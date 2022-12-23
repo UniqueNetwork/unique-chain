@@ -59,9 +59,6 @@ fn basic_setup_works() {
 	});
 }
 
-// todo:collator add more tests later
-// invulnerable after onboard + invulnerables can bypass desired_candidates
-
 #[test]
 fn it_should_add_invulnerables() {
 	new_test_ext().execute_with(|| {

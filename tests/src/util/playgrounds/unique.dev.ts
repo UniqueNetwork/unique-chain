@@ -445,6 +445,30 @@ class WaitGroup {
     return promise;
   }
 
+  /**
+   * Wait for the specified number of sessions to pass. 
+   * Only applicable if the Session pallet is turned on.
+   * @param sessionCount number of sessions to wait
+   * @param blockTimeout time in ms until panicking that the chain has stopped producing blocks
+   * @returns 
+   */
+  async newSessions(sessionCount = 1, blockTimeout = 60000): Promise<void> {
+    console.log(`Waiting for ${sessionCount} new session${sessionCount > 1 ? 's' : ''}.` 
+      + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
+
+    const expectedSessionIndex = await this.helper.session.getIndex() + sessionCount;
+    let currentSessionIndex = -1;
+
+    while (currentSessionIndex < expectedSessionIndex) {
+      // eslint-disable-next-line no-async-promise-executor
+      currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
+        await this.newBlocks(1);
+        const res = this.helper.session.getIndex();
+        resolve(res);
+      }), blockTimeout, 'The chain has stopped producing blocks!');
+    }
+  }
+
   async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor

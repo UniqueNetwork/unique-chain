@@ -223,13 +223,11 @@ impl ValidatorRegistration<u64> for IsRegistered {
 }
 
 impl Config for Test {
-	// todo:collator mocks and stocks
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type UpdateOrigin = EnsureSignedBy<RootAccount, u64>;
 	type PotId = PotId;
 	type MaxCollators = MaxCollators;
-	// type KickThreshold = Period;
 	type SlashRatio = SlashRatio;
 	type TreasuryAccountId = ();
 	type ValidatorId = <Self as frame_system::Config>::AccountId;

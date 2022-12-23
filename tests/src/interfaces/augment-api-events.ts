@@ -100,6 +100,21 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    collatorSelection: {
+      CandidateAdded: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      CandidateRemoved: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      InvulnerableAdded: AugmentedEvent<ApiType, [invulnerable: AccountId32], { invulnerable: AccountId32 }>;
+      InvulnerableRemoved: AugmentedEvent<ApiType, [invulnerable: AccountId32], { invulnerable: AccountId32 }>;
+      LicenseForfeited: AugmentedEvent<ApiType, [accountId: AccountId32, depositReturned: u128], { accountId: AccountId32, depositReturned: u128 }>;
+      LicenseObtained: AugmentedEvent<ApiType, [accountId: AccountId32, deposit: u128], { accountId: AccountId32, deposit: u128 }>;
+      NewDesiredCollators: AugmentedEvent<ApiType, [desiredCollators: u32], { desiredCollators: u32 }>;
+      NewKickThreshold: AugmentedEvent<ApiType, [lengthInBlocks: u32], { lengthInBlocks: u32 }>;
+      NewLicenseBond: AugmentedEvent<ApiType, [bondAmount: u128], { bondAmount: u128 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     common: {
       /**
        * Address was added to the allow list.
@@ -521,6 +536,17 @@ declare module '@polkadot/api-base/types/events' {
     rmrkEquip: {
       BaseCreated: AugmentedEvent<ApiType, [issuer: AccountId32, baseId: u32], { issuer: AccountId32, baseId: u32 }>;
       EquippablesUpdated: AugmentedEvent<ApiType, [baseId: u32, slotId: u32], { baseId: u32, slotId: u32 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    session: {
+      /**
+       * New session has happened. Note that the argument is the session index, not the
+       * block number as the type might suggest.
+       **/
+      NewSession: AugmentedEvent<ApiType, [sessionIndex: u32], { sessionIndex: u32 }>;
       /**
        * Generic event
        **/

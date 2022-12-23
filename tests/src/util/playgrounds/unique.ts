@@ -11,7 +11,6 @@ import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, b
 import {IKeyringPair} from '@polkadot/types/types';
 import {hexToU8a} from '@polkadot/util/hex';
 import {u8aConcat} from '@polkadot/util/u8a';
-import {BN} from '@polkadot/util/bn';
 import {
   IApiListeners,
   IBlock,
@@ -46,6 +45,7 @@ import {
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {DevUniqueHelper} from './unique.dev';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -376,6 +376,7 @@ export class ChainHelperBase {
   children: ChainHelperBase[];
   address: AddressGroup;
   chain: ChainGroup;
+  session: SessionGroup;
 
   constructor(logger?: ILogger, helperBase?: any) {
     this.helperBase = helperBase;
@@ -391,6 +392,7 @@ export class ChainHelperBase {
     this.children = [];
     this.address = new AddressGroup(this);
     this.chain = new ChainGroup(this);
+    this.session = new SessionGroup(this);
   }
 
   clone(helperCls: ChainHelperBaseConstructor, options: {[key: string]: any} = {}) {
@@ -2643,24 +2645,32 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
-class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
+class SessionGroup extends HelperGroup<ChainHelperBase> {
   //todo:collator documentation
-  setKeys(signer: TSigner, key: string) {
+  async getIndex(): Promise<number> {
+    return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
+  }
+
+  newSessions(sessionCount = 1, blockTimeout = 24000): Promise<void> {
+    return (this.helper as DevUniqueHelper).wait.newSessions(sessionCount, blockTimeout);
+  }
+
+  setOwnKeys(signer: TSigner, key: string) {
     return this.helper.executeExtrinsic(
       signer,
       'api.tx.session.setKeys', 
-      [
-        key,
-        '0x0',
-      ],
+      [key, '0x0'],
       true,
     );
   }
 
-  setOwnKeys(signer: TSigner) {
-    return this.setKeys(signer, '0x' + Buffer.from(signer.addressRaw).toString('hex'));
+  setOwnKeysFromAddress(signer: TSigner) {
+    return this.setOwnKeys(signer, '0x' + Buffer.from(signer.addressRaw).toString('hex'));
   }
+}
 
+class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
+  //todo:collator documentation
   addInvulnerable(signer: TSigner, address: string) {
     return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.addInvulnerable', [address]);
   }
@@ -2669,8 +2679,44 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.removeInvulnerable', [address]);
   }
 
-  async getInvulnerables() {
+  async getInvulnerables(): Promise<string[]> {
     return (await this.helper.callRpc('api.query.collatorSelection.invulnerables')).map((x: any) => x.toHuman());
+  }
+
+  setLicenseBond(signer: TSigner, amount: bigint) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.setLicenseBond', [amount]);
+  }
+
+  async getLicenseBond(): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.collatorSelection.licenseBond')).toBigInt();
+  }
+
+  obtainLicense(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.getLicense', []);
+  }
+
+  releaseLicense(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.releaseLicense', []);
+  }
+
+  forceRevokeLicense(signer: TSigner, released: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.forceRevokeLicense', [released]);
+  }
+
+  async hasLicense(address: string): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.collatorSelection.licenses', [address])).toBigInt();
+  }
+
+  onboard(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.onboard', []);
+  }
+
+  offboard(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.offboard', []);
+  }
+
+  async getCandidates(): Promise<string[]> {
+    return (await this.helper.callRpc('api.query.collatorSelection.candidates')).map((x: any) => x.toHuman());
   }
 }
 
@@ -3040,12 +3086,15 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
 
       if (result.status === 'Fail') return result;
 
-      const data = this.eventHelper.extractEvents(result.result.events).find(x => x.section == 'sudo')?.data[0];
-      if (data.err) {
-        const error = data.err.module;
-        // todo:collator
-        const metaError = super.getApi()?.registry.findMetaError({index: new BN(error.index), error: new BN(9)});
-        throw new Error(`${data.err.module.error} ${metaError.section}.${metaError.name}`);
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if (data.isErr) {
+        if (data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else {
+          throw new Error(data.asErr.toHuman());
+        }
       }
       return result;
     }

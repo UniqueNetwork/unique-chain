@@ -196,9 +196,9 @@ macro_rules! testnet_genesis {
 					.cloned()
 					.map(|(acc, _)| acc)
 					.collect(),
+				desired_collators: 10,
 				license_bond: GENESIS_LICENSE_BOND,
 				kick_threshold: SESSION_LENGTH,
-				..Default::default()
 			},
 			session: SessionConfig {
 				keys: $initial_invulnerables

@@ -41,6 +41,18 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    authorship: {
+      /**
+       * The number of blocks back we should accept uncles.
+       * This means that we will deal with uncle-parents that are
+       * `UncleGenerations + 1` before `now`.
+       **/
+      uncleGenerations: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     balances: {
       /**
        * The minimum amount required to keep an account open.
