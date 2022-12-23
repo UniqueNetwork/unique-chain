@@ -780,15 +780,16 @@ macro_rules! impl_common_runtime_apis {
 
             #[cfg(feature = "try-runtime")]
             impl frame_try_runtime::TryRuntime<Block> for Runtime {
-                fn on_runtime_upgrade() -> (frame_support::pallet_prelude::Weight, frame_support::pallet_prelude::Weight) {
+                fn on_runtime_upgrade(checks: bool) -> (frame_support::pallet_prelude::Weight, frame_support::pallet_prelude::Weight) {
                     log::info!("try-runtime::on_runtime_upgrade unique-chain.");
-                    let weight = Executive::try_runtime_upgrade().unwrap();
+                    let weight = Executive::try_runtime_upgrade(checks).unwrap();
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
                 }
 
                 fn execute_block(
                     block: Block,
                     state_root_check: bool,
+                    signature_check: bool,
                     select: frame_try_runtime::TryStateSelect
                 ) -> frame_support::pallet_prelude::Weight {
                     log::info!(
@@ -799,7 +800,7 @@ macro_rules! impl_common_runtime_apis {
                         select,
                     );
 
-                    Executive::try_execute_block(block, state_root_check, select).unwrap()
+                    Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
                 }
             }
         }

@@ -87,6 +87,7 @@ try-runtime = [
     'pallet-evm-transaction-payment/try-runtime',
     'pallet-evm-migration/try-runtime',
     'pallet-maintenance/try-runtime',
+    'fp-self-contained/try-runtime',
 ]
 std = [
     'codec/std',
