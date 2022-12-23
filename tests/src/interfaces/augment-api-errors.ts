@@ -304,6 +304,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       Reentrancy: AugmentedError<ApiType>;
       /**
+       * EIP-3607,
+       **/
+      TransactionMustComeFromEOA: AugmentedError<ApiType>;
+      /**
        * Undefined error.
        **/
       Undefined: AugmentedError<ApiType>;

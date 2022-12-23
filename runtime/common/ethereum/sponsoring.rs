@@ -144,9 +144,14 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 			let (collection_id, token_id) =
 				T::EvmTokenAddressMapping::address_to_token(&call_context.contract_address)?;
 			let collection = <CollectionHandle<T>>::new(collection_id)?;
+			if collection.mode != CollectionMode::ReFungible {
+				return None;
+			}
 			let sponsor = collection.sponsorship.sponsor()?.clone();
 			let rft_collection = RefungibleHandle::cast(collection);
+			// Token existance isn't checked at this point and should be checked in `withdraw` method.
 			let token = RefungibleTokenHandle(rft_collection, token_id);
+
 			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
 			let call = <UniqueRefungibleTokenCall<T>>::parse(method_id, &mut reader).ok()??;
 			Some(T::CrossAccountId::from_sub(
