@@ -145,7 +145,7 @@ where
 	) -> Result<PovInfo> {
 		self.deny_unsafe.check_if_safe()?;
 
-		let at = BlockId::<Block>::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+		let at = at.unwrap_or_else(|| self.client.info().best_hash);
 		let state = self
 			.backend
 			.state_at(at)
