@@ -38,7 +38,7 @@ const ACALA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
-const FUNDING_AMOUNT = 3_500_000_0000_000_000n; 
+const FUNDING_AMOUNT = 3_500_000_0000_000_000n;
 
 const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
 
@@ -52,7 +52,7 @@ const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
-  
+
   let balanceStmnBefore: bigint;
   let balanceStmnAfter: bigint;
 
@@ -81,7 +81,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     });
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
-      const sovereignFundingAmount = 3_500_000_000n; 
+      const sovereignFundingAmount = 3_500_000_000n;
 
       await helper.assets.create(
         alice,
@@ -185,7 +185,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
       await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
-  
+
   });
 
   itSub('Should connect and send USDT from Statemint to Unique', async ({helper}) => {
@@ -224,7 +224,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
                     },
                     {
                       GeneralIndex: USDT_ASSET_ID,
-                    }, 
+                    },
                   ]},
               },
             },
@@ -267,7 +267,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     console.log(
       '[Statemint -> Unique] transaction fees on Unique: %s UNQ',
       helper.util.bigIntToDecimals(balanceUniqueAfter - balanceUniqueBefore),
-    );    
+    );
     // commission has not paid in USDT token
     expect(free).to.be.equal(TRANSFER_AMOUNT);
     // ... and parachain native token
@@ -299,7 +299,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
           ForeignAssetId: 0,
         },
         TRANSFER_AMOUNT,
-      ], 
+      ],
       [
         {
           NativeAssetId: 'Parent',
@@ -311,7 +311,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     const feeItem = 1;
 
     await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, 'Unlimited');
-    
+
     // the commission has been paid in parachain native token
     balanceUniqueFinal = await helper.balance.getSubstrate(alice.address);
     console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueFinal - balanceUniqueAfter));
@@ -319,9 +319,9 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-      
+
       // The USDT token never paid fees. Its amount not changed from begin value.
-      // Also check that xcm transfer has been succeeded 
+      // Also check that xcm transfer has been succeeded
       expect((await helper.assets.account(USDT_ASSET_ID, alice.address))! == USDT_ASSET_AMOUNT).to.be.true;
     });
   });
@@ -372,10 +372,10 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
       await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
-  
+
     await helper.wait.newBlocks(3);
 
-    balanceBobAfter = await helper.balance.getSubstrate(bob.address);  
+    balanceBobAfter = await helper.balance.getSubstrate(bob.address);
     balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
     const wndFeeOnUnique = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
