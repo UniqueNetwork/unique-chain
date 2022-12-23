@@ -143,8 +143,7 @@ pub fn impl_enum_solidity_type_name(name: &syn::Ident) -> proc_macro2::TokenStre
 	)
 }
 
-pub fn check_and_count_options(de: &syn::DataEnum) -> syn::Result<usize> {
-	let mut count = 0;
+pub fn check_enum_fields(de: &syn::DataEnum) -> syn::Result<()> {
 	for v in de.variants.iter() {
 		if !v.fields.is_empty() {
 			return Err(syn::Error::new(
@@ -156,12 +155,10 @@ pub fn check_and_count_options(de: &syn::DataEnum) -> syn::Result<usize> {
 				v.ident.span(),
 				"Enumeration options should not have an explicit specified value",
 			));
-		} else {
-			count += 1;
 		}
 	}
 
-	Ok(count)
+	Ok(())
 }
 
 pub fn check_repr_u8(name: &syn::Ident, attrs: &[syn::Attribute]) -> syn::Result<()> {

@@ -70,6 +70,7 @@ fn expand_enum(
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
 	check_repr_u8(name, &ast.attrs)?;
+	check_enum_fields(de)?;
 	let docs = extract_docs(&ast.attrs)?;
 	let enum_options = de.variants.iter();
 
