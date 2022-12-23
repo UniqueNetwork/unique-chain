@@ -83,12 +83,12 @@ describe('evm collection sponsoring', () => {
 
   itEth('Remove sponsor', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
 
     let result = await collectionHelpers.methods.createNFTCollection('Sponsor collection', '1', '1').send({value: Number(2n * nominal)});
     const collectionIdAddress = helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionIdAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionIdAddress, 'nft', owner);
 
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.false;
     result = await collectionEvm.methods.setCollectionSponsor(sponsor).send({from: owner});
@@ -110,7 +110,7 @@ describe('evm collection sponsoring', () => {
 
     const collection = helper.nft.getCollectionObject(collectionId);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await collectionEvm.methods.setCollectionSponsor(sponsor).send({from: owner});
     let collectionData = (await collection.getData())!;
@@ -227,14 +227,14 @@ describe('evm collection sponsoring', () => {
     const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner,'Sponsor collection', '1', '1', '');
     const collection = helper.nft.getCollectionObject(collectionId);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     await collectionEvm.methods.setCollectionSponsor(sponsor).send();
     let collectionData = (await collection.getData())!;
     expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
     await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('caller is not set as sponsor');
 
-    const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
+    const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
     collectionData = (await collection.getData())!;
     expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
@@ -245,7 +245,7 @@ describe('evm collection sponsoring', () => {
     const ownerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
     const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
 
-    const userCollectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', user);
+    const userCollectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', user);
 
     const result = await userCollectionEvm.methods.mintWithTokenURI(user, 'Test URI').send();
     const tokenId = result.events.Transfer.returnValues.tokenId;

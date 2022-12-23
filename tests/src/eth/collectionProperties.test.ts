@@ -36,7 +36,7 @@ describe('EVM collection properties', () => {
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     await contract.methods.setCollectionProperty('testKey', Buffer.from('testValue')).send({from: caller});
 
@@ -52,7 +52,7 @@ describe('EVM collection properties', () => {
     await collection.addAdmin(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     await contract.methods.deleteCollectionProperty('testKey').send({from: caller});
 
@@ -90,12 +90,12 @@ describe('Supports ERC721Metadata', () => {
     const SUFFIX = 'suffix1';
     const URI = 'uri1';
 
-    const collectionHelpers = helper.ethNativeContract.collectionHelpers(caller);
+    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(caller);
     const creatorMethod = mode === 'rft' ? 'createRFTCollection' : 'createNFTCollection';
 
     const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p');
 
-    const contract = helper.ethNativeContract.collectionById(collectionId, mode, caller);
+    const contract = await helper.ethNativeContract.collectionById(collectionId, mode, caller);
     await contract.methods.addCollectionAdmin(bruh).send(); // to check that admin will work too
 
     const collection1 = helper.nft.getCollectionObject(collectionId);
