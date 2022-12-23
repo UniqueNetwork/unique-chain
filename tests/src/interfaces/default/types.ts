@@ -557,10 +557,6 @@ export interface FrameSystemAccountInfo extends Struct {
 
 /** @name FrameSystemCall */
 export interface FrameSystemCall extends Enum {
-  readonly isFillBlock: boolean;
-  readonly asFillBlock: {
-    readonly ratio: Perbill;
-  } & Struct;
   readonly isRemark: boolean;
   readonly asRemark: {
     readonly remark: Bytes;
@@ -594,7 +590,7 @@ export interface FrameSystemCall extends Enum {
   readonly asRemarkWithEvent: {
     readonly remark: Bytes;
   } & Struct;
-  readonly type: 'FillBlock' | 'Remark' | 'SetHeapPages' | 'SetCode' | 'SetCodeWithoutChecks' | 'SetStorage' | 'KillStorage' | 'KillPrefix' | 'RemarkWithEvent';
+  readonly type: 'Remark' | 'SetHeapPages' | 'SetCode' | 'SetCodeWithoutChecks' | 'SetStorage' | 'KillStorage' | 'KillPrefix' | 'RemarkWithEvent';
 }
 
 /** @name FrameSystemError */
@@ -1188,13 +1184,6 @@ export interface PalletBalancesReasons extends Enum {
   readonly type: 'Fee' | 'Misc' | 'All';
 }
 
-/** @name PalletBalancesReleases */
-export interface PalletBalancesReleases extends Enum {
-  readonly isV100: boolean;
-  readonly isV200: boolean;
-  readonly type: 'V100' | 'V200';
-}
-
 /** @name PalletBalancesReserveData */
 export interface PalletBalancesReserveData extends Struct {
   readonly id: U8aFixed;
@@ -1457,7 +1446,8 @@ export interface PalletEvmError extends Enum {
   readonly isGasLimitTooHigh: boolean;
   readonly isUndefined: boolean;
   readonly isReentrancy: boolean;
-  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy';
+  readonly isTransactionMustComeFromEOA: boolean;
+  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy' | 'TransactionMustComeFromEOA';
 }
 
 /** @name PalletEvmEvent */

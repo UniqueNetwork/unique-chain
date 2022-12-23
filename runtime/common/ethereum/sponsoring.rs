@@ -32,13 +32,21 @@ use pallet_fungible::{
 	Config as FungibleConfig,
 	erc::{UniqueFungibleCall, ERC20Call},
 };
-use pallet_refungible::Config as RefungibleConfig;
+use pallet_refungible::{
+	Config as RefungibleConfig,
+	erc::UniqueRefungibleCall,
+	erc_token::{RefungibleTokenHandle, UniqueRefungibleTokenCall},
+	RefungibleHandle,
+};
 use pallet_unique::Config as UniqueConfig;
 use sp_std::prelude::*;
-use up_data_structs::{CollectionMode, CreateItemData, CreateNftData, TokenId};
+use up_data_structs::{
+	CollectionMode, CreateItemData, CreateNftData, mapping::TokenAddressMapping, TokenId,
+};
 use up_sponsorship::SponsorshipHandler;
-
 use crate::{Runtime, runtime_common::sponsoring::*};
+
+mod refungible;
 
 pub type EvmSponsorshipHandler = (
 	UniqueEthSponsorshipHandler<Runtime>,
@@ -53,80 +61,163 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 		who: &T::CrossAccountId,
 		call_context: &CallContext,
 	) -> Option<T::CrossAccountId> {
-		let collection_id = map_eth_to_id(&call_context.contract_address)?;
-		let collection = <CollectionHandle<T>>::new(collection_id)?;
-		let sponsor = collection.sponsorship.sponsor()?.clone();
-		let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
-		Some(T::CrossAccountId::from_sub(match &collection.mode {
-			CollectionMode::NFT => {
-				let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
-				match call {
-					UniqueNFTCall::TokenProperties(TokenPropertiesCall::SetProperty {
-						token_id,
-						key,
-						value,
-						..
-					}) => {
-						let token_id: TokenId = token_id.try_into().ok()?;
-						withdraw_set_token_property::<T>(
+		if let Some(collection_id) = map_eth_to_id(&call_context.contract_address) {
+			let collection = <CollectionHandle<T>>::new(collection_id)?;
+			let sponsor = collection.sponsorship.sponsor()?.clone();
+			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
+			Some(T::CrossAccountId::from_sub(match &collection.mode {
+				CollectionMode::NFT => {
+					let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
+					match call {
+						UniqueNFTCall::TokenProperties(TokenPropertiesCall::SetProperty {
+							token_id,
+							key,
+							value,
+							..
+						}) => {
+							let token_id: TokenId = token_id.try_into().ok()?;
+							withdraw_set_token_property::<T>(
+								&collection,
+								&who,
+								&token_id,
+								key.len() + value.len(),
+							)
+							.map(|()| sponsor)
+						}
+						UniqueNFTCall::ERC721UniqueExtensions(
+							ERC721UniqueExtensionsCall::Transfer { token_id, .. },
+						) => {
+							let token_id: TokenId = token_id.try_into().ok()?;
+							withdraw_transfer::<T>(&collection, &who, &token_id).map(|()| sponsor)
+						}
+						UniqueNFTCall::ERC721UniqueMintable(
+							ERC721UniqueMintableCall::Mint { .. }
+							| ERC721UniqueMintableCall::MintCheckId { .. }
+							| ERC721UniqueMintableCall::MintWithTokenUri { .. }
+							| ERC721UniqueMintableCall::MintWithTokenUriCheckId { .. },
+						) => withdraw_create_item::<T>(
 							&collection,
 							&who,
-							&token_id,
-							key.len() + value.len(),
+							&CreateItemData::NFT(CreateNftData::default()),
 						)
-						.map(|()| sponsor)
+						.map(|()| sponsor),
+						UniqueNFTCall::ERC721(ERC721Call::TransferFrom {
+							token_id, from, ..
+						}) => {
+							let token_id: TokenId = token_id.try_into().ok()?;
+							let from = T::CrossAccountId::from_eth(from);
+							withdraw_transfer::<T>(&collection, &from, &token_id).map(|()| sponsor)
+						}
+						UniqueNFTCall::ERC721(ERC721Call::Approve { token_id, .. }) => {
+							let token_id: TokenId = token_id.try_into().ok()?;
+							withdraw_approve::<T>(&collection, who.as_sub(), &token_id)
+								.map(|()| sponsor)
+						}
+						_ => None,
 					}
-					UniqueNFTCall::ERC721UniqueExtensions(
-						ERC721UniqueExtensionsCall::Transfer { token_id, .. },
-					) => {
-						let token_id: TokenId = token_id.try_into().ok()?;
-						withdraw_transfer::<T>(&collection, &who, &token_id).map(|()| sponsor)
-					}
-					UniqueNFTCall::ERC721UniqueMintable(
-						ERC721UniqueMintableCall::Mint { .. }
-						| ERC721UniqueMintableCall::MintCheckId { .. }
-						| ERC721UniqueMintableCall::MintWithTokenUri { .. }
-						| ERC721UniqueMintableCall::MintWithTokenUriCheckId { .. },
-					) => withdraw_create_item::<T>(
-						&collection,
-						&who,
-						&CreateItemData::NFT(CreateNftData::default()),
-					)
-					.map(|()| sponsor),
-					UniqueNFTCall::ERC721(ERC721Call::TransferFrom { token_id, from, .. }) => {
-						let token_id: TokenId = token_id.try_into().ok()?;
-						let from = T::CrossAccountId::from_eth(from);
-						withdraw_transfer::<T>(&collection, &from, &token_id).map(|()| sponsor)
-					}
-					UniqueNFTCall::ERC721(ERC721Call::Approve { token_id, .. }) => {
-						let token_id: TokenId = token_id.try_into().ok()?;
-						withdraw_approve::<T>(&collection, who.as_sub(), &token_id)
-							.map(|()| sponsor)
-					}
-					_ => None,
 				}
-			}
-			CollectionMode::Fungible(_) => {
-				let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader).ok()??;
-				#[allow(clippy::single_match)]
-				match call {
-					UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
-						withdraw_transfer::<T>(&collection, who, &TokenId::default())
-							.map(|()| sponsor)
-					}
-					UniqueFungibleCall::ERC20(ERC20Call::TransferFrom { from, .. }) => {
-						let from = T::CrossAccountId::from_eth(from);
-						withdraw_transfer::<T>(&collection, &from, &TokenId::default())
-							.map(|()| sponsor)
-					}
-					UniqueFungibleCall::ERC20(ERC20Call::Approve { .. }) => {
-						withdraw_approve::<T>(&collection, who.as_sub(), &TokenId::default())
-							.map(|()| sponsor)
-					}
-					_ => None,
+				CollectionMode::ReFungible => {
+					let call = <UniqueRefungibleCall<T>>::parse(method_id, &mut reader).ok()??;
+					refungible::call_sponsor(call, collection, who).map(|()| sponsor)
 				}
+				CollectionMode::Fungible(_) => {
+					let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader).ok()??;
+					match call {
+						UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
+							withdraw_transfer::<T>(&collection, who, &TokenId::default())
+								.map(|()| sponsor)
+						}
+						UniqueFungibleCall::ERC20(ERC20Call::TransferFrom { from, .. }) => {
+							let from = T::CrossAccountId::from_eth(from);
+							withdraw_transfer::<T>(&collection, &from, &TokenId::default())
+								.map(|()| sponsor)
+						}
+						UniqueFungibleCall::ERC20(ERC20Call::Approve { .. }) => {
+							withdraw_approve::<T>(&collection, who.as_sub(), &TokenId::default())
+								.map(|()| sponsor)
+						}
+						_ => None,
+					}
+				}
+			}?))
+		} else {
+			let (collection_id, token_id) =
+				T::EvmTokenAddressMapping::address_to_token(&call_context.contract_address)?;
+			let collection = <CollectionHandle<T>>::new(collection_id)?;
+			if collection.mode != CollectionMode::ReFungible {
+				return None;
 			}
-			_ => None,
-		}?))
+			let sponsor = collection.sponsorship.sponsor()?.clone();
+			let rft_collection = RefungibleHandle::cast(collection);
+			// Token existance isn't checked at this point and should be checked in `withdraw` method.
+			let token = RefungibleTokenHandle(rft_collection, token_id);
+
+			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
+			let call = <UniqueRefungibleTokenCall<T>>::parse(method_id, &mut reader).ok()??;
+			Some(T::CrossAccountId::from_sub(
+				refungible::token_call_sponsor(call, token, who).map(|()| sponsor)?,
+			))
+		}
+	}
+}
+
+mod common {
+	use super::*;
+
+	use pallet_common::erc::{CollectionCall};
+
+	pub fn collection_call_sponsor<T>(
+		call: CollectionCall<T>,
+		_collection: CollectionHandle<T>,
+		_who: &T::CrossAccountId,
+	) -> Option<()>
+	where
+		T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig,
+	{
+		use CollectionCall::*;
+
+		match call {
+			// Readonly
+			ERC165Call(_, _)
+			| CollectionProperty { .. }
+			| CollectionProperties { .. }
+			| HasCollectionPendingSponsor
+			| CollectionSponsor
+			| ContractAddress
+			| AllowlistedCross { .. }
+			| IsOwnerOrAdminEth { .. }
+			| IsOwnerOrAdminCross { .. }
+			| CollectionOwner
+			| CollectionAdmins
+			| CollectionLimits
+			| CollectionNestingRestrictedIds
+			| CollectionNestingPermissions
+			| UniqueCollectionType => None,
+
+			// Not sponsored
+			AddToCollectionAllowList { .. }
+			| AddToCollectionAllowListCross { .. }
+			| RemoveFromCollectionAllowList { .. }
+			| RemoveFromCollectionAllowListCross { .. }
+			| AddCollectionAdminCross { .. }
+			| RemoveCollectionAdminCross { .. }
+			| AddCollectionAdmin { .. }
+			| RemoveCollectionAdmin { .. }
+			| SetNestingBool { .. }
+			| SetNesting { .. }
+			| SetCollectionAccess { .. }
+			| SetCollectionMintMode { .. }
+			| SetOwner { .. }
+			| ChangeCollectionOwnerCross { .. }
+			| SetCollectionProperty { .. }
+			| SetCollectionProperties { .. }
+			| DeleteCollectionProperty { .. }
+			| DeleteCollectionProperties { .. }
+			| SetCollectionSponsor { .. }
+			| SetCollectionSponsorCross { .. }
+			| SetCollectionLimit { .. }
+			| ConfirmCollectionSponsorship
+			| RemoveCollectionSponsor => None,
+		}
 	}
 }

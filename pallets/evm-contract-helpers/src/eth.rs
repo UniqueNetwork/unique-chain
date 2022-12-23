@@ -23,7 +23,7 @@ use evm_coder::{
 	execution::Result,
 	generate_stubgen, solidity_interface,
 	types::*,
-	ToLog, AbiCoder,
+	ToLog,
 };
 use pallet_common::eth;
 use pallet_evm::{
