@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+/* eslint-disable @typescript-eslint/no-floating-promises */
 import os from 'os';
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds} from './util';

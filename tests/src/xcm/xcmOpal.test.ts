@@ -37,12 +37,12 @@ const WESTMINT_DECIMALS = 12;
 const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 
 // 10,000.00 (ten thousands) USDT
-const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n; 
+const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n;
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
-  
+
   let balanceStmnBefore: bigint;
   let balanceStmnAfter: bigint;
 
@@ -66,7 +66,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       // 350.00 (three hundred fifty) DOT
-      const fundingAmount = 3_500_000_000_000n; 
+      const fundingAmount = 3_500_000_000_000n;
 
       await helper.assets.create(alice, ASSET_ID, alice.address, ASSET_METADATA_MINIMAL_BALANCE);
       await helper.assets.setMetadata(alice, ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
@@ -151,7 +151,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
-  
+
   });
 
   itSub('Should connect and send USDT from Westmint to Opal', async ({helper}) => {
@@ -190,7 +190,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
                     },
                     {
                       GeneralIndex: ASSET_ID,
-                    }, 
+                    },
                   ]},
               },
             },
@@ -266,7 +266,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
         },
         //10_000_000_000_000_000n,
         TRANSFER_AMOUNT,
-      ], 
+      ],
       [
         {
           NativeAssetId: 'Parent',
@@ -278,16 +278,16 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     const feeItem = 1;
 
     await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, 'Unlimited');
-    
+
     // the commission has been paid in parachain native token
     balanceOpalFinal = await helper.balance.getSubstrate(alice.address);
     expect(balanceOpalAfter > balanceOpalFinal).to.be.true;
 
     await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-      
+
       // The USDT token never paid fees. Its amount not changed from begin value.
-      // Also check that xcm transfer has been succeeded 
+      // Also check that xcm transfer has been succeeded
       expect((await helper.assets.account(ASSET_ID, alice.address))! == ASSET_AMOUNT).to.be.true;
     });
   });
@@ -341,13 +341,13 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     });
-  
+
     await helper.wait.newBlocks(3);
 
-    balanceBobAfter = await helper.balance.getSubstrate(bob.address);  
+    balanceBobAfter = await helper.balance.getSubstrate(bob.address);
     balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
 
-    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore; 
+    const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
     console.log(
       'Relay (Westend) to Opal transaction fees: %s OPL',
       helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),

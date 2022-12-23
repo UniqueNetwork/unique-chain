@@ -412,6 +412,7 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use std::{future::Future, pin::Pin};
+			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
 
 			let runner = cli.create_runner(cmd)?;
 
@@ -429,12 +430,21 @@ pub fn run() -> Result<()> {
 				Ok((
 					match config.chain_spec.runtime_id() {
 						#[cfg(feature = "unique-runtime")]
-						RuntimeId::Unique => Box::pin(cmd.run::<Block, UniqueRuntimeExecutor>(config)),
+						RuntimeId::Unique => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>>()),
 
 						#[cfg(feature = "quartz-runtime")]
-						RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
+						RuntimeId::Quartz => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>>()),
 
-						RuntimeId::Opal => Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config)),
+						RuntimeId::Opal => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>>()),
 						RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
 					},
 					task_manager,

@@ -32,6 +32,7 @@ describe('Create FT collection from EVM', () => {
     });
   });
 
+  // TODO move sponsorship tests to another file:
   // Soft-deprecated
   itEth('[eth] Set sponsorship', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
@@ -93,6 +94,11 @@ describe('Create FT collection from EVM', () => {
     expect(await collectionHelpers
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
+
+    // check collectionOwner:
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+    const collectionOwner = await collectionEvm.methods.collectionOwner().call();
+    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
   });
 
   itEth('destroyCollection', async ({helper}) => {

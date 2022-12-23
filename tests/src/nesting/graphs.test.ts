@@ -56,7 +56,7 @@ describe('Graphs', () => {
     // to self
     await expect(
       tokens[0].nest(alice, tokens[0]),
-      'first transaction',  
+      'first transaction',
     ).to.be.rejectedWith(/structure\.OuroborosDetected/);
     // to nested part of graph
     await expect(

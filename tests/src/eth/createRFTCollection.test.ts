@@ -88,27 +88,6 @@ describe('Create RFT collection from EVM', () => {
     ]);
   });
 
-  // this test will occasionally fail when in async environment.
-  itEth.skip('Check collection address exist', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-
-    const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
-    const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
-
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.false;
-
-    await collectionHelpers.methods
-      .createRFTCollection('A', 'A', 'A')
-      .send({value: Number(2n * helper.balance.getOneTokenNominal())});
-
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.true;
-  });
-
   // Soft-deprecated
   itEth('[eth] Set sponsorship', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
@@ -166,6 +145,11 @@ describe('Create RFT collection from EVM', () => {
     expect(await collectionHelpers
       .methods.isCollectionExist(collectionAddress).call())
       .to.be.true;
+
+    // check collectionOwner:
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+    const collectionOwner = await collectionEvm.methods.collectionOwner().call();
+    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
   });
 });
 

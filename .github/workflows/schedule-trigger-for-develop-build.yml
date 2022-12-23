@@ -1,8 +1,8 @@
 name: schedule-trigger-for-develop-build
 on:
   # update the branch ci/develop-scheduler every night
-  schedule:
-    - cron: '0 1 * * *'
+  # schedule:
+  #   - cron: '0 1 * * *'
   # or update the branch manually
   workflow_dispatch:
   # pull_request:

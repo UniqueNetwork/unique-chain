@@ -31,7 +31,7 @@ describe('Integration Test: Token Properties with sudo', () => {
 
   [
     {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
@@ -39,7 +39,7 @@ describe('Integration Test: Token Properties with sudo', () => {
         requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
       });
     });
-    
+
     itSub('force_repair_item preserves valid consumed space', async({helper}) => {
       const propKey = 'tok-prop';
 

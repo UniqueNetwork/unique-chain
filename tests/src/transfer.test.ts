@@ -29,7 +29,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
-  
+
   itSub('Balance transfers and check balance', async ({helper}) => {
     const alicesBalanceBefore = await helper.balance.getSubstrate(alice.address);
     const bobsBalanceBefore = await helper.balance.getSubstrate(bob.address);
@@ -162,7 +162,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
     await expect(collection.transfer(alice, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
-  
+
   itSub.ifWithPallets('[refungible] Transfer with deleted collection_id', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'Transfer-Neg-1-RFT', description: '', tokenPrefix: 'T'});
     const rft = await collection.mintToken(alice, 10n);
@@ -279,7 +279,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
       donor = await privateKey({filename: __filename});
     });
   });
-  
+
   itEth('Transfers to self. In case of same frontend', async ({helper}) => {
     const [owner] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.ft.mintCollection(owner, {});

@@ -43,6 +43,9 @@ use crate::{
 	TotalSupply, weights::WeightInfo,
 };
 
+/// Refungible token handle contains information about token's collection and id
+///
+/// RefungibleTokenHandle doesn't check token's existance upon creation
 pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
 
 #[solidity_interface(name = ERC1633)]

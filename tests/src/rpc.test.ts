@@ -35,20 +35,20 @@ describe('integration test: RPC methods', () => {
     const owner = (await helper.callRpc('api.rpc.unique.tokenOwner', [collection.collectionId, 0])).toJSON() as any;
     expect(owner).to.be.null;
   });
-  
+
   itSub('RPC method tokenOwners for fungible collection and token', async ({helper}) => {
     // Set-up a few token owners of all stripes
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
     const facelessCrowd = (await helper.arrange.createAccounts([0n, 0n, 0n, 0n, 0n, 0n, 0n], donor))
       .map(i => {return {Substrate: i.address};});
-    
+
     const collection = await helper.ft.mintCollection(alice, {name: 'RPC-2', tokenPrefix: 'RPC'});
     // mint some maximum (u128) amounts of tokens possible
     await collection.mint(alice, (1n << 128n) - 1n);
-    
+
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);
-          
+
     for (let i = 0; i < facelessCrowd.length; i++) {
       await collection.transfer(alice, facelessCrowd[i], 1n);
     }
@@ -59,7 +59,7 @@ describe('integration test: RPC methods', () => {
 
     expect(ids).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length == 10).to.be.true;
-    
+
     // Make sure only 10 results are returned with this RPC
     const [eleven] = await helper.arrange.createAccounts([0n], donor);
     expect(await collection.transfer(alice, {Substrate: eleven.address}, 10n)).to.be.true;

@@ -127,7 +127,7 @@ impl From<Option<bool>> for OptionUint {
 pub struct OptionCrossAddress {
 	/// Whether or not this CrossAdress is valid and has meaning.
 	pub status: bool,
-	/// The underlying CrossAddress. If the status is false, can be set to whatever.
+	/// The underlying CrossAddress value. If the status is false, can be set to whatever.
 	pub value: CrossAddress,
 }
 

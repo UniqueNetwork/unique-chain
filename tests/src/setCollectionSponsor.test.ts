@@ -37,7 +37,7 @@ describe('integration test: ext. setCollectionSponsor():', () => {
       Unconfirmed: bob.address,
     });
   });
-  
+
   itSub('Set Fungible collection sponsor', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'SetCollectionSponsor-1-FT', tokenPrefix: 'SCS'});
     await expect(collection.setSponsor(alice, bob.address)).to.be.not.rejected;
@@ -75,7 +75,7 @@ describe('integration test: ext. setCollectionSponsor():', () => {
       Unconfirmed: charlie.address,
     });
   });
-  
+
   itSub('Collection admin add sponsor', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'SetCollectionSponsor-4', tokenPrefix: 'SCS'});
     await collection.addAdmin(alice, {Substrate: bob.address});
