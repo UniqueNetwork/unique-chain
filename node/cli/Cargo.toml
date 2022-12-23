@@ -122,6 +122,10 @@ branch = "polkadot-v0.9.36"
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.36"
 
+[dependencies.sp-io]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.36"
+
 [dependencies.sp-finality-grandpa]
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.36"

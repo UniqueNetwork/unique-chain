@@ -91,6 +91,7 @@ try-runtime = [
     'pallet-unique-scheduler-v2/try-runtime',
     'pallet-maintenance/try-runtime',
     'pallet-test-utils?/try-runtime',
+    'fp-self-contained/try-runtime',
 ]
 std = [
     'codec/std',
