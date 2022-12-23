@@ -56,7 +56,7 @@ class ContractGroup extends EthGroupBase {
   }
 
   async compile(name: string, src: string, imports?: ContractImports[]): Promise<CompiledContract> {
-    const compiled = JSON.parse(solc.compile(JSON.stringify({
+    const out = JSON.parse(solc.compile(JSON.stringify({
       language: 'Solidity',
       sources: {
         [`${name}.sol`]: {
