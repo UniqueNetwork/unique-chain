@@ -125,9 +125,9 @@ impl From<Option<bool>> for OptionUint {
 /// Ethereum representation of Optional value with CrossAddress.
 #[derive(Debug, Default, AbiCoder)]
 pub struct OptionCrossAddress {
-	/// TODO: field description
+	/// Is address set
 	pub status: bool,
-	/// TODO: field description
+	/// Address value
 	pub value: CrossAddress,
 }
 

@@ -282,6 +282,10 @@ mod erc721 {
 	}
 }
 
+/// Module for methods of refungible token
+///
+/// Existance of token should be checked before searching for sponsor
+/// because RefungibleTokenHandle doesn't check token's existence upon creation
 mod erc20 {
 	use super::*;
 
