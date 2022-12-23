@@ -2760,9 +2760,9 @@ export interface SpRuntimeTransactionValidityInvalidTransaction extends Enum {
   readonly isCustom: boolean;
   readonly asCustom: u8;
   readonly isBadMandatory: boolean;
-  readonly isMandatoryDispatch: boolean;
+  readonly isMandatoryValidation: boolean;
   readonly isBadSigner: boolean;
-  readonly type: 'Call' | 'Payment' | 'Future' | 'Stale' | 'BadProof' | 'AncientBirthBlock' | 'ExhaustsResources' | 'Custom' | 'BadMandatory' | 'MandatoryDispatch' | 'BadSigner';
+  readonly type: 'Call' | 'Payment' | 'Future' | 'Stale' | 'BadProof' | 'AncientBirthBlock' | 'ExhaustsResources' | 'Custom' | 'BadMandatory' | 'MandatoryValidation' | 'BadSigner';
 }
 
 /** @name SpRuntimeTransactionValidityTransactionValidityError */
