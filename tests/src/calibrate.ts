@@ -295,6 +295,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
 (async () => {
   await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
     // Subsequent runs reduce error, as price line is not actually straight, this is a curve

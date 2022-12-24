@@ -26,7 +26,7 @@ export interface ITransactionResult {
 export interface ISubscribeBlockEventsData {
   number: number;
   hash: string;
-  timestamp: number; 
+  timestamp: number;
   events: IEvent[];
 }
 
@@ -56,7 +56,7 @@ export interface IApiListeners {
   connected?: (...args: any[]) => any;
   disconnected?: (...args: any[]) => any;
   error?: (...args: any[]) => any;
-  ready?: (...args: any[]) => any; 
+  ready?: (...args: any[]) => any;
   decorated?: (...args: any[]) => any;
 }
 
@@ -169,6 +169,14 @@ export interface ISubstrateBalance {
 export interface IStakingInfo {
   block: bigint,
   amount: bigint,
+}
+
+export interface IPovInfo {
+  proofSize: number,
+  compactProofSize: number,
+  compressedProofSize: number,
+  results: any[],
+  kv: any,
 }
 
 export interface ISchedulerOptions {

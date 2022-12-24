@@ -122,6 +122,10 @@ branch = "polkadot-v0.9.36"
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.36"
 
+[dependencies.sp-io]
+git = "https://github.com/paritytech/substrate"
+branch = "polkadot-v0.9.36"
+
 [dependencies.sp-finality-grandpa]
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.36"
@@ -315,8 +319,10 @@ fp-rpc = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-p
 pallet-ethereum = { git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 
 unique-rpc = { default-features = false, path = "../rpc" }
+uc-rpc = { default-features = false, path = "../../client/rpc" }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc" }
+up-pov-estimate-rpc = { path = "../../primitives/pov-estimate-rpc", default-features = false }
 
 [features]
 default = ["opal-runtime"]
@@ -335,3 +341,10 @@ try-runtime = [
     'try-runtime-cli/try-runtime',
 ]
 sapphire-runtime = ['opal-runtime', 'opal-runtime/become-sapphire']
+pov-estimate = [
+    'unique-runtime?/pov-estimate',
+    'quartz-runtime?/pov-estimate',
+    'opal-runtime/pov-estimate',
+    'uc-rpc/pov-estimate',
+    'unique-rpc/pov-estimate',
+]

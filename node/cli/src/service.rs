@@ -66,9 +66,10 @@ use polkadot_service::CollatorPair;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-use up_common::types::opaque::{
-	AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block, BlockNumber,
-};
+use up_common::types::opaque::*;
+
+#[cfg(feature = "pov-estimate")]
+use crate::chain_spec::RuntimeIdentification;
 
 // RMRK
 use up_data_structs::{
@@ -106,7 +107,12 @@ pub type DefaultRuntimeExecutor = OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
 impl NativeExecutionDispatch for UniqueRuntimeExecutor {
+	/// Only enable the benchmarking host functions when we actually want to benchmark.
+	#[cfg(feature = "runtime-benchmarks")]
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	/// Otherwise we only use the default Substrate host functions.
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		unique_runtime::api::dispatch(method, data)
@@ -119,7 +125,12 @@ impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 
 #[cfg(feature = "quartz-runtime")]
 impl NativeExecutionDispatch for QuartzRuntimeExecutor {
+	/// Only enable the benchmarking host functions when we actually want to benchmark.
+	#[cfg(feature = "runtime-benchmarks")]
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	/// Otherwise we only use the default Substrate host functions.
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		quartz_runtime::api::dispatch(method, data)
@@ -131,7 +142,12 @@ impl NativeExecutionDispatch for QuartzRuntimeExecutor {
 }
 
 impl NativeExecutionDispatch for OpalRuntimeExecutor {
+	/// Only enable the benchmarking host functions when we actually want to benchmark.
+	#[cfg(feature = "runtime-benchmarks")]
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	/// Otherwise we only use the default Substrate host functions.
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		opal_runtime::api::dispatch(method, data)
@@ -397,7 +413,8 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>,
@@ -502,9 +519,29 @@ where
 		.for_each(|()| futures::future::ready(())),
 	);
 
+	#[cfg(feature = "pov-estimate")]
+	let rpc_backend = backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
+	let runtime_id = parachain_config.chain_spec.runtime_id();
+
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			backend: rpc_frontier_backend.clone(),
+			#[cfg(feature = "pov-estimate")]
+			runtime_id: runtime_id.clone(),
+
+			#[cfg(feature = "pov-estimate")]
+			exec_params: uc_rpc::pov_estimate::ExecutorParams {
+				wasm_method: parachain_config.wasm_method,
+				default_heap_pages: parachain_config.default_heap_pages,
+				max_runtime_instances: parachain_config.max_runtime_instances,
+				runtime_cache_size: parachain_config.runtime_cache_size,
+			},
+
+			#[cfg(feature = "pov-estimate")]
+			backend: rpc_backend.clone(),
+
+			eth_backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),
@@ -705,7 +742,8 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
@@ -854,7 +892,8 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
@@ -1025,9 +1064,29 @@ where
 	let rpc_pool = transaction_pool.clone();
 	let rpc_network = network.clone();
 	let rpc_frontier_backend = frontier_backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
+	let rpc_backend = backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
+	let runtime_id = config.chain_spec.runtime_id();
+
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			backend: rpc_frontier_backend.clone(),
+			#[cfg(feature = "pov-estimate")]
+			runtime_id: runtime_id.clone(),
+
+			#[cfg(feature = "pov-estimate")]
+			exec_params: uc_rpc::pov_estimate::ExecutorParams {
+				wasm_method: config.wasm_method,
+				default_heap_pages: config.default_heap_pages,
+				max_runtime_instances: config.max_runtime_instances,
+				runtime_cache_size: config.runtime_cache_size,
+			},
+
+			#[cfg(feature = "pov-estimate")]
+			backend: rpc_backend.clone(),
+			eth_backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),

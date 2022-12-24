@@ -87,6 +87,7 @@ try-runtime = [
     'pallet-evm-transaction-payment/try-runtime',
     'pallet-evm-migration/try-runtime',
     'pallet-maintenance/try-runtime',
+    'fp-self-contained/try-runtime',
 ]
 std = [
     'codec/std',
@@ -122,6 +123,7 @@ std = [
     'pallet-base-fee/std',
     'fp-rpc/std',
     'up-rpc/std',
+    'up-pov-estimate-rpc/std',
     'app-promotion-rpc/std',
     'fp-evm-mapping/std',
     'fp-self-contained/std',
@@ -169,6 +171,7 @@ std = [
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 unique-runtime = ['foreign-assets']
+pov-estimate = []
 stubgen = ["evm-coder/stubgen"]
 
 refungible = []
@@ -453,6 +456,7 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 derivative = "2.2.0"
 pallet-unique = { path = '../../pallets/unique', default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
+up-pov-estimate-rpc = { path = "../../primitives/pov-estimate-rpc", default-features = false }
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false }
 rmrk-rpc = { path = "../../primitives/rmrk-rpc", default-features = false }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }

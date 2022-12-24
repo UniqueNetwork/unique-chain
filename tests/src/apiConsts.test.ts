@@ -46,33 +46,33 @@ const HELPERS_CONTRACT_ADDRESS = '0x842899ECF380553E8a4de75bF534cdf6fBF64049';
 
 describe('integration test: API UNIQUE consts', () => {
   let api: ApiPromise;
-  
+
   before(async () => {
     await usingPlaygrounds(async (helper) => {
       api = await helper.getApi();
     });
   });
-  
+
   itSub('DEFAULT_NFT_COLLECTION_LIMITS', () => {
     expect(api.consts.unique.nftDefaultCollectionLimits.toHuman()).to.deep.equal(DEFAULT_COLLETCTION_LIMIT);
   });
-  
+
   itSub('DEFAULT_RFT_COLLECTION_LIMITS', () => {
     expect(api.consts.unique.rftDefaultCollectionLimits.toHuman()).to.deep.equal(DEFAULT_COLLETCTION_LIMIT);
   });
-  
+
   itSub('DEFAULT_FT_COLLECTION_LIMITS', () => {
     expect(api.consts.unique.ftDefaultCollectionLimits.toHuman()).to.deep.equal(DEFAULT_COLLETCTION_LIMIT);
   });
-  
+
   itSub('MAX_COLLECTION_NAME_LENGTH', () => {
     checkConst(api.consts.unique.maxCollectionNameLength, MAX_COLLECTION_NAME_LENGTH);
   });
-  
+
   itSub('MAX_COLLECTION_DESCRIPTION_LENGTH', () => {
     checkConst(api.consts.unique.maxCollectionDescriptionLength, MAX_COLLECTION_DESCRIPTION_LENGTH);
   });
-  
+
   itSub('MAX_COLLECTION_PROPERTIES_SIZE', () => {
     checkConst(api.consts.unique.maxCollectionPropertiesSize, MAX_COLLECTION_PROPERTIES_SIZE);
   });
@@ -84,31 +84,31 @@ describe('integration test: API UNIQUE consts', () => {
   itSub('MAX_PROPERTY_KEY_LENGTH', () => {
     checkConst(api.consts.unique.maxPropertyKeyLength, MAX_PROPERTY_KEY_LENGTH);
   });
-  
+
   itSub('MAX_PROPERTY_VALUE_LENGTH', () => {
     checkConst(api.consts.unique.maxPropertyValueLength, MAX_PROPERTY_VALUE_LENGTH);
   });
-  
+
   itSub('MAX_PROPERTIES_PER_ITEM', () => {
     checkConst(api.consts.unique.maxPropertiesPerItem, MAX_PROPERTIES_PER_ITEM);
   });
-  
+
   itSub('NESTING_BUDGET', () => {
     checkConst(api.consts.unique.nestingBudget, NESTING_BUDGET);
   });
-  
+
   itSub('MAX_TOKEN_PROPERTIES_SIZE', () => {
     checkConst(api.consts.unique.maxTokenPropertiesSize, MAX_TOKEN_PROPERTIES_SIZE);
   });
-  
+
   itSub('COLLECTION_ADMINS_LIMIT', () => {
     checkConst(api.consts.unique.collectionAdminsLimit, COLLECTION_ADMINS_LIMIT);
   });
-  
+
   itSub('HELPERS_CONTRACT_ADDRESS', () => {
     expect(api.consts.evmContractHelpers.contractAddress.toString().toLowerCase()).to.be.equal(HELPERS_CONTRACT_ADDRESS.toLowerCase());
   });
-  
+
   itSub('EVM_COLLECTION_HELPERS_ADDRESS', () => {
     expect(api.consts.common.contractAddress.toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS.toLowerCase());
   });

@@ -34,11 +34,11 @@ describe('Integration Test: Set Permissions', () => {
 
     await collection.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {collectionAdmin: true, tokenOwner: true, restricted: [1, 2]}});
     await collection.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {collectionAdmin: true, tokenOwner: true, restricted: [1, 2]}});
-    
+
     const permissions = (await collection.getData())?.raw.permissions;
     expect(permissions).to.be.deep.equal({
-      access: 'AllowList', 
-      mintMode: true, 
+      access: 'AllowList',
+      mintMode: true,
       nesting: {collectionAdmin: true, tokenOwner: true, restricted: [1, 2]},
     });
   });
@@ -49,16 +49,16 @@ describe('Integration Test: Set Permissions', () => {
 
     await collection.setPermissions(alice, {access: 'AllowList', nesting: {collectionAdmin: false, tokenOwner: true, restricted: [1, 2]}});
     expect((await collection.getData())?.raw.permissions).to.be.deep.equal({
-      access: 'AllowList', 
-      mintMode: false, 
+      access: 'AllowList',
+      mintMode: false,
       nesting: {collectionAdmin: false, tokenOwner: true, restricted: [1, 2]},
     });
 
     await collection.setPermissions(alice, {access: 'Normal', mintMode: false, nesting: {}});
     await collection.setPermissions(alice, {access: 'Normal', mintMode: false, nesting: {}});
     expect((await collection.getData())?.raw.permissions).to.be.deep.equal({
-      access: 'Normal', 
-      mintMode: false, 
+      access: 'Normal',
+      mintMode: false,
       nesting: {collectionAdmin: false, tokenOwner: false, restricted: null},
     });
   });
@@ -67,7 +67,7 @@ describe('Integration Test: Set Permissions', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'SetPermissions-2', tokenPrefix: 'SP'});
     await collection.addAdmin(alice, {Substrate: bob.address});
     await collection.setPermissions(bob, {access: 'AllowList', mintMode: true});
-    
+
     expect((await collection.getData())?.raw.permissions.access).to.equal('AllowList');
     expect((await collection.getData())?.raw.permissions.mintMode).to.equal(true);
   });

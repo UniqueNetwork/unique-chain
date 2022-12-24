@@ -33,7 +33,7 @@
 // limitations under the License.
 
 use crate::{
-	chain_spec::{self, RuntimeId, RuntimeIdentification, ServiceId, ServiceIdentification},
+	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
 	service::{new_partial, start_node, start_dev_node},
 };
@@ -66,13 +66,13 @@ use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
 use std::{net::SocketAddr, time::Duration};
 
-use up_common::types::opaque::Block;
+use up_common::types::opaque::{Block, RuntimeId};
 
 macro_rules! no_runtime_err {
-	($chain_name:expr) => {
+	($runtime_id:expr) => {
 		format!(
-			"No runtime valid runtime was found for chain {}",
-			$chain_name
+			"No runtime valid runtime was found for chain {:#?}",
+			$runtime_id
 		)
 	};
 }
@@ -94,7 +94,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 				RuntimeId::Quartz => Box::new(chain_spec::QuartzChainSpec::from_json_file(path)?),
 
 				RuntimeId::Opal => chain_spec,
-				RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain)),
+				runtime_id => return Err(no_runtime_err!(runtime_id)),
 			}
 		}
 	})
@@ -147,7 +147,7 @@ impl SubstrateCli for Cli {
 			RuntimeId::Quartz => &quartz_runtime::VERSION,
 
 			RuntimeId::Opal => &opal_runtime::VERSION,
-			RuntimeId::Unknown(chain) => panic!("{}", no_runtime_err!(chain)),
+			runtime_id => panic!("{}", no_runtime_err!(runtime_id)),
 		}
 	}
 }
@@ -235,7 +235,7 @@ macro_rules! construct_async_run {
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
-			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into())
+			runtime_id => Err(no_runtime_err!(runtime_id).into())
 		}
 	}}
 }
@@ -274,7 +274,7 @@ macro_rules! construct_sync_run {
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
-			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into())
+			runtime_id => Err(no_runtime_err!(runtime_id).into())
 		}
 	}}
 }
@@ -302,7 +302,7 @@ macro_rules! start_node_using_chain_runtime {
 				OpalRuntimeExecutor,
 			>($config $(, $($args),+)?) $($code)*,
 
-			RuntimeId::Unknown(chain) => Err(no_runtime_err!(chain).into()),
+			runtime_id => Err(no_runtime_err!(runtime_id).into()),
 		}
 	};
 }
@@ -412,6 +412,7 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "try-runtime")]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use std::{future::Future, pin::Pin};
+			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
 
 			let runner = cli.create_runner(cmd)?;
 
@@ -429,13 +430,22 @@ pub fn run() -> Result<()> {
 				Ok((
 					match config.chain_spec.runtime_id() {
 						#[cfg(feature = "unique-runtime")]
-						RuntimeId::Unique => Box::pin(cmd.run::<Block, UniqueRuntimeExecutor>(config)),
+						RuntimeId::Unique => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>>()),
 
 						#[cfg(feature = "quartz-runtime")]
-						RuntimeId::Quartz => Box::pin(cmd.run::<Block, QuartzRuntimeExecutor>(config)),
+						RuntimeId::Quartz => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>>()),
 
-						RuntimeId::Opal => Box::pin(cmd.run::<Block, OpalRuntimeExecutor>(config)),
-						RuntimeId::Unknown(chain) => return Err(no_runtime_err!(chain).into()),
+						RuntimeId::Opal => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
+							sp_io::SubstrateHostFunctions,
+							<OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
+						>>()),
+						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
 					},
 					task_manager,
 				))

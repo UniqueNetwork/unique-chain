@@ -40,13 +40,16 @@ use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
 use std::{collections::BTreeMap, sync::Arc};
 
-use up_common::types::opaque::{Hash, AccountId, RuntimeInstance, Index, Block, BlockNumber, Balance};
+use up_common::types::opaque::*;
 
 // RMRK
 use up_data_structs::{
 	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
 	RmrkPartType, RmrkTheme,
 };
+
+#[cfg(feature = "pov-estimate")]
+type FullBackend = sc_service::TFullBackend<Block>;
 
 /// Extra dependencies for GRANDPA
 pub struct GrandpaDeps<B> {
@@ -82,8 +85,18 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub deny_unsafe: DenyUnsafe,
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
-	/// Backend.
-	pub backend: Arc<fc_db::Backend<Block>>,
+
+	#[cfg(feature = "pov-estimate")]
+	pub runtime_id: RuntimeId,
+	/// Executor params for PoV estimating
+	#[cfg(feature = "pov-estimate")]
+	pub exec_params: uc_rpc::pov_estimate::ExecutorParams,
+	/// Substrate Backend.
+	#[cfg(feature = "pov-estimate")]
+	pub backend: Arc<FullBackend>,
+
+	/// Ethereum Backend.
+	pub eth_backend: Arc<fc_db::Backend<Block>>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
@@ -162,6 +175,7 @@ where
 		RmrkPartType,
 		RmrkTheme,
 	>,
+	C::Api: up_pov_estimate_rpc::PovEstimateApi<Block>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	P: TransactionPool<Block = Block> + 'static,
@@ -182,6 +196,9 @@ where
 	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{RmrkApiServer, Rmrk};
 
+	#[cfg(feature = "pov-estimate")]
+	use uc_rpc::pov_estimate::{PovEstimateApiServer, PovEstimate};
+
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
@@ -200,7 +217,17 @@ where
 		network,
 		deny_unsafe,
 		filter_pool,
+
+		#[cfg(feature = "pov-estimate")]
+		runtime_id,
+
+		#[cfg(feature = "pov-estimate")]
+		exec_params,
+
+		#[cfg(feature = "pov-estimate")]
 		backend,
+
+		eth_backend,
 		max_past_logs,
 	} = deps;
 
@@ -226,7 +253,7 @@ where
 			network.clone(),
 			signers,
 			overrides.clone(),
-			backend.clone(),
+			eth_backend.clone(),
 			is_authority,
 			block_data_cache.clone(),
 			fee_history_cache,
@@ -244,11 +271,23 @@ where
 	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(Rmrk::new(client.clone()).into_rpc())?;
 
+	#[cfg(feature = "pov-estimate")]
+	io.merge(
+		PovEstimate::new(
+			client.clone(),
+			backend,
+			deny_unsafe,
+			exec_params,
+			runtime_id,
+		)
+		.into_rpc(),
+	)?;
+
 	if let Some(filter_pool) = filter_pool {
 		io.merge(
 			EthFilter::new(
 				client.clone(),
-				backend,
+				eth_backend,
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,

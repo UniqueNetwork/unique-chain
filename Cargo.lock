@@ -903,9 +903,9 @@ dependencies = [
 
 [[package]]
 name = "clap"
-version = "4.0.30"
+version = "4.0.32"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "656ad1e55e23d287773f7d8192c300dc715c3eeded93b3da651d11c42cfd74d2"
+checksum = "a7db700bc935f9e43e88d00b0850dae18a63773cfbec6d8e070fccf7fef89a39"
 dependencies = [
  "bitflags",
  "clap_derive",
@@ -1300,7 +1300,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-cli"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "clap",
  "parity-scale-codec 3.2.1",
@@ -1315,7 +1315,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-collator"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-client-consensus-common",
  "cumulus-client-network",
@@ -1338,7 +1338,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-aura"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-client-consensus-common",
@@ -1367,7 +1367,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-consensus-common"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-client-pov-recovery",
@@ -1390,7 +1390,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-network"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-relay-chain-interface",
@@ -1413,7 +1413,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-pov-recovery"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "cumulus-relay-chain-interface",
@@ -1436,7 +1436,7 @@ dependencies = [
 [[package]]
 name = "cumulus-client-service"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-client-cli",
  "cumulus-client-collator",
@@ -1464,7 +1464,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-aura-ext"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -1480,7 +1480,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-dmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1497,7 +1497,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "bytes",
  "cumulus-pallet-parachain-system-proc-macro",
@@ -1525,7 +1525,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-parachain-system-proc-macro"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "proc-macro-crate",
  "proc-macro2",
@@ -1536,7 +1536,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcm"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1552,7 +1552,7 @@ dependencies = [
 [[package]]
 name = "cumulus-pallet-xcmp-queue"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1570,7 +1570,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-core"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "polkadot-core-primitives",
@@ -1585,7 +1585,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-parachain-inherent"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1608,7 +1608,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-timestamp"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "futures 0.3.25",
@@ -1621,7 +1621,7 @@ dependencies = [
 [[package]]
 name = "cumulus-primitives-utility"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -1637,7 +1637,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-inprocess-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1662,7 +1662,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1682,7 +1682,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-minimal-node"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "array-bytes 6.0.0",
  "async-trait",
@@ -1722,7 +1722,7 @@ dependencies = [
 [[package]]
 name = "cumulus-relay-chain-rpc-interface"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "async-trait",
  "cumulus-primitives-core",
@@ -1751,7 +1751,7 @@ dependencies = [
 [[package]]
 name = "cumulus-test-relay-sproof-builder"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "parity-scale-codec 3.2.1",
@@ -2467,7 +2467,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "async-trait",
  "fc-db",
@@ -2486,7 +2486,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "fp-storage",
  "kvdb-rocksdb",
@@ -2505,7 +2505,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "fc-db",
  "fp-consensus",
@@ -2522,7 +2522,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "ethereum-types 0.14.1",
@@ -2565,7 +2565,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "ethereum-types 0.14.1",
@@ -2730,7 +2730,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "parity-scale-codec 3.2.1",
@@ -2742,7 +2742,7 @@ dependencies = [
 [[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "ethereum-types 0.14.1",
@@ -2757,7 +2757,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "evm",
  "frame-support",
@@ -2771,7 +2771,7 @@ dependencies = [
 [[package]]
 name = "fp-evm-mapping"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "frame-support",
  "sp-core",
@@ -2780,7 +2780,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "ethereum-types 0.14.1",
@@ -2797,7 +2797,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "frame-support",
@@ -2810,7 +2810,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "parity-scale-codec 3.2.1",
  "serde",
@@ -5362,6 +5362,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
  "xcm",
@@ -5682,7 +5683,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -5806,6 +5807,7 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "up-data-structs",
+ "up-pov-estimate-rpc",
 ]
 
 [[package]]
@@ -5918,7 +5920,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "ethereum 0.14.0",
  "ethereum-types 0.14.1",
@@ -5946,7 +5948,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "environmental",
  "evm",
@@ -6032,7 +6034,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#db60b911813df1d82e60e0de7f3dfa290e60d2f0"
+source = "git+https://github.com/uniquenetwork/frontier?branch=unique-polkadot-v0.9.36#cf1894629c7df1c4dafe58aa773627a3d940da14"
 dependencies = [
  "fp-evm",
  "ripemd",
@@ -6982,7 +6984,7 @@ dependencies = [
 [[package]]
 name = "parachain-info"
 version = "0.1.0"
-source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#a4e825c9500acab6cc3deccffea7b01350f12ed1"
+source = "git+https://github.com/paritytech/cumulus?branch=polkadot-v0.9.36#afe528af891f464b318293f183f6d3eefbc979b0"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -8917,6 +8919,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
  "xcm",
@@ -12824,18 +12827,34 @@ version = "0.1.4"
 dependencies = [
  "anyhow",
  "app-promotion-rpc",
+ "frame-benchmarking",
  "jsonrpsee",
+ "opal-runtime",
  "pallet-common",
  "pallet-evm",
  "parity-scale-codec 3.2.1",
+ "quartz-runtime",
  "rmrk-rpc",
+ "sc-client-api",
+ "sc-executor",
+ "sc-rpc-api",
+ "sc-service",
  "sp-api",
  "sp-blockchain",
  "sp-core",
+ "sp-externalities",
+ "sp-keystore",
  "sp-rpc",
  "sp-runtime",
+ "sp-state-machine",
+ "sp-trie",
+ "trie-db",
+ "unique-runtime",
+ "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
+ "zstd",
 ]
 
 [[package]]
@@ -12965,6 +12984,7 @@ dependencies = [
  "sp-core",
  "sp-finality-grandpa",
  "sp-inherents",
+ "sp-io",
  "sp-keystore",
  "sp-offchain",
  "sp-runtime",
@@ -12977,10 +12997,12 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tokio",
  "try-runtime-cli",
+ "uc-rpc",
  "unique-rpc",
  "unique-runtime",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
 ]
 
@@ -13031,6 +13053,7 @@ dependencies = [
  "uc-rpc",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
 ]
 
@@ -13124,6 +13147,7 @@ dependencies = [
  "substrate-wasm-builder",
  "up-common",
  "up-data-structs",
+ "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
  "xcm",
@@ -13190,6 +13214,19 @@ dependencies = [
  "sp-runtime",
  "sp-std",
  "struct-versioning",
+]
+
+[[package]]
+name = "up-pov-estimate-rpc"
+version = "0.1.0"
+dependencies = [
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "serde",
+ "sp-api",
+ "sp-core",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]

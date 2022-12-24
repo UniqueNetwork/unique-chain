@@ -20,7 +20,7 @@ import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip} from '..
 describe('Integration Test: Collection Properties with sudo', () => {
   let superuser: IKeyringPair;
   let alice: IKeyringPair;
-  
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       superuser = await privateKey('//Alice');
@@ -32,7 +32,7 @@ describe('Integration Test: Collection Properties with sudo', () => {
   [
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'ft' as const, requiredPallets: []},
-    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await

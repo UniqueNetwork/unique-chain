@@ -18,6 +18,9 @@
         "mocha"
     ],
     "rules": {
+        "@typescript-eslint/no-floating-promises": [
+            "error"
+        ],
         "indent": [
             "error",
             2,

@@ -62,7 +62,7 @@ describe('Evm Coder tests', () => {
       donor = await privateKey({filename: __filename});
     });
   });
-  
+
   itEth('Call non-existing function', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.eth.createNFTCollection(owner, 'EVMCODER', '', 'TEST');
