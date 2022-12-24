@@ -445,7 +445,7 @@ describe('App promotion', () => {
         },
       });
     });
-  
+
     itEth('should actually sponsor transactions', async ({helper}) => {
       // Contract caller
       const caller = await helper.eth.createAccountWithBalance(donor, 1000n);
@@ -465,7 +465,9 @@ describe('App promotion', () => {
       await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true);
   
       // Caller calls Flipper
-      await flipper.methods.flip().send({from: caller});
+      await flipper.methods.flip().send({
+        from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice(),
+      });
       expect(await flipper.methods.getValue().call()).to.be.true;
   
       // The contracts and caller balances have not changed

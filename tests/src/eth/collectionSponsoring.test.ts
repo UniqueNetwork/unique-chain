@@ -44,7 +44,7 @@ describe('evm collection sponsoring', () => {
 
     await collection.addToAllowList(alice, {Ethereum: minter});
 
-    const result = await contract.methods.mint(minter).send();
+    const result = await contract.methods.mint(minter).send({from: minter, gasPrice: await helper.getWeb3().eth.getGasPrice()});
 
     const events = helper.eth.normalizeEvents(result.events);
     expect(events).to.be.deep.equal([
@@ -141,7 +141,7 @@ describe('evm collection sponsoring', () => {
     const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
 
     {
-      const result = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user});
+      const result = await collectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: user, gasPrice: await helper.getWeb3().eth.getGasPrice()});
       const events = helper.eth.normalizeEvents(result.events);
 
       expect(events).to.be.deep.equal([
@@ -247,7 +247,7 @@ describe('evm collection sponsoring', () => {
 
     const userCollectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', user);
 
-    const result = await userCollectionEvm.methods.mintWithTokenURI(user, 'Test URI').send();
+    const result = await userCollectionEvm.methods.mintWithTokenURI(user, 'Test URI').send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     const tokenId = result.events.Transfer.returnValues.tokenId;
 
     const events = helper.eth.normalizeEvents(result.events);

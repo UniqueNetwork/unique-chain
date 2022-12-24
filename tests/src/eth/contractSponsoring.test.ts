@@ -309,7 +309,7 @@ describe('Sponsoring EVM contracts', () => {
     const sponsorBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(sponsor));
     const callerBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(await flipper.methods.getValue().call()).to.be.true;
 
     // Balance should be taken from sponsor instead of caller
@@ -335,7 +335,7 @@ describe('Sponsoring EVM contracts', () => {
     const contractBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(flipper.options.address));
     const callerBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(await flipper.methods.getValue().call()).to.be.true;
 
     // Balance should be taken from sponsor instead of caller
@@ -364,7 +364,7 @@ describe('Sponsoring EVM contracts', () => {
     const sponsorBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(sponsor));
     expect(sponsorBalanceBefore).to.be.not.equal('0');
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(await flipper.methods.getValue().call()).to.be.true;
 
     // Balance should be taken from flipper instead of caller
@@ -386,7 +386,9 @@ describe('Sponsoring EVM contracts', () => {
     const originalFlipperBalance = await helper.balance.getEthereum(flipper.options.address);
     expect(originalFlipperBalance).to.be.not.equal('0');
 
-    await expect(flipper.methods.flip().send({from: caller})).to.be.rejectedWith(/InvalidTransaction::Payment/);
+    await expect(flipper.methods.flip()
+      .send({from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice()}))
+      .to.be.rejectedWith(/InvalidTransaction::Payment|insufficient funds/);
     expect(await flipper.methods.getValue().call()).to.be.false;
 
     // Balance should be taken from flipper instead of caller
@@ -414,7 +416,9 @@ describe('Sponsoring EVM contracts', () => {
     const sponsorBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(sponsor));
     const callerBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({
+      from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice(),
+    });
     expect(await flipper.methods.getValue().call()).to.be.true;
 
     const sponsorBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(sponsor));
@@ -443,14 +447,18 @@ describe('Sponsoring EVM contracts', () => {
     const originalFlipperBalance = await helper.balance.getEthereum(sponsor);
     expect(originalFlipperBalance).to.be.not.equal('0');
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({
+      from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice(),
+    });
     expect(await flipper.methods.getValue().call()).to.be.true;
     expect(await helper.balance.getEthereum(caller)).to.be.equal(originalCallerBalance);
 
     const newFlipperBalance = await helper.balance.getEthereum(sponsor);
     expect(newFlipperBalance).to.be.not.equal(originalFlipperBalance);
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({
+      from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice(),
+    });
     // todo:playgrounds fails rarely (expected 99893341659775672580n to equal 99912598679356033129n) (again, 99893341659775672580n)
     expect(await helper.balance.getEthereum(sponsor)).to.be.equal(newFlipperBalance);
     expect(await helper.balance.getEthereum(caller)).to.be.not.equal(originalCallerBalance);
@@ -556,10 +564,14 @@ describe('Sponsoring Fee Limit', () => {
     await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 2_000_000n * gasPrice).send();
 
     const originalUserBalance = await helper.balance.getEthereum(user);
-    await testContract.methods.test(100).send({from: user, gas: 2_000_000});
+    await testContract.methods.test(100).send({
+      from: user, gas: 2_000_000, gasPrice: await helper.getWeb3().eth.getGasPrice(),
+    });
     expect(await helper.balance.getEthereum(user)).to.be.equal(originalUserBalance);
 
-    await testContract.methods.test(100).send({from: user, gas: 2_100_000});
+    await testContract.methods.test(100).send({
+      from: user, gas: 2_100_000, gasPrice: await helper.getWeb3().eth.getGasPrice(),
+    });
     expect(await helper.balance.getEthereum(user)).to.not.be.equal(originalUserBalance);
   });
 

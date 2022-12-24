@@ -59,7 +59,7 @@ describe('Contract calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, tokenId).send(caller));
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, async () => contract.methods.transfer(receiver, tokenId).send({from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice()}));
 
     const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());
     const expectedFee = 0.15;

@@ -53,7 +53,7 @@ describe('EVM sponsoring', () => {
     const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
     expect(originalSponsorBalance).to.be.not.equal(0n);
 
-    await flipper.methods.flip().send({from: caller});
+    await flipper.methods.flip().send({from: caller, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(await flipper.methods.getValue().call()).to.be.true;
 
     // Balance should be taken from flipper instead of caller
@@ -87,7 +87,7 @@ describe('EVM sponsoring', () => {
     const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
     expect(originalSponsorBalance).to.be.not.equal(0n);
 
-    await collector.methods.giveMoney().send({from: caller, value: '10000'});
+    await collector.methods.giveMoney().send({from: caller, value: '10000', gasPrice: await helper.getWeb3().eth.getGasPrice()});
 
     // Balance will be taken from both caller (value) and from collector (fee)
     expect(await helper.balance.getEthereum(caller)).to.be.equals((originalCallerBalance - 10000n));
