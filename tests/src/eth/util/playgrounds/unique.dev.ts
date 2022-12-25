@@ -201,7 +201,11 @@ class EthGroup extends EthGroupBase {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix).send({value: Number(collectionCreationPrice)});
+    const result = await collectionHelper.methods.createRFTCollection(name, description, tokenPrefix)
+      .send({
+        value: Number(collectionCreationPrice),
+        gasPrice: await this.helper.getWeb3().eth.getGasPrice(),
+      });
 
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
