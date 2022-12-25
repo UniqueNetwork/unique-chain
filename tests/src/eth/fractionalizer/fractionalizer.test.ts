@@ -53,8 +53,17 @@ const initContract = async (helper: EthUniqueHelper, owner: string): Promise<{co
   const fractionalizer = await deployContract(helper, owner);
   const amount = 10n * helper.balance.getOneTokenNominal();
   const web3 = helper.getWeb3();
-  await web3.eth.sendTransaction({from: owner, to: fractionalizer.options.address, value: `${amount}`, gas: helper.eth.DEFAULT_GAS});
-  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({value: Number(2n * helper.balance.getOneTokenNominal())});
+  await web3.eth.sendTransaction({
+    from: owner,
+    to: fractionalizer.options.address,
+    value: `${amount}`,
+    gas: helper.eth.DEFAULT_GAS,
+    gasPrice: await helper.getWeb3().eth.getGasPrice(),
+  });
+  const result = await fractionalizer.methods.createAndSetRFTCollection('A', 'B', 'C').send({
+    value: Number(2n * helper.balance.getOneTokenNominal()),
+    gasPrice: await helper.getWeb3().eth.getGasPrice(),
+  });
   const rftCollectionAddress = result.events.RFTCollectionSet.returnValues._collection;
   return {contract: fractionalizer, rftCollectionAddress};
 };
@@ -64,12 +73,15 @@ const mintRFTToken = async (helper: EthUniqueHelper, owner: string, fractionaliz
 }> => {
   const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
   const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
-  const mintResult = await nftContract.methods.mint(owner).send({from: owner});
+  const mintResult = await nftContract.methods.mint(owner)
+    .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
   const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
-  await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
-  await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
-  const result = await fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, amount).send({from: owner});
+  await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
+  await nftContract.methods.approve(fractionalizer.options.address, nftTokenId)
+    .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
+  const result = await fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, amount)
+    .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
   const {_collection, _tokenId, _rftToken} = result.events.Fractionalized.returnValues;
   return {
     nftCollectionAddress: _collection,
@@ -123,7 +135,8 @@ describe('Fractionalizer contract usage', () => {
     const {contract: fractionalizer} = await initContract(helper, owner);
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
 
-    const result1 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+    const result1 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(result1.events).to.be.like({
       AllowListSet: {
         returnValues: {
@@ -132,7 +145,8 @@ describe('Fractionalizer contract usage', () => {
         },
       },
     });
-    const result2 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, false).send({from: owner});
+    const result2 = await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, false)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(result2.events).to.be.like({
       AllowListSet: {
         returnValues: {
@@ -148,14 +162,17 @@ describe('Fractionalizer contract usage', () => {
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
-    const mintResult = await nftContract.methods.mint(owner).send({from: owner});
+    const mintResult = await nftContract.methods.mint(owner).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
     const {contract: fractionalizer} = await initContract(helper, owner);
 
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
-    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
-    const result = await fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).send({from: owner});
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
+    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
+    const result = await fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(result.events).to.be.like({
       Fractionalized: {
         returnValues: {
@@ -181,8 +198,10 @@ describe('Fractionalizer contract usage', () => {
     const refungibleAddress = helper.ethAddress.fromCollectionId(collectionId);
     expect(rftCollectionAddress).to.be.equal(refungibleAddress);
     const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
-    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send({from: owner});
-    const result = await fractionalizer.methods.rft2nft(refungibleAddress, tokenId).send({from: owner});
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
+    const result = await fractionalizer.methods.rft2nft(refungibleAddress, tokenId)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     expect(result.events).to.be.like({
       Defractionalized: {
         returnValues: {
@@ -204,7 +223,8 @@ describe('Fractionalizer contract usage', () => {
     const refungibleAddress = helper.ethAddress.fromCollectionId(collectionId);
     expect(rftCollectionAddress).to.be.equal(refungibleAddress);
     const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
-    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100).send({from: owner});
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 100)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
 
     const rft2nft = await fractionalizer.methods.rft2nftMapping(rftTokenAddress).call();
     expect(rft2nft).to.be.like({
@@ -295,13 +315,13 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
-    const mintResult = await nftContract.methods.mint(owner).send({from: owner});
+    const mintResult = await nftContract.methods.mint(owner).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
-    await nftContract.methods.transfer(nftOwner, 1).send({from: owner});
+    await nftContract.methods.transfer(nftOwner, 1).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
 
 
     const {contract: fractionalizer} = await initContract(helper, owner);
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
 
     await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call({from: owner}))
       .to.be.rejectedWith(/Only token owner could fractionalize it$/g);
@@ -312,12 +332,12 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
-    const mintResult = await nftContract.methods.mint(owner).send({from: owner});
+    const mintResult = await nftContract.methods.mint(owner).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
     const {contract: fractionalizer} = await initContract(helper, owner);
 
-    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner});
+    await nftContract.methods.approve(fractionalizer.options.address, nftTokenId).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call())
       .to.be.rejectedWith(/Fractionalization of this collection is not allowed by admin$/g);
   });
@@ -327,12 +347,13 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
-    const mintResult = await nftContract.methods.mint(owner).send({from: owner});
+    const mintResult = await nftContract.methods.mint(owner).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
     const {contract: fractionalizer} = await initContract(helper, owner);
 
-    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true).send({from: owner});
+    await fractionalizer.methods.setNftCollectionIsAllowed(nftCollection.collectionAddress, true)
+      .send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     await expect(fractionalizer.methods.nft2rft(nftCollection.collectionAddress, nftTokenId, 100).call())
       .to.be.rejectedWith(/ApprovedValueTooLow$/g);
   });
@@ -356,7 +377,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const {contract: fractionalizer} = await initContract(helper, owner);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
     const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
-    const mintResult = await refungibleContract.methods.mint(owner).send({from: owner});
+    const mintResult = await refungibleContract.methods.mint(owner).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     const rftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
     await expect(fractionalizer.methods.rft2nft(rftCollection.collectionAddress, rftTokenId).call())
@@ -389,8 +410,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const {tokenId} = helper.ethAddress.extractTokenId(rftTokenAddress);
     const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
-    await refungibleTokenContract.methods.transfer(receiver, 50).send({from: owner});
-    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 50).send({from: receiver});
+    await refungibleTokenContract.methods.transfer(receiver, 50).send({from: owner, gasPrice: await helper.getWeb3().eth.getGasPrice()});
+    await refungibleTokenContract.methods.approve(fractionalizer.options.address, 50).send({from: receiver, gasPrice: await helper.getWeb3().eth.getGasPrice()});
     await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, tokenId).call({from: receiver}))
       .to.be.rejectedWith(/Not all pieces are owned by the caller$/g);
   });
