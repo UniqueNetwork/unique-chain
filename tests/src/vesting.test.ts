@@ -32,9 +32,9 @@ describe('Vesting', () => {
     // arrange
     const [sender, recepient] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const currentRelayBlock = await helper.chain.getRelayBlockNumber();
-    const SCHEDULE_1_PERIOD = 4n; // 6 blocks one period
+    const SCHEDULE_1_PERIOD = 6n; // 6 blocks one period
     const SCHEDULE_1_START = currentRelayBlock + 6n; // Block when 1 schedule starts
-    const SCHEDULE_2_PERIOD = 8n; // 12 blocks one period
+    const SCHEDULE_2_PERIOD = 12n; // 12 blocks one period
     const SCHEDULE_2_START = currentRelayBlock + 12n; // Block when 2 schedule starts
     const schedule1 = {start: SCHEDULE_1_START, period: SCHEDULE_1_PERIOD, periodCount: 2n, perPeriod: 50n * nominal};
     const schedule2 = {start: SCHEDULE_2_START, period: SCHEDULE_2_PERIOD, periodCount: 2n, perPeriod: 100n * nominal};
