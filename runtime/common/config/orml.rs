@@ -95,6 +95,18 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
+pub struct CurrencyHooks;
+impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
+	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
+	type OnSlash = ();
+	type PreTransfer = ();
+	type PostTransfer = ();
+	type PreDeposit = ();
+	type PostDeposit = ();
+	type OnNewTokenAccount = ();
+	type OnKilledTokenAccount = ();
+}
+
 impl orml_vesting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
@@ -112,18 +124,13 @@ impl orml_tokens::Config for Runtime {
 	type CurrencyId = CurrencyId;
 	type WeightInfo = ();
 	type ExistentialDeposits = ExistentialDeposits;
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
-	type OnSlash = ();
-	type OnTransfer = ();
-	type OnDeposit = ();
+	type CurrencyHooks = CurrencyHooks;
 	type MaxLocks = MaxLocks;
 	type MaxReserves = MaxReserves;
 	// TODO: Add all module accounts
 	type DustRemovalWhitelist = DustRemovalWhitelist;
 	/// The id type for named reserves.
 	type ReserveIdentifier = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 }
 
 impl orml_xtokens::Config for Runtime {

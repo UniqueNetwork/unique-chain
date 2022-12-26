@@ -94,7 +94,6 @@ impl pallet_inflation::Config for Runtime {
 }
 
 impl pallet_unique::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
@@ -105,7 +104,7 @@ parameter_types! {
 	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
 }
 impl pallet_configuration::Config for Runtime {
-	type DefaultWeightToFeeCoefficient = ConstU32<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
+	type DefaultWeightToFeeCoefficient = ConstU64<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
 	type MaxXcmAllowedLocations = ConstU32<16>;
 	type AppPromotionDailyRate = AppPromotionDailyRate;

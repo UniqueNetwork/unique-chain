@@ -3,7 +3,7 @@ pragma solidity >=0.8.0;
 import {CollectionHelpers} from "../api/CollectionHelpers.sol";
 import {ContractHelpers} from "../api/ContractHelpers.sol";
 import {UniqueRefungibleToken} from "../api/UniqueRefungibleToken.sol";
-import {UniqueRefungible} from "../api/UniqueRefungible.sol";
+import {UniqueRefungible, CrossAddress} from "../api/UniqueRefungible.sol";
 import {UniqueNFT} from "../api/UniqueNFT.sol";
 
 /// @dev Fractionalization contract. It stores mappings between NFT and RFT tokens,
@@ -63,7 +63,7 @@ contract Fractionalizer {
 			"Wrong collection type. Collection is not refungible."
 		);
 		require(
-			refungibleContract.isOwnerOrAdmin(address(this)),
+			refungibleContract.isOwnerOrAdminCross(CrossAddress({eth: address(this), sub: uint256(0)})),
 			"Fractionalizer contract should be an admin of the collection"
 		);
 		rftCollection = _collection;
@@ -84,7 +84,11 @@ contract Fractionalizer {
 	) external payable onlyOwner {
 		require(rftCollection == address(0), "RFT collection is already set");
 		address collectionHelpers = 0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F;
-		rftCollection = CollectionHelpers(collectionHelpers).createRFTCollection{value: msg.value}(_name, _description, _tokenPrefix);
+		rftCollection = CollectionHelpers(collectionHelpers).createRFTCollection{value: msg.value}(
+			_name,
+			_description,
+			_tokenPrefix
+		);
 		emit RFTCollectionSet(rftCollection);
 	}
 
@@ -124,7 +128,7 @@ contract Fractionalizer {
 		address rftTokenAddress;
 		UniqueRefungibleToken rftTokenContract;
 		if (nft2rftMapping[_collection][_token] == 0) {
-            rftTokenId = rftCollectionContract.mint(address(this));
+			rftTokenId = rftCollectionContract.mint(address(this));
 			rftTokenAddress = rftCollectionContract.tokenContractAddress(rftTokenId);
 			nft2rftMapping[_collection][_token] = rftTokenId;
 			rft2nftMapping[rftTokenAddress] = Token(_collection, _token);

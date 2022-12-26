@@ -18,7 +18,10 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData};
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight};
+use pallet_common::{
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	weights::WeightInfo as _,
+};
 use pallet_structure::Error as StructureError;
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
@@ -53,14 +56,12 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::burn_item()
 	}
 
-	fn set_collection_properties(_amount: u32) -> Weight {
-		// Error
-		Weight::zero()
+	fn set_collection_properties(amount: u32) -> Weight {
+		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(_amount: u32) -> Weight {
-		// Error
-		Weight::zero()
+	fn delete_collection_properties(amount: u32) -> Weight {
+		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
 	}
 
 	fn set_token_properties(_amount: u32) -> Weight {
@@ -108,7 +109,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		Weight::zero()
 	}
 
-	fn repair_item() -> Weight {
+	fn set_allowance_for_all() -> Weight {
+		Weight::zero()
+	}
+
+	fn force_repair_item() -> Weight {
 		Weight::zero()
 	}
 }
@@ -290,18 +295,28 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn set_collection_properties(
 		&self,
-		_sender: T::CrossAccountId,
-		_property: Vec<Property>,
+		sender: T::CrossAccountId,
+		properties: Vec<Property>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::set_collection_properties(properties.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::set_collection_properties(self, &sender, properties),
+			weight,
+		)
 	}
 
 	fn delete_collection_properties(
 		&self,
-		_sender: &T::CrossAccountId,
-		_property_keys: Vec<PropertyKey>,
+		sender: &T::CrossAccountId,
+		property_keys: Vec<PropertyKey>,
 	) -> DispatchResultWithPostInfo {
-		fail!(<Error<T>>::SettingPropertiesNotAllowed)
+		let weight = <CommonWeights<T>>::delete_collection_properties(property_keys.len() as u32);
+
+		with_weight(
+			<Pallet<T>>::delete_collection_properties(self, sender, property_keys),
+			weight,
+		)
 	}
 
 	fn set_token_properties(
@@ -427,6 +442,19 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 			return None;
 		}
 		<TotalSupply<T>>::try_get(self.id).ok()
+	}
+
+	fn set_allowance_for_all(
+		&self,
+		_owner: T::CrossAccountId,
+		_operator: T::CrossAccountId,
+		_approve: bool,
+	) -> DispatchResultWithPostInfo {
+		fail!(<Error<T>>::SettingAllowanceForAllNotAllowed)
+	}
+
+	fn allowance_for_all(&self, _owner: T::CrossAccountId, _operator: T::CrossAccountId) -> bool {
+		false
 	}
 
 	/// Repairs a possibly broken item.

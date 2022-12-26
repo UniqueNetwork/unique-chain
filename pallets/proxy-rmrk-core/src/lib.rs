@@ -178,7 +178,7 @@ pub use property::*;
 
 use RmrkProperty::*;
 
-/// Maximum number of levels of depth in the token nesting tree.
+/// A maximum number of levels of depth in the token nesting tree.
 pub const NESTING_BUDGET: u32 = 5;
 
 type PendingTarget = (CollectionId, TokenId);
@@ -190,11 +190,13 @@ type BasesMap = BTreeMap<RmrkBaseId, u32>;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
-	use pallet_evm::account;
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_common::Config + pallet_nonfungible::Config + account::Config
+		frame_system::Config
+		+ pallet_common::Config
+		+ pallet_nonfungible::Config
+		+ pallet_evm::Config
 	{
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
@@ -355,6 +357,7 @@ pub mod pallet {
 		/// - `max`: Optional maximum number of tokens.
 		/// - `symbol`: UTF-8 string with token prefix, by which to represent the token in wallets and UIs.
 		/// Analogous to Unique's [`token_prefix`](up_data_structs::Collection). Cannot be changed.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
 		pub fn create_collection(
 			origin: OriginFor<T>,
@@ -428,6 +431,7 @@ pub mod pallet {
 		/// # Arguments:
 		/// - `origin`: sender of the transaction
 		/// - `collection_id`: RMRK ID of the collection to destroy.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<SelfWeightOf<T>>::destroy_collection())]
 		pub fn destroy_collection(
 			origin: OriginFor<T>,
@@ -462,6 +466,7 @@ pub mod pallet {
 		/// - `origin`: sender of the transaction
 		/// - `collection_id`: RMRK collection ID to change the issuer of.
 		/// - `new_issuer`: Collection's new issuer.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<SelfWeightOf<T>>::change_collection_issuer())]
 		pub fn change_collection_issuer(
 			origin: OriginFor<T>,
@@ -499,6 +504,7 @@ pub mod pallet {
 		/// # Arguments:
 		/// - `origin`: sender of the transaction
 		/// - `collection_id`: RMRK ID of the collection to lock.
+		#[pallet::call_index(3)]
 		#[pallet::weight(<SelfWeightOf<T>>::lock_collection())]
 		pub fn lock_collection(
 			origin: OriginFor<T>,
@@ -543,6 +549,7 @@ pub mod pallet {
 		/// - `metadata`: Arbitrary data about an NFT, e.g. IPFS hash. Cannot be changed.
 		/// - `transferable`: Can this NFT be transferred? Cannot be changed.
 		/// - `resources`: Resource data to be added to the NFT immediately after minting.
+		#[pallet::call_index(4)]
 		#[pallet::weight(<SelfWeightOf<T>>::mint_nft(resources.as_ref().map(|r| r.len() as u32).unwrap_or(0)))]
 		pub fn mint_nft(
 			origin: OriginFor<T>,
@@ -626,6 +633,7 @@ pub mod pallet {
 		/// - `max_burns`: Maximum number of tokens to burn, assuming nesting. The transaction
 		/// is reverted if there are more tokens to burn in the nesting tree than this number.
 		/// This is primarily a mechanism of transaction weight control.
+		#[pallet::call_index(5)]
 		#[pallet::weight(<SelfWeightOf<T>>::burn_nft(*max_burns))]
 		pub fn burn_nft(
 			origin: OriginFor<T>,
@@ -673,6 +681,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK ID of the collection of the NFT to be transferred.
 		/// - `rmrk_nft_id`: ID of the NFT to be transferred.
 		/// - `new_owner`: New owner of the nft which can be either an account or a NFT.
+		#[pallet::call_index(6)]
 		#[pallet::weight(<SelfWeightOf<T>>::send())]
 		pub fn send(
 			origin: OriginFor<T>,
@@ -798,6 +807,7 @@ pub mod pallet {
 		/// - `rmrk_nft_id`: ID of the NFT to be accepted.
 		/// - `new_owner`: Either the sender's account ID or a sender-owned NFT,
 		/// whichever the accepted NFT was sent to.
+		#[pallet::call_index(7)]
 		#[pallet::weight(<SelfWeightOf<T>>::accept_nft())]
 		pub fn accept_nft(
 			origin: OriginFor<T>,
@@ -888,6 +898,7 @@ pub mod pallet {
 		/// - `origin`: sender of the transaction
 		/// - `rmrk_collection_id`: RMRK ID of the NFT to be rejected.
 		/// - `rmrk_nft_id`: ID of the NFT to be rejected.
+		#[pallet::call_index(8)]
 		#[pallet::weight(<SelfWeightOf<T>>::reject_nft())]
 		pub fn reject_nft(
 			origin: OriginFor<T>,
@@ -955,6 +966,7 @@ pub mod pallet {
 		/// - `rmrk_nft_id`: ID of the NFT with a pending resource to be accepted.
 		/// - `resource_id`: ID of the newly created pending resource.
 		/// accept the addition of a new resource to an existing NFT
+		#[pallet::call_index(9)]
 		#[pallet::weight(<SelfWeightOf<T>>::accept_resource())]
 		pub fn accept_resource(
 			origin: OriginFor<T>,
@@ -1009,6 +1021,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
 		/// - `rmrk_nft_id`: ID of the NFT with a resource to be removed.
 		/// - `resource_id`: ID of the removal-pending resource.
+		#[pallet::call_index(10)]
 		#[pallet::weight(<SelfWeightOf<T>>::accept_resource_removal())]
 		pub fn accept_resource_removal(
 			origin: OriginFor<T>,
@@ -1090,6 +1103,7 @@ pub mod pallet {
 		/// - `maybe_nft_id`: Optional ID of the NFT. If left empty, then the property is set for the collection.
 		/// - `key`: Key of the custom property to be referenced by.
 		/// - `value`: Value of the custom property to be stored.
+		#[pallet::call_index(11)]
 		#[pallet::weight(<SelfWeightOf<T>>::set_property())]
 		pub fn set_property(
 			origin: OriginFor<T>,
@@ -1163,6 +1177,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
 		/// - `rmrk_nft_id`: ID of the NFT to rearrange resource priorities for.
 		/// - `priorities`: Ordered vector of resource IDs.
+		#[pallet::call_index(12)]
 		#[pallet::weight(<SelfWeightOf<T>>::set_priority())]
 		pub fn set_priority(
 			origin: OriginFor<T>,
@@ -1214,6 +1229,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
 		/// - `nft_id`: ID of the NFT to assign a resource to.
 		/// - `resource`: Data of the resource to be created.
+		#[pallet::call_index(13)]
 		#[pallet::weight(<SelfWeightOf<T>>::add_basic_resource())]
 		pub fn add_basic_resource(
 			origin: OriginFor<T>,
@@ -1256,6 +1272,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
 		/// - `nft_id`: ID of the NFT to assign a resource to.
 		/// - `resource`: Data of the resource to be created.
+		#[pallet::call_index(14)]
 		#[pallet::weight(<SelfWeightOf<T>>::add_composable_resource())]
 		pub fn add_composable_resource(
 			origin: OriginFor<T>,
@@ -1318,6 +1335,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK collection ID of the NFT.
 		/// - `nft_id`: ID of the NFT to assign a resource to.
 		/// - `resource`: Data of the resource to be created.
+		#[pallet::call_index(15)]
 		#[pallet::weight(<SelfWeightOf<T>>::add_slot_resource())]
 		pub fn add_slot_resource(
 			origin: OriginFor<T>,
@@ -1359,6 +1377,7 @@ pub mod pallet {
 		/// - `rmrk_collection_id`: RMRK ID of a collection to which the NFT making use of the resource belongs to.
 		/// - `nft_id`: ID of the NFT with a resource to be removed.
 		/// - `resource_id`: ID of the resource to be removed.
+		#[pallet::call_index(16)]
 		#[pallet::weight(<SelfWeightOf<T>>::remove_resource())]
 		pub fn remove_resource(
 			origin: OriginFor<T>,

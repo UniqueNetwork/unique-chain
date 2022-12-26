@@ -90,30 +90,24 @@
 use crate::erc_token::ERC20Events;
 use crate::erc::ERC721Events;
 
-use codec::{Encode, Decode, MaxEncodedLen};
 use core::ops::Deref;
-use derivative::Derivative;
 use evm_coder::ToLog;
-use frame_support::{
-	BoundedBTreeMap, BoundedVec, ensure, fail, storage::with_transaction, transactional,
-	pallet_prelude::ConstU32,
-};
+use frame_support::{ensure, fail, storage::with_transaction, transactional};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
 	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon,
+	Event as CommonEvent, Pallet as PalletCommon, erc::CollectionHelpersEvents,
 };
 use pallet_structure::Pallet as PalletStructure;
-use scale_info::TypeInfo;
-use sp_core::H160;
+use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionFlags, CollectionPropertiesVec,
-	CreateCollectionData, CustomDataLimit, mapping::TokenAddressMapping, MAX_ITEMS_PER_BATCH,
-	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	AccessMode, budget::Budget, CollectionId, CollectionFlags, CreateCollectionData,
+	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
+	PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue, TokenId,
+	TrySetProperty, PropertiesPermissionMap, CreateRefungibleExMultipleOwners,
 };
 
 pub use pallet::*;
@@ -124,26 +118,9 @@ pub mod erc;
 pub mod erc_token;
 pub mod weights;
 
-#[derive(Derivative, Clone)]
-pub struct CreateItemData<CrossAccountId> {
-	#[derivative(Debug(format_with = "bounded::map_debug"))]
-	pub users: BoundedBTreeMap<CrossAccountId, u128, ConstU32<MAX_ITEMS_PER_BATCH>>,
-	#[derivative(Debug(format_with = "bounded::vec_debug"))]
-	pub properties: CollectionPropertiesVec,
-}
+pub type CreateItemData<T> =
+	CreateRefungibleExMultipleOwners<<T as pallet_evm::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
-
-/// Token data, stored independently from other data used to describe it
-/// for the convenience of database access. Notably contains the token metadata.
-#[struct_versioning::versioned(version = 2, upper)]
-#[derive(Encode, Decode, Default, TypeInfo, MaxEncodedLen)]
-#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
-pub struct ItemData {
-	pub const_data: BoundedVec<u8, CustomDataLimit>,
-
-	#[version(..2)]
-	pub variable_data: BoundedVec<u8, CustomDataLimit>,
-}
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -152,7 +129,6 @@ pub mod pallet {
 		Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key,
 		traits::StorageVersion,
 	};
-	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -193,16 +169,6 @@ pub mod pallet {
 	#[pallet::storage]
 	pub type TokensBurnt<T: Config> =
 		StorageMap<Hasher = Twox64Concat, Key = CollectionId, Value = u32, QueryKind = ValueQuery>;
-
-	/// Token data, used to partially describe a token.
-	// TODO: remove
-	#[pallet::storage]
-	#[deprecated(since = "0.2.0", note = "ItemData is no more contains usefull data")]
-	pub type TokenData<T: Config> = StorageNMap<
-		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = ItemData,
-		QueryKind = ValueQuery,
-	>;
 
 	/// Amount of pieces a refungible token is split into.
 	#[pallet::storage]
@@ -274,18 +240,17 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			let storage_version = StorageVersion::get::<Pallet<T>>();
-			if storage_version < StorageVersion::new(2) {
-				<TokenData<T>>::remove_all(None);
-			}
-			StorageVersion::new(2).put::<Pallet<T>>();
-
-			Weight::zero()
-		}
-	}
+	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+	#[pallet::storage]
+	pub type CollectionAllowance<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+		),
+		Value = bool,
+		QueryKind = ValueQuery,
+	>;
 }
 
 pub struct RefungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);
@@ -637,6 +602,14 @@ impl<T: Config> Pallet<T> {
 					));
 				}
 			}
+
+			<PalletEvm<T>>::deposit_log(
+				CollectionHelpersEvents::TokenChanged {
+					collection_id: collection_id_to_address(collection.id),
+					token_id: token_id.into(),
+				}
+				.to_log(T::ContractAddress::get()),
+			);
 		}
 
 		Ok(())
@@ -893,7 +866,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_multiple_items(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: Vec<CreateItemData<T::CrossAccountId>>,
+		data: Vec<CreateItemData<T>>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if !collection.is_owner_or_admin(sender) {
@@ -1161,6 +1134,12 @@ impl<T: Config> Pallet<T> {
 		}
 		let allowance =
 			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
+
+		// Allowance (if any) would be reduced if spender is also wallet operator
+		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
+			return Ok(allowance);
+		}
+
 		if allowance.is_none() {
 			ensure!(
 				collection.ignores_allowance(spender),
@@ -1233,7 +1212,7 @@ impl<T: Config> Pallet<T> {
 	pub fn create_item(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
-		data: CreateItemData<T::CrossAccountId>,
+		data: CreateItemData<T>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
@@ -1352,6 +1331,10 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::set_token_property_permissions(collection, sender, property_permissions)
 	}
 
+	pub fn token_property_permission(collection_id: CollectionId) -> PropertiesPermissionMap {
+		<PalletCommon<T>>::property_permissions(collection_id)
+	}
+
 	pub fn set_scoped_token_property_permissions(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1386,6 +1369,54 @@ impl<T: Config> Pallet<T> {
 		} else {
 			Some(res)
 		}
+	}
+
+	/// Sets or unsets the approval of a given operator.
+	///
+	/// The `operator` is allowed to transfer all token pieces of the `owner` on their behalf.
+	/// - `owner`: Token owner
+	/// - `operator`: Operator
+	/// - `approve`: Should operator status be granted or revoked?
+	pub fn set_allowance_for_all(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(operator)?;
+		}
+
+		<PalletCommon<T>>::ensure_correct_receiver(operator)?;
+
+		// =========
+
+		<CollectionAllowance<T>>::insert((collection.id, owner, operator), approve);
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::ApprovalForAll {
+				owner: *owner.as_eth(),
+				operator: *operator.as_eth(),
+				approved: approve,
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ApprovedForAll(
+			collection.id,
+			owner.clone(),
+			operator.clone(),
+			approve,
+		));
+		Ok(())
+	}
+
+	/// Tells whether the given `owner` approves the `operator`.
+	pub fn allowance_for_all(
+		collection: &RefungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+	) -> bool {
+		<CollectionAllowance<T>>::get((collection.id, owner, operator))
 	}
 
 	pub fn repair_item(collection: &RefungibleHandle<T>, token: TokenId) -> DispatchResult {

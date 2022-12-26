@@ -48,7 +48,7 @@ describe('NFT (Via EVM proxy): Information getting', () => {
     await collection.mintToken(alice, {Substrate: alice.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const totalSupply = await contract.methods.totalSupply().call();
 
@@ -66,7 +66,7 @@ describe('NFT (Via EVM proxy): Information getting', () => {
     ]);
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const balance = await contract.methods.balanceOf(caller).call();
 
@@ -80,7 +80,7 @@ describe('NFT (Via EVM proxy): Information getting', () => {
     const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const owner = await contract.methods.ownerOf(tokenId).call();
 
@@ -99,14 +99,15 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint()', async ({helper}) => {
+  // Soft-deprecated
+  itEth('[eth] Can perform mint()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'A', 'A', 'A', '');
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const collectionEvmOwned = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const collectionEvmOwned = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller, true);
     const contract = await proxyWrap(helper, collectionEvm, donor);
     await collectionEvmOwned.methods.addCollectionAdmin(contract.options.address).send();
 
@@ -116,20 +117,55 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
       const tokenId = result.events.Transfer.returnValues.tokenId;
       expect(tokenId).to.be.equal('1');
 
-      const events = helper.eth.normalizeEvents(result.events);
-      events[0].address = events[0].address.toLocaleLowerCase();
+      const event = helper.eth.normalizeEvents(result.events)
+        .find(event => event.event === 'Transfer')!;
+      event.address = event.address.toLocaleLowerCase();
 
-      expect(events).to.be.deep.equal([
-        {
-          address: collectionAddress.toLocaleLowerCase(),
-          event: 'Transfer',
-          args: {
-            from: '0x0000000000000000000000000000000000000000',
-            to: receiver,
-            tokenId,
-          },
+      expect(event).to.be.deep.equal({
+        address: collectionAddress.toLocaleLowerCase(),
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId,
         },
-      ]);
+      });
+
+      expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
+    }
+  });
+
+  itEth('[cross] Can perform mint()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'A', 'A', 'A', '');
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+
+    const collectionEvmOwned = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const contract = await proxyWrap(helper, collectionEvm, donor);
+    const contractAddressCross = helper.ethCrossAccount.fromAddress(contract.options.address);
+    await collectionEvmOwned.methods.addCollectionAdminCross(contractAddressCross).send();
+
+    {
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      const result = await contract.methods.mintWithTokenURI(receiver, nextTokenId, 'Test URI').send({from: caller});
+      const tokenId = result.events.Transfer.returnValues.tokenId;
+      expect(tokenId).to.be.equal('1');
+
+      const event = helper.eth.normalizeEvents(result.events)
+        .find(event => event.event === 'Transfer')!;
+      event.address = event.address.toLocaleLowerCase();
+
+      expect(event).to.be.deep.equal({
+        address: collectionAddress.toLocaleLowerCase(),
+        event: 'Transfer',
+        args: {
+          from: '0x0000000000000000000000000000000000000000',
+          to: receiver,
+          tokenId,
+        },
+      });
 
       expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
     }
@@ -143,7 +179,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     await collection.addAdmin(donor, {Ethereum: contract.options.address});
 
@@ -201,7 +237,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const {tokenId} = await collection.mintToken(alice, {Ethereum: contract.options.address});
     await collection.addAdmin(alice, {Ethereum: contract.options.address});
@@ -230,7 +266,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const spender = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const {tokenId} = await collection.mintToken(alice, {Ethereum: contract.options.address});
 
@@ -260,7 +296,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
 
@@ -299,7 +335,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const evmCollection = helper.ethNativeContract.collection(address, 'nft', caller);
+    const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
     const {tokenId} = await collection.mintToken(alice, {Ethereum: contract.options.address});
 

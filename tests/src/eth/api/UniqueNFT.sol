@@ -13,43 +13,62 @@ interface ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x41369377
+/// @dev the ERC-165 identifier for this interface is 0xde0695c2
 interface TokenProperties is Dummy, ERC165 {
+	// /// @notice Set permissions for token property.
+	// /// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	// /// @param key Property key.
+	// /// @param isMutable Permission to mutate property.
+	// /// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
+	// /// @param tokenOwner Permission to mutate property by token owner if property is mutable.
+	// /// @dev EVM selector for this function is: 0x222d97fa,
+	// ///  or in textual repr: setTokenPropertyPermission(string,bool,bool,bool)
+	// function setTokenPropertyPermission(string memory key, bool isMutable, bool collectionAdmin, bool tokenOwner) external;
+
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
-	/// @param key Property key.
-	/// @param isMutable Permission to mutate property.
-	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
-	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
-	/// @dev EVM selector for this function is: 0x222d97fa,
-	///  or in textual repr: setTokenPropertyPermission(string,bool,bool,bool)
-	function setTokenPropertyPermission(
-		string memory key,
-		bool isMutable,
-		bool collectionAdmin,
-		bool tokenOwner
-	) external;
+	/// @param permissions Permissions for keys.
+	/// @dev EVM selector for this function is: 0xbd92983a,
+	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
+	function setTokenPropertyPermissions(TokenPropertyPermission[] memory permissions) external;
 
-	/// @notice Set token property value.
+	/// @notice Get permissions for token properties.
+	/// @dev EVM selector for this function is: 0xf23d7790,
+	///  or in textual repr: tokenPropertyPermissions()
+	function tokenPropertyPermissions() external view returns (TokenPropertyPermission[] memory);
+
+	// /// @notice Set token property value.
+	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// /// @param tokenId ID of the token.
+	// /// @param key Property key.
+	// /// @param value Property value.
+	// /// @dev EVM selector for this function is: 0x1752d67b,
+	// ///  or in textual repr: setProperty(uint256,string,bytes)
+	// function setProperty(uint256 tokenId, string memory key, bytes memory value) external;
+
+	/// @notice Set token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
-	/// @param key Property key.
-	/// @param value Property value.
-	/// @dev EVM selector for this function is: 0x1752d67b,
-	///  or in textual repr: setProperty(uint256,string,bytes)
-	function setProperty(
-		uint256 tokenId,
-		string memory key,
-		bytes memory value
-	) external;
+	/// @param properties settable properties
+	/// @dev EVM selector for this function is: 0x14ed3a6e,
+	///  or in textual repr: setProperties(uint256,(string,bytes)[])
+	function setProperties(uint256 tokenId, Property[] memory properties) external;
 
-	/// @notice Delete token property value.
+	// /// @notice Delete token property value.
+	// /// @dev Throws error if `msg.sender` has no permission to edit the property.
+	// /// @param tokenId ID of the token.
+	// /// @param key Property key.
+	// /// @dev EVM selector for this function is: 0x066111d1,
+	// ///  or in textual repr: deleteProperty(uint256,string)
+	// function deleteProperty(uint256 tokenId, string memory key) external;
+
+	/// @notice Delete token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
-	/// @param key Property key.
-	/// @dev EVM selector for this function is: 0x066111d1,
-	///  or in textual repr: deleteProperty(uint256,string)
-	function deleteProperty(uint256 tokenId, string memory key) external;
+	/// @param keys Properties key.
+	/// @dev EVM selector for this function is: 0xc472d371,
+	///  or in textual repr: deleteProperties(uint256,string[])
+	function deleteProperties(uint256 tokenId, string[] memory keys) external;
 
 	/// @notice Get token property value.
 	/// @dev Throws error if key not found
@@ -61,23 +80,69 @@ interface TokenProperties is Dummy, ERC165 {
 	function property(uint256 tokenId, string memory key) external view returns (bytes memory);
 }
 
-/// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x62e22290
-interface Collection is Dummy, ERC165 {
-	/// Set collection property.
-	///
-	/// @param key Property key.
-	/// @param value Propery value.
-	/// @dev EVM selector for this function is: 0x2f073f66,
-	///  or in textual repr: setCollectionProperty(string,bytes)
-	function setCollectionProperty(string memory key, bytes memory value) external;
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
+struct Property {
+	string key;
+	bytes value;
+}
 
-	/// Delete collection property.
+/// Ethereum representation of Token Property Permissions.
+struct TokenPropertyPermission {
+	/// Token property key.
+	string key;
+	/// Token property permissions.
+	PropertyPermission[] permissions;
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
+struct PropertyPermission {
+	/// TokenPermission field.
+	TokenPermissionField code;
+	/// TokenPermission value.
+	bool value;
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
+enum TokenPermissionField {
+	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
+	Mutable,
+	/// Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
+	TokenOwner,
+	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
+	CollectionAdmin
+}
+
+/// @title A contract that allows you to work with collections.
+/// @dev the ERC-165 identifier for this interface is 0x2a14cfd1
+interface Collection is Dummy, ERC165 {
+	// /// Set collection property.
+	// ///
+	// /// @param key Property key.
+	// /// @param value Propery value.
+	// /// @dev EVM selector for this function is: 0x2f073f66,
+	// ///  or in textual repr: setCollectionProperty(string,bytes)
+	// function setCollectionProperty(string memory key, bytes memory value) external;
+
+	/// Set collection properties.
 	///
-	/// @param key Property key.
-	/// @dev EVM selector for this function is: 0x7b7debce,
-	///  or in textual repr: deleteCollectionProperty(string)
-	function deleteCollectionProperty(string memory key) external;
+	/// @param properties Vector of properties key/value pair.
+	/// @dev EVM selector for this function is: 0x50b26b2a,
+	///  or in textual repr: setCollectionProperties((string,bytes)[])
+	function setCollectionProperties(Property[] memory properties) external;
+
+	// /// Delete collection property.
+	// ///
+	// /// @param key Property key.
+	// /// @dev EVM selector for this function is: 0x7b7debce,
+	// ///  or in textual repr: deleteCollectionProperty(string)
+	// function deleteCollectionProperty(string memory key) external;
+
+	/// Delete collection properties.
+	///
+	/// @param keys Properties keys.
+	/// @dev EVM selector for this function is: 0xee206ee3,
+	///  or in textual repr: deleteCollectionProperties(string[])
+	function deleteCollectionProperties(string[] memory keys) external;
 
 	/// Get collection property.
 	///
@@ -89,14 +154,31 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: collectionProperty(string)
 	function collectionProperty(string memory key) external view returns (bytes memory);
 
+	/// Get collection properties.
+	///
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0x285fb8e6,
+	///  or in textual repr: collectionProperties(string[])
+	function collectionProperties(string[] memory keys) external view returns (Property[] memory);
+
+	// /// Set the sponsor of the collection.
+	// ///
+	// /// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
+	// ///
+	// /// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
+	// /// @dev EVM selector for this function is: 0x7623402e,
+	// ///  or in textual repr: setCollectionSponsor(address)
+	// function setCollectionSponsor(address sponsor) external;
+
 	/// Set the sponsor of the collection.
 	///
 	/// @dev In order for sponsorship to work, it must be confirmed on behalf of the sponsor.
 	///
-	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
-	/// @dev EVM selector for this function is: 0x7623402e,
-	///  or in textual repr: setCollectionSponsor(address)
-	function setCollectionSponsor(address sponsor) external;
+	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
+	/// @dev EVM selector for this function is: 0x84a1d5a8,
+	///  or in textual repr: setCollectionSponsorCross((address,uint256))
+	function setCollectionSponsorCross(CrossAddress memory sponsor) external;
 
 	/// Whether there is a pending sponsor.
 	/// @dev EVM selector for this function is: 0x058ac185,
@@ -120,32 +202,21 @@ interface Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() external view returns (Tuple17 memory);
+	function collectionSponsor() external view returns (CrossAddress memory);
+
+	/// Get current collection limits.
+	///
+	/// @return Array of collection limits
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() external view returns (CollectionLimit[] memory);
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x6a3841db,
-	///  or in textual repr: setCollectionLimit(string,uint32)
-	function setCollectionLimit(string memory limit, uint32 value) external;
-
-	/// Set limits for the collection.
-	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x993b7fba,
-	///  or in textual repr: setCollectionLimit(string,bool)
-	function setCollectionLimit(string memory limit, bool value) external;
+	/// @param limit Some limit.
+	/// @dev EVM selector for this function is: 0x2316ee74,
+	///  or in textual repr: setCollectionLimit((uint8,(bool,uint256)))
+	function setCollectionLimit(CollectionLimit memory limit) external;
 
 	/// Get contract address.
 	/// @dev EVM selector for this function is: 0xf6b4dfb4,
@@ -153,17 +224,29 @@ interface Collection is Dummy, ERC165 {
 	function contractAddress() external view returns (address);
 
 	/// Add collection admin.
-	/// @param newAdmin Address of the added administrator.
-	/// @dev EVM selector for this function is: 0x92e462c7,
-	///  or in textual repr: addCollectionAdmin(address)
-	function addCollectionAdmin(address newAdmin) external;
+	/// @param newAdmin Cross account administrator address.
+	/// @dev EVM selector for this function is: 0x859aa7d6,
+	///  or in textual repr: addCollectionAdminCross((address,uint256))
+	function addCollectionAdminCross(CrossAddress memory newAdmin) external;
 
 	/// Remove collection admin.
-	///
-	/// @param admin Address of the removed administrator.
-	/// @dev EVM selector for this function is: 0xfafd7b42,
-	///  or in textual repr: removeCollectionAdmin(address)
-	function removeCollectionAdmin(address admin) external;
+	/// @param admin Cross account administrator address.
+	/// @dev EVM selector for this function is: 0x6c0cd173,
+	///  or in textual repr: removeCollectionAdminCross((address,uint256))
+	function removeCollectionAdminCross(CrossAddress memory admin) external;
+
+	// /// Add collection admin.
+	// /// @param newAdmin Address of the added administrator.
+	// /// @dev EVM selector for this function is: 0x92e462c7,
+	// ///  or in textual repr: addCollectionAdmin(address)
+	// function addCollectionAdmin(address newAdmin) external;
+
+	// /// Remove collection admin.
+	// ///
+	// /// @param admin Address of the removed administrator.
+	// /// @dev EVM selector for this function is: 0xfafd7b42,
+	// ///  or in textual repr: removeCollectionAdmin(address)
+	// function removeCollectionAdmin(address admin) external;
 
 	/// Toggle accessibility of collection nesting.
 	///
@@ -180,6 +263,16 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionNesting(bool,address[])
 	function setCollectionNesting(bool enable, address[] memory collections) external;
 
+	/// Returns nesting for a collection
+	/// @dev EVM selector for this function is: 0x22d25bfe,
+	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+	function collectionNestingRestrictedCollectionIds() external view returns (CollectionNesting memory);
+
+	/// Returns permissions for a collection
+	/// @dev EVM selector for this function is: 0x5b2eaf4b,
+	///  or in textual repr: collectionNestingPermissions()
+	function collectionNestingPermissions() external view returns (CollectionNestingPermission[] memory);
+
 	/// Set the collection access method.
 	/// @param mode Access mode
 	/// 	0 for Normal
@@ -191,23 +284,37 @@ interface Collection is Dummy, ERC165 {
 	/// Checks that user allowed to operate with collection.
 	///
 	/// @param user User address to check.
-	/// @dev EVM selector for this function is: 0xd63a8e11,
-	///  or in textual repr: allowed(address)
-	function allowed(address user) external view returns (bool);
+	/// @dev EVM selector for this function is: 0x91b6df49,
+	///  or in textual repr: allowlistedCross((address,uint256))
+	function allowlistedCross(CrossAddress memory user) external view returns (bool);
 
-	/// Add the user to the allowed list.
-	///
-	/// @param user Address of a trusted user.
-	/// @dev EVM selector for this function is: 0x67844fe6,
-	///  or in textual repr: addToCollectionAllowList(address)
-	function addToCollectionAllowList(address user) external;
+	// /// Add the user to the allowed list.
+	// ///
+	// /// @param user Address of a trusted user.
+	// /// @dev EVM selector for this function is: 0x67844fe6,
+	// ///  or in textual repr: addToCollectionAllowList(address)
+	// function addToCollectionAllowList(address user) external;
 
-	/// Remove the user from the allowed list.
+	/// Add user to allowed list.
 	///
-	/// @param user Address of a removed user.
-	/// @dev EVM selector for this function is: 0x85c51acb,
-	///  or in textual repr: removeFromCollectionAllowList(address)
-	function removeFromCollectionAllowList(address user) external;
+	/// @param user User cross account address.
+	/// @dev EVM selector for this function is: 0xa0184a3a,
+	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
+	function addToCollectionAllowListCross(CrossAddress memory user) external;
+
+	// /// Remove the user from the allowed list.
+	// ///
+	// /// @param user Address of a removed user.
+	// /// @dev EVM selector for this function is: 0x85c51acb,
+	// ///  or in textual repr: removeFromCollectionAllowList(address)
+	// function removeFromCollectionAllowList(address user) external;
+
+	/// Remove user from allowed list.
+	///
+	/// @param user User cross account address.
+	/// @dev EVM selector for this function is: 0x09ba452a,
+	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
+	function removeFromCollectionAllowListCross(CrossAddress memory user) external;
 
 	/// Switch permission for minting.
 	///
@@ -216,13 +323,21 @@ interface Collection is Dummy, ERC165 {
 	///  or in textual repr: setCollectionMintMode(bool)
 	function setCollectionMintMode(bool mode) external;
 
+	// /// Check that account is the owner or admin of the collection
+	// ///
+	// /// @param user account to verify
+	// /// @return "true" if account is the owner or admin
+	// /// @dev EVM selector for this function is: 0x9811b0c7,
+	// ///  or in textual repr: isOwnerOrAdmin(address)
+	// function isOwnerOrAdmin(address user) external view returns (bool);
+
 	/// Check that account is the owner or admin of the collection
 	///
-	/// @param user account to verify
+	/// @param user User cross account to verify
 	/// @return "true" if account is the owner or admin
-	/// @dev EVM selector for this function is: 0x9811b0c7,
-	///  or in textual repr: isOwnerOrAdmin(address)
-	function isOwnerOrAdmin(address user) external view returns (bool);
+	/// @dev EVM selector for this function is: 0x3e75a905,
+	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
+	function isOwnerOrAdminCross(CrossAddress memory user) external view returns (bool);
 
 	/// Returns collection type
 	///
@@ -237,21 +352,91 @@ interface Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() external view returns (Tuple17 memory);
+	function collectionOwner() external view returns (CrossAddress memory);
+
+	// /// Changes collection owner to another account
+	// ///
+	// /// @dev Owner can be changed only by current owner
+	// /// @param newOwner new owner account
+	// /// @dev EVM selector for this function is: 0x4f53e226,
+	// ///  or in textual repr: changeCollectionOwner(address)
+	// function changeCollectionOwner(address newOwner) external;
+
+	/// Get collection administrators
+	///
+	/// @return Vector of tuples with admins address and his substrate mirror.
+	/// If address is canonical then substrate mirror is zero and vice versa.
+	/// @dev EVM selector for this function is: 0x5813216b,
+	///  or in textual repr: collectionAdmins()
+	function collectionAdmins() external view returns (CrossAddress[] memory);
 
 	/// Changes collection owner to another account
 	///
 	/// @dev Owner can be changed only by current owner
-	/// @param newOwner new owner account
-	/// @dev EVM selector for this function is: 0x4f53e226,
-	///  or in textual repr: changeCollectionOwner(address)
-	function changeCollectionOwner(address newOwner) external;
+	/// @param newOwner new owner cross account
+	/// @dev EVM selector for this function is: 0x6496c497,
+	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
+	function changeCollectionOwnerCross(CrossAddress memory newOwner) external;
 }
 
-/// @dev anonymous struct
-struct Tuple17 {
-	address field_0;
-	uint256 field_1;
+/// Cross account struct
+struct CrossAddress {
+	address eth;
+	uint256 sub;
+}
+
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+struct CollectionNestingPermission {
+	CollectionPermissionField field;
+	bool value;
+}
+
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
+enum CollectionPermissionField {
+	/// Owner of token can nest tokens under it.
+	TokenOwner,
+	/// Admin of token collection can nest tokens under token.
+	CollectionAdmin
+}
+
+/// Nested collections.
+struct CollectionNesting {
+	bool token_owner;
+	uint256[] ids;
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+struct CollectionLimit {
+	CollectionLimitField field;
+	OptionUint value;
+}
+
+/// Ethereum representation of Optional value with uint256.
+struct OptionUint {
+	bool status;
+	uint256 value;
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
+enum CollectionLimitField {
+	/// How many tokens can a user have on one account.
+	AccountTokenOwnership,
+	/// How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+	/// How many tokens can be mined into this collection.
+	TokenLimit,
+	/// Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+	/// Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+	/// Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+	/// Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+	/// Is it possible to send tokens from this collection between users.
+	TransferEnabled
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
@@ -308,14 +493,14 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 	///  or in textual repr: mintingFinished()
 	function mintingFinished() external view returns (bool);
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	/// @dev EVM selector for this function is: 0x6a627842,
 	///  or in textual repr: mint(address)
 	function mint(address to) external returns (uint256);
 
-	// /// @notice Function to mint token.
+	// /// @notice Function to mint a token.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
 	// /// @param to The new owner
@@ -349,7 +534,7 @@ interface ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x4468500d
+/// @dev the ERC-165 identifier for this interface is 0x0e48fdb4
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -361,6 +546,37 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	///  or in textual repr: symbol()
 	function symbol() external view returns (string memory);
 
+	/// @notice A description for the collection.
+	/// @dev EVM selector for this function is: 0x7284e416,
+	///  or in textual repr: description()
+	function description() external view returns (string memory);
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	/// @dev EVM selector for this function is: 0x2b29dace,
+	///  or in textual repr: crossOwnerOf(uint256)
+	function crossOwnerOf(uint256 tokenId) external view returns (CrossAddress memory);
+
+	/// Returns the token properties.
+	///
+	/// @param tokenId Id for the token.
+	/// @param keys Properties keys. Empty keys for all propertyes.
+	/// @return Vector of properties key/value pairs.
+	/// @dev EVM selector for this function is: 0xe07ede7e,
+	///  or in textual repr: properties(uint256,string[])
+	function properties(uint256 tokenId, string[] memory keys) external view returns (Property[] memory);
+
+	/// @notice Set or reaffirm the approved address for an NFT
+	/// @dev The zero address indicates there is no approved address.
+	/// @dev Throws unless `msg.sender` is the current NFT owner, or an authorized
+	///  operator of the current owner.
+	/// @param approved The new substrate address approved NFT controller
+	/// @param tokenId The NFT to approve
+	/// @dev EVM selector for this function is: 0x0ecd0ab0,
+	///  or in textual repr: approveCross((address,uint256),uint256)
+	function approveCross(CrossAddress memory approved, uint256 tokenId) external;
+
 	/// @notice Transfer ownership of an NFT
 	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
@@ -370,20 +586,54 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	///  or in textual repr: transfer(address,uint256)
 	function transfer(address to, uint256 tokenId) external;
 
+	/// @notice Transfer ownership of an NFT
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid NFT.
+	/// @param to The new owner
+	/// @param tokenId The NFT to transfer
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(CrossAddress memory to, uint256 tokenId) external;
+
+	/// @notice Transfer ownership of an NFT from cross account address to cross account address
+	/// @dev Throws unless `msg.sender` is the current owner. Throws if `to`
+	///  is the zero address. Throws if `tokenId` is not a valid NFT.
+	/// @param from Cross acccount address of current owner
+	/// @param to Cross acccount address of new owner
+	/// @param tokenId The NFT to transfer
+	/// @dev EVM selector for this function is: 0xd5cf430b,
+	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	function transferFromCross(
+		CrossAddress memory from,
+		CrossAddress memory to,
+		uint256 tokenId
+	) external;
+
+	// /// @notice Burns a specific ERC721 token.
+	// /// @dev Throws unless `msg.sender` is the current owner or an authorized
+	// ///  operator for this NFT. Throws if `from` is not the current owner. Throws
+	// ///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
+	// /// @param from The current owner of the NFT
+	// /// @param tokenId The NFT to transfer
+	// /// @dev EVM selector for this function is: 0x79cc6790,
+	// ///  or in textual repr: burnFrom(address,uint256)
+	// function burnFrom(address from, uint256 tokenId) external;
+
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current owner or an authorized
 	///  operator for this NFT. Throws if `from` is not the current owner. Throws
 	///  if `to` is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param from The current owner of the NFT
 	/// @param tokenId The NFT to transfer
-	/// @dev EVM selector for this function is: 0x79cc6790,
-	///  or in textual repr: burnFrom(address,uint256)
-	function burnFrom(address from, uint256 tokenId) external;
+	/// @dev EVM selector for this function is: 0xbb2f5a58,
+	///  or in textual repr: burnFromCross((address,uint256),uint256)
+	function burnFromCross(CrossAddress memory from, uint256 tokenId) external;
 
 	/// @notice Returns next free NFT ID.
 	/// @dev EVM selector for this function is: 0x75794a3c,
 	///  or in textual repr: nextTokenId()
 	function nextTokenId() external view returns (uint256);
+
 	// /// @notice Function to mint multiple tokens.
 	// /// @dev `tokenIds` should be an array of consecutive numbers and first number
 	// ///  should be obtained with `nextTokenId` method
@@ -400,12 +650,19 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple6[] memory tokens) external returns (bool);
+	// function mintBulkWithTokenURI(address to, Tuple13[] memory tokens) external returns (bool);
 
+	/// @notice Function to mint a token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0xb904db03,
+	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
+	function mintCross(CrossAddress memory to, Property[] memory properties) external returns (uint256);
 }
 
 /// @dev anonymous struct
-struct Tuple6 {
+struct Tuple13 {
 	uint256 field_0;
 	string field_1;
 }
@@ -444,7 +701,7 @@ interface ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x80ac58cd
+/// @dev the ERC-165 identifier for this interface is 0x983a942b
 interface ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -510,7 +767,10 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	///  or in textual repr: approve(address,uint256)
 	function approve(address approved, uint256 tokenId) external;
 
-	/// @dev Not implemented
+	/// @notice Sets or unsets the approval of a given operator.
+	/// The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
+	/// @param operator Operator
+	/// @param approved Should operator status be granted or revoked?
 	/// @dev EVM selector for this function is: 0xa22cb465,
 	///  or in textual repr: setApprovalForAll(address,bool)
 	function setApprovalForAll(address operator, bool approved) external;
@@ -520,10 +780,15 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	///  or in textual repr: getApproved(uint256)
 	function getApproved(uint256 tokenId) external view returns (address);
 
-	/// @dev Not implemented
+	/// @notice Tells whether the given `owner` approves the `operator`.
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
-	function isApprovedForAll(address owner, address operator) external view returns (address);
+	function isApprovedForAll(address owner, address operator) external view returns (bool);
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() external view returns (address);
 }
 
 interface UniqueNFT is

@@ -25,6 +25,7 @@ use syn::{
 	parse_macro_input, spanned::Spanned,
 };
 
+mod abi_derive;
 mod solidity_interface;
 mod to_log;
 
@@ -107,7 +108,7 @@ fn parse_path_segment(path: &Path) -> syn::Result<&PathSegment> {
 	if path.segments.len() != 1 {
 		return Err(syn::Error::new(
 			path.span(),
-			"expected path to have only segment",
+			"expected path to have only one segment",
 		));
 	}
 	let last_segment = &path.segments.last().unwrap();
@@ -241,4 +242,14 @@ pub fn to_log(value: TokenStream) -> TokenStream {
 		Err(e) => e.to_compile_error(),
 	}
 	.into()
+}
+
+#[proc_macro_derive(AbiCoder)]
+pub fn abi_derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+	let ast = syn::parse(input).unwrap();
+	let ts = match abi_derive::impl_abi_macro(&ast) {
+		Ok(e) => e,
+		Err(e) => e.to_compile_error(),
+	};
+	ts.into()
 }

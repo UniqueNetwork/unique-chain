@@ -43,12 +43,12 @@ describe('Integration Test: Token Properties', () => {
 
   async function mintCollectionWithAllPermissionsAndToken(helper: UniqueHelper, mode: 'NFT' | 'RFT'): Promise<[UniqueNFToken | UniqueRFToken, bigint]> {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {
-      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) => 
+      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) =>
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n), 100n];
   }
-  
+
   async function testReadsYetEmptyProperties(token: UniqueNFToken | UniqueRFToken) {
     const properties = await token.getProperties();
     expect(properties).to.be.empty;
@@ -84,7 +84,7 @@ describe('Integration Test: Token Properties', () => {
         propertyKeys.push(key);
 
         await expect(
-          token.setProperties(signer, [{key: key, value: 'Serotonin increase'}]), 
+          token.setProperties(signer, [{key: key, value: 'Serotonin increase'}]),
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
@@ -117,7 +117,7 @@ describe('Integration Test: Token Properties', () => {
     for (const permission of permissions) {
       i++;
       if (!permission.permission.mutable) continue;
-      
+
       let j = 0;
       for (const signer of permission.signers) {
         j++;
@@ -125,12 +125,12 @@ describe('Integration Test: Token Properties', () => {
         propertyKeys.push(key);
 
         await expect(
-          token.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          token.setProperties(signer, [{key, value: 'Serotonin increase'}]),
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
 
         await expect(
-          token.setProperties(signer, [{key, value: 'Serotonin stable'}]), 
+          token.setProperties(signer, [{key, value: 'Serotonin stable'}]),
           `on changing property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
@@ -164,7 +164,7 @@ describe('Integration Test: Token Properties', () => {
     for (const permission of permissions) {
       i++;
       if (!permission.permission.mutable) continue;
-      
+
       let j = 0;
       for (const signer of permission.signers) {
         j++;
@@ -172,12 +172,12 @@ describe('Integration Test: Token Properties', () => {
         propertyKeys.push(key);
 
         await expect(
-          token.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          token.setProperties(signer, [{key, value: 'Serotonin increase'}]),
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
 
         await expect(
-          token.deleteProperties(signer, [key]), 
+          token.deleteProperties(signer, [key]),
           `on deleting property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
@@ -186,7 +186,7 @@ describe('Integration Test: Token Properties', () => {
     expect(await token.getProperties(propertyKeys)).to.be.empty;
     expect((await token.getData())!.properties).to.be.empty;
   }
-  
+
   itSub('Deletes properties of a token according to permissions (NFT)', async ({helper}) =>  {
     const [token, amount] = await mintCollectionWithAllPermissionsAndToken(helper, 'NFT');
     await testDeletePropertiesAccordingPermission(token, amount);
@@ -200,7 +200,7 @@ describe('Integration Test: Token Properties', () => {
   itSub('Assigns properties to a nested token according to permissions', async ({helper}) =>  {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.nft.mintCollection(alice, {
-      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) => 
+      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) =>
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     const targetToken = await collectionA.mintToken(alice);
@@ -220,7 +220,7 @@ describe('Integration Test: Token Properties', () => {
         propertyKeys.push(key);
 
         await expect(
-          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]),
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
@@ -238,7 +238,7 @@ describe('Integration Test: Token Properties', () => {
   itSub('Changes properties of a nested token according to permissions', async ({helper}) =>  {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.nft.mintCollection(alice, {
-      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) => 
+      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) =>
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     const targetToken = await collectionA.mintToken(alice);
@@ -252,7 +252,7 @@ describe('Integration Test: Token Properties', () => {
     for (const permission of permissions) {
       i++;
       if (!permission.permission.mutable) continue;
-      
+
       let j = 0;
       for (const signer of permission.signers) {
         j++;
@@ -260,12 +260,12 @@ describe('Integration Test: Token Properties', () => {
         propertyKeys.push(key);
 
         await expect(
-          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]),
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
 
         await expect(
-          nestedToken.setProperties(signer, [{key, value: 'Serotonin stable'}]), 
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin stable'}]),
           `on changing property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
@@ -283,7 +283,7 @@ describe('Integration Test: Token Properties', () => {
   itSub('Deletes properties of a nested token according to permissions', async ({helper}) =>  {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.nft.mintCollection(alice, {
-      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) => 
+      tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) =>
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     const targetToken = await collectionA.mintToken(alice);
@@ -297,7 +297,7 @@ describe('Integration Test: Token Properties', () => {
     for (const permission of permissions) {
       i++;
       if (!permission.permission.mutable) continue;
-      
+
       let j = 0;
       for (const signer of permission.signers) {
         j++;
@@ -305,12 +305,12 @@ describe('Integration Test: Token Properties', () => {
         propertyKeys.push(key);
 
         await expect(
-          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]), 
+          nestedToken.setProperties(signer, [{key, value: 'Serotonin increase'}]),
           `on adding property #${i} by signer #${j}`,
         ).to.be.fulfilled;
 
         await expect(
-          nestedToken.deleteProperties(signer, [key]), 
+          nestedToken.deleteProperties(signer, [key]),
           `on deleting property #${i} by signer #${j}`,
         ).to.be.fulfilled;
       }
@@ -323,7 +323,7 @@ describe('Integration Test: Token Properties', () => {
 
   [
     {mode: 'nft' as const, storage: 'nonfungible' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, storage: 'refungible' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+    {mode: 'rft' as const, storage: 'refungible' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
     itSub.ifWithPallets(`Allows modifying a token property multiple times with the same size (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
@@ -370,7 +370,7 @@ describe('Integration Test: Token Properties', () => {
 
   [
     {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
     itSub.ifWithPallets(`Adding then removing a token property doesn't change the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
@@ -404,40 +404,7 @@ describe('Integration Test: Token Properties', () => {
 
   [
     {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
-  ].map(testCase =>
-    itSub.ifWithPallets(`repair_item preserves valid consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
-      const propKey = 'tok-prop';
-
-      const collection = await helper[testCase.mode].mintCollection(alice, {
-        tokenPropertyPermissions: [
-          {
-            key: propKey,
-            permission: {mutable: true, tokenOwner: true},
-          },
-        ],
-      });
-      const token = await (
-        testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
-          : collection.mintToken(alice)
-      );
-
-      const propDataSize = 4096;
-      const propData = 'a'.repeat(propDataSize);
-
-      await token.setProperties(alice, [{key: propKey, value: propData}]);
-      const originalSpace = await token.getTokenPropertiesConsumedSpace();
-      expect(originalSpace).to.be.equal(propDataSize);
-
-      await helper.executeExtrinsic(alice, 'api.tx.unique.repairItem', [token.collectionId, token.tokenId], true);
-      const recomputedSpace = await token.getTokenPropertiesConsumedSpace();
-      expect(recomputedSpace).to.be.equal(originalSpace);
-    }));
-
-  [
-    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]}, 
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
     itSub.ifWithPallets(`Modifying a token property with different sizes correctly changes the consumed space (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
@@ -530,12 +497,12 @@ describe('Negative Integration Test: Token Properties', () => {
       i++;
       const signer = passage.signers[0];
       await expect(
-        token.setProperties(signer, [{key: `${i}`, value: 'Serotonin increase'}]), 
+        token.setProperties(signer, [{key: `${i}`, value: 'Serotonin increase'}]),
         `on adding property ${i} by ${signer.address}`,
       ).to.be.fulfilled;
     }
 
-    const originalSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const originalSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
     return originalSpace;
   }
 
@@ -548,17 +515,17 @@ describe('Negative Integration Test: Token Properties', () => {
       if (!forbiddance.permission.mutable) continue;
 
       await expect(
-        token.setProperties(forbiddance.sinner, [{key: `${i}`, value: 'Serotonin down'}]), 
+        token.setProperties(forbiddance.sinner, [{key: `${i}`, value: 'Serotonin down'}]),
         `on failing to change property ${i} by the malefactor`,
       ).to.be.rejectedWith(/common\.NoPermission/);
 
       await expect(
-        token.deleteProperties(forbiddance.sinner, [`${i}`]), 
+        token.deleteProperties(forbiddance.sinner, [`${i}`]),
         `on failing to delete property ${i} by the malefactor`,
       ).to.be.rejectedWith(/common\.NoPermission/);
     }
 
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -581,17 +548,17 @@ describe('Negative Integration Test: Token Properties', () => {
       if (permission.permission.mutable) continue;
 
       await expect(
-        token.setProperties(permission.signers[0], [{key: `${i}`, value: 'Serotonin down'}]), 
+        token.setProperties(permission.signers[0], [{key: `${i}`, value: 'Serotonin down'}]),
         `on failing to change property ${i} by signer #0`,
       ).to.be.rejectedWith(/common\.NoPermission/);
 
       await expect(
-        token.deleteProperties(permission.signers[0], [i.toString()]), 
+        token.deleteProperties(permission.signers[0], [i.toString()]),
         `on failing to delete property ${i} by signer #0`,
       ).to.be.rejectedWith(/common\.NoPermission/);
     }
-  
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -609,23 +576,23 @@ describe('Negative Integration Test: Token Properties', () => {
     const originalSpace = await prepare(token, pieces);
 
     await expect(
-      token.setProperties(alice, [{key: 'non-existent', value: 'I exist!'}]), 
+      token.setProperties(alice, [{key: 'non-existent', value: 'I exist!'}]),
       'on failing to add a previously non-existent property',
     ).to.be.rejectedWith(/common\.NoPermission/);
-      
+
     await expect(
-      token.collection.setTokenPropertyPermissions(alice, [{key: 'now-existent', permission: {}}]), 
+      token.collection.setTokenPropertyPermissions(alice, [{key: 'now-existent', permission: {}}]),
       'on setting a new non-permitted property',
     ).to.be.fulfilled;
 
     await expect(
-      token.setProperties(alice, [{key: 'now-existent', value: 'I exist!'}]), 
+      token.setProperties(alice, [{key: 'now-existent', value: 'I exist!'}]),
       'on failing to add a property forbidden by the \'None\' permission',
     ).to.be.rejectedWith(/common\.NoPermission/);
 
     expect(await token.getProperties(['non-existent', 'now-existent'])).to.be.empty;
-      
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -644,9 +611,9 @@ describe('Negative Integration Test: Token Properties', () => {
 
     await expect(
       token.collection.setTokenPropertyPermissions(alice, [
-        {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}}, 
+        {key: 'a_holy_book', permission: {collectionAdmin: true, tokenOwner: true}},
         {key: 'young_years', permission: {collectionAdmin: true, tokenOwner: true}},
-      ]), 
+      ]),
       'on setting new permissions for properties',
     ).to.be.fulfilled;
 
@@ -658,12 +625,12 @@ describe('Negative Integration Test: Token Properties', () => {
     }
 
     await expect(token.setProperties(alice, [
-      {key: 'a_holy_book', value: 'word '.repeat(3277)}, 
+      {key: 'a_holy_book', value: 'word '.repeat(3277)},
       {key: 'young_years', value: 'neverending'.repeat(1490)},
     ])).to.be.rejectedWith(/common\.NoSpaceForProperty/);
-  
+
     expect(await token.getProperties(['a_holy_book', 'young_years'])).to.be.empty;
-    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT'); 
+    const consumedSpace = await getConsumedSpace(token.collection.helper.getApi(), token.collectionId, token.tokenId, pieces == 1n ? 'NFT' : 'RFT');
     expect(consumedSpace).to.be.equal(originalSpace);
   }
 
@@ -679,7 +646,7 @@ describe('Negative Integration Test: Token Properties', () => {
 
   [
     {mode: 'nft' as const, requiredPallets: []},
-    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]}, 
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
     itSub.ifWithPallets(`Forbids adding too many propeties to a token (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const collection = await helper[testCase.mode].mintCollection(alice);
@@ -696,6 +663,35 @@ describe('Negative Integration Test: Token Properties', () => {
         key: `${maxPropertiesPerItem}-th`,
         permission: {mutable: true, tokenOwner: true, collectionAdmin: true},
       }])).to.be.rejectedWith(/common\.PropertyLimitReached/);
+    }));
+
+  [
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itSub.ifWithPallets(`Forbids force_repair_item from non-sudo (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+      const token = await (
+        testCase.pieces
+          ? collection.mintToken(alice, testCase.pieces)
+          : collection.mintToken(alice)
+      );
+
+      const propDataSize = 4096;
+      const propData = 'a'.repeat(propDataSize);
+      await token.setProperties(alice, [{key: propKey, value: propData}]);
+
+      await expect(helper.executeExtrinsic(alice, 'api.tx.unique.forceRepairItem', [token.collectionId, token.tokenId], true))
+        .to.be.rejectedWith(/BadOrigin/);
     }));
 });
 
@@ -716,10 +712,10 @@ describe('ReFungible token properties permissions tests', () => {
   async function prepare(helper: UniqueHelper): Promise<UniqueRFToken> {
     const collection = await helper.rft.mintCollection(alice);
     const token = await collection.mintToken(alice, 100n);
-    
+
     await collection.addAdmin(alice, {Substrate: bob.address});
     await collection.setTokenPropertyPermissions(alice, [{key: 'fractals', permission: {mutable: true, tokenOwner: true}}]);
-    
+
     return token;
   }
 
@@ -729,7 +725,7 @@ describe('ReFungible token properties permissions tests', () => {
     await token.transfer(alice, {Substrate: charlie.address}, 33n);
 
     await expect(token.setProperties(alice, [
-      {key: 'fractals', value: 'multiverse'}, 
+      {key: 'fractals', value: 'multiverse'},
     ])).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -740,13 +736,13 @@ describe('ReFungible token properties permissions tests', () => {
       .to.be.fulfilled;
 
     await expect(token.setProperties(alice, [
-      {key: 'fractals', value: 'multiverse'}, 
+      {key: 'fractals', value: 'multiverse'},
     ])).to.be.fulfilled;
 
     await token.transfer(alice, {Substrate: charlie.address}, 33n);
 
     await expect(token.setProperties(alice, [
-      {key: 'fractals', value: 'want to rule the world'}, 
+      {key: 'fractals', value: 'want to rule the world'},
     ])).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -754,7 +750,7 @@ describe('ReFungible token properties permissions tests', () => {
     const token = await prepare(helper);
 
     await expect(token.setProperties(alice, [
-      {key: 'fractals', value: 'one headline - why believe it'}, 
+      {key: 'fractals', value: 'one headline - why believe it'},
     ])).to.be.fulfilled;
 
     await token.transfer(alice, {Substrate: charlie.address}, 33n);
@@ -772,7 +768,7 @@ describe('ReFungible token properties permissions tests', () => {
       .to.be.fulfilled;
 
     await expect(token.setProperties(alice, [
-      {key: 'fractals', value: 'multiverse'}, 
+      {key: 'fractals', value: 'multiverse'},
     ])).to.be.fulfilled;
   });
 });

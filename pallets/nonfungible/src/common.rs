@@ -123,7 +123,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::token_owner()
 	}
 
-	fn repair_item() -> Weight {
+	fn set_allowance_for_all() -> Weight {
+		<SelfWeightOf<T>>::set_allowance_for_all()
+	}
+
+	fn force_repair_item() -> Weight {
 		<SelfWeightOf<T>>::repair_item()
 	}
 }
@@ -517,10 +521,26 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		}
 	}
 
+	fn set_allowance_for_all(
+		&self,
+		owner: T::CrossAccountId,
+		operator: T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::set_allowance_for_all(self, &owner, &operator, approve),
+			<CommonWeights<T>>::set_allowance_for_all(),
+		)
+	}
+
+	fn allowance_for_all(&self, owner: T::CrossAccountId, operator: T::CrossAccountId) -> bool {
+		<Pallet<T>>::allowance_for_all(self, &owner, &operator)
+	}
+
 	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo {
 		with_weight(
 			<Pallet<T>>::repair_item(self, token),
-			<CommonWeights<T>>::repair_item(),
+			<CommonWeights<T>>::force_repair_item(),
 		)
 	}
 }

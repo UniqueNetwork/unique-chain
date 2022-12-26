@@ -55,7 +55,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ExistingVestingSchedule: AugmentedError<ApiType>;
       /**
-       * Balance too low to send value
+       * Balance too low to send value.
        **/
       InsufficientBalance: AugmentedError<ApiType>;
       /**
@@ -145,6 +145,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       CollectionTokenPrefixLimitExceeded: AugmentedError<ApiType>;
       /**
+       * This address is not set as sponsor, use setCollectionSponsor first.
+       **/
+      ConfirmSponsorshipFail: AugmentedError<ApiType>;
+      /**
        * Empty property keys are forbidden
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
@@ -217,6 +221,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       UserIsNotAllowedToNest: AugmentedError<ApiType>;
       /**
+       * The user is not an administrator.
+       **/
+      UserIsNotCollectionAdmin: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -272,6 +280,14 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FeeOverflow: AugmentedError<ApiType>;
       /**
+       * Gas limit is too high.
+       **/
+      GasLimitTooHigh: AugmentedError<ApiType>;
+      /**
+       * Gas limit is too low.
+       **/
+      GasLimitTooLow: AugmentedError<ApiType>;
+      /**
        * Gas price is too low.
        **/
       GasPriceTooLow: AugmentedError<ApiType>;
@@ -283,6 +299,18 @@ declare module '@polkadot/api-base/types/errors' {
        * Calculating total payment overflowed
        **/
       PaymentOverflow: AugmentedError<ApiType>;
+      /**
+       * EVM reentrancy
+       **/
+      Reentrancy: AugmentedError<ApiType>;
+      /**
+       * EIP-3607,
+       **/
+      TransactionMustComeFromEOA: AugmentedError<ApiType>;
+      /**
+       * Undefined error.
+       **/
+      Undefined: AugmentedError<ApiType>;
       /**
        * Withdraw fee failed
        **/
@@ -380,6 +408,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Not Fungible item data used to mint in Fungible collection.
        **/
       NotFungibleDataUsedToMintFungibleCollectionToken: AugmentedError<ApiType>;
+      /**
+       * Setting allowance for all is not allowed.
+       **/
+      SettingAllowanceForAllNotAllowed: AugmentedError<ApiType>;
       /**
        * Setting item properties is not allowed.
        **/
@@ -539,6 +571,124 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    rmrkCore: {
+      /**
+       * Not the target owner of the sent NFT.
+       **/
+      CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
+      /**
+       * Not the target owner of the sent NFT.
+       **/
+      CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      /**
+       * NFT was not sent and is not pending.
+       **/
+      CannotRejectNonPendingNft: AugmentedError<ApiType>;
+      /**
+       * If an NFT is sent to a descendant, that would form a nesting loop, an ouroboros.
+       * Sending to self is redundant.
+       **/
+      CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
+      /**
+       * Too many tokens created in the collection, no new ones are allowed.
+       **/
+      CollectionFullOrLocked: AugmentedError<ApiType>;
+      /**
+       * Only destroying collections without tokens is allowed.
+       **/
+      CollectionNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Collection does not exist, has a wrong type, or does not map to a Unique ID.
+       **/
+      CollectionUnknown: AugmentedError<ApiType>;
+      /**
+       * Property of the type of RMRK collection could not be read successfully.
+       **/
+      CorruptedCollectionType: AugmentedError<ApiType>;
+      /**
+       * Could not find an ID for a collection. It is likely there were too many collections created on the chain, causing an overflow.
+       **/
+      NoAvailableCollectionId: AugmentedError<ApiType>;
+      /**
+       * Token does not exist, or there is no suitable ID for it, likely too many tokens were created in a collection, causing an overflow.
+       **/
+      NoAvailableNftId: AugmentedError<ApiType>;
+      /**
+       * Could not find an ID for the resource. It is likely there were too many resources created on an NFT, causing an overflow.
+       **/
+      NoAvailableResourceId: AugmentedError<ApiType>;
+      /**
+       * Token is marked as non-transferable, and thus cannot be transferred.
+       **/
+      NonTransferable: AugmentedError<ApiType>;
+      /**
+       * No permission to perform action.
+       **/
+      NoPermission: AugmentedError<ApiType>;
+      /**
+       * No such resource found.
+       **/
+      ResourceDoesntExist: AugmentedError<ApiType>;
+      /**
+       * Resource is not pending for the operation.
+       **/
+      ResourceNotPending: AugmentedError<ApiType>;
+      /**
+       * Could not find a property by the supplied key.
+       **/
+      RmrkPropertyIsNotFound: AugmentedError<ApiType>;
+      /**
+       * Too many symbols supplied as the property key. The maximum is [256](up_data_structs::MAX_PROPERTY_KEY_LENGTH).
+       **/
+      RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Too many bytes supplied as the property value. The maximum is [32768](up_data_structs::MAX_PROPERTY_VALUE_LENGTH).
+       **/
+      RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
+      /**
+       * Something went wrong when decoding encoded data from the storage.
+       * Perhaps, there was a wrong key supplied for the type, or the data was improperly stored.
+       **/
+      UnableToDecodeRmrkData: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    rmrkEquip: {
+      /**
+       * Base collection linked to this ID does not exist.
+       **/
+      BaseDoesntExist: AugmentedError<ApiType>;
+      /**
+       * No Theme named "default" is associated with the Base.
+       **/
+      NeedsDefaultThemeFirst: AugmentedError<ApiType>;
+      /**
+       * Could not find an ID for a Base collection. It is likely there were too many collections created on the chain, causing an overflow.
+       **/
+      NoAvailableBaseId: AugmentedError<ApiType>;
+      /**
+       * Could not find a suitable ID for a Part, likely too many Part tokens were created in the Base, causing an overflow
+       **/
+      NoAvailablePartId: AugmentedError<ApiType>;
+      /**
+       * Cannot assign equippables to a fixed Part.
+       **/
+      NoEquippableOnFixedPart: AugmentedError<ApiType>;
+      /**
+       * Part linked to this ID does not exist.
+       **/
+      PartDoesntExist: AugmentedError<ApiType>;
+      /**
+       * No permission to perform action.
+       **/
+      PermissionError: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     structure: {
       /**
        * While nesting, reached the breadth limit of nesting, exceeding the provided budget.
@@ -600,6 +750,14 @@ declare module '@polkadot/api-base/types/errors' {
        * and the new runtime.
        **/
       SpecVersionNeedsToIncrease: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    testUtils: {
+      TestPalletDisabled: AugmentedError<ApiType>;
+      TriggerRollback: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -672,10 +830,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
        **/
       CollectionDecimalPointLimitExceeded: AugmentedError<ApiType>;
-      /**
-       * This address is not set as sponsor, use setCollectionSponsor first.
-       **/
-      ConfirmUnsetSponsorFail: AugmentedError<ApiType>;
       /**
        * Length of items properties must be greater than 0.
        **/

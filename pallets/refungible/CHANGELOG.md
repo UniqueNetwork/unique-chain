@@ -2,12 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- bureaucrate goes here -->
+
+## [0.2.11] - 2022-12-16
+
+### Added
+
+- The function `tokenPropertyPermissions` and `setTokenPropertyPermissions` to `TokenProperties` interface.
+
+### Changed
+
+- Hide `setTokenPropertyPermission` function in `TokenProperties` interface.
+
+## [0.2.10] - 2022-12-01
+
+### Added
+
+- The functions `mintCross` to `ERC721UniqueExtensions` interface.
+
+## [0.2.9] - 2022-11-18
+
+### Added
+
+- The functions `description`, `crossOwnerOf`, `tokenProperties` to `ERC721UniqueExtensions` interface.
+
+## [0.2.8] - 2022-11-14
+
+### Changed
+
+- Added `transfer_cross` in eth functions.
+
+## [v0.2.7] - 2022-11-11
+
+### Changed
+
+- Added `delete_properties` in eth functions. The `delete_property` function is now deprecated.
+
+## [v0.2.6] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
+
+## [v0.2.5] - 2022-20-10
+
+### Change
+
+- Added `set_properties` method for `TokenProperties` interface.
+
 ## [v0.2.4] - 2022-08-24
 
 ### Change
- - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
 
-<!-- bureaucrate goes here -->
+- Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
+
 ## [v0.2.3] 2022-08-16
 
 ### Other changes

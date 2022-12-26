@@ -30,7 +30,7 @@ describe('Matcher contract usage', () => {
   before(async () => {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-    }); 
+    });
   });
 
   beforeEach(async () => {
@@ -46,26 +46,21 @@ describe('Matcher contract usage', () => {
   });
 
   itEth('With UNQ', async ({helper}) => {
-    const web3 = helper.getWeb3();
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
-      from: matcherOwner,
-      gas: helper.eth.DEFAULT_GAS,
-    });
-    const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${__dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${__dirname}/../api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
-    const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
+    const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
-    
+
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: alice.address});
     await collection.confirmSponsorship(alice);
     await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
-    const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
     await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
     await helpers.methods.toggleAllowed(matcher.options.address, aliceMirror, true).send({from: matcherOwner});
@@ -103,28 +98,23 @@ describe('Matcher contract usage', () => {
   });
 
   itEth('With escrow', async ({helper}) => {
-    const web3 = helper.getWeb3();
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
-      from: matcherOwner,
-      gas: helper.eth.DEFAULT_GAS,
-    });
-    const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments: [matcherOwner]}).send({from: matcherOwner, gas: 10000000});
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${__dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${__dirname}/../api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const escrow = await helper.eth.createAccountWithBalance(donor);
-    await matcher.methods.setEscrow(escrow).send({from: matcherOwner});
-    const helpers = helper.ethNativeContract.contractHelpers(matcherOwner);
+    await matcher.methods.setEscrow(escrow, true).send({from: matcherOwner});
+    const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
     await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
     await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
-    
+
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: alice.address});
     await collection.confirmSponsorship(alice);
     await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
-    const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
     await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
 
@@ -172,21 +162,16 @@ describe('Matcher contract usage', () => {
   });
 
   itEth('Sell tokens from substrate user via EVM contract', async ({helper}) => {
-    const web3 = helper.getWeb3();
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcherContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/MarketPlace.abi`)).toString()), undefined, {
-      from: matcherOwner,
-      gas: helper.eth.DEFAULT_GAS,
-    });
-    const matcher = await matcherContract.deploy({data: (await readFile(`${__dirname}/MarketPlace.bin`)).toString(), arguments:[matcherOwner]}).send({from: matcherOwner});
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${__dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${__dirname}/../api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
 
     await helper.eth.transferBalanceFromSubstrate(donor, matcher.options.address);
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}});
-    const evmCollection = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
 
     await helper.balance.transferToSubstrate(donor, seller.address, 100_000_000_000_000_000_000n);
-    
+
     const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
     // Token is owned by seller initially

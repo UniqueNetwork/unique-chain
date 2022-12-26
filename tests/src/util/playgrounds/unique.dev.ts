@@ -8,8 +8,11 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId} from './types';
+import {ICrossAccountId, IPovInfo, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {VoidFn} from '@polkadot/api/types';
+import {Pallets} from '..';
+import {spawnSync} from 'child_process';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -33,7 +36,7 @@ export class SilentConsole {
     this.consoleWarn = console.warn;
   }
 
-  enable() {  
+  enable() {
     const outFn = (printer: any) => (...args: any[]) => {
       for (const arg of args) {
         if (typeof arg !== 'string')
@@ -43,7 +46,7 @@ export class SilentConsole {
       }
       printer(...args);
     };
-  
+
     console.error = outFn(this.consoleErr.bind(console));
     console.log = outFn(this.consoleLog.bind(console));
     console.warn = outFn(this.consoleWarn.bind(console));
@@ -63,6 +66,7 @@ export class DevUniqueHelper extends UniqueHelper {
   arrange: ArrangeGroup;
   wait: WaitGroup;
   admin: AdminGroup;
+  testUtils: TestUtilGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
@@ -71,6 +75,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.arrange = new ArrangeGroup(this);
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
+    this.testUtils = new TestUtilGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -94,6 +99,7 @@ export class DevUniqueHelper extends UniqueHelper {
       rpc: {
         unique: defs.unique.rpc,
         appPromotion: defs.appPromotion.rpc,
+        povinfo: defs.povinfo.rpc,
         rmrk: defs.rmrk.rpc,
         eth: {
           feeHistory: {
@@ -111,10 +117,20 @@ export class DevUniqueHelper extends UniqueHelper {
     });
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
+    this.wsEndpoint = wsEndpoint;
   }
 }
 
-export class DevRelayHelper extends RelayHelper {}
+export class DevRelayHelper extends RelayHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevRelayHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
 
 export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;
@@ -127,12 +143,17 @@ export class DevWestmintHelper extends WestmintHelper {
   }
 }
 
+export class DevStatemineHelper extends DevWestmintHelper {}
+
+export class DevStatemintHelper extends DevWestmintHelper {}
+
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
+    options.notePreimagePallet = options.notePreimagePallet ?? 'democracy';
 
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
@@ -140,7 +161,12 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
   }
 }
 
-export class DevMoonriverHelper extends DevMoonbeamHelper {}
+export class DevMoonriverHelper extends DevMoonbeamHelper {
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
+    super(logger, options);
+  }
+}
 
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
@@ -158,16 +184,18 @@ export class DevKaruraHelper extends DevAcalaHelper {}
 class ArrangeGroup {
   helper: DevUniqueHelper;
 
+  scheduledIdSlider = 0;
+
   constructor(helper: DevUniqueHelper) {
     this.helper = helper;
   }
 
   /**
-   * Generates accounts with the specified UNQ token balance 
+   * Generates accounts with the specified UNQ token balance
    * @param balances balances for generated accounts. Each balance will be multiplied by the token nominal.
    * @param donor donor account for balances
    * @returns array of newly created accounts
-   * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor); 
+   * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor);
    */
   createAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
@@ -187,7 +215,7 @@ class ArrangeGroup {
     }
 
     await Promise.all(transactions).catch(_e => {});
-    
+
     //#region TODO remove this region, when nonce problem will be solved
     const checkBalances = async () => {
       let isSuccess = true;
@@ -217,7 +245,7 @@ class ArrangeGroup {
   };
 
   // TODO combine this method and createAccounts into one
-  createCrowd = async (accountsToCreate: number, withBalance: bigint, donor: IKeyringPair): Promise<IKeyringPair[]> => {  
+  createCrowd = async (accountsToCreate: number, withBalance: bigint, donor: IKeyringPair): Promise<IKeyringPair[]> => {
     const createAsManyAsCan = async () => {
       let transactions: any = [];
       const accounts: IKeyringPair[] = [];
@@ -225,9 +253,9 @@ class ArrangeGroup {
       const tokenNominal = this.helper.balance.getOneTokenNominal();
       for (let i = 0; i < accountsToCreate; i++) {
         if (i === 500) { // if there are too many accounts to create
-          await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled 
+          await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled
           transactions = []; //
-          nonce = await this.helper.chain.getNonce(donor.address); // update nonce 
+          nonce = await this.helper.chain.getNonce(donor.address); // update nonce
         }
         const recepient = this.helper.util.fromSeed(mnemonicGenerate());
         accounts.push(recepient);
@@ -237,7 +265,7 @@ class ArrangeGroup {
           nonce++;
         }
       }
-      
+
       const fullfilledAccounts = [];
       await Promise.allSettled(transactions);
       for (const account of accounts) {
@@ -249,7 +277,7 @@ class ArrangeGroup {
       return fullfilledAccounts;
     };
 
-    
+
     const crowd: IKeyringPair[] = [];
     // do up to 5 retries
     for (let index = 0; index < 5 && accountsToCreate !== 0; index++) {
@@ -266,7 +294,7 @@ class ArrangeGroup {
   isDevNode = async () => {
     let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     if (blockNumber == 0) {
-      await this.helper.wait.newBlocks(1); 
+      await this.helper.wait.newBlocks(1);
       blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     }
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
@@ -285,21 +313,84 @@ class ArrangeGroup {
     const block2date = await findCreationDate(block2);
     if(block2date! - block1date! < 9000) return true;
   };
-  
+
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
     const address = payer.Substrate ? payer.Substrate : await this.helper.address.ethToSubstrate(payer.Ethereum!);
-    let balance = await this.helper.balance.getSubstrate(address); 
-    
+    let balance = await this.helper.balance.getSubstrate(address);
+
     await promise();
-    
+
     balance -= await this.helper.balance.getSubstrate(address);
-    
+
     return balance;
+  }
+
+  async calculatePoVInfo(txs: any[]): Promise<IPovInfo> {
+    const rawPovInfo = await this.helper.callRpc('api.rpc.povinfo.estimateExtrinsicPoV', [txs]);
+
+    const kvJson: {[key: string]: string} = {};
+
+    for (const kv of rawPovInfo.keyValues) {
+      kvJson[kv.key.toHex()] = kv.value.toHex();
+    }
+
+    const kvStr = JSON.stringify(kvJson);
+
+    const chainql = spawnSync(
+      'chainql', 
+      [
+        `--tla-code=data=${kvStr}`,
+        '-e', `function(data) cql.dump(cql.chain("${this.helper.getEndpoint()}").latest._meta, data, {omit_empty:true})`,
+      ],
+    );
+
+    if (!chainql.stdout) {
+      throw Error('unable to get an output from the `chainql`');
+    }
+
+    return {
+      proofSize: rawPovInfo.proofSize.toNumber(),
+      compactProofSize: rawPovInfo.compactProofSize.toNumber(),
+      compressedProofSize: rawPovInfo.compressedProofSize.toNumber(),
+      results: rawPovInfo.results,
+      kv: JSON.parse(chainql.stdout.toString()),
+    };
   }
 
   calculatePalletAddress(palletId: any) {
     const address = stringToU8a(('modl' + palletId).padEnd(32, '\0'));
     return encodeAddress(address, this.helper.chain.getChainProperties().ss58Format);
+  }
+
+  makeScheduledIds(num: number): string[] {
+    function makeId(slider: number) {
+      const scheduledIdSize = 64;
+      const hexId = slider.toString(16);
+      const prefixSize = scheduledIdSize - hexId.length;
+
+      const scheduledId = '0x' + '0'.repeat(prefixSize) + hexId;
+
+      return scheduledId;
+    }
+
+    const ids = [];
+    for (let i = 0; i < num; i++) {
+      ids.push(makeId(this.scheduledIdSlider));
+      this.scheduledIdSlider += 1;
+    }
+
+    return ids;
+  }
+
+  makeScheduledId(): string {
+    return (this.makeScheduledIds(1))[0];
+  }
+
+  async captureEvents(eventSection: string, eventMethod: string): Promise<EventCapture> {
+    const capture = new EventCapture(this.helper, eventSection, eventMethod);
+    await capture.startCapture();
+
+    return capture;
   }
 }
 
@@ -368,7 +459,7 @@ class WaitGroup {
   /**
    * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
-   * @returns 
+   * @returns
    */
   async newBlocks(blocksCount = 1, timeout?: number): Promise<void> {
     timeout = timeout ?? blocksCount * 60_000;
@@ -387,7 +478,7 @@ class WaitGroup {
     return promise;
   }
 
-  async forParachainBlockNumber(blockNumber: bigint, timeout?: number) {
+  async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
@@ -401,8 +492,8 @@ class WaitGroup {
     await this.waitWithTimeout(promise, timeout);
     return promise;
   }
-  
-  async forRelayBlockNumber(blockNumber: bigint, timeout?: number) {
+
+  async forRelayBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
@@ -418,6 +509,24 @@ class WaitGroup {
     return promise;
   }
 
+  noScheduledTasks() {
+    const api = this.helper.getApi();
+
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<void>(async resolve => {
+      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
+        const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
+
+        if(areThereScheduledTasks.length == 0) {
+          unsubscribe();
+          resolve();
+        }
+      });
+    });
+
+    return promise;
+  }
+
   event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<EventRecord | null>(async (resolve) => {
@@ -426,16 +535,16 @@ class WaitGroup {
         const blockHash = header.hash;
         const eventIdStr = `${eventSection}.${eventMethod}`;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
-  
+
         this.helper.logger.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
-  
+
         const apiAt = await this.helper.getApi().at(blockHash);
         const eventRecords = (await apiAt.query.system.events()) as any;
-  
+
         const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
           return r.event.section == eventSection && r.event.method == eventMethod;
         });
-  
+
         if (neededEvent) {
           unsubscribe();
           resolve(neededEvent);
@@ -443,13 +552,96 @@ class WaitGroup {
           maxBlocksToWait--;
         } else {
           this.helper.logger.log(`Event \`${eventIdStr}\` is NOT found`);
-  
           unsubscribe();
           resolve(null);
         }
       });
     });
     return promise;
+  }
+}
+
+class TestUtilGroup {
+  helper: DevUniqueHelper;
+
+  constructor(helper: DevUniqueHelper) {
+    this.helper = helper;
+  }
+
+  async enable() {
+    if (this.helper.fetchMissingPalletNames([Pallets.TestUtils]).length != 0) {
+      return;
+    }
+
+    const signer = this.helper.util.fromSeed('//Alice');
+    await this.helper.getSudo<DevUniqueHelper>().executeExtrinsic(signer, 'api.tx.testUtils.enable', [], true);
+  }
+
+  async setTestValue(signer: TSigner, testVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValue', [testVal], true);
+  }
+
+  async incTestValue(signer: TSigner) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.incTestValue', [], true);
+  }
+
+  async setTestValueAndRollback(signer: TSigner, testVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
+  }
+
+  async testValue(blockIdx?: number) {
+    const api = blockIdx
+      ? await this.helper.getApi().at(await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockIdx]))
+      : this.helper.getApi();
+
+    return (await api.query.testUtils.testValue()).toJSON();
+  }
+
+  async justTakeFee(signer: TSigner) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.justTakeFee', [], true);
+  }
+
+  async selfCancelingInc(signer: TSigner, scheduledId: string, maxTestVal: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.selfCancelingInc', [scheduledId, maxTestVal], true);
+  }
+}
+
+class EventCapture {
+  helper: DevUniqueHelper;
+  eventSection: string;
+  eventMethod: string;
+  events: EventRecord[] = [];
+  unsubscribe: VoidFn | null = null;
+
+  constructor(
+    helper: DevUniqueHelper,
+    eventSection: string,
+    eventMethod: string,
+  ) {
+    this.helper = helper;
+    this.eventSection = eventSection;
+    this.eventMethod = eventMethod;
+  }
+
+  async startCapture() {
+    this.stopCapture();
+    this.unsubscribe = (await this.helper.getApi().query.system.events((eventRecords: FrameSystemEventRecord[]) => {
+      const newEvents = eventRecords.filter(r => {
+        return r.event.section == this.eventSection && r.event.method == this.eventMethod;
+      });
+
+      this.events.push(...newEvents);
+    })) as any;
+  }
+
+  stopCapture() {
+    if (this.unsubscribe !== null) {
+      this.unsubscribe();
+    }
+  }
+
+  extractCapturedEvents() {
+    return this.events;
   }
 }
 

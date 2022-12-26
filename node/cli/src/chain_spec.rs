@@ -54,17 +54,6 @@ pub type DefaultChainSpec = QuartzChainSpec;
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 pub type DefaultChainSpec = OpalChainSpec;
 
-pub enum RuntimeId {
-	#[cfg(feature = "unique-runtime")]
-	Unique,
-
-	#[cfg(feature = "quartz-runtime")]
-	Quartz,
-
-	Opal,
-	Unknown(String),
-}
-
 #[cfg(not(feature = "unique-runtime"))]
 /// PARA_ID for Opal/Sapphire/Quartz
 const PARA_ID: u32 = 2095;
