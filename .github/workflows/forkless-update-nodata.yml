@@ -34,9 +34,10 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
             network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
             network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
+            network {sapphire}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}
 
 
   forkless-update-nodata:
