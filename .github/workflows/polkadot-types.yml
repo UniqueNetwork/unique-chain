@@ -29,7 +29,7 @@ jobs:
     strategy:
       matrix:
         include:
-          - network: sapphire
+          - network: "sapphire"
             usage: ""
           - network: "opal"
             usage: ""
@@ -70,8 +70,8 @@ jobs:
         with:
           node-version: 16
 
-      - name: Install jq
-        run: sudo apt install jq -y
+      # - name: Install jq
+      #   run: sudo apt install jq -y
 
       - name: Run generate_types_package script
         working-directory: tests
