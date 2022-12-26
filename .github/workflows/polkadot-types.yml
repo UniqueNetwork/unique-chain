@@ -30,7 +30,7 @@ jobs:
       matrix:
         include:
           - network: sapphire
-            usage: "--sapphire"
+            usage: ""
           - network: "opal"
             usage: ""
           - network: "quartz"
