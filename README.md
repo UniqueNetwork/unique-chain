@@ -46,17 +46,17 @@ curl https://sh.rustup.rs -sSf | sh
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install toolchain nightly-2022-07-24 and make it default:
+3. Install toolchain nightly-2022-10-09 and make it default:
 
 ```bash
-rustup toolchain install nightly-2022-07-24
-rustup default nightly-2022-07-24
+rustup toolchain install nightly-2022-10-09
+rustup default nightly-2022-10-09
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2022-07-24
+rustup target add wasm32-unknown-unknown --toolchain nightly-2022-10-09
 ```
 
 5. Build:
@@ -82,7 +82,7 @@ Note: checkout this project and all related projects (see below) in the sibling 
 
 ```
 git clone https://github.com/UniqueNetwork/polkadot-launch.git
-git checkout feature/runtime-upgrade-testing
+git checkout unique-network
 ```
 
 ### Build relay
@@ -90,7 +90,7 @@ git checkout feature/runtime-upgrade-testing
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.30
+git checkout release-v0.9.36
 cargo build --release
 ```
 

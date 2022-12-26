@@ -29,6 +29,14 @@ pub mod opaque {
 
 	pub use super::{BlockNumber, Signature, AccountId, Balance, Index, Hash, AuraId};
 
+	#[derive(Debug, Clone)]
+	pub enum RuntimeId {
+		Unique,
+		Quartz,
+		Opal,
+		Unknown(sp_std::vec::Vec<u8>),
+	}
+
 	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 

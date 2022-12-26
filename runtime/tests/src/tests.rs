@@ -294,7 +294,6 @@ fn create_refungible_item() {
 
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
-		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
 		let balance =
 			<pallet_refungible::Balance<Test>>::get((collection_id, TokenId(1), account(1)));
 		assert_eq!(balance, 1023);
@@ -325,12 +324,11 @@ fn create_multiple_refungible_items() {
 				.collect()
 		));
 		for (index, data) in items_data.into_iter().enumerate() {
-			let item = <pallet_refungible::TokenData<Test>>::get((
+			let balance = <pallet_refungible::Balance<Test>>::get((
 				CollectionId(1),
 				TokenId((index + 1) as u32),
+				account(1),
 			));
-			let balance =
-				<pallet_refungible::Balance<Test>>::get((CollectionId(1), TokenId(1), account(1)));
 			assert_eq!(balance, 1023);
 		}
 	});
@@ -442,7 +440,6 @@ fn transfer_refungible_item() {
 		// Create RFT 1 in 1023 pieces for account 1
 		let data = default_re_fungible_data();
 		create_test_item(collection_id, &data.clone().into());
-		let item = <pallet_refungible::TokenData<Test>>::get((collection_id, TokenId(1)));
 		assert_eq!(
 			<pallet_refungible::AccountBalance<Test>>::get((collection_id, account(1))),
 			1

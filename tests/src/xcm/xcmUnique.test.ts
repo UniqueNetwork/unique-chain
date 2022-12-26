@@ -17,20 +17,429 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
-import {XcmV2TraitsError, XcmV2TraitsOutcome} from '../interfaces';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds} from '../util';
+import {XcmV2TraitsError} from '../interfaces';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds} from '../util';
 
 const UNIQUE_CHAIN = 2037;
+const STATEMINT_CHAIN = 1000;
 const ACALA_CHAIN = 2000;
 const MOONBEAM_CHAIN = 2004;
 
+const STATEMINT_PALLET_INSTANCE = 50;
+
 const relayUrl = config.relayUrl;
+const statemintUrl = config.statemintUrl;
 const acalaUrl = config.acalaUrl;
 const moonbeamUrl = config.moonbeamUrl;
 
+const RELAY_DECIMALS = 12;
+const STATEMINT_DECIMALS = 12;
 const ACALA_DECIMALS = 12;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
+
+const FUNDING_AMOUNT = 3_500_000_0000_000_000n;
+
+const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
+
+const USDT_ASSET_ID = 100;
+const USDT_ASSET_METADATA_DECIMALS = 18;
+const USDT_ASSET_METADATA_NAME = 'USDT';
+const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
+const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
+const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
+
+describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+
+  let balanceStmnBefore: bigint;
+  let balanceStmnAfter: bigint;
+
+  let balanceUniqueBefore: bigint;
+  let balanceUniqueAfter: bigint;
+  let balanceUniqueFinal: bigint;
+
+  let balanceBobBefore: bigint;
+  let balanceBobAfter: bigint;
+  let balanceBobFinal: bigint;
+
+  let balanceBobRelayTokenBefore: bigint;
+  let balanceBobRelayTokenAfter: bigint;
+
+
+  before(async () => {
+    await usingPlaygrounds(async (_helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      bob = await privateKey('//Bob'); // sovereign account on Statemint funds donor
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      // Fund accounts on Statemint
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT);
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT);
+    });
+
+    await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
+      const sovereignFundingAmount = 3_500_000_000n;
+
+      await helper.assets.create(
+        alice,
+        USDT_ASSET_ID,
+        alice.address,
+        USDT_ASSET_METADATA_MINIMAL_BALANCE,
+      );
+      await helper.assets.setMetadata(
+        alice,
+        USDT_ASSET_ID,
+        USDT_ASSET_METADATA_NAME,
+        USDT_ASSET_METADATA_DESCRIPTION,
+        USDT_ASSET_METADATA_DECIMALS,
+      );
+      await helper.assets.mint(
+        alice,
+        USDT_ASSET_ID,
+        alice.address,
+        USDT_ASSET_AMOUNT,
+      );
+
+      // funding parachain sovereing account on Statemint.
+      // The sovereign account should be created before any action
+      // (the assets pallet on Statemint check if the sovereign account exists)
+      const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(UNIQUE_CHAIN);
+      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, sovereignFundingAmount);
+    });
+
+
+    await usingPlaygrounds(async (helper) => {
+      const location = {
+        V1: {
+          parents: 1,
+          interior: {X3: [
+            {
+              Parachain: STATEMINT_CHAIN,
+            },
+            {
+              PalletInstance: STATEMINT_PALLET_INSTANCE,
+            },
+            {
+              GeneralIndex: USDT_ASSET_ID,
+            },
+          ]},
+        },
+      };
+
+      const metadata =
+      {
+        name: USDT_ASSET_ID,
+        symbol: USDT_ASSET_METADATA_NAME,
+        decimals: USDT_ASSET_METADATA_DECIMALS,
+        minimalBalance: USDT_ASSET_METADATA_MINIMAL_BALANCE,
+      };
+      await helper.getSudo().foreignAssets.register(alice, alice.address, location, metadata);
+      balanceUniqueBefore = await helper.balance.getSubstrate(alice.address);
+    });
+
+
+    // Providing the relay currency to the unique sender account
+    // (fee for USDT XCM are paid in relay tokens)
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: 'Here',
+              },
+            },
+            fun: {
+              Fungible: TRANSFER_AMOUNT_RELAY,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+
+      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+    });
+
+  });
+
+  itSub('Should connect and send USDT from Statemint to Unique', async ({helper}) => {
+    await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
+      const dest = {
+        V1: {
+          parents: 1,
+          interior: {X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: {
+                  X2: [
+                    {
+                      PalletInstance: STATEMINT_PALLET_INSTANCE,
+                    },
+                    {
+                      GeneralIndex: USDT_ASSET_ID,
+                    },
+                  ]},
+              },
+            },
+            fun: {
+              Fungible: TRANSFER_AMOUNT,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+
+      balanceStmnBefore = await helper.balance.getSubstrate(alice.address);
+      await helper.xcm.limitedReserveTransferAssets(alice, dest, beneficiary, assets, feeAssetItem, 'Unlimited');
+
+      balanceStmnAfter = await helper.balance.getSubstrate(alice.address);
+
+      // common good parachain take commission in it native token
+      console.log(
+        '[Statemint -> Unique] transaction fees on Statemint: %s WND',
+        helper.util.bigIntToDecimals(balanceStmnBefore - balanceStmnAfter, STATEMINT_DECIMALS),
+      );
+      expect(balanceStmnBefore > balanceStmnAfter).to.be.true;
+
+    });
+
+
+    // ensure that asset has been delivered
+    await helper.wait.newBlocks(3);
+
+    // expext collection id will be with id 1
+    const free = await helper.ft.getBalance(1, {Substrate: alice.address});
+
+    balanceUniqueAfter = await helper.balance.getSubstrate(alice.address);
+
+    console.log(
+      '[Statemint -> Unique] transaction fees on Unique: %s USDT',
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, USDT_ASSET_METADATA_DECIMALS),
+    );
+    console.log(
+      '[Statemint -> Unique] transaction fees on Unique: %s UNQ',
+      helper.util.bigIntToDecimals(balanceUniqueAfter - balanceUniqueBefore),
+    );
+    // commission has not paid in USDT token
+    expect(free).to.be.equal(TRANSFER_AMOUNT);
+    // ... and parachain native token
+    expect(balanceUniqueAfter == balanceUniqueBefore).to.be.true;
+  });
+
+  itSub('Should connect and send USDT from Unique to Statemint back', async ({helper}) => {
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {X2: [
+          {
+            Parachain: STATEMINT_CHAIN,
+          },
+          {
+            AccountId32: {
+              network: 'Any',
+              id: alice.addressRaw,
+            },
+          },
+        ]},
+      },
+    };
+
+    const relayFee = 400_000_000_000_000n;
+    const currencies: [any, bigint][] = [
+      [
+        {
+          ForeignAssetId: 0,
+        },
+        TRANSFER_AMOUNT,
+      ],
+      [
+        {
+          NativeAssetId: 'Parent',
+        },
+        relayFee,
+      ],
+    ];
+
+    const feeItem = 1;
+
+    await helper.xTokens.transferMulticurrencies(alice, currencies, feeItem, destination, 'Unlimited');
+
+    // the commission has been paid in parachain native token
+    balanceUniqueFinal = await helper.balance.getSubstrate(alice.address);
+    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueFinal - balanceUniqueAfter));
+    expect(balanceUniqueAfter > balanceUniqueFinal).to.be.true;
+
+    await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
+      await helper.wait.newBlocks(3);
+
+      // The USDT token never paid fees. Its amount not changed from begin value.
+      // Also check that xcm transfer has been succeeded
+      expect((await helper.assets.account(USDT_ASSET_ID, alice.address))! == USDT_ASSET_AMOUNT).to.be.true;
+    });
+  });
+
+  itSub('Should connect and send Relay token to Unique', async ({helper}) => {
+    balanceBobBefore = await helper.balance.getSubstrate(bob.address);
+    balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+          },
+        }};
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {X1: {
+            AccountId32: {
+              network: 'Any',
+              id: bob.addressRaw,
+            },
+          }},
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 0,
+                interior: 'Here',
+              },
+            },
+            fun: {
+              Fungible: TRANSFER_AMOUNT_RELAY,
+            },
+          },
+        ],
+      };
+
+      const feeAssetItem = 0;
+
+      await helper.xcm.limitedReserveTransferAssets(bob, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+    });
+
+    await helper.wait.newBlocks(3);
+
+    balanceBobAfter = await helper.balance.getSubstrate(bob.address);
+    balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+
+    const wndFeeOnUnique = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
+    const wndDiffOnUnique = balanceBobRelayTokenAfter - balanceBobRelayTokenBefore;
+    console.log(
+      '[Relay (Westend) -> Unique] transaction fees: %s UNQ',
+      helper.util.bigIntToDecimals(balanceBobAfter - balanceBobBefore),
+    );
+    console.log(
+      '[Relay (Westend) -> Unique] transaction fees: %s WND',
+      helper.util.bigIntToDecimals(wndFeeOnUnique, STATEMINT_DECIMALS),
+    );
+    console.log('[Relay (Westend) -> Unique] actually delivered: %s WND', wndDiffOnUnique);
+    expect(wndFeeOnUnique == 0n, 'No incoming WND fees should be taken').to.be.true;
+    expect(balanceBobBefore == balanceBobAfter, 'No incoming UNQ fees should be taken').to.be.true;
+  });
+
+  itSub('Should connect and send Relay token back', async ({helper}) => {
+    let relayTokenBalanceBefore: bigint;
+    let relayTokenBalanceAfter: bigint;
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      relayTokenBalanceBefore = await helper.balance.getSubstrate(bob.address);
+    });
+
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1:{
+            AccountId32: {
+              network: 'Any',
+              id: bob.addressRaw,
+            },
+          },
+        },
+      },
+    };
+
+    const currencies: any = [
+      [
+        {
+          NativeAssetId: 'Parent',
+        },
+        TRANSFER_AMOUNT_RELAY,
+      ],
+    ];
+
+    const feeItem = 0;
+
+    await helper.xTokens.transferMulticurrencies(bob, currencies, feeItem, destination, 'Unlimited');
+
+    balanceBobFinal = await helper.balance.getSubstrate(bob.address);
+    console.log('[Unique -> Relay (Westend)] transaction fees: %s UNQ',  helper.util.bigIntToDecimals(balanceBobAfter - balanceBobFinal));
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.wait.newBlocks(10);
+      relayTokenBalanceAfter = await helper.balance.getSubstrate(bob.address);
+
+      const diff = relayTokenBalanceAfter - relayTokenBalanceBefore;
+      console.log('[Unique -> Relay (Westend)] actually delivered: %s WND', helper.util.bigIntToDecimals(diff, RELAY_DECIMALS));
+      expect(diff > 0, 'Relay tokens was not delivered back').to.be.true;
+    });
+  });
+});
 
 describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
@@ -124,15 +533,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     };
 
     const feeAssetItem = 0;
-    const weightLimit = 5000000000;
 
-    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, weightLimit);
-
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     const unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
     console.log('[Unique -> Acala] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(unqFees));
-    expect(unqFees > 0n).to.be.true;
+    expect(unqFees > 0n, 'Negative fees UNQ, looks like nothing was transferred').to.be.true;
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.wait.newBlocks(3);
@@ -176,10 +583,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
         ForeignAsset: 0,
       };
 
-      const destWeight = 50000000;
-
-      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, destWeight);
-
+      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, 'Unlimited');
       balanceAcalaTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceUniqueForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -192,7 +596,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       );
       console.log('[Acala -> Unique] outcome %s UNQ', helper.util.bigIntToDecimals(unqOutcomeTransfer));
 
-      expect(acaFees > 0).to.be.true;
+      expect(acaFees > 0, 'Negative fees ACA, looks like nothing was transferred').to.be.true;
       expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
     });
 
@@ -220,75 +624,6 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     });
   });
 
-  itSub('Unique rejects tokens from the Relay', async ({helper}) => {
-    await usingRelayPlaygrounds(relayUrl, async (helper) => {
-      const destination = {
-        V1: {
-          parents: 0,
-          interior: {X1: {
-            Parachain: UNIQUE_CHAIN,
-          },
-          },
-        }};
-
-      const beneficiary = {
-        V1: {
-          parents: 0,
-          interior: {X1: {
-            AccountId32: {
-              network: 'Any',
-              id: alice.addressRaw,
-            },
-          }},
-        },
-      };
-
-      const assets = {
-        V1: [
-          {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: 'Here',
-              },
-            },
-            fun: {
-              Fungible: 50_000_000_000_000_000n,
-            },
-          },
-        ],
-      };
-
-      const feeAssetItem = 0;
-      const weightLimit = 5_000_000_000;
-
-      await helper.xcm.limitedReserveTransferAssets(alice, destination, beneficiary, assets, feeAssetItem, weightLimit);
-    });
-
-    const maxWaitBlocks = 3;
-
-    const dmpQueueExecutedDownward = await helper.wait.event(maxWaitBlocks, 'dmpQueue', 'ExecutedDownward');
-
-    expect(
-      dmpQueueExecutedDownward != null,
-      '[Relay] dmpQueue.ExecutedDownward event is expected',
-    ).to.be.true;
-
-    const event = dmpQueueExecutedDownward!.event;
-    const outcome = event.data[1] as XcmV2TraitsOutcome;
-
-    expect(
-      outcome.isIncomplete,
-      '[Relay] The outcome of the XCM should be `Incomplete`',
-    ).to.be.true;
-
-    const incomplete = outcome.asIncomplete;
-    expect(
-      incomplete[1].toString() == 'AssetNotFound',
-      '[Relay] The XCM error should be `AssetNotFound`',
-    ).to.be.true;
-  });
-
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
@@ -312,9 +647,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         Token: 'ACA',
       };
 
-      const destWeight = 50000000;
-
-      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, destWeight);
+      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, 'Unlimited');
     });
 
     const maxWaitBlocks = 3;
@@ -330,8 +663,8 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     const outcome = event.data[1] as XcmV2TraitsError;
 
     expect(
-      outcome.isUntrustedReserveLocation,
-      '[Acala] The XCM error should be `UntrustedReserveLocation`',
+      outcome.isFailedToTransactAsset,
+      '[Acala] The XCM error should be `FailedToTransactAsset`',
     ).to.be.true;
   });
 });
@@ -508,16 +841,15 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       },
     };
     const amount = TRANSFER_AMOUNT;
-    const destWeight = 850000000;
 
-    await helper.xTokens.transfer(randomAccountUnique, currencyId, amount, dest, destWeight);
+    await helper.xTokens.transfer(randomAccountUnique, currencyId, amount, dest, 'Unlimited');
 
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccountUnique.address);
     expect(balanceUniqueTokenMiddle < balanceUniqueTokenInit).to.be.true;
 
     const transactionFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
     console.log('[Unique -> Moonbeam] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(transactionFees));
-    expect(transactionFees > 0).to.be.true;
+    expect(transactionFees > 0, 'Negative fees UNQ, looks like nothing was transferred').to.be.true;
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       await helper.wait.newBlocks(3);
@@ -572,12 +904,12 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
       const glmrFees = balanceGlmrTokenMiddle - balanceGlmrTokenFinal;
       console.log('[Moonbeam -> Unique] transaction fees on Moonbeam: %s GLMR', helper.util.bigIntToDecimals(glmrFees));
-      expect(glmrFees > 0).to.be.true;
+      expect(glmrFees > 0, 'Negative fees GLMR, looks like nothing was transferred').to.be.true;
 
       const unqRandomAccountAsset = await helper.assets.account(assetId, randomAccountMoonbeam.address);
 
       expect(unqRandomAccountAsset).to.be.null;
-      
+
       balanceForeignUnqTokenFinal = 0n;
 
       const unqOutcomeTransfer = balanceForeignUnqTokenMiddle - balanceForeignUnqTokenFinal;

@@ -44,7 +44,7 @@ pub mod pallet {
 	}
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm::account::Config {
+	pub trait Config: frame_system::Config + pallet_evm::Config {
 		/// Loosly-coupled handlers for evm call sponsoring
 		type EvmSponsorshipHandler: SponsorshipHandler<Self::CrossAccountId, CallContext>;
 	}

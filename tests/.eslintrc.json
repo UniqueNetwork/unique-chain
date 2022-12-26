@@ -10,13 +10,17 @@
     "parser": "@typescript-eslint/parser",
     "parserOptions": {
         "ecmaVersion": 11,
-        "sourceType": "module"
+        "sourceType": "module",
+        "project": "**/tsconfig.json"
     },
     "plugins": [
         "@typescript-eslint",
         "mocha"
     ],
     "rules": {
+        "@typescript-eslint/no-floating-promises": [
+            "error"
+        ],
         "indent": [
             "error",
             2,
@@ -24,6 +28,7 @@
                 "SwitchCase": 1
             }
         ],
+        "no-trailing-spaces": "warn",
         "function-call-argument-newline": [
             "error",
             "consistent"

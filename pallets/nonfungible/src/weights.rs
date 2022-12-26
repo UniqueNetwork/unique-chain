@@ -26,6 +26,7 @@
 #![cfg_attr(rustfmt, rustfmt_skip)]
 #![allow(unused_parens)]
 #![allow(unused_imports)]
+#![allow(missing_docs)]
 #![allow(clippy::unnecessary_cast)]
 
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
@@ -47,6 +48,8 @@ pub trait WeightInfo {
 	fn set_token_properties(b: u32, ) -> Weight;
 	fn delete_token_properties(b: u32, ) -> Weight;
 	fn token_owner() -> Weight;
+	fn set_allowance_for_all() -> Weight;
+	fn allowance_for_all() -> Weight;
 	fn repair_item() -> Weight;
 }
 
@@ -194,6 +197,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenData (r:1 w:0)
 	fn token_owner() -> Weight {
 		Weight::from_ref_time(4_366_000)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+	}
+	// Storage: Nonfungible WalletOperator (r:0 w:1)
+	fn set_allowance_for_all() -> Weight {
+		Weight::from_ref_time(16_231_000 as u64)
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
+	// Storage: Nonfungible WalletOperator (r:1 w:0)
+	fn allowance_for_all() -> Weight {
+		Weight::from_ref_time(6_161_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
@@ -347,6 +360,16 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenData (r:1 w:0)
 	fn token_owner() -> Weight {
 		Weight::from_ref_time(4_366_000)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+	}
+	// Storage: Nonfungible WalletOperator (r:0 w:1)
+	fn set_allowance_for_all() -> Weight {
+		Weight::from_ref_time(16_231_000 as u64)
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Nonfungible WalletOperator (r:1 w:0)
+	fn allowance_for_all() -> Weight {
+		Weight::from_ref_time(6_161_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	// Storage: Nonfungible TokenProperties (r:1 w:1)

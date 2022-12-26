@@ -1,5 +1,3 @@
-cargo-features = ["workspace-inheritance"]
-
 [workspace]
 resolver = "2"
 members = [
@@ -13,26 +11,28 @@ members = [
     'runtime/unique',
     'runtime/tests',
 ]
-default-members = ['node/*', 'runtime/opal']
+default-members = ['node/*', 'client/*', 'runtime/opal']
+package.version = "0.9.36"
+
 [profile.release]
 panic = 'unwind'
 
 [workspace.dependencies.orml-vesting]
 git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "polkadot-v0.9.30"
+branch = "feature/polkadot-v0.9.36"
 default-features = false
 
 [workspace.dependencies.orml-xtokens]
 git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "polkadot-v0.9.30"
+branch = "feature/polkadot-v0.9.36"
 default-features = false
 
 [workspace.dependencies.orml-tokens]
 git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "polkadot-v0.9.30"
+branch = "feature/polkadot-v0.9.36"
 default-features = false
 
 [workspace.dependencies.orml-traits]
 git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "polkadot-v0.9.30"
+branch = "feature/polkadot-v0.9.36"
 default-features = false

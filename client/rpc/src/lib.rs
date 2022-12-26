@@ -42,6 +42,9 @@ use up_data_structs::{
 pub use app_promotion_unique_rpc::AppPromotionApiServer;
 pub use rmrk_unique_rpc::RmrkApiServer;
 
+#[cfg(feature = "pov-estimate")]
+pub mod pov_estimate;
+
 #[rpc(server)]
 #[async_trait]
 pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
@@ -246,6 +249,16 @@ pub trait UniqueApi<BlockHash, CrossAccountId, AccountId> {
 		token_id: TokenId,
 		at: Option<BlockHash>,
 	) -> Result<Option<String>>;
+
+	/// Get whether an operator is approved by a given owner.
+	#[method(name = "unique_allowanceForAll")]
+	fn allowance_for_all(
+		&self,
+		collection: CollectionId,
+		owner: CrossAccountId,
+		operator: CrossAccountId,
+		at: Option<BlockHash>,
+	) -> Result<bool>;
 }
 
 mod app_promotion_unique_rpc {
@@ -410,17 +423,18 @@ mod rmrk_unique_rpc {
 	}
 }
 
+#[macro_export]
 macro_rules! define_struct_for_server_api {
-	($name:ident) => {
-		pub struct $name<C, P> {
-			client: Arc<C>,
-			_marker: std::marker::PhantomData<P>,
+	($name:ident { $($arg:ident: $arg_ty:ty),+ $(,)? }) => {
+		pub struct $name<Client, Block: BlockT> {
+			$($arg: $arg_ty),+,
+			_marker: std::marker::PhantomData<Block>,
 		}
 
-		impl<C, P> $name<C, P> {
-			pub fn new(client: Arc<C>) -> Self {
+		impl<Client, Block: BlockT> $name<Client, Block> {
+			pub fn new($($arg: $arg_ty),+) -> Self {
 				Self {
-					client,
+					$($arg),+,
 					_marker: Default::default(),
 				}
 			}
@@ -428,9 +442,23 @@ macro_rules! define_struct_for_server_api {
 	};
 }
 
-define_struct_for_server_api!(Unique);
-define_struct_for_server_api!(AppPromotion);
-define_struct_for_server_api!(Rmrk);
+define_struct_for_server_api! {
+	Unique {
+		client: Arc<Client>
+	}
+}
+
+define_struct_for_server_api! {
+	AppPromotion {
+		client: Arc<Client>
+	}
+}
+
+define_struct_for_server_api! {
+	Rmrk {
+		client: Arc<Client>
+	}
+}
 
 macro_rules! pass_method {
 	(
@@ -569,6 +597,7 @@ where
 	pass_method!(effective_collection_limits(collection_id: CollectionId) -> Option<CollectionLimits>, unique_api);
 	pass_method!(total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<String> => |o| o.map(|number| number.to_string()) , unique_api);
 	pass_method!(token_owners(collection: CollectionId, token: TokenId) -> Vec<CrossAccountId>, unique_api);
+	pass_method!(allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> bool, unique_api);
 }
 
 impl<C, Block, BlockNumber, CrossAccountId, AccountId>

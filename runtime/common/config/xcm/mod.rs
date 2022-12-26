@@ -186,6 +186,9 @@ impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> 
 			TransferReserveAsset { dest: dst, .. } => {
 				allowed |= allowed_locations.contains(dst);
 			}
+			InitiateReserveWithdraw { reserve: dst, .. } => {
+				allowed |= allowed_locations.contains(dst);
+			}
 			_ => {}
 		});
 

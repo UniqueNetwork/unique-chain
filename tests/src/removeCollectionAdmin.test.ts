@@ -51,7 +51,7 @@ describe('Integration Test removeCollectionAdmin(collection_id, account_id):', (
     const adminListBeforeAddAdmin = await collection.getAdmins();
     expect(adminListBeforeAddAdmin).to.have.lengthOf(0);
 
-    await collection.removeAdmin(alice, {Substrate: alice.address});
+    await expect(collection.removeAdmin(alice, {Substrate: alice.address})).to.be.rejectedWith('common.UserIsNotCollectionAdmin');
   });
 });
 
@@ -94,7 +94,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
 
   itSub('Admin can\'t remove collection admin.', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionAdmin-Neg-4', tokenPrefix: 'RCA'});
-    
+
     await collection.addAdmin(alice, {Substrate: bob.address});
     await collection.addAdmin(alice, {Substrate: charlie.address});
 

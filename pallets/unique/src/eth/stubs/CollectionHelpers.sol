@@ -20,10 +20,13 @@ contract ERC165 is Dummy {
 /// @dev inlined interface
 contract CollectionHelpersEvents {
 	event CollectionCreated(address indexed owner, address indexed collectionId);
+	event CollectionDestroyed(address indexed collectionId);
+	event CollectionChanged(address indexed collectionId);
+	event TokenChanged(address indexed collectionId, uint256 tokenId);
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x58918631
+/// @dev the ERC-165 identifier for this interface is 0xe65011aa
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -76,12 +79,37 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
+	/// @dev EVM selector for this function is: 0x7335b79f,
+	///  or in textual repr: createFTCollection(string,uint8,string,string)
+	function createFTCollection(
+		string memory name,
+		uint8 decimals,
+		string memory description,
+		string memory tokenPrefix
+	) public payable returns (address) {
+		require(false, stub_error);
+		name;
+		decimals;
+		description;
+		tokenPrefix;
+		dummy = 0;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
 	/// @dev EVM selector for this function is: 0x85624258,
 	///  or in textual repr: makeCollectionERC721MetadataCompatible(address,string)
 	function makeCollectionERC721MetadataCompatible(address collection, string memory baseUri) public {
 		require(false, stub_error);
 		collection;
 		baseUri;
+		dummy = 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x564e321f,
+	///  or in textual repr: destroyCollection(address)
+	function destroyCollection(address collectionAddress) public {
+		require(false, stub_error);
+		collectionAddress;
 		dummy = 0;
 	}
 
@@ -101,6 +129,30 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	///  or in textual repr: collectionCreationFee()
 	function collectionCreationFee() public view returns (uint256) {
 		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
+	/// Returns address of a collection.
+	/// @param collectionId  - CollectionId  of the collection
+	/// @return eth mirror address of the collection
+	/// @dev EVM selector for this function is: 0x2e716683,
+	///  or in textual repr: collectionAddress(uint32)
+	function collectionAddress(uint32 collectionId) public view returns (address) {
+		require(false, stub_error);
+		collectionId;
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// Returns collectionId of a collection.
+	/// @param collectionAddress  - Eth address of the collection
+	/// @return collectionId of the collection
+	/// @dev EVM selector for this function is: 0xb5cb7498,
+	///  or in textual repr: collectionId(address)
+	function collectionId(address collectionAddress) public view returns (uint32) {
+		require(false, stub_error);
+		collectionAddress;
 		dummy;
 		return 0;
 	}

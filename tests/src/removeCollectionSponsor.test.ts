@@ -21,11 +21,12 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
+  let charlie: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({filename: __filename});
-      [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
+      [alice, bob, charlie] = await helper.arrange.createAccounts([20n, 10n, 10n], donor);
     });
   });
 
@@ -69,6 +70,12 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
     await expect(collection.removeSponsor(alice)).to.not.be.rejected;
   });
 
+  itSub('Remove a sponsor from a collection with collection admin permissions', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionSponsor-Neg-1', tokenPrefix: 'RCS'});
+    await collection.setSponsor(alice, bob.address);
+    await collection.addAdmin(alice, {Substrate: charlie.address});
+    await expect(collection.removeSponsor(charlie)).not.to.be.rejected;
+  });
 });
 
 describe('(!negative test!) integration test: ext. removeCollectionSponsor():', () => {
@@ -88,13 +95,6 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     await expect(helper.collection.removeSponsor(alice, collectionId)).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
-  itSub('(!negative test!) Remove sponsor for a collection with collection admin permissions', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionSponsor-Neg-1', tokenPrefix: 'RCS'});
-    await collection.setSponsor(alice, bob.address);
-    await collection.addAdmin(alice, {Substrate: charlie.address});
-    await expect(collection.removeSponsor(charlie)).to.be.rejectedWith(/common\.NoPermission/);
-  });
-
   itSub('(!negative test!) Remove sponsor for a collection by regular user', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionSponsor-Neg-2', tokenPrefix: 'RCS'});
     await collection.setSponsor(alice, bob.address);
@@ -112,7 +112,7 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     const collection = await helper.nft.mintCollection(alice, {name: 'RemoveCollectionSponsor-Neg-4', tokenPrefix: 'RCS'});
     await collection.setSponsor(alice, bob.address);
     await collection.removeSponsor(alice);
-    await expect(collection.confirmSponsorship(bob)).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
+    await expect(collection.confirmSponsorship(bob)).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
   });
 
   itSub('Set - confirm - remove - confirm: Sponsor cannot come back', async ({helper}) => {
@@ -120,6 +120,6 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
     await collection.removeSponsor(alice);
-    await expect(collection.confirmSponsorship(bob)).to.be.rejectedWith(/unique\.ConfirmUnsetSponsorFail/);
+    await expect(collection.confirmSponsorship(bob)).to.be.rejectedWith(/common\.ConfirmSponsorshipFail/);
   });
 });

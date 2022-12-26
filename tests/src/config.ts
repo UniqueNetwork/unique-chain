@@ -25,6 +25,8 @@ const config = {
   moonbeamUrl: process.env.moonbeamUrl || 'ws://127.0.0.1:9947',
   moonriverUrl: process.env.moonbeamUrl || 'ws://127.0.0.1:9947',
   westmintUrl: process.env.westmintUrl || 'ws://127.0.0.1:9948',
+  statemineUrl: process.env.statemineUrl || 'ws://127.0.0.1:9948',
+  statemintUrl: process.env.statemintUrl || 'ws://127.0.0.1:9948',
 };
 
 export default config;

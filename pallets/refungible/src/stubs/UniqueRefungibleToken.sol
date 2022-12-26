@@ -36,7 +36,7 @@ contract ERC1633 is Dummy, ERC165 {
 	}
 }
 
-/// @dev the ERC-165 identifier for this interface is 0xab8deb37
+/// @dev the ERC-165 identifier for this interface is 0xe17a7d2b
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
@@ -47,6 +47,37 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 	function burnFrom(address from, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev Function that burns an amount of the token of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
+	/// @dev EVM selector for this function is: 0xbb2f5a58,
+	///  or in textual repr: burnFromCross((address,uint256),uint256)
+	function burnFromCross(CrossAddress memory from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
+	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
+	/// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
+	/// race condition is to first reduce the spender's allowance to 0 and set the desired value afterwards:
+	/// https://github.com/ethereum/EIPs/issues/20#issuecomment-263524729
+	/// @param spender The crossaccount which will spend the funds.
+	/// @param amount The amount of tokens to be spent.
+	/// @dev EVM selector for this function is: 0x0ecd0ab0,
+	///  or in textual repr: approveCross((address,uint256),uint256)
+	function approveCross(CrossAddress memory spender, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		spender;
 		amount;
 		dummy = 0;
 		return false;
@@ -63,6 +94,44 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return false;
 	}
+
+	/// @dev Transfer token for a specified address
+	/// @param to The crossaccount to transfer to.
+	/// @param amount The amount to be transferred.
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(CrossAddress memory to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev Transfer tokens from one address to another
+	/// @param from The address which you want to send tokens from
+	/// @param to The address which you want to transfer to
+	/// @param amount the amount of tokens to be transferred
+	/// @dev EVM selector for this function is: 0xd5cf430b,
+	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	function transferFromCross(
+		CrossAddress memory from,
+		CrossAddress memory to,
+		uint256 amount
+	) public returns (bool) {
+		require(false, stub_error);
+		from;
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+}
+
+/// Cross account struct
+struct CrossAddress {
+	address eth;
+	uint256 sub;
 }
 
 /// @dev inlined interface

@@ -103,16 +103,16 @@ use up_data_structs::{
 	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,
 	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyPermission,
 	PropertyKey, PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty,
-	TokenChild, AuxPropertyValue,
+	TokenChild, AuxPropertyValue, PropertiesPermissionMap,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	eth::collection_id_to_address,
+	eth::collection_id_to_address, erc::CollectionHelpersEvents,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_core::H160;
+use sp_core::{H160, Get};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
@@ -127,7 +127,7 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
-pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::account::Config>::CrossAccountId>;
+pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 /// Token data, stored independently from other data used to describe it
@@ -270,6 +270,18 @@ pub mod pallet {
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = T::CrossAccountId,
 		QueryKind = OptionQuery,
+	>;
+
+	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+	#[pallet::storage]
+	pub type CollectionAllowance<T: Config> = StorageNMap<
+		Key = (
+			Key<Twox64Concat, CollectionId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>,
+		),
+		Value = bool,
+		QueryKind = ValueQuery,
 	>;
 
 	/// Upgrade from the old schema to properties.
@@ -438,6 +450,7 @@ impl<T: Config> Pallet<T> {
 		<TokensBurnt<T>>::remove(id);
 		let _ = <Allowance<T>>::clear_prefix((id,), u32::MAX, None);
 		let _ = <AccountBalance<T>>::clear_prefix((id,), u32::MAX, None);
+		let _ = <CollectionAllowance<T>>::clear_prefix((id,), u32::MAX, None);
 		Ok(())
 	}
 
@@ -660,6 +673,14 @@ impl<T: Config> Pallet<T> {
 					));
 				}
 			}
+
+			<PalletEvm<T>>::deposit_log(
+				CollectionHelpersEvents::TokenChanged {
+					collection_id: collection_id_to_address(collection.id),
+					token_id: token_id.into(),
+				}
+				.to_log(T::ContractAddress::get()),
+			);
 		}
 
 		Ok(())
@@ -803,15 +824,8 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
-	/// Set property permissions for the collection.
-	///
-	/// Sender should be the owner or admin of the collection.
-	pub fn set_property_permission(
-		collection: &CollectionHandle<T>,
-		sender: &T::CrossAccountId,
-		permission: PropertyKeyPermission,
-	) -> DispatchResult {
-		<PalletCommon<T>>::set_property_permission(collection, sender, permission)
+	pub fn token_property_permission(collection_id: CollectionId) -> PropertiesPermissionMap {
+		<PalletCommon<T>>::property_permissions(collection_id)
 	}
 
 	pub fn check_token_immediate_ownership(
@@ -1193,6 +1207,9 @@ impl<T: Config> Pallet<T> {
 		if <Allowance<T>>::get((collection.id, token)).as_ref() == Some(spender) {
 			return Ok(());
 		}
+		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
+			return Ok(());
+		}
 		ensure!(
 			collection.ignores_allowance(spender),
 			<CommonError<T>>::ApprovedValueTooLow
@@ -1325,6 +1342,54 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(collection, sender, vec![data], nesting_budget)
+	}
+
+	/// Sets or unsets the approval of a given operator.
+	///
+	/// The `operator` is allowed to transfer all token pieces of the `owner` on their behalf.
+	/// - `owner`: Token owner
+	/// - `operator`: Operator
+	/// - `approve`: Should operator status be granted or revoked?
+	pub fn set_allowance_for_all(
+		collection: &NonfungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+		approve: bool,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(operator)?;
+		}
+
+		<PalletCommon<T>>::ensure_correct_receiver(operator)?;
+
+		// =========
+
+		<CollectionAllowance<T>>::insert((collection.id, owner, operator), approve);
+		<PalletEvm<T>>::deposit_log(
+			ERC721Events::ApprovalForAll {
+				owner: *owner.as_eth(),
+				operator: *operator.as_eth(),
+				approved: approve,
+			}
+			.to_log(collection_id_to_address(collection.id)),
+		);
+		<PalletCommon<T>>::deposit_event(CommonEvent::ApprovedForAll(
+			collection.id,
+			owner.clone(),
+			operator.clone(),
+			approve,
+		));
+		Ok(())
+	}
+
+	/// Tells whether the given `owner` approves the `operator`.
+	pub fn allowance_for_all(
+		collection: &NonfungibleHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+	) -> bool {
+		<CollectionAllowance<T>>::get((collection.id, owner, operator))
 	}
 
 	pub fn repair_item(collection: &NonfungibleHandle<T>, token: TokenId) -> DispatchResult {

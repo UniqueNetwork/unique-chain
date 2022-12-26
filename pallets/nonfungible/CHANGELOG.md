@@ -2,12 +2,60 @@
 
 All notable changes to this project will be documented in this file.
 
+<!-- bureaucrate goes here -->
+
+## [0.1.12] - 2022-12-16
+
+### Added
+
+- The function `tokenPropertyPermissions` and `setTokenPropertyPermissions` to `TokenProperties` interface.
+
+### Changed
+
+- Hide `setTokenPropertyPermission` function in `TokenProperties` interface.
+
+## [0.1.11] - 2022-12-01
+
+### Added
+
+- The functions `mintCross` to `ERC721UniqueExtensions` interface.
+
+## [0.1.10] - 2022-11-18
+
+### Added
+
+- The functions `description`, `crossOwnerOf`, `tokenProperties` to `ERC721UniqueExtensions` interface.
+
+## [0.1.9] - 2022-11-14
+
+### Changed
+
+- Added `transfer_cross` in eth functions.
+
+## [v0.1.8] - 2022-11-11
+
+### Changed
+
+- Added `delete_properties` in eth functions. The `delete_property` function is now deprecated.
+
+## [v0.1.7] - 2022-11-02
+
+### Changed
+
+- Use named structure `EthCrossAccount` in eth functions.
+
+## [v0.1.6] - 2022-20-10
+
+### Change
+
+- Added `set_properties` method for `TokenProperties` interface.
+
 ## [v0.1.5] - 2022-08-24
 
 ### Change
- - Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
 
-<!-- bureaucrate goes here -->
+- Add bound `AsRef<[u8; 32]>` to `T::CrossAccountId`.
+
 ## [v0.1.4] 2022-08-16
 
 ### Other changes
@@ -28,7 +76,9 @@ Upstream-Change: https://github.com/paritytech/substrate/pull/11490
 - build: Upgrade polkadot to v0.9.25 cdfb9bdc7b205ff1b5134f034ef9973d769e5e6b
 
 ## [0.1.2] - 2022-07-25
+
 ### Changed
+
 - New `token_uri` retrieval logic:
 
       If the collection has a `url` property and it is not empty, it is returned.
@@ -39,8 +89,9 @@ Upstream-Change: https://github.com/paritytech/substrate/pull/11490
       otherwise, return concatenation of `baseURI` and stringified token id (decimal stringifying, without paddings).
 
 ## [0.1.1] - 2022-07-14
+
 ### Added
 
 - Implementation of RPC method `token_owners`.
-   For reasons of compatibility with this pallet, returns only one owner if token exists.
-   This was an internal request to improve the web interface and support fractionalization event.
+  For reasons of compatibility with this pallet, returns only one owner if token exists.
+  This was an internal request to improve the web interface and support fractionalization event.

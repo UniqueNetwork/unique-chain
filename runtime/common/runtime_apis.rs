@@ -35,7 +35,7 @@ macro_rules! impl_common_runtime_apis {
     ) => {
         use sp_std::prelude::*;
         use sp_api::impl_runtime_apis;
-        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
+        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160, Bytes};
         use sp_runtime::{
             Permill,
             traits::Block as BlockT,
@@ -186,6 +186,10 @@ macro_rules! impl_common_runtime_apis {
 
                 fn total_pieces(collection: CollectionId, token_id: TokenId) -> Result<Option<u128>, DispatchError> {
                     dispatch_unique_runtime!(collection.total_pieces(token_id))
+                }
+
+		        fn allowance_for_all(collection: CollectionId, owner: CrossAccountId, operator: CrossAccountId) -> Result<bool, DispatchError> {
+                    dispatch_unique_runtime!(collection.allowance_for_all(owner, operator))
                 }
             }
 
@@ -482,6 +486,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let is_transactional = false;
+                    let validate = false;
                     <Runtime as pallet_evm::Config>::Runner::call(
                         CrossAccountId::from_eth(from),
                         to,
@@ -493,6 +498,7 @@ macro_rules! impl_common_runtime_apis {
                         nonce,
                         access_list.unwrap_or_default(),
                         is_transactional,
+                        validate,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -518,6 +524,7 @@ macro_rules! impl_common_runtime_apis {
                     };
 
                     let is_transactional = false;
+                    let validate = false;
                     <Runtime as pallet_evm::Config>::Runner::create(
                         CrossAccountId::from_eth(from),
                         data,
@@ -528,6 +535,7 @@ macro_rules! impl_common_runtime_apis {
                         nonce,
                         access_list.unwrap_or_default(),
                         is_transactional,
+                        validate,
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -566,6 +574,8 @@ macro_rules! impl_common_runtime_apis {
                 fn elasticity() -> Option<Permill> {
                     None
                 }
+
+                fn gas_limit_multiplier_support() {}
             }
 
             impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
@@ -768,17 +778,41 @@ macro_rules! impl_common_runtime_apis {
                 }
             }
 
+            impl up_pov_estimate_rpc::PovEstimateApi<Block> for Runtime {
+                #[allow(unused_variables)]
+                fn pov_estimate(uxt: Bytes) -> ApplyExtrinsicResult {
+                    #[cfg(feature = "pov-estimate")]
+                    {
+                        use codec::Decode;
+
+                        let uxt_decode = <<Block as BlockT>::Extrinsic as Decode>::decode(&mut &*uxt)
+                            .map_err(|_| DispatchError::Other("failed to decode the extrinsic"));
+
+                        let uxt = match uxt_decode {
+                            Ok(uxt) => uxt,
+                            Err(err) => return Ok(err.into()),
+                        };
+
+                        Executive::apply_extrinsic(uxt)
+                    }
+
+                    #[cfg(not(feature = "pov-estimate"))]
+                    return Ok(unsupported!());
+                }
+            }
+
             #[cfg(feature = "try-runtime")]
             impl frame_try_runtime::TryRuntime<Block> for Runtime {
-                fn on_runtime_upgrade() -> (frame_support::pallet_prelude::Weight, frame_support::pallet_prelude::Weight) {
+                fn on_runtime_upgrade(checks: bool) -> (frame_support::pallet_prelude::Weight, frame_support::pallet_prelude::Weight) {
                     log::info!("try-runtime::on_runtime_upgrade unique-chain.");
-                    let weight = Executive::try_runtime_upgrade().unwrap();
+                    let weight = Executive::try_runtime_upgrade(checks).unwrap();
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
                 }
 
                 fn execute_block(
                     block: Block,
                     state_root_check: bool,
+                    signature_check: bool,
                     select: frame_try_runtime::TryStateSelect
                 ) -> frame_support::pallet_prelude::Weight {
                     log::info!(
@@ -789,7 +823,7 @@ macro_rules! impl_common_runtime_apis {
                         select,
                     );
 
-                    Executive::try_execute_block(block, state_root_check, select).unwrap()
+                    Executive::try_execute_block(block, state_root_check, signature_check, select).unwrap()
                 }
             }
         }
