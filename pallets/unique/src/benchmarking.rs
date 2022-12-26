@@ -143,8 +143,8 @@ benchmarks! {
 		};
 	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
 
-    force_repair_collection {
+	force_repair_collection {
 		let caller: T::AccountId = account("caller", 0, SEED);
-        let collection = create_nft_collection::<T>(caller.clone())?;
-    }: _(RawOrigin::Root, collection)
+		let collection = create_nft_collection::<T>(caller.clone())?;
+	}: _(RawOrigin::Root, collection)
 }
