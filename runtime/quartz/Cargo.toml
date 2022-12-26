@@ -43,6 +43,7 @@ runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
     'pallet-maintenance/runtime-benchmarks',
+    'cumulus-pallet-parachain-system/runtime-benchmarks',
 ]
 try-runtime = [
     'frame-try-runtime',
