@@ -212,8 +212,8 @@ declare module '@polkadot/types/lookup' {
       readonly accountId: AccountId32;
       readonly deposit: u128;
     } & Struct;
-    readonly isLicenseForfeited: boolean;
-    readonly asLicenseForfeited: {
+    readonly isLicenseReleased: boolean;
+    readonly asLicenseReleased: {
       readonly accountId: AccountId32;
       readonly depositReturned: u128;
     } & Struct;
@@ -225,7 +225,7 @@ declare module '@polkadot/types/lookup' {
     readonly asCandidateRemoved: {
       readonly accountId: AccountId32;
     } & Struct;
-    readonly type: 'InvulnerableAdded' | 'InvulnerableRemoved' | 'LicenseObtained' | 'LicenseForfeited' | 'CandidateAdded' | 'CandidateRemoved';
+    readonly type: 'InvulnerableAdded' | 'InvulnerableRemoved' | 'LicenseObtained' | 'LicenseReleased' | 'CandidateAdded' | 'CandidateRemoved';
   }
 
   /** @name PalletSessionEvent (31) */
@@ -3513,11 +3513,11 @@ declare module '@polkadot/types/lookup' {
     readonly asInsertEvents: {
       readonly events: Vec<Bytes>;
     } & Struct;
-    readonly isInsertIdentities: boolean;
-    readonly asInsertIdentities: {
+    readonly isSetIdentities: boolean;
+    readonly asSetIdentities: {
       readonly identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>;
     } & Struct;
-    readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents' | 'InsertIdentities';
+    readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents' | 'SetIdentities';
   }
 
   /** @name PalletMaintenanceCall (418) */

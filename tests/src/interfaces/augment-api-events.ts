@@ -105,8 +105,8 @@ declare module '@polkadot/api-base/types/events' {
       CandidateRemoved: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
       InvulnerableAdded: AugmentedEvent<ApiType, [invulnerable: AccountId32], { invulnerable: AccountId32 }>;
       InvulnerableRemoved: AugmentedEvent<ApiType, [invulnerable: AccountId32], { invulnerable: AccountId32 }>;
-      LicenseForfeited: AugmentedEvent<ApiType, [accountId: AccountId32, depositReturned: u128], { accountId: AccountId32, depositReturned: u128 }>;
       LicenseObtained: AugmentedEvent<ApiType, [accountId: AccountId32, deposit: u128], { accountId: AccountId32, deposit: u128 }>;
+      LicenseReleased: AugmentedEvent<ApiType, [accountId: AccountId32, depositReturned: u128], { accountId: AccountId32, depositReturned: u128 }>;
       /**
        * Generic event
        **/

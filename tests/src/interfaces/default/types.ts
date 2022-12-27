@@ -1283,8 +1283,8 @@ export interface PalletCollatorSelectionEvent extends Enum {
     readonly accountId: AccountId32;
     readonly deposit: u128;
   } & Struct;
-  readonly isLicenseForfeited: boolean;
-  readonly asLicenseForfeited: {
+  readonly isLicenseReleased: boolean;
+  readonly asLicenseReleased: {
     readonly accountId: AccountId32;
     readonly depositReturned: u128;
   } & Struct;
@@ -1296,7 +1296,7 @@ export interface PalletCollatorSelectionEvent extends Enum {
   readonly asCandidateRemoved: {
     readonly accountId: AccountId32;
   } & Struct;
-  readonly type: 'InvulnerableAdded' | 'InvulnerableRemoved' | 'LicenseObtained' | 'LicenseForfeited' | 'CandidateAdded' | 'CandidateRemoved';
+  readonly type: 'InvulnerableAdded' | 'InvulnerableRemoved' | 'LicenseObtained' | 'LicenseReleased' | 'CandidateAdded' | 'CandidateRemoved';
 }
 
 /** @name PalletCommonError */
@@ -1477,11 +1477,11 @@ export interface PalletDataManagementCall extends Enum {
   readonly asInsertEvents: {
     readonly events: Vec<Bytes>;
   } & Struct;
-  readonly isInsertIdentities: boolean;
-  readonly asInsertIdentities: {
+  readonly isSetIdentities: boolean;
+  readonly asSetIdentities: {
     readonly identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>;
   } & Struct;
-  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents' | 'InsertIdentities';
+  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents' | 'SetIdentities';
 }
 
 /** @name PalletDataManagementError */

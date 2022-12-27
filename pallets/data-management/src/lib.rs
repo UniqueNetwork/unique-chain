@@ -153,12 +153,18 @@ pub mod pallet {
 
 		/// Insert or remove identities.
 		#[pallet::call_index(5)]
-		#[pallet::weight(<SelfWeightOf<T>>::insert_events(identities.len() as u32))] // todo:collator weight
+		#[pallet::weight(<SelfWeightOf<T>>::set_identities(identities.len() as u32))] // todo:collator weight
 		pub fn set_identities(
 			origin: OriginFor<T>,
 			identities: Vec<(
 				T::AccountId,
-				Option<Registration<pallet_identity::BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>>,
+				Option<
+					Registration<
+						pallet_identity::BalanceOf<T>,
+						T::MaxRegistrars,
+						T::MaxAdditionalFields,
+					>,
+				>,
 			)>,
 		) -> DispatchResult {
 			ensure_root(origin)?;

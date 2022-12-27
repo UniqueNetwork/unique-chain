@@ -198,7 +198,7 @@ export default {
         accountId: 'AccountId32',
         deposit: 'u128',
       },
-      LicenseForfeited: {
+      LicenseReleased: {
         accountId: 'AccountId32',
         depositReturned: 'u128',
       },

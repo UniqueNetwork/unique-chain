@@ -127,16 +127,16 @@ bench-rmrk-equip:
 
 .PHONY: bench-foreign-assets
 bench-foreign-assets:
-	make _bench PALLET=foreign-assets	
+	make _bench PALLET=foreign-assets
+
+.PHONY: bench-collator-selection
+bench-collator-selection:
+	make _bench PALLET=collator-selection
 
 .PHONY: bench-app-promotion
 bench-app-promotion:
 	make _bench PALLET=app-promotion PALLET_DIR=app-promotion
 	
 .PHONY: bench
-<<<<<<< HEAD
-bench: bench-data-management bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core bench-rmrk-equip bench-foreign-assets
-=======
 # Disabled: bench-scheduler, bench-rmrk-core, bench-rmrk-equip
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets
->>>>>>> develop
+bench: bench-data-management bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets

@@ -265,24 +265,51 @@ pub mod pallet {
 		/// A name was set or reset (which will remove all judgements).
 		IdentitySet { who: T::AccountId },
 		/// A name was cleared, and the given balance returned.
-		IdentityCleared { who: T::AccountId, deposit: BalanceOf<T> },
+		IdentityCleared {
+			who: T::AccountId,
+			deposit: BalanceOf<T>,
+		},
 		/// A name was removed and the given balance slashed.
-		IdentityKilled { who: T::AccountId, deposit: BalanceOf<T> },
+		IdentityKilled {
+			who: T::AccountId,
+			deposit: BalanceOf<T>,
+		},
 		/// A judgement was asked from a registrar.
-		JudgementRequested { who: T::AccountId, registrar_index: RegistrarIndex },
+		JudgementRequested {
+			who: T::AccountId,
+			registrar_index: RegistrarIndex,
+		},
 		/// A judgement request was retracted.
-		JudgementUnrequested { who: T::AccountId, registrar_index: RegistrarIndex },
+		JudgementUnrequested {
+			who: T::AccountId,
+			registrar_index: RegistrarIndex,
+		},
 		/// A judgement was given by a registrar.
-		JudgementGiven { target: T::AccountId, registrar_index: RegistrarIndex },
+		JudgementGiven {
+			target: T::AccountId,
+			registrar_index: RegistrarIndex,
+		},
 		/// A registrar was added.
 		RegistrarAdded { registrar_index: RegistrarIndex },
 		/// A sub-identity was added to an identity and the deposit paid.
-		SubIdentityAdded { sub: T::AccountId, main: T::AccountId, deposit: BalanceOf<T> },
+		SubIdentityAdded {
+			sub: T::AccountId,
+			main: T::AccountId,
+			deposit: BalanceOf<T>,
+		},
 		/// A sub-identity was removed from an identity and the deposit freed.
-		SubIdentityRemoved { sub: T::AccountId, main: T::AccountId, deposit: BalanceOf<T> },
+		SubIdentityRemoved {
+			sub: T::AccountId,
+			main: T::AccountId,
+			deposit: BalanceOf<T>,
+		},
 		/// A sub-identity was cleared, and the given deposit repatriated from the
 		/// main identity account to the sub-identity account.
-		SubIdentityRevoked { sub: T::AccountId, main: T::AccountId, deposit: BalanceOf<T> },
+		SubIdentityRevoked {
+			sub: T::AccountId,
+			main: T::AccountId,
+			deposit: BalanceOf<T>,
+		},
 	}
 
 	#[pallet::call]
@@ -358,7 +385,10 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			let sender = ensure_signed(origin)?;
 			let extra_fields = info.additional.len() as u32;
-			ensure!(extra_fields <= T::MaxAdditionalFields::get(), Error::<T>::TooManyFields);
+			ensure!(
+				extra_fields <= T::MaxAdditionalFields::get(),
+				Error::<T>::TooManyFields
+			);
 			let fd = <BalanceOf<T>>::from(extra_fields) * T::FieldDeposit::get();
 
 			let mut id = match <IdentityOf<T>>::get(&sender) {
@@ -367,7 +397,7 @@ pub mod pallet {
 					id.judgements.retain(|j| j.1.is_sticky());
 					id.info = *info;
 					id
-				},
+				}
 				None => Registration {
 					info: *info,
 					judgements: BoundedVec::default(),
@@ -441,8 +471,10 @@ pub mod pallet {
 			let (old_deposit, old_ids) = <SubsOf<T>>::get(&sender);
 			let new_deposit = T::SubAccountDeposit::get() * <BalanceOf<T>>::from(subs.len() as u32);
 
-			let not_other_sub =
-				subs.iter().filter_map(|i| SuperOf::<T>::get(&i.0)).all(|i| i.0 == sender);
+			let not_other_sub = subs
+				.iter()
+				.filter_map(|i| SuperOf::<T>::get(&i.0))
+				.all(|i| i.0 == sender);
 			ensure!(not_other_sub, Error::<T>::AlreadyClaimed);
 
 			if old_deposit < new_deposit {
@@ -459,7 +491,8 @@ pub mod pallet {
 			let mut ids = BoundedVec::<T::AccountId, T::MaxSubAccounts>::default();
 			for (id, name) in subs {
 				<SuperOf<T>>::insert(&id, (sender.clone(), name));
-				ids.try_push(id).expect("subs length is less than T::MaxSubAccounts; qed");
+				ids.try_push(id)
+					.expect("subs length is less than T::MaxSubAccounts; qed");
 			}
 			let new_subs = ids.len();
 
@@ -514,7 +547,10 @@ pub mod pallet {
 			let err_amount = T::Currency::unreserve(&sender, deposit);
 			debug_assert!(err_amount.is_zero());
 
-			Self::deposit_event(Event::IdentityCleared { who: sender, deposit });
+			Self::deposit_event(Event::IdentityCleared {
+				who: sender,
+				deposit,
+			});
 
 			Ok(Some(T::WeightInfo::clear_identity(
 				id.judgements.len() as u32,      // R
@@ -568,14 +604,17 @@ pub mod pallet {
 
 			let item = (reg_index, Judgement::FeePaid(registrar.fee));
 			match id.judgements.binary_search_by_key(&reg_index, |x| x.0) {
-				Ok(i) =>
+				Ok(i) => {
 					if id.judgements[i].1.is_sticky() {
-						return Err(Error::<T>::StickyJudgement.into())
+						return Err(Error::<T>::StickyJudgement.into());
 					} else {
 						id.judgements[i] = item
-					},
-				Err(i) =>
-					id.judgements.try_insert(i, item).map_err(|_| Error::<T>::TooManyRegistrars)?,
+					}
+				}
+				Err(i) => id
+					.judgements
+					.try_insert(i, item)
+					.map_err(|_| Error::<T>::TooManyRegistrars)?,
 			}
 
 			T::Currency::reserve(&sender, registrar.fee)?;
@@ -589,8 +628,11 @@ pub mod pallet {
 				registrar_index: reg_index,
 			});
 
-			Ok(Some(T::WeightInfo::request_judgement(judgements as u32, extra_fields as u32))
-				.into())
+			Ok(Some(T::WeightInfo::request_judgement(
+				judgements as u32,
+				extra_fields as u32,
+			))
+			.into())
 		}
 
 		/// Cancel a previous request.
@@ -629,7 +671,7 @@ pub mod pallet {
 			let fee = if let Judgement::FeePaid(fee) = id.judgements.remove(pos).1 {
 				fee
 			} else {
-				return Err(Error::<T>::JudgementGiven.into())
+				return Err(Error::<T>::JudgementGiven.into());
 			};
 
 			let err_amount = T::Currency::unreserve(&sender, fee);
@@ -643,7 +685,11 @@ pub mod pallet {
 				registrar_index: reg_index,
 			});
 
-			Ok(Some(T::WeightInfo::cancel_request(judgements as u32, extra_fields as u32)).into())
+			Ok(Some(T::WeightInfo::cancel_request(
+				judgements as u32,
+				extra_fields as u32,
+			))
+			.into())
 		}
 
 		/// Set the fee required for a judgement to be requested from a registrar.
@@ -810,7 +856,7 @@ pub mod pallet {
 			let mut id = <IdentityOf<T>>::get(&target).ok_or(Error::<T>::InvalidTarget)?;
 
 			if T::Hashing::hash_of(&id.info) != identity {
-				return Err(Error::<T>::JudgementForDifferentIdentity.into())
+				return Err(Error::<T>::JudgementForDifferentIdentity.into());
 			}
 
 			let item = (reg_index, judgement);
@@ -826,7 +872,7 @@ pub mod pallet {
 						.map_err(|_| Error::<T>::JudgementPaymentFailed)?;
 					}
 					id.judgements[position] = item
-				},
+				}
 				Err(position) => id
 					.judgements
 					.try_insert(position, item)
@@ -836,10 +882,16 @@ pub mod pallet {
 			let judgements = id.judgements.len();
 			let extra_fields = id.info.additional.len();
 			<IdentityOf<T>>::insert(&target, id);
-			Self::deposit_event(Event::JudgementGiven { target, registrar_index: reg_index });
+			Self::deposit_event(Event::JudgementGiven {
+				target,
+				registrar_index: reg_index,
+			});
 
-			Ok(Some(T::WeightInfo::provide_judgement(judgements as u32, extra_fields as u32))
-				.into())
+			Ok(Some(T::WeightInfo::provide_judgement(
+				judgements as u32,
+				extra_fields as u32,
+			))
+			.into())
 		}
 
 		/// Remove an account's identity and sub-account information and slash the deposits.
@@ -885,7 +937,10 @@ pub mod pallet {
 			// Slash their deposit from them.
 			T::Slashed::on_unbalanced(T::Currency::slash_reserved(&target, deposit).0);
 
-			Self::deposit_event(Event::IdentityKilled { who: target, deposit });
+			Self::deposit_event(Event::IdentityKilled {
+				who: target,
+				deposit,
+			});
 
 			Ok(Some(T::WeightInfo::kill_identity(
 				id.judgements.len() as u32,      // R
@@ -911,10 +966,16 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let sub = T::Lookup::lookup(sub)?;
-			ensure!(IdentityOf::<T>::contains_key(&sender), Error::<T>::NoIdentity);
+			ensure!(
+				IdentityOf::<T>::contains_key(&sender),
+				Error::<T>::NoIdentity
+			);
 
 			// Check if it's already claimed as sub-identity.
-			ensure!(!SuperOf::<T>::contains_key(&sub), Error::<T>::AlreadyClaimed);
+			ensure!(
+				!SuperOf::<T>::contains_key(&sub),
+				Error::<T>::AlreadyClaimed
+			);
 
 			SubsOf::<T>::try_mutate(&sender, |(ref mut subs_deposit, ref mut sub_ids)| {
 				// Ensure there is space and that the deposit is paid.
@@ -926,10 +987,16 @@ pub mod pallet {
 				T::Currency::reserve(&sender, deposit)?;
 
 				SuperOf::<T>::insert(&sub, (sender.clone(), data));
-				sub_ids.try_push(sub.clone()).expect("sub ids length checked above; qed");
+				sub_ids
+					.try_push(sub.clone())
+					.expect("sub ids length checked above; qed");
 				*subs_deposit = subs_deposit.saturating_add(deposit);
 
-				Self::deposit_event(Event::SubIdentityAdded { sub, main: sender.clone(), deposit });
+				Self::deposit_event(Event::SubIdentityAdded {
+					sub,
+					main: sender.clone(),
+					deposit,
+				});
 				Ok(())
 			})
 		}
@@ -947,8 +1014,14 @@ pub mod pallet {
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let sub = T::Lookup::lookup(sub)?;
-			ensure!(IdentityOf::<T>::contains_key(&sender), Error::<T>::NoIdentity);
-			ensure!(SuperOf::<T>::get(&sub).map_or(false, |x| x.0 == sender), Error::<T>::NotOwned);
+			ensure!(
+				IdentityOf::<T>::contains_key(&sender),
+				Error::<T>::NoIdentity
+			);
+			ensure!(
+				SuperOf::<T>::get(&sub).map_or(false, |x| x.0 == sender),
+				Error::<T>::NotOwned
+			);
 			SuperOf::<T>::insert(&sub, (sender, data));
 			Ok(())
 		}
@@ -964,7 +1037,10 @@ pub mod pallet {
 		#[pallet::weight(T::WeightInfo::remove_sub(T::MaxSubAccounts::get()))]
 		pub fn remove_sub(origin: OriginFor<T>, sub: AccountIdLookupOf<T>) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-			ensure!(IdentityOf::<T>::contains_key(&sender), Error::<T>::NoIdentity);
+			ensure!(
+				IdentityOf::<T>::contains_key(&sender),
+				Error::<T>::NoIdentity
+			);
 			let sub = T::Lookup::lookup(sub)?;
 			let (sup, _) = SuperOf::<T>::get(&sub).ok_or(Error::<T>::NotSub)?;
 			ensure!(sup == sender, Error::<T>::NotOwned);
@@ -975,7 +1051,11 @@ pub mod pallet {
 				*subs_deposit -= deposit;
 				let err_amount = T::Currency::unreserve(&sender, deposit);
 				debug_assert!(err_amount.is_zero());
-				Self::deposit_event(Event::SubIdentityRemoved { sub, main: sender, deposit });
+				Self::deposit_event(Event::SubIdentityRemoved {
+					sub,
+					main: sender,
+					deposit,
+				});
 			});
 			Ok(())
 		}
@@ -1024,7 +1104,8 @@ impl<T: Config> Pallet<T> {
 
 	/// Check if the account has corresponding identity information by the identity field.
 	pub fn has_identity(who: &T::AccountId, fields: u64) -> bool {
-		IdentityOf::<T>::get(who)
-			.map_or(false, |registration| (registration.info.fields().0.bits() & fields) == fields)
+		IdentityOf::<T>::get(who).map_or(false, |registration| {
+			(registration.info.fields().0.bits() & fields) == fields
+		})
 	}
 }

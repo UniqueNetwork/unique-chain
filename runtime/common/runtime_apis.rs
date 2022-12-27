@@ -705,7 +705,6 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "rmrk")]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
 
-                    // todo:collator check benchmarks
                     #[cfg(feature = "collator-selection")]
                     list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 
@@ -772,7 +771,6 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "rmrk")]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
 
-                    // todo:collator check benchmarks
                     #[cfg(feature = "collator-selection")]
                     add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
 

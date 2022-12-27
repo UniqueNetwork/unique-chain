@@ -235,7 +235,7 @@ pub mod pallet {
 			account_id: T::AccountId,
 			deposit: BalanceOf<T>,
 		},
-		LicenseForfeited {
+		LicenseReleased {
 			account_id: T::AccountId,
 			deposit_returned: BalanceOf<T>,
 		},
@@ -285,7 +285,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Add a collator to the list of invulnerable (fixed) collators.
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::set_invulnerables(1u32))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::add_invulnerable(T::MaxCollators::get()))] // todo:collator weight
 		pub fn add_invulnerable(
 			origin: OriginFor<T>,
 			new: T::AccountId,
@@ -315,7 +315,7 @@ pub mod pallet {
 
 		/// Remove a collator from the list of invulnerable (fixed) collators.
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::set_invulnerables(1))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::remove_invulnerable(T::MaxCollators::get()))] // todo:collator weight
 		pub fn remove_invulnerable(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -344,7 +344,7 @@ pub mod pallet {
 		///
 		/// This call is not available to `Invulnerable` collators.
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCollators::get()))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::get_license(T::MaxCollators::get()))] // todo:collator weight
 		pub fn get_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// register_as_candidate
 			let who = ensure_signed(origin)?;
@@ -377,7 +377,7 @@ pub mod pallet {
 		///
 		/// This call is not available to `Invulnerable` collators.
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCollators::get()))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::onboard(T::MaxCollators::get()))] // todo:collator weight
 		pub fn onboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// register_as_candidate
 			let who = ensure_signed(origin)?;
@@ -417,33 +417,33 @@ pub mod pallet {
 				})?;
 
 			Self::deposit_event(Event::CandidateAdded { account_id: who });
-			Ok(Some(T::WeightInfo::register_as_candidate(current_count as u32)).into())
+			Ok(Some(T::WeightInfo::onboard(current_count as u32)).into())
 		}
 
 		/// Deregister `origin` as a collator candidate. Note that the collator can only leave on
 		/// session change. The license to `onboard` later at any other time will remain.
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCollators::get()))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::offboard(T::MaxCollators::get()))] // todo:collator weight
 		pub fn offboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// leave_intent
 			let who = ensure_signed(origin)?;
 			let current_count = Self::try_remove_candidate(&who)?;
 
-			Ok(Some(T::WeightInfo::leave_intent(current_count as u32)).into()) // todo:collator weight
+			Ok(Some(T::WeightInfo::offboard(current_count as u32)).into()) // todo:collator weight
 		}
 
 		/// Forfeit `origin`'s own license. The `LicenseBond` will be unreserved immediately.
 		///
 		/// This call is not available to `Invulnerable` collators.
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCollators::get()))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::release_license(T::MaxCollators::get()))] // todo:collator weight
 		pub fn release_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// leave_intent
 			let who = ensure_signed(origin)?;
 
 			let current_count = Self::try_remove_candidate_and_release_license(&who, false, true)?;
 
-			Ok(Some(T::WeightInfo::leave_intent(current_count as u32)).into()) // todo:collator weight
+			Ok(Some(T::WeightInfo::release_license(current_count as u32)).into()) // todo:collator weight
 		}
 
 		/// Force deregister `origin` as a collator candidate as a governing authority, and revoke its license.
@@ -452,7 +452,7 @@ pub mod pallet {
 		///
 		/// This call is, of course, not applicable to `Invulnerable` collators.
 		#[pallet::call_index(6)]
-		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCollators::get()))] // todo:collator weight
+		#[pallet::weight(T::WeightInfo::force_release_license(T::MaxCollators::get()))] // todo:collator weight
 		pub fn force_release_license(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -462,7 +462,7 @@ pub mod pallet {
 
 			let current_count = Self::try_remove_candidate_and_release_license(&who, false, true)?;
 
-			Ok(Some(T::WeightInfo::leave_intent(current_count as u32)).into()) // todo:collator weight
+			Ok(Some(T::WeightInfo::force_release_license(current_count as u32)).into()) // todo:collator weight
 		}
 	}
 
@@ -534,7 +534,7 @@ pub mod pallet {
 					Err(Error::<T>::NoLicense.into())
 				}
 			})?;
-			Self::deposit_event(Event::LicenseForfeited {
+			Self::deposit_event(Event::LicenseReleased {
 				account_id: who.clone(),
 				deposit_returned,
 			});

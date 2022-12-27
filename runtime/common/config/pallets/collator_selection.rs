@@ -54,9 +54,10 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	pub const BasicDeposit: Balance = 10 * UNIQUE; // todo:collator
+	// These do not matter as we forbid non-sudo operations with the identity pallet
+	pub const BasicDeposit: Balance = 10 * UNIQUE;
 	pub const FieldDeposit: Balance = 25 * MILLIUNIQUE;
-	pub const SubAccountDeposit: Balance = 2 * UNIQUE; // end todo
+	pub const SubAccountDeposit: Balance = 2 * UNIQUE;
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
@@ -89,7 +90,6 @@ impl pallet_collator_selection::Config for Runtime {
 	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
 	type MaxCollators = MaxCollators;
-	// todo:collator kick threshold should be in storage and configured only by root -- or rather UpdateOrigin
 	type SlashRatio = SlashRatio;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;

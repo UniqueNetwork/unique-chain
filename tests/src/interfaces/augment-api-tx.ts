@@ -313,14 +313,14 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       insertEvents: AugmentedSubmittable<(events: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<Bytes>]>;
       /**
-       * Insert or remove identities.
-       **/
-      insertIdentities: AugmentedSubmittable<(identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>> | ([AccountId32 | string | Uint8Array, Option<PalletIdentityRegistration> | null | Uint8Array | PalletIdentityRegistration | { judgements?: any; deposit?: any; info?: any } | string])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>]>;
-      /**
        * Insert items into contract storage, this method can be called
        * multiple times
        **/
       setData: AugmentedSubmittable<(address: H160 | string | Uint8Array, data: Vec<ITuple<[H256, H256]>> | ([H256 | string | Uint8Array, H256 | string | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [H160, Vec<ITuple<[H256, H256]>>]>;
+      /**
+       * Insert or remove identities.
+       **/
+      setIdentities: AugmentedSubmittable<(identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>> | ([AccountId32 | string | Uint8Array, Option<PalletIdentityRegistration> | null | Uint8Array | PalletIdentityRegistration | { judgements?: any; deposit?: any; info?: any } | string])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>]>;
       /**
        * Generic tx
        **/

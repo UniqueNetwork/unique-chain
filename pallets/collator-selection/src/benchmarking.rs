@@ -45,10 +45,15 @@ use frame_support::{
 use frame_system::{EventRecord, RawOrigin};
 use pallet_authorship::EventHandler;
 use pallet_session::{self as session, SessionManager};
+use pallet_configuration::{
+	self as configuration, BalanceOf,
+	CollatorSelectionDesiredCollatorsOverride as DesiredCollators,
+	CollatorSelectionLicenseBondOverride as LicenseBond,
+};
 use sp_std::prelude::*;
 
-pub type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+/*pub type BalanceOf<T> =
+<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;*/
 
 const SEED: u32 = 0;
 
@@ -111,7 +116,7 @@ fn register_validators<T: Config + session::Config>(count: u32) -> Vec<T::Accoun
 	validators.into_iter().map(|(who, _)| who).collect()
 }
 
-fn register_candidates<T: Config>(count: u32) {
+fn register_candidates<T: Config + configuration::Config>(count: u32) {
 	let candidates = (0..count)
 		.map(|c| account("candidate", c, SEED))
 		.collect::<Vec<_>>();
@@ -122,27 +127,44 @@ fn register_candidates<T: Config>(count: u32) {
 
 	for who in candidates {
 		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
-		<CollatorSelection<T>>::register_as_candidate(RawOrigin::Signed(who).into()).unwrap();
+		<CollatorSelection<T>>::get_license(RawOrigin::Signed(who.clone()).into()).unwrap();
+		<CollatorSelection<T>>::onboard(RawOrigin::Signed(who).into()).unwrap();
 	}
 }
 
 benchmarks! {
-	where_clause { where T: pallet_authorship::Config + session::Config }
+	where_clause { where T: pallet_authorship::Config + session::Config + configuration::Config }
 
-	set_invulnerables {
+	add_invulnerable {
 		let b in 1 .. T::MaxCollators::get();
-		let new_invulnerables = register_validators::<T>(b);
+		let new_invulnerable = register_validators::<T>(b)[0].clone();
 		let origin = T::UpdateOrigin::successful_origin();
 	}: {
 		assert_ok!(
-			<CollatorSelection<T>>::set_invulnerables(origin, new_invulnerables.clone())
+			<CollatorSelection<T>>::add_invulnerable(origin, new_invulnerable.clone())
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::NewInvulnerables{invulnerables: new_invulnerables}.into());
+		assert_last_event::<T>(Event::InvulnerableAdded{invulnerable: new_invulnerable}.into());
 	}
 
-	set_desired_collators {
+	remove_invulnerable {
+		let b in 1 .. T::MaxCollators::get();
+		let new_invulnerable = register_validators::<T>(b)[0].clone();
+		let origin = T::UpdateOrigin::successful_origin();
+		assert_ok!(
+			<CollatorSelection<T>>::add_invulnerable(origin.clone(), new_invulnerable.clone())
+		);
+	}: {
+		assert_ok!(
+			<CollatorSelection<T>>::remove_invulnerable(origin, new_invulnerable.clone())
+		);
+	}
+	verify {
+		assert_last_event::<T>(Event::InvulnerableRemoved{invulnerable: new_invulnerable}.into());
+	}
+
+	/*set_desired_collators {
 		let max: u32 = 999;
 		let origin = T::UpdateOrigin::successful_origin();
 	}: {
@@ -164,11 +186,9 @@ benchmarks! {
 	}
 	verify {
 		assert_last_event::<T>(Event::NewLicenseBond{bond_amount}.into());
-	}
+	}*/
 
-	// worse case is when we have all the max-candidate slots filled except one, and we fill that
-	// one.
-	register_as_candidate {
+	get_license {
 		let c in 1 .. T::MaxCollators::get();
 
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
@@ -189,27 +209,96 @@ benchmarks! {
 
 	}: _(RawOrigin::Signed(caller.clone()))
 	verify {
-		assert_last_event::<T>(Event::CandidateAdded{account_id: caller, deposit: bond / 2u32.into()}.into());
+		assert_last_event::<T>(Event::LicenseObtained{account_id: caller, deposit: bond / 2u32.into()}.into());
 	}
 
-	// worse case is the last candidate leaving.
-	leave_intent {
-		let c in (T::MinCandidates::get() + 1) .. T::MaxCollators::get();
+	// worst case is when we have all the max-candidate slots filled except one, and we fill that
+	// one.
+	onboard {
+		let c in 1 .. T::MaxCollators::get();
+
+		<LicenseBond<T>>::put(T::Currency::minimum_balance());
+		<DesiredCollators<T>>::put(c + 1);
+
+		register_validators::<T>(c);
+		register_candidates::<T>(c);
+
+		let caller: T::AccountId = whitelisted_caller();
+		let bond: BalanceOf<T> = T::Currency::minimum_balance() * 2u32.into();
+		T::Currency::make_free_balance_be(&caller, bond.clone());
+
+		let origin = RawOrigin::Signed(caller.clone());
+
+		<session::Pallet<T>>::set_keys(
+			origin.clone().into(),
+			keys::<T>(c + 1),
+			Vec::new()
+		).unwrap();
+
+		assert_ok!(
+			<CollatorSelection<T>>::get_license(origin.clone().into())
+		);
+	}: _(origin)
+	verify {
+		assert_last_event::<T>(Event::CandidateAdded{account_id: caller}.into());
+	}
+
+	// worst case is the last candidate leaving.
+	offboard {
+		let c in 1 .. T::MaxCollators::get();
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
 		<DesiredCollators<T>>::put(c);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
-		let leaving = <Candidates<T>>::get().last().unwrap().who.clone();
+		let leaving = <Candidates<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
 	}: _(RawOrigin::Signed(leaving.clone()))
 	verify {
-		// todo:collator verify these
-		assert_last_event::<T>(Event::CandidateRemoved{account_id: leaving, deposit_returned: bond / 2u32.into() }.into());
+		assert_last_event::<T>(Event::CandidateRemoved{account_id: leaving}.into());
 	}
 
-	// worse case is paying a non-existing candidate account.
+	// worst case is the last candidate leaving.
+	release_license {
+		let c in 1 .. T::MaxCollators::get();
+		let bond = T::Currency::minimum_balance();
+		<LicenseBond<T>>::put(bond);
+		<DesiredCollators<T>>::put(c);
+
+		register_validators::<T>(c);
+		register_candidates::<T>(c);
+
+		let leaving = <Candidates<T>>::get().last().unwrap().clone();
+		whitelist!(leaving);
+	}: _(RawOrigin::Signed(leaving.clone()))
+	verify {
+		assert_last_event::<T>(Event::LicenseReleased{account_id: leaving, deposit_returned: bond}.into());
+	}
+
+	// worst case is the last candidate leaving.
+	force_release_license {
+		let c in 1 .. T::MaxCollators::get();
+		let bond = T::Currency::minimum_balance();
+		<LicenseBond<T>>::put(bond);
+		<DesiredCollators<T>>::put(c);
+
+		register_validators::<T>(c);
+		register_candidates::<T>(c);
+
+		let leaving = <Candidates<T>>::get().last().unwrap().clone();
+		whitelist!(leaving);
+		let origin = T::UpdateOrigin::successful_origin();
+	}: {
+		assert_ok!(
+			<CollatorSelection<T>>::force_release_license(origin, leaving.clone())
+		);
+	}
+	verify {
+		assert_last_event::<T>(Event::LicenseReleased{account_id: leaving, deposit_returned: bond}.into());
+	}
+
+	// worst case is paying a non-existing candidate account.
 	note_author {
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
 		T::Currency::make_free_balance_be(
@@ -247,16 +336,16 @@ benchmarks! {
 		let non_removals = c.saturating_sub(r);
 
 		for i in 0..c {
-			<LastAuthoredBlock<T>>::insert(candidates[i as usize].who.clone(), zero_block);
+			<LastAuthoredBlock<T>>::insert(candidates[i as usize].clone(), zero_block);
 		}
 
 		if non_removals > 0 {
 			for i in 0..non_removals {
-				<LastAuthoredBlock<T>>::insert(candidates[i as usize].who.clone(), new_block);
+				<LastAuthoredBlock<T>>::insert(candidates[i as usize].clone(), new_block);
 			}
 		} else {
 			for i in 0..c {
-				<LastAuthoredBlock<T>>::insert(candidates[i as usize].who.clone(), new_block);
+				<LastAuthoredBlock<T>>::insert(candidates[i as usize].clone(), new_block);
 			}
 		}
 
@@ -268,10 +357,8 @@ benchmarks! {
 	}: {
 		<CollatorSelection<T> as SessionManager<_>>::new_session(0)
 	} verify {
-		if c > r && non_removals >= T::MinCandidates::get() {
+		if c > r {
 			assert!(<Candidates<T>>::get().len() < pre_length);
-		} else if c > r && non_removals < T::MinCandidates::get() {
-			assert!(<Candidates<T>>::get().len() == T::MinCandidates::get() as usize);
 		} else {
 			assert!(<Candidates<T>>::get().len() == pre_length);
 		}

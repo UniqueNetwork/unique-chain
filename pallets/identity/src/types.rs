@@ -87,7 +87,7 @@ impl Decode for Data {
 					.expect("bound checked in match arm condition; qed");
 				input.read(&mut r[..])?;
 				Data::Raw(r)
-			},
+			}
 			34 => Data::BlakeTwo256(<[u8; 32]>::decode(input)?),
 			35 => Data::Sha256(<[u8; 32]>::decode(input)?),
 			36 => Data::Keccak256(<[u8; 32]>::decode(input)?),
@@ -106,7 +106,7 @@ impl Encode for Data {
 				let mut r = vec![l as u8 + 1; l + 1];
 				r[1..].copy_from_slice(&x[..l as usize]);
 				r
-			},
+			}
 			Data::BlakeTwo256(ref h) => once(34u8).chain(h.iter().cloned()).collect(),
 			Data::Sha256(ref h) => once(35u8).chain(h.iter().cloned()).collect(),
 			Data::Keccak256(ref h) => once(36u8).chain(h.iter().cloned()).collect(),
@@ -175,19 +175,25 @@ impl TypeInfo for Data {
 
 		let variants = variants
 			.variant("BlakeTwo256", |v| {
-				v.index(34).fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
+				v.index(34)
+					.fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
 			})
 			.variant("Sha256", |v| {
-				v.index(35).fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
+				v.index(35)
+					.fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
 			})
 			.variant("Keccak256", |v| {
-				v.index(36).fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
+				v.index(36)
+					.fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
 			})
 			.variant("ShaThree256", |v| {
-				v.index(37).fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
+				v.index(37)
+					.fields(Fields::unnamed().field(|f| f.ty::<[u8; 32]>()))
 			});
 
-		Type::builder().path(Path::new("Data", module_path!())).variant(variants)
+		Type::builder()
+			.path(Path::new("Data", module_path!()))
+			.variant(variants)
 	}
 }
 
@@ -280,7 +286,9 @@ impl Encode for IdentityFields {
 impl Decode for IdentityFields {
 	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
 		let field = u64::decode(input)?;
-		Ok(Self(<BitFlags<IdentityField>>::from_bits(field as u64).map_err(|_| "invalid value")?))
+		Ok(Self(
+			<BitFlags<IdentityField>>::from_bits(field as u64).map_err(|_| "invalid value")?,
+		))
 	}
 }
 impl TypeInfo for IdentityFields {
@@ -289,7 +297,10 @@ impl TypeInfo for IdentityFields {
 	fn type_info() -> Type {
 		Type::builder()
 			.path(Path::new("BitFlags", module_path!()))
-			.type_params(vec![TypeParameter::new("T", Some(meta_type::<IdentityField>()))])
+			.type_params(vec![TypeParameter::new(
+				"T",
+				Some(meta_type::<IdentityField>()),
+			)])
 			.composite(Fields::unnamed().field(|f| f.ty::<u64>().type_name("IdentityField")))
 	}
 }
@@ -413,10 +424,17 @@ impl<
 	> Registration<Balance, MaxJudgements, MaxAdditionalFields>
 {
 	pub(crate) fn total_deposit(&self) -> Balance {
-		self.deposit +
-			self.judgements
+		self.deposit
+			+ self
+				.judgements
 				.iter()
-				.map(|(_, ref j)| if let Judgement::FeePaid(fee) = j { *fee } else { Zero::zero() })
+				.map(|(_, ref j)| {
+					if let Judgement::FeePaid(fee) = j {
+						*fee
+					} else {
+						Zero::zero()
+					}
+				})
 				.fold(Zero::zero(), |a, i| a + i)
 	}
 }
@@ -429,7 +447,11 @@ impl<
 {
 	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
 		let (judgements, deposit, info) = Decode::decode(&mut AppendZerosInput::new(input))?;
-		Ok(Self { judgements, deposit, info })
+		Ok(Self {
+			judgements,
+			deposit,
+			info,
+		})
 	}
 }
 
