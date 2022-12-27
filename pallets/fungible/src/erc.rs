@@ -27,7 +27,6 @@ use up_data_structs::CollectionMode;
 use pallet_common::{
 	CollectionHandle,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
-	eth::EthCrossAccount,
 };
 use sp_std::vec::Vec;
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
@@ -175,7 +174,12 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint_cross(&mut self, caller: caller, to: EthCrossAccount, amount: uint256) -> Result<bool> {
+	fn mint_cross(
+		&mut self,
+		caller: caller,
+		to: pallet_common::eth::CrossAddress,
+		amount: uint256,
+	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -191,7 +195,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		spender: EthCrossAccount,
+		spender: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -232,7 +236,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
+		from: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -274,7 +278,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
+		to: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -292,8 +296,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
-		to: EthCrossAccount,
+		from: pallet_common::eth::CrossAddress,
+		to: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);

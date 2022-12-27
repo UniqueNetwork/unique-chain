@@ -57,7 +57,7 @@ describe('Contract calls', () => {
     const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = helper.ethNativeContract.collection(address, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, tokenId).send(caller));
 
@@ -79,8 +79,8 @@ describe('ERC165 tests', () => {
   const BASE_URI = 'base/';
 
   async function checkInterface(helper: EthUniqueHelper, interfaceId: string, simpleResult: boolean, compatibleResult: boolean) {
-    const simple = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(simpleNftCollectionId), 'nft', minter);
-    const compatible = helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(erc721MetadataCompatibleNftCollectionId), 'nft', minter);
+    const simple = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(simpleNftCollectionId), 'nft', minter);
+    const compatible = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(erc721MetadataCompatibleNftCollectionId), 'nft', minter);
 
     expect(await simple.methods.supportsInterface(interfaceId).call()).to.equal(simpleResult, `empty (not ERC721Metadata compatible) NFT collection returns not ${simpleResult}`);
     expect(await compatible.methods.supportsInterface(interfaceId).call()).to.equal(compatibleResult, `ERC721Metadata compatible NFT collection returns not ${compatibleResult}`);

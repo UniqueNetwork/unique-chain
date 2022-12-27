@@ -30,7 +30,7 @@ describe('Number of tokens per address (NFT)', () => {
   itSub.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
     await collection.setLimits(alice, {accountTokenOwnershipLimit: 20});
-    
+
     for(let i = 0; i < 10; i++){
       await expect(collection.mintToken(alice)).to.be.not.rejected;
     }
@@ -40,14 +40,14 @@ describe('Number of tokens per address (NFT)', () => {
     }
     await collection.burn(alice);
   });
-  
+
   itSub('Collection limits allow lower number than chain limits, collection limits are enforced', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
     await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
 
     await collection.mintToken(alice);
     await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
-    
+
     await collection.burnToken(alice, 1);
     await expect(collection.burn(alice)).to.be.not.rejected;
   });
@@ -68,7 +68,7 @@ describe('Number of tokens per address (ReFungible)', () => {
   itSub.skip('Collection limits allow greater number than chain limits, chain limits are enforced', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
     await collection.setLimits(alice, {accountTokenOwnershipLimit: 20});
-    
+
     for(let i = 0; i < 10; i++){
       await expect(collection.mintToken(alice, 10n)).to.be.not.rejected;
     }
@@ -85,7 +85,7 @@ describe('Number of tokens per address (ReFungible)', () => {
 
     await collection.mintToken(alice);
     await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
-    
+
     await collection.burnToken(alice, 1);
     await expect(collection.burn(alice)).to.be.not.rejected;
   });
@@ -314,7 +314,7 @@ describe('Collection zero limits (NFT)', () => {
 
     await collection.setSponsor(alice, alice.address);
     await collection.confirmSponsorship(alice);
-    
+
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
@@ -345,7 +345,7 @@ describe('Collection zero limits (Fungible)', () => {
 
     await collection.setSponsor(alice, alice.address);
     await collection.confirmSponsorship(alice);
-    
+
     await collection.transfer(alice, {Substrate: bob.address}, 2n);
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
@@ -387,7 +387,7 @@ describe('Collection zero limits (ReFungible)', () => {
 
     await collection.setSponsor(alice, alice.address);
     await collection.confirmSponsorship(alice);
-    
+
     await token.transfer(alice, {Substrate: bob.address}, 2n);
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
 
@@ -408,17 +408,17 @@ describe('Effective collection limits (NFT)', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  
+
   itSub('Effective collection limits', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
-    await collection.setLimits(alice, {ownerCanTransfer: true});    
-    
-    { 
+    await collection.setLimits(alice, {ownerCanTransfer: true});
+
+    {
       // Check that limits are undefined
       const collectionInfo = await collection.getData();
       const limits = collectionInfo?.raw.limits;
       expect(limits).to.be.any;
-      
+
       expect(limits.accountTokenOwnershipLimit).to.be.null;
       expect(limits.sponsoredDataSize).to.be.null;
       expect(limits.sponsoredDataRateLimit).to.be.null;
@@ -449,7 +449,7 @@ describe('Effective collection limits (NFT)', () => {
       expect(limits.transfersEnabled).to.be.true;
     }
 
-    { 
+    {
       // Check the values for collection limits
       await collection.setLimits(alice, {
         accountTokenOwnershipLimit: 99_999,

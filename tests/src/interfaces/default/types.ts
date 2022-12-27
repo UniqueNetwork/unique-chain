@@ -558,10 +558,6 @@ export interface FrameSystemAccountInfo extends Struct {
 
 /** @name FrameSystemCall */
 export interface FrameSystemCall extends Enum {
-  readonly isFillBlock: boolean;
-  readonly asFillBlock: {
-    readonly ratio: Perbill;
-  } & Struct;
   readonly isRemark: boolean;
   readonly asRemark: {
     readonly remark: Bytes;
@@ -595,7 +591,7 @@ export interface FrameSystemCall extends Enum {
   readonly asRemarkWithEvent: {
     readonly remark: Bytes;
   } & Struct;
-  readonly type: 'FillBlock' | 'Remark' | 'SetHeapPages' | 'SetCode' | 'SetCodeWithoutChecks' | 'SetStorage' | 'KillStorage' | 'KillPrefix' | 'RemarkWithEvent';
+  readonly type: 'Remark' | 'SetHeapPages' | 'SetCode' | 'SetCodeWithoutChecks' | 'SetStorage' | 'KillStorage' | 'KillPrefix' | 'RemarkWithEvent';
 }
 
 /** @name FrameSystemError */
@@ -1227,13 +1223,6 @@ export interface PalletBalancesReasons extends Enum {
   readonly type: 'Fee' | 'Misc' | 'All';
 }
 
-/** @name PalletBalancesReleases */
-export interface PalletBalancesReleases extends Enum {
-  readonly isV100: boolean;
-  readonly isV200: boolean;
-  readonly type: 'V100' | 'V200';
-}
-
 /** @name PalletBalancesReserveData */
 export interface PalletBalancesReserveData extends Struct {
   readonly id: U8aFixed;
@@ -1412,7 +1401,7 @@ export interface PalletConfigurationAppPromotionConfiguration extends Struct {
 export interface PalletConfigurationCall extends Enum {
   readonly isSetWeightToFeeCoefficientOverride: boolean;
   readonly asSetWeightToFeeCoefficientOverride: {
-    readonly coeff: Option<u32>;
+    readonly coeff: Option<u64>;
   } & Struct;
   readonly isSetMinGasPriceOverride: boolean;
   readonly asSetMinGasPriceOverride: {
@@ -1636,7 +1625,8 @@ export interface PalletEvmError extends Enum {
   readonly isGasLimitTooHigh: boolean;
   readonly isUndefined: boolean;
   readonly isReentrancy: boolean;
-  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy';
+  readonly isTransactionMustComeFromEOA: boolean;
+  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'Undefined' | 'Reentrancy' | 'TransactionMustComeFromEOA';
 }
 
 /** @name PalletEvmEvent */
@@ -2013,11 +2003,6 @@ export interface PalletRefungibleError extends Enum {
   readonly isRefungibleDisallowsNesting: boolean;
   readonly isSettingPropertiesNotAllowed: boolean;
   readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RepartitionWhileNotOwningAllPieces' | 'RefungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
-}
-
-/** @name PalletRefungibleItemData */
-export interface PalletRefungibleItemData extends Struct {
-  readonly constData: Bytes;
 }
 
 /** @name PalletRmrkCoreCall */
@@ -2840,7 +2825,7 @@ export interface PalletXcmEvent extends Enum {
 }
 
 /** @name PhantomTypeUpDataStructs */
-export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild]>> {}
+export interface PhantomTypeUpDataStructs extends Vec<ITuple<[UpDataStructsTokenData, UpDataStructsRpcCollection, RmrkTraitsCollectionCollectionInfo, RmrkTraitsNftNftInfo, RmrkTraitsResourceResourceInfo, RmrkTraitsPropertyPropertyInfo, RmrkTraitsBaseBaseInfo, RmrkTraitsPartPartType, RmrkTraitsTheme, RmrkTraitsNftNftChild, UpPovEstimateRpcPovInfo]>> {}
 
 /** @name PolkadotCorePrimitivesInboundDownwardMessage */
 export interface PolkadotCorePrimitivesInboundDownwardMessage extends Struct {
@@ -3165,6 +3150,41 @@ export interface SpRuntimeTransactionalError extends Enum {
   readonly type: 'LimitReached' | 'NoLayer';
 }
 
+/** @name SpRuntimeTransactionValidityInvalidTransaction */
+export interface SpRuntimeTransactionValidityInvalidTransaction extends Enum {
+  readonly isCall: boolean;
+  readonly isPayment: boolean;
+  readonly isFuture: boolean;
+  readonly isStale: boolean;
+  readonly isBadProof: boolean;
+  readonly isAncientBirthBlock: boolean;
+  readonly isExhaustsResources: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: u8;
+  readonly isBadMandatory: boolean;
+  readonly isMandatoryValidation: boolean;
+  readonly isBadSigner: boolean;
+  readonly type: 'Call' | 'Payment' | 'Future' | 'Stale' | 'BadProof' | 'AncientBirthBlock' | 'ExhaustsResources' | 'Custom' | 'BadMandatory' | 'MandatoryValidation' | 'BadSigner';
+}
+
+/** @name SpRuntimeTransactionValidityTransactionValidityError */
+export interface SpRuntimeTransactionValidityTransactionValidityError extends Enum {
+  readonly isInvalid: boolean;
+  readonly asInvalid: SpRuntimeTransactionValidityInvalidTransaction;
+  readonly isUnknown: boolean;
+  readonly asUnknown: SpRuntimeTransactionValidityUnknownTransaction;
+  readonly type: 'Invalid' | 'Unknown';
+}
+
+/** @name SpRuntimeTransactionValidityUnknownTransaction */
+export interface SpRuntimeTransactionValidityUnknownTransaction extends Enum {
+  readonly isCannotLookup: boolean;
+  readonly isNoUnsignedValidator: boolean;
+  readonly isCustom: boolean;
+  readonly asCustom: u8;
+  readonly type: 'CannotLookup' | 'NoUnsignedValidator' | 'Custom';
+}
+
 /** @name SpTrieStorageProof */
 export interface SpTrieStorageProof extends Struct {
   readonly trieNodes: BTreeSet<Bytes>;
@@ -3433,6 +3453,21 @@ export interface UpDataStructsTokenData extends Struct {
   readonly properties: Vec<UpDataStructsProperty>;
   readonly owner: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
   readonly pieces: u128;
+}
+
+/** @name UpPovEstimateRpcPovInfo */
+export interface UpPovEstimateRpcPovInfo extends Struct {
+  readonly proofSize: u64;
+  readonly compactProofSize: u64;
+  readonly compressedProofSize: u64;
+  readonly results: Vec<Result<Result<Null, SpRuntimeDispatchError>, SpRuntimeTransactionValidityTransactionValidityError>>;
+  readonly keyValues: Vec<UpPovEstimateRpcTrieKeyValue>;
+}
+
+/** @name UpPovEstimateRpcTrieKeyValue */
+export interface UpPovEstimateRpcTrieKeyValue extends Struct {
+  readonly key: Bytes;
+  readonly value: Bytes;
 }
 
 /** @name XcmDoubleEncoded */

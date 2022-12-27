@@ -1,6 +1,6 @@
 use sp_core::{U256, H160};
 use frame_support::{
-	weights::{Weight, constants::WEIGHT_PER_SECOND},
+	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 	traits::{FindAuthor},
 	parameter_types, ConsensusEngineId,
 };
@@ -23,9 +23,9 @@ pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 // (contract, which only writes a lot of data),
 // approximating on top of our real store write weight
 parameter_types! {
-	pub const WritesPerSecond: u64 = WEIGHT_PER_SECOND.ref_time() / <Runtime as frame_system::Config>::DbWeight::get().write;
+	pub const WritesPerSecond: u64 = WEIGHT_REF_TIME_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
 	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
-	pub const WeightTimePerGas: u64 = WEIGHT_PER_SECOND.ref_time() / GasPerSecond::get();
+	pub const WeightTimePerGas: u64 = WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
 
 	pub const WeightPerGas: Weight = Weight::from_ref_time(WeightTimePerGas::get());
 }

@@ -25,7 +25,7 @@ use evm_coder::{
 	types::*,
 	ToLog,
 };
-use pallet_common::eth::EthCrossAccount;
+use pallet_common::eth;
 use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
@@ -175,10 +175,17 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn sponsor(&self, contract_address: address) -> Result<EthCrossAccount> {
-		Ok(EthCrossAccount::from_sub_cross_account::<T>(
-			&Pallet::<T>::get_sponsor(contract_address).ok_or("Contract has no sponsor")?,
-		))
+	fn sponsor(&self, contract_address: address) -> Result<eth::OptionCrossAddress> {
+		Ok(match Pallet::<T>::get_sponsor(contract_address) {
+			Some(ref value) => eth::OptionCrossAddress {
+				status: true,
+				value: eth::CrossAddress::from_sub_cross_account::<T>(value),
+			},
+			None => eth::OptionCrossAddress {
+				status: false,
+				value: Default::default(),
+			},
+		})
 	}
 
 	/// Check tat contract has confirmed sponsor.
@@ -208,14 +215,12 @@ where
 		&mut self,
 		caller: caller,
 		contract_address: address,
-		// TODO: implement support for enums in evm-coder
-		mode: uint8,
+		mode: SponsoringModeT,
 	) -> Result<void> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
 		<Pallet<T>>::ensure_owner(contract_address, caller).map_err(dispatch_to_evm::<T>)?;
-		let mode = SponsoringModeT::from_eth(mode).ok_or("unknown mode")?;
 		<Pallet<T>>::set_sponsoring_mode(contract_address, mode);
 
 		Ok(())

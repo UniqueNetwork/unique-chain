@@ -112,7 +112,7 @@ parameter_types! {
 impl pallet_configuration::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
-	type DefaultWeightToFeeCoefficient = ConstU32<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
+	type DefaultWeightToFeeCoefficient = ConstU64<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
 	type DefaultCollatorSelectionMaxCollators = MaxCollators;
 	type DefaultCollatorSelectionKickThreshold = SessionPeriod;

@@ -97,7 +97,7 @@ declare module '@polkadot/api-base/types/consts' {
       defaultCollatorSelectionLicenseBond: u128 & AugmentedConst<ApiType>;
       defaultCollatorSelectionMaxCollators: u32 & AugmentedConst<ApiType>;
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
-      defaultWeightToFeeCoefficient: u32 & AugmentedConst<ApiType>;
+      defaultWeightToFeeCoefficient: u64 & AugmentedConst<ApiType>;
       maxXcmAllowedLocations: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const

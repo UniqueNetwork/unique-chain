@@ -6,13 +6,15 @@ import * as crypto from 'crypto';
 import {IKeyringPair} from '@polkadot/types/types/interfaces';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
+import chaiSubset from 'chai-subset';
 import {Context} from 'mocha';
 import config from '../config';
 import {ChainHelperBase} from './playgrounds/unique';
 import {ILogger} from './playgrounds/types';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper} from './playgrounds/unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper} from './playgrounds/unique.dev';
 
 chai.use(chaiAsPromised);
+chai.use(chaiSubset);
 export const expect = chai.expect;
 
 const getTestHash = (filename: string) => {
@@ -39,7 +41,7 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
       else {
         const actualSeed = getTestSeed(seed.filename);
         let account = helper.util.fromSeed(actualSeed, ss58Format);
-        // here's to hoping that no 
+        // here's to hoping that no
         if (!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
           console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
           account = helper.util.fromSeed('//Alice', ss58Format);
@@ -61,6 +63,14 @@ export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (se
 
 export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
+};
+
+export const usingStateminePlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
+};
+
+export const usingStatemintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
 };
 
 export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
@@ -106,7 +116,7 @@ export enum Pallets {
 
 export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {
   const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
-    
+
   if (missingPallets.length > 0) {
     const skipMsg = `\tSkipping test '${test.test?.title}'.\n\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
     console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
@@ -115,13 +125,13 @@ export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, req
 }
 
 export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
-  (opts.only ? it.only : 
+  (opts.only ? it.only :
     opts.skip ? it.skip : it)(name, async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       if (opts.requiredPallets) {
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
-      
+
       await cb({helper, privateKey});
     });
   });

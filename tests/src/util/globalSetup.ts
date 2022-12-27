@@ -17,10 +17,10 @@ const globalSetup = async (): Promise<void> => {
       // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
-          if (!result) Promise.reject();
+          if (!result) throw Error('Some problems with fundFilenamesWithRetries');
         });
 
-      // 3. Configure App Promotion 
+      // 3. Configure App Promotion
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
       if (missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
@@ -38,7 +38,7 @@ const globalSetup = async (): Promise<void> => {
       }
     } catch (error) {
       console.error(error);
-      Promise.reject();
+      throw Error('Error during globalSetup');
     }
   });
 };
@@ -78,7 +78,7 @@ const fundFilenames = async () => {
 
         if (aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
           tx.push(helper.executeExtrinsic(
-            alice, 
+            alice,
             'api.tx.balances.transfer',
             [account.address, DONOR_FUNDING * oneToken],
             true,

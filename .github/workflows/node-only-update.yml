@@ -37,16 +37,16 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
-
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+            network {sapphire}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
 
   nodes-only-update:
     needs: nodes-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,large]
+    runs-on: [self-hosted-ci]
 
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
@@ -79,13 +79,13 @@ jobs:
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            # POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
+            # MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
-            BRANCH=${{ github.head_ref }}
+            # BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.node.${{ matrix.network }}.yml

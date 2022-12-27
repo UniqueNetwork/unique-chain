@@ -28,10 +28,12 @@ use sp_runtime::{
 	traits::{BlakeTwo256, AccountIdLookup},
 	Perbill, Permill, Percent,
 };
+use sp_arithmetic::traits::One;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot,
 };
+use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
 use crate::{
 	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, PalletInfo,
 	System, Balances, Treasury, SS58Prefix, Version,
@@ -152,6 +154,8 @@ parameter_types! {
 	/// This value increases the priority of `Operational` transactions by adding
 	/// a "virtual tip" that's equal to the `OperationalFeeMultiplier * final_fee`.
 	pub const OperationalFeeMultiplier: u8 = 5;
+
+	pub FeeMultiplier: Multiplier = Multiplier::one();
 }
 
 impl pallet_transaction_payment::Config for Runtime {
@@ -160,7 +164,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = pallet_configuration::WeightToFee<Self, Balance>;
-	type FeeMultiplierUpdate = ();
+	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
 }
 
 parameter_types! {

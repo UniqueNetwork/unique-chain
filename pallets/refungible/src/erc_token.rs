@@ -30,7 +30,7 @@ use evm_coder::{
 use pallet_common::{
 	CommonWeightInfo,
 	erc::{CommonEvmHandler, PrecompileResult},
-	eth::{collection_id_to_address, EthCrossAccount},
+	eth::collection_id_to_address,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
@@ -43,6 +43,9 @@ use crate::{
 	TotalSupply, weights::WeightInfo,
 };
 
+/// Refungible token handle contains information about token's collection and id
+///
+/// RefungibleTokenHandle doesn't check token's existance upon creation
 pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
 
 #[solidity_interface(name = ERC1633)]
@@ -224,7 +227,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
+		from: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -250,7 +253,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: caller,
-		spender: EthCrossAccount,
+		spender: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -280,7 +283,7 @@ where
 	fn transfer_cross(
 		&mut self,
 		caller: caller,
-		to: EthCrossAccount,
+		to: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -303,8 +306,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: caller,
-		from: EthCrossAccount,
-		to: EthCrossAccount,
+		from: pallet_common::eth::CrossAddress,
+		to: pallet_common::eth::CrossAddress,
 		amount: uint256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);

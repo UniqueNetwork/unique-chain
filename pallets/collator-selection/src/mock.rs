@@ -206,7 +206,7 @@ parameter_types! {
 	pub const LicenseBond: u64 = 10;
 	pub const KickThreshold: u64 = 10;
 	// the following values do not matter and are meaningless, etc.
-	pub const DefaultWeightToFeeCoefficient: u32 = 100_000;
+	pub const DefaultWeightToFeeCoefficient: u64 = 100_000;
 	pub const DefaultMinGasPrice: u64 = 100_000;
 	pub const MaxXcmAllowedLocations: u32 = 16;
 	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);

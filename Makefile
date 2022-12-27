@@ -134,4 +134,9 @@ bench-app-promotion:
 	make _bench PALLET=app-promotion PALLET_DIR=app-promotion
 	
 .PHONY: bench
+<<<<<<< HEAD
 bench: bench-data-management bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-scheduler bench-rmrk-core bench-rmrk-equip bench-foreign-assets
+=======
+# Disabled: bench-scheduler, bench-rmrk-core, bench-rmrk-equip
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets
+>>>>>>> develop

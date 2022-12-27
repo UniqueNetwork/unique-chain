@@ -8,10 +8,11 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId, TSigner} from './types';
+import {ICrossAccountId, IPovInfo, TSigner} from './types';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
+import {spawnSync} from 'child_process';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -35,7 +36,7 @@ export class SilentConsole {
     this.consoleWarn = console.warn;
   }
 
-  enable() {  
+  enable() {
     const outFn = (printer: any) => (...args: any[]) => {
       for (const arg of args) {
         if (typeof arg !== 'string')
@@ -45,7 +46,7 @@ export class SilentConsole {
       }
       printer(...args);
     };
-  
+
     console.error = outFn(this.consoleErr.bind(console));
     console.log = outFn(this.consoleLog.bind(console));
     console.warn = outFn(this.consoleWarn.bind(console));
@@ -104,6 +105,7 @@ export class DevUniqueHelper extends UniqueHelper {
       rpc: {
         unique: defs.unique.rpc,
         appPromotion: defs.appPromotion.rpc,
+        povinfo: defs.povinfo.rpc,
         rmrk: defs.rmrk.rpc,
         eth: {
           feeHistory: {
@@ -121,10 +123,20 @@ export class DevUniqueHelper extends UniqueHelper {
     });
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
+    this.wsEndpoint = wsEndpoint;
   }
 }
 
-export class DevRelayHelper extends RelayHelper {}
+export class DevRelayHelper extends RelayHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevRelayHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
 
 export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;
@@ -137,12 +149,17 @@ export class DevWestmintHelper extends WestmintHelper {
   }
 }
 
+export class DevStatemineHelper extends DevWestmintHelper {}
+
+export class DevStatemintHelper extends DevWestmintHelper {}
+
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
+    options.notePreimagePallet = options.notePreimagePallet ?? 'democracy';
 
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
@@ -150,7 +167,12 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
   }
 }
 
-export class DevMoonriverHelper extends DevMoonbeamHelper {}
+export class DevMoonriverHelper extends DevMoonbeamHelper {
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
+    super(logger, options);
+  }
+}
 
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
@@ -175,11 +197,11 @@ class ArrangeGroup {
   }
 
   /**
-   * Generates accounts with the specified UNQ token balance 
+   * Generates accounts with the specified UNQ token balance
    * @param balances balances for generated accounts. Each balance will be multiplied by the token nominal.
    * @param donor donor account for balances
    * @returns array of newly created accounts
-   * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor); 
+   * @example const [acc1, acc2, acc3] = await createAccounts([0n, 10n, 20n], donor);
    */
   createAccounts = async (balances: bigint[], donor: IKeyringPair): Promise<IKeyringPair[]> => {
     let nonce = await this.helper.chain.getNonce(donor.address);
@@ -199,7 +221,7 @@ class ArrangeGroup {
     }
 
     await Promise.all(transactions).catch(_e => {});
-    
+
     //#region TODO remove this region, when nonce problem will be solved
     const checkBalances = async () => {
       let isSuccess = true;
@@ -229,7 +251,7 @@ class ArrangeGroup {
   };
 
   // TODO combine this method and createAccounts into one
-  createCrowd = async (accountsToCreate: number, withBalance: bigint, donor: IKeyringPair): Promise<IKeyringPair[]> => {  
+  createCrowd = async (accountsToCreate: number, withBalance: bigint, donor: IKeyringPair): Promise<IKeyringPair[]> => {
     const createAsManyAsCan = async () => {
       let transactions: any = [];
       const accounts: IKeyringPair[] = [];
@@ -237,9 +259,9 @@ class ArrangeGroup {
       const tokenNominal = this.helper.balance.getOneTokenNominal();
       for (let i = 0; i < accountsToCreate; i++) {
         if (i === 500) { // if there are too many accounts to create
-          await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled 
+          await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled
           transactions = []; //
-          nonce = await this.helper.chain.getNonce(donor.address); // update nonce 
+          nonce = await this.helper.chain.getNonce(donor.address); // update nonce
         }
         const recepient = this.helper.util.fromSeed(mnemonicGenerate());
         accounts.push(recepient);
@@ -249,7 +271,7 @@ class ArrangeGroup {
           nonce++;
         }
       }
-      
+
       const fullfilledAccounts = [];
       await Promise.allSettled(transactions);
       for (const account of accounts) {
@@ -261,7 +283,7 @@ class ArrangeGroup {
       return fullfilledAccounts;
     };
 
-    
+
     const crowd: IKeyringPair[] = [];
     // do up to 5 retries
     for (let index = 0; index < 5 && accountsToCreate !== 0; index++) {
@@ -278,7 +300,7 @@ class ArrangeGroup {
   isDevNode = async () => {
     let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     if (blockNumber == 0) {
-      await this.helper.wait.newBlocks(1); 
+      await this.helper.wait.newBlocks(1);
       blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     }
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
@@ -297,16 +319,48 @@ class ArrangeGroup {
     const block2date = await findCreationDate(block2);
     if(block2date! - block1date! < 9000) return true;
   };
-  
+
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
     const address = payer.Substrate ? payer.Substrate : await this.helper.address.ethToSubstrate(payer.Ethereum!);
-    let balance = await this.helper.balance.getSubstrate(address); 
-    
+    let balance = await this.helper.balance.getSubstrate(address);
+
     await promise();
-    
+
     balance -= await this.helper.balance.getSubstrate(address);
-    
+
     return balance;
+  }
+
+  async calculatePoVInfo(txs: any[]): Promise<IPovInfo> {
+    const rawPovInfo = await this.helper.callRpc('api.rpc.povinfo.estimateExtrinsicPoV', [txs]);
+
+    const kvJson: {[key: string]: string} = {};
+
+    for (const kv of rawPovInfo.keyValues) {
+      kvJson[kv.key.toHex()] = kv.value.toHex();
+    }
+
+    const kvStr = JSON.stringify(kvJson);
+
+    const chainql = spawnSync(
+      'chainql',
+      [
+        `--tla-code=data=${kvStr}`,
+        '-e', `function(data) cql.dump(cql.chain("${this.helper.getEndpoint()}").latest._meta, data, {omit_empty:true})`,
+      ],
+    );
+
+    if (!chainql.stdout) {
+      throw Error('unable to get an output from the `chainql`');
+    }
+
+    return {
+      proofSize: rawPovInfo.proofSize.toNumber(),
+      compactProofSize: rawPovInfo.compactProofSize.toNumber(),
+      compressedProofSize: rawPovInfo.compressedProofSize.toNumber(),
+      results: rawPovInfo.results,
+      kv: JSON.parse(chainql.stdout.toString()),
+    };
   }
 
   calculatePalletAddress(palletId: any) {
@@ -322,7 +376,7 @@ class ArrangeGroup {
 
       const scheduledId = '0x' + '0'.repeat(prefixSize) + hexId;
 
-      return scheduledId;  
+      return scheduledId;
     }
 
     const ids = [];
@@ -415,7 +469,7 @@ class WaitGroup {
    * @param timeoutError error message to throw
    * @returns promise of the same type the operation had
    */
-  async withTimeout<T>(
+  withTimeout<T>(
     promise: Promise<T>,
     timeoutMS = 30000,
     timeoutError = 'The operation has timed out!',
@@ -425,14 +479,14 @@ class WaitGroup {
         reject(new Error(timeoutError));
       }, timeoutMS);
     });
-  
+
     return Promise.race<T>([promise, timeout]).catch(e => {throw new Error(e);});
   }
 
   /**
    * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
-   * @returns 
+   * @returns
    */
   async newBlocks(blocksCount = 1, timeout?: number): Promise<void> {
     timeout = timeout ?? blocksCount * 60_000;
@@ -452,14 +506,14 @@ class WaitGroup {
   }
 
   /**
-   * Wait for the specified number of sessions to pass. 
+   * Wait for the specified number of sessions to pass.
    * Only applicable if the Session pallet is turned on.
    * @param sessionCount number of sessions to wait
    * @param blockTimeout time in ms until panicking that the chain has stopped producing blocks
-   * @returns 
+   * @returns
    */
   async newSessions(sessionCount = 1, blockTimeout = 60000): Promise<void> {
-    console.log(`Waiting for ${sessionCount} new session${sessionCount > 1 ? 's' : ''}.` 
+    console.log(`Waiting for ${sessionCount} new session${sessionCount > 1 ? 's' : ''}.`
       + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
 
     const expectedSessionIndex = await (this.helper as DevUniqueHelper).session.getIndex() + sessionCount;
@@ -489,7 +543,7 @@ class WaitGroup {
     await this.waitWithTimeout(promise, timeout);
     return promise;
   }
-  
+
   async forRelayBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     // eslint-disable-next-line no-async-promise-executor
@@ -508,7 +562,7 @@ class WaitGroup {
 
   noScheduledTasks() {
     const api = this.helper.getApi();
-    
+
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async resolve => {
       const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
@@ -518,7 +572,7 @@ class WaitGroup {
           unsubscribe();
           resolve();
         }
-      }); 
+      });
     });
 
     return promise;
@@ -532,16 +586,16 @@ class WaitGroup {
         const blockHash = header.hash;
         const eventIdStr = `${eventSection}.${eventMethod}`;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
-  
+
         this.helper.logger.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
-  
+
         const apiAt = await this.helper.getApi().at(blockHash);
         const eventRecords = (await apiAt.query.system.events()) as any;
-  
+
         const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
           return r.event.section == eventSection && r.event.method == eventMethod;
         });
-  
+
         if (neededEvent) {
           unsubscribe();
           resolve(neededEvent);
@@ -564,7 +618,7 @@ class SessionGroup {
   constructor(helper: ChainHelperBase) {
     this.helper = helper;
   }
-  
+
   //todo:collator documentation
   async getIndex(): Promise<number> {
     return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
@@ -577,7 +631,7 @@ class SessionGroup {
   setOwnKeys(signer: TSigner, key: string) {
     return this.helper.executeExtrinsic(
       signer,
-      'api.tx.session.setKeys', 
+      'api.tx.session.setKeys',
       [key, '0x0'],
       true,
     );

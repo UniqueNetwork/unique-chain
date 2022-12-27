@@ -301,6 +301,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `admin`: account of the new admin.
+		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::set_admin_address())]
 		pub fn set_admin_address(origin: OriginFor<T>, admin: T::CrossAccountId) -> DispatchResult {
 			ensure_root(origin)?;
@@ -319,6 +320,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `amount`: in native tokens.
+		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::stake())]
 		pub fn stake(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
@@ -393,6 +395,7 @@ pub mod pallet {
 		/// Moves the sum of all stakes to the `reserved` state.
 		/// After the end of `PendingInterval` this sum becomes completely
 		/// free for further use.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::unstake())]
 		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
 			let staker_id = ensure_signed(staker)?;
@@ -454,6 +457,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection that will be sponsored by `pallet_id`
+		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::sponsor_collection())]
 		pub fn sponsor_collection(
 			admin: OriginFor<T>,
@@ -479,6 +483,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection that is sponsored by `pallet_id`
+		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::stop_sponsoring_collection())]
 		pub fn stop_sponsoring_collection(
 			admin: OriginFor<T>,
@@ -508,6 +513,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `contract_id`: the contract address that will be sponsored by `pallet_id`
+		#[pallet::call_index(5)]
 		#[pallet::weight(<T as Config>::WeightInfo::sponsor_contract())]
 		pub fn sponsor_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -534,6 +540,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `contract_id`: the contract address that is sponsored by `pallet_id`
+		#[pallet::call_index(6)]
 		#[pallet::weight(<T as Config>::WeightInfo::stop_sponsoring_contract())]
 		pub fn stop_sponsoring_contract(admin: OriginFor<T>, contract_id: H160) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -564,6 +571,7 @@ pub mod pallet {
 		/// # Arguments
 		///
 		/// * `stakers_number`: the number of stakers for which recalculation will be performed
+		#[pallet::call_index(7)]
 		#[pallet::weight(<T as Config>::WeightInfo::payout_stakers(stakers_number.unwrap_or(DEFAULT_NUMBER_PAYOUTS) as u32))]
 		pub fn payout_stakers(admin: OriginFor<T>, stakers_number: Option<u8>) -> DispatchResult {
 			let admin_id = ensure_signed(admin)?;
@@ -598,12 +606,22 @@ pub mod pallet {
 			PreviousCalculatedRecord::<T>::set(None);
 
 			{
+				// Address handled in the last payout loop iteration (below)
 				let last_id = RefCell::new(None);
+				// Block number (as a part of the key) for which calculation was performed in the last payout loop iteration
+				let mut last_staked_calculated_block = Default::default();
+				// Reward balance for the address in the iteration
 				let income_acc = RefCell::new(BalanceOf::<T>::default());
+				// Staked balance for the address in the iteration (before stake is recalculated)
 				let amount_acc = RefCell::new(BalanceOf::<T>::default());
 
-				// this closure is used to perform some of the actions if we break the loop because we reached the number of stakers for recalculation,
-				// but there were unrecalculated records in the storage.
+				// This closure is used to finalize handling single staker address in each of the two conditions: (1) when we break out of the payout
+				// loop because we reached the number of stakes for rewarding, (2) When all stakes by the single address are handled and the payout
+				// loop switches to handling the next staker address:
+				//   1. Transfer full reward amount to the payee
+				//   2. Lock the reward in staking lock
+				//   3. Update TotalStaked amount
+				//   4. Issue StakingRecalculation event
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
@@ -635,16 +653,40 @@ pub mod pallet {
 					Ok(())
 				};
 
+				// Reward payment loop. Should loop for no more than config.max_stakers_per_calculation
+				// iterations in one extrinsic call
+				//
+				// stakers_number - keeps the remaining number of iterations (staker addresses to handle)
+				// next_recalc_block_for_stake - is taken from the state and stores the starting relay block from which reward should be paid out
+				// income_acc - stores the reward amount to pay to the staker address (accumulates over all address stake records)
 				while let Some((
 					(current_id, staked_block),
 					(amount, next_recalc_block_for_stake),
 				)) = storage_iterator.next()
 				{
+					// last_id is not equal current_id when we switch to handling a new staker address
+					// or just start handling the very first address. In the latter case last_id will be None and
+					// flush_stake will do nothing
 					if last_id.borrow().as_ref() != Some(&current_id) {
-						flush_stake()?;
-						*last_id.borrow_mut() = Some(current_id.clone());
-						stakers_number -= 1;
+						if stakers_number > 0 {
+							flush_stake()?;
+							*last_id.borrow_mut() = Some(current_id.clone());
+							stakers_number -= 1;
+						}
+						// Break out if we reached the address limit
+						else {
+							if let Some(staker) = &*last_id.borrow() {
+								// Save the last calculated record to pick up in the next extrinsic call
+								PreviousCalculatedRecord::<T>::set(Some((
+									staker.clone(),
+									last_staked_calculated_block,
+								)));
+							}
+							break;
+						};
 					};
+
+					// Increase accumulated reward for current address and update current staking record, i.e. (address, staked_block) -> amount
 					if current_recalc_block >= next_recalc_block_for_stake {
 						*amount_acc.borrow_mut() += amount;
 						Self::recalculate_and_insert_stake(
@@ -658,13 +700,7 @@ pub mod pallet {
 							&mut *income_acc.borrow_mut(),
 						);
 					}
-
-					if stakers_number == 0 {
-						if storage_iterator.next().is_some() {
-							PreviousCalculatedRecord::<T>::set(Some((current_id, staked_block)));
-						}
-						break;
-					}
+					last_staked_calculated_block = staked_block;
 				}
 				flush_stake()?;
 			}
@@ -834,6 +870,8 @@ impl<T: Config> Pallet<T> {
 		income - base
 	}
 
+	/// Get relay block number rounded down to multiples of config.recalculation_interval.
+	/// We need it to reward stakers in integer parts of recalculation_interval
 	fn get_current_recalc_block(
 		current_relay_block: T::BlockNumber,
 		config: &PalletConfiguration<T>,

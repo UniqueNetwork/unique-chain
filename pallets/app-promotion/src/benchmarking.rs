@@ -77,27 +77,36 @@ benchmarks! {
 	} : _(RawOrigin::Root, T::CrossAccountId::from_sub(pallet_admin))
 
 	payout_stakers{
-		let b in 1..101;
+		let b in 1..100;
 
 		let pallet_admin = account::<T::AccountId>("admin", 1, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 		<T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		<T as Config>::Currency::make_free_balance_be(&<T as pallet::Config>::TreasuryAccountId::get(),  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 
-		let staker: T::AccountId = account("caller", 0, SEED);
-		<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let stakers: Vec<T::AccountId> = (0..b).map(|index| account("staker", index, SEED)).collect();
 		stakers.iter().for_each(|staker| {
 			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		});
-		(0..10).try_for_each(|_| {
+		(1..11).try_for_each(|i| {
+			<frame_system::Pallet<T>>::set_block_number(i.into());
+			T::RelayBlockNumberProvider::set_block_number((2*i).into());
+			assert_eq!(<frame_system::Pallet<T>>::block_number(), i.into());
+			assert_eq!(T::RelayBlockNumberProvider::current_block_number(), (2*i).into());
 			stakers.iter()
-				.map(|staker| {
-					PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())
-				}).collect::<Result<Vec<_>, _>>()?;
-			<frame_system::Pallet<T>>::finalize();
+			.map(|staker| {
+				PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())
+			}).collect::<Result<Vec<_>, _>>()?;
+
 			Result::<(), sp_runtime::DispatchError>::Ok(())
 		})?;
+
+		let stakes = Staked::<T>::iter_prefix((&stakers[0],)).into_iter().collect::<Vec<_>>();
+		assert_eq!(stakes.len(), 10);
+
+		<frame_system::Pallet<T>>::set_block_number(15_000.into());
+		T::RelayBlockNumberProvider::set_block_number(30_000.into());
 	} : _(RawOrigin::Signed(pallet_admin.clone()), Some(b as u8))
 
 	stake {
@@ -110,9 +119,12 @@ benchmarks! {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		(0..10).map(|_| {
+		(1..11).map(|i| {
 			// used to change block number
-			<frame_system::Pallet<T>>::finalize();
+			<frame_system::Pallet<T>>::set_block_number(i.into());
+			T::RelayBlockNumberProvider::set_block_number((2*i).into());
+			assert_eq!(<frame_system::Pallet<T>>::block_number(), i.into());
+			assert_eq!(T::RelayBlockNumberProvider::current_block_number(), (2*i).into());
 			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))
 		}).collect::<Result<Vec<_>, _>>()?;
 
