@@ -68,7 +68,7 @@ describe('Pallet presence', () => {
       const appPromotion = 'apppromotion';
       const testUtils = 'testutils';
 
-      if (chain.eq('OPAL by UNIQUE')) {
+      if (chain.eq('OPAL by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
         requiredPallets.push(
           refungible,
           foreignAssets,
