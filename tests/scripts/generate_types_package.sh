@@ -9,12 +9,11 @@ GIT_REPO=git@github.com:UniqueNetwork/unique-types-js.git
 . $DIR/functions.sh
 
 usage() {
-	echo "Usage: [RPC_URL=http://localhost:9933] $0 <--rc|--release|--sapphire> [--force] [--push] [--rpc-url=http://localhost:9933]" 1>&2
+	echo "Usage: [RPC_URL=http://localhost:9933] $0 <--rc|--release> [--force] [--push] [--rpc-url=http://localhost:9933]" 1>&2
 	exit 1
 }
 
 rc=
-sapphire=
 release=
 force=
 push=
@@ -23,15 +22,11 @@ for i in "$@"; do
 case $i in
 	--rc)
 		rc=1
-		if test "$release" -o "$sapphire"; then usage; fi
-		;;
-	--sapphire)
-		sapphire=1
-		if test "$rc" -o "$release"; then usage; fi
+		if test "$release"; then usage; fi
 		;;
 	--release)
 		release=1
-		if test "$rc" -o "$sapphire"; then usage; fi
+		if test "$rc"; then usage; fi
 		;;
 	--force)
 		force=1
@@ -48,7 +43,7 @@ case $i in
 esac
 done
 
-if test \( ! \( "$rc" -o "$release" -o "$sapphire" \) \) -o \( "${RPC_URL=}" = "" \); then
+if test \( ! \( "$rc" -o "$release" \) \) -o \( "${RPC_URL=}" = "" \); then
 	usage
 elif test "$rc"; then
 	echo "Rc build"
@@ -68,6 +63,11 @@ case $spec_name in
 	opal)
 		package_name=@unique-nft/opal-testnet-types
 		repo_branch=opal-testnet
+		repo_tag=$repo_branch
+		;;
+	sapphire)
+		package_name=@unique-nft/sapphire-mainnet-types
+		repo_branch=sapphire-mainnet
 		repo_tag=$repo_branch
 		;;
 	quartz)
@@ -93,15 +93,6 @@ if test "$rc" = 1; then
 	fi
 	package_name=@unique-nft/rc-types
 	repo_branch=rc
-	repo_tag=$repo_branch
-fi
-if test "$sapphire" = 1; then
-	if "$spec_name" != opal; then
-		echo "sapphire types can only be based on opal spec"
-		exit 1
-	fi
-	package_name=@unique-nft/sapphire-mainnet-types
-	repo_branch=sapphire-mainnet
 	repo_tag=$repo_branch
 fi
 

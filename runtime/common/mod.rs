@@ -145,6 +145,10 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 			.map(|d| d.relay_parent_number)
 			.unwrap_or_default()
 	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn set_block_number(block: Self::BlockNumber) {
+		cumulus_pallet_parachain_system::RelaychainBlockNumberProvider::<T>::set_block_number(block)
+	}
 }
 
 pub(crate) struct CheckInherents;

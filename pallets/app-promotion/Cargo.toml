@@ -9,13 +9,13 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-app-promotion'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.1.2'
+version = '0.1.3'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
-default = ['std']
+default = ['std',]
 runtime-benchmarks = [
     'frame-benchmarking',
     'frame-support/runtime-benchmarks',
