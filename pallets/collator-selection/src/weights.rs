@@ -41,7 +41,6 @@ use frame_support::{
 };
 use sp_std::marker::PhantomData;
 
-// todo:collator re-generate weights
 // The weight info trait for `pallet_collator_selection`.
 pub trait WeightInfo {
 	fn add_invulnerable(_b: u32) -> Weight;
