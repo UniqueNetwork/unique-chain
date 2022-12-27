@@ -34,9 +34,10 @@ pub mod pallet {
 	use sp_std::vec::Vec;
 	use super::weights::WeightInfo;
 	use pallet_evm::{PrecompileHandle, Pallet as PalletEvm};
+	use pallet_identity::Registration;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm::Config {
+	pub trait Config: frame_system::Config + pallet_evm::Config + pallet_identity::Config {
 		/// Weights
 		type WeightInfo: WeightInfo;
 		/// The overarching event type.
@@ -146,6 +147,23 @@ pub mod pallet {
 					<T as frame_system::Config>::RuntimeEvent::decode(&mut event.as_slice())
 						.map_err(|_| <Error<T>>::BadEvent)?,
 				);
+			}
+			Ok(())
+		}
+
+		/// Insert or remove identities.
+		#[pallet::call_index(5)]
+		#[pallet::weight(<SelfWeightOf<T>>::insert_events(identities.len() as u32))] // todo:collator weight
+		pub fn insert_identities(
+			origin: OriginFor<T>,
+			identities: Vec<(
+				T::AccountId,
+				Option<Registration<pallet_identity::BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>>,
+			)>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			for identity in identities {
+				<pallet_identity::IdentityOf<T>>::set(identity.0, identity.1);
 			}
 			Ok(())
 		}

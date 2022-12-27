@@ -1,8 +1,8 @@
 [package]
 name = "pallet-collator-selection"
-version = "3.0.0"
+version = "4.0.0"
 description = "Simple staking pallet with a fixed stake."
-authors = ["Unique Network <support@uniquenetwork.io>"]
+authors = ["Parity Technologies <admin@parity.io>", "Unique Network <support@uniquenetwork.io>"]
 edition = "2021"
 homepage = "https://unique.network"
 repository = "https://github.com/UniqueNetwork/unique-chain"

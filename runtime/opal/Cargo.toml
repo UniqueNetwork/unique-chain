@@ -276,11 +276,6 @@ default-features = false
 git = 'https://github.com/paritytech/substrate'
 branch = 'polkadot-v0.9.36'
 
-[dependencies.pallet-identity]
-default-features = false
-git = 'https://github.com/paritytech/substrate'
-branch = 'polkadot-v0.9.36'
-
 [dependencies.pallet-balances]
 default-features = false
 git = "https://github.com/paritytech/substrate"
@@ -505,6 +500,7 @@ pallet-inflation = { path = '../../pallets/inflation', default-features = false 
 pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
 pallet-collator-selection = { default-features = false, path = "../../pallets/collator-selection" }
+pallet-identity = { default-features = false, path = "../../pallets/identity" }
 pallet-configuration = { default-features = false, path = "../../pallets/configuration" }
 pallet-common = { default-features = false, path = "../../pallets/common" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }
