@@ -92,6 +92,10 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
+        FilterIdentity: {
+          extrinsic: {},
+          payload: {},
+        },
         FakeTransactionFinalizer: {
           extrinsic: {},
           payload: {},

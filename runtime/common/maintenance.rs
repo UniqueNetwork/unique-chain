@@ -60,7 +60,7 @@ impl SignedExtension for CheckMaintenance {
 	) -> TransactionValidity {
 		if Maintenance::is_enabled() {
 			match call {
-				RuntimeCall::EvmMigration(_)
+				RuntimeCall::DataManagement(_)
 				| RuntimeCall::EVM(_)
 				| RuntimeCall::Ethereum(_)
 				| RuntimeCall::Inflation(_)

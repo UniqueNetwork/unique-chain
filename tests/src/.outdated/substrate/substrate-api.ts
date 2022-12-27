@@ -41,6 +41,10 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+      FilterIdentity: {
+        extrinsic: {},
+        payload: {},
+      },
       FakeTransactionFinalizer: {
         extrinsic: {},
         payload: {},

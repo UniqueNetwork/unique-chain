@@ -83,9 +83,9 @@ describe('EVM Migrations', () => {
 
     const caller = await helper.eth.createAccountWithBalance(superuser);
 
-    const txBegin = helper.constructApiCall('api.tx.evmMigration.begin', [ADDRESS]);
-    const txSetData = helper.constructApiCall('api.tx.evmMigration.setData', [ADDRESS, DATA]);
-    const txFinish = helper.constructApiCall('api.tx.evmMigration.finish', [ADDRESS, CODE]);
+    const txBegin = helper.constructApiCall('api.tx.dataManagement.begin', [ADDRESS]);
+    const txSetData = helper.constructApiCall('api.tx.dataManagement.setData', [ADDRESS, DATA]);
+    const txFinish = helper.constructApiCall('api.tx.dataManagement.finish', [ADDRESS, CODE]);
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txBegin])).to.be.fulfilled;
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txSetData])).to.be.fulfilled;
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txFinish])).to.be.fulfilled;
@@ -126,7 +126,7 @@ describe('EVM Migrations', () => {
     }
   });
   itEth('Fake collection creation on substrate side', async ({helper}) => {
-    const txInsertEvents = helper.constructApiCall('api.tx.evmMigration.insertEvents', [[
+    const txInsertEvents = helper.constructApiCall('api.tx.dataManagement.insertEvents', [[
       encodeEvent(helper.getApi(), 'Common', 'common', 'CollectionCreated', [
         // Collection Id
         9999,
@@ -143,7 +143,7 @@ describe('EVM Migrations', () => {
     expect(eventStrings).to.contain('common.CollectionCreated');
   });
   itEth('Fake token creation on substrate side', async ({helper}) => {
-    const txInsertEvents = helper.constructApiCall('api.tx.evmMigration.insertEvents', [[
+    const txInsertEvents = helper.constructApiCall('api.tx.dataManagement.insertEvents', [[
       encodeEvent(helper.getApi(), 'Common', 'common', 'ItemCreated', [
         // Collection Id
         9999,
@@ -173,7 +173,7 @@ describe('EVM Migrations', () => {
     });
 
     {
-      const txInsertEthLogs = helper.constructApiCall('api.tx.evmMigration.insertEthLogs', [[
+      const txInsertEthLogs = helper.constructApiCall('api.tx.dataManagement.insertEthLogs', [[
         {
         // Contract, which has emitted this log
           address: collectionAddress,

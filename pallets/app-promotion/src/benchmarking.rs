@@ -25,13 +25,13 @@ use frame_benchmarking::{benchmarks, account};
 use frame_support::traits::OnInitialize;
 use frame_system::RawOrigin;
 use pallet_unique::benchmarking::create_nft_collection;
-use pallet_evm_migration::Pallet as EvmMigrationPallet;
+use pallet_data_management::Pallet as DataManagementPallet;
 
 const SEED: u32 = 0;
 
 fn set_admin<T>() -> Result<T::AccountId, sp_runtime::DispatchError>
 where
-	T: Config + pallet_unique::Config + pallet_evm_migration::Config,
+	T: Config + pallet_unique::Config + pallet_data_management::Config,
 	T::BlockNumber: From<u32> + Into<u32>,
 	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>,
 {
@@ -52,7 +52,7 @@ where
 
 benchmarks! {
 	where_clause{
-		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
+		where T:  Config + pallet_unique::Config + pallet_data_management::Config ,
 		T::BlockNumber: From<u32> + Into<u32>,
 		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
 	}
@@ -144,8 +144,8 @@ benchmarks! {
 		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let address = H160::from_low_u64_be(SEED as u64);
 		let data: Vec<u8> = (0..20 as u8).collect();
-		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
-		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
+		<DataManagementPallet<T>>::begin(RawOrigin::Root.into(), address)?;
+		<DataManagementPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), address)
 
 	stop_sponsoring_contract {
@@ -155,8 +155,8 @@ benchmarks! {
 		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let address = H160::from_low_u64_be(SEED as u64);
 		let data: Vec<u8> = (0..20 as u8).collect();
-		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
-		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
+		<DataManagementPallet<T>>::begin(RawOrigin::Root.into(), address)?;
+		<DataManagementPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
 		PromototionPallet::<T>::sponsor_contract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), address)
 }

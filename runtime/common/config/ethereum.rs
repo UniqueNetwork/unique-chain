@@ -70,7 +70,7 @@ impl pallet_evm::Config for Runtime {
 	type Currency = Balances;
 	type RuntimeEvent = RuntimeEvent;
 	type OnMethodCall = (
-		pallet_evm_migration::OnMethodCall<Self>,
+		pallet_data_management::OnMethodCall<Self>,
 		pallet_evm_contract_helpers::HelpersOnMethodCall<Self>,
 		CollectionDispatchT<Self>,
 		pallet_unique::eth::CollectionHelpersOnMethodCall<Self>,
@@ -83,9 +83,9 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Aura>;
 }
 
-impl pallet_evm_migration::Config for Runtime {
+impl pallet_data_management::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
+	type WeightInfo = pallet_data_management::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_ethereum::Config for Runtime {

@@ -32,7 +32,7 @@ const requiredPallets = [
   'evm',
   'evmcodersubstrate',
   'evmcontracthelpers',
-  'evmmigration',
+  'datamanagement',
   'evmtransactionpayment',
   'ethereum',
   'fungible',
@@ -66,7 +66,7 @@ describe('Pallet presence', () => {
       const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
-      const collatorSelection = ['authorship', 'session', 'collatorselection'];
+      const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
       const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE')) {

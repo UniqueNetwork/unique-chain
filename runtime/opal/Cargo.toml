@@ -26,7 +26,7 @@ runtime-benchmarks = [
     'frame-system-benchmarking',
     'frame-system/runtime-benchmarks',
     'pallet-ethereum/runtime-benchmarks',
-    'pallet-evm-migration/runtime-benchmarks',
+    'pallet-data-management/runtime-benchmarks',
     'pallet-evm-coder-substrate/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
@@ -73,6 +73,7 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-session/try-runtime",
+	"pallet-identity/try-runtime",
     'pallet-inflation/try-runtime',
     'pallet-unique/try-runtime',
     'pallet-configuration/try-runtime',
@@ -91,7 +92,7 @@ try-runtime = [
     'pallet-evm-coder-substrate/try-runtime',
     'pallet-evm-contract-helpers/try-runtime',
     'pallet-evm-transaction-payment/try-runtime',
-    'pallet-evm-migration/try-runtime',
+    'pallet-data-management/try-runtime',
     'pallet-base-fee/try-runtime',
     'pallet-unique-scheduler-v2/try-runtime',
     'pallet-maintenance/try-runtime',
@@ -119,6 +120,7 @@ std = [
 	"pallet-authorship/std",
 	'pallet-collator-selection/std',
 	"pallet-session/std",
+	'pallet-identity/std',
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-timestamp/std',
@@ -126,7 +128,7 @@ std = [
     'pallet-transaction-payment-rpc-runtime-api/std',
     'pallet-treasury/std',
     'pallet-evm/std',
-    'pallet-evm-migration/std',
+    'pallet-data-management/std',
     'pallet-evm-contract-helpers/std',
     'pallet-evm-transaction-payment/std',
     'pallet-evm-coder-substrate/std',
@@ -268,6 +270,11 @@ git = 'https://github.com/paritytech/substrate'
 branch = 'polkadot-v0.9.33'
 
 [dependencies.pallet-session]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.33'
+
+[dependencies.pallet-identity]
 default-features = false
 git = 'https://github.com/paritytech/substrate'
 branch = 'polkadot-v0.9.33'
@@ -505,7 +512,7 @@ pallet-proxy-rmrk-core = { default-features = false, path = "../../pallets/proxy
 pallet-proxy-rmrk-equip = { default-features = false, path = "../../pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
 pallet-charge-transaction = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.33", package = "pallet-template-transaction-payment", default-features = false, version = "3.0.0" }
 pallet-unique-scheduler-v2 = { path = '../../pallets/scheduler-v2', default-features = false }
-pallet-evm-migration = { path = '../../pallets/evm-migration', default-features = false }
+pallet-data-management = { path = '../../pallets/data-management', default-features = false }
 pallet-evm-contract-helpers = { path = '../../pallets/evm-contract-helpers', default-features = false }
 pallet-evm-transaction-payment = { path = '../../pallets/evm-transaction-payment', default-features = false }
 pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }

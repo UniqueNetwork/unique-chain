@@ -44,6 +44,9 @@ macro_rules! construct_runtime {
                 Aura: pallet_aura::{Pallet, Config<T>} = 25,
                 AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 26,
 
+                #[runtimes(opal)]
+                Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 27,
+
                 Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
                 RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
                 Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent} = 32,
@@ -101,7 +104,7 @@ macro_rules! construct_runtime {
                 EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
                 EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
-                EvmMigration: pallet_evm_migration::{Pallet, Call, Storage, Event<T>} = 153,
+                DataManagement: pallet_data_management::{Pallet, Call, Storage, Event<T>} = 153,
 
                 Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
 

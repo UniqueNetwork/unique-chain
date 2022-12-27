@@ -54,6 +54,30 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
+	pub const BasicDeposit: Balance = 10 * UNIQUE; // todo:collator
+	pub const FieldDeposit: Balance = 25 * MILLIUNIQUE;
+	pub const SubAccountDeposit: Balance = 2 * UNIQUE; // end todo
+	pub const MaxSubAccounts: u32 = 100;
+	pub const MaxAdditionalFields: u32 = 100;
+	pub const MaxRegistrars: u32 = 20;
+}
+
+impl pallet_identity::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type BasicDeposit = BasicDeposit;
+	type FieldDeposit = FieldDeposit;
+	type MaxAdditionalFields = MaxAdditionalFields;
+	type MaxRegistrars = MaxRegistrars;
+	type MaxSubAccounts = MaxSubAccounts;
+	type SubAccountDeposit = SubAccountDeposit;
+	type RegistrarOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+	type ForceOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+	type Slashed = Treasury;
+	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
+}
+
+parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
 	pub const SlashRatio: Perbill = Perbill::from_percent(100);
 }
