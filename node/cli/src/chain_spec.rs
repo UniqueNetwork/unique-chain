@@ -24,7 +24,6 @@ use serde::{Deserialize, Serialize};
 use serde_json::map::Map;
 
 use up_common::types::opaque::*;
-use up_common::constants::{GENESIS_LICENSE_BOND, SESSION_LENGTH};
 
 #[cfg(feature = "unique-runtime")]
 pub use unique_runtime as default_runtime;
@@ -196,9 +195,6 @@ macro_rules! testnet_genesis {
 					.cloned()
 					.map(|(acc, _)| acc)
 					.collect(),
-				desired_collators: 10,
-				license_bond: GENESIS_LICENSE_BOND,
-				kick_threshold: SESSION_LENGTH,
 			},
 			session: SessionConfig {
 				keys: $initial_invulnerables

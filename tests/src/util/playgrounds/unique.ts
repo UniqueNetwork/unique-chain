@@ -45,7 +45,6 @@ import {
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
 import {FrameSystemEventRecord} from '@polkadot/types/lookup';
-import {DevUniqueHelper} from './unique.dev';
 
 export class CrossAccountId implements ICrossAccountId {
   Substrate?: TSubstrateAccount;
@@ -376,7 +375,6 @@ export class ChainHelperBase {
   children: ChainHelperBase[];
   address: AddressGroup;
   chain: ChainGroup;
-  session: SessionGroup;
 
   constructor(logger?: ILogger, helperBase?: any) {
     this.helperBase = helperBase;
@@ -392,7 +390,6 @@ export class ChainHelperBase {
     this.children = [];
     this.address = new AddressGroup(this);
     this.chain = new ChainGroup(this);
-    this.session = new SessionGroup(this);
   }
 
   clone(helperCls: ChainHelperBaseConstructor, options: {[key: string]: any} = {}) {
@@ -2645,30 +2642,6 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
-class SessionGroup extends HelperGroup<ChainHelperBase> {
-  //todo:collator documentation
-  async getIndex(): Promise<number> {
-    return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
-  }
-
-  newSessions(sessionCount = 1, blockTimeout = 24000): Promise<void> {
-    return (this.helper as DevUniqueHelper).wait.newSessions(sessionCount, blockTimeout);
-  }
-
-  setOwnKeys(signer: TSigner, key: string) {
-    return this.helper.executeExtrinsic(
-      signer,
-      'api.tx.session.setKeys', 
-      [key, '0x0'],
-      true,
-    );
-  }
-
-  setOwnKeysFromAddress(signer: TSigner) {
-    return this.setOwnKeys(signer, '0x' + Buffer.from(signer.addressRaw).toString('hex'));
-  }
-}
-
 class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
   //todo:collator documentation
   addInvulnerable(signer: TSigner, address: string) {
@@ -2683,12 +2656,21 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
     return (await this.helper.callRpc('api.query.collatorSelection.invulnerables')).map((x: any) => x.toHuman());
   }
 
+  /** and also total max invulnerables */
+  maxCollators(): number {
+    return (this.helper.getApi().consts.configuration.defaultCollatorSelectionMaxCollators.toJSON() as number);
+  }
+
+  async getDesiredCollators(): Promise<number> {
+    return (await this.helper.callRpc('api.query.configuration.collatorSelectionDesiredCollatorsOverride')).toNumber();
+  }
+
   setLicenseBond(signer: TSigner, amount: bigint) {
-    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.setLicenseBond', [amount]);
+    return this.helper.executeExtrinsic(signer, 'api.tx.configuration.setCollatorSelectionLicenseBond', [amount]);
   }
 
   async getLicenseBond(): Promise<bigint> {
-    return (await this.helper.callRpc('api.query.collatorSelection.licenseBond')).toBigInt();
+    return (await this.helper.callRpc('api.query.configuration.collatorSelectionLicenseBondOverride')).toBigInt();
   }
 
   obtainLicense(signer: TSigner) {
@@ -2704,7 +2686,7 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
   }
 
   async hasLicense(address: string): Promise<bigint> {
-    return (await this.helper.callRpc('api.query.collatorSelection.licenses', [address])).toBigInt();
+    return (await this.helper.callRpc('api.query.collatorSelection.licenseDepositOf', [address])).toBigInt();
   }
 
   onboard(signer: TSigner) {

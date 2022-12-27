@@ -17,8 +17,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from './util';
 
-const MAX_INVULNERABLES = 10;
-
 async function resetInvulnerables() {
   await usingPlaygrounds(async (helper, privateKey) => {
     const superuser = await privateKey('//Alice');
@@ -31,7 +29,7 @@ async function resetInvulnerables() {
       
       let nonce = await helper.chain.getNonce(alice.address);
       // In case there are too many invulnerables already, remove some of them, leaving space for Alice and Bob.
-      if (invulnerables.length + 2 >= MAX_INVULNERABLES) {
+      if (invulnerables.length + 2 >= helper.collatorSelection.maxCollators()) {
         await Promise.all([
           helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()], true, {nonce: nonce++}),
           helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()], true, {nonce: nonce++}),
@@ -409,7 +407,7 @@ describe('Integration Test: Collator Selection', () => {
         // 28 non-functioning collators, teehee.
         
         const invulnerablesLength = (await helper.collatorSelection.getInvulnerables()).length;
-        const invulnerablesUntilLimit = MAX_INVULNERABLES - invulnerablesLength;
+        const invulnerablesUntilLimit = helper.collatorSelection.maxCollators() - invulnerablesLength;
         const newInvulnerables = await helper.arrange.createAccounts(Array(invulnerablesUntilLimit).fill(10n), superuser);
         const [lastInvulnerable] = await helper.arrange.createAccounts([10n], superuser);
 

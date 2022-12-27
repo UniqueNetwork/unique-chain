@@ -64,9 +64,6 @@ fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
 
 	let cfg = GenesisConfig {
 		collator_selection: CollatorSelectionConfig {
-			desired_collators: 2,
-			license_bond: 10,
-			kick_threshold: 10,
 			invulnerables,
 		},
 		session: SessionConfig { keys },

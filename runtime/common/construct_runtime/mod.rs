@@ -69,7 +69,7 @@ macro_rules! construct_runtime {
                 // #[runtimes(opal)]
                 // Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
 
-                Configuration: pallet_configuration::{Pallet, Call, Storage} = 63,
+                Configuration: pallet_configuration::{Pallet, Call, Storage, Event<T>} = 63,
 
                 Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
                 // ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,

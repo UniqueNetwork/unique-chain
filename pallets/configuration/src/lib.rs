@@ -36,15 +36,24 @@ use sp_runtime::Perbill;
 mod pallet {
 	use super::*;
 	use frame_support::{
-		traits::Get,
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, OptionQuery},
-		BoundedVec,
+		traits::{Get, ReservableCurrency, Currency},
+		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType, OptionQuery},
+		BoundedVec, log,
 	};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root};
+	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
 	use xcm::v1::MultiLocation;
+
+	pub type BalanceOf<T> =
+		<<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// Overarching event type.
+		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// The currency mechanism.
+		type Currency: ReservableCurrency<Self::AccountId>;
+
 		#[pallet::constant]
 		type DefaultWeightToFeeCoefficient: Get<u32>;
 
@@ -57,6 +66,27 @@ mod pallet {
 		type AppPromotionDailyRate: Get<Perbill>;
 		#[pallet::constant]
 		type DayRelayBlocks: Get<Self::BlockNumber>;
+
+		#[pallet::constant]
+		type DefaultCollatorSelectionMaxCollators: Get<u32>;
+		#[pallet::constant]
+		type DefaultCollatorSelectionLicenseBond: Get<BalanceOf<Self>>;
+		#[pallet::constant]
+		type DefaultCollatorSelectionKickThreshold: Get<Self::BlockNumber>;
+	}
+
+	#[pallet::event]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
+	pub enum Event<T: Config> {
+		NewDesiredCollators {
+			desired_collators: Option<u32>,
+		},
+		NewCollatorLicenseBond {
+			bond_cost: Option<BalanceOf<T>>,
+		},
+		NewCollatorKickThreshold {
+			length_in_blocks: Option<T::BlockNumber>,
+		},
 	}
 
 	#[pallet::error]
@@ -84,6 +114,27 @@ mod pallet {
 	#[pallet::storage]
 	pub type AppPromomotionConfigurationOverride<T: Config> =
 		StorageValue<Value = AppPromotionConfiguration<T::BlockNumber>, QueryKind = ValueQuery>;
+
+	#[pallet::storage]
+	pub type CollatorSelectionDesiredCollatorsOverride<T: Config> = StorageValue<
+		Value = u32,
+		QueryKind = ValueQuery,
+		OnEmpty = T::DefaultCollatorSelectionMaxCollators,
+	>;
+
+	#[pallet::storage]
+	pub type CollatorSelectionLicenseBondOverride<T: Config> = StorageValue<
+		Value = BalanceOf<T>,
+		QueryKind = ValueQuery,
+		OnEmpty = T::DefaultCollatorSelectionLicenseBond,
+	>;
+
+	#[pallet::storage]
+	pub type CollatorSelectionKickThresholdOverride<T: Config> = StorageValue<
+		Value = T::BlockNumber,
+		QueryKind = ValueQuery,
+		OnEmpty = T::DefaultCollatorSelectionKickThreshold,
+	>;
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -142,6 +193,55 @@ mod pallet {
 
 			<AppPromomotionConfigurationOverride<T>>::set(configuration);
 
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_collator_selection_desired_collators(
+			origin: OriginFor<T>,
+			max: Option<u32>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if let Some(max) = max {
+				// we trust origin calls, this is just a for more accurate benchmarking
+				if max > T::DefaultCollatorSelectionMaxCollators::get() {
+					log::warn!("max > T::DefaultCollatorSelectionMaxCollators; you might need to run benchmarks again");
+				}
+				<CollatorSelectionDesiredCollatorsOverride<T>>::set(max);
+			} else {
+				<CollatorSelectionDesiredCollatorsOverride<T>>::kill();
+			}
+			Self::deposit_event(Event::NewDesiredCollators { desired_collators: max });
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_collator_selection_license_bond(
+			origin: OriginFor<T>,
+			amount: Option<BalanceOf<T>>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if let Some(amount) = amount {
+				<CollatorSelectionLicenseBondOverride<T>>::set(amount);
+			} else {
+				<CollatorSelectionLicenseBondOverride<T>>::kill();
+			}
+			Self::deposit_event(Event::NewCollatorLicenseBond { bond_cost: amount });
+			Ok(())
+		}
+
+		#[pallet::weight(T::DbWeight::get().writes(1))]
+		pub fn set_collator_selection_kick_threshold(
+			origin: OriginFor<T>,
+			threshold: Option<T::BlockNumber>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if let Some(threshold) = threshold {
+				<CollatorSelectionKickThresholdOverride<T>>::set(threshold);
+			} else {
+				<CollatorSelectionKickThresholdOverride<T>>::kill();
+			}
+			Self::deposit_event(Event::NewCollatorKickThreshold { length_in_blocks: threshold });
 			Ok(())
 		}
 	}

@@ -25,7 +25,7 @@ use crate::{
 	},
 	Runtime, RuntimeEvent, RuntimeCall, Balances,
 };
-use frame_support::traits::{ConstU32, ConstU64};
+use frame_support::traits::{ConstU32, ConstU64, ConstU128};
 use up_common::{
 	types::{AccountId, Balance, BlockNumber},
 	constants::*,
@@ -104,11 +104,20 @@ impl pallet_unique::Config for Runtime {
 
 parameter_types! {
 	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub const MaxCollators: u32 = MAX_COLLATORS;
+	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
 	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
 }
+
 impl pallet_configuration::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
 	type DefaultWeightToFeeCoefficient = ConstU32<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
+	type DefaultCollatorSelectionMaxCollators = MaxCollators;
+	type DefaultCollatorSelectionKickThreshold = SessionPeriod;
+	type DefaultCollatorSelectionLicenseBond =
+		ConstU128<{ up_common::constants::GENESIS_LICENSE_BOND }>;
 	type MaxXcmAllowedLocations = ConstU32<16>;
 	type AppPromotionDailyRate = AppPromotionDailyRate;
 	type DayRelayBlocks = DayRelayBlocks;

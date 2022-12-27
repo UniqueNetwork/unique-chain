@@ -17,14 +17,14 @@
 use frame_support::{parameter_types, PalletId};
 use frame_system::EnsureRoot;
 use crate::{
-	AccountId, BlockNumber, Runtime, RuntimeEvent, Balances, Aura, Session, SessionKeys,
-	CollatorSelection, config::pallets::TreasuryAccountId,
+	AccountId, Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
+	CollatorSelection, Treasury,
+	config::pallets::{MaxCollators, SessionPeriod, TreasuryAccountId},
 };
 use sp_runtime::Perbill;
-use up_common::constants::*;
+use up_common::constants::{UNIQUE, MILLIUNIQUE};
 
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
 	pub const SessionOffset: BlockNumber = 0;
 }
 
@@ -55,13 +55,11 @@ impl pallet_authorship::Config for Runtime {
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCollators: u32 = 10;
 	pub const SlashRatio: Perbill = Perbill::from_percent(100);
 }
 
 impl pallet_collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.
 	type UpdateOrigin = EnsureRoot<AccountId>;
 	type TreasuryAccountId = TreasuryAccountId;

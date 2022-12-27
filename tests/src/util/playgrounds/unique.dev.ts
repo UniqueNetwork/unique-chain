@@ -65,6 +65,7 @@ export class DevUniqueHelper extends UniqueHelper {
   arrange: ArrangeGroup;
   wait: WaitGroup;
   admin: AdminGroup;
+  session: SessionGroup;
   testUtils: TestUtilGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
@@ -75,6 +76,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
     this.testUtils = new TestUtilGroup(this);
+    this.session = new SessionGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -456,14 +458,14 @@ class WaitGroup {
     console.log(`Waiting for ${sessionCount} new session${sessionCount > 1 ? 's' : ''}.` 
       + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
 
-    const expectedSessionIndex = await this.helper.session.getIndex() + sessionCount;
+    const expectedSessionIndex = await (this.helper as DevUniqueHelper).session.getIndex() + sessionCount;
     let currentSessionIndex = -1;
 
     while (currentSessionIndex < expectedSessionIndex) {
       // eslint-disable-next-line no-async-promise-executor
       currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
         await this.newBlocks(1);
-        const res = this.helper.session.getIndex();
+        const res = await (this.helper as DevUniqueHelper).session.getIndex();
         resolve(res);
       }), blockTimeout, 'The chain has stopped producing blocks!');
     }
@@ -549,6 +551,36 @@ class WaitGroup {
       });
     });
     return promise;
+  }
+}
+
+class SessionGroup {
+  helper: ChainHelperBase;
+
+  constructor(helper: ChainHelperBase) {
+    this.helper = helper;
+  }
+  
+  //todo:collator documentation
+  async getIndex(): Promise<number> {
+    return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
+  }
+
+  newSessions(sessionCount = 1, blockTimeout = 24000): Promise<void> {
+    return (this.helper as DevUniqueHelper).wait.newSessions(sessionCount, blockTimeout);
+  }
+
+  setOwnKeys(signer: TSigner, key: string) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.session.setKeys', 
+      [key, '0x0'],
+      true,
+    );
+  }
+
+  setOwnKeysFromAddress(signer: TSigner) {
+    return this.setOwnKeys(signer, '0x' + Buffer.from(signer.addressRaw).toString('hex'));
   }
 }
 

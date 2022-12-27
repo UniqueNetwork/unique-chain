@@ -63,6 +63,7 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
 		Authorship: pallet_authorship::{Pallet, Call, Storage, Inherent},
+		Configuration: pallet_configuration::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -200,13 +201,38 @@ impl pallet_session::Config for Test {
 	type WeightInfo = ();
 }
 
+parameter_types! {
+	pub const MaxCollators: u32 = 5;
+	pub const LicenseBond: u64 = 10;
+	pub const KickThreshold: u64 = 10;
+	// the following values do not matter and are meaningless, etc.
+	pub const DefaultWeightToFeeCoefficient: u32 = 100_000;
+	pub const DefaultMinGasPrice: u64 = 100_000;
+	pub const MaxXcmAllowedLocations: u32 = 16;
+	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub const DayRelayBlocks: u32 = 1;
+}
+
+impl pallet_configuration::Config for Test {
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type DefaultCollatorSelectionMaxCollators = MaxCollators;
+	type DefaultCollatorSelectionKickThreshold = KickThreshold;
+	type DefaultCollatorSelectionLicenseBond = LicenseBond;
+	// the following we don't care about
+	type DefaultWeightToFeeCoefficient = DefaultWeightToFeeCoefficient;
+	type DefaultMinGasPrice = DefaultMinGasPrice;
+	type MaxXcmAllowedLocations = MaxXcmAllowedLocations;
+	type AppPromotionDailyRate = AppPromotionDailyRate;
+	type DayRelayBlocks = DayRelayBlocks;
+}
+
 ord_parameter_types! {
 	pub const RootAccount: u64 = 777;
 }
 
 parameter_types! {
 	pub const PotId: PalletId = PalletId(*b"PotStake");
-	pub const MaxCollators: u32 = 20;
 	pub const MaxAuthorities: u32 = 100_000;
 	pub const SlashRatio: Perbill = Perbill::one();
 }
@@ -224,7 +250,6 @@ impl ValidatorRegistration<u64> for IsRegistered {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
 	type UpdateOrigin = EnsureSignedBy<RootAccount, u64>;
 	type PotId = PotId;
 	type MaxCollators = MaxCollators;
@@ -257,9 +282,6 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		})
 		.collect::<Vec<_>>();
 	let collator_selection = collator_selection::GenesisConfig::<Test> {
-		desired_collators: 5,
-		license_bond: 10,
-		kick_threshold: 10,
 		invulnerables,
 	};
 	let session = pallet_session::GenesisConfig::<Test> { keys };
