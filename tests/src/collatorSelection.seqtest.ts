@@ -209,7 +209,7 @@ describe('Integration Test: Collator Selection', () => {
         expect(await helper.collatorSelection.hasLicense(account.address)).to.be.equal(licenseBond);
 
         // force-releasing a license un-reserves the license bond cost as well
-        await helper.getSudo().collatorSelection.forceRevokeLicense(superuser, account.address);
+        await helper.getSudo().collatorSelection.forceReleaseLicense(superuser, account.address);
         expect(await helper.collatorSelection.hasLicense(account.address)).to.be.equal(previousBalance.reserved);
 
         const balance = await helper.balance.getSubstrateFull(account.address);
@@ -243,7 +243,7 @@ describe('Integration Test: Collator Selection', () => {
       itSub('Cannot force revoke a license as non-sudo', async ({helper}) => {
         const account = crowd.pop()!;
         await helper.collatorSelection.obtainLicense(account);
-        await expect(helper.collatorSelection.forceRevokeLicense(superuser, account.address))
+        await expect(helper.collatorSelection.forceReleaseLicense(superuser, account.address))
           .to.be.rejectedWith(/BadOrigin/);
       });
     });
@@ -459,7 +459,7 @@ describe('Integration Test: Collator Selection', () => {
       const candidates = await helper.collatorSelection.getCandidates();
       let nonce = await helper.chain.getNonce(superuser.address);
       await Promise.all(candidates.map(candidate =>
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.forceRevokeLicense', [candidate], true, {nonce: nonce++})));
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.forceReleaseLicense', [candidate], true, {nonce: nonce++})));
     });
   });
 });

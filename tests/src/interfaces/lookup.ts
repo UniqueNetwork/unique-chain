@@ -1692,7 +1692,7 @@ export default {
       onboard: 'Null',
       offboard: 'Null',
       release_license: 'Null',
-      force_revoke_license: {
+      force_release_license: {
         who: 'AccountId32'
       }
     }

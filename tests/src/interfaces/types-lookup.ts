@@ -1867,11 +1867,11 @@ declare module '@polkadot/types/lookup' {
     readonly isOnboard: boolean;
     readonly isOffboard: boolean;
     readonly isReleaseLicense: boolean;
-    readonly isForceRevokeLicense: boolean;
-    readonly asForceRevokeLicense: {
+    readonly isForceReleaseLicense: boolean;
+    readonly asForceReleaseLicense: {
       readonly who: AccountId32;
     } & Struct;
-    readonly type: 'AddInvulnerable' | 'RemoveInvulnerable' | 'GetLicense' | 'Onboard' | 'Offboard' | 'ReleaseLicense' | 'ForceRevokeLicense';
+    readonly type: 'AddInvulnerable' | 'RemoveInvulnerable' | 'GetLicense' | 'Onboard' | 'Offboard' | 'ReleaseLicense' | 'ForceReleaseLicense';
   }
 
   /** @name PalletCollatorSelectionError (185) */

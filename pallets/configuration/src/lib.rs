@@ -201,6 +201,7 @@ mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_collator_selection_desired_collators(
 			origin: OriginFor<T>,
@@ -216,10 +217,13 @@ mod pallet {
 			} else {
 				<CollatorSelectionDesiredCollatorsOverride<T>>::kill();
 			}
-			Self::deposit_event(Event::NewDesiredCollators { desired_collators: max });
+			Self::deposit_event(Event::NewDesiredCollators {
+				desired_collators: max,
+			});
 			Ok(())
 		}
 
+		#[pallet::call_index(5)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_collator_selection_license_bond(
 			origin: OriginFor<T>,
@@ -235,6 +239,7 @@ mod pallet {
 			Ok(())
 		}
 
+		#[pallet::call_index(6)]
 		#[pallet::weight(T::DbWeight::get().writes(1))]
 		pub fn set_collator_selection_kick_threshold(
 			origin: OriginFor<T>,
@@ -246,7 +251,9 @@ mod pallet {
 			} else {
 				<CollatorSelectionKickThresholdOverride<T>>::kill();
 			}
-			Self::deposit_event(Event::NewCollatorKickThreshold { length_in_blocks: threshold });
+			Self::deposit_event(Event::NewCollatorKickThreshold {
+				length_in_blocks: threshold,
+			});
 			Ok(())
 		}
 	}

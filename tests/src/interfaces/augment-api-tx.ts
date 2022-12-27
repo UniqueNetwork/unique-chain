@@ -237,7 +237,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * This call is, of course, not applicable to `Invulnerable` collators.
        **/
-      forceRevokeLicense: AugmentedSubmittable<(who: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
+      forceReleaseLicense: AugmentedSubmittable<(who: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       /**
        * Purchase a license on block collation for this account.
        * It does not make it a collator candidate, use `onboard` afterward. The account must

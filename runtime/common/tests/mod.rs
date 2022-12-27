@@ -63,9 +63,7 @@ fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
 		.collect::<Vec<_>>();
 
 	let cfg = GenesisConfig {
-		collator_selection: CollatorSelectionConfig {
-			invulnerables,
-		},
+		collator_selection: CollatorSelectionConfig { invulnerables },
 		session: SessionConfig { keys },
 		parachain_info: ParachainInfoConfig {
 			parachain_id: para_id.into(),

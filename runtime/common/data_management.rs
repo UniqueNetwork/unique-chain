@@ -58,10 +58,10 @@ impl SignedExtension for FilterIdentity {
 		_info: &DispatchInfoOf<Self::Call>,
 		_len: usize,
 	) -> TransactionValidity {
-        match call {
-            #[cfg(feature = "collator-selection")]
-            RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
-            _ => Ok(ValidTransaction::default()),
-        }
+		match call {
+			#[cfg(feature = "collator-selection")]
+			RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+			_ => Ok(ValidTransaction::default()),
+		}
 	}
 }

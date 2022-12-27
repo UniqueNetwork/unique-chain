@@ -2772,8 +2772,8 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.releaseLicense', []);
   }
 
-  forceRevokeLicense(signer: TSigner, released: string) {
-    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.forceRevokeLicense', [released]);
+  forceReleaseLicense(signer: TSigner, released: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.forceReleaseLicense', [released]);
   }
 
   async hasLicense(address: string): Promise<bigint> {

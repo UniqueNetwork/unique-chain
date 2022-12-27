@@ -217,7 +217,7 @@ pub mod pallet {
 			let bounded_invulnerables =
 				BoundedVec::<_, T::MaxCollators>::try_from(self.invulnerables.clone())
 					.expect("genesis invulnerables are more than T::MaxCollators");
-			
+
 			<Invulnerables<T>>::put(bounded_invulnerables);
 		}
 	}
@@ -284,6 +284,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		/// Add a collator to the list of invulnerable (fixed) collators.
+		#[pallet::call_index(0)]
 		#[pallet::weight(T::WeightInfo::set_invulnerables(1u32))] // todo:collator weight
 		pub fn add_invulnerable(
 			origin: OriginFor<T>,
@@ -313,6 +314,7 @@ pub mod pallet {
 		}
 
 		/// Remove a collator from the list of invulnerable (fixed) collators.
+		#[pallet::call_index(1)]
 		#[pallet::weight(T::WeightInfo::set_invulnerables(1))] // todo:collator weight
 		pub fn remove_invulnerable(
 			origin: OriginFor<T>,
@@ -341,6 +343,7 @@ pub mod pallet {
 		/// (a) already have registered session keys and (b) be able to reserve the `LicenseBond`.
 		///
 		/// This call is not available to `Invulnerable` collators.
+		#[pallet::call_index(2)]
 		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCollators::get()))] // todo:collator weight
 		pub fn get_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// register_as_candidate
@@ -373,6 +376,7 @@ pub mod pallet {
 		/// The account must already hold a license, and cannot offboard immediately during a session.
 		///
 		/// This call is not available to `Invulnerable` collators.
+		#[pallet::call_index(3)]
 		#[pallet::weight(T::WeightInfo::register_as_candidate(T::MaxCollators::get()))] // todo:collator weight
 		pub fn onboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// register_as_candidate
@@ -418,6 +422,7 @@ pub mod pallet {
 
 		/// Deregister `origin` as a collator candidate. Note that the collator can only leave on
 		/// session change. The license to `onboard` later at any other time will remain.
+		#[pallet::call_index(4)]
 		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCollators::get()))] // todo:collator weight
 		pub fn offboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// leave_intent
@@ -430,6 +435,7 @@ pub mod pallet {
 		/// Forfeit `origin`'s own license. The `LicenseBond` will be unreserved immediately.
 		///
 		/// This call is not available to `Invulnerable` collators.
+		#[pallet::call_index(5)]
 		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCollators::get()))] // todo:collator weight
 		pub fn release_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// leave_intent
@@ -445,8 +451,9 @@ pub mod pallet {
 		/// The `LicenseBond` will be unreserved and returned immediately.
 		///
 		/// This call is, of course, not applicable to `Invulnerable` collators.
+		#[pallet::call_index(6)]
 		#[pallet::weight(T::WeightInfo::leave_intent(T::MaxCollators::get()))] // todo:collator weight
-		pub fn force_revoke_license(
+		pub fn force_release_license(
 			origin: OriginFor<T>,
 			who: T::AccountId,
 		) -> DispatchResultWithPostInfo {

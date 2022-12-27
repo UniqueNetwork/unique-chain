@@ -16,11 +16,11 @@
 
 pub mod config;
 pub mod construct_runtime;
+pub mod data_management;
 pub mod dispatch;
 pub mod ethereum;
 pub mod instance;
 pub mod maintenance;
-pub mod data_management;
 pub mod runtime_apis;
 pub mod xcm;
 

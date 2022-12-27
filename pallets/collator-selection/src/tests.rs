@@ -380,7 +380,7 @@ fn release_license() {
 }
 
 #[test]
-fn force_revoke_license() {
+fn force_release_license() {
 	new_test_ext().execute_with(|| {
 		// obtain a license to collate and reserve the bond.
 		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(3)));
@@ -388,12 +388,12 @@ fn force_revoke_license() {
 
 		// cannot execute the operation as non-root
 		assert_noop!(
-			CollatorSelection::force_revoke_license(RuntimeOrigin::signed(3), 3),
+			CollatorSelection::force_release_license(RuntimeOrigin::signed(3), 3),
 			BadOrigin
 		);
 
 		// release the license and get the bond back.
-		assert_ok!(CollatorSelection::force_revoke_license(
+		assert_ok!(CollatorSelection::force_release_license(
 			RuntimeOrigin::signed(RootAccount::get()),
 			3
 		));
@@ -404,7 +404,7 @@ fn force_revoke_license() {
 		assert_eq!(Balances::free_balance(3), 90);
 
 		// can release license even if onboarded.
-		assert_ok!(CollatorSelection::force_revoke_license(
+		assert_ok!(CollatorSelection::force_release_license(
 			RuntimeOrigin::signed(RootAccount::get()),
 			3
 		));
@@ -532,9 +532,7 @@ fn cannot_set_genesis_value_twice() {
 		.unwrap();
 	let invulnerables = vec![1, 1];
 
-	let collator_selection = collator_selection::GenesisConfig::<Test> {
-		invulnerables,
-	};
+	let collator_selection = collator_selection::GenesisConfig::<Test> { invulnerables };
 	// collator selection must be initialized before session.
 	collator_selection.assimilate_storage(&mut t).unwrap();
 }
