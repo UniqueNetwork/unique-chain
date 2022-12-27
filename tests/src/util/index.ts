@@ -111,6 +111,8 @@ export enum Pallets {
   Scheduler = 'scheduler',
   AppPromotion = 'apppromotion',
   CollatorSelection = 'collatorselection',
+  Session = 'session',
+  Identity = 'identity',
   TestUtils = 'testutils',
 }
 

@@ -1477,7 +1477,11 @@ export interface PalletDataManagementCall extends Enum {
   readonly asInsertEvents: {
     readonly events: Vec<Bytes>;
   } & Struct;
-  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents';
+  readonly isInsertIdentities: boolean;
+  readonly asInsertIdentities: {
+    readonly identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>;
+  } & Struct;
+  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents' | 'InsertIdentities';
 }
 
 /** @name PalletDataManagementError */
