@@ -177,7 +177,7 @@ pub mod pallet {
 	/// TWOX-NOTE: OK ― `AccountId` is a secure hash.
 	#[pallet::storage]
 	#[pallet::getter(fn identity)]
-	pub type IdentityOf<T: Config> = StorageMap<
+	pub(super) type IdentityOf<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
 		T::AccountId,
@@ -274,6 +274,10 @@ pub mod pallet {
 			who: T::AccountId,
 			deposit: BalanceOf<T>,
 		},
+		/// A number of identities and associated info were forcibly inserted.
+		IdentitiesInserted { amount: u32 },
+		/// A number of identities and all associated info were forcibly removed.
+		IdentitiesRemoved { amount: u32 },
 		/// A judgement was asked from a registrar.
 		JudgementRequested {
 			who: T::AccountId,
@@ -1090,23 +1094,54 @@ pub mod pallet {
 			Ok(())
 		}
 
-		/// Insert or remove identities.
+		/// Set identities to be associated with the provided accounts as force origin.
+		///
+		/// This is not meant to operate in tandem with the identity pallet as is,
+		/// and be instead used to keep identities made and verified externally,
+		/// forbidden from interacting with an ordinary user, since it ignores any safety mechanism.
 		#[pallet::call_index(15)]
-		#[pallet::weight(T::WeightInfo::set_identities(
+		#[pallet::weight(T::WeightInfo::force_insert_identities(
 			T::MaxAdditionalFields::get(), // X
 			identities.len() as u32, // N
-		))] // todo:collator weight
-		pub fn set_identities(
+		))]
+		pub fn force_insert_identities(
 			origin: OriginFor<T>,
 			identities: Vec<(
 				T::AccountId,
-				Option<Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>>,
+				Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
 			)>,
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
-			for identity in identities {
-				IdentityOf::<T>::set(identity.0, identity.1);
+			for identity in identities.clone() {
+				IdentityOf::<T>::insert(identity.0, identity.1);
 			}
+			Self::deposit_event(Event::IdentitiesInserted {
+				amount: identities.len() as u32,
+			});
+			Ok(())
+		}
+
+		/// Remove identities associated with the provided accounts as force origin.
+		///
+		/// This is not meant to operate in tandem with the identity pallet as is,
+		/// and be instead used to keep identities made and verified externally,
+		/// forbidden from interacting with an ordinary user, since it ignores any safety mechanism.
+		#[pallet::call_index(16)]
+		#[pallet::weight(T::WeightInfo::force_remove_identities(
+			T::MaxAdditionalFields::get(), // X
+			identities.len() as u32, // N
+		))]
+		pub fn force_remove_identities(
+			origin: OriginFor<T>,
+			identities: Vec<T::AccountId>,
+		) -> DispatchResult {
+			T::ForceOrigin::ensure_origin(origin)?;
+			for identity in identities.clone() {
+				IdentityOf::<T>::set(identity, None);
+			}
+			Self::deposit_event(Event::IdentitiesRemoved {
+				amount: identities.len() as u32,
+			});
 			Ok(())
 		}
 	}

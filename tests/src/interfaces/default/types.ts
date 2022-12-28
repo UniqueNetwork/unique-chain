@@ -693,8 +693,8 @@ export interface FrameSystemPhase extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
-/** @name OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity */
-export interface OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity extends Null {}
+/** @name OpalRuntimeRuntimeCommonDataManagementFilterIdentity */
+export interface OpalRuntimeRuntimeCommonDataManagementFilterIdentity extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
 export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
@@ -1453,47 +1453,6 @@ export interface PalletConfigurationEvent extends Enum {
   readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold';
 }
 
-/** @name PalletEvmMigrationCall */
-export interface PalletEvmMigrationCall extends Enum {
-  readonly isBegin: boolean;
-  readonly asBegin: {
-    readonly address: H160;
-  } & Struct;
-  readonly isSetData: boolean;
-  readonly asSetData: {
-    readonly address: H160;
-    readonly data: Vec<ITuple<[H256, H256]>>;
-  } & Struct;
-  readonly isFinish: boolean;
-  readonly asFinish: {
-    readonly address: H160;
-    readonly code: Bytes;
-  } & Struct;
-  readonly isInsertEthLogs: boolean;
-  readonly asInsertEthLogs: {
-    readonly logs: Vec<EthereumLog>;
-  } & Struct;
-  readonly isInsertEvents: boolean;
-  readonly asInsertEvents: {
-    readonly events: Vec<Bytes>;
-  } & Struct;
-  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents';
-}
-
-/** @name PalletEvmMigrationError */
-export interface PalletEvmMigrationError extends Enum {
-  readonly isAccountNotEmpty: boolean;
-  readonly isAccountIsNotMigrating: boolean;
-  readonly isBadEvent: boolean;
-  readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating' | 'BadEvent';
-}
-
-/** @name PalletEvmMigrationEvent */
-export interface PalletEvmMigrationEvent extends Enum {
-  readonly isTestEvent: boolean;
-  readonly type: 'TestEvent';
-}
-
 /** @name PalletEthereumCall */
 export interface PalletEthereumCall extends Enum {
   readonly isTransact: boolean;
@@ -1652,6 +1611,47 @@ export interface PalletEvmEvent extends Enum {
     readonly address: H160;
   } & Struct;
   readonly type: 'Log' | 'Created' | 'CreatedFailed' | 'Executed' | 'ExecutedFailed';
+}
+
+/** @name PalletEvmMigrationCall */
+export interface PalletEvmMigrationCall extends Enum {
+  readonly isBegin: boolean;
+  readonly asBegin: {
+    readonly address: H160;
+  } & Struct;
+  readonly isSetData: boolean;
+  readonly asSetData: {
+    readonly address: H160;
+    readonly data: Vec<ITuple<[H256, H256]>>;
+  } & Struct;
+  readonly isFinish: boolean;
+  readonly asFinish: {
+    readonly address: H160;
+    readonly code: Bytes;
+  } & Struct;
+  readonly isInsertEthLogs: boolean;
+  readonly asInsertEthLogs: {
+    readonly logs: Vec<EthereumLog>;
+  } & Struct;
+  readonly isInsertEvents: boolean;
+  readonly asInsertEvents: {
+    readonly events: Vec<Bytes>;
+  } & Struct;
+  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents';
+}
+
+/** @name PalletEvmMigrationError */
+export interface PalletEvmMigrationError extends Enum {
+  readonly isAccountNotEmpty: boolean;
+  readonly isAccountIsNotMigrating: boolean;
+  readonly isBadEvent: boolean;
+  readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating' | 'BadEvent';
+}
+
+/** @name PalletEvmMigrationEvent */
+export interface PalletEvmMigrationEvent extends Enum {
+  readonly isTestEvent: boolean;
+  readonly type: 'TestEvent';
 }
 
 /** @name PalletForeignAssetsAssetIds */
@@ -1821,11 +1821,15 @@ export interface PalletIdentityCall extends Enum {
     readonly sub: MultiAddress;
   } & Struct;
   readonly isQuitSub: boolean;
-  readonly isSetIdentities: boolean;
-  readonly asSetIdentities: {
-    readonly identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>;
+  readonly isForceInsertIdentities: boolean;
+  readonly asForceInsertIdentities: {
+    readonly identities: Vec<ITuple<[AccountId32, PalletIdentityRegistration]>>;
   } & Struct;
-  readonly type: 'AddRegistrar' | 'SetIdentity' | 'SetSubs' | 'ClearIdentity' | 'RequestJudgement' | 'CancelRequest' | 'SetFee' | 'SetAccountId' | 'SetFields' | 'ProvideJudgement' | 'KillIdentity' | 'AddSub' | 'RenameSub' | 'RemoveSub' | 'QuitSub' | 'SetIdentities';
+  readonly isForceRemoveIdentities: boolean;
+  readonly asForceRemoveIdentities: {
+    readonly identities: Vec<AccountId32>;
+  } & Struct;
+  readonly type: 'AddRegistrar' | 'SetIdentity' | 'SetSubs' | 'ClearIdentity' | 'RequestJudgement' | 'CancelRequest' | 'SetFee' | 'SetAccountId' | 'SetFields' | 'ProvideJudgement' | 'KillIdentity' | 'AddSub' | 'RenameSub' | 'RemoveSub' | 'QuitSub' | 'ForceInsertIdentities' | 'ForceRemoveIdentities';
 }
 
 /** @name PalletIdentityError */
@@ -1867,6 +1871,14 @@ export interface PalletIdentityEvent extends Enum {
     readonly who: AccountId32;
     readonly deposit: u128;
   } & Struct;
+  readonly isIdentitiesInserted: boolean;
+  readonly asIdentitiesInserted: {
+    readonly amount: u32;
+  } & Struct;
+  readonly isIdentitiesRemoved: boolean;
+  readonly asIdentitiesRemoved: {
+    readonly amount: u32;
+  } & Struct;
   readonly isJudgementRequested: boolean;
   readonly asJudgementRequested: {
     readonly who: AccountId32;
@@ -1904,7 +1916,7 @@ export interface PalletIdentityEvent extends Enum {
     readonly main: AccountId32;
     readonly deposit: u128;
   } & Struct;
-  readonly type: 'IdentitySet' | 'IdentityCleared' | 'IdentityKilled' | 'JudgementRequested' | 'JudgementUnrequested' | 'JudgementGiven' | 'RegistrarAdded' | 'SubIdentityAdded' | 'SubIdentityRemoved' | 'SubIdentityRevoked';
+  readonly type: 'IdentitySet' | 'IdentityCleared' | 'IdentityKilled' | 'IdentitiesInserted' | 'IdentitiesRemoved' | 'JudgementRequested' | 'JudgementUnrequested' | 'JudgementGiven' | 'RegistrarAdded' | 'SubIdentityAdded' | 'SubIdentityRemoved' | 'SubIdentityRevoked';
 }
 
 /** @name PalletIdentityIdentityField */

@@ -236,16 +236,6 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    evmMigration: {
-      /**
-       * This event is used in benchmarking and can be used for tests
-       **/
-      TestEvent: AugmentedEvent<ApiType, []>;
-      /**
-       * Generic event
-       **/
-      [key: string]: AugmentedEvent<ApiType>;
-    };
     dmpQueue: {
       /**
        * Downward message executed with the given outcome.
@@ -330,6 +320,16 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    evmMigration: {
+      /**
+       * This event is used in benchmarking and can be used for tests
+       **/
+      TestEvent: AugmentedEvent<ApiType, []>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     foreignAssets: {
       /**
        * The asset registered.
@@ -353,6 +353,14 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     identity: {
+      /**
+       * A number of identities and associated info were forcibly inserted.
+       **/
+      IdentitiesInserted: AugmentedEvent<ApiType, [amount: u32], { amount: u32 }>;
+      /**
+       * A number of identities and all associated info were forcibly removed.
+       **/
+      IdentitiesRemoved: AugmentedEvent<ApiType, [amount: u32], { amount: u32 }>;
       /**
        * A name was cleared, and the given balance returned.
        **/

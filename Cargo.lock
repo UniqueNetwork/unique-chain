@@ -6054,7 +6054,6 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-evm",
- "pallet-identity 4.0.0-dev",
  "parity-scale-codec 3.2.1",
  "scale-info",
  "sp-core",

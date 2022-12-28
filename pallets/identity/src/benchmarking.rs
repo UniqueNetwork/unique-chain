@@ -41,7 +41,7 @@ use super::*;
 use crate::Pallet as Identity;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
-	ensure,
+	ensure, assert_ok,
 	traits::{EnsureOrigin, Get},
 };
 use frame_system::RawOrigin;
@@ -412,19 +412,38 @@ benchmarks! {
 		ensure!(!IdentityOf::<T>::contains_key(&target), "Identity not removed");
 	}
 
-	set_identities {
+	force_insert_identities {
 		let x in 0 .. T::MaxAdditionalFields::get();
 		let n in 0..600;
 		use frame_benchmarking::account;
 		let identities = (0..n).map(|i| (
 			account("caller", i, 0),
-			Some(Registration::<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields> {
+			Registration::<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields> {
 				judgements: Default::default(),
 				deposit: Default::default(),
 				info: create_identity_info::<T>(x),
-			}),
+			},
 		)).collect::<Vec<_>>();
 		let origin = T::ForceOrigin::successful_origin();
+	}: _<T::RuntimeOrigin>(origin, identities)
+
+	force_remove_identities {
+		let x in 0 .. T::MaxAdditionalFields::get();
+		let n in 0..600;
+		use frame_benchmarking::account;
+		let origin = T::ForceOrigin::successful_origin();
+		let identities = (0..n).map(|i| (
+			account("caller", i, 0),
+			Registration::<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields> {
+				judgements: Default::default(),
+				deposit: Default::default(),
+				info: create_identity_info::<T>(x),
+			},
+		)).collect::<Vec<_>>();
+		assert_ok!(
+			Identity::<T>::force_insert_identities(origin.clone(), identities.clone()),
+		);
+		let identities = identities.into_iter().map(|(acc, _)| acc).collect::<Vec<_>>();
 	}: _<T::RuntimeOrigin>(origin, identities)
 
 	add_sub {

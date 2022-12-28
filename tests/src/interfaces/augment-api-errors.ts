@@ -334,24 +334,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    evmMigration: {
-      /**
-       * Migration of this account is not yet started, or already finished.
-       **/
-      AccountIsNotMigrating: AugmentedError<ApiType>;
-      /**
-       * Can only migrate to empty address.
-       **/
-      AccountNotEmpty: AugmentedError<ApiType>;
-      /**
-       * Failed to decode event bytes
-       **/
-      BadEvent: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     dmpQueue: {
       /**
        * The amount of weight given is possibly not enough for executing the message.
@@ -451,6 +433,24 @@ declare module '@polkadot/api-base/types/errors' {
        * Number of methods that sponsored limit is defined for exceeds maximum.
        **/
       TooManyMethodsHaveSponsoredLimit: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    evmMigration: {
+      /**
+       * Migration of this account is not yet started, or already finished.
+       **/
+      AccountIsNotMigrating: AugmentedError<ApiType>;
+      /**
+       * Can only migrate to empty address.
+       **/
+      AccountNotEmpty: AugmentedError<ApiType>;
+      /**
+       * Failed to decode event bytes
+       **/
+      BadEvent: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

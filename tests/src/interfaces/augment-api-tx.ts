@@ -292,36 +292,6 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
-    evmMigration: {
-      /**
-       * Start contract migration, inserts contract stub at target address,
-       * and marks account as pending, allowing to insert storage
-       **/
-      begin: AugmentedSubmittable<(address: H160 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160]>;
-      /**
-       * Finish contract migration, allows it to be called.
-       * It is not possible to alter contract storage via [`Self::set_data`]
-       * after this call.
-       **/
-      finish: AugmentedSubmittable<(address: H160 | string | Uint8Array, code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160, Bytes]>;
-      /**
-       * Create ethereum events attached to the fake transaction
-       **/
-      insertEthLogs: AugmentedSubmittable<(logs: Vec<EthereumLog> | (EthereumLog | { address?: any; topics?: any; data?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<EthereumLog>]>;
-      /**
-       * Create substrate events
-       **/
-      insertEvents: AugmentedSubmittable<(events: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<Bytes>]>;
-      /**
-       * Insert items into contract storage, this method can be called
-       * multiple times
-       **/
-      setData: AugmentedSubmittable<(address: H160 | string | Uint8Array, data: Vec<ITuple<[H256, H256]>> | ([H256 | string | Uint8Array, H256 | string | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [H160, Vec<ITuple<[H256, H256]>>]>;
-      /**
-       * Generic tx
-       **/
-      [key: string]: SubmittableExtrinsicFunction<ApiType>;
-    };
     dmpQueue: {
       /**
        * Service a single overweight message.
@@ -371,6 +341,36 @@ declare module '@polkadot/api-base/types/submittable' {
        * Withdraw balance from EVM into currency/balances pallet.
        **/
       withdraw: AugmentedSubmittable<(address: H160 | string | Uint8Array, value: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160, u128]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    evmMigration: {
+      /**
+       * Start contract migration, inserts contract stub at target address,
+       * and marks account as pending, allowing to insert storage
+       **/
+      begin: AugmentedSubmittable<(address: H160 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160]>;
+      /**
+       * Finish contract migration, allows it to be called.
+       * It is not possible to alter contract storage via [`Self::set_data`]
+       * after this call.
+       **/
+      finish: AugmentedSubmittable<(address: H160 | string | Uint8Array, code: Bytes | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H160, Bytes]>;
+      /**
+       * Create ethereum events attached to the fake transaction
+       **/
+      insertEthLogs: AugmentedSubmittable<(logs: Vec<EthereumLog> | (EthereumLog | { address?: any; topics?: any; data?: any } | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<EthereumLog>]>;
+      /**
+       * Create substrate events
+       **/
+      insertEvents: AugmentedSubmittable<(events: Vec<Bytes> | (Bytes | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<Bytes>]>;
+      /**
+       * Insert items into contract storage, this method can be called
+       * multiple times
+       **/
+      setData: AugmentedSubmittable<(address: H160 | string | Uint8Array, data: Vec<ITuple<[H256, H256]>> | ([H256 | string | Uint8Array, H256 | string | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [H160, Vec<ITuple<[H256, H256]>>]>;
       /**
        * Generic tx
        **/
@@ -452,6 +452,22 @@ declare module '@polkadot/api-base/types/submittable' {
        * # </weight>
        **/
       clearIdentity: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
+      /**
+       * Set identities to be associated with the provided accounts as force origin.
+       * 
+       * This is not meant to operate in tandem with the identity pallet as is,
+       * and be instead used to keep identities made and verified externally,
+       * forbidden from interacting with an ordinary user, since it ignores any safety mechanism.
+       **/
+      forceInsertIdentities: AugmentedSubmittable<(identities: Vec<ITuple<[AccountId32, PalletIdentityRegistration]>> | ([AccountId32 | string | Uint8Array, PalletIdentityRegistration | { judgements?: any; deposit?: any; info?: any } | string | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[AccountId32, PalletIdentityRegistration]>>]>;
+      /**
+       * Remove identities associated with the provided accounts as force origin.
+       * 
+       * This is not meant to operate in tandem with the identity pallet as is,
+       * and be instead used to keep identities made and verified externally,
+       * forbidden from interacting with an ordinary user, since it ignores any safety mechanism.
+       **/
+      forceRemoveIdentities: AugmentedSubmittable<(identities: Vec<AccountId32> | (AccountId32 | string | Uint8Array)[]) => SubmittableExtrinsic<ApiType>, [Vec<AccountId32>]>;
       /**
        * Remove an account's identity and sub-account information and slash the deposits.
        * 
@@ -601,10 +617,6 @@ declare module '@polkadot/api-base/types/submittable' {
        * # </weight>
        **/
       setFields: AugmentedSubmittable<(index: Compact<u32> | AnyNumber | Uint8Array, fields: PalletIdentityBitFlags) => SubmittableExtrinsic<ApiType>, [Compact<u32>, PalletIdentityBitFlags]>;
-      /**
-       * Insert or remove identities.
-       **/
-      setIdentities: AugmentedSubmittable<(identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>> | ([AccountId32 | string | Uint8Array, Option<PalletIdentityRegistration> | null | Uint8Array | PalletIdentityRegistration | { judgements?: any; deposit?: any; info?: any } | string])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>]>;
       /**
        * Set an account's identity information and reserve the appropriate deposit.
        * 
