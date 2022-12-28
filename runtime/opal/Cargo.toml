@@ -44,7 +44,7 @@ runtime-benchmarks = [
     'sp-runtime/runtime-benchmarks',
     'xcm-builder/runtime-benchmarks',
     'pallet-maintenance/runtime-benchmarks',
-    'cumulus-pallet-parachain-system/runtime-benchmarks'
+    'cumulus-pallet-parachain-system/runtime-benchmarks',
 ]
 try-runtime = [
     'frame-try-runtime',
@@ -185,7 +185,6 @@ opal-runtime = [
     'foreign-assets',
     'pallet-test-utils',
 ]
-become-sapphire = []
 pov-estimate = []
 
 refungible = []
