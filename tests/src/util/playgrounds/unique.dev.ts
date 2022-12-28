@@ -93,7 +93,7 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
-        FilterIdentity: {
+        DisableIdentityCalls: {
           extrinsic: {},
           payload: {},
         },

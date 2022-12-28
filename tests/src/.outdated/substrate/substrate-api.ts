@@ -41,7 +41,7 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
-      FilterIdentity: {
+      DisableIdentityCalls: {
         extrinsic: {},
         payload: {},
       },

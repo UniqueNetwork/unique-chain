@@ -143,4 +143,4 @@ bench-app-promotion:
 	
 .PHONY: bench
 # Disabled: bench-scheduler, bench-rmrk-core, bench-rmrk-equip
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets bench-collator-selection bench-identity

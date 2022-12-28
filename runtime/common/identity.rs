@@ -27,15 +27,15 @@ use sp_runtime::{
 };
 
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
-pub struct FilterIdentity;
+pub struct DisableIdentityCalls;
 
-impl SignedExtension for FilterIdentity {
+impl SignedExtension for DisableIdentityCalls {
 	type AccountId = AccountId;
 	type Call = RuntimeCall;
 	type AdditionalSigned = ();
 	type Pre = ();
 
-	const IDENTIFIER: &'static str = "FilterIdentity";
+	const IDENTIFIER: &'static str = "DisableIdentityCalls";
 
 	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
 		Ok(())

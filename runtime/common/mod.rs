@@ -16,9 +16,9 @@
 
 pub mod config;
 pub mod construct_runtime;
-pub mod data_management;
 pub mod dispatch;
 pub mod ethereum;
+pub mod identity;
 pub mod instance;
 pub mod maintenance;
 pub mod runtime_apis;
@@ -97,7 +97,7 @@ pub type SignedExtra = (
 	frame_system::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
-	data_management::FilterIdentity,
+	identity::DisableIdentityCalls,
 	ChargeTransactionPayment,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
