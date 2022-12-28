@@ -119,7 +119,8 @@ fn register_invulnerables<T: Config + configuration::Config>(count: u32) {
 		.collect::<Vec<_>>();
 
 	for who in candidates {
-		<CollatorSelection<T>>::add_invulnerable(T::UpdateOrigin::successful_origin(), who).unwrap();
+		<CollatorSelection<T>>::add_invulnerable(T::UpdateOrigin::successful_origin(), who)
+			.unwrap();
 	}
 }
 
