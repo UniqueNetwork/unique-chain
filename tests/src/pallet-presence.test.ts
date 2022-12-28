@@ -76,13 +76,13 @@ describe('Pallet presence', () => {
           appPromotion,
           testUtils,
           ...rmrkPallets,
-          ...collatorSelection,
         );
       } else if (chain.eq('QUARTZ by UNIQUE')) {
         requiredPallets.push(
           refungible,
           appPromotion,
           foreignAssets,
+          ...collatorSelection,
         );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here

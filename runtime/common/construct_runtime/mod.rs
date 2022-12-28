@@ -32,13 +32,13 @@ macro_rules! construct_runtime {
                 ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
                 ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
-                #[runtimes(opal)]
+                #[runtimes(quartz)]
                 Authorship: pallet_authorship::{Pallet, Call, Storage} = 22,
 
-                #[runtimes(opal)]
+                #[runtimes(quartz)]
                 CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
 
-                #[runtimes(opal)]
+                #[runtimes(quartz)]
                 Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 24,
 
                 Aura: pallet_aura::{Pallet, Config<T>} = 25,
@@ -56,7 +56,7 @@ macro_rules! construct_runtime {
                 Tokens: orml_tokens = 39,
                 // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
-                #[runtimes(opal)]
+                #[runtimes(quartz)]
                 Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 40,
 
                 // XCM helpers.
