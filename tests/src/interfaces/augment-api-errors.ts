@@ -41,40 +41,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    authorship: {
-      /**
-       * The uncle is genesis.
-       **/
-      GenesisUncle: AugmentedError<ApiType>;
-      /**
-       * The uncle parent not in the chain.
-       **/
-      InvalidUncleParent: AugmentedError<ApiType>;
-      /**
-       * The uncle isn't recent enough to be included.
-       **/
-      OldUncle: AugmentedError<ApiType>;
-      /**
-       * The uncle is too high in chain.
-       **/
-      TooHighUncle: AugmentedError<ApiType>;
-      /**
-       * Too many uncles.
-       **/
-      TooManyUncles: AugmentedError<ApiType>;
-      /**
-       * The uncle is already included.
-       **/
-      UncleAlreadyIncluded: AugmentedError<ApiType>;
-      /**
-       * Uncles already set in the block.
-       **/
-      UnclesAlreadySet: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     balances: {
       /**
        * Beneficiary account must pre-exist
@@ -108,64 +74,6 @@ declare module '@polkadot/api-base/types/errors' {
        * Vesting balance too high to send value
        **/
       VestingBalance: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    collatorSelection: {
-      /**
-       * User is already a candidate
-       **/
-      AlreadyCandidate: AugmentedError<ApiType>;
-      /**
-       * User already holds license to collate
-       **/
-      AlreadyHoldingLicense: AugmentedError<ApiType>;
-      /**
-       * User is already an Invulnerable
-       **/
-      AlreadyInvulnerable: AugmentedError<ApiType>;
-      /**
-       * Account has no associated validator ID
-       **/
-      NoAssociatedValidatorId: AugmentedError<ApiType>;
-      /**
-       * User does not hold a license to collate
-       **/
-      NoLicense: AugmentedError<ApiType>;
-      /**
-       * User is not a candidate
-       **/
-      NotCandidate: AugmentedError<ApiType>;
-      /**
-       * User is not an Invulnerable
-       **/
-      NotInvulnerable: AugmentedError<ApiType>;
-      /**
-       * Permission issue
-       **/
-      Permission: AugmentedError<ApiType>;
-      /**
-       * Too few invulnerables
-       **/
-      TooFewInvulnerables: AugmentedError<ApiType>;
-      /**
-       * Too many candidates
-       **/
-      TooManyCandidates: AugmentedError<ApiType>;
-      /**
-       * Too many invulnerables
-       **/
-      TooManyInvulnerables: AugmentedError<ApiType>;
-      /**
-       * Unknown error
-       **/
-      Unknown: AugmentedError<ApiType>;
-      /**
-       * Validator ID is not yet registered
-       **/
-      ValidatorNotRegistered: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -513,84 +421,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    identity: {
-      /**
-       * Account ID is already named.
-       **/
-      AlreadyClaimed: AugmentedError<ApiType>;
-      /**
-       * Empty index.
-       **/
-      EmptyIndex: AugmentedError<ApiType>;
-      /**
-       * Fee is changed.
-       **/
-      FeeChanged: AugmentedError<ApiType>;
-      /**
-       * The index is invalid.
-       **/
-      InvalidIndex: AugmentedError<ApiType>;
-      /**
-       * Invalid judgement.
-       **/
-      InvalidJudgement: AugmentedError<ApiType>;
-      /**
-       * The target is invalid.
-       **/
-      InvalidTarget: AugmentedError<ApiType>;
-      /**
-       * The provided judgement was for a different identity.
-       **/
-      JudgementForDifferentIdentity: AugmentedError<ApiType>;
-      /**
-       * Judgement given.
-       **/
-      JudgementGiven: AugmentedError<ApiType>;
-      /**
-       * Error that occurs when there is an issue paying for judgement.
-       **/
-      JudgementPaymentFailed: AugmentedError<ApiType>;
-      /**
-       * No identity found.
-       **/
-      NoIdentity: AugmentedError<ApiType>;
-      /**
-       * Account isn't found.
-       **/
-      NotFound: AugmentedError<ApiType>;
-      /**
-       * Account isn't named.
-       **/
-      NotNamed: AugmentedError<ApiType>;
-      /**
-       * Sub-account isn't owned by sender.
-       **/
-      NotOwned: AugmentedError<ApiType>;
-      /**
-       * Sender is not a sub-account.
-       **/
-      NotSub: AugmentedError<ApiType>;
-      /**
-       * Sticky judgement.
-       **/
-      StickyJudgement: AugmentedError<ApiType>;
-      /**
-       * Too many additional fields.
-       **/
-      TooManyFields: AugmentedError<ApiType>;
-      /**
-       * Maximum amount of registrars reached. Cannot add any more.
-       **/
-      TooManyRegistrars: AugmentedError<ApiType>;
-      /**
-       * Too many subs-accounts.
-       **/
-      TooManySubAccounts: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
     maintenance: {
       /**
        * Generic error
@@ -854,32 +684,6 @@ declare module '@polkadot/api-base/types/errors' {
        * No permission to perform action.
        **/
       PermissionError: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    session: {
-      /**
-       * Registered duplicate key.
-       **/
-      DuplicatedKey: AugmentedError<ApiType>;
-      /**
-       * Invalid ownership proof.
-       **/
-      InvalidProof: AugmentedError<ApiType>;
-      /**
-       * Key setting account is not live, so it's impossible to associate keys.
-       **/
-      NoAccount: AugmentedError<ApiType>;
-      /**
-       * No associated validator ID for account.
-       **/
-      NoAssociatedValidatorId: AugmentedError<ApiType>;
-      /**
-       * No keys are associated with this account.
-       **/
-      NoKeys: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
