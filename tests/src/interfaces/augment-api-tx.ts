@@ -292,7 +292,7 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
-    dataManagement: {
+    evmMigration: {
       /**
        * Start contract migration, inserts contract stub at target address,
        * and marks account as pending, allowing to insert storage

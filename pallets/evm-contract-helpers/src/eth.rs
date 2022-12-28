@@ -91,7 +91,7 @@ where
 {
 	/// Get user, which deployed specified contract
 	/// @dev May return zero address in case if contract is deployed
-	///  using uniquenetwork data-management pallet, or using other terms not
+	///  using uniquenetwork evm-migration pallet, or using other terms not
 	///  intended by pallet-evm
 	/// @dev Returns zero address if contract does not exists
 	/// @param contractAddress Contract to get owner of

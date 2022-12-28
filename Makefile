@@ -3,7 +3,7 @@ _help:
 	@echo "regenerate_solidity - generate stubs/interfaces for contracts defined in native (via evm-coder)"
 	@echo "evm_stubs - recompile contract stubs and ABI"
 	@echo "bench - run frame-benchmarking"
-	@echo "  bench-data-management"
+	@echo "  bench-evm-migration"
 	@echo "  bench-unique"
 
 FUNGIBLE_EVM_STUBS=./pallets/fungible/src/stubs
@@ -85,9 +85,9 @@ _bench:
 	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=80 --heap-pages=4096 \
 	--output=./pallets/$(if $(PALLET_DIR),$(PALLET_DIR),$(PALLET))/src/weights.rs
 
-.PHONY: bench-data-management
-bench-data-management:
-	make _bench PALLET=data-management
+.PHONY: bench-evm-migration
+bench-evm-migration:
+	make _bench PALLET=evm-migration
 
 .PHONY: bench-common
 bench-common:
@@ -143,4 +143,4 @@ bench-app-promotion:
 	
 .PHONY: bench
 # Disabled: bench-scheduler, bench-rmrk-core, bench-rmrk-equip
-bench: bench-data-management bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets

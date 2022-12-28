@@ -71,7 +71,7 @@ pallet-common = { default-features = false, path = "../common" }
 pallet-configuration = { default-features = false, path = "../configuration" }
 pallet-unique = { default-features = false, path = "../unique" }
 pallet-evm-contract-helpers = { default-features = false, path = "../evm-contract-helpers" }
-pallet-data-management = { default-features = false, path = "../data-management" }
+pallet-evm-migration = { default-features = false, path = "../evm-migration" }
 
 # [dev-dependencies]
 

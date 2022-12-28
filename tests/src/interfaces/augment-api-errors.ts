@@ -334,7 +334,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    dataManagement: {
+    evmMigration: {
       /**
        * Migration of this account is not yet started, or already finished.
        **/

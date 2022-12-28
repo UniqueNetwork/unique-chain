@@ -104,7 +104,7 @@ macro_rules! construct_runtime {
                 EvmCoderSubstrate: pallet_evm_coder_substrate::{Pallet, Storage} = 150,
                 EvmContractHelpers: pallet_evm_contract_helpers::{Pallet, Storage, Event<T>} = 151,
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
-                DataManagement: pallet_data_management::{Pallet, Call, Storage, Event<T>} = 153,
+                EvmMigration: pallet_evm_migration::{Pallet, Call, Storage, Event<T>} = 153,
 
                 Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
 

@@ -693,8 +693,8 @@ export interface FrameSystemPhase extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
-/** @name OpalRuntimeRuntimeCommonDataManagementFilterIdentity */
-export interface OpalRuntimeRuntimeCommonDataManagementFilterIdentity extends Null {}
+/** @name OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity */
+export interface OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
 export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
@@ -1453,8 +1453,8 @@ export interface PalletConfigurationEvent extends Enum {
   readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold';
 }
 
-/** @name PalletDataManagementCall */
-export interface PalletDataManagementCall extends Enum {
+/** @name PalletEvmMigrationCall */
+export interface PalletEvmMigrationCall extends Enum {
   readonly isBegin: boolean;
   readonly asBegin: {
     readonly address: H160;
@@ -1480,16 +1480,16 @@ export interface PalletDataManagementCall extends Enum {
   readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents';
 }
 
-/** @name PalletDataManagementError */
-export interface PalletDataManagementError extends Enum {
+/** @name PalletEvmMigrationError */
+export interface PalletEvmMigrationError extends Enum {
   readonly isAccountNotEmpty: boolean;
   readonly isAccountIsNotMigrating: boolean;
   readonly isBadEvent: boolean;
   readonly type: 'AccountNotEmpty' | 'AccountIsNotMigrating' | 'BadEvent';
 }
 
-/** @name PalletDataManagementEvent */
-export interface PalletDataManagementEvent extends Enum {
+/** @name PalletEvmMigrationEvent */
+export interface PalletEvmMigrationEvent extends Enum {
   readonly isTestEvent: boolean;
   readonly type: 'TestEvent';
 }

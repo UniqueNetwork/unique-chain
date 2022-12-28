@@ -236,7 +236,7 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    dataManagement: {
+    evmMigration: {
       /**
        * This event is used in benchmarking and can be used for tests
        **/

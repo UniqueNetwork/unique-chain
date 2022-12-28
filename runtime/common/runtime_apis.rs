@@ -681,7 +681,7 @@ macro_rules! impl_common_runtime_apis {
 
                     let mut list = Vec::<BenchmarkList>::new();
 
-                    list_benchmark!(list, extra, pallet_data_management, DataManagement);
+                    list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
                     list_benchmark!(list, extra, pallet_common, Common);
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
@@ -750,7 +750,7 @@ macro_rules! impl_common_runtime_apis {
                     let mut batches = Vec::<BenchmarkBatch>::new();
                     let params = (&config, &allowlist);
 
-                    add_benchmark!(params, batches, pallet_data_management, DataManagement);
+                    add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
                     add_benchmark!(params, batches, pallet_common, Common);
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);

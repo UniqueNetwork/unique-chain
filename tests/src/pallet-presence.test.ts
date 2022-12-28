@@ -32,7 +32,7 @@ const requiredPallets = [
   'evm',
   'evmcodersubstrate',
   'evmcontracthelpers',
-  'datamanagement',
+  'evmmigration',
   'evmtransactionpayment',
   'ethereum',
   'fungible',

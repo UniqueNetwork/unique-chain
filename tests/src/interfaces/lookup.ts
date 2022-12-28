@@ -1391,9 +1391,9 @@ export default {
     }
   },
   /**
-   * Lookup123: pallet_data_management::pallet::Event<T>
+   * Lookup123: pallet_evm_migration::pallet::Event<T>
    **/
-  PalletDataManagementEvent: {
+  PalletEvmMigrationEvent: {
     _enum: ['TestEvent']
   },
   /**
@@ -3209,9 +3209,9 @@ export default {
     s: 'H256'
   },
   /**
-   * Lookup414: pallet_data_management::pallet::Call<T>
+   * Lookup414: pallet_evm_migration::pallet::Call<T>
    **/
-  PalletDataManagementCall: {
+  PalletEvmMigrationCall: {
     _enum: {
       begin: {
         address: 'H160',
@@ -3775,9 +3775,9 @@ export default {
     _enum: ['NoPermission', 'NoPendingSponsor', 'TooManyMethodsHaveSponsoredLimit']
   },
   /**
-   * Lookup551: pallet_data_management::pallet::Error<T>
+   * Lookup551: pallet_evm_migration::pallet::Error<T>
    **/
-  PalletDataManagementError: {
+  PalletEvmMigrationError: {
     _enum: ['AccountNotEmpty', 'AccountIsNotMigrating', 'BadEvent']
   },
   /**
@@ -3837,9 +3837,9 @@ export default {
    **/
   OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
   /**
-   * Lookup570: opal_runtime::runtime_common::data_management::FilterIdentity
+   * Lookup570: opal_runtime::runtime_common::evm_migration::FilterIdentity
    **/
-  OpalRuntimeRuntimeCommonDataManagementFilterIdentity: 'Null',
+  OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity: 'Null',
   /**
    * Lookup571: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/

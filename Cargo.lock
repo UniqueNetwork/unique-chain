@@ -5313,11 +5313,11 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
- "pallet-data-management",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
+ "pallet-evm-migration",
  "pallet-evm-precompile-simple",
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
@@ -5562,9 +5562,9 @@ dependencies = [
  "pallet-balances",
  "pallet-common",
  "pallet-configuration",
- "pallet-data-management",
  "pallet-evm",
  "pallet-evm-contract-helpers",
+ "pallet-evm-migration",
  "pallet-randomness-collective-flip",
  "pallet-timestamp",
  "pallet-unique",
@@ -5876,25 +5876,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "pallet-data-management"
-version = "0.1.1"
-dependencies = [
- "ethereum 0.14.0",
- "fp-evm",
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-evm",
- "pallet-identity 4.0.0-dev",
- "parity-scale-codec 3.2.1",
- "scale-info",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
 name = "pallet-democracy"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
@@ -6061,6 +6042,25 @@ dependencies = [
  "sp-std",
  "up-data-structs",
  "up-sponsorship",
+]
+
+[[package]]
+name = "pallet-evm-migration"
+version = "0.1.1"
+dependencies = [
+ "ethereum 0.14.0",
+ "fp-evm",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-evm",
+ "pallet-identity 4.0.0-dev",
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -8921,11 +8921,11 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
- "pallet-data-management",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
+ "pallet-evm-migration",
  "pallet-evm-precompile-simple",
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
@@ -13153,11 +13153,11 @@ dependencies = [
  "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
- "pallet-data-management",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-evm-contract-helpers",
+ "pallet-evm-migration",
  "pallet-evm-precompile-simple",
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",

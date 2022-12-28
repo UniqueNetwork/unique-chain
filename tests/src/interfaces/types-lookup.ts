@@ -1564,8 +1564,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'ContractSponsorSet' | 'ContractSponsorshipConfirmed' | 'ContractSponsorRemoved';
   }
 
-  /** @name PalletDataManagementEvent (123) */
-  interface PalletDataManagementEvent extends Enum {
+  /** @name PalletEvmMigrationEvent (123) */
+  interface PalletEvmMigrationEvent extends Enum {
     readonly isTestEvent: boolean;
     readonly type: 'TestEvent';
   }
@@ -3493,8 +3493,8 @@ declare module '@polkadot/types/lookup' {
     readonly s: H256;
   }
 
-  /** @name PalletDataManagementCall (414) */
-  interface PalletDataManagementCall extends Enum {
+  /** @name PalletEvmMigrationCall (414) */
+  interface PalletEvmMigrationCall extends Enum {
     readonly isBegin: boolean;
     readonly asBegin: {
       readonly address: H160;
@@ -4180,8 +4180,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'NoPermission' | 'NoPendingSponsor' | 'TooManyMethodsHaveSponsoredLimit';
   }
 
-  /** @name PalletDataManagementError (551) */
-  interface PalletDataManagementError extends Enum {
+  /** @name PalletEvmMigrationError (551) */
+  interface PalletEvmMigrationError extends Enum {
     readonly isAccountNotEmpty: boolean;
     readonly isAccountIsNotMigrating: boolean;
     readonly isBadEvent: boolean;
@@ -4236,8 +4236,8 @@ declare module '@polkadot/types/lookup' {
   /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (569) */
   type OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
 
-  /** @name OpalRuntimeRuntimeCommonDataManagementFilterIdentity (570) */
-  type OpalRuntimeRuntimeCommonDataManagementFilterIdentity = Null;
+  /** @name OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity (570) */
+  type OpalRuntimeRuntimeCommonEvmMigrationFilterIdentity = Null;
 
   /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (571) */
   interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
