@@ -24,6 +24,7 @@ jobs:
       matrix:
         include:
           - network: "opal"
+          - network: "sapphire"
           - network: "quartz"
           - network: "unique"
 

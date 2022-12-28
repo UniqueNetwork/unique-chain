@@ -37,10 +37,10 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
+            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {opal}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
 
   nodes-only-update:
@@ -85,6 +85,7 @@ jobs:
             # MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
+            WASM_NAME=${{ matrix.wasm_name }}
             # BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
@@ -97,6 +98,7 @@ jobs:
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             NETWORK=${{ matrix.network }}
+            WASM_NAME=${{ matrix.wasm_name }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json

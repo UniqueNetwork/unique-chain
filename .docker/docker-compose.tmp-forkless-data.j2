@@ -13,6 +13,7 @@ services:
         - "MAINNET_TAG={{ MAINNET_TAG }}"
         - "MAINNET_BRANCH={{ MAINNET_BRANCH }}"
         - "REPLICA_FROM={{ REPLICA_FROM }}"
+        - "WASM_NAME={{ WASM_NAME }}"
       context: ../
       dockerfile: .docker/Dockerfile-parachain-upgrade-data
     image: node-parachain
