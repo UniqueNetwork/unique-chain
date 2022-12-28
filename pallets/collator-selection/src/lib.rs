@@ -285,7 +285,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Add a collator to the list of invulnerable (fixed) collators.
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::add_invulnerable(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::add_invulnerable(T::MaxCollators::get()))]
 		pub fn add_invulnerable(
 			origin: OriginFor<T>,
 			new: T::AccountId,
@@ -315,7 +315,7 @@ pub mod pallet {
 
 		/// Remove a collator from the list of invulnerable (fixed) collators.
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::remove_invulnerable(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_invulnerable(T::MaxCollators::get()))]
 		pub fn remove_invulnerable(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -344,7 +344,7 @@ pub mod pallet {
 		///
 		/// This call is not available to `Invulnerable` collators.
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::get_license(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::get_license(T::MaxCollators::get()))]
 		pub fn get_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// register_as_candidate
 			let who = ensure_signed(origin)?;
@@ -377,7 +377,7 @@ pub mod pallet {
 		///
 		/// This call is not available to `Invulnerable` collators.
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::onboard(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::onboard(T::MaxCollators::get()))]
 		pub fn onboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// register_as_candidate
 			let who = ensure_signed(origin)?;
@@ -417,33 +417,36 @@ pub mod pallet {
 				})?;
 
 			Self::deposit_event(Event::CandidateAdded { account_id: who });
-			Ok(Some(T::WeightInfo::onboard(current_count as u32)).into())
+			Ok(Some(<T as Config>::WeightInfo::onboard(current_count as u32)).into())
 		}
 
 		/// Deregister `origin` as a collator candidate. Note that the collator can only leave on
 		/// session change. The license to `onboard` later at any other time will remain.
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::offboard(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::offboard(T::MaxCollators::get()))]
 		pub fn offboard(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// leave_intent
 			let who = ensure_signed(origin)?;
 			let current_count = Self::try_remove_candidate(&who)?;
 
-			Ok(Some(T::WeightInfo::offboard(current_count as u32)).into())
+			Ok(Some(<T as Config>::WeightInfo::offboard(current_count as u32)).into())
 		}
 
 		/// Forfeit `origin`'s own license. The `LicenseBond` will be unreserved immediately.
 		///
 		/// This call is not available to `Invulnerable` collators.
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::release_license(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::release_license(T::MaxCollators::get()))]
 		pub fn release_license(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
 			// leave_intent
 			let who = ensure_signed(origin)?;
 
 			let current_count = Self::try_remove_candidate_and_release_license(&who, false, true)?;
 
-			Ok(Some(T::WeightInfo::release_license(current_count as u32)).into())
+			Ok(Some(<T as Config>::WeightInfo::release_license(
+				current_count as u32,
+			))
+			.into())
 		}
 
 		/// Force deregister `origin` as a collator candidate as a governing authority, and revoke its license.
@@ -452,7 +455,7 @@ pub mod pallet {
 		///
 		/// This call is, of course, not applicable to `Invulnerable` collators.
 		#[pallet::call_index(6)]
-		#[pallet::weight(T::WeightInfo::force_release_license(T::MaxCollators::get()))]
+		#[pallet::weight(<T as Config>::WeightInfo::force_release_license(T::MaxCollators::get()))]
 		pub fn force_release_license(
 			origin: OriginFor<T>,
 			who: T::AccountId,
@@ -462,7 +465,10 @@ pub mod pallet {
 
 			let current_count = Self::try_remove_candidate_and_release_license(&who, false, true)?;
 
-			Ok(Some(T::WeightInfo::force_release_license(current_count as u32)).into())
+			Ok(Some(<T as Config>::WeightInfo::force_release_license(
+				current_count as u32,
+			))
+			.into())
 		}
 	}
 
@@ -599,7 +605,7 @@ pub mod pallet {
 			<LastAuthoredBlock<T>>::insert(author, frame_system::Pallet::<T>::block_number());
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::WeightInfo::note_author(),
+				<T as Config>::WeightInfo::note_author(),
 				DispatchClass::Mandatory,
 			);
 		}
@@ -625,7 +631,10 @@ pub mod pallet {
 			let result = Self::assemble_collators(active_candidates);
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
-				T::WeightInfo::new_session(candidates_len_before as u32, removed as u32),
+				<T as Config>::WeightInfo::new_session(
+					candidates_len_before as u32,
+					removed as u32,
+				),
 				DispatchClass::Mandatory,
 			);
 			Some(result)

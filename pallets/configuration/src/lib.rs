@@ -34,6 +34,10 @@ use smallvec::smallvec;
 pub use pallet::*;
 use sp_core::U256;
 
+#[cfg(feature = "runtime-benchmarks")]
+mod benchmarking;
+pub mod weights;
+
 #[pallet]
 mod pallet {
 	use super::*;
@@ -45,6 +49,7 @@ mod pallet {
 	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
 	use xcm::v1::MultiLocation;
 
+	pub use crate::weights::WeightInfo;
 	pub type BalanceOf<T> =
 		<<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
 
@@ -74,6 +79,9 @@ mod pallet {
 		type DefaultCollatorSelectionLicenseBond: Get<BalanceOf<Self>>;
 		#[pallet::constant]
 		type DefaultCollatorSelectionKickThreshold: Get<Self::BlockNumber>;
+
+		/// The weight information of this pallet.
+		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::event]
@@ -140,7 +148,7 @@ mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_weight_to_fee_coefficient_override())]
 		pub fn set_weight_to_fee_coefficient_override(
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
@@ -155,7 +163,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_min_gas_price_override())]
 		pub fn set_min_gas_price_override(
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
@@ -170,7 +178,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_xcm_allowed_locations())]
 		pub fn set_xcm_allowed_locations(
 			origin: OriginFor<T>,
 			locations: Option<BoundedVec<MultiLocation, T::MaxXcmAllowedLocations>>,
@@ -181,7 +189,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_app_promotion_configuration_override())]
 		pub fn set_app_promotion_configuration_override(
 			origin: OriginFor<T>,
 			mut configuration: AppPromotionConfiguration<T::BlockNumber>,
@@ -202,7 +210,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_collator_selection_desired_collators())]
 		pub fn set_collator_selection_desired_collators(
 			origin: OriginFor<T>,
 			max: Option<u32>,
@@ -224,7 +232,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_collator_selection_license_bond())]
 		pub fn set_collator_selection_license_bond(
 			origin: OriginFor<T>,
 			amount: Option<BalanceOf<T>>,
@@ -240,7 +248,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(T::DbWeight::get().writes(1))]
+		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
 		pub fn set_collator_selection_kick_threshold(
 			origin: OriginFor<T>,
 			threshold: Option<T::BlockNumber>,

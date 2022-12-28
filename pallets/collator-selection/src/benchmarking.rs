@@ -52,9 +52,6 @@ use pallet_configuration::{
 };
 use sp_std::prelude::*;
 
-/*pub type BalanceOf<T> =
-<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;*/
-
 const SEED: u32 = 0;
 
 // TODO: remove if this is given in substrate commit.
@@ -116,14 +113,24 @@ fn register_validators<T: Config + session::Config>(count: u32) -> Vec<T::Accoun
 	validators.into_iter().map(|(who, _)| who).collect()
 }
 
+fn register_invulnerables<T: Config + configuration::Config>(count: u32) {
+	let candidates = (0..count)
+		.map(|c| account("candidate", c, SEED))
+		.collect::<Vec<_>>();
+
+	for who in candidates {
+		<CollatorSelection<T>>::add_invulnerable(T::UpdateOrigin::successful_origin(), who).unwrap();
+	}
+}
+
 fn register_candidates<T: Config + configuration::Config>(count: u32) {
 	let candidates = (0..count)
 		.map(|c| account("candidate", c, SEED))
 		.collect::<Vec<_>>();
-	assert!(
+	/*assert!(
 		<LicenseBond<T>>::get() > 0u32.into(),
 		"Bond cannot be zero!"
-	);
+	);*/
 
 	for who in candidates {
 		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
@@ -132,16 +139,45 @@ fn register_candidates<T: Config + configuration::Config>(count: u32) {
 	}
 }
 
+fn get_licenses<T: Config + configuration::Config>(count: u32) {
+	let candidates = (0..count)
+		.map(|c| account("candidate", c, SEED))
+		.collect::<Vec<_>>();
+	/*assert!(
+		<LicenseBond<T>>::get() > 0u32.into(),
+		"Bond cannot be zero!"
+	);*/
+
+	for who in candidates {
+		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
+		<CollatorSelection<T>>::get_license(RawOrigin::Signed(who.clone()).into()).unwrap();
+	}
+}
+
 benchmarks! {
 	where_clause { where T: pallet_authorship::Config + session::Config + configuration::Config }
 
 	add_invulnerable {
-		let b in 1 .. T::MaxCollators::get();
-		let new_invulnerable = register_validators::<T>(b)[0].clone();
-		let origin = T::UpdateOrigin::successful_origin();
+		let b in 1 .. T::MaxCollators::get() - 3;
+		register_validators::<T>(b);
+		register_invulnerables::<T>(b);
+
+		// log::info!("{} {}", <Invulnerables<T>>::get().len(), b);
+
+		let new_invulnerable: T::AccountId = whitelisted_caller();
+		let bond: BalanceOf<T> = T::Currency::minimum_balance() * 2u32.into();
+		T::Currency::make_free_balance_be(&new_invulnerable, bond.clone());
+
+		<session::Pallet<T>>::set_keys(
+			RawOrigin::Signed(new_invulnerable.clone()).into(),
+			keys::<T>(b + 1),
+			Vec::new()
+		).unwrap();
+
+		let root_origin = T::UpdateOrigin::successful_origin();
 	}: {
 		assert_ok!(
-			<CollatorSelection<T>>::add_invulnerable(origin, new_invulnerable.clone())
+			<CollatorSelection<T>>::add_invulnerable(root_origin, new_invulnerable.clone())
 		);
 	}
 	verify {
@@ -150,52 +186,28 @@ benchmarks! {
 
 	remove_invulnerable {
 		let b in 1 .. T::MaxCollators::get();
-		let new_invulnerable = register_validators::<T>(b)[0].clone();
-		let origin = T::UpdateOrigin::successful_origin();
-		assert_ok!(
-			<CollatorSelection<T>>::add_invulnerable(origin.clone(), new_invulnerable.clone())
-		);
-	}: {
-		assert_ok!(
-			<CollatorSelection<T>>::remove_invulnerable(origin, new_invulnerable.clone())
-		);
-	}
-	verify {
-		assert_last_event::<T>(Event::InvulnerableRemoved{invulnerable: new_invulnerable}.into());
-	}
+		register_validators::<T>(b);
+		register_invulnerables::<T>(b);
 
-	/*set_desired_collators {
-		let max: u32 = 999;
-		let origin = T::UpdateOrigin::successful_origin();
+		let root_origin = T::UpdateOrigin::successful_origin();
+		let leaving = <Invulnerables<T>>::get().last().unwrap().clone();
+		whitelist!(leaving);
 	}: {
 		assert_ok!(
-			<CollatorSelection<T>>::set_desired_collators(origin, max.clone())
+			<CollatorSelection<T>>::remove_invulnerable(root_origin, leaving.clone())
 		);
 	}
 	verify {
-		assert_last_event::<T>(Event::NewDesiredCollators{desired_collators: max}.into());
+		assert_last_event::<T>(Event::InvulnerableRemoved{invulnerable: leaving}.into());
 	}
-
-	set_license_bond {
-		let bond_amount: BalanceOf<T> = T::Currency::minimum_balance() * 10u32.into();
-		let origin = T::UpdateOrigin::successful_origin();
-	}: {
-		assert_ok!(
-			<CollatorSelection<T>>::set_license_bond(origin, bond_amount.clone())
-		);
-	}
-	verify {
-		assert_last_event::<T>(Event::NewLicenseBond{bond_amount}.into());
-	}*/
 
 	get_license {
 		let c in 1 .. T::MaxCollators::get();
 
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCollators<T>>::put(c + 1);
 
 		register_validators::<T>(c);
-		register_candidates::<T>(c);
+		get_licenses::<T>(c);
 
 		let caller: T::AccountId = whitelisted_caller();
 		let bond: BalanceOf<T> = T::Currency::minimum_balance() * 2u32.into();
@@ -215,10 +227,10 @@ benchmarks! {
 	// worst case is when we have all the max-candidate slots filled except one, and we fill that
 	// one.
 	onboard {
-		let c in 1 .. T::MaxCollators::get();
+		let c in 1 .. 5;
 
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCollators<T>>::put(c + 1);
+		<DesiredCollators<T>>::put(c + 2);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
@@ -247,7 +259,7 @@ benchmarks! {
 	offboard {
 		let c in 1 .. T::MaxCollators::get();
 		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCollators<T>>::put(c);
+		<DesiredCollators<T>>::put(c + 2);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);

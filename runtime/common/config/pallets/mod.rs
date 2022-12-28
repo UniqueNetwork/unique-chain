@@ -121,6 +121,7 @@ impl pallet_configuration::Config for Runtime {
 	type MaxXcmAllowedLocations = ConstU32<16>;
 	type AppPromotionDailyRate = AppPromotionDailyRate;
 	type DayRelayBlocks = DayRelayBlocks;
+	type WeightInfo = pallet_configuration::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_maintenance::Config for Runtime {

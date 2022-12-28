@@ -225,6 +225,7 @@ impl pallet_configuration::Config for Test {
 	type MaxXcmAllowedLocations = MaxXcmAllowedLocations;
 	type AppPromotionDailyRate = AppPromotionDailyRate;
 	type DayRelayBlocks = DayRelayBlocks;
+	type WeightInfo = ();
 }
 
 ord_parameter_types! {
