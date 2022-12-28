@@ -287,7 +287,7 @@ describe('Integration Test: Collator Selection', () => {
         expect(await helper.collatorSelection.getCandidates()).to.be.deep.equal([]);
       });
 
-      itSub('Dithmarschen', async ({helper}) => {
+      itSub('Penalizes and forfeits license from faulty collators', async ({helper}) => {
         // This one shouldn't even be able to produce blocks.
         const account = crowd.pop()!;
         await helper.collatorSelection.obtainLicense(account);

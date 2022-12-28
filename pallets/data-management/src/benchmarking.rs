@@ -62,28 +62,4 @@ benchmarks! {
 		use codec::Encode;
 		let logs = (0..b).map(|_| <T as Config>::RuntimeEvent::from(crate::Event::<T>::TestEvent).encode()).collect::<Vec<_>>();
 	}: _(RawOrigin::Root, logs)
-
-	set_identities {
-		let b in 0..600;
-		use frame_benchmarking::account;
-		use pallet_identity::{BalanceOf, Registration, IdentityInfo};
-		let identities = (0..b).map(|i| (
-			account("caller", i, 0),
-			Some(Registration::<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields> {
-				judgements: Default::default(),
-				deposit: Default::default(),
-				info: IdentityInfo {
-					additional: Default::default(),
-					display: Default::default(),
-					legal: Default::default(),
-					web: Default::default(),
-					riot: Default::default(),
-					email: Default::default(),
-					pgp_fingerprint: None,
-					image: Default::default(),
-					twitter: Default::default(),
-				},
-			}),
-		)).collect::<Vec<_>>();
-	}: _(RawOrigin::Root, identities)
 }

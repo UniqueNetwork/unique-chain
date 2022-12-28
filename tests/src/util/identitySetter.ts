@@ -33,7 +33,7 @@ const setIdentities = async (): Promise<void> => {
     try {
       const superuser = await privateKey(key);
       // todo:collator
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.dataManagement.setIdentities', [identities]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.setIdentities', [identities]);
       console.log(`Tried to upload ${identities.length} identities. `
         + `Now there are ${(await helper.getApi().query.identity.identityOf.keys()).length}.`);
     } catch (error) {

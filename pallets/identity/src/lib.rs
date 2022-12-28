@@ -1089,6 +1089,26 @@ pub mod pallet {
 			});
 			Ok(())
 		}
+
+		/// Insert or remove identities.
+		#[pallet::call_index(15)]
+		#[pallet::weight(T::WeightInfo::set_identities(
+			T::MaxAdditionalFields::get(), // X
+			identities.len() as u32, // N
+		))] // todo:collator weight
+		pub fn set_identities(
+			origin: OriginFor<T>,
+			identities: Vec<(
+				T::AccountId,
+				Option<Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>>,
+			)>,
+		) -> DispatchResult {
+			T::ForceOrigin::ensure_origin(origin)?;
+			for identity in identities {
+				IdentityOf::<T>::set(identity.0, identity.1);
+			}
+			Ok(())
+		}
 	}
 }
 

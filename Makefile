@@ -133,6 +133,10 @@ bench-foreign-assets:
 bench-collator-selection:
 	make _bench PALLET=collator-selection
 
+.PHONY: bench-identity
+bench-identity:
+	make _bench PALLET=identity
+
 .PHONY: bench-app-promotion
 bench-app-promotion:
 	make _bench PALLET=app-promotion PALLET_DIR=app-promotion

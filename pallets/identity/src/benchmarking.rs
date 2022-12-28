@@ -412,6 +412,21 @@ benchmarks! {
 		ensure!(!IdentityOf::<T>::contains_key(&target), "Identity not removed");
 	}
 
+	set_identities {
+		let x in 0 .. T::MaxAdditionalFields::get();
+		let n in 0..600;
+		use frame_benchmarking::account;
+		let identities = (0..n).map(|i| (
+			account("caller", i, 0),
+			Some(Registration::<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields> {
+				judgements: Default::default(),
+				deposit: Default::default(),
+				info: create_identity_info::<T>(x),
+			}),
+		)).collect::<Vec<_>>();
+		let origin = T::ForceOrigin::successful_origin();
+	}: _<T::RuntimeOrigin>(origin, identities)
+
 	add_sub {
 		let s in 0 .. T::MaxSubAccounts::get() - 1;
 

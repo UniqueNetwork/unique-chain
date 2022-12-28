@@ -39,7 +39,6 @@ pub trait WeightInfo {
 	fn finish(b: u32, ) -> Weight;
 	fn insert_eth_logs(b: u32, ) -> Weight;
 	fn insert_events(b: u32, ) -> Weight;
-	fn set_identities(b: u32, ) -> Weight;
 }
 
 /// Weights for pallet_data_management using the Substrate node and recommended hardware.
@@ -81,11 +80,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			// Standard Error: 1_227
 			.saturating_add(Weight::from_ref_time(1_311_481 as u64).saturating_mul(b as u64))
 	}
-	fn set_identities(b: u32, ) -> Weight {
-		Weight::from_ref_time(10_936_376 as u64)
-			// Standard Error: 1_227
-			.saturating_add(Weight::from_ref_time(1_311_481 as u64).saturating_mul(b as u64))
-	}
 }
 
 // For backwards compatibility and tests
@@ -122,11 +116,6 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_ref_time(722_345 as u64).saturating_mul(b as u64))
 	}
 	fn insert_events(b: u32, ) -> Weight {
-		Weight::from_ref_time(10_936_376 as u64)
-			// Standard Error: 1_227
-			.saturating_add(Weight::from_ref_time(1_311_481 as u64).saturating_mul(b as u64))
-	}
-	fn set_identities(b: u32, ) -> Weight {
 		Weight::from_ref_time(10_936_376 as u64)
 			// Standard Error: 1_227
 			.saturating_add(Weight::from_ref_time(1_311_481 as u64).saturating_mul(b as u64))

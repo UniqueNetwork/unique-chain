@@ -1477,11 +1477,7 @@ export interface PalletDataManagementCall extends Enum {
   readonly asInsertEvents: {
     readonly events: Vec<Bytes>;
   } & Struct;
-  readonly isSetIdentities: boolean;
-  readonly asSetIdentities: {
-    readonly identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>;
-  } & Struct;
-  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents' | 'SetIdentities';
+  readonly type: 'Begin' | 'SetData' | 'Finish' | 'InsertEthLogs' | 'InsertEvents';
 }
 
 /** @name PalletDataManagementError */
@@ -1825,7 +1821,11 @@ export interface PalletIdentityCall extends Enum {
     readonly sub: MultiAddress;
   } & Struct;
   readonly isQuitSub: boolean;
-  readonly type: 'AddRegistrar' | 'SetIdentity' | 'SetSubs' | 'ClearIdentity' | 'RequestJudgement' | 'CancelRequest' | 'SetFee' | 'SetAccountId' | 'SetFields' | 'ProvideJudgement' | 'KillIdentity' | 'AddSub' | 'RenameSub' | 'RemoveSub' | 'QuitSub';
+  readonly isSetIdentities: boolean;
+  readonly asSetIdentities: {
+    readonly identities: Vec<ITuple<[AccountId32, Option<PalletIdentityRegistration>]>>;
+  } & Struct;
+  readonly type: 'AddRegistrar' | 'SetIdentity' | 'SetSubs' | 'ClearIdentity' | 'RequestJudgement' | 'CancelRequest' | 'SetFee' | 'SetAccountId' | 'SetFields' | 'ProvideJudgement' | 'KillIdentity' | 'AddSub' | 'RenameSub' | 'RemoveSub' | 'QuitSub' | 'SetIdentities';
 }
 
 /** @name PalletIdentityError */

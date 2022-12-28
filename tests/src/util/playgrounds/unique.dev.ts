@@ -257,16 +257,17 @@ class ArrangeGroup {
       const accounts: IKeyringPair[] = [];
       let nonce = await this.helper.chain.getNonce(donor.address);
       const tokenNominal = this.helper.balance.getOneTokenNominal();
+      const ss58Format = this.helper.chain.getChainProperties().ss58Format;
       for (let i = 0; i < accountsToCreate; i++) {
         if (i === 500) { // if there are too many accounts to create
           await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled
           transactions = []; //
           nonce = await this.helper.chain.getNonce(donor.address); // update nonce
         }
-        const recepient = this.helper.util.fromSeed(mnemonicGenerate());
-        accounts.push(recepient);
+        const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
+        accounts.push(recipient);
         if (withBalance !== 0n) {
-          const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recepient.address}, withBalance * tokenNominal]);
+          const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, withBalance * tokenNominal]);
           transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
           nonce++;
         }
