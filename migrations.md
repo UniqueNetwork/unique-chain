@@ -1,3 +1,11 @@
+# **936041 < 930032**
+
+### **pallet-collator-selection:**
+
+* Added use of Collator Selection pallet, along with Session, Authorship, and Identity:
+    * Aura authorities become Collator Selection's invulnerables
+    * Session keys are put, and the first session is started
+
 # **930032 < 924010**
 
 ### **pallet-common:**
