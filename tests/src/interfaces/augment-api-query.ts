@@ -159,6 +159,9 @@ declare module '@polkadot/api-base/types/storage' {
     };
     configuration: {
       appPromomotionConfigurationOverride: AugmentedQuery<ApiType, () => Observable<PalletConfigurationAppPromotionConfiguration>, []> & QueryableStorageEntry<ApiType, []>;
+      collatorSelectionDesiredCollatorsOverride: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      collatorSelectionKickThresholdOverride: AugmentedQuery<ApiType, () => Observable<u32>, []> & QueryableStorageEntry<ApiType, []>;
+      collatorSelectionLicenseBondOverride: AugmentedQuery<ApiType, () => Observable<u128>, []> & QueryableStorageEntry<ApiType, []>;
       minGasPriceOverride: AugmentedQuery<ApiType, () => Observable<u64>, []> & QueryableStorageEntry<ApiType, []>;
       weightToFeeCoefficientOverride: AugmentedQuery<ApiType, () => Observable<u64>, []> & QueryableStorageEntry<ApiType, []>;
       xcmAllowedLocationsOverride: AugmentedQuery<ApiType, () => Observable<Option<Vec<XcmV1MultiLocation>>>, []> & QueryableStorageEntry<ApiType, []>;
