@@ -66,6 +66,7 @@ describe('Pallet presence', () => {
       const foreignAssets = 'foreignassets';
       const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
+      const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
       const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
@@ -81,6 +82,7 @@ describe('Pallet presence', () => {
           refungible,
           appPromotion,
           foreignAssets,
+          ...collatorSelection,
         );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here

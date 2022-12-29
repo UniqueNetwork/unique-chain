@@ -89,6 +89,10 @@ _bench:
 bench-evm-migration:
 	make _bench PALLET=evm-migration
 
+.PHONY: bench-configuration
+bench-configuration:
+	make _bench PALLET=configuration
+
 .PHONY: bench-common
 bench-common:
 	make _bench PALLET=common
@@ -127,12 +131,20 @@ bench-rmrk-equip:
 
 .PHONY: bench-foreign-assets
 bench-foreign-assets:
-	make _bench PALLET=foreign-assets	
+	make _bench PALLET=foreign-assets
+
+.PHONY: bench-collator-selection
+bench-collator-selection:
+	make _bench PALLET=collator-selection
+
+.PHONY: bench-identity
+bench-identity:
+	make _bench PALLET=identity
 
 .PHONY: bench-app-promotion
 bench-app-promotion:
 	make _bench PALLET=app-promotion PALLET_DIR=app-promotion
 	
 .PHONY: bench
-# Disabled: bench-scheduler, bench-rmrk-core, bench-rmrk-equip
-bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-foreign-assets
+# Disabled: bench-scheduler, bench-collator-selection, bench-rmrk-core, bench-rmrk-equip
+bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-identity

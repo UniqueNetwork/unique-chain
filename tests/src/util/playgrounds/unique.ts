@@ -2733,6 +2733,66 @@ class SchedulerGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
+class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
+  //todo:collator documentation
+  addInvulnerable(signer: TSigner, address: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.addInvulnerable', [address]);
+  }
+
+  removeInvulnerable(signer: TSigner, address: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.removeInvulnerable', [address]);
+  }
+
+  async getInvulnerables(): Promise<string[]> {
+    return (await this.helper.callRpc('api.query.collatorSelection.invulnerables')).map((x: any) => x.toHuman());
+  }
+
+  /** and also total max invulnerables */
+  maxCollators(): number {
+    return (this.helper.getApi().consts.configuration.defaultCollatorSelectionMaxCollators.toJSON() as number);
+  }
+
+  async getDesiredCollators(): Promise<number> {
+    return (await this.helper.callRpc('api.query.configuration.collatorSelectionDesiredCollatorsOverride')).toNumber();
+  }
+
+  setLicenseBond(signer: TSigner, amount: bigint) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.configuration.setCollatorSelectionLicenseBond', [amount]);
+  }
+
+  async getLicenseBond(): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.configuration.collatorSelectionLicenseBondOverride')).toBigInt();
+  }
+
+  obtainLicense(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.getLicense', []);
+  }
+
+  releaseLicense(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.releaseLicense', []);
+  }
+
+  forceReleaseLicense(signer: TSigner, released: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.forceReleaseLicense', [released]);
+  }
+
+  async hasLicense(address: string): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.collatorSelection.licenseDepositOf', [address])).toBigInt();
+  }
+
+  onboard(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.onboard', []);
+  }
+
+  offboard(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.offboard', []);
+  }
+
+  async getCandidates(): Promise<string[]> {
+    return (await this.helper.callRpc('api.query.collatorSelection.candidates')).map((x: any) => x.toHuman());
+  }
+}
+
 class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
   async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
     await this.helper.executeExtrinsic(
@@ -2957,6 +3017,7 @@ export class UniqueHelper extends ChainHelperBase {
   ft: FTGroup;
   staking: StakingGroup;
   scheduler: SchedulerGroup;
+  collatorSelection: CollatorSelectionGroup;
   foreignAssets: ForeignAssetsGroup;
   xcm: XcmGroup<UniqueHelper>;
   xTokens: XTokensGroup<UniqueHelper>;
@@ -2972,6 +3033,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.ft = new FTGroup(this);
     this.staking = new StakingGroup(this);
     this.scheduler = new SchedulerGroup(this);
+    this.collatorSelection = new CollatorSelectionGroup(this);
     this.foreignAssets = new ForeignAssetsGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.xTokens = new XTokensGroup(this);
@@ -3139,19 +3201,35 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       super(...args);
     }
 
-    executeExtrinsic (
+    async executeExtrinsic(
       sender: IKeyringPair,
       extrinsic: string,
       params: any[],
       expectSuccess?: boolean,
+      options: Partial<SignerOptions>|null = null,
     ): Promise<ITransactionResult> {
       const call = this.constructApiCall(extrinsic, params);
-      return super.executeExtrinsic(
+      const result = await super.executeExtrinsic(
         sender,
         'api.tx.sudo.sudo',
         [call],
         expectSuccess,
+        options,
       );
+
+      if (result.status === 'Fail') return result;
+
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if (data.isErr) {
+        if (data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else {
+          throw new Error(data.asErr.toHuman());
+        }
+      }
+      return result;
     }
   };
 }

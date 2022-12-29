@@ -4026,7 +4026,7 @@ dependencies = [
  "pallet-elections-phragmen",
  "pallet-fast-unstake",
  "pallet-grandpa",
- "pallet-identity",
+ "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36)",
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
@@ -5307,8 +5307,10 @@ dependencies = [
  "orml-xtokens",
  "pallet-app-promotion",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
@@ -5320,6 +5322,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
  "pallet-fungible",
+ "pallet-identity 4.0.0-dev",
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
@@ -5327,6 +5330,7 @@ dependencies = [
  "pallet-refungible",
  "pallet-rmrk-core",
  "pallet-rmrk-equip",
+ "pallet-session",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -5772,6 +5776,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-collator-selection"
+version = "4.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "log",
+ "pallet-aura",
+ "pallet-authorship",
+ "pallet-balances",
+ "pallet-configuration",
+ "pallet-session",
+ "pallet-timestamp",
+ "parity-scale-codec 3.2.1",
+ "rand 0.8.5",
+ "scale-info",
+ "serde",
+ "sp-consensus-aura",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-staking",
+ "sp-std",
+ "sp-tracing",
+]
+
+[[package]]
 name = "pallet-collective"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36#cb4f2491b00af7d7817f3a54209c26b20faa1f51"
@@ -5812,9 +5843,10 @@ dependencies = [
 
 [[package]]
 name = "pallet-configuration"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "fp-evm",
+ "frame-benchmarking",
  "frame-support",
  "frame-system",
  "parity-scale-codec 3.2.1",
@@ -6147,6 +6179,23 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-staking",
+ "sp-std",
+]
+
+[[package]]
+name = "pallet-identity"
+version = "4.0.0-dev"
+dependencies = [
+ "enumflags2",
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "parity-scale-codec 3.2.1",
+ "scale-info",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
  "sp-std",
 ]
 
@@ -8106,7 +8155,7 @@ dependencies = [
  "pallet-elections-phragmen",
  "pallet-fast-unstake",
  "pallet-grandpa",
- "pallet-identity",
+ "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36)",
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
@@ -8866,8 +8915,10 @@ dependencies = [
  "orml-xtokens",
  "pallet-app-promotion",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
@@ -8879,6 +8930,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
  "pallet-fungible",
+ "pallet-identity 4.0.0-dev",
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
@@ -8886,6 +8938,7 @@ dependencies = [
  "pallet-refungible",
  "pallet-rmrk-core",
  "pallet-rmrk-equip",
+ "pallet-session",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -9318,7 +9371,7 @@ dependencies = [
  "pallet-democracy",
  "pallet-elections-phragmen",
  "pallet-grandpa",
- "pallet-identity",
+ "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36)",
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",
@@ -13094,8 +13147,10 @@ dependencies = [
  "orml-xtokens",
  "pallet-app-promotion",
  "pallet-aura",
+ "pallet-authorship",
  "pallet-balances",
  "pallet-base-fee",
+ "pallet-collator-selection",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
@@ -13107,6 +13162,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
  "pallet-fungible",
+ "pallet-identity 4.0.0-dev",
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
@@ -13114,6 +13170,7 @@ dependencies = [
  "pallet-refungible",
  "pallet-rmrk-core",
  "pallet-rmrk-equip",
+ "pallet-session",
  "pallet-structure",
  "pallet-sudo",
  "pallet-template-transaction-payment",
@@ -13750,7 +13807,7 @@ dependencies = [
  "pallet-elections-phragmen",
  "pallet-fast-unstake",
  "pallet-grandpa",
- "pallet-identity",
+ "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.36)",
  "pallet-im-online",
  "pallet-indices",
  "pallet-membership",

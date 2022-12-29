@@ -28,6 +28,7 @@ runtime-benchmarks = [
     'pallet-evm-coder-substrate/runtime-benchmarks',
     'pallet-balances/runtime-benchmarks',
     'pallet-timestamp/runtime-benchmarks',
+    'pallet-configuration/runtime-benchmarks',
     'pallet-common/runtime-benchmarks',
     'pallet-structure/runtime-benchmarks',
     'pallet-fungible/runtime-benchmarks',
@@ -38,6 +39,8 @@ runtime-benchmarks = [
     'pallet-unique/runtime-benchmarks',
     'pallet-foreign-assets/runtime-benchmarks',
     'pallet-inflation/runtime-benchmarks',
+    'pallet-collator-selection/runtime-benchmarks',
+    'pallet-identity/runtime-benchmarks',
     'pallet-app-promotion/runtime-benchmarks',
     'pallet-xcm/runtime-benchmarks',
     'sp-runtime/runtime-benchmarks',
@@ -67,6 +70,10 @@ try-runtime = [
     'pallet-xcm/try-runtime',
     'cumulus-pallet-xcm/try-runtime',
     'cumulus-pallet-dmp-queue/try-runtime',
+	"pallet-authorship/try-runtime",
+	"pallet-collator-selection/try-runtime",
+	"pallet-session/try-runtime",
+	"pallet-identity/try-runtime",
     'pallet-inflation/try-runtime',
     'pallet-unique/try-runtime',
     'pallet-configuration/try-runtime',
@@ -108,6 +115,10 @@ std = [
     # 'pallet-contracts-primitives/std',
     # 'pallet-contracts-rpc-runtime-api/std',
     # 'pallet-contract-helpers/std',
+	"pallet-authorship/std",
+	'pallet-collator-selection/std',
+	"pallet-session/std",
+	"pallet-identity/std",
     'pallet-randomness-collective-flip/std',
     'pallet-sudo/std',
     'pallet-timestamp/std',
@@ -178,6 +189,7 @@ refungible = []
 scheduler = []
 rmrk = []
 foreign-assets = []
+collator-selection = []
 
 ################################################################################
 # Substrate Dependencies
@@ -240,6 +252,16 @@ version = '1.0.130'
 default-features = false
 git = "https://github.com/paritytech/substrate"
 branch = "polkadot-v0.9.36"
+
+[dependencies.pallet-authorship]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.36'
+
+[dependencies.pallet-session]
+default-features = false
+git = 'https://github.com/paritytech/substrate'
+branch = 'polkadot-v0.9.36'
 
 [dependencies.pallet-balances]
 default-features = false
@@ -462,6 +484,8 @@ rmrk-rpc = { path = "../../primitives/rmrk-rpc", default-features = false }
 pallet-inflation = { path = '../../pallets/inflation', default-features = false }
 pallet-app-promotion = { path = '../../pallets/app-promotion', default-features = false }
 up-data-structs = { path = '../../primitives/data-structs', default-features = false }
+pallet-collator-selection = { default-features = false, path = "../../pallets/collator-selection" }
+pallet-identity = { default-features = false, path = "../../pallets/identity" }
 pallet-configuration = { default-features = false, path = "../../pallets/configuration" }
 pallet-common = { default-features = false, path = "../../pallets/common" }
 pallet-structure = { default-features = false, path = "../../pallets/structure" }

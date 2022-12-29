@@ -81,6 +81,9 @@ declare module '@polkadot/api-base/types/consts' {
     configuration: {
       appPromotionDailyRate: Perbill & AugmentedConst<ApiType>;
       dayRelayBlocks: u32 & AugmentedConst<ApiType>;
+      defaultCollatorSelectionKickThreshold: u32 & AugmentedConst<ApiType>;
+      defaultCollatorSelectionLicenseBond: u128 & AugmentedConst<ApiType>;
+      defaultCollatorSelectionMaxCollators: u32 & AugmentedConst<ApiType>;
       defaultMinGasPrice: u64 & AugmentedConst<ApiType>;
       defaultWeightToFeeCoefficient: u64 & AugmentedConst<ApiType>;
       maxXcmAllowedLocations: u32 & AugmentedConst<ApiType>;
