@@ -49,7 +49,7 @@ pub const GENESIS_LICENSE_BOND: u128 = 1_000_000_000_000 * UNIQUE;
 /// Amount of maximum collators for Collator Selection.
 pub const MAX_COLLATORS: u32 = 10;
 /// How long a periodic session lasts in blocks.
-pub const SESSION_LENGTH: BlockNumber = HOURS;
+pub const SESSION_LENGTH: BlockNumber = 2 * MINUTES;
 
 // Targeting 0.1 UNQ per transfer
 pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_071_069_464_131_590/*</weight2fee>*/;
