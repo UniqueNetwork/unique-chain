@@ -38,7 +38,7 @@ jobs:
         with:
           matrix: |
             network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {opal}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
             network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
             network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
@@ -214,7 +214,7 @@ jobs:
           docker exec node-parachain kill -SIGUSR1 ${PID}
           echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
           sleep 60s
-          echo -e "Show logs of node-parachain container.\n"          
+          echo -e "Show logs of node-parachain container.\n"
           docker logs ${ContainerID}
 
       - name: Get chain logs in case of docker image crashed after Polkadot Launch restart

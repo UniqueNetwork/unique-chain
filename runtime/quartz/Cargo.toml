@@ -182,6 +182,7 @@ std = [
 ]
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 quartz-runtime = ['refungible', 'app-promotion', 'collator-selection', 'foreign-assets']
+become-sapphire = []
 pov-estimate = []
 
 refungible = []

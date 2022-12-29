@@ -44,6 +44,9 @@ mod tests;
 
 pub use runtime_common::*;
 
+#[cfg(feature = "become-sapphire")]
+pub const RUNTIME_NAME: &str = "sapphire";
+#[cfg(not(feature = "become-sapphire"))]
 pub const RUNTIME_NAME: &str = "quartz";
 pub const TOKEN_SYMBOL: &str = "QTZ";
 
@@ -61,6 +64,15 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
+}
+#[cfg(feature = "become-sapphire")]
+parameter_types! {
+	pub const SS58Prefix: u16 = 8883;
+	pub const ChainId: u64 = 8883;
+}
+
+#[cfg(not(feature = "become-sapphire"))]
+parameter_types! {
 	pub const SS58Prefix: u8 = 255;
 	pub const ChainId: u64 = 8881;
 }
