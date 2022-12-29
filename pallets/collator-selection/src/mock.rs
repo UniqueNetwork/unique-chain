@@ -219,13 +219,13 @@ impl pallet_configuration::Config for Test {
 	type DefaultCollatorSelectionMaxCollators = MaxCollators;
 	type DefaultCollatorSelectionKickThreshold = KickThreshold;
 	type DefaultCollatorSelectionLicenseBond = LicenseBond;
-	// the following we don't care about
+	// the following constants we don't care about
 	type DefaultWeightToFeeCoefficient = DefaultWeightToFeeCoefficient;
 	type DefaultMinGasPrice = DefaultMinGasPrice;
 	type MaxXcmAllowedLocations = MaxXcmAllowedLocations;
 	type AppPromotionDailyRate = AppPromotionDailyRate;
 	type DayRelayBlocks = DayRelayBlocks;
-	type WeightInfo = ();
+	type WeightInfo = pallet_configuration::weights::SubstrateWeight<Self>;
 }
 
 ord_parameter_types! {

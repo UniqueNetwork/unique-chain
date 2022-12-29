@@ -128,10 +128,10 @@ fn register_candidates<T: Config + configuration::Config>(count: u32) {
 	let candidates = (0..count)
 		.map(|c| account("candidate", c, SEED))
 		.collect::<Vec<_>>();
-	/*assert!(
+	assert!(
 		<LicenseBond<T>>::get() > 0u32.into(),
 		"Bond cannot be zero!"
-	);*/
+	);
 
 	for who in candidates {
 		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
@@ -144,10 +144,10 @@ fn get_licenses<T: Config + configuration::Config>(count: u32) {
 	let candidates = (0..count)
 		.map(|c| account("candidate", c, SEED))
 		.collect::<Vec<_>>();
-	/*assert!(
+	assert!(
 		<LicenseBond<T>>::get() > 0u32.into(),
 		"Bond cannot be zero!"
-	);*/
+	);
 
 	for who in candidates {
 		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
@@ -158,6 +158,9 @@ fn get_licenses<T: Config + configuration::Config>(count: u32) {
 benchmarks! {
 	where_clause { where T: pallet_authorship::Config + session::Config + configuration::Config }
 
+	// todo:collator this and all the following do not work for some reason, going all the way up to 10 in length
+	// Both invulnerables and candidates count together against MaxCollators.
+	// Maybe try putting it in braces? 1 .. (T::MaxCollators::get() - 2)
 	add_invulnerable {
 		let b in 1 .. T::MaxCollators::get() - 3;
 		register_validators::<T>(b);
