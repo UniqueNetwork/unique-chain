@@ -41,6 +41,10 @@ function defaultApiOptions(): ApiOptions {
         extrinsic: {},
         payload: {},
       },
+      DisableIdentityCalls: {
+        extrinsic: {},
+        payload: {},
+      },
       FakeTransactionFinalizer: {
         extrinsic: {},
         payload: {},

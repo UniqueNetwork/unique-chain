@@ -194,6 +194,15 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    configuration: {
+      NewCollatorKickThreshold: AugmentedEvent<ApiType, [lengthInBlocks: Option<u32>], { lengthInBlocks: Option<u32> }>;
+      NewCollatorLicenseBond: AugmentedEvent<ApiType, [bondCost: Option<u128>], { bondCost: Option<u128> }>;
+      NewDesiredCollators: AugmentedEvent<ApiType, [desiredCollators: Option<u32>], { desiredCollators: Option<u32> }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     cumulusXcm: {
       /**
        * Downward message executed with the given outcome.

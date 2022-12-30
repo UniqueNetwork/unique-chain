@@ -66,6 +66,7 @@ export class DevUniqueHelper extends UniqueHelper {
   arrange: ArrangeGroup;
   wait: WaitGroup;
   admin: AdminGroup;
+  session: SessionGroup;
   testUtils: TestUtilGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
@@ -76,6 +77,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.wait = new WaitGroup(this);
     this.admin = new AdminGroup(this);
     this.testUtils = new TestUtilGroup(this);
+    this.session = new SessionGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -88,6 +90,10 @@ export class DevUniqueHelper extends UniqueHelper {
           payload: {},
         },
         CheckMaintenance: {
+          extrinsic: {},
+          payload: {},
+        },
+        DisableIdentityCalls: {
           extrinsic: {},
           payload: {},
         },
@@ -251,16 +257,17 @@ class ArrangeGroup {
       const accounts: IKeyringPair[] = [];
       let nonce = await this.helper.chain.getNonce(donor.address);
       const tokenNominal = this.helper.balance.getOneTokenNominal();
+      const ss58Format = this.helper.chain.getChainProperties().ss58Format;
       for (let i = 0; i < accountsToCreate; i++) {
         if (i === 500) { // if there are too many accounts to create
           await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled
           transactions = []; //
           nonce = await this.helper.chain.getNonce(donor.address); // update nonce
         }
-        const recepient = this.helper.util.fromSeed(mnemonicGenerate());
-        accounts.push(recepient);
+        const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
+        accounts.push(recipient);
         if (withBalance !== 0n) {
-          const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recepient.address}, withBalance * tokenNominal]);
+          const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, withBalance * tokenNominal]);
           transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
           nonce++;
         }
@@ -337,7 +344,7 @@ class ArrangeGroup {
     const kvStr = JSON.stringify(kvJson);
 
     const chainql = spawnSync(
-      'chainql', 
+      'chainql',
       [
         `--tla-code=data=${kvStr}`,
         '-e', `function(data) cql.dump(cql.chain("${this.helper.getEndpoint()}").latest._meta, data, {omit_empty:true})`,
@@ -457,6 +464,27 @@ class WaitGroup {
   }
 
   /**
+   * Launch some async operation, or throw an error after some time. Note that it will still continue executing after the timeout.
+   * @param promise async operation to race against the timeout
+   * @param timeoutMS time after which to time out
+   * @param timeoutError error message to throw
+   * @returns promise of the same type the operation had
+   */
+  withTimeout<T>(
+    promise: Promise<T>,
+    timeoutMS = 30000,
+    timeoutError = 'The operation has timed out!',
+  ): Promise<T> {
+    const timeout = new Promise<never>((_, reject) => {
+      setTimeout(() => {
+        reject(new Error(timeoutError));
+      }, timeoutMS);
+    });
+
+    return Promise.race<T>([promise, timeout]).catch(e => {throw new Error(e);});
+  }
+
+  /**
    * Wait for specified number of blocks
    * @param blocksCount number of blocks to wait
    * @returns
@@ -476,6 +504,30 @@ class WaitGroup {
     });
     await this.waitWithTimeout(promise, timeout);
     return promise;
+  }
+
+  /**
+   * Wait for the specified number of sessions to pass.
+   * Only applicable if the Session pallet is turned on.
+   * @param sessionCount number of sessions to wait
+   * @param blockTimeout time in ms until panicking that the chain has stopped producing blocks
+   * @returns
+   */
+  async newSessions(sessionCount = 1, blockTimeout = 60000): Promise<void> {
+    console.log(`Waiting for ${sessionCount} new session${sessionCount > 1 ? 's' : ''}.`
+      + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
+
+    const expectedSessionIndex = await (this.helper as DevUniqueHelper).session.getIndex() + sessionCount;
+    let currentSessionIndex = -1;
+
+    while (currentSessionIndex < expectedSessionIndex) {
+      // eslint-disable-next-line no-async-promise-executor
+      currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
+        await this.newBlocks(1);
+        const res = await (this.helper as DevUniqueHelper).session.getIndex();
+        resolve(res);
+      }), blockTimeout, 'The chain has stopped producing blocks!');
+    }
   }
 
   async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
@@ -558,6 +610,36 @@ class WaitGroup {
       });
     });
     return promise;
+  }
+}
+
+class SessionGroup {
+  helper: ChainHelperBase;
+
+  constructor(helper: ChainHelperBase) {
+    this.helper = helper;
+  }
+
+  //todo:collator documentation
+  async getIndex(): Promise<number> {
+    return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
+  }
+
+  newSessions(sessionCount = 1, blockTimeout = 24000): Promise<void> {
+    return (this.helper as DevUniqueHelper).wait.newSessions(sessionCount, blockTimeout);
+  }
+
+  setOwnKeys(signer: TSigner, key: string) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.session.setKeys',
+      [key, '0x0'],
+      true,
+    );
+  }
+
+  setOwnKeysFromAddress(signer: TSigner) {
+    return this.setOwnKeys(signer, '0x' + Buffer.from(signer.addressRaw).toString('hex'));
   }
 }
 

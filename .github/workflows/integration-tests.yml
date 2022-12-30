@@ -36,10 +36,10 @@ jobs:
         with:
           matrix: |
             network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
             network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
             network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
- 
+
   parallel-test:
     needs: nodes-execution-matrix
     # The type of runner that the job will run on
@@ -77,14 +77,14 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}            
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
             WASM_NAME=${{ matrix.wasm_name }}
-            
+
       - name: Show build configuration
         run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
 
@@ -95,7 +95,7 @@ jobs:
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             NETWORK=${{ matrix.network }}
-            
+
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
@@ -172,8 +172,8 @@ jobs:
           path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
-    
-             
+
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
@@ -184,7 +184,7 @@ jobs:
           docker builder prune -f -a
           docker system prune -f
           docker image prune -f -a
-          
+
       - name: List files in Workspace
         if: always()
         run: ls -la ./
@@ -226,14 +226,14 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}            
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
             WASM_NAME=${{ matrix.wasm_name }}
-            
+
       - name: Show build configuration
         run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
 
@@ -244,7 +244,7 @@ jobs:
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             NETWORK=${{ matrix.network }}
-            
+
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
@@ -321,7 +321,7 @@ jobs:
           path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
-       
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose.node.${{ matrix.network }}.yml" down --volumes
@@ -332,7 +332,7 @@ jobs:
           docker builder prune -f -a
           docker system prune -f
           docker image prune -f -a
-          
+
       - name: List files in Workspace
         if: always()
         run: ls -la ./

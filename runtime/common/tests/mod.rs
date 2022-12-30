@@ -18,7 +18,7 @@ use sp_runtime::BuildStorage;
 use sp_core::{Public, Pair};
 use sp_std::vec;
 use up_common::types::AuraId;
-use crate::{GenesisConfig, ParachainInfoConfig, AuraConfig};
+use crate::{GenesisConfig, ParachainInfoConfig};
 
 pub mod xcm;
 
@@ -28,7 +28,56 @@ fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
 		.public()
 }
 
+#[cfg(feature = "collator-selection")]
 fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
+	use sp_core::{sr25519};
+	use sp_runtime::traits::{IdentifyAccount, Verify};
+	use crate::{AccountId, Signature, SessionKeys, CollatorSelectionConfig, SessionConfig};
+
+	type AccountPublic = <Signature as Verify>::Signer;
+
+	fn get_account_id_from_seed<TPublic: Public>(seed: &str) -> AccountId
+	where
+		AccountPublic: From<<TPublic::Pair as Pair>::Public>,
+	{
+		AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
+	}
+
+	let accounts = vec!["Alice", "Bob"];
+	let keys = accounts
+		.iter()
+		.map(|&acc| {
+			let account_id = get_account_id_from_seed::<sr25519::Public>(acc);
+			(
+				account_id.clone(),
+				account_id,
+				SessionKeys {
+					aura: get_from_seed::<AuraId>(acc),
+				},
+			)
+		})
+		.collect::<Vec<_>>();
+	let invulnerables = accounts
+		.iter()
+		.map(|acc| get_account_id_from_seed::<sr25519::Public>(acc))
+		.collect::<Vec<_>>();
+
+	let cfg = GenesisConfig {
+		collator_selection: CollatorSelectionConfig { invulnerables },
+		session: SessionConfig { keys },
+		parachain_info: ParachainInfoConfig {
+			parachain_id: para_id.into(),
+		},
+		..GenesisConfig::default()
+	};
+
+	cfg.build_storage().unwrap().into()
+}
+
+#[cfg(not(feature = "collator-selection"))]
+fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
+	use crate::AuraConfig;
+
 	let cfg = GenesisConfig {
 		aura: AuraConfig {
 			authorities: vec![

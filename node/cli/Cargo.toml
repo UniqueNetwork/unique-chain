@@ -340,7 +340,7 @@ try-runtime = [
     'opal-runtime?/try-runtime',
     'try-runtime-cli/try-runtime',
 ]
-sapphire-runtime = ['opal-runtime', 'opal-runtime/become-sapphire']
+sapphire-runtime = ['quartz-runtime', 'quartz-runtime/become-sapphire']
 pov-estimate = [
     'unique-runtime?/pov-estimate',
     'quartz-runtime?/pov-estimate',

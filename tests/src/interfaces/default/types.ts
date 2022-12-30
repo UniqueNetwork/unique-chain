@@ -692,6 +692,9 @@ export interface FrameSystemPhase extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
+/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
+export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
+
 /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
 export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
 
@@ -1306,13 +1309,42 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetAppPromotionConfigurationOverride: {
     readonly configuration: PalletConfigurationAppPromotionConfiguration;
   } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations' | 'SetAppPromotionConfigurationOverride';
+  readonly isSetCollatorSelectionDesiredCollators: boolean;
+  readonly asSetCollatorSelectionDesiredCollators: {
+    readonly max: Option<u32>;
+  } & Struct;
+  readonly isSetCollatorSelectionLicenseBond: boolean;
+  readonly asSetCollatorSelectionLicenseBond: {
+    readonly amount: Option<u128>;
+  } & Struct;
+  readonly isSetCollatorSelectionKickThreshold: boolean;
+  readonly asSetCollatorSelectionKickThreshold: {
+    readonly threshold: Option<u32>;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold';
 }
 
 /** @name PalletConfigurationError */
 export interface PalletConfigurationError extends Enum {
   readonly isInconsistentConfiguration: boolean;
   readonly type: 'InconsistentConfiguration';
+}
+
+/** @name PalletConfigurationEvent */
+export interface PalletConfigurationEvent extends Enum {
+  readonly isNewDesiredCollators: boolean;
+  readonly asNewDesiredCollators: {
+    readonly desiredCollators: Option<u32>;
+  } & Struct;
+  readonly isNewCollatorLicenseBond: boolean;
+  readonly asNewCollatorLicenseBond: {
+    readonly bondCost: Option<u128>;
+  } & Struct;
+  readonly isNewCollatorKickThreshold: boolean;
+  readonly asNewCollatorKickThreshold: {
+    readonly lengthInBlocks: Option<u32>;
+  } & Struct;
+  readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold';
 }
 
 /** @name PalletEthereumCall */

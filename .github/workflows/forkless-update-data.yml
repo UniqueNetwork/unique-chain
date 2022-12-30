@@ -38,14 +38,14 @@ jobs:
             network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
             network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
             network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {opal}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
 
   forkless-update-data:
     needs: execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
-    
+
     name: ${{ matrix.network }}-data
     strategy:
       matrix:
@@ -74,7 +74,7 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}            
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             # POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             # MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
@@ -163,7 +163,7 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose-forkless-data.${{ matrix.network }}.yml" down --volumes
-        
+
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |
