@@ -73,6 +73,10 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
 
@@ -81,9 +85,6 @@ jobs:
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      - name: Install jq
-        run: sudo apt install jq -y
 
       # Check POLKADOT version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for POLKADOT
@@ -184,7 +185,6 @@ jobs:
             fi
         shell: bash
 
-
       # Check CUMULUS version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for CUMULUS
         uses: cuchi/jinja2-action@v1.2.0
@@ -218,6 +218,8 @@ jobs:
             fi
         shell: bash
 
+      - name: Pull chainql docker image
+        run: docker pull uniquenetwork/builder-chainql:latest
 
       # Build main image for XCM   
       - name: Generate ENV related extend Dockerfile file
@@ -249,17 +251,16 @@ jobs:
           find: '/'
           replace: '-'
 
-      - name: Pull chainql docker image
-        run: docker pull uniquenetwork/builder-chainql:latest
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:7}" >> $GITHUB_ENV
 
       - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest .
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-${{ BUILD_SHA }}.
 
       - name: Push docker image version
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }}
-
-      - name: Push docker image latest
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest
+        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-${{ BUILD_SHA }}
 
       - name: Remove builder cache
         if: always()                   # run this step always
@@ -295,6 +296,22 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
+      - name: Prepare
+        uses: ./.github/actions/prepare
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:7}" >> $GITHUB_ENV
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@2
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
+
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
 
@@ -305,6 +322,7 @@ jobs:
           output_file: .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
+            BUILD_SHA=${{ BUILD_SHA }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
