@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   xcm_nodes:
-    image: uniquenetwork/xcm-{{ NETWORK }}-testnet-local:latest
+    image: uniquenetwork/xcm-{{ NETWORK }}-testnet-local:{{ BUILD_TAG }}
     container_name: xcm-{{ NETWORK }}-testnet-local
     expose:
       - 9844

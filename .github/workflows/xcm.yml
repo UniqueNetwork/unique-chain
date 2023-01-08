@@ -327,7 +327,7 @@ jobs:
           output_file: .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
-            BUILD_SHA=$BUILD_SHA
+            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Show build configuration
         run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
