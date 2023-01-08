@@ -16,6 +16,9 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
+  yarn-dev:
+    uses: ./.github/workflows/yarn-dev.yml
+
   unit-test:
     uses: ./.github/workflows/unit-test.yml
 
@@ -39,3 +42,6 @@ jobs:
 
   codestyle:
     uses: ./.github/workflows/codestyle.yml
+
+  polkadot-types:
+    uses: ./.github/workflows/polkadot-types.yml

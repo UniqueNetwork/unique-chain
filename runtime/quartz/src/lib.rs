@@ -25,6 +25,8 @@
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
+extern crate alloc;
+
 use frame_support::parameter_types;
 
 use sp_version::RuntimeVersion;
@@ -42,6 +44,9 @@ mod tests;
 
 pub use runtime_common::*;
 
+#[cfg(feature = "become-sapphire")]
+pub const RUNTIME_NAME: &str = "sapphire";
+#[cfg(not(feature = "become-sapphire"))]
 pub const RUNTIME_NAME: &str = "quartz";
 pub const TOKEN_SYMBOL: &str = "QTZ";
 
@@ -50,15 +55,24 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 930032,
+	spec_version: 936050,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
-	transaction_version: 2,
+	transaction_version: 3,
 	state_version: 0,
 };
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
+}
+#[cfg(feature = "become-sapphire")]
+parameter_types! {
+	pub const SS58Prefix: u16 = 8883;
+	pub const ChainId: u64 = 8883;
+}
+
+#[cfg(not(feature = "become-sapphire"))]
+parameter_types! {
 	pub const SS58Prefix: u8 = 255;
 	pub const ChainId: u64 = 8881;
 }

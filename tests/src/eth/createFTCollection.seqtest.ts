@@ -32,16 +32,16 @@ describe('Create FT collection from EVM', () => {
 
   itEth('Create collection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    
+
     const name = 'CollectionEVM';
     const description = 'Some description';
     const prefix = 'token prefix';
-  
+
     // todo:playgrounds this might fail when in async environment.
     const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
     const {collectionId} = await helper.eth.createFungibleCollection(owner, name, DECIMALS, description, prefix);
-    
+
     const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
     const data = (await helper.ft.getData(collectionId))!;
 
@@ -59,16 +59,16 @@ describe('Create FT collection from EVM', () => {
 
     const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
     const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
 
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.false;
 
-    
+
     await helper.eth.createFungibleCollection(owner, 'A', DECIMALS, 'A', 'A');
 
-    
+
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
       .call()).to.be.true;

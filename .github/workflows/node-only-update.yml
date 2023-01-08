@@ -37,16 +37,16 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}
-
+            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
 
   nodes-only-update:
     needs: nodes-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,large]
+    runs-on: [self-hosted-ci]
 
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
@@ -79,13 +79,14 @@ jobs:
           variables: |
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            MAINNET_TAG=${{ matrix.mainnet_tag }}
+            # POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
+            # MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
-            BRANCH=${{ github.head_ref }}
+            WASM_NAME=${{ matrix.wasm_name }}
+            # BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
@@ -97,6 +98,7 @@ jobs:
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             NETWORK=${{ matrix.network }}
+            WASM_NAME=${{ matrix.wasm_name }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
@@ -160,57 +162,35 @@ jobs:
           ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
           path: ${{ matrix.mainnet_branch }}
 
-      - name: Run tests before Node Parachain upgrade
+      - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()
         run: |
           yarn install
           yarn add mochawesome
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-before-${NOW}
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
 
-      - name: Upload Test Report Before Node upgrade
-        uses: phoenix-actions/test-reporting@v10
-        id: test-report-before
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-          path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-before-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-          token: ${{ secrets.GITHUB_TOKEN }}
+      # - name: Upload Parallel Test Report Before Node upgrade
+      #   uses: phoenix-actions/test-reporting@v8
+      #   id: test-parallel-report-before
+      #   if: success() || failure()    # run this step even if previous step failed
+      #   with:
+      #     name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
+      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
+      #     reporter: mochawesome-json
+      #     fail-on-error: 'false'
 
-      # TODO uncomment thease steps after the merge
-      #- name: Run Parallel tests before Node Parachain upgrade
-      #  working-directory: ${{ matrix.mainnet_branch }}/tests
-      #  run: |
-      #    yarn install
-      #    yarn add mochawesome
-      #    echo "Ready to start tests"
-      #    yarn polkadot-types
-      #    NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
-      #  env:
-      #    RPC_URL: http://127.0.0.1:9933/
-
-      #- name: Upload Parallel Test Report Before Node upgrade
-      #  uses: phoenix-actions/test-reporting@v10
-      #  id: test-parallel-report-before
-      #  if: success() || failure()    # run this step even if previous step failed
-      #  with:
-      #    name: Tests before node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-      #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-parallel-*.json    # Path to test results
-      #    reporter: mochawesome-json
-      #    fail-on-error: 'false'
-
-      # - name: Run Sequential tests before Node Parachain upgrade
-      #   if: success() || failure()
-      #   working-directory: ${{ matrix.mainnet_branch }}/tests
-      #   run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-      #   env:
-      #     RPC_URL: http://127.0.0.1:9933/
+      - name: Run Sequential tests before Node Parachain upgrade
+        if: success() || failure()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Sequential Test Report Before Node upgrade
       #   uses: phoenix-actions/test-reporting@v10
@@ -234,7 +214,7 @@ jobs:
           docker exec node-parachain kill -SIGUSR1 ${PID}
           echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
           sleep 60s
-          echo -e "Show logs of node-parachain container.\n"          
+          echo -e "Show logs of node-parachain container.\n"
           docker logs ${ContainerID}
 
       - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
@@ -305,43 +285,18 @@ jobs:
           exit 0
         shell: bash
 
-      ## TODO: Remove next two blocks before switch to Parrallel & Sequental tests. Uncoment commented blocks.
-      - name: Run tests after Node Parachain upgrade
-        if: success() || failure()    # run this step even if previous step failed
+      - name: Run Parallel tests after Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: success() || failure()    # run this step even if previous step failed
         run: |
           yarn install
           yarn add mochawesome
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-after-${NOW}
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
-
-      # - name: Test Report After Node upgrade
-      #   uses: phoenix-actions/test-reporting@v10
-      #   id: test-report-after
-      #   if: success() || failure()    # run this step even if previous step failed
-      #   with:
-      #     name: Tests after node upgrade ${{ matrix.network }}            # Name of the check run which will be created
-      #     path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-after-*.json    # Path to test results
-      #     reporter: mochawesome-json
-      #     fail-on-error: 'false'
-      #     token: ${{ secrets.GITHUB_TOKEN }}
-
-      # TODO uncomment thease steps after the merge
-      #- name: Run Parallel tests after Node Parachain upgrade
-      #  working-directory: ${{ matrix.mainnet_branch }}/tests
-      #  run: |
-      #    yarn install
-      #    yarn add mochawesome
-      #    ./scripts/wait_for_first_block.sh
-      #    echo "Ready to start tests"
-      #    yarn polkadot-types
-      #    NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
-      #  env:
-      #    RPC_URL: http://127.0.0.1:9933/
 
       #- name: Test Report Parallel After Node upgrade
       #  uses: phoenix-actions/test-reporting@v10
@@ -353,12 +308,12 @@ jobs:
       #    reporter: mochawesome-json
       #    fail-on-error: 'false'
 
-      #- name: Run Sequential tests after Node Parachain upgrade
-      #  if: success() || failure()
-      #  working-directory: ${{ matrix.mainnet_branch }}/tests
-      #  run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
-      #  env:
-      #    RPC_URL: http://127.0.0.1:9933/
+      - name: Run Sequential tests after Node Parachain upgrade
+        if: success() || failure()
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
 
       #- name: Upload Sequential Test Report After Node upgrade
       #  uses: phoenix-actions/test-reporting@v10
@@ -369,7 +324,6 @@ jobs:
       #    path: ${{ matrix.mainnet_branch }}/tests/mochawesome-report/test-sequential-*.json    # Path to test results
       #    reporter: mochawesome-json
       #    fail-on-error: 'false'
-
 
       - name: Stop running containers
         if: always()                   # run this step always

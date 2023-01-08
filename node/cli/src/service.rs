@@ -34,7 +34,9 @@ use serde::{Serialize, Deserialize};
 
 // Cumulus Imports
 use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::ParachainConsensus;
+use cumulus_client_consensus_common::{
+	ParachainConsensus, ParachainBlockImport as TParachainBlockImport,
+};
 use cumulus_client_service::{
 	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
 };
@@ -43,7 +45,7 @@ use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
 use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_rpc_interface::{RelayChainRpcInterface, create_client_and_start_worker};
+use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 
 // Substrate Imports
 use sp_api::BlockT;
@@ -56,6 +58,7 @@ use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 use sc_client_api::BlockchainEvents;
+use sc_consensus::ImportQueue;
 
 use polkadot_service::CollatorPair;
 
@@ -63,9 +66,10 @@ use polkadot_service::CollatorPair;
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
-use up_common::types::opaque::{
-	AuraId, RuntimeInstance, AccountId, Balance, Index, Hash, Block, BlockNumber,
-};
+use up_common::types::opaque::*;
+
+#[cfg(feature = "pov-estimate")]
+use crate::chain_spec::RuntimeIdentification;
 
 // RMRK
 use up_data_structs::{
@@ -103,7 +107,12 @@ pub type DefaultRuntimeExecutor = OpalRuntimeExecutor;
 
 #[cfg(feature = "unique-runtime")]
 impl NativeExecutionDispatch for UniqueRuntimeExecutor {
+	/// Only enable the benchmarking host functions when we actually want to benchmark.
+	#[cfg(feature = "runtime-benchmarks")]
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	/// Otherwise we only use the default Substrate host functions.
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		unique_runtime::api::dispatch(method, data)
@@ -116,7 +125,12 @@ impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 
 #[cfg(feature = "quartz-runtime")]
 impl NativeExecutionDispatch for QuartzRuntimeExecutor {
+	/// Only enable the benchmarking host functions when we actually want to benchmark.
+	#[cfg(feature = "runtime-benchmarks")]
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	/// Otherwise we only use the default Substrate host functions.
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		quartz_runtime::api::dispatch(method, data)
@@ -128,7 +142,12 @@ impl NativeExecutionDispatch for QuartzRuntimeExecutor {
 }
 
 impl NativeExecutionDispatch for OpalRuntimeExecutor {
+	/// Only enable the benchmarking host functions when we actually want to benchmark.
+	#[cfg(feature = "runtime-benchmarks")]
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+	/// Otherwise we only use the default Substrate host functions.
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type ExtendHostFunctions = ();
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		opal_runtime::api::dispatch(method, data)
@@ -188,6 +207,8 @@ type FullClient<RuntimeApi, ExecutorDispatch> =
 	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
+type ParachainBlockImport<RuntimeApi, ExecutorDispatch> =
+	TParachainBlockImport<Block, Arc<FullClient<RuntimeApi, ExecutorDispatch>>, FullBackend>;
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -224,6 +245,7 @@ where
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+		Arc<FullBackend>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -294,6 +316,7 @@ where
 
 	let import_queue = build_import_queue(
 		client.clone(),
+		backend.clone(),
 		config,
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
@@ -331,22 +354,21 @@ async fn build_relay_chain_interface(
 	Arc<(dyn RelayChainInterface + 'static)>,
 	Option<CollatorPair>,
 )> {
-	match collator_options.relay_chain_rpc_url {
-		Some(relay_chain_url) => {
-			let rpc_client = create_client_and_start_worker(relay_chain_url, task_manager).await?;
-
-			Ok((
-				Arc::new(RelayChainRpcInterface::new(rpc_client)) as Arc<_>,
-				None,
-			))
-		}
-		None => build_inprocess_relay_chain(
+	if collator_options.relay_chain_rpc_urls.is_empty() {
+		build_inprocess_relay_chain(
 			polkadot_config,
 			parachain_config,
 			telemetry_worker_handle,
 			task_manager,
 			hwbench,
-		),
+		)
+	} else {
+		build_minimal_relay_chain_node(
+			polkadot_config,
+			task_manager,
+			collator_options.relay_chain_rpc_urls,
+		)
+		.await
 	}
 }
 
@@ -391,13 +413,15 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+		Arc<FullBackend>,
 		&Configuration,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -407,6 +431,7 @@ where
 	>,
 	BIC: FnOnce(
 		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+		Arc<FullBackend>,
 		Option<&Registry>,
 		Option<TelemetryHandle>,
 		&TaskManager,
@@ -448,7 +473,7 @@ where
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
-	let import_queue = cumulus_client_service::SharedImportQueue::new(params.import_queue);
+	let import_queue_service = params.import_queue.service();
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -456,7 +481,7 @@ where
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
-			import_queue: import_queue.clone(),
+			import_queue: params.import_queue,
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
@@ -494,9 +519,29 @@ where
 		.for_each(|()| futures::future::ready(())),
 	);
 
+	#[cfg(feature = "pov-estimate")]
+	let rpc_backend = backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
+	let runtime_id = parachain_config.chain_spec.runtime_id();
+
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			backend: rpc_frontier_backend.clone(),
+			#[cfg(feature = "pov-estimate")]
+			runtime_id: runtime_id.clone(),
+
+			#[cfg(feature = "pov-estimate")]
+			exec_params: uc_rpc::pov_estimate::ExecutorParams {
+				wasm_method: parachain_config.wasm_method,
+				default_heap_pages: parachain_config.default_heap_pages,
+				max_runtime_instances: parachain_config.max_runtime_instances,
+				runtime_cache_size: parachain_config.runtime_cache_size,
+			},
+
+			#[cfg(feature = "pov-estimate")]
+			backend: rpc_backend.clone(),
+
+			eth_backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),
@@ -561,6 +606,7 @@ where
 	if validator {
 		let parachain_consensus = build_consensus(
 			client.clone(),
+			backend.clone(),
 			prometheus_registry.as_ref(),
 			telemetry.as_ref().map(|t| t.handle()),
 			&task_manager,
@@ -581,7 +627,7 @@ where
 			task_manager: &mut task_manager,
 			spawner,
 			parachain_consensus,
-			import_queue,
+			import_queue: import_queue_service,
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_interface,
 			relay_chain_slot_duration,
@@ -594,10 +640,9 @@ where
 			announce_block,
 			task_manager: &mut task_manager,
 			para_id: id,
-			import_queue,
+			import_queue: import_queue_service,
 			relay_chain_interface,
 			relay_chain_slot_duration,
-			collator_options,
 		};
 
 		start_full_node(params)?;
@@ -611,6 +656,7 @@ where
 /// Build the import queue for the the parachain runtime.
 pub fn parachain_build_import_queue<RuntimeApi, ExecutorDispatch>(
 	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+	backend: Arc<FullBackend>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
@@ -631,6 +677,8 @@ where
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
+	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
 		_,
@@ -639,7 +687,7 @@ where
 		_,
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
-		block_import: client.clone(),
+		block_import,
 		client: client.clone(),
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
@@ -694,7 +742,8 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
@@ -708,6 +757,7 @@ where
 		id,
 		parachain_build_import_queue,
 		|client,
+		 backend,
 		 prometheus_registry,
 		 telemetry,
 		 task_manager,
@@ -725,6 +775,8 @@ where
 				prometheus_registry,
 				telemetry.clone(),
 			);
+
+			let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
 			Ok(AuraConsensus::build::<
 				sp_consensus_aura::sr25519::AuthorityPair,
@@ -763,7 +815,7 @@ where
 						Ok((slot, time, parachain_inherent))
 					}
 				},
-				block_import: client.clone(),
+				block_import,
 				para_client: client,
 				backoff_authoring_blocks: Option::<()>::None,
 				sync_oracle,
@@ -783,6 +835,7 @@ where
 
 fn dev_build_import_queue<RuntimeApi, ExecutorDispatch>(
 	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+	_: Arc<FullBackend>,
 	config: &Configuration,
 	_: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
@@ -839,7 +892,8 @@ where
 			RmrkBaseInfo<AccountId>,
 			RmrkPartType,
 			RmrkTheme,
-		> + substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
@@ -919,7 +973,7 @@ where
 				.import_notification_stream()
 				.map(|_| EngineCommand::SealNewBlock {
 					create_empty: true,
-					finalize: false,
+					finalize: false, // todo:collator finalize true
 					parent_hash: None,
 					sender: None,
 				}),
@@ -930,7 +984,7 @@ where
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
 		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
 			create_empty: true,
-			finalize: false,
+			finalize: false, // todo:collator finalize true
 			parent_hash: None,
 			sender: None,
 		}));
@@ -1010,9 +1064,29 @@ where
 	let rpc_pool = transaction_pool.clone();
 	let rpc_network = network.clone();
 	let rpc_frontier_backend = frontier_backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
+	let rpc_backend = backend.clone();
+
+	#[cfg(feature = "pov-estimate")]
+	let runtime_id = config.chain_spec.runtime_id();
+
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			backend: rpc_frontier_backend.clone(),
+			#[cfg(feature = "pov-estimate")]
+			runtime_id: runtime_id.clone(),
+
+			#[cfg(feature = "pov-estimate")]
+			exec_params: uc_rpc::pov_estimate::ExecutorParams {
+				wasm_method: config.wasm_method,
+				default_heap_pages: config.default_heap_pages,
+				max_runtime_instances: config.max_runtime_instances,
+				runtime_cache_size: config.runtime_cache_size,
+			},
+
+			#[cfg(feature = "pov-estimate")]
+			backend: rpc_backend.clone(),
+			eth_backend: rpc_frontier_backend.clone(),
 			deny_unsafe,
 			client: rpc_client.clone(),
 			pool: rpc_pool.clone(),

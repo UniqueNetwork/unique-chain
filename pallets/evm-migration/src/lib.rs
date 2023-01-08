@@ -73,6 +73,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// Start contract migration, inserts contract stub at target address,
 		/// and marks account as pending, allowing to insert storage
+		#[pallet::call_index(0)]
 		#[pallet::weight(<SelfWeightOf<T>>::begin())]
 		pub fn begin(origin: OriginFor<T>, address: H160) -> DispatchResult {
 			ensure_root(origin)?;
@@ -87,6 +88,7 @@ pub mod pallet {
 
 		/// Insert items into contract storage, this method can be called
 		/// multiple times
+		#[pallet::call_index(1)]
 		#[pallet::weight(<SelfWeightOf<T>>::set_data(data.len() as u32))]
 		pub fn set_data(
 			origin: OriginFor<T>,
@@ -108,6 +110,7 @@ pub mod pallet {
 		/// Finish contract migration, allows it to be called.
 		/// It is not possible to alter contract storage via [`Self::set_data`]
 		/// after this call.
+		#[pallet::call_index(2)]
 		#[pallet::weight(<SelfWeightOf<T>>::finish(code.len() as u32))]
 		pub fn finish(origin: OriginFor<T>, address: H160, code: Vec<u8>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -122,6 +125,7 @@ pub mod pallet {
 		}
 
 		/// Create ethereum events attached to the fake transaction
+		#[pallet::call_index(3)]
 		#[pallet::weight(<SelfWeightOf<T>>::insert_eth_logs(logs.len() as u32))]
 		pub fn insert_eth_logs(origin: OriginFor<T>, logs: Vec<ethereum::Log>) -> DispatchResult {
 			ensure_root(origin)?;
@@ -133,6 +137,7 @@ pub mod pallet {
 		}
 
 		/// Create substrate events
+		#[pallet::call_index(4)]
 		#[pallet::weight(<SelfWeightOf<T>>::insert_events(events.len() as u32))]
 		pub fn insert_events(origin: OriginFor<T>, events: Vec<Vec<u8>>) -> DispatchResult {
 			ensure_root(origin)?;

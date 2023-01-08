@@ -6,13 +6,17 @@ edition = "2021"
 publish = false
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
+	"derive",
+] }
+scale-info = { version = "2.1.1", default-features = false, features = [
+	"derive",
+] }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 # pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
 pallet-unique-scheduler-v2 = { path = '../../pallets/scheduler-v2', default-features = false }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 [features]
 default = ["std"]
@@ -24,4 +28,7 @@ std = [
 	"pallet-unique-scheduler-v2/std",
 	"sp-std/std",
 ]
-try-runtime = ["frame-support/try-runtime", "pallet-unique-scheduler-v2/try-runtime"]
+try-runtime = [
+	"frame-support/try-runtime",
+	"pallet-unique-scheduler-v2/try-runtime",
+]

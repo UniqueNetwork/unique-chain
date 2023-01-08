@@ -44,7 +44,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
     await collection.mint(alice, 10n);
     await collection.approveTokens(alice, {Substrate: bob.address}, 7n);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(7n);
-    
+
     await collection.transferFrom(bob, {Substrate: alice.address}, {Substrate: charlie.address}, 6n);
     expect(await collection.getBalance({Substrate: charlie.address})).to.be.equal(6n);
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(4n);
@@ -56,7 +56,7 @@ describe('Integration Test transferFrom(from, recipient, collection_id, item_id,
     const rft = await collection.mintToken(alice, 10n);
     await rft.approve(alice, {Substrate: bob.address}, 7n);
     expect(await rft.getApprovedPieces({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(7n);
-    
+
     await rft.transferFrom(bob, {Substrate: alice.address}, {Substrate: charlie.address}, 6n);
     expect(await rft.getBalance({Substrate: charlie.address})).to.be.equal(6n);
     expect(await rft.getBalance({Substrate: alice.address})).to.be.equal(4n);
@@ -155,11 +155,11 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
     expect(await nft.isApproved({Substrate: bob.address})).to.be.true;
 
     await expect(helper.collection.transferTokenFrom(
-      bob, 
-      collection.collectionId, 
-      nft.tokenId, 
-      {Substrate: alice.address}, 
-      {Substrate: charlie.address}, 
+      bob,
+      collection.collectionId,
+      nft.tokenId,
+      {Substrate: alice.address},
+      {Substrate: charlie.address},
       2n,
     )).to.be.rejectedWith(/nonfungible\.NonfungibleItemsHaveNoAmount/);
     expect(await nft.getOwner()).to.be.deep.equal({Substrate: alice.address});
@@ -202,7 +202,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(nft.transferFrom(
       charlie,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
     expect(await nft.getOwner()).to.be.deep.equal({Substrate: alice.address});
@@ -218,7 +218,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(collection.transferFrom(
       charlie,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
     expect(await collection.getBalance({Substrate: alice.address})).to.be.deep.equal(10000n);
@@ -236,7 +236,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(rft.transferFrom(
       charlie,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
     expect(await rft.getBalance({Substrate: alice.address})).to.be.deep.equal(10000n);
@@ -254,7 +254,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(nft.transferFrom(
       bob,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
   });
@@ -269,7 +269,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(collection.transferFrom(
       alice,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.TokenValueTooLow/);
   });
@@ -284,7 +284,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(rft.transferFrom(
       alice,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.TokenValueTooLow/);
   });
@@ -300,7 +300,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(nft.transferFrom(
       bob,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
   });
@@ -316,7 +316,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(collection.transferFrom(
       bob,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.TokenValueTooLow/);
   });
@@ -332,7 +332,7 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(rft.transferFrom(
       bob,
-      {Substrate: alice.address}, 
+      {Substrate: alice.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
   });
@@ -345,8 +345,31 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
 
     await expect(nft.transferFrom(
       alice,
-      {Substrate: bob.address}, 
+      {Substrate: bob.address},
       {Substrate: charlie.address},
     )).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
+  });
+
+  itSub('zero transfer NFT', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'Zero', description: 'Zero transfer', tokenPrefix: 'TF'});
+    const notApprovedNft = await collection.mintToken(alice, {Substrate: bob.address});
+    const approvedNft = await collection.mintToken(alice, {Substrate: bob.address});
+    await approvedNft.approve(bob, {Substrate: alice.address});
+
+    // 1. Cannot zero transferFrom (non-existing token)
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, 9999, 0])).to.be.rejectedWith('common.ApprovedValueTooLow');
+    // 2. Cannot zero transferFrom (not approved token)
+    await expect(helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, notApprovedNft.tokenId, 0])).to.be.rejectedWith('common.ApprovedValueTooLow');
+    // 3. Can zero transferFrom (approved token):
+    await helper.executeExtrinsic(alice, 'api.tx.unique.transferFrom', [{Substrate: bob.address}, {Substrate: alice.address}, collection.collectionId, approvedNft.tokenId, 0]);
+
+    // 4.1 approvedNft still approved:
+    expect(await approvedNft.isApproved({Substrate: alice.address})).to.be.true;
+    // 4.2 bob is still the owner:
+    expect(await approvedNft.getOwner()).to.deep.eq({Substrate: bob.address});
+    expect(await notApprovedNft.getOwner()).to.deep.eq({Substrate: bob.address});
+    // 4.3 Alice can transfer approved nft:
+    await approvedNft.transferFrom(alice, {Substrate: bob.address}, {Substrate: alice.address});
+    expect(await approvedNft.getOwner()).to.deep.eq({Substrate: alice.address});
   });
 });

@@ -87,6 +87,7 @@ pub mod logger {
 	where
 		<T as frame_system::Config>::RuntimeOrigin: OriginTrait<PalletsOrigin = OriginCaller>,
 	{
+		#[pallet::call_index(0)]
 		#[pallet::weight(*weight)]
 		pub fn log(origin: OriginFor<T>, i: u32, weight: Weight) -> DispatchResult {
 			Self::deposit_event(Event::Logged(i, weight));
@@ -96,6 +97,7 @@ pub mod logger {
 			Ok(())
 		}
 
+		#[pallet::call_index(1)]
 		#[pallet::weight(*weight)]
 		pub fn log_without_filter(origin: OriginFor<T>, i: u32, weight: Weight) -> DispatchResult {
 			Self::deposit_event(Event::Logged(i, weight));
@@ -133,8 +135,7 @@ impl Contains<RuntimeCall> for BaseFilter {
 parameter_types! {
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(
-			Weight::from_ref_time(2_000_000_000_000)
-			// .set_proof_size(u64::MAX),
+			Weight::from_ref_time(2_000_000_000_000).set_proof_size(u64::MAX)
 		);
 }
 impl system::Config for Test {

@@ -10,40 +10,40 @@ version = "0.2.2"
 
 [dependencies]
 scale-info = { version = "2.0.1", default-features = false, features = [
-  "derive",
+    "derive",
 ] }
 codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = [
-  'derive',
+    'derive',
 ] }
 serde = { version = "1.0.130", features = [
-  'derive',
+    'derive',
 ], default-features = false, optional = true }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.30" }
+frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 derivative = { version = "2.2.0", features = ["use_core"] }
 struct-versioning = { path = "../../crates/struct-versioning" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.30-2" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 rmrk-traits = { default-features = false, path = "../rmrk-traits" }
 bondrewd = { version = "0.1.14", features = [
-  "derive",
+    "derive",
 ], default-features = false }
 
 [features]
 default = ["std"]
 std = [
-  "serde1",
-  "serde/std",
-  "codec/std",
-  "frame-system/std",
-  "frame-support/std",
-  "sp-runtime/std",
-  "sp-core/std",
-  "sp-std/std",
-  "pallet-evm/std",
-  "rmrk-traits/std",
+    "serde1",
+    "serde/std",
+    "codec/std",
+    "frame-system/std",
+    "frame-support/std",
+    "sp-runtime/std",
+    "sp-core/std",
+    "sp-std/std",
+    "pallet-evm/std",
+    "rmrk-traits/std",
 ]
 serde1 = ["serde/alloc"]
 limit-testing = []

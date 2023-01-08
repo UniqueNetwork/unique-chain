@@ -190,7 +190,11 @@
         "name": "contractAddress",
         "type": "address"
       },
-      { "internalType": "uint8", "name": "mode", "type": "uint8" }
+      {
+        "internalType": "enum SponsoringModeT",
+        "name": "mode",
+        "type": "uint8"
+      }
     ],
     "name": "setSponsoringMode",
     "outputs": [],
@@ -223,10 +227,18 @@
     "outputs": [
       {
         "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+          { "internalType": "bool", "name": "status", "type": "bool" },
+          {
+            "components": [
+              { "internalType": "address", "name": "eth", "type": "address" },
+              { "internalType": "uint256", "name": "sub", "type": "uint256" }
+            ],
+            "internalType": "struct CrossAddress",
+            "name": "value",
+            "type": "tuple"
+          }
         ],
-        "internalType": "struct Tuple0",
+        "internalType": "struct OptionCrossAddress",
         "name": "",
         "type": "tuple"
       }

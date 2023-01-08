@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util';
+import {itSub, usingPlaygrounds, expect, requirePalletsOrSkip, Pallets} from './util';
 
 const U128_MAX = (1n << 128n) - 1n;
 
@@ -43,7 +43,7 @@ describe('integration test: Fungible functionality:', () => {
     expect(itemCountAfter).to.be.equal(defaultTokenId);
     expect(aliceBalance).to.be.equal(U128_MAX);
   });
-  
+
   itSub('RPC method tokenOnewrs for fungible collection and token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
     const facelessCrowd = (await helper.arrange.createAccounts(Array(7).fill(0n), donor)).map(keyring => {return {Substrate: keyring.address};});
@@ -54,22 +54,22 @@ describe('integration test: Fungible functionality:', () => {
 
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);
-    
+
     for (let i = 0; i < 7; i++) {
       await collection.transfer(alice, facelessCrowd[i], 1n);
-    } 
+    }
 
     const owners = await collection.getTop10Owners();
 
     // What to expect
     expect(owners).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length).to.be.equal(10);
-    
+
     const [eleven] = await helper.arrange.createAccounts([0n], donor);
     expect(await collection.transfer(alice, {Substrate: eleven.address}, 10n)).to.be.true;
     expect((await collection.getTop10Owners()).length).to.be.equal(10);
   });
-  
+
   itSub('Transfer token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
@@ -108,7 +108,7 @@ describe('integration test: Fungible functionality:', () => {
     expect(await collection.doesTokenExist(0)).to.be.true;
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(1n);
   });
-  
+
   itSub('Burn all tokens ', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.mint(alice, 500n);
@@ -127,7 +127,7 @@ describe('integration test: Fungible functionality:', () => {
     await collection.mint(alice, 100n);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(100n);
-    
+
     expect(await collection.approveTokens(alice, {Substrate: bob.address}, 60n)).to.be.true;
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(60n);
     expect(await collection.getBalance({Substrate: bob.address})).to.be.equal(0n);
@@ -143,5 +143,44 @@ describe('integration test: Fungible functionality:', () => {
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(30n);
     expect(await collection.transferFrom(bob, {Substrate: alice.address}, ethAcc, 10n)).to.be.true;
     expect(await collection.getBalance(ethAcc)).to.be.equal(10n);
+  });
+});
+
+describe('Fungible negative tests', () => {
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
+
+  before(async function() {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+
+      donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
+    });
+  });
+
+  itSub('Cannot transfer incorrect amount of tokens', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    const nonExistingCollection = helper.ft.getCollectionObject(99999);
+    await collection.mint(alice, 10n, {Substrate: bob.address});
+
+    // 1. Alice cannot transfer more than 0 tokens if balance low:
+    await expect(collection.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
+    await expect(collection.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejectedWith('common.TokenValueTooLow');
+
+    // 2. Alice cannot transfer non-existing token:
+    await expect(nonExistingCollection.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.CollectionNotFound');
+    await expect(nonExistingCollection.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.CollectionNotFound');
+
+    // 3. Zero transfer allowed (EIP-20):
+    await collection.transfer(bob, {Substrate: charlie.address}, 0n);
+    // 3.1 even if the balance = 0
+    await collection.transfer(alice, {Substrate: charlie.address}, 0n);
+
+    expect(await collection.getBalance({Substrate: alice.address})).to.eq(0n);
+    expect(await collection.getBalance({Substrate: bob.address})).to.eq(10n);
+    expect(await collection.getBalance({Substrate: charlie.address})).to.eq(0n);
   });
 });

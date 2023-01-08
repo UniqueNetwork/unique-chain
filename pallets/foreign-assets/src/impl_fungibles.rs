@@ -258,6 +258,13 @@ where
 			},
 		}
 	}
+
+	fn asset_exists(asset: AssetIds) -> bool {
+		match asset {
+			AssetIds::NativeAssetId(_) => true,
+			AssetIds::ForeignAssetId(fid) => <AssetBinding<T>>::contains_key(fid),
+		}
+	}
 }
 
 impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T>

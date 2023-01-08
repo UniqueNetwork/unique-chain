@@ -18,28 +18,43 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-/// @dev the ERC-165 identifier for this interface is 0x91a97a68
+/// @dev the ERC-165 identifier for this interface is 0xde0695c2
 contract TokenProperties is Dummy, ERC165 {
+	// /// @notice Set permissions for token property.
+	// /// @dev Throws error if `msg.sender` is not admin or owner of the collection.
+	// /// @param key Property key.
+	// /// @param isMutable Permission to mutate property.
+	// /// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
+	// /// @param tokenOwner Permission to mutate property by token owner if property is mutable.
+	// /// @dev EVM selector for this function is: 0x222d97fa,
+	// ///  or in textual repr: setTokenPropertyPermission(string,bool,bool,bool)
+	// function setTokenPropertyPermission(string memory key, bool isMutable, bool collectionAdmin, bool tokenOwner) public {
+	// 	require(false, stub_error);
+	// 	key;
+	// 	isMutable;
+	// 	collectionAdmin;
+	// 	tokenOwner;
+	// 	dummy = 0;
+	// }
+
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
-	/// @param key Property key.
-	/// @param isMutable Permission to mutate property.
-	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
-	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
-	/// @dev EVM selector for this function is: 0x222d97fa,
-	///  or in textual repr: setTokenPropertyPermission(string,bool,bool,bool)
-	function setTokenPropertyPermission(
-		string memory key,
-		bool isMutable,
-		bool collectionAdmin,
-		bool tokenOwner
-	) public {
+	/// @param permissions Permissions for keys.
+	/// @dev EVM selector for this function is: 0xbd92983a,
+	///  or in textual repr: setTokenPropertyPermissions((string,(uint8,bool)[])[])
+	function setTokenPropertyPermissions(TokenPropertyPermission[] memory permissions) public {
 		require(false, stub_error);
-		key;
-		isMutable;
-		collectionAdmin;
-		tokenOwner;
+		permissions;
 		dummy = 0;
+	}
+
+	/// @notice Get permissions for token properties.
+	/// @dev EVM selector for this function is: 0xf23d7790,
+	///  or in textual repr: tokenPropertyPermissions()
+	function tokenPropertyPermissions() public view returns (TokenPropertyPermission[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new TokenPropertyPermission[](0);
 	}
 
 	// /// @notice Set token property value.
@@ -112,14 +127,40 @@ contract TokenProperties is Dummy, ERC165 {
 	}
 }
 
-/// @dev Property struct
+/// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 struct Property {
 	string key;
 	bytes value;
 }
 
+/// Ethereum representation of Token Property Permissions.
+struct TokenPropertyPermission {
+	/// Token property key.
+	string key;
+	/// Token property permissions.
+	PropertyPermission[] permissions;
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
+struct PropertyPermission {
+	/// TokenPermission field.
+	TokenPermissionField code;
+	/// TokenPermission value.
+	bool value;
+}
+
+/// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
+enum TokenPermissionField {
+	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
+	Mutable,
+	/// Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
+	TokenOwner,
+	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
+	CollectionAdmin
+}
+
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xcc1d80ca
+/// @dev the ERC-165 identifier for this interface is 0x2a14cfd1
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -215,7 +256,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param sponsor Cross account address of the sponsor from whose account funds will be debited for operations with the contract.
 	/// @dev EVM selector for this function is: 0x84a1d5a8,
 	///  or in textual repr: setCollectionSponsorCross((address,uint256))
-	function setCollectionSponsorCross(EthCrossAccount memory sponsor) public {
+	function setCollectionSponsorCross(CrossAddress memory sponsor) public {
 		require(false, stub_error);
 		sponsor;
 		dummy = 0;
@@ -253,31 +294,31 @@ contract Collection is Dummy, ERC165 {
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
 	/// @dev EVM selector for this function is: 0x6ec0a9f1,
 	///  or in textual repr: collectionSponsor()
-	function collectionSponsor() public view returns (Tuple30 memory) {
+	function collectionSponsor() public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		dummy;
-		return Tuple30(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	/// Get current collection limits.
+	///
+	/// @return Array of collection limits
+	/// @dev EVM selector for this function is: 0xf63bc572,
+	///  or in textual repr: collectionLimits()
+	function collectionLimits() public view returns (CollectionLimit[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new CollectionLimit[](0);
 	}
 
 	/// Set limits for the collection.
 	/// @dev Throws error if limit not found.
-	/// @param limit Name of the limit. Valid names:
-	/// 	"accountTokenOwnershipLimit",
-	/// 	"sponsoredDataSize",
-	/// 	"sponsoredDataRateLimit",
-	/// 	"tokenLimit",
-	/// 	"sponsorTransferTimeout",
-	/// 	"sponsorApproveTimeout"
-	///  	"ownerCanTransfer",
-	/// 	"ownerCanDestroy",
-	/// 	"transfersEnabled"
-	/// @param value Value of the limit.
-	/// @dev EVM selector for this function is: 0x4ad890a8,
-	///  or in textual repr: setCollectionLimit(string,uint256)
-	function setCollectionLimit(string memory limit, uint256 value) public {
+	/// @param limit Some limit.
+	/// @dev EVM selector for this function is: 0x2316ee74,
+	///  or in textual repr: setCollectionLimit((uint8,(bool,uint256)))
+	function setCollectionLimit(CollectionLimit memory limit) public {
 		require(false, stub_error);
 		limit;
-		value;
 		dummy = 0;
 	}
 
@@ -294,7 +335,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param newAdmin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x859aa7d6,
 	///  or in textual repr: addCollectionAdminCross((address,uint256))
-	function addCollectionAdminCross(EthCrossAccount memory newAdmin) public {
+	function addCollectionAdminCross(CrossAddress memory newAdmin) public {
 		require(false, stub_error);
 		newAdmin;
 		dummy = 0;
@@ -304,7 +345,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param admin Cross account administrator address.
 	/// @dev EVM selector for this function is: 0x6c0cd173,
 	///  or in textual repr: removeCollectionAdminCross((address,uint256))
-	function removeCollectionAdminCross(EthCrossAccount memory admin) public {
+	function removeCollectionAdminCross(CrossAddress memory admin) public {
 		require(false, stub_error);
 		admin;
 		dummy = 0;
@@ -355,6 +396,24 @@ contract Collection is Dummy, ERC165 {
 		dummy = 0;
 	}
 
+	/// Returns nesting for a collection
+	/// @dev EVM selector for this function is: 0x22d25bfe,
+	///  or in textual repr: collectionNestingRestrictedCollectionIds()
+	function collectionNestingRestrictedCollectionIds() public view returns (CollectionNesting memory) {
+		require(false, stub_error);
+		dummy;
+		return CollectionNesting(false, new uint256[](0));
+	}
+
+	/// Returns permissions for a collection
+	/// @dev EVM selector for this function is: 0x5b2eaf4b,
+	///  or in textual repr: collectionNestingPermissions()
+	function collectionNestingPermissions() public view returns (CollectionNestingPermission[] memory) {
+		require(false, stub_error);
+		dummy;
+		return new CollectionNestingPermission[](0);
+	}
+
 	/// Set the collection access method.
 	/// @param mode Access mode
 	/// 	0 for Normal
@@ -372,7 +431,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User address to check.
 	/// @dev EVM selector for this function is: 0x91b6df49,
 	///  or in textual repr: allowlistedCross((address,uint256))
-	function allowlistedCross(EthCrossAccount memory user) public view returns (bool) {
+	function allowlistedCross(CrossAddress memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -395,7 +454,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0xa0184a3a,
 	///  or in textual repr: addToCollectionAllowListCross((address,uint256))
-	function addToCollectionAllowListCross(EthCrossAccount memory user) public {
+	function addToCollectionAllowListCross(CrossAddress memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -417,7 +476,7 @@ contract Collection is Dummy, ERC165 {
 	/// @param user User cross account address.
 	/// @dev EVM selector for this function is: 0x09ba452a,
 	///  or in textual repr: removeFromCollectionAllowListCross((address,uint256))
-	function removeFromCollectionAllowListCross(EthCrossAccount memory user) public {
+	function removeFromCollectionAllowListCross(CrossAddress memory user) public {
 		require(false, stub_error);
 		user;
 		dummy = 0;
@@ -453,7 +512,7 @@ contract Collection is Dummy, ERC165 {
 	/// @return "true" if account is the owner or admin
 	/// @dev EVM selector for this function is: 0x3e75a905,
 	///  or in textual repr: isOwnerOrAdminCross((address,uint256))
-	function isOwnerOrAdminCross(EthCrossAccount memory user) public view returns (bool) {
+	function isOwnerOrAdminCross(CrossAddress memory user) public view returns (bool) {
 		require(false, stub_error);
 		user;
 		dummy;
@@ -477,10 +536,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0xdf727d3b,
 	///  or in textual repr: collectionOwner()
-	function collectionOwner() public view returns (EthCrossAccount memory) {
+	function collectionOwner() public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		dummy;
-		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	// /// Changes collection owner to another account
@@ -501,10 +560,10 @@ contract Collection is Dummy, ERC165 {
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	/// @dev EVM selector for this function is: 0x5813216b,
 	///  or in textual repr: collectionAdmins()
-	function collectionAdmins() public view returns (EthCrossAccount[] memory) {
+	function collectionAdmins() public view returns (CrossAddress[] memory) {
 		require(false, stub_error);
 		dummy;
-		return new EthCrossAccount[](0);
+		return new CrossAddress[](0);
 	}
 
 	/// Changes collection owner to another account
@@ -513,23 +572,71 @@ contract Collection is Dummy, ERC165 {
 	/// @param newOwner new owner cross account
 	/// @dev EVM selector for this function is: 0x6496c497,
 	///  or in textual repr: changeCollectionOwnerCross((address,uint256))
-	function changeCollectionOwnerCross(EthCrossAccount memory newOwner) public {
+	function changeCollectionOwnerCross(CrossAddress memory newOwner) public {
 		require(false, stub_error);
 		newOwner;
 		dummy = 0;
 	}
 }
 
-/// @dev Cross account struct
-struct EthCrossAccount {
+/// Cross account struct
+struct CrossAddress {
 	address eth;
 	uint256 sub;
 }
 
-/// @dev anonymous struct
-struct Tuple30 {
-	address field_0;
-	uint256 field_1;
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
+struct CollectionNestingPermission {
+	CollectionPermissionField field;
+	bool value;
+}
+
+/// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) fields as an enumeration.
+enum CollectionPermissionField {
+	/// Owner of token can nest tokens under it.
+	TokenOwner,
+	/// Admin of token collection can nest tokens under token.
+	CollectionAdmin
+}
+
+/// Nested collections.
+struct CollectionNesting {
+	bool token_owner;
+	uint256[] ids;
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+struct CollectionLimit {
+	CollectionLimitField field;
+	OptionUint value;
+}
+
+/// Ethereum representation of Optional value with uint256.
+struct OptionUint {
+	bool status;
+	uint256 value;
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
+enum CollectionLimitField {
+	/// How many tokens can a user have on one account.
+	AccountTokenOwnership,
+	/// How many bytes of data are available for sponsorship.
+	SponsoredDataSize,
+	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+	SponsoredDataRateLimit,
+	/// How many tokens can be mined into this collection.
+	TokenLimit,
+	/// Timeouts for transfer sponsoring.
+	SponsorTransferTimeout,
+	/// Timeout for sponsoring an approval in passed blocks.
+	SponsorApproveTimeout,
+	/// Whether the collection owner of the collection can send tokens (which belong to other users).
+	OwnerCanTransfer,
+	/// Can the collection owner burn other people's tokens.
+	OwnerCanDestroy,
+	/// Is it possible to send tokens from this collection between users.
+	TransferEnabled
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
@@ -607,7 +714,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return false;
 	}
 
-	/// @notice Function to mint token.
+	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	/// @dev EVM selector for this function is: 0x6a627842,
@@ -619,7 +726,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		return 0;
 	}
 
-	// /// @notice Function to mint token.
+	// /// @notice Function to mint a token.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
 	// /// @param to The new owner
@@ -676,7 +783,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xb74c26b7
+/// @dev the ERC-165 identifier for this interface is 0x0e48fdb4
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -710,11 +817,11 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId Id for the token.
 	/// @dev EVM selector for this function is: 0x2b29dace,
 	///  or in textual repr: crossOwnerOf(uint256)
-	function crossOwnerOf(uint256 tokenId) public view returns (EthCrossAccount memory) {
+	function crossOwnerOf(uint256 tokenId) public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		tokenId;
 		dummy;
-		return EthCrossAccount(0x0000000000000000000000000000000000000000, 0);
+		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
 	}
 
 	/// Returns the token properties.
@@ -740,7 +847,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId The NFT to approve
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
-	function approveCross(EthCrossAccount memory approved, uint256 tokenId) public {
+	function approveCross(CrossAddress memory approved, uint256 tokenId) public {
 		require(false, stub_error);
 		approved;
 		tokenId;
@@ -768,7 +875,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId The NFT to transfer
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
-	function transferCross(EthCrossAccount memory to, uint256 tokenId) public {
+	function transferCross(CrossAddress memory to, uint256 tokenId) public {
 		require(false, stub_error);
 		to;
 		tokenId;
@@ -784,8 +891,8 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
 	function transferFromCross(
-		EthCrossAccount memory from,
-		EthCrossAccount memory to,
+		CrossAddress memory from,
+		CrossAddress memory to,
 		uint256 tokenId
 	) public {
 		require(false, stub_error);
@@ -818,7 +925,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @param tokenId The NFT to transfer
 	/// @dev EVM selector for this function is: 0xbb2f5a58,
 	///  or in textual repr: burnFromCross((address,uint256),uint256)
-	function burnFromCross(EthCrossAccount memory from, uint256 tokenId) public {
+	function burnFromCross(CrossAddress memory from, uint256 tokenId) public {
 		require(false, stub_error);
 		from;
 		tokenId;
@@ -833,6 +940,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy;
 		return 0;
 	}
+
 	// /// @notice Function to mint multiple tokens.
 	// /// @dev `tokenIds` should be an array of consecutive numbers and first number
 	// ///  should be obtained with `nextTokenId` method
@@ -863,6 +971,19 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// 	return false;
 	// }
 
+	/// @notice Function to mint a token.
+	/// @param to The new owner crossAccountId
+	/// @param properties Properties of minted token
+	/// @return uint256 The id of the newly minted token
+	/// @dev EVM selector for this function is: 0xb904db03,
+	///  or in textual repr: mintCross((address,uint256),(string,bytes)[])
+	function mintCross(CrossAddress memory to, Property[] memory properties) public returns (uint256) {
+		require(false, stub_error);
+		to;
+		properties;
+		dummy = 0;
+		return 0;
+	}
 }
 
 /// @dev anonymous struct
@@ -1020,7 +1141,10 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		dummy = 0;
 	}
 
-	/// @dev Not implemented
+	/// @notice Sets or unsets the approval of a given operator.
+	/// The `operator` is allowed to transfer all tokens of the `caller` on their behalf.
+	/// @param operator Operator
+	/// @param approved Should operator status be granted or revoked?
 	/// @dev EVM selector for this function is: 0xa22cb465,
 	///  or in textual repr: setApprovalForAll(address,bool)
 	function setApprovalForAll(address operator, bool approved) public {
@@ -1040,15 +1164,15 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		return 0x0000000000000000000000000000000000000000;
 	}
 
-	/// @dev Not implemented
+	/// @notice Tells whether the given `owner` approves the `operator`.
 	/// @dev EVM selector for this function is: 0xe985e9c5,
 	///  or in textual repr: isApprovedForAll(address,address)
-	function isApprovedForAll(address owner, address operator) public view returns (address) {
+	function isApprovedForAll(address owner, address operator) public view returns (bool) {
 		require(false, stub_error);
 		owner;
 		operator;
 		dummy;
-		return 0x0000000000000000000000000000000000000000;
+		return false;
 	}
 
 	/// @notice Returns collection helper contract address

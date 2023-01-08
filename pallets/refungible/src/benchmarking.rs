@@ -22,21 +22,17 @@ use core::iter::IntoIterator;
 use frame_benchmarking::{benchmarks, account};
 use pallet_common::{
 	bench_init,
-	benchmarking::{create_collection_raw, property_key, property_value, create_data},
+	benchmarking::{create_collection_raw, property_key, property_value},
 };
-use sp_core::H160;
 use sp_std::prelude::*;
-use up_data_structs::{
-	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, CUSTOM_DATA_LIMIT,
-	budget::Unlimited,
-};
+use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited};
 
 const SEED: u32 = 1;
 
-fn create_max_item_data<CrossAccountId: Ord>(
-	users: impl IntoIterator<Item = (CrossAccountId, u128)>,
-) -> CreateItemData<CrossAccountId> {
-	CreateItemData {
+fn create_max_item_data<T: Config>(
+	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
+) -> CreateItemData<T> {
+	CreateItemData::<T> {
 		users: users
 			.into_iter()
 			.collect::<BTreeMap<_, _>>()
@@ -51,7 +47,7 @@ fn create_max_item<T: Config>(
 	sender: &T::CrossAccountId,
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
-	let data: CreateItemData<T::CrossAccountId> = create_max_item_data(users);
+	let data: CreateItemData<T> = create_max_item_data::<T>(users);
 	<Pallet<T>>::create_item(&collection, sender, data, &Unlimited)?;
 	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
 }
@@ -83,7 +79,7 @@ benchmarks! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
-		let data = (0..b).map(|_| create_max_item_data([(to.clone(), 200)])).collect();
+		let data = (0..b).map(|_| create_max_item_data::<T>([(to.clone(), 200)])).collect();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	create_multiple_items_ex_multiple_items {
@@ -94,7 +90,7 @@ benchmarks! {
 		};
 		let data = (0..b).map(|t| {
 			bench_init!(to: cross_sub(t););
-			create_max_item_data([(to, 200)])
+			create_max_item_data::<T>([(to, 200)])
 		}).collect();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
@@ -104,7 +100,7 @@ benchmarks! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner);
 		};
-		let data = vec![create_max_item_data((0..b).map(|u| {
+		let data = vec![create_max_item_data::<T>((0..b).map(|u| {
 			bench_init!(to: cross_sub(u););
 			(to, 200)
 		}))].try_into().unwrap();
@@ -290,4 +286,26 @@ benchmarks! {
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
 	}: {<Pallet<T>>::token_owner(collection.id, item)}
+
+	set_allowance_for_all {
+		bench_init!{
+			owner: sub; collection: collection(owner); owner: cross_from_sub;
+			operator: cross_sub;
+		};
+	}: {<Pallet<T>>::set_allowance_for_all(&collection, &owner, &operator, true)?}
+
+	allowance_for_all {
+		bench_init!{
+			owner: sub; collection: collection(owner); owner: cross_from_sub;
+			operator: cross_sub;
+		};
+	}: {<Pallet<T>>::allowance_for_all(&collection, &owner, &operator)}
+
+	repair_item {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let item = create_max_item(&collection, &owner, [(owner.clone(), 100)])?;
+	}: {<Pallet<T>>::repair_item(&collection, item)?}
 }

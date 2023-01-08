@@ -19,20 +19,18 @@ fn expand_struct(
 	ast: &syn::DeriveInput,
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
-	let docs = extract_docs(&ast.attrs, false)?;
-	let (is_named_fields, field_names, field_types, field_docs, params_count) = match ds.fields {
+	let docs = extract_docs(&ast.attrs)?;
+	let (is_named_fields, field_names, field_types, params_count) = match ds.fields {
 		syn::Fields::Named(ref fields) => Ok((
 			true,
 			fields.named.iter().enumerate().map(map_field_to_name),
 			fields.named.iter().map(map_field_to_type),
-			fields.named.iter().map(map_field_to_doc),
 			fields.named.len(),
 		)),
 		syn::Fields::Unnamed(ref fields) => Ok((
 			false,
 			fields.unnamed.iter().enumerate().map(map_field_to_name),
 			fields.unnamed.iter().map(map_field_to_type),
-			fields.unnamed.iter().map(map_field_to_doc),
 			fields.unnamed.len(),
 		)),
 		syn::Fields::Unit => Err(syn::Error::new(name.span(), "Unit structs not supported")),
@@ -52,11 +50,9 @@ fn expand_struct(
 	let abi_type = impl_struct_abi_type(name, tuple_type.clone());
 	let abi_read = impl_struct_abi_read(name, tuple_type, tuple_names, struct_from_tuple);
 	let abi_write = impl_struct_abi_write(name, is_named_fields, tuple_ref_type, tuple_data);
-	let solidity_type = impl_struct_solidity_type(name, field_types.clone(), params_count);
+	let solidity_type = impl_struct_solidity_type(name, docs, ds.fields.iter());
 	let solidity_type_name =
 		impl_struct_solidity_type_name(name, field_types.clone(), params_count);
-	let solidity_struct_collect =
-		impl_struct_solidity_struct_collect(name, field_names, field_types, field_docs, &docs)?;
 
 	Ok(quote! {
 		#can_be_plcaed_in_vec
@@ -65,7 +61,6 @@ fn expand_struct(
 		#abi_write
 		#solidity_type
 		#solidity_type_name
-		#solidity_struct_collect
 	})
 }
 
@@ -75,25 +70,17 @@ fn expand_enum(
 ) -> syn::Result<proc_macro2::TokenStream> {
 	let name = &ast.ident;
 	check_repr_u8(name, &ast.attrs)?;
-	let docs = extract_docs(&ast.attrs, false)?;
-	let option_count = check_and_count_options(de)?;
-	let enum_options = de.variants.iter().map(|v| &v.ident);
-	let enum_options_docs = de.variants.iter().map(|v| extract_docs(&v.attrs, true));
+	check_enum_fields(de)?;
+	let docs = extract_docs(&ast.attrs)?;
+	let enum_options = de.variants.iter();
 
 	let from = impl_enum_from_u8(name, enum_options.clone());
-	let solidity_option = impl_solidity_option(name, enum_options.clone());
+	let solidity_option = impl_solidity_option(docs, name, enum_options.clone());
 	let can_be_plcaed_in_vec = impl_can_be_placed_in_vec(name);
 	let abi_type = impl_enum_abi_type(name);
 	let abi_read = impl_enum_abi_read(name);
 	let abi_write = impl_enum_abi_write(name);
 	let solidity_type_name = impl_enum_solidity_type_name(name);
-	let solidity_struct_collect = impl_enum_solidity_struct_collect(
-		name,
-		enum_options,
-		option_count,
-		enum_options_docs,
-		&docs,
-	);
 
 	Ok(quote! {
 		#from
@@ -103,14 +90,10 @@ fn expand_enum(
 		#abi_read
 		#abi_write
 		#solidity_type_name
-		#solidity_struct_collect
 	})
 }
 
-fn extract_docs(
-	attrs: &[syn::Attribute],
-	is_field_doc: bool,
-) -> syn::Result<Vec<proc_macro2::TokenStream>> {
+fn extract_docs(attrs: &[syn::Attribute]) -> syn::Result<Vec<String>> {
 	attrs
 		.iter()
 		.filter_map(|attr| {
@@ -130,16 +113,6 @@ fn extract_docs(
 				}
 			}
 			None
-		})
-		.enumerate()
-		.map(|(i, doc)| {
-			let doc = doc?;
-			let doc = doc.trim();
-			let dev = if i == 0 { " @dev" } else { "" };
-			let tab = if is_field_doc { "\t" } else { "" };
-			Ok(quote! {
-				writeln!(str, "{}///{} {}", #tab, #dev, #doc).unwrap();
-			})
 		})
 		.collect()
 }

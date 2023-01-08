@@ -32,8 +32,17 @@ macro_rules! construct_runtime {
                 ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
                 ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
-                Aura: pallet_aura::{Pallet, Config<T>} = 22,
-                AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 23,
+                #[runtimes(quartz)]
+                Authorship: pallet_authorship::{Pallet, Call, Storage} = 22,
+
+                #[runtimes(quartz)]
+                CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
+
+                #[runtimes(quartz)]
+                Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 24,
+
+                Aura: pallet_aura::{Pallet, Config<T>} = 25,
+                AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 26,
 
                 Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
                 RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
@@ -47,6 +56,9 @@ macro_rules! construct_runtime {
                 Tokens: orml_tokens = 39,
                 // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
+                #[runtimes(quartz)]
+                Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 40,
+
                 // XCM helpers.
                 XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
                 PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
@@ -55,12 +67,12 @@ macro_rules! construct_runtime {
 
                 // Unique Pallets
                 Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
-                Unique: pallet_unique::{Pallet, Call, Storage, Event<T>} = 61,
+                Unique: pallet_unique::{Pallet, Call, Storage} = 61,
 
-                #[runtimes(opal)]
-                Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
+                // #[runtimes(opal)]
+                // Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
 
-                Configuration: pallet_configuration::{Pallet, Call, Storage} = 63,
+                Configuration: pallet_configuration::{Pallet, Call, Storage, Event<T>} = 63,
 
                 Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
                 // ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
@@ -79,10 +91,10 @@ macro_rules! construct_runtime {
                 #[runtimes(opal)]
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz)]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
-                #[runtimes(opal)]
+                #[runtimes(opal, quartz, unique)]
                 ForeignAssets: pallet_foreign_assets::{Pallet, Call, Storage, Event<T>} = 80,
 
                 // Frontier

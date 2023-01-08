@@ -54,17 +54,6 @@ pub type DefaultChainSpec = QuartzChainSpec;
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 pub type DefaultChainSpec = OpalChainSpec;
 
-pub enum RuntimeId {
-	#[cfg(feature = "unique-runtime")]
-	Unique,
-
-	#[cfg(feature = "quartz-runtime")]
-	Quartz,
-
-	Opal,
-	Unknown(String),
-}
-
 #[cfg(not(feature = "unique-runtime"))]
 /// PARA_ID for Opal/Sapphire/Quartz
 const PARA_ID: u32 = 2095;
@@ -154,11 +143,76 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
+#[cfg(feature = "quartz-runtime")]
 macro_rules! testnet_genesis {
 	(
 		$runtime:path,
 		$root_key:expr,
-		$initial_authorities:expr,
+		$initial_invulnerables:expr,
+		$endowed_accounts:expr,
+		$id:expr
+	) => {{
+		use $runtime::*;
+
+		GenesisConfig {
+			system: SystemConfig {
+				code: WASM_BINARY
+					.expect("WASM binary was not build, please build it!")
+					.to_vec(),
+			},
+			balances: BalancesConfig {
+				balances: $endowed_accounts
+					.iter()
+					.cloned()
+					// 1e13 UNQ
+					.map(|k| (k, 1 << 100))
+					.collect(),
+			},
+			treasury: Default::default(),
+			tokens: TokensConfig { balances: vec![] },
+			sudo: SudoConfig {
+				key: Some($root_key),
+			},
+			vesting: VestingConfig { vesting: vec![] },
+			parachain_info: ParachainInfoConfig {
+				parachain_id: $id.into(),
+			},
+			parachain_system: Default::default(),
+			collator_selection: CollatorSelectionConfig {
+				invulnerables: $initial_invulnerables
+					.iter()
+					.cloned()
+					.map(|(acc, _)| acc)
+					.collect(),
+			},
+			session: SessionConfig {
+				keys: $initial_invulnerables
+					.into_iter()
+					.map(|(acc, aura)| {
+						(
+							acc.clone(),          // account id
+							acc,                  // validator id
+							SessionKeys { aura }, // session keys
+						)
+					})
+					.collect(),
+			},
+			aura: Default::default(),
+			aura_ext: Default::default(),
+			evm: EVMConfig {
+				accounts: BTreeMap::new(),
+			},
+			ethereum: EthereumConfig {},
+		}
+	}};
+}
+
+#[cfg(not(feature = "quartz-runtime"))]
+macro_rules! testnet_genesis {
+	(
+		$runtime:path,
+		$root_key:expr,
+		$initial_invulnerables:expr,
 		$endowed_accounts:expr,
 		$id:expr
 	) => {{
@@ -189,7 +243,10 @@ macro_rules! testnet_genesis {
 			},
 			parachain_system: Default::default(),
 			aura: AuraConfig {
-				authorities: $initial_authorities,
+				authorities: $initial_invulnerables
+					.into_iter()
+					.map(|(_, aura)| aura)
+					.collect(),
 			},
 			aura_ext: Default::default(),
 			evm: EVMConfig {
@@ -230,8 +287,14 @@ pub fn development_config() -> DefaultChainSpec {
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_from_seed::<AuraId>("Alice"),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_from_seed::<AuraId>("Bob"),
+					),
 				],
 				// Pre-funded accounts
 				vec![
@@ -298,8 +361,14 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
 				vec![
-					get_from_seed::<AuraId>("Alice"),
-					get_from_seed::<AuraId>("Bob"),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Alice"),
+						get_from_seed::<AuraId>("Alice"),
+					),
+					(
+						get_account_id_from_seed::<sr25519::Public>("Bob"),
+						get_from_seed::<AuraId>("Bob"),
+					),
 				],
 				// Pre-funded accounts
 				vec![

@@ -30,7 +30,7 @@ describe('Integration Test: Unnesting', () => {
   itSub('NFT: allows the owner to successfully unnest a token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
-    
+
     // Create a nested token
     const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
 
@@ -49,7 +49,7 @@ describe('Integration Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     const collectionFT = await helper.ft.mintCollection(alice);
-    
+
     // Nest and unnest
     await collectionFT.mint(alice, 10n, targetToken.nestingAccount());
     await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
@@ -69,7 +69,7 @@ describe('Integration Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     const collectionRFT = await helper.rft.mintCollection(alice);
-    
+
     // Nest and unnest
     const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
     await expect(token.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
