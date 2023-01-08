@@ -244,7 +244,7 @@ jobs:
         run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
 
       - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@2
+        uses: mad9000/actions-find-and-replace-string@3
         id: branchname
         with:
           source: ${{ github.head_ref }}
@@ -254,23 +254,13 @@ jobs:
       - name: Set build SHA
         shell: bash
         run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:7}" >> $GITHUB_ENV
-
-      - name: ECHO BUILD_SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA="$BUILD_SHA
-
-      - name: ECHO BUILD_SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA="${BUILD_SHA}
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
 
       - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-$BUILD_SHA .
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA .
 
       - name: Push docker image version
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-$BUILD_SHA
+        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Remove builder cache
         if: always()                   # run this step always
@@ -312,7 +302,7 @@ jobs:
       - name: Set build SHA
         shell: bash
         run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:7}" >> $GITHUB_ENV
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@2
@@ -341,6 +331,12 @@ jobs:
         with:
           node-version: 16
 
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.0.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
 
@@ -350,14 +346,14 @@ jobs:
         run: |
           counter=160
           function check_container_status {
-                docker inspect -f {{.State.Running}} xcm-${{ matrix.network }}-testnet-local
+                docker inspect -f {{.State.Running}} xcm-${{ matrix.network }}-local
           }
           function do_docker_logs {
-                docker logs --details xcm-${{ matrix.network }}-testnet-local 2>&1
+                docker logs --details xcm-${{ matrix.network }}-local 2>&1
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: xcm-${{ matrix.network }}-testnet-local RUNNING";
+                        echo "Container: xcm-${{ matrix.network }}-local RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
                         if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
@@ -368,7 +364,7 @@ jobs:
                                 return 1
                         fi
                 else
-                        echo "Container xcm-${{ matrix.network }}-testnet-local NOT RUNNING"
+                        echo "Container xcm-${{ matrix.network }}-local NOT RUNNING"
                         echo "Halting all future checks"
                         exit 1
                 fi
