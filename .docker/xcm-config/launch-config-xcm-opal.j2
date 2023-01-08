@@ -1,7 +1,7 @@
 {
     "relaychain": {
         "bin": "/polkadot/target/release/polkadot",
-        "chain": "{{ RELAY_CHAIN_TYPE }}",
+        "chain": "{{ RELAY_CHAIN_TYPE }}-local",
         "chainInitializer": [
                 "chainql",
                 "--tla-code=spec=import '${spec}'",

@@ -95,6 +95,7 @@ jobs:
           output_file: .docker/launch-config-forkless-nodata.json
           variables: |
             NETWORK=${{ matrix.network }}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json

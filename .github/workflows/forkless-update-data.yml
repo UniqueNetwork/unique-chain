@@ -95,6 +95,7 @@ jobs:
             NETWORK=${{ matrix.network }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
             WASM_NAME=${{ matrix.wasm_name}}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-data.json
