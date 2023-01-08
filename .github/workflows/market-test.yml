@@ -72,7 +72,7 @@ jobs:
         working-directory: qa-tests
         run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
      
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16.17
 

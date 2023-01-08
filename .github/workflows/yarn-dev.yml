@@ -57,7 +57,7 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 

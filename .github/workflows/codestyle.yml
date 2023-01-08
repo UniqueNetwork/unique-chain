@@ -13,7 +13,7 @@ jobs:
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}            
       - name: Install latest nightly
@@ -32,10 +32,10 @@ jobs:
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}            
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
       - name: Install modules

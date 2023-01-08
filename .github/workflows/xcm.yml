@@ -309,7 +309,7 @@ jobs:
       - name: Show build configuration
         run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 
