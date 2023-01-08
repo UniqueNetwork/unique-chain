@@ -218,8 +218,16 @@ jobs:
             fi
         shell: bash
 
-      - name: Pull chainql docker image
-        run: docker pull uniquenetwork/builder-chainql:latest
+      - name: Generate ENV related extend launch-config file
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.j2
+          output_file: .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
+          variables: |
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}           
+
+      - name: Show launch-config-xcm-${{ matrix.network }} configuration
+        run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
 
       # Build main image for XCM   
       - name: Generate ENV related extend Dockerfile file
@@ -239,9 +247,6 @@ jobs:
 
       - name: Show build Dockerfile
         run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
-
-      - name: Show launch-config-xcm-${{ matrix.network }} configuration
-        run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@3
