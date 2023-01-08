@@ -257,10 +257,10 @@ jobs:
           echo "BUILD_SHA=${LAST_COMMIT_SHA:0:7}" >> $GITHUB_ENV
 
       - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-${{ BUILD_SHA }}.
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-$BUILD_SHA .
 
       - name: Push docker image version
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-${{ BUILD_SHA }}
+        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Remove builder cache
         if: always()                   # run this step always
@@ -322,7 +322,7 @@ jobs:
           output_file: .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
-            BUILD_SHA=${{ BUILD_SHA }}
+            BUILD_SHA=$BUILD_SHA
 
       - name: Show build configuration
         run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
