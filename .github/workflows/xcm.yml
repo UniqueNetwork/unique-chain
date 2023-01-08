@@ -256,6 +256,11 @@ jobs:
         run: |
           echo "BUILD_SHA=${LAST_COMMIT_SHA:0:7}" >> $GITHUB_ENV
 
+      - name: ECHO GITHUB_ENV
+        shell: bash
+        run: |
+          echo $GITHUB_ENV
+
       - name: Build the stack
         run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:${{ steps.branchname.outputs.value }}-$BUILD_SHA .
 
