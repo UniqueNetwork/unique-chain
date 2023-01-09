@@ -298,6 +298,11 @@ up-sponsorship = { default-features = false, git = "https://github.com/uniquenet
 pallet-test-utils = { default-features = false, path = "../../test-pallets/utils" }
 
 ################################################################################
+# Test dependencies
+
+pallet-test-utils = { default-features = false, path = "../../test-pallets/utils" }
+
+################################################################################
 # Other Dependencies
 
 impl-trait-for-tuples = "0.2.2"
