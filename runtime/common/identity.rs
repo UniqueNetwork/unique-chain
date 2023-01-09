@@ -21,7 +21,9 @@ use crate::RuntimeCall;
 
 use sp_runtime::{
 	traits::{DispatchInfoOf, SignedExtension},
-	transaction_validity::{TransactionValidity, ValidTransaction, TransactionValidityError},
+	transaction_validity::{
+		TransactionValidity, ValidTransaction, InvalidTransaction, TransactionValidityError,
+	},
 };
 <<<<<<< HEAD
 #[cfg(feature = "collator-selection")]
