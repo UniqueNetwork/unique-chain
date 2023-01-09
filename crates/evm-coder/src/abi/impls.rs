@@ -276,7 +276,7 @@ impl<T: AbiWrite + AbiType + Default> AbiWrite for Option<T> {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		match self {
 			Some(value) => (true, value).abi_write(writer),
-			None => (false, T::default()).abi_write(writer),
+			None => (true, T::default()).abi_write(writer),
 		}
 	}
 }
