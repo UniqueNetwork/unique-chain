@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   xcm_nodes:
-    image: uniquenetwork/ci-xcm-local:${{ NETWORK }}-{{ BUILD_TAG }}
+    image: uniquenetwork/ci-xcm-local:{{ NETWORK }}-{{ BUILD_TAG }}
     container_name: xcm-{{ NETWORK }}-local
     expose:
       - 9844
