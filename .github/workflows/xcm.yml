@@ -36,7 +36,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
+        uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
