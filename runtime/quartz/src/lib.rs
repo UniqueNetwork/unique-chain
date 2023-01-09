@@ -77,7 +77,7 @@ parameter_types! {
 	pub const ChainId: u64 = 8881;
 }
 
-construct_runtime!(quartz);
+construct_runtime!();
 
 impl_common_runtime_apis!();
 

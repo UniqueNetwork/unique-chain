@@ -65,7 +65,7 @@ parameter_types! {
 	pub const ChainId: u64 = 8882;
 }
 
-construct_runtime!(opal);
+construct_runtime!();
 
 impl_common_runtime_apis!();
 
