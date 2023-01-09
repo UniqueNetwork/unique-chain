@@ -258,3 +258,39 @@ impl_tuples! {A B C D E F G}
 impl_tuples! {A B C D E F G H}
 impl_tuples! {A B C D E F G H I}
 impl_tuples! {A B C D E F G H I J}
+
+//----- impls for Option -----
+impl<T: AbiType> AbiType for Option<T> {
+	const SIGNATURE: SignatureUnit = <(bool, T)>::SIGNATURE;
+
+	fn is_dynamic() -> bool {
+		<(bool, T)>::is_dynamic()
+	}
+
+	fn size() -> usize {
+		<(bool, T)>::size()
+	}
+}
+
+impl<T: AbiWrite + AbiType + Default> AbiWrite for Option<T> {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		match self {
+			Some(value) => (true, value).abi_write(writer),
+			None => (true, T::default()).abi_write(writer),
+		}
+	}
+}
+
+impl<T> AbiRead for Option<T>
+where
+	Self: AbiType,
+	T: AbiRead + AbiType,
+{
+	fn abi_read(reader: &mut AbiReader) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let (status, value) = <(bool, T)>::abi_read(reader)?;
+		Ok(if status { Some(value) } else { None })
+	}
+}
