@@ -1214,6 +1214,25 @@ declare module '@polkadot/api-base/types/submittable' {
        **/
       approve: AugmentedSubmittable<(spender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletEvmAccountBasicCrossAccountIdRepr, u32, u32, u128]>;
       /**
+       * Allow a non-permissioned address to transfer or burn an item from owner's eth mirror.
+       * 
+       * # Permissions
+       * 
+       * * Collection owner
+       * * Collection admin
+       * * Current item owner
+       * 
+       * # Arguments
+       * 
+       * * `from`: Owner's account eth mirror
+       * * `to`: Account to be approved to make specific transactions on non-owned tokens.
+       * * `collection_id`: ID of the collection the item belongs to.
+       * * `item_id`: ID of the item transactions on which are now approved.
+       * * `amount`: Number of pieces of the item approved for a transaction (maximum of 1 for NFTs).
+       * Set to 0 to revoke the approval.
+       **/
+      approveFrom: AugmentedSubmittable<(from: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, to: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, collectionId: u32 | AnyNumber | Uint8Array, itemId: u32 | AnyNumber | Uint8Array, amount: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmAccountBasicCrossAccountIdRepr, u32, u32, u128]>;
+      /**
        * Destroy a token on behalf of the owner as a non-owner account.
        * 
        * See also: [`approve`][`Pallet::approve`].

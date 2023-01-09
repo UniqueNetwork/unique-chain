@@ -1171,6 +1171,51 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Set allowance for the spender to `transfer` or `burn` sender's token from eth mirror.
+	///
+	/// - `from`: Address of sender's eth mirror.
+	/// - `to`: Adress of spender.
+	/// - `token`: Token the spender is allowed to `transfer` or `burn`.
+	pub fn set_allowance_for(
+		collection: &NonfungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		token: TokenId,
+		to: Option<&T::CrossAccountId>,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(sender)?;
+			collection.check_allowlist(from)?;
+			if let Some(to) = to {
+				collection.check_allowlist(to)?;
+			}
+		}
+
+		if let Some(to) = to {
+			<PalletCommon<T>>::ensure_correct_receiver(to)?;
+		}
+
+		ensure!(
+			*sender.as_eth() == *from.as_eth(),
+			<CommonError<T>>::AddressIsNotEthMirror
+		);
+
+		let token_data =
+			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
+		if token_data.owner != *from {
+			ensure!(
+				collection.limits.owner_can_transfer()
+					&& (collection.is_owner_or_admin(sender) || collection.is_owner_or_admin(from)),
+				<CommonError<T>>::CantApproveMoreThanOwned
+			);
+		}
+
+		// =========
+
+		Self::set_allowance_unchecked(collection, from, token, to, false);
+		Ok(())
+	}
+
 	/// Checks allowance for the spender to use the token.
 	fn check_allowed(
 		collection: &NonfungibleHandle<T>,

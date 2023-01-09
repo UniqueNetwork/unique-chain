@@ -633,6 +633,10 @@ export class ChainHelperBase {
     let call = this.getApi() as any;
     for(const part of apiCall.slice(4).split('.')) {
       call = call[part];
+      if (!call) {
+        const advice = part.includes('_') ? ' Looks like it needs to be converted to camel case.' : '';
+        throw Error(`Function ${part} of api call ${apiCall} not found.${advice}`);
+      }
     }
     return call(...params);
   }
@@ -1259,6 +1263,42 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
   }
 
   /**
+   * Set, change, or remove approved address to transfer the ownership of the NFT from eth mirror.
+   *
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param fromAddressObj Signer's Ethereum address containing her tokens
+   * @param toAddressObj Substrate or Ethereum address which gets approved use of the signer's tokens
+   * @param amount amount of token to be approved. For NFT must be set to 1n
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async approveTokenFrom(signer: IKeyringPair, collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount=1n) {
+    const approveResult = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.approveFrom', [fromAddressObj, toAddressObj, collectionId, tokenId, amount],
+      true, // `Unable to approve token for ${label}`,
+    );
+
+    return this.helper.util.findCollectionInEvents(approveResult.result.events, collectionId, 'common', 'Approved');
+  }
+
+  /**
+   * Set, change, or remove approved address to transfer the ownership of the NFT from eth mirror.
+   *
+   * @param signer keyring of signer
+   * @param collectionId ID of collection
+   * @param tokenId ID of token
+   * @param toAddressObj Substrate or Ethereum address which gets approved use of the signer's tokens
+   * @param amount amount of token to be approved. For NFT must be set to 1n
+   * @returns ```true``` if extrinsic success, otherwise ```false```
+   */
+  async approveTokenFromEth(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
+    const ethMirror = CrossAccountId.fromKeyring(signer).toEthereum();
+    return await this.approveTokenFrom(signer, collectionId, tokenId, ethMirror, toAddressObj, amount);
+  }
+
+  /**
    * Get the amount of token pieces approved to transfer or burn. Normally 0.
    *
    * @param collectionId ID of collection
@@ -1756,8 +1796,8 @@ class NFTGroup extends NFTnRFT {
    * @example approveToken(aliceKeyring, 10, 5, {Substrate: "5DyN4Y92vZCjv38fg..."})
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId) {
-    return super.approveToken(signer, collectionId, tokenId, toAddressObj, 1n);
+  approveToken(signer: IKeyringPair, collectionId: number, tokenId: number, toAddressObj: ICrossAccountId, amount=1n) {
+    return super.approveToken(signer, collectionId, tokenId, toAddressObj, amount);
   }
 }
 

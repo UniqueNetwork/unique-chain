@@ -42,6 +42,7 @@ pub trait WeightInfo {
 	fn burn_recursively_breadth_plus_self_plus_self_per_each_raw(b: u32, ) -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
+	fn approve_from() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
 	fn set_token_property_permissions(b: u32, ) -> Weight;
@@ -144,6 +145,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(21_985_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(18_965_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -307,6 +315,13 @@ impl WeightInfo for () {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(21_985_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(18_965_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
