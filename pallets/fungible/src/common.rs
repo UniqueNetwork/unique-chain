@@ -278,7 +278,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-			<Pallet<T>>::set_allowance_for(self, &sender, &from, &to, amount),
+			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, amount),
 			<CommonWeights<T>>::approve_from(),
 		)
 	}

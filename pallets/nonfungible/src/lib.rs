@@ -1190,7 +1190,7 @@ impl<T: Config> Pallet<T> {
 	/// - `from`: Address of sender's eth mirror.
 	/// - `to`: Adress of spender.
 	/// - `token`: Token the spender is allowed to `transfer` or `burn`.
-	pub fn set_allowance_for(
+	pub fn set_allowance_from(
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		from: &T::CrossAccountId,

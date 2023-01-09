@@ -624,7 +624,7 @@ impl<T: Config> Pallet<T> {
 	/// - `from`: Owner's eth mirror.
 	/// - `to`: Recipient of the allowance rights.
 	/// - `amount`: Amount of tokens the spender is allowed to `transfer` or `burn`.
-	pub fn set_allowance_for(
+	pub fn set_allowance_from(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		from: &T::CrossAccountId,

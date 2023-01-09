@@ -373,9 +373,9 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			if amount == 1 {
-				<Pallet<T>>::set_allowance_for(self, &sender, &from, token, Some(&to))
+				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, Some(&to))
 			} else {
-				<Pallet<T>>::set_allowance_for(self, &sender, &from, token, None)
+				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, None)
 			},
 			<CommonWeights<T>>::approve_from(),
 		)
