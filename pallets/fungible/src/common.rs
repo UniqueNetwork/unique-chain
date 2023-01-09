@@ -93,6 +93,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::approve_from()
 	}
 
+	fn approve_from() -> Weight {
+		<SelfWeightOf<T>>::approve_from()
+	}
+
 	fn transfer_from() -> Weight {
 		<SelfWeightOf<T>>::transfer_from()
 	}
@@ -274,15 +278,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
-<<<<<<< HEAD
-<<<<<<< HEAD
-			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, amount),
-=======
 			<Pallet<T>>::set_allowance_for(self, &sender, &from, &to, amount),
->>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
-=======
-			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, amount),
->>>>>>> 2c03632a (chore: rename `set_allowance_for` to `set_allowance_from`)
 			<CommonWeights<T>>::approve_from(),
 		)
 	}

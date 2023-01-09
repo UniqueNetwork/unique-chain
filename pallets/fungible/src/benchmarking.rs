@@ -90,7 +90,7 @@ benchmarks! {
 		};
 		let owner_eth = T::CrossAccountId::from_eth(*sender.as_eth());
 		<Pallet<T>>::create_item(&collection, &owner, (owner_eth.clone(), 200), &Unlimited)?;
-	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, &spender, 100)?}
+	}: {<Pallet<T>>::set_allowance_for(&collection, &sender, &owner_eth, &spender, 100)?}
 
 	transfer_from {
 		bench_init!{

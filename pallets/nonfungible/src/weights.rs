@@ -162,6 +162,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(18_965_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	// Storage: Nonfungible TokenData (r:1 w:1)
 	// Storage: Nonfungible AccountBalance (r:2 w:2)
@@ -336,6 +343,13 @@ impl WeightInfo for () {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve_from() -> Weight {
 		Weight::from_ref_time(22_818_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Nonfungible TokenData (r:1 w:0)
+	// Storage: Nonfungible Allowance (r:1 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(18_965_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

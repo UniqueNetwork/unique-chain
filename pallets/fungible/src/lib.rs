@@ -624,15 +624,7 @@ impl<T: Config> Pallet<T> {
 	/// - `from`: Owner's eth mirror.
 	/// - `to`: Recipient of the allowance rights.
 	/// - `amount`: Amount of tokens the spender is allowed to `transfer` or `burn`.
-<<<<<<< HEAD
-<<<<<<< HEAD
-	pub fn set_allowance_from(
-=======
 	pub fn set_allowance_for(
->>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
-=======
-	pub fn set_allowance_from(
->>>>>>> 2c03632a (chore: rename `set_allowance_for` to `set_allowance_from`)
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
@@ -646,15 +638,7 @@ impl<T: Config> Pallet<T> {
 		}
 
 		ensure!(
-<<<<<<< HEAD
-<<<<<<< HEAD
-			sender.conv_eq(from),
-=======
 			*sender.as_eth() == *from.as_eth(),
->>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
-=======
-			sender.conv_eq(from),
->>>>>>> 8162cc08 (chore: fix code review requests)
 			<CommonError<T>>::AddressIsNotEthMirror
 		);
 

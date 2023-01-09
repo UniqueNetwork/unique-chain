@@ -183,9 +183,9 @@ enum SponsoringModeT {
 
 /// Optional value
 struct OptionCrossAddress {
-	/// Shows the status of accessibility of value
+	/// Whether or not this CrossAdress is valid and has meaning.
 	bool status;
-	/// Actual value if `status` is true
+	/// The underlying CrossAddress value. If the status is false, can be set to whatever.
 	CrossAddress value;
 }
 

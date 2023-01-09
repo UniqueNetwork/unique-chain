@@ -92,6 +92,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
+	// Storage: Fungible Balance (r:1 w:0)
+	// Storage: Fungible Allowance (r:0 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(19_817_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
 	// Storage: Fungible Allowance (r:1 w:1)
 	// Storage: Fungible Balance (r:2 w:2)
 	fn transfer_from() -> Weight {
@@ -153,6 +160,13 @@ impl WeightInfo for () {
 	// Storage: Fungible Allowance (r:0 w:1)
 	fn approve_from() -> Weight {
 		Weight::from_ref_time(22_434_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Fungible Balance (r:1 w:0)
+	// Storage: Fungible Allowance (r:0 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(19_817_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

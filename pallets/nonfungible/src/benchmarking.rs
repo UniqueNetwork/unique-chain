@@ -141,15 +141,7 @@ benchmarks! {
 		};
 		let owner_eth = T::CrossAccountId::from_eth(*sender.as_eth());
 		let item = create_max_item(&collection, &owner, owner_eth.clone())?;
-<<<<<<< HEAD
-<<<<<<< HEAD
-	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, item, Some(&spender))?}
-=======
 	}: {<Pallet<T>>::set_allowance_for(&collection, &sender, &owner_eth, item, Some(&spender))?}
->>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
-=======
-	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, item, Some(&spender))?}
->>>>>>> 2c03632a (chore: rename `set_allowance_for` to `set_allowance_from`)
 
 	transfer_from {
 		bench_init!{
