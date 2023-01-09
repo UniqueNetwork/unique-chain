@@ -1108,10 +1108,14 @@ impl<T: Config> Pallet<T> {
 	/// - `to`: Adress of spender.
 	/// - `amount`: Amount of token pieces the spender is allowed to `transfer` or `burn.
 <<<<<<< HEAD
+<<<<<<< HEAD
 	pub fn set_allowance_from(
 =======
 	pub fn set_allowance_for(
 >>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
+=======
+	pub fn set_allowance_from(
+>>>>>>> 2c03632a (chore: rename `set_allowance_for` to `set_allowance_from`)
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		from: &T::CrossAccountId,

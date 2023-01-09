@@ -328,10 +328,14 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		with_weight(
 <<<<<<< HEAD
+<<<<<<< HEAD
 			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, token_id, amount),
 =======
 			<Pallet<T>>::set_allowance_for(self, &sender, &from, &to, token_id, amount),
 >>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
+=======
+			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, token_id, amount),
+>>>>>>> 2c03632a (chore: rename `set_allowance_for` to `set_allowance_from`)
 			<CommonWeights<T>>::approve_from(),
 		)
 	}
