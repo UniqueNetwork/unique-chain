@@ -45,6 +45,7 @@ pub trait WeightInfo {
 	fn transfer_removing() -> Weight;
 	fn transfer_creating_removing() -> Weight;
 	fn approve() -> Weight;
+	fn approve_from() -> Weight;
 	fn transfer_from_normal() -> Weight;
 	fn transfer_from_creating() -> Weight;
 	fn transfer_from_removing() -> Weight;
@@ -172,6 +173,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Refungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(23_177_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
+	// Storage: Refungible Balance (r:1 w:0)
+	// Storage: Refungible Allowance (r:0 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(20_649_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -397,6 +405,13 @@ impl WeightInfo for () {
 	// Storage: Refungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(23_177_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Refungible Balance (r:1 w:0)
+	// Storage: Refungible Allowance (r:0 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(20_649_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}

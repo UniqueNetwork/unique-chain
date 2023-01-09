@@ -39,6 +39,7 @@ pub trait WeightInfo {
 	fn burn_item() -> Weight;
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
+	fn approve_from() -> Weight;
 	fn transfer_from() -> Weight;
 	fn burn_from() -> Weight;
 }
@@ -81,6 +82,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Fungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(21_626_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64))
+	}
+	// Storage: Fungible Balance (r:1 w:0)
+	// Storage: Fungible Allowance (r:0 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(19_817_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -138,6 +146,13 @@ impl WeightInfo for () {
 	// Storage: Fungible Allowance (r:0 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(21_626_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+	}
+	// Storage: Fungible Balance (r:1 w:0)
+	// Storage: Fungible Allowance (r:0 w:1)
+	fn approve_from() -> Weight {
+		Weight::from_ref_time(19_817_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
