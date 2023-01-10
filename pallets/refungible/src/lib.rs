@@ -1142,7 +1142,7 @@ impl<T: Config> Pallet<T> {
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
 		ensure!(
-			*sender.as_eth() == *from.as_eth(),
+			sender.conv_eq(from),
 			<CommonError<T>>::AddressIsNotEthMirror
 		);
 
