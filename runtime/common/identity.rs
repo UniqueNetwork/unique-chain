@@ -23,22 +23,9 @@ use sp_runtime::{
 	traits::{DispatchInfoOf, SignedExtension},
 	transaction_validity::{TransactionValidity, ValidTransaction, TransactionValidityError},
 };
-<<<<<<< HEAD
-#[cfg(feature = "collator-selection")]
-use sp_runtime::transaction_validity::InvalidTransaction;
-<<<<<<< HEAD
-=======
->>>>>>> a4be5511 (fix: remove duplicated use)
 
 #[cfg(feature = "collator-selection")]
 use sp_runtime::transaction_validity::InvalidTransaction;
-
-<<<<<<< HEAD
-<<<<<<< HEAD
-#[cfg(feature = "collator-selection")]
-use sp_runtime::transaction_validity::InvalidTransaction;
-=======
->>>>>>> 90bf3a39 (chore: add using for `collator-selection`)
 
 =======
 >>>>>>> 3006d97d (fix: after merge)
