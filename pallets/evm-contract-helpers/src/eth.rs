@@ -175,8 +175,10 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn sponsor(&self, contract_address: Address) -> Result<Option<eth::CrossAddress>> {
+	fn sponsor(&self, contract_address: address) -> Result<Option<eth::CrossAddress>> {
 		Ok(match Pallet::<T>::get_sponsor(contract_address) {
+			Some(ref value) => Some(eth::CrossAddress::from_sub_cross_account::<T>(value)),
+			None => None,
 			Some(ref value) => Some(eth::CrossAddress::from_sub_cross_account::<T>(value)),
 			None => None,
 		})
