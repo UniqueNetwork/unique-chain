@@ -1205,10 +1205,14 @@ impl<T: Config> Pallet<T> {
 
 		ensure!(
 <<<<<<< HEAD
+<<<<<<< HEAD
 			sender.conv_eq(from),
 =======
 			*sender.as_eth() == *from.as_eth(),
 >>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
+=======
+			sender.conv_eq(from),
+>>>>>>> 8162cc08 (chore: fix code review requests)
 			<CommonError<T>>::AddressIsNotEthMirror
 		);
 
