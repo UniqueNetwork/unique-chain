@@ -14,13 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-mod util;
-
 #[macro_export]
 macro_rules! construct_runtime {
-    ($select_runtime:ident) => {
-        $crate::construct_runtime_impl! {
-            select_runtime($select_runtime);
+    () => {
+            frame_support::construct_runtime! {
 
             pub enum Runtime where
                 Block = Block,
@@ -32,13 +29,13 @@ macro_rules! construct_runtime {
                 ParachainSystem: cumulus_pallet_parachain_system::{Pallet, Call, Config, Storage, Inherent, Event<T>, ValidateUnsigned} = 20,
                 ParachainInfo: parachain_info::{Pallet, Storage, Config} = 21,
 
-                #[runtimes(quartz)]
+                #[cfg(feature = "collator-selection")]
                 Authorship: pallet_authorship::{Pallet, Call, Storage} = 22,
 
-                #[runtimes(quartz)]
+                #[cfg(feature = "collator-selection")]
                 CollatorSelection: pallet_collator_selection::{Pallet, Call, Storage, Event<T>, Config<T>} = 23,
 
-                #[runtimes(quartz)]
+                #[cfg(feature = "collator-selection")]
                 Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 24,
 
                 Aura: pallet_aura::{Pallet, Config<T>} = 25,
@@ -56,7 +53,7 @@ macro_rules! construct_runtime {
                 Tokens: orml_tokens = 39,
                 // Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
-                #[runtimes(quartz)]
+                #[cfg(feature = "collator-selection")]
                 Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 40,
 
                 // XCM helpers.
@@ -69,7 +66,7 @@ macro_rules! construct_runtime {
                 Inflation: pallet_inflation::{Pallet, Call, Storage} = 60,
                 Unique: pallet_unique::{Pallet, Call, Storage} = 61,
 
-                // #[runtimes(opal)]
+                // #[cfg(feature = "scheduler")]
                 // Scheduler: pallet_unique_scheduler_v2::{Pallet, Call, Storage, Event<T>} = 62,
 
                 Configuration: pallet_configuration::{Pallet, Call, Storage, Event<T>} = 63,
@@ -79,22 +76,22 @@ macro_rules! construct_runtime {
                 Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
                 Fungible: pallet_fungible::{Pallet, Storage} = 67,
 
-                #[runtimes(opal, quartz)]
+                #[cfg(feature = "refungible")]
                 Refungible: pallet_refungible::{Pallet, Storage} = 68,
 
                 Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
                 Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 
-                #[runtimes(opal)]
+                #[cfg(feature = "rmrk")]
                 RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
 
-                #[runtimes(opal)]
+                #[cfg(feature = "rmrk")]
                 RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
 
-                #[runtimes(opal, quartz)]
+                #[cfg(feature = "app-promotion")]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
 
-                #[runtimes(opal, quartz, unique)]
+                #[cfg(feature = "foreign-assets")]
                 ForeignAssets: pallet_foreign_assets::{Pallet, Call, Storage, Event<T>} = 80,
 
                 // Frontier
@@ -108,7 +105,7 @@ macro_rules! construct_runtime {
 
                 Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
 
-                #[runtimes(opal)]
+                #[cfg(feature = "pallet-test-utils")]
                 TestUtils: pallet_test_utils = 255,
             }
         }

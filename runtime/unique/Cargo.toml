@@ -516,6 +516,11 @@ precompile-utils-macro = { path = "../common/ethereum/precompiles/utils/macro" }
 num_enum = { version = "0.5.3", default-features = false }
 
 ################################################################################
+# Test dependencies
+
+pallet-test-utils = { default-features = false, path = "../../test-pallets/utils" }
+
+################################################################################
 # Other Dependencies
 
 impl-trait-for-tuples = "0.2.2"

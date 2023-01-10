@@ -65,7 +65,7 @@ parameter_types! {
 	pub const ChainId: u64 = 8880;
 }
 
-construct_runtime!(unique);
+construct_runtime!();
 
 impl_common_runtime_apis!();
 
