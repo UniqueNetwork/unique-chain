@@ -408,12 +408,14 @@ struct CollectionNesting {
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 struct CollectionLimit {
 	CollectionLimitField field;
-	OptionUint value;
+	Option_uint256 value;
 }
 
-/// Ethereum representation of Optional value with uint256.
-struct OptionUint {
+/// Optional value
+struct Option_uint256 {
+	/// Shows the status of accessibility of value
 	bool status;
+	/// Actual value if `status` is true
 	uint256 value;
 }
 

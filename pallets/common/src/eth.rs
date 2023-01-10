@@ -66,62 +66,6 @@ where
 	T::CrossAccountId::from_sub(account_id)
 }
 
-/// Ethereum representation of Optional value with uint256.
-#[derive(Debug, Default, AbiCoder)]
-pub struct OptionUint {
-	status: bool,
-	value: uint256,
-}
-
-impl From<u32> for OptionUint {
-	fn from(value: u32) -> Self {
-		Self {
-			status: true,
-			value: uint256::from(value),
-		}
-	}
-}
-
-impl From<Option<u32>> for OptionUint {
-	fn from(value: Option<u32>) -> Self {
-		match value {
-			Some(value) => Self {
-				status: true,
-				value: value.into(),
-			},
-			None => Self {
-				status: false,
-				value: Default::default(),
-			},
-		}
-	}
-}
-
-impl From<bool> for OptionUint {
-	fn from(value: bool) -> Self {
-		Self {
-			status: true,
-			value: if value {
-				uint256::from(1)
-			} else {
-				Default::default()
-			},
-		}
-	}
-}
-
-impl From<Option<bool>> for OptionUint {
-	fn from(value: Option<bool>) -> Self {
-		match value {
-			Some(value) => Self::from(value),
-			None => Self {
-				status: false,
-				value: Default::default(),
-			},
-		}
-	}
-}
-
 /// Ethereum representation of Optional value with CrossAddress.
 #[derive(Debug, Default, AbiCoder)]
 pub struct OptionCrossAddress {
@@ -252,23 +196,23 @@ pub enum CollectionLimitField {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
-	value: OptionUint,
+	value: Option<uint256>,
 }
 
 impl CollectionLimit {
 	/// Create [`CollectionLimit`] from field and value.
-	pub fn new<T>(field: CollectionLimitField, value: T) -> Self
-	where
-		OptionUint: From<T>,
-	{
+	pub fn new(field: CollectionLimitField, value: Option<u32>) -> Self {
 		Self {
 			field,
-			value: value.into(),
+			value: match value {
+				Some(value) => Some(value.into()),
+				None => None,
+			},
 		}
 	}
 	/// Whether the field contains a value.
 	pub fn has_value(&self) -> bool {
-		self.value.status
+		self.value.is_some()
 	}
 }
 
@@ -276,52 +220,60 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 	type Error = evm_coder::execution::Error;
 
 	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
-		let value = self.value.value.try_into().map_err(|error| {
+		let value = self
+			.value
+			.ok_or::<Self::Error>("can't convert `None` value to boolean".into())?;
+		let value = Some(value.try_into().map_err(|error| {
 			Self::Error::Revert(format!(
 				"can't convert value to u32 \"{}\" because: \"{error}\"",
-				self.value.value
+				value
 			))
-		})?;
+		})?);
 
 		let convert_value_to_bool = || match value {
-			0 => Ok(false),
-			1 => Ok(true),
-			_ => {
-				return Err(Self::Error::Revert(format!(
-					"can't convert value to boolean \"{value}\""
-				)))
-			}
+			Some(value) => match value {
+				0 => Ok(Some(false)),
+				1 => Ok(Some(true)),
+				_ => {
+					return Err(Self::Error::Revert(format!(
+						"can't convert value to boolean \"{value}\""
+					)))
+				}
+			},
+			None => Ok(None),
 		};
 
 		let mut limits = up_data_structs::CollectionLimits::default();
 		match self.field {
 			CollectionLimitField::AccountTokenOwnership => {
-				limits.account_token_ownership_limit = Some(value);
+				limits.account_token_ownership_limit = value;
 			}
 			CollectionLimitField::SponsoredDataSize => {
-				limits.sponsored_data_size = Some(value);
+				limits.sponsored_data_size = value;
 			}
 			CollectionLimitField::SponsoredDataRateLimit => {
-				limits.sponsored_data_rate_limit =
-					Some(up_data_structs::SponsoringRateLimit::Blocks(value));
+				limits.sponsored_data_rate_limit = match value {
+					Some(value) => Some(up_data_structs::SponsoringRateLimit::Blocks(value)),
+					None => None,
+				};
 			}
 			CollectionLimitField::TokenLimit => {
-				limits.token_limit = Some(value);
+				limits.token_limit = value;
 			}
 			CollectionLimitField::SponsorTransferTimeout => {
-				limits.sponsor_transfer_timeout = Some(value);
+				limits.sponsor_transfer_timeout = value;
 			}
 			CollectionLimitField::SponsorApproveTimeout => {
-				limits.sponsor_approve_timeout = Some(value);
+				limits.sponsor_approve_timeout = value;
 			}
 			CollectionLimitField::OwnerCanTransfer => {
-				limits.owner_can_transfer = Some(convert_value_to_bool()?);
+				limits.owner_can_transfer = convert_value_to_bool()?;
 			}
 			CollectionLimitField::OwnerCanDestroy => {
-				limits.owner_can_destroy = Some(convert_value_to_bool()?);
+				limits.owner_can_destroy = convert_value_to_bool()?;
 			}
 			CollectionLimitField::TransferEnabled => {
-				limits.transfers_enabled = Some(convert_value_to_bool()?);
+				limits.transfers_enabled = convert_value_to_bool()?;
 			}
 		};
 		Ok(limits)
