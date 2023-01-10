@@ -141,21 +141,14 @@ impl<T: SolidityTypeName + 'static> SolidityTypeName for Option<T> {
 
 impl<T: SolidityTypeName> super::SolidityStructTy for Option<T> {
 	fn generate_solidity_interface(tc: &TypeCollector) -> String {
-		let mut solidity_name = "Option".to_string();
-		let mut generic_name = String::new();
-		T::solidity_name(&mut generic_name, tc);
-		solidity_name.push(
-			generic_name
-				.chars()
-				.next()
-				.expect("Generic name is empty")
-				.to_ascii_uppercase(),
-		);
-		solidity_name.push_str(&generic_name[1..]);
+		// use super::solidity::*;
 
+		let mut solidity_name = "Option_".to_string();
+		T::solidity_name(&mut solidity_name, tc);
+		let solidity_name_str = solidity_name.as_str();
 		let interface = super::SolidityStruct {
 			docs: &[" Optional value"],
-			name: solidity_name.as_str(),
+			name: solidity_name_str,
 			fields: (
 				super::SolidityStructField::<bool> {
 					docs: &[" Shows the status of accessibility of value"],
