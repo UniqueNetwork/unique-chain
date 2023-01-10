@@ -141,8 +141,6 @@ impl<T: SolidityTypeName + 'static> SolidityTypeName for Option<T> {
 
 impl<T: SolidityTypeName> super::SolidityStructTy for Option<T> {
 	fn generate_solidity_interface(tc: &TypeCollector) -> String {
-		// use super::solidity::*;
-
 		let mut solidity_name = "Option_".to_string();
 		T::solidity_name(&mut solidity_name, tc);
 		let solidity_name_str = solidity_name.as_str();
