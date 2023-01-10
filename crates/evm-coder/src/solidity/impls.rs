@@ -121,3 +121,52 @@ impl_tuples! {A B C D E F G}
 impl_tuples! {A B C D E F G H}
 impl_tuples! {A B C D E F G H I}
 impl_tuples! {A B C D E F G H I J}
+
+//----- impls for Option -----
+impl<T: SolidityTypeName + 'static> SolidityTypeName for Option<T> {
+	fn solidity_name(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		write!(writer, "{}", tc.collect_struct::<Self>())
+	}
+	fn is_simple() -> bool {
+		false
+	}
+	fn solidity_default(writer: &mut impl fmt::Write, tc: &TypeCollector) -> fmt::Result {
+		write!(writer, "{}(", tc.collect_struct::<Self>())?;
+		bool::solidity_default(writer, tc)?;
+		write!(writer, ", ");
+		T::solidity_default(writer, tc)?;
+		write!(writer, ")")
+	}
+}
+
+impl<T: SolidityTypeName> super::SolidityStructTy for Option<T> {
+	fn generate_solidity_interface(tc: &TypeCollector) -> String {
+		// use super::solidity::*;
+
+		let mut solidity_name = "Option_".to_string();
+		T::solidity_name(&mut solidity_name, tc);
+		let solidity_name_str = solidity_name.as_str();
+		let interface = super::SolidityStruct {
+			docs: &[" Optional value"],
+			name: solidity_name_str,
+			fields: (
+				super::SolidityStructField::<bool> {
+					docs: &[" Shows the status of accessibility of value"],
+					name: "status",
+					ty: ::core::marker::PhantomData,
+				},
+				super::SolidityStructField::<T> {
+					docs: &[" Actual value if `status` is true"],
+					name: "value",
+					ty: ::core::marker::PhantomData,
+				},
+			),
+		};
+
+		let mut out = String::new();
+		let _ = interface.format(&mut out, tc);
+		tc.collect(out);
+
+		solidity_name.to_string()
+	}
+}
