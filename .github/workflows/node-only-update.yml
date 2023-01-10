@@ -99,6 +99,7 @@ jobs:
           variables: |
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json

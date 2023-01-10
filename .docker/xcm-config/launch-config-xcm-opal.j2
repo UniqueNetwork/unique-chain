@@ -1,7 +1,7 @@
 {
     "relaychain": {
         "bin": "/polkadot/target/release/polkadot",
-        "chain": "westend-local",
+        "chain": "{{ RELAY_CHAIN_TYPE }}-local",
         "chainInitializer": [
                 "chainql",
                 "--tla-code=spec=import '${spec}'",
@@ -90,63 +90,17 @@
                     "rpcPort": 9933,
                     "name": "alice",
                     "flags": [
-                       "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
                        "--unsafe-rpc-external",
+                       "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
                        "--unsafe-ws-external"
 		    ]
                 }
             ]
         },
         {
-            "bin": "/acala/target/release/acala",
-            "id": "2000",
-            "chain":  "karura-dev",
-            "balance": "1000000000000000000000",
-            "chainInitializer": [
-                "chainql",
-                "-e",
-                "(import '${spec}') {id+: '-local'}"
-            ],	              
-            "nodes": [
-                {
-                    "wsPort": 9946,
-                    "port": 31202,
-                    "name": "alice",
-                    "flags": [
-                       "--unsafe-rpc-external",
-                       "--unsafe-ws-external"
-                     ]
-                }
-              ]
-        },
-        {
-            "bin": "/moonbeam/target/release/moonbeam",
-            "id": 2023,
-            "balance": "1000000000000000000000",
-            "chain": "moonriver-local",
-            "chainInitializer": [
-                "chainql",
-                "--tla-code=spec=import '${spec}'",
-                "minBondFix.jsonnet"
-            ],		    
-            "nodes": [
-                {
-                    "wsPort": 9947,
-                    "port": 31203,
-                    "name": "alice",
-                    "flags": [
-                       "--unsafe-rpc-external",
-                       "--unsafe-ws-external",
-                        "--",
-                        "--execution=wasm"
-                    ]
-                }
-            ]
-        },
-        {
             "bin": "/cumulus/target/release/cumulus",
             "id": "1000",
-            "chain": "statemine-local",
+            "chain": "westmint-local",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -163,30 +117,6 @@
     ],
     "simpleParachains": [],
     "hrmpChannels": [
-        {
-            "sender": 2095,
-            "recipient": 2000,
-            "maxCapacity": 8,
-            "maxMessageSize": 512
-        },
-        {
-            "sender": 2000,
-            "recipient": 2095,
-            "maxCapacity": 8,
-            "maxMessageSize": 512
-        },
-        {
-            "sender": 2095,
-            "recipient": 2023,
-            "maxCapacity": 8,
-            "maxMessageSize": 512
-        },
-        {
-            "sender": 2023,
-            "recipient": 2095,
-            "maxCapacity": 8,
-            "maxMessageSize": 512
-        },
         {
             "sender": 2095,
             "recipient": 1000,
