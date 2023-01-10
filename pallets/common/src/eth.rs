@@ -66,15 +66,6 @@ where
 	T::CrossAccountId::from_sub(account_id)
 }
 
-/// Ethereum representation of Optional value with CrossAddress.
-#[derive(Debug, Default, AbiCoder)]
-pub struct OptionCrossAddress {
-	/// Whether or not this CrossAdress is valid and has meaning.
-	pub status: bool,
-	/// The underlying CrossAddress value. If the status is false, can be set to whatever.
-	pub value: CrossAddress,
-}
-
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {

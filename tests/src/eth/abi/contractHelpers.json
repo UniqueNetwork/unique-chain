@@ -238,7 +238,7 @@
             "type": "tuple"
           }
         ],
-        "internalType": "struct OptionCrossAddress",
+        "internalType": "struct Option_CrossAddress",
         "name": "",
         "type": "tuple"
       }
