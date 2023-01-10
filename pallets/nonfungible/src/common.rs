@@ -102,6 +102,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::approve()
 	}
 
+	fn approve_from() -> Weight {
+		<SelfWeightOf<T>>::approve_from()
+	}
+
 	fn transfer_from() -> Weight {
 		<SelfWeightOf<T>>::transfer_from()
 	}
@@ -350,6 +354,26 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				<Pallet<T>>::set_allowance(self, &sender, token, None)
 			},
 			<CommonWeights<T>>::approve(),
+		)
+	}
+
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		with_weight(
+			if amount == 1 {
+				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, Some(&to))
+			} else {
+				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, None)
+			},
+			<CommonWeights<T>>::approve_from(),
 		)
 	}
 

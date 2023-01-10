@@ -613,6 +613,45 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Set allowance for the spender to `transfer` or `burn` owner's tokens from eth mirror.
+	///
+	/// - `collection`: Collection that contains the token
+	/// - `sender`: Owner of tokens that sets the allowance.
+	/// - `from`: Owner's eth mirror.
+	/// - `to`: Recipient of the allowance rights.
+	/// - `amount`: Amount of tokens the spender is allowed to `transfer` or `burn`.
+	pub fn set_allowance_from(
+		collection: &FungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		amount: u128,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(sender)?;
+			collection.check_allowlist(from)?;
+			collection.check_allowlist(to)?;
+		}
+
+		ensure!(
+			sender.conv_eq(from),
+			<CommonError<T>>::AddressIsNotEthMirror
+		);
+
+		if <Balance<T>>::get((collection.id, from)) < amount {
+			ensure!(
+				collection.limits.owner_can_transfer()
+					&& (collection.is_owner_or_admin(sender) || collection.is_owner_or_admin(from)),
+				<CommonError<T>>::CantApproveMoreThanOwned
+			);
+		}
+
+		// =========
+
+		Self::set_allowance_unchecked(collection, from, to, amount);
+		Ok(())
+	}
+
 	/// Checks if a non-owner has (enough) allowance from the owner to perform operations on the tokens.
 	/// Returns the expected remaining allowance - it should be set manually if the transaction proceeds.
 	///

@@ -283,8 +283,8 @@ struct CrossAddress {
 
 /// Ethereum representation of Optional value with CrossAddress.
 struct OptionCrossAddress {
-	/// TODO: field description
+	/// Whether or not this CrossAdress is valid and has meaning.
 	bool status;
-	/// TODO: field description
+	/// The underlying CrossAddress value. If the status is false, can be set to whatever.
 	CrossAddress value;
 }

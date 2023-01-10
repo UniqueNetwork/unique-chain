@@ -1102,6 +1102,47 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Set allowance to spend from sender's eth mirror
+	///
+	/// - `from`: Address of sender's eth mirror.
+	/// - `to`: Adress of spender.
+	/// - `amount`: Amount of token pieces the spender is allowed to `transfer` or `burn.
+	pub fn set_allowance_from(
+		collection: &RefungibleHandle<T>,
+		sender: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token_id: TokenId,
+		amount: u128,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(sender)?;
+			collection.check_allowlist(from)?;
+			collection.check_allowlist(to)?;
+		}
+
+		<PalletCommon<T>>::ensure_correct_receiver(to)?;
+
+		ensure!(
+			sender.conv_eq(from),
+			<CommonError<T>>::AddressIsNotEthMirror
+		);
+
+		if <Balance<T>>::get((collection.id, token_id, from)) < amount {
+			ensure!(
+				collection.limits.owner_can_transfer()
+					&& (collection.is_owner_or_admin(sender) || collection.is_owner_or_admin(from))
+					&& Self::token_exists(collection, token_id),
+				<CommonError<T>>::CantApproveMoreThanOwned
+			);
+		}
+
+		// =========
+
+		Self::set_allowance_unchecked(collection, from, to, token_id, amount);
+		Ok(())
+	}
+
 	/// Returns allowance, which should be set after transaction
 	fn check_allowed(
 		collection: &RefungibleHandle<T>,

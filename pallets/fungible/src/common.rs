@@ -87,6 +87,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<SelfWeightOf<T>>::approve()
 	}
 
+	fn approve_from() -> Weight {
+		<SelfWeightOf<T>>::approve_from()
+	}
+
 	fn transfer_from() -> Weight {
 		<SelfWeightOf<T>>::transfer_from()
 	}
@@ -251,6 +255,25 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::set_allowance(self, &sender, &spender, amount),
 			<CommonWeights<T>>::approve(),
+		)
+	}
+
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		ensure!(
+			token == TokenId::default(),
+			<Error<T>>::FungibleItemsHaveNoId
+		);
+
+		with_weight(
+			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, amount),
+			<CommonWeights<T>>::approve_from(),
 		)
 	}
 
