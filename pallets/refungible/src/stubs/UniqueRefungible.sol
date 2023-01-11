@@ -614,11 +614,11 @@ struct CollectionNesting {
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 struct CollectionLimit {
 	CollectionLimitField field;
-	Option_uint256 value;
+	OptionUint256 value;
 }
 
 /// Optional value
-struct Option_uint256 {
+struct OptionUint256 {
 	/// Shows the status of accessibility of value
 	bool status;
 	/// Actual value if `status` is true

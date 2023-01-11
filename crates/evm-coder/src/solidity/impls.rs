@@ -141,12 +141,29 @@ impl<T: SolidityTypeName + 'static> SolidityTypeName for Option<T> {
 
 impl<T: SolidityTypeName> super::SolidityStructTy for Option<T> {
 	fn generate_solidity_interface(tc: &TypeCollector) -> String {
-		let mut solidity_name = "Option_".to_string();
+		const option_name: &str = "Option";
+		const option_name_len: usize = option_name.len();
+
+		let to_upper_case_generic_type_name = |s: &mut String| {
+			let c = s
+				.chars()
+				.skip(option_name_len)
+				.next()
+				.expect("Ethereum name must be presented");
+			if c.is_ascii_uppercase() {
+				return;
+			}
+			let uc = String::from(c.to_ascii_uppercase());
+			s.replace_range(option_name_len..option_name_len + 1, uc.as_str());
+		};
+
+		let mut solidity_name = option_name.to_string();
 		T::solidity_name(&mut solidity_name, tc);
-		let solidity_name_str = solidity_name.as_str();
+		to_upper_case_generic_type_name(&mut solidity_name);
+
 		let interface = super::SolidityStruct {
 			docs: &[" Optional value"],
-			name: solidity_name_str,
+			name: solidity_name.as_str(),
 			fields: (
 				super::SolidityStructField::<bool> {
 					docs: &[" Shows the status of accessibility of value"],
