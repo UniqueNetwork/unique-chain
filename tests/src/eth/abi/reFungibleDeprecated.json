@@ -82,6 +82,17 @@
   },
   {
     "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
+      { "internalType": "string", "name": "key", "type": "string" },
+      { "internalType": "bytes", "name": "value", "type": "bytes" }
+    ],
+    "name": "setProperty",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "newOwner", "type": "address" }
     ],
     "name": "changeCollectionOwner",
