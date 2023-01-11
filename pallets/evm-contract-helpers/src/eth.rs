@@ -108,7 +108,7 @@ where
 		caller: caller,
 		contract_address: address,
 		sponsor: address,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -125,7 +125,7 @@ where
 	/// Set contract as self sponsored.
 	///
 	/// @param contractAddress Contract for which a self sponsoring is being enabled.
-	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
+	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -146,7 +146,7 @@ where
 	/// Remove sponsor.
 	///
 	/// @param contractAddress Contract for which a sponsorship is being removed.
-	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
+	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -161,7 +161,7 @@ where
 	/// @dev Caller must be same that set via [`setSponsor`].
 	///
 	/// @param contractAddress Сontract for which need to confirm sponsorship.
-	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
+	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -210,7 +210,7 @@ where
 		caller: caller,
 		contract_address: address,
 		mode: SponsoringModeT,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -223,7 +223,7 @@ where
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
-	fn sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
+	fn sponsoring_rate_limit(&self, contract_address: address) -> Result<u32> {
 		self.recorder().consume_sload()?;
 
 		Ok(<SponsoringRateLimit<T>>::get(contract_address)
@@ -241,8 +241,8 @@ where
 		&mut self,
 		caller: caller,
 		contract_address: address,
-		rate_limit: uint32,
-	) -> Result<void> {
+		rate_limit: u32,
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -262,7 +262,7 @@ where
 		caller: caller,
 		contract_address: address,
 		fee_limit: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -304,7 +304,7 @@ where
 		contract_address: address,
 		user: address,
 		is_allowed: bool,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -332,7 +332,7 @@ where
 		caller: caller,
 		contract_address: address,
 		enabled: bool,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 

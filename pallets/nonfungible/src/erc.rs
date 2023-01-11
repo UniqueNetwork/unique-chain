@@ -423,7 +423,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		_to: address,
 		_token_id: uint256,
 		_data: bytes,
-	) -> Result<void> {
+	) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -433,7 +433,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		_from: address,
 		_to: address,
 		_token_id: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -454,7 +454,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		from: address,
 		to: address,
 		token_id: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
@@ -475,7 +475,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param approved The new approved NFT controller
 	/// @param tokenId The NFT to approve
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: caller, approved: address, token_id: uint256) -> Result<void> {
+	fn approve(&mut self, caller: caller, approved: address, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let approved = T::CrossAccountId::from_eth(approved);
 		let token = token_id.try_into()?;
@@ -495,7 +495,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		caller: caller,
 		operator: address,
 		approved: bool,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let operator = T::CrossAccountId::from_eth(operator);
 
@@ -528,7 +528,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  operator of the current owner.
 	/// @param tokenId The NFT to approve
 	#[weight(<SelfWeightOf<T>>::burn_item())]
-	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<void> {
+	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token = token_id.try_into()?;
 
@@ -773,7 +773,7 @@ where
 		caller: caller,
 		approved: eth::CrossAddress,
 		token_id: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let approved = approved.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
@@ -789,7 +789,7 @@ where
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<void> {
+	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
@@ -812,7 +812,7 @@ where
 		caller: caller,
 		to: eth::CrossAddress,
 		token_id: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
@@ -837,7 +837,7 @@ where
 		from: eth::CrossAddress,
 		to: eth::CrossAddress,
 		token_id: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
 		let to = to.into_sub_cross_account::<T>()?;
@@ -858,7 +858,7 @@ where
 	/// @param tokenId The NFT to transfer
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<void> {
+	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
@@ -883,7 +883,7 @@ where
 		caller: caller,
 		from: eth::CrossAddress,
 		token_id: uint256,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;

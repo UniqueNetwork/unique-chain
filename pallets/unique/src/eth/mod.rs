@@ -231,7 +231,7 @@ where
 		caller: caller,
 		value: value,
 		name: string,
-		decimals: uint8,
+		decimals: u8,
 		description: string,
 		token_prefix: string,
 	) -> Result<address> {
@@ -334,7 +334,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
-	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<void> {
+	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
@@ -366,14 +366,14 @@ where
 	/// Returns address of a collection.
 	/// @param collectionId  - CollectionId  of the collection
 	/// @return eth mirror address of the collection
-	fn collection_address(&self, collection_id: uint32) -> Result<address> {
+	fn collection_address(&self, collection_id: u32) -> Result<address> {
 		Ok(collection_id_to_address(collection_id.into()))
 	}
 
 	/// Returns collectionId of a collection.
 	/// @param collectionAddress  - Eth address of the collection
 	/// @return collectionId of the collection
-	fn collection_id(&self, collection_address: address) -> Result<uint32> {
+	fn collection_id(&self, collection_address: address) -> Result<u32> {
 		map_eth_to_id(&collection_address)
 			.map(|id| id.0)
 			.ok_or(Error::Revert(format!(
