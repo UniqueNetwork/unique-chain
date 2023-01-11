@@ -746,6 +746,8 @@ pub mod pallet {
 		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
+		/// Only spending from eth mirror could be approved
+		AddressIsNotEthMirror,
 
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
@@ -1797,6 +1799,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	/// The price of setting the permission of the operation from another user.
 	fn approve() -> Weight;
 
+	/// The price of setting the permission of the operation from another user for eth mirror.
+	fn approve_from() -> Weight;
+
 	/// Transfer price from another user.
 	fn transfer_from() -> Weight;
 
@@ -2004,6 +2009,22 @@ pub trait CommonCollectionOperations<T: Config> {
 		&self,
 		sender: T::CrossAccountId,
 		spender: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo;
+
+	/// Grant access to another account to transfer parts of the token owned by the calling user's eth mirror via [Self::transfer_from].
+	///
+	/// * `sender` - The user who grants access to the token.
+	/// * `from` - Spender's eth mirror.
+	/// * `to` - The user to whom the rights are granted.
+	/// * `token` - The token to which access is granted.
+	/// * `amount` - The amount of pieces that another user can dispose of.
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
