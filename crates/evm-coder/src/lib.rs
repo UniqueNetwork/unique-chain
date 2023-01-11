@@ -134,9 +134,10 @@ pub mod types {
 	use alloc::{vec::Vec};
 	use primitive_types::{U256, H160, H256};
 
-	pub type Address = H160;
-	pub type Bytes4 = [u8; 4];
-	pub type Topic = H256;
+	pub type address = H160;
+	pub type uint256 = U256;
+	pub type bytes4 = [u8; 4];
+	pub type topic = H256;
 
 	#[cfg(not(feature = "std"))]
 	pub type String = ::alloc::string::String;
@@ -144,7 +145,7 @@ pub mod types {
 	pub type String = ::std::string::String;
 
 	#[derive(Default, Debug, PartialEq, Eq, Clone)]
-	pub struct Bytes(pub Vec<u8>);
+	pub struct bytes(pub Vec<u8>);
 
 	//#region Special types
 	/// Makes function payable

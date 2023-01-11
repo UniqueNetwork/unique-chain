@@ -228,6 +228,7 @@ where
 	#[solidity(rename_selector = "createFTCollection")]
 	fn create_fungible_collection(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		value: Value,
 		name: String,
@@ -235,6 +236,15 @@ where
 		description: String,
 		token_prefix: String,
 	) -> Result<Address> {
+=======
+		caller: caller,
+		value: value,
+		name: string,
+		decimals: u8,
+		description: string,
+		token_prefix: string,
+	) -> Result<address> {
+>>>>>>> 2f30e2f1 (misk: remove simple type aliases)
 		create_collection_internal::<T>(
 			caller,
 			value,
@@ -334,7 +344,11 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
+<<<<<<< HEAD
 	fn destroy_collection(&mut self, caller: Caller, collection_address: Address) -> Result<()> {
+=======
+	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<()> {
+>>>>>>> 2f30e2f1 (misk: remove simple type aliases)
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
@@ -366,14 +380,22 @@ where
 	/// Returns address of a collection.
 	/// @param collectionId  - CollectionId  of the collection
 	/// @return eth mirror address of the collection
+<<<<<<< HEAD
 	fn collection_address(&self, collection_id: u32) -> Result<Address> {
+=======
+	fn collection_address(&self, collection_id: u32) -> Result<address> {
+>>>>>>> 2f30e2f1 (misk: remove simple type aliases)
 		Ok(collection_id_to_address(collection_id.into()))
 	}
 
 	/// Returns collectionId of a collection.
 	/// @param collectionAddress  - Eth address of the collection
 	/// @return collectionId of the collection
+<<<<<<< HEAD
 	fn collection_id(&self, collection_address: Address) -> Result<u32> {
+=======
+	fn collection_id(&self, collection_address: address) -> Result<u32> {
+>>>>>>> 2f30e2f1 (misk: remove simple type aliases)
 		map_eth_to_id(&collection_address)
 			.map(|id| id.0)
 			.ok_or(Error::Revert(format!(

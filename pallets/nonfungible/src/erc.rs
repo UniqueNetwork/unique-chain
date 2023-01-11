@@ -419,16 +419,21 @@ impl<T: Config> NonfungibleHandle<T> {
 	#[solidity(rename_selector = "safeTransferFrom")]
 	fn safe_transfer_from_with_data(
 		&mut self,
-		_from: Address,
-		_to: Address,
-		_token_id: U256,
-		_data: Bytes,
+		_from: address,
+		_to: address,
+		_token_id: uint256,
+		_data: bytes,
 	) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
 	/// @dev Not implemented
-	fn safe_transfer_from(&mut self, _from: Address, _to: Address, _token_id: U256) -> Result<()> {
+	fn safe_transfer_from(
+		&mut self,
+		_from: address,
+		_to: address,
+		_token_id: uint256,
+	) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -445,10 +450,10 @@ impl<T: Config> NonfungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
-		caller: Caller,
-		from: Address,
-		to: Address,
-		token_id: U256,
+		caller: caller,
+		from: address,
+		to: address,
+		token_id: uint256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
@@ -470,7 +475,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param approved The new approved NFT controller
 	/// @param tokenId The NFT to approve
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: Caller, approved: Address, token_id: U256) -> Result<()> {
+	fn approve(&mut self, caller: caller, approved: address, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let approved = T::CrossAccountId::from_eth(approved);
 		let token = token_id.try_into()?;
@@ -490,6 +495,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		caller: Caller,
 		operator: Address,
 		approved: bool,
+	) -> Result<()> {
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let operator = T::CrossAccountId::from_eth(operator);
@@ -524,7 +530,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	///  operator of the current owner.
 	/// @param tokenId The NFT to approve
 	#[weight(<SelfWeightOf<T>>::burn_item())]
-	fn burn(&mut self, caller: Caller, token_id: U256) -> Result<()> {
+	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token = token_id.try_into()?;
 
@@ -768,7 +774,7 @@ where
 		&mut self,
 		caller: Caller,
 		approved: eth::CrossAddress,
-		token_id: U256,
+		token_id: uint256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let approved = approved.into_sub_cross_account::<T>()?;
@@ -785,7 +791,7 @@ where
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer(&mut self, caller: Caller, to: Address, token_id: U256) -> Result<()> {
+	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
@@ -807,7 +813,7 @@ where
 		&mut self,
 		caller: Caller,
 		to: eth::CrossAddress,
-		token_id: U256,
+		token_id: uint256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -832,7 +838,7 @@ where
 		caller: Caller,
 		from: eth::CrossAddress,
 		to: eth::CrossAddress,
-		token_id: U256,
+		token_id: uint256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
@@ -854,7 +860,7 @@ where
 	/// @param tokenId The NFT to transfer
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(&mut self, caller: Caller, from: Address, token_id: U256) -> Result<()> {
+	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
@@ -878,7 +884,7 @@ where
 		&mut self,
 		caller: Caller,
 		from: eth::CrossAddress,
-		token_id: U256,
+		token_id: uint256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
