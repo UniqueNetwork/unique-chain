@@ -93,12 +93,7 @@ where
 	/// @param value Propery value.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
-	fn set_collection_property(
-		&mut self,
-		caller: caller,
-		key: string,
-		value: bytes,
-	) -> Result<void> {
+	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -117,7 +112,7 @@ where
 		&mut self,
 		caller: caller,
 		properties: Vec<eth::Property>,
-	) -> Result<void> {
+	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let properties = properties
@@ -212,7 +207,7 @@ where
 	///
 	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
 	#[solidity(hide)]
-	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<void> {
+	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -231,7 +226,7 @@ where
 		&mut self,
 		caller: caller,
 		sponsor: eth::CrossAddress,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -252,7 +247,7 @@ where
 	/// Collection sponsorship confirmation.
 	///
 	/// @dev After setting the sponsor for the collection, it must be confirmed with this function.
-	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<void> {
+	fn confirm_collection_sponsorship(&mut self, caller: caller) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -261,7 +256,7 @@ where
 	}
 
 	/// Remove collection sponsor.
-	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<void> {
+	fn remove_collection_sponsor(&mut self, caller: caller) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 		let caller = T::CrossAccountId::from_eth(caller);
 		self.remove_sponsor(&caller).map_err(dispatch_to_evm::<T>)
@@ -343,11 +338,7 @@ where
 	/// @dev Throws error if limit not found.
 	/// @param limit Some limit.
 	#[solidity(rename_selector = "setCollectionLimit")]
-	fn set_collection_limit(
-		&mut self,
-		caller: caller,
-		limit: eth::CollectionLimit,
-	) -> Result<void> {
+	fn set_collection_limit(&mut self, caller: caller, limit: eth::CollectionLimit) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		if !limit.has_value() {
@@ -369,7 +360,7 @@ where
 		&mut self,
 		caller: caller,
 		new_admin: eth::CrossAddress,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -384,7 +375,7 @@ where
 		&mut self,
 		caller: caller,
 		admin: eth::CrossAddress,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -396,7 +387,7 @@ where
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
 	#[solidity(hide)]
-	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<void> {
+	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<()> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -409,7 +400,7 @@ where
 	///
 	/// @param admin Address of the removed administrator.
 	#[solidity(hide)]
-	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<void> {
+	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<()> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -422,7 +413,7 @@ where
 	///
 	/// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
 	#[solidity(rename_selector = "setCollectionNesting")]
-	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<void> {
+	fn set_nesting_bool(&mut self, caller: caller, enable: bool) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -446,7 +437,7 @@ where
 		caller: caller,
 		enable: bool,
 		collections: Vec<address>,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		if collections.is_empty() {
@@ -513,7 +504,7 @@ where
 	/// @param mode Access mode
 	/// 	0 for Normal
 	/// 	1 for AllowList
-	fn set_collection_access(&mut self, caller: caller, mode: uint8) -> Result<void> {
+	fn set_collection_access(&mut self, caller: caller, mode: u8) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -540,7 +531,7 @@ where
 	///
 	/// @param user Address of a trusted user.
 	#[solidity(hide)]
-	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
+	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -556,7 +547,7 @@ where
 		&mut self,
 		caller: caller,
 		user: eth::CrossAddress,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -569,7 +560,7 @@ where
 	///
 	/// @param user Address of a removed user.
 	#[solidity(hide)]
-	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<void> {
+	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -585,7 +576,7 @@ where
 		&mut self,
 		caller: caller,
 		user: eth::CrossAddress,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -597,7 +588,7 @@ where
 	/// Switch permission for minting.
 	///
 	/// @param mode Enable if "true".
-	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<void> {
+	fn set_collection_mint_mode(&mut self, caller: caller, mode: bool) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -654,7 +645,7 @@ where
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
 	#[solidity(hide, rename_selector = "changeCollectionOwner")]
-	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<void> {
+	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -682,7 +673,7 @@ where
 		&mut self,
 		caller: caller,
 		new_owner: eth::CrossAddress,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);

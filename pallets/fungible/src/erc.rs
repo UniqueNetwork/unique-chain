@@ -72,7 +72,7 @@ impl<T: Config> FungibleHandle<T> {
 		Ok(<TotalSupply<T>>::get(self.id).into())
 	}
 
-	fn decimals(&self) -> Result<uint8> {
+	fn decimals(&self) -> Result<u8> {
 		Ok(if let CollectionMode::Fungible(decimals) = &self.mode {
 			*decimals
 		} else {

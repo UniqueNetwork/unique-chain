@@ -109,7 +109,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	}
 
 	/// @dev Not supported
-	fn decimals(&self) -> Result<uint8> {
+	fn decimals(&self) -> Result<u8> {
 		// Decimals aren't supported for refungible tokens
 		Ok(0)
 	}

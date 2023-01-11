@@ -132,11 +132,6 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 
 	pub type address = H160;
-	pub type uint8 = u8;
-	pub type uint16 = u16;
-	pub type uint32 = u32;
-	pub type uint64 = u64;
-	pub type uint128 = u128;
 	pub type uint256 = U256;
 	pub type bytes4 = [u8; 4];
 	pub type topic = H256;
@@ -148,10 +143,6 @@ pub mod types {
 
 	#[derive(Default, Debug, PartialEq, Eq, Clone)]
 	pub struct bytes(pub Vec<u8>);
-
-	/// Solidity doesn't have `void` type, however we have special implementation
-	/// for empty tuple return type
-	pub type void = ();
 
 	//#region Special types
 	/// Makes function payable
