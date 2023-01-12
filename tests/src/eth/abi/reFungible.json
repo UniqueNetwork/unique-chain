@@ -616,7 +616,7 @@
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" },
       { "internalType": "bytes", "name": "data", "type": "bytes" }
     ],
-    "name": "safeTransferFromWithData",
+    "name": "safeTransferFrom",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
