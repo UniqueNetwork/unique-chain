@@ -20,6 +20,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 describe('Refungible: Information getting', () => {
   let donor: IKeyringPair;
 
@@ -104,6 +105,8 @@ describe('Refungible: Information getting', () => {
   });
 });
 
+=======
+>>>>>>> 8a76dd7a (Combine call tests)
 =======
 >>>>>>> 8a76dd7a (Combine call tests)
 describe('Refungible: Plain calls', () => {
