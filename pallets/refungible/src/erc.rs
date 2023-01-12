@@ -288,13 +288,6 @@ pub enum ERC721Events {
 	},
 }
 
-#[derive(ToLog)]
-pub enum ERC721UniqueMintableEvents {
-	/// @dev Not supported
-	#[allow(dead_code)]
-	MintingFinished {},
-}
-
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 #[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]

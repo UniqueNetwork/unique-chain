@@ -266,6 +266,7 @@ mod erc721 {
 		match call {
 			// Readonly
 			ERC165Call(_, _) => None,
+			ERC165Call(_, _) => None,
 
 			// Sponsored
 			Mint { .. }
