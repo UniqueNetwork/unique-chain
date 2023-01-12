@@ -25,7 +25,8 @@ use core::{
 	ops::Deref,
 };
 use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity_interface, types::*, weight,
+	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity_interface, solidity, types::*,
+	weight,
 };
 use pallet_common::{
 	CommonWeightInfo,
@@ -206,6 +207,7 @@ where
 	/// @param from The account whose tokens will be burnt.
 	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
+	#[solidity(hide)]
 	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
