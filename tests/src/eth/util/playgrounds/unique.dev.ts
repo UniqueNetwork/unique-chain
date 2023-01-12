@@ -190,7 +190,7 @@ class NativeContractGroup extends EthGroupBase {
 
   async rftToken(address: string, caller?: string, mergeDeprecated = false) {
     const web3 = this.helper.getWeb3();
-    const abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
+    let abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
     return unlimitedMoneyHack(new web3.eth.Contract(abi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
       gasPrice: await this.getGasPrice(),
@@ -199,7 +199,7 @@ class NativeContractGroup extends EthGroupBase {
   }
 
   rftTokenById(collectionId: number, tokenId: number, caller?: string, mergeDeprecated = false) {
-    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller, mergeDeprecated);
+    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller, true);
   }
 }
 
