@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+## [v0.1.6] - 2023-01-12
+
+### Added
+- Support Option<T> type.
+### Removed
+- Frontier dependency.
+
 ## [v0.1.5] - 2022-11-30
 
 ### Added
