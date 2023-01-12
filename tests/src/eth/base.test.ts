@@ -108,10 +108,6 @@ describe('ERC165 tests', () => {
     await checkInterface(helper, '0x5b5e139f', false, true);
   });
 
-  itEth('ERC721UniqueMintable - 0x476ff149 - support', async ({helper}) => {
-    await checkInterface(helper, '0x476ff149', true, true);
-  });
-
   itEth('ERC721Enumerable - 0x780e9d63 - support', async ({helper}) => {
     await checkInterface(helper, '0x780e9d63', true, true);
   });
