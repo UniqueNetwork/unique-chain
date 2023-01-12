@@ -141,25 +141,17 @@ impl<T: SolidityTypeName + 'static> SolidityTypeName for Option<T> {
 
 impl<T: SolidityTypeName> super::SolidityStructTy for Option<T> {
 	fn generate_solidity_interface(tc: &TypeCollector) -> String {
-		const option_name: &str = "Option";
-		const option_name_len: usize = option_name.len();
-
-		let to_upper_case_generic_type_name = |s: &mut String| {
-			let c = s
+		let mut solidity_name = "Option".to_string();
+		let mut generic_name = String::new();
+		T::solidity_name(&mut generic_name, tc);
+		solidity_name.push(
+			generic_name
 				.chars()
-				.skip(option_name_len)
 				.next()
-				.expect("Ethereum name must be presented");
-			if c.is_ascii_uppercase() {
-				return;
-			}
-			let uc = String::from(c.to_ascii_uppercase());
-			s.replace_range(option_name_len..option_name_len + 1, uc.as_str());
-		};
-
-		let mut solidity_name = option_name.to_string();
-		T::solidity_name(&mut solidity_name, tc);
-		to_upper_case_generic_type_name(&mut solidity_name);
+				.expect("Generic name is empty")
+				.to_ascii_uppercase(),
+		);
+		solidity_name.push_str(&generic_name[1..]);
 
 		let interface = super::SolidityStruct {
 			docs: &[" Optional value"],
