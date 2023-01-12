@@ -641,6 +641,8 @@ enum CollectionLimitField {
 	TransferEnabled
 }
 
+/// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
+/// @dev See https://eips.ethereum.org/EIPS/eip-721
 /// @dev the ERC-165 identifier for this interface is 0x5b5e139f
 contract ERC721Metadata is Dummy, ERC165 {
 	// /// @notice A descriptive name for a collection of NFTs in this contract
@@ -783,7 +785,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xabf30dc2
+/// @dev the ERC-165 identifier for this interface is 0xb365c124
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -985,6 +987,15 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
 }
 
 /// @dev anonymous struct
@@ -1042,7 +1053,7 @@ contract ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x4016cd87
+/// @dev the ERC-165 identifier for this interface is 0x80ac58cd
 contract ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all RFTs assigned to an owner
 	/// @dev RFTs assigned to the zero address are considered invalid, and this
@@ -1075,9 +1086,9 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 	}
 
 	/// @dev Not implemented
-	/// @dev EVM selector for this function is: 0x60a11672,
-	///  or in textual repr: safeTransferFromWithData(address,address,uint256,bytes)
-	function safeTransferFromWithData(
+	/// @dev EVM selector for this function is: 0xb88d4fde,
+	///  or in textual repr: safeTransferFrom(address,address,uint256,bytes)
+	function safeTransferFrom(
 		address from,
 		address to,
 		uint256 tokenId,
@@ -1172,15 +1183,6 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		operator;
 		dummy;
 		return false;
-	}
-
-	/// @notice Returns collection helper contract address
-	/// @dev EVM selector for this function is: 0x1896cce6,
-	///  or in textual repr: collectionHelperAddress()
-	function collectionHelperAddress() public view returns (address) {
-		require(false, stub_error);
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
 	}
 }
 
