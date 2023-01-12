@@ -520,7 +520,7 @@ impl<T: Config> Pallet<T> {
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		properties: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
@@ -544,15 +544,16 @@ impl<T: Config> Pallet<T> {
 			Ok(is_bundle_owner)
 		};
 
-		for (key, value) in properties {
-			let permission = <PalletCommon<T>>::property_permissions(collection.id)
+		let mut stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
+		let permissions = <PalletCommon<T>>::property_permissions(collection.id);
+
+		for (key, value) in properties_updates {
+			let permission = permissions
 				.get(&key)
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
-			let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
-				.get(&key)
-				.is_some();
+			let is_property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
 				PropertyPermission { mutable: false, .. } if is_property_exists => {
@@ -578,10 +579,9 @@ impl<T: Config> Pallet<T> {
 
 			match value {
 				Some(value) => {
-					<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
-						properties.try_set(key.clone(), value)
-					})
-					.map_err(<CommonError<T>>::from)?;
+					stored_properties
+						.try_set(key.clone(), value)
+						.map_err(<CommonError<T>>::from)?;
 
 					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 						collection.id,
@@ -590,10 +590,9 @@ impl<T: Config> Pallet<T> {
 					));
 				}
 				None => {
-					<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
-						properties.remove(&key)
-					})
-					.map_err(<CommonError<T>>::from)?;
+					stored_properties
+						.remove(&key)
+						.map_err(<CommonError<T>>::from)?;
 
 					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
 						collection.id,
@@ -611,6 +610,10 @@ impl<T: Config> Pallet<T> {
 				.to_log(T::ContractAddress::get()),
 			);
 		}
+
+		<TokenProperties<T>>::mutate((collection.id, token_id), |properties| {
+			*properties = stored_properties;
+		});
 
 		Ok(())
 	}
@@ -1369,7 +1372,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties.into_iter())
 	}
 
 	pub fn delete_collection_properties(
@@ -1377,7 +1380,11 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+		<PalletCommon<T>>::delete_collection_properties(
+			collection,
+			sender,
+			property_keys.into_iter(),
+		)
 	}
 
 	pub fn set_token_property_permissions(
