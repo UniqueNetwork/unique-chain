@@ -255,7 +255,7 @@ class EthGroup extends EthGroupBase {
     }
   }
 
-  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18, mergeDeprecated = false): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[], collection: Contract }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
     const functionName: string = this.createCollectionMethodName(mode);
@@ -266,8 +266,9 @@ class EthGroup extends EthGroupBase {
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
     const events = this.helper.eth.normalizeEvents(result.events);
+    const collection = await this.helper.ethNativeContract.collectionById(collectionId, mode, signer, mergeDeprecated);
 
-    return {collectionId, collectionAddress, events};
+    return {collectionId, collectionAddress, events, collection};
   }
 
   createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
