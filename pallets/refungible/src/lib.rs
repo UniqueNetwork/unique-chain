@@ -641,9 +641,7 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 
-		<TokenProperties<T>>::mutate((collection.id, token_id), |properties| {
-			*properties = stored_properties;
-		});
+		<TokenProperties<T>>::set((collection.id, token_id), stored_properties);
 
 		Ok(())
 	}
