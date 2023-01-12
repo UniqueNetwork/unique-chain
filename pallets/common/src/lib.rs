@@ -1236,9 +1236,7 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		<CollectionProperties<T>>::mutate(collection.id, |properties| {
-			*properties = stored_properties;
-		});
+		<CollectionProperties<T>>::set(collection.id, stored_properties);
 
 		Ok(())
 	}
