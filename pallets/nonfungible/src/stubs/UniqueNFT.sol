@@ -785,7 +785,7 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x0e48fdb4
+/// @dev the ERC-165 identifier for this interface is 0x16de3152
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -986,6 +986,15 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return 0;
 	}
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
 }
 
 /// @dev anonymous struct
@@ -1043,7 +1052,7 @@ contract ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x983a942b
+/// @dev the ERC-165 identifier for this interface is 0x80ac58cd
 contract ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -1175,15 +1184,6 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		operator;
 		dummy;
 		return false;
-	}
-
-	/// @notice Returns collection helper contract address
-	/// @dev EVM selector for this function is: 0x1896cce6,
-	///  or in textual repr: collectionHelperAddress()
-	function collectionHelperAddress() public view returns (address) {
-		require(false, stub_error);
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
 	}
 }
 
