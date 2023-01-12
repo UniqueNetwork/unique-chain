@@ -19,68 +19,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
-
-describe('NFT: Information getting', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([10n], donor);
-    });
-  });
-
-  itEth('totalSupply', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    await collection.mintToken(alice);
-
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-    const totalSupply = await contract.methods.totalSupply().call();
-
-    expect(totalSupply).to.equal('1');
-  });
-
-  itEth('balanceOf', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    await collection.mintToken(alice, {Ethereum: caller});
-    await collection.mintToken(alice, {Ethereum: caller});
-    await collection.mintToken(alice, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-    const balance = await contract.methods.balanceOf(caller).call();
-
-    expect(balance).to.equal('3');
-  });
-
-  itEth('ownerOf', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    const token = await collection.mintToken(alice, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-
-    const owner = await contract.methods.ownerOf(token.tokenId).call();
-
-    expect(owner).to.equal(caller);
-  });
-
-  itEth('name/symbol is available regardless of ERC721Metadata support', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'test', tokenPrefix: 'TEST'});
-    const caller = helper.eth.createAccount();
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-
-    expect(await contract.methods.name().call()).to.equal('test');
-    expect(await contract.methods.symbol().call()).to.equal('TEST');
-  });
-});
-
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;
 

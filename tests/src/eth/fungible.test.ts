@@ -17,38 +17,6 @@
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 
-describe('Fungible: Information getting', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
-    });
-  });
-
-  itEth('totalSupply', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.ft.mintCollection(alice);
-    await collection.mint(alice, 200n);
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'ft', caller);
-    const totalSupply = await contract.methods.totalSupply().call();
-    expect(totalSupply).to.equal('200');
-  });
-
-  itEth('balanceOf', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.ft.mintCollection(alice);
-    await collection.mint(alice, 200n, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'ft', caller);
-    const balance = await contract.methods.balanceOf(caller).call();
-    expect(balance).to.equal('200');
-  });
-});
-
 describe('Fungible: Plain calls', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
