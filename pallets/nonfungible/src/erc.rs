@@ -524,11 +524,6 @@ impl<T: Config> NonfungibleHandle<T> {
 
 		Ok(<Pallet<T>>::allowance_for_all(self, &owner, &operator))
 	}
-
-	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<address> {
-		Ok(T::ContractAddress::get())
-	}
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
@@ -1057,6 +1052,11 @@ where
 		.map_err(dispatch_to_evm::<T>)?;
 
 		Ok(token_id.into())
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 
