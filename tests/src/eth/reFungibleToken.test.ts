@@ -458,7 +458,7 @@ describe('Refungible: Plain calls', () => {
     const result = await contract.methods.mint(caller).send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
     const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
-    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, caller, true);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();

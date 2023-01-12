@@ -38,19 +38,19 @@ contract ERC1633 is Dummy, ERC165 {
 
 /// @dev the ERC-165 identifier for this interface is 0xe17a7d2b
 contract ERC20UniqueExtensions is Dummy, ERC165 {
-	// /// @dev Function that burns an amount of the token of a given account,
-	// /// deducting from the sender's allowance for said account.
-	// /// @param from The account whose tokens will be burnt.
-	// /// @param amount The amount that will be burnt.
-	// /// @dev EVM selector for this function is: 0x79cc6790,
-	// ///  or in textual repr: burnFrom(address,uint256)
-	// function burnFrom(address from, uint256 amount) public returns (bool) {
-	// 	require(false, stub_error);
-	// 	from;
-	// 	amount;
-	// 	dummy = 0;
-	// 	return false;
-	// }
+	/// @dev Function that burns an amount of the token of a given account,
+	/// deducting from the sender's allowance for said account.
+	/// @param from The account whose tokens will be burnt.
+	/// @param amount The amount that will be burnt.
+	/// @dev EVM selector for this function is: 0x79cc6790,
+	///  or in textual repr: burnFrom(address,uint256)
+	function burnFrom(address from, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		from;
+		amount;
+		dummy = 0;
+		return false;
+	}
 
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
