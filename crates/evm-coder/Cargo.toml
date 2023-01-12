@@ -3,6 +3,8 @@ edition = "2021"
 license = "GPLv3"
 name = "evm-coder"
 version = "0.1.6"
+license = "GPLv3"
+edition = "2021"
 
 [dependencies]
 sha3-const = { version = "0.1.1", default-features = false }
