@@ -514,6 +514,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		Ok(<Pallet<T>>::allowance_for_all(self, &owner, &operator))
 	}
 }
+}
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
 #[solidity_interface(name = ERC721Burnable)]
@@ -1035,7 +1036,7 @@ where
 	}
 
 	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<Address> {
+	fn collection_helper_address(&self) -> Result<address> {
 		Ok(T::ContractAddress::get())
 	}
 }
