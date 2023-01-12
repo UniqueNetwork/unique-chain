@@ -1209,18 +1209,10 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// This function sets or removes a collection properties according to
-	/// `properties_updates` contents:
-	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
-	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
-	///
-	/// This function fires an event for each property change.
-	/// In case of an error, all the changes (including the events) will be reverted
-	/// since the function is transactional.
-	#[transactional]
 	fn modify_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
@@ -1256,9 +1248,24 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		<CollectionProperties<T>>::set(collection.id, stored_properties);
+		<CollectionProperties<T>>::mutate(collection.id, |properties| {
+			*properties = stored_properties;
+		});
 
 		Ok(())
+	}
+
+	/// Set collection property.
+	///
+	/// * `collection` - Collection handler.
+	/// * `sender` - The owner or administrator of the collection.
+	/// * `property` - The property to set.
+	pub fn set_collection_property(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		property: Property,
+	) -> DispatchResult {
+		Self::set_collection_properties(collection, sender, [property].into_iter())
 	}
 
 	/// Set collection property.

@@ -538,6 +538,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
@@ -566,10 +567,16 @@ impl<T: Config> Pallet<T> {
 
 		for (key, value) in properties_updates {
 			let permission = permissions
+		let mut stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
+		let permissions = <PalletCommon<T>>::property_permissions(collection.id);
+
+		for (key, value) in properties_updates {
+			let permission = permissions
 				.get(&key)
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
+			let is_property_exists = stored_properties.get(&key).is_some();
 			let is_property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
@@ -599,6 +606,9 @@ impl<T: Config> Pallet<T> {
 					stored_properties
 						.try_set(key.clone(), value)
 						.map_err(<CommonError<T>>::from)?;
+					stored_properties
+						.try_set(key.clone(), value)
+						.map_err(<CommonError<T>>::from)?;
 
 					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 						collection.id,
@@ -607,6 +617,9 @@ impl<T: Config> Pallet<T> {
 					));
 				}
 				None => {
+					stored_properties
+						.remove(&key)
+						.map_err(<CommonError<T>>::from)?;
 					stored_properties
 						.remove(&key)
 						.map_err(<CommonError<T>>::from)?;
@@ -628,7 +641,9 @@ impl<T: Config> Pallet<T> {
 			);
 		}
 
-		<TokenProperties<T>>::set((collection.id, token_id), stored_properties);
+		<TokenProperties<T>>::mutate((collection.id, token_id), |properties| {
+			*properties = stored_properties;
+		});
 
 		Ok(())
 	}
