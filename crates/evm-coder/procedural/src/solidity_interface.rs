@@ -811,6 +811,13 @@ fn generics_reference(gen: &Generics) -> proc_macro2::TokenStream {
 	let list = generics_list(gen);
 	quote! { <#list> }
 }
+fn generics_stub(gen: &Generics) -> proc_macro2::TokenStream {
+	if gen.params.is_empty() {
+		return quote! {};
+	}
+	let params = (0..gen.params.len()).map(|_| quote! {()});
+	quote! {<#(#params,)*>}
+}
 fn generics_data(gen: &Generics) -> proc_macro2::TokenStream {
 	let list = generics_list(gen);
 	if gen.params.len() == 1 {
@@ -866,6 +873,7 @@ impl SolidityInterface {
 		let generics = self.generics;
 		let gen_ref = generics_reference(&generics);
 		let gen_data = generics_data(&generics);
+		let gen_stub = generics_stub(&generics);
 		let gen_where = &generics.where_clause;
 
 		let call_sub = self
@@ -936,6 +944,12 @@ impl SolidityInterface {
 		let solidity_events_idents = self.info.events.0.iter().map(|is| is.name.clone());
 		let docs = &self.docs;
 
+		let expect_selector = self.info.expect_selector.map(|s| {
+            quote! {
+                const _: () = assert!(#s == u32::from_be_bytes(<#call_name #gen_stub>::interface_id()), "selector mismatch, review contained function selectors");
+            }
+        });
+
 		quote! {
 			#(
 				const _: ::core::marker::PhantomData<#solidity_events_idents> = ::core::marker::PhantomData;
@@ -952,12 +966,15 @@ impl SolidityInterface {
 					#call_sub,
 				)*
 			}
+
+			#expect_selector
+
 			impl #gen_ref #call_name #gen_ref {
 				#(
 					#consts
 				)*
 				/// Return this call ERC165 selector
-				pub fn interface_id() -> ::evm_coder::types::bytes4 {
+				pub const fn interface_id() -> ::evm_coder::types::bytes4 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
