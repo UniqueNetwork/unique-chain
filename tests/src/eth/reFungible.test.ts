@@ -75,7 +75,7 @@ describe('Refungible: Information getting', () => {
 
     const result = await contract.methods.mint(caller).send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
-    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller, true);
+    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
     await tokenContract.methods.repartition(2).send();
     await tokenContract.methods.transfer(receiver, 1).send();
@@ -300,7 +300,7 @@ describe('Refungible: Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
 
-    const rftToken = await helper.ethNativeContract.rftTokenById(token.collectionId, token.tokenId, owner, true);
+    const rftToken = await helper.ethNativeContract.rftTokenById(token.collectionId, token.tokenId, owner);
 
     {
       await rftToken.methods.approve(operator, 15n).send({from: owner});
