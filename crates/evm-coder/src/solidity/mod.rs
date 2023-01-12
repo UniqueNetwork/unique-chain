@@ -456,13 +456,13 @@ where
 		Ok(())
 	}
 }
-pub struct SolidityStruct<F> {
-	pub docs: &'static [&'static str],
+pub struct SolidityStruct<'a, F> {
+	pub docs: &'a [&'a str],
 	// pub generics:
-	pub name: &'static str,
+	pub name: &'a str,
 	pub fields: F,
 }
-impl<F> SolidityStruct<F>
+impl<F> SolidityStruct<'_, F>
 where
 	F: SolidityItems,
 {

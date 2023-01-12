@@ -252,7 +252,7 @@
               { "internalType": "bool", "name": "status", "type": "bool" },
               { "internalType": "uint256", "name": "value", "type": "uint256" }
             ],
-            "internalType": "struct OptionUint",
+            "internalType": "struct OptionUint256",
             "name": "value",
             "type": "tuple"
           }
@@ -670,7 +670,7 @@
               { "internalType": "bool", "name": "status", "type": "bool" },
               { "internalType": "uint256", "name": "value", "type": "uint256" }
             ],
-            "internalType": "struct OptionUint",
+            "internalType": "struct OptionUint256",
             "name": "value",
             "type": "tuple"
           }
