@@ -1198,6 +1198,51 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	fn modify_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		let mut stored_properties = <CollectionProperties<T>>::get(collection.id);
+
+		for (key, value) in properties_updates {
+			match value {
+				Some(value) => {
+					stored_properties
+						.try_set(key.clone(), value)
+						.map_err(<Error<T>>::from)?;
+
+					Self::deposit_event(Event::CollectionPropertySet(collection.id, key));
+					<PalletEvm<T>>::deposit_log(
+						erc::CollectionHelpersEvents::CollectionChanged {
+							collection_id: eth::collection_id_to_address(collection.id),
+						}
+						.to_log(T::ContractAddress::get()),
+					);
+				}
+				None => {
+					stored_properties.remove(&key).map_err(<Error<T>>::from)?;
+
+					Self::deposit_event(Event::CollectionPropertyDeleted(collection.id, key));
+					<PalletEvm<T>>::deposit_log(
+						erc::CollectionHelpersEvents::CollectionChanged {
+							collection_id: eth::collection_id_to_address(collection.id),
+						}
+						.to_log(T::ContractAddress::get()),
+					);
+				}
+			}
+		}
+
+		<CollectionProperties<T>>::mutate(collection.id, |properties| {
+			*properties = stored_properties;
+		});
+
+		Ok(())
+	}
+
 	/// Set collection property.
 	///
 	/// * `collection` - Collection handler.
@@ -1208,23 +1253,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property: Property,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
-
-		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
-			let property = property.clone();
-			properties.try_set(property.key, property.value)
-		})
-		.map_err(<Error<T>>::from)?;
-
-		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
-		<PalletEvm<T>>::deposit_log(
-			erc::CollectionHelpersEvents::CollectionChanged {
-				collection_id: eth::collection_id_to_address(collection.id),
-			}
-			.to_log(T::ContractAddress::get()),
-		);
-
-		Ok(())
+		Self::set_collection_properties(collection, sender, [property].into_iter())
 	}
 
 	/// Set a scoped collection property, where the scope is a special prefix
@@ -1274,13 +1303,13 @@ impl<T: Config> Pallet<T> {
 	pub fn set_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		properties: Vec<Property>,
+		properties: impl Iterator<Item = Property>,
 	) -> DispatchResult {
-		for property in properties {
-			Self::set_collection_property(collection, sender, property)?;
-		}
-
-		Ok(())
+		Self::modify_collection_properties(
+			collection,
+			sender,
+			properties.map(|property| (property.key, Some(property.value))),
+		)
 	}
 
 	/// Delete collection property.
@@ -1293,25 +1322,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
-
-		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
-			properties.remove(&property_key)
-		})
-		.map_err(<Error<T>>::from)?;
-
-		Self::deposit_event(Event::CollectionPropertyDeleted(
-			collection.id,
-			property_key,
-		));
-		<PalletEvm<T>>::deposit_log(
-			erc::CollectionHelpersEvents::CollectionChanged {
-				collection_id: eth::collection_id_to_address(collection.id),
-			}
-			.to_log(T::ContractAddress::get()),
-		);
-
-		Ok(())
+		Self::delete_collection_properties(collection, sender, [property_key].into_iter())
 	}
 
 	/// Delete collection properties.
@@ -1323,13 +1334,9 @@ impl<T: Config> Pallet<T> {
 	pub fn delete_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		property_keys: Vec<PropertyKey>,
+		property_keys: impl Iterator<Item = PropertyKey>,
 	) -> DispatchResult {
-		for key in property_keys {
-			Self::delete_collection_property(collection, sender, key)?;
-		}
-
-		Ok(())
+		Self::modify_collection_properties(collection, sender, property_keys.map(|key| (key, None)))
 	}
 
 	/// Set collection propetry permission without any checks.
