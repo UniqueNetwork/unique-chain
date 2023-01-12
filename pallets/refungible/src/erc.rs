@@ -288,6 +288,13 @@ pub enum ERC721Events {
 	},
 }
 
+#[derive(ToLog)]
+pub enum ERC721UniqueMintableEvents {
+	/// @dev Not supported
+	#[allow(dead_code)]
+	MintingFinished {},
+}
+
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 #[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
@@ -360,6 +367,7 @@ where
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 #[solidity_interface(name = ERC721Enumerable, expect_selector = 0x780e9d63)]
+#[solidity_interface(name = ERC721Enumerable, expect_selector = 0x780e9d63)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Enumerate valid RFTs
 	/// @param index A counter less than `totalSupply()`
@@ -386,6 +394,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
+#[solidity_interface(name = ERC721, events(ERC721Events), expect_selector = 0x80ac58cd)]
 #[solidity_interface(name = ERC721, events(ERC721Events), expect_selector = 0x80ac58cd)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Count all RFTs assigned to an owner
@@ -421,6 +430,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 	/// @dev Not implemented
 	#[solidity(rename_selector = "safeTransferFrom")]
+	#[solidity(rename_selector = "safeTransferFrom")]
 	fn safe_transfer_from_with_data(
 		&mut self,
 		_from: Address,
@@ -434,7 +444,12 @@ impl<T: Config> RefungibleHandle<T> {
 
 	/// @dev Not implemented
 	#[solidity(rename_selector = "safeTransferFrom")]
-	fn safe_transfer_from(&mut self, _from: Address, _to: Address, _token_id: U256) -> Result<()> {
+	fn safe_transfer_from(
+		&mut self,
+		_from: address,
+		_to: address,
+		_token_id: uint256,
+	) -> Result<void> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -512,6 +527,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 		Ok(<Pallet<T>>::allowance_for_all(self, &owner, &operator))
 	}
+}
 }
 
 /// Returns amount of pieces of `token` that `owner` have
@@ -1104,7 +1120,7 @@ where
 	}
 
 	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<Address> {
+	fn collection_helper_address(&self) -> Result<address> {
 		Ok(T::ContractAddress::get())
 	}
 }
