@@ -258,20 +258,22 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Refungible TokenProperties (r:1 w:1)
+	// Storage: Refungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn set_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(18_287_762 as u64)
-			// Standard Error: 31_915
-			.saturating_add(Weight::from_ref_time(7_070_524 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(25_518_267 as u64)
+			// Standard Error: 20_451
+			.saturating_add(Weight::from_ref_time(5_041_089 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Refungible TokenProperties (r:1 w:1)
+	// Storage: Refungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn delete_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(15_075_000 as u64)
-			// Standard Error: 69_091
-			.saturating_add(Weight::from_ref_time(22_793_781 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(13_715_000 as u64)
+			// Standard Error: 28_323
+			.saturating_add(Weight::from_ref_time(13_113_351 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -503,18 +505,19 @@ impl WeightInfo for () {
 	// Storage: Refungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn set_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(18_287_762 as u64)
-			// Standard Error: 31_915
-			.saturating_add(Weight::from_ref_time(7_070_524 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(25_518_267 as u64)
+			// Standard Error: 20_451
+			.saturating_add(Weight::from_ref_time(5_041_089 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Refungible TokenProperties (r:1 w:1)
+	// Storage: Refungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn delete_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(15_075_000 as u64)
-			// Standard Error: 69_091
-			.saturating_add(Weight::from_ref_time(22_793_781 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(13_715_000 as u64)
+			// Standard Error: 28_323
+			.saturating_add(Weight::from_ref_time(13_113_351 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
