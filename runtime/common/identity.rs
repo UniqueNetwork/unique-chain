@@ -34,6 +34,7 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::transaction_validity::InvalidTransaction;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 #[cfg(feature = "collator-selection")]
 use sp_runtime::transaction_validity::InvalidTransaction;
 =======
@@ -41,6 +42,8 @@ use sp_runtime::transaction_validity::InvalidTransaction;
 
 =======
 >>>>>>> 3006d97d (fix: after merge)
+=======
+>>>>>>> cd1a7039 (fix: identity InvalidTransaction use)
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
 pub struct DisableIdentityCalls;
 
