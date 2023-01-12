@@ -29,7 +29,6 @@ import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json';
 import refungibleAbi from '../../abi/reFungible.json';
 import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json';
 import refungibleTokenAbi from '../../abi/reFungibleToken.json';
-import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json';
 import contractHelpersAbi from '../../abi/contractHelpers.json';
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 import {TCollectionMode} from '../../../util/playgrounds/types';
@@ -188,18 +187,17 @@ class NativeContractGroup extends EthGroupBase {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller, mergeDeprecated);
   }
 
-  async rftToken(address: string, caller?: string, mergeDeprecated = false) {
+  async rftToken(address: string, caller?: string) {
     const web3 = this.helper.getWeb3();
-    let abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
-    return unlimitedMoneyHack(new web3.eth.Contract(abi as any, address, {
+    return unlimitedMoneyHack(new web3.eth.Contract(refungibleTokenAbi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
       gasPrice: await this.getGasPrice(),
       ...(caller ? {from: caller} : {}),
     }));
   }
 
-  rftTokenById(collectionId: number, tokenId: number, caller?: string, mergeDeprecated = false) {
-    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller, true);
+  rftTokenById(collectionId: number, tokenId: number, caller?: string) {
+    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
   }
 }
 
