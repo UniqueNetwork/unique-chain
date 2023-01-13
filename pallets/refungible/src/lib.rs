@@ -1193,6 +1193,11 @@ impl<T: Config> Pallet<T> {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
+
+		if collection.limits.owner_can_transfer() && collection.is_owner_or_admin(spender) {
+			return Ok(None);
+		}
+
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
