@@ -16,9 +16,7 @@
 
 import {itEth, usingEthPlaygrounds, expect} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
-import {Pallets} from '../util';
-
-const EVM_COLLECTION_HELPERS_ADDRESS = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';
+import {COLLECTION_HELPER, Pallets} from '../util';
 
 describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
   let donor: IKeyringPair;
@@ -36,7 +34,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
     const nftCollection = await helper.ethNativeContract.collection(nftCollectionAddress, 'nft', owner);
 
     expect((await nftCollection.methods.collectionHelperAddress().call())
-      .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
+      .toString().toLowerCase()).to.be.equal(COLLECTION_HELPER);
   });
 
   itEth.ifWithPallets('RFT ', [Pallets.ReFungible], async ({helper}) => {
@@ -46,7 +44,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
 
     const rftCollection = await helper.ethNativeContract.collection(rftCollectionAddress, 'rft', owner);
     expect((await rftCollection.methods.collectionHelperAddress().call())
-      .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
+      .toString().toLowerCase()).to.be.equal(COLLECTION_HELPER);
   });
 
   itEth('FT', async ({helper}) => {
@@ -56,7 +54,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
     const collection = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
     expect((await collection.methods.collectionHelperAddress().call())
-      .toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS);
+      .toString().toLowerCase()).to.be.equal(COLLECTION_HELPER);
   });
 
   itEth('[collectionHelpers] convert collectionId into address', async ({helper}) => {

@@ -18,6 +18,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {CollectionLimitField} from './util/playgrounds/types';
+import {COLLECTION_HELPER} from '../util';
 
 
 describe('Create NFT collection from EVM', () => {
@@ -42,7 +43,7 @@ describe('Create NFT collection from EVM', () => {
 
     expect(events).to.be.deep.equal([
       {
-        address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
+        address: COLLECTION_HELPER,
         event: 'CollectionCreated',
         args: {
           owner: owner,
