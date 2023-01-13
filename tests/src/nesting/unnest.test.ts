@@ -66,6 +66,7 @@ describe('Integration Test: Unnesting', () => {
     expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.be.length(0);
   });
+<<<<<<< HEAD
 
   itSub.ifWithPallets('ReFungible: allows the owner to successfully unnest a token', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
@@ -268,6 +269,8 @@ describe('Integration Test: Unnesting', () => {
 
       expect((await targetNft.getChildren()).length).to.be.equal(0);
     }));
+=======
+>>>>>>> 483c1f0f (Combine refungible tests)
 });
 
 describe('Negative Test: Unnesting', () => {
