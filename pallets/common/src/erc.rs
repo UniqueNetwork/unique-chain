@@ -284,6 +284,11 @@ where
 	fn collection_limits(&self) -> Result<Vec<eth::CollectionLimit>> {
 		let limits = &self.collection.limits;
 
+		let convert_value_from_bool = |ob: Option<bool>| match ob {
+			Some(b) => Some(b as u32),
+			None => None,
+		};
+
 		Ok(vec![
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::AccountTokenOwnership,
@@ -297,15 +302,15 @@ where
 				.sponsored_data_rate_limit
 				.and_then(|limit| {
 					if let SponsoringRateLimit::Blocks(blocks) = limit {
-						Some(eth::CollectionLimit::new::<u32>(
+						Some(eth::CollectionLimit::new(
 							eth::CollectionLimitField::SponsoredDataRateLimit,
-							blocks,
+							Some(blocks),
 						))
 					} else {
 						None
 					}
 				})
-				.unwrap_or(eth::CollectionLimit::new::<u32>(
+				.unwrap_or(eth::CollectionLimit::new(
 					eth::CollectionLimitField::SponsoredDataRateLimit,
 					Default::default(),
 				)),
@@ -320,15 +325,15 @@ where
 			),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::OwnerCanTransfer,
-				limits.owner_can_transfer,
+				convert_value_from_bool(limits.owner_can_transfer),
 			),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::OwnerCanDestroy,
-				limits.owner_can_destroy,
+				convert_value_from_bool(limits.owner_can_destroy),
 			),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::TransferEnabled,
-				limits.transfers_enabled,
+				convert_value_from_bool(limits.transfers_enabled),
 			),
 		])
 	}
