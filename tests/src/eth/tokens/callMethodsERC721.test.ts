@@ -105,14 +105,22 @@ describe('ERC-721 call methods', () => {
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
     // TODO {mode: 'nft' as const, requiredPallets: []},
   ].map(testCase => {
+<<<<<<< HEAD
     itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: ownerOf after burn`, testCase.requiredPallets, async ({helper}) => {
+=======
+    itEth(`${testCase.mode.toUpperCase()}: ownerOf after burn`, async ({helper}) => {
+>>>>>>> b0a74de7 (Mint tests generalization)
       const caller = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
       const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'OwnerOf-AfterBurn', '6', '6');
 
       const result = await collection.methods.mint(caller).send();
       const tokenId = result.events.Transfer.returnValues.tokenId;
+<<<<<<< HEAD
       const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller, true);
+=======
+      const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
+>>>>>>> b0a74de7 (Mint tests generalization)
 
       await tokenContract.methods.repartition(2).send();
       await tokenContract.methods.transfer(receiver, 1).send();
@@ -124,7 +132,11 @@ describe('ERC-721 call methods', () => {
     });
   });
 
+<<<<<<< HEAD
   itEth.ifWithPallets('RFT: ownerOf for partial ownership', [Pallets.ReFungible], async ({helper}) => {
+=======
+  itEth('RFT: ownerOf for partial ownership', async ({helper}) => {
+>>>>>>> b0a74de7 (Mint tests generalization)
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
