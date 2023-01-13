@@ -59,10 +59,14 @@ describe('Refungible nesting', () => {
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   itSub('Owner can unnest nested token', async ({helper}) => {
 =======
   itSub('owner can unnest nested token', async ({helper}) => {
 >>>>>>> 483c1f0f (Combine refungible tests)
+=======
+  itSub('Owner can unnest nested token', async ({helper}) => {
+>>>>>>> f37b77ad (Nested rft pieces burn test)
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
 
@@ -82,15 +86,20 @@ describe('Refungible nesting', () => {
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   itSub('Owner can burn nested token pieces', async ({helper}) => {
 =======
   itSub('owner can burn nested token', async ({helper}) => {
 >>>>>>> 483c1f0f (Combine refungible tests)
+=======
+  itSub('Owner can burn nested token pieces', async ({helper}) => {
+>>>>>>> f37b77ad (Nested rft pieces burn test)
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
 
     // Owner mints nested RFT token:
     const collectionRFT = await helper.rft.mintCollection(alice);
+<<<<<<< HEAD
 <<<<<<< HEAD
     const token = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
     await token.transfer(alice, targetToken.nestingAccount(), 30n);
@@ -112,19 +121,31 @@ describe('Refungible nesting', () => {
     expect(await targetToken.doesExist()).to.be.false;
 =======
     const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
+=======
+    const token = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
+    await token.transfer(alice, targetToken.nestingAccount(), 30n);
+>>>>>>> f37b77ad (Nested rft pieces burn test)
 
     // 1.1 Owner can partially burnFrom nested pieces:
-    await token.burnFrom(alice, targetToken.nestingAccount(), 6n);
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
-    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(4n);
+    await token.burnFrom(alice, targetToken.nestingAccount(), 10n);
+    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(70n);
+    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(20n);
     expect(await targetToken.getChildren()).to.has.length(1);
 
     // 1.1 Owner can burnFrom all nested pieces:
-    await token.burnFrom(alice, targetToken.nestingAccount(), 4n);
+    await token.burnFrom(alice, targetToken.nestingAccount(), 20n);
     expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.has.length(0);
+<<<<<<< HEAD
     expect(await token.doesExist()).to.be.false;
 >>>>>>> 483c1f0f (Combine refungible tests)
+=======
+    expect(await token.doesExist()).to.be.true;
+
+    // 2. Target token does not contain any pieces and can be burnt:
+    await targetToken.burn(alice);
+    expect(await targetToken.doesExist()).to.be.false;
+>>>>>>> f37b77ad (Nested rft pieces burn test)
   });
 });
 
