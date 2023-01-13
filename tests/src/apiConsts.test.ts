@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, itSub, expect} from './util';
+import {usingPlaygrounds, itSub, expect, COLLECTION_HELPER, CONTRACT_HELPER} from './util';
 
 
 const MAX_COLLECTION_DESCRIPTION_LENGTH = 256n;
@@ -40,9 +40,6 @@ const DEFAULT_COLLETCTION_LIMIT = {
   ownerCanDestroy: true,
   transfersEnabled: true,
 };
-
-const EVM_COLLECTION_HELPERS_ADDRESS = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';
-const HELPERS_CONTRACT_ADDRESS = '0x842899ECF380553E8a4de75bF534cdf6fBF64049';
 
 describe('integration test: API UNIQUE consts', () => {
   let api: ApiPromise;
@@ -106,11 +103,11 @@ describe('integration test: API UNIQUE consts', () => {
   });
 
   itSub('HELPERS_CONTRACT_ADDRESS', () => {
-    expect(api.consts.evmContractHelpers.contractAddress.toString().toLowerCase()).to.be.equal(HELPERS_CONTRACT_ADDRESS.toLowerCase());
+    expect(api.consts.evmContractHelpers.contractAddress.toString().toLowerCase()).to.be.equal(CONTRACT_HELPER.toLowerCase());
   });
 
   itSub('EVM_COLLECTION_HELPERS_ADDRESS', () => {
-    expect(api.consts.common.contractAddress.toString().toLowerCase()).to.be.equal(EVM_COLLECTION_HELPERS_ADDRESS.toLowerCase());
+    expect(api.consts.common.contractAddress.toString().toLowerCase()).to.be.equal(COLLECTION_HELPER.toLowerCase());
   });
 });
 
