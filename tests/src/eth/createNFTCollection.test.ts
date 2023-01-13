@@ -43,7 +43,7 @@ describe('Create NFT collection from EVM', () => {
 
     expect(events).to.be.deep.equal([
       {
-        address: COLLECTION_HELPER,
+        address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
         event: 'CollectionCreated',
         args: {
           owner: owner,

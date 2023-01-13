@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../util';
+import {expect, itSub, usingPlaygrounds} from '../util';
 
 describe('Integration Test: Composite nesting tests', () => {
   let alice: IKeyringPair;
@@ -288,6 +288,7 @@ describe('Integration Test: Various token type nesting', () => {
     await collectionFT.transfer(charlie, targetToken.nestingAccount(), 2n);
     expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(7n);
   });
+<<<<<<< HEAD
 
   itSub.ifWithPallets('ReFungible: getTopmostOwner works correctly with Nesting', [Pallets.ReFungible], async({helper}) => {
     const collectionNFT = await helper.nft.mintCollection(alice, {
@@ -320,6 +321,8 @@ describe('Integration Test: Various token type nesting', () => {
 
     expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
   });
+=======
+>>>>>>> 483c1f0f (Combine refungible tests)
 });
 
 describe('Negative Test: Nesting', () => {
