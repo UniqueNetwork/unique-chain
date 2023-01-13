@@ -88,30 +88,6 @@ describe('NFT: Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint() & get crossOwner()', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-
-    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', '6', '6', '');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-
-    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-    expect(tokenId).to.be.equal('1');
-
-    const event = result.events.Transfer;
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.be.equal(receiver);
-
-    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
-    // TODO: this wont work right now, need release 919000 first
-    // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
-    // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
-    // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
-  });
-
   // TODO combine all minting tests in one place
   [
     'substrate' as const,

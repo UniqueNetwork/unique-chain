@@ -29,24 +29,6 @@ describe('Fungible: Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint()', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-    const collection = await helper.ft.mintCollection(alice);
-    await collection.addAdmin(alice, {Ethereum: owner});
-
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
-
-    const result = await contract.methods.mint(receiver, 100).send();
-
-    const event = result.events.Transfer;
-    expect(event.address).to.equal(collectionAddress);
-    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.equal(receiver);
-    expect(event.returnValues.value).to.equal('100');
-  });
-
   [
     'substrate' as const,
     'ethereum' as const,

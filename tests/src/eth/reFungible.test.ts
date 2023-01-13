@@ -121,25 +121,6 @@ describe('Refungible: Plain calls', () => {
     });
   });
 
-  itEth('Can perform mint() & crossOwnerOf()', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Minty', '6', '6', '');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
-
-    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
-
-    const event = result.events.Transfer;
-    expect(event.address).to.equal(collectionAddress);
-    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.equal(receiver);
-    const tokenId = event.returnValues.tokenId;
-    expect(tokenId).to.be.equal('1');
-
-    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
-    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-  });
-
   [
     'substrate' as const,
     'ethereum' as const,
