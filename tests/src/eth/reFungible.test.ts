@@ -213,7 +213,7 @@ describe('Refungible: Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
 
-    const rftToken = await helper.ethNativeContract.rftTokenById(token.collectionId, token.tokenId, owner);
+    const rftToken = await helper.ethNativeContract.rftTokenById(token.collectionId, token.tokenId, owner, true);
 
     {
       await rftToken.methods.approve(operator, 15n).send({from: owner});
