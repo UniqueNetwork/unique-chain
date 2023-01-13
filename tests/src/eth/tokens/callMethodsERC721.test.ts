@@ -14,26 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets, requirePalletsOrSkip} from '../../util';
+import {Pallets} from '../../util';
 import {expect, itEth, usingEthPlaygrounds} from '../util';
 import {IKeyringPair} from '@polkadot/types/types';
 
-[
-  {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-  {mode: 'nft' as const, requiredPallets: []},
-].map(testCase => {
-  describe(`${testCase.mode.toUpperCase()}: ERC-721 call methods`, () => {
-    let donor: IKeyringPair;
 
-    before(async function() {
-      await usingEthPlaygrounds(async (helper, privateKey) => {
-        requirePalletsOrSkip(this, helper, testCase.requiredPallets);
+describe('ERC-721 call methods', () => {
+  let donor: IKeyringPair;
 
-        donor = await privateKey({filename: __filename});
-      });
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = await privateKey({filename: __filename});
     });
+  });
 
-    itEth('name/symbol/description', async ({helper}) => {
+  [
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, requiredPallets: []},
+  ].map(testCase => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: name/symbol/description`, testCase.requiredPallets, async ({helper}) => {
       const callerEth = await helper.eth.createAccountWithBalance(donor);
       const [callerSub] = await helper.arrange.createAccounts([100n], donor);
       const [name, description, tokenPrefix] = ['Name', 'Description', 'Symbol'];
@@ -52,8 +51,13 @@ import {IKeyringPair} from '@polkadot/types/types';
       expect(await collectionSub.methods.symbol().call()).to.eq(tokenPrefix);
       expect(await collectionSub.methods.description().call()).to.eq(description);
     });
+  });
 
-    itEth('totalSupply', async ({helper}) => {
+  [
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, requiredPallets: []},
+  ].map(testCase => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: totalSupply`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const {collection} = await helper.eth.createCollection(testCase.mode, caller, 'TotalSupply', '6', '6');
@@ -62,8 +66,13 @@ import {IKeyringPair} from '@polkadot/types/types';
       const totalSupply = await collection.methods.totalSupply().call();
       expect(totalSupply).to.equal('1');
     });
+  });
 
-    itEth('balanceOf', async ({helper}) => {
+  [
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, requiredPallets: []},
+  ].map(testCase => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: balanceOf`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const {collection} = await helper.eth.createCollection(testCase.mode, caller, 'BalanceOf', 'Descroption', 'Prefix');
@@ -74,8 +83,13 @@ import {IKeyringPair} from '@polkadot/types/types';
       const balance = await collection.methods.balanceOf(caller).call();
       expect(balance).to.equal('3');
     });
+  });
 
-    itEth('ownerOf', async ({helper}) => {
+  [
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, requiredPallets: []},
+  ].map(testCase => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: ownerOf`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const {collection} = await helper.eth.createCollection(testCase.mode, caller, 'OwnerOf', '6', '6');
 
@@ -85,43 +99,45 @@ import {IKeyringPair} from '@polkadot/types/types';
       const owner = await collection.methods.ownerOf(tokenId).call();
       expect(owner).to.equal(caller);
     });
+  });
 
-    // TODO move to rft tests:
-    // itEth('ownerOf after burn', async ({helper}) => {
-    //   const caller = await helper.eth.createAccountWithBalance(donor);
-    //   const receiver = helper.eth.createAccount();
-    //   const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf-AfterBurn', '6', '6');
-    //   const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+  [
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    // TODO {mode: 'nft' as const, requiredPallets: []},
+  ].map(testCase => {
+    itEth(`${testCase.mode.toUpperCase()}: ownerOf after burn`, async ({helper}) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      const receiver = helper.eth.createAccount();
+      const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'OwnerOf-AfterBurn', '6', '6');
 
-    //   const result = await contract.methods.mint(caller).send();
-    //   const tokenId = result.events.Transfer.returnValues.tokenId;
-    //   const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
+      const result = await collection.methods.mint(caller).send();
+      const tokenId = result.events.Transfer.returnValues.tokenId;
+      const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
-    //   await tokenContract.methods.repartition(2).send();
-    //   await tokenContract.methods.transfer(receiver, 1).send();
+      await tokenContract.methods.repartition(2).send();
+      await tokenContract.methods.transfer(receiver, 1).send();
 
-    //   await tokenContract.methods.burnFrom(caller, 1).send();
+      await tokenContract.methods.burnFrom(caller, 1).send();
 
-    //   const owner = await contract.methods.ownerOf(tokenId).call();
-    //   expect(owner).to.equal(receiver);
-    // });
+      const owner = await collection.methods.ownerOf(tokenId).call();
+      expect(owner).to.equal(receiver);
+    });
+  });
 
-    // TODO move to rft tests:
-    // itEth('ownerOf for partial ownership', async ({helper}) => {
-    //   const caller = await helper.eth.createAccountWithBalance(donor);
-    //   const receiver = helper.eth.createAccount();
-    //   const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
-    //   const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+  itEth('RFT: ownerOf for partial ownership', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = helper.eth.createAccount();
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    //   const result = await contract.methods.mint(caller).send();
-    //   const tokenId = result.events.Transfer.returnValues.tokenId;
-    //   const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
+    const result = await contract.methods.mint(caller).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
 
-    //   await tokenContract.methods.repartition(2).send();
-    //   await tokenContract.methods.transfer(receiver, 1).send();
+    await tokenContract.methods.repartition(2).send();
+    await tokenContract.methods.transfer(receiver, 1).send();
 
-    //   const owner = await contract.methods.ownerOf(tokenId).call();
-    //   expect(owner).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
-    // });
+    const owner = await contract.methods.ownerOf(tokenId).call();
+    expect(owner).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
   });
 });
