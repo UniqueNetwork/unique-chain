@@ -577,14 +577,23 @@ impl<T: Config> Pallet<T> {
 		})
 	}
 
-	/// Batch operation to add, edit or remove properties for the token
+	/// A batch operation to add, edit or remove properties for a token.
+	/// It sets or removes a token's properties according to
+	/// `properties_updates` contents:
+	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
+	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
-	/// All affected properties should have mutable permission and sender should have
-	/// permission to edit those properties.
-	///
-	/// - `nesting_budget`: Limit for searching parents in depth to check ownership.
+	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
 	/// - `is_token_create`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
+	///
+	/// All affected properties should have `mutable` permission
+	/// to be **deleted** or to be **set more than once**,
+	/// and the sender should have permission to edit those properties.
+	///
+	/// This function fires an event for each property change.
+	/// In case of an error, all the changes (including the events) will be reverted
+	/// since the function is transactional.
 	#[transactional]
 	fn modify_token_properties(
 		collection: &NonfungibleHandle<T>,

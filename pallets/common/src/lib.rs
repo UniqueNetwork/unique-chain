@@ -1198,6 +1198,15 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// This function sets or removes a collection properties according to
+	/// `properties_updates` contents:
+	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
+	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
+	///
+	/// This function fires an event for each property change.
+	/// In case of an error, all the changes (including the events) will be reverted
+	/// since the function is transactional.
+	#[transactional]
 	fn modify_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1297,7 +1306,6 @@ impl<T: Config> Pallet<T> {
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `properties` - The properties to set.
-	#[transactional]
 	pub fn set_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1328,7 +1336,6 @@ impl<T: Config> Pallet<T> {
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `properties` - The properties to delete.
-	#[transactional]
 	pub fn delete_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
