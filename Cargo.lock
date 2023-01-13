@@ -13093,6 +13093,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-storage",
  "sp-timestamp",
  "sp-transaction-pool",
  "substrate-build-script-utils",

@@ -26,6 +26,7 @@ use futures::{
 	stream::select,
 	task::{Context, Poll},
 };
+use sc_client_api::StorageProvider;
 use tokio::time::Interval;
 
 use unique_rpc::overrides_handle;
@@ -59,6 +60,11 @@ use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::ImportQueue;
+use sp_core::twox_128;
+
+use codec::Decode;
+
+use polkadot_primitives::v2::PersistedValidationData;
 
 use polkadot_service::CollatorPair;
 
@@ -151,6 +157,44 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 		opal_runtime::native_version()
 	}
 }
+
+macro_rules! ez_bounds {
+    ($vis:vis trait $name:ident$(<$($gen:ident $(: $($(+)? $bound:path)*)?),* $(,)?>)? $(:)? $($(+)? $super:path)* {}) => {
+        $vis trait $name $(<$($gen $(: $($bound+)*)?,)*>)?: $($super +)* {}
+        impl<T, $($($gen $(: $($bound+)*)?,)*)?> $name$(<$($gen,)*>)? for T
+        where T: $($super +)* {}
+    }
+}
+ez_bounds!(
+	pub trait RuntimeApiDep<Runtime: RuntimeInstance>:
+		sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+		+ fp_rpc::EthereumRuntimeRPCApi<Block>
+		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
+		+ sp_session::SessionKeys<Block>
+		+ sp_block_builder::BlockBuilder<Block>
+		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
+		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
+		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
+		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
+		+ rmrk_rpc::RmrkApi<
+			Block,
+			AccountId,
+			RmrkCollectionInfo<AccountId>,
+			RmrkInstanceInfo<AccountId>,
+			RmrkResourceInfo,
+			RmrkPropertyInfo,
+			RmrkBaseInfo<AccountId>,
+			RmrkPartType,
+			RmrkTheme,
+		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
+		+ sp_api::Metadata<Block>
+		+ sp_offchain::OffchainWorkerApi<Block>
+		+ cumulus_primitives_core::CollectCollationInfo<Block>
+		+ sp_consensus_aura::AuraApi<Block, AuraId>
+	{
+	}
+);
 
 pub struct AutosealInterval {
 	interval: Interval,
@@ -388,20 +432,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-		+ fp_rpc::EthereumRuntimeRPCApi<Block>
-		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
-		+ sp_session::SessionKeys<Block>
-		+ sp_block_builder::BlockBuilder<Block>
-		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ up_pov_estimate_rpc::PovEstimateApi<Block>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
-		+ sp_api::Metadata<Block>
-		+ sp_offchain::OffchainWorkerApi<Block>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>,
+	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
@@ -707,21 +738,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-		+ fp_rpc::EthereumRuntimeRPCApi<Block>
-		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
-		+ sp_session::SessionKeys<Block>
-		+ sp_block_builder::BlockBuilder<Block>
-		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ up_pov_estimate_rpc::PovEstimateApi<Block>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
-		+ sp_api::Metadata<Block>
-		+ sp_offchain::OffchainWorkerApi<Block>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>
-		+ sp_consensus_aura::AuraApi<Block, AuraId>,
+	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	start_node_impl::<Runtime, RuntimeApi, ExecutorDispatch, _, _>(
@@ -835,9 +852,48 @@ where
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
+pub fn start_dev_shell<Runtime, RuntimeApi, ExecutorDispatch>(
+	config: Configuration,
+) -> sc_service::error::Result<()>
+where
+	Runtime: RuntimeInstance + Send + Sync + 'static,
+	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
+	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
+	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
+		+ Send
+		+ Sync
+		+ 'static,
+	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime>,
+	ExecutorDispatch: NativeExecutionDispatch + 'static,
+{
+	let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
+		config.wasm_method,
+		config.default_heap_pages,
+		config.max_runtime_instances,
+		config.runtime_cache_size,
+	);
+
+	let (client, _backend, _keystore_container, _task_manager) =
+		sc_service::new_full_parts::<Block, RuntimeApi, _>(&config, None, executor)?;
+
+    #[derive(serde::Serialize)]
+    struct StateToPrint {
+        best_number: u32
+    }
+
+    println!("{}", serde_json::to_string_pretty(&StateToPrint {
+        best_number: client.chain_info().best_number
+    }).expect("should not fail"));
+
+	Ok(())
+}
+
+/// Builds a new development service. This service uses instant seal, and mocks
+/// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
 	autoseal_interval: Duration,
+	finalize: bool,
 ) -> sc_service::error::Result<TaskManager>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
@@ -847,21 +903,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
-		+ fp_rpc::EthereumRuntimeRPCApi<Block>
-		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
-		+ sp_session::SessionKeys<Block>
-		+ sp_block_builder::BlockBuilder<Block>
-		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
-		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
-		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ up_pov_estimate_rpc::PovEstimateApi<Block>
-		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
-		+ sp_api::Metadata<Block>
-		+ sp_offchain::OffchainWorkerApi<Block>
-		+ cumulus_primitives_core::CollectCollationInfo<Block>
-		+ sp_consensus_aura::AuraApi<Block, AuraId>,
+	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
@@ -935,9 +977,9 @@ where
 				.pool()
 				.validated_pool()
 				.import_notification_stream()
-				.map(|_| EngineCommand::SealNewBlock {
+				.map(move |_| EngineCommand::SealNewBlock {
 					create_empty: true,
-					finalize: false, // todo:collator finalize true
+					finalize,
 					parent_hash: None,
 					sender: None,
 				}),
@@ -946,9 +988,9 @@ where
 		let autoseal_interval = Box::pin(AutosealInterval::new(&config, autoseal_interval));
 		let idle_commands_stream: Box<
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
-		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
+		> = Box::new(autoseal_interval.map(move |_| EngineCommand::SealNewBlock {
 			create_empty: true,
-			finalize: false, // todo:collator finalize true
+			finalize,
 			parent_hash: None,
 			sender: None,
 		}));
@@ -979,16 +1021,46 @@ where
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
+						const PARACHAIN_SYSTEM: &[u8] = b"ParachainSystem";
+
+						let relay_blocks_per_para_block = 2;
+						let relay_offset = client_for_xcm
+							.storage(
+								block,
+								&sp_storage::StorageKey(
+									[twox_128(b"ParachainSystem"), twox_128(b"ValidationData")]
+										.concat()
+										.to_vec(),
+								),
+							)
+							.expect("read should not fail")
+							.map(|raw_data| {
+								let data: PersistedValidationData = Decode::decode(&mut &raw_data.0[..]).expect("validation data type is correct");
+								data.relay_parent_number + relay_blocks_per_para_block
+							})
+							.unwrap_or(1000);
+						let para_id = client_for_xcm
+							.storage(
+								block,
+								&sp_storage::StorageKey([
+									twox_128(b"ParachainInfo"), twox_128(b"ParachainId")]
+										.concat()
+										.to_vec(),
+									)
+								).expect("read should not fail").map(|id| {
+									Decode::decode(&mut &id.0[..]).expect("id is correct")
+								}).unwrap_or(2000);
 						let mocked_parachain = cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
-							relay_offset: 1000,
-							relay_blocks_per_para_block: 2,
-							para_blocks_per_relay_epoch: 0,
+							relay_offset,
+							relay_blocks_per_para_block,
+							para_blocks_per_relay_epoch: 10,
 							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
-								Default::default(),
-								Default::default(),
+								para_id.into(),
+								// ParachainSystemName(PARACHAIN_SYSTEM),
+								Default::default()
 							),
 							relay_randomness_config: (),
 							raw_downward_messages: vec![],

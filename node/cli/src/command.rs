@@ -35,7 +35,7 @@
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, start_node, start_dev_node},
+	service::{new_partial, start_node, start_dev_node, start_dev_shell},
 };
 #[cfg(feature = "runtime-benchmarks")]
 use crate::chain_spec::default_runtime;
@@ -455,6 +455,16 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::TryRuntime) => {
 			Err("Try-runtime must be enabled by `--features try-runtime`.".into())
 		}
+		Some(Subcommand::CurrentState { run }) => {
+			let runner = cli.create_runner(&run.normalize())?;
+
+			runner.sync_run(|config| {
+				return start_node_using_chain_runtime! {
+					start_dev_shell(config)
+				};
+			})?;
+			std::process::exit(0);
+		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
@@ -486,9 +496,19 @@ pub fn run() -> Result<()> {
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, autoseal_interval).map_err(Into::into)
+						start_dev_node(config, autoseal_interval, false).map_err(Into::into)
 					};
-				};
+				} else if cli.local_maintenance {
+					let autoseal_interval = Duration::from_secs(12);
+
+					let mut config = config;
+
+					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
+
+					return start_node_using_chain_runtime! {
+						start_dev_node(config, autoseal_interval, true).map_err(Into::into)
+					};
+                };
 
 				let para_id = extensions
 					.map(|e| e.para_id)

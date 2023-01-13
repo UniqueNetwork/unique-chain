@@ -62,6 +62,12 @@ pub enum Subcommand {
 	/// Try runtime. Note: `try-runtime` feature must be enabled.
 	#[cfg(not(feature = "try-runtime"))]
 	TryRuntime,
+
+    /// Print current node data
+    CurrentState {
+        #[structopt(flatten)]
+        run: cumulus_client_cli::RunCmd,
+    },
 }
 
 #[derive(Debug, Parser)]
@@ -81,6 +87,9 @@ pub struct Cli {
 	/// The default interval is 500 milliseconds
 	#[structopt(default_value = "500", long)]
 	pub idle_autoseal_interval: u64,
+
+	#[structopt(long)]
+	pub local_maintenance: bool,
 
 	/// Disable automatic hardware benchmarks.
 	///

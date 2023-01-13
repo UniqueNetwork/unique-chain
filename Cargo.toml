@@ -44,6 +44,7 @@ pallet-unique-scheduler-v2 = { path = "pallets/scheduler-v2", default-features =
 precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }
 struct-versioning = { path = "crates/struct-versioning" }
 uc-rpc = { path = "client/rpc" }
+uc-local-maintenance = { path = "client/local-maintenance" }
 unique-rpc = { path = "node/rpc" }
 up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
@@ -91,6 +92,7 @@ cumulus-primitives-utility = { git = "https://github.com/paritytech/cumulus", br
 cumulus-relay-chain-inprocess-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.37" }
 cumulus-relay-chain-interface = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.37" }
 cumulus-relay-chain-minimal-node = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.37" }
+cumulus-test-relay-sproof-builder = { git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.37" }
 frame-executive = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
@@ -145,6 +147,7 @@ sp-session = { default-features = false, git = "https://github.com/paritytech/su
 sp-staking = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+sp-storage = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-tracing = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 sp-transaction-pool = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
