@@ -58,7 +58,7 @@ describe('Refungible nesting', () => {
     });
   });
 
-  itSub('owner can unnest nested token', async ({helper}) => {
+  itSub('Owner can unnest nested token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
 
@@ -77,25 +77,30 @@ describe('Refungible nesting', () => {
     expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
   });
 
-  itSub('owner can burn nested token', async ({helper}) => {
+  itSub('Owner can burn nested token pieces', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
 
     // Owner mints nested RFT token:
     const collectionRFT = await helper.rft.mintCollection(alice);
-    const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
+    const token = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
+    await token.transfer(alice, targetToken.nestingAccount(), 30n);
 
     // 1.1 Owner can partially burnFrom nested pieces:
-    await token.burnFrom(alice, targetToken.nestingAccount(), 6n);
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
-    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(4n);
+    await token.burnFrom(alice, targetToken.nestingAccount(), 10n);
+    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(70n);
+    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(20n);
     expect(await targetToken.getChildren()).to.has.length(1);
 
     // 1.1 Owner can burnFrom all nested pieces:
-    await token.burnFrom(alice, targetToken.nestingAccount(), 4n);
+    await token.burnFrom(alice, targetToken.nestingAccount(), 20n);
     expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.has.length(0);
-    expect(await token.doesExist()).to.be.false;
+    expect(await token.doesExist()).to.be.true;
+
+    // 2. Target token does not contain any pieces and can be burnt:
+    await targetToken.burn(alice);
+    expect(await targetToken.doesExist()).to.be.false;
   });
 });
 
