@@ -198,21 +198,21 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn set_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(4_361_000 as u64)
-			// Standard Error: 5_349_868
-			.saturating_add(Weight::from_ref_time(637_246_356 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(31_850_484 as u64)
+			// Standard Error: 9_618
+			.saturating_add(Weight::from_ref_time(4_721_947 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
-	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn delete_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(4_489_000 as u64)
-			// Standard Error: 5_738_954
-			.saturating_add(Weight::from_ref_time(689_912_822 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(13_795_000 as u64)
+			// Standard Error: 28_239
+			.saturating_add(Weight::from_ref_time(12_840_446 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -382,21 +382,21 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn set_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(4_361_000 as u64)
-			// Standard Error: 5_349_868
-			.saturating_add(Weight::from_ref_time(637_246_356 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(31_850_484 as u64)
+			// Standard Error: 9_618
+			.saturating_add(Weight::from_ref_time(4_721_947 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
-	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
+	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn delete_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(4_489_000 as u64)
-			// Standard Error: 5_738_954
-			.saturating_add(Weight::from_ref_time(689_912_822 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(13_795_000 as u64)
+			// Standard Error: 28_239
+			.saturating_add(Weight::from_ref_time(12_840_446 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
