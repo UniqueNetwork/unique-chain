@@ -267,9 +267,7 @@ mod erc721 {
 			// Readonly
 			ERC165Call(_, _) => None,
 
-			// Not sponsored
-			FinishMinting => None,
-
+			// Sponsored
 			Mint { .. }
 			| MintCheckId { .. }
 			| MintWithTokenUri { .. }
