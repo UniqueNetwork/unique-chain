@@ -112,7 +112,7 @@ describe('ERC-721 call methods', () => {
 
       const result = await collection.methods.mint(caller).send();
       const tokenId = result.events.Transfer.returnValues.tokenId;
-      const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
+      const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller, true);
 
       await tokenContract.methods.repartition(2).send();
       await tokenContract.methods.transfer(receiver, 1).send();
