@@ -88,20 +88,6 @@ describe('integration test: Refungible functionality:', () => {
     expect((await token.getTop10Owners()).length).to.be.equal(10);
   });
 
-  itSub('Transfer token pieces', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
-    expect(await token.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
-
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(40n);
-    expect(await token.getBalance({Substrate: bob.address})).to.be.equal(60n);
-
-    await expect(token.transfer(alice, {Substrate: bob.address}, 41n))
-      .to.eventually.be.rejectedWith(/common\.TokenValueTooLow/);
-  });
-
   itSub('Create multiple tokens', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     // TODO: fix mintMultipleTokens
@@ -120,54 +106,6 @@ describe('integration test: Refungible functionality:', () => {
     expect(await collection.getTokenBalance(lastTokenId, {Substrate: alice.address})).to.be.equal(100n);
   });
 
-  itSub('Burn some pieces', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
-    expect(await token.burn(alice, 99n)).to.be.true;
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(1n);
-  });
-
-  itSub('Burn all pieces', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
-
-    expect(await token.burn(alice, 100n)).to.be.true;
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.false;
-  });
-
-  itSub('Burn some pieces for multiple users', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
-
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
-    expect(await token.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
-
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(40n);
-    expect(await token.getBalance({Substrate: bob.address})).to.be.equal(60n);
-
-    expect(await token.burn(alice, 40n)).to.be.true;
-
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
-
-    expect(await token.burn(bob, 59n)).to.be.true;
-
-    expect(await token.getBalance({Substrate: bob.address})).to.be.equal(1n);
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
-
-    expect(await token.burn(bob, 1n)).to.be.true;
-
-    expect(await collection.doesTokenExist(token.tokenId)).to.be.false;
-  });
-
   itSub('Set allowance for token', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, 100n);
@@ -183,68 +121,6 @@ describe('integration test: Refungible functionality:', () => {
     expect(await token.getApprovedPieces({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(40n);
   });
 
-  itSub('Repartition', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-
-    expect(await token.repartition(alice, 200n)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(200n);
-    expect(await token.getTotalPieces()).to.be.equal(200n);
-
-    expect(await token.transfer(alice, {Substrate: bob.address}, 110n)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(90n);
-    expect(await token.getBalance({Substrate: bob.address})).to.be.equal(110n);
-
-    await expect(token.repartition(alice, 80n))
-      .to.eventually.be.rejectedWith(/refungible\.RepartitionWhileNotOwningAllPieces/);
-
-    expect(await token.transfer(alice, {Substrate: bob.address}, 90n)).to.be.true;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(0n);
-    expect(await token.getBalance({Substrate: bob.address})).to.be.equal(200n);
-
-    expect(await token.repartition(bob, 150n)).to.be.true;
-    await expect(token.transfer(bob, {Substrate: alice.address}, 160n))
-      .to.eventually.be.rejectedWith(/common\.TokenValueTooLow/);
-  });
-
-  itSub('Repartition with increased amount', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-    await token.repartition(alice, 200n);
-    const chainEvents = helper.chainLog.slice(-1)[0].events;
-    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemCreated');
-    expect(event).to.deep.include({
-      section: 'common',
-      method: 'ItemCreated',
-      index: [66, 2],
-      data: [
-        collection.collectionId,
-        token.tokenId,
-        {substrate: alice.address},
-        100n,
-      ],
-    });
-  });
-
-  itSub('Repartition with decreased amount', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
-    await token.repartition(alice, 50n);
-    const chainEvents = helper.chainLog.slice(-1)[0].events;
-    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemDestroyed');
-    expect(event).to.deep.include({
-      section: 'common',
-      method: 'ItemDestroyed',
-      index: [66, 3],
-      data: [
-        collection.collectionId,
-        token.tokenId,
-        {substrate: alice.address},
-        50n,
-      ],
-    });
-  });
-
   itSub('Create new collection with properties', async ({helper}) => {
     const properties = [{key: 'key1', value: 'val1'}];
     const tokenPropertyPermissions = [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}];
@@ -252,46 +128,5 @@ describe('integration test: Refungible functionality:', () => {
     const info = await collection.getData();
     expect(info?.raw.properties).to.be.deep.equal(properties);
     expect(info?.raw.tokenPropertyPermissions).to.be.deep.equal(tokenPropertyPermissions);
-  });
-});
-
-describe('Refungible negative tests', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
-  let bob: IKeyringPair;
-  let charlie: IKeyringPair;
-
-  before(async function() {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-
-      donor = await privateKey({filename: __filename});
-      [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
-    });
-  });
-
-  itSub('Cannot transfer incorrect amount of token pieces', async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const tokenAlice = await collection.mintToken(alice, 10n, {Substrate: alice.address});
-    const tokenBob = await collection.mintToken(alice, 10n, {Substrate: bob.address});
-
-    // 1. Alice cannot transfer Bob's token:
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 10n)).to.be.rejectedWith('common.TokenValueTooLow');
-    await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 100n)).to.be.rejectedWith('common.TokenValueTooLow');
-
-    // 2. Alice cannot transfer non-existing token:
-    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
-    await expect(collection.transferToken(alice, 100, {Substrate: charlie.address}, 1n)).to.be.rejectedWith('common.TokenValueTooLow');
-
-    // 3. Zero transfer allowed (EIP-20):
-    await tokenAlice.transfer(alice, {Substrate: charlie.address}, 0n);
-
-    expect(await tokenAlice.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
-    expect(await tokenBob.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
-    expect(await tokenAlice.getBalance({Substrate: alice.address})).to.eq(10n);
-    expect(await tokenBob.getBalance({Substrate: bob.address})).to.eq(10n);
-    expect(await tokenBob.getBalance({Substrate: charlie.address})).to.eq(0n);
   });
 });

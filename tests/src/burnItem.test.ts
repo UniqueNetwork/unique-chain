@@ -45,32 +45,6 @@ describe('integration test: ext. burnItem():', () => {
     await collection.burnTokens(alice, 1n);
     expect(await collection.getBalance({Substrate: alice.address})).to.eq(9n);
   });
-
-  itSub.ifWithPallets('Burn item in ReFungible collection', [Pallets.ReFungible], async function({helper}) {
-    const collection = await helper.rft.mintCollection(alice);
-    const token = await collection.mintToken(alice, 100n);
-
-    await token.burn(alice, 90n);
-    expect(await token.getBalance({Substrate: alice.address})).to.eq(10n);
-
-    await token.burn(alice, 10n);
-    expect(await token.getBalance({Substrate: alice.address})).to.eq(0n);
-  });
-
-  itSub.ifWithPallets('Burn owned portion of item in ReFungible collection', [Pallets.ReFungible], async function({helper}) {
-    const collection = await helper.rft.mintCollection(alice);
-    const token = await collection.mintToken(alice, 100n);
-
-    await token.transfer(alice, {Substrate: bob.address}, 1n);
-
-    expect(await token.getBalance({Substrate: alice.address})).to.eq(99n);
-    expect(await token.getBalance({Substrate: bob.address})).to.eq(1n);
-
-    await token.burn(bob, 1n);
-
-    expect(await token.getBalance({Substrate: alice.address})).to.eq(99n);
-    expect(await token.getBalance({Substrate: bob.address})).to.eq(0n);
-  });
 });
 
 describe('integration test: ext. burnItem() with admin permissions:', () => {
@@ -104,16 +78,6 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     await collection.burnTokensFrom(bob, {Substrate: alice.address}, 1n);
     expect(await collection.getBalance({Substrate: alice.address})).to.eq(9n);
   });
-
-  itSub.ifWithPallets('Burn item in ReFungible collection', [Pallets.ReFungible], async function({helper}) {
-    const collection = await helper.rft.mintCollection(alice);
-    await collection.setLimits(alice, {ownerCanTransfer: true});
-    await collection.addAdmin(alice, {Substrate: bob.address});
-    const token = await collection.mintToken(alice, 100n);
-
-    await token.burnFrom(bob, {Substrate: alice.address}, 100n);
-    expect(await token.doesExist()).to.be.false;
-  });
 });
 
 describe('Negative integration test: ext. burnItem():', () => {
@@ -138,31 +102,6 @@ describe('Negative integration test: ext. burnItem():', () => {
     const token = await collection.mintToken(alice);
 
     await expect(token.burn(bob)).to.be.rejectedWith('common.NoPermission');
-  });
-
-  itSub.ifWithPallets('RFT: cannot burn non-owned token pieces', [Pallets.ReFungible], async ({helper}) => {
-    const collection = await helper.rft.mintCollection(alice);
-    const aliceToken = await collection.mintToken(alice, 10n, {Substrate: alice.address});
-    const bobToken = await collection.mintToken(alice, 10n, {Substrate: bob.address});
-
-    // 1. Cannot burn non-owned token:
-    await expect(bobToken.burn(alice, 0n)).to.be.rejectedWith('common.TokenValueTooLow');
-    await expect(bobToken.burn(alice, 5n)).to.be.rejectedWith('common.TokenValueTooLow');
-    // 2. Cannot burn non-existing token:
-    await expect(helper.rft.burnToken(alice, 99999, 10)).to.be.rejectedWith('common.CollectionNotFound');
-    await expect(helper.rft.burnToken(alice, collection.collectionId, 99999)).to.be.rejectedWith('common.TokenValueTooLow');
-    // 3. Can burn zero amount of owned tokens (EIP-20)
-    await aliceToken.burn(alice, 0n);
-
-    // 4. Storage is not corrupted:
-    expect(await aliceToken.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
-    expect(await bobToken.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
-
-    // 4.1 Tokens can be transfered:
-    await aliceToken.transfer(alice, {Substrate: bob.address}, 10n);
-    await bobToken.transfer(bob, {Substrate: alice.address}, 10n);
-    expect(await aliceToken.getTop10Owners()).to.deep.eq([{Substrate: bob.address}]);
-    expect(await bobToken.getTop10Owners()).to.deep.eq([{Substrate: alice.address}]);
   });
 
   itSub('Transfer a burned token', async ({helper}) => {

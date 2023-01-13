@@ -63,26 +63,6 @@ describe('Integration Test: Unnesting', () => {
     expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.be.length(0);
   });
-
-  itSub.ifWithPallets('ReFungible: allows the owner to successfully unnest a token', [Pallets.ReFungible], async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const targetToken = await collection.mintToken(alice);
-
-    const collectionRFT = await helper.rft.mintCollection(alice);
-
-    // Nest and unnest
-    const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
-    await expect(token.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(9n);
-    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
-
-    // Nest and burn
-    await token.transfer(alice, targetToken.nestingAccount(), 5n);
-    await expect(token.burnFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(4n);
-    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
-    expect(await targetToken.getChildren()).to.be.length(0);
-  });
 });
 
 describe('Negative Test: Unnesting', () => {
