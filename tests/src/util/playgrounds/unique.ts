@@ -651,6 +651,9 @@ export class ChainHelperBase {
     try {
       result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
       events = this.eventHelper.extractEvents(result.result.events);
+      const errorEvent = events.find((event) => event.method == 'ExecutedFailed' || event.method == 'CreatedFailed');
+      if (errorEvent)
+        throw Error(errorEvent.method + ': ' + extrinsic);
     }
     catch(e) {
       if(!(e as object).hasOwnProperty('status')) throw e;
