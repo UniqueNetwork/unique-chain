@@ -34,7 +34,7 @@ solidity_type_name! {
 	bool => "bool" true = "false",
 }
 
-impl SolidityTypeName for void {
+impl SolidityTypeName for () {
 	fn solidity_name(_writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
 		Ok(())
 	}
