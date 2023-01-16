@@ -218,6 +218,9 @@ jobs:
             fi
         shell: bash
 
+      - name: Pull chainql docker image
+        run: docker pull uniquenetwork/builder-chainql:latest
+
       - name: Generate ENV related extend launch-config file
         uses: cuchi/jinja2-action@v1.2.0
         with:
