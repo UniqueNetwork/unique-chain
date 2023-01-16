@@ -93,7 +93,7 @@ impl Event {
 
 		let args = fields.iter().map(|f| {
 			let ty = &f.ty;
-			quote! {nameof(<#ty>::SIGNATURE) fixed(",")}
+			quote! {nameof(<#ty as ::evm_coder::abi::AbiType>::SIGNATURE) fixed(",")}
 		});
 		// Remove trailing comma
 		let shift = (!fields.is_empty()).then(|| quote! {shift_left(1)});
