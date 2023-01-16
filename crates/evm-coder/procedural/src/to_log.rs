@@ -89,22 +89,14 @@ impl Event {
 			));
 		}
 
-		let mut args = proc_macro2::TokenStream::new();
-		let mut has_params = false;
-		for arg in fields.iter() {
-			has_params = true;
-			let ty = &arg.ty;
-			args.extend(quote! {nameof(<#ty>::SIGNATURE)});
-			args.extend(quote! {fixed(",")})
-		}
-
+		let args = fields.iter().map(|f| {
+			let ty = &f.ty;
+			quote! {nameof(<#ty>::SIGNATURE) fixed(",")}
+		});
 		// Remove trailing comma
-		if has_params {
-			args.extend(quote! {shift_left(1)})
-		}
+		let shift = (!fields.is_empty()).then(|| quote! {shift_left(1)});
 
-		let signature = quote! { ::evm_coder::make_signature!(new fixed(#name_lit) fixed("(") #args fixed(")")) };
-
+		let signature = quote! { ::evm_coder::make_signature!(new fixed(#name_lit) fixed("(") #(#args)* #shift fixed(")")) };
 		let selector = quote! {
 			{
 				let signature = #signature;
