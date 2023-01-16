@@ -1191,8 +1191,10 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(spender)?;
 		}
 
-		if collection.limits.owner_can_transfer() && collection.is_owner_or_admin(spender) {
-			return Ok(None);
+		if collection.ignores_token_restrictions(spender) {
+			return Ok(Self::compute_allowance_decrease(
+				collection, token, from, &spender, amount,
+			));
 		}
 
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
