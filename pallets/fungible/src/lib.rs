@@ -266,7 +266,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties.into_iter())
 	}
 
 	/// Delete properties of the collection, associated with the provided keys.
@@ -275,7 +275,11 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+		<PalletCommon<T>>::delete_collection_properties(
+			collection,
+			sender,
+			property_keys.into_iter(),
+		)
 	}
 
 	/// Checks if collection has tokens. Return `true` if it has.

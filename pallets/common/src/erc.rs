@@ -125,7 +125,7 @@ where
 			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?;
 
-		<Pallet<T>>::set_collection_properties(self, &caller, properties)
+		<Pallet<T>>::set_collection_properties(self, &caller, properties.into_iter())
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -158,7 +158,8 @@ where
 			})
 			.collect::<Result<Vec<_>>>()?;
 
-		<Pallet<T>>::delete_collection_properties(self, &caller, keys).map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::delete_collection_properties(self, &caller, keys.into_iter())
+			.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// Get collection property.
