@@ -1,5 +1,10 @@
+// Normalize type names used on `chain` to their Rust address-like names mapped to the indexes of these types in the registry.
+// 
+// Usage: chainql --tla-code=chain="cql.chain('ws://localhost:9944').latest" typeNames.jsonnet
+
 function(chain)
 local
+	// Converts the name of a type under `id` into its Rust representation
 	typeName(id) = local
 		ty = chain._meta.types.types[id],
 		name = if std.objectHas(ty.type, "path") then
@@ -12,8 +17,9 @@ local
 		else error "Can't generate useable name for " + ty.type,
 		generics = if std.objectHas(ty.type, "params") then
 			'<' + std.join(', ', std.map(function(p) if p.type == null then 'Spec#'+id else typeName(p.type), ty.type.params)) + '>'
-		else ''
-	; name + generics,
+		else ''; 
+		name + generics,
+	// Replaces the `obj`'s first found element's `prefix` with `short` and returns that single element as an array
 	shortenPrefix(obj, prefix, short) = {
 		[short]: obj[field]
 		for field in std.objectFields(obj)
@@ -22,6 +28,7 @@ local
 	},
 ;
 
+// Index all types, converting their names into Rust format
 local typesRaw = {
 	[typeName(id)]: id
 	for id in std.range(0, std.length(chain._meta.types.types)-1)

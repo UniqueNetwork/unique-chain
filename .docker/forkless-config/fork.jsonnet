@@ -1,13 +1,20 @@
+// Get live chain data on the URL provided with `forkFrom`, and 
+// merge the necessary data into chain spec `rawSpec` to launch a new chain with.
+// 
+// Usage: chainql --tla-code=rawSpec="import 'parachain-spec-raw.json'" --tla-str=forkFrom="wss://some-parachain.node:443" fork.jsonnet > modified-spec-raw.json
 
 function(rawSpec, forkFrom)
+// Get data from the live chain
 local sourceChain = cql.chain(forkFrom).latest;
 
+// Convert all keys to their hex format unless they do not exist
 local raw = local sourceRaw = sourceChain._raw._preloadKeys; {
   [key]: cql.toHex(sourceRaw[key])
   for key in std.objectFields(sourceRaw)
   if sourceRaw[key] != null
 };
 
+// Get normalized type names used on the chain
 local typeNames = (import './typeNames.jsonnet')(sourceChain);
 
 local
@@ -41,13 +48,14 @@ unwantedPrefixes = [
 	sourceChain.System._key.Digest,
 ] + auraKeys,
 
+// Filter elements with unwanted keys
 cleanupRaw(raw) = {
 	[key]: raw[key]
 	for key in std.objectFields(raw)
 	if std.all(std.map(function(prefix) !std.startsWith(key, prefix), unwantedPrefixes))
 };
 
-
+// Merge data from the forked chain and the chain spec, cleaning up unwanted keys from the chain and adding wanted keys from the chain spec
 local originalRaw = rawSpec.genesis.raw.top;
 local outSpec = rawSpec {
 	genesis+: {
@@ -72,12 +80,14 @@ outSpec {
 	genesis+: {
 		raw+: {
 			top+: {
+				// Calculate total issuance (previous total issuance - Alice's funds + 1 Munique)
 				[totalIssuance]: cql.calc([
 					Munique,
 					if std.objectHas(super, totalIssuance) then sourceChain._decode(typeNames.u128, super[totalIssuance]) else '0',
 					if std.objectHas(super, aliceAccount) then sourceChain._decode(typeNames.AccountInfo, super[aliceAccount]).data.free else '0',
 					'-', '+',
 				]),
+				// Encode Alice's account with new balance
 				[aliceAccount]: sourceChain._encode(typeNames.AccountInfo, {
 					nonce: 0,
 					consumers: 3,

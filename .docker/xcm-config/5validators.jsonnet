@@ -1,3 +1,6 @@
+// Add genesis data with 5 staker validators to some chain spec JSON.
+// 
+// Usage: `chainql --tla-code=spec="import 'kusama.json'" 5validators.jsonnet > kusama-modified.json`
 
 function(spec)
   spec {
