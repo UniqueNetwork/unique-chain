@@ -17,15 +17,19 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, Pallets, usingPlaygrounds} from '../util';
 import {UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '../util/playgrounds/unique';
+import {UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '../util/playgrounds/unique';
 
 describe('Integration Test: Unnesting', () => {
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
+  let charlie: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({filename: __filename});
+      [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 50n, 50n], donor);
       [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 50n, 50n], donor);
     });
   });
@@ -269,8 +273,6 @@ describe('Integration Test: Unnesting', () => {
 
       expect((await targetNft.getChildren()).length).to.be.equal(0);
     }));
-=======
->>>>>>> 483c1f0f (Combine refungible tests)
 });
 
 describe('Negative Test: Unnesting', () => {
