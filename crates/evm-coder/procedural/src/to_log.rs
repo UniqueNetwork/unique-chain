@@ -61,11 +61,13 @@ struct Event {
 	name_screaming: Ident,
 	fields: Vec<EventField>,
 	selector: proc_macro2::TokenStream,
+	selector: proc_macro2::TokenStream,
 }
 
 impl Event {
 	fn try_from(variant: &Variant) -> syn::Result<Self> {
 		let name = &variant.ident;
+		let name_lit = proc_macro2::Literal::string(name.to_string().as_str());
 		let name_lit = proc_macro2::Literal::string(name.to_string().as_str());
 		let name_screaming = snake_ident_to_screaming(name);
 
@@ -89,14 +91,22 @@ impl Event {
 			));
 		}
 
-		let args = fields.iter().map(|f| {
-			let ty = &f.ty;
-			quote! {nameof(<#ty as ::evm_coder::abi::AbiType>::SIGNATURE) fixed(",")}
-		});
-		// Remove trailing comma
-		let shift = (!fields.is_empty()).then(|| quote! {shift_left(1)});
+		let mut args = proc_macro2::TokenStream::new();
+		let mut has_params = false;
+		for arg in fields.iter() {
+			has_params = true;
+			let ty = &arg.ty;
+			args.extend(quote! {nameof(<#ty>::SIGNATURE)});
+			args.extend(quote! {fixed(",")})
+		}
 
-		let signature = quote! { ::evm_coder::make_signature!(new fixed(#name_lit) fixed("(") #(#args)* #shift fixed(")")) };
+		// Remove trailing comma
+		if has_params {
+			args.extend(quote! {shift_left(1)})
+		}
+
+		let signature = quote! { ::evm_coder::make_signature!(new fixed(#name_lit) fixed("(") #args fixed(")")) };
+
 		let selector = quote! {
 			{
 				let signature = #signature;
@@ -153,6 +163,7 @@ impl Event {
 		let selector = &self.selector;
 
 		quote! {
+			const #name_screaming: [u8; 32] = #selector;
 			const #name_screaming: [u8; 32] = #selector;
 		}
 	}
