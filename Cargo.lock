@@ -2340,7 +2340,7 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.2.2"
+version = "0.2.3"
 dependencies = [
  "Inflector",
  "hex",
