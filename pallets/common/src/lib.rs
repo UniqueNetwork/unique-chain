@@ -390,8 +390,10 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 
-	/// Return **true** if `user` was not allowed to have tokens, and he can ignore such restrictions.
-	pub fn ignores_allowance(&self, user: &T::CrossAccountId) -> bool {
+	/// Returns **true** if
+	/// * the `user`is a collection owner or admin
+	/// * the collection limits allow the owner/admins to transfer/burn any collection token
+	pub fn ignores_token_restrictions(&self, user: &T::CrossAccountId) -> bool {
 		self.limits.owner_can_transfer() && self.is_owner_or_admin(user)
 	}
 
