@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM uniquenetwork/services:latest
 
 ARG RUST_TOOLCHAIN
 ARG NETWORK
@@ -10,10 +10,6 @@ ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 
 RUN echo "$NETWORK\n" && echo "$RUST_TOOLCHAIN\n"
-
-RUN apt-get update && apt-get install -y git curl libssl-dev llvm pkg-config libclang-dev clang git make cmake protobuf-compiler
-
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
