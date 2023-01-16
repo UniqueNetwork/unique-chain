@@ -76,6 +76,7 @@ describe('Pallet presence', () => {
           appPromotion,
           testUtils,
           ...rmrkPallets,
+          ...collatorSelection,
         );
       } else if (chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
         requiredPallets.push(

@@ -143,7 +143,7 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-#[cfg(feature = "quartz-runtime")]
+#[cfg(not(feature = "unique-runtime"))]
 macro_rules! testnet_genesis {
 	(
 		$runtime:path,
@@ -207,7 +207,7 @@ macro_rules! testnet_genesis {
 	}};
 }
 
-#[cfg(not(feature = "quartz-runtime"))]
+#[cfg(feature = "unique-runtime")]
 macro_rules! testnet_genesis {
 	(
 		$runtime:path,
