@@ -1178,8 +1178,10 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(spender)?;
 		}
 
-		if collection.limits.owner_can_transfer() && collection.is_owner_or_admin(spender) {
-			return Ok(None);
+		if collection.ignores_token_restrictions(spender) {
+			return Ok(Self::compute_allowance_decrease(
+				collection, token, from, &spender, amount,
+			));
 		}
 
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
@@ -1196,21 +1198,30 @@ impl<T: Config> Pallet<T> {
 			);
 			return Ok(None);
 		}
-		let allowance =
-			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
+
+		let allowance = Self::compute_allowance_decrease(collection, token, from, &spender, amount);
+		if allowance.is_some() {
+			return Ok(allowance);
+		}
 
 		// Allowance (if any) would be reduced if spender is also wallet operator
 		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
 			return Ok(allowance);
 		}
 
-		if allowance.is_none() {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
-		Ok(allowance)
+		Err(<CommonError<T>>::ApprovedValueTooLow.into())
+	}
+
+	/// Returns `Some(amount)` if the `spender` have allowance to spend this amount.
+	/// Otherwise, it returns `None`.
+	fn compute_allowance_decrease(
+		collection: &RefungibleHandle<T>,
+		token: TokenId,
+		from: &T::CrossAccountId,
+		spender: &T::CrossAccountId,
+		amount: u128,
+	) -> Option<u128> {
+		<Allowance<T>>::get((collection.id, token, from, spender)).checked_sub(amount)
 	}
 
 	/// Transfer RFT token pieces from one account to another.

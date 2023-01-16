@@ -1246,7 +1246,7 @@ impl<T: Config> Pallet<T> {
 			collection.check_allowlist(spender)?;
 		}
 
-		if collection.limits.owner_can_transfer() && collection.is_owner_or_admin(spender) {
+		if collection.ignores_token_restrictions(spender) {
 			return Ok(());
 		}
 
@@ -1269,11 +1269,8 @@ impl<T: Config> Pallet<T> {
 		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
 			return Ok(());
 		}
-		ensure!(
-			collection.ignores_allowance(spender),
-			<CommonError<T>>::ApprovedValueTooLow
-		);
-		Ok(())
+
+		Err(<CommonError<T>>::ApprovedValueTooLow.into())
 	}
 
 	/// Transfer NFT token from one account to another.
