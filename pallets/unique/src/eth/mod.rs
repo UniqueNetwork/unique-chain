@@ -33,7 +33,6 @@ use pallet_common::{
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
-use sp_std::vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
 	CreateCollectionData,
@@ -316,13 +315,14 @@ where
 			<PalletCommon<T>>::set_collection_properties(
 				&collection,
 				&caller,
-				vec![up_data_structs::Property {
+				[up_data_structs::Property {
 					key: key::base_uri(),
 					value: base_uri
 						.into_bytes()
 						.try_into()
 						.map_err(|_| "base uri is too large")?,
-				}],
+				}]
+				.into_iter(),
 			)
 			.map_err(dispatch_to_evm::<T>)?;
 		}

@@ -176,7 +176,7 @@ benchmarks! {
 			key: property_key(p as usize),
 			value: property_value(),
 		}).collect::<Vec<_>>();
-	}: {<Pallet<T>>::set_collection_properties(&collection, &owner, props)?}
+	}: {<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?}
 
 	delete_collection_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -188,7 +188,7 @@ benchmarks! {
 			key: property_key(p as usize),
 			value: property_value(),
 		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_collection_properties(&collection, &owner, props)?;
+		<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?;
 		let to_delete = (0..b).map(|p| property_key(p as usize)).collect::<Vec<_>>();
-	}: {<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete)?}
+	}: {<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete.into_iter())?}
 }
