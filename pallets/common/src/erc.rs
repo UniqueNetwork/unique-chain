@@ -503,18 +503,12 @@ where
 	}
 	/// Set the collection access method.
 	/// @param mode Access mode
-	/// 	0 for Normal
-	/// 	1 for AllowList
-	fn set_collection_access(&mut self, caller: caller, mode: u8) -> Result<()> {
+	fn set_collection_access(&mut self, caller: caller, mode: eth::AccessMode) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 		let permissions = CollectionPermissions {
-			access: Some(match mode {
-				0 => AccessMode::Normal,
-				1 => AccessMode::AllowList,
-				_ => return Err("not supported access mode".into()),
-			}),
+			access: Some(mode.into()),
 			..Default::default()
 		};
 		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
