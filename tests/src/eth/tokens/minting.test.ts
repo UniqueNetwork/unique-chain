@@ -35,7 +35,7 @@ describe('Minting tokens', () => {
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase => {
-    itEth(`${testCase.mode.toUpperCase()}: Can mint() for Substrate collection`, async ({helper}) => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: Can mint() for Substrate collection`, testCase.requiredPallets, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
       const mintingParams = testCase.mode === 'ft' ? [receiver, 100] : [receiver];
@@ -73,7 +73,7 @@ describe('Minting tokens', () => {
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase => {
-    itEth(`${testCase.mode.toUpperCase()}: Can mint() for Ethereum collection`, async ({helper}) => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: Can mint() for Ethereum collection`, testCase.requiredPallets, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
       const mintingParams = testCase.mode === 'ft' ? [receiver, 100] : [receiver];
@@ -107,7 +107,7 @@ describe('Minting tokens', () => {
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
     {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase => {
-    itEth(`${testCase.mode.toUpperCase()}: Can mint() for Ethereum collection`, async ({helper}) => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: Can mint() for Ethereum collection`, testCase.requiredPallets, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
       const mintingParams = testCase.mode === 'ft' ? [receiver, 100] : [receiver];
@@ -140,7 +140,7 @@ describe('Minting tokens', () => {
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase => {
-    itEth(`${testCase.mode.toUpperCase()}: Can mintWithTokenURI() for Ethereum collection`, async ({helper}) => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: Can mintWithTokenURI() for Ethereum collection`, testCase.requiredPallets, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
 

@@ -105,7 +105,7 @@ describe('ERC-721 call methods', () => {
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
     // TODO {mode: 'nft' as const, requiredPallets: []},
   ].map(testCase => {
-    itEth(`${testCase.mode.toUpperCase()}: ownerOf after burn`, async ({helper}) => {
+    itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: ownerOf after burn`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
       const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'OwnerOf-AfterBurn', '6', '6');
@@ -124,7 +124,7 @@ describe('ERC-721 call methods', () => {
     });
   });
 
-  itEth('RFT: ownerOf for partial ownership', async ({helper}) => {
+  itEth.ifWithPallets('RFT: ownerOf for partial ownership', [Pallets.ReFungible], async ({helper}) => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
