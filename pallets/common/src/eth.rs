@@ -18,7 +18,11 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
+<<<<<<< HEAD
 use evm_coder::{AbiCoder, types::Address};
+=======
+use evm_coder::{AbiCoder, types::address};
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
@@ -66,7 +70,11 @@ where
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {
+<<<<<<< HEAD
 	pub(crate) eth: Address,
+=======
+	pub(crate) eth: address,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	pub(crate) sub: U256,
 }
 
@@ -92,6 +100,7 @@ impl CrossAddress {
 		Self {
 			eth: Default::default(),
 			sub: U256::from_big_endian(account_id.as_ref()),
+<<<<<<< HEAD
 		}
 	}
 	/// Creates [`CrossAddress`] from Ethereum account.
@@ -99,6 +108,8 @@ impl CrossAddress {
 		Self {
 			eth: address,
 			sub: Default::default(),
+=======
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		}
 	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
@@ -188,7 +199,7 @@ pub enum CollectionLimitField {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
-	value: Option<uint256>,
+	value: Option<U256>,
 }
 
 impl CollectionLimit {

@@ -73,7 +73,11 @@ pub enum ERC20Events {
 		#[indexed]
 		from: Address,
 		#[indexed]
+<<<<<<< HEAD
 		to: Address,
+=======
+		to: address,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		value: U256,
 	},
 	/// @dev This event is emitted when the amount of tokens (value) is approved
@@ -82,7 +86,11 @@ pub enum ERC20Events {
 		#[indexed]
 		owner: Address,
 		#[indexed]
+<<<<<<< HEAD
 		spender: Address,
+=======
+		spender: address,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		value: U256,
 	},
 }
@@ -120,7 +128,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @dev Gets the balance of the specified address.
 	/// @param owner The address to query the balance of.
 	/// @return An uint256 representing the amount owned by the passed address.
+<<<<<<< HEAD
 	fn balance_of(&self, owner: Address) -> Result<U256> {
+=======
+	fn balance_of(&self, owner: address) -> Result<U256> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <Balance<T>>::get((self.id, self.1, owner));
@@ -131,7 +143,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param to The address to transfer to.
 	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
+<<<<<<< HEAD
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
+=======
+	fn transfer(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -151,9 +167,15 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		from: Address,
 		to: Address,
+=======
+		caller: caller,
+		from: address,
+		to: address,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -177,7 +199,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param spender The address which will spend the funds.
 	/// @param amount The amount of tokens to be spent.
 	#[weight(<SelfWeightOf<T>>::approve())]
+<<<<<<< HEAD
 	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
+=======
+	fn approve(&mut self, caller: caller, spender: address, amount: U256) -> Result<bool> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -191,7 +217,11 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param owner address The address which owns the funds.
 	/// @param spender address The address which will spend the funds.
 	/// @return A uint256 specifying the amount of tokens still available for the spender.
+<<<<<<< HEAD
 	fn allowance(&self, owner: Address, spender: Address) -> Result<U256> {
+=======
+	fn allowance(&self, owner: address, spender: address) -> Result<U256> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let spender = T::CrossAccountId::from_eth(spender);
@@ -211,7 +241,7 @@ where
 	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	#[solidity(hide)]
-	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
+	fn burn_from(&mut self, caller: caller, from: address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -273,7 +303,11 @@ where
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
 	/// @param amount New total amount of the tokens.
 	#[weight(<SelfWeightOf<T>>::repartition_item())]
+<<<<<<< HEAD
 	fn repartition(&mut self, caller: Caller, amount: U256) -> Result<bool> {
+=======
+	fn repartition(&mut self, caller: caller, amount: U256) -> Result<bool> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 

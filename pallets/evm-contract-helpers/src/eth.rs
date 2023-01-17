@@ -264,7 +264,7 @@ where
 		&mut self,
 		caller: caller,
 		contract_address: address,
-		fee_limit: uint256,
+		fee_limit: U256,
 	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
@@ -279,7 +279,11 @@ where
 	/// @param contractAddress Contract to get sponsoring fee limit of
 	/// @return uint256 Maximum amount of fee that could be spent by single
 	///  transaction
+<<<<<<< HEAD
 	fn sponsoring_fee_limit(&self, contract_address: Address) -> Result<U256> {
+=======
+	fn sponsoring_fee_limit(&self, contract_address: address) -> Result<U256> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		self.recorder().consume_sload()?;
 
 		Ok(get_sponsoring_fee_limit::<T>(contract_address))
@@ -446,7 +450,11 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 	}
 }
 
+<<<<<<< HEAD
 fn get_sponsoring_fee_limit<T: Config>(contract_address: Address) -> U256 {
+=======
+fn get_sponsoring_fee_limit<T: Config>(contract_address: address) -> U256 {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	<SponsoringFeeLimit<T>>::get(contract_address)
 		.get(&0xffffffff)
 		.cloned()

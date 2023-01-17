@@ -135,7 +135,6 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 
 	pub type address = H160;
-	pub type uint256 = U256;
 	pub type bytes4 = [u8; 4];
 	pub type topic = H256;
 

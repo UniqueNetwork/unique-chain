@@ -124,10 +124,17 @@ impl<T: Config> RefungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::set_token_properties(1))]
 	fn set_property(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		token_id: U256,
 		key: String,
 		value: Bytes,
+=======
+		caller: caller,
+		token_id: U256,
+		key: string,
+		value: bytes,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -157,7 +164,11 @@ impl<T: Config> RefungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
 	fn set_properties(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		token_id: U256,
 		properties: Vec<eth::Property>,
 	) -> Result<()> {
@@ -190,7 +201,11 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param key Property key.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_token_properties(1))]
+<<<<<<< HEAD
 	fn delete_property(&mut self, token_id: U256, caller: Caller, key: String) -> Result<()> {
+=======
+	fn delete_property(&mut self, token_id: U256, caller: caller, key: string) -> Result<()> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
@@ -213,8 +228,13 @@ impl<T: Config> RefungibleHandle<T> {
 	fn delete_properties(
 		&mut self,
 		token_id: U256,
+<<<<<<< HEAD
 		caller: Caller,
 		keys: Vec<String>,
+=======
+		caller: caller,
+		keys: Vec<string>,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -242,7 +262,11 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	/// @return Property value bytes
+<<<<<<< HEAD
 	fn property(&self, token_id: U256, key: String) -> Result<Bytes> {
+=======
+	fn property(&self, token_id: U256, key: string) -> Result<bytes> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -319,7 +343,11 @@ where
 	///
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
+<<<<<<< HEAD
 	fn token_uri(&self, token_id: U256) -> Result<String> {
+=======
+	fn token_uri(&self, token_id: U256) -> Result<string> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
 		match get_token_property(self, token_id_u32, &key::url()).as_deref() {
@@ -371,7 +399,11 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 
 	/// Not implemented
+<<<<<<< HEAD
 	fn token_of_owner_by_index(&self, _owner: Address, _index: U256) -> Result<U256> {
+=======
+	fn token_of_owner_by_index(&self, _owner: address, _index: U256) -> Result<U256> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -395,7 +427,11 @@ impl<T: Config> RefungibleHandle<T> {
 	///  function throws for queries about the zero address.
 	/// @param owner An address for whom to query the balance
 	/// @return The number of RFTs owned by `owner`, possibly zero
+<<<<<<< HEAD
 	fn balance_of(&self, owner: Address) -> Result<U256> {
+=======
+	fn balance_of(&self, owner: address) -> Result<U256> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <AccountBalance<T>>::get((self.id, owner));
@@ -409,7 +445,11 @@ impl<T: Config> RefungibleHandle<T> {
 	///  the tokens that are partially owned.
 	/// @param tokenId The identifier for an RFT
 	/// @return The address of the owner of the RFT
+<<<<<<< HEAD
 	fn owner_of(&self, token_id: U256) -> Result<Address> {
+=======
+	fn owner_of(&self, token_id: U256) -> Result<address> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		self.consume_store_reads(2)?;
 		let token = token_id.try_into()?;
 		let owner = <Pallet<T>>::token_owner(self.id, token);
@@ -428,7 +468,7 @@ impl<T: Config> RefungibleHandle<T> {
 		&mut self,
 		_from: address,
 		_to: address,
-		_token_id: uint256,
+		_token_id: U256,
 		_data: bytes,
 	) -> Result<()> {
 		// TODO: Not implemetable
@@ -437,12 +477,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 	/// @dev Not implemented
 	#[solidity(rename_selector = "safeTransferFrom")]
-	fn safe_transfer_from(
-		&mut self,
-		_from: address,
-		_to: address,
-		_token_id: uint256,
-	) -> Result<()> {
+	fn safe_transfer_from(&mut self, _from: address, _to: address, _token_id: U256) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -463,7 +498,7 @@ impl<T: Config> RefungibleHandle<T> {
 		caller: caller,
 		from: address,
 		to: address,
-		token_id: uint256,
+		token_id: U256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
@@ -483,7 +518,7 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 
 	/// @dev Not implemented
-	fn approve(&mut self, _caller: caller, _approved: address, _token_id: uint256) -> Result<()> {
+	fn approve(&mut self, _caller: caller, _approved: address, _token_id: U256) -> Result<()> {
 		Err("not implemented".into())
 	}
 
@@ -507,7 +542,11 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 
 	/// @dev Not implemented
+<<<<<<< HEAD
 	fn get_approved(&self, _token_id: U256) -> Result<Address> {
+=======
+	fn get_approved(&self, _token_id: U256) -> Result<address> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -563,7 +602,7 @@ impl<T: Config> RefungibleHandle<T> {
 	///  operator of the current owner.
 	/// @param tokenId The RFT to approve
 	#[weight(<SelfWeightOf<T>>::burn_item_fully())]
-	fn burn(&mut self, caller: caller, token_id: uint256) -> Result<()> {
+	fn burn(&mut self, caller: caller, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token = token_id.try_into()?;
 
@@ -582,7 +621,11 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
 	#[weight(<SelfWeightOf<T>>::create_item())]
+<<<<<<< HEAD
 	fn mint(&mut self, caller: Caller, to: Address) -> Result<U256> {
+=======
+	fn mint(&mut self, caller: caller, to: address) -> Result<U256> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let token_id: U256 = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
@@ -598,7 +641,11 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenId ID of the minted RFT
 	#[solidity(hide, rename_selector = "mint")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
+<<<<<<< HEAD
 	fn mint_check_id(&mut self, caller: Caller, to: Address, token_id: U256) -> Result<bool> {
+=======
+	fn mint_check_id(&mut self, caller: caller, to: address, token_id: U256) -> Result<bool> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
@@ -641,9 +688,15 @@ impl<T: Config> RefungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint_with_token_uri(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		to: Address,
 		token_uri: String,
+=======
+		caller: caller,
+		to: address,
+		token_uri: string,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<U256> {
 		let token_id: U256 = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -663,10 +716,17 @@ impl<T: Config> RefungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::create_item())]
 	fn mint_with_token_uri_check_id(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		to: Address,
 		token_id: U256,
 		token_uri: String,
+=======
+		caller: caller,
+		to: address,
+		token_id: U256,
+		token_uri: string,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<bool> {
 		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
@@ -791,7 +851,11 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
+<<<<<<< HEAD
 	fn properties(&self, token_id: U256, keys: Vec<String>) -> Result<Vec<eth::Property>> {
+=======
+	fn properties(&self, token_id: U256, keys: Vec<string>) -> Result<Vec<eth::Property>> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -817,7 +881,7 @@ where
 	/// @param to The new owner
 	/// @param tokenId The RFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
-	fn transfer(&mut self, caller: caller, to: address, token_id: uint256) -> Result<()> {
+	fn transfer(&mut self, caller: caller, to: address, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
@@ -844,7 +908,7 @@ where
 		&mut self,
 		caller: Caller,
 		to: eth::CrossAddress,
-		token_id: uint256,
+		token_id: U256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -873,7 +937,7 @@ where
 		caller: Caller,
 		from: eth::CrossAddress,
 		to: eth::CrossAddress,
-		token_id: uint256,
+		token_id: U256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
@@ -900,7 +964,7 @@ where
 	/// @param tokenId The RFT to transfer
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(&mut self, caller: caller, from: address, token_id: uint256) -> Result<()> {
+	fn burn_from(&mut self, caller: caller, from: address, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
@@ -928,7 +992,7 @@ where
 		&mut self,
 		caller: Caller,
 		from: eth::CrossAddress,
-		token_id: uint256,
+		token_id: U256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
@@ -961,7 +1025,11 @@ where
 	/// @param tokenIds IDs of the minted RFTs
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
+<<<<<<< HEAD
 	fn mint_bulk(&mut self, caller: Caller, to: Address, token_ids: Vec<U256>) -> Result<bool> {
+=======
+	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<U256>) -> Result<bool> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
@@ -1006,9 +1074,15 @@ where
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		to: Address,
 		tokens: Vec<(U256, String)>,
+=======
+		caller: caller,
+		to: address,
+		tokens: Vec<(U256, string)>,
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<bool> {
 		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1105,7 +1179,11 @@ where
 	/// Returns EVM address for refungible token
 	///
 	/// @param token ID of the token
+<<<<<<< HEAD
 	fn token_contract_address(&self, token: U256) -> Result<Address> {
+=======
+	fn token_contract_address(&self, token: U256) -> Result<address> {
+>>>>>>> 214592d8 (misc: change uint256 to U256)
 		Ok(T::EvmTokenAddressMapping::token_to_address(
 			self.id,
 			token.try_into().map_err(|_| "token id overflow")?,
