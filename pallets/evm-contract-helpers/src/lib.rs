@@ -69,7 +69,7 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
+	#[pallet::generate_store(trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Store owner for contract.
@@ -81,8 +81,7 @@ pub mod pallet {
 		StorageMap<Hasher = Twox128, Key = H160, Value = H160, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	#[deprecated]
-	pub(super) type SelfSponsoring<T: Config> =
+	type SelfSponsoring<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
 
 	/// Store for contract sponsorship state.
