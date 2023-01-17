@@ -26,19 +26,27 @@ enum ERC721Log {
 		from: Address,
 		#[indexed]
 <<<<<<< HEAD
+<<<<<<< HEAD
 		to: Address,
 =======
 		to: address,
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+		to: Address,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		value: U256,
 	},
 	Eee {
 		#[indexed]
 <<<<<<< HEAD
+<<<<<<< HEAD
 		aaa: Address,
 =======
 		aaa: address,
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+		aaa: Address,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		bbb: U256,
 	},
 }

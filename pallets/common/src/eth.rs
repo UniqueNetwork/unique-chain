@@ -19,10 +19,14 @@
 use alloc::format;
 use sp_std::{vec, vec::Vec};
 <<<<<<< HEAD
+<<<<<<< HEAD
 use evm_coder::{AbiCoder, types::Address};
 =======
 use evm_coder::{AbiCoder, types::address};
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+use evm_coder::{AbiCoder, types::Address};
+>>>>>>> 314a48de (refac: rename address -> Address)
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
@@ -71,10 +75,14 @@ where
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	pub(crate) eth: Address,
 =======
 	pub(crate) eth: address,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	pub(crate) eth: Address,
+>>>>>>> 314a48de (refac: rename address -> Address)
 	pub(crate) sub: U256,
 }
 

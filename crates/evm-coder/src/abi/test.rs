@@ -102,10 +102,14 @@ fn encode_decode_tuple_string() {
 #[test]
 fn encode_decode_vec_tuple_address_uint256() {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	test_impl::<Vec<(Address, U256)>>(
 =======
 	test_impl::<Vec<(address, U256)>>(
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+	test_impl::<Vec<(Address, U256)>>(
+>>>>>>> 314a48de (refac: rename address -> Address)
         0x1ACF2D55,
         vec![
             (

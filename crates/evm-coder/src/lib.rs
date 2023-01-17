@@ -134,7 +134,7 @@ pub mod types {
 	use alloc::{vec::Vec};
 	use primitive_types::{U256, H160, H256};
 
-	pub type address = H160;
+	pub type Address = H160;
 	pub type bytes4 = [u8; 4];
 	pub type topic = H256;
 
@@ -150,7 +150,11 @@ pub mod types {
 	/// Makes function payable
 	pub type Value = U256;
 	/// Makes function caller-sensitive
+<<<<<<< HEAD
 	pub type Caller = Address;
+=======
+	pub type caller = Address;
+>>>>>>> 314a48de (refac: rename address -> Address)
 	//#endregion
 
 	/// Ethereum typed call message, similar to solidity

@@ -91,8 +91,13 @@ fn create_collection_internal<T: Config>(
 	value: Value,
 	name: String,
 	collection_mode: CollectionMode,
+<<<<<<< HEAD
 	description: String,
 	token_prefix: String,
+=======
+	description: string,
+	token_prefix: string,
+>>>>>>> 314a48de (refac: rename address -> Address)
 ) -> Result<Address> {
 	let (caller, name, description, token_prefix) =
 		convert_data::<T>(caller, name, description, token_prefix)?;
@@ -149,11 +154,19 @@ where
 	#[solidity(rename_selector = "createNFTCollection")]
 	fn create_nft_collection(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		value: Value,
 		name: String,
 		description: String,
 		token_prefix: String,
+=======
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+>>>>>>> 314a48de (refac: rename address -> Address)
 	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, name, description, token_prefix)?;
@@ -188,11 +201,19 @@ where
 	#[solidity(hide)]
 	fn create_nonfungible_collection(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		value: Value,
 		name: String,
 		description: String,
 		token_prefix: String,
+=======
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+>>>>>>> 314a48de (refac: rename address -> Address)
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -208,11 +229,19 @@ where
 	#[solidity(rename_selector = "createRFTCollection")]
 	fn create_rft_collection(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		value: Value,
 		name: String,
 		description: String,
 		token_prefix: String,
+=======
+		caller: caller,
+		value: value,
+		name: string,
+		description: string,
+		token_prefix: string,
+>>>>>>> 314a48de (refac: rename address -> Address)
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -243,8 +272,12 @@ where
 		decimals: u8,
 		description: string,
 		token_prefix: string,
+<<<<<<< HEAD
 	) -> Result<address> {
 >>>>>>> 2f30e2f1 (misk: remove simple type aliases)
+=======
+	) -> Result<Address> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		create_collection_internal::<T>(
 			caller,
 			value,
@@ -258,9 +291,15 @@ where
 	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
 	fn make_collection_metadata_compatible(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
 		collection: Address,
 		base_uri: String,
+=======
+		caller: caller,
+		collection: Address,
+		base_uri: string,
+>>>>>>> 314a48de (refac: rename address -> Address)
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let collection =
@@ -345,10 +384,14 @@ where
 
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn destroy_collection(&mut self, caller: Caller, collection_address: Address) -> Result<()> {
 =======
 	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<()> {
 >>>>>>> 2f30e2f1 (misk: remove simple type aliases)
+=======
+	fn destroy_collection(&mut self, caller: caller, collection_address: Address) -> Result<()> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
@@ -360,7 +403,11 @@ where
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
+<<<<<<< HEAD
 	fn is_collection_exist(&self, _caller: Caller, collection_address: Address) -> Result<bool> {
+=======
+	fn is_collection_exist(&self, _caller: caller, collection_address: Address) -> Result<bool> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
 			let collection_id = id;
 			return Ok(<CollectionById<T>>::contains_key(collection_id));
@@ -381,10 +428,14 @@ where
 	/// @param collectionId  - CollectionId  of the collection
 	/// @return eth mirror address of the collection
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn collection_address(&self, collection_id: u32) -> Result<Address> {
 =======
 	fn collection_address(&self, collection_id: u32) -> Result<address> {
 >>>>>>> 2f30e2f1 (misk: remove simple type aliases)
+=======
+	fn collection_address(&self, collection_id: u32) -> Result<Address> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		Ok(collection_id_to_address(collection_id.into()))
 	}
 
@@ -392,10 +443,14 @@ where
 	/// @param collectionAddress  - Eth address of the collection
 	/// @return collectionId of the collection
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn collection_id(&self, collection_address: Address) -> Result<u32> {
 =======
 	fn collection_id(&self, collection_address: address) -> Result<u32> {
 >>>>>>> 2f30e2f1 (misk: remove simple type aliases)
+=======
+	fn collection_id(&self, collection_address: Address) -> Result<u32> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		map_eth_to_id(&collection_address)
 			.map(|id| id.0)
 			.ok_or(Error::Revert(format!(

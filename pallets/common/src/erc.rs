@@ -209,7 +209,7 @@ where
 	///
 	/// @param sponsor Address of the sponsor from whose account funds will be debited for operations with the contract.
 	#[solidity(hide)]
-	fn set_collection_sponsor(&mut self, caller: caller, sponsor: address) -> Result<()> {
+	fn set_collection_sponsor(&mut self, caller: caller, sponsor: Address) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -392,7 +392,7 @@ where
 	/// Add collection admin.
 	/// @param newAdmin Address of the added administrator.
 	#[solidity(hide)]
-	fn add_collection_admin(&mut self, caller: caller, new_admin: address) -> Result<()> {
+	fn add_collection_admin(&mut self, caller: caller, new_admin: Address) -> Result<()> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -405,7 +405,7 @@ where
 	///
 	/// @param admin Address of the removed administrator.
 	#[solidity(hide)]
-	fn remove_collection_admin(&mut self, caller: caller, admin: address) -> Result<()> {
+	fn remove_collection_admin(&mut self, caller: caller, admin: Address) -> Result<()> {
 		self.consume_store_reads_and_writes(2, 2)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -441,7 +441,7 @@ where
 		&mut self,
 		caller: Caller,
 		enable: bool,
-		collections: Vec<address>,
+		collections: Vec<Address>,
 	) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -530,7 +530,7 @@ where
 	///
 	/// @param user Address of a trusted user.
 	#[solidity(hide)]
-	fn add_to_collection_allow_list(&mut self, caller: caller, user: address) -> Result<()> {
+	fn add_to_collection_allow_list(&mut self, caller: caller, user: Address) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -560,7 +560,7 @@ where
 	///
 	/// @param user Address of a removed user.
 	#[solidity(hide)]
-	fn remove_from_collection_allow_list(&mut self, caller: caller, user: address) -> Result<()> {
+	fn remove_from_collection_allow_list(&mut self, caller: caller, user: Address) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -646,7 +646,7 @@ where
 	/// @dev Owner can be changed only by current owner
 	/// @param newOwner new owner account
 	#[solidity(hide, rename_selector = "changeCollectionOwner")]
-	fn set_owner(&mut self, caller: caller, new_owner: address) -> Result<()> {
+	fn set_owner(&mut self, caller: caller, new_owner: Address) -> Result<()> {
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);

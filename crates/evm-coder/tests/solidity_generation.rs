@@ -26,6 +26,7 @@ impl ERC20 {
 	}
 	/// Get balance of specified owner
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn balance_of(&self, _owner: Address) -> Result<U256> {
 		unreachable!()
 	}
@@ -36,6 +37,12 @@ impl ERC20 {
 	}
 	fn transfer(&mut self, _caller: caller, _to: address, _value: U256) -> Result<bool> {
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+	fn balance_of(&self, _owner: Address) -> Result<U256> {
+		unreachable!()
+	}
+	fn transfer(&mut self, _caller: caller, _to: Address, _value: U256) -> Result<bool> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		unreachable!()
 	}
 	fn transfer_from(
@@ -46,13 +53,19 @@ impl ERC20 {
 		_to: Address,
 =======
 		_caller: caller,
+<<<<<<< HEAD
 		_from: address,
 		_to: address,
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+		_from: Address,
+		_to: Address,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		_value: U256,
 	) -> Result<bool> {
 		unreachable!()
 	}
+<<<<<<< HEAD
 <<<<<<< HEAD
 	fn approve(&mut self, _caller: Caller, _spender: Address, _value: U256) -> Result<bool> {
 		unreachable!()
@@ -64,6 +77,12 @@ impl ERC20 {
 	}
 	fn allowance(&self, _owner: address, _spender: address) -> Result<U256> {
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+	fn approve(&mut self, _caller: caller, _spender: Address, _value: U256) -> Result<bool> {
+		unreachable!()
+	}
+	fn allowance(&self, _owner: Address, _spender: Address) -> Result<U256> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		unreachable!()
 	}
 }

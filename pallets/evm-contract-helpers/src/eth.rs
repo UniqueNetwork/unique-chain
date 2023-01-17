@@ -106,8 +106,8 @@ where
 	fn set_sponsor(
 		&mut self,
 		caller: caller,
-		contract_address: address,
-		sponsor: address,
+		contract_address: Address,
+		sponsor: Address,
 	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
@@ -125,7 +125,7 @@ where
 	/// Set contract as self sponsored.
 	///
 	/// @param contractAddress Contract for which a self sponsoring is being enabled.
-	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<()> {
+	fn self_sponsored_enable(&mut self, caller: caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -146,7 +146,7 @@ where
 	/// Remove sponsor.
 	///
 	/// @param contractAddress Contract for which a sponsorship is being removed.
-	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<()> {
+	fn remove_sponsor(&mut self, caller: caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -161,7 +161,7 @@ where
 	/// @dev Caller must be same that set via [`setSponsor`].
 	///
 	/// @param contractAddress Сontract for which need to confirm sponsorship.
-	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<()> {
+	fn confirm_sponsorship(&mut self, caller: caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -175,7 +175,7 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn sponsor(&self, contract_address: address) -> Result<Option<eth::CrossAddress>> {
+	fn sponsor(&self, contract_address: Address) -> Result<Option<eth::CrossAddress>> {
 		Ok(match Pallet::<T>::get_sponsor(contract_address) {
 			Some(ref value) => Some(eth::CrossAddress::from_sub_cross_account::<T>(value)),
 			None => None,
@@ -209,7 +209,11 @@ where
 
 	fn set_sponsoring_mode(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		contract_address: Address,
 		mode: SponsoringModeT,
 	) -> Result<()> {
@@ -226,7 +230,7 @@ where
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
-	fn sponsoring_rate_limit(&self, contract_address: address) -> Result<u32> {
+	fn sponsoring_rate_limit(&self, contract_address: Address) -> Result<u32> {
 		self.recorder().consume_sload()?;
 
 		Ok(<SponsoringRateLimit<T>>::get(contract_address)
@@ -243,7 +247,7 @@ where
 	fn set_sponsoring_rate_limit(
 		&mut self,
 		caller: caller,
-		contract_address: address,
+		contract_address: Address,
 		rate_limit: u32,
 	) -> Result<()> {
 		self.recorder().consume_sload()?;
@@ -263,7 +267,7 @@ where
 	fn set_sponsoring_fee_limit(
 		&mut self,
 		caller: caller,
-		contract_address: address,
+		contract_address: Address,
 		fee_limit: U256,
 	) -> Result<()> {
 		self.recorder().consume_sload()?;
@@ -280,10 +284,14 @@ where
 	/// @return uint256 Maximum amount of fee that could be spent by single
 	///  transaction
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn sponsoring_fee_limit(&self, contract_address: Address) -> Result<U256> {
 =======
 	fn sponsoring_fee_limit(&self, contract_address: address) -> Result<U256> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn sponsoring_fee_limit(&self, contract_address: Address) -> Result<U256> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		self.recorder().consume_sload()?;
 
 		Ok(get_sponsoring_fee_limit::<T>(contract_address))
@@ -307,7 +315,11 @@ where
 	/// @dev Only contract owner can change this setting
 	fn toggle_allowed(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		contract_address: Address,
 		user: Address,
 		is_allowed: bool,
@@ -337,7 +349,11 @@ where
 	/// @param enabled Should allowlist access to be enabled?
 	fn toggle_allowlist(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		contract_address: Address,
 		enabled: bool,
 	) -> Result<()> {
@@ -451,10 +467,14 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 fn get_sponsoring_fee_limit<T: Config>(contract_address: Address) -> U256 {
 =======
 fn get_sponsoring_fee_limit<T: Config>(contract_address: address) -> U256 {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+fn get_sponsoring_fee_limit<T: Config>(contract_address: Address) -> U256 {
+>>>>>>> 314a48de (refac: rename address -> Address)
 	<SponsoringFeeLimit<T>>::get(contract_address)
 		.get(&0xffffffff)
 		.cloned()

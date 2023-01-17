@@ -400,10 +400,14 @@ impl<T: Config> RefungibleHandle<T> {
 
 	/// Not implemented
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn token_of_owner_by_index(&self, _owner: Address, _index: U256) -> Result<U256> {
 =======
 	fn token_of_owner_by_index(&self, _owner: address, _index: U256) -> Result<U256> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn token_of_owner_by_index(&self, _owner: Address, _index: U256) -> Result<U256> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -428,10 +432,14 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param owner An address for whom to query the balance
 	/// @return The number of RFTs owned by `owner`, possibly zero
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn balance_of(&self, owner: Address) -> Result<U256> {
 =======
 	fn balance_of(&self, owner: address) -> Result<U256> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn balance_of(&self, owner: Address) -> Result<U256> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <AccountBalance<T>>::get((self.id, owner));
@@ -446,10 +454,14 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenId The identifier for an RFT
 	/// @return The address of the owner of the RFT
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn owner_of(&self, token_id: U256) -> Result<Address> {
 =======
 	fn owner_of(&self, token_id: U256) -> Result<address> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn owner_of(&self, token_id: U256) -> Result<Address> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		self.consume_store_reads(2)?;
 		let token = token_id.try_into()?;
 		let owner = <Pallet<T>>::token_owner(self.id, token);
@@ -466,8 +478,8 @@ impl<T: Config> RefungibleHandle<T> {
 	#[solidity(rename_selector = "safeTransferFrom")]
 	fn safe_transfer_from_with_data(
 		&mut self,
-		_from: address,
-		_to: address,
+		_from: Address,
+		_to: Address,
 		_token_id: U256,
 		_data: bytes,
 	) -> Result<()> {
@@ -477,7 +489,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 	/// @dev Not implemented
 	#[solidity(rename_selector = "safeTransferFrom")]
-	fn safe_transfer_from(&mut self, _from: address, _to: address, _token_id: U256) -> Result<()> {
+	fn safe_transfer_from(&mut self, _from: Address, _to: Address, _token_id: U256) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -496,8 +508,8 @@ impl<T: Config> RefungibleHandle<T> {
 	fn transfer_from(
 		&mut self,
 		caller: caller,
-		from: address,
-		to: address,
+		from: Address,
+		to: Address,
 		token_id: U256,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -518,7 +530,7 @@ impl<T: Config> RefungibleHandle<T> {
 	}
 
 	/// @dev Not implemented
-	fn approve(&mut self, _caller: caller, _approved: address, _token_id: U256) -> Result<()> {
+	fn approve(&mut self, _caller: caller, _approved: Address, _token_id: U256) -> Result<()> {
 		Err("not implemented".into())
 	}
 
@@ -529,7 +541,11 @@ impl<T: Config> RefungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::set_allowance_for_all())]
 	fn set_approval_for_all(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> 314a48de (refac: rename address -> Address)
 		operator: Address,
 		approved: bool,
 	) -> Result<()> {
@@ -543,10 +559,14 @@ impl<T: Config> RefungibleHandle<T> {
 
 	/// @dev Not implemented
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn get_approved(&self, _token_id: U256) -> Result<Address> {
 =======
 	fn get_approved(&self, _token_id: U256) -> Result<address> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn get_approved(&self, _token_id: U256) -> Result<Address> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		// TODO: Not implemetable
 		Err("not implemented".into())
 	}
@@ -622,10 +642,14 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @return uint256 The id of the newly minted token
 	#[weight(<SelfWeightOf<T>>::create_item())]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn mint(&mut self, caller: Caller, to: Address) -> Result<U256> {
 =======
 	fn mint(&mut self, caller: caller, to: address) -> Result<U256> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn mint(&mut self, caller: caller, to: Address) -> Result<U256> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		let token_id: U256 = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?
@@ -642,10 +666,14 @@ impl<T: Config> RefungibleHandle<T> {
 	#[solidity(hide, rename_selector = "mint")]
 	#[weight(<SelfWeightOf<T>>::create_item())]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn mint_check_id(&mut self, caller: Caller, to: Address, token_id: U256) -> Result<bool> {
 =======
 	fn mint_check_id(&mut self, caller: caller, to: address, token_id: U256) -> Result<bool> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn mint_check_id(&mut self, caller: caller, to: Address, token_id: U256) -> Result<bool> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
@@ -694,7 +722,7 @@ impl<T: Config> RefungibleHandle<T> {
 		token_uri: String,
 =======
 		caller: caller,
-		to: address,
+		to: Address,
 		token_uri: string,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<U256> {
@@ -723,7 +751,7 @@ impl<T: Config> RefungibleHandle<T> {
 		token_uri: String,
 =======
 		caller: caller,
-		to: address,
+		to: Address,
 		token_id: U256,
 		token_uri: string,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
@@ -881,7 +909,7 @@ where
 	/// @param to The new owner
 	/// @param tokenId The RFT to transfer
 	#[weight(<SelfWeightOf<T>>::transfer_creating_removing())]
-	fn transfer(&mut self, caller: caller, to: address, token_id: U256) -> Result<()> {
+	fn transfer(&mut self, caller: caller, to: Address, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
@@ -964,7 +992,7 @@ where
 	/// @param tokenId The RFT to transfer
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(&mut self, caller: caller, from: address, token_id: U256) -> Result<()> {
+	fn burn_from(&mut self, caller: caller, from: Address, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
@@ -1026,10 +1054,14 @@ where
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_ids.len() as u32))]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn mint_bulk(&mut self, caller: Caller, to: Address, token_ids: Vec<U256>) -> Result<bool> {
 =======
 	fn mint_bulk(&mut self, caller: caller, to: address, token_ids: Vec<U256>) -> Result<bool> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn mint_bulk(&mut self, caller: caller, to: Address, token_ids: Vec<U256>) -> Result<bool> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
@@ -1080,7 +1112,7 @@ where
 		tokens: Vec<(U256, String)>,
 =======
 		caller: caller,
-		to: address,
+		to: Address,
 		tokens: Vec<(U256, string)>,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<bool> {
@@ -1180,10 +1212,14 @@ where
 	///
 	/// @param token ID of the token
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn token_contract_address(&self, token: U256) -> Result<Address> {
 =======
 	fn token_contract_address(&self, token: U256) -> Result<address> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn token_contract_address(&self, token: U256) -> Result<Address> {
+>>>>>>> 314a48de (refac: rename address -> Address)
 		Ok(T::EvmTokenAddressMapping::token_to_address(
 			self.id,
 			token.try_into().map_err(|_| "token id overflow")?,
@@ -1191,7 +1227,7 @@ where
 	}
 
 	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<address> {
+	fn collection_helper_address(&self) -> Result<Address> {
 		Ok(T::ContractAddress::get())
 	}
 }
