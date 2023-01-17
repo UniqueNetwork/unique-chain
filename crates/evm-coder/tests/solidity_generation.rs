@@ -15,19 +15,20 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use evm_coder::{abi::AbiType, execution::Result, generate_stubgen, solidity_interface, types::*};
+use primitive_types::U256;
 
 pub struct ERC20;
 
 #[solidity_interface(name = ERC20)]
 impl ERC20 {
-	fn decimals(&self) -> Result<uint8> {
+	fn decimals(&self) -> Result<u8> {
 		unreachable!()
 	}
 	/// Get balance of specified owner
-	fn balance_of(&self, _owner: address) -> Result<uint256> {
+	fn balance_of(&self, _owner: address) -> Result<U256> {
 		unreachable!()
 	}
-	fn transfer(&mut self, _caller: caller, _to: address, _value: uint256) -> Result<bool> {
+	fn transfer(&mut self, _caller: caller, _to: address, _value: U256) -> Result<bool> {
 		unreachable!()
 	}
 	fn transfer_from(
@@ -35,14 +36,14 @@ impl ERC20 {
 		_caller: caller,
 		_from: address,
 		_to: address,
-		_value: uint256,
+		_value: U256,
 	) -> Result<bool> {
 		unreachable!()
 	}
-	fn approve(&mut self, _caller: caller, _spender: address, _value: uint256) -> Result<bool> {
+	fn approve(&mut self, _caller: caller, _spender: address, _value: U256) -> Result<bool> {
 		unreachable!()
 	}
-	fn allowance(&self, _owner: address, _spender: address) -> Result<uint256> {
+	fn allowance(&self, _owner: address, _spender: address) -> Result<U256> {
 		unreachable!()
 	}
 }

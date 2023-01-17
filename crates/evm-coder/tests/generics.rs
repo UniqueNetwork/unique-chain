@@ -16,19 +16,20 @@
 
 use std::marker::PhantomData;
 use evm_coder::{execution::Result, generate_stubgen, solidity_interface, types::*};
+use primitive_types::U256;
 
 pub struct Generic<T>(PhantomData<T>);
 
 #[solidity_interface(name = GenericIs)]
 impl<T> Generic<T> {
-	fn test_1(&self) -> Result<uint256> {
+	fn test_1(&self) -> Result<U256> {
 		unreachable!()
 	}
 }
 
 #[solidity_interface(name = Generic, is(GenericIs))]
 impl<T: Into<u32>> Generic<T> {
-	fn test_2(&self) -> Result<uint256> {
+	fn test_2(&self) -> Result<U256> {
 		unreachable!()
 	}
 }
@@ -40,7 +41,7 @@ impl<T> Generic<T>
 where
 	T: core::fmt::Debug,
 {
-	fn test_3(&self) -> Result<uint256> {
+	fn test_3(&self) -> Result<U256> {
 		unreachable!()
 	}
 }
