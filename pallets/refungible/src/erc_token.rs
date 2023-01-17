@@ -37,6 +37,7 @@ use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_std::vec::Vec;
+use sp_core::U256;
 use up_data_structs::TokenId;
 
 use crate::{
@@ -55,7 +56,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		Ok(collection_id_to_address(self.id))
 	}
 
-	fn parent_token_id(&self) -> Result<uint256> {
+	fn parent_token_id(&self) -> Result<U256> {
 		Ok(self.1.into())
 	}
 }
@@ -71,7 +72,7 @@ pub enum ERC20Events {
 		from: address,
 		#[indexed]
 		to: address,
-		value: uint256,
+		value: U256,
 	},
 	/// @dev This event is emitted when the amount of tokens (value) is approved
 	/// by the owner to be used by the spender.
@@ -80,7 +81,7 @@ pub enum ERC20Events {
 		owner: address,
 		#[indexed]
 		spender: address,
-		value: uint256,
+		value: U256,
 	},
 }
 
@@ -103,7 +104,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	}
 
 	/// @dev Total number of tokens in existence
-	fn total_supply(&self) -> Result<uint256> {
+	fn total_supply(&self) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		Ok(<TotalSupply<T>>::get((self.id, self.1)).into())
 	}
@@ -117,7 +118,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @dev Gets the balance of the specified address.
 	/// @param owner The address to query the balance of.
 	/// @return An uint256 representing the amount owned by the passed address.
-	fn balance_of(&self, owner: address) -> Result<uint256> {
+	fn balance_of(&self, owner: address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <Balance<T>>::get((self.id, self.1, owner));
@@ -128,7 +129,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param to The address to transfer to.
 	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
-	fn transfer(&mut self, caller: caller, to: address, amount: uint256) -> Result<bool> {
+	fn transfer(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -151,7 +152,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		caller: caller,
 		from: address,
 		to: address,
-		amount: uint256,
+		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
@@ -174,7 +175,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param spender The address which will spend the funds.
 	/// @param amount The amount of tokens to be spent.
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: caller, spender: address, amount: uint256) -> Result<bool> {
+	fn approve(&mut self, caller: caller, spender: address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -188,7 +189,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param owner address The address which owns the funds.
 	/// @param spender address The address which will spend the funds.
 	/// @return A uint256 specifying the amount of tokens still available for the spender.
-	fn allowance(&self, owner: address, spender: address) -> Result<uint256> {
+	fn allowance(&self, owner: address, spender: address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let spender = T::CrossAccountId::from_eth(spender);
@@ -208,7 +209,7 @@ where
 	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	#[solidity(hide)]
-	fn burn_from(&mut self, caller: caller, from: address, amount: uint256) -> Result<bool> {
+	fn burn_from(&mut self, caller: caller, from: address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -230,7 +231,7 @@ where
 		&mut self,
 		caller: caller,
 		from: pallet_common::eth::CrossAddress,
-		amount: uint256,
+		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
@@ -256,7 +257,7 @@ where
 		&mut self,
 		caller: caller,
 		spender: pallet_common::eth::CrossAddress,
-		amount: uint256,
+		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = spender.into_sub_cross_account::<T>()?;
@@ -270,7 +271,7 @@ where
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
 	/// @param amount New total amount of the tokens.
 	#[weight(<SelfWeightOf<T>>::repartition_item())]
-	fn repartition(&mut self, caller: caller, amount: uint256) -> Result<bool> {
+	fn repartition(&mut self, caller: caller, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
@@ -286,7 +287,7 @@ where
 		&mut self,
 		caller: caller,
 		to: pallet_common::eth::CrossAddress,
-		amount: uint256,
+		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -310,7 +311,7 @@ where
 		caller: caller,
 		from: pallet_common::eth::CrossAddress,
 		to: pallet_common::eth::CrossAddress,
-		amount: uint256,
+		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;

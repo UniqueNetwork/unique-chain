@@ -18,12 +18,9 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
-use evm_coder::{
-	AbiCoder,
-	types::{uint256, address},
-};
+use evm_coder::{AbiCoder, types::address};
 pub use pallet_evm::{Config, account::CrossAccountId};
-use sp_core::H160;
+use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
@@ -55,8 +52,8 @@ pub fn is_collection(address: &H160) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
-/// Convert `uint256` to `CrossAccountId`.
-pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
+/// Convert `U256` to `CrossAccountId`.
+pub fn convert_uint256_to_cross_account<T: Config>(from: U256) -> T::CrossAccountId
 where
 	T::AccountId: From<[u8; 32]>,
 {
@@ -70,7 +67,7 @@ where
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {
 	pub(crate) eth: address,
-	pub(crate) sub: uint256,
+	pub(crate) sub: U256,
 }
 
 impl CrossAddress {
@@ -97,7 +94,7 @@ impl CrossAddress {
 	{
 		Self {
 			eth: Default::default(),
-			sub: uint256::from_big_endian(account_id.as_ref()),
+			sub: U256::from_big_endian(account_id.as_ref()),
 		}
 	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
@@ -187,7 +184,7 @@ pub enum CollectionLimitField {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
-	value: Option<uint256>,
+	value: Option<U256>,
 }
 
 impl CollectionLimit {
@@ -393,12 +390,12 @@ impl TokenPropertyPermission {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionNesting {
 	token_owner: bool,
-	ids: Vec<uint256>,
+	ids: Vec<U256>,
 }
 
 impl CollectionNesting {
 	/// Create [`CollectionNesting`].
-	pub fn new(token_owner: bool, ids: Vec<uint256>) -> Self {
+	pub fn new(token_owner: bool, ids: Vec<U256>) -> Self {
 		Self { token_owner, ids }
 	}
 }
