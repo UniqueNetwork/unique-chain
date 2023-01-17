@@ -16,7 +16,6 @@
 
 use inflector::cases;
 use syn::{Data, DeriveInput, Field, Fields, Ident, Variant, spanned::Spanned};
-use std::fmt::Write;
 use quote::quote;
 
 use crate::{parse_ident_from_path, parse_ident_from_type, snake_ident_to_screaming};
@@ -61,13 +60,13 @@ struct Event {
 	name: Ident,
 	name_screaming: Ident,
 	fields: Vec<EventField>,
-	selector: [u8; 32],
-	selector_str: String,
+	selector: proc_macro2::TokenStream,
 }
 
 impl Event {
 	fn try_from(variant: &Variant) -> syn::Result<Self> {
 		let name = &variant.ident;
+		let name_lit = proc_macro2::Literal::string(name.to_string().as_str());
 		let name_screaming = snake_ident_to_screaming(name);
 
 		let named = match &variant.fields {
@@ -89,22 +88,40 @@ impl Event {
 				"events can have at most 4 indexed fields (1 indexed field is reserved for event signature)"
 			));
 		}
-		let mut selector_str = format!("{}(", name);
-		for (i, arg) in fields.iter().enumerate() {
-			if i != 0 {
-				write!(selector_str, ",").unwrap();
+
+		let args = fields.iter().map(|f| {
+			let ty = &f.ty;
+			quote! {nameof(<#ty as ::evm_coder::abi::AbiType>::SIGNATURE) fixed(",")}
+		});
+		// Remove trailing comma
+		let shift = (!fields.is_empty()).then(|| quote! {shift_left(1)});
+
+		let signature = quote! { ::evm_coder::make_signature!(new fixed(#name_lit) fixed("(") #(#args)* #shift fixed(")")) };
+		let selector = quote! {
+			{
+				let signature = #signature;
+				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
+				let mut pos = 0;
+				while pos < signature.len {
+					sum = sum.update(&[signature.data[pos]; 1]);
+					pos += 1;
+				}
+				let a = sum.finalize();
+				let mut selector_bytes = [0; 32];
+				let mut i = 0;
+				while i != 32 {
+					selector_bytes[i] = a[i];
+					i += 1;
+				}
+				selector_bytes
 			}
-			write!(selector_str, "{}", arg.ty).unwrap();
-		}
-		selector_str.push(')');
-		let selector = crate::event_selector_str(&selector_str);
+		};
 
 		Ok(Self {
 			name: name.to_owned(),
 			name_screaming,
 			fields,
 			selector,
-			selector_str,
 		})
 	}
 
@@ -133,14 +150,10 @@ impl Event {
 
 	fn expand_consts(&self) -> proc_macro2::TokenStream {
 		let name_screaming = &self.name_screaming;
-		let selector_str = &self.selector_str;
 		let selector = &self.selector;
 
 		quote! {
-			#[doc = #selector_str]
-			const #name_screaming: [u8; 32] = [#(
-				#selector,
-			)*];
+			const #name_screaming: [u8; 32] = #selector;
 		}
 	}
 

@@ -515,12 +515,29 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// A batch operation to add, edit or remove properties for a token.
+	/// It sets or removes a token's properties according to
+	/// `properties_updates` contents:
+	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
+	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
+	///
+	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
+	/// - `is_token_create`: Indicates that method is called during token initialization.
+	///   Allows to bypass ownership check.
+	///
+	/// All affected properties should have `mutable` permission
+	/// to be **deleted** or to be **set more than once**,
+	/// and the sender should have permission to edit those properties.
+	///
+	/// This function fires an event for each property change.
+	/// In case of an error, all the changes (including the events) will be reverted
+	/// since the function is transactional.
 	#[transactional]
 	fn modify_token_properties(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		properties: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
@@ -544,15 +561,16 @@ impl<T: Config> Pallet<T> {
 			Ok(is_bundle_owner)
 		};
 
-		for (key, value) in properties {
-			let permission = <PalletCommon<T>>::property_permissions(collection.id)
+		let mut stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
+		let permissions = <PalletCommon<T>>::property_permissions(collection.id);
+
+		for (key, value) in properties_updates {
+			let permission = permissions
 				.get(&key)
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
-			let is_property_exists = TokenProperties::<T>::get((collection.id, token_id))
-				.get(&key)
-				.is_some();
+			let is_property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
 				PropertyPermission { mutable: false, .. } if is_property_exists => {
@@ -578,10 +596,9 @@ impl<T: Config> Pallet<T> {
 
 			match value {
 				Some(value) => {
-					<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
-						properties.try_set(key.clone(), value)
-					})
-					.map_err(<CommonError<T>>::from)?;
+					stored_properties
+						.try_set(key.clone(), value)
+						.map_err(<CommonError<T>>::from)?;
 
 					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
 						collection.id,
@@ -590,10 +607,9 @@ impl<T: Config> Pallet<T> {
 					));
 				}
 				None => {
-					<TokenProperties<T>>::try_mutate((collection.id, token_id), |properties| {
-						properties.remove(&key)
-					})
-					.map_err(<CommonError<T>>::from)?;
+					stored_properties
+						.remove(&key)
+						.map_err(<CommonError<T>>::from)?;
 
 					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
 						collection.id,
@@ -611,6 +627,8 @@ impl<T: Config> Pallet<T> {
 				.to_log(T::ContractAddress::get()),
 			);
 		}
+
+		<TokenProperties<T>>::set((collection.id, token_id), stored_properties);
 
 		Ok(())
 	}
@@ -1159,6 +1177,13 @@ impl<T: Config> Pallet<T> {
 			// `from`, `to` checked in [`transfer`]
 			collection.check_allowlist(spender)?;
 		}
+
+		if collection.ignores_token_restrictions(spender) {
+			return Ok(Self::compute_allowance_decrease(
+				collection, token, from, &spender, amount,
+			));
+		}
+
 		if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
 			// TODO: should collection owner be allowed to perform this transfer?
 			ensure!(
@@ -1173,21 +1198,30 @@ impl<T: Config> Pallet<T> {
 			);
 			return Ok(None);
 		}
-		let allowance =
-			<Allowance<T>>::get((collection.id, token, from, &spender)).checked_sub(amount);
+
+		let allowance = Self::compute_allowance_decrease(collection, token, from, &spender, amount);
+		if allowance.is_some() {
+			return Ok(allowance);
+		}
 
 		// Allowance (if any) would be reduced if spender is also wallet operator
 		if <CollectionAllowance<T>>::get((collection.id, from, spender)) {
 			return Ok(allowance);
 		}
 
-		if allowance.is_none() {
-			ensure!(
-				collection.ignores_allowance(spender),
-				<CommonError<T>>::ApprovedValueTooLow
-			);
-		}
-		Ok(allowance)
+		Err(<CommonError<T>>::ApprovedValueTooLow.into())
+	}
+
+	/// Returns `Some(amount)` if the `spender` have allowance to spend this amount.
+	/// Otherwise, it returns `None`.
+	fn compute_allowance_decrease(
+		collection: &RefungibleHandle<T>,
+		token: TokenId,
+		from: &T::CrossAccountId,
+		spender: &T::CrossAccountId,
+		amount: u128,
+	) -> Option<u128> {
+		<Allowance<T>>::get((collection.id, token, from, spender)).checked_sub(amount)
 	}
 
 	/// Transfer RFT token pieces from one account to another.
@@ -1353,7 +1387,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		properties: Vec<Property>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::set_collection_properties(collection, sender, properties)
+		<PalletCommon<T>>::set_collection_properties(collection, sender, properties.into_iter())
 	}
 
 	pub fn delete_collection_properties(
@@ -1361,7 +1395,11 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_keys: Vec<PropertyKey>,
 	) -> DispatchResult {
-		<PalletCommon<T>>::delete_collection_properties(collection, sender, property_keys)
+		<PalletCommon<T>>::delete_collection_properties(
+			collection,
+			sender,
+			property_keys.into_iter(),
+		)
 	}
 
 	pub fn set_token_property_permissions(

@@ -24,6 +24,9 @@ use sp_runtime::{
 	transaction_validity::{TransactionValidity, ValidTransaction, TransactionValidityError},
 };
 
+#[cfg(feature = "collator-selection")]
+use sp_runtime::transaction_validity::InvalidTransaction;
+
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
 pub struct DisableIdentityCalls;
 

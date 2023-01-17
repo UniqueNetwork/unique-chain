@@ -139,8 +139,7 @@ mod erc721 {
 			| BalanceOf { .. }
 			| OwnerOf { .. }
 			| GetApproved { .. }
-			| IsApprovedForAll { .. }
-			| CollectionHelperAddress => None,
+			| IsApprovedForAll { .. } => None,
 
 			// Not sponsored
 			SafeTransferFromWithData { .. }
@@ -230,7 +229,8 @@ mod erc721 {
 			| CrossOwnerOf { .. }
 			| Properties { .. }
 			| NextTokenId
-			| TokenContractAddress { .. } => None,
+			| TokenContractAddress { .. }
+			| CollectionHelperAddress => None,
 
 			// Not sponsored
 			BurnFrom { .. }
