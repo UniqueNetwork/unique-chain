@@ -25,12 +25,20 @@ enum ERC721Log {
 		#[indexed]
 		from: Address,
 		#[indexed]
+<<<<<<< HEAD
 		to: Address,
+=======
+		to: address,
+>>>>>>> c1366a22 (fix: unit tests)
 		value: U256,
 	},
 	Eee {
 		#[indexed]
+<<<<<<< HEAD
 		aaa: Address,
+=======
+		aaa: address,
+>>>>>>> c1366a22 (fix: unit tests)
 		bbb: U256,
 	},
 }

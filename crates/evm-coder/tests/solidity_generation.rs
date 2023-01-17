@@ -25,25 +25,45 @@ impl ERC20 {
 		unreachable!()
 	}
 	/// Get balance of specified owner
+<<<<<<< HEAD
 	fn balance_of(&self, _owner: Address) -> Result<U256> {
 		unreachable!()
 	}
 	fn transfer(&mut self, _caller: Caller, _to: Address, _value: U256) -> Result<bool> {
+=======
+	fn balance_of(&self, _owner: address) -> Result<U256> {
+		unreachable!()
+	}
+	fn transfer(&mut self, _caller: caller, _to: address, _value: U256) -> Result<bool> {
+>>>>>>> c1366a22 (fix: unit tests)
 		unreachable!()
 	}
 	fn transfer_from(
 		&mut self,
+<<<<<<< HEAD
 		_caller: Caller,
 		_from: Address,
 		_to: Address,
+=======
+		_caller: caller,
+		_from: address,
+		_to: address,
+>>>>>>> c1366a22 (fix: unit tests)
 		_value: U256,
 	) -> Result<bool> {
 		unreachable!()
 	}
+<<<<<<< HEAD
 	fn approve(&mut self, _caller: Caller, _spender: Address, _value: U256) -> Result<bool> {
 		unreachable!()
 	}
 	fn allowance(&self, _owner: Address, _spender: Address) -> Result<U256> {
+=======
+	fn approve(&mut self, _caller: caller, _spender: address, _value: U256) -> Result<bool> {
+		unreachable!()
+	}
+	fn allowance(&self, _owner: address, _spender: address) -> Result<U256> {
+>>>>>>> c1366a22 (fix: unit tests)
 		unreachable!()
 	}
 }
