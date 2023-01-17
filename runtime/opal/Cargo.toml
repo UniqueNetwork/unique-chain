@@ -193,6 +193,7 @@ opal-runtime = [
     'refungible',
     'rmrk',
     'app-promotion',
+    'collator-selection',
     'foreign-assets',
     'pallet-test-utils',
 ]
