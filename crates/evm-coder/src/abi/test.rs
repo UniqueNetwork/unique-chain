@@ -101,7 +101,7 @@ fn encode_decode_tuple_string() {
 
 #[test]
 fn encode_decode_vec_tuple_address_uint256() {
-	test_impl::<Vec<(address, U256)>>(
+	test_impl::<Vec<(Address, U256)>>(
         0x1ACF2D55,
         vec![
             (

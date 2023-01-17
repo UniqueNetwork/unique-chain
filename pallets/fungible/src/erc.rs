@@ -43,16 +43,16 @@ use crate::{
 pub enum ERC20Events {
 	Transfer {
 		#[indexed]
-		from: address,
+		from: Address,
 		#[indexed]
-		to: address,
+		to: Address,
 		value: U256,
 	},
 	Approval {
 		#[indexed]
-		owner: address,
+		owner: Address,
 		#[indexed]
-		spender: address,
+		spender: Address,
 		value: U256,
 	},
 }
@@ -79,14 +79,14 @@ impl<T: Config> FungibleHandle<T> {
 			unreachable!()
 		})
 	}
-	fn balance_of(&self, owner: address) -> Result<U256> {
+	fn balance_of(&self, owner: Address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <Balance<T>>::get((self.id, owner));
 		Ok(balance.into())
 	}
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
+	fn transfer(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -102,8 +102,8 @@ impl<T: Config> FungibleHandle<T> {
 	fn transfer_from(
 		&mut self,
 		caller: caller,
-		from: address,
-		to: address,
+		from: Address,
+		to: Address,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -119,7 +119,7 @@ impl<T: Config> FungibleHandle<T> {
 		Ok(true)
 	}
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: caller, spender: address, amount: U256) -> Result<bool> {
+	fn approve(&mut self, caller: caller, spender: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -128,7 +128,7 @@ impl<T: Config> FungibleHandle<T> {
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
-	fn allowance(&self, owner: address, spender: address) -> Result<U256> {
+	fn allowance(&self, owner: Address, spender: Address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let spender = T::CrossAccountId::from_eth(spender);
@@ -137,7 +137,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 
 	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<address> {
+	fn collection_helper_address(&self) -> Result<Address> {
 		Ok(T::ContractAddress::get())
 	}
 }
@@ -148,7 +148,7 @@ impl<T: Config> FungibleHandle<T> {
 	/// @param to account that will receive minted tokens
 	/// @param amount amount of tokens to mint
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
+	fn mint(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -214,7 +214,7 @@ where
 	/// @param amount The amount that will be burnt.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::burn_from())]
-	fn burn_from(&mut self, caller: caller, from: address, amount: U256) -> Result<bool> {
+	fn burn_from(&mut self, caller: caller, from: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -254,7 +254,7 @@ where
 	/// Mint tokens for multiple accounts.
 	/// @param amounts array of pairs of account address and amount
 	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
-	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(address, U256)>) -> Result<bool> {
+	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(Address, U256)>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let budget = self
 			.recorder

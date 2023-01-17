@@ -18,7 +18,7 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
-use evm_coder::{AbiCoder, types::address};
+use evm_coder::{AbiCoder, types::Address};
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
@@ -30,7 +30,7 @@ const ETH_COLLECTION_PREFIX: [u8; 16] = [
 ];
 
 /// Maps the ethereum address of the collection in substrate.
-pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
+pub fn map_eth_to_id(eth: &Address) -> Option<CollectionId> {
 	if eth[0..16] != ETH_COLLECTION_PREFIX {
 		return None;
 	}
@@ -40,7 +40,7 @@ pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
 }
 
 /// Maps the substrate collection id in ethereum.
-pub fn collection_id_to_address(id: CollectionId) -> H160 {
+pub fn collection_id_to_address(id: CollectionId) -> Address {
 	let mut out = [0; 20];
 	out[0..16].copy_from_slice(&ETH_COLLECTION_PREFIX);
 	out[16..20].copy_from_slice(&u32::to_be_bytes(id.0));
@@ -48,7 +48,7 @@ pub fn collection_id_to_address(id: CollectionId) -> H160 {
 }
 
 /// Check if the ethereum address is a collection.
-pub fn is_collection(address: &H160) -> bool {
+pub fn is_collection(address: &Address) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
@@ -66,7 +66,7 @@ where
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {
-	pub(crate) eth: address,
+	pub(crate) eth: Address,
 	pub(crate) sub: U256,
 }
 
