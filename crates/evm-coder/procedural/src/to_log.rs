@@ -231,7 +231,7 @@ impl Events {
 
 			#[automatically_derived]
 			impl ::evm_coder::events::ToLog for #name {
-				fn to_log(&self, contract: address) -> ::ethereum::Log {
+				fn to_log(&self, contract: Address) -> ::ethereum::Log {
 					use ::evm_coder::events::ToTopic;
 					use ::evm_coder::abi::AbiWrite;
 					let mut writer = ::evm_coder::abi::AbiWriter::new();

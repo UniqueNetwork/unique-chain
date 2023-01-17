@@ -23,14 +23,14 @@ use primitive_types::U256;
 enum ERC721Log {
 	Transfer {
 		#[indexed]
-		from: address,
+		from: Address,
 		#[indexed]
-		to: address,
+		to: Address,
 		value: U256,
 	},
 	Eee {
 		#[indexed]
-		aaa: address,
+		aaa: Address,
 		bbb: U256,
 	},
 }

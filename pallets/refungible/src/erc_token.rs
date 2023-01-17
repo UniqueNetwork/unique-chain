@@ -52,7 +52,7 @@ pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId
 
 #[solidity_interface(name = ERC1633)]
 impl<T: Config> RefungibleTokenHandle<T> {
-	fn parent_token(&self) -> Result<address> {
+	fn parent_token(&self) -> Result<Address> {
 		Ok(collection_id_to_address(self.id))
 	}
 
@@ -69,18 +69,18 @@ pub enum ERC20Events {
 	/// of burning tokens the transfer is to 0.
 	Transfer {
 		#[indexed]
-		from: address,
+		from: Address,
 		#[indexed]
-		to: address,
+		to: Address,
 		value: U256,
 	},
 	/// @dev This event is emitted when the amount of tokens (value) is approved
 	/// by the owner to be used by the spender.
 	Approval {
 		#[indexed]
-		owner: address,
+		owner: Address,
 		#[indexed]
-		spender: address,
+		spender: Address,
 		value: U256,
 	},
 }
@@ -118,7 +118,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @dev Gets the balance of the specified address.
 	/// @param owner The address to query the balance of.
 	/// @return An uint256 representing the amount owned by the passed address.
-	fn balance_of(&self, owner: address) -> Result<U256> {
+	fn balance_of(&self, owner: Address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <Balance<T>>::get((self.id, self.1, owner));
@@ -129,7 +129,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param to The address to transfer to.
 	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
-	fn transfer(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
+	fn transfer(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -150,8 +150,8 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	fn transfer_from(
 		&mut self,
 		caller: caller,
-		from: address,
-		to: address,
+		from: Address,
+		to: Address,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -175,7 +175,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param spender The address which will spend the funds.
 	/// @param amount The amount of tokens to be spent.
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: caller, spender: address, amount: U256) -> Result<bool> {
+	fn approve(&mut self, caller: caller, spender: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -189,7 +189,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param owner address The address which owns the funds.
 	/// @param spender address The address which will spend the funds.
 	/// @return A uint256 specifying the amount of tokens still available for the spender.
-	fn allowance(&self, owner: address, spender: address) -> Result<U256> {
+	fn allowance(&self, owner: Address, spender: Address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let spender = T::CrossAccountId::from_eth(spender);
@@ -209,7 +209,7 @@ where
 	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	#[solidity(hide)]
-	fn burn_from(&mut self, caller: caller, from: address, amount: U256) -> Result<bool> {
+	fn burn_from(&mut self, caller: caller, from: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;

@@ -53,7 +53,7 @@ impl ToTopic for U256 {
 	}
 }
 
-impl ToTopic for address {
+impl ToTopic for Address {
 	fn to_topic(&self) -> H256 {
 		let mut out = [0u8; 32];
 		out[12..32].copy_from_slice(&self.0);
