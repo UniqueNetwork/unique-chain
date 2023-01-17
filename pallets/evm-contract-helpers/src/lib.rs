@@ -80,6 +80,7 @@ pub mod pallet {
 	pub(super) type Owner<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = H160, QueryKind = ValueQuery>;
 
+	/// Deprecated: this storage is deprecated
 	#[pallet::storage]
 	type SelfSponsoring<T: Config> =
 		StorageMap<Hasher = Twox128, Key = H160, Value = bool, QueryKind = ValueQuery>;
@@ -348,6 +349,7 @@ pub mod pallet {
 		}
 
 		/// Get current sponsoring mode, performing lazy migration from legacy storage
+		/// Deprecated: this method is for deprecated storage
 		pub fn sponsoring_mode(contract: H160) -> SponsoringModeT {
 			<SponsoringMode<T>>::get(contract)
 				.or_else(|| {
@@ -358,6 +360,7 @@ pub mod pallet {
 		}
 
 		/// Reconfigure contract sponsoring mode
+		/// Deprecated: this method is for deprecated storage
 		pub fn set_sponsoring_mode(contract: H160, mode: SponsoringModeT) {
 			if mode == SponsoringModeT::Disabled {
 				<SponsoringMode<T>>::remove(contract);
