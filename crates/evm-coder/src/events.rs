@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use ethereum::Log;
-use primitive_types::{H160, H256};
+use primitive_types::{H160, H256, U256};
 
 use crate::types::*;
 
@@ -45,7 +45,7 @@ impl ToTopic for H256 {
 	}
 }
 
-impl ToTopic for uint256 {
+impl ToTopic for U256 {
 	fn to_topic(&self) -> H256 {
 		let mut out = [0u8; 32];
 		self.to_big_endian(&mut out);
