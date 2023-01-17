@@ -26,6 +26,7 @@ use evm_coder::{
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::{vec, vec::Vec};
+use sp_core::U256;
 use up_data_structs::{
 	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
 	SponsoringRateLimit, SponsorshipState,
@@ -67,7 +68,7 @@ pub enum CollectionHelpersEvents {
 		#[indexed]
 		collection_id: address,
 		/// Token ID.
-		token_id: uint256,
+		token_id: U256,
 	},
 }
 
