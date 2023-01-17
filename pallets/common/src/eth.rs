@@ -413,3 +413,32 @@ impl CollectionNestingPermission {
 		Self { field, value }
 	}
 }
+
+/// Ethereum representation of `AccessMode` (see [`up_data_structs::AccessMode`]).
+#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[repr(u8)]
+pub enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
+	#[default]
+	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
+	AllowList,
+}
+
+impl From<up_data_structs::AccessMode> for AccessMode {
+	fn from(value: up_data_structs::AccessMode) -> Self {
+		match value {
+			up_data_structs::AccessMode::Normal => AccessMode::Normal,
+			up_data_structs::AccessMode::AllowList => AccessMode::AllowList,
+		}
+	}
+}
+
+impl Into<up_data_structs::AccessMode> for AccessMode {
+	fn into(self) -> up_data_structs::AccessMode {
+		match self {
+			AccessMode::Normal => up_data_structs::AccessMode::Normal,
+			AccessMode::AllowList => up_data_structs::AccessMode::AllowList,
+		}
+	}
+}

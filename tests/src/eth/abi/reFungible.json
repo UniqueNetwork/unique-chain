@@ -632,7 +632,9 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "uint8", "name": "mode", "type": "uint8" }],
+    "inputs": [
+      { "internalType": "enum AccessMode", "name": "mode", "type": "uint8" }
+    ],
     "name": "setCollectionAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
