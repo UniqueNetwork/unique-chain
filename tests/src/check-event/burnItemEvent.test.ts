@@ -32,6 +32,7 @@ describe('Burn Item event ', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     const token = await collection.mintToken(alice, {Substrate: alice.address});
     await token.burn(alice);
+    await helper.wait.newBlocks(1);
 
     const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
     const eventStrings = event.map(e => `${e.section}.${e.method}`);
