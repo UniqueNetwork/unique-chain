@@ -266,10 +266,12 @@ decl_module! {
 		/// * `token_prefix`: Byte string containing the token prefix to mark a collection
 		/// to which a token belongs (limit [`MAX_TOKEN_PREFIX_LENGTH`]).
 		/// * `mode`: Type of items stored in the collection and type dependent data.
-		// returns collection ID
+		///
+		/// returns collection ID
+		///
+		/// Deprecated: `create_collection_ex` is more up-to-date and advanced, prefer it instead.
 		#[weight = <SelfWeightOf<T>>::create_collection()]
-		#[deprecated(note = "`create_collection_ex` is more up-to-date and advanced, prefer it instead")]
-		pub fn create_collection(
+		fn create_collection(
 			origin,
 			collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 			collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
