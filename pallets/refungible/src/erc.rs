@@ -288,13 +288,6 @@ pub enum ERC721Events {
 	},
 }
 
-#[derive(ToLog)]
-pub enum ERC721UniqueMintableEvents {
-	/// @dev Not supported
-	#[allow(dead_code)]
-	MintingFinished {},
-}
-
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
 #[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
@@ -576,12 +569,8 @@ impl<T: Config> RefungibleHandle<T> {
 }
 
 /// @title ERC721 minting logic.
-#[solidity_interface(name = ERC721UniqueMintable, events(ERC721UniqueMintableEvents))]
+#[solidity_interface(name = ERC721UniqueMintable)]
 impl<T: Config> RefungibleHandle<T> {
-	fn minting_finished(&self) -> Result<bool> {
-		Ok(false)
-	}
-
 	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
@@ -717,11 +706,6 @@ impl<T: Config> RefungibleHandle<T> {
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
-	}
-
-	/// @dev Not implemented
-	fn finish_minting(&mut self, _caller: caller) -> Result<bool> {
-		Err("not implementable".into())
 	}
 }
 
