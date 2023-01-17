@@ -17,6 +17,7 @@
 #![allow(dead_code)]
 
 use evm_coder::{ToLog, types::*};
+use primitive_types::U256;
 
 #[derive(ToLog)]
 enum ERC721Log {
@@ -25,11 +26,11 @@ enum ERC721Log {
 		from: address,
 		#[indexed]
 		to: address,
-		value: uint256,
+		value: U256,
 	},
 	Eee {
 		#[indexed]
 		aaa: address,
-		bbb: uint256,
+		bbb: U256,
 	},
 }

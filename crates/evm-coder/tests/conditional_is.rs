@@ -4,14 +4,14 @@ pub struct Contract(bool);
 
 #[solidity_interface(name = A)]
 impl Contract {
-	fn method_a() -> Result<void> {
+	fn method_a() -> Result<()> {
 		Ok(())
 	}
 }
 
 #[solidity_interface(name = B)]
 impl Contract {
-	fn method_b() -> Result<void> {
+	fn method_b() -> Result<()> {
 		Ok(())
 	}
 }

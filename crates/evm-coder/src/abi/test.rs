@@ -39,22 +39,22 @@ macro_rules! test_impl_uint {
 
 #[test]
 fn encode_decode_uint8() {
-	test_impl_uint!(uint8);
+	test_impl_uint!(u8);
 }
 
 #[test]
 fn encode_decode_uint32() {
-	test_impl_uint!(uint32);
+	test_impl_uint!(u32);
 }
 
 #[test]
 fn encode_decode_uint128() {
-	test_impl_uint!(uint128);
+	test_impl_uint!(u128);
 }
 
 #[test]
 fn encode_decode_uint256() {
-	test_impl::<uint256>(
+	test_impl::<U256>(
 		0xdeadbeef,
 		U256([255, 0, 0, 0]),
 		&hex!(
@@ -101,7 +101,7 @@ fn encode_decode_tuple_string() {
 
 #[test]
 fn encode_decode_vec_tuple_address_uint256() {
-	test_impl::<Vec<(address, uint256)>>(
+	test_impl::<Vec<(address, U256)>>(
         0x1ACF2D55,
         vec![
             (
@@ -138,7 +138,7 @@ fn encode_decode_vec_tuple_address_uint256() {
 
 #[test]
 fn encode_decode_vec_tuple_uint256_string() {
-	test_impl::<Vec<(uint256, string)>>(
+	test_impl::<Vec<(U256, string)>>(
         0xdeadbeef,
         vec![
             (1.into(), "Test URI 0".to_string()),
@@ -261,7 +261,7 @@ fn parse_vec_with_dynamic_type() {
 	let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 	assert_eq!(call, u32::to_be_bytes(decoded_data.0));
 	let address = decoder.address().unwrap();
-	let data = <Vec<(uint256, string)>>::abi_read(&mut decoder).unwrap();
+	let data = <Vec<(U256, string)>>::abi_read(&mut decoder).unwrap();
 	assert_eq!(data, decoded_data.1);
 
 	let mut writer = AbiWriter::new_call(decoded_data.0);
