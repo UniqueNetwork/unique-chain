@@ -94,7 +94,7 @@ where
 	/// @param value Propery value.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
-	fn set_collection_property(&mut self, caller: caller, key: String, value: bytes) -> Result<()> {
+	fn set_collection_property(&mut self, caller: caller, key: String, value: Bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -174,10 +174,14 @@ where
 	/// @param key Property key.
 	/// @return bytes The property corresponding to the key.
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn collection_property(&self, key: String) -> Result<Bytes> {
 =======
 	fn collection_property(&self, key: String) -> Result<bytes> {
 >>>>>>> 7d542e41 (refac: rename string -> String)
+=======
+	fn collection_property(&self, key: String) -> Result<Bytes> {
+>>>>>>> 64d0cdb0 (refac: rename bytes -> Bytes)
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;

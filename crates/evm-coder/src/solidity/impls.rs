@@ -31,10 +31,14 @@ solidity_type_name! {
 	H160 => "address" true = "0x0000000000000000000000000000000000000000",
 	String => "string" false = "\"\"",
 <<<<<<< HEAD
+<<<<<<< HEAD
 	Bytes => "bytes" false = "hex\"\"",
 =======
 	bytes => "bytes" false = "hex\"\"",
 >>>>>>> 7d542e41 (refac: rename string -> String)
+=======
+	Bytes => "bytes" false = "hex\"\"",
+>>>>>>> 64d0cdb0 (refac: rename bytes -> Bytes)
 	bool => "bool" true = "false",
 }
 

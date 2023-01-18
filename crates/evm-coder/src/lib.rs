@@ -144,7 +144,7 @@ pub mod types {
 	pub type String = ::std::string::String;
 
 	#[derive(Default, Debug, PartialEq, Eq, Clone)]
-	pub struct bytes(pub Vec<u8>);
+	pub struct Bytes(pub Vec<u8>);
 
 	//#region Special types
 	/// Makes function payable

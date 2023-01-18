@@ -298,10 +298,14 @@ fn parse_vec_with_dynamic_type() {
 #[test]
 fn encode_decode_vec_tuple_string_bytes() {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	test_impl::<Vec<(String, Bytes)>>(
 =======
 	test_impl::<Vec<(String, bytes)>>(
 >>>>>>> 7d542e41 (refac: rename string -> String)
+=======
+	test_impl::<Vec<(String, Bytes)>>(
+>>>>>>> 64d0cdb0 (refac: rename bytes -> Bytes)
 		0xdeadbeef,
 		vec![
 			(
