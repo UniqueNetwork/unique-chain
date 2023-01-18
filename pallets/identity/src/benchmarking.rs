@@ -418,6 +418,7 @@ benchmarks! {
 		use frame_benchmarking::account;
 		let identities = (0..n).map(|i| (
 			account("caller", i, SEED),
+			account("caller", i, SEED),
 			Registration::<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields> {
 				judgements: Default::default(),
 				deposit: Default::default(),
@@ -450,16 +451,13 @@ benchmarks! {
 		let s in 0 .. T::MaxSubAccounts::get();
 		let n in 0..600;
 		use frame_benchmarking::account;
-		let identities = (0..n).map(|i| {
-			let caller: T::AccountId = account("caller", i, SEED);
+		let identities = (0..n).map(|i| (
+			account("caller", i, SEED),
 			(
-				caller.clone(),
-				(
-					BalanceOf::<T>::max_value(),
-					create_sub_accounts::<T>(&caller, s).unwrap().try_into().unwrap(),
-				),
-			)
-		}).collect::<Vec<_>>();
+				BalanceOf::<T>::max_value(),
+				create_sub_accounts::<T>(&caller, s)?.try_into().unwrap(),
+			),
+		)).collect::<Vec<_>>();
 		let origin = T::ForceOrigin::successful_origin();
 	}: _<T::RuntimeOrigin>(origin, identities)
 
