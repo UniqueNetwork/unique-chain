@@ -17,19 +17,10 @@ scale-info = { version = "2.0.1", default-features = false, features = [
 ] }
 up-data-structs = { path = "../../primitives/data-structs", default-features = false }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
+log = { version = "0.4.17", default-features = false }
 
 [features]
 default = ["std"]
-std = [
-	"frame-support/std",
-	"frame-system/std",
-	"frame-benchmarking/std",
-	"sp-std/std",
-	"pallet-common/std",
-	"scale-info/std",
-	"parity-scale-codec/std",
-	"up-data-structs/std",
-	"pallet-evm/std",
-]
+std = ["frame-support/std", "frame-system/std", "frame-benchmarking/std", "sp-std/std", "pallet-common/std", "scale-info/std", "parity-scale-codec/std", "up-data-structs/std", "pallet-evm/std"]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 try-runtime = ["frame-support/try-runtime"]

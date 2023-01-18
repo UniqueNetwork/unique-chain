@@ -54,6 +54,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use pallet_common::CommonCollectionOperations;
+use pallet_common::{erc::CrossAccountId, eth::is_collection};
 use sp_std::collections::btree_set::BTreeSet;
 
 use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
@@ -86,6 +87,8 @@ pub mod pallet {
 		BreadthLimit,
 		/// Couldn't find the token owner that is itself a token.
 		TokenNotFound,
+		/// Tried to nest token under collection contract address, instead of token address
+		CantNestTokenUnderCollection,
 	}
 
 	#[pallet::event]
@@ -302,7 +305,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(under, |collection, parent_id| {
+		Self::try_exec_if_token(under, |collection, parent_id| {
 			collection.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)
 		})
 	}
@@ -319,7 +322,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		Self::try_exec_if_owner_is_valid_nft(under, |collection, parent_id| {
+		Self::try_exec_if_token(under, |collection, parent_id| {
 			collection.check_nesting(from, (collection_id, token_id), parent_id, nesting_budget)?;
 
 			collection.nest(parent_id, (collection_id, token_id));
@@ -336,7 +339,7 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(owner, |collection, parent_id| {
+		Self::exec_if_token(owner, |collection, parent_id| {
 			collection.nest(parent_id, (collection_id, token_id))
 		});
 	}
@@ -347,45 +350,45 @@ impl<T: Config> Pallet<T> {
 		collection_id: CollectionId,
 		token_id: TokenId,
 	) {
-		Self::exec_if_owner_is_valid_nft(owner, |collection, parent_id| {
-			collection.unnest(parent_id, (collection_id, token_id))
-		});
+		if let Err(e) = Self::try_exec_if_token(owner, |collection, parent_id| {
+			collection.unnest(parent_id, (collection_id, token_id));
+			Ok(())
+		}) {
+			log::warn!("unnest precondition failed: {e:?}")
+		}
 	}
 
-	fn exec_if_owner_is_valid_nft(
+	/// # Panics
+	/// If [`Self::try_exec_if_token`] fails
+	fn exec_if_token(
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId),
 	) {
-		Self::try_exec_if_owner_is_valid_nft(account, |collection, id| {
+		Self::try_exec_if_token(account, |collection, id| {
 			action(collection, id);
 			Ok(())
 		})
 		.unwrap();
 	}
 
-	fn try_exec_if_owner_is_valid_nft(
+	/// If `account` is a token address, execute `action` providing found collection as an argument
+	/// Token may not exist, it is expected it will be checked in the callback.
+	fn try_exec_if_token(
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult,
 	) -> DispatchResult {
-		let account = T::CrossTokenAddressMapping::address_to_token(account);
-
-		if account.is_none() {
-			return Ok(());
+		if is_collection(&account.as_eth()) {
+			fail!(<Error<T>>::CantNestTokenUnderCollection);
 		}
+		let Some((collection, token)) = T::CrossTokenAddressMapping::address_to_token(account) else {
+			return Ok(())
+		};
 
-		let account = account.unwrap();
-
-		let handle = <CollectionHandle<T>>::try_get(account.0);
-
-		if handle.is_err() {
-			return Ok(());
-		}
-
-		let handle = handle.unwrap();
+		let handle = <CollectionHandle<T>>::try_get(collection)?;
 
 		let dispatch = T::CollectionDispatch::dispatch(handle);
 		let dispatch = dispatch.as_dyn();
 
-		action(dispatch, account.1)
+		action(dispatch, token)
 	}
 }
