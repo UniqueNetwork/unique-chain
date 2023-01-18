@@ -10,20 +10,9 @@ services:
         - "NETWORK={{ NETWORK }}"
         - "BRANCH={{ BRANCH }}"
       context: ../
-<<<<<<< HEAD
       dockerfile: .docker/Dockerfile-parachain
     image: parachain-collators
     container_name: parachain-collators
-=======
-      dockerfile: .docker/Dockerfile-collators
-    image: parachain-collators
-    container_name: parachain-collators
-    volumes:
-       - type: bind
-         source: ./launch-config.json
-         target: /polkadot-launch/launch-config.json
-         read_only: true
->>>>>>> 15ad7775 (ci: separate workflow for collator selection)
     expose:
       - 9944
       - 9933
