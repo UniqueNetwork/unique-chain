@@ -27,14 +27,14 @@ solidity_type_name! {
 	u64 => "uint64" true = "0",
 	u128 => "uint128" true = "0",
 	U256 => "uint256" true = "0",
-	bytes4 => "bytes4" true = "bytes4(0)",
+	Bytes4 => "bytes4" true = "bytes4(0)",
 	H160 => "address" true = "0x0000000000000000000000000000000000000000",
-	string => "string" false = "\"\"",
-	bytes => "bytes" false = "hex\"\"",
+	String => "string" false = "\"\"",
+	Bytes => "bytes" false = "hex\"\"",
 	bool => "bool" true = "false",
 }
 
-impl SolidityTypeName for void {
+impl SolidityTypeName for () {
 	fn solidity_name(_writer: &mut impl fmt::Write, _tc: &TypeCollector) -> fmt::Result {
 		Ok(())
 	}
@@ -72,10 +72,10 @@ macro_rules! count {
 macro_rules! impl_tuples {
 	($($ident:ident)+) => {
 		impl<$($ident: SolidityTypeName + 'static),+> SolidityTupleTy for ($($ident,)+) {
-			fn fields(tc: &TypeCollector) -> Vec<string> {
+			fn fields(tc: &TypeCollector) -> Vec<String> {
 				let mut collected = Vec::with_capacity(Self::len());
 				$({
-					let mut out = string::new();
+					let mut out = String::new();
 					$ident::solidity_name(&mut out, tc).expect("no fmt error");
 					collected.push(out);
 				})*;
