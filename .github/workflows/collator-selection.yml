@@ -1,0 +1,164 @@
+name: collator-selection-test-run
+
+# Triger: only call from main workflow(re-usable workflows)
+on:
+  workflow_call:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  execution-marix:
+    name: Prepare execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v3
+        id: create_matrix
+        with:
+          matrix: |
+            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+
+  collator-selection:
+    needs: execution-marix
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci,large]
+    timeout-minutes: 1380
+
+    name: ${{ matrix.network }}-build
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-collators.j2
+          output_file: .docker/docker-compose.collators.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
+            NETWORK=${{ matrix.network }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/docker-compose.collators.${{ matrix.network }}.yml
+
+      - name: Show launch-config configuration
+        run: cat launch-config.json
+
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose.collators.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+
+      #  🚀 POLKADOT LAUNCH COMPLETE 🚀
+      - name: Check if docker logs consist messages related to testing of collator tests 
+        if: success()
+        run: |
+          counter=160
+          function check_container_status {
+                docker inspect -f {{.State.Running}} parachain-collators
+          }
+          function do_docker_logs {
+                docker logs --details parachain-collators  2>&1
+          }
+          function is_started {
+                if [ "$(check_container_status)" == "true" ]; then
+                        echo "Container: collator-${{ matrix.network }}-testnet-local RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
+                                echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
+                                return 0
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
+                else
+                        echo "Container collator-${{ matrix.network }}-testnet-local NOT RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
+                fi
+          echo "something goes wrong"
+          exit 1
+          }
+          while ! is_started; do
+                echo "Waiting for special message in log files "
+                sleep 30s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                         continue
+                else
+                         break
+                fi
+          done
+          echo "Halting script"
+          exit 0
+        shell: bash
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
+      - name: Run Collator tests
+        working-directory: tests
+        if: success() || failure()
+        run: |
+          yarn install
+          yarn add mochawesome
+          node scripts/readyness.js
+          echo "Ready to start tests"
+          yarn polkadot-types
+          NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
+        env:
+          RPC_URL: http://127.0.0.1:9933/
+
+      - name: Test Report Collator
+        uses: phoenix-actions/test-reporting@v8
+        id: test-report-collator
+        if: success() || failure()    # run this step even if previous step failed
+        with:
+          name: Report Collator tests results - ${{ matrix.network }}            # Name of the check run which will be created
+          path: tests/mochawesome-report/test-collators-*.json    # Path to test results
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
+      - name: Stop running containers
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose.collators.${{ matrix.network }}.yml" down
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f -a
+          docker system prune -f
