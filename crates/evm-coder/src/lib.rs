@@ -145,7 +145,7 @@ pub mod types {
 
 	//#region Special types
 	/// Makes function payable
-	pub type value = U256;
+	pub type Value = U256;
 	/// Makes function caller-sensitive
 	pub type caller = Address;
 	//#endregion

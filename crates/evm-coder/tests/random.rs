@@ -67,7 +67,7 @@ impl Impls {
 	fn caller_sensitive(&self, _caller: caller) -> Result<u8> {
 		unreachable!()
 	}
-	fn payable(&mut self, _value: value) -> Result<u8> {
+	fn payable(&mut self, _value: Value) -> Result<u8> {
 		unreachable!()
 	}
 
