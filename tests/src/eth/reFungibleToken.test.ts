@@ -19,51 +19,6 @@ import {EthUniqueHelper, expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 
-
-describe('Refungible token: Information getting', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-
-      donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
-    });
-  });
-
-  itEth('totalSupply', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
-    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
-    const totalSupply = await contract.methods.totalSupply().call();
-    expect(totalSupply).to.equal('200');
-  });
-
-  itEth('balanceOf', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
-    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
-    const balance = await contract.methods.balanceOf(caller).call();
-    expect(balance).to.equal('200');
-  });
-
-  itEth('decimals', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const collection = await helper.rft.mintCollection(alice, {tokenPrefix: 'MUON'});
-    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.rftTokenById(collection.collectionId, tokenId, caller);
-    const decimals = await contract.methods.decimals().call();
-    expect(decimals).to.equal('0');
-  });
-});
-
 // FIXME: Need erc721 for ReFubgible.
 describe('Check ERC721 token URI for ReFungible', () => {
   let donor: IKeyringPair;

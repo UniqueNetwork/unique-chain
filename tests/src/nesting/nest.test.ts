@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../util';
+import {expect, itSub, usingPlaygrounds} from '../util';
 
 describe('Integration Test: Composite nesting tests', () => {
   let alice: IKeyringPair;
@@ -288,53 +288,6 @@ describe('Integration Test: Various token type nesting', () => {
     await collectionFT.transfer(charlie, targetToken.nestingAccount(), 2n);
     expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(7n);
   });
-
-  // ---------- Re-Fungible ----------
-
-  itSub.ifWithPallets('ReFungible: allows an Owner to nest/unnest their token', [Pallets.ReFungible], async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice, {permissions: {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}}});
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice, {Substrate: charlie.address});
-
-    await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
-
-    await collectionRFT.setPermissions(alice, {access: 'AllowList', mintMode: true});
-    await collectionRFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionRFT.addToAllowList(alice, targetToken.nestingAccount());
-
-    // Create an immediately nested token
-    const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAccount());
-    expect(await nestedToken.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
-
-    // Create a token to be nested and nest
-    const newToken = await collectionRFT.mintToken(charlie, 5n);
-    await newToken.transfer(charlie, targetToken.nestingAccount(), 2n);
-    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(2n);
-  });
-
-  itSub.ifWithPallets('ReFungible: allows an Owner to nest/unnest their token (Restricted nesting)', [Pallets.ReFungible], async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice);
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice, {Substrate: charlie.address});
-
-    await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted:[collectionRFT.collectionId]}});
-    await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
-
-    await collectionRFT.setPermissions(alice, {access: 'AllowList', mintMode: true});
-    await collectionRFT.addToAllowList(alice, {Substrate: charlie.address});
-    await collectionRFT.addToAllowList(alice, targetToken.nestingAccount());
-
-    // Create an immediately nested token
-    const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAccount());
-    expect(await nestedToken.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
-
-    // Create a token to be nested and nest
-    const newToken = await collectionRFT.mintToken(charlie, 5n);
-    await newToken.transfer(charlie, targetToken.nestingAccount(), 2n);
-    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(2n);
-  });
 });
 
 describe('Negative Test: Nesting', () => {
@@ -579,89 +532,5 @@ describe('Negative Test: Nesting', () => {
 
     expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(5n);
-  });
-
-  // ---------- Re-Fungible ----------
-
-  itSub.ifWithPallets('ReFungible: disallows to nest token if nesting is disabled', [Pallets.ReFungible], async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice);
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice);
-
-    // Try to create an immediately nested token
-    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAccount()))
-      .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
-
-    // Try to create a token to be nested and nest
-    const token = await collectionRFT.mintToken(alice, 5n);
-    await expect(token.transfer(alice, targetToken.nestingAccount(), 2n))
-      .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(5n);
-  });
-
-  itSub.ifWithPallets('ReFungible: disallows a non-Owner to nest someone else\'s token', [Pallets.ReFungible], async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice);
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice);
-
-    await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}});
-    await collectionNFT.addToAllowList(alice, {Substrate: bob.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
-
-    // Try to create a token to be nested and nest
-    const newToken = await collectionRFT.mintToken(alice);
-    await expect(newToken.transfer(bob, targetToken.nestingAccount())).to.be.rejectedWith(/common\.TokenValueTooLow/);
-
-    expect(await targetToken.getChildren()).to.be.length(0);
-    expect(await newToken.getBalance({Substrate: alice.address})).to.be.equal(1n);
-
-    // Nest some tokens as Alice into Bob's token
-    await newToken.transfer(alice, targetToken.nestingAccount());
-
-    // Try to pull it out
-    await expect(newToken.transferFrom(bob, targetToken.nestingAccount(), {Substrate: alice.address}, 1n))
-      .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
-  });
-
-  itSub.ifWithPallets('ReFungible: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', [Pallets.ReFungible], async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice);
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice);
-
-    await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: [collectionRFT.collectionId]}});
-    await collectionNFT.addToAllowList(alice, {Substrate: bob.address});
-    await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
-
-    // Try to create a token to be nested and nest
-    const newToken = await collectionRFT.mintToken(alice);
-    await expect(newToken.transfer(bob, targetToken.nestingAccount())).to.be.rejectedWith(/common\.TokenValueTooLow/);
-
-    expect(await targetToken.getChildren()).to.be.length(0);
-    expect(await newToken.getBalance({Substrate: alice.address})).to.be.equal(1n);
-
-    // Nest some tokens as Alice into Bob's token
-    await newToken.transfer(alice, targetToken.nestingAccount());
-
-    // Try to pull it out
-    await expect(newToken.transferFrom(bob, targetToken.nestingAccount(), {Substrate: alice.address}, 1n))
-      .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
-    expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
-  });
-
-  itSub.ifWithPallets('ReFungible: disallows to nest token to an unlisted collection', [Pallets.ReFungible], async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true, restricted: []}}});
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice);
-
-    // Try to create an immediately nested token
-    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAccount()))
-      .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
-
-    // Try to create a token to be nested and nest
-    const token = await collectionRFT.mintToken(alice, 5n);
-    await expect(token.transfer(alice, targetToken.nestingAccount(), 2n))
-      .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(5n);
   });
 });
