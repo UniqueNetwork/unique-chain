@@ -314,6 +314,8 @@ pub mod pallet {
 			main: T::AccountId,
 			deposit: BalanceOf<T>,
 		},
+		/// A number of identities were forcibly updated with new sub-identities.
+		SubIdentitiesInserted { amount: u32 },
 	}
 
 	#[pallet::call]
@@ -1137,10 +1139,61 @@ pub mod pallet {
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 			for identity in identities.clone() {
-				IdentityOf::<T>::set(identity, None);
+				let (_, sub_ids) = <SubsOf<T>>::take(&identity);
+				<IdentityOf<T>>::remove(&identity);
+				for sub in sub_ids.iter() {
+					<SuperOf<T>>::remove(sub);
+				}
 			}
 			Self::deposit_event(Event::IdentitiesRemoved {
 				amount: identities.len() as u32,
+			});
+			Ok(())
+		}
+
+		/// Set sub-identities to be associated with the provided accounts as force origin.
+		///
+		/// This is not meant to operate in tandem with the identity pallet as is,
+		/// and be instead used to keep identities made and verified externally,
+		/// forbidden from interacting with an ordinary user, since it ignores any safety mechanism.
+		#[pallet::call_index(17)]
+		#[pallet::weight(T::WeightInfo::force_set_subs(
+			T::MaxSubAccounts::get(), // S
+			subs.len() as u32, // N
+		))]
+		pub fn force_set_subs(
+			origin: OriginFor<T>,
+			subs: Vec<(
+				T::AccountId,
+				(
+					BalanceOf<T>,
+					BoundedVec<(T::AccountId, Data), T::MaxSubAccounts>,
+				),
+			)>,
+		) -> DispatchResult {
+			T::ForceOrigin::ensure_origin(origin)?;
+			for identity in subs.clone() {
+				let account = identity.0;
+				let (_, old_subs) = <SubsOf<T>>::get(&account);
+				for old_sub in old_subs {
+					<SuperOf<T>>::remove(old_sub);
+				}
+
+				let mut ids = BoundedVec::<T::AccountId, T::MaxSubAccounts>::default();
+				for (id, name) in identity.1 .1 {
+					<SuperOf<T>>::insert(&id, (account.clone(), name));
+					ids.try_push(id)
+						.expect("subs length is less than T::MaxSubAccounts; qed");
+				}
+
+				if ids.is_empty() {
+					<SubsOf<T>>::remove(&account);
+				} else {
+					<SubsOf<T>>::insert(account, (identity.1 .0, ids));
+				}
+			}
+			Self::deposit_event(Event::SubIdentitiesInserted {
+				amount: subs.len() as u32,
 			});
 			Ok(())
 		}
