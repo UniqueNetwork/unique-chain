@@ -700,22 +700,9 @@ contract ERC721Burnable is Dummy, ERC165 {
 	}
 }
 
-/// @dev inlined interface
-contract ERC721UniqueMintableEvents {
-	event MintingFinished();
-}
-
 /// @title ERC721 minting logic.
-/// @dev the ERC-165 identifier for this interface is 0x476ff149
-contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
-	/// @dev EVM selector for this function is: 0x05d2035b,
-	///  or in textual repr: mintingFinished()
-	function mintingFinished() public view returns (bool) {
-		require(false, stub_error);
-		dummy;
-		return false;
-	}
-
+/// @dev the ERC-165 identifier for this interface is 0x3fd94ea6
+contract ERC721UniqueMintable is Dummy, ERC165 {
 	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
@@ -756,7 +743,6 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		dummy = 0;
 		return 0;
 	}
-
 	// /// @notice Function to mint token with the given tokenUri.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
@@ -774,14 +760,6 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 	// 	return false;
 	// }
 
-	/// @dev Not implemented
-	/// @dev EVM selector for this function is: 0x7d64bcb4,
-	///  or in textual repr: finishMinting()
-	function finishMinting() public returns (bool) {
-		require(false, stub_error);
-		dummy = 0;
-		return false;
-	}
 }
 
 /// @title Unique extensions for ERC721.

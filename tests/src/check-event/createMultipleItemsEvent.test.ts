@@ -35,6 +35,7 @@ describe('Create Multiple Items Event event ', () => {
       {owner: {Substrate: alice.address}},
     ]);
 
+    await helper.wait.newBlocks(1);
     const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
     const eventStrings = event.map(e => `${e.section}.${e.method}`);
 

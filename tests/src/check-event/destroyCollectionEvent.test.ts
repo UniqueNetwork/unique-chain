@@ -31,6 +31,7 @@ describe('Destroy collection event ', () => {
   itSub('Check event from destroyCollection(): ', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
     await collection.burn(alice);
+    await helper.wait.newBlocks(1);
     const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
     const eventStrings = event.map(e => `${e.section}.${e.method}`);
 
