@@ -122,7 +122,7 @@ describe('Nesting negative', () => {
     await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
   });
 
-  itSub('Cannot nest to a future collection', async ({helper}) => {
+  itSub.ifWithPallets('Cannot nest to a future collection', [Pallets.ReFungible], async ({helper}) => {
     const nonExistingCollectionId = await helper.collection.getTotalCount() + 1000;
     const futureToken = helper.nft.getTokenObject(nonExistingCollectionId, 1);
 
@@ -144,7 +144,7 @@ describe('Nesting negative', () => {
     await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('CollectionNotFound');
   });
 
-  itSub('Cannot nest to a future token in a NFT collection', async ({helper}) => {
+  itSub.ifWithPallets('Cannot nest to a future token in a NFT collection', [Pallets.ReFungible], async ({helper}) => {
     const {collectionId} = await helper.nft.mintCollection(alice);
     // To avoid UserIsNotAllowedToNest error
     await helper.collection.setPermissions(alice, collectionId, {nesting: {collectionAdmin: true}});
@@ -168,7 +168,7 @@ describe('Nesting negative', () => {
     await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('TokenNotFound');
   });
 
-  itEth('Cannot nest to collection address', async({helper}) => {
+  itEth.ifWithPallets('Cannot nest to collection address', [Pallets.ReFungible], async({helper}) => {
     const existingCollection = await helper.nft.mintCollection(alice);
     const existingCollectionAddress = helper.ethAddress.fromCollectionId(existingCollection.collectionId);
     const futureCollectionAddress = helper.ethAddress.fromCollectionId(99999999);
