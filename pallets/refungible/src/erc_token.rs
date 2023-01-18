@@ -157,6 +157,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	#[weight(<CommonWeights<T>>::transfer())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 =======
 	fn transfer(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
@@ -164,6 +165,9 @@ impl<T: Config> RefungibleTokenHandle<T> {
 =======
 	fn transfer(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -184,6 +188,9 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	fn transfer_from(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		caller: Caller,
 		from: Address,
 		to: Address,
@@ -222,6 +229,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	#[weight(<SelfWeightOf<T>>::approve())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
 =======
 	fn approve(&mut self, caller: caller, spender: address, amount: U256) -> Result<bool> {
@@ -229,6 +237,9 @@ impl<T: Config> RefungibleTokenHandle<T> {
 =======
 	fn approve(&mut self, caller: caller, spender: Address, amount: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -270,7 +281,7 @@ where
 	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	#[solidity(hide)]
-	fn burn_from(&mut self, caller: caller, from: Address, amount: U256) -> Result<bool> {
+	fn burn_from(&mut self, caller: Caller, from: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -333,10 +344,14 @@ where
 	/// @param amount New total amount of the tokens.
 	#[weight(<SelfWeightOf<T>>::repartition_item())]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn repartition(&mut self, caller: Caller, amount: U256) -> Result<bool> {
 =======
 	fn repartition(&mut self, caller: caller, amount: U256) -> Result<bool> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn repartition(&mut self, caller: Caller, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 

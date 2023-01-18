@@ -151,10 +151,14 @@ pub mod types {
 	pub type Value = U256;
 	/// Makes function caller-sensitive
 <<<<<<< HEAD
+<<<<<<< HEAD
 	pub type Caller = Address;
 =======
 	pub type caller = Address;
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	pub type Caller = Address;
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 	//#endregion
 
 	/// Ethereum typed call message, similar to solidity

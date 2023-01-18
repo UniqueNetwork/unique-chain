@@ -105,7 +105,7 @@ where
 	/// @param sponsor User address who set as pending sponsor.
 	fn set_sponsor(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		contract_address: Address,
 		sponsor: Address,
 	) -> Result<()> {
@@ -125,7 +125,7 @@ where
 	/// Set contract as self sponsored.
 	///
 	/// @param contractAddress Contract for which a self sponsoring is being enabled.
-	fn self_sponsored_enable(&mut self, caller: caller, contract_address: Address) -> Result<()> {
+	fn self_sponsored_enable(&mut self, caller: Caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -146,7 +146,7 @@ where
 	/// Remove sponsor.
 	///
 	/// @param contractAddress Contract for which a sponsorship is being removed.
-	fn remove_sponsor(&mut self, caller: caller, contract_address: Address) -> Result<()> {
+	fn remove_sponsor(&mut self, caller: Caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -161,7 +161,7 @@ where
 	/// @dev Caller must be same that set via [`setSponsor`].
 	///
 	/// @param contractAddress Сontract for which need to confirm sponsorship.
-	fn confirm_sponsorship(&mut self, caller: caller, contract_address: Address) -> Result<()> {
+	fn confirm_sponsorship(&mut self, caller: Caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -210,10 +210,14 @@ where
 	fn set_sponsoring_mode(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		contract_address: Address,
 		mode: SponsoringModeT,
 	) -> Result<()> {
@@ -246,7 +250,7 @@ where
 	/// @dev Only contract owner can change this setting
 	fn set_sponsoring_rate_limit(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		contract_address: Address,
 		rate_limit: u32,
 	) -> Result<()> {
@@ -266,7 +270,7 @@ where
 	/// @dev Only contract owner can change this setting
 	fn set_sponsoring_fee_limit(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		contract_address: Address,
 		fee_limit: U256,
 	) -> Result<()> {
@@ -316,10 +320,14 @@ where
 	fn toggle_allowed(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		contract_address: Address,
 		user: Address,
 		is_allowed: bool,
@@ -350,10 +358,14 @@ where
 	fn toggle_allowlist(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		contract_address: Address,
 		enabled: bool,
 	) -> Result<()> {

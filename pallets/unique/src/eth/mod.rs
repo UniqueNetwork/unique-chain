@@ -57,10 +57,14 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 
 fn convert_data<T: Config>(
 <<<<<<< HEAD
+<<<<<<< HEAD
 	caller: Caller,
 =======
 	caller: caller,
 >>>>>>> 7d542e41 (refac: rename string -> String)
+=======
+	caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 	name: String,
 	description: String,
 	token_prefix: String,
@@ -92,6 +96,7 @@ fn convert_data<T: Config>(
 #[inline(always)]
 fn create_collection_internal<T: Config>(
 <<<<<<< HEAD
+<<<<<<< HEAD
 	caller: Caller,
 	value: Value,
 	name: String,
@@ -105,6 +110,9 @@ fn create_collection_internal<T: Config>(
 >>>>>>> 314a48de (refac: rename address -> Address)
 =======
 	caller: caller,
+=======
+	caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 	value: Value,
 	name: String,
 	collection_mode: CollectionMode,
@@ -169,10 +177,14 @@ where
 		&mut self,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> dc76967d (refac: rename value -> Value)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		value: Value,
 		name: String,
 		description: String,
@@ -226,10 +238,14 @@ where
 		&mut self,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> dc76967d (refac: rename value -> Value)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		value: Value,
 		name: String,
 		description: String,
@@ -264,10 +280,14 @@ where
 		&mut self,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> dc76967d (refac: rename value -> Value)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		value: Value,
 		name: String,
 		description: String,
@@ -302,10 +322,14 @@ where
 		&mut self,
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
 =======
 		caller: caller,
 >>>>>>> dc76967d (refac: rename value -> Value)
+=======
+		caller: Caller,
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		value: Value,
 		name: String,
 		decimals: u8,
@@ -344,6 +368,9 @@ where
 	fn make_collection_metadata_compatible(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		caller: Caller,
 		collection: Address,
 		base_uri: String,
@@ -441,6 +468,7 @@ where
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn destroy_collection(&mut self, caller: Caller, collection_address: Address) -> Result<()> {
 =======
 	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<()> {
@@ -448,6 +476,9 @@ where
 =======
 	fn destroy_collection(&mut self, caller: caller, collection_address: Address) -> Result<()> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn destroy_collection(&mut self, caller: Caller, collection_address: Address) -> Result<()> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
@@ -460,10 +491,14 @@ where
 	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn is_collection_exist(&self, _caller: Caller, collection_address: Address) -> Result<bool> {
 =======
 	fn is_collection_exist(&self, _caller: caller, collection_address: Address) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn is_collection_exist(&self, _caller: Caller, collection_address: Address) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
 			let collection_id = id;
 			return Ok(<CollectionById<T>>::contains_key(collection_id));

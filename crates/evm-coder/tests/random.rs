@@ -65,6 +65,9 @@ impl Impls {
 	}
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 	fn caller_sensitive(&self, _caller: Caller) -> Result<u8> {
 		unreachable!()
 	}

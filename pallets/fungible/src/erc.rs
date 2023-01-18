@@ -112,6 +112,7 @@ impl<T: Config> FungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::transfer())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 =======
 	fn transfer(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
@@ -119,6 +120,9 @@ impl<T: Config> FungibleHandle<T> {
 =======
 	fn transfer(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -134,6 +138,9 @@ impl<T: Config> FungibleHandle<T> {
 	fn transfer_from(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		caller: Caller,
 		from: Address,
 		to: Address,
@@ -164,6 +171,7 @@ impl<T: Config> FungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::approve())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
 =======
 	fn approve(&mut self, caller: caller, spender: address, amount: U256) -> Result<bool> {
@@ -171,6 +179,9 @@ impl<T: Config> FungibleHandle<T> {
 =======
 	fn approve(&mut self, caller: caller, spender: Address, amount: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -209,6 +220,7 @@ impl<T: Config> FungibleHandle<T> {
 	#[weight(<SelfWeightOf<T>>::create_item())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn mint(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 =======
 	fn mint(&mut self, caller: caller, to: address, amount: U256) -> Result<bool> {
@@ -216,6 +228,9 @@ impl<T: Config> FungibleHandle<T> {
 =======
 	fn mint(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn mint(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -283,6 +298,7 @@ where
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn burn_from(&mut self, caller: Caller, from: Address, amount: U256) -> Result<bool> {
 =======
 	fn burn_from(&mut self, caller: caller, from: address, amount: U256) -> Result<bool> {
@@ -290,6 +306,9 @@ where
 =======
 	fn burn_from(&mut self, caller: caller, from: Address, amount: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn burn_from(&mut self, caller: Caller, from: Address, amount: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -331,6 +350,7 @@ where
 	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<(Address, U256)>) -> Result<bool> {
 =======
 	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(address, U256)>) -> Result<bool> {
@@ -338,6 +358,9 @@ where
 =======
 	fn mint_bulk(&mut self, caller: caller, amounts: Vec<(Address, U256)>) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<(Address, U256)>) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let budget = self
 			.recorder

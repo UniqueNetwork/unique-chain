@@ -41,13 +41,20 @@ impl ERC20 {
 	fn balance_of(&self, _owner: Address) -> Result<U256> {
 		unreachable!()
 	}
+<<<<<<< HEAD
 	fn transfer(&mut self, _caller: caller, _to: Address, _value: U256) -> Result<bool> {
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	fn transfer(&mut self, _caller: Caller, _to: Address, _value: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		unreachable!()
 	}
 	fn transfer_from(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		_caller: Caller,
 		_from: Address,
 		_to: Address,
@@ -67,6 +74,7 @@ impl ERC20 {
 	}
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn approve(&mut self, _caller: Caller, _spender: Address, _value: U256) -> Result<bool> {
 		unreachable!()
 	}
@@ -79,6 +87,9 @@ impl ERC20 {
 >>>>>>> c1366a22 (fix: unit tests)
 =======
 	fn approve(&mut self, _caller: caller, _spender: Address, _value: U256) -> Result<bool> {
+=======
+	fn approve(&mut self, _caller: Caller, _spender: Address, _value: U256) -> Result<bool> {
+>>>>>>> 45404723 (refac: rename caller -> Caller)
 		unreachable!()
 	}
 	fn allowance(&self, _owner: Address, _spender: Address) -> Result<U256> {
