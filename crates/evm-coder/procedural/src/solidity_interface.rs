@@ -354,7 +354,7 @@ impl AbiTypeHelper for Type {
 
 	fn is_caller(&self) -> bool {
 		if let Ok(ident) = self.plain() {
-			return ident == "caller";
+			return ident == "Caller";
 		}
 		false
 	}

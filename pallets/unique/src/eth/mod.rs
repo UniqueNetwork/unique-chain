@@ -56,7 +56,7 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 }
 
 fn convert_data<T: Config>(
-	caller: caller,
+	caller: Caller,
 	name: String,
 	description: String,
 	token_prefix: String,
@@ -87,7 +87,7 @@ fn convert_data<T: Config>(
 
 #[inline(always)]
 fn create_collection_internal<T: Config>(
-	caller: caller,
+	caller: Caller,
 	value: Value,
 	name: String,
 	collection_mode: CollectionMode,
@@ -149,7 +149,7 @@ where
 	#[solidity(rename_selector = "createNFTCollection")]
 	fn create_nft_collection(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		value: Value,
 		name: String,
 		description: String,
@@ -188,7 +188,7 @@ where
 	#[solidity(hide)]
 	fn create_nonfungible_collection(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		value: Value,
 		name: String,
 		description: String,
@@ -208,7 +208,7 @@ where
 	#[solidity(rename_selector = "createRFTCollection")]
 	fn create_rft_collection(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		value: Value,
 		name: String,
 		description: String,
@@ -228,7 +228,7 @@ where
 	#[solidity(rename_selector = "createFTCollection")]
 	fn create_fungible_collection(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		value: Value,
 		name: String,
 		decimals: u8,
@@ -248,7 +248,7 @@ where
 	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
 	fn make_collection_metadata_compatible(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		collection: Address,
 		base_uri: String,
 	) -> Result<()> {
@@ -334,7 +334,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
-	fn destroy_collection(&mut self, caller: caller, collection_address: Address) -> Result<()> {
+	fn destroy_collection(&mut self, caller: Caller, collection_address: Address) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
@@ -346,7 +346,7 @@ where
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
-	fn is_collection_exist(&self, _caller: caller, collection_address: Address) -> Result<bool> {
+	fn is_collection_exist(&self, _caller: Caller, collection_address: Address) -> Result<bool> {
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
 			let collection_id = id;
 			return Ok(<CollectionById<T>>::contains_key(collection_id));
