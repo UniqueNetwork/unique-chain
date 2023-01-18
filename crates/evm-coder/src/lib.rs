@@ -136,9 +136,9 @@ pub mod types {
 	pub type Topic = H256;
 
 	#[cfg(not(feature = "std"))]
-	pub type string = ::alloc::string::String;
+	pub type String = ::alloc::string::String;
 	#[cfg(feature = "std")]
-	pub type string = ::std::string::String;
+	pub type String = ::std::string::String;
 
 	#[derive(Default, Debug, PartialEq, Eq, Clone)]
 	pub struct bytes(pub Vec<u8>);

@@ -222,7 +222,7 @@ impl Events {
 							#solidity_functions,
 						)*),
 					};
-					let mut out = string::new();
+					let mut out = ::evm_coder::types::String::new();
 					out.push_str("/// @dev inlined interface\n");
 					let _ = interface.format(is_impl, &mut out, tc);
 					tc.collect(out);

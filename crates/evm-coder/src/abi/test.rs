@@ -138,7 +138,7 @@ fn encode_decode_vec_tuple_address_uint256() {
 
 #[test]
 fn encode_decode_vec_tuple_uint256_string() {
-	test_impl::<Vec<(U256, string)>>(
+	test_impl::<Vec<(U256, String)>>(
         0xdeadbeef,
         vec![
             (1.into(), "Test URI 0".to_string()),
@@ -261,7 +261,7 @@ fn parse_vec_with_dynamic_type() {
 	let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 	assert_eq!(call, u32::to_be_bytes(decoded_data.0));
 	let address = decoder.address().unwrap();
-	let data = <Vec<(U256, string)>>::abi_read(&mut decoder).unwrap();
+	let data = <Vec<(U256, String)>>::abi_read(&mut decoder).unwrap();
 	assert_eq!(data, decoded_data.1);
 
 	let mut writer = AbiWriter::new_call(decoded_data.0);
@@ -273,7 +273,7 @@ fn parse_vec_with_dynamic_type() {
 
 #[test]
 fn encode_decode_vec_tuple_string_bytes() {
-	test_impl::<Vec<(string, bytes)>>(
+	test_impl::<Vec<(String, bytes)>>(
 		0xdeadbeef,
 		vec![
 			(

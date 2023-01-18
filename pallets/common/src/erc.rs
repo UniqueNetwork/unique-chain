@@ -94,7 +94,7 @@ where
 	/// @param value Propery value.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
-	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
+	fn set_collection_property(&mut self, caller: caller, key: String, value: bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -130,7 +130,7 @@ where
 	/// @param key Property key.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
-	fn delete_collection_property(&mut self, caller: caller, key: string) -> Result<()> {
+	fn delete_collection_property(&mut self, caller: caller, key: String) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -143,7 +143,7 @@ where
 	///
 	/// @param keys Properties keys.
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(keys.len() as u32))]
-	fn delete_collection_properties(&mut self, caller: caller, keys: Vec<string>) -> Result<()> {
+	fn delete_collection_properties(&mut self, caller: caller, keys: Vec<String>) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let keys = keys
 			.into_iter()
@@ -164,7 +164,7 @@ where
 	///
 	/// @param key Property key.
 	/// @return bytes The property corresponding to the key.
-	fn collection_property(&self, key: string) -> Result<bytes> {
+	fn collection_property(&self, key: String) -> Result<bytes> {
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;
@@ -179,7 +179,7 @@ where
 	///
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn collection_properties(&self, keys: Vec<string>) -> Result<Vec<eth::Property>> {
+	fn collection_properties(&self, keys: Vec<String>) -> Result<Vec<eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -616,7 +616,7 @@ where
 	/// Returns collection type
 	///
 	/// @return `Fungible` or `NFT` or `ReFungible`
-	fn unique_collection_type(&self) -> Result<string> {
+	fn unique_collection_type(&self) -> Result<String> {
 		let mode = match self.collection.mode {
 			CollectionMode::Fungible(_) => "Fungible",
 			CollectionMode::NFT => "NFT",

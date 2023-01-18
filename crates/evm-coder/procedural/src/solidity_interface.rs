@@ -999,7 +999,7 @@ impl SolidityInterface {
 						)*),
 					};
 
-					let mut out = ::evm_coder::types::string::new();
+					let mut out = ::evm_coder::types::String::new();
 					if #solidity_name.starts_with("Inline") {
 						out.push_str("/// @dev inlined interface\n");
 					}

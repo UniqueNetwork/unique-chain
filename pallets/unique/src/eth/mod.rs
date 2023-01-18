@@ -57,9 +57,9 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 
 fn convert_data<T: Config>(
 	caller: caller,
-	name: string,
-	description: string,
-	token_prefix: string,
+	name: String,
+	description: String,
+	token_prefix: String,
 ) -> Result<(
 	T::CrossAccountId,
 	CollectionName,
@@ -89,10 +89,10 @@ fn convert_data<T: Config>(
 fn create_collection_internal<T: Config>(
 	caller: caller,
 	value: value,
-	name: string,
+	name: String,
 	collection_mode: CollectionMode,
-	description: string,
-	token_prefix: string,
+	description: String,
+	token_prefix: String,
 ) -> Result<Address> {
 	let (caller, name, description, token_prefix) =
 		convert_data::<T>(caller, name, description, token_prefix)?;
@@ -151,9 +151,9 @@ where
 		&mut self,
 		caller: caller,
 		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
+		name: String,
+		description: String,
+		token_prefix: String,
 	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, name, description, token_prefix)?;
@@ -190,9 +190,9 @@ where
 		&mut self,
 		caller: caller,
 		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
+		name: String,
+		description: String,
+		token_prefix: String,
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -210,9 +210,9 @@ where
 		&mut self,
 		caller: caller,
 		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
+		name: String,
+		description: String,
+		token_prefix: String,
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -230,10 +230,10 @@ where
 		&mut self,
 		caller: caller,
 		value: value,
-		name: string,
+		name: String,
 		decimals: u8,
-		description: string,
-		token_prefix: string,
+		description: String,
+		token_prefix: String,
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -250,7 +250,7 @@ where
 		&mut self,
 		caller: caller,
 		collection: Address,
-		base_uri: string,
+		base_uri: String,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let collection =
