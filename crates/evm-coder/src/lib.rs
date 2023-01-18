@@ -147,7 +147,7 @@ pub mod types {
 	/// Makes function payable
 	pub type Value = U256;
 	/// Makes function caller-sensitive
-	pub type caller = Address;
+	pub type Caller = Address;
 	//#endregion
 
 	/// Ethereum typed call message, similar to solidity

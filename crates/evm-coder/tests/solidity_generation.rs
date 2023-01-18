@@ -28,19 +28,19 @@ impl ERC20 {
 	fn balance_of(&self, _owner: Address) -> Result<U256> {
 		unreachable!()
 	}
-	fn transfer(&mut self, _caller: caller, _to: Address, _value: U256) -> Result<bool> {
+	fn transfer(&mut self, _caller: Caller, _to: Address, _value: U256) -> Result<bool> {
 		unreachable!()
 	}
 	fn transfer_from(
 		&mut self,
-		_caller: caller,
+		_caller: Caller,
 		_from: Address,
 		_to: Address,
 		_value: U256,
 	) -> Result<bool> {
 		unreachable!()
 	}
-	fn approve(&mut self, _caller: caller, _spender: Address, _value: U256) -> Result<bool> {
+	fn approve(&mut self, _caller: Caller, _spender: Address, _value: U256) -> Result<bool> {
 		unreachable!()
 	}
 	fn allowance(&self, _owner: Address, _spender: Address) -> Result<U256> {

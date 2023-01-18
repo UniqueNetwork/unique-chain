@@ -129,7 +129,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param to The address to transfer to.
 	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
-	fn transfer(&mut self, caller: caller, to: Address, amount: U256) -> Result<bool> {
+	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -149,7 +149,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		from: Address,
 		to: Address,
 		amount: U256,
@@ -175,7 +175,7 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	/// @param spender The address which will spend the funds.
 	/// @param amount The amount of tokens to be spent.
 	#[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: caller, spender: Address, amount: U256) -> Result<bool> {
+	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let spender = T::CrossAccountId::from_eth(spender);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -209,7 +209,7 @@ where
 	/// @param amount The amount that will be burnt.
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	#[solidity(hide)]
-	fn burn_from(&mut self, caller: caller, from: Address, amount: U256) -> Result<bool> {
+	fn burn_from(&mut self, caller: Caller, from: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -229,7 +229,7 @@ where
 	#[weight(<SelfWeightOf<T>>::burn_from())]
 	fn burn_from_cross(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		from: pallet_common::eth::CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
@@ -255,7 +255,7 @@ where
 	#[weight(<SelfWeightOf<T>>::approve())]
 	fn approve_cross(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		spender: pallet_common::eth::CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
@@ -271,7 +271,7 @@ where
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
 	/// @param amount New total amount of the tokens.
 	#[weight(<SelfWeightOf<T>>::repartition_item())]
-	fn repartition(&mut self, caller: caller, amount: U256) -> Result<bool> {
+	fn repartition(&mut self, caller: Caller, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
@@ -285,7 +285,7 @@ where
 	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer_cross(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		to: pallet_common::eth::CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
@@ -308,7 +308,7 @@ where
 	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from_cross(
 		&mut self,
-		caller: caller,
+		caller: Caller,
 		from: pallet_common::eth::CrossAddress,
 		to: pallet_common::eth::CrossAddress,
 		amount: U256,
