@@ -360,7 +360,7 @@ impl SolidityFunctions for Tuple {
 
 pub struct SolidityInterface<F: SolidityFunctions> {
 	pub docs: &'static [&'static str],
-	pub selector: bytes4,
+	pub selector: Bytes4,
 	pub name: &'static str,
 	pub is: &'static [&'static str],
 	pub functions: F,

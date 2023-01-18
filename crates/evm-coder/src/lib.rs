@@ -132,7 +132,7 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 
 	pub type Address = H160;
-	pub type bytes4 = [u8; 4];
+	pub type Bytes4 = [u8; 4];
 	pub type topic = H256;
 
 	#[cfg(not(feature = "std"))]
@@ -191,7 +191,7 @@ pub mod types {
 /// Parseable EVM call, this trait should be implemented with [`solidity_interface`] macro
 pub trait Call: Sized {
 	/// Parse call buffer into typed call enum
-	fn parse(selector: types::bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>>;
+	fn parse(selector: types::Bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>>;
 }
 
 /// Intended to be used as `#[weight]` output type
@@ -227,22 +227,22 @@ pub enum ERC165Call {
 	/// implements specified interface
 	SupportsInterface {
 		/// Requested interface
-		interface_id: types::bytes4,
+		interface_id: types::Bytes4,
 	},
 }
 
 impl ERC165Call {
 	/// ERC165 selector is provided by standard
-	pub const INTERFACE_ID: types::bytes4 = u32::to_be_bytes(0x01ffc9a7);
+	pub const INTERFACE_ID: types::Bytes4 = u32::to_be_bytes(0x01ffc9a7);
 }
 
 impl Call for ERC165Call {
-	fn parse(selector: types::bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>> {
+	fn parse(selector: types::Bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>> {
 		if selector != Self::INTERFACE_ID {
 			return Ok(None);
 		}
 		Ok(Some(Self::SupportsInterface {
-			interface_id: types::bytes4::abi_read(input)?,
+			interface_id: types::Bytes4::abi_read(input)?,
 		}))
 	}
 }

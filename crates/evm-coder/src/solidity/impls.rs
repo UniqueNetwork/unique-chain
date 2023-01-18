@@ -27,7 +27,7 @@ solidity_type_name! {
 	u64 => "uint64" true = "0",
 	u128 => "uint128" true = "0",
 	U256 => "uint256" true = "0",
-	bytes4 => "bytes4" true = "bytes4(0)",
+	Bytes4 => "bytes4" true = "bytes4(0)",
 	H160 => "address" true = "0x0000000000000000000000000000000000000000",
 	string => "string" false = "\"\"",
 	bytes => "bytes" false = "hex\"\"",

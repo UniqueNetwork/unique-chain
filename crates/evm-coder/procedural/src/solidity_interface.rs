@@ -610,7 +610,7 @@ impl Method {
 		let custom_signature = self.expand_custom_signature();
 		quote! {
 			const #screaming_name_signature: ::evm_coder::custom_signature::SignatureUnit = #custom_signature;
-			const #screaming_name: ::evm_coder::types::bytes4 = {
+			const #screaming_name: ::evm_coder::types::Bytes4 = {
 				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
 				let mut pos = 0;
 				while pos < Self::#screaming_name_signature.len {
@@ -974,7 +974,7 @@ impl SolidityInterface {
 					#consts
 				)*
 				/// Return this call ERC165 selector
-				pub const fn interface_id() -> ::evm_coder::types::bytes4 {
+				pub const fn interface_id() -> ::evm_coder::types::Bytes4 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
@@ -1019,7 +1019,7 @@ impl SolidityInterface {
 				}
 			}
 			impl #gen_ref ::evm_coder::Call for #call_name #gen_ref {
-				fn parse(method_id: ::evm_coder::types::bytes4, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
+				fn parse(method_id: ::evm_coder::types::Bytes4, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
 					use ::evm_coder::abi::AbiRead;
 					match method_id {
 						::evm_coder::ERC165Call::INTERFACE_ID => return Ok(
@@ -1041,7 +1041,7 @@ impl SolidityInterface {
 			#gen_where
 			{
 				/// Is this contract implements specified ERC165 selector
-				pub fn supports_interface(this: &#name, interface_id: ::evm_coder::types::bytes4) -> bool {
+				pub fn supports_interface(this: &#name, interface_id: ::evm_coder::types::Bytes4) -> bool {
 					interface_id != u32::to_be_bytes(0xffffff) && (
 						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
 						interface_id == Self::interface_id()

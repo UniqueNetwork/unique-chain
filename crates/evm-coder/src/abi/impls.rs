@@ -81,9 +81,9 @@ impl AbiWrite for bytes {
 	}
 }
 
-impl_abi_type!(bytes4, bytes4, false);
-impl AbiRead for bytes4 {
-	fn abi_read(reader: &mut AbiReader) -> Result<bytes4> {
+impl_abi_type!(Bytes4, bytes4, false);
+impl AbiRead for Bytes4 {
+	fn abi_read(reader: &mut AbiReader) -> Result<Bytes4> {
 		reader.bytes4()
 	}
 }
