@@ -1348,7 +1348,10 @@ impl<T: Config> Pallet<T> {
 		let permissive = nesting.permissive;
 
 		if permissive {
-			// Pass
+			ensure!(
+				<TokenData<T>>::contains_key((handle.id, under)),
+				<CommonError<T>>::TokenNotFound
+			);
 		} else if nesting.token_owner
 			&& <PalletStructure<T>>::check_indirectly_owned(
 				sender.clone(),
@@ -1357,9 +1360,12 @@ impl<T: Config> Pallet<T> {
 				Some(from),
 				nesting_budget,
 			)? {
-			// Pass
+			// Pass, token existence is checked in `check_indirectly_owned`
 		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
-			// Pass
+			ensure!(
+				<TokenData<T>>::contains_key((handle.id, under)),
+				<CommonError<T>>::TokenNotFound
+			);
 		} else {
 			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
 		}
