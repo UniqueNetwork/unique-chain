@@ -152,6 +152,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(24_476_000 as u64)
+<<<<<<< HEAD
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -159,13 +160,15 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve_from() -> Weight {
 		Weight::from_ref_time(22_818_000 as u64)
+=======
+>>>>>>> b48e2456 (chore: run benchmarks)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Nonfungible TokenData (r:1 w:0)
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve_from() -> Weight {
-		Weight::from_ref_time(18_965_000 as u64)
+		Weight::from_ref_time(22_818_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -201,18 +204,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn set_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(31_850_484 as u64)
-			// Standard Error: 9_618
-			.saturating_add(Weight::from_ref_time(4_721_947 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(28_171_920 as u64)
+			// Standard Error: 13_715
+			.saturating_add(Weight::from_ref_time(6_217_801 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn delete_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(13_795_000 as u64)
-			// Standard Error: 28_239
-			.saturating_add(Weight::from_ref_time(12_840_446 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(15_511_000 as u64)
+			// Standard Error: 68_273
+			.saturating_add(Weight::from_ref_time(22_917_441 as u64).saturating_mul(b as u64))
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
@@ -336,6 +339,7 @@ impl WeightInfo for () {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve() -> Weight {
 		Weight::from_ref_time(24_476_000 as u64)
+<<<<<<< HEAD
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -343,13 +347,15 @@ impl WeightInfo for () {
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve_from() -> Weight {
 		Weight::from_ref_time(22_818_000 as u64)
+=======
+>>>>>>> b48e2456 (chore: run benchmarks)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Nonfungible TokenData (r:1 w:0)
 	// Storage: Nonfungible Allowance (r:1 w:1)
 	fn approve_from() -> Weight {
-		Weight::from_ref_time(18_965_000 as u64)
+		Weight::from_ref_time(22_818_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
@@ -385,18 +391,18 @@ impl WeightInfo for () {
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn set_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(31_850_484 as u64)
-			// Standard Error: 9_618
-			.saturating_add(Weight::from_ref_time(4_721_947 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(28_171_920 as u64)
+			// Standard Error: 13_715
+			.saturating_add(Weight::from_ref_time(6_217_801 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Nonfungible TokenProperties (r:1 w:1)
 	// Storage: Common CollectionPropertyPermissions (r:1 w:0)
 	fn delete_token_properties(b: u32, ) -> Weight {
-		Weight::from_ref_time(13_795_000 as u64)
-			// Standard Error: 28_239
-			.saturating_add(Weight::from_ref_time(12_840_446 as u64).saturating_mul(b as u64))
+		Weight::from_ref_time(15_511_000 as u64)
+			// Standard Error: 68_273
+			.saturating_add(Weight::from_ref_time(22_917_441 as u64).saturating_mul(b as u64))
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
