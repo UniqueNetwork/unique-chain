@@ -49,25 +49,25 @@ pub enum ContractHelpersEvents {
 	ContractSponsorSet {
 		/// Contract address of the affected collection.
 		#[indexed]
-		contract_address: address,
+		contract_address: Address,
 		/// New sponsor address.
-		sponsor: address,
+		sponsor: Address,
 	},
 
 	/// New sponsor was confirm.
 	ContractSponsorshipConfirmed {
 		/// Contract address of the affected collection.
 		#[indexed]
-		contract_address: address,
+		contract_address: Address,
 		/// New sponsor address.
-		sponsor: address,
+		sponsor: Address,
 	},
 
 	/// Collection sponsor was removed.
 	ContractSponsorRemoved {
 		/// Contract address of the affected collection.
 		#[indexed]
-		contract_address: address,
+		contract_address: Address,
 	},
 }
 
@@ -96,7 +96,7 @@ where
 	/// @dev Returns zero address if contract does not exists
 	/// @param contractAddress Contract to get owner of
 	/// @return address Owner of contract
-	fn contract_owner(&self, contract_address: address) -> Result<address> {
+	fn contract_owner(&self, contract_address: Address) -> Result<Address> {
 		Ok(<Owner<T>>::get(contract_address))
 	}
 
@@ -105,10 +105,10 @@ where
 	/// @param sponsor User address who set as pending sponsor.
 	fn set_sponsor(
 		&mut self,
-		caller: caller,
-		contract_address: address,
-		sponsor: address,
-	) -> Result<void> {
+		caller: Caller,
+		contract_address: Address,
+		sponsor: Address,
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -125,7 +125,7 @@ where
 	/// Set contract as self sponsored.
 	///
 	/// @param contractAddress Contract for which a self sponsoring is being enabled.
-	fn self_sponsored_enable(&mut self, caller: caller, contract_address: address) -> Result<void> {
+	fn self_sponsored_enable(&mut self, caller: Caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -146,7 +146,7 @@ where
 	/// Remove sponsor.
 	///
 	/// @param contractAddress Contract for which a sponsorship is being removed.
-	fn remove_sponsor(&mut self, caller: caller, contract_address: address) -> Result<void> {
+	fn remove_sponsor(&mut self, caller: Caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -161,7 +161,7 @@ where
 	/// @dev Caller must be same that set via [`setSponsor`].
 	///
 	/// @param contractAddress Сontract for which need to confirm sponsorship.
-	fn confirm_sponsorship(&mut self, caller: caller, contract_address: address) -> Result<void> {
+	fn confirm_sponsorship(&mut self, caller: Caller, contract_address: Address) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -175,7 +175,7 @@ where
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
 	/// @return Tuble with sponsor address and his substrate mirror. If there is no confirmed sponsor error "Contract has no sponsor" throw.
-	fn sponsor(&self, contract_address: address) -> Result<Option<eth::CrossAddress>> {
+	fn sponsor(&self, contract_address: Address) -> Result<Option<eth::CrossAddress>> {
 		Ok(match Pallet::<T>::get_sponsor(contract_address) {
 			Some(ref value) => Some(eth::CrossAddress::from_sub_cross_account::<T>(value)),
 			None => None,
@@ -186,7 +186,7 @@ where
 	///
 	/// @param contractAddress The contract for which the presence of a confirmed sponsor is checked.
 	/// @return **true** if contract has confirmed sponsor.
-	fn has_sponsor(&self, contract_address: address) -> Result<bool> {
+	fn has_sponsor(&self, contract_address: Address) -> Result<bool> {
 		Ok(Pallet::<T>::get_sponsor(contract_address).is_some())
 	}
 
@@ -194,23 +194,23 @@ where
 	///
 	/// @param contractAddress The contract for which the presence of a pending sponsor is checked.
 	/// @return **true** if contract has pending sponsor.
-	fn has_pending_sponsor(&self, contract_address: address) -> Result<bool> {
+	fn has_pending_sponsor(&self, contract_address: Address) -> Result<bool> {
 		Ok(match Sponsoring::<T>::get(contract_address) {
 			SponsorshipState::Disabled | SponsorshipState::Confirmed(_) => false,
 			SponsorshipState::Unconfirmed(_) => true,
 		})
 	}
 
-	fn sponsoring_enabled(&self, contract_address: address) -> Result<bool> {
+	fn sponsoring_enabled(&self, contract_address: Address) -> Result<bool> {
 		Ok(<Pallet<T>>::sponsoring_mode(contract_address) != SponsoringModeT::Disabled)
 	}
 
 	fn set_sponsoring_mode(
 		&mut self,
-		caller: caller,
-		contract_address: address,
+		caller: Caller,
+		contract_address: Address,
 		mode: SponsoringModeT,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -223,7 +223,7 @@ where
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
-	fn sponsoring_rate_limit(&self, contract_address: address) -> Result<uint32> {
+	fn sponsoring_rate_limit(&self, contract_address: Address) -> Result<u32> {
 		self.recorder().consume_sload()?;
 
 		Ok(<SponsoringRateLimit<T>>::get(contract_address)
@@ -239,10 +239,10 @@ where
 	/// @dev Only contract owner can change this setting
 	fn set_sponsoring_rate_limit(
 		&mut self,
-		caller: caller,
-		contract_address: address,
-		rate_limit: uint32,
-	) -> Result<void> {
+		caller: Caller,
+		contract_address: Address,
+		rate_limit: u32,
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -259,10 +259,10 @@ where
 	/// @dev Only contract owner can change this setting
 	fn set_sponsoring_fee_limit(
 		&mut self,
-		caller: caller,
-		contract_address: address,
-		fee_limit: uint256,
-	) -> Result<void> {
+		caller: Caller,
+		contract_address: Address,
+		fee_limit: U256,
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -276,7 +276,7 @@ where
 	/// @param contractAddress Contract to get sponsoring fee limit of
 	/// @return uint256 Maximum amount of fee that could be spent by single
 	///  transaction
-	fn sponsoring_fee_limit(&self, contract_address: address) -> Result<uint256> {
+	fn sponsoring_fee_limit(&self, contract_address: Address) -> Result<U256> {
 		self.recorder().consume_sload()?;
 
 		Ok(get_sponsoring_fee_limit::<T>(contract_address))
@@ -287,7 +287,7 @@ where
 	/// @param contractAddress Contract to check allowlist of
 	/// @param user User to check
 	/// @return bool Is specified users exists in contract allowlist
-	fn allowed(&self, contract_address: address, user: address) -> Result<bool> {
+	fn allowed(&self, contract_address: Address, user: Address) -> Result<bool> {
 		self.0.consume_sload()?;
 		Ok(<Pallet<T>>::allowed(contract_address, user))
 	}
@@ -300,11 +300,11 @@ where
 	/// @dev Only contract owner can change this setting
 	fn toggle_allowed(
 		&mut self,
-		caller: caller,
-		contract_address: address,
-		user: address,
+		caller: Caller,
+		contract_address: Address,
+		user: Address,
 		is_allowed: bool,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -320,7 +320,7 @@ where
 	///  in case of allowlist access enabled, only users from allowlist may call this contract
 	/// @param contractAddress Contract to get allowlist access of
 	/// @return bool Is specified contract has allowlist access enabled
-	fn allowlist_enabled(&self, contract_address: address) -> Result<bool> {
+	fn allowlist_enabled(&self, contract_address: Address) -> Result<bool> {
 		Ok(<AllowlistEnabled<T>>::get(contract_address))
 	}
 
@@ -329,10 +329,10 @@ where
 	/// @param enabled Should allowlist access to be enabled?
 	fn toggle_allowlist(
 		&mut self,
-		caller: caller,
-		contract_address: address,
+		caller: Caller,
+		contract_address: Address,
 		enabled: bool,
-	) -> Result<void> {
+	) -> Result<()> {
 		self.recorder().consume_sload()?;
 		self.recorder().consume_sstore()?;
 
@@ -441,7 +441,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 	}
 }
 
-fn get_sponsoring_fee_limit<T: Config>(contract_address: address) -> uint256 {
+fn get_sponsoring_fee_limit<T: Config>(contract_address: Address) -> U256 {
 	<SponsoringFeeLimit<T>>::get(contract_address)
 		.get(&0xffffffff)
 		.cloned()

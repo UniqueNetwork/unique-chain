@@ -18,12 +18,9 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
-use evm_coder::{
-	AbiCoder,
-	types::{uint256, address},
-};
+use evm_coder::{AbiCoder, types::Address};
 pub use pallet_evm::{Config, account::CrossAccountId};
-use sp_core::H160;
+use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
@@ -33,7 +30,7 @@ const ETH_COLLECTION_PREFIX: [u8; 16] = [
 ];
 
 /// Maps the ethereum address of the collection in substrate.
-pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
+pub fn map_eth_to_id(eth: &Address) -> Option<CollectionId> {
 	if eth[0..16] != ETH_COLLECTION_PREFIX {
 		return None;
 	}
@@ -43,7 +40,7 @@ pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
 }
 
 /// Maps the substrate collection id in ethereum.
-pub fn collection_id_to_address(id: CollectionId) -> H160 {
+pub fn collection_id_to_address(id: CollectionId) -> Address {
 	let mut out = [0; 20];
 	out[0..16].copy_from_slice(&ETH_COLLECTION_PREFIX);
 	out[16..20].copy_from_slice(&u32::to_be_bytes(id.0));
@@ -51,12 +48,12 @@ pub fn collection_id_to_address(id: CollectionId) -> H160 {
 }
 
 /// Check if the ethereum address is a collection.
-pub fn is_collection(address: &H160) -> bool {
+pub fn is_collection(address: &Address) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
-/// Convert `uint256` to `CrossAccountId`.
-pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
+/// Convert `U256` to `CrossAccountId`.
+pub fn convert_uint256_to_cross_account<T: Config>(from: U256) -> T::CrossAccountId
 where
 	T::AccountId: From<[u8; 32]>,
 {
@@ -69,8 +66,8 @@ where
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {
-	pub(crate) eth: address,
-	pub(crate) sub: uint256,
+	pub(crate) eth: Address,
+	pub(crate) sub: U256,
 }
 
 impl CrossAddress {
@@ -97,7 +94,7 @@ impl CrossAddress {
 	{
 		Self {
 			eth: Default::default(),
-			sub: uint256::from_big_endian(account_id.as_ref()),
+			sub: U256::from_big_endian(account_id.as_ref()),
 		}
 	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
@@ -121,17 +118,17 @@ impl CrossAddress {
 /// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 #[derive(Debug, Default, AbiCoder)]
 pub struct Property {
-	key: evm_coder::types::string,
-	value: evm_coder::types::bytes,
+	key: evm_coder::types::String,
+	value: evm_coder::types::Bytes,
 }
 
 impl TryFrom<up_data_structs::Property> for Property {
 	type Error = evm_coder::execution::Error;
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
-		let key = evm_coder::types::string::from_utf8(from.key.into())
+		let key = evm_coder::types::String::from_utf8(from.key.into())
 			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
-		let value = evm_coder::types::bytes(from.value.to_vec());
+		let value = evm_coder::types::Bytes(from.value.to_vec());
 		Ok(Property { key, value })
 	}
 }
@@ -187,7 +184,7 @@ pub enum CollectionLimitField {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
-	value: Option<uint256>,
+	value: Option<U256>,
 }
 
 impl CollectionLimit {
@@ -345,7 +342,7 @@ impl PropertyPermission {
 #[derive(Debug, Default, AbiCoder)]
 pub struct TokenPropertyPermission {
 	/// Token property key.
-	key: evm_coder::types::string,
+	key: evm_coder::types::String,
 	/// Token property permissions.
 	permissions: Vec<PropertyPermission>,
 }
@@ -363,7 +360,7 @@ impl
 		),
 	) -> Self {
 		let (key, permission) = value;
-		let key = evm_coder::types::string::from_utf8(key.into_inner())
+		let key = evm_coder::types::String::from_utf8(key.into_inner())
 			.expect("Stored key must be valid");
 		let permissions = PropertyPermission::into_vec(permission);
 		Self { key, permissions }
@@ -393,12 +390,12 @@ impl TokenPropertyPermission {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionNesting {
 	token_owner: bool,
-	ids: Vec<uint256>,
+	ids: Vec<U256>,
 }
 
 impl CollectionNesting {
 	/// Create [`CollectionNesting`].
-	pub fn new(token_owner: bool, ids: Vec<uint256>) -> Self {
+	pub fn new(token_owner: bool, ids: Vec<U256>) -> Self {
 		Self { token_owner, ids }
 	}
 }
@@ -414,5 +411,34 @@ impl CollectionNestingPermission {
 	/// Create [`CollectionNestingPermission`].
 	pub fn new(field: CollectionPermissionField, value: bool) -> Self {
 		Self { field, value }
+	}
+}
+
+/// Ethereum representation of `AccessMode` (see [`up_data_structs::AccessMode`]).
+#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[repr(u8)]
+pub enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
+	#[default]
+	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
+	AllowList,
+}
+
+impl From<up_data_structs::AccessMode> for AccessMode {
+	fn from(value: up_data_structs::AccessMode) -> Self {
+		match value {
+			up_data_structs::AccessMode::Normal => AccessMode::Normal,
+			up_data_structs::AccessMode::AllowList => AccessMode::AllowList,
+		}
+	}
+}
+
+impl Into<up_data_structs::AccessMode> for AccessMode {
+	fn into(self) -> up_data_structs::AccessMode {
+		match self {
+			AccessMode::Normal => up_data_structs::AccessMode::Normal,
+			AccessMode::AllowList => up_data_structs::AccessMode::AllowList,
+		}
 	}
 }

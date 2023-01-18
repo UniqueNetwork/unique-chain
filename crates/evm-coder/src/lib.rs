@@ -131,33 +131,23 @@ pub mod types {
 	use alloc::{vec::Vec};
 	use primitive_types::{U256, H160, H256};
 
-	pub type address = H160;
-	pub type uint8 = u8;
-	pub type uint16 = u16;
-	pub type uint32 = u32;
-	pub type uint64 = u64;
-	pub type uint128 = u128;
-	pub type uint256 = U256;
-	pub type bytes4 = [u8; 4];
-	pub type topic = H256;
+	pub type Address = H160;
+	pub type Bytes4 = [u8; 4];
+	pub type Topic = H256;
 
 	#[cfg(not(feature = "std"))]
-	pub type string = ::alloc::string::String;
+	pub type String = ::alloc::string::String;
 	#[cfg(feature = "std")]
-	pub type string = ::std::string::String;
+	pub type String = ::std::string::String;
 
 	#[derive(Default, Debug, PartialEq, Eq, Clone)]
-	pub struct bytes(pub Vec<u8>);
-
-	/// Solidity doesn't have `void` type, however we have special implementation
-	/// for empty tuple return type
-	pub type void = ();
+	pub struct Bytes(pub Vec<u8>);
 
 	//#region Special types
 	/// Makes function payable
-	pub type value = U256;
+	pub type Value = U256;
 	/// Makes function caller-sensitive
-	pub type caller = address;
+	pub type Caller = Address;
 	//#endregion
 
 	/// Ethereum typed call message, similar to solidity
@@ -172,20 +162,20 @@ pub mod types {
 		pub value: U256,
 	}
 
-	impl From<Vec<u8>> for bytes {
+	impl From<Vec<u8>> for Bytes {
 		fn from(src: Vec<u8>) -> Self {
 			Self(src)
 		}
 	}
 
 	#[allow(clippy::from_over_into)]
-	impl Into<Vec<u8>> for bytes {
+	impl Into<Vec<u8>> for Bytes {
 		fn into(self) -> Vec<u8> {
 			self.0
 		}
 	}
 
-	impl bytes {
+	impl Bytes {
 		#[must_use]
 		pub fn len(&self) -> usize {
 			self.0.len()
@@ -201,7 +191,7 @@ pub mod types {
 /// Parseable EVM call, this trait should be implemented with [`solidity_interface`] macro
 pub trait Call: Sized {
 	/// Parse call buffer into typed call enum
-	fn parse(selector: types::bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>>;
+	fn parse(selector: types::Bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>>;
 }
 
 /// Intended to be used as `#[weight]` output type
@@ -237,22 +227,22 @@ pub enum ERC165Call {
 	/// implements specified interface
 	SupportsInterface {
 		/// Requested interface
-		interface_id: types::bytes4,
+		interface_id: types::Bytes4,
 	},
 }
 
 impl ERC165Call {
 	/// ERC165 selector is provided by standard
-	pub const INTERFACE_ID: types::bytes4 = u32::to_be_bytes(0x01ffc9a7);
+	pub const INTERFACE_ID: types::Bytes4 = u32::to_be_bytes(0x01ffc9a7);
 }
 
 impl Call for ERC165Call {
-	fn parse(selector: types::bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>> {
+	fn parse(selector: types::Bytes4, input: &mut AbiReader) -> execution::Result<Option<Self>> {
 		if selector != Self::INTERFACE_ID {
 			return Ok(None);
 		}
 		Ok(Some(Self::SupportsInterface {
-			interface_id: types::bytes4::abi_read(input)?,
+			interface_id: types::Bytes4::abi_read(input)?,
 		}))
 	}
 }

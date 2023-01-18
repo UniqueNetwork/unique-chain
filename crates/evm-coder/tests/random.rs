@@ -19,19 +19,20 @@
 use evm_coder::{
 	abi::AbiType, ToLog, execution::Result, solidity_interface, types::*, solidity, weight,
 };
+use primitive_types::U256;
 
 pub struct Impls;
 
 #[solidity_interface(name = OurInterface)]
 impl Impls {
-	fn fn_a(&self, _input: uint256) -> Result<bool> {
+	fn fn_a(&self, _input: U256) -> Result<bool> {
 		unreachable!()
 	}
 }
 
 #[solidity_interface(name = OurInterface1)]
 impl Impls {
-	fn fn_b(&self, _input: uint128) -> Result<uint32> {
+	fn fn_b(&self, _input: u128) -> Result<u32> {
 		unreachable!()
 	}
 }
@@ -39,12 +40,12 @@ impl Impls {
 #[derive(ToLog)]
 enum OurEvents {
 	Event1 {
-		field1: uint32,
+		field1: u32,
 	},
 	Event2 {
-		field1: uint32,
+		field1: u32,
 		#[indexed]
-		field2: uint32,
+		field2: u32,
 	},
 }
 
@@ -56,27 +57,27 @@ enum OurEvents {
 )]
 impl Impls {
 	#[solidity(rename_selector = "fnK")]
-	fn fn_c(&self, _input: uint32) -> Result<uint8> {
+	fn fn_c(&self, _input: u32) -> Result<u8> {
 		unreachable!()
 	}
-	fn fn_d(&self, _value: uint32) -> Result<uint32> {
+	fn fn_d(&self, _value: u32) -> Result<u32> {
 		unreachable!()
 	}
 
-	fn caller_sensitive(&self, _caller: caller) -> Result<uint8> {
+	fn caller_sensitive(&self, _caller: Caller) -> Result<u8> {
 		unreachable!()
 	}
-	fn payable(&mut self, _value: value) -> Result<uint8> {
+	fn payable(&mut self, _value: Value) -> Result<u8> {
 		unreachable!()
 	}
 
 	#[weight(*_weight)]
-	fn with_weight(&self, _weight: uint64) -> Result<void> {
+	fn with_weight(&self, _weight: u64) -> Result<()> {
 		unreachable!()
 	}
 
 	/// Doccoment example
-	fn with_doc(&self) -> Result<void> {
+	fn with_doc(&self) -> Result<()> {
 		unreachable!()
 	}
 }

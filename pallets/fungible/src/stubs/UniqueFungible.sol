@@ -274,11 +274,9 @@ contract Collection is Dummy, ERC165 {
 
 	/// Set the collection access method.
 	/// @param mode Access mode
-	/// 	0 for Normal
-	/// 	1 for AllowList
 	/// @dev EVM selector for this function is: 0x41835d4c,
 	///  or in textual repr: setCollectionAccess(uint8)
-	function setCollectionAccess(uint8 mode) public {
+	function setCollectionAccess(AccessMode mode) public {
 		require(false, stub_error);
 		mode;
 		dummy = 0;
@@ -441,6 +439,14 @@ contract Collection is Dummy, ERC165 {
 struct CrossAddress {
 	address eth;
 	uint256 sub;
+}
+
+/// Ethereum representation of `AccessMode` (see [`up_data_structs::AccessMode`]).
+enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
+	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
+	AllowList
 }
 
 /// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.

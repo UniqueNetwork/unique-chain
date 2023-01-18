@@ -137,7 +137,7 @@ impl Event {
 			Self::#name {#(
 				#fields,
 			)*} => {
-				topics.push(topic::from(Self::#name_screaming));
+				topics.push(::evm_coder::types::Topic::from(Self::#name_screaming));
 				#(
 					topics.push(#indexed.to_topic());
 				)*
@@ -222,7 +222,7 @@ impl Events {
 							#solidity_functions,
 						)*),
 					};
-					let mut out = string::new();
+					let mut out = ::evm_coder::types::String::new();
 					out.push_str("/// @dev inlined interface\n");
 					let _ = interface.format(is_impl, &mut out, tc);
 					tc.collect(out);
@@ -231,7 +231,7 @@ impl Events {
 
 			#[automatically_derived]
 			impl ::evm_coder::events::ToLog for #name {
-				fn to_log(&self, contract: address) -> ::ethereum::Log {
+				fn to_log(&self, contract: Address) -> ::ethereum::Log {
 					use ::evm_coder::events::ToTopic;
 					use ::evm_coder::abi::AbiWrite;
 					let mut writer = ::evm_coder::abi::AbiWriter::new();
