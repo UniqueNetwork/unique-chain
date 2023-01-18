@@ -123,10 +123,14 @@ describe('Nesting negative', () => {
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   itSub.ifWithPallets('Cannot nest to a future collection', [Pallets.ReFungible], async ({helper}) => {
 =======
   itSub('Cannot nest to a future token', async ({helper}) => {
 >>>>>>> 81ec604a (Test: nesting to future token or collection address)
+=======
+  itSub('Cannot nest to a future collection', async ({helper}) => {
+>>>>>>> 5dde9455 (test: nesting under non-existing token)
     const nonExistingCollectionId = await helper.collection.getTotalCount() + 1000;
     const futureToken = helper.nft.getTokenObject(nonExistingCollectionId, 1);
 
@@ -135,6 +139,7 @@ describe('Nesting negative', () => {
     const ftCollectionForNesting = await helper.ft.mintCollection(alice);
 
     // 1. Alice cannot create nested token to future token
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
     await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
@@ -150,6 +155,11 @@ describe('Nesting negative', () => {
     await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
     await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
 >>>>>>> d3f529b7 (Fix tests)
+=======
+    await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+    await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+    await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+>>>>>>> 5dde9455 (test: nesting under non-existing token)
 
     // 2. Alice cannot mint and nest token:
     const nft = await nftCollectionForNesting.mintToken(alice);
@@ -157,12 +167,19 @@ describe('Nesting negative', () => {
     const _ft = await ftCollectionForNesting.mint(alice, 100n);
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5dde9455 (test: nesting under non-existing token)
     await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
     await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
     await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('CollectionNotFound');
   });
 
+<<<<<<< HEAD
   itSub.ifWithPallets('Cannot nest to a future token in a NFT collection', [Pallets.ReFungible], async ({helper}) => {
+=======
+  itSub('Cannot nest to a future token in a NFT collection', async ({helper}) => {
+>>>>>>> 5dde9455 (test: nesting under non-existing token)
     const {collectionId} = await helper.nft.mintCollection(alice);
     // To avoid UserIsNotAllowedToNest error
     await helper.collection.setPermissions(alice, collectionId, {nesting: {collectionAdmin: true}});
@@ -266,6 +283,7 @@ describe('Nesting negative', () => {
     await expect(ftCollection.transfer(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
   });
 });
+<<<<<<< HEAD
 =======
     await expect(collectionForNesting.mintToken(alice, targetToken.nestingAccount())).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
 =======
@@ -281,3 +299,5 @@ describe('Nesting negative', () => {
 });
 
 >>>>>>> 81ec604a (Test: nesting to future token or collection address)
+=======
+>>>>>>> 5dde9455 (test: nesting under non-existing token)
