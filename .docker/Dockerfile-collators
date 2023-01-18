@@ -28,7 +28,12 @@ ARG NETWORK
 ARG POLKADOT_LAUNCH_BRANCH
 ARG BRANCH
 
+<<<<<<< HEAD
 >>>>>>> 15ad7775 (ci: separate workflow for collator selection)
+=======
+ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
+
+>>>>>>> 06f5d9ab (ci(collators): another attempt to fix ci)
 WORKDIR /unique_parachain
 
 RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
@@ -48,10 +53,14 @@ RUN apt-get -y update && \
       nvm use v16.16.0
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 RUN git clone https://github.com/uniquenetwork/polkadot-launch -b ${POLKADOT_LAUNCH_BRANCH}
 =======
 RUN git clone https://github.com/uniquenetwork/polkadot-launch -b $POLKADOT_LAUNCH_BRANCH
 >>>>>>> 15ad7775 (ci: separate workflow for collator selection)
+=======
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b ${POLKADOT_LAUNCH_BRANCH}
+>>>>>>> 06f5d9ab (ci(collators): another attempt to fix ci)
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
