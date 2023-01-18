@@ -100,7 +100,7 @@
     "testFT": "mocha --timeout 9999999 -r ts-node/register ./**/fungible.test.ts",
     "testEthFT": "mocha --timeout 9999999 -r ts-node/register ./**/eth/fungible.test.ts",
     "testRPC": "mocha --timeout 9999999 -r ts-node/register ./**/rpc.test.ts",
-    "testPromotion": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/app-promotion.*test.ts",
+    "testPromotion": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/appPromotion/*test.ts",
     "testXcmUnique": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmUnique.test.ts",
     "testXcmQuartz": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmQuartz.test.ts",
     "testXcmOpal": "RUN_XCM_TESTS=1 mocha --timeout 9999999 -r ts-node/register ./**/xcm/xcmOpal.test.ts",
