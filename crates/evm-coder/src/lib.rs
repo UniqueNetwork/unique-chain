@@ -135,7 +135,7 @@ pub mod types {
 	use primitive_types::{U256, H160, H256};
 
 	pub type Address = H160;
-	pub type bytes4 = [u8; 4];
+	pub type Bytes4 = [u8; 4];
 	pub type topic = H256;
 
 	#[cfg(not(feature = "std"))]

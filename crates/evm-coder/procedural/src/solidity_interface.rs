@@ -991,7 +991,7 @@ impl SolidityInterface {
 					#consts
 				)*
 				/// Return this call ERC165 selector
-				pub const fn interface_id() -> ::evm_coder::types::bytes4 {
+				pub const fn interface_id() -> ::evm_coder::types::Bytes4 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
