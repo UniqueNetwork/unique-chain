@@ -122,9 +122,33 @@ describe('Nesting negative', () => {
     await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
   });
 
-  itSub('Cannot nest to a future token', async ({helper}) => {
+  itSub('Cannot nest to a future collection', async ({helper}) => {
     const nonExistingCollectionId = await helper.collection.getTotalCount() + 1000;
     const futureToken = helper.nft.getTokenObject(nonExistingCollectionId, 1);
+
+    const nftCollectionForNesting = await helper.nft.mintCollection(alice);
+    const rftCollectionForNesting = await helper.rft.mintCollection(alice);
+    const ftCollectionForNesting = await helper.ft.mintCollection(alice);
+
+    // 1. Alice cannot create nested token to future token
+    await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+    await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+    await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+
+    // 2. Alice cannot mint and nest token:
+    const nft = await nftCollectionForNesting.mintToken(alice);
+    const rft = await rftCollectionForNesting.mintToken(alice, 100n);
+    const _ft = await ftCollectionForNesting.mint(alice, 100n);
+    await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+    await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+    await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('CollectionNotFound');
+  });
+
+  itSub('Cannot nest to a future token in a NFT collection', async ({helper}) => {
+    const {collectionId} = await helper.nft.mintCollection(alice);
+    // To avoid UserIsNotAllowedToNest error
+    await helper.collection.setPermissions(alice, collectionId, {nesting: {collectionAdmin: true}});
+    const futureToken = helper.nft.getTokenObject(collectionId, 1);
 
     const nftCollectionForNesting = await helper.nft.mintCollection(alice);
     const rftCollectionForNesting = await helper.rft.mintCollection(alice);
@@ -181,4 +205,3 @@ describe('Nesting negative', () => {
     await expect(ftCollection.transfer(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
   });
 });
-
