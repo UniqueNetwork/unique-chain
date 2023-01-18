@@ -136,7 +136,7 @@ pub mod types {
 
 	pub type Address = H160;
 	pub type Bytes4 = [u8; 4];
-	pub type topic = H256;
+	pub type Topic = H256;
 
 	#[cfg(not(feature = "std"))]
 	pub type String = ::alloc::string::String;
