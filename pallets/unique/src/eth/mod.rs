@@ -88,7 +88,7 @@ fn convert_data<T: Config>(
 #[inline(always)]
 fn create_collection_internal<T: Config>(
 	caller: caller,
-	value: value,
+	value: Value,
 	name: String,
 	collection_mode: CollectionMode,
 	description: String,
@@ -118,7 +118,7 @@ fn create_collection_internal<T: Config>(
 	Ok(address)
 }
 
-fn check_sent_amount_equals_collection_creation_price<T: Config>(value: value) -> Result<()> {
+fn check_sent_amount_equals_collection_creation_price<T: Config>(value: Value) -> Result<()> {
 	let value = value.as_u128();
 	let creation_price: u128 = T::CollectionCreationPrice::get()
 		.try_into()
@@ -150,7 +150,7 @@ where
 	fn create_nft_collection(
 		&mut self,
 		caller: caller,
-		value: value,
+		value: Value,
 		name: String,
 		description: String,
 		token_prefix: String,
@@ -189,7 +189,7 @@ where
 	fn create_nonfungible_collection(
 		&mut self,
 		caller: caller,
-		value: value,
+		value: Value,
 		name: String,
 		description: String,
 		token_prefix: String,
@@ -209,7 +209,7 @@ where
 	fn create_rft_collection(
 		&mut self,
 		caller: caller,
-		value: value,
+		value: Value,
 		name: String,
 		description: String,
 		token_prefix: String,
@@ -229,7 +229,7 @@ where
 	fn create_fungible_collection(
 		&mut self,
 		caller: caller,
-		value: value,
+		value: Value,
 		name: String,
 		decimals: u8,
 		description: String,
@@ -355,7 +355,7 @@ where
 		Ok(false)
 	}
 
-	fn collection_creation_fee(&self) -> Result<value> {
+	fn collection_creation_fee(&self) -> Result<Value> {
 		let price: u128 = T::CollectionCreationPrice::get()
 			.try_into()
 			.map_err(|_| ()) // workaround for `expect` requiring `Debug` trait

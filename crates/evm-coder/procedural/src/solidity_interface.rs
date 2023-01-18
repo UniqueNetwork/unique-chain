@@ -347,7 +347,7 @@ impl AbiTypeHelper for Type {
 
 	fn is_value(&self) -> bool {
 		if let Ok(ident) = self.plain() {
-			return ident == "value";
+			return ident == "Value";
 		}
 		false
 	}
