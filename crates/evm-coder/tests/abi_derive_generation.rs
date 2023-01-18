@@ -1,6 +1,6 @@
 mod test_struct {
 	use evm_coder_procedural::AbiCoder;
-	use evm_coder::types::bytes;
+	use evm_coder::types::Bytes;
 
 	#[test]
 	fn empty_struct() {
@@ -27,13 +27,13 @@ mod test_struct {
 	#[derive(AbiCoder, PartialEq, Debug)]
 	struct TypeStruct2DynamicParam {
 		_a: String,
-		_b: bytes,
+		_b: Bytes,
 	}
 
 	#[derive(AbiCoder, PartialEq, Debug)]
 	struct TypeStruct2MixedParam {
 		_a: u8,
-		_b: bytes,
+		_b: Bytes,
 	}
 
 	#[derive(AbiCoder, PartialEq, Debug)]
@@ -236,10 +236,10 @@ mod test_struct {
 	struct TupleStruct2SimpleParam(u8, u32);
 
 	#[derive(AbiCoder, PartialEq, Debug)]
-	struct TupleStruct2DynamicParam(String, bytes);
+	struct TupleStruct2DynamicParam(String, Bytes);
 
 	#[derive(AbiCoder, PartialEq, Debug)]
-	struct TupleStruct2MixedParam(u8, bytes);
+	struct TupleStruct2MixedParam(u8, Bytes);
 
 	#[derive(AbiCoder, PartialEq, Debug)]
 	struct TupleStruct1DerivedSimpleParam(TupleStruct1SimpleParam);
@@ -562,8 +562,8 @@ mod test_struct {
 	#[test]
 	fn codec_struct_2_dynamic() {
 		let _a: String = "some string".into();
-		let _b: bytes = bytes(vec![0x11, 0x22, 0x33]);
-		test_impl::<(String, bytes), TupleStruct2DynamicParam, TypeStruct2DynamicParam>(
+		let _b: Bytes = Bytes(vec![0x11, 0x22, 0x33]);
+		test_impl::<(String, Bytes), TupleStruct2DynamicParam, TypeStruct2DynamicParam>(
 			(_a.clone(), _b.clone()),
 			TupleStruct2DynamicParam(_a.clone(), _b.clone()),
 			TypeStruct2DynamicParam { _a, _b },
@@ -573,8 +573,8 @@ mod test_struct {
 	#[test]
 	fn codec_struct_2_mixed() {
 		let _a: u8 = 0xff;
-		let _b: bytes = bytes(vec![0x11, 0x22, 0x33]);
-		test_impl::<(u8, bytes), TupleStruct2MixedParam, TypeStruct2MixedParam>(
+		let _b: Bytes = Bytes(vec![0x11, 0x22, 0x33]);
+		test_impl::<(u8, Bytes), TupleStruct2MixedParam, TypeStruct2MixedParam>(
 			(_a.clone(), _b.clone()),
 			TupleStruct2MixedParam(_a.clone(), _b.clone()),
 			TypeStruct2MixedParam { _a, _b },
@@ -605,9 +605,9 @@ mod test_struct {
 	#[test]
 	fn codec_struct_2_derived_dynamic() {
 		let _a = "some string".to_string();
-		let _b = bytes(vec![0x11, 0x22, 0x33]);
+		let _b = Bytes(vec![0x11, 0x22, 0x33]);
 		test_impl::<
-			((String,), (String, bytes)),
+			((String,), (String, Bytes)),
 			TupleStruct2DerivedDynamicParam,
 			TypeStruct2DerivedDynamicParam,
 		>(
@@ -626,10 +626,10 @@ mod test_struct {
 	#[test]
 	fn codec_struct_3_derived_mixed() {
 		let int = 0xff;
-		let by = bytes(vec![0x11, 0x22, 0x33]);
+		let by = Bytes(vec![0x11, 0x22, 0x33]);
 		let string = "some string".to_string();
 		test_impl::<
-			((u8,), (String, bytes), (u8, bytes)),
+			((u8,), (String, Bytes), (u8, Bytes)),
 			TupleStruct3DerivedMixedParam,
 			TypeStruct3DerivedMixedParam,
 		>(

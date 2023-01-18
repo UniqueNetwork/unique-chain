@@ -119,7 +119,7 @@ impl CrossAddress {
 #[derive(Debug, Default, AbiCoder)]
 pub struct Property {
 	key: evm_coder::types::String,
-	value: evm_coder::types::bytes,
+	value: evm_coder::types::Bytes,
 }
 
 impl TryFrom<up_data_structs::Property> for Property {
@@ -128,7 +128,7 @@ impl TryFrom<up_data_structs::Property> for Property {
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
 		let key = evm_coder::types::String::from_utf8(from.key.into())
 			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
-		let value = evm_coder::types::bytes(from.value.to_vec());
+		let value = evm_coder::types::Bytes(from.value.to_vec());
 		Ok(Property { key, value })
 	}
 }

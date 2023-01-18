@@ -141,7 +141,7 @@ pub mod types {
 	pub type String = ::std::string::String;
 
 	#[derive(Default, Debug, PartialEq, Eq, Clone)]
-	pub struct bytes(pub Vec<u8>);
+	pub struct Bytes(pub Vec<u8>);
 
 	//#region Special types
 	/// Makes function payable
@@ -162,20 +162,20 @@ pub mod types {
 		pub value: U256,
 	}
 
-	impl From<Vec<u8>> for bytes {
+	impl From<Vec<u8>> for Bytes {
 		fn from(src: Vec<u8>) -> Self {
 			Self(src)
 		}
 	}
 
 	#[allow(clippy::from_over_into)]
-	impl Into<Vec<u8>> for bytes {
+	impl Into<Vec<u8>> for Bytes {
 		fn into(self) -> Vec<u8> {
 			self.0
 		}
 	}
 
-	impl bytes {
+	impl Bytes {
 		#[must_use]
 		pub fn len(&self) -> usize {
 			self.0.len()
