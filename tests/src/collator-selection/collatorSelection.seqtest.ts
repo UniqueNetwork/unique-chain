@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from './util';
+import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '../util';
 
 async function resetInvulnerables() {
   await usingPlaygrounds(async (helper, privateKey) => {
@@ -58,6 +58,8 @@ describe('Integration Test: Collator Selection', () => {
   let licenseBond = 0n;
 
   before(async function() {
+    if (!process.env.RUN_COLLATOR_TESTS) this.skip();
+
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
       superuser = await privateKey('//Alice');
@@ -449,8 +451,9 @@ describe('Integration Test: Collator Selection', () => {
     });
   });
 
-  after(async () => {
-    // eslint-disable-next-line require-await
+  after(async function() {
+    if (!process.env.RUN_COLLATOR_TESTS) return;
+
     await usingPlaygrounds(async (helper) => {
       if (helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
 
