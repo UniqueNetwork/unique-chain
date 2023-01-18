@@ -122,7 +122,11 @@ describe('Nesting negative', () => {
     await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
   });
 
+<<<<<<< HEAD
   itSub.ifWithPallets('Cannot nest to a future collection', [Pallets.ReFungible], async ({helper}) => {
+=======
+  itSub('Cannot nest to a future token', async ({helper}) => {
+>>>>>>> 81ec604a (Test: nesting to future token or collection address)
     const nonExistingCollectionId = await helper.collection.getTotalCount() + 1000;
     const futureToken = helper.nft.getTokenObject(nonExistingCollectionId, 1);
 
@@ -131,14 +135,21 @@ describe('Nesting negative', () => {
     const ftCollectionForNesting = await helper.ft.mintCollection(alice);
 
     // 1. Alice cannot create nested token to future token
+<<<<<<< HEAD
     await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
     await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
     await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
+=======
+    await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
+    await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
+    await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
+>>>>>>> 81ec604a (Test: nesting to future token or collection address)
 
     // 2. Alice cannot mint and nest token:
     const nft = await nftCollectionForNesting.mintToken(alice);
     const rft = await rftCollectionForNesting.mintToken(alice, 100n);
     const _ft = await ftCollectionForNesting.mint(alice, 100n);
+<<<<<<< HEAD
     await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
     await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('CollectionNotFound');
     await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('CollectionNotFound');
@@ -169,6 +180,14 @@ describe('Nesting negative', () => {
   });
 
   itEth.ifWithPallets('Cannot nest to collection address', [Pallets.ReFungible], async({helper}) => {
+=======
+    await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
+    await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
+    await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('TODO:add message');
+  });
+
+  itEth('Cannot nest to collection address', async({helper}) => {
+>>>>>>> 81ec604a (Test: nesting to future token or collection address)
     const existingCollection = await helper.nft.mintCollection(alice);
     const existingCollectionAddress = helper.ethAddress.fromCollectionId(existingCollection.collectionId);
     const futureCollectionAddress = helper.ethAddress.fromCollectionId(99999999);
@@ -176,6 +195,7 @@ describe('Nesting negative', () => {
     const nftCollectionForNesting = await helper.nft.mintCollection(alice);
 
     // 1. Alice cannot create nested token to collection address
+<<<<<<< HEAD
     await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('CantNestTokenUnderCollection');
     await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('CantNestTokenUnderCollection');
 
@@ -192,10 +212,26 @@ describe('Nesting negative', () => {
 
     const rftToken = await rftCollection.mintToken(alice);
     const _ftToken = await ftCollection.mint(alice, 100n);
+=======
+    await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('TODO:add message');
+    await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('TODO:add message');
+
+    // 2. Alice cannot mint and nest token to collection address:
+    const nft = await nftCollectionForNesting.mintToken(alice);
+    await expect(nft.transfer(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('TODO:add message');
+    await expect(nft.transfer(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('TODO:add message');
+  });
+
+  itSub.ifWithPallets('Cannot nest in RFT', [Pallets.ReFungible], async ({helper}) => {
+  // Create default collection, permissions are not set:
+    const rftCollection = await helper.rft.mintCollection(alice);
+    const targetToken = await rftCollection.mintToken(alice);
+>>>>>>> 81ec604a (Test: nesting to future token or collection address)
 
     const collectionForNesting = await helper.nft.mintCollection(alice);
 
     // 1. Alice cannot create immediately nested tokens:
+<<<<<<< HEAD
     await expect(collectionForNesting.mintToken(alice, rftToken.nestingAccount())).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
     await expect(collectionForNesting.mintToken(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
 
@@ -205,3 +241,13 @@ describe('Nesting negative', () => {
     await expect(ftCollection.transfer(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
   });
 });
+=======
+    await expect(collectionForNesting.mintToken(alice, targetToken.nestingAccount())).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
+
+    // 2. Alice cannot mint and nest token:
+    const nestedToken2 = await collectionForNesting.mintToken(alice);
+    await expect(nestedToken2.nest(alice, targetToken)).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
+  });
+});
+
+>>>>>>> 81ec604a (Test: nesting to future token or collection address)
