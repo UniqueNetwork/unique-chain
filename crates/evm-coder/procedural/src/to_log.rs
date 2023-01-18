@@ -137,7 +137,7 @@ impl Event {
 			Self::#name {#(
 				#fields,
 			)*} => {
-				topics.push(topic::from(Self::#name_screaming));
+				topics.push(::evm_coder::types::Topic::from(Self::#name_screaming));
 				#(
 					topics.push(#indexed.to_topic());
 				)*
