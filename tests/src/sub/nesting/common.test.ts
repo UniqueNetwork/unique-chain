@@ -124,6 +124,7 @@ describe('Nesting negative', () => {
 
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
   itSub.ifWithPallets('Cannot nest to a future collection', [Pallets.ReFungible], async ({helper}) => {
 =======
   itSub('Cannot nest to a future token', async ({helper}) => {
@@ -131,6 +132,9 @@ describe('Nesting negative', () => {
 =======
   itSub('Cannot nest to a future collection', async ({helper}) => {
 >>>>>>> 5dde9455 (test: nesting under non-existing token)
+=======
+  itSub.ifWithPallets('Cannot nest to a future collection', [Pallets.ReFungible], async ({helper}) => {
+>>>>>>> ba92b384 (Skip rft tests for Unique)
     const nonExistingCollectionId = await helper.collection.getTotalCount() + 1000;
     const futureToken = helper.nft.getTokenObject(nonExistingCollectionId, 1);
 
@@ -176,10 +180,14 @@ describe('Nesting negative', () => {
   });
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   itSub.ifWithPallets('Cannot nest to a future token in a NFT collection', [Pallets.ReFungible], async ({helper}) => {
 =======
   itSub('Cannot nest to a future token in a NFT collection', async ({helper}) => {
 >>>>>>> 5dde9455 (test: nesting under non-existing token)
+=======
+  itSub.ifWithPallets('Cannot nest to a future token in a NFT collection', [Pallets.ReFungible], async ({helper}) => {
+>>>>>>> ba92b384 (Skip rft tests for Unique)
     const {collectionId} = await helper.nft.mintCollection(alice);
     // To avoid UserIsNotAllowedToNest error
     await helper.collection.setPermissions(alice, collectionId, {nesting: {collectionAdmin: true}});
@@ -204,6 +212,7 @@ describe('Nesting negative', () => {
   });
 
   itEth.ifWithPallets('Cannot nest to collection address', [Pallets.ReFungible], async({helper}) => {
+<<<<<<< HEAD
 =======
     await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
     await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
@@ -217,6 +226,8 @@ describe('Nesting negative', () => {
 
   itEth('Cannot nest to collection address', async({helper}) => {
 >>>>>>> 81ec604a (Test: nesting to future token or collection address)
+=======
+>>>>>>> ba92b384 (Skip rft tests for Unique)
     const existingCollection = await helper.nft.mintCollection(alice);
     const existingCollectionAddress = helper.ethAddress.fromCollectionId(existingCollection.collectionId);
     const futureCollectionAddress = helper.ethAddress.fromCollectionId(99999999);
