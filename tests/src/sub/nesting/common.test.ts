@@ -131,17 +131,17 @@ describe('Nesting negative', () => {
     const ftCollectionForNesting = await helper.ft.mintCollection(alice);
 
     // 1. Alice cannot create nested token to future token
-    await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
-    await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
-    await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
+    await expect(nftCollectionForNesting.mintToken(alice, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
+    await expect(rftCollectionForNesting.mintToken(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
+    await expect(ftCollectionForNesting.mint(alice, 10n, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
 
     // 2. Alice cannot mint and nest token:
     const nft = await nftCollectionForNesting.mintToken(alice);
     const rft = await rftCollectionForNesting.mintToken(alice, 100n);
     const _ft = await ftCollectionForNesting.mint(alice, 100n);
-    await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
-    await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TODO:add message');
-    await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('TODO:add message');
+    await expect(nft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
+    await expect(rft.transfer(alice, futureToken.nestingAccount())).to.be.rejectedWith('TokenNotFound');
+    await expect(ftCollectionForNesting.transfer(alice, futureToken.nestingAccount(), 50n)).to.be.rejectedWith('TokenNotFound');
   });
 
   itEth('Cannot nest to collection address', async({helper}) => {
@@ -152,28 +152,33 @@ describe('Nesting negative', () => {
     const nftCollectionForNesting = await helper.nft.mintCollection(alice);
 
     // 1. Alice cannot create nested token to collection address
-    await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('TODO:add message');
-    await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('TODO:add message');
+    await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('CantNestTokenUnderCollection');
+    await expect(nftCollectionForNesting.mintToken(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('CantNestTokenUnderCollection');
 
     // 2. Alice cannot mint and nest token to collection address:
     const nft = await nftCollectionForNesting.mintToken(alice);
-    await expect(nft.transfer(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('TODO:add message');
-    await expect(nft.transfer(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('TODO:add message');
+    await expect(nft.transfer(alice, {Ethereum: existingCollectionAddress})).to.be.rejectedWith('CantNestTokenUnderCollection');
+    await expect(nft.transfer(alice, {Ethereum: futureCollectionAddress})).to.be.rejectedWith('CantNestTokenUnderCollection');
   });
 
-  itSub.ifWithPallets('Cannot nest in RFT', [Pallets.ReFungible], async ({helper}) => {
+  itEth.ifWithPallets('Cannot nest in RFT or FT', [Pallets.ReFungible], async ({helper}) => {
   // Create default collection, permissions are not set:
     const rftCollection = await helper.rft.mintCollection(alice);
-    const targetToken = await rftCollection.mintToken(alice);
+    const ftCollection = await helper.ft.mintCollection(alice);
+
+    const rftToken = await rftCollection.mintToken(alice);
+    const _ftToken = await ftCollection.mint(alice, 100n);
 
     const collectionForNesting = await helper.nft.mintCollection(alice);
 
     // 1. Alice cannot create immediately nested tokens:
-    await expect(collectionForNesting.mintToken(alice, targetToken.nestingAccount())).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
+    await expect(collectionForNesting.mintToken(alice, rftToken.nestingAccount())).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
+    await expect(collectionForNesting.mintToken(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
 
     // 2. Alice cannot mint and nest token:
     const nestedToken2 = await collectionForNesting.mintToken(alice);
-    await expect(nestedToken2.nest(alice, targetToken)).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
+    await expect(nestedToken2.nest(alice, rftToken)).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
+    await expect(ftCollection.transfer(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
   });
 });
 
