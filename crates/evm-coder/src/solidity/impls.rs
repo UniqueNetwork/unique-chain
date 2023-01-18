@@ -30,7 +30,11 @@ solidity_type_name! {
 	Bytes4 => "bytes4" true = "bytes4(0)",
 	H160 => "address" true = "0x0000000000000000000000000000000000000000",
 	String => "string" false = "\"\"",
+<<<<<<< HEAD
 	Bytes => "bytes" false = "hex\"\"",
+=======
+	bytes => "bytes" false = "hex\"\"",
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	bool => "bool" true = "false",
 }
 

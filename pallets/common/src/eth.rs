@@ -142,7 +142,11 @@ impl CrossAddress {
 #[derive(Debug, Default, AbiCoder)]
 pub struct Property {
 	key: evm_coder::types::String,
+<<<<<<< HEAD
 	value: evm_coder::types::Bytes,
+=======
+	value: evm_coder::types::bytes,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 }
 
 impl TryFrom<up_data_structs::Property> for Property {

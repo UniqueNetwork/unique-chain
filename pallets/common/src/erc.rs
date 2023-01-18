@@ -94,7 +94,7 @@ where
 	/// @param value Propery value.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
-	fn set_collection_property(&mut self, caller: caller, key: string, value: bytes) -> Result<()> {
+	fn set_collection_property(&mut self, caller: caller, key: String, value: bytes) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -131,7 +131,11 @@ where
 	/// @param key Property key.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
+<<<<<<< HEAD
 	fn delete_collection_property(&mut self, caller: Caller, key: String) -> Result<()> {
+=======
+	fn delete_collection_property(&mut self, caller: caller, key: String) -> Result<()> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -144,7 +148,11 @@ where
 	///
 	/// @param keys Properties keys.
 	#[weight(<SelfWeightOf<T>>::delete_collection_properties(keys.len() as u32))]
+<<<<<<< HEAD
 	fn delete_collection_properties(&mut self, caller: Caller, keys: Vec<String>) -> Result<()> {
+=======
+	fn delete_collection_properties(&mut self, caller: caller, keys: Vec<String>) -> Result<()> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let keys = keys
 			.into_iter()
@@ -165,7 +173,11 @@ where
 	///
 	/// @param key Property key.
 	/// @return bytes The property corresponding to the key.
+<<<<<<< HEAD
 	fn collection_property(&self, key: String) -> Result<Bytes> {
+=======
+	fn collection_property(&self, key: String) -> Result<bytes> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let key = <Vec<u8>>::from(key)
 			.try_into()
 			.map_err(|_| "key too large")?;

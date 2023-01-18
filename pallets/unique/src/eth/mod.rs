@@ -56,7 +56,11 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 }
 
 fn convert_data<T: Config>(
+<<<<<<< HEAD
 	caller: Caller,
+=======
+	caller: caller,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	name: String,
 	description: String,
 	token_prefix: String,
@@ -87,6 +91,7 @@ fn convert_data<T: Config>(
 
 #[inline(always)]
 fn create_collection_internal<T: Config>(
+<<<<<<< HEAD
 	caller: Caller,
 	value: Value,
 	name: String,
@@ -98,6 +103,14 @@ fn create_collection_internal<T: Config>(
 	description: string,
 	token_prefix: string,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+	caller: caller,
+	value: value,
+	name: String,
+	collection_mode: CollectionMode,
+	description: String,
+	token_prefix: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 ) -> Result<Address> {
 	let (caller, name, description, token_prefix) =
 		convert_data::<T>(caller, name, description, token_prefix)?;
@@ -163,10 +176,16 @@ where
 =======
 		caller: caller,
 		value: value,
+<<<<<<< HEAD
 		name: string,
 		description: string,
 		token_prefix: string,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		name: String,
+		description: String,
+		token_prefix: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, name, description, token_prefix)?;
@@ -210,10 +229,16 @@ where
 =======
 		caller: caller,
 		value: value,
+<<<<<<< HEAD
 		name: string,
 		description: string,
 		token_prefix: string,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		name: String,
+		description: String,
+		token_prefix: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -238,10 +263,16 @@ where
 =======
 		caller: caller,
 		value: value,
+<<<<<<< HEAD
 		name: string,
 		description: string,
 		token_prefix: string,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		name: String,
+		description: String,
+		token_prefix: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
@@ -268,14 +299,19 @@ where
 =======
 		caller: caller,
 		value: value,
-		name: string,
+		name: String,
 		decimals: u8,
+<<<<<<< HEAD
 		description: string,
 		token_prefix: string,
 <<<<<<< HEAD
 	) -> Result<address> {
 >>>>>>> 2f30e2f1 (misk: remove simple type aliases)
 =======
+=======
+		description: String,
+		token_prefix: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<Address> {
 >>>>>>> 314a48de (refac: rename address -> Address)
 		create_collection_internal::<T>(
@@ -298,8 +334,12 @@ where
 =======
 		caller: caller,
 		collection: Address,
+<<<<<<< HEAD
 		base_uri: string,
 >>>>>>> 314a48de (refac: rename address -> Address)
+=======
+		base_uri: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let collection =

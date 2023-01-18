@@ -66,7 +66,11 @@ impl<T: Config> RefungibleHandle<T> {
 	#[solidity(hide)]
 	fn set_token_property_permission(
 		&mut self,
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		key: String,
 		is_mutable: bool,
 		collection_admin: bool,
@@ -132,7 +136,7 @@ impl<T: Config> RefungibleHandle<T> {
 =======
 		caller: caller,
 		token_id: U256,
-		key: string,
+		key: String,
 		value: bytes,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
 	) -> Result<()> {
@@ -202,10 +206,14 @@ impl<T: Config> RefungibleHandle<T> {
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_token_properties(1))]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn delete_property(&mut self, token_id: U256, caller: Caller, key: String) -> Result<()> {
 =======
 	fn delete_property(&mut self, token_id: U256, caller: caller, key: string) -> Result<()> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn delete_property(&mut self, token_id: U256, caller: caller, key: String) -> Result<()> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
@@ -233,8 +241,12 @@ impl<T: Config> RefungibleHandle<T> {
 		keys: Vec<String>,
 =======
 		caller: caller,
+<<<<<<< HEAD
 		keys: Vec<string>,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+		keys: Vec<String>,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -263,10 +275,14 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param key Property key.
 	/// @return Property value bytes
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn property(&self, token_id: U256, key: String) -> Result<Bytes> {
 =======
 	fn property(&self, token_id: U256, key: string) -> Result<bytes> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn property(&self, token_id: U256, key: String) -> Result<bytes> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -344,10 +360,14 @@ where
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn token_uri(&self, token_id: U256) -> Result<String> {
 =======
 	fn token_uri(&self, token_id: U256) -> Result<string> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn token_uri(&self, token_id: U256) -> Result<String> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
 		match get_token_property(self, token_id_u32, &key::url()).as_deref() {
@@ -723,8 +743,12 @@ impl<T: Config> RefungibleHandle<T> {
 =======
 		caller: caller,
 		to: Address,
+<<<<<<< HEAD
 		token_uri: string,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+		token_uri: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<U256> {
 		let token_id: U256 = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -753,8 +777,12 @@ impl<T: Config> RefungibleHandle<T> {
 		caller: caller,
 		to: Address,
 		token_id: U256,
+<<<<<<< HEAD
 		token_uri: string,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+		token_uri: String,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<bool> {
 		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
@@ -880,10 +908,14 @@ where
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
 <<<<<<< HEAD
+<<<<<<< HEAD
 	fn properties(&self, token_id: U256, keys: Vec<String>) -> Result<Vec<eth::Property>> {
 =======
 	fn properties(&self, token_id: U256, keys: Vec<string>) -> Result<Vec<eth::Property>> {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+	fn properties(&self, token_id: U256, keys: Vec<String>) -> Result<Vec<eth::Property>> {
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -1113,8 +1145,12 @@ where
 =======
 		caller: caller,
 		to: Address,
+<<<<<<< HEAD
 		tokens: Vec<(U256, string)>,
 >>>>>>> 214592d8 (misc: change uint256 to U256)
+=======
+		tokens: Vec<(U256, String)>,
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	) -> Result<bool> {
 		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);

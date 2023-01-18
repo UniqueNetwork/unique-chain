@@ -147,10 +147,14 @@ fn encode_decode_vec_tuple_address_uint256() {
 #[test]
 fn encode_decode_vec_tuple_uint256_string() {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	test_impl::<Vec<(U256, String)>>(
 =======
 	test_impl::<Vec<(U256, string)>>(
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+	test_impl::<Vec<(U256, String)>>(
+>>>>>>> 7d542e41 (refac: rename string -> String)
         0xdeadbeef,
         vec![
             (1.into(), "Test URI 0".to_string()),
@@ -274,10 +278,14 @@ fn parse_vec_with_dynamic_type() {
 	assert_eq!(call, u32::to_be_bytes(decoded_data.0));
 	let address = decoder.address().unwrap();
 <<<<<<< HEAD
+<<<<<<< HEAD
 	let data = <Vec<(U256, String)>>::abi_read(&mut decoder).unwrap();
 =======
 	let data = <Vec<(U256, string)>>::abi_read(&mut decoder).unwrap();
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+	let data = <Vec<(U256, String)>>::abi_read(&mut decoder).unwrap();
+>>>>>>> 7d542e41 (refac: rename string -> String)
 	assert_eq!(data, decoded_data.1);
 
 	let mut writer = AbiWriter::new_call(decoded_data.0);
@@ -289,7 +297,11 @@ fn parse_vec_with_dynamic_type() {
 
 #[test]
 fn encode_decode_vec_tuple_string_bytes() {
+<<<<<<< HEAD
 	test_impl::<Vec<(String, Bytes)>>(
+=======
+	test_impl::<Vec<(String, bytes)>>(
+>>>>>>> 7d542e41 (refac: rename string -> String)
 		0xdeadbeef,
 		vec![
 			(
