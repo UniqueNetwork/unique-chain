@@ -105,7 +105,7 @@ fn create_collection_internal<T: Config>(
 >>>>>>> 314a48de (refac: rename address -> Address)
 =======
 	caller: caller,
-	value: value,
+	value: Value,
 	name: String,
 	collection_mode: CollectionMode,
 	description: String,
@@ -168,7 +168,11 @@ where
 	fn create_nft_collection(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> dc76967d (refac: rename value -> Value)
 		value: Value,
 		name: String,
 		description: String,
@@ -221,7 +225,11 @@ where
 	fn create_nonfungible_collection(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> dc76967d (refac: rename value -> Value)
 		value: Value,
 		name: String,
 		description: String,
@@ -255,7 +263,11 @@ where
 	fn create_rft_collection(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> dc76967d (refac: rename value -> Value)
 		value: Value,
 		name: String,
 		description: String,
@@ -289,7 +301,11 @@ where
 	fn create_fungible_collection(
 		&mut self,
 <<<<<<< HEAD
+<<<<<<< HEAD
 		caller: Caller,
+=======
+		caller: caller,
+>>>>>>> dc76967d (refac: rename value -> Value)
 		value: Value,
 		name: String,
 		decimals: u8,

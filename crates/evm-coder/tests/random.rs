@@ -73,8 +73,12 @@ impl Impls {
 	fn caller_sensitive(&self, _caller: caller) -> Result<u8> {
 		unreachable!()
 	}
+<<<<<<< HEAD
 	fn payable(&mut self, _value: value) -> Result<u8> {
 >>>>>>> c1366a22 (fix: unit tests)
+=======
+	fn payable(&mut self, _value: Value) -> Result<u8> {
+>>>>>>> dc76967d (refac: rename value -> Value)
 		unreachable!()
 	}
 
