@@ -29,6 +29,7 @@ async function getIdentityAccounts(helper: UniqueHelper) {
   return (await getIdentities(helper)).flatMap(([key, _value]) => key);
 }
 
+<<<<<<< HEAD
 async function getSubIdentityAccounts(helper: UniqueHelper, address: string) {
   return ((await helper.getApi().query.identity.subsOf(address)).toHuman() as any)[1];
 }
@@ -37,6 +38,8 @@ async function getSubIdentityName(helper: UniqueHelper, address: string) {
   return ((await helper.getApi().query.identity.superOf(address)).toHuman() as any);
 }
 
+=======
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
 describe('Integration Test: Identities Manipulation', () => {
   let superuser: IKeyringPair;
 
@@ -55,6 +58,7 @@ describe('Integration Test: Identities Manipulation', () => {
       .to.be.rejectedWith(/Transaction call is not expected/);
   });
 
+<<<<<<< HEAD
   describe('Identities', () => {
     itSub('Sets identities', async ({helper}) => {
       const oldIdentitiesCount = (await getIdentityAccounts(helper)).length;
@@ -269,6 +273,51 @@ describe('Integration Test: Identities Manipulation', () => {
         expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
       }
     });
+=======
+  itSub('Sets identities', async ({helper}) => {
+    const oldIdentitiesCount = (await getIdentityAccounts(helper)).length;
+
+    const crowdSize = 10;
+    const crowd = await helper.arrange.createCrowd(crowdSize, 0n, superuser);
+    const identities = crowd.map((acc, i) => [acc.address, {info: {display: {Raw: `accounter #${i}`}}}]);
+    await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+
+    expect((await getIdentityAccounts(helper)).length).to.be.equal(oldIdentitiesCount + crowdSize);
+  });
+
+  itSub('Setting identities does not delete existing but does overwrite', async ({helper}) => {
+    const crowd = await helper.arrange.createCrowd(10, 0n, superuser);
+    const identities = crowd.map((acc, i) => [acc.address, {info: {display: {Raw: `accounter #${i}`}}}]);
+
+    // insert a single identity
+    let singleIdentity = identities.pop()!;
+    await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [[singleIdentity]]);
+
+    const oldIdentitiesCount = (await getIdentityAccounts(helper)).length;
+
+    // change an identity and push it with a few new others
+    singleIdentity = [singleIdentity[0], {info: {display: {Raw: 'something special'}}}];
+    identities.push(singleIdentity);
+    await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+
+    // oldIdentitiesCount + 9 because one identity is overwritten, not inserted on top
+    expect((await getIdentityAccounts(helper)).length).to.be.equal(oldIdentitiesCount + 9);
+    expect((await helper.callRpc('api.query.identity.identityOf', [singleIdentity[0]])).toHuman().info.display)
+      .to.be.deep.equal({Raw: 'something special'});
+  });
+
+  itSub('Removes identities', async ({helper}) => {
+    const crowd = await helper.arrange.createCrowd(10, 0n, superuser);
+    const identities = crowd.map((acc, i) => [acc.address, {info: {display: {Raw: `accounter #${i}`}}}]);
+    await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+    const oldIdentities = await getIdentityAccounts(helper);
+
+    // delete a couple, check that they are no longer there
+    const scapegoats = [crowd.pop()!.address, crowd.pop()!.address];
+    await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [scapegoats]);
+    const newIdentities = await getIdentityAccounts(helper);
+    expect(newIdentities.concat(scapegoats)).to.be.have.members(oldIdentities);
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
   });
 
   after(async function() {

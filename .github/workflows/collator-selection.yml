@@ -31,7 +31,10 @@ jobs:
         id: create_matrix
         with:
           matrix: |
+<<<<<<< HEAD
             network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+=======
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
             network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
             network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
 
@@ -41,7 +44,11 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
+<<<<<<< HEAD
     name: ${{ matrix.network }}
+=======
+    name: ${{ matrix.network }}-build
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
     strategy:
       matrix:
         include: ${{fromJson(needs.execution-marix.outputs.matrix)}}

@@ -1,6 +1,9 @@
+<<<<<<< HEAD
 ARG POLKADOT_BUILD_BRANCH
 FROM uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} as polkadot
 
+=======
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
 # ===== Rust builder =====
 FROM uniquenetwork/services:latest as rust-builder
 ARG RUST_TOOLCHAIN=
@@ -25,11 +28,16 @@ FROM rust-builder as builder-unique
 
 ARG PROFILE=release
 ARG NETWORK
+<<<<<<< HEAD
 ARG POLKADOT_LAUNCH_BRANCH
 ARG BRANCH
 
 ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
 
+=======
+ARG BRANCH
+
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
 WORKDIR /unique_parachain
 
 RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
@@ -39,6 +47,10 @@ RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
 # ===== RUN ======
 
 FROM ubuntu:20.04
+<<<<<<< HEAD
+=======
+ARG POLKADOT_LAUNCH_BRANCH
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \
@@ -48,7 +60,11 @@ RUN apt-get -y update && \
       nvm install v16.16.0 && \
       nvm use v16.16.0
 
+<<<<<<< HEAD
 RUN git clone https://github.com/uniquenetwork/polkadot-launch -b ${POLKADOT_LAUNCH_BRANCH}
+=======
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b $POLKADOT_LAUNCH_BRANCH
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -59,7 +75,11 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 COPY --from=builder-unique /unique_parachain/unique-chain/.docker/testnet-config/launch-config.json /polkadot-launch/launch-config.json
 COPY --from=builder-unique /unique_parachain/unique-chain/target/release/unique-collator /unique-chain/target/release/
 
+<<<<<<< HEAD
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+=======
+COPY --from=uniquenetwork/builder-polkadot:$POLKADOT_BUILD_BRANCH /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+>>>>>>> 15ad7775 (ci: separate workflow for collator selection)
 
 EXPOSE 9844
 EXPOSE 9944
