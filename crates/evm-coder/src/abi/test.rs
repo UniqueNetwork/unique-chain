@@ -273,12 +273,12 @@ fn parse_vec_with_dynamic_type() {
 
 #[test]
 fn encode_decode_vec_tuple_string_bytes() {
-	test_impl::<Vec<(String, bytes)>>(
+	test_impl::<Vec<(String, Bytes)>>(
 		0xdeadbeef,
 		vec![
 			(
 				"Test URI 0".to_string(),
-				bytes(vec![
+				Bytes(vec![
 					0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
 					0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
 					0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
@@ -287,14 +287,14 @@ fn encode_decode_vec_tuple_string_bytes() {
 			),
 			(
 				"Test URI 1".to_string(),
-				bytes(vec![
+				Bytes(vec![
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 				]),
 			),
-			("Test URI 2".to_string(), bytes(vec![0x33, 0x33])),
+			("Test URI 2".to_string(), Bytes(vec![0x33, 0x33])),
 		],
 		&hex!(
 			"
@@ -337,10 +337,10 @@ fn encode_decode_vec_tuple_string_bytes() {
 // #[ignore = "reason"]
 fn encode_decode_tuple0_tuple1_uint8_tuple1_string_bytes_tuple1_uint8_bytes() {
 	let int = 0xff;
-	let by = bytes(vec![0x11, 0x22, 0x33]);
+	let by = Bytes(vec![0x11, 0x22, 0x33]);
 	let string = "some string".to_string();
 
-	test_impl::<((u8,), (String, bytes), (u8, bytes))>(
+	test_impl::<((u8,), (String, Bytes), (u8, Bytes))>(
 		0xdeadbeef,
 		((int,), (string.clone(), by.clone()), (int, by)),
 		&hex!(
@@ -485,9 +485,9 @@ fn encode_decode_tuple0_tuple1_uint8_string() {
 
 #[test]
 fn encode_decode_tuple0_tuple1_string_bytes() {
-	test_impl::<((String, bytes),)>(
+	test_impl::<((String, Bytes),)>(
 		0xdeadbeef,
-		(("some string".to_string(), bytes(vec![1, 2, 3])),),
+		(("some string".to_string(), Bytes(vec![1, 2, 3])),),
 		&hex!(
 			"
                 deadbeef

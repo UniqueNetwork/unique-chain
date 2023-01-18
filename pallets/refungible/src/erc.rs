@@ -127,7 +127,7 @@ impl<T: Config> RefungibleHandle<T> {
 		caller: caller,
 		token_id: U256,
 		key: String,
-		value: bytes,
+		value: Bytes,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -242,7 +242,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	/// @return Property value bytes
-	fn property(&self, token_id: U256, key: String) -> Result<bytes> {
+	fn property(&self, token_id: U256, key: String) -> Result<Bytes> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -423,7 +423,7 @@ impl<T: Config> RefungibleHandle<T> {
 		_from: Address,
 		_to: Address,
 		_token_id: U256,
-		_data: bytes,
+		_data: Bytes,
 	) -> Result<()> {
 		// TODO: Not implemetable
 		Err("not implemented".into())

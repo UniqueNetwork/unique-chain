@@ -30,7 +30,7 @@ solidity_type_name! {
 	Bytes4 => "bytes4" true = "bytes4(0)",
 	H160 => "address" true = "0x0000000000000000000000000000000000000000",
 	String => "string" false = "\"\"",
-	bytes => "bytes" false = "hex\"\"",
+	Bytes => "bytes" false = "hex\"\"",
 	bool => "bool" true = "false",
 }
 
