@@ -59,13 +59,13 @@ pub enum ERC20Events {
 
 #[solidity_interface(name = ERC20, events(ERC20Events))]
 impl<T: Config> FungibleHandle<T> {
-	fn name(&self) -> Result<string> {
+	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+			.collect::<String>())
 	}
-	fn symbol(&self) -> Result<string> {
-		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	fn symbol(&self) -> Result<String> {
+		Ok(String::from_utf8_lossy(&self.token_prefix).into())
 	}
 	fn total_supply(&self) -> Result<U256> {
 		self.consume_store_reads(1)?;
@@ -167,10 +167,10 @@ where
 	T::AccountId: From<[u8; 32]>,
 {
 	/// @notice A description for the collection.
-	fn description(&self) -> Result<string> {
+	fn description(&self) -> Result<String> {
 		Ok(decode_utf16(self.description.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+			.collect::<String>())
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_item())]

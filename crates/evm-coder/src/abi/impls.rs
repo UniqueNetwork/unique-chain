@@ -63,7 +63,7 @@ impl_abi!(u64, uint64, false);
 impl_abi!(u128, uint128, false);
 impl_abi!(U256, uint256, false);
 impl_abi!(H160, address, false);
-impl_abi!(string, string, true);
+impl_abi!(String, string, true);
 
 impl_abi_writeable!(&str, string);
 

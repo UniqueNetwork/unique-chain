@@ -118,7 +118,7 @@ impl CrossAddress {
 /// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 #[derive(Debug, Default, AbiCoder)]
 pub struct Property {
-	key: evm_coder::types::string,
+	key: evm_coder::types::String,
 	value: evm_coder::types::bytes,
 }
 
@@ -126,7 +126,7 @@ impl TryFrom<up_data_structs::Property> for Property {
 	type Error = evm_coder::execution::Error;
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
-		let key = evm_coder::types::string::from_utf8(from.key.into())
+		let key = evm_coder::types::String::from_utf8(from.key.into())
 			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
 		let value = evm_coder::types::bytes(from.value.to_vec());
 		Ok(Property { key, value })
@@ -342,7 +342,7 @@ impl PropertyPermission {
 #[derive(Debug, Default, AbiCoder)]
 pub struct TokenPropertyPermission {
 	/// Token property key.
-	key: evm_coder::types::string,
+	key: evm_coder::types::String,
 	/// Token property permissions.
 	permissions: Vec<PropertyPermission>,
 }
@@ -360,7 +360,7 @@ impl
 		),
 	) -> Self {
 		let (key, permission) = value;
-		let key = evm_coder::types::string::from_utf8(key.into_inner())
+		let key = evm_coder::types::String::from_utf8(key.into_inner())
 			.expect("Stored key must be valid");
 		let permissions = PropertyPermission::into_vec(permission);
 		Self { key, permissions }

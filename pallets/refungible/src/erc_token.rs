@@ -92,15 +92,15 @@ pub enum ERC20Events {
 #[solidity_interface(name = ERC20, events(ERC20Events))]
 impl<T: Config> RefungibleTokenHandle<T> {
 	/// @return the name of the token.
-	fn name(&self) -> Result<string> {
+	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+			.collect::<String>())
 	}
 
 	/// @return the symbol of the token.
-	fn symbol(&self) -> Result<string> {
-		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	fn symbol(&self) -> Result<String> {
+		Ok(String::from_utf8_lossy(&self.token_prefix).into())
 	}
 
 	/// @dev Total number of tokens in existence

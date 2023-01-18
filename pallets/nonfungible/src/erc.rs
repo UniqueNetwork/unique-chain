@@ -64,7 +64,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	fn set_token_property_permission(
 		&mut self,
 		caller: caller,
-		key: string,
+		key: String,
 		is_mutable: bool,
 		collection_admin: bool,
 		token_owner: bool,
@@ -123,7 +123,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		token_id: U256,
-		key: string,
+		key: String,
 		value: bytes,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -187,7 +187,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param key Property key.
 	#[solidity(hide)]
 	#[weight(<SelfWeightOf<T>>::delete_token_properties(1))]
-	fn delete_property(&mut self, token_id: U256, caller: caller, key: string) -> Result<()> {
+	fn delete_property(&mut self, token_id: U256, caller: caller, key: String) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
@@ -211,7 +211,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self,
 		token_id: U256,
 		caller: caller,
-		keys: Vec<string>,
+		keys: Vec<String>,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -239,7 +239,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	/// @return Property value bytes
-	fn property(&self, token_id: U256, key: string) -> Result<bytes> {
+	fn property(&self, token_id: U256, key: String) -> Result<bytes> {
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 		let key = <Vec<u8>>::from(key)
 			.try_into()
@@ -301,14 +301,14 @@ where
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
 	#[solidity(hide, rename_selector = "name")]
-	fn name_proxy(&self) -> Result<string> {
+	fn name_proxy(&self) -> Result<String> {
 		self.name()
 	}
 
 	/// @notice An abbreviated name for NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
 	#[solidity(hide, rename_selector = "symbol")]
-	fn symbol_proxy(&self) -> Result<string> {
+	fn symbol_proxy(&self) -> Result<String> {
 		self.symbol()
 	}
 
@@ -322,7 +322,7 @@ where
 	///
 	/// @return token's const_metadata
 	#[solidity(rename_selector = "tokenURI")]
-	fn token_uri(&self, token_id: U256) -> Result<string> {
+	fn token_uri(&self, token_id: U256) -> Result<String> {
 		let token_id_u32: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
 
 		match get_token_property(self, token_id_u32, &key::url()).as_deref() {
@@ -335,7 +335,7 @@ where
 		let base_uri =
 			pallet_common::Pallet::<T>::get_collection_property(self.id, &key::base_uri())
 				.map(BoundedVec::into_inner)
-				.map(string::from_utf8)
+				.map(String::from_utf8)
 				.transpose()
 				.map_err(|e| {
 					Error::Revert(alloc::format!(
@@ -595,7 +595,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		&mut self,
 		caller: caller,
 		to: Address,
-		token_uri: string,
+		token_uri: String,
 	) -> Result<U256> {
 		let token_id: U256 = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -618,7 +618,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		caller: caller,
 		to: Address,
 		token_id: U256,
-		token_uri: string,
+		token_uri: String,
 	) -> Result<bool> {
 		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
@@ -670,12 +670,12 @@ fn get_token_property<T: Config>(
 	collection: &CollectionHandle<T>,
 	token_id: u32,
 	key: &up_data_structs::PropertyKey,
-) -> Result<string> {
+) -> Result<String> {
 	collection.consume_store_reads(1)?;
 	let properties = <TokenProperties<T>>::try_get((collection.id, token_id))
 		.map_err(|_| Error::Revert("Token properties not found".into()))?;
 	if let Some(property) = properties.get(key) {
-		return Ok(string::from_utf8_lossy(property).into());
+		return Ok(String::from_utf8_lossy(property).into());
 	}
 
 	Err("Property tokenURI not found".into())
@@ -691,7 +691,7 @@ fn get_token_permission<T: Config>(
 		.get(key)
 		.map(Clone::clone)
 		.ok_or_else(|| {
-			let key = string::from_utf8(key.clone().into_inner()).unwrap_or_default();
+			let key = String::from_utf8(key.clone().into_inner()).unwrap_or_default();
 			Error::Revert(alloc::format!("No permission for key {}", key))
 		})?;
 	Ok(a)
@@ -704,22 +704,22 @@ where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
-	fn name(&self) -> Result<string> {
+	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+			.collect::<String>())
 	}
 
 	/// @notice An abbreviated name for NFTs in this contract
-	fn symbol(&self) -> Result<string> {
-		Ok(string::from_utf8_lossy(&self.token_prefix).into())
+	fn symbol(&self) -> Result<String> {
+		Ok(String::from_utf8_lossy(&self.token_prefix).into())
 	}
 
 	/// @notice A description for the collection.
-	fn description(&self) -> Result<string> {
+	fn description(&self) -> Result<String> {
 		Ok(decode_utf16(self.description.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<string>())
+			.collect::<String>())
 	}
 
 	/// Returns the owner (in cross format) of the token.
@@ -736,7 +736,7 @@ where
 	/// @param tokenId Id for the token.
 	/// @param keys Properties keys. Empty keys for all propertyes.
 	/// @return Vector of properties key/value pairs.
-	fn properties(&self, token_id: U256, keys: Vec<string>) -> Result<Vec<eth::Property>> {
+	fn properties(&self, token_id: U256, keys: Vec<String>) -> Result<Vec<eth::Property>> {
 		let keys = keys
 			.into_iter()
 			.map(|key| {
@@ -948,7 +948,7 @@ where
 		&mut self,
 		caller: caller,
 		to: Address,
-		tokens: Vec<(U256, string)>,
+		tokens: Vec<(U256, String)>,
 	) -> Result<bool> {
 		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);

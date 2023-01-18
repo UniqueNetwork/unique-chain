@@ -26,7 +26,7 @@ pub use traits::*;
 mod impls;
 
 #[cfg(not(feature = "std"))]
-use alloc::{string::String, vec::Vec, collections::BTreeMap, format};
+use alloc::{vec::Vec, collections::BTreeMap, format};
 #[cfg(feature = "std")]
 use std::collections::BTreeMap;
 use core::{
@@ -42,16 +42,16 @@ use crate::{types::*, custom_signature::SignatureUnit};
 pub struct TypeCollector {
 	/// Code => id
 	/// id ordering is required to perform topo-sort on the resulting data
-	structs: RefCell<BTreeMap<string, usize>>,
-	anonymous: RefCell<BTreeMap<Vec<string>, usize>>,
-	// generic: RefCell<BTreeMap<string, usize>>,
+	structs: RefCell<BTreeMap<String, usize>>,
+	anonymous: RefCell<BTreeMap<Vec<String>, usize>>,
+	// generic: RefCell<BTreeMap<String, usize>>,
 	id: Cell<usize>,
 }
 impl TypeCollector {
 	pub fn new() -> Self {
 		Self::default()
 	}
-	pub fn collect(&self, item: string) {
+	pub fn collect(&self, item: String) {
 		let id = self.next_id();
 		self.structs.borrow_mut().insert(item, id);
 	}
@@ -84,7 +84,7 @@ impl TypeCollector {
 	pub fn collect_enum<T: SolidityEnumTy>(&self) -> String {
 		T::generate_solidity_interface(self)
 	}
-	pub fn finish(self) -> Vec<string> {
+	pub fn finish(self) -> Vec<String> {
 		let mut data = self.structs.into_inner().into_iter().collect::<Vec<_>>();
 		data.sort_by_key(|(_, id)| Reverse(*id));
 		data.into_iter().map(|(code, _)| code).collect()
