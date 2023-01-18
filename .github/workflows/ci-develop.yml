@@ -34,6 +34,10 @@ jobs:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested
     
+  collator-selection:
+    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-collator-selection')) }}  # Conditional check for draft & labels per job.
+    uses: ./.github/workflows/collator-selection.yml
+    
   forkless:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'forkless')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/forkless.yml
