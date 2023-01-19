@@ -12,7 +12,7 @@ services:
         - "STATEMINE_BUILD_BRANCH=${STATEMINE_BUILD_BRANCH}"
         - "KARURA_BUILD_BRANCH=${KARURA_BUILD_BRANCH}"        
       context: .
-      dockerfile: .Dockerfile-xcm-quartz-rococo
+      dockerfile: ./Dockerfile-xcm-quartz-rococo
     container_name: xcm-quartz-rococo
     image: xcm-quartz-rococo
     env_file: .env
