@@ -96,6 +96,9 @@ pub use evm_coder_procedural::weight;
 pub use evm_coder_procedural::AbiCoder;
 pub use sha3_const;
 
+/// macro reexports
+pub use ethereum;
+
 /// Derives [`ToLog`] for enum
 ///
 /// Selectors will be derived from variant names, there is currently no way to have custom naming
@@ -198,7 +201,7 @@ pub trait Call: Sized {
 /// Should be same between evm-coder and substrate to avoid confusion
 ///
 /// Isn't same thing as gas, some mapping is required between those types
-pub type Weight = frame_support::weights::Weight;
+pub type Weight = frame_support::pallet_prelude::Weight;
 
 /// In substrate, we have benchmarking, which allows
 /// us to not rely on gas metering, but instead predict amount of gas to execute call
