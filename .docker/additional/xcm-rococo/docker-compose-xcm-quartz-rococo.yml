@@ -3,19 +3,10 @@ version: "3.5"
 services:
   xcm_quartz_rococo:
     build:
-      args:
-        - "BRANCH=feature/xcm-local-stand"
-        - "RUST_TOOLCHAIN=${RUST_TOOLCHAIN}"
-        - "POLKADOT_LAUNCH_BRANCH=${POLKADOT_LAUNCH_BRANCH}"
-        - "POLKADOT_BUILD_BRANCH=${POLKADOT_BUILD_BRANCH}"
-        - "MOONRIVER_BUILD_BRANCH=${MOONRIVER_BUILD_BRANCH}"
-        - "STATEMINE_BUILD_BRANCH=${STATEMINE_BUILD_BRANCH}"
-        - "KARURA_BUILD_BRANCH=${KARURA_BUILD_BRANCH}"        
       context: .
       dockerfile: ./Dockerfile-xcm-quartz-rococo
     container_name: xcm-quartz-rococo
     image: xcm-quartz-rococo
-    env_file: .env
     expose:
       - 9844
       - 9944
