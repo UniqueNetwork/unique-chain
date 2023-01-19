@@ -252,7 +252,7 @@ pub type DecimalPoints = u8;
 /// Collection can represent various types of tokens.
 /// Each collection can contain only one type of tokens at a time.
 /// This type helps to understand which tokens the collection contains.
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(Encode, Decode, Eq, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
 #[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub enum CollectionMode {
 	/// Non fungible tokens.

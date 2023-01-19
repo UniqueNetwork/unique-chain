@@ -61,9 +61,14 @@ use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithP
 use frame_support::fail;
 pub use pallet::*;
 use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
+<<<<<<< HEAD
 use up_data_structs::{
 	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
 };
+=======
+use up_data_structs::CollectionMode;
+use up_data_structs::{CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget};
+>>>>>>> e0035410 (fix: find_parent)
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -167,8 +172,16 @@ impl<T: Config> Pallet<T> {
 				Some((collection, token)) => Parent::Token(collection, token),
 				None => Parent::User(owner),
 			},
+<<<<<<< HEAD
 			Err(TokenOwnerError::MultipleOwners) => Parent::MultipleOwners,
 			Err(TokenOwnerError::NotFound) => Parent::TokenNotFound,
+=======
+			None if handle.mode() == CollectionMode::ReFungible => handle
+				.total_pieces(token)
+				.map(|_| Parent::MultipleOwners)
+				.unwrap_or(Parent::TokenNotFound),
+			None => Parent::TokenNotFound,
+>>>>>>> e0035410 (fix: find_parent)
 		})
 	}
 
