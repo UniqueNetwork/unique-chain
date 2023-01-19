@@ -1,6 +1,3 @@
-ARG CHAIN=quartz
-ARG LAUNCH_CONFIG_FILE=launch-config-xcm-quartz-rococo.json
-
 # ===== Rust builder =====
 FROM ubuntu:20.04 as rust-builder
 LABEL maintainer="Unique.Network"
@@ -20,11 +17,11 @@ RUN apt-get update && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install ${RUST_TOOLCHAIN} && \
-    rustup default ${RUST_TOOLCHAIN} && \
+    rustup toolchain install $RUST_TOOLCHAIN && \
+    rustup default $RUST_TOOLCHAIN && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain ${RUST_TOOLCHAIN}
+RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -33,7 +30,6 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique
 
 ARG BRANCH
-ARG CHAIN
 ARG PROFILE=release
 
 WORKDIR /unique_parachain
@@ -41,7 +37,7 @@ WORKDIR /unique_parachain
 
 RUN git clone -b ${BRANCH} https://github.com/UniqueNetwork/unique-chain.git . && \
 #    cd unique-chain && \
-  cargo build --features=${CHAIN}-runtime --$PROFILE
+  cargo build --features=quartz-runtime --$PROFILE
 
 # ===== RUN ======
 FROM ubuntu:20.04
@@ -63,7 +59,7 @@ RUN apt-get -y update && \
       nvm install v16.16.0 && \
       nvm use v16.16.0
 
-RUN git clone https://github.com/uniquenetwork/polkadot-launch -b ${POLKADOT_LAUNCH_BRANCH}
+RUN git clone https://github.com/uniquenetwork/polkadot-launch -b $POLKADOT_LAUNCH_BRANCH
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -71,7 +67,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
-COPY --from=builder-unique /unique_parachain/.docker/xcm-config/${LAUNCH_CONFIG_FILE} /polkadot-launch/
+COPY --from=builder-unique /unique_parachain/.docker/additional/xcm-rococo/launch-config-xcm-quartz-rococo.json /polkadot-launch/
 COPY --from=builder-unique /unique_parachain/.docker/xcm-config/5validators.jsonnet /polkadot-launch/5validators.jsonnet
 COPY --from=builder-unique /unique_parachain/.docker/xcm-config/minBondFix.jsonnet /polkadot-launch/minBondFix.jsonnet
 

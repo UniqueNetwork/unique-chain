@@ -4,7 +4,13 @@ services:
   xcm_quartz_rococo:
     build:
       args:
-        - "BRANCH=develop"
+        - "BRANCH=feature/xcm-local-stand"
+        - "RUST_TOOLCHAIN=${RUST_TOOLCHAIN}"
+        - "POLKADOT_LAUNCH_BRANCH=${POLKADOT_LAUNCH_BRANCH}"
+        - "POLKADOT_BUILD_BRANCH=${POLKADOT_BUILD_BRANCH}"
+        - "MOONRIVER_BUILD_BRANCH=${MOONRIVER_BUILD_BRANCH}"
+        - "STATEMINE_BUILD_BRANCH=${STATEMINE_BUILD_BRANCH}"
+        - "KARURA_BUILD_BRANCH=${KARURA_BUILD_BRANCH}"        
       context: .
       dockerfile: .Dockerfile-xcm-quartz-rococo
     container_name: xcm-quartz-rococo
@@ -22,7 +28,4 @@ services:
       - 127.0.0.1:9946:9946
       - 127.0.0.1:9947:9947
       - 127.0.0.1:9948:9948
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "3"
+
