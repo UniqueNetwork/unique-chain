@@ -1,18 +1,17 @@
 [package]
+edition = "2021"
+license = "GPLv3"
 name = "evm-coder"
 version = "0.1.6"
-license = "GPLv3"
-edition = "2021"
 
 [dependencies]
 sha3-const = { version = "0.1.1", default-features = false }
 # evm-coder reexports those proc-macro
-evm-coder-procedural = { path = "./procedural" }
+evm-coder-procedural.path = "./procedural"
 # Evm uses primitive-types for H160, H256 and others
 primitive-types = { version = "0.12.1", default-features = false }
 # Evm doesn't have reexports for log and others
 ethereum = { version = "0.14.0", default-features = false }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 # Error types for execution
 evm-core = { default-features = false, git = "https://github.com/uniquenetwork/evm", branch = "unique-polkadot-v0.9.36" }
@@ -28,11 +27,6 @@ trybuild = "1.0"
 
 [features]
 default = ["std"]
-std = [
-    "ethereum/std",
-    "primitive-types/std",
-    "evm-core/std",
-    "frame-support/std",
-]
+std = ["ethereum/std", "evm-core/std", "frame-support/std", "primitive-types/std"]
 # Stub/interface generation
 stubgen = []

@@ -1,7 +1,7 @@
 [package]
+edition = "2021"
 name = "tests"
 version = "0.1.1"
-edition = "2021"
 
 [features]
 default = ['refungible']
@@ -9,12 +9,12 @@ default = ['refungible']
 refungible = []
 
 [dependencies]
-up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
+up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
 
 sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 
@@ -22,25 +22,23 @@ frame-support = { git = "https://github.com/paritytech/substrate", branch = "pol
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 
-pallet-common = { path = '../../pallets/common' }
-pallet-structure = { path = '../../pallets/structure' }
-pallet-fungible = { path = '../../pallets/fungible' }
-pallet-nonfungible = { path = '../../pallets/nonfungible' }
-pallet-refungible = { path = '../../pallets/refungible' }
-pallet-unique = { path = '../../pallets/unique' }
+pallet-common.path = "../../pallets/common"
+pallet-fungible.path = "../../pallets/fungible"
+pallet-nonfungible.path = "../../pallets/nonfungible"
+pallet-refungible.path = "../../pallets/refungible"
+pallet-structure.path = "../../pallets/structure"
+pallet-unique.path = "../../pallets/unique"
 
-pallet-evm-coder-substrate = { path = '../../pallets/evm-coder-substrate' }
+pallet-evm-coder-substrate.path = "../../pallets/evm-coder-substrate"
 
-parity-scale-codec = { version = "3.1.2", default-features = false, features = [
-	"derive",
-] }
+parity-scale-codec = { version = "3.2.2", default-features = false, features = ["derive"] }
 scale-info = "*"
 
-evm-coder = { default-features = false, path = '../../crates/evm-coder' }
+evm-coder = { default-features = false, path = "../../crates/evm-coder" }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.36" }
