@@ -63,6 +63,7 @@ pub use pallet::*;
 use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 use up_data_structs::{
 	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
 };
@@ -72,6 +73,11 @@ use up_data_structs::CollectionMode;
 >>>>>>> 6a7ab3b8 (Revert "fix: find_parent")
 use up_data_structs::{CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget};
 >>>>>>> e0035410 (fix: find_parent)
+=======
+use up_data_structs::{
+	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
+};
+>>>>>>> 05c459d3 (fix: find_parent)
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -145,6 +151,8 @@ pub enum Parent<CrossAccountId> {
 	User(CrossAccountId),
 	/// Could not find the token provided as the owner.
 	TokenNotFound,
+	/// Nested token has multiple owners.
+	MultipleOwners,
 	/// Token owner is another token (still, the target token may not exist).
 	Token(CollectionId, TokenId),
 }
@@ -175,6 +183,7 @@ impl<T: Config> Pallet<T> {
 			},
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 			Err(TokenOwnerError::MultipleOwners) => Parent::MultipleOwners,
 			Err(TokenOwnerError::NotFound) => Parent::TokenNotFound,
 =======
@@ -186,6 +195,10 @@ impl<T: Config> Pallet<T> {
 >>>>>>> 6a7ab3b8 (Revert "fix: find_parent")
 			None => Parent::TokenNotFound,
 >>>>>>> e0035410 (fix: find_parent)
+=======
+			Err(TokenOwnerError::MultipleOwners) => Parent::MultipleOwners,
+			Err(TokenOwnerError::NotFound) => Parent::TokenNotFound,
+>>>>>>> 05c459d3 (fix: find_parent)
 		})
 	}
 
@@ -225,19 +238,27 @@ impl<T: Config> Pallet<T> {
 	///
 	/// May return token address if parent token not yet exists
 	///
+	/// Returns `None` if the token has multiple owners.
+	///
 	/// - `budget`: Limit for searching parents in depth.
 	pub fn find_topmost_owner(
 		collection: CollectionId,
 		token: TokenId,
 		budget: &dyn Budget,
-	) -> Result<T::CrossAccountId, DispatchError> {
+	) -> Result<Option<T::CrossAccountId>, DispatchError> {
 		let owner = Self::parent_chain(collection, token)
 			.take_while(|_| budget.consume())
-			.find(|p| matches!(p, Ok(Parent::User(_) | Parent::TokenNotFound)))
+			.find(|p| {
+				matches!(
+					p,
+					Ok(Parent::User(_) | Parent::TokenNotFound | Parent::MultipleOwners)
+				)
+			})
 			.ok_or(<Error<T>>::DepthLimit)??;
 
 		Ok(match owner {
-			Parent::User(v) => v,
+			Parent::User(v) => Some(v),
+			Parent::MultipleOwners => None,
 			_ => fail!(<Error<T>>::TokenNotFound),
 		})
 	}
@@ -245,13 +266,15 @@ impl<T: Config> Pallet<T> {
 	/// Find the topmost parent and check that assigning `for_nest` token as a child for
 	/// `token` wouldn't create a cycle.
 	///
+	/// Returns `None` if the token has multiple owners.
+	///
 	/// - `budget`: Limit for searching parents in depth.
 	pub fn get_checked_topmost_owner(
 		collection: CollectionId,
 		token: TokenId,
 		for_nest: Option<(CollectionId, TokenId)>,
 		budget: &dyn Budget,
-	) -> Result<T::CrossAccountId, DispatchError> {
+	) -> Result<Option<T::CrossAccountId>, DispatchError> {
 		// Tried to nest token in itself
 		if Some((collection, token)) == for_nest {
 			return Err(<Error<T>>::OuroborosDetected.into());
@@ -264,8 +287,9 @@ impl<T: Config> Pallet<T> {
 					return Err(<Error<T>>::OuroborosDetected.into())
 				}
 				// Token is owned by other user
-				Parent::User(user) => return Ok(user),
+				Parent::User(user) => return Ok(Some(user)),
 				Parent::TokenNotFound => return Err(<Error<T>>::TokenNotFound.into()),
+				Parent::MultipleOwners => return Ok(None),
 				// Continue parent chain
 				Parent::Token(_, _) => {}
 			}
@@ -306,12 +330,17 @@ impl<T: Config> Pallet<T> {
 		budget: &dyn Budget,
 	) -> Result<bool, DispatchError> {
 		let target_parent = match T::CrossTokenAddressMapping::address_to_token(&user) {
-			Some((collection, token)) => Self::find_topmost_owner(collection, token, budget)?,
+			Some((collection, token)) => match Self::find_topmost_owner(collection, token, budget)?
+			{
+				Some(topmost_owner) => topmost_owner,
+				None => return Ok(false),
+			},
 			None => user,
 		};
 
-		Self::get_checked_topmost_owner(collection, token, for_nest, budget)
-			.map(|indirect_owner| indirect_owner == target_parent)
+		Self::get_checked_topmost_owner(collection, token, for_nest, budget).map(|indirect_owner| {
+			indirect_owner.map_or(false, |indirect_owner| indirect_owner == target_parent)
+		})
 	}
 
 	/// Checks that `under` is valid token and that `token_id` could be nested under it

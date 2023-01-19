@@ -120,6 +120,13 @@ impl CrossAddress {
 >>>>>>> 214592d8 (misc: change uint256 to U256)
 		}
 	}
+	/// Creates [`CrossAddress`] from Ethereum account.
+	pub fn from_eth(address: Address) -> Self {
+		Self {
+			eth: address,
+			sub: Default::default(),
+		}
+	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
 	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
 	where
