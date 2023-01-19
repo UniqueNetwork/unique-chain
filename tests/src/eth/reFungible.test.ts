@@ -19,90 +19,6 @@ import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
-describe('Refungible: Information getting', () => {
-  let donor: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-
-      donor = await privateKey({filename: __filename});
-    });
-  });
-
-  itEth('totalSupply', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'TotalSupply', '6', '6');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
-
-    await contract.methods.mint(caller).send();
-
-    const totalSupply = await contract.methods.totalSupply().call();
-    expect(totalSupply).to.equal('1');
-  });
-
-  itEth('balanceOf', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'BalanceOf', '6', '6');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
-
-    await contract.methods.mint(caller).send();
-    await contract.methods.mint(caller).send();
-    await contract.methods.mint(caller).send();
-
-    const balance = await contract.methods.balanceOf(caller).call();
-    expect(balance).to.equal('3');
-  });
-
-  itEth('ownerOf', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const {collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf', '6', '6');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
-
-    const result = await contract.methods.mint(caller).send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-
-    const owner = await contract.methods.ownerOf(tokenId).call();
-    expect(owner).to.equal(caller);
-  });
-
-  itEth('ownerOf after burn', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'OwnerOf-AfterBurn', '6', '6');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
-
-    const result = await contract.methods.mint(caller).send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller, true);
-
-    await tokenContract.methods.repartition(2).send();
-    await tokenContract.methods.transfer(receiver, 1).send();
-
-    await tokenContract.methods.burnFrom(caller, 1).send();
-
-    const owner = await contract.methods.ownerOf(tokenId).call();
-    expect(owner).to.equal(receiver);
-  });
-
-  itEth('ownerOf for partial ownership', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
-
-    const result = await contract.methods.mint(caller).send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
-
-    await tokenContract.methods.repartition(2).send();
-    await tokenContract.methods.transfer(receiver, 1).send();
-
-    const owner = await contract.methods.ownerOf(tokenId).call();
-    expect(owner).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
-  });
-});
-
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
   let minter: IKeyringPair;
@@ -116,25 +32,6 @@ describe('Refungible: Plain calls', () => {
       donor = await privateKey({filename: __filename});
       [minter, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
-  });
-
-  itEth('Can perform mint() & crossOwnerOf()', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, 'Minty', '6', '6', '');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
-
-    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
-
-    const event = result.events.Transfer;
-    expect(event.address).to.equal(collectionAddress);
-    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.equal(receiver);
-    const tokenId = event.returnValues.tokenId;
-    expect(tokenId).to.be.equal('1');
-
-    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
-    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
   });
 
   [

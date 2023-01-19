@@ -17,19 +17,20 @@
 #![allow(dead_code)]
 
 use evm_coder::{ToLog, types::*};
+use primitive_types::U256;
 
 #[derive(ToLog)]
 enum ERC721Log {
 	Transfer {
 		#[indexed]
-		from: address,
+		from: Address,
 		#[indexed]
-		to: address,
-		value: uint256,
+		to: Address,
+		value: U256,
 	},
 	Eee {
 		#[indexed]
-		aaa: address,
-		bbb: uint256,
+		aaa: Address,
+		bbb: U256,
 	},
 }

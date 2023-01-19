@@ -54,7 +54,7 @@ impl<'i> AbiReader<'i> {
 		}
 	}
 	/// Start reading RLP buffer, parsing first 4 bytes as selector
-	pub fn new_call(buf: &'i [u8]) -> Result<(bytes4, Self)> {
+	pub fn new_call(buf: &'i [u8]) -> Result<(Bytes4, Self)> {
 		if buf.len() < 4 {
 			return Err(Error::Error(ExitError::OutOfOffset));
 		}
@@ -148,8 +148,8 @@ impl<'i> AbiReader<'i> {
 	}
 
 	/// Read [`string`] at current position, then advance
-	pub fn string(&mut self) -> Result<string> {
-		string::from_utf8(self.bytes()?).map_err(|_| Error::Error(ExitError::InvalidRange))
+	pub fn string(&mut self) -> Result<String> {
+		String::from_utf8(self.bytes()?).map_err(|_| Error::Error(ExitError::InvalidRange))
 	}
 
 	/// Read [`u8`] at current position, then advance

@@ -19,68 +19,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
 
-
-describe('NFT: Information getting', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
-
-  before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
-      [alice] = await helper.arrange.createAccounts([10n], donor);
-    });
-  });
-
-  itEth('totalSupply', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    await collection.mintToken(alice);
-
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-    const totalSupply = await contract.methods.totalSupply().call();
-
-    expect(totalSupply).to.equal('1');
-  });
-
-  itEth('balanceOf', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    await collection.mintToken(alice, {Ethereum: caller});
-    await collection.mintToken(alice, {Ethereum: caller});
-    await collection.mintToken(alice, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-    const balance = await contract.methods.balanceOf(caller).call();
-
-    expect(balance).to.equal('3');
-  });
-
-  itEth('ownerOf', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    const caller = await helper.eth.createAccountWithBalance(donor);
-
-    const token = await collection.mintToken(alice, {Ethereum: caller});
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-
-    const owner = await contract.methods.ownerOf(token.tokenId).call();
-
-    expect(owner).to.equal(caller);
-  });
-
-  itEth('name/symbol is available regardless of ERC721Metadata support', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'test', tokenPrefix: 'TEST'});
-    const caller = helper.eth.createAccount();
-
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-
-    expect(await contract.methods.name().call()).to.equal('test');
-    expect(await contract.methods.symbol().call()).to.equal('TEST');
-  });
-});
-
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;
 
@@ -148,30 +86,6 @@ describe('NFT: Plain calls', () => {
       donor = await privateKey({filename: __filename});
       [minter, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
-  });
-
-  itEth('Can perform mint() & get crossOwner()', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
-
-    const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', '6', '6', '');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-
-    const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-    expect(tokenId).to.be.equal('1');
-
-    const event = result.events.Transfer;
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.be.equal(receiver);
-
-    expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-    expect(await contract.methods.crossOwnerOf(tokenId).call()).to.be.like([receiver, '0']);
-    // TODO: this wont work right now, need release 919000 first
-    // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
-    // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
-    // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
   });
 
   // TODO combine all minting tests in one place

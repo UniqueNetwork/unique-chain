@@ -41,7 +41,7 @@ use sp_core::H160;
 use evm_coder::{
 	abi::{AbiReader, AbiWrite, AbiWriter},
 	execution,
-	types::{Msg, value},
+	types::{Msg, Value},
 };
 
 pub use pallet::*;
@@ -256,7 +256,7 @@ fn call_internal<
 >(
 	caller: H160,
 	e: &mut E,
-	value: value,
+	value: Value,
 	input: &[u8],
 ) -> execution::Result<Option<AbiWriter>> {
 	let (selector, mut reader) = AbiReader::new_call(input)?;

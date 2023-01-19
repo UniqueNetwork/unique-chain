@@ -32,7 +32,7 @@ RUN echo "NETWORK="${NETWORK}
 
 WORKDIR /unique_parachain
 
-RUN git clone $REPO_URL -b $BRANCH . && \
+RUN git clone https://github.com/UniqueNetwork/unique-chain.git -b $BRANCH . && \
     cargo build --features=${NETWORK}-runtime --$PROFILE
 
 # ===== RUN ======

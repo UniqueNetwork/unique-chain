@@ -111,6 +111,42 @@
                         "--unsafe-ws-external",
                         "-lxcm=trace"
                     ]
+                },
+                {
+                    "port": 31202,
+                    "wsPort": 9946,
+                    "rpcPort": 9935,
+                    "name": "charlie",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31203,
+                    "wsPort": 9947,
+                    "rpcPort": 9936,
+                    "name": "dave",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31204,
+                    "wsPort": 9948,
+                    "rpcPort": 9937,
+                    "name": "eve",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
                 }
             ]
         }

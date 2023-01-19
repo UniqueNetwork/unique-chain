@@ -500,8 +500,16 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		/// Helper function that handles deposit events
+		pub fn deposit_event(event: Event<T>) {
+			let event = <T as Config>::RuntimeEvent::from(event);
+			let event = event.into();
+			<frame_system::Pallet<T>>::deposit_event(event)
+		}
+	}
+
 	#[pallet::event]
-	#[pallet::generate_deposit(pub fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// New collection was created
 		CollectionCreated(
