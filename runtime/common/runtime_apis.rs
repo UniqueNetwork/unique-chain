@@ -83,7 +83,7 @@ macro_rules! impl_common_runtime_apis {
                 fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     let budget = up_data_structs::budget::Value::new(10);
 
-                    Ok(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?)
+                    Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
                 }
                 fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>, DispatchError> {
                     Ok(<pallet_nonfungible::Pallet<Runtime>>::token_children_ids(collection, token))
