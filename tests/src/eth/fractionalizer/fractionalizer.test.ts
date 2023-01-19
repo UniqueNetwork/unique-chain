@@ -173,7 +173,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('RFT to NFT', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 30n);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
     const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
