@@ -16,11 +16,11 @@
 
 #[macro_export]
 macro_rules! dispatch_unique_runtime {
-	($collection:ident.$method:ident($($name:ident),*)) => {{
+	($collection:ident.$method:ident($($name:ident),*) $($rest:tt)*) => {{
 		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		Ok::<_, DispatchError>(dispatch.$method($($name),*))
+		Ok::<_, DispatchError>(dispatch.$method($($name),*) $($rest)*)
 	}};
 }
 
@@ -73,7 +73,7 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
-                    dispatch_unique_runtime!(collection.token_owner(token))
+                    dispatch_unique_runtime!(collection.token_owner(token).ok())
                 }
 
                 fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec::<CrossAccountId>, DispatchError>  {
@@ -83,7 +83,7 @@ macro_rules! impl_common_runtime_apis {
                 fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     let budget = up_data_structs::budget::Value::new(10);
 
-                    Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
+                    Ok(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?)
                 }
                 fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>, DispatchError> {
                     Ok(<pallet_nonfungible::Pallet<Runtime>>::token_children_ids(collection, token))

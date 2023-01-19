@@ -728,7 +728,7 @@ where
 	fn cross_owner_of(&self, token_id: U256) -> Result<eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
 			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
-			.ok_or(Error::Revert("key too large".into()))
+			.map_err(|_| Error::Revert("token not found".into()))
 	}
 
 	/// Returns the token properties.

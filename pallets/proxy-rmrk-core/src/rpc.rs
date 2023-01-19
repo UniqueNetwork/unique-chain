@@ -68,7 +68,7 @@ pub fn nft_by_id<T: Config>(
 	}
 
 	let owner = match collection.token_owner(nft_id) {
-		Some(owner) => match T::CrossTokenAddressMapping::address_to_token(&owner) {
+		Ok(owner) => match T::CrossTokenAddressMapping::address_to_token(&owner) {
 			Some((col, tok)) => {
 				let rmrk_collection = <Pallet<T>>::rmrk_collection_id(col)?;
 
@@ -76,7 +76,7 @@ pub fn nft_by_id<T: Config>(
 			}
 			None => RmrkAccountIdOrCollectionNftTuple::AccountId(owner.as_sub().clone()),
 		},
-		None => return Ok(None),
+		_ => return Ok(None),
 	};
 
 	Ok(Some(RmrkInstanceInfo {
