@@ -152,6 +152,10 @@ fn map_create_data<T: Config>(
 /// Implementation of `CommonCollectionOperations` for `NonfungibleHandle`. It wraps Nonfungible Pallete
 /// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
+	fn mode(&self) -> up_data_structs::CollectionMode {
+		self.0.mode()
+	}
+
 	fn create_item(
 		&self,
 		sender: T::CrossAccountId,
