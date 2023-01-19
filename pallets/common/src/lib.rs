@@ -156,11 +156,6 @@ impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
 }
 
 impl<T: Config> CollectionHandle<T> {
-	/// Get the mode of the collection: NFT/FT/RFT.
-	pub fn mode(&self) -> CollectionMode {
-		self.mode
-	}
-
 	/// Same as [CollectionHandle::new] but with an explicit gas limit.
 	pub fn new_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
 		<CollectionById<T>>::get(id).map(|collection| Self {
@@ -1892,9 +1887,6 @@ pub trait RefungibleExtensionsWeightInfo {
 /// It wraps methods in Fungible, Nonfungible and Refungible pallets
 /// and adds weight info.
 pub trait CommonCollectionOperations<T: Config> {
-	/// Get the mode of the collection: NFT/FT/RFT.
-	fn mode(&self) -> CollectionMode;
-
 	/// Create token.
 	///
 	/// * `sender` - The user who mint the token and pays for the transaction.
