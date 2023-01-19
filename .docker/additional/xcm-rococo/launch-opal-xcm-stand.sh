@@ -15,14 +15,14 @@ fi
 
 pip install j2cli
 
-# CHAIN=quartz
+# CHAIN=opal
 # export $CHAIN
 
 export PATH="$PATH:$HOME/.local/bin"
 
 for i in `cat .env`; do export $i; done
 
-j2 Dockerfile-xcm-quartz-rococo.temp > Dockerfile-xcm-quartz-rococo
-#cat Dockerfile-xcm-quartz-rococo.tmp | envsubst > Dockerfile-xcm-quartz-rococo
+j2 Dockerfile-xcm-opal-rococo.temp > Dockerfile-xcm-opal-rococo
+#cat Dockerfile-xcm-opal-rococo.tmp | envsubst > Dockerfile-xcm-opal-rococo
 #exit
-docker-compose -f ./docker-compose-xcm-quartz-rococo.yml up -d
+docker-compose -f ./docker-compose-xcm-opal-rococo.yml up -d

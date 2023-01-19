@@ -22,7 +22,7 @@ export PATH="$PATH:$HOME/.local/bin"
 
 for i in `cat .env`; do export $i; done
 
-j2 Dockerfile-xcm-quartz-rococo.temp > Dockerfile-xcm-quartz-rococo
-#cat Dockerfile-xcm-quartz-rococo.tmp | envsubst > Dockerfile-xcm-quartz-rococo
+j2 Dockerfile-xcm-unique-rococo.temp > Dockerfile-xcm-unique-rococo
+#cat Dockerfile-xcm-unique-rococo.tmp | envsubst > Dockerfile-xcm-unique-rococo
 #exit
-docker-compose -f ./docker-compose-xcm-quartz-rococo.yml up -d
+docker-compose -f ./docker-compose-xcm-unique-rococo.yml up -d
