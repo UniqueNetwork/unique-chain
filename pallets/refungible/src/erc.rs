@@ -43,7 +43,7 @@ use sp_core::{H160, U256, Get};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
 use up_data_structs::{
 	CollectionId, CollectionPropertiesVec, mapping::TokenAddressMapping, Property, PropertyKey,
-	PropertyKeyPermission, PropertyPermission, TokenId,
+	PropertyKeyPermission, PropertyPermission, TokenId, TokenOwnerError,
 };
 
 use crate::{
@@ -411,9 +411,12 @@ impl<T: Config> RefungibleHandle<T> {
 		self.consume_store_reads(2)?;
 		let token = token_id.try_into()?;
 		let owner = <Pallet<T>>::token_owner(self.id, token);
-		Ok(owner
+		owner
 			.map(|address| *address.as_eth())
-			.unwrap_or_else(|| ADDRESS_FOR_PARTIALLY_OWNED_TOKENS))
+			.or_else(|err| match err {
+				TokenOwnerError::NotFound => Err(Error::Revert("token not found".into())),
+				TokenOwnerError::MultipleOwners => Ok(ADDRESS_FOR_PARTIALLY_OWNED_TOKENS),
+			})
 	}
 
 	/// @dev Not implemented
@@ -766,7 +769,12 @@ where
 	fn cross_owner_of(&self, token_id: U256) -> Result<eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
 			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
-			.ok_or(Error::Revert("key too large".into()))
+			.or_else(|err| match err {
+				TokenOwnerError::NotFound => Err(Error::Revert("token not found".into())),
+				TokenOwnerError::MultipleOwners => Ok(eth::CrossAddress::from_eth(
+					ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
+				)),
+			})
 	}
 
 	/// Returns the token properties.

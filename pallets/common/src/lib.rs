@@ -100,6 +100,7 @@ use up_data_structs::{
 	PropertyValue,
 	PropertyPermission,
 	PropertiesError,
+	TokenOwnerError,
 	PropertyKeyPermission,
 	TokenData,
 	TrySetProperty,
@@ -2134,7 +2135,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// Get the owner of the token.
 	///
 	/// * `token` - The token for which you need to find out the owner.
-	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
+	fn token_owner(&self, token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError>;
 
 	/// Returns 10 tokens owners in no particular order.
 	///
