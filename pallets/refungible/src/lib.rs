@@ -107,7 +107,7 @@ use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CollectionFlags, CreateCollectionData,
 	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
 	PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue, TokenId,
-	TrySetProperty, PropertiesPermissionMap, CreateRefungibleExMultipleOwners,
+	TrySetProperty, PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
 };
 
 pub use pallet::*;
@@ -480,7 +480,7 @@ impl<T: Config> Pallet<T> {
 			<Balance<T>>::remove((collection.id, token, owner));
 			<AccountBalance<T>>::insert((collection.id, owner), account_balance);
 
-			if let Some(user) = Self::token_owner(collection.id, token) {
+			if let Ok(user) = Self::token_owner(collection.id, token) {
 				<PalletEvm<T>>::deposit_log(
 					ERC721Events::Transfer {
 						from: erc::ADDRESS_FOR_PARTIALLY_OWNED_TOKENS,
@@ -1365,17 +1365,20 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	fn token_owner(collection_id: CollectionId, token_id: TokenId) -> Option<T::CrossAccountId> {
+	fn token_owner(
+		collection_id: CollectionId,
+		token_id: TokenId,
+	) -> Result<T::CrossAccountId, TokenOwnerError> {
 		let mut owner = None;
 		let mut count = 0;
 		for key in Balance::<T>::iter_key_prefix((collection_id, token_id)) {
 			count += 1;
 			if count > 1 {
-				return None;
+				return Err(TokenOwnerError::MultipleOwners);
 			}
 			owner = Some(key);
 		}
-		owner
+		owner.ok_or(TokenOwnerError::NotFound)
 	}
 
 	fn total_pieces(collection_id: CollectionId, token_id: TokenId) -> Option<u128> {
