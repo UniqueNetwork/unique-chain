@@ -32,15 +32,14 @@ WORKDIR /unique_parachain
 # ===== BUILD ======
 FROM rust-builder as builder-unique
 
-ARG UNIQUE_BRANCH
+ARG BRANCH
 ARG CHAIN
-ARG LAUNCH_CONFIG_FILE
 ARG PROFILE=release
 
 WORKDIR /unique_parachain
 #COPY . .
 
-RUN git clone -b ${UNIQUE_BRANCH} https://github.com/UniqueNetwork/unique-chain.git . && \
+RUN git clone -b ${BRANCH} https://github.com/UniqueNetwork/unique-chain.git . && \
 #    cd unique-chain && \
   cargo build --features=${CHAIN}-runtime --$PROFILE
 
@@ -49,6 +48,10 @@ FROM ubuntu:20.04
 
 ARG POLKADOT_LAUNCH_BRANCH
 ARG LAUNCH_CONFIG_FILE
+ARG POLKADOT_BUILD_BRANCH
+ARG MOONRIVER_BUILD_BRANCH
+ARG STATEMINE_BUILD_BRANCH
+ARG KARURA_BUILD_BRANCH
 ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
 ENV LAUNCH_CONFIG_FILE $LAUNCH_CONFIG_FILE
 

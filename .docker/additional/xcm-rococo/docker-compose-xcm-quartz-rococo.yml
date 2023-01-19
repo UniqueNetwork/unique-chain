@@ -3,10 +3,12 @@ version: "3.5"
 services:
   xcm_quartz_rococo:
     build:
+      args:
+        - "BRANCH=develop"
       context: .
       dockerfile: .Dockerfile-xcm-quartz-rococo
     container_name: xcm-quartz-rococo
-    image: xcm-quartz-rococo:latest
+    image: xcm-quartz-rococo
     env_file: .env
     expose:
       - 9844
