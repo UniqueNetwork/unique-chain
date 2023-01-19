@@ -3,8 +3,6 @@ edition = "2021"
 license = "GPLv3"
 name = "evm-coder-procedural"
 version = "0.2.3"
-license = "GPLv3"
-edition = "2021"
 
 [lib]
 proc-macro = true

@@ -148,3 +148,11 @@ bench-app-promotion:
 .PHONY: bench
 # Disabled: bench-scheduler, bench-collator-selection, bench-identity, bench-rmrk-core, bench-rmrk-equip
 bench: bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets
+
+.PHONY: check
+check:
+	SKIP_WASM_BUILD=1 cargo check --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests
+
+.PHONY: clippy
+clippy:
+	SKIP_WASM_BUILD=1 cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests

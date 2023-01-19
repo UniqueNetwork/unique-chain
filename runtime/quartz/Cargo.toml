@@ -291,11 +291,14 @@ pallet-foreign-assets = { default-features = false, path = "../../pallets/foreig
 pallet-maintenance = { default-features = false, path = "../../pallets/maintenance" }
 precompile-utils-macro.path = "../common/ethereum/precompiles/utils/macro"
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.36" }
+<<<<<<< HEAD
 
 ################################################################################
 # Test dependencies
 
 pallet-test-utils = { default-features = false, path = "../../test-pallets/utils" }
+=======
+>>>>>>> fa01f9a8 (build: upgrade dependencies)
 
 ################################################################################
 # Test dependencies

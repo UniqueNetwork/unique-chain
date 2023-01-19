@@ -10,6 +10,7 @@ scale-info = { version = "2.0.1", default-features = false, features = ["derive"
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+<<<<<<< HEAD
 log = { version = "0.4.17", default-features = false }
 pallet-common = { path = "../common", default-features = false }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
@@ -32,11 +33,30 @@ std = [
 	"up-data-structs/std",
 ]
 =======
+=======
+>>>>>>> fa01f9a8 (build: upgrade dependencies)
 log = { version = "0.4.17", default-features = false }
+pallet-common = { path = "../common", default-features = false }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
+sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+up-data-structs = { path = "../../primitives/data-structs", default-features = false }
 
 [features]
 default = ["std"]
-std = ["frame-support/std", "frame-system/std", "frame-benchmarking/std", "sp-std/std", "pallet-common/std", "scale-info/std", "parity-scale-codec/std", "up-data-structs/std", "pallet-evm/std"]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
+<<<<<<< HEAD
 >>>>>>> 6ad82a28 (fix: disallow nesting under non-existing tokens)
+=======
+std = [
+	"frame-benchmarking/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-common/std",
+	"pallet-evm/std",
+	"parity-scale-codec/std",
+	"scale-info/std",
+	"sp-std/std",
+	"up-data-structs/std",
+]
+>>>>>>> fa01f9a8 (build: upgrade dependencies)
 try-runtime = ["frame-support/try-runtime"]
