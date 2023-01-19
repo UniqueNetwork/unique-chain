@@ -720,7 +720,7 @@ macro_rules! impl_common_runtime_apis {
 
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
-                    let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
+                    let storage_info = AllPalletsWithSystem::storage_info();
 
                     return (list, storage_info)
                 }

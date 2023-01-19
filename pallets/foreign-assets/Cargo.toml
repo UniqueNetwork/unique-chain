@@ -1,54 +1,53 @@
 [package]
+edition = "2021"
+license = "GPLv3"
 name = "pallet-foreign-assets"
 version = "0.1.0"
-license = "GPLv3"
-edition = "2021"
 
 [dependencies]
-log = { version = "0.4.16", default-features = false }
-serde = { version = "1.0.136", optional = true }
-scale-info = { version = "2.0.1", default-features = false, features = [
-	"derive",
-] }
 codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+
+frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
 frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
-up-data-structs = { default-features = false, path = '../../primitives/data-structs' }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
-pallet-common = { default-features = false, path = '../common' }
-pallet-fungible = { default-features = false, path = '../fungible' }
-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
-xcm-builder = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
-xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
+log = { version = "0.4.16", default-features = false }
 orml-tokens.workspace = true
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
+pallet-common = { default-features = false, path = "../common" }
+pallet-fungible = { default-features = false, path = "../fungible" }
+serde = { version = "1.0.136", optional = true }
+sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
+sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36", default-features = false }
+up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
+xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
 
 [dev-dependencies]
-serde_json = "1.0.68"
-hex = { version = "0.4" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+hex = "0.4"
 pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+serde_json = "1.0.68"
+sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 [features]
 default = ["std"]
+runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
-	"serde",
-	"log/std",
 	"codec/std",
-	"scale-info/std",
-	"sp-runtime/std",
-	"sp-std/std",
 	"frame-support/std",
 	"frame-system/std",
-	"up-data-structs/std",
-	"pallet-common/std",
-	"pallet-balances/std",
-	"pallet-fungible/std",
+	"log/std",
 	"orml-tokens/std",
+	"pallet-balances/std",
+	"pallet-common/std",
+	"pallet-fungible/std",
+	"scale-info/std",
+	"serde",
+	"sp-io/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"up-data-structs/std",
 ]
 try-runtime = ["frame-support/try-runtime"]
-runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
