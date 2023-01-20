@@ -19,7 +19,7 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{
 	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue,
+	PropertyKeyPermission, PropertyValue, TokenOwnerError,
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
@@ -460,13 +460,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
-		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
+	fn token_owner(&self, token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
+		<TokenData<T>>::get((self.id, token))
+			.map(|t| t.owner)
+			.ok_or(TokenOwnerError::NotFound)
 	}
 
 	/// Returns token owners.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
-		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
+		self.token_owner(token).map_or_else(|_| vec![], |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {

@@ -17,7 +17,9 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData};
+use up_data_structs::{
+	TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData, TokenOwnerError,
+};
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
 	weights::WeightInfo as _,
@@ -404,8 +406,8 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		TokenId::default()
 	}
 
-	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
-		None
+	fn token_owner(&self, _token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
+		Err(TokenOwnerError::MultipleOwners)
 	}
 
 	/// Returns 10 tokens owners in no particular order.

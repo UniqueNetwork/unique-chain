@@ -80,10 +80,7 @@ impl CrossAddress {
 		if cross_account_id.is_canonical_substrate() {
 			Self::from_sub::<T>(cross_account_id.as_sub())
 		} else {
-			Self {
-				eth: *cross_account_id.as_eth(),
-				sub: Default::default(),
-			}
+			Self::from_eth(*cross_account_id.as_eth())
 		}
 	}
 	/// Creates [`CrossAddress`] from Substrate account.
@@ -95,6 +92,13 @@ impl CrossAddress {
 		Self {
 			eth: Default::default(),
 			sub: U256::from_big_endian(account_id.as_ref()),
+		}
+	}
+	/// Creates [`CrossAddress`] from Ethereum account.
+	pub fn from_eth(address: Address) -> Self {
+		Self {
+			eth: address,
+			sub: Default::default(),
 		}
 	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.

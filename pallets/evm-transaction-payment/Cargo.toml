@@ -1,44 +1,32 @@
 [package]
+edition = "2021"
+license = "GPLv3"
 name = "pallet-evm-transaction-payment"
 version = "0.1.1"
-license = "GPLv3"
-edition = "2021"
 
 [dependencies]
-scale-info = { version = "2.0.1", default-features = false, features = [
-    "derive",
-] }
+codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
+scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.36" }
-fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-
-[dependencies.codec]
-default-features = false
-features = ['derive']
-package = 'parity-scale-codec'
-version = '3.1.2'
 
 [features]
 default = ["std"]
 std = [
-    "frame-support/std",
-    "frame-system/std",
-    "sp-runtime/std",
-    "sp-std/std",
-    "sp-io/std",
-    "sp-core/std",
-    "pallet-evm/std",
-    "pallet-ethereum/std",
-    "fp-evm/std",
-    "up-sponsorship/std",
-    "fp-evm-mapping/std",
+	"fp-evm/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-evm/std",
+	"sp-core/std",
+	"sp-runtime/std",
+	"sp-std/std",
+	"up-sponsorship/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

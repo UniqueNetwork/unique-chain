@@ -1,38 +1,24 @@
 [workspace]
-resolver = "2"
+default-members = ['client/*', 'node/*', 'runtime/opal']
 members = [
-    'node/*',
-    'pallets/*',
-    'client/*',
-    'primitives/*',
-    'crates/*',
-    'runtime/opal',
-    'runtime/quartz',
-    'runtime/unique',
-    'runtime/tests',
+	'client/*',
+	'crates/*',
+	'node/*',
+	'pallets/*',
+	'primitives/*',
+	'runtime/opal',
+	'runtime/quartz',
+	'runtime/tests',
+	'runtime/unique',
 ]
-default-members = ['node/*', 'client/*', 'runtime/opal']
 package.version = "0.9.36"
+resolver = "2"
 
 [profile.release]
 panic = 'unwind'
 
-[workspace.dependencies.orml-vesting]
-git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "feature/polkadot-v0.9.36"
-default-features = false
-
-[workspace.dependencies.orml-xtokens]
-git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "feature/polkadot-v0.9.36"
-default-features = false
-
-[workspace.dependencies.orml-tokens]
-git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "feature/polkadot-v0.9.36"
-default-features = false
-
-[workspace.dependencies.orml-traits]
-git = "https://github.com/uniquenetwork/open-runtime-module-library"
-branch = "feature/polkadot-v0.9.36"
-default-features = false
+[workspace.dependencies]
+orml-tokens = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
+orml-traits = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
+orml-vesting = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
+orml-xtokens = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
