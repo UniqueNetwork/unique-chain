@@ -8,7 +8,7 @@ version = "0.2.11"
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
 scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
 
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
+evm-coder = { default-features = false, git = "https://github.com/UniqueNetwork/evm-coder", branch = "master" }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }

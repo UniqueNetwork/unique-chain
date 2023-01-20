@@ -40,5 +40,5 @@ pallet-evm-coder-substrate.path = "../../pallets/evm-coder-substrate"
 parity-scale-codec = { version = "3.2.2", default-features = false, features = ["derive"] }
 scale-info = "*"
 
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
+evm-coder = { default-features = false, git = "https://github.com/UniqueNetwork/evm-coder", branch = "master" }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.36" }

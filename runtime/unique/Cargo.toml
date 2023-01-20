@@ -269,7 +269,7 @@ up-data-structs = { path = "../../primitives/data-structs", default-features = f
 up-pov-estimate-rpc = { path = "../../primitives/pov-estimate-rpc", default-features = false }
 up-rpc = { path = "../../primitives/rpc", default-features = false }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
+evm-coder = { default-features = false, git = "https://github.com/UniqueNetwork/evm-coder", branch = "master" }
 fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 fp-evm-mapping = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
 fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
