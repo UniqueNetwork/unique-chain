@@ -1,0 +1,25 @@
+version: "3.5"
+
+services:
+  parachain-collators:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "POLKADOT_BUILD_BRANCH={{ POLKADOT_BUILD_BRANCH }}"
+        - "POLKADOT_LAUNCH_BRANCH={{ POLKADOT_LAUNCH_BRANCH }}"
+        - "NETWORK={{ NETWORK }}"
+        - "BRANCH={{ BRANCH }}"
+      context: ../
+      dockerfile: .docker/Dockerfile-parachain
+    image: parachain-collators
+    container_name: parachain-collators
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"

@@ -28,8 +28,8 @@ use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::{vec, vec::Vec};
 use sp_core::U256;
 use up_data_structs::{
-	AccessMode, CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property,
-	SponsoringRateLimit, SponsorshipState,
+	CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property, SponsoringRateLimit,
+	SponsorshipState,
 };
 
 use crate::{

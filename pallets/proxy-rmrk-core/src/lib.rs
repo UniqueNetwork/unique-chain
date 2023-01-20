@@ -741,7 +741,8 @@ pub mod pallet {
 						Some((collection_id, nft_id)),
 						&target_nft_budget,
 					)
-					.map_err(Self::map_unique_err_to_proxy)?;
+					.map_err(Self::map_unique_err_to_proxy)?
+					.ok_or::<DispatchError>(<Error<T>>::NoPermission.into())?;
 
 					approval_required = cross_sender != target_nft_owner;
 
@@ -989,7 +990,8 @@ pub mod pallet {
 
 			let nft_owner =
 				<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
-					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+					.map_err(|_| <Error<T>>::ResourceDoesntExist)?
+					.ok_or::<DispatchError>(<Error<T>>::NoPermission.into())?;
 
 			Self::try_mutate_resource_info(collection_id, nft_id, resource_id, |res| {
 				ensure!(res.pending, <Error<T>>::ResourceNotPending);
@@ -1044,7 +1046,8 @@ pub mod pallet {
 
 			let nft_owner =
 				<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
-					.map_err(|_| <Error<T>>::ResourceDoesntExist)?;
+					.map_err(|_| <Error<T>>::ResourceDoesntExist)?
+					.ok_or::<DispatchError>(<Error<T>>::NoPermission.into())?;
 
 			ensure!(cross_sender == nft_owner, <Error<T>>::NoPermission);
 
@@ -1666,7 +1669,8 @@ impl<T: Config> Pallet<T> {
 		let budget = budget::Value::new(NESTING_BUDGET);
 
 		let nft_owner = <PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)
-			.map_err(Self::map_unique_err_to_proxy)?;
+			.map_err(Self::map_unique_err_to_proxy)?
+			.ok_or::<DispatchError>(<Error<T>>::NoPermission.into())?;
 
 		let pending = sender != nft_owner;
 
@@ -1720,7 +1724,8 @@ impl<T: Config> Pallet<T> {
 
 		let budget = up_data_structs::budget::Value::new(NESTING_BUDGET);
 		let topmost_owner =
-			<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)?;
+			<PalletStructure<T>>::find_topmost_owner(collection_id, nft_id, &budget)?
+				.ok_or::<DispatchError>(<Error<T>>::NoPermission.into())?;
 
 		let sender = T::CrossAccountId::from_sub(sender);
 		if topmost_owner == sender {

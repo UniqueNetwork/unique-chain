@@ -78,6 +78,7 @@ pub trait WeightInfo {
 	fn kill_identity(r: u32, s: u32, x: u32, ) -> Weight;
 	fn force_insert_identities(x: u32, n: u32, ) -> Weight;
 	fn force_remove_identities(x: u32, n: u32, ) -> Weight;
+	fn force_set_subs(s: u32, n: u32, ) -> Weight;
 	fn add_sub(s: u32, ) -> Weight;
 	fn rename_sub(s: u32, ) -> Weight;
 	fn remove_sub(s: u32, ) -> Weight;
@@ -270,6 +271,20 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(Weight::from_ref_time(145_168 as u64))
 			// Standard Error: 457
 			.saturating_add(Weight::from_ref_time(291_732 as u64).saturating_mul(x as u64))
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
+			.saturating_add(T::DbWeight::get().writes(1 as u64).saturating_mul(n as u64))
+	}
+	// Storage: Identity IdentityOf (r:1 w:1)
+	// todo:collator
+	/// The range of component `s` is `[0, 100]`.
+	/// The range of component `n` is `[0, 600]`.
+	fn force_set_subs(s: u32, n: u32) -> Weight {
+		// Minimum execution time: 41_872 nanoseconds.
+		Weight::from_ref_time(40_230_216 as u64)
+			// Standard Error: 2_342
+			.saturating_add(Weight::from_ref_time(145_168 as u64))
+			// Standard Error: 457
+			.saturating_add(Weight::from_ref_time(291_732 as u64).saturating_mul(s as u64))
 			.saturating_add(T::DbWeight::get().reads(1 as u64))
 			.saturating_add(T::DbWeight::get().writes(1 as u64).saturating_mul(n as u64))
 	}
@@ -506,6 +521,20 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_ref_time(145_168 as u64))
 			// Standard Error: 457
 			.saturating_add(Weight::from_ref_time(291_732 as u64).saturating_mul(x as u64))
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+			.saturating_add(RocksDbWeight::get().writes(1 as u64).saturating_mul(n as u64))
+	}
+	// Storage: Identity IdentityOf (r:1 w:1)
+	// todo:collator
+	/// The range of component `xs is `[0, 100]`.
+	/// The range of component `n` is `[0, 600]`.
+	fn force_set_subs(s: u32, n: u32) -> Weight {
+		// Minimum execution time: 41_872 nanoseconds.
+		Weight::from_ref_time(40_230_216 as u64)
+			// Standard Error: 2_342
+			.saturating_add(Weight::from_ref_time(145_168 as u64))
+			// Standard Error: 457
+			.saturating_add(Weight::from_ref_time(291_732 as u64).saturating_mul(s as u64))
 			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 			.saturating_add(RocksDbWeight::get().writes(1 as u64).saturating_mul(n as u64))
 	}

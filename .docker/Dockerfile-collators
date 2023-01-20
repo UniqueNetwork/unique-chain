@@ -4,11 +4,12 @@ FROM uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} as polkadot
 # ===== Rust builder =====
 FROM uniquenetwork/services:latest as rust-builder
 ARG RUST_TOOLCHAIN=
-ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 
+ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
+
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
     rustup default $RUST_TOOLCHAIN && \
@@ -19,27 +20,25 @@ RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
-
 # ===== BUILD ======
 FROM rust-builder as builder-unique
 
 ARG PROFILE=release
 ARG NETWORK
-ARG REPO_URL
+ARG POLKADOT_LAUNCH_BRANCH
 ARG BRANCH
 
-RUN echo "NETWORK="${NETWORK}
+ENV POLKADOT_LAUNCH_BRANCH $POLKADOT_LAUNCH_BRANCH
 
 WORKDIR /unique_parachain
 
-RUN git clone https://github.com/UniqueNetwork/unique-chain.git -b $BRANCH . && \
-    cargo build --features=${NETWORK}-runtime --$PROFILE
+RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
+    cd unique-chain && \
+    cargo build --features=$NETWORK-runtime --$PROFILE
 
 # ===== RUN ======
 
 FROM ubuntu:20.04
-
-ARG POLKADOT_LAUNCH_BRANCH=
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \
@@ -57,10 +56,17 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
-COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-COPY --from=builder-unique /unique_parachain/launch-config.json /polkadot-launch/launch-config.json
+COPY --from=builder-unique /unique_parachain/unique-chain/.docker/testnet-config/launch-config.json /polkadot-launch/launch-config.json
+COPY --from=builder-unique /unique_parachain/unique-chain/target/release/unique-collator /unique-chain/target/release/
 
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
+
+EXPOSE 9844
+EXPOSE 9944
+EXPOSE 9933
+EXPOSE 9833
+EXPOSE 40333
+EXPOSE 30333
 
 CMD export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
