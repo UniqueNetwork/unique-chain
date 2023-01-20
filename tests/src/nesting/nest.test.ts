@@ -28,6 +28,7 @@ describe('Integration Test: Composite nesting tests', () => {
     });
   });
 
+  /// TODO move
   itSub('Performs the full suite: bundles a token, transfers, and unnests', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
@@ -56,77 +57,6 @@ describe('Integration Test: Composite nesting tests', () => {
     await newToken.unnest(bob, targetToken, {Substrate: bob.address});
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
     expect(await newToken.getOwner()).to.be.deep.equal({Substrate: bob.address});
-  });
-
-  itSub('Transfers an already bundled token', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const tokenA = await collection.mintToken(alice);
-    const tokenB = await collection.mintToken(alice);
-
-    // Create a nested token
-    const tokenC = await collection.mintToken(alice, tokenA.nestingAccount());
-    expect(await tokenC.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
-
-    // Transfer the nested token to another token
-    await expect(tokenC.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount())).to.be.fulfilled;
-    expect(await tokenC.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await tokenC.getOwner()).to.be.deep.equal(tokenB.nestingAccount().toLowerCase());
-  });
-
-  itSub('Checks token children', async ({helper}) => {
-    const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const collectionB = await helper.ft.mintCollection(alice);
-
-    const targetToken = await collectionA.mintToken(alice);
-    expect((await targetToken.getChildren()).length).to.be.equal(0, 'Children length check at creation');
-
-    // Create a nested NFT token
-    const tokenA = await collectionA.mintToken(alice, targetToken.nestingAccount());
-    expect(await targetToken.getChildren()).to.have.deep.members([
-      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-    ], 'Children contents check at nesting #1').and.be.length(1, 'Children length check at nesting #1');
-
-    // Create then nest
-    const tokenB = await collectionA.mintToken(alice);
-    await tokenB.nest(alice, targetToken);
-    expect(await targetToken.getChildren()).to.have.deep.members([
-      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-      {tokenId: tokenB.tokenId, collectionId: collectionA.collectionId},
-    ], 'Children contents check at nesting #2').and.be.length(2, 'Children length check at nesting #2');
-
-    // Move token B to a different user outside the nesting tree
-    await tokenB.unnest(alice, targetToken, {Substrate: bob.address});
-    expect(await targetToken.getChildren()).to.be.have.deep.members([
-      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-    ], 'Children contents check at nesting #3 (unnesting)').and.be.length(1, 'Children length check at nesting #3 (unnesting)');
-
-    // Create a fungible token in another collection and then nest
-    await collectionB.mint(alice, 10n);
-    await collectionB.transfer(alice, targetToken.nestingAccount(), 2n);
-    expect(await targetToken.getChildren()).to.be.have.deep.members([
-      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-      {tokenId: 0, collectionId: collectionB.collectionId},
-    ], 'Children contents check at nesting #4 (from another collection)')
-      .and.be.length(2, 'Children length check at nesting #4 (from another collection)');
-
-    // Move part of the fungible token inside token A deeper in the nesting tree
-    await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
-    expect(await targetToken.getChildren()).to.be.have.deep.members([
-      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-      {tokenId: 0, collectionId: collectionB.collectionId},
-    ], 'Children contents check at nesting #5 (deeper)').and.be.length(2, 'Children length check at nesting #5 (deeper)');
-    expect(await tokenA.getChildren()).to.be.have.deep.members([
-      {tokenId: 0, collectionId: collectionB.collectionId},
-    ], 'Children contents check at nesting #5.5 (deeper)').and.be.length(1, 'Children length check at nesting #5.5 (deeper)');
-
-    // Move the remaining part of the fungible token inside token A deeper in the nesting tree
-    await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
-    expect(await targetToken.getChildren()).to.be.have.deep.members([
-      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-    ], 'Children contents check at nesting #6 (deeper)').and.be.length(1, 'Children length check at nesting #6 (deeper)');
-    expect(await tokenA.getChildren()).to.be.have.deep.members([
-      {tokenId: 0, collectionId: collectionB.collectionId},
-    ], 'Children contents check at nesting #6.5 (deeper)').and.be.length(1, 'Children length check at nesting #6.5 (deeper)');
   });
 });
 
