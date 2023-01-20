@@ -80,6 +80,8 @@ substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
 try-runtime-cli = { workspace = true }
 unique-runtime = { workspace = true, optional = true }
+
+uc-local-maintenance = { workspace = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
 

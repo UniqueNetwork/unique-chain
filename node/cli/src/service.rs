@@ -26,9 +26,9 @@ use futures::{
 	stream::select,
 	task::{Context, Poll},
 };
-use sc_client_api::StorageProvider;
 use tokio::time::Interval;
 
+use uc_local_maintenance::PalletName;
 use unique_rpc::overrides_handle;
 
 use serde::{Serialize, Deserialize};
@@ -60,11 +60,6 @@ use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 use sc_client_api::BlockchainEvents;
 use sc_consensus::ImportQueue;
-use sp_core::twox_128;
-
-use codec::Decode;
-
-use polkadot_primitives::v2::PersistedValidationData;
 
 use polkadot_service::CollatorPair;
 
@@ -176,17 +171,7 @@ ez_bounds!(
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ rmrk_rpc::RmrkApi<
-			Block,
-			AccountId,
-			RmrkCollectionInfo<AccountId>,
-			RmrkInstanceInfo<AccountId>,
-			RmrkResourceInfo,
-			RmrkPropertyInfo,
-			RmrkBaseInfo<AccountId>,
-			RmrkPartType,
-			RmrkTheme,
-		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ up_pov_estimate_rpc::PovEstimateApi<Block>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -573,6 +558,7 @@ where
 			fee_history_cache: fee_history_cache.clone(),
 			// TODO: Unhardcode
 			fee_history_limit: 2048,
+			local_maintenance_data: None,
 		};
 
 		unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
@@ -876,14 +862,18 @@ where
 	let (client, _backend, _keystore_container, _task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(&config, None, executor)?;
 
-    #[derive(serde::Serialize)]
-    struct StateToPrint {
-        best_number: u32
-    }
+	#[derive(serde::Serialize)]
+	struct StateToPrint {
+		best_number: u32,
+	}
 
-    println!("{}", serde_json::to_string_pretty(&StateToPrint {
-        best_number: client.chain_info().best_number
-    }).expect("should not fail"));
+	println!(
+		"{}",
+		serde_json::to_string_pretty(&StateToPrint {
+			best_number: client.chain_info().best_number
+		})
+		.expect("should not fail")
+	);
 
 	Ok(())
 }
@@ -908,7 +898,6 @@ where
 {
 	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
 	use fc_consensus::FrontierBlockImport;
-	use sc_client_api::HeaderBackend;
 
 	let sc_service::PartialComponents {
 		client,
@@ -957,6 +946,7 @@ where
 	let collator = config.role.is_authority();
 
 	let select_chain = maybe_select_chain.clone();
+	let local_maintenance_data = uc_local_maintenance::SharedLocalMaintenanceData::default();
 
 	if collator {
 		let block_import =
@@ -977,6 +967,8 @@ where
 				.pool()
 				.validated_pool()
 				.import_notification_stream()
+				// Do not seal new block on each transaction when finalization is enabled
+				.filter(move |_| core::future::ready(!finalize))
 				.map(move |_| EngineCommand::SealNewBlock {
 					create_empty: true,
 					finalize,
@@ -999,6 +991,7 @@ where
 
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 		let client_set_aside_for_cidp = client.clone();
+		let local_maintenance_data = local_maintenance_data.clone();
 
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"authorship_task",
@@ -1012,60 +1005,21 @@ where
 				select_chain: select_chain.clone(),
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |block: Hash, ()| {
-					let current_para_block = client_set_aside_for_cidp
-						.number(block)
-						.expect("Header lookup should succeed")
-						.expect("Header passed in as parent should be present in backend.");
-
 					let client_for_xcm = client_set_aside_for_cidp.clone();
+					let local_maintenance_data = local_maintenance_data.clone();
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 						const PARACHAIN_SYSTEM: &[u8] = b"ParachainSystem";
 
-						let relay_blocks_per_para_block = 2;
-						let relay_offset = client_for_xcm
-							.storage(
-								block,
-								&sp_storage::StorageKey(
-									[twox_128(b"ParachainSystem"), twox_128(b"ValidationData")]
-										.concat()
-										.to_vec(),
-								),
-							)
-							.expect("read should not fail")
-							.map(|raw_data| {
-								let data: PersistedValidationData = Decode::decode(&mut &raw_data.0[..]).expect("validation data type is correct");
-								data.relay_parent_number + relay_blocks_per_para_block
-							})
-							.unwrap_or(1000);
-						let para_id = client_for_xcm
-							.storage(
-								block,
-								&sp_storage::StorageKey([
-									twox_128(b"ParachainInfo"), twox_128(b"ParachainId")]
-										.concat()
-										.to_vec(),
-									)
-								).expect("read should not fail").map(|id| {
-									Decode::decode(&mut &id.0[..]).expect("id is correct")
-								}).unwrap_or(2000);
-						let mocked_parachain = cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
-							current_para_block,
-							relay_offset,
-							relay_blocks_per_para_block,
-							para_blocks_per_relay_epoch: 10,
-							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
+						let mocked_parachain =
+							uc_local_maintenance::MockValidationDataInherentDataProvider::new(
 								&*client_for_xcm,
 								block,
-								para_id.into(),
-								// ParachainSystemName(PARACHAIN_SYSTEM),
-								Default::default()
-							),
-							relay_randomness_config: (),
-							raw_downward_messages: vec![],
-							raw_horizontal_messages: vec![],
-						};
+								PalletName(b"ParachainSystem".to_vec()),
+								PalletName(b"ParachainInfo".to_vec()),
+								local_maintenance_data,
+							);
 
 						let slot =
 						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
@@ -1139,6 +1093,8 @@ where
 			fee_history_cache: fee_history_cache.clone(),
 			// TODO: Unhardcode
 			fee_history_limit: 2048,
+
+			local_maintenance_data: Some(local_maintenance_data.clone()),
 		};
 
 		unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
