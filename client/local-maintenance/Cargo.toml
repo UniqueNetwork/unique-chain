@@ -1,0 +1,19 @@
+[package]
+name = "uc-local-maintenance"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+codec = { workspace = true }
+cumulus-primitives-core = { workspace = true }
+cumulus-primitives-parachain-inherent = { workspace = true }
+cumulus-test-relay-sproof-builder = { workspace = true }
+sc-client-api = { workspace = true }
+sp-runtime = { workspace = true }
+sp-core = { workspace = true }
+sp-inherents = { workspace = true }
+sp-storage = { workspace = true }
+async-trait = "0.1.62"
+jsonrpsee = { workspace = true }
+scale-info = "2.3.1"
+serde = { workspace = true }
