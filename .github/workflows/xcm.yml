@@ -28,7 +28,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -36,7 +36,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
+        uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
@@ -54,7 +54,7 @@ jobs:
 
     name: ${{ matrix.network }}-build
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -69,9 +69,13 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
+
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -81,9 +85,6 @@ jobs:
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      - name: Install jq
-        run: sudo apt install jq -y
 
       # Check POLKADOT version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for POLKADOT
@@ -184,7 +185,6 @@ jobs:
             fi
         shell: bash
 
-
       # Check CUMULUS version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for CUMULUS
         uses: cuchi/jinja2-action@v1.2.0
@@ -218,6 +218,9 @@ jobs:
             fi
         shell: bash
 
+      - name: Pull chainql docker image
+        run: docker pull uniquenetwork/builder-chainql:latest
+
       - name: Generate ENV related extend launch-config file
         uses: cuchi/jinja2-action@v1.2.0
         with:
@@ -249,24 +252,23 @@ jobs:
         run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
 
       - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@2
+        uses: mad9000/actions-find-and-replace-string@3
         id: branchname
         with:
           source: ${{ github.head_ref }}
           find: '/'
           replace: '-'
 
-      - name: Pull chainql docker image
-        run: docker pull uniquenetwork/builder-chainql:latest
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
 
       - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }} --tag uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest .
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA .
 
       - name: Push docker image version
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }}
-
-      - name: Push docker image latest
-        run: docker push uniquenetwork/xcm-${{ matrix.network }}-testnet-local:latest
+        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Remove builder cache
         if: always()                   # run this step always
@@ -283,7 +285,7 @@ jobs:
 
     name: ${{ matrix.network }}-tests
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -298,9 +300,25 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Prepare
+        uses: ./.github/actions/prepare
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@2
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -312,13 +330,20 @@ jobs:
           output_file: .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
+            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Show build configuration
         run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.0.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
@@ -329,14 +354,14 @@ jobs:
         run: |
           counter=160
           function check_container_status {
-                docker inspect -f {{.State.Running}} xcm-${{ matrix.network }}-testnet-local
+                docker inspect -f {{.State.Running}} xcm-${{ matrix.network }}-local
           }
           function do_docker_logs {
-                docker logs --details xcm-${{ matrix.network }}-testnet-local 2>&1
+                docker logs --details xcm-${{ matrix.network }}-local 2>&1
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: xcm-${{ matrix.network }}-testnet-local RUNNING";
+                        echo "Container: xcm-${{ matrix.network }}-local RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
                         if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
@@ -347,7 +372,7 @@ jobs:
                                 return 1
                         fi
                 else
-                        echo "Container xcm-${{ matrix.network }}-testnet-local NOT RUNNING"
+                        echo "Container xcm-${{ matrix.network }}-local NOT RUNNING"
                         echo "Halting all future checks"
                         exit 1
                 fi
@@ -374,7 +399,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types          
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
@@ -382,7 +407,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       - name: XCM Test Report
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v10
         id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:

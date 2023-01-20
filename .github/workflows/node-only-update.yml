@@ -25,7 +25,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -33,7 +33,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Create Execution matrix
-        uses: CertainLach/create-matrix-action@v3
+        uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
@@ -52,7 +52,7 @@ jobs:
 
     name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -64,7 +64,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -104,7 +104,7 @@ jobs:
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 
@@ -169,7 +169,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -194,7 +194,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       # - name: Upload Sequential Test Report Before Node upgrade
-      #   uses: phoenix-actions/test-reporting@v8
+      #   uses: phoenix-actions/test-reporting@v10
       #   id: test-sequential-report-before
       #   if: success() || failure()    # run this step even if previous step failed
       #   with:
@@ -292,7 +292,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -300,7 +300,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       #- name: Test Report Parallel After Node upgrade
-      #  uses: phoenix-actions/test-reporting@v8
+      #  uses: phoenix-actions/test-reporting@v10
       #  id: test-report-parallel-after
       #  if: success() || failure()    # run this step even if previous step failed
       #  with:
@@ -317,7 +317,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       #- name: Upload Sequential Test Report After Node upgrade
-      #  uses: phoenix-actions/test-reporting@v8
+      #  uses: phoenix-actions/test-reporting@v10
       #  id: test-sequential-report-after
       #  if: success() || failure()    # run this step even if previous step failed
       #  with:

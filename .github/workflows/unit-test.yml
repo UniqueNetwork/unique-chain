@@ -17,8 +17,7 @@ jobs:
 
     name: ${{ github.base_ref }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     steps:
 
@@ -26,7 +25,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 

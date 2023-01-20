@@ -28,7 +28,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -36,7 +36,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Create Execution matrix
-        uses: fabiocaccamo/create-matrix-action@v2
+        uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
@@ -53,7 +53,7 @@ jobs:
 
     name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -68,7 +68,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 

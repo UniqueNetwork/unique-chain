@@ -13,15 +13,13 @@ jobs:
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}            
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
-            toolchain: nightly
-            default: true
-            target: wasm32-unknown-unknown
+            targets: wasm32-unknown-unknown
             components: rustfmt, clippy
       - name: Run cargo fmt
         run: cargo fmt -- --check   # In that mode it returns only exit code.
@@ -34,10 +32,10 @@ jobs:
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}            
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
       - name: Install modules
@@ -49,15 +47,13 @@ jobs:
     if: ${{ false }}
     runs-on: [ self-hosted-ci ]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
       - name: Install substrate dependencies
         run: sudo apt-get install libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Install latest nightly
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@nightly
         with:
-            toolchain: nightly
-            default: true
-            target: wasm32-unknown-unknown
+            targets: wasm32-unknown-unknown
             components: rustfmt, clippy
       - name: Run cargo check
         run: cargo clippy -- -Dwarnings
