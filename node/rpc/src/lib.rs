@@ -38,6 +38,7 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sc_service::TransactionPool;
+use uc_local_maintenance::SharedLocalMaintenanceData;
 use std::{collections::BTreeMap, sync::Arc};
 
 use up_common::types::opaque::*;
@@ -99,6 +100,8 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub fee_history_cache: FeeHistoryCache,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
+
+	pub local_maintenance_data: Option<SharedLocalMaintenanceData>,
 }
 
 pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
@@ -183,6 +186,8 @@ where
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
 
+	use uc_local_maintenance::{LocalMaintenance, LocalMaintenanceApiServer};
+
 	let mut io = RpcModule::new(());
 	let FullDeps {
 		client,
@@ -209,6 +214,8 @@ where
 
 		eth_backend,
 		max_past_logs,
+
+		local_maintenance_data,
 	} = deps;
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
@@ -272,6 +279,10 @@ where
 			)
 			.into_rpc(),
 		)?;
+	}
+
+	if let Some(local_maintenance_data) = local_maintenance_data {
+		io.merge(LocalMaintenance::new(local_maintenance_data).into_rpc())?;
 	}
 
 	io.merge(

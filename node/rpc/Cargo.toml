@@ -39,6 +39,7 @@ up-common = { workspace = true }
 up-data-structs = { workspace = true }
 up-pov-estimate-rpc = { workspace = true, default-features = true }
 up-rpc = { workspace = true }
+uc-local-maintenance = { workspace = true }
 
 [features]
 default = []
