@@ -18,7 +18,7 @@ jobs:
 
     name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -34,7 +34,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -57,7 +57,7 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
-      - uses: actions/setup-node@v3
+      - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 
@@ -66,7 +66,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          node scripts/readyness.js
+          ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
@@ -74,7 +74,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9933/
 
       - name: Test Report
-        uses: phoenix-actions/test-reporting@v8
+        uses: phoenix-actions/test-reporting@v10
         id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:
@@ -97,3 +97,20 @@ jobs:
           docker builder prune -f -a
           docker system prune -f
           docker image prune -f -a
+
+  # check:
+  #   if: always()
+  #   runs-on: [self-hosted-ci]
+  #   needs:
+  #   - dev_build_int_tests
+
+  #   steps:
+  #   - name: Install python3
+  #     uses: actions/setup-python@v4
+  #     with:
+  #       python-version: '3.10'
+
+  #   - name: Decide whether the needed jobs succeeded or failed
+  #     uses: re-actors/alls-green@v1.2.2
+  #     with:
+  #       jobs: ${{ toJSON(needs) }}
