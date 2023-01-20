@@ -19,61 +19,77 @@ import {expect, itSub, Pallets, usingPlaygrounds} from '../../util';
 import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
 
 let alice: IKeyringPair;
+let bob: IKeyringPair;
 
 before(async () => {
   await usingPlaygrounds(async (helper, privateKey) => {
     const donor = await privateKey({filename: __filename});
-    [alice] = await helper.arrange.createAccounts([100n], donor);
+    [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
   });
 });
 
 [
-  {mode: 'nft' as const, requiredPallets: []},
-  {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  {mode: 'nft' as const, restrictedMode: true, requiredPallets: []},
+  {mode: 'nft' as const, restrictedMode: false, requiredPallets: []},
+  {mode: 'rft' as const, restrictedMode: true, requiredPallets: [Pallets.ReFungible]},
+  {mode: 'rft' as const, restrictedMode: false, requiredPallets: [Pallets.ReFungible]},
 ].map(testCase => {
-  itSub.ifWithPallets(`Owner can nest ${testCase.mode.toUpperCase()} in NFT`, testCase.requiredPallets, async ({helper}) => {
-    // Only NFT allows nesting, permissions should be set:
-    const aliceNFTCollection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const targetToken = await aliceNFTCollection.mintToken(alice);
+  itSub.ifWithPallets(`Token owner can nest ${testCase.mode.toUpperCase()} in NFT if "tokenOwner" permission set ${testCase.restrictedMode ? 'in restricted mode': ''}`, testCase.requiredPallets, async ({helper}) => {
+    // Only NFT can be target for nesting in
+    const targetNFTCollection = await helper.nft.mintCollection(alice);
+    const targetTokenBob = await targetNFTCollection.mintToken(alice, {Substrate: bob.address});
 
-    const collectionForNesting = await helper[testCase.mode].mintCollection(alice);
+    const collectionForNesting = await helper[testCase.mode].mintCollection(bob);
+    // permissions should be set:
+    await targetNFTCollection.setPermissions(alice, {
+      nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
+    });
 
-    // 1. Alice can immediately create nested token:
+    // 1. Bob can immediately create nested token:
     const nestedToken1 = testCase.mode === 'nft'
-      ? await (collectionForNesting as UniqueNFTCollection).mintToken(alice, targetToken.nestingAccount())
-      : await (collectionForNesting as UniqueRFTCollection).mintToken(alice, 10n, targetToken.nestingAccount());
-    expect(await nestedToken1.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await nestedToken1.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+      ? await (collectionForNesting as UniqueNFTCollection).mintToken(bob, targetTokenBob.nestingAccount())
+      : await (collectionForNesting as UniqueRFTCollection).mintToken(bob, 10n, targetTokenBob.nestingAccount());
+    expect(await nestedToken1.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect(await nestedToken1.getOwner()).to.be.deep.equal(targetTokenBob.nestingAccount().toLowerCase());
 
-    // 2. Alice can mint and nest token:
-    const nestedToken2 = await collectionForNesting.mintToken(alice);
-    await nestedToken2.nest(alice, targetToken);
-    expect(await nestedToken2.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await nestedToken2.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    // 2. Bob can mint and nest token:
+    const nestedToken2 = await collectionForNesting.mintToken(bob);
+    await nestedToken2.nest(bob, targetTokenBob);
+    expect(await nestedToken2.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect(await nestedToken2.getOwner()).to.be.deep.equal(targetTokenBob.nestingAccount().toLowerCase());
   });
 });
 
 
-itSub('Owner can nest FT in NFT', async ({helper}) => {
-  // Only NFT allows nesting, permissions should be set:
-  const aliceNFTCollection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-  const targetToken = await aliceNFTCollection.mintToken(alice);
+[
+  {restrictedMode: true},
+  {restrictedMode: false},
+].map(testCase => {
+  itSub(`Token owner can nest FT in NFT if "tokenOwner" permission set  ${testCase.restrictedMode ? 'in restricted mode': ''}`, async ({helper}) => {
+    // Only NFT allows nesting, permissions should be set:
+    const targetNFTCollection = await helper.nft.mintCollection(alice);
+    const targetTokenBob = await targetNFTCollection.mintToken(alice, {Substrate: bob.address});
 
-  const collectionForNesting = await helper.ft.mintCollection(alice);
+    const collectionForNesting = await helper.ft.mintCollection(bob);
+    // permissions should be set:
+    await targetNFTCollection.setPermissions(alice, {
+      nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
+    });
 
-  // 1. Alice can immediately create nested tokens:
-  await collectionForNesting.mint(alice, 100n, targetToken.nestingAccount());
-  expect(await collectionForNesting.getTop10Owners()).deep.eq([targetToken.nestingAccount().toLowerCase()]);
-  expect(await collectionForNesting.getBalance(targetToken.nestingAccount())).eq(100n);
+    // 1. Alice can immediately create nested tokens:
+    await collectionForNesting.mint(bob, 100n, targetTokenBob.nestingAccount());
+    expect(await collectionForNesting.getTop10Owners()).deep.eq([targetTokenBob.nestingAccount().toLowerCase()]);
+    expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(100n);
 
-  // 2. Alice can mint and nest token:
-  await collectionForNesting.mint(alice, 100n);
-  await collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n);
-  expect(await collectionForNesting.getBalance(targetToken.nestingAccount())).eq(150n);
+    // 2. Alice can mint and nest token:
+    await collectionForNesting.mint(bob, 100n);
+    await collectionForNesting.transfer(bob, targetTokenBob.nestingAccount(), 50n);
+    expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(150n);
+  });
 });
 
 
-itSub.ifWithPallets('Owner can transferFrom nested tokens', [Pallets.ReFungible], async ({helper}) => {
+itSub.ifWithPallets('Owner can unnest tokens using transferFrom', [Pallets.ReFungible], async ({helper}) => {
   const collectionToNest = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
   const tokenA = await collectionToNest.mintToken(alice);
   const tokenB = await collectionToNest.mintToken(alice);
