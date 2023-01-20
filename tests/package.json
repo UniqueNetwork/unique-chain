@@ -32,6 +32,7 @@
     "fix": "eslint --ext .ts,.js src/ --fix",
     "setup": "ts-node ./src/util/globalSetup.ts",
     "setIdentities": "ts-node ./src/util/identitySetter.ts",
+    "checkRelayIdentities": "ts-node ./src/util/relayIdentitiesChecker.ts",
     "test": "yarn setup && mocha --timeout 9999999 -r ts-node/register './src/**/*.*test.ts'",
     "testParallelFull": "yarn testParallel && yarn testSequential",
     "testParallel": "yarn setup && mocha --parallel --timeout 9999999 -r ts-node/register './src/**/*.test.ts'",
