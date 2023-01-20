@@ -272,7 +272,11 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		);
 
 		with_weight(
+<<<<<<< HEAD
 			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, amount),
+=======
+			<Pallet<T>>::set_allowance_for(self, &sender, &from, &to, amount),
+>>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
 			<CommonWeights<T>>::approve_from(),
 		)
 	}

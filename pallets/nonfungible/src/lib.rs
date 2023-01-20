@@ -1176,7 +1176,11 @@ impl<T: Config> Pallet<T> {
 	/// - `from`: Address of sender's eth mirror.
 	/// - `to`: Adress of spender.
 	/// - `token`: Token the spender is allowed to `transfer` or `burn`.
+<<<<<<< HEAD
 	pub fn set_allowance_from(
+=======
+	pub fn set_allowance_for(
+>>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
 		collection: &NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		from: &T::CrossAccountId,
@@ -1196,7 +1200,11 @@ impl<T: Config> Pallet<T> {
 		}
 
 		ensure!(
+<<<<<<< HEAD
 			sender.conv_eq(from),
+=======
+			*sender.as_eth() == *from.as_eth(),
+>>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
 			<CommonError<T>>::AddressIsNotEthMirror
 		);
 

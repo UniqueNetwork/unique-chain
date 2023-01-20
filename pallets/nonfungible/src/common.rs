@@ -369,9 +369,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 		with_weight(
 			if amount == 1 {
+<<<<<<< HEAD
 				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, Some(&to))
 			} else {
 				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, None)
+=======
+				<Pallet<T>>::set_allowance_for(self, &sender, &from, token, Some(&to))
+			} else {
+				<Pallet<T>>::set_allowance_for(self, &sender, &from, token, None)
+>>>>>>> 0f4242c7 (feat: add ApproveFrom eth mirror)
 			},
 			<CommonWeights<T>>::approve_from(),
 		)
