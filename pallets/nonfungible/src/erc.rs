@@ -590,7 +590,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenUri Token URI that would be stored in the NFT properties
 	/// @return uint256 The id of the newly minted token
 	#[solidity(rename_selector = "mintWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_item())]
+	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(1))]
 	fn mint_with_token_uri(
 		&mut self,
 		caller: Caller,
@@ -612,7 +612,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId ID of the minted NFT
 	/// @param tokenUri Token URI that would be stored in the NFT properties
 	#[solidity(hide, rename_selector = "mintWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_item())]
+	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(1))]
 	fn mint_with_token_uri_check_id(
 		&mut self,
 		caller: Caller,
@@ -943,7 +943,7 @@ where
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32))]
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32)  + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
 		caller: Caller,
