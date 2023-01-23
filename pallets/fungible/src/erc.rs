@@ -57,7 +57,7 @@ pub enum ERC20Events {
 	},
 }
 
-#[solidity_interface(name = ERC20, events(ERC20Events))]
+#[solidity_interface(name = ERC20, events(ERC20Events), expect_selector = 0x942e8b22)]
 impl<T: Config> FungibleHandle<T> {
 	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
