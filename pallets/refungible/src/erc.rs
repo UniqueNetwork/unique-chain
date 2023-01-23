@@ -1051,7 +1051,7 @@ where
 	/// @param to The new owner crossAccountId
 	/// @param properties Properties of minted token
 	/// @return uint256 The id of the newly minted token
-	#[weight(<SelfWeightOf<T>>::create_item())]
+	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
 	fn mint_cross(
 		&mut self,
 		caller: Caller,
