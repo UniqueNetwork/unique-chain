@@ -135,11 +135,6 @@ impl<T: Config> FungibleHandle<T> {
 
 		Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
 	}
-
-	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<Address> {
-		Ok(T::ContractAddress::get())
-	}
 }
 
 #[solidity_interface(name = ERC20Mintable)]
@@ -311,6 +306,11 @@ where
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<Address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 
