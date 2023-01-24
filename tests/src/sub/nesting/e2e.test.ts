@@ -101,4 +101,35 @@ describe('Composite nesting tests', () => {
       {tokenId: 0, collectionId: collectionB.collectionId},
     ]).and.has.length(1);
   });
+
+  /// TODO review this test
+  itSub('Performs the full suite: bundles a token, transfers, and unnests', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const targetToken = await collection.mintToken(alice);
+
+    // Create an immediately nested token
+    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
+    expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+
+    // Create a token to be nested
+    const newToken = await collection.mintToken(alice);
+
+    // Nest
+    await newToken.nest(alice, targetToken);
+    expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+
+    // Move bundle to different user
+    await targetToken.transfer(alice, {Substrate: bob.address});
+    expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+
+    // Unnest
+    await newToken.unnest(bob, targetToken, {Substrate: bob.address});
+    expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect(await newToken.getOwner()).to.be.deep.equal({Substrate: bob.address});
+  });
 });

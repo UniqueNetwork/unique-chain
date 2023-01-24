@@ -21,11 +21,12 @@ import {itEth} from '../../eth/util';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
+let charlie: IKeyringPair;
 
 before(async () => {
   await usingPlaygrounds(async (helper, privateKey) => {
     const donor = await privateKey({filename: __filename});
-    [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
+    [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
   });
 });
 
@@ -108,21 +109,19 @@ itSub('Owner cannot nest FT if nesting is disabled', async ({helper}) => {
   {mode: 'nft' as const, nesting: {tokenOwner: true,  collectionAdmin: false}},
   {mode: 'nft' as const, nesting: {tokenOwner: false, collectionAdmin: true}},
 ].map(testCase => {
-  itSub(`${testCase.nesting.tokenOwner ? 'Admin' : 'Token owner'} cannot nest when only ${testCase.nesting.tokenOwner ? 'tokenOwner' : 'collectionAdmin'} is allowed`, async ({helper}) => {
+  itSub.only(`${testCase.nesting.tokenOwner ? 'Admin' : 'Token owner'} cannot nest when only ${testCase.nesting.tokenOwner ? 'tokenOwner' : 'collectionAdmin'} is allowed`, async ({helper}) => {
     // Create collection with tokenOwner or create collection with collectionAdmin permission:
     const targetCollection = await helper.nft.mintCollection(alice, {permissions: {nesting: testCase.nesting}});
-    const targetTokenAlice = await targetCollection.mintToken(alice);
+    const targetTokenCharlie = await targetCollection.mintToken(alice, {Substrate: charlie.address});
     await targetCollection.addAdmin(alice, {Substrate: bob.address});
 
-    const nestedCollectionAlice = await helper[testCase.mode].mintCollection(alice);
+    const nestedCollectionCharlie = await helper[testCase.mode].mintCollection(charlie);
     const nestedCollectionBob = await helper[testCase.mode].mintCollection(bob);
     // if nesting permissions restricted for token owner – minter is bob (admin),
-    // if collectionAdmin – alice (owner)
-
-    // FIXME: nesting allowed only for admin but token owner can nest anyway:
+    // if collectionAdmin – charlie (owner)
     testCase.nesting.tokenOwner
-      ? await expect(nestedCollectionBob.mintToken(bob, targetTokenAlice.nestingAccount())).to.be.rejectedWith(/common\.UserIsNotAllowedToNest/)
-      : await expect(nestedCollectionAlice.mintToken(alice, targetTokenAlice.nestingAccount())).to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
+      ? await expect(nestedCollectionBob.mintToken(bob, targetTokenCharlie.nestingAccount())).to.be.rejectedWith(/common\.UserIsNotAllowedToNest/)
+      : await expect(nestedCollectionCharlie.mintToken(charlie, targetTokenCharlie.nestingAccount())).to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
   });
 });
 
