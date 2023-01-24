@@ -72,7 +72,7 @@ jobs:
         uses: ./.github/actions/prepare
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.0.0
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
@@ -192,7 +192,7 @@ jobs:
         run: cat .docker/docker-compose.forkless-nodata.${{ matrix.network }}.yml
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.0.0
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}

@@ -4,7 +4,6 @@ services:
   forkless-nodata:
     image: uniquenetwork/ci-forkless-nodata-local:{{ NETWORK }}-{{ BUILD_TAG }}
     container_name: forkless-nodata
-    image: forkless-nodata
     expose:
       - 9944
       - 9933
