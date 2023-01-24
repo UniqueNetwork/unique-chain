@@ -511,7 +511,7 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x7dee5997
+/// @dev the ERC-165 identifier for this interface is 0x65789571
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
@@ -607,6 +607,15 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return false;
 	}
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
 }
 
 /// @dev anonymous struct
@@ -637,7 +646,7 @@ contract ERC20Events {
 	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x8cb847c4
+/// @dev the ERC-165 identifier for this interface is 0x942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
 	/// @dev EVM selector for this function is: 0x06fdde03,
 	///  or in textual repr: name()
@@ -723,15 +732,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		spender;
 		dummy;
 		return 0;
-	}
-
-	/// @notice Returns collection helper contract address
-	/// @dev EVM selector for this function is: 0x1896cce6,
-	///  or in textual repr: collectionHelperAddress()
-	function collectionHelperAddress() public view returns (address) {
-		require(false, stub_error);
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
 	}
 }
 
