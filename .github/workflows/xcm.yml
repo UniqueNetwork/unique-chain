@@ -360,14 +360,14 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-xcm-tests.j2
-          output_file: .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
+          template: .docker/docker-compose.xcm.j2
+          output_file: .docker/docker-compose.xcm.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
             BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.xcm-tests.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.xcm.${{ matrix.network }}.yml
 
       - uses: actions/setup-node@v3.5.1
         with:
@@ -380,7 +380,7 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose.xcm.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
 
       #  🚀 POLKADOT LAUNCH COMPLETE 🚀
       - name: Check if docker logs consist messages related to testing of xcm tests 
@@ -456,7 +456,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" down
+        run: docker-compose -f ".docker/docker-compose.xcm.${{ matrix.network }}.yml" down
 
       - name: Clean Workspace
         if: always()

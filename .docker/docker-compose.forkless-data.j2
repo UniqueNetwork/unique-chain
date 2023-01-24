@@ -1,0 +1,13 @@
+version: "3.5"
+
+services:
+  forkless-data:
+    image: uniquenetwork/ci-forkless-data-local:{{ NETWORK }}-{{ BUILD_TAG }}
+    container_name: forkless-data
+    image: forkless-data
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
