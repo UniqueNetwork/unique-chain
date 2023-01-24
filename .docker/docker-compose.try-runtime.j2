@@ -1,0 +1,14 @@
+version: "3.5"
+
+services:
+  try-runtime:
+    image: uniquenetwork/ci-tryruntime-local:{{ NETWORK }}-{{ BUILD_TAG }}
+    container_name: try-runtime
+    image: try-runtime
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+
