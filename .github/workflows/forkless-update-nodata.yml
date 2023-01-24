@@ -8,7 +8,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  execution-marix:
+  prepare-execution-marix:
 
     name: Prepare execution matrix
 
@@ -41,7 +41,7 @@ jobs:
 
 
   forkless-nodata-build:
-    needs: execution-marix
+    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
