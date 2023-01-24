@@ -49,7 +49,7 @@ jobs:
     name: ${{ matrix.network }}-data
     strategy:
       matrix:
-        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
