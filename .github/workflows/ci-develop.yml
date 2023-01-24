@@ -19,10 +19,12 @@ jobs:
   yarn-dev:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/yarn-dev.yml
+    secrets: inherit    
 
   unit-test:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/unit-test.yml
+    secrets: inherit    
 
   canary:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-canary')) }}    # Conditional check for draft & labels per job.
@@ -37,19 +39,19 @@ jobs:
   collator-selection:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-collator-selection')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/collator-selection.yml
+    secrets: inherit    
     
   forkless:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/forkless.yml
+    secrets: inherit    
   
   node-only-update:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-node-only-update')) }}  # Conditional check for draft & labels per job.
     uses: ./.github/workflows/node-only-update.yml
-    
-  # integration:
-  #   if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'integration')) }}      # Conditional check for draft & labels per job.
-  #   uses: ./.github/workflows/integration-tests.yml
+    secrets: inherit
 
   codestyle:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/codestyle.yml
+    secrets: inherit
