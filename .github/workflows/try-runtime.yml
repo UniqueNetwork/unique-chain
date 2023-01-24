@@ -191,7 +191,6 @@ jobs:
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './try-runtime-logs.${{ matrix.network }}'
-          images: 'try-runtime'
 
       - name: Show docker logs
         run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'

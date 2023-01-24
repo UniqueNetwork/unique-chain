@@ -256,7 +256,6 @@ jobs:
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.network }}'
-          images: 'forkless-nodata'
 
       - name: Show docker logs
         if: success() || failure()
