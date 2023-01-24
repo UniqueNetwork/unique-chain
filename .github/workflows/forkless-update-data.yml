@@ -51,7 +51,7 @@ jobs:
       matrix:
         include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
 
-    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     steps:
       - name: Clean Workspace
