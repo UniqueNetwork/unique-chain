@@ -81,7 +81,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.0.0
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
@@ -340,7 +340,7 @@ jobs:
           node-version: 16
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.0.0
+        uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
