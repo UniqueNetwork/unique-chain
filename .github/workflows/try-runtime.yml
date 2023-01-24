@@ -102,7 +102,7 @@ jobs:
           echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
 
       - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-try-runtime.${{ matrix.network }}.yml --tag uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA .
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-try-runtime.${{ matrix.network }}.yml --tag uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
 
       - name: Push docker image version
         run: docker push uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
