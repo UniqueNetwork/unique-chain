@@ -416,11 +416,9 @@ contract Collection is Dummy, ERC165 {
 
 	/// Set the collection access method.
 	/// @param mode Access mode
-	/// 	0 for Normal
-	/// 	1 for AllowList
 	/// @dev EVM selector for this function is: 0x41835d4c,
 	///  or in textual repr: setCollectionAccess(uint8)
-	function setCollectionAccess(uint8 mode) public {
+	function setCollectionAccess(AccessMode mode) public {
 		require(false, stub_error);
 		mode;
 		dummy = 0;
@@ -585,6 +583,14 @@ struct CrossAddress {
 	uint256 sub;
 }
 
+/// Ethereum representation of `AccessMode` (see [`up_data_structs::AccessMode`]).
+enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
+	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
+	AllowList
+}
+
 /// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
 struct CollectionNestingPermission {
 	CollectionPermissionField field;
@@ -608,12 +614,14 @@ struct CollectionNesting {
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 struct CollectionLimit {
 	CollectionLimitField field;
-	OptionUint value;
+	OptionUint256 value;
 }
 
-/// Ethereum representation of Optional value with uint256.
-struct OptionUint {
+/// Optional value
+struct OptionUint256 {
+	/// Shows the status of accessibility of value
 	bool status;
+	/// Actual value if `status` is true
 	uint256 value;
 }
 
@@ -698,22 +706,9 @@ contract ERC721Burnable is Dummy, ERC165 {
 	}
 }
 
-/// @dev inlined interface
-contract ERC721UniqueMintableEvents {
-	event MintingFinished();
-}
-
 /// @title ERC721 minting logic.
-/// @dev the ERC-165 identifier for this interface is 0x476ff149
-contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
-	/// @dev EVM selector for this function is: 0x05d2035b,
-	///  or in textual repr: mintingFinished()
-	function mintingFinished() public view returns (bool) {
-		require(false, stub_error);
-		dummy;
-		return false;
-	}
-
+/// @dev the ERC-165 identifier for this interface is 0x3fd94ea6
+contract ERC721UniqueMintable is Dummy, ERC165 {
 	/// @notice Function to mint a token.
 	/// @param to The new owner
 	/// @return uint256 The id of the newly minted token
@@ -754,7 +749,6 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 		dummy = 0;
 		return 0;
 	}
-
 	// /// @notice Function to mint token with the given tokenUri.
 	// /// @dev `tokenId` should be obtained with `nextTokenId` method,
 	// ///  unlike standard, you can't specify it manually
@@ -772,18 +766,10 @@ contract ERC721UniqueMintable is Dummy, ERC165, ERC721UniqueMintableEvents {
 	// 	return false;
 	// }
 
-	/// @dev Not implemented
-	/// @dev EVM selector for this function is: 0x7d64bcb4,
-	///  or in textual repr: finishMinting()
-	function finishMinting() public returns (bool) {
-		require(false, stub_error);
-		dummy = 0;
-		return false;
-	}
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x0e48fdb4
+/// @dev the ERC-165 identifier for this interface is 0x16de3152
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -984,6 +970,15 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return 0;
 	}
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() public view returns (address) {
+		require(false, stub_error);
+		dummy;
+		return 0x0000000000000000000000000000000000000000;
+	}
 }
 
 /// @dev anonymous struct
@@ -1041,7 +1036,7 @@ contract ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-/// @dev the ERC-165 identifier for this interface is 0x983a942b
+/// @dev the ERC-165 identifier for this interface is 0x80ac58cd
 contract ERC721 is Dummy, ERC165, ERC721Events {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -1173,15 +1168,6 @@ contract ERC721 is Dummy, ERC165, ERC721Events {
 		operator;
 		dummy;
 		return false;
-	}
-
-	/// @notice Returns collection helper contract address
-	/// @dev EVM selector for this function is: 0x1896cce6,
-	///  or in textual repr: collectionHelperAddress()
-	function collectionHelperAddress() public view returns (address) {
-		require(false, stub_error);
-		dummy;
-		return 0x0000000000000000000000000000000000000000;
 	}
 }
 

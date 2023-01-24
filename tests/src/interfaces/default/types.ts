@@ -692,6 +692,9 @@ export interface FrameSystemPhase extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
+/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
+export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
+
 /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
 export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
 
@@ -1213,6 +1216,7 @@ export interface PalletCommonError extends Enum {
   readonly isTokenValueTooLow: boolean;
   readonly isApprovedValueTooLow: boolean;
   readonly isCantApproveMoreThanOwned: boolean;
+  readonly isAddressIsNotEthMirror: boolean;
   readonly isAddressIsZero: boolean;
   readonly isUnsupportedOperation: boolean;
   readonly isNotSufficientFounds: boolean;
@@ -1228,7 +1232,7 @@ export interface PalletCommonError extends Enum {
   readonly isCollectionIsInternal: boolean;
   readonly isConfirmSponsorshipFail: boolean;
   readonly isUserIsNotCollectionAdmin: boolean;
-  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin';
+  readonly type: 'CollectionNotFound' | 'MustBeTokenOwner' | 'NoPermission' | 'CantDestroyNotEmptyCollection' | 'PublicMintingNotAllowed' | 'AddressNotInAllowlist' | 'CollectionNameLimitExceeded' | 'CollectionDescriptionLimitExceeded' | 'CollectionTokenPrefixLimitExceeded' | 'TotalCollectionsLimitExceeded' | 'CollectionAdminCountExceeded' | 'CollectionLimitBoundsExceeded' | 'OwnerPermissionsCantBeReverted' | 'TransferNotAllowed' | 'AccountTokenLimitExceeded' | 'CollectionTokenLimitExceeded' | 'MetadataFlagFrozen' | 'TokenNotFound' | 'TokenValueTooLow' | 'ApprovedValueTooLow' | 'CantApproveMoreThanOwned' | 'AddressIsNotEthMirror' | 'AddressIsZero' | 'UnsupportedOperation' | 'NotSufficientFounds' | 'UserIsNotAllowedToNest' | 'SourceCollectionIsNotAllowedToNest' | 'CollectionFieldSizeExceeded' | 'NoSpaceForProperty' | 'PropertyLimitReached' | 'PropertyKeyIsTooLong' | 'InvalidCharacterInPropertyKey' | 'EmptyPropertyKey' | 'CollectionIsExternal' | 'CollectionIsInternal' | 'ConfirmSponsorshipFail' | 'UserIsNotCollectionAdmin';
 }
 
 /** @name PalletCommonEvent */
@@ -1306,13 +1310,42 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetAppPromotionConfigurationOverride: {
     readonly configuration: PalletConfigurationAppPromotionConfiguration;
   } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations' | 'SetAppPromotionConfigurationOverride';
+  readonly isSetCollatorSelectionDesiredCollators: boolean;
+  readonly asSetCollatorSelectionDesiredCollators: {
+    readonly max: Option<u32>;
+  } & Struct;
+  readonly isSetCollatorSelectionLicenseBond: boolean;
+  readonly asSetCollatorSelectionLicenseBond: {
+    readonly amount: Option<u128>;
+  } & Struct;
+  readonly isSetCollatorSelectionKickThreshold: boolean;
+  readonly asSetCollatorSelectionKickThreshold: {
+    readonly threshold: Option<u32>;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetXcmAllowedLocations' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold';
 }
 
 /** @name PalletConfigurationError */
 export interface PalletConfigurationError extends Enum {
   readonly isInconsistentConfiguration: boolean;
   readonly type: 'InconsistentConfiguration';
+}
+
+/** @name PalletConfigurationEvent */
+export interface PalletConfigurationEvent extends Enum {
+  readonly isNewDesiredCollators: boolean;
+  readonly asNewDesiredCollators: {
+    readonly desiredCollators: Option<u32>;
+  } & Struct;
+  readonly isNewCollatorLicenseBond: boolean;
+  readonly asNewCollatorLicenseBond: {
+    readonly bondCost: Option<u128>;
+  } & Struct;
+  readonly isNewCollatorKickThreshold: boolean;
+  readonly asNewCollatorKickThreshold: {
+    readonly lengthInBlocks: Option<u32>;
+  } & Struct;
+  readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold';
 }
 
 /** @name PalletEthereumCall */
@@ -2274,6 +2307,14 @@ export interface PalletUniqueCall extends Enum {
     readonly itemId: u32;
     readonly amount: u128;
   } & Struct;
+  readonly isApproveFrom: boolean;
+  readonly asApproveFrom: {
+    readonly from: PalletEvmAccountBasicCrossAccountIdRepr;
+    readonly to: PalletEvmAccountBasicCrossAccountIdRepr;
+    readonly collectionId: u32;
+    readonly itemId: u32;
+    readonly amount: u128;
+  } & Struct;
   readonly isTransferFrom: boolean;
   readonly asTransferFrom: {
     readonly from: PalletEvmAccountBasicCrossAccountIdRepr;
@@ -2313,7 +2354,7 @@ export interface PalletUniqueCall extends Enum {
     readonly collectionId: u32;
     readonly itemId: u32;
   } & Struct;
-  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll' | 'ForceRepairCollection' | 'ForceRepairItem';
+  readonly type: 'CreateCollection' | 'CreateCollectionEx' | 'DestroyCollection' | 'AddToAllowList' | 'RemoveFromAllowList' | 'ChangeCollectionOwner' | 'AddCollectionAdmin' | 'RemoveCollectionAdmin' | 'SetCollectionSponsor' | 'ConfirmSponsorship' | 'RemoveCollectionSponsor' | 'CreateItem' | 'CreateMultipleItems' | 'SetCollectionProperties' | 'DeleteCollectionProperties' | 'SetTokenProperties' | 'DeleteTokenProperties' | 'SetTokenPropertyPermissions' | 'CreateMultipleItemsEx' | 'SetTransfersEnabledFlag' | 'BurnItem' | 'BurnFrom' | 'Transfer' | 'Approve' | 'ApproveFrom' | 'TransferFrom' | 'SetCollectionLimits' | 'SetCollectionPermissions' | 'Repartition' | 'SetAllowanceForAll' | 'ForceRepairCollection' | 'ForceRepairItem';
 }
 
 /** @name PalletUniqueError */

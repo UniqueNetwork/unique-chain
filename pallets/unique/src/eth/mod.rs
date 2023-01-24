@@ -33,7 +33,6 @@ use pallet_common::{
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
-use sp_std::vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
 	CreateCollectionData,
@@ -57,10 +56,10 @@ impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
 }
 
 fn convert_data<T: Config>(
-	caller: caller,
-	name: string,
-	description: string,
-	token_prefix: string,
+	caller: Caller,
+	name: String,
+	description: String,
+	token_prefix: String,
 ) -> Result<(
 	T::CrossAccountId,
 	CollectionName,
@@ -88,13 +87,13 @@ fn convert_data<T: Config>(
 
 #[inline(always)]
 fn create_collection_internal<T: Config>(
-	caller: caller,
-	value: value,
-	name: string,
+	caller: Caller,
+	value: Value,
+	name: String,
 	collection_mode: CollectionMode,
-	description: string,
-	token_prefix: string,
-) -> Result<address> {
+	description: String,
+	token_prefix: String,
+) -> Result<Address> {
 	let (caller, name, description, token_prefix) =
 		convert_data::<T>(caller, name, description, token_prefix)?;
 	let data = CreateCollectionData {
@@ -119,7 +118,7 @@ fn create_collection_internal<T: Config>(
 	Ok(address)
 }
 
-fn check_sent_amount_equals_collection_creation_price<T: Config>(value: value) -> Result<()> {
+fn check_sent_amount_equals_collection_creation_price<T: Config>(value: Value) -> Result<()> {
 	let value = value.as_u128();
 	let creation_price: u128 = T::CollectionCreationPrice::get()
 		.try_into()
@@ -150,12 +149,12 @@ where
 	#[solidity(rename_selector = "createNFTCollection")]
 	fn create_nft_collection(
 		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
+		caller: Caller,
+		value: Value,
+		name: String,
+		description: String,
+		token_prefix: String,
+	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, name, description, token_prefix)?;
 		let data = CreateCollectionData {
@@ -189,12 +188,12 @@ where
 	#[solidity(hide)]
 	fn create_nonfungible_collection(
 		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
+		caller: Caller,
+		value: Value,
+		name: String,
+		description: String,
+		token_prefix: String,
+	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
 			value,
@@ -209,12 +208,12 @@ where
 	#[solidity(rename_selector = "createRFTCollection")]
 	fn create_rft_collection(
 		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
+		caller: Caller,
+		value: Value,
+		name: String,
+		description: String,
+		token_prefix: String,
+	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
 			value,
@@ -229,13 +228,13 @@ where
 	#[solidity(rename_selector = "createFTCollection")]
 	fn create_fungible_collection(
 		&mut self,
-		caller: caller,
-		value: value,
-		name: string,
-		decimals: uint8,
-		description: string,
-		token_prefix: string,
-	) -> Result<address> {
+		caller: Caller,
+		value: Value,
+		name: String,
+		decimals: u8,
+		description: String,
+		token_prefix: String,
+	) -> Result<Address> {
 		create_collection_internal::<T>(
 			caller,
 			value,
@@ -249,9 +248,9 @@ where
 	#[solidity(rename_selector = "makeCollectionERC721MetadataCompatible")]
 	fn make_collection_metadata_compatible(
 		&mut self,
-		caller: caller,
-		collection: address,
-		base_uri: string,
+		caller: Caller,
+		collection: Address,
+		base_uri: String,
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let collection =
@@ -316,13 +315,14 @@ where
 			<PalletCommon<T>>::set_collection_properties(
 				&collection,
 				&caller,
-				vec![up_data_structs::Property {
+				[up_data_structs::Property {
 					key: key::base_uri(),
 					value: base_uri
 						.into_bytes()
 						.try_into()
 						.map_err(|_| "base uri is too large")?,
-				}],
+				}]
+				.into_iter(),
 			)
 			.map_err(dispatch_to_evm::<T>)?;
 		}
@@ -334,7 +334,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::destroy_collection())]
-	fn destroy_collection(&mut self, caller: caller, collection_address: address) -> Result<void> {
+	fn destroy_collection(&mut self, caller: Caller, collection_address: Address) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let collection_id = pallet_common::eth::map_eth_to_id(&collection_address)
@@ -346,7 +346,7 @@ where
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
-	fn is_collection_exist(&self, _caller: caller, collection_address: address) -> Result<bool> {
+	fn is_collection_exist(&self, _caller: Caller, collection_address: Address) -> Result<bool> {
 		if let Some(id) = pallet_common::eth::map_eth_to_id(&collection_address) {
 			let collection_id = id;
 			return Ok(<CollectionById<T>>::contains_key(collection_id));
@@ -355,7 +355,7 @@ where
 		Ok(false)
 	}
 
-	fn collection_creation_fee(&self) -> Result<value> {
+	fn collection_creation_fee(&self) -> Result<Value> {
 		let price: u128 = T::CollectionCreationPrice::get()
 			.try_into()
 			.map_err(|_| ()) // workaround for `expect` requiring `Debug` trait
@@ -366,14 +366,14 @@ where
 	/// Returns address of a collection.
 	/// @param collectionId  - CollectionId  of the collection
 	/// @return eth mirror address of the collection
-	fn collection_address(&self, collection_id: uint32) -> Result<address> {
+	fn collection_address(&self, collection_id: u32) -> Result<Address> {
 		Ok(collection_id_to_address(collection_id.into()))
 	}
 
 	/// Returns collectionId of a collection.
 	/// @param collectionAddress  - Eth address of the collection
 	/// @return collectionId of the collection
-	fn collection_id(&self, collection_address: address) -> Result<uint32> {
+	fn collection_id(&self, collection_address: Address) -> Result<u32> {
 		map_eth_to_id(&collection_address)
 			.map(|id| id.0)
 			.ok_or(Error::Revert(format!(

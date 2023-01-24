@@ -19,7 +19,7 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{
 	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue,
+	PropertyKeyPermission, PropertyValue, TokenOwnerError,
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
@@ -100,6 +100,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn approve() -> Weight {
 		<SelfWeightOf<T>>::approve()
+	}
+
+	fn approve_from() -> Weight {
+		<SelfWeightOf<T>>::approve_from()
 	}
 
 	fn transfer_from() -> Weight {
@@ -353,6 +357,26 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		)
 	}
 
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		with_weight(
+			if amount == 1 {
+				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, Some(&to))
+			} else {
+				<Pallet<T>>::set_allowance_from(self, &sender, &from, token, None)
+			},
+			<CommonWeights<T>>::approve_from(),
+		)
+	}
+
 	fn transfer_from(
 		&self,
 		sender: T::CrossAccountId,
@@ -436,13 +460,15 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
-		<TokenData<T>>::get((self.id, token)).map(|t| t.owner)
+	fn token_owner(&self, token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
+		<TokenData<T>>::get((self.id, token))
+			.map(|t| t.owner)
+			.ok_or(TokenOwnerError::NotFound)
 	}
 
 	/// Returns token owners.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
-		self.token_owner(token).map_or_else(|| vec![], |t| vec![t])
+		self.token_owner(token).map_or_else(|_| vec![], |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {

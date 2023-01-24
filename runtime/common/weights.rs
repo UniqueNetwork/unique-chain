@@ -101,6 +101,10 @@ where
 		dispatch_weight::<T>() + max_weight_of!(approve())
 	}
 
+	fn approve_from() -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(approve_from())
+	}
+
 	fn transfer_from() -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(transfer_from())
 	}

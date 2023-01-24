@@ -973,7 +973,7 @@ where
 				.import_notification_stream()
 				.map(|_| EngineCommand::SealNewBlock {
 					create_empty: true,
-					finalize: false,
+					finalize: false, // todo:collator finalize true
 					parent_hash: None,
 					sender: None,
 				}),
@@ -984,7 +984,7 @@ where
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
 		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
 			create_empty: true,
-			finalize: false,
+			finalize: false, // todo:collator finalize true
 			parent_hash: None,
 			sender: None,
 		}));

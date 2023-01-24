@@ -293,6 +293,8 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
+        undefined,
+        true,
       );
 
       const subTokenId = await evmContract.methods.nextTokenId().call();
@@ -351,9 +353,7 @@ async function benchMintWithProperties(
       encodedCall = await evmContract.methods
         .setProperties(
           subTokenId,
-          PROPERTIES.slice(0, setup.propertiesNumber).map((p) => {
-            return {field_0: p.key, field_1: p.value};
-          }),
+          PROPERTIES.slice(0, setup.propertiesNumber),
         )
         .encodeABI();
 
@@ -394,9 +394,7 @@ async function benchMintWithProperties(
         .mintToSubstrateBulkProperty(
           helper.ethAddress.fromCollectionId(collection.collectionId),
           susbstrateReceiver.addressRaw,
-          PROPERTIES.slice(0, setup.propertiesNumber).map((p) => {
-            return {field_0: p.key, field_1: p.value};
-          }),
+          PROPERTIES.slice(0, setup.propertiesNumber),
         )
         .send({from: ethSigner, gas: 25_000_000});
     },

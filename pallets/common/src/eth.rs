@@ -18,12 +18,9 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
-use evm_coder::{
-	AbiCoder,
-	types::{uint256, address},
-};
+use evm_coder::{AbiCoder, types::Address};
 pub use pallet_evm::{Config, account::CrossAccountId};
-use sp_core::H160;
+use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
@@ -33,7 +30,7 @@ const ETH_COLLECTION_PREFIX: [u8; 16] = [
 ];
 
 /// Maps the ethereum address of the collection in substrate.
-pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
+pub fn map_eth_to_id(eth: &Address) -> Option<CollectionId> {
 	if eth[0..16] != ETH_COLLECTION_PREFIX {
 		return None;
 	}
@@ -43,7 +40,7 @@ pub fn map_eth_to_id(eth: &H160) -> Option<CollectionId> {
 }
 
 /// Maps the substrate collection id in ethereum.
-pub fn collection_id_to_address(id: CollectionId) -> H160 {
+pub fn collection_id_to_address(id: CollectionId) -> Address {
 	let mut out = [0; 20];
 	out[0..16].copy_from_slice(&ETH_COLLECTION_PREFIX);
 	out[16..20].copy_from_slice(&u32::to_be_bytes(id.0));
@@ -51,12 +48,12 @@ pub fn collection_id_to_address(id: CollectionId) -> H160 {
 }
 
 /// Check if the ethereum address is a collection.
-pub fn is_collection(address: &H160) -> bool {
+pub fn is_collection(address: &Address) -> bool {
 	address[0..16] == ETH_COLLECTION_PREFIX
 }
 
-/// Convert `uint256` to `CrossAccountId`.
-pub fn convert_uint256_to_cross_account<T: Config>(from: uint256) -> T::CrossAccountId
+/// Convert `U256` to `CrossAccountId`.
+pub fn convert_uint256_to_cross_account<T: Config>(from: U256) -> T::CrossAccountId
 where
 	T::AccountId: From<[u8; 32]>,
 {
@@ -66,76 +63,11 @@ where
 	T::CrossAccountId::from_sub(account_id)
 }
 
-/// Ethereum representation of Optional value with uint256.
-#[derive(Debug, Default, AbiCoder)]
-pub struct OptionUint {
-	status: bool,
-	value: uint256,
-}
-
-impl From<u32> for OptionUint {
-	fn from(value: u32) -> Self {
-		Self {
-			status: true,
-			value: uint256::from(value),
-		}
-	}
-}
-
-impl From<Option<u32>> for OptionUint {
-	fn from(value: Option<u32>) -> Self {
-		match value {
-			Some(value) => Self {
-				status: true,
-				value: value.into(),
-			},
-			None => Self {
-				status: false,
-				value: Default::default(),
-			},
-		}
-	}
-}
-
-impl From<bool> for OptionUint {
-	fn from(value: bool) -> Self {
-		Self {
-			status: true,
-			value: if value {
-				uint256::from(1)
-			} else {
-				Default::default()
-			},
-		}
-	}
-}
-
-impl From<Option<bool>> for OptionUint {
-	fn from(value: Option<bool>) -> Self {
-		match value {
-			Some(value) => Self::from(value),
-			None => Self {
-				status: false,
-				value: Default::default(),
-			},
-		}
-	}
-}
-
-/// Ethereum representation of Optional value with CrossAddress.
-#[derive(Debug, Default, AbiCoder)]
-pub struct OptionCrossAddress {
-	/// Whether or not this CrossAdress is valid and has meaning.
-	pub status: bool,
-	/// The underlying CrossAddress value. If the status is false, can be set to whatever.
-	pub value: CrossAddress,
-}
-
 /// Cross account struct
 #[derive(Debug, Default, AbiCoder)]
 pub struct CrossAddress {
-	pub(crate) eth: address,
-	pub(crate) sub: uint256,
+	pub(crate) eth: Address,
+	pub(crate) sub: U256,
 }
 
 impl CrossAddress {
@@ -148,10 +80,7 @@ impl CrossAddress {
 		if cross_account_id.is_canonical_substrate() {
 			Self::from_sub::<T>(cross_account_id.as_sub())
 		} else {
-			Self {
-				eth: *cross_account_id.as_eth(),
-				sub: Default::default(),
-			}
+			Self::from_eth(*cross_account_id.as_eth())
 		}
 	}
 	/// Creates [`CrossAddress`] from Substrate account.
@@ -162,7 +91,14 @@ impl CrossAddress {
 	{
 		Self {
 			eth: Default::default(),
-			sub: uint256::from_big_endian(account_id.as_ref()),
+			sub: U256::from_big_endian(account_id.as_ref()),
+		}
+	}
+	/// Creates [`CrossAddress`] from Ethereum account.
+	pub fn from_eth(address: Address) -> Self {
+		Self {
+			eth: address,
+			sub: Default::default(),
 		}
 	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
@@ -186,17 +122,17 @@ impl CrossAddress {
 /// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
 #[derive(Debug, Default, AbiCoder)]
 pub struct Property {
-	key: evm_coder::types::string,
-	value: evm_coder::types::bytes,
+	key: evm_coder::types::String,
+	value: evm_coder::types::Bytes,
 }
 
 impl TryFrom<up_data_structs::Property> for Property {
 	type Error = evm_coder::execution::Error;
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
-		let key = evm_coder::types::string::from_utf8(from.key.into())
+		let key = evm_coder::types::String::from_utf8(from.key.into())
 			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
-		let value = evm_coder::types::bytes(from.value.to_vec());
+		let value = evm_coder::types::Bytes(from.value.to_vec());
 		Ok(Property { key, value })
 	}
 }
@@ -252,23 +188,23 @@ pub enum CollectionLimitField {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionLimit {
 	field: CollectionLimitField,
-	value: OptionUint,
+	value: Option<U256>,
 }
 
 impl CollectionLimit {
 	/// Create [`CollectionLimit`] from field and value.
-	pub fn new<T>(field: CollectionLimitField, value: T) -> Self
-	where
-		OptionUint: From<T>,
-	{
+	pub fn new(field: CollectionLimitField, value: Option<u32>) -> Self {
 		Self {
 			field,
-			value: value.into(),
+			value: match value {
+				Some(value) => Some(value.into()),
+				None => None,
+			},
 		}
 	}
 	/// Whether the field contains a value.
 	pub fn has_value(&self) -> bool {
-		self.value.status
+		self.value.is_some()
 	}
 }
 
@@ -276,52 +212,60 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 	type Error = evm_coder::execution::Error;
 
 	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
-		let value = self.value.value.try_into().map_err(|error| {
+		let value = self
+			.value
+			.ok_or::<Self::Error>("can't convert `None` value to boolean".into())?;
+		let value = Some(value.try_into().map_err(|error| {
 			Self::Error::Revert(format!(
 				"can't convert value to u32 \"{}\" because: \"{error}\"",
-				self.value.value
+				value
 			))
-		})?;
+		})?);
 
 		let convert_value_to_bool = || match value {
-			0 => Ok(false),
-			1 => Ok(true),
-			_ => {
-				return Err(Self::Error::Revert(format!(
-					"can't convert value to boolean \"{value}\""
-				)))
-			}
+			Some(value) => match value {
+				0 => Ok(Some(false)),
+				1 => Ok(Some(true)),
+				_ => {
+					return Err(Self::Error::Revert(format!(
+						"can't convert value to boolean \"{value}\""
+					)))
+				}
+			},
+			None => Ok(None),
 		};
 
 		let mut limits = up_data_structs::CollectionLimits::default();
 		match self.field {
 			CollectionLimitField::AccountTokenOwnership => {
-				limits.account_token_ownership_limit = Some(value);
+				limits.account_token_ownership_limit = value;
 			}
 			CollectionLimitField::SponsoredDataSize => {
-				limits.sponsored_data_size = Some(value);
+				limits.sponsored_data_size = value;
 			}
 			CollectionLimitField::SponsoredDataRateLimit => {
-				limits.sponsored_data_rate_limit =
-					Some(up_data_structs::SponsoringRateLimit::Blocks(value));
+				limits.sponsored_data_rate_limit = match value {
+					Some(value) => Some(up_data_structs::SponsoringRateLimit::Blocks(value)),
+					None => None,
+				};
 			}
 			CollectionLimitField::TokenLimit => {
-				limits.token_limit = Some(value);
+				limits.token_limit = value;
 			}
 			CollectionLimitField::SponsorTransferTimeout => {
-				limits.sponsor_transfer_timeout = Some(value);
+				limits.sponsor_transfer_timeout = value;
 			}
 			CollectionLimitField::SponsorApproveTimeout => {
-				limits.sponsor_approve_timeout = Some(value);
+				limits.sponsor_approve_timeout = value;
 			}
 			CollectionLimitField::OwnerCanTransfer => {
-				limits.owner_can_transfer = Some(convert_value_to_bool()?);
+				limits.owner_can_transfer = convert_value_to_bool()?;
 			}
 			CollectionLimitField::OwnerCanDestroy => {
-				limits.owner_can_destroy = Some(convert_value_to_bool()?);
+				limits.owner_can_destroy = convert_value_to_bool()?;
 			}
 			CollectionLimitField::TransferEnabled => {
-				limits.transfers_enabled = Some(convert_value_to_bool()?);
+				limits.transfers_enabled = convert_value_to_bool()?;
 			}
 		};
 		Ok(limits)
@@ -402,7 +346,7 @@ impl PropertyPermission {
 #[derive(Debug, Default, AbiCoder)]
 pub struct TokenPropertyPermission {
 	/// Token property key.
-	key: evm_coder::types::string,
+	key: evm_coder::types::String,
 	/// Token property permissions.
 	permissions: Vec<PropertyPermission>,
 }
@@ -420,7 +364,7 @@ impl
 		),
 	) -> Self {
 		let (key, permission) = value;
-		let key = evm_coder::types::string::from_utf8(key.into_inner())
+		let key = evm_coder::types::String::from_utf8(key.into_inner())
 			.expect("Stored key must be valid");
 		let permissions = PropertyPermission::into_vec(permission);
 		Self { key, permissions }
@@ -450,12 +394,12 @@ impl TokenPropertyPermission {
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionNesting {
 	token_owner: bool,
-	ids: Vec<uint256>,
+	ids: Vec<U256>,
 }
 
 impl CollectionNesting {
 	/// Create [`CollectionNesting`].
-	pub fn new(token_owner: bool, ids: Vec<uint256>) -> Self {
+	pub fn new(token_owner: bool, ids: Vec<U256>) -> Self {
 		Self { token_owner, ids }
 	}
 }
@@ -471,5 +415,34 @@ impl CollectionNestingPermission {
 	/// Create [`CollectionNestingPermission`].
 	pub fn new(field: CollectionPermissionField, value: bool) -> Self {
 		Self { field, value }
+	}
+}
+
+/// Ethereum representation of `AccessMode` (see [`up_data_structs::AccessMode`]).
+#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[repr(u8)]
+pub enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
+	#[default]
+	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
+	AllowList,
+}
+
+impl From<up_data_structs::AccessMode> for AccessMode {
+	fn from(value: up_data_structs::AccessMode) -> Self {
+		match value {
+			up_data_structs::AccessMode::Normal => AccessMode::Normal,
+			up_data_structs::AccessMode::AllowList => AccessMode::AllowList,
+		}
+	}
+}
+
+impl Into<up_data_structs::AccessMode> for AccessMode {
+	fn into(self) -> up_data_structs::AccessMode {
+		match self {
+			AccessMode::Normal => up_data_structs::AccessMode::Normal,
+			AccessMode::AllowList => up_data_structs::AccessMode::AllowList,
+		}
 	}
 }

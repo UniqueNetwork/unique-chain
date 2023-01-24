@@ -16,11 +16,11 @@
 
 #[macro_export]
 macro_rules! dispatch_unique_runtime {
-	($collection:ident.$method:ident($($name:ident),*)) => {{
+	($collection:ident.$method:ident($($name:ident),*) $($rest:tt)*) => {{
 		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
 		let dispatch = collection.as_dyn();
 
-		Ok::<_, DispatchError>(dispatch.$method($($name),*))
+		Ok::<_, DispatchError>(dispatch.$method($($name),*) $($rest)*)
 	}};
 }
 
@@ -73,7 +73,7 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
-                    dispatch_unique_runtime!(collection.token_owner(token))
+                    dispatch_unique_runtime!(collection.token_owner(token).ok())
                 }
 
                 fn token_owners(collection: CollectionId, token: TokenId) -> Result<Vec::<CrossAccountId>, DispatchError>  {
@@ -83,7 +83,7 @@ macro_rules! impl_common_runtime_apis {
                 fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     let budget = up_data_structs::budget::Value::new(10);
 
-                    Ok(Some(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?))
+                    Ok(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?)
                 }
                 fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>, DispatchError> {
                     Ok(<pallet_nonfungible::Pallet<Runtime>>::token_children_ids(collection, token))
@@ -451,7 +451,9 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn account_code_at(address: H160) -> Vec<u8> {
-                    EVM::account_codes(address)
+                    use pallet_evm::OnMethodCall;
+                    <Runtime as pallet_evm::Config>::OnMethodCall::get_code(&address)
+                        .unwrap_or_else(|| EVM::account_codes(address))
                 }
 
                 fn author() -> H160 {
@@ -686,6 +688,7 @@ macro_rules! impl_common_runtime_apis {
                     list_benchmark!(list, extra, pallet_unique, Unique);
                     list_benchmark!(list, extra, pallet_structure, Structure);
                     list_benchmark!(list, extra, pallet_inflation, Inflation);
+                    list_benchmark!(list, extra, pallet_configuration, Configuration);
 
                     #[cfg(feature = "app-promotion")]
                     list_benchmark!(list, extra, pallet_app_promotion, AppPromotion);
@@ -705,13 +708,19 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "rmrk")]
                     list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
 
+                    #[cfg(feature = "collator-selection")]
+                    list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
+
+                    #[cfg(feature = "collator-selection")]
+                    list_benchmark!(list, extra, pallet_identity, Identity);
+
                     #[cfg(feature = "foreign-assets")]
                     list_benchmark!(list, extra, pallet_foreign_assets, ForeignAssets);
 
 
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
-                    let storage_info = AllPalletsReversedWithSystemFirst::storage_info();
+                    let storage_info = AllPalletsWithSystem::storage_info();
 
                     return (list, storage_info)
                 }
@@ -749,6 +758,7 @@ macro_rules! impl_common_runtime_apis {
                     add_benchmark!(params, batches, pallet_unique, Unique);
                     add_benchmark!(params, batches, pallet_structure, Structure);
                     add_benchmark!(params, batches, pallet_inflation, Inflation);
+                    add_benchmark!(params, batches, pallet_configuration, Configuration);
 
                     #[cfg(feature = "app-promotion")]
                     add_benchmark!(params, batches, pallet_app_promotion, AppPromotion);
@@ -767,6 +777,12 @@ macro_rules! impl_common_runtime_apis {
 
                     #[cfg(feature = "rmrk")]
                     add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
+
+                    #[cfg(feature = "collator-selection")]
+                    add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
+
+                    #[cfg(feature = "collator-selection")]
+                    add_benchmark!(params, batches, pallet_identity, Identity);
 
                     #[cfg(feature = "foreign-assets")]
                     add_benchmark!(params, batches, pallet_foreign_assets, ForeignAssets);

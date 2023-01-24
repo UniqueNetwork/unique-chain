@@ -21,7 +21,7 @@ use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights:
 use up_data_structs::{
 	CollectionId, TokenId, CreateItemExData, budget::Budget, Property, PropertyKey, PropertyValue,
 	PropertyKeyPermission, CollectionPropertiesVec, CreateRefungibleExMultipleOwners,
-	CreateRefungibleExSingleOwner,
+	CreateRefungibleExSingleOwner, TokenOwnerError,
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
@@ -125,6 +125,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn approve() -> Weight {
 		<SelfWeightOf<T>>::approve()
+	}
+
+	fn approve_from() -> Weight {
+		<SelfWeightOf<T>>::approve_from()
 	}
 
 	fn transfer_from() -> Weight {
@@ -314,6 +318,20 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		)
 	}
 
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token_id: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		with_weight(
+			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, token_id, amount),
+			<CommonWeights<T>>::approve_from(),
+		)
+	}
+
 	fn transfer_from(
 		&self,
 		sender: T::CrossAccountId,
@@ -460,7 +478,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		TokenId(<TokensMinted<T>>::get(self.id))
 	}
 
-	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId> {
+	fn token_owner(&self, token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
 		<Pallet<T>>::token_owner(self.id, token)
 	}
 

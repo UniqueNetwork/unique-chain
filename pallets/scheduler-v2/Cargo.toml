@@ -1,29 +1,25 @@
 [package]
-name = "pallet-unique-scheduler-v2"
-version = "0.1.0"
 authors = ["Unique Network <support@uniquenetwork.io>"]
-edition = "2021"
-license = "GPLv3"
-homepage = "https://unique.network"
-repository = "https://github.com/UniqueNetwork/unique-chain"
 description = "Unique Scheduler pallet"
+edition = "2021"
+homepage = "https://unique.network"
+license = "GPLv3"
+name = "pallet-unique-scheduler-v2"
 readme = "README.md"
+repository = "https://github.com/UniqueNetwork/unique-chain"
+version = "0.1.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = [
-	"derive",
-] }
-log = { version = "0.4.17", default-features = false }
-scale-info = { version = "2.1.1", default-features = false, features = [
-	"derive",
-] }
+codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
 frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+log = { version = "0.4.17", default-features = false }
+scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
 
 [dev-dependencies]
 pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
@@ -32,11 +28,7 @@ substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch
 
 [features]
 default = ["std"]
-runtime-benchmarks = [
-	"frame-benchmarking",
-	"frame-support/runtime-benchmarks",
-	"frame-system/runtime-benchmarks",
-]
+runtime-benchmarks = ["frame-benchmarking", "frame-support/runtime-benchmarks", "frame-system/runtime-benchmarks"]
 std = [
 	"codec/std",
 	"frame-benchmarking?/std",
@@ -44,9 +36,9 @@ std = [
 	"frame-system/std",
 	"log/std",
 	"scale-info/std",
+	"sp-core/std",
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
-	"sp-core/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

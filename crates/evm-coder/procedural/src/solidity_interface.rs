@@ -347,14 +347,14 @@ impl AbiTypeHelper for Type {
 
 	fn is_value(&self) -> bool {
 		if let Ok(ident) = self.plain() {
-			return ident == "value";
+			return ident == "Value";
 		}
 		false
 	}
 
 	fn is_caller(&self) -> bool {
 		if let Ok(ident) = self.plain() {
-			return ident == "caller";
+			return ident == "Caller";
 		}
 		false
 	}
@@ -610,7 +610,7 @@ impl Method {
 		let custom_signature = self.expand_custom_signature();
 		quote! {
 			const #screaming_name_signature: ::evm_coder::custom_signature::SignatureUnit = #custom_signature;
-			const #screaming_name: ::evm_coder::types::bytes4 = {
+			const #screaming_name: ::evm_coder::types::Bytes4 = {
 				let mut sum = ::evm_coder::sha3_const::Keccak256::new();
 				let mut pos = 0;
 				while pos < Self::#screaming_name_signature.len {
@@ -811,6 +811,13 @@ fn generics_reference(gen: &Generics) -> proc_macro2::TokenStream {
 	let list = generics_list(gen);
 	quote! { <#list> }
 }
+fn generics_stub(gen: &Generics) -> proc_macro2::TokenStream {
+	if gen.params.is_empty() {
+		return quote! {};
+	}
+	let params = (0..gen.params.len()).map(|_| quote! {()});
+	quote! {<#(#params,)*>}
+}
 fn generics_data(gen: &Generics) -> proc_macro2::TokenStream {
 	let list = generics_list(gen);
 	if gen.params.len() == 1 {
@@ -866,6 +873,7 @@ impl SolidityInterface {
 		let generics = self.generics;
 		let gen_ref = generics_reference(&generics);
 		let gen_data = generics_data(&generics);
+		let gen_stub = generics_stub(&generics);
 		let gen_where = &generics.where_clause;
 
 		let call_sub = self
@@ -936,6 +944,12 @@ impl SolidityInterface {
 		let solidity_events_idents = self.info.events.0.iter().map(|is| is.name.clone());
 		let docs = &self.docs;
 
+		let expect_selector = self.info.expect_selector.map(|s| {
+            quote! {
+                const _: () = assert!(#s == u32::from_be_bytes(<#call_name #gen_stub>::interface_id()), "selector mismatch, review contained function selectors");
+            }
+        });
+
 		quote! {
 			#(
 				const _: ::core::marker::PhantomData<#solidity_events_idents> = ::core::marker::PhantomData;
@@ -952,12 +966,15 @@ impl SolidityInterface {
 					#call_sub,
 				)*
 			}
+
+			#expect_selector
+
 			impl #gen_ref #call_name #gen_ref {
 				#(
 					#consts
 				)*
 				/// Return this call ERC165 selector
-				pub fn interface_id() -> ::evm_coder::types::bytes4 {
+				pub const fn interface_id() -> ::evm_coder::types::Bytes4 {
 					let mut interface_id = 0;
 					#(#interface_id)*
 					#(#inline_interface_id)*
@@ -982,7 +999,7 @@ impl SolidityInterface {
 						)*),
 					};
 
-					let mut out = ::evm_coder::types::string::new();
+					let mut out = ::evm_coder::types::String::new();
 					if #solidity_name.starts_with("Inline") {
 						out.push_str("/// @dev inlined interface\n");
 					}
@@ -1002,7 +1019,7 @@ impl SolidityInterface {
 				}
 			}
 			impl #gen_ref ::evm_coder::Call for #call_name #gen_ref {
-				fn parse(method_id: ::evm_coder::types::bytes4, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
+				fn parse(method_id: ::evm_coder::types::Bytes4, reader: &mut ::evm_coder::abi::AbiReader) -> ::evm_coder::execution::Result<Option<Self>> {
 					use ::evm_coder::abi::AbiRead;
 					match method_id {
 						::evm_coder::ERC165Call::INTERFACE_ID => return Ok(
@@ -1024,7 +1041,7 @@ impl SolidityInterface {
 			#gen_where
 			{
 				/// Is this contract implements specified ERC165 selector
-				pub fn supports_interface(this: &#name, interface_id: ::evm_coder::types::bytes4) -> bool {
+				pub fn supports_interface(this: &#name, interface_id: ::evm_coder::types::Bytes4) -> bool {
 					interface_id != u32::to_be_bytes(0xffffff) && (
 						interface_id == ::evm_coder::ERC165Call::INTERFACE_ID ||
 						interface_id == Self::interface_id()

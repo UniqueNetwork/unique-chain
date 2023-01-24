@@ -39,22 +39,22 @@ macro_rules! test_impl_uint {
 
 #[test]
 fn encode_decode_uint8() {
-	test_impl_uint!(uint8);
+	test_impl_uint!(u8);
 }
 
 #[test]
 fn encode_decode_uint32() {
-	test_impl_uint!(uint32);
+	test_impl_uint!(u32);
 }
 
 #[test]
 fn encode_decode_uint128() {
-	test_impl_uint!(uint128);
+	test_impl_uint!(u128);
 }
 
 #[test]
 fn encode_decode_uint256() {
-	test_impl::<uint256>(
+	test_impl::<U256>(
 		0xdeadbeef,
 		U256([255, 0, 0, 0]),
 		&hex!(
@@ -101,7 +101,7 @@ fn encode_decode_tuple_string() {
 
 #[test]
 fn encode_decode_vec_tuple_address_uint256() {
-	test_impl::<Vec<(address, uint256)>>(
+	test_impl::<Vec<(Address, U256)>>(
         0x1ACF2D55,
         vec![
             (
@@ -138,7 +138,7 @@ fn encode_decode_vec_tuple_address_uint256() {
 
 #[test]
 fn encode_decode_vec_tuple_uint256_string() {
-	test_impl::<Vec<(uint256, string)>>(
+	test_impl::<Vec<(U256, String)>>(
         0xdeadbeef,
         vec![
             (1.into(), "Test URI 0".to_string()),
@@ -261,7 +261,7 @@ fn parse_vec_with_dynamic_type() {
 	let (call, mut decoder) = AbiReader::new_call(encoded_data).unwrap();
 	assert_eq!(call, u32::to_be_bytes(decoded_data.0));
 	let address = decoder.address().unwrap();
-	let data = <Vec<(uint256, string)>>::abi_read(&mut decoder).unwrap();
+	let data = <Vec<(U256, String)>>::abi_read(&mut decoder).unwrap();
 	assert_eq!(data, decoded_data.1);
 
 	let mut writer = AbiWriter::new_call(decoded_data.0);
@@ -273,12 +273,12 @@ fn parse_vec_with_dynamic_type() {
 
 #[test]
 fn encode_decode_vec_tuple_string_bytes() {
-	test_impl::<Vec<(string, bytes)>>(
+	test_impl::<Vec<(String, Bytes)>>(
 		0xdeadbeef,
 		vec![
 			(
 				"Test URI 0".to_string(),
-				bytes(vec![
+				Bytes(vec![
 					0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
 					0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
 					0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
@@ -287,14 +287,14 @@ fn encode_decode_vec_tuple_string_bytes() {
 			),
 			(
 				"Test URI 1".to_string(),
-				bytes(vec![
+				Bytes(vec![
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 					0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
 				]),
 			),
-			("Test URI 2".to_string(), bytes(vec![0x33, 0x33])),
+			("Test URI 2".to_string(), Bytes(vec![0x33, 0x33])),
 		],
 		&hex!(
 			"
@@ -337,10 +337,10 @@ fn encode_decode_vec_tuple_string_bytes() {
 // #[ignore = "reason"]
 fn encode_decode_tuple0_tuple1_uint8_tuple1_string_bytes_tuple1_uint8_bytes() {
 	let int = 0xff;
-	let by = bytes(vec![0x11, 0x22, 0x33]);
+	let by = Bytes(vec![0x11, 0x22, 0x33]);
 	let string = "some string".to_string();
 
-	test_impl::<((u8,), (String, bytes), (u8, bytes))>(
+	test_impl::<((u8,), (String, Bytes), (u8, Bytes))>(
 		0xdeadbeef,
 		((int,), (string.clone(), by.clone()), (int, by)),
 		&hex!(
@@ -485,9 +485,9 @@ fn encode_decode_tuple0_tuple1_uint8_string() {
 
 #[test]
 fn encode_decode_tuple0_tuple1_string_bytes() {
-	test_impl::<((String, bytes),)>(
+	test_impl::<((String, Bytes),)>(
 		0xdeadbeef,
-		(("some string".to_string(), bytes(vec![1, 2, 3])),),
+		(("some string".to_string(), Bytes(vec![1, 2, 3])),),
 		&hex!(
 			"
                 deadbeef
@@ -537,4 +537,69 @@ fn parse_multiple_params() {
 	let p2 = <u8>::abi_read(&mut decoder).unwrap();
 	assert_eq!(p1, 0x0a);
 	assert_eq!(p2, 0x0b);
+}
+
+#[test]
+fn encode_decode_option_uint8_some() {
+	test_impl::<Option<u8>>(
+		0xdeadbeef,
+		Some(44),
+		&hex!(
+			"
+                deadbeef
+                0000000000000000000000000000000000000000000000000000000000000001
+                000000000000000000000000000000000000000000000000000000000000002c
+            "
+		),
+	);
+}
+
+#[test]
+fn encode_decode_option_uint8_none() {
+	test_impl::<Option<u8>>(
+		0xdeadbeef,
+		None,
+		&hex!(
+			"
+                deadbeef
+                0000000000000000000000000000000000000000000000000000000000000000
+                0000000000000000000000000000000000000000000000000000000000000000
+            "
+		),
+	);
+}
+
+#[test]
+fn encode_decode_option_string_some() {
+	test_impl::<Option<String>>(
+		0xdeadbeef,
+		Some("some string".to_string()),
+		&hex!(
+			"
+                deadbeef
+                0000000000000000000000000000000000000000000000000000000000000020
+                0000000000000000000000000000000000000000000000000000000000000001
+                0000000000000000000000000000000000000000000000000000000000000040
+                000000000000000000000000000000000000000000000000000000000000000b
+                736f6d6520737472696e67000000000000000000000000000000000000000000
+            "
+		),
+	);
+}
+
+#[test]
+fn encode_decode_option_string_none() {
+	test_impl::<Option<String>>(
+		0xdeadbeef,
+		None,
+		&hex!(
+			"
+                deadbeef
+                0000000000000000000000000000000000000000000000000000000000000020
+                0000000000000000000000000000000000000000000000000000000000000000
+                0000000000000000000000000000000000000000000000000000000000000040
+                0000000000000000000000000000000000000000000000000000000000000000
+            "
+		),
+	);
 }

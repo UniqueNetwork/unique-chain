@@ -37,7 +37,7 @@ jobs:
             network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
             network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
             network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {opal}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
 
 
   forkless-update-nodata:
@@ -53,7 +53,7 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}    
+        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
 
     steps:
       - name: Clean Workspace
@@ -76,7 +76,7 @@ jobs:
             REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}            
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             # POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
             # MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
@@ -95,6 +95,7 @@ jobs:
           variables: |
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
 
       - name: Show launch-config-forkless configuration
         run: cat .docker/launch-config-forkless-nodata.json
@@ -163,8 +164,8 @@ jobs:
       - name: Show docker logs
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.features }}/node-parachain.log'
-                
-      - name: Run Parallel tests 
+
+      - name: Run Parallel tests
         working-directory: tests
         run: |
           yarn install
@@ -175,7 +176,7 @@ jobs:
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
-    
+
       - name: Test Report Parallel
         uses: phoenix-actions/test-reporting@v8
         id: test-report-parallel
@@ -185,10 +186,10 @@ jobs:
           path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
-          
-      - name: Run Sequential tests 
+
+      - name: Run Sequential tests
         working-directory: tests
-        if: success() || failure() 
+        if: success() || failure()
         run: |
           yarn install
           yarn add mochawesome
@@ -198,7 +199,7 @@ jobs:
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9933/
-    
+
       - name: Test Report Sequential
         uses: phoenix-actions/test-reporting@v8
         id: test-report-sequential
@@ -212,7 +213,7 @@ jobs:
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
-        
+
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |

@@ -17,7 +17,9 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData};
+use up_data_structs::{
+	TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData, TokenOwnerError,
+};
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
 	weights::WeightInfo as _,
@@ -85,6 +87,10 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn approve() -> Weight {
 		<SelfWeightOf<T>>::approve()
+	}
+
+	fn approve_from() -> Weight {
+		<SelfWeightOf<T>>::approve_from()
 	}
 
 	fn transfer_from() -> Weight {
@@ -254,6 +260,25 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		)
 	}
 
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo {
+		ensure!(
+			token == TokenId::default(),
+			<Error<T>>::FungibleItemsHaveNoId
+		);
+
+		with_weight(
+			<Pallet<T>>::set_allowance_from(self, &sender, &from, &to, amount),
+			<CommonWeights<T>>::approve_from(),
+		)
+	}
+
 	fn transfer_from(
 		&self,
 		sender: T::CrossAccountId,
@@ -381,8 +406,8 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		TokenId::default()
 	}
 
-	fn token_owner(&self, _token: TokenId) -> Option<T::CrossAccountId> {
-		None
+	fn token_owner(&self, _token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
+		Err(TokenOwnerError::MultipleOwners)
 	}
 
 	/// Returns 10 tokens owners in no particular order.

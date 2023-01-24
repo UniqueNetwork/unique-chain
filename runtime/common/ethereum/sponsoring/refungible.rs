@@ -139,8 +139,7 @@ mod erc721 {
 			| BalanceOf { .. }
 			| OwnerOf { .. }
 			| GetApproved { .. }
-			| IsApprovedForAll { .. }
-			| CollectionHelperAddress => None,
+			| IsApprovedForAll { .. } => None,
 
 			// Not sponsored
 			SafeTransferFromWithData { .. }
@@ -230,7 +229,8 @@ mod erc721 {
 			| CrossOwnerOf { .. }
 			| Properties { .. }
 			| NextTokenId
-			| TokenContractAddress { .. } => None,
+			| TokenContractAddress { .. }
+			| CollectionHelperAddress => None,
 
 			// Not sponsored
 			BurnFrom { .. }
@@ -265,11 +265,9 @@ mod erc721 {
 
 		match call {
 			// Readonly
-			ERC165Call(_, _) | MintingFinished => None,
+			ERC165Call(_, _) => None,
 
-			// Not sponsored
-			FinishMinting => None,
-
+			// Sponsored
 			Mint { .. }
 			| MintCheckId { .. }
 			| MintWithTokenUri { .. }

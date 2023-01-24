@@ -29,6 +29,7 @@ import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json';
 import refungibleAbi from '../../abi/reFungible.json';
 import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json';
 import refungibleTokenAbi from '../../abi/reFungibleToken.json';
+import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json';
 import contractHelpersAbi from '../../abi/contractHelpers.json';
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 import {TCollectionMode} from '../../../util/playgrounds/types';
@@ -187,17 +188,18 @@ class NativeContractGroup extends EthGroupBase {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller, mergeDeprecated);
   }
 
-  async rftToken(address: string, caller?: string) {
+  async rftToken(address: string, caller?: string, mergeDeprecated = false) {
     const web3 = this.helper.getWeb3();
-    return unlimitedMoneyHack(new web3.eth.Contract(refungibleTokenAbi as any, address, {
+    const abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
+    return unlimitedMoneyHack(new web3.eth.Contract(abi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
       gasPrice: await this.getGasPrice(),
       ...(caller ? {from: caller} : {}),
     }));
   }
 
-  rftTokenById(collectionId: number, tokenId: number, caller?: string) {
-    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller);
+  rftTokenById(collectionId: number, tokenId: number, caller?: string, mergeDeprecated = false) {
+    return this.rftToken(this.helper.ethAddress.fromTokenId(collectionId, tokenId), caller, mergeDeprecated);
   }
 }
 
@@ -255,7 +257,7 @@ class EthGroup extends EthGroupBase {
     }
   }
 
-  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createCollection(mode: TCollectionMode, signer: string, name: string, description: string, tokenPrefix: string, decimals = 18, mergeDeprecated = false): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[], collection: Contract }> {
     const collectionCreationPrice = this.helper.balance.getCollectionCreationPrice();
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
     const functionName: string = this.createCollectionMethodName(mode);
@@ -266,8 +268,9 @@ class EthGroup extends EthGroupBase {
     const collectionAddress = this.helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId);
     const collectionId = this.helper.ethAddress.extractCollectionId(collectionAddress);
     const events = this.helper.eth.normalizeEvents(result.events);
+    const collection = await this.helper.ethNativeContract.collectionById(collectionId, mode, signer, mergeDeprecated);
 
-    return {collectionId, collectionAddress, events};
+    return {collectionId, collectionAddress, events, collection};
   }
 
   createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {

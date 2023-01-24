@@ -82,6 +82,16 @@ benchmarks! {
 		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200), &Unlimited)?;
 	}: {<Pallet<T>>::set_allowance(&collection, &sender, &spender, 100)?}
 
+	approve_from {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;
+
+		};
+		let owner_eth = T::CrossAccountId::from_eth(*sender.as_eth());
+		<Pallet<T>>::create_item(&collection, &owner, (owner_eth.clone(), 200), &Unlimited)?;
+	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, &spender, 100)?}
+
 	transfer_from {
 		bench_init!{
 			owner: sub; collection: collection(owner);

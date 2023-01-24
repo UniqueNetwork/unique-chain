@@ -63,27 +63,27 @@ impl_abi!(u64, uint64, false);
 impl_abi!(u128, uint128, false);
 impl_abi!(U256, uint256, false);
 impl_abi!(H160, address, false);
-impl_abi!(string, string, true);
+impl_abi!(String, string, true);
 
 impl_abi_writeable!(&str, string);
 
-impl_abi_type!(bytes, bytes, true);
+impl_abi_type!(Bytes, bytes, true);
 
-impl AbiRead for bytes {
-	fn abi_read(reader: &mut AbiReader) -> Result<bytes> {
-		Ok(bytes(reader.bytes()?))
+impl AbiRead for Bytes {
+	fn abi_read(reader: &mut AbiReader) -> Result<Bytes> {
+		Ok(Bytes(reader.bytes()?))
 	}
 }
 
-impl AbiWrite for bytes {
+impl AbiWrite for Bytes {
 	fn abi_write(&self, writer: &mut AbiWriter) {
 		writer.bytes(self.0.as_slice())
 	}
 }
 
-impl_abi_type!(bytes4, bytes4, false);
-impl AbiRead for bytes4 {
-	fn abi_read(reader: &mut AbiReader) -> Result<bytes4> {
+impl_abi_type!(Bytes4, bytes4, false);
+impl AbiRead for Bytes4 {
+	fn abi_read(reader: &mut AbiReader) -> Result<Bytes4> {
 		reader.bytes4()
 	}
 }
@@ -258,3 +258,39 @@ impl_tuples! {A B C D E F G}
 impl_tuples! {A B C D E F G H}
 impl_tuples! {A B C D E F G H I}
 impl_tuples! {A B C D E F G H I J}
+
+//----- impls for Option -----
+impl<T: AbiType> AbiType for Option<T> {
+	const SIGNATURE: SignatureUnit = <(bool, T)>::SIGNATURE;
+
+	fn is_dynamic() -> bool {
+		<(bool, T)>::is_dynamic()
+	}
+
+	fn size() -> usize {
+		<(bool, T)>::size()
+	}
+}
+
+impl<T: AbiWrite + AbiType + Default> AbiWrite for Option<T> {
+	fn abi_write(&self, writer: &mut AbiWriter) {
+		match self {
+			Some(value) => (true, value).abi_write(writer),
+			None => (false, T::default()).abi_write(writer),
+		}
+	}
+}
+
+impl<T> AbiRead for Option<T>
+where
+	Self: AbiType,
+	T: AbiRead + AbiType,
+{
+	fn abi_read(reader: &mut AbiReader) -> Result<Self>
+	where
+		Self: Sized,
+	{
+		let (status, value) = <(bool, T)>::abi_read(reader)?;
+		Ok(if status { Some(value) } else { None })
+	}
+}

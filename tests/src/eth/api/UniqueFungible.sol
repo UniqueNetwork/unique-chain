@@ -175,11 +175,9 @@ interface Collection is Dummy, ERC165 {
 
 	/// Set the collection access method.
 	/// @param mode Access mode
-	/// 	0 for Normal
-	/// 	1 for AllowList
 	/// @dev EVM selector for this function is: 0x41835d4c,
 	///  or in textual repr: setCollectionAccess(uint8)
-	function setCollectionAccess(uint8 mode) external;
+	function setCollectionAccess(AccessMode mode) external;
 
 	/// Checks that user allowed to operate with collection.
 	///
@@ -285,6 +283,14 @@ struct CrossAddress {
 	uint256 sub;
 }
 
+/// Ethereum representation of `AccessMode` (see [`up_data_structs::AccessMode`]).
+enum AccessMode {
+	/// Access grant for owner and admins. Used as default.
+	Normal,
+	/// Like a [`Normal`](AccessMode::Normal) but also users in allow list.
+	AllowList
+}
+
 /// Ethereum representation of `NestingPermissions` (see [`up_data_structs::NestingPermissions`]) field.
 struct CollectionNestingPermission {
 	CollectionPermissionField field;
@@ -308,12 +314,14 @@ struct CollectionNesting {
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
 struct CollectionLimit {
 	CollectionLimitField field;
-	OptionUint value;
+	OptionUint256 value;
 }
 
-/// Ethereum representation of Optional value with uint256.
-struct OptionUint {
+/// Optional value
+struct OptionUint256 {
+	/// Shows the status of accessibility of value
 	bool status;
+	/// Actual value if `status` is true
 	uint256 value;
 }
 

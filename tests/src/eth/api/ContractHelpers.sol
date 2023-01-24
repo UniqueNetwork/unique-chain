@@ -181,11 +181,11 @@ enum SponsoringModeT {
 	Generous
 }
 
-/// Ethereum representation of Optional value with CrossAddress.
+/// Optional value
 struct OptionCrossAddress {
-	/// TODO: field description
+	/// Shows the status of accessibility of value
 	bool status;
-	/// TODO: field description
+	/// Actual value if `status` is true
 	CrossAddress value;
 }
 

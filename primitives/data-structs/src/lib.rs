@@ -1099,6 +1099,13 @@ pub enum PropertiesError {
 	EmptyPropertyKey,
 }
 
+/// Token owner error: it could be either `NotFound` ot `MultipleOwners`.
+#[derive(Debug)]
+pub enum TokenOwnerError {
+	NotFound,
+	MultipleOwners,
+}
+
 /// Marker for scope of property.
 ///
 /// Scoped property can't be changed by user. Used for external collections.

@@ -1,4 +1,15 @@
+# Change Log
+
+All notable changes to this project will be documented in this file.
+
 <!-- bureaucrate goes here -->
+
+## [0.1.3] - 2022-12-29
+
+### Added
+
+- The ability to configure pallet `collator-selection` via the `configuration` pallet.
+
 ## [0.1.2] - 2022-12-13
 
 ### Added

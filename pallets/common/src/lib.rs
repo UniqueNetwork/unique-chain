@@ -100,6 +100,7 @@ use up_data_structs::{
 	PropertyValue,
 	PropertyPermission,
 	PropertiesError,
+	TokenOwnerError,
 	PropertyKeyPermission,
 	TokenData,
 	TrySetProperty,
@@ -390,8 +391,10 @@ impl<T: Config> CollectionHandle<T> {
 		Ok(())
 	}
 
-	/// Return **true** if `user` was not allowed to have tokens, and he can ignore such restrictions.
-	pub fn ignores_allowance(&self, user: &T::CrossAccountId) -> bool {
+	/// Returns **true** if
+	/// * the `user`is a collection owner or admin
+	/// * the collection limits allow the owner/admins to transfer/burn any collection token
+	pub fn ignores_token_restrictions(&self, user: &T::CrossAccountId) -> bool {
 		self.limits.owner_can_transfer() && self.is_owner_or_admin(user)
 	}
 
@@ -498,8 +501,16 @@ pub mod pallet {
 		}
 	}
 
+	impl<T: Config> Pallet<T> {
+		/// Helper function that handles deposit events
+		pub fn deposit_event(event: Event<T>) {
+			let event = <T as Config>::RuntimeEvent::from(event);
+			let event = event.into();
+			<frame_system::Pallet<T>>::deposit_event(event)
+		}
+	}
+
 	#[pallet::event]
-	#[pallet::generate_deposit(pub fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// New collection was created
 		CollectionCreated(
@@ -746,6 +757,8 @@ pub mod pallet {
 		ApprovedValueTooLow,
 		/// Tried to approve more than owned
 		CantApproveMoreThanOwned,
+		/// Only spending from eth mirror could be approved
+		AddressIsNotEthMirror,
 
 		/// Can't transfer tokens to ethereum zero address
 		AddressIsZero,
@@ -1196,6 +1209,58 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// This function sets or removes a collection properties according to
+	/// `properties_updates` contents:
+	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
+	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
+	///
+	/// This function fires an event for each property change.
+	/// In case of an error, all the changes (including the events) will be reverted
+	/// since the function is transactional.
+	#[transactional]
+	fn modify_collection_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+	) -> DispatchResult {
+		collection.check_is_owner_or_admin(sender)?;
+
+		let mut stored_properties = <CollectionProperties<T>>::get(collection.id);
+
+		for (key, value) in properties_updates {
+			match value {
+				Some(value) => {
+					stored_properties
+						.try_set(key.clone(), value)
+						.map_err(<Error<T>>::from)?;
+
+					Self::deposit_event(Event::CollectionPropertySet(collection.id, key));
+					<PalletEvm<T>>::deposit_log(
+						erc::CollectionHelpersEvents::CollectionChanged {
+							collection_id: eth::collection_id_to_address(collection.id),
+						}
+						.to_log(T::ContractAddress::get()),
+					);
+				}
+				None => {
+					stored_properties.remove(&key).map_err(<Error<T>>::from)?;
+
+					Self::deposit_event(Event::CollectionPropertyDeleted(collection.id, key));
+					<PalletEvm<T>>::deposit_log(
+						erc::CollectionHelpersEvents::CollectionChanged {
+							collection_id: eth::collection_id_to_address(collection.id),
+						}
+						.to_log(T::ContractAddress::get()),
+					);
+				}
+			}
+		}
+
+		<CollectionProperties<T>>::set(collection.id, stored_properties);
+
+		Ok(())
+	}
+
 	/// Set collection property.
 	///
 	/// * `collection` - Collection handler.
@@ -1206,23 +1271,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property: Property,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
-
-		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
-			let property = property.clone();
-			properties.try_set(property.key, property.value)
-		})
-		.map_err(<Error<T>>::from)?;
-
-		Self::deposit_event(Event::CollectionPropertySet(collection.id, property.key));
-		<PalletEvm<T>>::deposit_log(
-			erc::CollectionHelpersEvents::CollectionChanged {
-				collection_id: eth::collection_id_to_address(collection.id),
-			}
-			.to_log(T::ContractAddress::get()),
-		);
-
-		Ok(())
+		Self::set_collection_properties(collection, sender, [property].into_iter())
 	}
 
 	/// Set a scoped collection property, where the scope is a special prefix
@@ -1268,17 +1317,16 @@ impl<T: Config> Pallet<T> {
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `properties` - The properties to set.
-	#[transactional]
 	pub fn set_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		properties: Vec<Property>,
+		properties: impl Iterator<Item = Property>,
 	) -> DispatchResult {
-		for property in properties {
-			Self::set_collection_property(collection, sender, property)?;
-		}
-
-		Ok(())
+		Self::modify_collection_properties(
+			collection,
+			sender,
+			properties.map(|property| (property.key, Some(property.value))),
+		)
 	}
 
 	/// Delete collection property.
@@ -1291,25 +1339,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		property_key: PropertyKey,
 	) -> DispatchResult {
-		collection.check_is_owner_or_admin(sender)?;
-
-		CollectionProperties::<T>::try_mutate(collection.id, |properties| {
-			properties.remove(&property_key)
-		})
-		.map_err(<Error<T>>::from)?;
-
-		Self::deposit_event(Event::CollectionPropertyDeleted(
-			collection.id,
-			property_key,
-		));
-		<PalletEvm<T>>::deposit_log(
-			erc::CollectionHelpersEvents::CollectionChanged {
-				collection_id: eth::collection_id_to_address(collection.id),
-			}
-			.to_log(T::ContractAddress::get()),
-		);
-
-		Ok(())
+		Self::delete_collection_properties(collection, sender, [property_key].into_iter())
 	}
 
 	/// Delete collection properties.
@@ -1317,17 +1347,12 @@ impl<T: Config> Pallet<T> {
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
 	/// * `properties` - The properties to delete.
-	#[transactional]
 	pub fn delete_collection_properties(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
-		property_keys: Vec<PropertyKey>,
+		property_keys: impl Iterator<Item = PropertyKey>,
 	) -> DispatchResult {
-		for key in property_keys {
-			Self::delete_collection_property(collection, sender, key)?;
-		}
-
-		Ok(())
+		Self::modify_collection_properties(collection, sender, property_keys.map(|key| (key, None)))
 	}
 
 	/// Set collection propetry permission without any checks.
@@ -1797,6 +1822,9 @@ pub trait CommonWeightInfo<CrossAccountId> {
 	/// The price of setting the permission of the operation from another user.
 	fn approve() -> Weight;
 
+	/// The price of setting the permission of the operation from another user for eth mirror.
+	fn approve_from() -> Weight;
+
 	/// Transfer price from another user.
 	fn transfer_from() -> Weight;
 
@@ -2008,6 +2036,22 @@ pub trait CommonCollectionOperations<T: Config> {
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
 
+	/// Grant access to another account to transfer parts of the token owned by the calling user's eth mirror via [Self::transfer_from].
+	///
+	/// * `sender` - The user who grants access to the token.
+	/// * `from` - Spender's eth mirror.
+	/// * `to` - The user to whom the rights are granted.
+	/// * `token` - The token to which access is granted.
+	/// * `amount` - The amount of pieces that another user can dispose of.
+	fn approve_from(
+		&self,
+		sender: T::CrossAccountId,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResultWithPostInfo;
+
 	/// Send parts of a token owned by another user.
 	///
 	/// Before calling this method, you must grant rights to the calling user via [`Self::approve`].
@@ -2091,7 +2135,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// Get the owner of the token.
 	///
 	/// * `token` - The token for which you need to find out the owner.
-	fn token_owner(&self, token: TokenId) -> Option<T::CrossAccountId>;
+	fn token_owner(&self, token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError>;
 
 	/// Returns 10 tokens owners in no particular order.
 	///

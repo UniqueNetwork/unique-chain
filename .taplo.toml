@@ -1,0 +1,9 @@
+[formatting]
+array_auto_collapse = true
+array_auto_expand = true
+array_trailing_comma = true
+column_width = 120
+indent_string = "\t"
+reorder_arrays = true
+reorder_keys = true
+trailing_newline = true

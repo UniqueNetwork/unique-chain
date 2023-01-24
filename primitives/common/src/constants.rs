@@ -42,11 +42,20 @@ pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
 pub const CENTIUNIQUE: Balance = 10 * MILLIUNIQUE;
 pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
+/// Minimum balance required to create or keep an account open.
+pub const EXISTENTIAL_DEPOSIT: u128 = 0;
+/// Amount of Balance reserved for candidate registration.
+pub const GENESIS_LICENSE_BOND: u128 = 1_000_000_000_000 * UNIQUE;
+/// Amount of maximum collators for Collator Selection.
+pub const MAX_COLLATORS: u32 = 10;
+/// How long a periodic session lasts in blocks.
+pub const SESSION_LENGTH: BlockNumber = HOURS;
+
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_071_069_464_131_590/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_191_946_012_018_089/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_014_754_530_878/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_016_390_998_841/*</mingasprice>*/;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.

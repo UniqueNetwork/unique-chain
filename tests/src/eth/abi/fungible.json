@@ -222,7 +222,7 @@
               { "internalType": "bool", "name": "status", "type": "bool" },
               { "internalType": "uint256", "name": "value", "type": "uint256" }
             ],
-            "internalType": "struct OptionUint",
+            "internalType": "struct OptionUint256",
             "name": "value",
             "type": "tuple"
           }
@@ -488,7 +488,9 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "uint8", "name": "mode", "type": "uint8" }],
+    "inputs": [
+      { "internalType": "enum AccessMode", "name": "mode", "type": "uint8" }
+    ],
     "name": "setCollectionAccess",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -508,7 +510,7 @@
               { "internalType": "bool", "name": "status", "type": "bool" },
               { "internalType": "uint256", "name": "value", "type": "uint256" }
             ],
-            "internalType": "struct OptionUint",
+            "internalType": "struct OptionUint256",
             "name": "value",
             "type": "tuple"
           }

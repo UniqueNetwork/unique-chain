@@ -266,10 +266,12 @@ decl_module! {
 		/// * `token_prefix`: Byte string containing the token prefix to mark a collection
 		/// to which a token belongs (limit [`MAX_TOKEN_PREFIX_LENGTH`]).
 		/// * `mode`: Type of items stored in the collection and type dependent data.
-		// returns collection ID
+		///
+		/// returns collection ID
+		///
+		/// Deprecated: `create_collection_ex` is more up-to-date and advanced, prefer it instead.
 		#[weight = <SelfWeightOf<T>>::create_collection()]
-		#[deprecated(note = "`create_collection_ex` is more up-to-date and advanced, prefer it instead")]
-		pub fn create_collection(
+		fn create_collection(
 			origin,
 			collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 			collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
@@ -849,6 +851,29 @@ decl_module! {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			dispatch_tx::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount))
+		}
+
+		/// Allow a non-permissioned address to transfer or burn an item from owner's eth mirror.
+		///
+		/// # Permissions
+		///
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current item owner
+		///
+		/// # Arguments
+		///
+		/// * `from`: Owner's account eth mirror
+		/// * `to`: Account to be approved to make specific transactions on non-owned tokens.
+		/// * `collection_id`: ID of the collection the item belongs to.
+		/// * `item_id`: ID of the item transactions on which are now approved.
+		/// * `amount`: Number of pieces of the item approved for a transaction (maximum of 1 for NFTs).
+		/// Set to 0 to revoke the approval.
+		#[weight = T::CommonWeightInfo::approve_from()]
+		pub fn approve_from(origin, from:T::CrossAccountId, to: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+
+			dispatch_tx::<T, _>(collection_id, |d| d.approve_from(sender, from, to, item_id, amount))
 		}
 
 		/// Change ownership of an item on behalf of the owner as a non-owner account.

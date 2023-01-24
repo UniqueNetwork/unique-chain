@@ -100,6 +100,9 @@ export const DONOR_FUNDING = 1_000_000n;
 export const LOCKING_PERIOD = 12n; // 12 blocks of relay
 export const UNLOCKING_PERIOD = 6n; // 6 blocks of parachain
 
+// Native contracts
+export const COLLECTION_HELPER = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';
+export const CONTRACT_HELPER = '0x842899ECF380553E8a4de75bF534cdf6fBF64049';
 
 export enum Pallets {
   Inflation = 'inflation',
@@ -110,6 +113,9 @@ export enum Pallets {
   NFT = 'nonfungible',
   Scheduler = 'scheduler',
   AppPromotion = 'apppromotion',
+  CollatorSelection = 'collatorselection',
+  Session = 'session',
+  Identity = 'identity',
   TestUtils = 'testutils',
 }
 
