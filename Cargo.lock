@@ -5783,7 +5783,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-common"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "ethereum 0.14.0",
  "evm-coder",
@@ -6340,7 +6340,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-nonfungible"
-version = "0.1.12"
+version = "0.1.13"
 dependencies = [
  "evm-coder",
  "frame-benchmarking",
@@ -6499,7 +6499,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-refungible"
-version = "0.2.11"
+version = "0.2.12"
 dependencies = [
  "evm-coder",
  "frame-benchmarking",

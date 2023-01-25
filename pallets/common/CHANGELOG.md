@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.13] - 2023-01-20
+
+### Changed
+
+- Behavior of the `CommonWeightInfo::create_item` method.
+
 ## [0.1.12] - 2022-11-16
 
 ### Changed

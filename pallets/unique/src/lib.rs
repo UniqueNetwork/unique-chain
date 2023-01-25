@@ -518,7 +518,7 @@ decl_module! {
 		/// * `collection_id`: ID of the collection to which an item would belong.
 		/// * `owner`: Address of the initial owner of the item.
 		/// * `data`: Token data describing the item to store on chain.
-		#[weight = T::CommonWeightInfo::create_item()]
+		#[weight = T::CommonWeightInfo::create_item(&data)]
 		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);

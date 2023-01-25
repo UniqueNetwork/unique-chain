@@ -35,10 +35,6 @@ use crate::{
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
-	fn create_item() -> Weight {
-		<SelfWeightOf<T>>::create_item()
-	}
-
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match data {
 			CreateItemExData::NFT(t) => {
@@ -159,6 +155,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		data: up_data_structs::CreateItemData,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let weight = <CommonWeights<T>>::create_item(&data);
 		with_weight(
 			<Pallet<T>>::create_item(
 				self,
@@ -166,7 +163,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				map_create_data::<T>(data, &to)?,
 				nesting_budget,
 			),
-			<CommonWeights<T>>::create_item(),
+			weight,
 		)
 	}
 
