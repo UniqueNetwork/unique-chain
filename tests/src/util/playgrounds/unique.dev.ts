@@ -187,7 +187,7 @@ export class DevAcalaHelper extends AcalaHelper {
 
 export class DevKaruraHelper extends DevAcalaHelper {}
 
-class ArrangeGroup {
+export class ArrangeGroup {
   helper: DevUniqueHelper;
 
   scheduledIdSlider = 0;
