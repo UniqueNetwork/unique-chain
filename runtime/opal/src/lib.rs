@@ -34,6 +34,8 @@ use sp_runtime::create_runtime_str;
 
 use up_common::types::*;
 
+use ::xcm::latest::NetworkId;
+
 #[path = "../../common/mod.rs"]
 mod runtime_common;
 
@@ -63,6 +65,7 @@ parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 42;
 	pub const ChainId: u64 = 8882;
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 }
 
 construct_runtime!();

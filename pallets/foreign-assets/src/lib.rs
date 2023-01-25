@@ -52,10 +52,10 @@ use sp_runtime::{
 use sp_std::{boxed::Box, vec::Vec};
 use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
-// NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
-// MultiLocation in the future.
+// NOTE: MultiLocation is used in storages, we will need to do migration if upgrade the
+// MultiLocation to the XCM v3.
 use xcm::opaque::latest::{prelude::XcmError, Weight};
-use xcm::{v1::MultiLocation, VersionedMultiLocation};
+use xcm::{latest::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
 
 use pallet_common::erc::CrossAccountId;
@@ -250,7 +250,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_locations)]
 	pub type ForeignAssetLocations<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, MultiLocation, OptionQuery>;
+		StorageMap<_, Twox64Concat, ForeignAssetId, xcm::v2::MultiLocation, OptionQuery>;
 
 	/// The storages for CurrencyIds.
 	///
@@ -258,7 +258,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
 	pub type LocationToCurrencyIds<T: Config> =
-		StorageMap<_, Twox64Concat, MultiLocation, ForeignAssetId, OptionQuery>;
+		StorageMap<_, Twox64Concat, xcm::v2::MultiLocation, ForeignAssetId, OptionQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
