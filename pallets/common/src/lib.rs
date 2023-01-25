@@ -53,7 +53,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
-use core::ops::{Deref, DerefMut};
+use core::{
+	ops::{Deref, DerefMut},
+	slice::from_ref,
+};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
@@ -1780,7 +1783,9 @@ macro_rules! unsupported {
 /// Return weights for various worst-case operations.
 pub trait CommonWeightInfo<CrossAccountId> {
 	/// Weight of item creation.
-	fn create_item() -> Weight;
+	fn create_item(data: &CreateItemData) -> Weight {
+		Self::create_multiple_items(from_ref(data))
+	}
 
 	/// Weight of items creation.
 	fn create_multiple_items(amount: &[CreateItemData]) -> Weight;

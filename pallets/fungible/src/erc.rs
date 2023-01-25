@@ -57,7 +57,7 @@ pub enum ERC20Events {
 	},
 }
 
-#[solidity_interface(name = ERC20, events(ERC20Events))]
+#[solidity_interface(name = ERC20, events(ERC20Events), expect_selector = 0x942e8b22)]
 impl<T: Config> FungibleHandle<T> {
 	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -134,11 +134,6 @@ impl<T: Config> FungibleHandle<T> {
 		let spender = T::CrossAccountId::from_eth(spender);
 
 		Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
-	}
-
-	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<Address> {
-		Ok(T::ContractAddress::get())
 	}
 }
 
@@ -311,6 +306,11 @@ where
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
+	}
+
+	/// @notice Returns collection helper contract address
+	fn collection_helper_address(&self) -> Result<Address> {
+		Ok(T::ContractAddress::get())
 	}
 }
 
