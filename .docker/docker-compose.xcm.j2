@@ -1,0 +1,22 @@
+version: "3.5"
+
+services:
+  xcm_nodes:
+    image: uniquenetwork/ci-xcm-local:{{ NETWORK }}-{{ BUILD_TAG }}
+    container_name: xcm-{{ NETWORK }}-local
+    expose:
+      - 9844
+      - 9933
+      - 9944
+      - 9946
+      - 9947
+      - 9948
+    ports:
+      - 127.0.0.1:9844:9844
+      - 127.0.0.1:9933:9933      
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9946:9946
+      - 127.0.0.1:9947:9947
+      - 127.0.0.1:9948:9948
+
+
