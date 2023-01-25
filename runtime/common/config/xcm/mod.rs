@@ -21,7 +21,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
-use xcm::latest::{prelude::*, Weight, MultiLocation, NetworkId};
+use xcm::latest::{prelude::*, Weight, MultiLocation};
 use xcm_builder::{
 	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentAsSuperuser,
 	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
@@ -31,7 +31,7 @@ use xcm_executor::{Config, XcmExecutor, traits::ShouldExecute};
 use sp_std::{marker::PhantomData, vec::Vec};
 use crate::{
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo, ParachainSystem, PolkadotXcm,
-	XcmpQueue, xcm_barrier::Barrier,
+	XcmpQueue, xcm_barrier::Barrier, RelayNetwork,
 };
 
 use up_common::types::AccountId;
@@ -52,7 +52,6 @@ use xcm_assets::{AssetTransactors, IsReserve, Trader};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
-	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));

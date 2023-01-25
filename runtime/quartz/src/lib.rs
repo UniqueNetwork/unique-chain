@@ -34,6 +34,8 @@ use sp_runtime::create_runtime_str;
 
 use up_common::types::*;
 
+use ::xcm::latest::NetworkId;
+
 #[path = "../../common/mod.rs"]
 mod runtime_common;
 
@@ -64,6 +66,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 
 parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
+	pub const RelayNetwork: NetworkId = NetworkId::Kusama;
 }
 #[cfg(feature = "become-sapphire")]
 parameter_types! {
