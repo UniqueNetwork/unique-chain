@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.2.12] - 2023-01-20
+
+### Fixed
+
+- The weight of properties when creating an item.
+
 ## [0.2.11] - 2022-12-16
 
 ### Added

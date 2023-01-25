@@ -2,7 +2,7 @@
 edition = "2021"
 license = "GPLv3"
 name = "pallet-nonfungible"
-version = "0.1.12"
+version = "0.1.13"
 
 [dependencies]
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
