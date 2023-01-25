@@ -46,12 +46,12 @@ jobs:
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}-data
+    name: ${{ matrix.network }}-data-build
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: false         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     steps:
       - name: Clean Workspace
@@ -262,7 +262,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless-data.${{ matrix.network }}.yml" down --volumes
+        run: docker-compose -f ".docker/docker-compose.forkless-data.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always
