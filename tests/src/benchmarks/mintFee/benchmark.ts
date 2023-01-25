@@ -9,7 +9,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
-import {FeeGas} from '../../eth/util/playgrounds/unique.dev';
 
 const CONTRACT_IMPORT: ContractImports[] = [
   {
@@ -590,7 +589,7 @@ async function calculateFeeNftMintWithProperties(
     await calculatedCall(collection);
   });
 }
-function convertToTokens(value: bigint, nominal: bigint): number {
+function convertToTokens(value: bigint, nominal = 1000_000_000_000_000_000n): number {
   return Number((value * 1000n) / nominal) / 1000;
 }
 
@@ -635,11 +634,26 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.mint(ethSigner).send(),
     );
 
+  res['mint'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.mintToken(
+      donor,
+      {Ethereum: ethSigner},
+    ),
+  )));
+
   res['mintCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.mintCross(crossSigner, []).send(),
     );
+
+  res['mintCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.mintMultipleTokens(donor, [{
+      owner: {Ethereum: ethSigner},
+    }]),
+  )));
 
   res['mintWithTokenURI'] =
     await helper.arrange.calculcateFeeGas(
@@ -737,13 +751,22 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.setCollectionProperties(PROPERTIES.slice(0, 1)).send(),
     );
 
-
-
   res['deleteCollectionProperties'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () =>  evmContract.methods.deleteCollectionProperties(PROPERTIES.slice(0,1).map(p => p.key)).send(),
     );
+  res['setCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setProperties(donor, PROPERTIES.slice(0, 1)
+      .map(p => { return {key: p.key, value: p.value.toString()}; })),
+  )));
+
+  res['deleteCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.deleteProperties(donor, PROPERTIES.slice(0, 1)
+      .map(p => p.key)),
+  )));
 
   res['setCollectionLimit'] =
     await helper.arrange.calculcateFeeGas(
@@ -808,8 +831,6 @@ async function ERC721CalculateFeeGas(
       {Ethereum: ethSigner},
       () =>  collectionWithEthOwner.methods.changeCollectionOwnerCross(crossReceiver).send(),
     );
-  for (const name in res) {
-    res[name] = {fee: res[name].fee, gas: res[name].gas};
-  }
+
   return res;
 }
