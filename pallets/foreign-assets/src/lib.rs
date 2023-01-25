@@ -250,7 +250,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_locations)]
 	pub type ForeignAssetLocations<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, MultiLocation, OptionQuery>;
+		StorageMap<_, Twox64Concat, ForeignAssetId, xcm::v2::MultiLocation, OptionQuery>;
 
 	/// The storages for CurrencyIds.
 	///
@@ -258,7 +258,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
 	pub type LocationToCurrencyIds<T: Config> =
-		StorageMap<_, Twox64Concat, MultiLocation, ForeignAssetId, OptionQuery>;
+		StorageMap<_, Twox64Concat, xcm::v2::MultiLocation, ForeignAssetId, OptionQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
