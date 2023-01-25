@@ -47,7 +47,7 @@ mod pallet {
 		BoundedVec, log,
 	};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
-	use xcm::v1::MultiLocation;
+	use xcm::latest::MultiLocation;
 
 	pub use crate::weights::WeightInfo;
 	pub type BalanceOf<T> =

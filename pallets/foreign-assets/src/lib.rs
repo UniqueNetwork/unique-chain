@@ -52,10 +52,10 @@ use sp_runtime::{
 use sp_std::{boxed::Box, vec::Vec};
 use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
-// NOTE:v1::MultiLocation is used in storages, we would need to do migration if upgrade the
-// MultiLocation in the future.
+// NOTE: MultiLocation is used in storages, we will need to do migration if upgrade the
+// MultiLocation to the XCM v3.
 use xcm::opaque::latest::{prelude::XcmError, Weight};
-use xcm::{v1::MultiLocation, VersionedMultiLocation};
+use xcm::{latest::MultiLocation, VersionedMultiLocation};
 use xcm_executor::{traits::WeightTrader, Assets};
 
 use pallet_common::erc::CrossAccountId;

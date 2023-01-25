@@ -21,8 +21,7 @@ use frame_support::{
 use frame_system::EnsureSigned;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use sp_runtime::traits::Convert;
-use xcm::v1::{Junction::*, Junctions::*, MultiLocation, NetworkId};
-use xcm::latest::Weight;
+use xcm::latest::{Weight, Junction::*, Junctions::*, MultiLocation, NetworkId};
 use xcm_builder::LocationInverter;
 use xcm_executor::XcmExecutor;
 use sp_std::{vec, vec::Vec};
