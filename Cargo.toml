@@ -18,7 +18,7 @@ resolver = "2"
 panic = 'unwind'
 
 [workspace.dependencies]
-orml-tokens = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
-orml-traits = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
-orml-vesting = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
-orml-xtokens = { git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "feature/polkadot-v0.9.36", default-features = false }
+orml-tokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.37", default-features = false }
+orml-traits = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.37", default-features = false }
+orml-vesting = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.37", default-features = false }
+orml-xtokens = { git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.37", default-features = false }
