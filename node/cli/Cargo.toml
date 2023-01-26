@@ -79,27 +79,20 @@ try-runtime-cli = { git = "https://github.com/paritytech/substrate", branch = "p
 unique-runtime = { path = "../../runtime/unique", optional = true }
 up-common.path = "../../primitives/common"
 up-data-structs = { path = "../../primitives/data-structs", default-features = false }
-up-rpc.path = "../../primitives/rpc"
 
-fc-consensus.git = "https://github.com/uniquenetwork/unique-frontier"
-
-fc-consensus.branch = "unique-polkadot-v0.9.37"
-fc-db.git = "https://github.com/uniquenetwork/unique-frontier"
-fc-db.branch = "unique-polkadot-v0.9.37"
-fc-mapping-sync.git = "https://github.com/uniquenetwork/unique-frontier"
-fc-mapping-sync.branch = "unique-polkadot-v0.9.37"
-fc-rpc-core.git = "https://github.com/uniquenetwork/unique-frontier"
-fc-rpc-core.branch = "unique-polkadot-v0.9.37"
-fc-rpc.git = "https://github.com/uniquenetwork/unique-frontier"
-fc-rpc.branch = "unique-polkadot-v0.9.37"
-fp-rpc.git = "https://github.com/uniquenetwork/unique-frontier"
-fp-rpc.branch = "unique-polkadot-v0.9.37"
+fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
+fc-db = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
+fc-rpc = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
+fc-rpc-core = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
+fp-rpc = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
 
 app-promotion-rpc = { path = "../../primitives/app_promotion_rpc", default-features = false }
 rmrk-rpc.path = "../../primitives/rmrk-rpc"
 uc-rpc = { default-features = false, path = "../../client/rpc" }
 unique-rpc = { default-features = false, path = "../rpc" }
 up-pov-estimate-rpc = { path = "../../primitives/pov-estimate-rpc", default-features = false }
+up-rpc.path = "../../primitives/rpc"
 
 [features]
 default = ["opal-runtime"]
