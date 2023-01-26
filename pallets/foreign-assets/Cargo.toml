@@ -23,14 +23,6 @@ up-data-structs = { default-features = false, path = "../../primitives/data-stru
 xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
 xcm-executor = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.36", default-features = false }
 
-[dev-dependencies]
-hex = "0.4"
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-serde_json = "1.0.68"
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-io = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-
 [features]
 default = ["std"]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
@@ -45,7 +37,6 @@ std = [
 	"pallet-fungible/std",
 	"scale-info/std",
 	"serde",
-	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"up-data-structs/std",
