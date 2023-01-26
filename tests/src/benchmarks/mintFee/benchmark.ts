@@ -100,7 +100,7 @@ const main = async () => {
 
     const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
     const ethReceiver = await helper.eth.createAccountWithBalance(donor, 5n);
-   
+
     let susbtrateCollection: UniqueNFTCollection | null;
     const createCollectionSubstrateFee = convertToTokens(
       await helper.arrange.calculcateFee({Substrate: donor.address}, async () => {
