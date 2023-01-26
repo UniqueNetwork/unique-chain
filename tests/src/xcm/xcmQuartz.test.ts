@@ -463,13 +463,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V0: {
-          X2: [
-            'Parent',
-            {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
               Parachain: QUARTZ_CHAIN,
             },
-          ],
+          },
         },
       };
 
@@ -494,22 +494,25 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
   itSub('Should connect and send QTZ to Karura', async ({helper}) => {
     const destination = {
-      V0: {
-        X2: [
-          'Parent',
-          {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
             Parachain: KARURA_CHAIN,
           },
-        ],
+        },
       },
     };
 
     const beneficiary = {
-      V0: {
-        X1: {
-          AccountId32: {
-            network: 'Any',
-            id: randomAccount.addressRaw,
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
           },
         },
       },

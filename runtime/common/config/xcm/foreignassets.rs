@@ -19,8 +19,7 @@ use frame_support::{
 	parameter_types,
 };
 use sp_runtime::traits::Convert;
-use xcm::v1::{Junction::*, MultiLocation, Junctions::*};
-use xcm::latest::MultiAsset;
+use xcm::latest::{MultiAsset, Junction::*, MultiLocation, Junctions::*};
 use xcm_builder::{FungiblesAdapter, ConvertedConcreteAssetId};
 use xcm_executor::traits::{Convert as ConvertXcm, JustTry, FilterAssetLocation};
 use pallet_foreign_assets::{

@@ -463,13 +463,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V0: {
-          X2: [
-            'Parent',
-            {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
               Parachain: UNIQUE_CHAIN,
             },
-          ],
+          },
         },
       };
 
@@ -495,22 +495,25 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect and send UNQ to Acala', async ({helper}) => {
 
     const destination = {
-      V0: {
-        X2: [
-          'Parent',
-          {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
             Parachain: ACALA_CHAIN,
           },
-        ],
+        },
       },
     };
 
     const beneficiary = {
-      V0: {
-        X1: {
-          AccountId32: {
-            network: 'Any',
-            id: randomAccount.addressRaw,
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
           },
         },
       },

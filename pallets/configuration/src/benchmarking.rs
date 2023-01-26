@@ -20,7 +20,7 @@ use super::*;
 use frame_benchmarking::benchmarks;
 use frame_system::{EventRecord, RawOrigin};
 use frame_support::{assert_ok, BoundedVec, traits::Currency};
-use xcm::v1::MultiLocation;
+use xcm::latest::MultiLocation;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
