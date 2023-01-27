@@ -5,11 +5,11 @@ name = "app-promotion-rpc"
 version = "0.1.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ["derive"] }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+codec = { workspace = true }
+pallet-evm = { workspace = true }
+sp-api = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 [features]
 default = ["std"]

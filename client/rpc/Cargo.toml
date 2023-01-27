@@ -6,37 +6,40 @@ version = "0.1.4"
 
 [dependencies]
 anyhow = "1.0.57"
-app-promotion-rpc.path = "../../primitives/app_promotion_rpc"
-codec = { package = "parity-scale-codec", version = "3.1.2" }
 jsonrpsee = { version = "0.16.2", features = ["macros", "server"] }
-rmrk-rpc.path = "../../primitives/rmrk-rpc"
 trie-db = { version = "0.24.0", default-features = false }
-up-common = { default-features = false, path = "../../primitives/common" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
-up-pov-estimate-rpc = { path = "../../primitives/pov-estimate-rpc", optional = true }
-up-rpc.path = "../../primitives/rpc"
 zstd = { version = "0.11.2", default-features = false }
 
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-rpc-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-api = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-blockchain = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-externalities = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-keystore = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-state-machine = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-trie = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
 
-frame-benchmarking = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+app-promotion-rpc = { workspace = true }
+rmrk-rpc = { workspace = true }
+up-common = { workspace = true }
+up-data-structs = { workspace = true }
+up-pov-estimate-rpc = { workspace = true, optional = true }
+up-rpc = { workspace = true }
 
-sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+pallet-evm = { workspace = true }
+sc-client-api = { workspace = true }
+sc-rpc-api = { default-features = false, workspace = true }
+sc-service = { workspace = true }
+sp-api = { default-features = false, workspace = true }
+sp-blockchain = { default-features = false, workspace = true }
+sp-core = { default-features = false, workspace = true }
+sp-externalities = { workspace = true }
+sp-keystore = { default-features = false, workspace = true }
+sp-runtime = { default-features = false, workspace = true }
+sp-state-machine = { workspace = true }
+sp-trie = { default-features = false, workspace = true }
 
-opal-runtime.path = "../../runtime/opal"
-quartz-runtime = { path = "../../runtime/quartz", optional = true }
-unique-runtime = { path = "../../runtime/unique", optional = true }
+frame-benchmarking = { workspace = true }
+
+sc-executor = { workspace = true }
+
+opal-runtime = { workspace = true }
+quartz-runtime = { workspace = true, optional = true }
+unique-runtime = { workspace = true, optional = true }
 
 [features]
 pov-estimate = [

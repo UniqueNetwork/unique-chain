@@ -22,11 +22,11 @@ std = [
 ]
 
 [dependencies]
-cumulus-primitives-core = { default-features = false, git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.37" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-sp-consensus-aura = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+cumulus-primitives-core = { workspace = true }
+fp-rpc = { workspace = true }
+frame-support = { workspace = true }
+pallet-evm = { workspace = true }
+sp-consensus-aura = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
