@@ -10,36 +10,36 @@ version = "0.1.2"
 targets = ["x86_64-unknown-linux-gnu"]
 
 [dependencies]
-jsonrpsee = { version = "0.16.2", features = ["macros", "server"] }
+jsonrpsee = { workspace = true }
 # pallet-contracts-rpc = { git = 'https://github.com/paritytech/substrate', branch = 'master' }
-pallet-transaction-payment-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-finality-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-rpc = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-rpc-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-service = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sc-transaction-pool = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-block-builder = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-blockchain = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-substrate-frame-rpc-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+pallet-transaction-payment-rpc = { workspace = true }
+sc-client-api = { workspace = true }
+sc-finality-grandpa = { workspace = true }
+sc-network = { workspace = true }
+sc-rpc = { workspace = true }
+sc-rpc-api = { workspace = true }
+sc-service = { workspace = true }
+sc-transaction-pool = { workspace = true }
+sp-api = { workspace = true }
+sp-block-builder = { workspace = true }
+sp-blockchain = { workspace = true }
+sp-runtime = { workspace = true }
+substrate-frame-rpc-system = { workspace = true }
 
-fc-db = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
+fc-db = { workspace = true }
+fc-rpc = { workspace = true }
+fc-rpc-core = { workspace = true }
+fp-rpc = { workspace = true }
+fp-storage = { workspace = true }
 
-app-promotion-rpc.path = "../../primitives/app_promotion_rpc"
-rmrk-rpc.path = "../../primitives/rmrk-rpc"
-serde = { features = ['derive'], version = "1.0.130" }
-uc-rpc.path = "../../client/rpc"
-up-common.path = "../../primitives/common"
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
-up-pov-estimate-rpc.path = "../../primitives/pov-estimate-rpc"
-up-rpc.path = "../../primitives/rpc"
+app-promotion-rpc = { workspace = true }
+rmrk-rpc = { workspace = true }
+serde = { workspace = true }
+uc-rpc = { workspace = true }
+up-common = { workspace = true }
+up-data-structs = { workspace = true }
+up-pov-estimate-rpc = { workspace = true, default-features = true }
+up-rpc = { workspace = true }
 
 [features]
 default = []

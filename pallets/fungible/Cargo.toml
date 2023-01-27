@@ -5,21 +5,23 @@ name = "pallet-fungible"
 version = "0.1.9"
 
 [dependencies]
-codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
 
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-pallet-common = { default-features = false, path = "../common" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-pallet-evm-coder-substrate = { default-features = false, path = "../evm-coder-substrate" }
-pallet-structure = { default-features = false, path = "../structure" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+scale-info = { workspace = true }
+
+evm-coder = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-common = { workspace = true }
+pallet-evm = { workspace = true }
+pallet-evm-coder-substrate = { workspace = true }
+pallet-structure = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+up-data-structs = { workspace = true }
 
 [features]
 default = ["std"]
