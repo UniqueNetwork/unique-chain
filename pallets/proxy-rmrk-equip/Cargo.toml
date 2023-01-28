@@ -5,19 +5,21 @@ name = "pallet-rmrk-equip"
 version = "0.1.2"
 
 [dependencies]
-codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
 
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-pallet-common = { default-features = false, path = "../common" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.37" }
-pallet-nonfungible = { default-features = false, path = "../../pallets/nonfungible" }
-pallet-rmrk-core = { default-features = false, path = "../proxy-rmrk-core" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+scale-info = { workspace = true }
+
+frame-benchmarking = {workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-common = { workspace = true }
+pallet-evm = { workspace = true }
+pallet-nonfungible = { workspace = true }
+pallet-proxy-rmrk-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+up-data-structs = { workspace = true }
 
 [features]
 default = ["std"]
@@ -28,7 +30,7 @@ std = [
 	"pallet-common/std",
 	"pallet-evm/std",
 	"pallet-nonfungible/std",
-	"pallet-rmrk-core/std",
+	"pallet-proxy-rmrk-core/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"up-data-structs/std",
