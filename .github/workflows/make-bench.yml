@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  bench:
+  make-bench:
     runs-on: [ XL ]
     steps:
       - name: Clean Workspace
@@ -22,42 +22,25 @@ jobs:
           ref: develop 
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2        
+        uses: xom9ikk/dotenv@v2.1.1        
 
       - name: Install substrate dependencies
         run: sudo apt install -y curl cmake make libssl-dev pkg-config libclang-dev clang protobuf-compiler
 
       - name: Install actual toolchain
-        uses: actions-rs/toolchain@v1
+        uses: actions-rs/toolchain@v1.0.6
         with:
             toolchain: ${{ env.RUST_TOOLCHAIN }}
             default: true
             target: wasm32-unknown-unknown
 
-      # - name: Run cargo check
-      #   uses: actions-rs/cargo@v1
-      #   with:
-      #     command: check
-
-      # - name: Create new branch from develop
-      #   run: |
-      #     git config user.name "Unique"
-      #     git config user.email github-actions@usetech.com
-      #     git checkout -b ci/make-bench develop
-
       - name: RUN benchmarking
         run: |
-          time make bench-unique
+          time make bench
 
       - name: show git diff
         run: |
           git diff
-
-      # - name: Create PR
-      #   run: |
-      #     git config user.name "Unique"
-      #     git config user.email github-actions@usetech.com
-      #     git commit -a -m "commit benchmarking for on $(date)"
 
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v4.2.3
@@ -69,6 +52,6 @@ jobs:
           author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
           signoff: false
           delete-branch: true
-          title: 'CI Make BENCH'
-          assignees: BuddyGlas
-          reviewers: BuddyGlas
+          title: 'CI Make Benchmarking'
+          assignees: CertainLach
+          reviewers: CertainLach
