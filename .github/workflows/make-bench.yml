@@ -5,7 +5,9 @@ name: make-bench
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
-  # workflow_call:
+  push:
+    branches:
+      - "feature/ci-make-bench"
   workflow_dispatch:
 
 jobs:
