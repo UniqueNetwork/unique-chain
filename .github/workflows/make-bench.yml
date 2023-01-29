@@ -24,6 +24,9 @@ jobs:
       - name: Read .env file
         uses: xom9ikk/dotenv@v2        
 
+      - name: Install substrate dependencies
+        run: sudo apt-get install libssl-dev pkg-config libclang-dev clang protobuf-compiler
+
       - name: Install actual toolchain
         uses: actions-rs/toolchain@v1
         with:
