@@ -1,0 +1,57 @@
+# https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586837012/Code+style+testing
+# Nested workflow for checks related to formatting Rust code 
+
+name: make-bench
+
+# Triger: only call from main workflow(re-usable workflows)
+on:
+  push:
+    branches:
+      - "feature/ci-make-bench"
+  workflow_dispatch:
+
+jobs:
+  make-bench:
+    runs-on: [ bench ]
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      - uses: actions/checkout@v3.3.0
+        with:
+          ref: develop 
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2.1.1        
+
+      - name: Install substrate dependencies
+        run: sudo apt install -y curl cmake make libssl-dev pkg-config libclang-dev clang protobuf-compiler
+
+      - name: Install actual toolchain
+        uses: actions-rs/toolchain@v1.0.7
+        with:
+            toolchain: ${{ env.RUST_TOOLCHAIN }}
+            default: true
+            target: wasm32-unknown-unknown
+
+      - name: RUN benchmarking
+        run: |
+          time make bench
+
+      - name: show git diff
+        run: |
+          git diff
+
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4.2.3
+        with:
+          base: develop
+          branch: ci/make-bench
+          commit-message: commit benchmarking
+          committer: Unique <noreply@github.com>
+          author: ${{ github.actor }} <${{ github.actor }}@users.noreply.github.com>
+          signoff: false
+          delete-branch: true
+          title: 'CI Make Benchmarking'
+          assignees: CertainLach
+          reviewers: CertainLach
