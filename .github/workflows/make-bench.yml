@@ -34,10 +34,21 @@ jobs:
             default: true
             target: wasm32-unknown-unknown
 
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 16
+
       - name: RUN benchmarking
         run: |
           time make bench
 
+      - name: RUN Calibrate
+        working-directory: ./tests
+        run: |
+          yarn install
+          yarn ts-node src/calibrate.ts
+          yarn ts-node src/calibrateApply.ts
+          
       - name: show git diff
         run: |
           git diff
