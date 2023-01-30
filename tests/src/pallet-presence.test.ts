@@ -64,7 +64,7 @@ describe('Pallet presence', () => {
 
       const refungible = 'refungible';
       const foreignAssets = 'foreignassets';
-      const rmrkPallets = ['rmrkcore', 'rmrkequip'];
+      const _rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
       const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
       const testUtils = 'testutils';
@@ -75,7 +75,6 @@ describe('Pallet presence', () => {
           foreignAssets,
           appPromotion,
           testUtils,
-          ...rmrkPallets,
           ...collatorSelection,
         );
       } else if (chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
