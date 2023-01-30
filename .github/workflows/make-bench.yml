@@ -12,7 +12,7 @@ on:
 
 jobs:
   make-bench:
-    runs-on: [ XL ]
+    runs-on: [ bench ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
