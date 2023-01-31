@@ -1,4 +1,4 @@
-import {ApiPromise, ScProvider, WsProvider} from '@polkadot/api';
+import {ApiPromise, WsProvider} from '@polkadot/api';
 import {readFile} from 'fs/promises';
 import {join} from 'path';
 
@@ -39,7 +39,7 @@ async function ff(url: string, regex: RegExp, rep: string): Promise<string> {
     ff('wss://westmint-rpc.polkadot.io/', /^(....)$/, 'parachains-v$1').then(v => env = setVar(env, 'WESTMINT_BUILD_BRANCH', v)),
     ff('wss://eu-ws-opal.unique.network/', /^(......)$/, 'release-v$1').then(v => env = setVar(env, 'OPAL_MAINNET_BRANCH', v)),
 
-    // ff('wss://westend-rpc.polkadot.io/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v=>env = setVar(env, 'UNIQUEEAST_MAINNET_BRANCH', v)),
+    ff('wss://ws-eastend.unique.network/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v => env = setVar(env, 'UNIQUEEAST_MAINNET_BRANCH', v)),
     ff('wss://eu-ws-sapphire.unique.network/', /^(......)$/, 'release-v$1').then(v => env = setVar(env, 'SAPPHIRE_MAINNET_BRANCH', v)),
   ]);
   console.log(env);
