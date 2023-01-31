@@ -234,7 +234,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Stores amount of stakes for an `Account`.
+	/// Stores number of stake records for an `Account`.
 	///
 	/// * **Key** - Staker account.
 	/// * **Value** - Amount of stakes.
@@ -242,7 +242,7 @@ pub mod pallet {
 	pub type StakesPerAccount<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, u8, ValueQuery>;
 
-	/// Stores amount of stakes for an `Account`.
+	/// Pending unstake records for an `Account`.
 	///
 	/// * **Key** - Staker account.
 	/// * **Value** - Amount of stakes.
@@ -263,7 +263,8 @@ pub mod pallet {
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
 	#[pallet::storage]
-	pub(crate) type IsMigrated<T: Config> = StorageValue<Value = bool, QueryKind = ValueQuery>;
+	pub(crate) type UpgradedToReserves<T: Config> =
+		StorageValue<Value = bool, QueryKind = ValueQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
@@ -296,12 +297,12 @@ pub mod pallet {
 				consumed_weight += weight;
 			};
 
-			if <IsMigrated<T>>::get() {
+			if <UpgradedToReserves<T>>::get() {
 				add_weight(1, 0, Weight::zero());
 				return consumed_weight;
 			} else {
 				add_weight(1, 1, Weight::zero());
-				<IsMigrated<T>>::set(true);
+				<UpgradedToReserves<T>>::set(true);
 			}
 			<PendingUnstake<T>>::drain().for_each(|(_, v)| {
 				add_weight(1, 1, Weight::zero());
@@ -319,7 +320,7 @@ pub mod pallet {
 		#[cfg(feature = "try-runtime")]
 		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
 			use sp_std::collections::btree_map::BTreeMap;
-			if <IsMigrated<T>>::get() {
+			if <UpgradedToReserves<T>>::get() {
 				return Ok(Default::default());
 			}
 			// Staker -> (total amount of reserved balance, reserved by promotion);
@@ -346,7 +347,7 @@ pub mod pallet {
 		fn post_upgrade(pre_state: Vec<u8>) -> Result<(), &'static str> {
 			use sp_std::collections::btree_map::BTreeMap;
 
-			if <IsMigrated<T>>::get() {
+			if <UpgradedToReserves<T>>::get() {
 				return Ok(());
 			}
 
@@ -807,26 +808,6 @@ impl<T: Config> Pallet<T> {
 	pub fn account_id() -> T::AccountId {
 		T::PalletId::get().into_account_truncating()
 	}
-
-	// /// Unlocks the balance that was locked by the pallet.
-	// ///
-	// /// - `staker`: staker account.
-	// /// - `amount`: amount of unlocked funds.
-	// fn unlock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-	// 	let locked_balance = Self::get_locked_balance(staker)
-	// 		.map(|l| l.amount)
-	// 		.ok_or(<Error<T>>::IncorrectLockedBalanceOperation)?;
-
-	// 	// It is understood that we cannot unlock more funds than were locked by staking.
-	// 	// Therefore, if implemented correctly, this error should not occur.
-	// 	Self::set_lock_unchecked(
-	// 		staker,
-	// 		locked_balance
-	// 			.checked_sub(&amount)
-	// 			.ok_or(ArithmeticError::Underflow)?,
-	// 	);
-	// 	Ok(())
-	// }
 
 	/// Adds the balance to locked by the pallet.
 	///
