@@ -96,12 +96,8 @@ type BalanceOf<T> =
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		Blake2_128Concat, Twox64Concat,
-		pallet_prelude::{*, ValueQuery, StorageValue},
-		storage::Key,
-		PalletId,
-		traits::ReservableCurrency,
-		weights::Weight,
+		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId,
+		traits::ReservableCurrency, weights::Weight,
 	};
 	use frame_system::pallet_prelude::*;
 
@@ -353,12 +349,12 @@ pub mod pallet {
 			if <IsMigrated<T>>::get() {
 				return Ok(());
 			}
-			
+
 			ensure!(
 				<PendingUnstake<T>>::iter().collect::<Vec<_>>().len() == 0,
 				"pendingUnstake storage isn't empty"
 			);
-			
+
 			let mut is_ok = true;
 
 			let pre_state: BTreeMap<T::AccountId, (BalanceOf<T>, BalanceOf<T>)> =
@@ -527,7 +523,6 @@ pub mod pallet {
 				.map_err(|_| Error::<T>::PendingForBlockOverflow)?;
 
 			<PendingUnstake<T>>::insert(block, pendings);
-
 
 			TotalStaked::<T>::set(
 				TotalStaked::<T>::get()
