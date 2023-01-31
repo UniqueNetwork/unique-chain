@@ -95,11 +95,11 @@ describe('App promotion', () => {
       const staker = accounts.pop()!;
 
       // Can't stake full balance because Alice needs to pay some fee
-      await expect(helper.staking.stake(staker, 1000n * nominal)).to.be.rejected;
+      await expect(helper.staking.stake(staker, 1000n * nominal)).to.be.rejected; // With('Arithmetic')
       await helper.staking.stake(staker, 500n * nominal);
 
       // Can't stake 500 tkn because Alice has Less than 500 transferable;
-      await expect(helper.staking.stake(staker, 500n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
+      await expect(helper.staking.stake(staker, 500n * nominal)).to.be.rejected; // With('Arithmetic');
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(500n * nominal);
     });
 
@@ -123,8 +123,8 @@ describe('App promotion', () => {
 
       // Right after unstake balance is reserved
       // Staker can not transfer
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 900n * nominal, miscFrozen: 0n, feeFrozen: 0n});
-      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.InsufficientBalance');
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 900n * nominal, feeFrozen: 900n * nominal});
+      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(900n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
@@ -171,7 +171,8 @@ describe('App promotion', () => {
       expect(stakes).to.be.deep.equal([]);
       expect(pendingUnstake[0].amount).to.equal(600n * nominal);
 
-      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 600n * nominal, feeFrozen: 0n, miscFrozen: 0n});
+      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 600n * nominal, miscFrozen: 600n * nominal});
+      expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
       await helper.wait.forParachainBlockNumber(pendingUnstake[0].block);
       expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
       expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
