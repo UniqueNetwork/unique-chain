@@ -96,8 +96,12 @@ type BalanceOf<T> =
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId,
+		Blake2_128Concat, Twox64Concat,
+		pallet_prelude::{*, ValueQuery, StorageValue},
+		storage::Key,
+		PalletId,
 		traits::ReservableCurrency,
+		weights::Weight,
 	};
 	use frame_system::pallet_prelude::*;
 
@@ -262,6 +266,9 @@ pub mod pallet {
 	pub type PreviousCalculatedRecord<T: Config> =
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
+	#[pallet::storage]
+	pub(crate) type IsMigrated<T: Config> = StorageValue<Value = bool, QueryKind = ValueQuery>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
@@ -276,13 +283,104 @@ pub mod pallet {
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
-					<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::unreserve(
-						&staker, amount,
-					);
+					Self::get_locked_balance(&staker).map(|b| {
+						let new_state = b.amount.checked_sub(&amount).unwrap_or_default();
+						Self::set_lock_unchecked(&staker, new_state);
+					});
 				});
 			}
 
 			<T as Config>::WeightInfo::on_initialize(counter)
+		}
+
+		fn on_runtime_upgrade() -> Weight {
+			let mut consumed_weight = Weight::zero();
+			let mut add_weight = |reads, writes, weight| {
+				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
+				consumed_weight += weight;
+			};
+
+			if <IsMigrated<T>>::get() {
+				add_weight(1, 0, Weight::zero());
+				return consumed_weight;
+			} else {
+				add_weight(1, 1, Weight::zero());
+				<IsMigrated<T>>::set(true);
+			}
+			<PendingUnstake<T>>::drain().for_each(|(_, v)| {
+				add_weight(1, 1, Weight::zero());
+				v.into_iter().for_each(|(staker, amount)| {
+					<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::unreserve(
+						&staker, amount,
+					);
+					add_weight(1, 1, Weight::zero());
+				});
+			});
+
+			consumed_weight
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
+			use sp_std::collections::btree_map::BTreeMap;
+			if <IsMigrated<T>>::get() {
+				return Ok(Default::default());
+			}
+			// Staker -> (total amount of reserved balance, reserved by promotion);
+			let mut pre_state: BTreeMap<T::AccountId, (BalanceOf<T>, BalanceOf<T>)> =
+				BTreeMap::new();
+
+			<PendingUnstake<T>>::iter().for_each(|(_, v)| {
+				v.into_iter().for_each(|(staker, amount)| {
+					if let Some((_, reserved_balance)) = pre_state.get_mut(&staker) {
+						*reserved_balance += amount;
+					} else {
+						let total_reserve = <<T as Config>::Currency as ReservableCurrency<
+							T::AccountId,
+						>>::reserved_balance(&staker);
+						pre_state.insert(staker, (total_reserve, amount));
+					}
+				})
+			});
+
+			Ok(pre_state.encode())
+		}
+
+		#[cfg(feature = "try-runtime")]
+		fn post_upgrade(pre_state: Vec<u8>) -> Result<(), &'static str> {
+			use sp_std::collections::btree_map::BTreeMap;
+
+			if <IsMigrated<T>>::get() {
+				return Ok(());
+			}
+			
+			ensure!(
+				<PendingUnstake<T>>::iter().collect::<Vec<_>>().len() == 0,
+				"pendingUnstake storage isn't empty"
+			);
+			
+			let mut is_ok = true;
+
+			let pre_state: BTreeMap<T::AccountId, (BalanceOf<T>, BalanceOf<T>)> =
+				Decode::decode(&mut &pre_state[..]).map_err(|_| "failed to decode pre_state")?;
+			for (staker, (total_reserved, reserved_by_promo)) in pre_state.into_iter() {
+				let new_state_reserve = <<T as Config>::Currency as ReservableCurrency<
+					T::AccountId,
+				>>::reserved_balance(&staker);
+				if new_state_reserve != total_reserved - reserved_by_promo {
+					is_ok = false;
+					log::error!(
+								"Incorrect reserved balance for {:?}. New balance: {:?}. Before runtime upgrade: total reserve - {:?}, reserved by promo - {:?}",
+								staker, new_state_reserve, total_reserved, reserved_by_promo
+							);
+				}
+			}
+
+			if is_ok {
+				Ok(())
+			} else {
+				Err("Incorrect balance for some of stakers... See logs")
+			}
 		}
 	}
 
@@ -340,14 +438,16 @@ pub mod pallet {
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
 
 			// checks that we can lock `amount` on the `staker` account.
-			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
-				&staker_id,
-				amount,
-				WithdrawReasons::all(),
-				balance
-					.checked_sub(&amount)
-					.ok_or(ArithmeticError::Underflow)?,
-			)?;
+			ensure!(
+				amount
+					<= match Self::get_locked_balance(&staker_id) {
+						Some(lock) => balance
+							.checked_sub(&lock.amount)
+							.ok_or(ArithmeticError::Underflow)?,
+						None => balance,
+					},
+				ArithmeticError::Underflow
+			);
 
 			Self::add_lock_balance(&staker_id, amount)?;
 
@@ -428,12 +528,6 @@ pub mod pallet {
 
 			<PendingUnstake<T>>::insert(block, pendings);
 
-			Self::unlock_balance(&staker_id, total_staked)?;
-
-			<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::reserve(
-				&staker_id,
-				total_staked,
-			)?;
 
 			TotalStaked::<T>::set(
 				TotalStaked::<T>::get()
@@ -719,25 +813,25 @@ impl<T: Config> Pallet<T> {
 		T::PalletId::get().into_account_truncating()
 	}
 
-	/// Unlocks the balance that was locked by the pallet.
-	///
-	/// - `staker`: staker account.
-	/// - `amount`: amount of unlocked funds.
-	fn unlock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-		let locked_balance = Self::get_locked_balance(staker)
-			.map(|l| l.amount)
-			.ok_or(<Error<T>>::IncorrectLockedBalanceOperation)?;
+	// /// Unlocks the balance that was locked by the pallet.
+	// ///
+	// /// - `staker`: staker account.
+	// /// - `amount`: amount of unlocked funds.
+	// fn unlock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
+	// 	let locked_balance = Self::get_locked_balance(staker)
+	// 		.map(|l| l.amount)
+	// 		.ok_or(<Error<T>>::IncorrectLockedBalanceOperation)?;
 
-		// It is understood that we cannot unlock more funds than were locked by staking.
-		// Therefore, if implemented correctly, this error should not occur.
-		Self::set_lock_unchecked(
-			staker,
-			locked_balance
-				.checked_sub(&amount)
-				.ok_or(ArithmeticError::Underflow)?,
-		);
-		Ok(())
-	}
+	// 	// It is understood that we cannot unlock more funds than were locked by staking.
+	// 	// Therefore, if implemented correctly, this error should not occur.
+	// 	Self::set_lock_unchecked(
+	// 		staker,
+	// 		locked_balance
+	// 			.checked_sub(&amount)
+	// 			.ok_or(ArithmeticError::Underflow)?,
+	// 	);
+	// 	Ok(())
+	// }
 
 	/// Adds the balance to locked by the pallet.
 	///
