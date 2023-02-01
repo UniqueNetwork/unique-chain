@@ -203,6 +203,21 @@ impl<T: Config> RefungibleTokenHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	fn allowance_cross(
+		&self,
+		owner: pallet_common::eth::CrossAddress,
+		spender: pallet_common::eth::CrossAddress,
+	) -> Result<U256> {
+		let owner = owner.into_sub_cross_account::<T>()?;
+		let spender = spender.into_sub_cross_account::<T>()?;
+
+		Ok(<Allowance<T>>::get((self.id, self.1, owner, spender)).into())
+	}
+
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
 	/// @param from The account whose tokens will be burnt.

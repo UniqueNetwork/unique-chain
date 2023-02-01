@@ -341,7 +341,9 @@ mod erc20 {
 			ERC165Call(_, _) => None,
 
 			// Not sponsored
-			BurnFrom { .. } | BurnFromCross { .. } | Repartition { .. } => None,
+			AllowanceCross { .. } | BurnFrom { .. } | BurnFromCross { .. } | Repartition { .. } => {
+				None
+			}
 
 			TransferCross { .. } | TransferFromCross { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;

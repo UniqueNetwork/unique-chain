@@ -161,6 +161,21 @@ impl<T: Config> FungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	fn allowance_cross(
+		&self,
+		owner: pallet_common::eth::CrossAddress,
+		spender: pallet_common::eth::CrossAddress,
+	) -> Result<U256> {
+		let owner = owner.into_sub_cross_account::<T>()?;
+		let spender = spender.into_sub_cross_account::<T>()?;
+
+		Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
+	}
+
 	/// @notice A description for the collection.
 	fn description(&self) -> Result<String> {
 		Ok(decode_utf16(self.description.iter().copied())

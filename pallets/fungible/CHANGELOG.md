@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.10] - 2023-02-01
+
+### Added
+
+- The functions `allowanceCross` to `ERC20UniqueExtensions` interface.
+
 ## [0.1.9] - 2022-12-01
 
 ### Added

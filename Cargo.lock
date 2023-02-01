@@ -6360,7 +6360,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-fungible"
-version = "0.1.9"
+version = "0.1.10"
 dependencies = [
  "evm-coder",
  "frame-benchmarking",
@@ -6773,7 +6773,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-refungible"
-version = "0.2.12"
+version = "0.2.13"
 dependencies = [
  "evm-coder",
  "frame-benchmarking",

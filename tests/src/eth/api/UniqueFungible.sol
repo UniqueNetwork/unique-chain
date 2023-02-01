@@ -353,8 +353,16 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x65789571
+/// @dev the ERC-165 identifier for this interface is 0x85d7dea6
 interface ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	/// @dev EVM selector for this function is: 0xe0af4bd7,
+	///  or in textual repr: allowanceCross((address,uint256),(address,uint256))
+	function allowanceCross(CrossAddress memory owner, CrossAddress memory spender) external view returns (uint256);
+
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
 	///  or in textual repr: description()
@@ -390,7 +398,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple9[] memory amounts) external returns (bool);
+	function mintBulk(Tuple11[] memory amounts) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
@@ -411,7 +419,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 }
 
 /// @dev anonymous struct
-struct Tuple9 {
+struct Tuple11 {
 	address field_0;
 	uint256 field_1;
 }
