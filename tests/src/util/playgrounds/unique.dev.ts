@@ -159,7 +159,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
-    options.notePreimagePallet = options.notePreimagePallet ?? 'democracy';
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
 
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
