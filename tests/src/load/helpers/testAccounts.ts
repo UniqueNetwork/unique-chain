@@ -57,5 +57,5 @@ export async function emptyCrowd(crowd: IKeyringPair[]) {
     }
 
     await Promise.all(transactions);
-  });
+  },'wss://ws-opal.unique.network');
 }

@@ -21,6 +21,5 @@ export async function feedAccounts
     await Promise.all(transactions);
 
     return accounts;
-  });
-  // wss://ws-rc.unique.network
+  }, 'wss://ws-opal.unique.network');
 }
