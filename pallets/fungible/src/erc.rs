@@ -6,7 +6,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Unique Network is distributed in the hope that it will be useful,
+// Unique Network is disaddress: tod in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -19,6 +19,7 @@
 extern crate alloc;
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
+use evm_coder::AbiCoder;
 use evm_coder::{
 	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
 	weight,
@@ -55,6 +56,12 @@ pub enum ERC20Events {
 		spender: Address,
 		value: U256,
 	},
+}
+
+#[derive(AbiCoder, Debug)]
+pub struct AmountForAddress {
+	to: Address,
+	amount: U256,
 }
 
 #[solidity_interface(name = ERC20, events(ERC20Events), expect_selector = 0x942e8b22)]
@@ -264,14 +271,14 @@ where
 	/// Mint tokens for multiple accounts.
 	/// @param amounts array of pairs of account address and amount
 	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
-	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<(Address, U256)>) -> Result<bool> {
+	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<AmountForAddress>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 		let amounts = amounts
 			.into_iter()
-			.map(|(to, amount)| {
+			.map(|AmountForAddress { to, amount }| {
 				Ok((
 					T::CrossAccountId::from_eth(to),
 					amount.try_into().map_err(|_| "amount overflow")?,

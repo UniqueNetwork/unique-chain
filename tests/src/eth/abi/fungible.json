@@ -434,10 +434,10 @@
     "inputs": [
       {
         "components": [
-          { "internalType": "address", "name": "field_0", "type": "address" },
-          { "internalType": "uint256", "name": "field_1", "type": "uint256" }
+          { "internalType": "address", "name": "to", "type": "address" },
+          { "internalType": "uint256", "name": "amount", "type": "uint256" }
         ],
-        "internalType": "struct Tuple11[]",
+        "internalType": "struct AmountForAddress[]",
         "name": "amounts",
         "type": "tuple[]"
       }

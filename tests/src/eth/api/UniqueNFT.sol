@@ -644,7 +644,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple13[] memory tokens) external returns (bool);
+	// function mintBulkWithTokenURI(address to, TokenUri[] memory tokens) external returns (bool);
 
 	/// @notice Function to mint a token.
 	/// @param to The new owner crossAccountId
@@ -660,10 +660,12 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	function collectionHelperAddress() external view returns (address);
 }
 
-/// @dev anonymous struct
-struct Tuple13 {
-	uint256 field_0;
-	string field_1;
+/// Data for creation token with uri.
+struct TokenUri {
+	/// Id of new token.
+	uint256 id;
+	/// Uri of new token.
+	string uri;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension

@@ -168,7 +168,7 @@ contract UniqueNFTProxy is UniqueNFT {
         return proxied.mintBulk(to, tokenIds);
     }
 
-    function mintBulkWithTokenURI(address to, Tuple6[] memory tokens)
+    function mintBulkWithTokenURI(address to, TokenUri[] memory tokens)
         external
         override
         returns (bool)

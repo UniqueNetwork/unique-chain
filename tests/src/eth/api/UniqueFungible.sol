@@ -398,7 +398,7 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @param amounts array of pairs of account address and amount
 	/// @dev EVM selector for this function is: 0x1acf2d55,
 	///  or in textual repr: mintBulk((address,uint256)[])
-	function mintBulk(Tuple11[] memory amounts) external returns (bool);
+	function mintBulk(AmountForAddress[] memory amounts) external returns (bool);
 
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
@@ -418,10 +418,9 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	function collectionHelperAddress() external view returns (address);
 }
 
-/// @dev anonymous struct
-struct Tuple11 {
-	address field_0;
-	uint256 field_1;
+struct AmountForAddress {
+	address to;
+	uint256 amount;
 }
 
 /// @dev the ERC-165 identifier for this interface is 0x40c10f19
