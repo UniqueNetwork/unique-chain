@@ -34,29 +34,27 @@ export async function feedCrowd
   const crowd = getCrowd(crowdSize);
   // Each donor can proccess near 900 accounts effectively
   const neededDonors = crowdSize / 900;
+  const transactions = [];
   for (let i = 0; i < neededDonors; i++) {
     const accountsToFeed = crowd.slice(0, 900 * (i + 1));
-    await feedAccounts(donors[i], accountsToFeed, amountOfTokens);
+    transactions.push(feedAccounts(donors[i], accountsToFeed, amountOfTokens));
   }
+  await Promise.all(transactions);
   return crowd;
 }
 
 export async function emptyCrowd(crowd: IKeyringPair[]) {
   await usingPlaygrounds(async (helper) => {
     const api = helper.getApi();
+    const donor = getDonors()[0].address;
 
     const transactions: Promise<TransactionResult>[] = [];
     let i = 1;
-    crowd.map(account => {
+    for (const account of crowd) {
       console.log(i++);
-      const extrinsic = api.tx.balances.transferAll(getDonors()[0].address, false);
+      const extrinsic = api.tx.balances.transferAll(donor, false);
       transactions.push(signSendAndWait(account, extrinsic, {era: 0}));
-    });
-    // for (const account of crowd) {
-    //   console.log(i++);
-    //   const extrinsic = api.tx.balances.transferAll(getDonors()[0].address, false);
-    //   transactions.push(signSendAndWait(account, extrinsic, {era: 0}));
-    // }
+    }
 
     await Promise.all(transactions);
   });
