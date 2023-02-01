@@ -917,9 +917,8 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
           },
         },
       };
-      const destWeight = 50000000;
 
-      await helper.xTokens.transferMultiasset(randomAccountMoonbeam, asset, destination, destWeight);
+      await helper.xTokens.transferMultiasset(randomAccountMoonbeam, asset, destination, 'Unlimited');
 
       balanceGlmrTokenFinal = await helper.balance.getEthereum(randomAccountMoonbeam.address);
 
