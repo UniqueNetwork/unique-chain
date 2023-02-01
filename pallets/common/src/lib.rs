@@ -1297,6 +1297,11 @@ impl<T: Config> Pallet<T> {
 		let is_collection_admin = collection.is_owner_or_admin(sender);
 		let permissions = Self::property_permissions(collection.id);
 
+		let mut token_owner_result = None;
+		let mut is_token_owner = || -> Result<bool, DispatchError> {
+			*token_owner_result.get_or_insert_with(&is_token_owner)
+		};
+
 		for (key, value) in properties_updates {
 			let permission = permissions
 				.get(&key)
