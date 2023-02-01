@@ -914,8 +914,9 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
           },
         },
       };
+      const destWeight = 50000000;
 
-      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, 'Unlimited');
+      await helper.xTokens.transferMultiasset(randomAccountMoonriver, asset, destination, destWeight);
 
       balanceMovrTokenFinal = await helper.balance.getEthereum(randomAccountMoonriver.address);
 
