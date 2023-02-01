@@ -92,22 +92,22 @@ use crate::erc::ERC721Events;
 
 use core::ops::Deref;
 use evm_coder::ToLog;
-use frame_support::{ensure, fail, storage::with_transaction, transactional};
+use frame_support::{ensure, storage::with_transaction, transactional};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
 	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon, erc::CollectionHelpersEvents,
+	Event as CommonEvent, Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
-use sp_core::{Get, H160};
+use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CollectionFlags, CreateCollectionData,
 	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
-	PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue, TokenId,
-	TrySetProperty, PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
+	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
+	PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
 };
 
 pub use pallet::*;
@@ -245,8 +245,8 @@ pub mod pallet {
 	pub type CollectionAllowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128Concat, T::CrossAccountId>,
-			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128Concat, T::CrossAccountId>, // Owner
+			Key<Blake2_128Concat, T::CrossAccountId>, // Operator
 		),
 		Value = bool,
 		QueryKind = ValueQuery,
@@ -541,7 +541,6 @@ impl<T: Config> Pallet<T> {
 		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_collection_admin = || collection.is_owner_or_admin(sender);
 		let is_token_owner = || -> Result<bool, DispatchError> {
 			let balance = collection.balance(sender.clone(), token_id);
 			let total_pieces: u128 =
@@ -561,76 +560,18 @@ impl<T: Config> Pallet<T> {
 			Ok(is_bundle_owner)
 		};
 
-		let mut stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
-		let permissions = <PalletCommon<T>>::property_permissions(collection.id);
+		let stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
 
-		for (key, value) in properties_updates {
-			let permission = permissions
-				.get(&key)
-				.cloned()
-				.unwrap_or_else(PropertyPermission::none);
-
-			let is_property_exists = stored_properties.get(&key).is_some();
-
-			match permission {
-				PropertyPermission { mutable: false, .. } if is_property_exists => {
-					return Err(<CommonError<T>>::NoPermission.into());
-				}
-
-				PropertyPermission {
-					collection_admin,
-					token_owner,
-					..
-				} => {
-					//TODO: investigate threats during public minting.
-					let is_token_create =
-						is_token_create && (collection_admin || token_owner) && value.is_some();
-					if !(is_token_create
-						|| (collection_admin && is_collection_admin())
-						|| (token_owner && is_token_owner()?))
-					{
-						fail!(<CommonError<T>>::NoPermission);
-					}
-				}
-			}
-
-			match value {
-				Some(value) => {
-					stored_properties
-						.try_set(key.clone(), value)
-						.map_err(<CommonError<T>>::from)?;
-
-					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertySet(
-						collection.id,
-						token_id,
-						key,
-					));
-				}
-				None => {
-					stored_properties
-						.remove(&key)
-						.map_err(<CommonError<T>>::from)?;
-
-					<PalletCommon<T>>::deposit_event(CommonEvent::TokenPropertyDeleted(
-						collection.id,
-						token_id,
-						key,
-					));
-				}
-			}
-
-			<PalletEvm<T>>::deposit_log(
-				CollectionHelpersEvents::TokenChanged {
-					collection_id: collection_id_to_address(collection.id),
-					token_id: token_id.into(),
-				}
-				.to_log(T::ContractAddress::get()),
-			);
-		}
-
-		<TokenProperties<T>>::set((collection.id, token_id), stored_properties);
-
-		Ok(())
+		<PalletCommon<T>>::modify_token_properties(
+			collection,
+			sender,
+			token_id,
+			properties_updates,
+			is_token_create,
+			stored_properties,
+			is_token_owner,
+			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+		)
 	}
 
 	pub fn set_token_properties(
@@ -1465,31 +1406,19 @@ impl<T: Config> Pallet<T> {
 		operator: &T::CrossAccountId,
 		approve: bool,
 	) -> DispatchResult {
-		if collection.permissions.access() == AccessMode::AllowList {
-			collection.check_allowlist(owner)?;
-			collection.check_allowlist(operator)?;
-		}
-
-		<PalletCommon<T>>::ensure_correct_receiver(operator)?;
-
-		// =========
-
-		<CollectionAllowance<T>>::insert((collection.id, owner, operator), approve);
-		<PalletEvm<T>>::deposit_log(
+		<PalletCommon<T>>::set_allowance_for_all(
+			collection,
+			owner,
+			operator,
+			approve,
+			|| <CollectionAllowance<T>>::insert((collection.id, owner, operator), approve),
 			ERC721Events::ApprovalForAll {
 				owner: *owner.as_eth(),
 				operator: *operator.as_eth(),
 				approved: approve,
 			}
 			.to_log(collection_id_to_address(collection.id)),
-		);
-		<PalletCommon<T>>::deposit_event(CommonEvent::ApprovedForAll(
-			collection.id,
-			owner.clone(),
-			operator.clone(),
-			approve,
-		));
-		Ok(())
+		)
 	}
 
 	/// Tells whether the given `owner` approves the `operator`.
