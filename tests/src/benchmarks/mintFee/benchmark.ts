@@ -42,6 +42,15 @@ const PROPERTIES = Array(40)
     };
   });
 
+const SUBS_PROPERTIES = Array(40)
+  .fill(0)
+  .map((_, i) => {
+    return {
+      key: `key_${i}`,
+      value: `value_${i}`,
+    };
+  });
+
 const PERMISSIONS: ITokenPropertyPermission[] = PROPERTIES.map((p) => {
   return {
     key: p.key,
@@ -609,6 +618,7 @@ async function ERC721CalculateFeeGas(
 ): Promise<IFunctionFee> {
   const res: IFunctionFee = {};
   const donor = await privateKey('//Alice');
+  const [subReceiver] = await helper.arrange.createAccounts([10n], donor);
   const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
   const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
   const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
@@ -634,24 +644,24 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.mint(ethSigner).send(),
     );
 
-  res['mint'].substrate = convertToTokens((await helper.arrange.calculcateFee(
-    {Substrate: donor.address},
-    () => collection.mintToken(
-      donor,
-      {Ethereum: ethSigner},
-    ),
-  )));
-
   res['mintCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.mintCross(crossSigner, []).send(),
     );
 
+  res['mint'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.mintToken(
+      donor,
+      {Substrate: donor.address},
+    ),
+  )));
+
   res['mintCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     () => collection.mintMultipleTokens(donor, [{
-      owner: {Ethereum: ethSigner},
+      owner: {Substrate: donor.address},
     }]),
   )));
 
@@ -660,6 +670,15 @@ async function ERC721CalculateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.mintWithTokenURI(ethSigner, 'Test URI').send(),
     );
+
+  res['mintWithTokenURI'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.mintToken(
+      donor,
+      {Ethereum: ethSigner},
+      [{key: 'URI', value: 'Test URI'}],
+    ),
+  )));
 
   res['setProperties'] =
     await helper.arrange.calculcateFeeGas(
@@ -673,6 +692,25 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.deleteProperties(1, [PROPERTIES[0].key]).send(),
     );
 
+  res['setProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setTokenProperties(
+      donor,
+      1,
+      SUBS_PROPERTIES.slice(0, 1),
+    ),
+  )));
+
+  res['deleteProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.deleteTokenProperties(
+      donor,
+      1,
+      SUBS_PROPERTIES.slice(0, 1)
+        .map(p => p.key),
+    ),
+  )));
+
   res['transfer'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
@@ -684,6 +722,16 @@ async function ERC721CalculateFeeGas(
       {Ethereum: ethReceiver},
       () => evmContract.methods.transferCross(crossSigner, 1).send({from: ethReceiver}),
     );
+
+  res['transferCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.transferToken(
+      donor,
+      3,
+      {Substrate: subReceiver.address},
+    ),
+  )));
+  await collection.approveToken(subReceiver, 3, {Substrate: donor.address});
 
   res['transferFrom'] =
     await helper.arrange.calculcateFeeGas(
@@ -697,11 +745,22 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.transferFromCross(crossReceiver, crossSigner, 1).send({from:ethReceiver}),
     );
 
+  res['transferFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.transferTokenFrom(donor, 3, {Substrate: subReceiver.address}, {Substrate: donor.address}),
+  )));
+
   res['burn'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.burn(1).send(),
     );
+
+  res['burn'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.burnToken(donor, 3),
+  )));
+
 
   res['approveCross'] =
     await helper.arrange.calculcateFeeGas(
@@ -709,11 +768,21 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.approveCross(crossReceiver, 2).send(),
     );
 
+  res['approveCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.approveToken(donor, 4, {Substrate: subReceiver.address}),
+  )));
+
   res['burnFromCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver},
       () => evmContract.methods.burnFromCross(crossSigner, 2).send({from:ethReceiver}),
     );
+
+  res['burnFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: subReceiver.address},
+    () => collection.burnTokenFrom(subReceiver, 4, {Substrate: donor.address}),
+  )));
 
   res['setTokenPropertyPermissions'] =
     await helper.arrange.calculcateFeeGas(
@@ -726,6 +795,15 @@ async function ERC721CalculateFeeGas(
         ],
       ]).send(),
     );
+
+  res['setTokenPropertyPermissions'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setTokenPropertyPermissions(donor, [{key: 'url', permission: {
+      tokenOwner: true,
+      collectionAdmin: true,
+      mutable: true,
+    }}]),
+  )));
 
   res['setCollectionSponsorCross'] =
     await helper.arrange.calculcateFeeGas(
@@ -744,6 +822,21 @@ async function ERC721CalculateFeeGas(
       {Ethereum: ethSigner},
       () =>  evmContract.methods.removeCollectionSponsor().send(),
     );
+
+  res['setCollectionSponsorCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setSponsor(donor, subReceiver.address),
+  )));
+
+  res['confirmCollectionSponsorship'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: subReceiver.address},
+    () => collection.confirmSponsorship(subReceiver),
+  )));
+
+  res['removeCollectionSponsor'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.removeSponsor(donor),
+  )));
 
   res['setCollectionProperties'] =
     await helper.arrange.calculcateFeeGas(
@@ -774,6 +867,11 @@ async function ERC721CalculateFeeGas(
       () =>  evmContract.methods.setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}}).send(),
     );
 
+  res['setCollectionLimit'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setLimits(donor, {accountTokenOwnershipLimit: 1000}),
+  )));
+
   const {collectionAddress} = await helper.eth.createCollection('nft', ethSigner, 'A', 'B', 'C');
   const collectionWithEthOwner = await helper.ethNativeContract.collection(collectionAddress, 'nft', ethSigner, true);
 
@@ -790,6 +888,16 @@ async function ERC721CalculateFeeGas(
       () =>  collectionWithEthOwner.methods.removeCollectionAdminCross(crossReceiver).send(),
     );
 
+  res['addCollectionAdminCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.addAdmin(donor, {Ethereum: ethReceiver}),
+  )));
+
+  res['removeCollectionAdminCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.removeAdmin(donor, {Ethereum: ethReceiver}),
+  )));
+
   res['setCollectionNesting'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
@@ -802,11 +910,34 @@ async function ERC721CalculateFeeGas(
       () =>  evmContract.methods.setCollectionNesting(true, [collectionAddress]).send(),
     );
 
-  res['setCollectionAcces'] =
+  res['setCollectionNesting'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.disableNesting(donor),
+  )));
+
+  res['setCollectionNesting[]'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setPermissions(
+      donor,
+      {
+        nesting: {
+          tokenOwner: true,
+          restricted: [collection.collectionId],
+        },
+      },
+    ),
+  )));
+
+  res['setCollectionAccess'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
-      () =>  evmContract.methods.setCollectionAccess(SponsoringMode.Allowlisted).send(),
+      () =>  evmContract.methods.setCollectionAccess(1).send(),
     );
+
+  res['setCollectionAccess'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setPermissions(donor, {access: 'AllowList'}),
+  )));
 
   res['addToCollectionAllowListCross'] =
     await helper.arrange.calculcateFeeGas(
@@ -820,17 +951,37 @@ async function ERC721CalculateFeeGas(
       () =>  evmContract.methods.removeFromCollectionAllowListCross(crossReceiver).send(),
     );
 
+  res['addToCollectionAllowListCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.addToAllowList(donor, {Ethereum: ethReceiver}),
+  )));
+
+  res['removeFromCollectionAllowListCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.removeFromAllowList(donor, {Ethereum: ethReceiver}),
+  )));
+
   res['setCollectionMintMode'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () =>  evmContract.methods.setCollectionMintMode(true).send(),
     );
 
+  res['setCollectionMintMode'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setPermissions(donor, {mintMode: false}),
+  )));
+
   res['changeCollectionOwnerCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () =>  collectionWithEthOwner.methods.changeCollectionOwnerCross(crossReceiver).send(),
     );
+
+  res['changeCollectionOwnerCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.changeOwner(donor, subReceiver.address),
+  )));
 
   return res;
 }

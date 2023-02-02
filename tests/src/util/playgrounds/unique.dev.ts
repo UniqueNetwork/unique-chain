@@ -322,7 +322,7 @@ export class ArrangeGroup {
   };
 
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
-    const address = payer.Substrate ? payer.Substrate : await this.helper.address.ethToSubstrate(payer.Ethereum!);
+    const address = payer.Substrate ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum!);
     let balance = await this.helper.balance.getSubstrate(address);
 
     await promise();
