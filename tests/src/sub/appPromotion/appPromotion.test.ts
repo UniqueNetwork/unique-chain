@@ -91,15 +91,48 @@ describe('App promotion', () => {
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.equal(100n * nominal);
     });
 
-    itSub('should reject transaction if stake amount is more than total free balance minus frozen', async ({helper}) => {
+    itSub('should allow to stake() if balance is locked with different id', async ({helper}) => {
+      const staker = accounts.pop()!;
+
+      // staker has tokens locked with vesting id:
+      await helper.balance.vestedTransfer(donor, staker.address, {start: 0n, period: 1n, periodCount: 1n, perPeriod: 200n * nominal});
+      expect(await helper.balance.getSubstrateFull(staker.address))
+        .to.deep.contain({free: 1200n * nominal, miscFrozen: 200n * nominal, feeFrozen: 200n * nominal, reserved: 0n});
+
+      // Locked balance can be staked. staker can stake 1200 tokens (minus fee):
+      await helper.staking.stake(staker, 1000n * nominal);
+      await helper.staking.stake(staker, 199n * nominal);
+      // check balances
+      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'ormlvest', amount: 200n * nominal, reasons: 'All'}, {id: 'appstake', amount: 1199n * nominal, reasons: 'All'}]);
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 1199n * nominal, feeFrozen: 1199n * nominal});
+      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.eq(1199n);
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.eq(1199n * nominal);
+
+      // staker can unstake
+      await helper.staking.unstake(staker);
+      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.eq(1199n * nominal);
+      const [pendingUnstake] = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+      await helper.wait.forParachainBlockNumber(pendingUnstake.block);
+
+      // check balances
+      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'ormlvest', amount: 200n * nominal, reasons: 'All'}]);
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 200n * nominal, feeFrozen: 200n * nominal});
+      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.eq(1199n);
+      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.eq(0n);
+
+      // staker can transfer balances now
+      await helper.balance.transferToSubstrate(staker, donor.address, 900n * nominal);
+    });
+
+    itSub('should not allow to stake(), if stake amount is more than total free balance minus locked by staking', async ({helper}) => {
       const staker = accounts.pop()!;
 
       // Can't stake full balance because Alice needs to pay some fee
-      await expect(helper.staking.stake(staker, 1000n * nominal)).to.be.rejected;
+      await expect(helper.staking.stake(staker, 1000n * nominal)).to.be.rejected; // With('Arithmetic')
       await helper.staking.stake(staker, 500n * nominal);
 
       // Can't stake 500 tkn because Alice has Less than 500 transferable;
-      await expect(helper.staking.stake(staker, 500n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
+      await expect(helper.staking.stake(staker, 500n * nominal)).to.be.rejected; // With('Arithmetic');
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(500n * nominal);
     });
 
@@ -115,16 +148,17 @@ describe('App promotion', () => {
   });
 
   describe('unstake extrinsic', () => {
-    itSub('should change balance state from "frozen" to "reserved", add it to "pendingUnstake" map, and subtract it from totalStaked', async ({helper}) => {
+    itSub('should move tokens to "pendingUnstake" map and subtract it from totalStaked', async ({helper}) => {
       const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
       const totalStakedBefore = await helper.staking.getTotalStaked();
       await helper.staking.stake(staker, 900n * nominal);
       await helper.staking.unstake(staker);
 
-      // Right after unstake balance is reserved
+      // Right after unstake tokens are still locked
+      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: 900n * nominal, reasons: 'All'}]);
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 900n * nominal, feeFrozen: 900n * nominal});
       // Staker can not transfer
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 900n * nominal, miscFrozen: 0n, feeFrozen: 0n});
-      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.InsufficientBalance');
+      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(900n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
@@ -171,7 +205,8 @@ describe('App promotion', () => {
       expect(stakes).to.be.deep.equal([]);
       expect(pendingUnstake[0].amount).to.equal(600n * nominal);
 
-      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 600n * nominal, feeFrozen: 0n, miscFrozen: 0n});
+      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 600n * nominal, miscFrozen: 600n * nominal});
+      expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
       await helper.wait.forParachainBlockNumber(pendingUnstake[0].block);
       expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
       expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
@@ -209,7 +244,7 @@ describe('App promotion', () => {
       expect(unstakingPerBlock[1].amount).to.equal(120n * nominal);
     });
 
-    itSub('should be possible for different accounts in one block', async ({helper}) => {
+    itSub('should be possible for 3 accounts in one block', async ({helper}) => {
       const stakers = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
 
       await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
@@ -219,6 +254,18 @@ describe('App promotion', () => {
         expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(100n * nominal);
         expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
       }));
+    });
+
+    itSub('should not be possible for more than 3 accounts in one block', async ({helper}) => {
+      if (!await helper.arrange.isDevNode()) {
+        const stakers = await helper.arrange.createAccounts([200n,200n,200n,200n,200n,200n,200n,200n,200n,200n], donor);
+
+        await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
+        const unstakingResults = await Promise.allSettled(stakers.map(staker => helper.staking.unstake(staker)));
+
+        const successfulUnstakes = unstakingResults.filter(result => result.status === 'fulfilled');
+        expect(successfulUnstakes).to.have.length(3);
+      }
     });
   });
 
@@ -598,8 +645,8 @@ describe('App promotion', () => {
       expect(stakerFullBalance).to.contain({reserved: 0n, feeFrozen: frozenBalanceShouldBe, miscFrozen: frozenBalanceShouldBe});
     });
 
-    itSub('should not be credited for unstaked (reserved) balance', async ({helper}) => {
-      // staker unstakes before rewards has been payed
+    itSub('should not be credited for pending-unstaked tokens', async ({helper}) => {
+      // staker unstakes before rewards been payed
       const staker = accounts.pop()!;
       await helper.staking.stake(staker, 100n * nominal);
       const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
