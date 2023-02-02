@@ -12,9 +12,14 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
+/// @dev inlined interface
+interface ERC721TokenEvent {
+	event TokenChanged(address indexed collectionId, uint256 tokenId);
+}
+
 /// @title A contract that allows to set and delete token properties and change token property permissions.
 /// @dev the ERC-165 identifier for this interface is 0xde0695c2
-interface TokenProperties is Dummy, ERC165 {
+interface TokenProperties is Dummy, ERC165, ERC721TokenEvent {
 	// /// @notice Set permissions for token property.
 	// /// @dev Throws error if `msg.sender` is not admin or owner of the collection.
 	// /// @param key Property key.
