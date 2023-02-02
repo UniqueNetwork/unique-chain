@@ -4,10 +4,9 @@ services:
   xcm_quartz_rococo:
     build:
       context: .
-      dockerfile: .Dockerfile-xcm-quartz-rococo
+      dockerfile: ./Dockerfile-xcm-quartz-rococo
     container_name: xcm-quartz-rococo
-    image: xcm-quartz-rococo:latest
-    env_file: .env
+    image: xcm-quartz-rococo
     expose:
       - 9844
       - 9944
@@ -20,7 +19,4 @@ services:
       - 127.0.0.1:9946:9946
       - 127.0.0.1:9947:9947
       - 127.0.0.1:9948:9948
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "3"
+

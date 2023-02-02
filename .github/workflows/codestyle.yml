@@ -51,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install substrate dependencies
-        run: sudo apt-get install libssl-dev pkg-config libclang-dev clang protobuf-compiler
+        run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Install latest nightly
         uses: actions-rs/toolchain@v1
         with:

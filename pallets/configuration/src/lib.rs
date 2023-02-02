@@ -23,7 +23,7 @@ use frame_support::{
 	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
 };
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_arithmetic::{
 	per_things::{Perbill, PerThing},
@@ -47,7 +47,7 @@ mod pallet {
 		BoundedVec, log,
 	};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
-	use xcm::v1::MultiLocation;
+	use xcm::latest::MultiLocation;
 
 	pub use crate::weights::WeightInfo;
 	pub type BalanceOf<T> =
@@ -116,7 +116,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type XcmAllowedLocationsOverride<T: Config> = StorageValue<
-		Value = BoundedVec<MultiLocation, T::MaxXcmAllowedLocations>,
+		Value = BoundedVec<xcm::v2::MultiLocation, T::MaxXcmAllowedLocations>,
 		QueryKind = OptionQuery,
 	>;
 

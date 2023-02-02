@@ -138,7 +138,7 @@ use frame_system::{pallet_prelude::*, ensure_signed};
 use sp_runtime::DispatchError;
 use up_data_structs::*;
 use pallet_common::{Pallet as PalletCommon, Error as CommonError};
-use pallet_rmrk_core::{
+use pallet_proxy_rmrk_core::{
 	Pallet as PalletCore, Error as CoreError,
 	misc::{self, *},
 	property::RmrkProperty::*,
@@ -161,7 +161,7 @@ pub mod pallet {
 	use super::*;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_rmrk_core::Config {
+	pub trait Config: frame_system::Config + pallet_proxy_rmrk_core::Config {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 

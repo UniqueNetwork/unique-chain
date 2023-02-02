@@ -353,7 +353,7 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x7dee5997
+/// @dev the ERC-165 identifier for this interface is 0x65789571
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @notice A description for the collection.
 	/// @dev EVM selector for this function is: 0x7284e416,
@@ -403,6 +403,11 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 		CrossAddress memory to,
 		uint256 amount
 	) external returns (bool);
+
+	/// @notice Returns collection helper contract address
+	/// @dev EVM selector for this function is: 0x1896cce6,
+	///  or in textual repr: collectionHelperAddress()
+	function collectionHelperAddress() external view returns (address);
 }
 
 /// @dev anonymous struct
@@ -427,7 +432,7 @@ interface ERC20Events {
 	event Approval(address indexed owner, address indexed spender, uint256 value);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x8cb847c4
+/// @dev the ERC-165 identifier for this interface is 0x942e8b22
 interface ERC20 is Dummy, ERC165, ERC20Events {
 	/// @dev EVM selector for this function is: 0x06fdde03,
 	///  or in textual repr: name()
@@ -468,11 +473,6 @@ interface ERC20 is Dummy, ERC165, ERC20Events {
 	/// @dev EVM selector for this function is: 0xdd62ed3e,
 	///  or in textual repr: allowance(address,address)
 	function allowance(address owner, address spender) external view returns (uint256);
-
-	/// @notice Returns collection helper contract address
-	/// @dev EVM selector for this function is: 0x1896cce6,
-	///  or in textual repr: collectionHelperAddress()
-	function collectionHelperAddress() external view returns (address);
 }
 
 interface UniqueFungible is Dummy, ERC165, ERC20, ERC20Mintable, ERC20UniqueExtensions, Collection {}

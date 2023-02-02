@@ -4,10 +4,9 @@ services:
   xcm_unique_rococo:
     build:
       context: .
-      dockerfile: .Dockerfile-xcm-unique-rococo
+      dockerfile: ./Dockerfile-xcm-unique-rococo
     container_name: xcm-unique-rococo
-    image: xcm-unique-rococo:latest
-    env_file: .env
+    image: xcm-unique-rococo
     expose:
       - 9844
       - 9944
@@ -20,7 +19,4 @@ services:
       - 127.0.0.1:9946:9946
       - 127.0.0.1:9947:9947
       - 127.0.0.1:9948:9948
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "3"
+

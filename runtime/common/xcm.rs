@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use sp_std::{vec::Vec, marker::PhantomData};
-use xcm::v1::MultiLocation;
+use xcm::latest::MultiLocation;
 use frame_support::traits::Get;
 
 pub struct OverridableAllowedLocations<T, L>(PhantomData<(T, L)>)

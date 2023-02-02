@@ -193,7 +193,7 @@ impl<T: Config> SubstrateRecorder<T> {
 					output: writer.finish(),
 				})
 			}
-			Err(Error::Fatal(f)) => Err(f.into()),
+			Err(Error::Fatal(f)) => Err(PrecompileFailure::Fatal { exit_status: f }),
 			Err(Error::Error(e)) => Err(e.into()),
 		})
 	}

@@ -17,7 +17,7 @@
 //! Realizations of RMRK RPCs (remote procedure calls) related to the Equip pallet.
 
 use super::*;
-use pallet_rmrk_core::{misc, property::*};
+use pallet_proxy_rmrk_core::{misc, property::*};
 use sp_std::vec::Vec;
 
 /// Get base info by its ID.

@@ -40,27 +40,29 @@ try-runtime = ["frame-support/try-runtime"]
 ################################################################################
 # Substrate Dependencies
 
-codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
 
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-balances = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+scale-info = { workspace = true }
+
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-evm = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 
 ################################################################################
 # local dependencies
 
-pallet-common = { default-features = false, path = "../common" }
-pallet-configuration = { default-features = false, path = "../configuration" }
-pallet-evm-contract-helpers = { default-features = false, path = "../evm-contract-helpers" }
-pallet-evm-migration = { default-features = false, path = "../evm-migration" }
-pallet-unique = { default-features = false, path = "../unique" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+pallet-common = { workspace = true }
+pallet-configuration = { workspace = true }
+pallet-evm-contract-helpers = { workspace = true }
+pallet-evm-migration = { workspace = true }
+pallet-unique = { workspace = true }
+up-data-structs = { workspace = true }
 
 # [dev-dependencies]
 

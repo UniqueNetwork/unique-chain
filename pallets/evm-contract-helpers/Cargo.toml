@@ -5,25 +5,27 @@ name = "pallet-evm-contract-helpers"
 version = "0.3.0"
 
 [dependencies]
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+scale-info = { workspace = true }
 
 # Substrate
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+sp-core = { workspace = true }
+sp-std = { workspace = true }
 
 # Unique
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-up-sponsorship = { version = "0.1.0", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.36" }
+pallet-evm = { workspace = true }
+up-sponsorship = { workspace = true }
 
 # Locals
-codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-pallet-common = { default-features = false, path = "../../pallets/common" }
-pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-pallet-evm-transaction-payment = { default-features = false, path = "../../pallets/evm-transaction-payment" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs", features = ['serde1'] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
+
+evm-coder = { workspace = true }
+pallet-common = { workspace = true }
+pallet-evm-coder-substrate = { workspace = true }
+pallet-evm-transaction-payment = { workspace = true }
+up-data-structs = { workspace = true, features = ['serde1'] }
 
 [features]
 default = ["std"]

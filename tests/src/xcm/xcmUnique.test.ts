@@ -463,13 +463,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V0: {
-          X2: [
-            'Parent',
-            {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
               Parachain: UNIQUE_CHAIN,
             },
-          ],
+          },
         },
       };
 
@@ -495,22 +495,25 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect and send UNQ to Acala', async ({helper}) => {
 
     const destination = {
-      V0: {
-        X2: [
-          'Parent',
-          {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
             Parachain: ACALA_CHAIN,
           },
-        ],
+        },
       },
     };
 
     const beneficiary = {
-      V0: {
-        X1: {
-          AccountId32: {
-            network: 'Any',
-            id: randomAccount.addressRaw,
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
           },
         },
       },
@@ -757,7 +760,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
       // >>> Propose external motion through council >>>
       console.log('Propose external motion through council.......');
-      const externalMotion = helper.democracy.externalProposeMajority(proposalHash);
+      const externalMotion = helper.democracy.externalProposeMajority({Legacy: proposalHash});
       const encodedMotion = externalMotion?.method.toHex() || '';
       const motionHash = blake2AsHex(encodedMotion);
       console.log('Motion hash is %s', motionHash);
@@ -768,7 +771,16 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       await helper.collective.council.vote(dorothyAccount, motionHash, councilProposalIdx, true);
       await helper.collective.council.vote(baltatharAccount, motionHash, councilProposalIdx, true);
 
-      await helper.collective.council.close(dorothyAccount, motionHash, councilProposalIdx, 1_000_000_000, externalMotion.encodedLength);
+      await helper.collective.council.close(
+        dorothyAccount,
+        motionHash,
+        councilProposalIdx,
+        {
+          refTime: 1_000_000_000,
+          proofSize: 1_000_000,
+        },
+        externalMotion.encodedLength,
+      );
       console.log('Propose external motion through council.......DONE');
       // <<< Propose external motion through council <<<
 
@@ -785,7 +797,16 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       await helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
       await helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
 
-      await helper.collective.techCommittee.close(baltatharAccount, fastTrackHash, techProposalIdx, 1_000_000_000, fastTrack.encodedLength);
+      await helper.collective.techCommittee.close(
+        baltatharAccount,
+        fastTrackHash,
+        techProposalIdx,
+        {
+          refTime: 1_000_000_000,
+          proofSize: 1_000_000,
+        },
+        fastTrack.encodedLength,
+      );
       console.log('Fast track proposal through technical committee.......DONE');
       // <<< Fast track proposal through technical committee <<<
 
@@ -896,9 +917,8 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
           },
         },
       };
-      const destWeight = 50000000;
 
-      await helper.xTokens.transferMultiasset(randomAccountMoonbeam, asset, destination, destWeight);
+      await helper.xTokens.transferMultiasset(randomAccountMoonbeam, asset, destination, 'Unlimited');
 
       balanceGlmrTokenFinal = await helper.balance.getEthereum(randomAccountMoonbeam.address);
 

@@ -19,7 +19,7 @@ use frame_support::{
 	traits::{Get, Everything},
 };
 use sp_std::{vec, vec::Vec};
-use xcm::v1::{Junction::*, Junctions::*, MultiLocation};
+use xcm::latest::{Junction::*, Junctions::*, MultiLocation};
 use xcm_builder::{
 	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom,

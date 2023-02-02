@@ -57,8 +57,8 @@ impl<T> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T>
 where
 	T: CommonWeightConfigs,
 {
-	fn create_item() -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(create_item())
+	fn create_item(data: &CreateItemData) -> Weight {
+		dispatch_weight::<T>() + max_weight_of!(create_item(data))
 	}
 
 	fn create_multiple_items(data: &[CreateItemData]) -> Weight {

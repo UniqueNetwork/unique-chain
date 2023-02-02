@@ -36,13 +36,9 @@ use crate::{
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
-	fn create_item() -> Weight {
-		<SelfWeightOf<T>>::create_item()
-	}
-
 	fn create_multiple_items(_data: &[CreateItemData]) -> Weight {
 		// All items minted for the same user, so it works same as create_item
-		Self::create_item()
+		<SelfWeightOf<T>>::create_item()
 	}
 
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
@@ -134,10 +130,10 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		data: up_data_structs::CreateItemData,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		match data {
-			up_data_structs::CreateItemData::Fungible(data) => with_weight(
-				<Pallet<T>>::create_item(self, &sender, (to, data.value), nesting_budget),
-				<CommonWeights<T>>::create_item(),
+		match &data {
+			up_data_structs::CreateItemData::Fungible(fungible_data) => with_weight(
+				<Pallet<T>>::create_item(self, &sender, (to, fungible_data.value), nesting_budget),
+				<CommonWeights<T>>::create_item(&data),
 			),
 			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
 		}
@@ -151,8 +147,8 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
 		let mut sum: u128 = 0;
-		for data in data {
-			match data {
+		for data in &data {
+			match &data {
 				up_data_structs::CreateItemData::Fungible(data) => {
 					sum = sum
 						.checked_add(data.value)
@@ -164,7 +160,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 		with_weight(
 			<Pallet<T>>::create_item(self, &sender, (to, sum), nesting_budget),
-			<CommonWeights<T>>::create_item(),
+			<CommonWeights<T>>::create_multiple_items(&data),
 		)
 	}
 
