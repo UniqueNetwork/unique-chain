@@ -240,13 +240,13 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Operator set by a wallet owner that could perform certain transactions on all tokens in the wallet.
+	/// Spender set by a wallet owner that could perform certain transactions on all tokens in the wallet.
 	#[pallet::storage]
 	pub type CollectionAllowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
 			Key<Blake2_128Concat, T::CrossAccountId>, // Owner
-			Key<Blake2_128Concat, T::CrossAccountId>, // Operator
+			Key<Blake2_128Concat, T::CrossAccountId>, // Spender
 		),
 		Value = bool,
 		QueryKind = ValueQuery,
@@ -1403,18 +1403,18 @@ impl<T: Config> Pallet<T> {
 	pub fn set_allowance_for_all(
 		collection: &RefungibleHandle<T>,
 		owner: &T::CrossAccountId,
-		operator: &T::CrossAccountId,
+		spender: &T::CrossAccountId,
 		approve: bool,
 	) -> DispatchResult {
 		<PalletCommon<T>>::set_allowance_for_all(
 			collection,
 			owner,
-			operator,
+			spender,
 			approve,
-			|| <CollectionAllowance<T>>::insert((collection.id, owner, operator), approve),
+			|| <CollectionAllowance<T>>::insert((collection.id, owner, spender), approve),
 			ERC721Events::ApprovalForAll {
 				owner: *owner.as_eth(),
-				operator: *operator.as_eth(),
+				operator: *spender.as_eth(),
 				approved: approve,
 			}
 			.to_log(collection_id_to_address(collection.id)),
@@ -1425,9 +1425,9 @@ impl<T: Config> Pallet<T> {
 	pub fn allowance_for_all(
 		collection: &RefungibleHandle<T>,
 		owner: &T::CrossAccountId,
-		operator: &T::CrossAccountId,
+		spender: &T::CrossAccountId,
 	) -> bool {
-		<CollectionAllowance<T>>::get((collection.id, owner, operator))
+		<CollectionAllowance<T>>::get((collection.id, owner, spender))
 	}
 
 	pub fn repair_item(collection: &RefungibleHandle<T>, token: TokenId) -> DispatchResult {

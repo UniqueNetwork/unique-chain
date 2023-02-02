@@ -6,7 +6,7 @@
 // the Free Software Foundation, either version 3 of the License, or
 // (at your option) any later version.
 
-// Unique Network is disaddress: tod in the hope that it will be useful,
+// Unique Network is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 // GNU General Public License for more details.
@@ -28,6 +28,7 @@ use up_data_structs::CollectionMode;
 use pallet_common::{
 	CollectionHandle,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
+	eth::CrossAddress,
 };
 use sp_std::vec::Vec;
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
@@ -172,11 +173,7 @@ where
 	/// @param owner crossAddress The address which owns the funds.
 	/// @param spender crossAddress The address which will spend the funds.
 	/// @return A uint256 specifying the amount of tokens still available for the spender.
-	fn allowance_cross(
-		&self,
-		owner: pallet_common::eth::CrossAddress,
-		spender: pallet_common::eth::CrossAddress,
-	) -> Result<U256> {
+	fn allowance_cross(&self, owner: CrossAddress, spender: CrossAddress) -> Result<U256> {
 		let owner = owner.into_sub_cross_account::<T>()?;
 		let spender = spender.into_sub_cross_account::<T>()?;
 
@@ -191,12 +188,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint_cross(
-		&mut self,
-		caller: Caller,
-		to: pallet_common::eth::CrossAddress,
-		amount: U256,
-	) -> Result<bool> {
+	fn mint_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -212,7 +204,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: Caller,
-		spender: pallet_common::eth::CrossAddress,
+		spender: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -253,7 +245,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -292,12 +284,7 @@ where
 	}
 
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer_cross(
-		&mut self,
-		caller: Caller,
-		to: pallet_common::eth::CrossAddress,
-		amount: U256,
-	) -> Result<bool> {
+	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -313,8 +300,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
-		to: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
+		to: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);

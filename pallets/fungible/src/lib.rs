@@ -165,8 +165,8 @@ pub mod pallet {
 	pub type Allowance<T: Config> = StorageNMap<
 		Key = (
 			Key<Twox64Concat, CollectionId>,
-			Key<Blake2_128, T::CrossAccountId>,
-			Key<Blake2_128Concat, T::CrossAccountId>,
+			Key<Blake2_128, T::CrossAccountId>,       // Owner
+			Key<Blake2_128Concat, T::CrossAccountId>, // Spender
 		),
 		Value = u128,
 		QueryKind = ValueQuery,
