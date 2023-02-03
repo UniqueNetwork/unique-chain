@@ -27,33 +27,18 @@ use core::{
 use frame_support::{
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
 	traits::Get,
-	parameter_types,
 };
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
 
 use sp_core::U256;
-use sp_runtime::{ArithmeticError, sp_std::prelude::Vec, Permill};
+use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use bondrewd::Bitfields;
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
-
-// RMRK
-use rmrk_traits::{
-	CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme, ThemeProperty,
-	ResourceTypes, BasicResource, ComposableResource, SlotResource, EquippableList,
-};
-pub use rmrk_traits::{
-	primitives::{
-		CollectionId as RmrkCollectionId, NftId as RmrkNftId, BaseId as RmrkBaseId,
-		SlotId as RmrkSlotId, PartId as RmrkPartId, ResourceId as RmrkResourceId,
-	},
-	NftChild as RmrkNftChild, AccountIdOrCollectionNftTuple as RmrkAccountIdOrCollectionNftTuple,
-	FixedPart as RmrkFixedPart, SlotPart as RmrkSlotPart,
-};
 
 mod bondrewd_codec;
 mod bounded;
@@ -173,6 +158,12 @@ pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
 pub struct CollectionId(pub u32);
 impl EncodeLike<u32> for CollectionId {}
 impl EncodeLike<CollectionId> for u32 {}
+
+impl From<u32> for CollectionId {
+	fn from(id: u32) -> Self {
+		Self(id)
+	}
+}
 
 /// Token id.
 #[derive(
@@ -1367,73 +1358,3 @@ impl Get<Properties> for TokenProperties {
 		Properties::new(MAX_TOKEN_PROPERTIES_SIZE)
 	}
 }
-
-// RMRK
-// todo document?
-parameter_types! {
-	#[derive(PartialEq, TypeInfo)]
-	pub const RmrkStringLimit: u32 = 128;
-	#[derive(PartialEq)]
-	pub const RmrkCollectionSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
-	#[derive(PartialEq)]
-	pub const RmrkResourceSymbolLimit: u32 = 10;
-	#[derive(PartialEq)]
-	pub const RmrkBaseSymbolLimit: u32 = MAX_TOKEN_PREFIX_LENGTH;
-	#[derive(PartialEq)]
-	pub const RmrkKeyLimit: u32 = 32;
-	#[derive(PartialEq)]
-	pub const RmrkValueLimit: u32 = 256;
-	#[derive(PartialEq)]
-	pub const RmrkMaxCollectionsEquippablePerPart: u32 = 100;
-	#[derive(PartialEq)]
-	pub const MaxPropertiesPerTheme: u32 = 5;
-	#[derive(PartialEq)]
-	pub const RmrkPartsLimit: u32 = 25;
-	#[derive(PartialEq)]
-	pub const RmrkMaxPriorities: u32 = 25;
-	#[derive(PartialEq)]
-	pub const MaxResourcesOnMint: u32 = 100;
-}
-
-impl From<RmrkCollectionId> for CollectionId {
-	fn from(id: RmrkCollectionId) -> Self {
-		Self(id)
-	}
-}
-
-impl From<RmrkNftId> for TokenId {
-	fn from(id: RmrkNftId) -> Self {
-		Self(id)
-	}
-}
-
-pub type RmrkCollectionInfo<AccountId> =
-	CollectionInfo<RmrkString, RmrkCollectionSymbol, AccountId>;
-pub type RmrkInstanceInfo<AccountId> = NftInfo<AccountId, Permill, RmrkString>;
-pub type RmrkResourceInfo = ResourceInfo<RmrkString, RmrkBoundedParts>;
-pub type RmrkPropertyInfo = PropertyInfo<RmrkKeyString, RmrkValueString>;
-pub type RmrkBaseInfo<AccountId> = BaseInfo<AccountId, RmrkString>;
-pub type BoundedEquippableCollectionIds =
-	BoundedVec<RmrkCollectionId, RmrkMaxCollectionsEquippablePerPart>;
-pub type RmrkPartType = PartType<RmrkString, BoundedEquippableCollectionIds>;
-pub type RmrkEquippableList = EquippableList<BoundedEquippableCollectionIds>;
-pub type RmrkThemeProperty = ThemeProperty<RmrkString>;
-pub type RmrkTheme = Theme<RmrkString, Vec<RmrkThemeProperty>>;
-pub type RmrkBoundedTheme = Theme<RmrkString, BoundedVec<RmrkThemeProperty, MaxPropertiesPerTheme>>;
-pub type RmrkResourceTypes = ResourceTypes<RmrkString, RmrkBoundedParts>;
-
-pub type RmrkBasicResource = BasicResource<RmrkString>;
-pub type RmrkComposableResource = ComposableResource<RmrkString, RmrkBoundedParts>;
-pub type RmrkSlotResource = SlotResource<RmrkString>;
-
-pub type RmrkString = BoundedVec<u8, RmrkStringLimit>;
-pub type RmrkCollectionSymbol = BoundedVec<u8, RmrkCollectionSymbolLimit>;
-pub type RmrkBaseSymbol = BoundedVec<u8, RmrkBaseSymbolLimit>;
-pub type RmrkKeyString = BoundedVec<u8, RmrkKeyLimit>;
-pub type RmrkValueString = BoundedVec<u8, RmrkValueLimit>;
-pub type RmrkBoundedResource = BoundedVec<u8, RmrkResourceSymbolLimit>;
-pub type RmrkBoundedParts = BoundedVec<RmrkPartId, RmrkPartsLimit>; // todo make sure it is needed
-
-pub type RmrkRpcString = Vec<u8>;
-pub type RmrkThemeName = RmrkRpcString;
-pub type RmrkPropertyKey = RmrkRpcString;

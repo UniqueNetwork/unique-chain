@@ -42,12 +42,6 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use up_common::types::opaque::*;
 
-// RMRK
-use up_data_structs::{
-	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
-	RmrkPartType, RmrkTheme,
-};
-
 #[cfg(feature = "pov-estimate")]
 type FullBackend = sc_service::TFullBackend<Block>;
 
@@ -164,17 +158,7 @@ where
 		<R as RuntimeInstance>::CrossAccountId,
 		AccountId,
 	>,
-	C::Api: rmrk_rpc::RmrkApi<
-		Block,
-		AccountId,
-		RmrkCollectionInfo<AccountId>,
-		RmrkInstanceInfo<AccountId>,
-		RmrkResourceInfo,
-		RmrkPropertyInfo,
-		RmrkBaseInfo<AccountId>,
-		RmrkPartType,
-		RmrkTheme,
-	>,
+
 	C::Api: up_pov_estimate_rpc::PovEstimateApi<Block>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
@@ -192,9 +176,6 @@ where
 
 	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{AppPromotionApiServer, AppPromotion};
-
-	#[cfg(not(feature = "unique-runtime"))]
-	use uc_rpc::{RmrkApiServer, Rmrk};
 
 	#[cfg(feature = "pov-estimate")]
 	use uc_rpc::pov_estimate::{PovEstimateApiServer, PovEstimate};
@@ -267,9 +248,6 @@ where
 
 	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
-
-	#[cfg(not(feature = "unique-runtime"))]
-	io.merge(Rmrk::new(client.clone()).into_rpc())?;
 
 	#[cfg(feature = "pov-estimate")]
 	io.merge(

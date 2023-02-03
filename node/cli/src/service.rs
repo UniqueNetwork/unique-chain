@@ -71,12 +71,6 @@ use up_common::types::opaque::*;
 #[cfg(feature = "pov-estimate")]
 use crate::chain_spec::RuntimeIdentification;
 
-// RMRK
-use up_data_structs::{
-	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
-	RmrkPartType, RmrkTheme,
-};
-
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]
 pub struct UniqueRuntimeExecutor;
@@ -403,17 +397,7 @@ where
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ rmrk_rpc::RmrkApi<
-			Block,
-			AccountId,
-			RmrkCollectionInfo<AccountId>,
-			RmrkInstanceInfo<AccountId>,
-			RmrkResourceInfo,
-			RmrkPropertyInfo,
-			RmrkBaseInfo<AccountId>,
-			RmrkPartType,
-			RmrkTheme,
-		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ up_pov_estimate_rpc::PovEstimateApi<Block>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -732,17 +716,7 @@ where
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ rmrk_rpc::RmrkApi<
-			Block,
-			AccountId,
-			RmrkCollectionInfo<AccountId>,
-			RmrkInstanceInfo<AccountId>,
-			RmrkResourceInfo,
-			RmrkPropertyInfo,
-			RmrkBaseInfo<AccountId>,
-			RmrkPartType,
-			RmrkTheme,
-		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ up_pov_estimate_rpc::PovEstimateApi<Block>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
@@ -882,17 +856,7 @@ where
 		+ sp_api::ApiExt<Block, StateBackend = sc_client_api::StateBackendFor<FullBackend, Block>>
 		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
 		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
-		+ rmrk_rpc::RmrkApi<
-			Block,
-			AccountId,
-			RmrkCollectionInfo<AccountId>,
-			RmrkInstanceInfo<AccountId>,
-			RmrkResourceInfo,
-			RmrkPropertyInfo,
-			RmrkBaseInfo<AccountId>,
-			RmrkPartType,
-			RmrkTheme,
-		> + up_pov_estimate_rpc::PovEstimateApi<Block>
+		+ up_pov_estimate_rpc::PovEstimateApi<Block>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>

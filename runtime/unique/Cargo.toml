@@ -39,8 +39,6 @@ runtime-benchmarks = [
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
-	'pallet-proxy-rmrk-core/runtime-benchmarks',
-	'pallet-proxy-rmrk-equip/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
@@ -93,8 +91,6 @@ std = [
 	'pallet-fungible/std',
 	'pallet-inflation/std',
 	'pallet-nonfungible/std',
-	'pallet-proxy-rmrk-core/std',
-	'pallet-proxy-rmrk-equip/std',
 	'pallet-randomness-collective-flip/std',
 	'pallet-refungible/std',
 	'pallet-structure/std',
@@ -105,7 +101,6 @@ std = [
 	'pallet-treasury/std',
 	'pallet-unique/std',
 	'parachain-info/std',
-	'rmrk-rpc/std',
 	'sp-api/std',
 	'sp-block-builder/std',
 	'sp-core/std',
@@ -169,8 +164,6 @@ try-runtime = [
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
 	'pallet-nonfungible/try-runtime',
-	'pallet-proxy-rmrk-core/try-runtime',
-	'pallet-proxy-rmrk-equip/try-runtime',
 	'pallet-randomness-collective-flip/try-runtime',
 	'pallet-refungible/try-runtime',
 	'pallet-structure/try-runtime',
@@ -255,12 +248,9 @@ pallet-fungible = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }
 pallet-nonfungible = { workspace = true }
-pallet-proxy-rmrk-core = { workspace = true }
-pallet-proxy-rmrk-equip = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }
-rmrk-rpc = { workspace = true }
 scale-info = { workspace = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
@@ -290,11 +280,11 @@ up-sponsorship = { workspace = true }
 ################################################################################
 # Optional dependencies
 
-frame-system-benchmarking = { workspace = true, optional = true }
 frame-benchmarking = { workspace = true, optional = true }
+frame-system-benchmarking = { workspace = true, optional = true }
 frame-try-runtime = { workspace = true, optional = true }
-serde = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
 
 ################################################################################
 # Test dependencies

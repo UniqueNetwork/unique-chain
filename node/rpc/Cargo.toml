@@ -33,7 +33,6 @@ fp-rpc = { workspace = true }
 fp-storage = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
-rmrk-rpc = { workspace = true }
 serde = { workspace = true }
 uc-rpc = { workspace = true }
 up-common = { workspace = true }

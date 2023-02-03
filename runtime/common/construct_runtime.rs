@@ -82,11 +82,8 @@ macro_rules! construct_runtime {
                 Nonfungible: pallet_nonfungible::{Pallet, Storage} = 69,
                 Structure: pallet_structure::{Pallet, Call, Storage, Event<T>} = 70,
 
-                #[cfg(feature = "rmrk")]
-                RmrkCore: pallet_proxy_rmrk_core::{Pallet, Call, Storage, Event<T>} = 71,
-
-                #[cfg(feature = "rmrk")]
-                RmrkEquip: pallet_proxy_rmrk_equip::{Pallet, Call, Storage, Event<T>} = 72,
+                // Here was rmrk core = 71
+                // Here was rmrk equip = 72
 
                 #[cfg(feature = "app-promotion")]
                 AppPromotion: pallet_app_promotion::{Pallet, Call, Storage, Event<T>} = 73,
