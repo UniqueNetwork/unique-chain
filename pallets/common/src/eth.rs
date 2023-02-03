@@ -18,7 +18,10 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
-use evm_coder::{AbiCoder, types::Address};
+use evm_coder::{
+	AbiCoder,
+	types::{Address, String},
+};
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
@@ -388,6 +391,16 @@ impl TokenPropertyPermission {
 		}
 		Ok(perms)
 	}
+}
+
+/// Data for creation token with uri.
+#[derive(Debug, AbiCoder)]
+pub struct TokenUri {
+	/// Id of new token.
+	pub id: U256,
+
+	/// Uri of new token.
+	pub uri: String,
 }
 
 /// Nested collections.

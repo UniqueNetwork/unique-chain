@@ -31,7 +31,7 @@ use evm_coder::{
 use pallet_common::{
 	CommonWeightInfo,
 	erc::{CommonEvmHandler, PrecompileResult},
-	eth::collection_id_to_address,
+	eth::{collection_id_to_address, CrossAddress},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
@@ -203,6 +203,17 @@ impl<T: Config> RefungibleTokenHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	fn allowance_cross(&self, owner: CrossAddress, spender: CrossAddress) -> Result<U256> {
+		let owner = owner.into_sub_cross_account::<T>()?;
+		let spender = spender.into_sub_cross_account::<T>()?;
+
+		Ok(<Allowance<T>>::get((self.id, self.1, owner, spender)).into())
+	}
+
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
 	/// @param from The account whose tokens will be burnt.
@@ -230,7 +241,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -256,7 +267,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: Caller,
-		spender: pallet_common::eth::CrossAddress,
+		spender: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -283,12 +294,7 @@ where
 	/// @param to The crossaccount to transfer to.
 	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
-	fn transfer_cross(
-		&mut self,
-		caller: Caller,
-		to: pallet_common::eth::CrossAddress,
-		amount: U256,
-	) -> Result<bool> {
+	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -309,8 +315,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
-		to: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
+		to: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);

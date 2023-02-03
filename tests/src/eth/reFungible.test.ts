@@ -219,8 +219,16 @@ describe('Refungible: Plain calls', () => {
       await rftToken.methods.approve(operator, 15n).send({from: owner});
       await contract.methods.setApprovalForAll(operator, true).send({from: owner});
       await rftToken.methods.burnFrom(owner, 10n).send({from: operator});
+    }
+    {
       const allowance = await rftToken.methods.allowance(owner, operator).call();
-      expect(allowance).to.be.equal('5');
+      expect(+allowance).to.be.equal(5);
+    }
+    {
+      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+      const operatorCross = helper.ethCrossAccount.fromAddress(operator);
+      const allowance = await rftToken.methods.allowanceCross(ownerCross, operatorCross).call();
+      expect(+allowance).to.equal(5);
     }
   });
 

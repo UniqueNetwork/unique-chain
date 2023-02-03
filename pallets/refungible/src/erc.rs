@@ -34,7 +34,7 @@ use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	Error as CommonError,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	eth,
+	eth::{self, TokenUri},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{call, dispatch_to_evm};
@@ -999,7 +999,7 @@ where
 		&mut self,
 		caller: Caller,
 		to: Address,
-		tokens: Vec<(U256, String)>,
+		tokens: Vec<TokenUri>,
 	) -> Result<bool> {
 		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1017,7 +1017,7 @@ where
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap();
-		for (id, token_uri) in tokens {
+		for TokenUri { id, uri } in tokens {
 			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
 			if id != expected_index {
 				return Err("item id should be next".into());
@@ -1028,7 +1028,7 @@ where
 			properties
 				.try_push(Property {
 					key: key.clone(),
-					value: token_uri
+					value: uri
 						.into_bytes()
 						.try_into()
 						.map_err(|_| "token uri is too long")?,
