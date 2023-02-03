@@ -1,61 +1,78 @@
 import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
-import {feedAccounts} from './generateAccounts';
 import {usingPlaygrounds} from '../../util';
-import {signSendAndWait, TransactionResult} from './sign';
+import {signSendAndWait, TxResult} from './sign';
+import {WS_ENDPOINT} from '../config';
 
-/*
-  Helper functions related to test accounts.
-*/
+/* eslint-disable no-constant-condition */
 
-export function getDonors(): IKeyringPair[] {
-  //FIXME: use secret seeds
+/**
+ * Returns IKeyringPair[] of "//Account//{1,2,3...}"" accounts
+ * @param accountsNumber number of accounts to create
+ * @returns ```IKeyringPair[]```
+ */
+export function getAccounts(accountsNumber: number, baseSeed: string): IKeyringPair[] {
   const keyring = new Keyring();
-  return Array(10).fill('//Donor').map((donor, i) => keyring.addFromUri(donor + `//${i}`));
+  const accounts = Array(accountsNumber)
+    .fill(baseSeed.startsWith('//' ? baseSeed : `//${baseSeed}`))
+    .map((donor, i) => keyring.addFromUri(donor + `//${i}`));
+  return accounts;
 }
 
-export function getCrowd(crowdSize: number): IKeyringPair[] {
-  //FIXME: use secret seeds
-  const keyring = new Keyring();
-  return Array(crowdSize).fill('//Loader').map((donor, i) => keyring.addFromUri(donor + `//${i}`));
-}
-
-export async function feedDonors(amountOfTokens: bigint): Promise<IKeyringPair[]> {
-  const donors = getDonors();
-  // The first donor is main
-  console.log('super donor', donors[0].address);
-  await feedAccounts(donors[0], donors.slice(1), amountOfTokens);
-  return donors;
-}
-
-export async function feedCrowd
-(crowdSize: number, amountOfTokens: bigint): Promise<IKeyringPair[]> {
-  const donors = getDonors();
-  const crowd = getCrowd(crowdSize);
-  // Each donor can proccess near 900 accounts effectively
-  const neededDonors = crowdSize / 900;
-  const transactions = [];
-  for (let i = 0; i < neededDonors; i++) {
-    const accountsToFeed = crowd.slice(0, 900 * (i + 1));
-    transactions.push(feedAccounts(donors[i], accountsToFeed, amountOfTokens));
-  }
-  await Promise.all(transactions);
-  return crowd;
-}
-
-export async function emptyCrowd(crowd: IKeyringPair[]) {
-  await usingPlaygrounds(async (helper) => {
+/**
+ * Send specified balance from ```donor``` to ```accounts```
+ * @param donor account to transfer UNQ
+ * @param accounts recepients
+ * @param accountBalance balance of each account
+ * @returns ```IKeyringPair[]``` of feeded accounts
+ */
+export async function topUpAccounts
+(donor: IKeyringPair | string, accounts: IKeyringPair[], accountBalance: bigint): Promise<TxResult[]> {
+  return await usingPlaygrounds(async (helper) => {
+    if (typeof donor === 'string') donor = helper.util.fromSeed(donor);
     const api = helper.getApi();
-    const donor = getDonors()[0].address;
+    let nonce = await helper.chain.getNonce(donor.address);
 
-    const transactions: Promise<TransactionResult>[] = [];
+    const transactions: Promise<TxResult>[] = [];
+    let i = 1;
+    for (const account of accounts) {
+      console.log(i++);
+      // For each account creates immortal extrinsic, send it and push transactions[]:
+      const extrinsic = api.tx.balances.transfer(account.address, accountBalance);
+      transactions.push(signSendAndWait({signer: donor, extrinsic, options: {era: 0, nonce: nonce++}}));
+    }
+
+    const result = await Promise.all(transactions);
+    return result;
+  }, WS_ENDPOINT);
+}
+
+/**
+ * Transfer all the balance from ```crowd``` to ```destination``` account
+ * @param crowd accounts to transferAll from
+ * @param recepient recepient of transferAll
+ */
+export async function emptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPair) {
+  return await usingPlaygrounds(async (helper) => {
+    const api = helper.getApi();
+
+    const transactions: Promise<TxResult>[] = [];
     let i = 1;
     for (const account of crowd) {
       console.log(i++);
-      const extrinsic = api.tx.balances.transferAll(donor, false);
-      transactions.push(signSendAndWait(account, extrinsic, {era: 0}));
+      const extrinsic = api.tx.balances.transferAll(recepient.address, false);
+      transactions.push(signSendAndWait({extrinsic, signer: account}));
     }
 
-    await Promise.all(transactions);
-  },'wss://ws-opal.unique.network');
+    const result = await Promise.all(transactions);
+    return result;
+  }, WS_ENDPOINT);
+}
+
+export function chunk<T>(array: T[], size: number) {
+  const chunkedArray = [];
+  for (let i = 0; i < array.length; i += size) {
+    chunkedArray.push(array.slice(i, i + size));
+  }
+  return chunkedArray;
 }

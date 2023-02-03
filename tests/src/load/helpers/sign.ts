@@ -1,21 +1,23 @@
 import {SignerOptions, SubmittableExtrinsic} from '@polkadot/api/types/submittable';
 import {ISubmittableResult, IKeyringPair} from '@polkadot/types/types';
 
-// FIXME: rename
-export type TransactionResult = {
+export type TxResult = {
   status: 'success' | 'fail',
   reason?: string,
   result?: ISubmittableResult,
 }
 
-export function signSendAndWait(
+export type Tx = {
   signer: IKeyringPair,
   extrinsic: SubmittableExtrinsic<'promise', ISubmittableResult>,
   options?: Partial<SignerOptions> | undefined,
-): Promise<TransactionResult> {
+}
+
+export function signSendAndWait(transaction: Tx): Promise<TxResult> {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     try {
+      const {signer, extrinsic, options} = transaction;
       const unsub = await extrinsic.signAndSend(signer, options ? options : {}, (result) => {
         const {events, status} = result;
         // If the transaction wasn't included in the block for some reason:
@@ -24,7 +26,6 @@ export function signSendAndWait(
           unsub();
           resolve({status: 'fail', reason: 'ExtrinsicDropped', result});
         }
-        // status.isInBlock useful for a dev node only
         if (status.isFinalized || status.isInBlock) {
           const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
           if (errors.length > 0) {
