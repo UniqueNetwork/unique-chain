@@ -134,6 +134,12 @@ describe('Fungible: Plain calls', () => {
       const allowance = await contract.methods.allowance(owner, spender).call();
       expect(+allowance).to.equal(100);
     }
+    {
+      const ownerCross = helper.ethCrossAccount.fromAddress(owner);
+      const spenderCross = helper.ethCrossAccount.fromAddress(spender);
+      const allowance = await contract.methods.allowanceCross(ownerCross, spenderCross).call();
+      expect(+allowance).to.equal(100);
+    }
   });
 
   itEth('Can perform approveCross()', async ({helper}) => {

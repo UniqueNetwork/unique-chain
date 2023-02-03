@@ -36,8 +36,22 @@ contract ERC1633 is Dummy, ERC165 {
 	}
 }
 
-/// @dev the ERC-165 identifier for this interface is 0xe17a7d2b
+/// @dev the ERC-165 identifier for this interface is 0x01d536fc
 contract ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	/// @dev EVM selector for this function is: 0xe0af4bd7,
+	///  or in textual repr: allowanceCross((address,uint256),(address,uint256))
+	function allowanceCross(CrossAddress memory owner, CrossAddress memory spender) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		spender;
+		dummy;
+		return 0;
+	}
+
 	// /// @dev Function that burns an amount of the token of a given account,
 	// /// deducting from the sender's allowance for said account.
 	// /// @param from The account whose tokens will be burnt.
