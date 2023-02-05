@@ -214,7 +214,7 @@ pub mod pallet {
 	/// usual [`TokenProperties`] due to an unlimited number
 	/// and separately stored and written-to key-value pairs.
 	///
-	/// Currently used to store RMRK data.
+	/// Currently unused.
 	#[pallet::storage]
 	#[pallet::getter(fn token_aux_property)]
 	pub type TokenAuxProperties<T: Config> = StorageNMap<

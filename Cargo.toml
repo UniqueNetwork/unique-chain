@@ -43,9 +43,6 @@ pallet-identity = { default-features = false, path = "pallets/identity" }
 pallet-inflation = { path = "pallets/inflation", default-features = false }
 pallet-maintenance = { default-features = false, path = "pallets/maintenance" }
 pallet-nonfungible = { default-features = false, path = "pallets/nonfungible" }
-pallet-proxy-rmrk-core = { default-features = false, path = "pallets/proxy-rmrk-core", package = "pallet-rmrk-core" }
-pallet-proxy-rmrk-equip = { default-features = false, path = "pallets/proxy-rmrk-equip", package = "pallet-rmrk-equip" }
-rmrk-traits = { default-features = false, path = "primitives/rmrk-traits" }
 pallet-refungible = { default-features = false, path = "pallets/refungible" }
 pallet-structure = { default-features = false, path = "pallets/structure" }
 pallet-unique = { path = "pallets/unique", default-features = false }
@@ -53,7 +50,6 @@ pallet-unique-scheduler-v2 = { path = "pallets/scheduler-v2", default-features =
 pallet-test-utils = { default-features = false, path = "test-pallets/utils" }
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
 app-promotion-rpc = { path = "primitives/app_promotion_rpc", default-features = false }
-rmrk-rpc = { path = "primitives/rmrk-rpc", default-features = false }
 
 # Unique: Runtimes
 unique-runtime = { path = "runtime/unique" }

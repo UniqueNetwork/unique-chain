@@ -5543,8 +5543,6 @@ dependencies = [
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
- "pallet-rmrk-core",
- "pallet-rmrk-equip",
  "pallet-session",
  "pallet-structure",
  "pallet-sudo",
@@ -5561,7 +5559,6 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "precompile-utils-macro",
- "rmrk-rpc",
  "scale-info",
  "serde",
  "smallvec",
@@ -6772,43 +6769,6 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
- "sp-runtime",
- "sp-std",
- "up-data-structs",
-]
-
-[[package]]
-name = "pallet-rmrk-core"
-version = "0.1.2"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-common",
- "pallet-evm",
- "pallet-nonfungible",
- "pallet-structure",
- "parity-scale-codec",
- "rmrk-traits",
- "scale-info",
- "sp-runtime",
- "sp-std",
- "up-data-structs",
-]
-
-[[package]]
-name = "pallet-rmrk-equip"
-version = "0.1.2"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-common",
- "pallet-evm",
- "pallet-nonfungible",
- "pallet-rmrk-core",
- "parity-scale-codec",
- "scale-info",
  "sp-runtime",
  "sp-std",
  "up-data-structs",
@@ -9009,8 +8969,6 @@ dependencies = [
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
- "pallet-rmrk-core",
- "pallet-rmrk-equip",
  "pallet-session",
  "pallet-structure",
  "pallet-sudo",
@@ -9026,7 +8984,6 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "precompile-utils-macro",
- "rmrk-rpc",
  "scale-info",
  "serde",
  "smallvec",
@@ -9412,26 +9369,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
-]
-
-[[package]]
-name = "rmrk-rpc"
-version = "0.0.2"
-dependencies = [
- "parity-scale-codec",
- "rmrk-traits",
- "sp-api",
- "sp-runtime",
- "sp-std",
-]
-
-[[package]]
-name = "rmrk-traits"
-version = "0.1.0"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
 ]
 
 [[package]]
@@ -13026,7 +12963,6 @@ dependencies = [
  "pallet-evm",
  "parity-scale-codec",
  "quartz-runtime",
- "rmrk-rpc",
  "sc-client-api",
  "sc-executor",
  "sc-rpc-api",
@@ -13132,7 +13068,6 @@ dependencies = [
  "polkadot-primitives",
  "polkadot-service",
  "quartz-runtime",
- "rmrk-rpc",
  "sc-basic-authorship",
  "sc-chain-spec",
  "sc-cli",
@@ -13186,7 +13121,6 @@ dependencies = [
  "fp-storage",
  "jsonrpsee",
  "pallet-transaction-payment-rpc",
- "rmrk-rpc",
  "sc-client-api",
  "sc-finality-grandpa",
  "sc-network",
@@ -13265,8 +13199,6 @@ dependencies = [
  "pallet-nonfungible",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
- "pallet-rmrk-core",
- "pallet-rmrk-equip",
  "pallet-session",
  "pallet-structure",
  "pallet-sudo",
@@ -13282,7 +13214,6 @@ dependencies = [
  "parity-scale-codec",
  "polkadot-parachain",
  "precompile-utils-macro",
- "rmrk-rpc",
  "scale-info",
  "serde",
  "smallvec",
@@ -13361,7 +13292,6 @@ dependencies = [
  "frame-support",
  "pallet-evm",
  "parity-scale-codec",
- "rmrk-traits",
  "scale-info",
  "serde",
  "sp-core",

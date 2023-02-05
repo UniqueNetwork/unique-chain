@@ -47,7 +47,7 @@ use sp_core::{U256, Get};
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	SelfWeightOf, weights::WeightInfo, TokenProperties,
+	TokenProperties, SelfWeightOf, weights::WeightInfo,
 };
 
 frontier_contract! {

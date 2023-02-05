@@ -89,7 +89,6 @@ fc-rpc-core = { workspace = true }
 fp-rpc = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
-rmrk-rpc = { workspace = true }
 uc-rpc = { workspace = true }
 unique-rpc = { workspace = true }
 up-pov-estimate-rpc = { workspace = true }

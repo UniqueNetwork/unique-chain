@@ -28,6 +28,7 @@ use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult},
 	eth::{collection_id_to_address, CrossAddress},
+	CommonWeightInfo,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
@@ -39,7 +40,7 @@ use sp_std::vec::Vec;
 use sp_core::U256;
 use up_data_structs::TokenId;
 
-use crate::{Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply};
+use crate::{Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply, common::CommonWeights, SelfWeightOf, weights::WeightInfo};
 
 /// Refungible token handle contains information about token's collection and id
 ///

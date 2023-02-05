@@ -109,15 +109,6 @@ use up_data_structs::{
 	TokenData,
 	TrySetProperty,
 	PropertyScope,
-	// RMRK
-	RmrkCollectionInfo,
-	RmrkInstanceInfo,
-	RmrkResourceInfo,
-	RmrkPropertyInfo,
-	RmrkBaseInfo,
-	RmrkPartType,
-	RmrkBoundedTheme,
-	RmrkNftChild,
 	CollectionPermissions,
 };
 use up_pov_estimate_rpc::PovInfo;
@@ -898,15 +889,6 @@ pub mod pallet {
 			PhantomType<(
 				TokenData<T::CrossAccountId>,
 				RpcCollection<T::AccountId>,
-				// RMRK
-				RmrkCollectionInfo<T::AccountId>,
-				RmrkInstanceInfo<T::AccountId>,
-				RmrkResourceInfo,
-				RmrkPropertyInfo,
-				RmrkBaseInfo<T::AccountId>,
-				RmrkPartType,
-				RmrkBoundedTheme,
-				RmrkNftChild,
 				// PoV Estimate Info
 				PovInfo,
 			)>,

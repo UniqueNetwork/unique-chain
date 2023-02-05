@@ -43,7 +43,6 @@
     "testEthFractionalizer": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/fractionalizer/**/*.*test.ts'",
     "testEthMarketplace": "yarn setup && mocha --timeout 9999999 -r ts-node/register './**/eth/marketplace/**/*.*test.ts'",
     "testEvent": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./src/check-event/*.*test.ts",
-    "testRmrk": "yarn setup && mocha --timeout 9999999 -r ts-node/register ./**/rmrk/*.*test.ts",
     "testEthPayable": "mocha --timeout 9999999 -r ts-node/register './**/eth/payable.test.ts'",
     "testEvmCoder": "mocha --timeout 9999999 -r ts-node/register './**/eth/evmCoder.test.ts'",
     "testNesting": "mocha --timeout 9999999 -r ts-node/register ./**/nest.test.ts",

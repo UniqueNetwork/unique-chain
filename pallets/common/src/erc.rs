@@ -33,7 +33,7 @@ use up_data_structs::{
 };
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf, eth, weights::WeightInfo,
+	Pallet, CollectionHandle, Config, CollectionProperties, eth, SelfWeightOf, weights::WeightInfo,
 };
 
 frontier_contract! {
