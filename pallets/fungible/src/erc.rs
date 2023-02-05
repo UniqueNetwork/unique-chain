@@ -38,8 +38,8 @@ use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _
 use sp_core::{U256, Get};
 
 use crate::{
-	Allowance, Balance, Config, FungibleHandle, Pallet, TotalSupply,
-	SelfWeightOf, weights::WeightInfo,	
+	Allowance, Balance, Config, FungibleHandle, Pallet, TotalSupply, SelfWeightOf,
+	weights::WeightInfo,
 };
 
 frontier_contract! {

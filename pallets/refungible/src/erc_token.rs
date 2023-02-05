@@ -40,7 +40,10 @@ use sp_std::vec::Vec;
 use sp_core::U256;
 use up_data_structs::TokenId;
 
-use crate::{Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply, common::CommonWeights, SelfWeightOf, weights::WeightInfo};
+use crate::{
+	Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply, common::CommonWeights,
+	SelfWeightOf, weights::WeightInfo,
+};
 
 /// Refungible token handle contains information about token's collection and id
 ///

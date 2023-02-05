@@ -48,8 +48,8 @@ use up_data_structs::{
 };
 
 use crate::{
-	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, 
-	TokenProperties, TokensMinted, TotalSupply, SelfWeightOf, weights::WeightInfo,
+	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, TokenProperties,
+	TokensMinted, TotalSupply, SelfWeightOf, weights::WeightInfo,
 };
 
 frontier_contract! {
