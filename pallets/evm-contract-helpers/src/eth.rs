@@ -20,7 +20,6 @@ extern crate alloc;
 use core::marker::PhantomData;
 use evm_coder::{
 	abi::{AbiWriter, AbiType},
-	execution::Result,
 	generate_stubgen, solidity_interface,
 	types::*,
 	ToLog,
@@ -30,7 +29,11 @@ use pallet_evm::{
 	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
 	account::CrossAccountId,
 };
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder, dispatch_to_evm};
+use pallet_evm_coder_substrate::{
+	SubstrateRecorder, WithRecorder, dispatch_to_evm,
+	execution::{Result, PreDispatch},
+	frontier_contract,
+};
 use pallet_evm_transaction_payment::CallContext;
 use sp_core::{H160, U256};
 use up_data_structs::SponsorshipState;
@@ -41,6 +44,11 @@ use crate::{
 use frame_support::traits::Get;
 use up_sponsorship::SponsorshipHandler;
 use sp_std::vec::Vec;
+
+frontier_contract! {
+	macro_rules! ContractHelpers_result {...}
+	impl<T: Config> Contract for ContractHelpers<T> {...}
+}
 
 /// Pallet events.
 #[derive(ToLog)]
@@ -84,7 +92,7 @@ impl<T: Config> WithRecorder<T> for ContractHelpers<T> {
 }
 
 /// @title Magic contract, which allows users to reconfigure other contracts
-#[solidity_interface(name = ContractHelpers, events(ContractHelpersEvents))]
+#[solidity_interface(name = ContractHelpers, events(ContractHelpersEvents), enum(derive(PreDispatch)))]
 impl<T: Config> ContractHelpers<T>
 where
 	T::AccountId: AsRef<[u8; 32]>,

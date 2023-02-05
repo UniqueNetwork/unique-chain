@@ -20,10 +20,7 @@ extern crate alloc;
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
 use evm_coder::AbiCoder;
-use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	weight,
-};
+use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use up_data_structs::CollectionMode;
 use pallet_common::{
 	CollectionHandle,
@@ -32,7 +29,11 @@ use pallet_common::{
 };
 use sp_std::vec::Vec;
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
-use pallet_evm_coder_substrate::{call, dispatch_to_evm};
+use pallet_evm_coder_substrate::{
+	call, dispatch_to_evm,
+	execution::{PreDispatch, Result},
+	frontier_contract,
+};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::{U256, Get};
 
@@ -40,6 +41,11 @@ use crate::{
 	Allowance, Balance, Config, FungibleHandle, Pallet, SelfWeightOf, TotalSupply,
 	weights::WeightInfo,
 };
+
+frontier_contract! {
+	macro_rules! FungibleHandle_result {...}
+	impl<T: Config> Contract for FungibleHandle<T> {...}
+}
 
 #[derive(ToLog)]
 pub enum ERC20Events {
@@ -65,7 +71,7 @@ pub struct AmountForAddress {
 	amount: U256,
 }
 
-#[solidity_interface(name = ERC20, events(ERC20Events), expect_selector = 0x942e8b22)]
+#[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
 impl<T: Config> FungibleHandle<T> {
 	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -145,7 +151,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = ERC20Mintable)]
+#[solidity_interface(name = ERC20Mintable, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleHandle<T> {
 	/// Mint tokens for `to` account.
 	/// @param to account that will receive minted tokens
@@ -158,13 +164,13 @@ impl<T: Config> FungibleHandle<T> {
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+		<Pallet<T>>::create_item(self, &caller, (to, amount), &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
 
-#[solidity_interface(name = ERC20UniqueExtensions)]
+#[solidity_interface(name = ERC20UniqueExtensions, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
@@ -181,10 +187,10 @@ where
 	}
 
 	/// @notice A description for the collection.
-	fn description(&self) -> Result<String> {
-		Ok(decode_utf16(self.description.iter().copied())
+	fn description(&self) -> String {
+		decode_utf16(self.description.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<String>())
+			.collect::<String>()
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_item())]
@@ -278,7 +284,7 @@ where
 			})
 			.collect::<Result<_>>()?;
 
-		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
+		<Pallet<T>>::create_multiple_items(self, &caller, amounts, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -330,7 +336,8 @@ where
 		ERC20Mintable,
 		ERC20UniqueExtensions,
 		Collection(via(common_mut returns CollectionHandle<T>)),
-	)
+	),
+	enum(derive(PreDispatch))
 )]
 impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 

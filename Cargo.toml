@@ -19,7 +19,7 @@ panic = 'unwind'
 
 [workspace.dependencies]
 # Unique
-evm-coder = { default-features = false, path = "crates/evm-coder" }
+evm-coder = { git = "https://github.com/uniquenetwork/evm-coder", tag = "v0.3.0", default-features = false }
 struct-versioning = { path = "crates/struct-versioning" }
 precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }
 up-common = { path = "primitives/common", default-features = false }

@@ -192,7 +192,10 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Consume gas for reading.
-	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
+	pub fn consume_store_reads(
+		&self,
+		reads: u64,
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
@@ -202,7 +205,10 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Consume gas for writing.
-	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
+	pub fn consume_store_writes(
+		&self,
+		writes: u64,
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
@@ -216,7 +222,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 		writes: u64,
-	) -> evm_coder::execution::Result<()> {
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		let weight = <T as frame_system::Config>::DbWeight::get();
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
