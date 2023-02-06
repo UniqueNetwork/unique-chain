@@ -87,7 +87,6 @@
     "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.seqtest.ts",
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
     "testPalletPresence": "mocha --timeout 9999999 -r ts-node/register ./**/pallet-presence.test.ts",
-    "testBlockProduction": "mocha --timeout 9999999 -r ts-node/register ./**/block-production.test.ts",
     "testCollators": "RUN_COLLATOR_TESTS=1 mocha --timeout 49999999 -r ts-node/register ./**/collator-selection/**.*test.ts",
     "testCollatorSelection": "RUN_COLLATOR_TESTS=1 mocha --timeout 49999999 -r ts-node/register ./**/collatorSelection.*test.ts",
     "testIdentity": "RUN_COLLATOR_TESTS=1 mocha --timeout 49999999 -r ts-node/register ./**/identity.*test.ts",
