@@ -1035,7 +1035,7 @@ async function erc20CalculateFeeGas(
   res['mintBulk'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
-      () => evmContract.methods.mintBulk([{field_0: ethSigner, field_1: 1}]).send(),
+      () => evmContract.methods.mintBulk([{to: ethSigner, amount: 1}]).send(),
     );
 
   res['mintBulk'].substrate = convertToTokens((await helper.arrange.calculcateFee(
