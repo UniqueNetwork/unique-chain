@@ -34,14 +34,14 @@ export async function topUpAccounts
     let nonce = await helper.chain.getNonce(donor.address);
 
     const transactions: Promise<TxResult>[] = [];
-    let i = 1;
+    console.log('Signing transfer transactions for', accounts.length, 'accounts');
     for (const account of accounts) {
-      console.log(i++);
       // For each account creates immortal extrinsic, send it and push transactions[]:
       const extrinsic = api.tx.balances.transfer(account.address, accountBalance);
       transactions.push(signSendAndWait({signer: donor, extrinsic, options: {era: 0, nonce: nonce++}}));
     }
 
+    console.log('Transactions sent, waiting for result...');
     const result = await Promise.all(transactions);
     return result;
   }, WS_ENDPOINT);
@@ -57,13 +57,13 @@ export async function emptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPa
     const api = helper.getApi();
 
     const transactions: Promise<TxResult>[] = [];
-    let i = 1;
+    console.log('Signing transferAll transactions from', crowd.length, 'accounts');
     for (const account of crowd) {
-      console.log(i++);
       const extrinsic = api.tx.balances.transferAll(recepient.address, false);
       transactions.push(signSendAndWait({extrinsic, signer: account}));
     }
 
+    console.log('Transactions sent, waiting for result...');
     const result = await Promise.all(transactions);
     return result;
   }, WS_ENDPOINT);

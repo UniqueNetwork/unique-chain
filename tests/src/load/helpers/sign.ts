@@ -22,7 +22,6 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
         const {events, status} = result;
         // If the transaction wasn't included in the block for some reason:
         if (status.isDropped) {
-          console.log('Transaction has been dropped');
           unsub();
           resolve({status: 'fail', reason: 'ExtrinsicDropped', result});
         }
@@ -37,7 +36,6 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
         }
       });
     } catch (error) {
-      console.log('Unknown error');
       const reason = error instanceof Error ? error.message : 'Unknown error';
       resolve({status: 'fail', reason});
     }
