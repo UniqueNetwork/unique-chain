@@ -393,7 +393,6 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
     expect(result.events.TokenChanged).to.be.like({
       event: 'TokenChanged',
       returnValues: {
-        collectionId: collectionAddress,
         tokenId: tokenId,
       },
     });
@@ -406,7 +405,6 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
     expect(result.events.TokenChanged).to.be.like({
       event: 'TokenChanged',
       returnValues: {
-        collectionId: collectionAddress,
         tokenId: tokenId,
       },
     });

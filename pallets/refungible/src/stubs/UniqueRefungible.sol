@@ -19,7 +19,7 @@ contract ERC165 is Dummy {
 
 /// @dev inlined interface
 contract ERC721TokenEvent {
-	event TokenChanged(address indexed collectionId, uint256 tokenId);
+	event TokenChanged(uint256 indexed tokenId);
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.

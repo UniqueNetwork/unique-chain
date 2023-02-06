@@ -55,10 +55,8 @@ use crate::{
 pub enum ERC721TokenEvent {
 	/// The token has been changed.
 	TokenChanged {
-		/// Collection ID.
-		#[indexed]
-		collection_id: Address,
 		/// Token ID.
+		#[indexed]
 		token_id: U256,
 	},
 }

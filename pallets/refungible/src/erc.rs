@@ -64,10 +64,8 @@ pub const ADDRESS_FOR_PARTIALLY_OWNED_TOKENS: H160 = H160::repeat_byte(0xff);
 pub enum ERC721TokenEvent {
 	/// The token has been changed.
 	TokenChanged {
-		/// Collection ID.
-		#[indexed]
-		collection_id: Address,
 		/// Token ID.
+		#[indexed]
 		token_id: U256,
 	},
 }
