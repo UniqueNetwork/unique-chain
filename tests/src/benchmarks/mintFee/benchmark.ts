@@ -1,14 +1,16 @@
-import {EthUniqueHelper, SponsoringMode, usingEthPlaygrounds} from '../../eth/util';
+import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
 import {readFile} from 'fs/promises';
 import {CollectionLimitField, ContractImports, TokenPermissionField} from '../../eth/util/playgrounds/types';
 import {
   ICrossAccountId,
   ITokenPropertyPermission,
+  TCollectionMode,
 } from '../../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import {UniqueNFTCollection} from '../../util/playgrounds/unique';
+import {UniqueFTCollection, UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
+import {FunctionFeeVM, IFunctionFee} from './types';
 
 const CONTRACT_IMPORT: ContractImports[] = [
   {
@@ -71,11 +73,7 @@ interface IBenchmarkResultForProp {
 	evmProxyContractFee: number;
 	evmProxyContractBulkFee: number;
 }
-interface IBenchmarkCollection {
-  createFee: number,
-  mintFee: number,
-  transferFee: number,
-}
+
 const main = async () => {
   const benchmarks = [
     'substrateFee',
@@ -101,129 +99,16 @@ const main = async () => {
     const CONTRACT_SOURCE = (
       await readFile(`${__dirname}/proxyContract.sol`)
     ).toString();
-    const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/openZeppelin/bin/ZeppelinContract.bin`)).toString();
-    const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/openZeppelin/bin/ZeppelinContract.abi`)).toString());
+
+    console.log('\n ERC20 ops fees');
+    console.table(FunctionFeeVM.fromModel(await erc20CalculateFeeGas(helper, privateKey)));
 
     console.log('\n ERC721 ops fees');
-    console.table(await ERC721CalculateFeeGas(helper, privateKey), ['fee', 'gas', 'substrate']);
+    const erc721 = await erc721CalculateFeeGas(helper, privateKey);
+    console.table(FunctionFeeVM.fromModel(erc721));
 
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-    const [substrateReceiver] = await helper.arrange.createAccounts([10n], donor);
-
     const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const ethReceiver = await helper.eth.createAccountWithBalance(donor, 5n);
-
-    let susbtrateCollection: UniqueNFTCollection | null;
-    const createCollectionSubstrateFee = convertToTokens(
-      await helper.arrange.calculcateFee({Substrate: donor.address}, async () => {
-        susbtrateCollection = await helper.nft.mintCollection(donor, {tokenPropertyPermissions: [
-          {
-            key: 'url',
-            permission: {
-              tokenOwner: true,
-              collectionAdmin: true,
-              mutable: true,
-            },
-          },
-        ]});
-      }),
-      NOMINAL,
-    );
-
-    const susbstrateMintFee = convertToTokens(
-      await helper.arrange.calculcateFee(
-        {Substrate: donor.address},
-        () => susbtrateCollection!.mintToken(donor, {Substrate: substrateReceiver.address}, [{key: 'url', value: 'test'}]),
-      ),
-      NOMINAL,
-    );
-    const susbstrateTransferFee = convertToTokens(
-      await helper.arrange.calculcateFee(
-        {Substrate: substrateReceiver.address},
-        () => susbtrateCollection!.transferToken(substrateReceiver, 1, {Substrate: donor.address}),
-      ),
-      NOMINAL,
-    );
-    const substrateFee: IBenchmarkCollection = {
-      createFee: createCollectionSubstrateFee,
-      mintFee: susbstrateMintFee,
-      transferFee: susbstrateTransferFee,
-    };
-
-    const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
-
-    let ethContract: Contract | null = null;
-
-    const createCollectionEthFee = convertToTokens(
-      await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-        const result = await helperContract.methods.createNFTCollection('a', 'b', 'c').send({from: ethSigner, value: Number(2n * helper.balance.getOneTokenNominal())});
-        ethContract = await helper.ethNativeContract.collection(helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId), 'nft', ethSigner);
-      }),
-      NOMINAL,
-    );
-
-    await ethContract!.methods.setTokenPropertyPermissions([
-      ['url', [
-        [TokenPermissionField.Mutable, true],
-        [TokenPermissionField.TokenOwner, true],
-        [TokenPermissionField.CollectionAdmin, true]],
-      ],
-    ]).send({from: ethSigner});
-
-    const ethMintFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethSigner},
-      () => ethContract!.methods.mintCross(
-        helper.ethCrossAccount.fromAddress(ethReceiver),
-        [{key: 'url', value: Buffer.from('test')}],
-      )
-        .send({from: ethSigner}),
-    ), NOMINAL);
-
-    const ethTransferFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethReceiver},
-      () => ethContract!.methods.transferFrom(ethReceiver, ethSigner, 1)
-        .send({from: ethReceiver}),
-    ), NOMINAL);
-
-    const ethFee: IBenchmarkCollection = {
-      createFee: createCollectionEthFee,
-      mintFee: ethMintFee,
-      transferFee: ethTransferFee,
-    };
-
-    let zeppelelinContract: Contract | null = null;
-
-    const zeppelinDeployFee = convertToTokens(
-      await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-        zeppelelinContract = await helper.ethContract.deployByAbi(
-          ethSigner,
-          ZEPPELIN_ABI,
-          ZEPPELIN_OBJECT,
-        );
-      }),
-      NOMINAL,
-    );
-
-    const zeppelinMintFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethSigner},
-      () => zeppelelinContract!.methods.safeMint(ethReceiver, 'test').send({from: ethSigner}),
-    ), NOMINAL);
-
-
-    const zeppelinTransferFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethReceiver},
-      () => zeppelelinContract!.methods.safeTransferFrom(ethReceiver, ethSigner, 0).send({from: ethReceiver}),
-    ), NOMINAL);
-
-    const zeppelinFee: IBenchmarkCollection = {
-      createFee: zeppelinDeployFee,
-      mintFee: zeppelinMintFee,
-      transferFee: zeppelinTransferFee,
-    };
-
-    console.log('collection ops fees');
-    const results = {substrate: substrateFee, eth: ethFee, zeppelin: zeppelinFee};
-    console.table(results);
 
     const contract = await helper.ethContract.deployByCode(
       ethSigner,
@@ -270,6 +155,7 @@ main()
   });
 
 async function createCollectionForBenchmarks(
+  mode : TCollectionMode,
   helper: EthUniqueHelper,
   privateKey: (seed: string) => Promise<IKeyringPair>,
   ethSigner: string,
@@ -278,28 +164,30 @@ async function createCollectionForBenchmarks(
 ) {
   const donor = await privateKey('//Alice');
 
-  const collection = await helper.nft.mintCollection(donor, {
+  const collection = await helper[mode].mintCollection(donor, {
     name: 'test mintToSubstrate',
     description: 'EVMHelpers',
-    tokenPrefix: 'ap',
-    tokenPropertyPermissions: [
-      {
-        key: 'url',
-        permission: {
-          tokenOwner: true,
-          collectionAdmin: true,
-          mutable: true,
+    tokenPrefix: mode,
+    ...(mode != 'ft' ? {
+      tokenPropertyPermissions: [
+        {
+          key: 'url',
+          permission: {
+            tokenOwner: true,
+            collectionAdmin: true,
+            mutable: true,
+          },
         },
-      },
-      {
-        key: 'URI',
-        permission: {
-          tokenOwner: true,
-          collectionAdmin: true,
-          mutable: true,
+        {
+          key: 'URI',
+          permission: {
+            tokenOwner: true,
+            collectionAdmin: true,
+            mutable: true,
+          },
         },
-      },
-    ],
+      ],
+    } : {}),
     limits: {sponsorTransferTimeout: 0, sponsorApproveTimeout: 0},
     permissions: {mintMode: true},
   });
@@ -317,8 +205,8 @@ async function createCollectionForBenchmarks(
     await collection.addToAllowList(donor, {Ethereum: proxyContract});
     await collection.addAdmin(donor, {Ethereum: proxyContract});
   }
-
-  await collection.setTokenPropertyPermissions(donor, permissions);
+  if (collection instanceof UniqueNFTCollection || collection instanceof UniqueRFTCollection)
+    await collection.setTokenPropertyPermissions(donor, permissions);
 
   return collection;
 }
@@ -344,13 +232,14 @@ async function benchMintFee(
     100n,
   );
 
-  const collection = await createCollectionForBenchmarks(
+  const collection = (await createCollectionForBenchmarks(
+    'nft',
     helper,
     privateKey,
     ethSigner,
     proxyContract.options.address,
     PERMISSIONS,
-  );
+  )) as UniqueNFTCollection;
 
   const substrateFee = await helper.arrange.calculcateFee(
     {Substrate: donor.address},
@@ -587,31 +476,24 @@ async function calculateFeeNftMintWithProperties(
   proxyContractAddress: string,
   calculatedCall: (collection: UniqueNFTCollection) => Promise<any>,
 ): Promise<bigint> {
-  const collection = await createCollectionForBenchmarks(
+  const collection = (await createCollectionForBenchmarks(
+    'nft',
     helper,
     privateKey,
     ethSigner,
     proxyContractAddress,
     PERMISSIONS,
-  );
+  )) as UniqueNFTCollection;
   return helper.arrange.calculcateFee(payer, async () => {
     await calculatedCall(collection);
   });
 }
+
 function convertToTokens(value: bigint, nominal = 1000_000_000_000_000_000n): number {
   return Number((value * 1000n) / nominal) / 1000;
 }
 
-interface IFeeGas {
-  fee: number | bigint,
-  gas: number | bigint,
-  substrate?: number,
-}
-interface IFunctionFee {
-  [name: string]: IFeeGas
-}
-
-async function ERC721CalculateFeeGas(
+async function erc721CalculateFeeGas(
   helper: EthUniqueHelper,
   privateKey: (seed: string) => Promise<IKeyringPair>,
 
@@ -623,13 +505,19 @@ async function ERC721CalculateFeeGas(
   const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
   const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
   const crossReceiver = helper.ethCrossAccount.fromAddress(ethReceiver);
-  const collection = await createCollectionForBenchmarks(
+  const collection = (await createCollectionForBenchmarks(
+    'nft',
     helper,
     privateKey,
     ethSigner,
     null,
     PERMISSIONS,
-  );
+  )) as UniqueNFTCollection;
+
+  const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
+  let zeppelelinContract: Contract | null = null;
+  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/openZeppelin/ERC721/bin/ZeppelinContract.bin`)).toString();
+  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/openZeppelin/ERC721/bin/ZeppelinContract.abi`)).toString());
 
   const evmContract = await helper.ethNativeContract.collection(
     helper.ethAddress.fromCollectionId(collection.collectionId),
@@ -638,10 +526,40 @@ async function ERC721CalculateFeeGas(
     true,
   );
 
+  res['createCollection'] = await helper.arrange.calculcateFeeGas(
+    {Ethereum: ethSigner},
+    () => helperContract.methods.createNFTCollection('test','test','test').send({from: ethSigner, value: Number(2n * helper.balance.getOneTokenNominal())}),
+  );
+
+  res['createCollection'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => helper.nft.mintCollection(
+      donor,
+      {name: 'test', description: 'test', tokenPrefix: 'test'},
+    ),
+  )));
+
+  res['createCollection'].zeppelin = await helper.arrange.calculcateFeeGas(
+    {Ethereum: ethSigner},
+    async () => {
+      zeppelelinContract = await helper.ethContract.deployByAbi(
+        ethSigner,
+        ZEPPELIN_ABI,
+        ZEPPELIN_OBJECT,
+      );
+    },
+  );
+
   res['mint'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.mint(ethSigner).send(),
+    );
+
+  res['mint'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.safeMint(ethSigner, 'test').send({from: ethSigner}),
     );
 
   res['mintCross'] =
@@ -717,6 +635,14 @@ async function ERC721CalculateFeeGas(
       () => evmContract.methods.transfer(ethReceiver, 1).send(),
     );
 
+  res['safeTransferFrom*'] = {
+    zeppelin:
+      await helper.arrange.calculcateFeeGas(
+        {Ethereum: ethSigner},
+        () => zeppelelinContract!.methods.safeTransferFrom(ethSigner, ethReceiver, 0).send({from: ethSigner}),
+      ),
+  };
+
   res['transferCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver},
@@ -733,11 +659,18 @@ async function ERC721CalculateFeeGas(
   )));
   await collection.approveToken(subReceiver, 3, {Substrate: donor.address});
 
-  res['transferFrom'] =
+  res['transferFrom*'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.transferFrom(ethSigner, ethReceiver, 1).send(),
     );
+
+  res['transferFrom*'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethReceiver},
+      () => zeppelelinContract!.methods.transferFrom(ethReceiver, ethSigner, 0).send({from: ethReceiver}),
+    );
+
 
   res['transferFromCross'] =
     await helper.arrange.calculcateFeeGas(
@@ -761,6 +694,17 @@ async function ERC721CalculateFeeGas(
     () => collection.burnToken(donor, 3),
   )));
 
+  res['approve*'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.approve(ethReceiver, 2).send(),
+    );
+
+  res['approve*'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.approve(ethReceiver, 0).send({from: ethSigner}),
+    );
 
   res['approveCross'] =
     await helper.arrange.calculcateFeeGas(
@@ -771,6 +715,23 @@ async function ERC721CalculateFeeGas(
   res['approveCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     () => collection.approveToken(donor, 4, {Substrate: subReceiver.address}),
+  )));
+
+  res['setApprovalForAll*'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.setApprovalForAll(ethReceiver, true).send(),
+    );
+
+  res['setApprovalForAll*'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.setApprovalForAll(ethReceiver, true).send({from: ethSigner}),
+    );
+
+  res['setApprovalForAll*'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => helper.nft.setAllowanceForAll(donor, collection.collectionId, {Substrate: subReceiver.address}, true),
   )));
 
   res['burnFromCross'] =
@@ -803,6 +764,381 @@ async function ERC721CalculateFeeGas(
       collectionAdmin: true,
       mutable: true,
     }}]),
+  )));
+
+  res['setCollectionSponsorCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.setCollectionSponsorCross(crossReceiver).send(),
+    );
+
+  res['confirmCollectionSponsorship'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethReceiver},
+      () =>  evmContract.methods.confirmCollectionSponsorship().send({from: ethReceiver}),
+    );
+
+  res['removeCollectionSponsor'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.removeCollectionSponsor().send(),
+    );
+
+  res['setCollectionSponsorCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setSponsor(donor, subReceiver.address),
+  )));
+
+  res['confirmCollectionSponsorship'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: subReceiver.address},
+    () => collection.confirmSponsorship(subReceiver),
+  )));
+
+  res['removeCollectionSponsor'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.removeSponsor(donor),
+  )));
+
+  res['setCollectionProperties'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.setCollectionProperties(PROPERTIES.slice(0, 1)).send(),
+    );
+
+  res['deleteCollectionProperties'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.deleteCollectionProperties(PROPERTIES.slice(0,1).map(p => p.key)).send(),
+    );
+  res['setCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setProperties(donor, PROPERTIES.slice(0, 1)
+      .map(p => { return {key: p.key, value: p.value.toString()}; })),
+  )));
+
+  res['deleteCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.deleteProperties(donor, PROPERTIES.slice(0, 1)
+      .map(p => p.key)),
+  )));
+
+  res['setCollectionLimit'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}}).send(),
+    );
+
+  res['setCollectionLimit'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setLimits(donor, {accountTokenOwnershipLimit: 1000}),
+  )));
+
+  const {collectionAddress} = await helper.eth.createCollection('nft', ethSigner, 'A', 'B', 'C');
+  const collectionWithEthOwner = await helper.ethNativeContract.collection(collectionAddress, 'nft', ethSigner, true);
+
+
+  res['addCollectionAdminCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  collectionWithEthOwner.methods.addCollectionAdminCross(crossReceiver).send(),
+    );
+
+  res['removeCollectionAdminCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  collectionWithEthOwner.methods.removeCollectionAdminCross(crossReceiver).send(),
+    );
+
+  res['addCollectionAdminCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.addAdmin(donor, {Ethereum: ethReceiver}),
+  )));
+
+  res['removeCollectionAdminCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.removeAdmin(donor, {Ethereum: ethReceiver}),
+  )));
+
+  res['setCollectionNesting'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.setCollectionNesting(true).send(),
+    );
+
+  res['setCollectionNesting[]'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.setCollectionNesting(true, [collectionAddress]).send(),
+    );
+
+  res['setCollectionNesting'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.disableNesting(donor),
+  )));
+
+  res['setCollectionNesting[]'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setPermissions(
+      donor,
+      {
+        nesting: {
+          tokenOwner: true,
+          restricted: [collection.collectionId],
+        },
+      },
+    ),
+  )));
+
+  res['setCollectionAccess'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.setCollectionAccess(1).send(),
+    );
+
+  res['setCollectionAccess'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setPermissions(donor, {access: 'AllowList'}),
+  )));
+
+  res['addToCollectionAllowListCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.addToCollectionAllowListCross(crossReceiver).send(),
+    );
+
+  res['removeFromCollectionAllowListCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.removeFromCollectionAllowListCross(crossReceiver).send(),
+    );
+
+  res['addToCollectionAllowListCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.addToAllowList(donor, {Ethereum: ethReceiver}),
+  )));
+
+  res['removeFromCollectionAllowListCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.removeFromAllowList(donor, {Ethereum: ethReceiver}),
+  )));
+
+  res['setCollectionMintMode'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  evmContract.methods.setCollectionMintMode(true).send(),
+    );
+
+  res['setCollectionMintMode'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.setPermissions(donor, {mintMode: false}),
+  )));
+
+  res['changeCollectionOwnerCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () =>  collectionWithEthOwner.methods.changeCollectionOwnerCross(crossReceiver).send(),
+    );
+
+  res['changeCollectionOwnerCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.changeOwner(donor, subReceiver.address),
+  )));
+
+  return res;
+}
+
+async function erc20CalculateFeeGas(
+  helper: EthUniqueHelper,
+  privateKey: (seed: string) => Promise<IKeyringPair>,
+
+): Promise<IFunctionFee> {
+  const res: IFunctionFee = {};
+  const donor = await privateKey('//Alice');
+  const [subReceiver] = await helper.arrange.createAccounts([10n], donor);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+  const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
+  const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
+  const crossReceiver = helper.ethCrossAccount.fromAddress(ethReceiver);
+  const collection = (await createCollectionForBenchmarks(
+    'ft',
+    helper,
+    privateKey,
+    ethSigner,
+    null,
+    PERMISSIONS,
+  )) as UniqueFTCollection;
+
+  const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
+  let zeppelelinContract: Contract | null = null;
+  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/openZeppelin/ERC20/bin/ZeppelinContract.bin`)).toString();
+  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/openZeppelin/ERC20/bin/ZeppelinContract.abi`)).toString());
+
+  const evmContract = await helper.ethNativeContract.collection(
+    helper.ethAddress.fromCollectionId(collection.collectionId),
+    'ft',
+    ethSigner,
+    true,
+  );
+
+  res['createCollection'] = await helper.arrange.calculcateFeeGas(
+    {Ethereum: ethSigner},
+    () => helperContract.methods.createFTCollection('test', 18,'test','test').send({from: ethSigner, value: Number(2n * helper.balance.getOneTokenNominal())}),
+  );
+
+  res['createCollection'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => helper.ft.mintCollection(
+      donor,
+      {name: 'test', description: 'test', tokenPrefix: 'test'},
+      18,
+    ),
+  )));
+
+  res['createCollection'].zeppelin = await helper.arrange.calculcateFeeGas(
+    {Ethereum: ethSigner},
+    async () => {
+      zeppelelinContract = await helper.ethContract.deployByAbi(
+        ethSigner,
+        ZEPPELIN_ABI,
+        ZEPPELIN_OBJECT,
+      );
+    },
+  );
+
+  res['mint'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.mint(ethSigner, 1).send(),
+    );
+
+  res['mint'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.mint(ethSigner, 1).send(),
+    );
+
+  res['mintCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.mintCross(crossSigner, 1).send(),
+    );
+
+  res['mintCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.mint(
+      donor,
+      10n,
+      {Substrate: donor.address},
+    ),
+  )));
+
+  res['mintBulk'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.mintBulk([{field_0: ethSigner, field_1: 1}]).send(),
+    );
+
+  res['mintBulk'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => helper.executeExtrinsic(donor, 'api.tx.unique.createMultipleItemsEx',[collection.collectionId, {
+      Fungible: new Map([
+        [JSON.stringify({Ethereum: ethSigner}), 1],
+
+      ]),
+    }], true),
+  )));
+
+  res['transfer*'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.transfer(ethReceiver, 1).send(),
+    );
+
+  res['transfer*'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.transfer(ethReceiver, 1).send(),
+    );
+
+  res['transferCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethReceiver},
+      () => evmContract.methods.transferCross(crossSigner, 1).send({from: ethReceiver}),
+    );
+
+  res['transferCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.transfer(
+      donor,
+      {Substrate: subReceiver.address},
+      1n,
+    ),
+  )));
+  await collection.approveTokens(subReceiver, {Substrate: donor.address}, 1n);
+
+  res['transferFrom*'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.transferFrom(ethSigner, ethReceiver, 1).send(),
+    );
+
+  res['transferFrom*'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethReceiver},
+      () => zeppelelinContract!.methods.transferFrom(ethReceiver, ethSigner, 0).send({from: ethReceiver}),
+    );
+
+  res['transferFromCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethReceiver},
+      () => evmContract.methods.transferFromCross(crossReceiver, crossSigner, 1).send({from:ethReceiver}),
+    );
+
+  res['transferFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.transferFrom(donor, {Substrate: subReceiver.address}, {Substrate: donor.address}, 1n),
+  )));
+
+
+  res['burnTokens'] = {fee: 0n, gas: 0n};
+  res['burnTokens'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.burnTokens(donor, 1n),
+  )));
+
+
+  res['approve*'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.approve(ethReceiver, 2).send(),
+    );
+
+  res['approve*'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.approve(ethReceiver, 0).send(),
+    );
+
+  res['approveCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => evmContract.methods.approveCross(crossReceiver, 2).send(),
+    );
+
+  res['approveCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: donor.address},
+    () => collection.approveTokens(donor, {Substrate: subReceiver.address}, 1n),
+  )));
+
+  res['burnFromCross'] =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethReceiver},
+      () => evmContract.methods.burnFromCross(crossSigner, 1).send({from:ethReceiver}),
+    );
+
+  res['burnFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
+    {Substrate: subReceiver.address},
+    () => collection.burnTokensFrom(subReceiver, {Substrate: donor.address}, 1n),
   )));
 
   res['setCollectionSponsorCross'] =
