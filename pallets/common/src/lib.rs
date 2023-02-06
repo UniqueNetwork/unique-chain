@@ -70,55 +70,15 @@ use frame_support::{
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	AccessMode,
-	COLLECTION_NUMBER_LIMIT,
-	Collection,
-	RpcCollection,
-	CollectionFlags,
-	RpcCollectionFlags,
-	CollectionId,
-	CreateItemData,
-	MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT,
-	TokenId,
-	TokenChild,
-	CollectionStats,
-	MAX_TOKEN_OWNERSHIP,
-	CollectionMode,
-	NFT_SPONSOR_TRANSFER_TIMEOUT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT,
-	CollectionLimits,
-	CreateCollectionData,
-	SponsorshipState,
-	CreateItemExData,
-	SponsoringRateLimit,
-	budget::Budget,
-	PhantomType,
-	Property,
-	Properties,
-	PropertiesPermissionMap,
-	PropertyKey,
-	PropertyValue,
-	PropertyPermission,
-	PropertiesError,
-	TokenOwnerError,
-	PropertyKeyPermission,
-	TokenData,
-	TrySetProperty,
-	PropertyScope,
-	// RMRK
-	RmrkCollectionInfo,
-	RmrkInstanceInfo,
-	RmrkResourceInfo,
-	RmrkPropertyInfo,
-	RmrkBaseInfo,
-	RmrkPartType,
-	RmrkBoundedTheme,
-	RmrkNftChild,
-	CollectionPermissions,
+	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
+	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_ADMINS_LIMIT, TokenId, TokenChild, CollectionStats, MAX_TOKEN_OWNERSHIP,
+	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
+	CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget,
+	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyValue,
+	PropertyPermission, PropertiesError, TokenOwnerError, PropertyKeyPermission, TokenData,
+	TrySetProperty, PropertyScope, CollectionPermissions,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -192,7 +152,10 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Consume gas for reading.
-	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
+	pub fn consume_store_reads(
+		&self,
+		reads: u64,
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
@@ -202,7 +165,10 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Consume gas for writing.
-	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
+	pub fn consume_store_writes(
+		&self,
+		writes: u64,
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
@@ -216,7 +182,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 		writes: u64,
-	) -> evm_coder::execution::Result<()> {
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		let weight = <T as frame_system::Config>::DbWeight::get();
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
@@ -892,15 +858,6 @@ pub mod pallet {
 			PhantomType<(
 				TokenData<T::CrossAccountId>,
 				RpcCollection<T::AccountId>,
-				// RMRK
-				RmrkCollectionInfo<T::AccountId>,
-				RmrkInstanceInfo<T::AccountId>,
-				RmrkResourceInfo,
-				RmrkPropertyInfo,
-				RmrkBaseInfo<T::AccountId>,
-				RmrkPartType,
-				RmrkBoundedTheme,
-				RmrkNftChild,
 				// PoV Estimate Info
 				PovInfo,
 			)>,

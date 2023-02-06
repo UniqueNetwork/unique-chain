@@ -121,14 +121,6 @@ bench-structure:
 bench-scheduler:
 	make _bench PALLET=unique-scheduler-v2 PALLET_DIR=scheduler-v2
 
-.PHONY: bench-rmrk-core
-bench-rmrk-core:
-	make _bench PALLET=proxy-rmrk-core
-
-.PHONY: bench-rmrk-equip
-bench-rmrk-equip:
-	make _bench PALLET=proxy-rmrk-equip
-
 .PHONY: bench-foreign-assets
 bench-foreign-assets:
 	make _bench PALLET=foreign-assets
@@ -146,7 +138,7 @@ bench-app-promotion:
 	make _bench PALLET=app-promotion PALLET_DIR=app-promotion
 
 .PHONY: bench
-# Disabled: bench-scheduler, bench-collator-selection, bench-identity, bench-rmrk-core, bench-rmrk-equip
+# Disabled: bench-scheduler, bench-collator-selection, bench-identity
 bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets
 
 .PHONY: check

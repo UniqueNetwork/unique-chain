@@ -64,7 +64,6 @@ describe('Pallet presence', () => {
 
       const refungible = 'refungible';
       const foreignAssets = 'foreignassets';
-      const _rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
       const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
       const testUtils = 'testutils';

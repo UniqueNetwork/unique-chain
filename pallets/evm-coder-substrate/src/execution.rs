@@ -18,11 +18,14 @@
 
 #[cfg(not(feature = "std"))]
 use alloc::string::{String, ToString};
-use evm_core::{ExitError, ExitFatal};
 #[cfg(feature = "std")]
 use std::string::{String, ToString};
 
-use crate::Weight;
+use evm_coder::ERC165Call;
+use evm_core::{ExitError, ExitFatal};
+
+pub use frame_support::weights::Weight;
+pub use evm_coder_substrate_procedural::PreDispatch;
 
 /// Execution error, should be convertible between EVM and Substrate.
 #[derive(Debug, Clone)]
@@ -46,6 +49,22 @@ where
 
 /// To be used in [`crate::solidity_interface`] implementation.
 pub type Result<T> = core::result::Result<T, Error>;
+/// Return type of items in [`crate::solidity_interface`] definition
+pub type ResultWithPostInfo<T> =
+	core::result::Result<WithPostDispatchInfo<T>, WithPostDispatchInfo<Error>>;
+
+pub trait PreDispatch {
+	fn dispatch_info(&self) -> DispatchInfo;
+}
+
+impl PreDispatch for ERC165Call {
+	fn dispatch_info(&self) -> DispatchInfo {
+		DispatchInfo {
+			// ERC165 impl should be cheap
+			weight: Weight::from_ref_time(200),
+		}
+	}
+}
 
 /// Static information collected from [`crate::weight`].
 pub struct DispatchInfo {
@@ -78,7 +97,7 @@ impl From<()> for DispatchInfo {
 #[derive(Default, Clone)]
 pub struct PostDispatchInfo {
 	/// Actual weight consumed by call
-	actual_weight: Option<Weight>,
+	pub actual_weight: Option<Weight>,
 }
 
 impl PostDispatchInfo {
@@ -115,7 +134,53 @@ impl<T> From<T> for WithPostDispatchInfo<T> {
 		}
 	}
 }
-
-/// Return type of items in [`crate::solidity_interface`] definition
-pub type ResultWithPostInfo<T> =
-	core::result::Result<WithPostDispatchInfo<T>, WithPostDispatchInfo<Error>>;
+#[allow(clippy::crate_in_macro_def)]
+#[macro_export]
+macro_rules! frontier_contract {
+	(
+		macro_rules! $res:ident {...}
+		impl$(<$($gen:ident $(: $($(+)? $bound:ty)*)?),+ $(,)?>)? Contract for $ty:ty {...}
+	) => {
+		/// Generate macro to convert function return value into Contract result
+		macro_rules! $res {
+			($i:expr) => {{
+				pallet_evm_coder_substrate::spez! {
+					for res = $i;
+					match<T> ::pallet_evm_coder_substrate::execution::ResultWithPostInfo<T> -> ::pallet_evm_coder_substrate::execution::ResultWithPostInfo<T> {
+						res
+					}
+					match<T> ::pallet_evm_coder_substrate::execution::Result<T> -> ::pallet_evm_coder_substrate::execution::ResultWithPostInfo<T> {
+						res
+							.map(pallet_evm_coder_substrate::execution::WithPostDispatchInfo::from)
+							.map_err(pallet_evm_coder_substrate::execution::WithPostDispatchInfo::from)
+					}
+					match<T> T -> ::pallet_evm_coder_substrate::execution::ResultWithPostInfo<T> {
+						Ok(pallet_evm_coder_substrate::execution::WithPostDispatchInfo::from(res))
+					}
+				}
+			}};
+		}
+		impl $(<$($gen),+>)? $crate::Contract for $ty where T: crate::Config {
+			type Error = ::pallet_evm_coder_substrate::execution::Error;
+			type WithPostInfo<R> = ::pallet_evm_coder_substrate::execution::WithPostDispatchInfo<R>;
+			type Result<R, E> = core::result::Result<R, E>;
+			fn map_post<I, O>(
+				v: Self::WithPostInfo<I>,
+				mapper: impl FnOnce(I) -> O,
+			) -> Self::WithPostInfo<O> {
+				::pallet_evm_coder_substrate::execution::WithPostDispatchInfo {
+					data: mapper(v.data),
+					post_info: v.post_info,
+				}
+			}
+			fn with_default_post<V>(v: V) -> Self::WithPostInfo<V> {
+				::pallet_evm_coder_substrate::execution::WithPostDispatchInfo {
+					data: v,
+					post_info: ::pallet_evm_coder_substrate::execution::PostDispatchInfo {
+						actual_weight: None,
+					},
+				}
+			}
+		}
+	};
+}

@@ -106,8 +106,6 @@ export const CONTRACT_HELPER = '0x842899ECF380553E8a4de75bF534cdf6fBF64049';
 
 export enum Pallets {
   Inflation = 'inflation',
-  RmrkCore = 'rmrkcore',
-  RmrkEquip = 'rmrkequip',
   ReFungible = 'refungible',
   Fungible = 'fungible',
   NFT = 'nonfungible',

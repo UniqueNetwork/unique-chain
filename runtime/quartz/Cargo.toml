@@ -42,8 +42,6 @@ runtime-benchmarks = [
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
-	'pallet-proxy-rmrk-core/runtime-benchmarks',
-	'pallet-proxy-rmrk-equip/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
@@ -95,8 +93,6 @@ std = [
 	'pallet-fungible/std',
 	'pallet-inflation/std',
 	'pallet-nonfungible/std',
-	'pallet-proxy-rmrk-core/std',
-	'pallet-proxy-rmrk-equip/std',
 	'pallet-randomness-collective-flip/std',
 	'pallet-refungible/std',
 	'pallet-structure/std',
@@ -107,7 +103,6 @@ std = [
 	'pallet-treasury/std',
 	'pallet-unique/std',
 	'parachain-info/std',
-	'rmrk-rpc/std',
 	'serde',
 	'sp-api/std',
 	'sp-block-builder/std',
@@ -171,8 +166,6 @@ try-runtime = [
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
 	'pallet-nonfungible/try-runtime',
-	'pallet-proxy-rmrk-core/try-runtime',
-	'pallet-proxy-rmrk-equip/try-runtime',
 	'pallet-randomness-collective-flip/try-runtime',
 	'pallet-refungible/try-runtime',
 	'pallet-structure/try-runtime',
@@ -189,7 +182,6 @@ app-promotion = []
 collator-selection = []
 foreign-assets = []
 refungible = []
-rmrk = []
 scheduler = []
 
 ################################################################################
@@ -228,7 +220,6 @@ pallet-treasury = { workspace = true }
 pallet-xcm = { workspace = true }
 parachain-info = { workspace = true }
 polkadot-parachain = { workspace = true }
-rmrk-rpc = { workspace = true }
 smallvec = { workspace = true }
 sp-api = { workspace = true }
 sp-arithmetic = { workspace = true }
@@ -260,8 +251,6 @@ pallet-fungible = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }
 pallet-nonfungible = { workspace = true }
-pallet-proxy-rmrk-core = { workspace = true }
-pallet-proxy-rmrk-equip = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }
