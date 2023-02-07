@@ -1,4 +1,3 @@
-import {Keyring} from '@polkadot/api';
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds} from '../../util';
 import {signSendAndWait, TxResult} from './sign';
@@ -11,12 +10,14 @@ import {WS_ENDPOINT} from '../config';
  * @param accountsNumber number of accounts to create
  * @returns ```IKeyringPair[]```
  */
-export function getAccounts(accountsNumber: number, baseSeed: string): IKeyringPair[] {
-  const keyring = new Keyring();
-  const accounts = Array(accountsNumber)
-    .fill(baseSeed.startsWith('//' ? baseSeed : `//${baseSeed}`))
-    .map((donor, i) => keyring.addFromUri(donor + `//${i}`));
-  return accounts;
+export async function getAccounts(accountsNumber: number, baseSeed: string): Promise<IKeyringPair[]> {
+  // eslint-disable-next-line require-await
+  return await usingPlaygrounds(async (helper) => {
+    const accounts = Array(accountsNumber)
+      .fill(baseSeed.startsWith('//' ? baseSeed : `//${baseSeed}`))
+      .map((donor, i) => helper.util.fromSeed(donor + `//${i}`));
+    return accounts;
+  }, WS_ENDPOINT);
 }
 
 /**
