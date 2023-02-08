@@ -22,10 +22,12 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
         const {events, status} = result;
         // If the transaction wasn't included in the block for some reason:
         if (status.isDropped) {
+          console.log('TX DROPPED', result.dispatchError);
           unsub();
           resolve({status: 'fail', reason: 'ExtrinsicDropped', result});
         }
-        if (status.isFinalized || status.isInBlock) {
+        // Do not use in block
+        if (status.isFinalized /* || status.isInBlock */) {
           const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
           if (errors.length > 0) {
             unsub();
@@ -33,6 +35,24 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
           }
           unsub();
           resolve({status: 'success', result});
+        }
+        if (status.isRetracted) {
+          console.log('TX RECTRACTED');
+        }
+        if (status.isInvalid) {
+          console.log('TX INVALID');
+        }
+        if (status.isFinalityTimeout) {
+          console.log('TX FINALITY TIMEOUT');
+        }
+        if (status.isNone) {
+          console.log('TX IS NONE');
+        }
+        if (status.isUsurped) {
+          console.log('TX IS USURPED');
+        }
+        else {
+          console.log(status.toHuman());
         }
       });
     } catch (error) {
