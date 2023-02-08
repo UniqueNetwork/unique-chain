@@ -61,6 +61,32 @@
   },
   {
     "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct CrossAddress",
+        "name": "owner",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct CrossAddress",
+        "name": "spender",
+        "type": "tuple"
+      }
+    ],
+    "name": "allowanceCross",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "address", "name": "spender", "type": "address" },
       { "internalType": "uint256", "name": "amount", "type": "uint256" }
     ],

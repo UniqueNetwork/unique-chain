@@ -24,21 +24,21 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	weight,
-};
+use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::BoundedVec;
 use up_data_structs::{
 	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,
 	CollectionPropertiesVec,
 };
-use pallet_evm_coder_substrate::dispatch_to_evm;
+use pallet_evm_coder_substrate::{
+	dispatch_to_evm, frontier_contract,
+	execution::{Result, PreDispatch, Error},
+};
 use sp_std::{vec::Vec, vec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
-	eth,
+	eth::{self, TokenUri},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -47,11 +47,16 @@ use sp_core::{U256, Get};
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	SelfWeightOf, weights::WeightInfo, TokenProperties,
+	TokenProperties, SelfWeightOf, weights::WeightInfo,
 };
 
+frontier_contract! {
+	macro_rules! NonfungibleHandle_result {...}
+	impl<T: Config> Contract for NonfungibleHandle<T> {...}
+}
+
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-#[solidity_interface(name = TokenProperties)]
+#[solidity_interface(name = TokenProperties, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
@@ -59,8 +64,8 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param isMutable Permission to mutate property.
 	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
 	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
-	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
 	#[solidity(hide)]
+	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
 	fn set_token_property_permission(
 		&mut self,
 		caller: Caller,
@@ -293,7 +298,7 @@ pub enum ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
+#[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NonfungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
@@ -301,14 +306,14 @@ where
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
 	#[solidity(hide, rename_selector = "name")]
-	fn name_proxy(&self) -> Result<String> {
+	fn name_proxy(&self) -> String {
 		self.name()
 	}
 
 	/// @notice An abbreviated name for NFTs in this contract
 	/// @dev real implementation of this function lies in `ERC721UniqueExtensions`
 	#[solidity(hide, rename_selector = "symbol")]
-	fn symbol_proxy(&self) -> Result<String> {
+	fn symbol_proxy(&self) -> String {
 		self.symbol()
 	}
 
@@ -362,14 +367,14 @@ where
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = ERC721Enumerable, expect_selector = 0x780e9d63)]
+#[solidity_interface(name = ERC721Enumerable, expect_selector = 0x780e9d63, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Enumerate valid NFTs
 	/// @param index A counter less than `totalSupply()`
 	/// @return The token identifier for the `index`th NFT,
 	///  (sort order not specified)
-	fn token_by_index(&self, index: U256) -> Result<U256> {
-		Ok(index)
+	fn token_by_index(&self, index: U256) -> U256 {
+		index
 	}
 
 	/// @dev Not implemented
@@ -389,7 +394,7 @@ impl<T: Config> NonfungibleHandle<T> {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-#[solidity_interface(name = ERC721, events(ERC721Events), expect_selector = 0x80ac58cd)]
+#[solidity_interface(name = ERC721, events(ERC721Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x80ac58cd)]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Count all NFTs assigned to an owner
 	/// @dev NFTs assigned to the zero address are considered invalid, and this
@@ -516,7 +521,7 @@ impl<T: Config> NonfungibleHandle<T> {
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
-#[solidity_interface(name = ERC721Burnable)]
+#[solidity_interface(name = ERC721Burnable, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current NFT owner, or an authorized
@@ -533,7 +538,7 @@ impl<T: Config> NonfungibleHandle<T> {
 }
 
 /// @title ERC721 minting logic.
-#[solidity_interface(name = ERC721UniqueMintable)]
+#[solidity_interface(name = ERC721UniqueMintable, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NonfungibleHandle<T> {
 	/// @notice Function to mint a token.
 	/// @param to The new owner
@@ -698,28 +703,28 @@ fn get_token_permission<T: Config>(
 }
 
 /// @title Unique extensions for ERC721.
-#[solidity_interface(name = ERC721UniqueExtensions)]
+#[solidity_interface(name = ERC721UniqueExtensions, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> NonfungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
-	fn name(&self) -> Result<String> {
-		Ok(decode_utf16(self.name.iter().copied())
+	fn name(&self) -> String {
+		decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<String>())
+			.collect::<String>()
 	}
 
 	/// @notice An abbreviated name for NFTs in this contract
-	fn symbol(&self) -> Result<String> {
-		Ok(String::from_utf8_lossy(&self.token_prefix).into())
+	fn symbol(&self) -> String {
+		String::from_utf8_lossy(&self.token_prefix).into()
 	}
 
 	/// @notice A description for the collection.
-	fn description(&self) -> Result<String> {
-		Ok(decode_utf16(self.description.iter().copied())
+	fn description(&self) -> String {
+		decode_utf16(self.description.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<String>())
+			.collect::<String>()
 	}
 
 	/// Returns the owner (in cross format) of the token.
@@ -948,7 +953,7 @@ where
 		&mut self,
 		caller: Caller,
 		to: Address,
-		tokens: Vec<(U256, String)>,
+		tokens: Vec<TokenUri>,
 	) -> Result<bool> {
 		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -961,7 +966,7 @@ where
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut data = Vec::with_capacity(tokens.len());
-		for (id, token_uri) in tokens {
+		for TokenUri { id, uri } in tokens {
 			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
 			if id != expected_index {
 				return Err("item id should be next".into());
@@ -972,7 +977,7 @@ where
 			properties
 				.try_push(Property {
 					key: key.clone(),
-					value: token_uri
+					value: uri
 						.into_bytes()
 						.try_into()
 						.map_err(|_| "token uri is too long")?,
@@ -1035,8 +1040,8 @@ where
 	}
 
 	/// @notice Returns collection helper contract address
-	fn collection_helper_address(&self) -> Result<Address> {
-		Ok(T::ContractAddress::get())
+	fn collection_helper_address(&self) -> Address {
+		T::ContractAddress::get()
 	}
 }
 
@@ -1051,7 +1056,8 @@ where
 		ERC721Metadata(if(this.flags.erc721metadata)),
 		Collection(via(common_mut returns CollectionHandle<T>)),
 		TokenProperties,
-	)
+	),
+	enum(derive(PreDispatch)),
 )]
 impl<T: Config> NonfungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 

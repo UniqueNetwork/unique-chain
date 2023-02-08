@@ -53,7 +53,6 @@ function defaultApiOptions(): ApiOptions {
     rpc: {
       unique: defs.unique.rpc,
       appPromotion: defs.appPromotion.rpc,
-      rmrk: defs.rmrk.rpc,
       eth: {
         feeHistory: {
           description: 'Dummy',

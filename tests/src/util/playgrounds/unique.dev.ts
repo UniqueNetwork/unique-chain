@@ -106,7 +106,6 @@ export class DevUniqueHelper extends UniqueHelper {
         unique: defs.unique.rpc,
         appPromotion: defs.appPromotion.rpc,
         povinfo: defs.povinfo.rpc,
-        rmrk: defs.rmrk.rpc,
         eth: {
           feeHistory: {
             description: 'Dummy',

@@ -18,9 +18,7 @@
 
 use core::marker::PhantomData;
 use ethereum as _;
-use evm_coder::{
-	abi::AbiType, execution::*, generate_stubgen, solidity, solidity_interface, types::*, weight,
-};
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*};
 use frame_support::traits::Get;
 use crate::Pallet;
 
@@ -32,7 +30,11 @@ use pallet_common::{
 	Pallet as PalletCommon,
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
-use pallet_evm_coder_substrate::{dispatch_to_evm, SubstrateRecorder, WithRecorder};
+use pallet_evm_coder_substrate::{
+	dispatch_to_evm, SubstrateRecorder, WithRecorder,
+	execution::{PreDispatch, Result, Error},
+	frontier_contract,
+};
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionTokenPrefix,
 	CreateCollectionData,
@@ -43,6 +45,10 @@ use crate::{weights::WeightInfo, Config, SelfWeightOf};
 use alloc::format;
 use sp_std::vec::Vec;
 
+frontier_contract! {
+	macro_rules! EvmCollectionHelpers_result {...}
+	impl<T: Config> Contract for EvmCollectionHelpers<T> {...}
+}
 /// See [`CollectionHelpersCall`]
 pub struct EvmCollectionHelpers<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> WithRecorder<T> for EvmCollectionHelpers<T> {
@@ -135,7 +141,7 @@ fn check_sent_amount_equals_collection_creation_price<T: Config>(value: Value) -
 }
 
 /// @title Contract, which allows users to operate with collections
-#[solidity_interface(name = CollectionHelpers, events(CollectionHelpersEvents))]
+#[solidity_interface(name = CollectionHelpers, events(CollectionHelpersEvents), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T> EvmCollectionHelpers<T>
 where
 	T: Config + pallet_common::Config + pallet_nonfungible::Config + pallet_refungible::Config,
@@ -183,9 +189,9 @@ where
 	/// @param description Informative description of the collection
 	/// @param tokenPrefix Token prefix to represent the collection tokens in UI and user applications
 	/// @return address Address of the newly created collection
-	#[weight(<SelfWeightOf<T>>::create_collection())]
 	#[deprecated(note = "mathod was renamed to `create_nft_collection`, prefer it instead")]
 	#[solidity(hide)]
+	#[weight(<SelfWeightOf<T>>::create_collection())]
 	fn create_nonfungible_collection(
 		&mut self,
 		caller: Caller,

@@ -18,7 +18,10 @@
 
 use alloc::format;
 use sp_std::{vec, vec::Vec};
-use evm_coder::{AbiCoder, types::Address};
+use evm_coder::{
+	AbiCoder,
+	types::{Address, String},
+};
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
 use up_data_structs::CollectionId;
@@ -102,7 +105,9 @@ impl CrossAddress {
 		}
 	}
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
-	pub fn into_sub_cross_account<T>(&self) -> evm_coder::execution::Result<T::CrossAccountId>
+	pub fn into_sub_cross_account<T>(
+		&self,
+	) -> pallet_evm_coder_substrate::execution::Result<T::CrossAccountId>
 	where
 		T: pallet_evm::Config,
 		T::AccountId: From<[u8; 32]>,
@@ -127,7 +132,7 @@ pub struct Property {
 }
 
 impl TryFrom<up_data_structs::Property> for Property {
-	type Error = evm_coder::execution::Error;
+	type Error = pallet_evm_coder_substrate::execution::Error;
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
 		let key = evm_coder::types::String::from_utf8(from.key.into())
@@ -138,7 +143,7 @@ impl TryFrom<up_data_structs::Property> for Property {
 }
 
 impl TryInto<up_data_structs::Property> for Property {
-	type Error = evm_coder::execution::Error;
+	type Error = pallet_evm_coder_substrate::execution::Error;
 
 	fn try_into(self) -> Result<up_data_structs::Property, Self::Error> {
 		let key = <Vec<u8>>::from(self.key)
@@ -209,7 +214,7 @@ impl CollectionLimit {
 }
 
 impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
-	type Error = evm_coder::execution::Error;
+	type Error = pallet_evm_coder_substrate::execution::Error;
 
 	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
 		let value = self
@@ -375,7 +380,8 @@ impl TokenPropertyPermission {
 	/// Convert vector of [`TokenPropertyPermission`] into vector of [`up_data_structs::PropertyKeyPermission`].
 	pub fn into_property_key_permissions(
 		permissions: Vec<TokenPropertyPermission>,
-	) -> evm_coder::execution::Result<Vec<up_data_structs::PropertyKeyPermission>> {
+	) -> pallet_evm_coder_substrate::execution::Result<Vec<up_data_structs::PropertyKeyPermission>>
+	{
 		let mut perms = Vec::new();
 
 		for TokenPropertyPermission { key, permissions } in permissions {
@@ -388,6 +394,16 @@ impl TokenPropertyPermission {
 		}
 		Ok(perms)
 	}
+}
+
+/// Data for creation token with uri.
+#[derive(Debug, AbiCoder)]
+pub struct TokenUri {
+	/// Id of new token.
+	pub id: U256,
+
+	/// Uri of new token.
+	pub uri: String,
 }
 
 /// Nested collections.

@@ -15,7 +15,6 @@ codec = { workspace = true, package = "parity-scale-codec" }
 derivative = { workspace = true }
 frame-support = { workspace = true }
 pallet-evm = { workspace = true }
-rmrk-traits = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true, optional = true }
 sp-core = { workspace = true }
@@ -33,7 +32,6 @@ std = [
 	"codec/std",
 	"frame-support/std",
 	"pallet-evm/std",
-	"rmrk-traits/std",
 	"serde/std",
 	"serde1",
 	"sp-core/std",

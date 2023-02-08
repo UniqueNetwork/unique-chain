@@ -35,9 +35,6 @@ use up_data_structs::{
 };
 use sp_arithmetic::Perbill;
 
-#[cfg(feature = "rmrk")]
-pub mod rmrk;
-
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
 

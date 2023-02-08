@@ -66,64 +66,27 @@ use frame_support::{
 	ensure,
 	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
 	dispatch::Pays,
-	transactional,
+	transactional, fail,
 };
 use pallet_evm::GasWeightMapping;
 use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT,
-	Collection,
-	RpcCollection,
-	CollectionFlags,
-	RpcCollectionFlags,
-	CollectionId,
-	CreateItemData,
-	MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT,
-	TokenId,
-	TokenChild,
-	CollectionStats,
-	MAX_TOKEN_OWNERSHIP,
-	CollectionMode,
-	NFT_SPONSOR_TRANSFER_TIMEOUT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT,
-	CollectionLimits,
-	CreateCollectionData,
-	SponsorshipState,
-	CreateItemExData,
-	SponsoringRateLimit,
-	budget::Budget,
-	PhantomType,
-	Property,
-	Properties,
-	PropertiesPermissionMap,
-	PropertyKey,
-	PropertyValue,
-	PropertyPermission,
-	PropertiesError,
-	TokenOwnerError,
-	PropertyKeyPermission,
-	TokenData,
-	TrySetProperty,
-	PropertyScope,
-	// RMRK
-	RmrkCollectionInfo,
-	RmrkInstanceInfo,
-	RmrkResourceInfo,
-	RmrkPropertyInfo,
-	RmrkBaseInfo,
-	RmrkPartType,
-	RmrkBoundedTheme,
-	RmrkNftChild,
-	CollectionPermissions,
+	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
+	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
+	COLLECTION_ADMINS_LIMIT, TokenId, TokenChild, CollectionStats, MAX_TOKEN_OWNERSHIP,
+	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
+	CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget,
+	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyValue,
+	PropertyPermission, PropertiesError, TokenOwnerError, PropertyKeyPermission, TokenData,
+	TrySetProperty, PropertyScope, CollectionPermissions,
 };
 use up_pov_estimate_rpc::PovInfo;
 
 pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+
+use crate::erc::CollectionHelpersEvents;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod dispatch;
@@ -189,7 +152,10 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Consume gas for reading.
-	pub fn consume_store_reads(&self, reads: u64) -> evm_coder::execution::Result<()> {
+	pub fn consume_store_reads(
+		&self,
+		reads: u64,
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
@@ -199,7 +165,10 @@ impl<T: Config> CollectionHandle<T> {
 	}
 
 	/// Consume gas for writing.
-	pub fn consume_store_writes(&self, writes: u64) -> evm_coder::execution::Result<()> {
+	pub fn consume_store_writes(
+		&self,
+		writes: u64,
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
 			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
 				<T as frame_system::Config>::DbWeight::get()
@@ -213,7 +182,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 		writes: u64,
-	) -> evm_coder::execution::Result<()> {
+	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		let weight = <T as frame_system::Config>::DbWeight::get();
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
@@ -889,15 +858,6 @@ pub mod pallet {
 			PhantomType<(
 				TokenData<T::CrossAccountId>,
 				RpcCollection<T::AccountId>,
-				// RMRK
-				RmrkCollectionInfo<T::AccountId>,
-				RmrkInstanceInfo<T::AccountId>,
-				RmrkResourceInfo,
-				RmrkPropertyInfo,
-				RmrkBaseInfo<T::AccountId>,
-				RmrkPartType,
-				RmrkBoundedTheme,
-				RmrkNftChild,
 				// PoV Estimate Info
 				PovInfo,
 			)>,
@@ -1261,6 +1221,133 @@ impl<T: Config> Pallet<T> {
 
 		<CollectionProperties<T>>::set(collection.id, stored_properties);
 
+		Ok(())
+	}
+
+	/// A batch operation to add, edit or remove properties for a token.
+	/// It sets or removes a token's properties according to
+	/// `properties_updates` contents:
+	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
+	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
+	///
+	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
+	/// - `is_token_create`: Indicates that method is called during token initialization.
+	///   Allows to bypass ownership check.
+	///
+	/// All affected properties should have `mutable` permission
+	/// to be **deleted** or to be **set more than once**,
+	/// and the sender should have permission to edit those properties.
+	///
+	/// This function fires an event for each property change.
+	/// In case of an error, all the changes (including the events) will be reverted
+	/// since the function is transactional.
+	pub fn modify_token_properties(
+		collection: &CollectionHandle<T>,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		is_token_create: bool,
+		mut stored_properties: Properties,
+		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
+		set_token_properties: impl FnOnce(Properties),
+	) -> DispatchResult {
+		let is_collection_admin = collection.is_owner_or_admin(sender);
+		let permissions = Self::property_permissions(collection.id);
+
+		let mut token_owner_result = None;
+		let mut is_token_owner = || -> Result<bool, DispatchError> {
+			*token_owner_result.get_or_insert_with(&is_token_owner)
+		};
+
+		for (key, value) in properties_updates {
+			let permission = permissions
+				.get(&key)
+				.cloned()
+				.unwrap_or_else(PropertyPermission::none);
+
+			let is_property_exists = stored_properties.get(&key).is_some();
+
+			match permission {
+				PropertyPermission { mutable: false, .. } if is_property_exists => {
+					return Err(<Error<T>>::NoPermission.into());
+				}
+
+				PropertyPermission {
+					collection_admin,
+					token_owner,
+					..
+				} => {
+					//TODO: investigate threats during public minting.
+					let is_token_create =
+						is_token_create && (collection_admin || token_owner) && value.is_some();
+					if !(is_token_create
+						|| (collection_admin && is_collection_admin)
+						|| (token_owner && is_token_owner()?))
+					{
+						fail!(<Error<T>>::NoPermission);
+					}
+				}
+			}
+
+			match value {
+				Some(value) => {
+					stored_properties
+						.try_set(key.clone(), value)
+						.map_err(<Error<T>>::from)?;
+
+					Self::deposit_event(Event::TokenPropertySet(collection.id, token_id, key));
+				}
+				None => {
+					stored_properties.remove(&key).map_err(<Error<T>>::from)?;
+
+					Self::deposit_event(Event::TokenPropertyDeleted(collection.id, token_id, key));
+				}
+			}
+
+			<PalletEvm<T>>::deposit_log(
+				CollectionHelpersEvents::TokenChanged {
+					collection_id: eth::collection_id_to_address(collection.id),
+					token_id: token_id.into(),
+				}
+				.to_log(T::ContractAddress::get()),
+			);
+		}
+
+		set_token_properties(stored_properties);
+
+		Ok(())
+	}
+
+	/// Sets or unsets the approval of a given operator.
+	///
+	/// The `operator` is allowed to transfer all token pieces of the `owner` on their behalf.
+	/// - `owner`: Token owner
+	/// - `operator`: Operator
+	/// - `approve`: Should operator status be granted or revoked?
+	pub fn set_allowance_for_all(
+		collection: &CollectionHandle<T>,
+		owner: &T::CrossAccountId,
+		operator: &T::CrossAccountId,
+		approve: bool,
+		set_allowance: impl FnOnce(),
+		log: evm_coder::ethereum::Log,
+	) -> DispatchResult {
+		if collection.permissions.access() == AccessMode::AllowList {
+			collection.check_allowlist(owner)?;
+			collection.check_allowlist(operator)?;
+		}
+
+		Self::ensure_correct_receiver(operator)?;
+
+		set_allowance();
+
+		<PalletEvm<T>>::deposit_log(log);
+		Self::deposit_event(Event::ApprovedForAll(
+			collection.id,
+			owner.clone(),
+			operator.clone(),
+			approve,
+		));
 		Ok(())
 	}
 

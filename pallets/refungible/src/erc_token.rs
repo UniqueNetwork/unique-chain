@@ -24,25 +24,25 @@ use core::{
 	convert::TryInto,
 	ops::Deref,
 };
-use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity_interface, solidity, types::*,
-	weight,
-};
+use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use pallet_common::{
-	CommonWeightInfo,
 	erc::{CommonEvmHandler, PrecompileResult},
-	eth::collection_id_to_address,
+	eth::{collection_id_to_address, CrossAddress},
+	CommonWeightInfo,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
-use pallet_evm_coder_substrate::{call, dispatch_to_evm, WithRecorder};
+use pallet_evm_coder_substrate::{
+	call, dispatch_to_evm, WithRecorder, frontier_contract,
+	execution::{Result, PreDispatch},
+};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_std::vec::Vec;
 use sp_core::U256;
 use up_data_structs::TokenId;
 
 use crate::{
-	Allowance, Balance, common::CommonWeights, Config, Pallet, RefungibleHandle, SelfWeightOf,
-	TotalSupply, weights::WeightInfo,
+	Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply, common::CommonWeights,
+	SelfWeightOf, weights::WeightInfo,
 };
 
 /// Refungible token handle contains information about token's collection and id
@@ -50,14 +50,19 @@ use crate::{
 /// RefungibleTokenHandle doesn't check token's existance upon creation
 pub struct RefungibleTokenHandle<T: Config>(pub RefungibleHandle<T>, pub TokenId);
 
-#[solidity_interface(name = ERC1633)]
+frontier_contract! {
+	macro_rules! RefungibleTokenHandle_result {...}
+	impl<T: Config> Contract for RefungibleTokenHandle<T> {...}
+}
+
+#[solidity_interface(name = ERC1633, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleTokenHandle<T> {
-	fn parent_token(&self) -> Result<Address> {
-		Ok(collection_id_to_address(self.id))
+	fn parent_token(&self) -> Address {
+		collection_id_to_address(self.id)
 	}
 
-	fn parent_token_id(&self) -> Result<U256> {
-		Ok(self.1.into())
+	fn parent_token_id(&self) -> U256 {
+		self.1.into()
 	}
 }
 
@@ -89,18 +94,18 @@ pub enum ERC20Events {
 ///
 /// @dev Implementation of the basic standard token.
 /// https://github.com/ethereum/EIPs/blob/master/EIPS/eip-20.md
-#[solidity_interface(name = ERC20, events(ERC20Events))]
+#[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleTokenHandle<T> {
 	/// @return the name of the token.
-	fn name(&self) -> Result<String> {
-		Ok(decode_utf16(self.name.iter().copied())
+	fn name(&self) -> String {
+		decode_utf16(self.name.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<String>())
+			.collect::<String>()
 	}
 
 	/// @return the symbol of the token.
-	fn symbol(&self) -> Result<String> {
-		Ok(String::from_utf8_lossy(&self.token_prefix).into())
+	fn symbol(&self) -> String {
+		String::from_utf8_lossy(&self.token_prefix).into()
 	}
 
 	/// @dev Total number of tokens in existence
@@ -198,11 +203,22 @@ impl<T: Config> RefungibleTokenHandle<T> {
 	}
 }
 
-#[solidity_interface(name = ERC20UniqueExtensions)]
+#[solidity_interface(name = ERC20UniqueExtensions, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleTokenHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	fn allowance_cross(&self, owner: CrossAddress, spender: CrossAddress) -> Result<U256> {
+		let owner = owner.into_sub_cross_account::<T>()?;
+		let spender = spender.into_sub_cross_account::<T>()?;
+
+		Ok(<Allowance<T>>::get((self.id, self.1, owner, spender)).into())
+	}
+
 	/// @dev Function that burns an amount of the token of a given account,
 	/// deducting from the sender's allowance for said account.
 	/// @param from The account whose tokens will be burnt.
@@ -230,7 +246,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -256,7 +272,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: Caller,
-		spender: pallet_common::eth::CrossAddress,
+		spender: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -283,12 +299,7 @@ where
 	/// @param to The crossaccount to transfer to.
 	/// @param amount The amount to be transferred.
 	#[weight(<CommonWeights<T>>::transfer())]
-	fn transfer_cross(
-		&mut self,
-		caller: Caller,
-		to: pallet_common::eth::CrossAddress,
-		amount: U256,
-	) -> Result<bool> {
+	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -309,8 +320,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
-		to: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
+		to: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -355,7 +366,8 @@ impl<T: Config> Deref for RefungibleTokenHandle<T> {
 
 #[solidity_interface(
 	name = UniqueRefungibleToken,
-	is(ERC20, ERC20UniqueExtensions, ERC1633)
+	is(ERC20, ERC20UniqueExtensions, ERC1633),
+	enum(derive(PreDispatch)),
 )]
 impl<T: Config> RefungibleTokenHandle<T> where T::AccountId: From<[u8; 32]> {}
 

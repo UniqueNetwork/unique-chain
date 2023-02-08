@@ -19,25 +19,33 @@
 extern crate alloc;
 use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
 use core::convert::TryInto;
-use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	weight,
-};
+use evm_coder::AbiCoder;
+use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use up_data_structs::CollectionMode;
 use pallet_common::{
 	CollectionHandle,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
+	eth::CrossAddress,
 };
 use sp_std::vec::Vec;
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
-use pallet_evm_coder_substrate::{call, dispatch_to_evm};
+use pallet_evm_coder_substrate::{
+	call, dispatch_to_evm,
+	execution::{PreDispatch, Result},
+	frontier_contract,
+};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::{U256, Get};
 
 use crate::{
-	Allowance, Balance, Config, FungibleHandle, Pallet, SelfWeightOf, TotalSupply,
+	Allowance, Balance, Config, FungibleHandle, Pallet, TotalSupply, SelfWeightOf,
 	weights::WeightInfo,
 };
+
+frontier_contract! {
+	macro_rules! FungibleHandle_result {...}
+	impl<T: Config> Contract for FungibleHandle<T> {...}
+}
 
 #[derive(ToLog)]
 pub enum ERC20Events {
@@ -57,7 +65,13 @@ pub enum ERC20Events {
 	},
 }
 
-#[solidity_interface(name = ERC20, events(ERC20Events), expect_selector = 0x942e8b22)]
+#[derive(AbiCoder, Debug)]
+pub struct AmountForAddress {
+	to: Address,
+	amount: U256,
+}
+
+#[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
 impl<T: Config> FungibleHandle<T> {
 	fn name(&self) -> Result<String> {
 		Ok(decode_utf16(self.name.iter().copied())
@@ -137,7 +151,7 @@ impl<T: Config> FungibleHandle<T> {
 	}
 }
 
-#[solidity_interface(name = ERC20Mintable)]
+#[solidity_interface(name = ERC20Mintable, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleHandle<T> {
 	/// Mint tokens for `to` account.
 	/// @param to account that will receive minted tokens
@@ -150,31 +164,37 @@ impl<T: Config> FungibleHandle<T> {
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+		<Pallet<T>>::create_item(self, &caller, (to, amount), &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
 
-#[solidity_interface(name = ERC20UniqueExtensions)]
+#[solidity_interface(name = ERC20UniqueExtensions, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> FungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
+	/// @param owner crossAddress The address which owns the funds.
+	/// @param spender crossAddress The address which will spend the funds.
+	/// @return A uint256 specifying the amount of tokens still available for the spender.
+	fn allowance_cross(&self, owner: CrossAddress, spender: CrossAddress) -> Result<U256> {
+		let owner = owner.into_sub_cross_account::<T>()?;
+		let spender = spender.into_sub_cross_account::<T>()?;
+
+		Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
+	}
+
 	/// @notice A description for the collection.
-	fn description(&self) -> Result<String> {
-		Ok(decode_utf16(self.description.iter().copied())
+	fn description(&self) -> String {
+		decode_utf16(self.description.iter().copied())
 			.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-			.collect::<String>())
+			.collect::<String>()
 	}
 
 	#[weight(<SelfWeightOf<T>>::create_item())]
-	fn mint_cross(
-		&mut self,
-		caller: Caller,
-		to: pallet_common::eth::CrossAddress,
-		amount: U256,
-	) -> Result<bool> {
+	fn mint_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -190,7 +210,7 @@ where
 	fn approve_cross(
 		&mut self,
 		caller: Caller,
-		spender: pallet_common::eth::CrossAddress,
+		spender: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -231,7 +251,7 @@ where
 	fn burn_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -249,14 +269,14 @@ where
 	/// Mint tokens for multiple accounts.
 	/// @param amounts array of pairs of account address and amount
 	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
-	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<(Address, U256)>) -> Result<bool> {
+	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<AmountForAddress>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 		let amounts = amounts
 			.into_iter()
-			.map(|(to, amount)| {
+			.map(|AmountForAddress { to, amount }| {
 				Ok((
 					T::CrossAccountId::from_eth(to),
 					amount.try_into().map_err(|_| "amount overflow")?,
@@ -264,18 +284,13 @@ where
 			})
 			.collect::<Result<_>>()?;
 
-		<Pallet<T>>::create_multiple_items(&self, &caller, amounts, &budget)
+		<Pallet<T>>::create_multiple_items(self, &caller, amounts, &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
 	#[weight(<SelfWeightOf<T>>::transfer())]
-	fn transfer_cross(
-		&mut self,
-		caller: Caller,
-		to: pallet_common::eth::CrossAddress,
-		amount: U256,
-	) -> Result<bool> {
+	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
@@ -291,8 +306,8 @@ where
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
-		from: pallet_common::eth::CrossAddress,
-		to: pallet_common::eth::CrossAddress,
+		from: CrossAddress,
+		to: CrossAddress,
 		amount: U256,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -321,7 +336,8 @@ where
 		ERC20Mintable,
 		ERC20UniqueExtensions,
 		Collection(via(common_mut returns CollectionHandle<T>)),
-	)
+	),
+	enum(derive(PreDispatch))
 )]
 impl<T: Config> FungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 
