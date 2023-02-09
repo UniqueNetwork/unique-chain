@@ -117,7 +117,7 @@ async function erc721CalculateFeeGas(
   res['mint'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
-      () => zeppelelinContract!.methods.safeMint(ethSigner, 'test').send({from: ethSigner}),
+      () => zeppelelinContract!.methods.safeMint(ethSigner, '').send({from: ethSigner}),
     );
 
   res['mintCross'] =
@@ -155,6 +155,12 @@ async function erc721CalculateFeeGas(
       [{key: 'URI', value: 'Test URI'}],
     ),
   )));
+
+  res['mintWithTokenURI'].zeppelin =
+    await helper.arrange.calculcateFeeGas(
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.safeMint(ethSigner, 'Test URI').send({from: ethSigner}),
+    );
 
   res['setProperties'] =
     await helper.arrange.calculcateFeeGas(
