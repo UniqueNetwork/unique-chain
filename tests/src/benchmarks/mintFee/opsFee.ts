@@ -642,8 +642,8 @@ async function erc20CalculateFeeGas(
 
   res['transferFrom*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
-      {Ethereum: ethReceiver},
-      () => zeppelelinContract!.methods.transferFrom(ethReceiver, ethSigner, 0).send({from: ethReceiver}),
+      {Ethereum: ethSigner},
+      () => zeppelelinContract!.methods.transferFrom(ethReceiver, ethSigner, 1).send({from: ethSigner}),
     );
 
   res['transferFromCross'] =
@@ -674,7 +674,7 @@ async function erc20CalculateFeeGas(
   res['approve*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner},
-      () => zeppelelinContract!.methods.approve(ethReceiver, 0).send(),
+      () => zeppelelinContract!.methods.approve(ethReceiver, 10).send(),
     );
 
   res['approveCross'] =
