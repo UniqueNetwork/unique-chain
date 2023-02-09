@@ -5,8 +5,8 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {UniqueFTCollection, UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
-import {FunctionFeeVM, IFunctionFee} from './types';
-import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from './common';
+import {FunctionFeeVM, IFunctionFee} from '../utils/types';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common';
 
 
 
@@ -74,8 +74,8 @@ async function erc721CalculateFeeGas(
 
   const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
   let zeppelelinContract: Contract | null = null;
-  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/openZeppelin/ERC721/bin/ZeppelinContract.bin`)).toString();
-  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/openZeppelin/ERC721/bin/ZeppelinContract.abi`)).toString());
+  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.bin`)).toString();
+  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.abi`)).toString());
 
   const evmContract = await helper.ethNativeContract.collection(
     helper.ethAddress.fromCollectionId(collection.collectionId),
@@ -528,8 +528,8 @@ async function erc20CalculateFeeGas(
 
   const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
   let zeppelelinContract: Contract | null = null;
-  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/openZeppelin/ERC20/bin/ZeppelinContract.bin`)).toString();
-  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/openZeppelin/ERC20/bin/ZeppelinContract.abi`)).toString());
+  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/../utils/openZeppelin/ERC20/bin/ZeppelinContract.bin`)).toString();
+  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/../utils/openZeppelin/ERC20/bin/ZeppelinContract.abi`)).toString());
 
   const evmContract = await helper.ethNativeContract.collection(
     helper.ethAddress.fromCollectionId(collection.collectionId),
@@ -601,7 +601,6 @@ async function erc20CalculateFeeGas(
     () => helper.executeExtrinsic(donor, 'api.tx.unique.createMultipleItemsEx',[collection.collectionId, {
       Fungible: new Map([
         [JSON.stringify({Ethereum: ethSigner}), 1],
-
       ]),
     }], true),
   )));
@@ -639,6 +638,8 @@ async function erc20CalculateFeeGas(
       {Ethereum: ethSigner},
       () => evmContract.methods.transferFrom(ethSigner, ethReceiver, 1).send(),
     );
+
+  await zeppelelinContract!.methods.approve(ethSigner, 10).send({from: ethReceiver});
 
   res['transferFrom*'].zeppelin =
     await helper.arrange.calculcateFeeGas(

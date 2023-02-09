@@ -7,9 +7,31 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
-import {CONTRACT_IMPORT, convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from './common';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common';
+import {ContractImports} from '../../eth/util/playgrounds/types';
 
-
+export const CONTRACT_IMPORT: ContractImports[] = [
+  {
+    fsPath: `${__dirname}/../../eth/api/CollectionHelpers.sol`,
+    solPath: 'eth/api/CollectionHelpers.sol',
+  },
+  {
+    fsPath: `${__dirname}/../../eth/api/ContractHelpers.sol`,
+    solPath: 'eth/api/ContractHelpers.sol',
+  },
+  {
+    fsPath: `${__dirname}/../../eth/api/UniqueRefungibleToken.sol`,
+    solPath: 'eth/api/UniqueRefungibleToken.sol',
+  },
+  {
+    fsPath: `${__dirname}/../../eth/api/UniqueRefungible.sol`,
+    solPath: 'eth/api/UniqueRefungible.sol',
+  },
+  {
+    fsPath: `${__dirname}/../../eth/api/UniqueNFT.sol`,
+    solPath: 'eth/api/UniqueNFT.sol',
+  },
+];
 
 interface IBenchmarkResultForProp {
 	propertiesNumber: number;
