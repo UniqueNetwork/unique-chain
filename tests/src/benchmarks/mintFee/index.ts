@@ -1,16 +1,16 @@
 import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
 import {readFile} from 'fs/promises';
-import {ContractImports, TokenPermissionField} from '../../eth/util/playgrounds/types';
 import {
   ICrossAccountId,
-  ITokenPropertyPermission,
 } from '../../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import {UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common';
+import {ContractImports} from '../../eth/util/playgrounds/types';
 
-const CONTRACT_IMPORT: ContractImports[] = [
+export const CONTRACT_IMPORT: ContractImports[] = [
   {
     fsPath: `${__dirname}/../../eth/api/CollectionHelpers.sol`,
     solPath: 'eth/api/CollectionHelpers.sol',
@@ -33,26 +33,6 @@ const CONTRACT_IMPORT: ContractImports[] = [
   },
 ];
 
-const PROPERTIES = Array(40)
-  .fill(0)
-  .map((_, i) => {
-    return {
-      key: `key_${i}`,
-      value: Uint8Array.from(Buffer.from(`value_${i}`)),
-    };
-  });
-
-const PERMISSIONS: ITokenPropertyPermission[] = PROPERTIES.map((p) => {
-  return {
-    key: p.key,
-    permission: {
-      tokenOwner: true,
-      collectionAdmin: true,
-      mutable: true,
-    },
-  };
-});
-
 interface IBenchmarkResultForProp {
 	propertiesNumber: number;
 	substrateFee: number;
@@ -62,11 +42,7 @@ interface IBenchmarkResultForProp {
 	evmProxyContractFee: number;
 	evmProxyContractBulkFee: number;
 }
-interface IBenchmarkCollection {
-  createFee: number,
-  mintFee: number,
-  transferFee: number,
-}
+
 const main = async () => {
   const benchmarks = [
     'substrateFee',
@@ -88,130 +64,12 @@ const main = async () => {
   });
 
   await usingEthPlaygrounds(async (helper, privateKey) => {
-    const NOMINAL = helper.balance.getOneTokenNominal();
     const CONTRACT_SOURCE = (
       await readFile(`${__dirname}/proxyContract.sol`)
     ).toString();
-    const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/openZeppelin/bin/ZeppelinContract.bin`)).toString();
-    const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/openZeppelin/bin/ZeppelinContract.abi`)).toString());
 
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-    const [substrateReceiver] = await helper.arrange.createAccounts([10n], donor);
-
     const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const ethReceiver = await helper.eth.createAccountWithBalance(donor, 5n);
-
-    let susbtrateCollection: UniqueNFTCollection | null;
-    const createCollectionSubstrateFee = convertToTokens(
-      await helper.arrange.calculcateFee({Substrate: donor.address}, async () => {
-        susbtrateCollection = await helper.nft.mintCollection(donor, {tokenPropertyPermissions: [
-          {
-            key: 'url',
-            permission: {
-              tokenOwner: true,
-              collectionAdmin: true,
-              mutable: true,
-            },
-          },
-        ]});
-      }),
-      NOMINAL,
-    );
-
-    const susbstrateMintFee = convertToTokens(
-      await helper.arrange.calculcateFee(
-        {Substrate: donor.address},
-        () => susbtrateCollection!.mintToken(donor, {Substrate: substrateReceiver.address}, [{key: 'url', value: 'test'}]),
-      ),
-      NOMINAL,
-    );
-    const susbstrateTransferFee = convertToTokens(
-      await helper.arrange.calculcateFee(
-        {Substrate: substrateReceiver.address},
-        () => susbtrateCollection!.transferToken(substrateReceiver, 1, {Substrate: donor.address}),
-      ),
-      NOMINAL,
-    );
-    const substrateFee: IBenchmarkCollection = {
-      createFee: createCollectionSubstrateFee,
-      mintFee: susbstrateMintFee,
-      transferFee: susbstrateTransferFee,
-    };
-
-    const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
-
-    let ethContract: Contract | null = null;
-
-    const createCollectionEthFee = convertToTokens(
-      await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-        const result = await helperContract.methods.createNFTCollection('a', 'b', 'c').send({from: ethSigner, value: Number(2n * helper.balance.getOneTokenNominal())});
-        ethContract = await helper.ethNativeContract.collection(helper.ethAddress.normalizeAddress(result.events.CollectionCreated.returnValues.collectionId), 'nft', ethSigner);
-      }),
-      NOMINAL,
-    );
-
-    await ethContract!.methods.setTokenPropertyPermissions([
-      ['url', [
-        [TokenPermissionField.Mutable, true],
-        [TokenPermissionField.TokenOwner, true],
-        [TokenPermissionField.CollectionAdmin, true]],
-      ],
-    ]).send({from: ethSigner});
-
-    const ethMintFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethSigner},
-      () => ethContract!.methods.mintCross(
-        helper.ethCrossAccount.fromAddress(ethReceiver),
-        [{key: 'url', value: Buffer.from('test')}],
-      )
-        .send({from: ethSigner}),
-    ), NOMINAL);
-
-    const ethTransferFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethReceiver},
-      () => ethContract!.methods.transferFrom(ethReceiver, ethSigner, 1)
-        .send({from: ethReceiver}),
-    ), NOMINAL);
-
-    const ethFee: IBenchmarkCollection = {
-      createFee: createCollectionEthFee,
-      mintFee: ethMintFee,
-      transferFee: ethTransferFee,
-    };
-
-    let zeppelelinContract: Contract | null = null;
-
-    const zeppelinDeployFee = convertToTokens(
-      await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-        zeppelelinContract = await helper.ethContract.deployByAbi(
-          ethSigner,
-          ZEPPELIN_ABI,
-          ZEPPELIN_OBJECT,
-        );
-      }),
-      NOMINAL,
-    );
-
-    const zeppelinMintFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethSigner},
-      () => zeppelelinContract!.methods.safeMint(ethReceiver, 'test').send({from: ethSigner}),
-    ), NOMINAL);
-
-
-    const zeppelinTransferFee = convertToTokens(await helper.arrange.calculcateFee(
-      {Ethereum: ethReceiver},
-      () => zeppelelinContract!.methods.safeTransferFrom(ethReceiver, ethSigner, 0).send({from: ethReceiver}),
-    ), NOMINAL);
-
-    const zeppelinFee: IBenchmarkCollection = {
-      createFee: zeppelinDeployFee,
-      mintFee: zeppelinMintFee,
-      transferFee: zeppelinTransferFee,
-    };
-
-    console.log('collection ops fees');
-    const results = {substrate: substrateFee, eth: ethFee, zeppelin: zeppelinFee};
-    console.table(results);
 
     const contract = await helper.ethContract.deployByCode(
       ethSigner,
@@ -257,47 +115,7 @@ main()
     process.exit(1);
   });
 
-async function createCollectionForBenchmarks(
-  helper: EthUniqueHelper,
-  privateKey: (seed: string) => Promise<IKeyringPair>,
-  ethSigner: string,
-  proxyContract: string,
-  permissions: ITokenPropertyPermission[],
-) {
-  const donor = await privateKey('//Alice');
 
-  const collection = await helper.nft.mintCollection(donor, {
-    name: 'test mintToSubstrate',
-    description: 'EVMHelpers',
-    tokenPrefix: 'ap',
-    tokenPropertyPermissions: [
-      {
-        key: 'url',
-        permission: {
-          tokenOwner: true,
-          collectionAdmin: true,
-          mutable: true,
-        },
-      },
-    ],
-    limits: {sponsorTransferTimeout: 0, sponsorApproveTimeout: 0},
-    permissions: {mintMode: true},
-  });
-
-  await collection.addToAllowList(donor, {
-    Ethereum: helper.address.substrateToEth(donor.address),
-  });
-  await collection.addToAllowList(donor, {Substrate: donor.address});
-  await collection.addAdmin(donor, {Ethereum: ethSigner});
-  await collection.addAdmin(donor, {
-    Ethereum: helper.address.substrateToEth(donor.address),
-  });
-  await collection.addToAllowList(donor, {Ethereum: proxyContract});
-  await collection.addAdmin(donor, {Ethereum: proxyContract});
-  await collection.setTokenPropertyPermissions(donor, permissions);
-
-  return collection;
-}
 
 async function benchMintFee(
   helper: EthUniqueHelper,
@@ -320,13 +138,14 @@ async function benchMintFee(
     100n,
   );
 
-  const collection = await createCollectionForBenchmarks(
+  const collection = (await createCollectionForBenchmarks(
+    'nft',
     helper,
     privateKey,
     ethSigner,
     proxyContract.options.address,
     PERMISSIONS,
-  );
+  )) as UniqueNFTCollection;
 
   const substrateFee = await helper.arrange.calculcateFee(
     {Substrate: donor.address},
@@ -563,17 +382,18 @@ async function calculateFeeNftMintWithProperties(
   proxyContractAddress: string,
   calculatedCall: (collection: UniqueNFTCollection) => Promise<any>,
 ): Promise<bigint> {
-  const collection = await createCollectionForBenchmarks(
+  const collection = (await createCollectionForBenchmarks(
+    'nft',
     helper,
     privateKey,
     ethSigner,
     proxyContractAddress,
     PERMISSIONS,
-  );
+  )) as UniqueNFTCollection;
   return helper.arrange.calculcateFee(payer, async () => {
     await calculatedCall(collection);
   });
 }
-function convertToTokens(value: bigint, nominal: bigint): number {
-  return Number((value * 1000n) / nominal) / 1000;
-}
+
+
+
