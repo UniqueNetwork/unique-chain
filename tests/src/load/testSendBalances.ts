@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import {UNQ} from '../helpers/balances';
-import {getAccounts, topUpAccounts, emptyAccounts, chunk} from '../helpers/testAccounts';
+import {UNQ} from './helpers/balances';
+import {getAccounts, arrangeTopUpAccounts, spamEmptyAccounts, chunk} from './helpers/accounts';
 
 const CROWD_SIZE = 3000;
 const SUPER_DONOR = '//Dave';
@@ -21,7 +21,7 @@ const main = async () => {
 
   // 1. Feed crowd using different donors for each chunk:
   for(let i = 5; i !== 0; i--) {
-    const topUpBalanceTransactions = crowd.map((subCrowd, i) => topUpAccounts(donors[i], subCrowd, UNQ(2n)));
+    const topUpBalanceTransactions = crowd.map((subCrowd, i) => arrangeTopUpAccounts(donors[i], subCrowd, UNQ(2n)));
     const topUpResult = await Promise.all(topUpBalanceTransactions);
   }
 
@@ -34,7 +34,7 @@ const main = async () => {
 
   // console.log('Saving to result.log ...');
   // fs.appendFileSync(path.resolve(__dirname, './result.log'), JSON.stringify(topUpFailed));
-  // // fs.appendFileSync(path.resolve(__dirname, './result.log'), JSON.stringify(emptyFailed));
+  // // fs.appendFileSync(path.resolve(__dirname, './resuspamEmptyAccountsN.stringify(emptyFailed));
 
   // console.log('Top up balance transactions failed:', topUpFailed.length);
   // // console.log('Empty balance transactions failed:', emptyFailed.length);

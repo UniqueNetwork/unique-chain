@@ -20,14 +20,15 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
       const {signer, extrinsic, options} = transaction;
       const unsub = await extrinsic.signAndSend(signer, options ? options : {}, (result) => {
         const {events, status} = result;
+
         // If the transaction wasn't included in the block for some reason:
         if (status.isDropped) {
-          console.log('TX DROPPED', result.dispatchError);
+          console.log('TX DROPPED');
           unsub();
           resolve({status: 'fail', reason: 'ExtrinsicDropped', result});
         }
         // Do not use in block
-        if (status.isFinalized /* || status.isInBlock */) {
+        else if (status.isFinalized /* || status.isInBlock */) {
           const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
           if (errors.length > 0) {
             unsub();
@@ -36,23 +37,29 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
           unsub();
           resolve({status: 'success', result});
         }
-        if (status.isRetracted) {
-          console.log('TX RECTRACTED');
+        else if (status.isRetracted) {
+          console.log('TX RETRACTED');
+          unsub();
+          resolve({status:'fail', reason: 'Tx retracted'});
         }
-        if (status.isInvalid) {
+        else if (status.isInvalid) {
           console.log('TX INVALID');
+          unsub();
+          resolve({status:'fail', reason: 'Tx Invalid'});
         }
-        if (status.isFinalityTimeout) {
+        else if (status.isFinalityTimeout) {
           console.log('TX FINALITY TIMEOUT');
+          unsub();
+          resolve({status:'fail', reason: 'FinalityTimeout'});
         }
-        if (status.isNone) {
-          console.log('TX IS NONE');
-        }
-        if (status.isUsurped) {
+        else if (status.isUsurped) {
           console.log('TX IS USURPED');
+          unsub();
+          resolve({status:'fail', reason: 'Tx usurped'});
         }
+        else if (status.isBroadcast || status.isInBlock || status.isNone) {/* do nothing */}
         else {
-          console.log(status.toHuman());
+          console.log(status);
         }
       });
     } catch (error) {

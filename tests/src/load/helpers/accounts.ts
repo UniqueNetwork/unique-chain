@@ -27,8 +27,13 @@ export async function getAccounts(accountsNumber: number, baseSeed: string): Pro
  * @param accountBalance balance of each account
  * @returns ```IKeyringPair[]``` of feeded accounts
  */
-export async function topUpAccounts
-(donor: IKeyringPair | string, accounts: IKeyringPair[], accountBalance: bigint): Promise<TxResult[]> {
+export async function arrangeTopUpAccounts
+(
+  donor: IKeyringPair | string,
+  accounts: IKeyringPair[],
+  accountBalance: bigint,
+  wsEndpoin?: string,
+): Promise<TxResult[]> {
   return await usingPlaygrounds(async (helper) => {
     if (typeof donor === 'string') donor = helper.util.fromSeed(donor);
     const api = helper.getApi();
@@ -45,7 +50,7 @@ export async function topUpAccounts
     console.log('Transactions sent, waiting for result...');
     const result = await Promise.all(transactions);
     return result;
-  }, WS_ENDPOINT);
+  }, wsEndpoin ? wsEndpoin : WS_ENDPOINT);
 }
 
 /**
@@ -53,7 +58,7 @@ export async function topUpAccounts
  * @param crowd accounts to transferAll from
  * @param recepient recepient of transferAll
  */
-export async function emptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPair) {
+export async function spamEmptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPair) {
   return await usingPlaygrounds(async (helper) => {
     const api = helper.getApi();
 
