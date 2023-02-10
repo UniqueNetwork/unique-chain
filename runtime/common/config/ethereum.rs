@@ -16,7 +16,7 @@ use crate::{
 };
 use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
 use up_common::constants::*;
-
+use fp_evm::Config as EvmConfig;
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 // Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case
@@ -81,6 +81,9 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
 	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
+	fn config() -> &'static EvmConfig {
+		&UNIQUE_CONFIG
+	}
 }
 
 impl pallet_evm_migration::Config for Runtime {
@@ -116,3 +119,20 @@ impl pallet_evm_coder_substrate::Config for Runtime {}
 impl pallet_evm_transaction_payment::Config for Runtime {
 	type EvmSponsorshipHandler = EvmSponsorshipHandler;
 }
+
+const CALIBRATION_COEF: u64 = 3;
+
+static UNIQUE_CONFIG: EvmConfig = {
+	let mut base = EvmConfig::london();
+	base.gas_storage_read_warm *= CALIBRATION_COEF;
+	base.gas_sload_cold *= CALIBRATION_COEF;
+	base.gas_access_list_storage_key *= CALIBRATION_COEF;
+	base.gas_sload = base.gas_storage_read_warm;
+	base.gas_sstore_reset = 20_000 * CALIBRATION_COEF - base.gas_sload_cold;
+	base.refund_sstore_clears = (base.gas_sstore_reset + base.gas_access_list_storage_key) as i64;
+	base.gas_sstore_set = 20_000 * CALIBRATION_COEF;
+	base.gas_access_list_address = 2400 * CALIBRATION_COEF;
+	base.gas_account_access_cold = 2600 * CALIBRATION_COEF;
+
+	base
+};
