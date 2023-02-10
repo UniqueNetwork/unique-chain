@@ -90,7 +90,7 @@ git checkout unique-network
 ```
 git clone https://github.com/paritytech/polkadot.git
 cd polkadot
-git checkout release-v0.9.36
+git checkout release-v0.9.37
 cargo build --release
 ```
 
