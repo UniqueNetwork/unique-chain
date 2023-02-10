@@ -74,15 +74,14 @@ impl RuntimeIdentification for Box<dyn sc_service::ChainSpec> {
 		}
 
 		#[cfg(feature = "quartz-runtime")]
-		if self.id().starts_with("quartz") || self.id().starts_with("qtz") {
+		if self.id().starts_with("quartz")
+			|| self.id().starts_with("qtz")
+			|| self.id().starts_with("sapphire")
+		{
 			return RuntimeId::Quartz;
 		}
 
-		if self.id().starts_with("opal")
-			|| self.id().starts_with("sapphire")
-			|| self.id() == "dev"
-			|| self.id() == "local_testnet"
-		{
+		if self.id().starts_with("opal") || self.id() == "dev" || self.id() == "local_testnet" {
 			return RuntimeId::Opal;
 		}
 
