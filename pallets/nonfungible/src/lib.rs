@@ -1273,12 +1273,16 @@ impl<T: Config> Pallet<T> {
 				Some(from),
 				nesting_budget,
 			)? {
-			// Pass, token existence is checked in `check_indirectly_owned`
+			// Pass, token existence and ouroboros checks are done in `check_indirectly_owned`
 		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
-			ensure!(
-				<TokenData<T>>::contains_key((handle.id, under)),
-				<CommonError<T>>::TokenNotFound
-			);
+			// token existence and ouroboros checks are done in `get_checked_topmost_owner`
+			let _ = <PalletStructure<T>>::get_checked_topmost_owner(
+				handle.id,
+				under,
+				Some(from),
+				nesting_budget,
+			)?
+			.ok_or(<CommonError<T>>::TokenNotFound)?;
 		} else {
 			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
 		}
