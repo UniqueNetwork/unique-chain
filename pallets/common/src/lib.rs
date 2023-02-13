@@ -86,7 +86,6 @@ pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 
-use crate::erc::CollectionHelpersEvents;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod dispatch;
@@ -1250,6 +1249,7 @@ impl<T: Config> Pallet<T> {
 		mut stored_properties: Properties,
 		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
 		set_token_properties: impl FnOnce(Properties),
+		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
 		let is_collection_admin = collection.is_owner_or_admin(sender);
 		let permissions = Self::property_permissions(collection.id);
@@ -1304,13 +1304,7 @@ impl<T: Config> Pallet<T> {
 				}
 			}
 
-			<PalletEvm<T>>::deposit_log(
-				CollectionHelpersEvents::TokenChanged {
-					collection_id: eth::collection_id_to_address(collection.id),
-					token_id: token_id.into(),
-				}
-				.to_log(T::ContractAddress::get()),
-			);
+			<PalletEvm<T>>::deposit_log(log.clone());
 		}
 
 		set_token_properties(stored_properties);

@@ -59,8 +59,19 @@ frontier_contract! {
 
 pub const ADDRESS_FOR_PARTIALLY_OWNED_TOKENS: H160 = H160::repeat_byte(0xff);
 
+/// Rft events.
+#[derive(ToLog)]
+pub enum ERC721TokenEvent {
+	/// The token has been changed.
+	TokenChanged {
+		/// Token ID.
+		#[indexed]
+		token_id: U256,
+	},
+}
+
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-#[solidity_interface(name = TokenProperties, enum(derive(PreDispatch)), enum_attr(weight))]
+#[solidity_interface(name = TokenProperties, events(ERC721TokenEvent), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
