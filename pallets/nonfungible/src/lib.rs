@@ -112,7 +112,7 @@ use pallet_common::{
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_core::H160;
+use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
@@ -622,6 +622,10 @@ impl<T: Config> Pallet<T> {
 			stored_properties,
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+			erc::ERC721TokenEvent::TokenChanged {
+				token_id: token_id.into(),
+			}
+			.to_log(T::ContractAddress::get()),
 		)
 	}
 
