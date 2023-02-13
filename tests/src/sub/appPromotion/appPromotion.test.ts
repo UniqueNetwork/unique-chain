@@ -147,113 +147,172 @@ describe('App promotion', () => {
     });
   });
 
-  describe('unstake extrinsic', () => {
-    itSub('should move tokens to "pendingUnstake" map and subtract it from totalStaked', async ({helper}) => {
-      const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
-      const totalStakedBefore = await helper.staking.getTotalStaked();
-      await helper.staking.stake(staker, 900n * nominal);
-      await helper.staking.unstakeAll(staker);
+  describe('Unstaking', () => {
+    [
+      {method: 'unstakeAll' as const},
+      {method: 'unstakePartial' as const},
+    ].map(testCase => {
+      itSub(`[${testCase.method}] should move tokens to "pendingUnstake" and subtract it from totalStaked`, async ({helper}) => {
+        const [staker, recepient] = [accounts.pop()!, accounts.pop()!];
+        const totalStakedBefore = await helper.staking.getTotalStaked();
+        const STAKE_AMOUNT = 900n * nominal;
 
-      // Right after unstake tokens are still locked
-      expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: 900n * nominal, reasons: 'All'}]);
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 900n * nominal, feeFrozen: 900n * nominal});
-      // Staker can not transfer
-      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
-      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(900n * nominal);
-      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
-      expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
+        await helper.staking.stake(staker, STAKE_AMOUNT);
+        testCase.method === 'unstakeAll'
+          ? await helper.staking.unstakeAll(staker)
+          : await helper.staking.unstakePartial(staker, STAKE_AMOUNT);
+
+        // Right after unstake tokens are still locked
+        expect(await helper.staking.getStakesNumber({Substrate: staker.address})).to.eq(0);
+        expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: STAKE_AMOUNT, reasons: 'All'}]);
+        expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: STAKE_AMOUNT, feeFrozen: STAKE_AMOUNT});
+        // Staker can not transfer
+        await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
+        expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(STAKE_AMOUNT);
+        expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
+        expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
+      });
     });
 
-    itSub('should unlock balance after unlocking period ends and remove it from "pendingUnstake"', async ({helper}) => {
-      const staker = accounts.pop()!;
-      await helper.staking.stake(staker, 100n * nominal);
-      await helper.staking.unstakeAll(staker);
-      const [pendingUnstake] = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+    [
+      {method: 'unstakeAll' as const},
+      {method: 'unstakePartial' as const},
+    ].map(testCase => {
+      itSub(`[${testCase.method}] should unlock balance after unlocking period ends and remove it from "pendingUnstake"`, async ({helper}) => {
+        const staker = accounts.pop()!;
+        await helper.staking.stake(staker, 100n * nominal);
+        testCase.method === 'unstakeAll'
+          ? await helper.staking.unstakeAll(staker)
+          : await helper.staking.unstakePartial(staker, 100n * nominal);
+        const [pendingUnstake] = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
 
-      // Wait for unstaking period. Balance now free ~1000; reserved, frozen, miscFrozeb: 0n
-      await helper.wait.forParachainBlockNumber(pendingUnstake.block);
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 0n, feeFrozen: 0n});
-      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
+        // Wait for unstaking period. Balance now free ~1000; reserved, frozen, miscFrozeb: 0n
+        await helper.wait.forParachainBlockNumber(pendingUnstake.block);
+        expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 0n, feeFrozen: 0n});
+        expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
 
-      // staker can transfer:
-      await helper.balance.transferToSubstrate(staker, donor.address, 998n * nominal);
-      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(1n);
+        // staker can transfer:
+        await helper.balance.transferToSubstrate(staker, donor.address, 998n * nominal);
+        expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(1n);
+      });
     });
 
-    itSub('should successfully unstake multiple stakes', async ({helper}) => {
-      const staker = accounts.pop()!;
-      await helper.staking.stake(staker, 100n * nominal);
-      await helper.staking.stake(staker, 200n * nominal);
-      await helper.staking.stake(staker, 300n * nominal);
+    [
+      {method: 'unstakeAll' as const},
+      {method: 'unstakePartial' as const},
+    ].map(testCase => {
+      itSub(`[${testCase.method}] should successfully unstake multiple stakes`, async ({helper}) => {
+        const staker = accounts.pop()!;
+        await helper.staking.stake(staker, 100n * nominal);
+        await helper.staking.stake(staker, 200n * nominal);
+        await helper.staking.stake(staker, 300n * nominal);
 
-      // staked: [100, 200, 300]; unstaked: 0
-      let totalPendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
-      let pendingUnstake = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
-      let stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(totalPendingUnstake).to.be.deep.equal(0n);
-      expect(pendingUnstake).to.be.deep.equal([]);
-      expect(stakes[0].amount).to.equal(100n * nominal);
-      expect(stakes[1].amount).to.equal(200n * nominal);
-      expect(stakes[2].amount).to.equal(300n * nominal);
+        // staked: [100, 200, 300]; unstaked: 0
+        let totalPendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+        let pendingUnstake = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+        let stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+        expect(totalPendingUnstake).to.be.deep.equal(0n);
+        expect(pendingUnstake).to.be.deep.equal([]);
+        expect(stakes[0].amount).to.equal(100n * nominal);
+        expect(stakes[1].amount).to.equal(200n * nominal);
+        expect(stakes[2].amount).to.equal(300n * nominal);
 
-      // Can unstake multiple stakes
-      await helper.staking.unstakeAll(staker);
-      pendingUnstake = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
-      totalPendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
-      stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      expect(totalPendingUnstake).to.be.equal(600n * nominal);
-      expect(stakes).to.be.deep.equal([]);
-      expect(pendingUnstake[0].amount).to.equal(600n * nominal);
+        // Can unstake multiple stakes
+        testCase.method === 'unstakeAll'
+          ? await helper.staking.unstakeAll(staker)
+          : await helper.staking.unstakePartial(staker, 600n * nominal);
 
-      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 600n * nominal, miscFrozen: 600n * nominal});
-      expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
-      await helper.wait.forParachainBlockNumber(pendingUnstake[0].block);
-      expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
-      expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
+        pendingUnstake = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+        totalPendingUnstake = await helper.staking.getPendingUnstake({Substrate: staker.address});
+        stakes = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+        expect(totalPendingUnstake).to.be.equal(600n * nominal);
+        expect(stakes).to.be.deep.equal([]);
+        expect(pendingUnstake[0].amount).to.equal(600n * nominal);
+
+        expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 600n * nominal, miscFrozen: 600n * nominal});
+        expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
+        await helper.wait.forParachainBlockNumber(pendingUnstake[0].block);
+        expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
+        expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
+      });
     });
 
-    itSub('should not have any effects if no active stakes', async ({helper}) => {
-      const staker = accounts.pop()!;
+    [
+      {method: 'unstakeAll' as const},
+      {method: 'unstakePartial' as const},
+    ].map(testCase => {
+      itSub(`[${testCase.method}] should not have any effects if no active stakes`, async ({helper}) => {
+        const staker = accounts.pop()!;
 
-      // unstake has no effect if no stakes at all
-      await helper.staking.unstakeAll(staker);
-      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
-      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n); // TODO bigint closeTo helper
+        // unstake has no effect if no stakes at all
+        testCase.method === 'unstakeAll'
+          ? await helper.staking.unstakeAll(staker)
+          : await helper.staking.unstakePartial(staker, 100n * nominal);
 
-      // TODO stake() unstake() waitUnstaked() unstake();
+        expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
+        expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n); // TODO bigint closeTo helper
 
-      // can't unstake if there are only pendingUnstakes
-      await helper.staking.stake(staker, 100n * nominal);
-      await helper.staking.unstakeAll(staker);
-      await helper.staking.unstakeAll(staker);
+        // TODO stake() unstake() waitUnstaked() unstake();
 
-      expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(100n * nominal);
-      expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
-    });
+        // can't unstake if there are only pendingUnstakes
+        await helper.staking.stake(staker, 100n * nominal);
 
-    itSub('should keep different unlocking block for each unlocking stake', async ({helper}) => {
-      const staker = accounts.pop()!;
-      await helper.staking.stake(staker, 100n * nominal);
-      await helper.staking.unstakeAll(staker);
-      await helper.staking.stake(staker, 120n * nominal);
-      await helper.staking.unstakeAll(staker);
+        if (testCase.method === 'unstakeAll') {
+          await helper.staking.unstakeAll(staker);
+          await helper.staking.unstakeAll(staker);
+        } else {
+          await helper.staking.unstakePartial(staker, 100n * nominal);
+          await helper.staking.unstakePartial(staker, 100n * nominal);
+        }
 
-      const unstakingPerBlock = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
-      expect(unstakingPerBlock).has.length(2);
-      expect(unstakingPerBlock[0].amount).to.equal(100n * nominal);
-      expect(unstakingPerBlock[1].amount).to.equal(120n * nominal);
-    });
-
-    itSub('should be possible for 3 accounts in one block', async ({helper}) => {
-      const stakers = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
-
-      await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
-      await Promise.all(stakers.map(staker => helper.staking.unstakeAll(staker)));
-
-      await Promise.all(stakers.map(async (staker) => {
+        expect(await helper.staking.getStakesNumber({Substrate: staker.address})).to.eq(0);
         expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(100n * nominal);
         expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
-      }));
+      });
+    });
+
+    [
+      {method: 'unstakeAll' as const},
+      {method: 'unstakePartial' as const},
+    ].map(testCase => {
+      itSub(`[${testCase.method}] should create different pending-unlock for each unlocking stake`, async ({helper}) => {
+        const staker = accounts.pop()!;
+        await helper.staking.stake(staker, 100n * nominal);
+        testCase.method === 'unstakeAll'
+          ? await helper.staking.unstakeAll(staker)
+          : await helper.staking.unstakePartial(staker, 100n * nominal);
+        await helper.staking.stake(staker, 120n * nominal);
+        testCase.method === 'unstakeAll'
+          ? await helper.staking.unstakeAll(staker)
+          : await helper.staking.unstakePartial(staker, 120n * nominal);
+
+        const unstakingPerBlock = await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address});
+        expect(unstakingPerBlock).has.length(2);
+        expect(unstakingPerBlock[0].amount).to.equal(100n * nominal);
+        expect(unstakingPerBlock[1].amount).to.equal(120n * nominal);
+        expect(await helper.staking.getStakesNumber({Substrate: staker.address})).to.equal(0);
+      });
+    });
+
+    [
+      {method: 'unstakeAll' as const},
+      {method: 'unstakePartial' as const},
+    ].map(testCase => {
+      itSub(`[${testCase.method}] should be possible for 3 accounts in one block`, async ({helper}) => {
+        const stakers = [accounts.pop()!, accounts.pop()!, accounts.pop()!];
+
+        await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
+        await Promise.all(stakers.map(staker => {
+          return testCase.method === 'unstakeAll'
+            ? helper.staking.unstakeAll(staker)
+            : helper.staking.unstakePartial(staker, 100n * nominal);
+        }));
+
+        await Promise.all(stakers.map(async (staker) => {
+          expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(100n * nominal);
+          expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
+        }));
+      });
     });
 
     itSub('should not be possible for more than 3 accounts in one block', async ({helper}) => {
@@ -261,7 +320,11 @@ describe('App promotion', () => {
         const stakers = await helper.arrange.createAccounts([200n,200n,200n,200n,200n,200n,200n,200n,200n,200n], donor);
 
         await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
-        const unstakingResults = await Promise.allSettled(stakers.map(staker => helper.staking.unstakeAll(staker)));
+        const unstakingResults = await Promise.allSettled(stakers.map((staker, i) => {
+          return i % 2 === 0
+            ? helper.staking.unstakeAll(staker)
+            : helper.staking.unstakePartial(staker, 100n * nominal);
+        }));
 
         const successfulUnstakes = unstakingResults.filter(result => result.status === 'fulfilled');
         expect(successfulUnstakes).to.have.length(3);

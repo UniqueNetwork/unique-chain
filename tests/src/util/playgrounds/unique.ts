@@ -2689,6 +2689,16 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   }
 
   /**
+   * Get total number of active stakes
+   * @param address substrate address
+   * @returns {number}
+   */
+  async getStakesNumber(address: ICrossAccountId): Promise<number> {
+    if (address.Ethereum) throw Error('only substrate address');
+    return (await this.helper.callRpc('api.query.appPromotion.stakesPerAccount', [address.Substrate])).toNumber();
+  }
+
+  /**
    * Get total staked amount for address
    * @param address substrate or ethereum address
    * @returns total staked amount
