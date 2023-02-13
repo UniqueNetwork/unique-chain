@@ -623,7 +623,6 @@ impl<T: Config> Pallet<T> {
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
 			erc::ERC721TokenEvent::TokenChanged {
-				collection_id: collection_id_to_address(collection.id),
 				token_id: token_id.into(),
 			}
 			.to_log(T::ContractAddress::get()),

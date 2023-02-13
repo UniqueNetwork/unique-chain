@@ -86,7 +86,6 @@ pub use pallet::*;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 
-use crate::erc::CollectionHelpersEvents;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod dispatch;
