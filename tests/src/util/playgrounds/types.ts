@@ -21,7 +21,7 @@ export interface ITransactionResult {
       }[];
   },
   blockHash: string,
-  moduleError?: string;
+  moduleError?: string | object;
 }
 
 export interface ISubscribeBlockEventsData {

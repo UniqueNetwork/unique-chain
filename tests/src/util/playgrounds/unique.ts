@@ -672,8 +672,15 @@ export class ChainHelperBase {
       params,
     } as IUniqueHelperLog;
 
+    let errorMessage = '';
+
     if(result.status !== this.transactionStatus.SUCCESS) {
-      if (result.moduleError) log.moduleError = result.moduleError;
+      if (result.moduleError) {
+        errorMessage = typeof result.moduleError === 'string'
+          ? result.moduleError
+          : `${Object.keys(result.moduleError)[0]}: ${Object.values(result.moduleError)[0]}`;
+        log.moduleError = errorMessage;
+      }
       else if (result.result.dispatchError) log.dispatchError = result.result.dispatchError;
     }
     if(events.length > 0) log.events = events;
@@ -681,7 +688,7 @@ export class ChainHelperBase {
     this.chainLog.push(log);
 
     if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
-      if (result.moduleError) throw Error(`${result.moduleError}`);
+      if (result.moduleError) throw Error(`${errorMessage}`);
       else if (result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
     }
     return result;
