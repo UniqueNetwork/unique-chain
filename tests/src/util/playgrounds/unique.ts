@@ -561,7 +561,7 @@ export class ChainHelperBase {
           if (status === this.transactionStatus.SUCCESS) {
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status});
+            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
           } else if (status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
@@ -2657,20 +2657,35 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   }
 
   /**
-   * Unstake tokens for App Promotion
+   * Unstake all staked tokens
    * @param signer keyring of signer
    * @param amountToUnstake amount of tokens to unstake
    * @param label extra label for log
-   * @returns block number where balances will be unlocked
+   * @returns block hash where unstake happened
    */
-  async unstake(signer: TSigner, label?: string): Promise<number> {
+  async unstakeAll(signer: TSigner, label?: string): Promise<string> {
     if(typeof label === 'undefined') label = `${signer.address}`;
-    const _unstakeResult = await this.helper.executeExtrinsic(
-      signer, 'api.tx.appPromotion.unstake',
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.unstakeAll',
       [], true,
     );
-    // TODO extract block number fron events
-    return 1;
+    return unstakeResult.blockHash;
+  }
+
+  /**
+   * Unstake the part of a staked tokens
+   * @param signer keyring of signer
+   * @param amount amount of tokens to unstake
+   * @param label extra label for log
+   * @returns block hash where unstake happened
+   */
+  async unstakePartial(signer: TSigner, amount: bigint, label?: string): Promise<string> {
+    if(typeof label === 'undefined') label = `${signer.address}`;
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.unstakePartial',
+      [amount], true,
+    );
+    return unstakeResult.blockHash;
   }
 
   /**

@@ -20,6 +20,7 @@ export interface ITransactionResult {
         event: IEvent;
       }[];
   },
+  blockHash: string,
   moduleError?: string;
 }
 
