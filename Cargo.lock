@@ -12952,6 +12952,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "497961ef93d974e23eb6f433eb5fe1b7930b659f06d12dec6fc44a8f554c0bba"
 
 [[package]]
+name = "uc-local-maintenance"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "cumulus-primitives-core",
+ "cumulus-primitives-parachain-inherent",
+ "cumulus-test-relay-sproof-builder",
+ "jsonrpsee",
+ "parity-scale-codec",
+ "sc-client-api",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-inherents",
+ "sp-runtime",
+ "sp-storage",
+]
+
+[[package]]
 name = "uc-rpc"
 version = "0.1.4"
 dependencies = [
@@ -13060,6 +13079,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-benchmarking-cli",
  "futures",
+ "jsonrpsee",
  "log",
  "opal-runtime",
  "pallet-transaction-payment-rpc-runtime-api",
@@ -13101,6 +13121,7 @@ dependencies = [
  "substrate-prometheus-endpoint",
  "tokio",
  "try-runtime-cli",
+ "uc-local-maintenance",
  "uc-rpc",
  "unique-rpc",
  "unique-runtime",
@@ -13135,6 +13156,7 @@ dependencies = [
  "sp-blockchain",
  "sp-runtime",
  "substrate-frame-rpc-system",
+ "uc-local-maintenance",
  "uc-rpc",
  "up-common",
  "up-data-structs",
