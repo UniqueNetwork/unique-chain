@@ -247,7 +247,7 @@ describe('App promotion', () => {
         // unstake has no effect if no stakes at all
         testCase.method === 'unstakeAll'
           ? await helper.staking.unstakeAll(staker)
-          : await expect(helper.staking.unstakePartial(staker, 100n * nominal)).to.be.rejectedWith('Arithmetic: Underflow');
+          : await expect(helper.staking.unstakePartial(staker, 100n * nominal)).to.be.rejectedWith('appPromotion.InsufficientStakedBalance');
 
         expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(0n);
         expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n); // TODO bigint closeTo helper
@@ -262,7 +262,7 @@ describe('App promotion', () => {
           await helper.staking.unstakeAll(staker);
         } else {
           await helper.staking.unstakePartial(staker, 100n * nominal);
-          await expect(helper.staking.unstakePartial(staker, 100n * nominal)).to.be.rejectedWith('Arithmetic: Underflow');
+          await expect(helper.staking.unstakePartial(staker, 100n * nominal)).to.be.rejectedWith('appPromotion.InsufficientStakedBalance');
         }
 
         expect(await helper.staking.getStakesNumber({Substrate: staker.address})).to.eq(0);
