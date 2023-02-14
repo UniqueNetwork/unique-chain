@@ -27,6 +27,10 @@ pub enum Subcommand {
 	/// Export the genesis wasm of the parachain.
 	ExportGenesisWasm(cumulus_client_cli::ExportGenesisWasmCommand),
 
+	/// Keys manipulation subcommand
+	#[clap(subcommand)]
+	Key(sc_cli::KeySubcommand),
+
 	/// Build a chain specification.
 	BuildSpec(sc_cli::BuildSpecCmd),
 
