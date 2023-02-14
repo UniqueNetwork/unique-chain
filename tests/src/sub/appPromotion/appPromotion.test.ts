@@ -360,12 +360,12 @@ describe('App promotion', () => {
       await helper.staking.stake(staker, 200n * nominal);
 
       // cannot usntake 300.00000...1
-      await expect(helper.staking.unstakePartial(staker, 300n * nominal + 1n)).to.be.rejectedWith('Arithmetic: Underflow');
+      await expect(helper.staking.unstakePartial(staker, 300n * nominal + 1n)).to.be.rejectedWith('appPromotion.InsufficientStakedBalance');
       expect(await helper.staking.getStakesNumber({Substrate: staker.address})).eq(2);
 
       await helper.staking.unstakePartial(staker, 150n * nominal);
       expect(await helper.staking.getStakesNumber({Substrate: staker.address})).eq(1);
-      await expect(helper.staking.unstakePartial(staker, 150n * nominal + 1n)).to.be.rejectedWith('Arithmetic: Underflow');
+      await expect(helper.staking.unstakePartial(staker, 150n * nominal + 1n)).to.be.rejectedWith('appPromotion.InsufficientStakedBalance');
       expect(await helper.staking.getStakesNumber({Substrate: staker.address})).eq(1);
 
       // nothing broken, can unstake full amount:
@@ -840,35 +840,46 @@ describe('App promotion', () => {
       expect(stake.amount).to.equal(calculateIncome(100n * nominal, 2));
     });
 
-    itSub.skip('can be paid 1000 rewards in a time', async ({helper}) => {
-      // all other stakes should be unstaked
-      const oneHundredStakers = await helper.arrange.createCrowd(100, 1050n, donor);
+    itSub('can calculate reward for tiny stake', async ({helper}) => {
+      const staker = accounts.pop()!;
+      await helper.staking.stake(staker, 100n * nominal);
+      await helper.staking.stake(staker, 100n * nominal);
+      await helper.staking.unstakePartial(staker, 100n * nominal - 1n);
 
-      // stakers stakes 10 times each
-      for (let i = 0; i < 10; i++) {
-        await Promise.all(oneHundredStakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
-      }
-      await helper.wait.newBlocks(40);
-      await helper.admin.payoutStakers(palletAdmin, 100);
+      const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
+
+      const payouts = await helper.admin.payoutStakers(palletAdmin, 100);
+      const stakerPayout = payouts.find(p => p.staker === staker.address);
+      expect(stakerPayout!.stake).to.eq(100n * nominal + 1n);
     });
 
-    itSub.skip('can handle 40.000 rewards', async ({helper}) => {
-      const crowdStakes = async () => {
-        // each account in the crowd stakes 2 times
-        const crowd = await helper.arrange.createCrowd(500, 300n, donor);
-        await Promise.all(crowd.map(account => helper.staking.stake(account, 100n * nominal)));
-        await Promise.all(crowd.map(account => helper.staking.stake(account, 100n * nominal)));
-        //
-      };
+    itSub('can eventually pay all rewards', async ({helper}) => {
+      const stakers = await helper.arrange.createAccounts(new Array(100).fill(200n), donor);
+      await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
 
-      for (let i = 0; i < 40; i++) {
-        await crowdStakes();
+      let unstakingTxs = [];
+      for (const staker of stakers) {
+        if (unstakingTxs.length == 3) {
+          await Promise.all(unstakingTxs);
+          unstakingTxs = [];
+        }
+        unstakingTxs.push(helper.staking.unstakePartial(staker, 100n * nominal - 1n));
       }
 
-      // TODO pay rewards for some period
+      const [staker] = await helper.arrange.createAccounts([1000n], donor);
+      await helper.staking.stake(staker, 100n * nominal);
+      const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
+
+      let payouts;
+      do {
+        payouts = await helper.admin.payoutStakers(palletAdmin, 20);
+      } while (payouts.length !== 0);
     });
   });
 });
+
 
 function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
