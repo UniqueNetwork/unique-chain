@@ -65,7 +65,7 @@ benchmarks! {
 			let staker = account::<T::AccountId>("staker", index, SEED);
 			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 			PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())?;
-			PromototionPallet::<T>::unstake_all(RawOrigin::Signed(staker.clone()).into()).map_err(|e| e.error)?;
+			PromototionPallet::<T>::unstake_all(RawOrigin::Signed(staker.clone()).into())?;
 			Result::<(), sp_runtime::DispatchError>::Ok(())
 		})?;
 		let block_number = <frame_system::Pallet<T>>::current_block_number() + T::PendingInterval::get();
