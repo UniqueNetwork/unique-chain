@@ -819,7 +819,7 @@ impl<T: Config> Pallet<T> {
 			});
 
 		ensure!(
-			total_staked >= unstaked_balance,
+			unstaked_balance <= total_staked,
 			<Error<T>>::InsufficientStakedBalance
 		);
 
