@@ -35,10 +35,7 @@ pub struct MockValidationDataInherentDataProvider<R = ()> {
 	pub current_para_block: u32,
 	/// The relay block in which this parachain appeared to start. This will be the relay block
 	/// number in para block #P1
-	pub relay_offset: u32,
-	/// The number of relay blocks that elapses between each parablock. Probably set this to 1 or 2
-	/// to simulate optimistic or realistic relay chain behavior.
-	pub relay_blocks_per_para_block: u32,
+	pub relay_block_number: u32,
 	/// Number of parachain blocks per relay chain epoch
 	/// Mock epoch is computed by dividing `current_para_block` by this value.
 	pub para_blocks_per_relay_epoch: u32,
@@ -160,7 +157,7 @@ impl MockValidationDataInherentDataProvider<()> {
 			.expect("Header passed in as parent should be present in backend.")
 			.into();
 		let relay_blocks_per_para_block = 2;
-		let relay_offset = client
+		let relay_block_number = client
 			.storage(
 				parent_block,
 				&sp_storage::StorageKey(
@@ -178,7 +175,7 @@ impl MockValidationDataInherentDataProvider<()> {
 					Decode::decode(&mut &raw_data.0[..]).expect("validation data type is correct");
 				data.relay_parent_number + relay_blocks_per_para_block
 			})
-			.unwrap_or(1000);
+			.unwrap_or_else(|| 1000 + relay_blocks_per_para_block * current_para_block);
 		let para_id = client
 			.storage(
 				parent_block,
@@ -195,8 +192,7 @@ impl MockValidationDataInherentDataProvider<()> {
 		let mut data = data.lock().unwrap();
 		Self {
 			current_para_block,
-			relay_offset,
-			relay_blocks_per_para_block,
+			relay_block_number,
 			para_blocks_per_relay_epoch: 10,
 			relay_randomness_config: (),
 			raw_downward_messages: vec![],
@@ -227,8 +223,7 @@ impl<R: Send + Sync + GenerateRandomness<u64>> InherentDataProvider
 		inherent_data: &mut InherentData,
 	) -> Result<(), sp_inherents::Error> {
 		// Calculate the mocked relay block based on the current para block
-		let relay_parent_number =
-			self.relay_offset + self.relay_blocks_per_para_block * self.current_para_block;
+		let relay_parent_number = self.relay_block_number;
 
 		// Use the "sproof" (spoof proof) builder to build valid mock state root and proof.
 		let mut sproof_builder = RelayStateSproofBuilder::default();
