@@ -20,7 +20,8 @@ export interface ITransactionResult {
         event: IEvent;
       }[];
   },
-  moduleError?: string;
+  blockHash: string,
+  moduleError?: string | object;
 }
 
 export interface ISubscribeBlockEventsData {

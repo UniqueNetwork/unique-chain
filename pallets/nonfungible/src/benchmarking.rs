@@ -24,7 +24,10 @@ use pallet_common::{
 	CommonCollectionOperations,
 };
 use sp_std::prelude::*;
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited};
+use up_data_structs::{
+	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited,
+	PropertyPermission,
+};
 
 const SEED: u32 = 1;
 

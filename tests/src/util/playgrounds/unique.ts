@@ -6,7 +6,8 @@
 /* eslint-disable no-prototype-builtins */
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
-import {ApiInterfaceEvents, SignerOptions} from '@polkadot/api/types';
+import {SignerOptions} from '@polkadot/api/types/submittable';
+import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 import {hexToU8a} from '@polkadot/util/hex';
@@ -561,7 +562,7 @@ export class ChainHelperBase {
           if (status === this.transactionStatus.SUCCESS) {
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status});
+            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
           } else if (status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
@@ -672,8 +673,15 @@ export class ChainHelperBase {
       params,
     } as IUniqueHelperLog;
 
+    let errorMessage = '';
+
     if(result.status !== this.transactionStatus.SUCCESS) {
-      if (result.moduleError) log.moduleError = result.moduleError;
+      if (result.moduleError) {
+        errorMessage = typeof result.moduleError === 'string'
+          ? result.moduleError
+          : `${Object.keys(result.moduleError)[0]}: ${Object.values(result.moduleError)[0]}`;
+        log.moduleError = errorMessage;
+      }
       else if (result.result.dispatchError) log.dispatchError = result.result.dispatchError;
     }
     if(events.length > 0) log.events = events;
@@ -681,7 +689,7 @@ export class ChainHelperBase {
     this.chainLog.push(log);
 
     if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
-      if (result.moduleError) throw Error(`${result.moduleError}`);
+      if (result.moduleError) throw Error(`${errorMessage}`);
       else if (result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
     }
     return result;
@@ -2657,20 +2665,45 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   }
 
   /**
-   * Unstake tokens for App Promotion
+   * Unstake all staked tokens
    * @param signer keyring of signer
    * @param amountToUnstake amount of tokens to unstake
    * @param label extra label for log
-   * @returns block number where balances will be unlocked
+   * @returns block hash where unstake happened
    */
-  async unstake(signer: TSigner, label?: string): Promise<number> {
+  async unstakeAll(signer: TSigner, label?: string): Promise<string> {
     if(typeof label === 'undefined') label = `${signer.address}`;
-    const _unstakeResult = await this.helper.executeExtrinsic(
-      signer, 'api.tx.appPromotion.unstake',
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.unstakeAll',
       [], true,
     );
-    // TODO extract block number fron events
-    return 1;
+    return unstakeResult.blockHash;
+  }
+
+  /**
+   * Unstake the part of a staked tokens
+   * @param signer keyring of signer
+   * @param amount amount of tokens to unstake
+   * @param label extra label for log
+   * @returns block hash where unstake happened
+   */
+  async unstakePartial(signer: TSigner, amount: bigint, label?: string): Promise<string> {
+    if(typeof label === 'undefined') label = `${signer.address}`;
+    const unstakeResult = await this.helper.executeExtrinsic(
+      signer, 'api.tx.appPromotion.unstakePartial',
+      [amount], true,
+    );
+    return unstakeResult.blockHash;
+  }
+
+  /**
+   * Get total number of active stakes
+   * @param address substrate address
+   * @returns {number}
+   */
+  async getStakesNumber(address: ICrossAccountId): Promise<number> {
+    if (address.Ethereum) throw Error('only substrate address');
+    return (await this.helper.callRpc('api.query.appPromotion.stakesPerAccount', [address.Substrate])).toNumber();
   }
 
   /**
