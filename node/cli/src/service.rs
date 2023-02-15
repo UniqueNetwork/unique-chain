@@ -852,6 +852,9 @@ where
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
+	use sp_core::{Encode, hexdisplay::HexDisplay};
+	use sc_client_api::BlockBackend;
+
 	let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
 		config.wasm_method,
 		config.default_heap_pages,
@@ -865,12 +868,23 @@ where
 	#[derive(serde::Serialize)]
 	struct StateToPrint {
 		best_number: u32,
+		best_hash: <Block as BlockT>::Hash,
+		header_hash: String,
+		header: Header,
 	}
 
+
+	let block = client.block(client.chain_info().best_hash)?.unwrap();
+	let header = block.block.header();
 	println!(
 		"{}",
 		serde_json::to_string_pretty(&StateToPrint {
-			best_number: client.chain_info().best_number
+			best_number: client.chain_info().best_number,
+			best_hash: client.chain_info().best_hash,
+			// todo the following line was passed to relay as header hash, but it was an option. maybe the source of problems?
+			//header_hash: format!("0x{:?}", HexDisplay::from(&client.header(&generic::BlockId::hash(client.chain_info().best_hash))?.encode())),
+			header_hash: format!("0x{:?}", HexDisplay::from(&header.encode())),
+			header: header.clone(),
 		})
 		.expect("should not fail")
 	);
