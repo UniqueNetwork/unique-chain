@@ -291,93 +291,9 @@ pub mod pallet {
 		}
 
 		fn on_runtime_upgrade() -> Weight {
-			let mut consumed_weight = Weight::zero();
-			let mut add_weight = |reads, writes, weight| {
-				consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-				consumed_weight += weight;
-			};
+			<UpgradedToReserves<T>>::kill();
 
-			if <UpgradedToReserves<T>>::get() {
-				add_weight(1, 0, Weight::zero());
-				return consumed_weight;
-			} else {
-				add_weight(1, 1, Weight::zero());
-				<UpgradedToReserves<T>>::set(true);
-			}
-			<PendingUnstake<T>>::drain().for_each(|(_, v)| {
-				add_weight(1, 1, Weight::zero());
-				v.into_iter().for_each(|(staker, amount)| {
-					<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::unreserve(
-						&staker, amount,
-					);
-					add_weight(1, 1, Weight::zero());
-				});
-			});
-
-			consumed_weight
-		}
-
-		#[cfg(feature = "try-runtime")]
-		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-			use sp_std::collections::btree_map::BTreeMap;
-			if <UpgradedToReserves<T>>::get() {
-				return Ok(Default::default());
-			}
-			// Staker -> (total amount of reserved balance, reserved by promotion);
-			let mut pre_state: BTreeMap<T::AccountId, (BalanceOf<T>, BalanceOf<T>)> =
-				BTreeMap::new();
-
-			<PendingUnstake<T>>::iter().for_each(|(_, v)| {
-				v.into_iter().for_each(|(staker, amount)| {
-					if let Some((_, reserved_balance)) = pre_state.get_mut(&staker) {
-						*reserved_balance += amount;
-					} else {
-						let total_reserve = <<T as Config>::Currency as ReservableCurrency<
-							T::AccountId,
-						>>::reserved_balance(&staker);
-						pre_state.insert(staker, (total_reserve, amount));
-					}
-				})
-			});
-
-			Ok(pre_state.encode())
-		}
-
-		#[cfg(feature = "try-runtime")]
-		fn post_upgrade(pre_state: Vec<u8>) -> Result<(), &'static str> {
-			use sp_std::collections::btree_map::BTreeMap;
-
-			if <UpgradedToReserves<T>>::get() {
-				return Ok(());
-			}
-
-			ensure!(
-				<PendingUnstake<T>>::iter().collect::<Vec<_>>().len() == 0,
-				"pendingUnstake storage isn't empty"
-			);
-
-			let mut is_ok = true;
-
-			let pre_state: BTreeMap<T::AccountId, (BalanceOf<T>, BalanceOf<T>)> =
-				Decode::decode(&mut &pre_state[..]).map_err(|_| "failed to decode pre_state")?;
-			for (staker, (total_reserved, reserved_by_promo)) in pre_state.into_iter() {
-				let new_state_reserve = <<T as Config>::Currency as ReservableCurrency<
-					T::AccountId,
-				>>::reserved_balance(&staker);
-				if new_state_reserve != total_reserved - reserved_by_promo {
-					is_ok = false;
-					log::error!(
-								"Incorrect reserved balance for {:?}. New balance: {:?}. Before runtime upgrade: total reserve - {:?}, reserved by promo - {:?}",
-								staker, new_state_reserve, total_reserved, reserved_by_promo
-							);
-				}
-			}
-
-			if is_ok {
-				Ok(())
-			} else {
-				Err("Incorrect balance for some of stakers... See logs")
-			}
+			T::DbWeight::get().reads_writes(0, 1)
 		}
 	}
 
