@@ -29,8 +29,8 @@ const globalSetup = async (): Promise<void> => {
         const api = helper.getApi();
         await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
         const nominal = helper.balance.getOneTokenNominal();
-        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 1000n * nominal);
-        await helper.balance.transferToSubstrate(superuser, palletAddress, 1000n * nominal);
+        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);
+        await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);
         await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
           .setAppPromotionConfigurationOverride({
             recalculationInterval: LOCKING_PERIOD,
