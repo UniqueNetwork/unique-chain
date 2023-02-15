@@ -807,7 +807,7 @@ impl<T: Config> Pallet<T> {
 
 		let mut pendings = <PendingUnstake<T>>::get(unpending_block);
 
-		// checks that we can do unreserve stakes in the block
+		// checks that we can do unstake in the block
 		ensure!(!pendings.is_full(), Error::<T>::PendingForBlockOverflow);
 
 		let mut stakes = Staked::<T>::iter_prefix((&staker_id,)).collect::<Vec<_>>();
@@ -836,18 +836,18 @@ impl<T: Config> Pallet<T> {
 
 		let changed_stakes = stakes
 			.into_iter()
-			.map_while(|(block, (balance_per_block, recalc_block))| {
+			.map_while(|(block, (balance_per_block, _))| {
 				if acc_amount == <BalanceOf<T>>::default() {
 					return None;
 				}
 				if acc_amount < balance_per_block {
-					let res = (block, (balance_per_block - acc_amount, recalc_block));
+					let res = (block, balance_per_block - acc_amount);
 					acc_amount = <BalanceOf<T>>::default();
 					return Some(res);
 				} else {
 					acc_amount -= balance_per_block;
 					will_deleted_stakes_count += 1;
-					return Some((block, (<BalanceOf<T>>::default(), recalc_block)));
+					return Some((block, <BalanceOf<T>>::default()));
 				}
 			})
 			.collect::<Vec<_>>();
@@ -864,13 +864,13 @@ impl<T: Config> Pallet<T> {
 		})?;
 
 		changed_stakes
-			.iter()
-			.for_each(|(staked_block, (current_stake_state, _))| {
-				if current_stake_state == &Default::default() {
+			.into_iter()
+			.for_each(|(staked_block, current_stake_state)| {
+				if current_stake_state == Default::default() {
 					<Staked<T>>::remove((&staker_id, staked_block));
 				} else {
 					<Staked<T>>::mutate((&staker_id, staked_block), |(old_stake_state, _)| {
-						*old_stake_state = *current_stake_state
+						*old_stake_state = current_stake_state
 					});
 				}
 			});
@@ -1087,7 +1087,7 @@ where
 
 		let mut pendings = <PendingUnstake<T>>::get(block);
 
-		// checks that we can do unreserve stakes in the block
+		// checks that we can do unstake in the block
 		ensure!(!pendings.is_full(), Error::<T>::PendingForBlockOverflow);
 
 		let mut total_stakes = 0u64;
