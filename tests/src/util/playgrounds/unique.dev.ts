@@ -214,7 +214,7 @@ export class ArrangeGroup {
       accounts.push(recipient);
       if (balance !== 0n) {
         const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
-        transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
+        transactions.push(this.helper.signTransaction(donor, tx, {nonce, era: 0}, 'account generation'));
         nonce++;
       }
     }
