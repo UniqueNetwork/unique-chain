@@ -793,7 +793,7 @@ impl<T: Config> Pallet<T> {
 
 		<PendingUnstake<T>>::insert(unpending_block, pendings);
 
-		Self::deposit_event(Event::Unstake(staker_id, total_staked));
+		Self::deposit_event(Event::Unstake(staker_id, unstaked_balance));
 
 		Ok(())
 	}

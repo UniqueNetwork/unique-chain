@@ -795,7 +795,7 @@ describe('App promotion', () => {
       const [_stake1, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
 
-      const payoutToStaker = (await helper.admin.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)?.payout;
+      const payoutToStaker = (await helper.admin.payoutStakers(palletAdmin, 100)).find((payout) => payout.staker === staker.address)!.payout;
       expect(payoutToStaker + 300n * nominal).to.equal(calculateIncome(300n * nominal));
 
       const totalStakedPerBlock = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
@@ -867,12 +867,11 @@ describe('App promotion', () => {
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstakePartial(staker, 100n * nominal - 1n);
 
-      const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
+      const [_stake1, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
 
-      const payouts = await helper.admin.payoutStakers(palletAdmin, 100);
-      const stakerPayout = payouts.find(p => p.staker === staker.address);
-      expect(stakerPayout!.stake).to.eq(100n * nominal + 1n);
+      const stakerPayout = await payUntilRewardFor(staker.address, helper);
+      expect(stakerPayout.stake).to.eq(100n * nominal + 1n);
     });
 
     itSub('can eventually pay all rewards', async ({helper}) => {
@@ -900,8 +899,72 @@ describe('App promotion', () => {
       } while (payouts.length !== 0);
     });
   });
+
+  describe('events', () => {
+    [
+      {method: 'unstakePartial' as const},
+      {method: 'unstakeAll' as const},
+    ].map(testCase => {
+      itSub(testCase.method, async ({helper}) => {
+        const unstakeParams = testCase.method === 'unstakePartial'
+          ? [100n * nominal - 1n]
+          : [];
+        const [staker] = getAccount(1);
+        await helper.staking.stake(staker, 100n * nominal);
+        await helper.staking.stake(staker, 200n * nominal);
+        const {result} = await helper.executeExtrinsic(staker, `api.tx.appPromotion.${testCase.method}`, unstakeParams);
+
+        const event = result.events.find(e => e.event.section === 'appPromotion' && e.event.method === 'Unstake');
+        const unstakerEvents = event?.event.data[0].toString();
+        const unstakedEvents = BigInt(event?.event.data[1].toString());
+        expect(unstakerEvents).to.eq(staker.address);
+        expect(unstakedEvents).to.eq(testCase.method === 'unstakeAll' ? 300n * nominal : 100n * nominal - 1n);
+      });
+    });
+
+    itSub('stake', async ({helper}) => {
+      const [staker] = getAccount(1);
+      const {result} = await helper.executeExtrinsic(staker, 'api.tx.appPromotion.stake', [100n * nominal]);
+
+      const event = result.events.find(e => e.event.section === 'appPromotion' && e.event.method === 'Stake');
+      const stakerEvents = event?.event.data[0].toString();
+      const stakedEvents = BigInt(event?.event.data[1].toString());
+      expect(stakerEvents).to.eq(staker.address);
+      expect(stakedEvents).to.eq(100n * nominal);
+    });
+
+    // Flaky
+    itSub.skip('payoutStakers', async ({helper}) => {
+      const [staker1, staker2] = getAccount(2);
+      const STAKE1 = 100n * nominal;
+      const STAKE2 = 200n * nominal;
+      await helper.staking.stake(staker1, STAKE1);
+      await helper.staking.stake(staker2, STAKE2);
+
+      const [stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker2.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
+
+      const results = await helper.admin.payoutStakers(palletAdmin, 100);
+      const stakersEvents = results.filter(ev => ev.staker === staker1.address || ev.staker === staker2.address);
+      expect(stakersEvents).has.length(2);
+      expect(stakersEvents).has.not.ordered.members([
+        {staker: staker1.address, stake: STAKE1, payout: calculateIncome(STAKE1) - STAKE1},
+        {staker: staker2.address, stake: STAKE2, payout: calculateIncome(STAKE2) - STAKE2},
+      ]);
+    });
+  });
 });
 
+
+// Sometimes is is required to make a cycle in order for the payment to be calculated for a specific account
+async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
+  for (let i = 0; i < 3; i++) {
+    const payouts = await helper.admin.payoutStakers(palletAdmin, 100);
+    const accountPayout = payouts.find(p => p.staker === account);
+    if (accountPayout) return accountPayout;
+  }
+  throw Error(`Cannot find payout for ${account}`);
+}
 
 function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
