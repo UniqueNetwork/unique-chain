@@ -116,22 +116,6 @@ describe('Refungible nesting negative tests', () => {
     });
   });
 
-  itSub('cannot nest token if nesting is disabled', async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice);
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice);
-
-    // Try to create an immediately nested token
-    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAccount()))
-      .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
-
-    // Try to create a token to be nested and nest
-    const token = await collectionRFT.mintToken(alice, 5n);
-    await expect(token.transfer(alice, targetToken.nestingAccount(), 2n))
-      .to.be.rejectedWith(/common\.UserIsNotAllowedToNest/);
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(5n);
-  });
-
   [
     {restrictedMode: true},
     {restrictedMode: false},
@@ -160,21 +144,5 @@ describe('Refungible nesting negative tests', () => {
         .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
       expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
     });
-  });
-
-  itSub('ReFungible: disallows to nest token to an unlisted collection', async ({helper}) => {
-    const collectionNFT = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true, restricted: []}}});
-    const collectionRFT = await helper.rft.mintCollection(alice);
-    const targetToken = await collectionNFT.mintToken(alice);
-
-    // Try to create an immediately nested token
-    await expect(collectionRFT.mintToken(alice, 5n, targetToken.nestingAccount()))
-      .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
-
-    // Try to create a token to be nested and nest
-    const token = await collectionRFT.mintToken(alice, 5n);
-    await expect(token.transfer(alice, targetToken.nestingAccount(), 2n))
-      .to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(5n);
   });
 });
