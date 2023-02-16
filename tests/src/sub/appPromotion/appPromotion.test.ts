@@ -867,8 +867,8 @@ describe('App promotion', () => {
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstakePartial(staker, 100n * nominal - 1n);
 
-      const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
-      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
+      const [_stake1, stake2] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
+      await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake2.block));
 
       const stakerPayout = await payUntilRewardFor(staker.address, helper);
       expect(stakerPayout.stake).to.eq(100n * nominal + 1n);
