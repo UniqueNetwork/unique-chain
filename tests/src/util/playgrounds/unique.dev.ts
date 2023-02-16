@@ -733,7 +733,7 @@ class AdminGroup {
     this.helper = helper;
   }
 
-  async payoutStakers(signer: IKeyringPair, stakersToPayout: number) {
+  async payoutStakers(signer: IKeyringPair, stakersToPayout: number):  Promise<{staker: string, stake: bigint, payout: bigint}[]> {
     const payoutResult = await this.helper.executeExtrinsic(signer, 'api.tx.appPromotion.payoutStakers', [stakersToPayout], true);
     return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => {
       return {
