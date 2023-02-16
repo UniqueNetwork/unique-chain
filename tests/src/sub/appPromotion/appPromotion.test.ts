@@ -900,6 +900,24 @@ describe('App promotion', () => {
       } while (payouts.length !== 0);
     });
   });
+
+  describe('events', () => {
+    [
+      {method: 'unstakePartial' as const},
+      {method: 'unstakeAll' as const},
+    ].map(testCase => {
+      itSub.only('unstakePartial', async ({helper}) => {
+        const unstakeingParams = testCase.method === 'unstakePartial' ? [100n * nominal - 1n] : [];
+        const [staker] = getAccount(1);
+        await helper.staking.stake(staker, 100n * nominal);
+        await helper.staking.stake(staker, 200n * nominal);
+        const {result} = await helper.executeExtrinsic(staker, `api.tx.appPromotion.${testCase.method}`, unstakeingParams);
+
+        const event = result.events.find(e => e.event.section === 'appPromotion' && e.event.method === 'Unstake');
+        expect(event).to.exist;
+      });
+    });
+  });
 });
 
 
