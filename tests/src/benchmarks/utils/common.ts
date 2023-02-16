@@ -2,7 +2,6 @@ import {EthUniqueHelper} from '../../eth/util';
 import {ITokenPropertyPermission, TCollectionMode} from '../../util/playgrounds/types';
 import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
 import {IKeyringPair} from '@polkadot/types/types';
-import {ContractImports} from '../../eth/util/playgrounds/types';
 
 export const PROPERTIES = Array(40)
   .fill(0)
