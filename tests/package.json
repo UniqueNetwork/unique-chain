@@ -128,7 +128,7 @@
     "csv-writer": "^1.6.0",
     "find-process": "^1.4.7",
     "solc": "0.8.17",
-    "web3": "^1.8.1"
+    "web3": "1.8.2"
   },
   "resolutions": {
     "decode-uri-component": "^0.2.1"
