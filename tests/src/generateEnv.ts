@@ -35,7 +35,7 @@ async function ff(url: string, regex: RegExp, rep: string): Promise<string> {
     ff('wss://wss.api.moonriver.moonbeam.network/', /^(....)$/, 'runtime-$1').then(v => env = setVar(env, 'MOONRIVER_BUILD_BRANCH', v)),
     ff('wss://ws-quartz.unique.network/', /^(......)$/, 'release-v$1').then(v => env = setVar(env, 'QUARTZ_MAINNET_BRANCH', v)),
 
-    ff('wss://westend-rpc.polkadot.io/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v => env = setVar(env, 'UNIQUEWEST_MAINNET_BRANCH', v)),
+    ff('wss://ws-westend.unique.network/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v => env = setVar(env, 'UNIQUEWEST_MAINNET_BRANCH', v)),
     ff('wss://westmint-rpc.polkadot.io/', /^(....)$/, 'parachains-v$1').then(v => env = setVar(env, 'WESTMINT_BUILD_BRANCH', v)),
     ff('wss://ws-opal.unique.network/', /^(......)$/, 'release-v$1').then(v => env = setVar(env, 'OPAL_MAINNET_BRANCH', v)),
 
@@ -43,8 +43,8 @@ async function ff(url: string, regex: RegExp, rep: string): Promise<string> {
     ff('wss://ws-sapphire.unique.network/', /^(......)$/, 'release-v$1').then(v => env = setVar(env, 'SAPPHIRE_MAINNET_BRANCH', v)),
   ]);
   console.log(env);
-  process.exit(0);
 })().catch(e => {
+  console.error('Fatal');
   console.error(e.stack);
   process.exit(1);
 });
