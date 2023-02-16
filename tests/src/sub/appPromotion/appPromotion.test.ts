@@ -870,9 +870,8 @@ describe('App promotion', () => {
       const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
 
-      const payouts = await helper.admin.payoutStakers(palletAdmin, 100);
-      const stakerPayout = payouts.find(p => p.staker === staker.address);
-      expect(stakerPayout!.stake).to.eq(100n * nominal + 1n);
+      const stakerPayout = await payUntilRewardFor(staker.address, helper);
+      expect(stakerPayout.stake).to.eq(100n * nominal + 1n);
     });
 
     itSub('can eventually pay all rewards', async ({helper}) => {
@@ -956,6 +955,16 @@ describe('App promotion', () => {
   });
 });
 
+
+// Sometimes is is required to make a cycle in order for the payment to be calculated for a specific account
+async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
+  for (let i = 0; i < 3; i++) {
+    const payouts = await helper.admin.payoutStakers(palletAdmin, 100);
+    const accountPayout = payouts.find(p => p.staker === account);
+    if (accountPayout) return accountPayout;
+  }
+  throw Error(`Cannot find payout for ${account}`);
+}
 
 function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
