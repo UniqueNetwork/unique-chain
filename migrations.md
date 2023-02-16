@@ -1,3 +1,11 @@
+# **937053 < 937052**
+
+* Removed the previous migration of AppPromition
+
+# **937052 < 937051**
+
+* Migrate AppPromotion from using reserves to locks
+
 # **936050 < 930032**
 
 ### **pallet-collator-selection:**

@@ -175,7 +175,7 @@ try-runtime = [
 	'pallet-xcm/try-runtime',
 	'parachain-info/try-runtime',
 ]
-unique-runtime = ['foreign-assets']
+unique-runtime = ['foreign-assets', 'refungible']
 
 collator-selection = []
 foreign-assets = []
