@@ -43,10 +43,9 @@ jobs:
       - name: Install modules
         run: cd tests && yarn
       - name: Run ESLint
-        run: cd tests && yarn eslint --ext .ts,.js src/
+        run: cd tests && yarn eslint --ext .ts,.js --max-warnings=0 src/
 
   clippy:
-    if: ${{ false }}
     runs-on: [ self-hosted-ci ]
     steps:
       - uses: actions/checkout@v3
