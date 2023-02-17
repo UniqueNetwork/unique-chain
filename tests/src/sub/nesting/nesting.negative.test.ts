@@ -109,7 +109,7 @@ itSub('Owner cannot nest FT if nesting is disabled', async ({helper}) => {
   {mode: 'nft' as const, nesting: {tokenOwner: true,  collectionAdmin: false}},
   {mode: 'nft' as const, nesting: {tokenOwner: false, collectionAdmin: true}},
 ].map(testCase => {
-  itSub.only(`${testCase.nesting.tokenOwner ? 'Admin' : 'Token owner'} cannot nest when only ${testCase.nesting.tokenOwner ? 'tokenOwner' : 'collectionAdmin'} is allowed`, async ({helper}) => {
+  itSub(`${testCase.nesting.tokenOwner ? 'Admin' : 'Token owner'} cannot nest when only ${testCase.nesting.tokenOwner ? 'tokenOwner' : 'collectionAdmin'} is allowed`, async ({helper}) => {
     // Create collection with tokenOwner or create collection with collectionAdmin permission:
     const targetCollection = await helper.nft.mintCollection(alice, {permissions: {nesting: testCase.nesting}});
     const targetTokenCharlie = await targetCollection.mintToken(alice, {Substrate: charlie.address});
