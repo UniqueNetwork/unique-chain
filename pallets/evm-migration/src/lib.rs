@@ -149,6 +149,17 @@ pub mod pallet {
 			}
 			Ok(())
 		}
+
+		/// Remove remark compatibility data leftovers
+		#[pallet::call_index(5)]
+		#[pallet::weight(<T as frame_system::Config>::DbWeight::get().reads_writes(10, 10))]
+		pub fn remove_rmrk_data(origin: OriginFor<T>) -> DispatchResult {
+			use sp_io::hashing::twox_128;
+			ensure_root(origin)?;
+			let _ = sp_io::storage::clear_prefix(&twox_128(b"RmrkEquip"), Some(5));
+			let _ = sp_io::storage::clear_prefix(&twox_128(b"RmrkCore"), Some(5));
+			Ok(())
+		}
 	}
 
 	/// Implements [`pallet_evm::OnMethodCall`], which reserves accounts with pending migration
