@@ -474,10 +474,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       };
 
       const metadata = {
-        name: 'UNQ',
+        name: 'Unique Network',
         symbol: 'UNQ',
         decimals: 18,
-        minimalBalance: 1n,
+        minimalBalance: 1250000000000000000n,
       };
 
       await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);

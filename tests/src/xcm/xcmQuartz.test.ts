@@ -474,10 +474,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       };
 
       const metadata = {
-        name: 'QTZ',
+        name: 'Quartz',
         symbol: 'QTZ',
         decimals: 18,
-        minimalBalance: 1n,
+        minimalBalance: 1000000000000000000n,
       };
 
       await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
