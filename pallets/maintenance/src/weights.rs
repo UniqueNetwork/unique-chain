@@ -35,6 +35,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn enable() -> Weight;
 	fn disable() -> Weight;
+	fn execute_preimage() -> Weight;
 }
 
 /// Weights for pallet_maintenance using the Substrate node and recommended hardware.
@@ -50,6 +51,12 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_ref_time(7_273_000)
 			.saturating_add(T::DbWeight::get().writes(1))
 	}
+	// Storage: 
+	fn execute_preimage() -> Weight {
+		Weight::from_ref_time(7_273_000)
+			.saturating_add(T::DbWeight::get().reads(2))
+			.saturating_add(T::DbWeight::get().writes(1))
+	}
 }
 
 // For backwards compatibility and tests
@@ -62,6 +69,12 @@ impl WeightInfo for () {
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn disable() -> Weight {
 		Weight::from_ref_time(7_273_000)
+			.saturating_add(RocksDbWeight::get().writes(1))
+	}
+	// Storage: 
+	fn execute_preimage() -> Weight {
+		Weight::from_ref_time(7_273_000)
+			.saturating_add(RocksDbWeight::get().reads(2))
 			.saturating_add(RocksDbWeight::get().writes(1))
 	}
 }
