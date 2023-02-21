@@ -25,13 +25,37 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
+	use frame_support::{
+		dispatch::*,
+		pallet_prelude::*,
+		traits::{QueryPreimage, StorePreimage},
+	};
 	use frame_system::pallet_prelude::*;
+	use sp_core::H256;
+
 	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// The runtime origin type.
+		type RuntimeOrigin: From<RawOrigin<Self::AccountId>>
+			+ IsType<<Self as frame_system::Config>::RuntimeOrigin>;
+
+		/// The aggregated call type.
+		type RuntimeCall: Parameter
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
+			+ From<frame_system::Call<Self>>;
+
+		/// The preimage provider with which we look up call hashes to get the call.
+		type Preimages: QueryPreimage + StorePreimage;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
 
@@ -77,6 +101,24 @@ pub mod pallet {
 			Self::deposit_event(Event::MaintenanceDisabled);
 
 			Ok(())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage())]
+		pub fn execute_preimage(origin: OriginFor<T>, hash: H256) -> DispatchResult {
+			ensure_root(origin)?;
+
+			let len = T::Preimages::len(&hash).ok_or(DispatchError::Unavailable)?;
+			let bounded = T::Preimages::pick::<<T as Config>::RuntimeCall>(hash, len);
+			let (call, _) =
+				T::Preimages::realize(&bounded).map_err(|_| DispatchError::Unavailable)?;
+
+			let result = match call.dispatch(frame_system::RawOrigin::Root.into()) {
+				Ok(_) => Ok(()),
+				Err(error_and_info) => Err(error_and_info.error),
+			};
+
+			result
 		}
 	}
 }
