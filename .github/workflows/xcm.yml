@@ -391,6 +391,10 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
+      - name: Show container logs
+        if: always()                   # run this step always
+        run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" logs
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" down
