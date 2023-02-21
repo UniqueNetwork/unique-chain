@@ -173,7 +173,6 @@ where
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
 
-	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{AppPromotionApiServer, AppPromotion};
 
 	#[cfg(feature = "pov-estimate")]
@@ -245,7 +244,6 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
 
 	#[cfg(feature = "pov-estimate")]
