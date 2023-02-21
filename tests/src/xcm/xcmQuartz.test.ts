@@ -455,6 +455,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let balanceQuartzForeignTokenMiddle: bigint;
   let balanceQuartzForeignTokenFinal: bigint;
 
+  // computed by a test transfer from prod Quartz to prod Karura.
+  // 2 QTZ sent https://quartz.subscan.io/xcm_message/kusama-f60d821b049f8835a3005ce7102285006f5b61e9
+  // 1.919176000000000000 QTZ received (you can check Karura's chain state in the corresponding block)
+  const expectedKaruraIncomeFee = 2000000000000000000n - 1919176000000000000n;
+
+  const KARURA_BACKWARD_TRANSFER_AMOUNT = TRANSFER_AMOUNT - expectedKaruraIncomeFee;
+
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
@@ -545,19 +552,28 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.wait.newBlocks(3);
+
       balanceQuartzForeignTokenMiddle = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
       balanceKaruraTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
       const karFees = balanceKaruraTokenInit - balanceKaruraTokenMiddle;
       const qtzIncomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenInit;
+      const karUnqFees = TRANSFER_AMOUNT - qtzIncomeTransfer;
 
       console.log(
         '[Quartz -> Karura] transaction fees on Karura: %s KAR',
         helper.util.bigIntToDecimals(karFees, KARURA_DECIMALS),
       );
+      console.log(
+        '[Quartz -> Karura] transaction fees on Karura: %s QTZ',
+        helper.util.bigIntToDecimals(karUnqFees),
+      );
       console.log('[Quartz -> Karura] income %s QTZ', helper.util.bigIntToDecimals(qtzIncomeTransfer));
       expect(karFees == 0n).to.be.true;
-      expect(qtzIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
+      expect(
+        karUnqFees == expectedKaruraIncomeFee,
+        'Karura took different income fee, check the Karura foreign asset config',
+      ).to.be.true;
     });
   });
 
@@ -584,7 +600,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
         ForeignAsset: 0,
       };
 
-      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, 'Unlimited');
+      await helper.xTokens.transfer(randomAccount, id, KARURA_BACKWARD_TRANSFER_AMOUNT, destination, 'Unlimited');
       balanceKaruraTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceQuartzForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -598,7 +614,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       console.log('[Karura -> Quartz] outcome %s QTZ', helper.util.bigIntToDecimals(qtzOutcomeTransfer));
 
       expect(karFees > 0, 'Negative fees KAR, looks like nothing was transferred').to.be.true;
-      expect(qtzOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
+      expect(qtzOutcomeTransfer == KARURA_BACKWARD_TRANSFER_AMOUNT).to.be.true;
     });
 
     await helper.wait.newBlocks(3);
@@ -609,7 +625,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     console.log('[Karura -> Quartz] actually delivered %s QTZ', helper.util.bigIntToDecimals(actuallyDelivered));
 
-    const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
+    const qtzFees = KARURA_BACKWARD_TRANSFER_AMOUNT - actuallyDelivered;
     console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });

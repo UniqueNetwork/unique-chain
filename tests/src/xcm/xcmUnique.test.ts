@@ -441,7 +441,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   });
 });
 
-describe.only('[XCM] Integration test: Exchanging tokens with Acala', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -457,7 +457,7 @@ describe.only('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
   // computed by a test transfer from prod Unique to prod Acala.
   // 2 UNQ sent https://unique.subscan.io/xcm_message/polkadot-bad0b68847e2398af25d482e9ee6f9c1f9ec2a48
-  // 1.898970000000000000 UNQ received (you can check Acala's chain state in the coreesponding block)
+  // 1.898970000000000000 UNQ received (you can check Acala's chain state in the corresponding block)
   const expectedAcalaIncomeFee = 2000000000000000000n - 1898970000000000000n;
 
   const ACALA_BACKWARD_TRANSFER_AMOUNT = TRANSFER_AMOUNT - expectedAcalaIncomeFee;
