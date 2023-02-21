@@ -441,7 +441,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
+describe.only('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -454,6 +454,13 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let balanceUniqueForeignTokenInit: bigint;
   let balanceUniqueForeignTokenMiddle: bigint;
   let balanceUniqueForeignTokenFinal: bigint;
+
+  // computed by a test transfer from prod Unique to prod Acala.
+  // 2 UNQ sent https://unique.subscan.io/xcm_message/polkadot-bad0b68847e2398af25d482e9ee6f9c1f9ec2a48
+  // 1.898970000000000000 UNQ received (you can check Acala's chain state in the coreesponding block)
+  const expectedAcalaIncomeFee = 2000000000000000000n - 1898970000000000000n;
+
+  const ACALA_BACKWARD_TRANSFER_AMOUNT = TRANSFER_AMOUNT - expectedAcalaIncomeFee;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -552,14 +559,22 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
       const acaFees = balanceAcalaTokenInit - balanceAcalaTokenMiddle;
       const unqIncomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenInit;
+      const acaUnqFees = TRANSFER_AMOUNT - unqIncomeTransfer;
 
       console.log(
         '[Unique -> Acala] transaction fees on Acala: %s ACA',
         helper.util.bigIntToDecimals(acaFees, ACALA_DECIMALS),
       );
+      console.log(
+        '[Unique -> Acala] transaction fees on Acala: %s UNQ',
+        helper.util.bigIntToDecimals(acaUnqFees),
+      );
       console.log('[Unique -> Acala] income %s UNQ', helper.util.bigIntToDecimals(unqIncomeTransfer));
       expect(acaFees == 0n).to.be.true;
-      expect(unqIncomeTransfer == TRANSFER_AMOUNT).to.be.true;
+      expect(
+        acaUnqFees == expectedAcalaIncomeFee,
+        'Acala took different income fee, check the Acala foreign asset config',
+      ).to.be.true;
     });
   });
 
@@ -586,7 +601,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
         ForeignAsset: 0,
       };
 
-      await helper.xTokens.transfer(randomAccount, id, TRANSFER_AMOUNT, destination, 'Unlimited');
+      await helper.xTokens.transfer(randomAccount, id, ACALA_BACKWARD_TRANSFER_AMOUNT, destination, 'Unlimited');
       balanceAcalaTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceUniqueForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -600,7 +615,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       console.log('[Acala -> Unique] outcome %s UNQ', helper.util.bigIntToDecimals(unqOutcomeTransfer));
 
       expect(acaFees > 0, 'Negative fees ACA, looks like nothing was transferred').to.be.true;
-      expect(unqOutcomeTransfer == TRANSFER_AMOUNT).to.be.true;
+      expect(unqOutcomeTransfer == ACALA_BACKWARD_TRANSFER_AMOUNT).to.be.true;
     });
 
     await helper.wait.newBlocks(3);
@@ -611,7 +626,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     console.log('[Acala -> Unique] actually delivered %s UNQ', helper.util.bigIntToDecimals(actuallyDelivered));
 
-    const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
+    const unqFees = ACALA_BACKWARD_TRANSFER_AMOUNT - actuallyDelivered;
     console.log('[Acala -> Unique] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(unqFees));
     expect(unqFees == 0n).to.be.true;
   });
