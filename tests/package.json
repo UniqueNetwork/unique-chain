@@ -82,7 +82,7 @@
     "testSetOffchainSchema": "mocha --timeout 9999999 -r ts-node/register ./**/setOffchainSchema.test.ts",
     "testNextSponsoring": "mocha --timeout 9999999 -r ts-node/register ./**/nextSponsoring.test.ts",
     "testOverflow": "mocha --timeout 9999999 -r ts-node/register ./**/overflow.test.ts",
-    "testMaintenance": "mocha --timeout 9999999 -r ts-node/register ./**/maintenanceMode.seqtest.ts",
+    "testMaintenance": "mocha --timeout 9999999 -r ts-node/register ./**/maintenance.seqtest.ts",
     "testInflation": "mocha --timeout 9999999 -r ts-node/register ./**/inflation.seqtest.ts",
     "testScheduler": "mocha --timeout 9999999 -r ts-node/register ./**/scheduler.seqtest.ts",
     "testSchedulingEVM": "mocha --timeout 9999999 -r ts-node/register ./**/eth/scheduling.test.ts",
