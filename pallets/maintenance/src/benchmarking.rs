@@ -23,30 +23,6 @@ use frame_support::{ensure, traits::StorePreimage};
 use codec::Encode;
 use sp_std::vec;
 
-#[cfg(not(feature = "governance"))]
-benchmarks! {
-	enable {
-	}: _(RawOrigin::Root)
-	verify {
-		ensure!(<Enabled<T>>::get(), "didn't enable the MM");
-	}
-
-	disable {
-		Maintenance::<T>::enable(RawOrigin::Root.into())?;
-	}: _(RawOrigin::Root)
-	verify {
-		ensure!(!<Enabled<T>>::get(), "didn't disable the MM");
-	}
-
-	execute_preimage {
-		let call_hash = RuntimeCall::<T>::set_storage { items: vec![] }.encode();
-		let hash = T::Preimages::note(call_hash.into())?;
-	}: _(RawOrigin::Root, hash)
-	verify {
-	}
-}
-
-#[cfg(feature = "governance")]
 benchmarks! {
 	enable {
 	}: _(RawOrigin::Root)

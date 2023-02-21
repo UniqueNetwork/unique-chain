@@ -86,7 +86,7 @@ impl SignedExtension for CheckMaintenance {
 				| RuntimeCall::Session(_)
 				| RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
-				#[cfg(feature = "governance")]
+				#[cfg(feature = "preimage")]
 				RuntimeCall::Preimage(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
 				#[cfg(feature = "pallet-test-utils")]

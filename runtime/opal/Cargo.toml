@@ -18,7 +18,7 @@ targets = ['x86_64-unknown-linux-gnu']
 [features]
 default = ['opal-runtime', 'std']
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'governance', 'pallet-test-utils', 'refungible']
+opal-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'preimage', 'pallet-test-utils', 'refungible']
 pov-estimate = []
 runtime-benchmarks = [
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
@@ -191,7 +191,7 @@ try-runtime = [
 app-promotion = []
 collator-selection = []
 foreign-assets = []
-governance = []
+preimage = []
 pallet-test-utils = []
 refungible = []
 scheduler = []

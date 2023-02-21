@@ -183,7 +183,7 @@ unique-runtime = ['app-promotion', 'foreign-assets', 'refungible']
 app-promotion = []
 collator-selection = []
 foreign-assets = []
-governance = []
+preimage = []
 refungible = []
 scheduler = []
 

@@ -565,7 +565,7 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "collator-selection")]
                     list_benchmark!(list, extra, pallet_identity, Identity);
 
-                    #[cfg(feature = "governance")]
+                    #[cfg(feature = "preimage")]
                     list_benchmark!(list, extra, pallet_preimage, Preimage);
 
                     #[cfg(feature = "foreign-assets")]
@@ -632,7 +632,7 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "collator-selection")]
                     add_benchmark!(params, batches, pallet_identity, Identity);
 
-                    #[cfg(feature = "governance")]
+                    #[cfg(feature = "preimage")]
                     add_benchmark!(params, batches, pallet_preimage, Preimage);
 
                     #[cfg(feature = "foreign-assets")]

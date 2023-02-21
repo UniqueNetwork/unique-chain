@@ -25,10 +25,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
-		dispatch::*,
-		pallet_prelude::*,
-	};
+	use frame_support::{dispatch::*, pallet_prelude::*};
 	use frame_support::{
 		traits::{QueryPreimage, StorePreimage},
 	};
@@ -108,11 +105,11 @@ pub mod pallet {
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage())]
 		pub fn execute_preimage(_origin: OriginFor<T>, _hash: H256) -> DispatchResult {
-			#[cfg(feature = "governance")]
+			#[cfg(feature = "preimage")]
 			{
 				let origin = _origin;
 				let hash = _hash;
-				
+
 				ensure_root(origin)?;
 
 				let len = T::Preimages::len(&hash).ok_or(DispatchError::Unavailable)?;
@@ -128,7 +125,7 @@ pub mod pallet {
 				result
 			}
 
-			#[cfg(not(feature = "governance"))]
+			#[cfg(not(feature = "preimage"))]
 			{
 				Err(DispatchError::Unavailable)
 			}

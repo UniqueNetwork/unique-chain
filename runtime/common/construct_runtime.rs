@@ -56,7 +56,7 @@ macro_rules! construct_runtime {
                 #[cfg(feature = "collator-selection")]
                 Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 40,
 
-                #[cfg(feature = "governance")]
+                #[cfg(feature = "preimage")]
                 Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 41,
 
                 // XCM helpers.
