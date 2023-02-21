@@ -20,7 +20,7 @@ become-sapphire = []
 default = ['quartz-runtime', 'std']
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
-quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'refungible']
+quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'governance', 'refungible']
 runtime-benchmarks = [
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
 	'frame-benchmarking',
@@ -184,6 +184,7 @@ try-runtime = [
 app-promotion = []
 collator-selection = []
 foreign-assets = []
+governance = []
 refungible = []
 scheduler = []
 

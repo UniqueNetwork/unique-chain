@@ -86,8 +86,7 @@ impl SignedExtension for CheckMaintenance {
 				| RuntimeCall::Session(_)
 				| RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
-				// todo:governance switch the feature to governance
-				#[cfg(feature = "collator-selection")]
+				#[cfg(feature = "governance")]
 				RuntimeCall::Preimage(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
 				#[cfg(feature = "pallet-test-utils")]

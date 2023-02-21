@@ -28,6 +28,8 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::*,
 		pallet_prelude::*,
+	};
+	use frame_support::{
 		traits::{QueryPreimage, StorePreimage},
 	};
 	use frame_system::pallet_prelude::*;
@@ -105,20 +107,31 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage())]
-		pub fn execute_preimage(origin: OriginFor<T>, hash: H256) -> DispatchResult {
-			ensure_root(origin)?;
+		pub fn execute_preimage(_origin: OriginFor<T>, _hash: H256) -> DispatchResult {
+			#[cfg(feature = "governance")]
+			{
+				let origin = _origin;
+				let hash = _hash;
+				
+				ensure_root(origin)?;
 
-			let len = T::Preimages::len(&hash).ok_or(DispatchError::Unavailable)?;
-			let bounded = T::Preimages::pick::<<T as Config>::RuntimeCall>(hash, len);
-			let (call, _) =
-				T::Preimages::realize(&bounded).map_err(|_| DispatchError::Unavailable)?;
+				let len = T::Preimages::len(&hash).ok_or(DispatchError::Unavailable)?;
+				let bounded = T::Preimages::pick::<<T as Config>::RuntimeCall>(hash, len);
+				let (call, _) =
+					T::Preimages::realize(&bounded).map_err(|_| DispatchError::Unavailable)?;
 
-			let result = match call.dispatch(frame_system::RawOrigin::Root.into()) {
-				Ok(_) => Ok(()),
-				Err(error_and_info) => Err(error_and_info.error),
-			};
+				let result = match call.dispatch(frame_system::RawOrigin::Root.into()) {
+					Ok(_) => Ok(()),
+					Err(error_and_info) => Err(error_and_info.error),
+				};
 
-			result
+				result
+			}
+
+			#[cfg(not(feature = "governance"))]
+			{
+				Err(DispatchError::Unavailable)
+			}
 		}
 	}
 }

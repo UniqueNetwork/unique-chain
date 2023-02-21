@@ -23,7 +23,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, Balances, Preimage,
+	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64};
 use up_common::{
@@ -47,8 +47,7 @@ pub mod app_promotion;
 #[cfg(feature = "collator-selection")]
 pub mod collator_selection;
 
-// todo:governance replace the feature with governance
-#[cfg(feature = "collator-selection")]
+#[cfg(feature = "governance")]
 pub mod governance;
 
 parameter_types! {
@@ -129,6 +128,9 @@ impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Preimages = Preimage;
+	#[cfg(feature = "governance")]
+	type Preimages = crate::Preimage;
+	#[cfg(not(feature = "governance"))]
+	type Preimages = ();
 	type WeightInfo = pallet_maintenance::weights::SubstrateWeight<Self>;
 }
