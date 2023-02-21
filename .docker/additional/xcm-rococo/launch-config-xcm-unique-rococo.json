@@ -124,6 +124,7 @@
             "id": "2004",
             "balance": "1000000000000000000000",
             "chain": "moonbeam-local",
+            "specNamePrefix": "moonbeam-local-",
             "nodes": [
                 {
                     "wsPort": 9947,
