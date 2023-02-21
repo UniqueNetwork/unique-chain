@@ -88,6 +88,7 @@ describe('Pallet presence', () => {
         requiredPallets.push(
           refungible,
           foreignAssets,
+          appPromotion,
         );
       }
     });
