@@ -3011,7 +3011,8 @@ export default {
         _alias: {
           hash_: 'hash',
         },
-        hash_: 'H256'
+        hash_: 'H256',
+        weightBound: 'SpWeightsWeightV2Weight'
       }
     }
   },

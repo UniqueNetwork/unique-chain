@@ -2004,6 +2004,7 @@ export interface PalletMaintenanceCall extends Enum {
   readonly isExecutePreimage: boolean;
   readonly asExecutePreimage: {
     readonly hash_: H256;
+    readonly weightBound: SpWeightsWeightV2Weight;
   } & Struct;
   readonly type: 'Enable' | 'Disable' | 'ExecutePreimage';
 }

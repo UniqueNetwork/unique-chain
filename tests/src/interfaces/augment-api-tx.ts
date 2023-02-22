@@ -713,7 +713,13 @@ declare module '@polkadot/api-base/types/submittable' {
     maintenance: {
       disable: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
       enable: AugmentedSubmittable<() => SubmittableExtrinsic<ApiType>, []>;
-      executePreimage: AugmentedSubmittable<(hash: H256 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H256]>;
+      /**
+       * Execute a runtime call stored as a preimage.
+       * 
+       * `weight_bound` is the maximum weight that the caller is willing
+       * to allow the extrinsic to be executed with.
+       **/
+      executePreimage: AugmentedSubmittable<(hash: H256 | string | Uint8Array, weightBound: SpWeightsWeightV2Weight | { refTime?: any; proofSize?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [H256, SpWeightsWeightV2Weight]>;
       /**
        * Generic tx
        **/
