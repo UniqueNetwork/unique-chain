@@ -279,7 +279,7 @@ describe('Integration Test: Maintenance Functionality', () => {
   });
 
   describe('Preimage Execution', () => {
-    let preimageHash: string;
+    const preimageHashes: string[] = [];
 
     async function notePreimage(helper: UniqueHelper, preimage: any): Promise<string> {
       const result = await helper.preimage.notePreimage(bob, preimage);
@@ -306,13 +306,13 @@ describe('Integration Test: Maintenance Functionality', () => {
           },
         ]);
         const preimage = helper.constructApiCall('api.tx.identity.forceInsertIdentities', [randomIdentities]).method.toHex();
-        preimageHash = await notePreimage(helper, preimage);
+        preimageHashes.push(await notePreimage(helper, preimage));
       });
     });
 
     itSub('Successfully executes call in a preimage', async ({helper}) => {
       const result = await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHash, null, {refTime: 10000000000, proofSize: 10000000000},
+        preimageHashes[0], {refTime: 10000000000, proofSize: 10000000000},
       ])).to.be.fulfilled;
 
       // preimage is executed, and an appropriate event is present
@@ -320,7 +320,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(events.length).to.be.equal(1);
 
       // the preimage goes back to being unrequested
-      expect(await helper.preimage.getPreimageInfo(preimageHash)).to.have.property('unrequested');
+      expect(await helper.preimage.getPreimageInfo(preimageHashes[0])).to.have.property('unrequested');
     });
 
     itSub('Does not allow execution of a preimage that would fail', async ({helper}) => {
@@ -330,27 +330,28 @@ describe('Integration Test: Maintenance Functionality', () => {
         {Id: zeroAccount.address}, {Id: superuser.address}, 1000n,
       ]).method.toHex();
       const preimageHash = await notePreimage(helper, preimage);
+      preimageHashes.push(preimageHash);
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHash, null, {refTime: 100000000000, proofSize: 100000000000},
+        preimageHash, {refTime: 100000000000, proofSize: 100000000000},
       ])).to.be.rejectedWith(/balances\.InsufficientBalance/);
     });
 
     itSub('Does not allow preimage execution with non-root', async ({helper}) => {
       await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [
-        preimageHash, null, {refTime: 100000000000, proofSize: 100000000000},
+        preimageHashes[0], {refTime: 100000000000, proofSize: 100000000000},
       ])).to.be.rejectedWith(/BadOrigin/);
     });
 
     itSub('Does not allow execution of non-existent preimages', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        '0x1010101010101010101010101010101010101010101010101010101010101010', null, {refTime: 100000000000, proofSize: 100000000000},
+        '0x1010101010101010101010101010101010101010101010101010101010101010', {refTime: 100000000000, proofSize: 100000000000},
       ])).to.be.rejectedWith(/Unavailable/);
     });
 
     itSub('Does not allow preimage execution with less than minimum weights', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHash, null, {refTime: 1000, proofSize: 1000},
+        preimageHashes[0], {refTime: 1000, proofSize: 1000},
       ])).to.be.rejectedWith(/Exhausted/);
     });
 
@@ -358,7 +359,9 @@ describe('Integration Test: Maintenance Functionality', () => {
       await usingPlaygrounds(async (helper) => {
         if (helper.fetchMissingPalletNames([Pallets.Preimage, Pallets.Maintenance]).length != 0) return;
 
-        await helper.preimage.unnotePreimage(bob, preimageHash);
+        for (const hash of preimageHashes) {
+          await helper.preimage.unnotePreimage(bob, hash);
+        }
       });
     });
   });

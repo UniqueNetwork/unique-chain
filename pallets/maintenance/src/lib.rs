@@ -102,19 +102,22 @@ pub mod pallet {
 			Ok(())
 		}
 
+		/// Execute a runtime call stored as a preimage.
+		///
+		/// `weight_bound` is the maximum weight that the caller is willing
+		/// to allow the extrinsic to be executed with.
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage())]
 		pub fn execute_preimage(
 			origin: OriginFor<T>,
 			hash: H256,
-			preimage_length: Option<u32>,
 			weight_bound: Weight,
 		) -> DispatchResultWithPostInfo {
 			use codec::Decode;
 
 			ensure_root(origin)?;
 
-			let data = T::Preimages::fetch(&hash, preimage_length)?;
+			let data = T::Preimages::fetch(&hash, None)?;
 			weight_bound.set_proof_size(
 				weight_bound
 					.proof_size()
@@ -135,15 +138,9 @@ pub mod pallet {
 			);
 
 			match call.dispatch(frame_system::RawOrigin::Root.into()) {
-				Ok(post_info) => Ok(PostDispatchInfo {
-					actual_weight: post_info.actual_weight,
-					pays_fee: Pays::No,
-				}),
+				Ok(_) => Ok(Pays::No.into()),
 				Err(error_and_info) => Err(DispatchErrorWithPostInfo {
-					post_info: PostDispatchInfo {
-						actual_weight: error_and_info.post_info.actual_weight,
-						pays_fee: Pays::No,
-					},
+					post_info: Pays::No.into(),
 					error: error_and_info.error,
 				}),
 			}
