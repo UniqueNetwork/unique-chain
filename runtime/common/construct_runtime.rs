@@ -56,6 +56,9 @@ macro_rules! construct_runtime {
                 #[cfg(feature = "collator-selection")]
                 Identity: pallet_identity::{Pallet, Call, Storage, Event<T>} = 40,
 
+                #[cfg(feature = "preimage")]
+                Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 41,
+
                 // XCM helpers.
                 XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
                 PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,

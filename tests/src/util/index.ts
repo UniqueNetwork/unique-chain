@@ -114,6 +114,8 @@ export enum Pallets {
   CollatorSelection = 'collatorselection',
   Session = 'session',
   Identity = 'identity',
+  Preimage = 'preimage',
+  Maintenance = 'maintenance',
   TestUtils = 'testutils',
 }
 
