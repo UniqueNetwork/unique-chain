@@ -44,18 +44,18 @@ pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn enable() -> Weight {
-		Weight::from_ref_time(10_860_000 as u64)
+		Weight::from_ref_time(12_866_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn disable() -> Weight {
-		Weight::from_ref_time(10_871_000 as u64)
+		Weight::from_ref_time(12_777_000 as u64)
 			.saturating_add(T::DbWeight::get().writes(1 as u64))
 	}
 	// Storage: Preimage StatusFor (r:1 w:0)
 	// Storage: Preimage PreimageFor (r:1 w:0)
 	fn execute_preimage() -> Weight {
-		Weight::from_ref_time(10_068_000 as u64)
+		Weight::from_ref_time(12_228_000 as u64)
 			.saturating_add(T::DbWeight::get().reads(2 as u64))
 	}
 }
@@ -64,18 +64,18 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 impl WeightInfo for () {
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn enable() -> Weight {
-		Weight::from_ref_time(10_860_000 as u64)
+		Weight::from_ref_time(12_866_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Maintenance Enabled (r:0 w:1)
 	fn disable() -> Weight {
-		Weight::from_ref_time(10_871_000 as u64)
+		Weight::from_ref_time(12_777_000 as u64)
 			.saturating_add(RocksDbWeight::get().writes(1 as u64))
 	}
 	// Storage: Preimage StatusFor (r:1 w:0)
 	// Storage: Preimage PreimageFor (r:1 w:0)
 	fn execute_preimage() -> Weight {
-		Weight::from_ref_time(10_068_000 as u64)
+		Weight::from_ref_time(12_228_000 as u64)
 			.saturating_add(RocksDbWeight::get().reads(2 as u64))
 	}
 }
