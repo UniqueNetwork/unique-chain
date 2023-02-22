@@ -312,7 +312,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
     itSub('Successfully executes call in a preimage', async ({helper}) => {
       const result = await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHashes[0], {refTime: 10000000000, proofSize: 10000000000},
+        preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
       ])).to.be.fulfilled;
 
       // preimage is executed, and an appropriate event is present
@@ -333,25 +333,25 @@ describe('Integration Test: Maintenance Functionality', () => {
       preimageHashes.push(preimageHash);
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHash, {refTime: 100000000000, proofSize: 100000000000},
+        preimageHash, {refTime: 10000000000, proofSize: 10000},
       ])).to.be.rejectedWith(/balances\.InsufficientBalance/);
     });
 
     itSub('Does not allow preimage execution with non-root', async ({helper}) => {
       await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [
-        preimageHashes[0], {refTime: 100000000000, proofSize: 100000000000},
+        preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
       ])).to.be.rejectedWith(/BadOrigin/);
     });
 
     itSub('Does not allow execution of non-existent preimages', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        '0x1010101010101010101010101010101010101010101010101010101010101010', {refTime: 100000000000, proofSize: 100000000000},
+        '0x1010101010101010101010101010101010101010101010101010101010101010', {refTime: 10000000000, proofSize: 10000},
       ])).to.be.rejectedWith(/Unavailable/);
     });
 
     itSub('Does not allow preimage execution with less than minimum weights', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHashes[0], {refTime: 1000, proofSize: 1000},
+        preimageHashes[0], {refTime: 1000, proofSize: 100},
       ])).to.be.rejectedWith(/Exhausted/);
     });
 
