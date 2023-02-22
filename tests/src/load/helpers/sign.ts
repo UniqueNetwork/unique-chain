@@ -13,12 +13,16 @@ export type Tx = {
   options?: Partial<SignerOptions> | undefined,
 }
 
-export function signSendAndWait(transaction: Tx): Promise<TxResult> {
+const sleep = (time: number) => new Promise((resolve) => {
+  setTimeout(resolve, time);
+});
+
+export function signSendAndWait(transaction: Tx, retry = false): Promise<TxResult> {
   // eslint-disable-next-line no-async-promise-executor
   return new Promise(async (resolve) => {
     try {
       const {signer, extrinsic, options} = transaction;
-      const unsub = await extrinsic.signAndSend(signer, options ? options : {}, (result) => {
+      const unsub = await extrinsic.signAndSend(signer, options ? options : {}, async (result) => {
         const {events, status} = result;
 
         // If the transaction wasn't included in the block for some reason:
@@ -38,9 +42,17 @@ export function signSendAndWait(transaction: Tx): Promise<TxResult> {
           resolve({status: 'success', result});
         }
         else if (status.isRetracted) {
-          console.log('TX RETRACTED');
           unsub();
-          resolve({status:'fail', reason: 'Tx retracted'});
+          if (retry) {
+            await sleep(6000);
+            // TODO recreate tx with new nonce
+            const retryResult = await signSendAndWait(transaction);
+            resolve(retryResult);
+          }
+          else {
+            console.log('TX RETRACTED');
+            resolve({status: 'fail', reason: 'Tx Retacted'});
+          }
         }
         else if (status.isInvalid) {
           console.log('TX INVALID');

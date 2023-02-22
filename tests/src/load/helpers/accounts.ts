@@ -32,7 +32,8 @@ export async function arrangeTopUpAccounts
   donor: IKeyringPair | string,
   accounts: IKeyringPair[],
   accountBalance: bigint,
-  wsEndpoin?: string,
+  retry = false,
+  wsEndpoin: string = WS_ENDPOINT,
 ): Promise<TxResult[]> {
   return await usingPlaygrounds(async (helper) => {
     if (typeof donor === 'string') donor = helper.util.fromSeed(donor);
@@ -44,7 +45,7 @@ export async function arrangeTopUpAccounts
     for (const account of accounts) {
       // For each account creates immortal extrinsic, send it and push transactions[]:
       const extrinsic = api.tx.balances.transfer(account.address, accountBalance);
-      transactions.push(signSendAndWait({signer: donor, extrinsic, options: {era: 0, nonce: nonce++}}));
+      transactions.push(signSendAndWait({signer: donor, extrinsic, options: {era: 0, nonce: nonce++}}, retry));
     }
 
     console.log('Transactions sent, waiting for result...');
@@ -58,15 +59,33 @@ export async function arrangeTopUpAccounts
  * @param crowd accounts to transferAll from
  * @param recepient recepient of transferAll
  */
-export async function spamEmptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPair) {
+export async function spamEmptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPair, retry = false) {
   return await usingPlaygrounds(async (helper) => {
     const api = helper.getApi();
 
     const transactions: Promise<TxResult>[] = [];
     console.log('Signing transferAll transactions from', crowd.length, 'accounts');
     for (const account of crowd) {
-      const extrinsic = api.tx.balances.transferAll(recepient.address, false);
+      const extrinsic = api.tx.balances.transferAll(recepient.address, retry);
       transactions.push(signSendAndWait({extrinsic, signer: account}));
+    }
+
+    console.log('Transactions sent, waiting for result...');
+    const result = await Promise.all(transactions);
+    return result;
+  }, WS_ENDPOINT);
+}
+
+export async function spamTransfer(crowd: IKeyringPair[], recepient: IKeyringPair, balance: bigint, retry = false) {
+  return await usingPlaygrounds(async (helper) => {
+    const api = helper.getApi();
+
+    const transactions: Promise<TxResult>[] = [];
+    for (const account of crowd) {
+      const extrinsic = api.tx.balances.transfer(recepient.address, balance);
+      transactions.push(signSendAndWait({extrinsic, signer: account}, retry)
+        .then(() => signSendAndWait({extrinsic, signer: account}, retry))
+        .then(() => signSendAndWait({extrinsic, signer: account}, retry)));
     }
 
     console.log('Transactions sent, waiting for result...');
