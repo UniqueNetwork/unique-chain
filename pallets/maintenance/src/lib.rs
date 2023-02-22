@@ -107,7 +107,7 @@ pub mod pallet {
 		/// `weight_bound` is the maximum weight that the caller is willing
 		/// to allow the extrinsic to be executed with.
 		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage())]
+		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage() + *weight_bound)]
 		pub fn execute_preimage(
 			origin: OriginFor<T>,
 			hash: H256,
