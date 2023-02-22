@@ -18,6 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {itEth} from './eth/util';
+import {UniqueHelper} from './util/playgrounds/unique';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
   return (await api.query.maintenance.enabled()).toJSON() as boolean;
@@ -280,6 +281,13 @@ describe('Integration Test: Maintenance Functionality', () => {
   describe('Preimage Execution', () => {
     let preimageHash: string;
 
+    async function notePreimage(helper: UniqueHelper, preimage: any): Promise<string> {
+      const result = await helper.preimage.notePreimage(bob, preimage);
+      const events = result.result.events.filter(x => x.event.method === 'Noted' && x.event.section === 'preimage');
+      const preimageHash = events[0].event.data[0].toHuman();
+      return preimageHash;
+    }
+
     before(async function() {
       await usingPlaygrounds(async (helper) => {
         requirePalletsOrSkip(this, helper, [Pallets.Preimage, Pallets.Maintenance]);
@@ -298,15 +306,14 @@ describe('Integration Test: Maintenance Functionality', () => {
           },
         ]);
         const preimage = helper.constructApiCall('api.tx.identity.forceInsertIdentities', [randomIdentities]).method.toHex();
-        const result = await helper.preimage.notePreimage(bob, preimage);
-        const events = result.result.events.filter(x => x.event.method === 'Noted' && x.event.section === 'preimage');
-        preimageHash = events[0].event.data[0].toHuman();
+        preimageHash = await notePreimage(helper, preimage);
       });
     });
 
     itSub('Successfully executes call in a preimage', async ({helper}) => {
-      const result = await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [preimageHash]))
-        .to.be.fulfilled;
+      const result = await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
+        preimageHash, null, {refTime: 10000000000, proofSize: 10000000000},
+      ])).to.be.fulfilled;
 
       // preimage is executed, and an appropriate event is present
       const events = result.result.events.filter((x: any) => x.event.method === 'IdentitiesInserted' && x.event.section === 'identity');
@@ -316,15 +323,35 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(await helper.preimage.getPreimageInfo(preimageHash)).to.have.property('unrequested');
     });
 
+    itSub('Does not allow execution of a preimage that would fail', async ({helper}) => {
+      const [zeroAccount] = await helper.arrange.createAccounts([0n], superuser);
+
+      const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [
+        {Id: zeroAccount.address}, {Id: superuser.address}, 1000n,
+      ]).method.toHex();
+      const preimageHash = await notePreimage(helper, preimage);
+
+      await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
+        preimageHash, null, {refTime: 100000000000, proofSize: 100000000000},
+      ])).to.be.rejectedWith(/balances\.InsufficientBalance/);
+    });
+
     itSub('Does not allow preimage execution with non-root', async ({helper}) => {
-      await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [preimageHash]))
-        .to.be.rejectedWith(/BadOrigin/);
+      await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [
+        preimageHash, null, {refTime: 100000000000, proofSize: 100000000000},
+      ])).to.be.rejectedWith(/BadOrigin/);
     });
 
     itSub('Does not allow execution of non-existent preimages', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        '0x1010101010101010101010101010101010101010101010101010101010101010',
+        '0x1010101010101010101010101010101010101010101010101010101010101010', null, {refTime: 100000000000, proofSize: 100000000000},
       ])).to.be.rejectedWith(/Unavailable/);
+    });
+
+    itSub('Does not allow preimage execution with less than minimum weights', async ({helper}) => {
+      await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
+        preimageHash, null, {refTime: 1000, proofSize: 1000},
+      ])).to.be.rejectedWith(/Exhausted/);
     });
 
     after(async function() {

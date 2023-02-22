@@ -19,7 +19,7 @@ use crate::{Pallet as Maintenance, Config};
 
 use frame_benchmarking::benchmarks;
 use frame_system::{Call as RuntimeCall, RawOrigin};
-use frame_support::{ensure, traits::StorePreimage};
+use frame_support::{ensure, pallet_prelude::Weight, traits::StorePreimage};
 use codec::Encode;
 use sp_std::vec;
 
@@ -40,7 +40,7 @@ benchmarks! {
 	execute_preimage {
 		let call_hash = RuntimeCall::<T>::set_storage { items: vec![] }.encode();
 		let hash = T::Preimages::note(call_hash.into())?;
-	}: _(RawOrigin::Root, hash)
+	}: _(RawOrigin::Root, hash, None, Weight::from_parts(100000000000, 100000000000))
 	verify {
 	}
 }

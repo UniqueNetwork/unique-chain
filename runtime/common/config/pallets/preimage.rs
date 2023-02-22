@@ -20,8 +20,7 @@ use crate::{AccountId, Balance, Balances, Runtime, RuntimeEvent};
 use up_common::constants::*;
 
 parameter_types! {
-	pub PreimageBaseDeposit: Balance = 1000 * UNIQUE; // deposit(2, 64);
-	// pub PreimageByteDeposit: Balance = 1 * CENTIUNIQUE; // deposit(0, 1);
+	pub PreimageBaseDeposit: Balance = 1000 * UNIQUE;
 }
 
 impl pallet_preimage::Config for Runtime {

@@ -104,30 +104,48 @@ pub mod pallet {
 
 		#[pallet::call_index(2)]
 		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage())]
-		pub fn execute_preimage(_origin: OriginFor<T>, _hash: H256) -> DispatchResult {
-			#[cfg(feature = "preimage")]
-			{
-				let origin = _origin;
-				let hash = _hash;
+		pub fn execute_preimage(
+			origin: OriginFor<T>,
+			hash: H256,
+			preimage_length: Option<u32>,
+			weight_bound: Weight,
+		) -> DispatchResultWithPostInfo {
+			use codec::Decode;
 
-				ensure_root(origin)?;
+			ensure_root(origin)?;
 
-				let len = T::Preimages::len(&hash).ok_or(DispatchError::Unavailable)?;
-				let bounded = T::Preimages::pick::<<T as Config>::RuntimeCall>(hash, len);
-				let (call, _) =
-					T::Preimages::realize(&bounded).map_err(|_| DispatchError::Unavailable)?;
+			let data = T::Preimages::fetch(&hash, preimage_length)?;
+			weight_bound.set_proof_size(
+				weight_bound
+					.proof_size()
+					.checked_sub(
+						data.len()
+							.try_into()
+							.map_err(|_| DispatchError::Corruption)?,
+					)
+					.ok_or(DispatchError::Exhausted)?,
+			);
 
-				let result = match call.dispatch(frame_system::RawOrigin::Root.into()) {
-					Ok(_) => Ok(()),
-					Err(error_and_info) => Err(error_and_info.error),
-				};
+			let call = <T as Config>::RuntimeCall::decode(&mut &data[..])
+				.map_err(|_| DispatchError::Corruption)?;
 
-				result
-			}
+			ensure!(
+				call.get_dispatch_info().weight.all_lte(weight_bound),
+				DispatchError::Exhausted
+			);
 
-			#[cfg(not(feature = "preimage"))]
-			{
-				Err(DispatchError::Unavailable)
+			match call.dispatch(frame_system::RawOrigin::Root.into()) {
+				Ok(post_info) => Ok(PostDispatchInfo {
+					actual_weight: post_info.actual_weight,
+					pays_fee: Pays::No,
+				}),
+				Err(error_and_info) => Err(DispatchErrorWithPostInfo {
+					post_info: PostDispatchInfo {
+						actual_weight: error_and_info.post_info.actual_weight,
+						pays_fee: Pays::No,
+					},
+					error: error_and_info.error,
+				}),
 			}
 		}
 	}

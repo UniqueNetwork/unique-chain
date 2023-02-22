@@ -172,8 +172,6 @@ const forceInsertIdentities = async (): Promise<void> => {
         // identitiesToRemove.push((key as any).toHuman()[0]);
       }
 
-      console.log(identitiesToAdd[0][1]);
-
       if (identitiesToRemove.length != 0)
         await uploadPreimage(
           helper,
