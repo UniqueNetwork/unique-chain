@@ -24,7 +24,7 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
 [dev-dependencies]
-pallet-preimage = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+pallet-preimage = { workspace = true }
 substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
 
 [features]

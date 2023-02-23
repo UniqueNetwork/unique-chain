@@ -2869,6 +2869,55 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
+class PreimageGroup extends HelperGroup<UniqueHelper> {
+  async getPreimageInfo(h256: string) {
+    return (await this.helper.callRpc('api.query.preimage.statusFor', [h256])).toJSON();
+  }
+
+  /**
+   * Create a preimage with a hex or a byte array.
+   * @param signer keyring of the signer.
+   * @param bytes preimage encoded in hex or a byte array, e.g. an extrinsic call.
+   * @example await notePreimage(preimageMaker,
+   *   helper.constructApiCall('api.tx.identity.forceInsertIdentities', [identitiesToAdd]).method.toHex()
+   * );
+   * @returns promise of extrinsic execution.
+   */
+  notePreimage(signer: TSigner, bytes: string | Uint8Array) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
+  }
+
+  /**
+   * Delete an existing preimage and return the deposit.
+   * @param signer keyring of the signer - either the owner or the preimage manager (sudo).
+   * @param h256 hash of the preimage.
+   * @returns promise of extrinsic execution.
+   */
+  unnotePreimage(signer: TSigner, h256: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.preimage.unnotePreimage', [h256]);
+  }
+
+  /**
+   * Request a preimage be uploaded to the chain without paying any fees or deposits.
+   * @param signer keyring of the signer - either the owner or the preimage manager (sudo).
+   * @param h256 hash of the preimage.
+   * @returns promise of extrinsic execution.
+   */
+  requestPreimage(signer: TSigner, h256: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.preimage.requestPreimage', [h256]);
+  }
+
+  /**
+   * Clear a previously made request for a preimage.
+   * @param signer keyring of the signer - either the owner or the preimage manager (sudo).
+   * @param h256 hash of the preimage.
+   * @returns promise of extrinsic execution.
+   */
+  unrequestPreimage(signer: TSigner, h256: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.preimage.unrequestPreimage', [h256]);
+  }
+}
+
 class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
   async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
     await this.helper.executeExtrinsic(
@@ -3094,6 +3143,7 @@ export class UniqueHelper extends ChainHelperBase {
   staking: StakingGroup;
   scheduler: SchedulerGroup;
   collatorSelection: CollatorSelectionGroup;
+  preimage: PreimageGroup;
   foreignAssets: ForeignAssetsGroup;
   xcm: XcmGroup<UniqueHelper>;
   xTokens: XTokensGroup<UniqueHelper>;
@@ -3110,6 +3160,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.staking = new StakingGroup(this);
     this.scheduler = new SchedulerGroup(this);
     this.collatorSelection = new CollatorSelectionGroup(this);
+    this.preimage = new PreimageGroup(this);
     this.foreignAssets = new ForeignAssetsGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.xTokens = new XTokensGroup(this);

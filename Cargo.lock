@@ -5541,6 +5541,7 @@ dependencies = [
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-session",
@@ -6480,6 +6481,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
  "sp-std",
 ]
 
@@ -8968,6 +8970,7 @@ dependencies = [
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-session",
@@ -13198,6 +13201,7 @@ dependencies = [
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-session",
