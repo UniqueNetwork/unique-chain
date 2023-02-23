@@ -51,7 +51,7 @@ export async function arrangeTopUpAccounts
     console.log('Transactions sent, waiting for result...');
     const result = await Promise.all(transactions);
     return result;
-  }, wsEndpoin ? wsEndpoin : WS_ENDPOINT);
+  }, wsEndpoin);
 }
 
 /**
@@ -59,7 +59,12 @@ export async function arrangeTopUpAccounts
  * @param crowd accounts to transferAll from
  * @param recepient recepient of transferAll
  */
-export async function spamEmptyAccounts(crowd: IKeyringPair[], recepient: IKeyringPair, retry = false) {
+export async function spamEmptyAccounts(
+  crowd: IKeyringPair[],
+  recepient: IKeyringPair,
+  retry = false,
+  wsEndpoin: string = WS_ENDPOINT,
+) {
   return await usingPlaygrounds(async (helper) => {
     const api = helper.getApi();
 
@@ -73,10 +78,16 @@ export async function spamEmptyAccounts(crowd: IKeyringPair[], recepient: IKeyri
     console.log('Transactions sent, waiting for result...');
     const result = await Promise.all(transactions);
     return result;
-  }, WS_ENDPOINT);
+  }, wsEndpoin);
 }
 
-export async function spamTransfer(crowd: IKeyringPair[], recepient: IKeyringPair, balance: bigint, retry = false) {
+export async function spamTransfer(
+  crowd: IKeyringPair[],
+  recepient: IKeyringPair,
+  balance: bigint,
+  retry = false,
+  wsEndpoin: string = WS_ENDPOINT,
+) {
   return await usingPlaygrounds(async (helper) => {
     const api = helper.getApi();
 
@@ -91,7 +102,7 @@ export async function spamTransfer(crowd: IKeyringPair[], recepient: IKeyringPai
     console.log('Transactions sent, waiting for result...');
     const result = await Promise.all(transactions);
     return result;
-  }, WS_ENDPOINT);
+  }, wsEndpoin);
 }
 
 export function chunk<T>(array: T[], size: number) {
