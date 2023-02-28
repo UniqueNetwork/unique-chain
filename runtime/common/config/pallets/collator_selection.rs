@@ -15,7 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{parameter_types, PalletId};
-use frame_system::EnsureRoot;
 use crate::{
 	Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
 	CollatorSelection, Treasury,
@@ -26,7 +25,7 @@ use crate::{
 use crate::config::pallets::governance;
 
 #[cfg(not(feature = "governance"))]
-use crate::AccountId;
+use frame_system::EnsureRoot;
 
 use sp_runtime::Perbill;
 use up_common::constants::{UNIQUE, MILLIUNIQUE};
@@ -84,8 +83,19 @@ impl pallet_identity::Config for Runtime {
 	type MaxRegistrars = MaxRegistrars;
 	type MaxSubAccounts = MaxSubAccounts;
 	type SubAccountDeposit = SubAccountDeposit;
+
+	#[cfg(feature = "governance")]
+	type RegistrarOrigin = governance::RootOrAllTechnicalCommittee;
+
+	#[cfg(feature = "governance")]
+	type ForceOrigin = governance::RootOrAllTechnicalCommittee;
+
+	#[cfg(not(feature = "governance"))]
 	type RegistrarOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+
+	#[cfg(not(feature = "governance"))]
 	type ForceOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+
 	type Slashed = Treasury;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
@@ -108,7 +118,7 @@ impl pallet_collator_selection::Config for Runtime {
 	// If there is no governance,
 	// we allow root only to execute privileged collator selection operations.
 	#[cfg(not(feature = "governance"))]
-	type UpdateOrigin = EnsureRoot<AccountId>;
+	type UpdateOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
 
 	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
