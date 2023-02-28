@@ -186,6 +186,9 @@ macro_rules! testnet_genesis {
 			technical_committee: TechnicalCommitteeConfig::default(),
 
 			#[cfg(not(feature = "quartz-runtime"))]
+			council_membership: CouncilMembershipConfig::default(),
+
+			#[cfg(not(feature = "quartz-runtime"))]
 			fellowship_membership: FellowshipMembershipConfig::default(),
 
 			#[cfg(not(feature = "quartz-runtime"))]
