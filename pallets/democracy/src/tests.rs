@@ -46,10 +46,22 @@ mod public_proposals;
 mod scheduling;
 mod voting;
 
-const AYE: Vote = Vote { aye: true, conviction: Conviction::None };
-const NAY: Vote = Vote { aye: false, conviction: Conviction::None };
-const BIG_AYE: Vote = Vote { aye: true, conviction: Conviction::Locked1x };
-const BIG_NAY: Vote = Vote { aye: false, conviction: Conviction::Locked1x };
+const AYE: Vote = Vote {
+	aye: true,
+	conviction: Conviction::None,
+};
+const NAY: Vote = Vote {
+	aye: false,
+	conviction: Conviction::None,
+};
+const BIG_AYE: Vote = Vote {
+	aye: true,
+	conviction: Conviction::Locked1x,
+};
+const BIG_NAY: Vote = Vote {
+	aye: false,
+	conviction: Conviction::Locked1x,
+};
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;
@@ -72,7 +84,10 @@ frame_support::construct_runtime!(
 pub struct BaseFilter;
 impl Contains<RuntimeCall> for BaseFilter {
 	fn contains(call: &RuntimeCall) -> bool {
-		!matches!(call, &RuntimeCall::Balances(pallet_balances::Call::set_balance { .. }))
+		!matches!(
+			call,
+			&RuntimeCall::Balances(pallet_balances::Call::set_balance { .. })
+		)
 	}
 }
 
@@ -199,7 +214,9 @@ impl Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	let mut t = frame_system::GenesisConfig::default().build_storage::<Test>().unwrap();
+	let mut t = frame_system::GenesisConfig::default()
+		.build_storage::<Test>()
+		.unwrap();
 	pallet_balances::GenesisConfig::<Test> {
 		balances: vec![(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)],
 	}
@@ -223,7 +240,11 @@ fn params_should_work() {
 }
 
 fn set_balance_proposal(value: u64) -> BoundedCallOf<Test> {
-	let inner = pallet_balances::Call::set_balance { who: 42, new_free: value, new_reserved: 0 };
+	let inner = pallet_balances::Call::set_balance {
+		who: 42,
+		new_free: value,
+		new_reserved: 0,
+	};
 	let outer = RuntimeCall::Balances(inner);
 	Preimage::bound(outer).unwrap()
 }
@@ -232,12 +253,18 @@ fn set_balance_proposal(value: u64) -> BoundedCallOf<Test> {
 fn set_balance_proposal_is_correctly_filtered_out() {
 	for i in 0..10 {
 		let call = Preimage::realize(&set_balance_proposal(i)).unwrap().0;
-		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(&call));
+		assert!(!<Test as frame_system::Config>::BaseCallFilter::contains(
+			&call
+		));
 	}
 }
 
 fn propose_set_balance(who: u64, value: u64, delay: u64) -> DispatchResult {
-	Democracy::propose(RuntimeOrigin::signed(who), set_balance_proposal(value), delay)
+	Democracy::propose(
+		RuntimeOrigin::signed(who),
+		set_balance_proposal(value),
+		delay,
+	)
 }
 
 fn next_block() {
@@ -260,19 +287,31 @@ fn begin_referendum() -> ReferendumIndex {
 }
 
 fn aye(who: u64) -> AccountVote<u64> {
-	AccountVote::Standard { vote: AYE, balance: Balances::free_balance(&who) }
+	AccountVote::Standard {
+		vote: AYE,
+		balance: Balances::free_balance(&who),
+	}
 }
 
 fn nay(who: u64) -> AccountVote<u64> {
-	AccountVote::Standard { vote: NAY, balance: Balances::free_balance(&who) }
+	AccountVote::Standard {
+		vote: NAY,
+		balance: Balances::free_balance(&who),
+	}
 }
 
 fn big_aye(who: u64) -> AccountVote<u64> {
-	AccountVote::Standard { vote: BIG_AYE, balance: Balances::free_balance(&who) }
+	AccountVote::Standard {
+		vote: BIG_AYE,
+		balance: Balances::free_balance(&who),
+	}
 }
 
 fn big_nay(who: u64) -> AccountVote<u64> {
-	AccountVote::Standard { vote: BIG_NAY, balance: Balances::free_balance(&who) }
+	AccountVote::Standard {
+		vote: BIG_NAY,
+		balance: Balances::free_balance(&who),
+	}
 }
 
 fn tally(r: ReferendumIndex) -> Tally<u64> {
@@ -285,7 +324,10 @@ fn note_preimage(who: u64) -> PreimageHash {
 	// note a new preimage on every function invoke.
 	static COUNTER: AtomicU8 = AtomicU8::new(0);
 	let data = vec![COUNTER.fetch_add(1, Ordering::Relaxed)];
-	assert_ok!(Preimage::note_preimage(RuntimeOrigin::signed(who), data.clone()));
+	assert_ok!(Preimage::note_preimage(
+		RuntimeOrigin::signed(who),
+		data.clone()
+	));
 	let hash = BlakeTwo256::hash(&data);
 	assert!(!Preimage::is_requested(&hash));
 	hash

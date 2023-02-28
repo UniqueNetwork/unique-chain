@@ -21,20 +21,30 @@ use super::*;
 
 fn aye(x: u8, balance: u64) -> AccountVote<u64> {
 	AccountVote::Standard {
-		vote: Vote { aye: true, conviction: Conviction::try_from(x).unwrap() },
+		vote: Vote {
+			aye: true,
+			conviction: Conviction::try_from(x).unwrap(),
+		},
 		balance,
 	}
 }
 
 fn nay(x: u8, balance: u64) -> AccountVote<u64> {
 	AccountVote::Standard {
-		vote: Vote { aye: false, conviction: Conviction::try_from(x).unwrap() },
+		vote: Vote {
+			aye: false,
+			conviction: Conviction::try_from(x).unwrap(),
+		},
 		balance,
 	}
 }
 
 fn the_lock(amount: u64) -> BalanceLock<u64> {
-	BalanceLock { id: DEMOCRACY_ID, amount, reasons: pallet_balances::Reasons::Misc }
+	BalanceLock {
+		id: DEMOCRACY_ID,
+		amount,
+		reasons: pallet_balances::Reasons::Misc,
+	}
 }
 
 #[test]
@@ -52,7 +62,14 @@ fn lock_voting_should_work() {
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(3), r, aye(3, 30)));
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(4), r, aye(2, 40)));
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(5), r, nay(1, 50)));
-		assert_eq!(tally(r), Tally { ayes: 250, nays: 100, turnout: 150 });
+		assert_eq!(
+			tally(r),
+			Tally {
+				ayes: 250,
+				nays: 100,
+				turnout: 150
+			}
+		);
 
 		// All balances are currently locked.
 		for i in 1..=5 {
@@ -153,10 +170,22 @@ fn lock_voting_should_work_with_delegation() {
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(1), r, nay(5, 10)));
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(2), r, aye(4, 20)));
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(3), r, aye(3, 30)));
-		assert_ok!(Democracy::delegate(RuntimeOrigin::signed(4), 2, Conviction::Locked2x, 40));
+		assert_ok!(Democracy::delegate(
+			RuntimeOrigin::signed(4),
+			2,
+			Conviction::Locked2x,
+			40
+		));
 		assert_ok!(Democracy::vote(RuntimeOrigin::signed(5), r, nay(1, 50)));
 
-		assert_eq!(tally(r), Tally { ayes: 250, nays: 100, turnout: 150 });
+		assert_eq!(
+			tally(r),
+			Tally {
+				ayes: 250,
+				nays: 100,
+				turnout: 150
+			}
+		);
 
 		next_block();
 		next_block();
@@ -200,7 +229,11 @@ fn prior_lockvotes_should_be_enforced() {
 		assert_ok!(Democracy::unlock(RuntimeOrigin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![the_lock(50)]);
 		fast_forward_to(8);
-		assert_ok!(Democracy::remove_other_vote(RuntimeOrigin::signed(1), 5, r.2));
+		assert_ok!(Democracy::remove_other_vote(
+			RuntimeOrigin::signed(1),
+			5,
+			r.2
+		));
 		assert_ok!(Democracy::unlock(RuntimeOrigin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![the_lock(20)]);
 		fast_forward_to(13);
@@ -211,7 +244,11 @@ fn prior_lockvotes_should_be_enforced() {
 		assert_ok!(Democracy::unlock(RuntimeOrigin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![the_lock(20)]);
 		fast_forward_to(14);
-		assert_ok!(Democracy::remove_other_vote(RuntimeOrigin::signed(1), 5, r.1));
+		assert_ok!(Democracy::remove_other_vote(
+			RuntimeOrigin::signed(1),
+			5,
+			r.1
+		));
 		assert_ok!(Democracy::unlock(RuntimeOrigin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![the_lock(10)]);
 		fast_forward_to(25);
@@ -222,7 +259,11 @@ fn prior_lockvotes_should_be_enforced() {
 		assert_ok!(Democracy::unlock(RuntimeOrigin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![the_lock(10)]);
 		fast_forward_to(26);
-		assert_ok!(Democracy::remove_other_vote(RuntimeOrigin::signed(1), 5, r.0));
+		assert_ok!(Democracy::remove_other_vote(
+			RuntimeOrigin::signed(1),
+			5,
+			r.0
+		));
 		assert_ok!(Democracy::unlock(RuntimeOrigin::signed(5), 5));
 		assert_eq!(Balances::locks(5), vec![]);
 	});
@@ -303,7 +344,12 @@ fn locks_should_persist_from_voting_to_delegation() {
 		assert_ok!(Democracy::remove_vote(RuntimeOrigin::signed(5), r));
 		// locked 10 until #26.
 
-		assert_ok!(Democracy::delegate(RuntimeOrigin::signed(5), 1, Conviction::Locked3x, 20));
+		assert_ok!(Democracy::delegate(
+			RuntimeOrigin::signed(5),
+			1,
+			Conviction::Locked3x,
+			20
+		));
 		// locked 20.
 		assert!(Balances::locks(5)[0].amount == 20);
 
@@ -332,7 +378,12 @@ fn locks_should_persist_from_voting_to_delegation() {
 fn locks_should_persist_from_delegation_to_voting() {
 	new_test_ext().execute_with(|| {
 		System::set_block_number(0);
-		assert_ok!(Democracy::delegate(RuntimeOrigin::signed(5), 1, Conviction::Locked5x, 5));
+		assert_ok!(Democracy::delegate(
+			RuntimeOrigin::signed(5),
+			1,
+			Conviction::Locked5x,
+			5
+		));
 		assert_ok!(Democracy::undelegate(RuntimeOrigin::signed(5)));
 		// locked 5 until 16 * 3 = #48
 
