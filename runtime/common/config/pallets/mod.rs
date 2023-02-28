@@ -148,6 +148,13 @@ impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
+
+	#[cfg(feature = "governance")]
+	type ManagerOrigin = governance::RootOrAllTechnicalCommittee;
+
+	#[cfg(not(feature = "governance"))]
+	type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
+
 	#[cfg(feature = "preimage")]
 	type Preimages = crate::Preimage;
 	#[cfg(not(feature = "preimage"))]

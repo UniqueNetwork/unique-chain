@@ -27,7 +27,7 @@ pub mod weights;
 pub mod pallet {
 	use frame_support::{dispatch::*, pallet_prelude::*};
 	use frame_support::{
-		traits::{QueryPreimage, StorePreimage},
+		traits::{QueryPreimage, StorePreimage, EnsureOrigin},
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_core::H256;
@@ -53,6 +53,9 @@ pub mod pallet {
 
 		/// The preimage provider with which we look up call hashes to get the call.
 		type Preimages: QueryPreimage + StorePreimage;
+
+		/// The Origin that has the right to enable or disable the maintenance mode
+		type ManagerOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -80,7 +83,7 @@ pub mod pallet {
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::enable())]
 		pub fn enable(origin: OriginFor<T>) -> DispatchResult {
-			ensure_root(origin)?;
+			T::ManagerOrigin::ensure_origin(origin)?;
 
 			<Enabled<T>>::set(true);
 
@@ -92,7 +95,7 @@ pub mod pallet {
 		#[pallet::call_index(1)]
 		#[pallet::weight(<T as Config>::WeightInfo::disable())]
 		pub fn disable(origin: OriginFor<T>) -> DispatchResult {
-			ensure_root(origin)?;
+			T::ManagerOrigin::ensure_origin(origin)?;
 
 			<Enabled<T>>::set(false);
 
@@ -114,7 +117,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			use codec::Decode;
 
-			ensure_root(origin)?;
+			T::ManagerOrigin::ensure_origin(origin)?;
 
 			let data = T::Preimages::fetch(&hash, None)?;
 			weight_bound.set_proof_size(
