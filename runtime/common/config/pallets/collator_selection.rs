@@ -17,10 +17,17 @@
 use frame_support::{parameter_types, PalletId};
 use frame_system::EnsureRoot;
 use crate::{
-	AccountId, Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
+	Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
 	CollatorSelection, Treasury,
 	config::pallets::{MaxCollators, SessionPeriod, TreasuryAccountId},
 };
+
+#[cfg(feature = "governance")]
+use crate::config::pallets::governance;
+
+#[cfg(not(feature = "governance"))]
+use crate::AccountId;
+
 use sp_runtime::Perbill;
 use up_common::constants::{UNIQUE, MILLIUNIQUE};
 
@@ -85,8 +92,17 @@ parameter_types! {
 
 impl pallet_collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	// We allow root only to execute privileged collator selection operations.
+
+	// We allow root or the unanimous technical committee
+	// to execute privileged collator selection operations.
+	#[cfg(feature = "governance")]
+	type UpdateOrigin = governance::RootOrAllTechnicalCommittee;
+
+	// If there is no governance,
+	// we allow root only to execute privileged collator selection operations.
+	#[cfg(not(feature = "governance"))]
 	type UpdateOrigin = EnsureRoot<AccountId>;
+
 	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
 	type MaxCollators = MaxCollators;
