@@ -31,7 +31,11 @@ mod v0 {
 	#[storage_alias]
 	pub type PublicProps<T: Config> = StorageValue<
 		Pallet<T>,
-		Vec<(PropIndex, <T as frame_system::Config>::Hash, <T as frame_system::Config>::AccountId)>,
+		Vec<(
+			PropIndex,
+			<T as frame_system::Config>::Hash,
+			<T as frame_system::Config>::AccountId,
+		)>,
 		ValueQuery,
 	>;
 
@@ -62,14 +66,29 @@ pub mod v1 {
 	impl<T: Config + frame_system::Config<Hash = H256>> OnRuntimeUpgrade for Migration<T> {
 		#[cfg(feature = "try-runtime")]
 		fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-			assert_eq!(StorageVersion::get::<Pallet<T>>(), 0, "can only upgrade from version 0");
+			assert_eq!(
+				StorageVersion::get::<Pallet<T>>(),
+				0,
+				"can only upgrade from version 0"
+			);
 
 			let props_count = v0::PublicProps::<T>::get().len();
-			log::info!(target: TARGET, "{} public proposals will be migrated.", props_count,);
-			ensure!(props_count <= T::MaxProposals::get() as usize, "too many proposals");
+			log::info!(
+				target: TARGET,
+				"{} public proposals will be migrated.",
+				props_count,
+			);
+			ensure!(
+				props_count <= T::MaxProposals::get() as usize,
+				"too many proposals"
+			);
 
 			let referenda_count = v0::ReferendumInfoOf::<T>::iter().count();
-			log::info!(target: TARGET, "{} referenda will be migrated.", referenda_count);
+			log::info!(
+				target: TARGET,
+				"{} referenda will be migrated.",
+				referenda_count
+			);
 
 			Ok((props_count as u32, referenda_count as u32).encode())
 		}
@@ -83,7 +102,7 @@ pub mod v1 {
 					"skipping on_runtime_upgrade: executed on wrong storage version.\
 				Expected version 0"
 				);
-				return weight
+				return weight;
 			}
 
 			ReferendumInfoOf::<T>::translate(
@@ -91,16 +110,18 @@ pub mod v1 {
 					weight.saturating_accrue(T::DbWeight::get().reads_writes(1, 1));
 					log::info!(target: TARGET, "migrating referendum #{:?}", &index);
 					Some(match old {
-						ReferendumInfo::Ongoing(status) =>
+						ReferendumInfo::Ongoing(status) => {
 							ReferendumInfo::Ongoing(ReferendumStatus {
 								end: status.end,
 								proposal: Bounded::from_legacy_hash(status.proposal),
 								threshold: status.threshold,
 								delay: status.delay,
 								tally: status.tally,
-							}),
-						ReferendumInfo::Finished { approved, end } =>
-							ReferendumInfo::Finished { approved, end },
+							})
+						}
+						ReferendumInfo::Finished { approved, end } => {
+							ReferendumInfo::Finished { approved, end }
+						}
 					})
 				},
 			);
@@ -139,7 +160,10 @@ pub mod v1 {
 			let (old_props_count, old_ref_count): (u32, u32) =
 				Decode::decode(&mut &state[..]).expect("pre_upgrade provides a valid state; qed");
 			let new_props_count = crate::PublicProps::<T>::get().len() as u32;
-			assert_eq!(new_props_count, old_props_count, "must migrate all public proposals");
+			assert_eq!(
+				new_props_count, old_props_count,
+				"must migrate all public proposals"
+			);
 			let new_ref_count = crate::ReferendumInfoOf::<T>::iter().count() as u32;
 			assert_eq!(new_ref_count, old_ref_count, "must migrate all referenda");
 
@@ -178,14 +202,21 @@ mod test {
 				proposal: hash.clone(),
 				threshold: VoteThreshold::SuperMajorityApprove,
 				delay: 1u32.into(),
-				tally: Tally { ayes: 1u32.into(), nays: 1u32.into(), turnout: 1u32.into() },
+				tally: Tally {
+					ayes: 1u32.into(),
+					nays: 1u32.into(),
+					turnout: 1u32.into(),
+				},
 			};
 			v0::ReferendumInfoOf::<T>::insert(1u32, ReferendumInfo::Ongoing(status));
 
 			// Case 2: Finished referendum
 			v0::ReferendumInfoOf::<T>::insert(
 				2u32,
-				ReferendumInfo::Finished { approved: true, end: 123u32.into() },
+				ReferendumInfo::Finished {
+					approved: true,
+					end: 123u32.into(),
+				},
 			);
 
 			// Case 3: Public proposals
@@ -212,13 +243,20 @@ mod test {
 					proposal: Bounded::from_legacy_hash(hash),
 					threshold: VoteThreshold::SuperMajorityApprove,
 					delay: 1u32.into(),
-					tally: Tally { ayes: 1u32.into(), nays: 1u32.into(), turnout: 1u32.into() },
+					tally: Tally {
+						ayes: 1u32.into(),
+						nays: 1u32.into(),
+						turnout: 1u32.into()
+					},
 				}))
 			);
 			// Case 2: Finished referendum
 			assert_eq!(
 				ReferendumInfoOf::<T>::get(2u32),
-				Some(ReferendumInfo::Finished { approved: true, end: 123u32.into() })
+				Some(ReferendumInfo::Finished {
+					approved: true,
+					end: 123u32.into()
+				})
 			);
 			// Case 3: Public proposals
 			let props: BoundedVec<_, <Test as Config>::MaxProposals> = bounded_vec![
@@ -229,7 +267,10 @@ mod test {
 			// Case 4: Next external
 			assert_eq!(
 				NextExternal::<T>::get(),
-				Some((Bounded::from_legacy_hash(hash), VoteThreshold::SuperMajorityApprove))
+				Some((
+					Bounded::from_legacy_hash(hash),
+					VoteThreshold::SuperMajorityApprove
+				))
 			);
 		});
 	}

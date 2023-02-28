@@ -70,7 +70,10 @@ fn proposal_with_deposit_below_minimum_should_not_work() {
 #[test]
 fn poor_proposer_should_not_work() {
 	new_test_ext().execute_with(|| {
-		assert_noop!(propose_set_balance(1, 2, 11), BalancesError::<Test, _>::InsufficientBalance);
+		assert_noop!(
+			propose_set_balance(1, 2, 11),
+			BalancesError::<Test, _>::InsufficientBalance
+		);
 	});
 }
 
@@ -90,7 +93,10 @@ fn cancel_proposal_should_work() {
 	new_test_ext().execute_with(|| {
 		assert_ok!(propose_set_balance(1, 2, 2));
 		assert_ok!(propose_set_balance(1, 4, 4));
-		assert_noop!(Democracy::cancel_proposal(RuntimeOrigin::signed(1), 0), BadOrigin);
+		assert_noop!(
+			Democracy::cancel_proposal(RuntimeOrigin::signed(1), 0),
+			BadOrigin
+		);
 		let hash = note_preimage(1);
 		assert_ok!(Democracy::set_metadata(
 			RuntimeOrigin::signed(1),
@@ -103,7 +109,11 @@ fn cancel_proposal_should_work() {
 		assert!(<MetadataOf<Test>>::get(MetadataOwner::Proposal(0)).is_none());
 		System::assert_has_event(crate::Event::ProposalCanceled { prop_index: 0 }.into());
 		System::assert_last_event(
-			crate::Event::MetadataCleared { owner: MetadataOwner::Proposal(0), hash }.into(),
+			crate::Event::MetadataCleared {
+				owner: MetadataOwner::Proposal(0),
+				hash,
+			}
+			.into(),
 		);
 		assert_eq!(Democracy::backing_for(0), None);
 		assert_eq!(Democracy::backing_for(1), Some(4));
@@ -119,20 +129,29 @@ fn blacklisting_should_work() {
 		assert_ok!(propose_set_balance(1, 2, 2));
 		assert_ok!(propose_set_balance(1, 4, 4));
 
-		assert_noop!(Democracy::blacklist(RuntimeOrigin::signed(1), hash, None), BadOrigin);
+		assert_noop!(
+			Democracy::blacklist(RuntimeOrigin::signed(1), hash, None),
+			BadOrigin
+		);
 		assert_ok!(Democracy::blacklist(RuntimeOrigin::root(), hash, None));
 
 		assert_eq!(Democracy::backing_for(0), None);
 		assert_eq!(Democracy::backing_for(1), Some(4));
 
-		assert_noop!(propose_set_balance(1, 2, 2), Error::<Test>::ProposalBlacklisted);
+		assert_noop!(
+			propose_set_balance(1, 2, 2),
+			Error::<Test>::ProposalBlacklisted
+		);
 
 		fast_forward_to(2);
 
 		let hash = set_balance_proposal(4).hash();
 		assert_ok!(Democracy::referendum_status(0));
 		assert_ok!(Democracy::blacklist(RuntimeOrigin::root(), hash, Some(0)));
-		assert_noop!(Democracy::referendum_status(0), Error::<Test>::ReferendumInvalid);
+		assert_noop!(
+			Democracy::referendum_status(0),
+			Error::<Test>::ReferendumInvalid
+		);
 	});
 }
 

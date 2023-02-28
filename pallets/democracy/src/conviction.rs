@@ -115,7 +115,9 @@ impl Conviction {
 	) -> Delegations<B> {
 		let votes = match self {
 			Conviction::None => capital.checked_div(&10u8.into()).unwrap_or_else(Zero::zero),
-			x => capital.checked_mul(&u8::from(x).into()).unwrap_or_else(B::max_value),
+			x => capital
+				.checked_mul(&u8::from(x).into())
+				.unwrap_or_else(B::max_value),
 		};
 		Delegations { votes, capital }
 	}

@@ -66,14 +66,23 @@ fn add_referendum<T: Config>(n: u32) -> (ReferendumIndex, H256, PreimageHash) {
 		0u32.into(),
 	);
 	let preimage_hash = note_preimage::<T>();
-	MetadataOf::<T>::insert(crate::MetadataOwner::Referendum(index), preimage_hash.clone());
+	MetadataOf::<T>::insert(
+		crate::MetadataOwner::Referendum(index),
+		preimage_hash.clone(),
+	);
 	(index, hash, preimage_hash)
 }
 
 fn account_vote<T: Config>(b: BalanceOf<T>) -> AccountVote<BalanceOf<T>> {
-	let v = Vote { aye: true, conviction: Conviction::Locked1x };
+	let v = Vote {
+		aye: true,
+		conviction: Conviction::Locked1x,
+	};
 
-	AccountVote::Standard { vote: v, balance: b }
+	AccountVote::Standard {
+		vote: v,
+		balance: b,
+	}
 }
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
