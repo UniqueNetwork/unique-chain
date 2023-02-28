@@ -18,7 +18,6 @@ targets = ['x86_64-unknown-linux-gnu']
 [features]
 become-sapphire = []
 default = ['quartz-runtime', 'std']
-state-version-0 = []
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
 quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'preimage', 'refungible']
@@ -29,11 +28,14 @@ runtime-benchmarks = [
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
 	'frame-system/runtime-benchmarks',
+	'hex-literal',
 	'pallet-app-promotion/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-collator-selection/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
 	'pallet-common/runtime-benchmarks',
 	'pallet-configuration/runtime-benchmarks',
+	'pallet-democracy/runtime-benchmarks',
 	'pallet-ethereum/runtime-benchmarks',
 	'pallet-evm-coder-substrate/runtime-benchmarks',
 	'pallet-evm-migration/runtime-benchmarks',
@@ -42,8 +44,10 @@ runtime-benchmarks = [
 	'pallet-identity/runtime-benchmarks',
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
+	'pallet-membership/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
+	'pallet-scheduler/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
 	'pallet-unique/runtime-benchmarks',
@@ -51,6 +55,7 @@ runtime-benchmarks = [
 	'sp-runtime/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
 ]
+state-version-0 = []
 std = [
 	'codec/std',
 	'cumulus-pallet-aura-ext/std',
@@ -65,8 +70,12 @@ std = [
 	'frame-system/std',
 	'frame-try-runtime/std',
 	'pallet-aura/std',
-	'pallet-balances/std',
 	'pallet-balances-adapter/std',
+	'pallet-balances/std',
+	'pallet-collective/std',
+	'pallet-democracy/std',
+	'pallet-membership/std',
+	'pallet-scheduler/std',
 	# 'pallet-contracts/std',
 	# 'pallet-contracts-primitives/std',
 	# 'pallet-contracts-rpc-runtime-api/std',
@@ -156,11 +165,13 @@ try-runtime = [
 	'orml-xtokens/try-runtime',
 	'pallet-app-promotion/try-runtime',
 	'pallet-aura/try-runtime',
-	'pallet-balances/try-runtime',
 	'pallet-balances-adapter/try-runtime',
+	'pallet-balances/try-runtime',
 	'pallet-charge-transaction/try-runtime',
+	'pallet-collective/try-runtime',
 	'pallet-common/try-runtime',
 	'pallet-configuration/try-runtime',
+	'pallet-democracy/try-runtime',
 	'pallet-ethereum/try-runtime',
 	'pallet-evm-coder-substrate/try-runtime',
 	'pallet-evm-contract-helpers/try-runtime',
@@ -171,8 +182,10 @@ try-runtime = [
 	'pallet-fungible/try-runtime',
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
+	'pallet-membership/try-runtime',
 	'pallet-nonfungible/try-runtime',
 	'pallet-refungible/try-runtime',
+	'pallet-scheduler/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
 	'pallet-timestamp/try-runtime',
@@ -186,9 +199,10 @@ try-runtime = [
 app-promotion = []
 collator-selection = []
 foreign-assets = []
+governance = []
 preimage = []
 refungible = []
-scheduler = []
+unique-scheduler = []
 
 ################################################################################
 # local dependencies
@@ -217,7 +231,11 @@ orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
+pallet-collective = { workspace = true }
+pallet-democracy = { workspace = true }
+pallet-membership = { workspace = true }
 pallet-preimage = { workspace = true }
+pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
@@ -303,8 +321,8 @@ pallet-test-utils = { workspace = true }
 ################################################################################
 # Other Dependencies
 
-impl-trait-for-tuples = { workspace = true }
 hex-literal = { workspace = true }
+impl-trait-for-tuples = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

@@ -57,8 +57,29 @@ macro_rules! construct_runtime {
 				#[cfg(feature = "collator-selection")]
 				Identity: pallet_identity = 40,
 
-				#[cfg(feature = "preimage")]
-				Preimage: pallet_preimage = 41,
+                #[cfg(feature = "preimage")]
+                Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 41,
+
+                #[cfg(feature = "governance")]
+                Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 42,
+
+                #[cfg(feature = "governance")]
+                Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 43,
+
+                #[cfg(feature = "governance")]
+                Fellowship: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 44,
+
+                #[cfg(feature = "governance")]
+                TechnicalCommittee: pallet_collective::<Instance3>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 45,
+
+                #[cfg(feature = "governance")]
+                FellowshipMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 46,
+
+                #[cfg(feature = "governance")]
+                TechnicalCommitteeMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 47,
+
+                #[cfg(feature = "governance")]
+                GovScheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 48,
 
 				// XCM helpers.
 				XcmpQueue: cumulus_pallet_xcmp_queue = 50,

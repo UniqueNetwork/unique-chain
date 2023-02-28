@@ -37,7 +37,7 @@ use up_data_structs::{
 };
 use sp_arithmetic::Perbill;
 
-#[cfg(feature = "scheduler")]
+#[cfg(feature = "unique-scheduler")]
 pub mod scheduler;
 
 #[cfg(feature = "foreign-assets")]
@@ -51,6 +51,9 @@ pub mod collator_selection;
 
 #[cfg(feature = "preimage")]
 pub mod preimage;
+
+#[cfg(feature = "governance")]
+pub mod governance;
 
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
