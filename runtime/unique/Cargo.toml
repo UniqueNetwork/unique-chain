@@ -24,6 +24,10 @@ runtime-benchmarks = [
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
 	'frame-system/runtime-benchmarks',
+	'pallet-scheduler/runtime-benchmarks',
+	'pallet-democracy/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
+	'pallet-membership/runtime-benchmarks',
 	'hex-literal',
 	'pallet-app-promotion/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
@@ -62,6 +66,10 @@ std = [
 	'frame-system-rpc-runtime-api/std',
 	'frame-system/std',
 	'frame-try-runtime/std',
+	'pallet-scheduler/std',
+	'pallet-democracy/std',
+	'pallet-collective/std',
+	'pallet-membership/std',
 	'pallet-aura/std',
 	'pallet-balances/std',
 	# 'pallet-contracts/std',
@@ -147,6 +155,10 @@ try-runtime = [
 	'frame-support/try-runtime',
 	'frame-system/try-runtime',
 	'frame-try-runtime',
+	'pallet-scheduler/try-runtime',
+	'pallet-democracy/try-runtime',
+	'pallet-collective/try-runtime',
+	'pallet-membership/try-runtime',
 	'orml-tokens/try-runtime',
 	'orml-vesting/try-runtime',
 	'orml-xtokens/try-runtime',
@@ -185,7 +197,8 @@ collator-selection = []
 foreign-assets = []
 preimage = []
 refungible = []
-scheduler = []
+unique-scheduler = []
+governance = []
 
 ################################################################################
 # local dependencies
@@ -210,6 +223,10 @@ orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
 orml-xtokens = { workspace = true }
+pallet-scheduler = { workspace = true }
+pallet-democracy = { workspace = true }
+pallet-collective = { workspace = true }
+pallet-membership = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }

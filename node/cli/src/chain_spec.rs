@@ -172,6 +172,25 @@ macro_rules! testnet_genesis {
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},
+
+			#[cfg(not(feature = "quartz-runtime"))]
+			democracy: DemocracyConfig::default(),
+
+			#[cfg(not(feature = "quartz-runtime"))]
+			council: CouncilConfig::default(),
+
+			#[cfg(not(feature = "quartz-runtime"))]
+			fellowship: FellowshipConfig::default(),
+
+			#[cfg(not(feature = "quartz-runtime"))]
+			technical_committee: TechnicalCommitteeConfig::default(),
+
+			#[cfg(not(feature = "quartz-runtime"))]
+			fellowship_membership: FellowshipMembershipConfig::default(),
+
+			#[cfg(not(feature = "quartz-runtime"))]
+			technical_committee_membership: TechnicalCommitteeMembershipConfig::default(),
+
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
