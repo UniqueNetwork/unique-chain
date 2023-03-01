@@ -221,7 +221,7 @@ where
 	type Barrier = Barrier;
 	type Weigher = Weigher;
 	type Trader = Trader<T>;
-	type ResponseHandler = (); // Don't handle responses for now.
+	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 
 	type AssetTrap = PolkadotXcm;
