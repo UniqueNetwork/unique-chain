@@ -67,6 +67,16 @@ describe('Pallet presence', () => {
       const appPromotion = 'apppromotion';
       const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
       const preimage = ['preimage'];
+      const governance = [
+        'council',
+        'councilmembership',
+        'democracy',
+        'fellowship',
+        'fellowshipmembership',
+        'govscheduler',
+        'technicalcommittee',
+        'technicalcommitteemembership',
+      ];
       const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE')) {
@@ -77,6 +87,7 @@ describe('Pallet presence', () => {
           testUtils,
           ...collatorSelection,
           ...preimage,
+          ...governance,
         );
       } else if (chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
         requiredPallets.push(
