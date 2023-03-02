@@ -38,8 +38,8 @@ macro_rules! construct_runtime {
                 #[cfg(feature = "collator-selection")]
                 Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 24,
 
-                Aura: pallet_aura::{Pallet, Config<T>} = 25,
-                AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 26,
+                Aura: pallet_aura::{Pallet, Storage, Config<T>} = 25,
+                AuraExt: cumulus_pallet_aura_ext::{Pallet, Storage, Config} = 26,
 
                 Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
                 RandomnessCollectiveFlip: pallet_randomness_collective_flip::{Pallet, Storage} = 31,
@@ -61,7 +61,7 @@ macro_rules! construct_runtime {
 
                 // XCM helpers.
                 XcmpQueue: cumulus_pallet_xcmp_queue::{Pallet, Call, Storage, Event<T>} = 50,
-                PolkadotXcm: pallet_xcm::{Pallet, Call, Event<T>, Origin} = 51,
+                PolkadotXcm: pallet_xcm::{Pallet, Call, Storage, Event<T>, Origin} = 51,
                 CumulusXcm: cumulus_pallet_xcm::{Pallet, Call, Event<T>, Origin} = 52,
                 DmpQueue: cumulus_pallet_dmp_queue::{Pallet, Call, Storage, Event<T>} = 53,
 
