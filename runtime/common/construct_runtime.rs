@@ -38,7 +38,7 @@ macro_rules! construct_runtime {
                 #[cfg(feature = "collator-selection")]
                 Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>} = 24,
 
-                Aura: pallet_aura::{Pallet, Config<T>} = 25,
+                Aura: pallet_aura::{Pallet, Storage, Config<T>} = 25,
                 AuraExt: cumulus_pallet_aura_ext::{Pallet, Config} = 26,
 
                 Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>} = 30,
