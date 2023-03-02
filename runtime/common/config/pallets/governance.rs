@@ -98,9 +98,10 @@ impl pallet_democracy::Config for Runtime {
 	/// (SimpleMajority)
 	type ExternalMajorityOrigin = HalfCouncil;
 
-	/// 3/4 of council can have the next scheduled referendum be a straight default-carries
+	/// Root (for the initial referendums)
+	/// or 3/4 of council can have the next scheduled referendum be a straight default-carries
 	/// (NTB) vote (SuperMajorityAgainst).
-	type ExternalDefaultOrigin = ThreeFourthsCouncil;
+	type ExternalDefaultOrigin = RootOrThreeFourthsCouncil;
 
 	/// A unanimous technical committee can have an ExternalMajority/ExternalDefault vote
 	/// be tabled immediately and with a shorter voting/enactment period.
@@ -163,6 +164,8 @@ pub type HalfCouncil =
 pub type ThreeFourthsCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 4>;
 
 pub type RootOrHalfCouncil = EitherOfDiverse<EnsureRoot<AccountId>, HalfCouncil>;
+
+pub type RootOrThreeFourthsCouncil = EitherOfDiverse<EnsureRoot<AccountId>, ThreeFourthsCouncil>;
 
 pub type RootOrAllCouncil = EitherOfDiverse<
 	EnsureRoot<AccountId>,
