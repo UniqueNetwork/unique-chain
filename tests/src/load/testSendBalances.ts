@@ -5,10 +5,12 @@ import {getAccounts, arrangeTopUpAccounts, spamEmptyAccounts, chunk, spamTransfe
 import {TxResult} from './helpers/sign';
 
 const CROWD_SIZE = 8000;
-const SUPER_DONOR = 'enroll distance often indicate ancient throw arrow sort screen replace horse bonus';
+const SUPER_DONOR = '//Alice';
 const DONOR_BASE_SEED = '//Donor';
 const CROWD_BASE_SEED = '//Account';
-const TKN = DOT;
+const TKN = UNQ;
+const TOPUP_CROWD = true;
+const SPAM_CROWD = true;
 
 const main = async () => {
   // Get donors and top up
@@ -23,9 +25,11 @@ const main = async () => {
 
   // 1. Feed crowd using different donors for each chunk:
   const topUpResult: TxResult[]  = [];
-  for (const subCrowd of crowd) {
-    const result = await arrangeTopUpAccounts(donors[0], subCrowd, TKN(10n));
-    topUpResult.push(...result);
+  if (TOPUP_CROWD) {
+    for (const subCrowd of crowd) {
+      const result = await arrangeTopUpAccounts(donors[0], subCrowd, TKN(10n));
+      topUpResult.push(...result);
+    }
   }
 
   // 2. Empty crowd:

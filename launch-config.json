@@ -84,8 +84,9 @@
     },
     "parachains": [
         {
-            "bin": "../unique-chain/target/release/unique-collator",
-            "id": 1000,
+            "bin": "../Astar/target/release/astar-collator",
+            "id": 2006,
+            "chain":  "astar-dev",
             "balance": "1000000000000000000000000",
             "nodes": [
                 {
@@ -149,7 +150,75 @@
                     ]
                 }
             ]
+        },
+        {
+            "bin": "../unique-chain/target/release/unique-collator",
+            "id": 1000,
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "port": 31205,
+                    "wsPort": 10044,
+                    "rpcPort": 10033,
+                    "name": "alice",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31206,
+                    "wsPort": 10045,
+                    "rpcPort": 10034,
+                    "name": "bob",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31207,
+                    "wsPort": 10046,
+                    "rpcPort": 10035,
+                    "name": "charlie",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31208,
+                    "wsPort": 10047,
+                    "rpcPort": 10036,
+                    "name": "dave",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                },
+                {
+                    "port": 31209,
+                    "wsPort": 10048,
+                    "rpcPort": 10037,
+                    "name": "eve",
+                    "flags": [
+                        "--rpc-cors=all",
+                        "--unsafe-rpc-external",
+                        "--unsafe-ws-external",
+                        "-lxcm=trace"
+                    ]
+                }
+            ]
         }
+
     ],
     "simpleParachains": [],
     "hrmpChannels": [],

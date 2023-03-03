@@ -94,9 +94,7 @@ export async function spamTransfer(
     const transactions: Promise<TxResult>[] = [];
     for (const account of crowd) {
       const extrinsic = api.tx.balances.transfer(recepient.address, balance);
-      transactions.push(signSendAndWait({extrinsic, signer: account}, retry)
-        .then(() => signSendAndWait({extrinsic, signer: account}, retry))
-        .then(() => signSendAndWait({extrinsic, signer: account}, retry)));
+      transactions.push(signSendAndWait({extrinsic, signer: account}, retry));
     }
 
     console.log('Transactions sent, waiting for result...');
