@@ -85,6 +85,7 @@ export async function spamTransfer(
   crowd: IKeyringPair[],
   recepient: IKeyringPair,
   balance: bigint,
+  transfersEach: number,
   retry = false,
   wsEndpoin: string = WS_ENDPOINT,
 ) {
@@ -94,7 +95,14 @@ export async function spamTransfer(
     const transactions: Promise<TxResult>[] = [];
     for (const account of crowd) {
       const extrinsic = api.tx.balances.transfer(recepient.address, balance);
-      transactions.push(signSendAndWait({extrinsic, signer: account}, retry));
+      const spamScript = async () => {
+        let result: TxResult = {status: 'fail'};
+        for (let i = 0; i < transfersEach; i++) {
+          result = await signSendAndWait({extrinsic, signer: account}, retry);
+        }
+        return result;
+      };
+      transactions.push(spamScript());
     }
 
     console.log('Transactions sent, waiting for result...');

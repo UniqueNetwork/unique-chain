@@ -4,13 +4,16 @@ import {UNQ, DOT} from './helpers/balances';
 import {getAccounts, arrangeTopUpAccounts, spamEmptyAccounts, chunk, spamTransfer} from './helpers/accounts';
 import {TxResult} from './helpers/sign';
 
+
+// Set ws gate in the config.ts
 const CROWD_SIZE = 8000;
+const TRANSFERS_EACH = 10; // CROWD_SIZE * TRANSFERS_EACH = Total tx amount
 const SUPER_DONOR = '//Alice';
 const DONOR_BASE_SEED = '//Donor';
 const CROWD_BASE_SEED = '//Account';
-const TKN = UNQ;
-const TOPUP_CROWD = true;
-const SPAM_CROWD = true;
+const TKN = UNQ; // Set DOT if decimals = 12
+const TOPUP_CROWD = true; // If crowd has tokens set false to speed up
+
 
 const main = async () => {
   // Get donors and top up
@@ -33,7 +36,7 @@ const main = async () => {
   }
 
   // 2. Empty crowd:
-  const spamTransactions = crowd.map(subCrowd => spamTransfer(subCrowd, donors[0], 1n));
+  const spamTransactions = crowd.map(subCrowd => spamTransfer(subCrowd, donors[0], 1n, TRANSFERS_EACH));
   const spamResult = await Promise.all(spamTransactions);
 
   const topUpFailed = topUpResult.flat().filter(res => res.status === 'fail');
