@@ -18,7 +18,6 @@ use frame_support::{
 	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError},
 	parameter_types,
 };
-use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::latest::{prelude::*, Weight, MultiLocation};
@@ -48,6 +47,9 @@ pub use foreignassets as xcm_assets;
 
 #[cfg(not(feature = "foreign-assets"))]
 pub use nativeassets as xcm_assets;
+
+#[cfg(feature = "governance")]
+use crate::runtime_common::config::pallets::governance;
 
 use xcm_assets::{AssetTransactor, IsReserve, Trader};
 
@@ -238,7 +240,13 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = PolkadotXcm;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
+
+	#[cfg(feature = "governance")]
+	type ControllerOrigin = governance::RootOrAllTechnicalCommittee;
+
+	#[cfg(not(feature = "governance"))]
+	type ControllerOrigin = frame_system::EnsureRoot<AccountId>;
+
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = ();
 }
