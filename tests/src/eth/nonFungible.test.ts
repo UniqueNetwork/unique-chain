@@ -240,6 +240,28 @@ describe('NFT: Plain calls', () => {
     }
   });
 
+  itEth('Can perform setApproval()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const operator = helper.eth.createAccount();
+
+    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+
+    const result = await contract.methods.mint(owner).send({from: owner});
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
+    }
+    await contract.methods.approve(operator, tokenId).send({from: owner});
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal(operator);
+    }
+  });
+
+
   itEth('Can perform setApprovalForAll()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const operator = helper.eth.createAccount();

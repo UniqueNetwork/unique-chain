@@ -516,9 +516,14 @@ impl<T: Config> NonfungibleHandle<T> {
 	}
 
 	/// @dev Not implemented
-	fn get_approved(&self, _token_id: U256) -> Result<Address> {
-		// TODO: Not implemetable
-		Err("not implemented".into())
+	fn get_approved(&self, token_id: U256) -> Result<Address> {
+		let token = token_id.try_into()?;
+		let operator = <Pallet<T>>::get_allowance(self, token).map_err(dispatch_to_evm::<T>)?;
+		Ok(if let Some(operator) = operator {
+			*operator.as_eth()
+		} else {
+			Address::zero()
+		})
 	}
 
 	/// @notice Tells whether the given `owner` approves the `operator`.
