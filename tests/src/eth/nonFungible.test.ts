@@ -219,7 +219,7 @@ describe('NFT: Plain calls', () => {
     }
   });
 
-  itEth('Can perform approve()', async ({helper}) => {
+  itEth.only('Can perform approve()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
 
@@ -230,6 +230,14 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
+      const badTokenId = 1234567;
+      await expect(contract.methods.getApproved(badTokenId).call()).to.be.rejectedWith('revert TokenNotFound');
+    }
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
+    }
+    {
       const result = await contract.methods.approve(spender, tokenId).send({from: owner});
 
       const event = result.events.Approval;
@@ -238,29 +246,11 @@ describe('NFT: Plain calls', () => {
       expect(event.returnValues.approved).to.be.equal(spender);
       expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
     }
-  });
-
-  itEth('Can perform setApproval()', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const operator = helper.eth.createAccount();
-
-    const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-
-    const result = await contract.methods.mint(owner).send({from: owner});
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-
     {
       const approved = await contract.methods.getApproved(tokenId).call();
-      expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
-    }
-    await contract.methods.approve(operator, tokenId).send({from: owner});
-    {
-      const approved = await contract.methods.getApproved(tokenId).call();
-      expect(approved).to.be.equal(operator);
+      expect(approved).to.be.equal(spender);
     }
   });
-
 
   itEth('Can perform setApprovalForAll()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);

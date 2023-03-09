@@ -1088,8 +1088,7 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 	) -> Result<Option<T::CrossAccountId>, DispatchError> {
 		ensure! {
-		<TokenData<T>>::iter_keys().find(
-			|(c, t)| return *c == collection.id && *t == token).is_some()
+		<TokenData<T>>::get((collection.id, token)).is_some()
 		,<CommonError<T>>::TokenNotFound
 		};
 		Ok(<Allowance<T>>::get((collection.id, token)))
