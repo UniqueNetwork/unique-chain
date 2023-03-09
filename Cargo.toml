@@ -15,7 +15,14 @@ package.version = "0.9.37"
 resolver = "2"
 
 [profile.release]
-panic = 'unwind'
+# Runtime requires unwinding
+panic = "unwind"
+
+[profile.production]
+inherits = "release"
+lto = true
+codegen-units = 1
+opt-level = 3
 
 [workspace.dependencies]
 # Unique
