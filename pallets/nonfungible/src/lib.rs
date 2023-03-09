@@ -1087,10 +1087,10 @@ impl<T: Config> Pallet<T> {
 		collection: &NonfungibleHandle<T>,
 		token: TokenId,
 	) -> Result<Option<T::CrossAccountId>, DispatchError> {
-		ensure! {
-		<TokenData<T>>::get((collection.id, token)).is_some()
-		,<CommonError<T>>::TokenNotFound
-		};
+		ensure!(
+			<TokenData<T>>::get((collection.id, token)).is_some(),
+			<CommonError<T>>::TokenNotFound
+		);
 		Ok(<Allowance<T>>::get((collection.id, token)))
 	}
 

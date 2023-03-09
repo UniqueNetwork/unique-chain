@@ -219,7 +219,7 @@ describe('NFT: Plain calls', () => {
     }
   });
 
-  itEth.only('Can perform approve()', async ({helper}) => {
+  itEth('Can perform approve()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
 
