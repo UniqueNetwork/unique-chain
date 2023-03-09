@@ -22,7 +22,7 @@ panic = "unwind"
 inherits = "release"
 lto = true
 codegen-units = 1
-opt-level = "3"
+opt-level = 3
 
 [workspace.dependencies]
 # Unique
