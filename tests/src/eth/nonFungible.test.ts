@@ -230,7 +230,7 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
-      const badTokenId = 1234567;
+      const badTokenId = await contract.methods.nextTokenId().call() + 1;
       await expect(contract.methods.getApproved(badTokenId).call()).to.be.rejectedWith('revert TokenNotFound');
     }
     {

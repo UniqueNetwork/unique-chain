@@ -520,8 +520,8 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId The NFT to find the approved address for
 	/// @return The approved address for this NFT, or the zero address if there is none
 	fn get_approved(&self, token_id: U256) -> Result<Address> {
-		let token = token_id.try_into()?;
-		let operator = <Pallet<T>>::get_allowance(self, token).map_err(dispatch_to_evm::<T>)?;
+		let token_id = token_id.try_into()?;
+		let operator = <Pallet<T>>::get_allowance(self, token_id).map_err(dispatch_to_evm::<T>)?;
 		Ok(if let Some(operator) = operator {
 			*operator.as_eth()
 		} else {
