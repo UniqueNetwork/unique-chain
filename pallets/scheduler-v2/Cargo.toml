@@ -25,7 +25,7 @@ sp-std = { workspace = true }
 
 [dev-dependencies]
 pallet-preimage = { workspace = true }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.37" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
 
 [features]
 default = ["std"]

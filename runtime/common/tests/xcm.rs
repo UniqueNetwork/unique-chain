@@ -19,6 +19,7 @@ use xcm::latest::prelude::*;
 use logtest::Logger;
 use crate::RuntimeCall;
 use super::new_test_ext;
+use frame_support::pallet_prelude::Weight;
 
 fn catch_xcm_barrier_log(logger: &mut Logger, expected_msg: &str) -> Result<(), String> {
 	for record in logger {
@@ -45,16 +46,16 @@ pub fn barrier_denies_transact<B: ShouldExecute>(logger: &mut Logger) {
 	// so it is irrelevant what we are passing to the `transact` cmd.
 	let fake_encoded_call = vec![0u8];
 
-	let transact_inst = Transact {
-		origin_type: OriginKind::Superuser,
-		require_weight_at_most: 0,
+	let transact_inst: Instruction<RuntimeCall> = Transact {
+		origin_kind: OriginKind::Superuser,
+		require_weight_at_most: Weight::default(),
 		call: fake_encoded_call.into(),
 	};
 
-	let mut xcm_program = Xcm::<RuntimeCall>(vec![transact_inst]);
+	let mut xcm_program = vec![transact_inst];
 
-	let max_weight = 100_000;
-	let mut weight_credit = 100_000_000;
+	let max_weight = Weight::from_parts(100_000, 100_000);
+	let mut weight_credit = Weight::from_parts(100_000_000, 100_000_000);
 
 	let result = B::should_execute(&location, &mut xcm_program, max_weight, &mut weight_credit);
 
@@ -69,11 +70,11 @@ pub fn barrier_denies_transact<B: ShouldExecute>(logger: &mut Logger) {
 fn xcm_execute<B: ShouldExecute>(
 	self_para_id: u32,
 	location: &MultiLocation,
-	xcm: &mut Xcm<RuntimeCall>,
+	xcm: &mut [Instruction<RuntimeCall>],
 ) -> Result<(), ()> {
 	new_test_ext(self_para_id).execute_with(|| {
-		let max_weight = 100_000;
-		let mut weight_credit = 100_000_000;
+		let max_weight = Weight::from_parts(100_000, 100_000);
+		let mut weight_credit = Weight::from_parts(100_000_000, 100_000_000);
 
 		B::should_execute(&location, xcm, max_weight, &mut weight_credit)
 	})
@@ -102,7 +103,6 @@ fn make_deposit_reserve_asset(location: &MultiLocation) -> Xcm<RuntimeCall> {
 	let assets = make_multiassets(location);
 	let inst = DepositReserveAsset {
 		assets: assets.into(),
-		max_assets: 42,
 		dest: location.clone(),
 		xcm: Xcm(vec![]),
 	};
@@ -114,7 +114,7 @@ fn expect_transfer_location_denied<B: ShouldExecute>(
 	logger: &mut Logger,
 	self_para_id: u32,
 	location: &MultiLocation,
-	xcm: &mut Xcm<RuntimeCall>,
+	xcm: &mut [Instruction<RuntimeCall>],
 ) -> Result<(), String> {
 	let result = xcm_execute::<B>(self_para_id, location, xcm);
 
@@ -148,14 +148,14 @@ where
 		logger,
 		self_para_id,
 		&unknown_location,
-		&mut transfer_reserve_asset,
+		&mut transfer_reserve_asset.0,
 	)?;
 
 	expect_transfer_location_denied::<B>(
 		logger,
 		self_para_id,
 		&unknown_location,
-		&mut deposit_reserve_asset,
+		&mut deposit_reserve_asset.0,
 	)?;
 
 	Ok(())

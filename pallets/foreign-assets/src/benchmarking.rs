@@ -22,15 +22,14 @@ use frame_system::RawOrigin;
 use crate::AssetMetadata;
 use xcm::opaque::latest::Junction::Parachain;
 use xcm::VersionedMultiLocation;
-use frame_support::{
-	traits::{Currency},
-};
+use xcm::v3::Junctions::X1;
+use frame_support::traits::Currency;
 use sp_std::boxed::Box;
 
 benchmarks! {
 	register_foreign_asset {
 		let owner: T::AccountId = account("user", 0, 1);
-		let location: VersionedMultiLocation = VersionedMultiLocation::from(Parachain(1000).into());
+		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(1000)));
 		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
 			name: "name".into(),
 			symbol: "symbol".into(),
@@ -46,7 +45,7 @@ benchmarks! {
 
 	update_foreign_asset {
 		let owner: T::AccountId = account("user", 0, 1);
-		let location: VersionedMultiLocation = VersionedMultiLocation::from(Parachain(2000).into());
+		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(2000)));
 		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
 			name: "name".into(),
 			symbol: "symbol".into(),

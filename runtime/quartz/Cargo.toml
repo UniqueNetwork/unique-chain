@@ -95,7 +95,6 @@ std = [
 	'pallet-fungible/std',
 	'pallet-inflation/std',
 	'pallet-nonfungible/std',
-	'pallet-randomness-collective-flip/std',
 	'pallet-refungible/std',
 	'pallet-structure/std',
 	'pallet-sudo/std',
@@ -169,7 +168,6 @@ try-runtime = [
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
 	'pallet-nonfungible/try-runtime',
-	'pallet-randomness-collective-flip/try-runtime',
 	'pallet-refungible/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
@@ -215,7 +213,6 @@ pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-preimage = { workspace = true }
-pallet-randomness-collective-flip = { workspace = true }
 pallet-session = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }

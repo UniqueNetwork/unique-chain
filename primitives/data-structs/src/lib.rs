@@ -24,10 +24,7 @@ use core::{
 	convert::{TryFrom, TryInto},
 	fmt,
 };
-use frame_support::{
-	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
-	traits::Get,
-};
+use frame_support::storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
@@ -1200,6 +1197,12 @@ impl<Value> PropertiesMap<Value> {
 		self.0.contains_key(key)
 	}
 
+	fn metadata_encoded_len() -> usize {
+		// Max length of key length + max length of value length for max properties
+		// + max length of table size length
+		(4 * 4) * (MAX_PROPERTIES_PER_ITEM as usize) + 4
+	}
+
 	/// Check if map contains key with key validation.
 	fn check_property_key(key: &PropertyKey) -> Result<(), PropertiesError> {
 		if key.is_empty() {
@@ -1259,20 +1262,34 @@ impl<Value> TrySetProperty for PropertiesMap<Value> {
 pub type PropertiesPermissionMap = PropertiesMap<PropertyPermission>;
 
 /// Wrapper for properties map with consumed space control.
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
-pub struct Properties {
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq)]
+pub struct Properties<const S: u32> {
 	map: PropertiesMap<PropertyValue>,
 	consumed_space: u32,
 	space_limit: u32,
 }
 
-impl Properties {
+impl<const S: u32> MaxEncodedLen for Properties<S> {
+	fn max_encoded_len() -> usize {
+		<PropertiesMap<PropertyValue>>::metadata_encoded_len()
+			+ (u32::max_encoded_len() * 2)
+			+ S as usize
+	}
+}
+
+impl<const S: u32> Default for Properties<S> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl<const S: u32> Properties<S> {
 	/// Create new properies container.
-	pub fn new(space_limit: u32) -> Self {
+	pub fn new() -> Self {
 		Self {
 			map: PropertiesMap::new(),
 			consumed_space: 0,
-			space_limit,
+			space_limit: u32::MAX,
 		}
 	}
 
@@ -1300,7 +1317,7 @@ impl Properties {
 	}
 }
 
-impl IntoIterator for Properties {
+impl<const S: u32> IntoIterator for Properties<S> {
 	type Item = (PropertyKey, PropertyValue);
 	type IntoIter = <PropertiesMap<PropertyValue> as IntoIterator>::IntoIter;
 
@@ -1309,7 +1326,7 @@ impl IntoIterator for Properties {
 	}
 }
 
-impl TrySetProperty for Properties {
+impl<const S: u32> TrySetProperty for Properties<S> {
 	type Value = PropertyValue;
 
 	fn try_scoped_set(
@@ -1320,7 +1337,7 @@ impl TrySetProperty for Properties {
 	) -> Result<Option<Self::Value>, PropertiesError> {
 		let value_len = value.len();
 
-		if self.consumed_space as usize + value_len > self.space_limit as usize
+		if self.consumed_space as usize + value_len > self.space_limit.min(S) as usize
 			&& !cfg!(feature = "runtime-benchmarks")
 		{
 			return Err(PropertiesError::NoSpaceForProperty);
@@ -1341,20 +1358,5 @@ impl TrySetProperty for Properties {
 	}
 }
 
-/// Utility struct for using in `StorageMap`.
-pub struct CollectionProperties;
-
-impl Get<Properties> for CollectionProperties {
-	fn get() -> Properties {
-		Properties::new(MAX_COLLECTION_PROPERTIES_SIZE)
-	}
-}
-
-/// Utility struct for using in `StorageMap`.
-pub struct TokenProperties;
-
-impl Get<Properties> for TokenProperties {
-	fn get() -> Properties {
-		Properties::new(MAX_TOKEN_PROPERTIES_SIZE)
-	}
-}
+pub type CollectionProperties = Properties<MAX_COLLECTION_PROPERTIES_SIZE>;
+pub type TokenProperties = Properties<MAX_TOKEN_PROPERTIES_SIZE>;

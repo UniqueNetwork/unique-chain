@@ -119,8 +119,11 @@ fn register_invulnerables<T: Config + configuration::Config>(count: u32) {
 		.collect::<Vec<_>>();
 
 	for who in candidates {
-		<CollatorSelection<T>>::add_invulnerable(T::UpdateOrigin::successful_origin(), who)
-			.unwrap();
+		<CollatorSelection<T>>::add_invulnerable(
+			T::UpdateOrigin::try_successful_origin().unwrap(),
+			who,
+		)
+		.unwrap();
 	}
 }
 
@@ -178,7 +181,7 @@ benchmarks! {
 			Vec::new()
 		).unwrap();
 
-		let root_origin = T::UpdateOrigin::successful_origin();
+		let root_origin = T::UpdateOrigin::try_successful_origin().unwrap();
 	}: {
 		assert_ok!(
 			<CollatorSelection<T>>::add_invulnerable(root_origin, new_invulnerable.clone())
@@ -193,7 +196,7 @@ benchmarks! {
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
-		let root_origin = T::UpdateOrigin::successful_origin();
+		let root_origin = T::UpdateOrigin::try_successful_origin().unwrap();
 		let leaving = <Invulnerables<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
 	}: {
@@ -304,7 +307,7 @@ benchmarks! {
 
 		let leaving = <Candidates<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
-		let origin = T::UpdateOrigin::successful_origin();
+		let origin = T::UpdateOrigin::try_successful_origin().unwrap();
 	}: {
 		assert_ok!(
 			<CollatorSelection<T>>::force_release_license(origin, leaving.clone())

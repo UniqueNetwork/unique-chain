@@ -27,6 +27,8 @@ use pallet_refungible::{
 };
 use up_data_structs::{CreateItemExData, CreateItemData};
 
+pub mod xcm;
+
 macro_rules! max_weight_of {
 	($method:ident ( $($args:tt)* )) => {{
 		let max_weight = <FungibleWeights<T>>::$method($($args)*)

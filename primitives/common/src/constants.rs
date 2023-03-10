@@ -19,7 +19,7 @@ use frame_support::{
 	parameter_types,
 	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 };
-use cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE;
+use cumulus_primitives_core::relay_chain::MAX_POV_SIZE;
 use crate::types::{BlockNumber, Balance};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
