@@ -15,23 +15,24 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Everything, Get},
+	traits::{Everything, Nothing, Get, ConstU32},
 	parameter_types,
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::latest::{prelude::*, Weight, MultiLocation};
+use xcm::v3::Instruction;
 use xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, LocationInverter, ParentAsSuperuser,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
+	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
 use xcm_executor::{Config, XcmExecutor, traits::ShouldExecute};
 use sp_std::{marker::PhantomData, vec::Vec};
 use crate::{
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo, ParachainSystem, PolkadotXcm,
-	XcmpQueue, xcm_barrier::Barrier, RelayNetwork,
+	XcmpQueue, xcm_barrier::Barrier, RelayNetwork, AllPalletsWithSystem, Balances,
 };
 
 use up_common::types::AccountId;
@@ -54,10 +55,11 @@ parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
+	pub UniversalLocation: InteriorMultiLocation = Parachain(ParachainInfo::get().into()).into();
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
-	pub UnitWeightCost: Weight = 1_000_000;
+	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000, 1000); // ?
 	pub const MaxInstructions: u32 = 100;
 }
 
@@ -80,7 +82,7 @@ pub type LocalOriginToLocation = (SignedToAccountId32<RuntimeOrigin, AccountId, 
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, (), ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -110,12 +112,12 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub trait TryPass {
-	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()>;
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()>;
 }
 
 #[impl_trait_for_tuples::impl_for_tuples(30)]
 impl TryPass for Tuple {
-	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()> {
 		for_tuples!( #(
 			Tuple::try_pass(origin, message)?;
 		)* );
@@ -126,9 +128,11 @@ impl TryPass for Tuple {
 
 pub struct DenyTransact;
 impl TryPass for DenyTransact {
-	fn try_pass<Call>(_origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+	fn try_pass<Call>(
+		_origin: &MultiLocation,
+		message: &mut [Instruction<Call>],
+	) -> Result<(), ()> {
 		let transact_inst = message
-			.0
 			.iter()
 			.find(|inst| matches![inst, Instruction::Transact { .. }]);
 
@@ -159,7 +163,7 @@ where
 {
 	fn should_execute<Call>(
 		origin: &MultiLocation,
-		message: &mut Xcm<Call>,
+		message: &mut [Instruction<Call>],
 		max_weight: Weight,
 		weight_credit: &mut Weight,
 	) -> Result<(), ()> {
@@ -171,22 +175,19 @@ where
 // Allow xcm exchange only with locations in list
 pub struct DenyExchangeWithUnknownLocation<T>(PhantomData<T>);
 impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> {
-	fn try_pass<Call>(origin: &MultiLocation, message: &mut Xcm<Call>) -> Result<(), ()> {
+	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()> {
 		let allowed_locations = T::get();
 
 		// Check if deposit or transfer belongs to allowed parachains
 		let mut allowed = allowed_locations.contains(origin);
 
-		message.0.iter().for_each(|inst| match inst {
-			DepositReserveAsset { dest: dst, .. } => {
-				allowed |= allowed_locations.contains(dst);
+		message.iter().for_each(|inst| match inst {
+			DepositReserveAsset { dest: dst, .. }
+			| TransferReserveAsset { dest: dst, .. }
+			| InitiateReserveWithdraw { reserve: dst, .. } => {
+				allowed |= allowed_locations.contains(&dst);
 			}
-			TransferReserveAsset { dest: dst, .. } => {
-				allowed |= allowed_locations.contains(dst);
-			}
-			InitiateReserveWithdraw { reserve: dst, .. } => {
-				allowed |= allowed_locations.contains(dst);
-			}
+			// ? There are more instructions worth checking
 			_ => {}
 		});
 
@@ -217,15 +218,29 @@ where
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
-	type LocationInverter = LocationInverter<Ancestry>;
+	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = Weigher;
 	type Trader = Trader<T>;
 	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
+	type PalletInstancesInfo = AllPalletsWithSystem;
+	type MaxAssetsIntoHolding = ConstU32<64>;
 
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
+	type AssetLocker = ();
+	type AssetExchanger = ();
+	type FeeManager = ();
+	type MessageExporter = ();
+	type UniversalAliases = Nothing; // ?
+	type CallDispatcher = RuntimeCall;
+	type SafeCallFilter = Nothing; // ? Only non-recursive calls may go here, but do we need this?
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -238,11 +253,19 @@ impl pallet_xcm::Config for Runtime {
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
-	type LocationInverter = LocationInverter<Ancestry>;
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
 	const VERSION_DISCOVERY_QUEUE_SIZE: u32 = 100;
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
+	type UniversalLocation = UniversalLocation;
+	type Currency = Balances;
+	type CurrencyMatcher = (); // ?
+	type TrustedLockers = ();
+	type SovereignAccountOf = ();
+	type MaxLockers = ConstU32<8>;
+	type WeightInfo = crate::weights::xcm::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type ReachableDest = ReachableDest;
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
@@ -259,6 +282,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
+	type PriceForSiblingDelivery = ();
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {

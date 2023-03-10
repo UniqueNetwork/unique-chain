@@ -202,6 +202,9 @@ macro_rules! testnet_genesis {
 				accounts: BTreeMap::new(),
 			},
 			ethereum: EthereumConfig {},
+			foreign_assets: Default::default(),
+			polkadot_xcm: Default::default(),
+			transaction_payment: Default::default(),
 		}
 	}};
 }
@@ -252,6 +255,9 @@ macro_rules! testnet_genesis {
 				accounts: BTreeMap::new(),
 			},
 			ethereum: EthereumConfig {},
+			foreign_assets: Default::default(),
+			polkadot_xcm: Default::default(),
+			transaction_payment: Default::default(),
 		}
 	}};
 }

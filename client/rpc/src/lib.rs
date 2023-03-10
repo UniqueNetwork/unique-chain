@@ -28,7 +28,7 @@ use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
 	PropertyKeyPermission, TokenData, TokenChild,
 };
-use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
+use sp_api::{BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
 use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
@@ -342,9 +342,9 @@ macro_rules! pass_method {
 			at: Option<<Block as BlockT>::Hash>,
 		) -> Result<$result> {
 			let api = self.client.runtime_api();
-			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+			let at = at.unwrap_or_else(|| self.client.info().best_hash);
 			let _api_version = if let Ok(Some(api_version)) =
-				api.api_version::<$runtime_api_macro!()>(&at)
+				api.api_version::<$runtime_api_macro!()>(at)
 			{
 				api_version
 			} else {
@@ -353,9 +353,9 @@ macro_rules! pass_method {
 			};
 
 			let result = $(if _api_version < $ver {
-				api.$changed_method_name(&at, $($changed_name),*).map(|r| r.map($fixer))
+				api.$changed_method_name(at, $($changed_name),*).map(|r| r.map($fixer))
 			} else)*
-			{ api.$method_name(&at, $($((|$map_arg: $ty| $map))? ($name)),*) };
+			{ api.$method_name(at, $($((|$map_arg: $ty| $map))? ($name)),*) };
 
 			Ok(result
 				.map_err(|e| anyhow!("unable to query: {e}"))?

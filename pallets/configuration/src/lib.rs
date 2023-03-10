@@ -116,7 +116,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type XcmAllowedLocationsOverride<T: Config> = StorageValue<
-		Value = BoundedVec<xcm::v2::MultiLocation, T::MaxXcmAllowedLocations>,
+		Value = BoundedVec<xcm::v3::MultiLocation, T::MaxXcmAllowedLocations>,
 		QueryKind = OptionQuery,
 	>;
 

@@ -21,8 +21,7 @@ use frame_support::{
 use frame_system::EnsureSigned;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use sp_runtime::traits::Convert;
-use xcm::latest::{Weight, Junction::*, Junctions::*, MultiLocation, NetworkId};
-use xcm_builder::LocationInverter;
+use xcm::latest::{Weight, Junction::*, Junctions::*, MultiLocation};
 use xcm_executor::XcmExecutor;
 use sp_std::{vec, vec::Vec};
 use pallet_foreign_assets::{CurrencyId, NativeCurrency};
@@ -30,7 +29,7 @@ use crate::{
 	Runtime, RuntimeEvent, RelayChainBlockNumberProvider,
 	runtime_common::config::{
 		xcm::{
-			SelfLocation, Weigher, XcmConfig, Ancestry,
+			SelfLocation, Weigher, XcmConfig, UniversalLocation,
 			xcm_assets::{CurrencyIdConvert},
 		},
 		pallets::TreasuryAccountId,
@@ -50,7 +49,7 @@ parameter_types! {
 	pub const MinVestedTransfer: Balance = 10 * UNIQUE;
 	pub const MaxVestingSchedules: u32 = 28;
 
-	pub const BaseXcmWeight: Weight = 100_000_000; // TODO: recheck this
+	pub const BaseXcmWeight: Weight = Weight::from_parts(100_000_000, 1000); // ? TODO: recheck this
 	pub const MaxAssetsForTransfer: usize = 2;
 }
 
@@ -87,7 +86,7 @@ pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
 		X1(AccountId32 {
-			network: NetworkId::Any,
+			network: None,
 			id: account.into(),
 		})
 		.into()
@@ -142,9 +141,9 @@ impl orml_xtokens::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
 	type Weigher = Weigher;
 	type BaseXcmWeight = BaseXcmWeight;
-	type LocationInverter = LocationInverter<Ancestry>;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
 	type MultiLocationsFilter = Everything;
 	type ReserveProvider = AbsoluteReserveProvider;
+	type UniversalLocation = UniversalLocation;
 }

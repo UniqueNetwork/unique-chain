@@ -15,7 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::traits::Everything;
-use xcm::latest::{Xcm, Weight, MultiLocation};
+use xcm::latest::{Weight, MultiLocation};
+use xcm::v3::Instruction;
 use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit};
 use xcm_executor::traits::ShouldExecute;
 
@@ -30,7 +31,7 @@ pub struct AllowAllDebug;
 impl ShouldExecute for AllowAllDebug {
 	fn should_execute<Call>(
 		_origin: &MultiLocation,
-		_message: &mut Xcm<Call>,
+		_message: &mut [Instruction<Call>],
 		_max_weight: Weight,
 		_weight_credit: &mut Weight,
 	) -> Result<(), ()> {

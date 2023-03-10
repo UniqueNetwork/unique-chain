@@ -15,13 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Contains, Get, fungibles},
+	traits::{Contains, Get, fungibles, ContainsPair},
 	parameter_types,
 };
 use sp_runtime::traits::Convert;
 use xcm::latest::{MultiAsset, Junction::*, MultiLocation, Junctions::*};
-use xcm_builder::{FungiblesAdapter, ConvertedConcreteAssetId};
-use xcm_executor::traits::{Convert as ConvertXcm, JustTry, FilterAssetLocation};
+use xcm_builder::{FungiblesAdapter, NonLocalMint, ConvertedConcreteId};
+use xcm_executor::traits::{Convert as ConvertXcm, JustTry};
 use pallet_foreign_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, NativeCurrency, FreeForAll, TryAsForeign,
 	ForeignAssetId, CurrencyId,
@@ -126,13 +126,13 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	// Use this fungibles implementation:
 	ForeignAssets,
 	// Use this currency when it is a fungible asset matching the given location or name:
-	ConvertedConcreteAssetId<AssetIds, Balance, AsInnerId<AssetIds, JustTry>, JustTry>,
+	ConvertedConcreteId<AssetIds, Balance, AsInnerId<AssetIds, JustTry>, JustTry>,
 	// Convert an XCM MultiLocation into a local account id:
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
 	// No teleports are allowed
-	NoTeleports<AccountId, ForeignAssets>,
+	NonLocalMint<NoTeleports<AccountId, ForeignAssets>>,
 	// The account to use for tracking teleports.
 	CheckingAccount,
 >;
@@ -141,8 +141,10 @@ pub type FungiblesTransactor = FungiblesAdapter<
 pub type AssetTransactors = FungiblesTransactor;
 
 pub struct AllAsset;
-impl FilterAssetLocation for AllAsset {
-	fn filter_asset_location(_asset: &MultiAsset, _origin: &MultiLocation) -> bool {
+impl ContainsPair<MultiAsset, MultiLocation> for AllAsset {
+	fn contains(_asset: &MultiAsset, _origin: &MultiLocation) -> bool {
+		// ? Shouldn't we query foreign-asset pallet here, because of the new non-local mint
+		// location logic?
 		true
 	}
 }

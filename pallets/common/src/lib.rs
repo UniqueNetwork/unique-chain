@@ -76,9 +76,10 @@ use up_data_structs::{
 	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
 	CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget,
-	PhantomType, Property, Properties, PropertiesPermissionMap, PropertyKey, PropertyValue,
-	PropertyPermission, PropertiesError, TokenOwnerError, PropertyKeyPermission, TokenData,
-	TrySetProperty, PropertyScope, CollectionPermissions,
+	PhantomType, Property, CollectionProperties as CollectionPropertiesT, TokenProperties,
+	PropertiesPermissionMap, PropertyKey, PropertyValue, PropertyPermission, PropertiesError,
+	TokenOwnerError, PropertyKeyPermission, TokenData, TrySetProperty, PropertyScope,
+	CollectionPermissions,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -800,9 +801,8 @@ pub mod pallet {
 	pub type CollectionProperties<T> = StorageMap<
 		Hasher = Blake2_128Concat,
 		Key = CollectionId,
-		Value = Properties,
+		Value = CollectionPropertiesT,
 		QueryKind = ValueQuery,
-		OnEmpty = up_data_structs::CollectionProperties,
 	>;
 
 	/// Storage of token property permissions of a collection.
@@ -1082,7 +1082,7 @@ impl<T: Config> Pallet<T> {
 			flags,
 		};
 
-		let mut collection_properties = up_data_structs::CollectionProperties::get();
+		let mut collection_properties = CollectionPropertiesT::new();
 		collection_properties
 			.try_set_from_iter(data.properties.into_iter())
 			.map_err(<Error<T>>::from)?;
@@ -1246,9 +1246,9 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_create: bool,
-		mut stored_properties: Properties,
+		mut stored_properties: TokenProperties,
 		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
-		set_token_properties: impl FnOnce(Properties),
+		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
 		let is_collection_admin = collection.is_owner_or_admin(sender);
