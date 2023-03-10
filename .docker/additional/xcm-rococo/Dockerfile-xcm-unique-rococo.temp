@@ -63,7 +63,6 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 
 COPY --from=builder-unique /unique_parachain/.docker/additional/xcm-rococo/launch-config-xcm-unique-rococo.json /polkadot-launch/launch-config.json
 COPY --from=builder-unique /unique_parachain/.docker/xcm-config/5validators.jsonnet /polkadot-launch/5validators.jsonnet
-COPY --from=builder-unique /unique_parachain/.docker/xcm-config/minBondFix.jsonnet /polkadot-launch/minBondFix.jsonnet
 
 COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/

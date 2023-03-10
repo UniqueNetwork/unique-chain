@@ -94,7 +94,7 @@ export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbea
 };
 
 export const MINIMUM_DONOR_FUND = 100_000n;
-export const DONOR_FUNDING = 1_000_000n;
+export const DONOR_FUNDING = 2_000_000n;
 
 // App-promotion periods:
 export const LOCKING_PERIOD = 12n; // 12 blocks of relay
@@ -114,6 +114,8 @@ export enum Pallets {
   CollatorSelection = 'collatorselection',
   Session = 'session',
   Identity = 'identity',
+  Preimage = 'preimage',
+  Maintenance = 'maintenance',
   TestUtils = 'testutils',
 }
 

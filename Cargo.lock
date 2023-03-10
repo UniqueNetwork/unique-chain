@@ -2445,8 +2445,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.3.0"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.0#c4bfdf39d84fbe74c6178417177f2a7f81d92bdd"
+version = "0.3.1"
+source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.1#21e61c627f71337d6b8a03899fe8de14bfbf67aa"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2457,8 +2457,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.3.0"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.0#c4bfdf39d84fbe74c6178417177f2a7f81d92bdd"
+version = "0.3.1"
+source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.1#21e61c627f71337d6b8a03899fe8de14bfbf67aa"
 dependencies = [
  "Inflector",
  "hex",
@@ -5487,7 +5487,7 @@ checksum = "6f61fba1741ea2b3d6a1e3178721804bb716a68a6aeba1149b5d52e3d464ea66"
 
 [[package]]
 name = "opal-runtime"
-version = "0.9.36"
+version = "0.9.37"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -5541,6 +5541,7 @@ dependencies = [
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-session",
@@ -5782,7 +5783,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-app-promotion"
-version = "0.1.4"
+version = "0.1.5"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6272,6 +6273,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-io",
  "sp-std",
 ]
 
@@ -6479,6 +6481,7 @@ dependencies = [
  "frame-system",
  "parity-scale-codec",
  "scale-info",
+ "sp-core",
  "sp-std",
 ]
 
@@ -8913,7 +8916,7 @@ dependencies = [
 
 [[package]]
 name = "quartz-runtime"
-version = "0.9.36"
+version = "0.9.37"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -8967,6 +8970,7 @@ dependencies = [
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-session",
@@ -13037,7 +13041,7 @@ checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "unique-node"
-version = "0.9.36"
+version = "0.9.37"
 dependencies = [
  "app-promotion-rpc",
  "clap",
@@ -13143,7 +13147,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime"
-version = "0.9.36"
+version = "0.9.37"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -13197,6 +13201,7 @@ dependencies = [
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-nonfungible",
+ "pallet-preimage",
  "pallet-randomness-collective-flip",
  "pallet-refungible",
  "pallet-session",
@@ -13271,7 +13276,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-common"
-version = "0.9.36"
+version = "0.9.37"
 dependencies = [
  "cumulus-primitives-core",
  "fp-rpc",

@@ -104,10 +104,10 @@ impl Cli {
 			None => {
 				if cfg!(feature = "unique-runtime") {
 					"Unique"
-				} else if cfg!(feature = "quartz-runtime") {
-					"Quartz"
 				} else if cfg!(feature = "sapphire-runtime") {
 					"Sapphire"
+				} else if cfg!(feature = "quartz-runtime") {
+					"Quartz"
 				} else {
 					"Opal"
 				}

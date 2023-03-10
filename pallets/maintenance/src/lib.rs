@@ -25,13 +25,36 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::pallet_prelude::*;
+	use frame_support::{dispatch::*, pallet_prelude::*};
+	use frame_support::{
+		traits::{QueryPreimage, StorePreimage},
+	};
 	use frame_system::pallet_prelude::*;
+	use sp_core::H256;
+
 	use crate::weights::WeightInfo;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
+		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		/// The runtime origin type.
+		type RuntimeOrigin: From<RawOrigin<Self::AccountId>>
+			+ IsType<<Self as frame_system::Config>::RuntimeOrigin>;
+
+		/// The aggregated call type.
+		type RuntimeCall: Parameter
+			+ Dispatchable<
+				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
+				PostInfo = PostDispatchInfo,
+			> + GetDispatchInfo
+			+ From<frame_system::Call<Self>>;
+
+		/// The preimage provider with which we look up call hashes to get the call.
+		type Preimages: QueryPreimage + StorePreimage;
+
+		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 	}
 
@@ -77,6 +100,50 @@ pub mod pallet {
 			Self::deposit_event(Event::MaintenanceDisabled);
 
 			Ok(())
+		}
+
+		/// Execute a runtime call stored as a preimage.
+		///
+		/// `weight_bound` is the maximum weight that the caller is willing
+		/// to allow the extrinsic to be executed with.
+		#[pallet::call_index(2)]
+		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage() + *weight_bound)]
+		pub fn execute_preimage(
+			origin: OriginFor<T>,
+			hash: H256,
+			weight_bound: Weight,
+		) -> DispatchResultWithPostInfo {
+			use codec::Decode;
+
+			ensure_root(origin)?;
+
+			let data = T::Preimages::fetch(&hash, None)?;
+			weight_bound.set_proof_size(
+				weight_bound
+					.proof_size()
+					.checked_sub(
+						data.len()
+							.try_into()
+							.map_err(|_| DispatchError::Corruption)?,
+					)
+					.ok_or(DispatchError::Exhausted)?,
+			);
+
+			let call = <T as Config>::RuntimeCall::decode(&mut &data[..])
+				.map_err(|_| DispatchError::Corruption)?;
+
+			ensure!(
+				call.get_dispatch_info().weight.all_lte(weight_bound),
+				DispatchError::Exhausted
+			);
+
+			match call.dispatch(frame_system::RawOrigin::Root.into()) {
+				Ok(_) => Ok(Pays::No.into()),
+				Err(error_and_info) => Err(DispatchErrorWithPostInfo {
+					post_info: Pays::No.into(),
+					error: error_and_info.error,
+				}),
+			}
 		}
 	}
 }

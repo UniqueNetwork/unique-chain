@@ -66,6 +66,7 @@ describe('Pallet presence', () => {
       const foreignAssets = 'foreignassets';
       const appPromotion = 'apppromotion';
       const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
+      const preimage = ['preimage'];
       const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE')) {
@@ -75,6 +76,7 @@ describe('Pallet presence', () => {
           appPromotion,
           testUtils,
           ...collatorSelection,
+          ...preimage,
         );
       } else if (chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
         requiredPallets.push(
@@ -82,10 +84,15 @@ describe('Pallet presence', () => {
           appPromotion,
           foreignAssets,
           ...collatorSelection,
+          ...preimage,
         );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
-        requiredPallets.push(foreignAssets);
+        requiredPallets.push(
+          refungible,
+          foreignAssets,
+          appPromotion,
+        );
       }
     });
   });

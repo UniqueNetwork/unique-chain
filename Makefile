@@ -137,9 +137,13 @@ bench-identity:
 bench-app-promotion:
 	make _bench PALLET=app-promotion PALLET_DIR=app-promotion
 
+.PHONY: bench-maintenance
+bench-maintenance:
+	make _bench PALLET=maintenance
+
 .PHONY: bench
 # Disabled: bench-scheduler, bench-collator-selection, bench-identity
-bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets
+bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance
 
 .PHONY: check
 check:

@@ -1,13 +1,14 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 //
-// Pulls identities and sub-identities from a chain and then uses sudo to force upload them into another.
+// Pulls identities and sub-identities from a chain and then makes a preimage to later force upload them into another.
 // Only changed or previously non-existent data are inserted.
 //
-// Usage: `yarn setIdentities [relay WS URL] [parachain WS URL] [sudo key]`
+// Usage: `yarn setIdentities [relay WS URL] [parachain WS URL] [user key]
 // Example: `yarn setIdentities wss://polkadot-rpc.dwellir.com ws://localhost:9944 escape pattern miracle train sudden cart adapt embark wedding alien lamp mesh`
 
 import {encodeAddress} from '@polkadot/keyring';
+import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, Pallets} from './index';
 import {ChainHelperBase} from './playgrounds/unique';
 
@@ -81,6 +82,18 @@ export async function getSupers(helper: ChainHelperBase) {
   return (await helper.getApi().query.identity.superOf.entries()).map(([key, value]) => [extractAccountId(key), value as any]);
 }
 
+async function uploadPreimage(helper: ChainHelperBase, preimageMaker: IKeyringPair, preimage: string) {
+  try {
+    await helper.executeExtrinsic(preimageMaker, 'api.tx.preimage.notePreimage', [preimage]);
+  } catch(e: any) {
+    if (e.message.includes('AlreadyNoted')) {
+      console.warn('Warning: The same preimage already exists on the chain. Nothing was uploaded.');
+    } else {
+      console.error(e);
+    }
+  }
+}
+
 // The utility for pulling identity and sub-identity data
 const forceInsertIdentities = async (): Promise<void> => {
   let relaySS58Prefix = 0;
@@ -128,8 +141,10 @@ const forceInsertIdentities = async (): Promise<void> => {
 
   await usingPlaygrounds(async (helper, privateKey) => {
     if (helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) console.error('pallet-identity is not included in parachain.');
+    if (helper.fetchMissingPalletNames([Pallets.Preimage]).length != 0) console.error('pallet-preimage is not included in parachain.');
+
     try {
-      const superuser = await privateKey(key);
+      const preimageMaker = await privateKey(key);
       const ss58Format = helper.chain.getChainProperties().ss58Format;
       const paraIdentities = await getIdentities(helper);
       const identitiesToAdd: any[] = [];
@@ -158,13 +173,21 @@ const forceInsertIdentities = async (): Promise<void> => {
       }
 
       if (identitiesToRemove.length != 0)
-        await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [identitiesToRemove]);
+        await uploadPreimage(
+          helper,
+          preimageMaker,
+          helper.constructApiCall('api.tx.identity.forceRemoveIdentities', [identitiesToRemove]).method.toHex(),
+        );
       if (identitiesToAdd.length != 0)
-        await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identitiesToAdd]);
+        await uploadPreimage(
+          helper,
+          preimageMaker,
+          helper.constructApiCall('api.tx.identity.forceInsertIdentities', [identitiesToAdd]).method.toHex(),
+        );
 
-      console.log(`Tried to upload ${identitiesToAdd.length} identities`
+      console.log(`Tried to push ${identitiesToAdd.length} identities`
         + ` and found ${identitiesToRemove.length} identities for potential removal.`
-        + ` Now there are ${(await helper.getApi().query.identity.identityOf.keys()).length}.`);
+        + ` Currently there are ${(await helper.getApi().query.identity.identityOf.keys()).length} identities on the chain.`);
 
       // fill sub-identities
       const paraSubs = await getSubs(helper);
@@ -187,10 +210,14 @@ const forceInsertIdentities = async (): Promise<void> => {
       }
 
       if (subsToUpdate.length != 0)
-        await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsToUpdate]);
+        await uploadPreimage(
+          helper,
+          preimageMaker,
+          helper.constructApiCall('api.tx.identity.forceSetSubs', [subsToUpdate]).method.toHex(),
+        );
 
-      console.log(`Also tried to update ${subsToUpdate.length} identities with their sub-identities.`
-        + ` Now there are ${(await helper.getApi().query.identity.subsOf.keys()).length} identities with subs.`);
+      console.log(`Also tried to push ${subsToUpdate.length} identities with their sub-identities.`
+        + ` Currently there are ${(await helper.getApi().query.identity.subsOf.keys()).length} identities with subs.`);
     } catch (error) {
       console.error(error);
       throw Error('Error during setting identities');

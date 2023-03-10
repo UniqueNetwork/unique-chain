@@ -186,7 +186,7 @@ export class DevAcalaHelper extends AcalaHelper {
 
 export class DevKaruraHelper extends DevAcalaHelper {}
 
-class ArrangeGroup {
+export class ArrangeGroup {
   helper: DevUniqueHelper;
 
   scheduledIdSlider = 0;
@@ -214,7 +214,7 @@ class ArrangeGroup {
       accounts.push(recipient);
       if (balance !== 0n) {
         const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
-        transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
+        transactions.push(this.helper.signTransaction(donor, tx, {nonce, era: 0}, 'account generation'));
         nonce++;
       }
     }
@@ -321,7 +321,7 @@ class ArrangeGroup {
   };
 
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
-    const address = payer.Substrate ? payer.Substrate : await this.helper.address.ethToSubstrate(payer.Ethereum!);
+    const address = payer.Substrate ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum!);
     let balance = await this.helper.balance.getSubstrate(address);
 
     await promise();
@@ -733,7 +733,7 @@ class AdminGroup {
     this.helper = helper;
   }
 
-  async payoutStakers(signer: IKeyringPair, stakersToPayout: number) {
+  async payoutStakers(signer: IKeyringPair, stakersToPayout: number):  Promise<{staker: string, stake: bigint, payout: bigint}[]> {
     const payoutResult = await this.helper.executeExtrinsic(signer, 'api.tx.appPromotion.payoutStakers', [stakersToPayout], true);
     return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => {
       return {

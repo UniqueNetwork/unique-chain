@@ -112,7 +112,7 @@ use pallet_common::{
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_core::H160;
+use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use core::ops::Deref;
@@ -622,6 +622,10 @@ impl<T: Config> Pallet<T> {
 			stored_properties,
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+			erc::ERC721TokenEvent::TokenChanged {
+				token_id: token_id.into(),
+			}
+			.to_log(T::ContractAddress::get()),
 		)
 	}
 
@@ -1273,12 +1277,16 @@ impl<T: Config> Pallet<T> {
 				Some(from),
 				nesting_budget,
 			)? {
-			// Pass, token existence is checked in `check_indirectly_owned`
+			// Pass, token existence and ouroboros checks are done in `check_indirectly_owned`
 		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
-			ensure!(
-				<TokenData<T>>::contains_key((handle.id, under)),
-				<CommonError<T>>::TokenNotFound
-			);
+			// token existence and ouroboros checks are done in `get_checked_topmost_owner`
+			let _ = <PalletStructure<T>>::get_checked_topmost_owner(
+				handle.id,
+				under,
+				Some(from),
+				nesting_budget,
+			)?
+			.ok_or(<CommonError<T>>::TokenNotFound)?;
 		} else {
 			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
 		}

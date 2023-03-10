@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.5] - 2023-02-14
+
+### Added
+
+- `unstake_partial` extrinsic.
+
 ## [0.1.4] - 2023-01-31
 
 ### Changed
