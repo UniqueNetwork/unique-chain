@@ -25,7 +25,8 @@ export const getTestSeed = (filename: string) => {
   return `//Alice+${getTestHash(filename)}`;
 };
 
-async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
+async function usingPlaygroundsGeneral<T1 extends ChainHelperBase, T2>
+(helperType: new(logger: ILogger) => T1, url: string, code: (helper: T1, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<T2>) {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
@@ -49,7 +50,8 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
         return account;
       }
     };
-    await code(helper, privateKey);
+    const result = await code(helper, privateKey);
+    return result;
   }
   finally {
     await helper.disconnect();
@@ -57,40 +59,40 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
   }
 }
 
-export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
-  return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
+export const usingPlaygrounds = <T>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<T>, url: string = config.substrateUrl) => {
+  return usingPlaygroundsGeneral<DevUniqueHelper, T>(DevUniqueHelper, url, code);
 };
 
-export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
+export const usingWestmintPlaygrounds = <T>(url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevWestmintHelper, T>(DevWestmintHelper, url, code);
 };
 
-export const usingStateminePlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
+export const usingStateminePlaygrounds = <T>(url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevStatemineHelper, T>(DevWestmintHelper, url, code);
 };
 
-export const usingStatemintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
+export const usingStatemintPlaygrounds = <T>(url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevStatemintHelper, T>(DevWestmintHelper, url, code);
 };
 
-export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
+export const usingRelayPlaygrounds = <T>(url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevRelayHelper, T>(DevRelayHelper, url, code);
 };
 
-export const usingAcalaPlaygrounds = (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
+export const usingAcalaPlaygrounds = <T>(url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevAcalaHelper, T>(DevAcalaHelper, url, code);
 };
 
-export const usingKaruraPlaygrounds = (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
+export const usingKaruraPlaygrounds = <T>(url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevKaruraHelper, T>(DevAcalaHelper, url, code);
 };
 
-export const usingMoonbeamPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
+export const usingMoonbeamPlaygrounds = <T>(url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevMoonbeamHelper, T>(DevMoonbeamHelper, url, code);
 };
 
-export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
+export const usingMoonriverPlaygrounds = <T>(url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<T>) => {
+  return usingPlaygroundsGeneral<DevMoonriverHelper, T>(DevMoonriverHelper, url, code);
 };
 
 export const MINIMUM_DONOR_FUND = 100_000n;
