@@ -190,6 +190,7 @@ scheduler = []
 
 no-maintenance = []
 no-sponsorship = []
+no-fake-tx-finalizer = []
 
 ################################################################################
 # local dependencies

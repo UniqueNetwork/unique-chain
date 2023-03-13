@@ -93,63 +93,115 @@ pub fn native_version() -> NativeVersion {
 #[cfg(not(feature = "no-sponsorship"))]
 pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
-#[cfg(all(not(feature = "no-maintenance"), not(feature = "no-sponsorship")))]
-pub type SignedExtra = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	maintenance::CheckMaintenance,
-	identity::DisableIdentityCalls,
-	ChargeTransactionPayment,
-	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
-	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
-);
+macro_rules! signed_extra {
+	(
+		maintenance: $($maintenance: path)?;
+		sponsorship: $($sponsorship: path)?;
+		ftf: $($ftf: path)?;
+	) => {
+		pub type SignedExtra = (
+			frame_system::CheckSpecVersion<Runtime>,
+			frame_system::CheckTxVersion<Runtime>,
+			frame_system::CheckGenesis<Runtime>,
+			frame_system::CheckEra<Runtime>,
+			frame_system::CheckNonce<Runtime>,
+			frame_system::CheckWeight<Runtime>,
+			$($maintenance,)?
+			identity::DisableIdentityCalls,
+			$($sponsorship,)?
+			//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+			$($ftf)?
+		);
+	};
+}
 
-#[cfg(all(not(feature = "no-maintenance"), feature = "no-sponsorship"))]
-pub type SignedExtra = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	maintenance::CheckMaintenance,
-	identity::DisableIdentityCalls,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
-	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
-);
+#[cfg(all(
+	not(feature = "no-maintenance"),
+	not(feature = "no-sponsorship"),
+	not(feature = "no-fake-tx-finalizer")
+))]
+signed_extra! {
+	maintenance: maintenance::CheckMaintenance;
+	sponsorship: ChargeTransactionPayment;
+	ftf: pallet_ethereum::FakeTransactionFinalizer<Runtime>;
+}
 
-#[cfg(all(feature = "no-maintenance", not(feature = "no-sponsorship")))]
-pub type SignedExtra = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	identity::DisableIdentityCalls,
-	ChargeTransactionPayment,
-	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
-	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
-);
+#[cfg(all(
+	not(feature = "no-maintenance"),
+	not(feature = "no-sponsorship"),
+	feature = "no-fake-tx-finalizer"
+))]
+signed_extra! {
+	maintenance: maintenance::CheckMaintenance;
+	sponsorship: ChargeTransactionPayment;
+	ftf: ;
+}
 
-#[cfg(all(feature = "no-maintenance", feature = "no-sponsorship"))]
-pub type SignedExtra = (
-	frame_system::CheckSpecVersion<Runtime>,
-	frame_system::CheckTxVersion<Runtime>,
-	frame_system::CheckGenesis<Runtime>,
-	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
-	frame_system::CheckWeight<Runtime>,
-	identity::DisableIdentityCalls,
-	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
-	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
-);
+#[cfg(all(
+	not(feature = "no-maintenance"),
+	feature = "no-sponsorship",
+	not(feature = "no-fake-tx-finalizer")
+))]
+signed_extra! {
+	maintenance: maintenance::CheckMaintenance;
+	sponsorship: ;
+	ftf: pallet_ethereum::FakeTransactionFinalizer<Runtime>;
+}
+
+#[cfg(all(
+	not(feature = "no-maintenance"),
+	feature = "no-sponsorship",
+	feature = "no-fake-tx-finalizer"
+))]
+signed_extra! {
+	maintenance: maintenance::CheckMaintenance;
+	sponsorship: ;
+	ftf: ;
+}
+
+#[cfg(all(
+	feature = "no-maintenance",
+	not(feature = "no-sponsorship"),
+	not(feature = "no-fake-tx-finalizer")
+))]
+signed_extra! {
+	maintenance: ;
+	sponsorship: ChargeTransactionPayment;
+	ftf: pallet_ethereum::FakeTransactionFinalizer<Runtime>;
+}
+
+#[cfg(all(
+	feature = "no-maintenance",
+	not(feature = "no-sponsorship"),
+	feature = "no-fake-tx-finalizer"
+))]
+signed_extra! {
+	maintenance: ;
+	sponsorship: ChargeTransactionPayment;
+	ftf: ;
+}
+
+#[cfg(all(
+	feature = "no-maintenance",
+	feature = "no-sponsorship",
+	not(feature = "no-fake-tx-finalizer")
+))]
+signed_extra! {
+	maintenance: ;
+	sponsorship: ;
+	ftf: pallet_ethereum::FakeTransactionFinalizer<Runtime>;
+}
+
+#[cfg(all(
+	feature = "no-maintenance",
+	feature = "no-sponsorship",
+	feature = "no-fake-tx-finalizer"
+))]
+signed_extra! {
+	maintenance: ;
+	sponsorship: ;
+	ftf: ;
+}
 
 /// Unchecked extrinsic type as expected by this runtime.
 pub type UncheckedExtrinsic =
