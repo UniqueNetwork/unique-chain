@@ -23,7 +23,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, Balances,
+	Runtime, RuntimeEvent, RuntimeCall, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64};
 use up_common::{
@@ -34,6 +34,9 @@ use up_data_structs::{
 	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
 };
 use sp_arithmetic::Perbill;
+
+#[cfg(not(feature = "no-maintenance"))]
+use crate::RuntimeOrigin;
 
 #[cfg(feature = "scheduler")]
 pub mod scheduler;
@@ -124,6 +127,7 @@ impl pallet_configuration::Config for Runtime {
 	type WeightInfo = pallet_configuration::weights::SubstrateWeight<Self>;
 }
 
+#[cfg(not(feature = "no-maintenance"))]
 impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeOrigin = RuntimeOrigin;

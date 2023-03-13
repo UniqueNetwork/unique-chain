@@ -196,6 +196,9 @@ pallet-test-utils = []
 refungible = []
 scheduler = []
 
+no-maintenance = []
+no-sponsorship = []
+
 ################################################################################
 # local dependencies
 

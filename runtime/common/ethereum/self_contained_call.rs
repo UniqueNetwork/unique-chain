@@ -17,9 +17,15 @@
 use sp_core::H160;
 use sp_runtime::{
 	traits::{Dispatchable, DispatchInfoOf, PostDispatchInfoOf},
-	transaction_validity::{TransactionValidityError, TransactionValidity, InvalidTransaction},
+	transaction_validity::{TransactionValidityError, TransactionValidity},
 };
-use crate::{RuntimeOrigin, RuntimeCall, Maintenance};
+use crate::{RuntimeOrigin, RuntimeCall};
+
+#[cfg(not(feature = "no-maintenance"))]
+use crate::Maintenance;
+
+#[cfg(not(feature = "no-maintenance"))]
+use sp_runtime::transaction_validity::InvalidTransaction;
 
 impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	type SignedInfo = H160;
@@ -34,13 +40,14 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	fn check_self_contained(&self) -> Option<Result<Self::SignedInfo, TransactionValidityError>> {
 		match self {
 			RuntimeCall::Ethereum(call) => {
+				#[cfg(not(feature = "no-maintenance"))]
 				if Maintenance::is_enabled() {
-					Some(Err(TransactionValidityError::Invalid(
+					return Some(Err(TransactionValidityError::Invalid(
 						InvalidTransaction::Call,
-					)))
-				} else {
-					call.check_self_contained()
+					)));
 				}
+
+				call.check_self_contained()
 			}
 			_ => None,
 		}
@@ -54,13 +61,14 @@ impl fp_self_contained::SelfContainedCall for RuntimeCall {
 	) -> Option<TransactionValidity> {
 		match self {
 			RuntimeCall::Ethereum(call) => {
+				#[cfg(not(feature = "no-maintenance"))]
 				if Maintenance::is_enabled() {
-					Some(Err(TransactionValidityError::Invalid(
+					return Some(Err(TransactionValidityError::Invalid(
 						InvalidTransaction::Call,
-					)))
-				} else {
-					call.validate_self_contained(info, dispatch_info, len)
+					)));
 				}
+
+				call.validate_self_contained(info, dispatch_info, len)
 			}
 			_ => None,
 		}

@@ -74,6 +74,7 @@ macro_rules! construct_runtime {
 
                 Configuration: pallet_configuration::{Pallet, Call, Storage, Event<T>} = 63,
 
+                #[cfg(not(feature = "no-sponsorship"))]
                 Charging: pallet_charge_transaction::{Pallet, Call, Storage } = 64,
                 // ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
                 Common: pallet_common::{Pallet, Storage, Event<T>} = 66,
@@ -104,6 +105,7 @@ macro_rules! construct_runtime {
                 EvmTransactionPayment: pallet_evm_transaction_payment::{Pallet} = 152,
                 EvmMigration: pallet_evm_migration::{Pallet, Call, Storage, Event<T>} = 153,
 
+                #[cfg(not(feature = "no-maintenance"))]
                 Maintenance: pallet_maintenance::{Pallet, Call, Storage, Event<T>} = 154,
 
                 #[cfg(feature = "pallet-test-utils")]

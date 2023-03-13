@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#[cfg(not(feature = "no-sponsorship"))]
 use crate::{
 	runtime_common::{sponsoring::UniqueSponsorshipHandler},
 	Runtime,
@@ -27,11 +28,13 @@ parameter_types! {
 	pub const DefaultSponsoringFeeLimit: U256 = U256::MAX;
 }
 
+#[cfg(not(feature = "no-sponsorship"))]
 type SponsorshipHandler = (
 	UniqueSponsorshipHandler<Runtime>,
 	pallet_evm_transaction_payment::BridgeSponsorshipHandler<Runtime>,
 );
 
+#[cfg(not(feature = "no-sponsorship"))]
 impl pallet_charge_transaction::Config for Runtime {
 	type SponsorshipHandler = SponsorshipHandler;
 }

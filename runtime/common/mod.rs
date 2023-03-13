@@ -20,7 +20,10 @@ pub mod dispatch;
 pub mod ethereum;
 pub mod identity;
 pub mod instance;
+
+#[cfg(not(feature = "no-maintenance"))]
 pub mod maintenance;
+
 pub mod runtime_apis;
 pub mod xcm;
 
@@ -87,8 +90,10 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
+#[cfg(not(feature = "no-sponsorship"))]
 pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
 
+#[cfg(all(not(feature = "no-maintenance"), not(feature = "no-sponsorship")))]
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
@@ -99,6 +104,49 @@ pub type SignedExtra = (
 	maintenance::CheckMaintenance,
 	identity::DisableIdentityCalls,
 	ChargeTransactionPayment,
+	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+);
+
+#[cfg(all(not(feature = "no-maintenance"), feature = "no-sponsorship"))]
+pub type SignedExtra = (
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	maintenance::CheckMaintenance,
+	identity::DisableIdentityCalls,
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
+	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+);
+
+#[cfg(all(feature = "no-maintenance", not(feature = "no-sponsorship")))]
+pub type SignedExtra = (
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	identity::DisableIdentityCalls,
+	ChargeTransactionPayment,
+	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
+	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+);
+
+#[cfg(all(feature = "no-maintenance", feature = "no-sponsorship"))]
+pub type SignedExtra = (
+	frame_system::CheckSpecVersion<Runtime>,
+	frame_system::CheckTxVersion<Runtime>,
+	frame_system::CheckGenesis<Runtime>,
+	frame_system::CheckEra<Runtime>,
+	frame_system::CheckNonce<Runtime>,
+	frame_system::CheckWeight<Runtime>,
+	identity::DisableIdentityCalls,
+	pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );

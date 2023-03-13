@@ -187,6 +187,9 @@ preimage = []
 refungible = []
 scheduler = []
 
+no-maintenance = []
+no-sponsorship = []
+
 ################################################################################
 # local dependencies
 
