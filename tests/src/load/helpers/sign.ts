@@ -71,7 +71,7 @@ export function signSendAndWait(transaction: Tx, retry = false): Promise<TxResul
         }
         else if (status.isBroadcast || status.isInBlock || status.isNone) {/* do nothing */}
         else {
-          console.log(status);
+          console.log('Unknown status:', status);
         }
       });
     } catch (error) {

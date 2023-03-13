@@ -12,14 +12,15 @@ const SUPER_DONOR = '//Alice';
 const DONOR_BASE_SEED = '//Donor';
 const CROWD_BASE_SEED = '//Account';
 const TKN = UNQ; // Set DOT if decimals = 12
-const TOPUP_CROWD = true; // If crowd has tokens set false to speed up
+const TRANSFER_AMOUNT = TKN(1n);
+const TOPUP_CROWD = false; // If crowd has tokens set false to speed up
 
 
 const main = async () => {
   // Get donors and top up
   const donors = await getAccounts(1, DONOR_BASE_SEED);
   // const donors = ['//Alice', '//Bob', '//Charlie', '//Dave'];
-  await arrangeTopUpAccounts(SUPER_DONOR, donors, TKN(100_000n));
+  await arrangeTopUpAccounts(SUPER_DONOR, donors, TKN(1_000_000n));
 
   // Get crowd and beat it into chunks – 800 accounts each.
   // thats because we cannot keep more than 1024 subscriptions for a single ws-connection
@@ -30,13 +31,13 @@ const main = async () => {
   const topUpResult: TxResult[]  = [];
   if (TOPUP_CROWD) {
     for (const subCrowd of crowd) {
-      const result = await arrangeTopUpAccounts(donors[0], subCrowd, TKN(10n));
+      const result = await arrangeTopUpAccounts(donors[0], subCrowd, TKN(100n));
       topUpResult.push(...result);
     }
   }
 
   // 2. Empty crowd:
-  const spamTransactions = crowd.map(subCrowd => spamTransfer(subCrowd, donors[0], 1n, TRANSFERS_EACH));
+  const spamTransactions = crowd.map(subCrowd => spamTransfer(subCrowd, donors[0], TRANSFER_AMOUNT, TRANSFERS_EACH));
   const spamResult = await Promise.all(spamTransactions);
 
   const topUpFailed = topUpResult.flat().filter(res => res.status === 'fail');
