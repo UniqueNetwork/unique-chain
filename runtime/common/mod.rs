@@ -144,7 +144,7 @@ signed_extra! {
 ))]
 signed_extra! {
 	maintenance: maintenance::CheckMaintenance;
-	sponsorship: ;
+	sponsorship: pallet_transaction_payment::ChargeTransactionPayment<Runtime>;
 	ftf: pallet_ethereum::FakeTransactionFinalizer<Runtime>;
 }
 
@@ -155,7 +155,7 @@ signed_extra! {
 ))]
 signed_extra! {
 	maintenance: maintenance::CheckMaintenance;
-	sponsorship: ;
+	sponsorship: pallet_transaction_payment::ChargeTransactionPayment<Runtime>;
 	ftf: ;
 }
 
@@ -188,7 +188,7 @@ signed_extra! {
 ))]
 signed_extra! {
 	maintenance: ;
-	sponsorship: ;
+	sponsorship: pallet_transaction_payment::ChargeTransactionPayment<Runtime>;
 	ftf: pallet_ethereum::FakeTransactionFinalizer<Runtime>;
 }
 
@@ -199,7 +199,7 @@ signed_extra! {
 ))]
 signed_extra! {
 	maintenance: ;
-	sponsorship: ;
+	sponsorship: pallet_transaction_payment::ChargeTransactionPayment<Runtime>;
 	ftf: ;
 }
 
