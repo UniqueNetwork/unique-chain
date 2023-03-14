@@ -32,7 +32,7 @@ export function signSendAndWait(transaction: Tx, retry = false): Promise<TxResul
           resolve({status: 'fail', reason: 'ExtrinsicDropped', result});
         }
         // Do not use in block
-        else if (status.isFinalized /* || status.isInBlock */) {
+        else if (status.isFinalized || status.isInBlock) {
           const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
           if (errors.length > 0) {
             unsub();
