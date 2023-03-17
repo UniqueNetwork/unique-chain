@@ -7077,6 +7077,7 @@ dependencies = [
  "pallet-common",
  "pallet-evm",
  "pallet-evm-coder-substrate",
+ "pallet-fungible",
  "pallet-nonfungible",
  "pallet-refungible",
  "parity-scale-codec",
