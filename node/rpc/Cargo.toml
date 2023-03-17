@@ -44,4 +44,3 @@ up-rpc = { workspace = true }
 default = []
 pov-estimate = ['uc-rpc/pov-estimate']
 std = []
-unique-runtime = []

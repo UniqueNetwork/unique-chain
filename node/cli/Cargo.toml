@@ -99,6 +99,11 @@ substrate-build-script-utils = { workspace = true }
 
 [features]
 default = ["opal-runtime"]
+all-runtimes = [
+	'opal-runtime',
+	'quartz-runtime',
+	'unique-runtime',
+]
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',

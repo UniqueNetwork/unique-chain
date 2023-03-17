@@ -68,7 +68,6 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use up_common::types::opaque::*;
 
-#[cfg(feature = "pov-estimate")]
 use crate::chain_spec::RuntimeIdentification;
 
 /// Unique native executor instance.
@@ -506,12 +505,10 @@ where
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
-	#[cfg(feature = "pov-estimate")]
 	let runtime_id = parachain_config.chain_spec.runtime_id();
 
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			#[cfg(feature = "pov-estimate")]
 			runtime_id: runtime_id.clone(),
 
 			#[cfg(feature = "pov-estimate")]
@@ -1032,12 +1029,10 @@ where
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
-	#[cfg(feature = "pov-estimate")]
 	let runtime_id = config.chain_spec.runtime_id();
 
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			#[cfg(feature = "pov-estimate")]
 			runtime_id: runtime_id.clone(),
 
 			#[cfg(feature = "pov-estimate")]

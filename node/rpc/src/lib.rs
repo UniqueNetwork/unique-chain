@@ -80,7 +80,7 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 
-	#[cfg(feature = "pov-estimate")]
+	/// Runtime identification (read from the chain spec)
 	pub runtime_id: RuntimeId,
 	/// Executor params for PoV estimating
 	#[cfg(feature = "pov-estimate")]
@@ -197,8 +197,7 @@ where
 		deny_unsafe,
 		filter_pool,
 
-		#[cfg(feature = "pov-estimate")]
-		runtime_id,
+		runtime_id: _,
 
 		#[cfg(feature = "pov-estimate")]
 		exec_params,

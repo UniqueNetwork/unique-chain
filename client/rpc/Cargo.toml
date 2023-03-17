@@ -36,11 +36,17 @@ frame-benchmarking = { workspace = true }
 
 sc-executor = { workspace = true }
 
-opal-runtime = { workspace = true }
+opal-runtime = { workspace = true, optional = true }
 quartz-runtime = { workspace = true, optional = true }
 unique-runtime = { workspace = true, optional = true }
 
 [features]
+default = ['opal-runtime']
+all-runtimes = [
+	'opal-runtime',
+	'quartz-runtime',
+	'unique-runtime',
+]
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',
