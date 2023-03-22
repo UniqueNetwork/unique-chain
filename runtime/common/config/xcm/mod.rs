@@ -29,7 +29,7 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
 use xcm_executor::{XcmExecutor, traits::ShouldExecute};
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
 use crate::{
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo, ParachainSystem, PolkadotXcm,
 	XcmpQueue, xcm_barrier::Barrier, RelayNetwork, AllPalletsWithSystem, Balances,
@@ -54,7 +54,10 @@ use xcm_assets::{AssetTransactor, IsReserve, Trader};
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::get().into()));
+	pub UniversalLocation: InteriorMultiLocation = (
+		GlobalConsensus(crate::RelayNetwork::get()),
+		Parachain(ParachainInfo::get().into()),
+	).into();
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
@@ -224,7 +227,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type ChannelInfo = ParachainSystem;
-	type VersionWrapper = ();
+	type VersionWrapper = PolkadotXcm;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
