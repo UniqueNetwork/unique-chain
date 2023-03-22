@@ -49,7 +49,7 @@ pub use foreignassets as xcm_assets;
 #[cfg(not(feature = "foreign-assets"))]
 pub use nativeassets as xcm_assets;
 
-use xcm_assets::{AssetTransactors, IsReserve, Trader};
+use xcm_assets::{AssetTransactor, IsReserve, Trader};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -213,7 +213,7 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = AssetTransactors;
+	type AssetTransactor = AssetTransactor;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled

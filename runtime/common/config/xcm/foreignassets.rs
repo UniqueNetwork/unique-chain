@@ -15,13 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Contains, Get, fungibles, ContainsPair},
+	traits::{Get, ContainsPair},
 	parameter_types,
 };
 use sp_runtime::traits::Convert;
-use xcm::latest::{MultiAsset, Junction::*, MultiLocation, Junctions::*};
-use xcm_builder::{FungiblesAdapter, NonLocalMint, ConvertedConcreteId};
-use xcm_executor::traits::{Convert as ConvertXcm, JustTry};
+use xcm::latest::{prelude::*, MultiAsset, MultiLocation};
+use xcm_builder::{FungiblesAdapter, NoChecking, ConvertedConcreteId};
+use xcm_executor::traits::{TransactAsset, Convert as ConvertXcm, JustTry};
 use pallet_foreign_assets::{
 	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, NativeCurrency, FreeForAll, TryAsForeign,
 	ForeignAssetId, CurrencyId,
@@ -35,19 +35,6 @@ use up_common::types::{AccountId, Balance};
 
 parameter_types! {
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();
-}
-
-/// No teleports are allowed
-pub struct NoTeleports<AccountId, ForeignAssets>(PhantomData<(AccountId, ForeignAssets)>);
-
-impl<AccountId, ForeignAssets> Contains<<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId>
-	for NoTeleports<AccountId, ForeignAssets>
-where
-	ForeignAssets: fungibles::Inspect<AccountId>,
-{
-	fn contains(_id: &<ForeignAssets as fungibles::Inspect<AccountId>>::AssetId) -> bool {
-		false
-	}
 }
 
 pub struct AsInnerId<AssetId, ConvertAssetId>(PhantomData<(AssetId, ConvertAssetId)>);
@@ -131,14 +118,56 @@ pub type FungiblesTransactor = FungiblesAdapter<
 	LocationToAccountId,
 	// Our chain's account ID type (we can't get away without mentioning it explicitly):
 	AccountId,
-	// No teleports are allowed
-	NonLocalMint<NoTeleports<AccountId, ForeignAssets>>,
+	// No Checking for teleported assets since we disallow teleports at all.
+	NoChecking,
 	// The account to use for tracking teleports.
 	CheckingAccount,
 >;
 
 /// Means for transacting assets on this chain.
-pub type AssetTransactors = FungiblesTransactor;
+pub struct AssetTransactor;
+impl TransactAsset for AssetTransactor {
+	fn can_check_in(
+		_origin: &MultiLocation,
+		_what: &MultiAsset,
+		_context: &XcmContext,
+	) -> XcmResult {
+		Err(XcmError::Unimplemented)
+	}
+
+	fn check_in(_origin: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
+
+	fn can_check_out(
+		_dest: &MultiLocation,
+		_what: &MultiAsset,
+		_context: &XcmContext,
+	) -> XcmResult {
+		Err(XcmError::Unimplemented)
+	}
+
+	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
+
+	fn deposit_asset(what: &MultiAsset, who: &MultiLocation, context: &XcmContext) -> XcmResult {
+		FungiblesTransactor::deposit_asset(what, who, context)
+	}
+
+	fn withdraw_asset(
+		what: &MultiAsset,
+		who: &MultiLocation,
+		maybe_context: Option<&XcmContext>,
+	) -> Result<xcm_executor::Assets, XcmError> {
+		FungiblesTransactor::withdraw_asset(what, who, maybe_context)
+	}
+
+	fn internal_transfer_asset(
+		what: &MultiAsset,
+		from: &MultiLocation,
+		to: &MultiLocation,
+		context: &XcmContext,
+	) -> Result<xcm_executor::Assets, XcmError> {
+		FungiblesTransactor::internal_transfer_asset(what, from, to, context)
+	}
+}
 
 pub struct AllAsset;
 impl ContainsPair<MultiAsset, MultiLocation> for AllAsset {
