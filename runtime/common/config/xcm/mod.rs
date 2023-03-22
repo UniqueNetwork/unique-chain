@@ -28,7 +28,7 @@ use xcm_builder::{
 	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
 	SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
-use xcm_executor::{Config, XcmExecutor, traits::ShouldExecute};
+use xcm_executor::{XcmExecutor, traits::ShouldExecute};
 use sp_std::{marker::PhantomData, vec::Vec};
 use crate::{
 	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo, ParachainSystem, PolkadotXcm,
@@ -182,8 +182,8 @@ impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> 
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
-pub struct XcmConfig<T>(PhantomData<T>);
-impl<T> Config for XcmConfig<T>
+pub struct XcmExecutorConfig<T>(PhantomData<T>);
+impl<T> xcm_executor::Config for XcmExecutorConfig<T>
 where
 	T: pallet_configuration::Config,
 {
@@ -227,7 +227,7 @@ impl pallet_xcm::Config for Runtime {
 	type XcmRouter = XcmRouter;
 	type ExecuteXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, LocalOriginToLocation>;
 	type XcmExecuteFilter = Everything;
-	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
+	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type XcmTeleportFilter = Everything;
 	type XcmReserveTransferFilter = Everything;
 	type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
@@ -248,13 +248,13 @@ impl pallet_xcm::Config for Runtime {
 
 impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
+	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type WeightInfo = ();
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
+	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = ();
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
@@ -265,6 +265,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
+	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 }

@@ -29,7 +29,7 @@ use crate::{
 	Runtime, RuntimeEvent, RelayChainBlockNumberProvider,
 	runtime_common::config::{
 		xcm::{
-			SelfLocation, Weigher, XcmConfig, UniversalLocation,
+			SelfLocation, Weigher, XcmExecutorConfig, UniversalLocation,
 			xcm_assets::{CurrencyIdConvert},
 		},
 		pallets::TreasuryAccountId,
@@ -138,7 +138,7 @@ impl orml_xtokens::Config for Runtime {
 	type CurrencyIdConvert = CurrencyIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
-	type XcmExecutor = XcmExecutor<XcmConfig<Self>>;
+	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type Weigher = Weigher;
 	type BaseXcmWeight = BaseXcmWeight;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
