@@ -15,23 +15,16 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	match_types, parameter_types,
-	traits::{Get, Everything},
+	match_types,
+	traits::Everything,
 };
-use sp_std::{vec, vec::Vec};
-use xcm::latest::{Junction::*, Junctions::*, MultiLocation};
+use xcm::latest::{Junctions::*, MultiLocation};
 use xcm_builder::{
 	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom,
 };
 
-use crate::{
-	Runtime, ParachainInfo, PolkadotXcm,
-	runtime_common::{
-		config::xcm::{DenyThenTry, DenyExchangeWithUnknownLocation},
-		xcm::OverridableAllowedLocations,
-	},
-};
+use crate::PolkadotXcm;
 
 match_types! {
 	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
@@ -40,51 +33,11 @@ match_types! {
 	};
 }
 
-parameter_types! {
-	pub QuartzDefaultAllowedLocations: Vec<MultiLocation> = vec![
-		// Self location
-		MultiLocation {
-			parents: 0,
-			interior: Here,
-		},
-		// Parent location
-		MultiLocation {
-			parents: 1,
-			interior: Here,
-		},
-		// Statemint/Statemint location
-		MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(1000)),
-		},
-		// Karura/Acala location
-		MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(2000)),
-		},
-		// Moonriver location
-		MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(2023)),
-		},
-		// Self parachain address
-		MultiLocation {
-			parents: 1,
-			interior: X1(Parachain(ParachainInfo::get().into())),
-		},
-	];
-}
-
-pub type Barrier = DenyThenTry<
-	DenyExchangeWithUnknownLocation<
-		OverridableAllowedLocations<Runtime, QuartzDefaultAllowedLocations>,
-	>,
-	(
-		TakeWeightCredit,
-		AllowTopLevelPaidExecutionFrom<Everything>,
-		// Expected responses are OK.
-		AllowKnownQueryResponses<PolkadotXcm>,
-		// Subscriptions for version tracking are OK.
-		AllowSubscriptionsFrom<ParentOrSiblings>,
-	),
->;
+pub type Barrier = (
+	TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	// Expected responses are OK.
+	AllowKnownQueryResponses<PolkadotXcm>,
+	// Subscriptions for version tracking are OK.
+	AllowSubscriptionsFrom<ParentOrSiblings>,
+);

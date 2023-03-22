@@ -148,38 +148,6 @@ where
 	}
 }
 
-// Allow xcm exchange only with locations in list
-pub struct DenyExchangeWithUnknownLocation<T>(PhantomData<T>);
-impl<T: Get<Vec<MultiLocation>>> TryPass for DenyExchangeWithUnknownLocation<T> {
-	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()> {
-		let allowed_locations = T::get();
-
-		// Check if deposit or transfer belongs to allowed parachains
-		let mut allowed = allowed_locations.contains(origin);
-
-		message.iter().for_each(|inst| match inst {
-			DepositReserveAsset { dest: dst, .. }
-			| TransferReserveAsset { dest: dst, .. }
-			| InitiateReserveWithdraw { reserve: dst, .. } => {
-				allowed |= allowed_locations.contains(&dst);
-			}
-			// ? There are more instructions worth checking
-			_ => {}
-		});
-
-		if allowed {
-			return Ok(());
-		}
-
-		log::warn!(
-			target: "xcm::barrier",
-			"Unexpected deposit or transfer location"
-		);
-		// Deny
-		Err(())
-	}
-}
-
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
