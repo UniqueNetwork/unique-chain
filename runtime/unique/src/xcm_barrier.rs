@@ -28,7 +28,7 @@ use xcm_builder::{
 use crate::{
 	Runtime, ParachainInfo, PolkadotXcm,
 	runtime_common::{
-		config::xcm::{DenyThenTry, DenyTransact, DenyExchangeWithUnknownLocation},
+		config::xcm::{DenyThenTry, DenyExchangeWithUnknownLocation},
 		xcm::OverridableAllowedLocations,
 	},
 };
@@ -76,12 +76,9 @@ parameter_types! {
 }
 
 pub type Barrier = DenyThenTry<
-	(
-		DenyTransact,
-		DenyExchangeWithUnknownLocation<
-			OverridableAllowedLocations<Runtime, UniqueDefaultAllowedLocations>,
-		>,
-	),
+	DenyExchangeWithUnknownLocation<
+		OverridableAllowedLocations<Runtime, UniqueDefaultAllowedLocations>,
+	>,
 	(
 		TakeWeightCredit,
 		AllowTopLevelPaidExecutionFrom<Everything>,

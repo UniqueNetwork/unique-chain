@@ -125,29 +125,6 @@ impl TryPass for Tuple {
 	}
 }
 
-pub struct DenyTransact;
-impl TryPass for DenyTransact {
-	fn try_pass<Call>(
-		_origin: &MultiLocation,
-		message: &mut [Instruction<Call>],
-	) -> Result<(), ()> {
-		let transact_inst = message
-			.iter()
-			.find(|inst| matches![inst, Instruction::Transact { .. }]);
-
-		if transact_inst.is_some() {
-			log::warn!(
-				target: "xcm::barrier",
-				"transact XCM rejected"
-			);
-
-			Err(())
-		} else {
-			Ok(())
-		}
-	}
-}
-
 /// Deny executing the XCM if it matches any of the Deny filter regardless of anything else.
 /// If it passes the Deny, and matches one of the Allow cases then it is let through.
 pub struct DenyThenTry<Deny, Allow>(PhantomData<Deny>, PhantomData<Allow>)
@@ -234,7 +211,9 @@ where
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
-	type SafeCallFilter = Nothing; // ? Only non-recursive calls may go here, but do we need this?
+
+	// Deny all XCM Transacts.
+	type SafeCallFilter = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

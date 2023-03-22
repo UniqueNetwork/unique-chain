@@ -20,8 +20,6 @@ use xcm::v3::Instruction;
 use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit};
 use xcm_executor::traits::ShouldExecute;
 
-use crate::runtime_common::config::xcm::{DenyThenTry, DenyTransact};
-
 /// Execution barrier that just takes `max_weight` from `weight_credit`.
 ///
 /// Useful to allow XCM execution by local chain users via extrinsics.
@@ -39,11 +37,8 @@ impl ShouldExecute for AllowAllDebug {
 	}
 }
 
-pub type Barrier = DenyThenTry<
-	DenyTransact,
-	(
-		TakeWeightCredit,
-		AllowTopLevelPaidExecutionFrom<Everything>,
-		AllowAllDebug,
-	),
->;
+pub type Barrier = (
+	TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+	AllowAllDebug,
+);
