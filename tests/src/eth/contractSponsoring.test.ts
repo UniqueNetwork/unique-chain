@@ -402,6 +402,43 @@ describe('Sponsoring EVM contracts', () => {
 
     expect(await helpers.methods.sponsoringRateLimit(flipper.options.address).call()).to.be.equal('7200');
   });
+
+  itEth('Gas price boundaries', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const sponsor = await helper.eth.createAccountWithBalance(donor);
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const helpers = await helper.ethNativeContract.contractHelpers(owner);
+    const flipper = await helper.eth.deployFlipper(owner);
+
+    await helpers.methods.setSponsor(flipper.options.address, sponsor).send();
+    await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
+
+    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: owner});
+    await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
+
+    let sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
+    let callerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(caller));
+
+    let expectValue = await flipper.methods.getValue().call();
+
+    const flip = async (gasPrice: bigint, shouldPass = true) => {
+      await flipper.methods.flip().send({from: caller, gasPrice: gasPrice});
+      expectValue = !expectValue;
+      expect(await flipper.methods.getValue().call()).to.be.eq(expectValue);
+      const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
+      const callerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(caller));
+      expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.eq(shouldPass);
+      expect(callerBalanceAfter === callerBalanceBefore).to.be.eq(shouldPass);
+      sponsorBalanceBefore = sponsorBalanceAfter;
+      callerBalanceBefore = callerBalanceAfter;
+    };
+
+    const gasPrice = BigInt(await helper.eth.getGasPrice());
+    await flip(gasPrice);
+    await flip(gasPrice * 2n);
+    await flip(gasPrice * 21n / 10n);
+    await flip(gasPrice * 22n / 10n, false);
+  });
 });
 
 describe('Sponsoring Fee Limit', () => {
