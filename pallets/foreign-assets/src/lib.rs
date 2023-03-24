@@ -276,62 +276,7 @@ pub mod module {
 		StorageMap<_, Twox64Concat, ForeignAssetId, CollectionId, OptionQuery>;
 
 	#[pallet::pallet]
-	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
-
-	pub const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			let mut weight = Weight::default();
-			// 0-1 -- xcmv2 => xcmv3
-			if StorageVersion::get::<Pallet<T>>() <= 0 {
-				pub trait V0ToV1 {
-					type Pallet: 'static + PalletInfoAccess;
-				}
-				#[frame_support::storage_alias]
-				type LocationToCurrencyIds<T: Config> =
-					StorageMap<Pallet<T>, Twox64Concat, xcm::v2::MultiLocation, ForeignAssetId>;
-				<ForeignAssetLocations<T>>::translate_values::<xcm::v2::MultiLocation, _>(|loc| {
-					weight += T::DbWeight::get().reads_writes(1, 1);
-					Some(
-						xcm::v3::MultiLocation::try_from(loc)
-							.expect("failed to migrate multilocation from XCMv2 to XCMv3"),
-					)
-				});
-
-				let old_values: Vec<(xcm::v2::MultiLocation, _)> =
-					<LocationToCurrencyIds<T>>::drain().collect();
-				weight += T::DbWeight::get()
-					.reads_writes(old_values.len() as u64, old_values.len() as u64);
-				for (loc, asset_id) in old_values {
-					let loc = xcm::v3::MultiLocation::try_from(loc)
-						.expect("failed to migrate multilocation from XCMv2 to XCMv3");
-					<crate::LocationToCurrencyIds<T>>::insert(loc, asset_id);
-				}
-			}
-			STORAGE_VERSION.put::<Pallet<T>>();
-			weight += T::DbWeight::get().writes(1);
-			weight
-		}
-	}
-
-	#[pallet::genesis_config]
-	pub struct GenesisConfig;
-
-	#[cfg(feature = "std")]
-	impl Default for GenesisConfig {
-		fn default() -> Self {
-			Self
-		}
-	}
-
-	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig {
-		fn build(&self) {
-			STORAGE_VERSION.put::<Pallet<T>>();
-		}
-	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
