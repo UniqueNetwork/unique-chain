@@ -190,10 +190,13 @@ pub mod module {
 		type WeightInfo: WeightInfo;
 	}
 
-	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+	pub type AssetName = BoundedVec<u8, ConstU32<32>>;
+	pub type AssetSymbol = BoundedVec<u8, ConstU32<7>>;
+
+	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 	pub struct AssetMetadata<Balance> {
-		pub name: Vec<u8>,
-		pub symbol: Vec<u8>,
+		pub name: AssetName,
+		pub symbol: AssetSymbol,
 		pub decimals: u8,
 		pub minimal_balance: Balance,
 	}
