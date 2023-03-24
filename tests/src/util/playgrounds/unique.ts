@@ -736,7 +736,7 @@ export class ChainHelperBase {
 
   fetchAllPalletNames(): string[] {
     if(this.api === null) throw Error('API not initialized');
-    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase()).sort();
   }
 
   fetchMissingPalletNames(requiredPallets: string[]): string[] {
