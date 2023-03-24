@@ -54,8 +54,7 @@ use xcm_assets::{AssetTransactors, IsReserve, Trader};
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub Ancestry: MultiLocation = Parachain(ParachainInfo::parachain_id().into()).into();
-	pub UniversalLocation: InteriorMultiLocation = Parachain(ParachainInfo::get().into()).into();
+	pub UniversalLocation: InteriorMultiLocation = X2(GlobalConsensus(RelayNetwork::get()), Parachain(ParachainInfo::get().into()));
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
 
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
@@ -82,7 +81,7 @@ pub type LocalOriginToLocation = (SignedToAccountId32<RuntimeOrigin, AccountId, 
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, (), ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -225,7 +224,7 @@ where
 	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type PalletInstancesInfo = AllPalletsWithSystem;
-	type MaxAssetsIntoHolding = ConstU32<64>;
+	type MaxAssetsIntoHolding = ConstU32<8>;
 
 	type AssetTrap = PolkadotXcm;
 	type AssetClaims = PolkadotXcm;
@@ -233,7 +232,7 @@ where
 	type AssetExchanger = ();
 	type FeeManager = ();
 	type MessageExporter = ();
-	type UniversalAliases = Nothing; // ?
+	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Nothing; // ? Only non-recursive calls may go here, but do we need this?
 }
@@ -259,9 +258,9 @@ impl pallet_xcm::Config for Runtime {
 	type AdvertisedXcmVersion = pallet_xcm::CurrentXcmVersion;
 	type UniversalLocation = UniversalLocation;
 	type Currency = Balances;
-	type CurrencyMatcher = (); // ?
+	type CurrencyMatcher = ();
 	type TrustedLockers = ();
-	type SovereignAccountOf = ();
+	type SovereignAccountOf = LocationToAccountId;
 	type MaxLockers = ConstU32<8>;
 	type WeightInfo = crate::weights::xcm::SubstrateWeight<Runtime>;
 	#[cfg(feature = "runtime-benchmarks")]
