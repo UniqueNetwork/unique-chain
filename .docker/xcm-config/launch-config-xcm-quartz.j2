@@ -5,7 +5,7 @@
         "chainInitializer": [
                 "chainql",
                 "--tla-code=spec=import '${spec}'",
-                "5validators.jsonnet"
+                "6validators.jsonnet"
             ],	
         "nodes": [
             {
@@ -57,6 +57,17 @@
                 "wsPort": 9888,
                 "rpcPort": 9887,
                 "port": 30888,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            },
+            {
+                "name": "ferdie",
+                "wsPort": 9899,
+                "rpcPort": 9898,
+                "port": 30999,
                 "flags": [
                     "--unsafe-rpc-external",
                     "--unsafe-ws-external",
@@ -156,6 +167,23 @@
                 }
             ]
         }
+        {
+            "bin": "/astar/target/release/astar",
+            "id": "2007",
+            "chain": "astar-dev",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "wsPort": 9949,
+                    "port": 31205,
+                    "name": "alice",
+                    "flags": [
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external"
+                    ]
+                }
+            ]
+        }
     ],
     "simpleParachains": [],
     "hrmpChannels": [
@@ -194,7 +222,19 @@
             "recipient": 2095,
             "maxCapacity": 8,
             "maxMessageSize": 512
-        }
+        },
+        {
+            "sender": 2007,
+            "recipient": 1000,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 1000,
+            "recipient": 2007,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }        
     ],
     "finalization": false
 }

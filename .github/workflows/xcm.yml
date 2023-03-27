@@ -41,8 +41,8 @@ jobs:
         with:
           matrix: |
             network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testXcmQuartz}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmUnique}
 
   xcm-build:
     
@@ -184,7 +184,6 @@ jobs:
             fi
         shell: bash
 
-
       # Check CUMULUS version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for CUMULUS
         uses: cuchi/jinja2-action@v1.2.0
@@ -217,6 +216,41 @@ jobs:
                 docker push uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
             fi
         shell: bash
+
+
+      # Check ASTAR version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for ASTAR
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-astar.j2
+          output_file: .docker/Dockerfile-astar.${{ matrix.astar_version }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            ASTAR_BUILD_BRANCH=${{ matrix.astar_version }}
+
+      - name: Check if the dockerhub repository contains the needed MOONBEAM version
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            ASTAR_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-astar/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "ASTAR TAGS:"
+            echo $ASTAR_TAGS
+          # Check correct version ASTAR and build it if it doesn't exist in ASTAR TAGS
+            if [[ ${ASTAR_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.astar_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed ASTAR version";
+                docker pull uniquenetwork/builder-astar:${{ matrix.astar_version }}
+            else
+                echo "Repository has not needed ASTAR version, so build it";
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-astar.${{ matrix.astar_version }}.yml --tag uniquenetwork/builder-astar:${{ matrix.astar_version }} .
+                echo "Push needed ASTAR version to the repository";
+                docker push uniquenetwork/builder-astar:${{ matrix.astar_version }}
+            fi
+        shell: bash
+
 
       - name: Generate ENV related extend launch-config file
         uses: cuchi/jinja2-action@v1.2.0

@@ -57,6 +57,7 @@ COPY --from=uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} /unique_p
 COPY --from=uniquenetwork/builder-moonbeam:{{ MOONBEAM_BUILD_BRANCH }} /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=uniquenetwork/builder-cumulus:{{ CUMULUS_BUILD_BRANCH }} /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
 COPY --from=uniquenetwork/builder-acala:{{ ACALA_BUILD_BRANCH }} /unique_parachain/Acala/target/production/acala /acala/target/release/
+COPY --from=uniquenetwork/builder-astar:{{ ASTAR_BUILD_BRANCH }} /unique_parachain/Astar/target/release/astar /astar/target/release/
 COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
 
 EXPOSE 9844
@@ -65,6 +66,7 @@ EXPOSE 9944
 EXPOSE 9946
 EXPOSE 9947
 EXPOSE 9948
+EXPOSE 9949
 
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
