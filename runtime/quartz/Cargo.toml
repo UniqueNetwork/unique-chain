@@ -300,8 +300,5 @@ pallet-test-utils = { workspace = true }
 
 impl-trait-for-tuples = { workspace = true }
 
-[dev-dependencies]
-logtest = { workspace = true }
-
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

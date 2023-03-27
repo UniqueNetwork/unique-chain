@@ -41,9 +41,6 @@ mod runtime_common;
 
 pub mod xcm_barrier;
 
-#[cfg(test)]
-mod tests;
-
 pub use runtime_common::*;
 
 pub const RUNTIME_NAME: &str = "unique";
