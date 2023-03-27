@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-	match_types,
-	traits::Everything,
-};
+use frame_support::{match_types, traits::Everything};
 use xcm::latest::{Junctions::*, MultiLocation};
 use xcm_builder::{
 	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,

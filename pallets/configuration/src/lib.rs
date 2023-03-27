@@ -43,7 +43,8 @@ mod pallet {
 	use super::*;
 	use frame_support::{
 		traits::{Get, ReservableCurrency, Currency},
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType}, log,
+		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType},
+		log,
 	};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
 

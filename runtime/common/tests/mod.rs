@@ -40,7 +40,13 @@ fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
 }
 
 fn last_events(n: usize) -> Vec<RuntimeEvent> {
-	System::events().into_iter().map(|e| e.event).rev().take(n).rev().collect()
+	System::events()
+		.into_iter()
+		.map(|e| e.event)
+		.rev()
+		.take(n)
+		.rev()
+		.collect()
 }
 
 fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
@@ -50,9 +56,9 @@ fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities
 		.assimilate_storage(&mut storage)
 		.unwrap();
 
-		let mut ext = sp_io::TestExternalities::new(storage);
-		ext.execute_with(|| System::set_block_number(1));
-		ext
+	let mut ext = sp_io::TestExternalities::new(storage);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
 }
 
 #[cfg(feature = "collator-selection")]
