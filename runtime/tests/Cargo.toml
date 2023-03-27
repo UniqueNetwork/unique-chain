@@ -43,4 +43,5 @@ scale-info = "*"
 evm-coder = { workspace = true }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.39" }
 xcm = { workspace = true }
+pallet-xcm = { workspace = true }
 pallet-configuration = { workspace = true }

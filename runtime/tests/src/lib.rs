@@ -44,7 +44,7 @@ mod dispatch;
 
 use dispatch::CollectionDispatchT;
 
-#[path = "../../common/weights.rs"]
+#[path = "../../common/weights/mod.rs"]
 mod weights;
 
 use weights::CommonWeights;
