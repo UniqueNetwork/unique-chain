@@ -1,3 +1,4 @@
+
 function(spec)
   spec {
     genesis+: {
