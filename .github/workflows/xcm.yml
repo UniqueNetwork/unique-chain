@@ -276,6 +276,7 @@ jobs:
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}           
             BRANCH=${{ github.head_ref }}
             ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
+            ASTAR_BUILD_BRANCH=${{ matrix.astar_version }}
             MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
             CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
 
