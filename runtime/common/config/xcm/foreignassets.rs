@@ -14,10 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-	traits::{Get, ContainsPair},
-	parameter_types,
-};
+use frame_support::{traits::Get, parameter_types};
 use sp_runtime::traits::Convert;
 use xcm::latest::{prelude::*, MultiAsset, MultiLocation};
 use xcm_builder::{FungiblesAdapter, NoChecking, ConvertedConcreteId};
@@ -27,6 +24,8 @@ use pallet_foreign_assets::{
 	ForeignAssetId, CurrencyId,
 };
 use sp_std::{borrow::Borrow, marker::PhantomData};
+use orml_traits::location::AbsoluteReserveProvider;
+use orml_xcm_support::MultiNativeAsset;
 use crate::{Runtime, Balances, ParachainInfo, PolkadotXcm, ForeignAssets};
 
 use super::{LocationToAccountId, RelayLocation};
@@ -169,16 +168,7 @@ impl TransactAsset for AssetTransactor {
 	}
 }
 
-pub struct AllAsset;
-impl ContainsPair<MultiAsset, MultiLocation> for AllAsset {
-	fn contains(_asset: &MultiAsset, _origin: &MultiLocation) -> bool {
-		// ? Shouldn't we query foreign-asset pallet here, because of the new non-local mint
-		// location logic?
-		true
-	}
-}
-
-pub type IsReserve = AllAsset;
+pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 
 pub type Trader<T> = FreeForAll<
 	pallet_configuration::WeightToFee<T, Balance>,

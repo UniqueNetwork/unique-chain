@@ -181,6 +181,7 @@ orml-tokens = { default-features = false , git = "https://github.com/open-web3-s
 orml-traits = { default-features = false , git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.39" }
 orml-vesting = { default-features = false , git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.39" }
 orml-xtokens = { default-features = false , git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.39" }
+orml-xcm-support = { default-features = false , git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v0.9.39" }
 
 # Other
 derivative = { version = "2.2.0", features = ["use_core"] }
