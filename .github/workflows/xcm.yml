@@ -18,7 +18,7 @@ jobs:
 
     name: Prepare execution matrix
 
-    runs-on: [XL]
+    runs-on: [self-hosted-ci]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -228,7 +228,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             ASTAR_BUILD_BRANCH=${{ matrix.astar_version }}
 
-      - name: Check if the dockerhub repository contains the needed MOONBEAM version
+      - name: Check if the dockerhub repository contains the needed ASTAR version
         run: |
           # aquire token
             TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)

@@ -38,4 +38,4 @@ RUN git clone -b {{ ACALA_BUILD_BRANCH }} --depth 1 https://github.com/AcalaNetw
 
 FROM ubuntu:22.04 as builder-acala
 
-COPY --from=builder-acala-bin /unique_parachain/Acala/target/production/acala /unique_parachain/Acala/target/production/acala
+COPY --from=builder-acala-bin /unique_parachain/Acala/target/production/acala /unique_parachain/acala/target/production/acala

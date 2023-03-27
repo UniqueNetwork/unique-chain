@@ -37,4 +37,4 @@ RUN git clone --recurse-submodules -b {{ ASTAR_BUILD_BRANCH }} --depth 1 https:/
 
 FROM ubuntu:20.04 as builder-astar
 
-COPY --from=builder-astar-bin /unique_parachain/Astar/target/release/astar /unique_parachain/Astar/target/release/astar
+COPY --from=builder-astar-bin /unique_parachain/Astar/target/release/astar-collator /unique_parachain/astar/target/release/astar
