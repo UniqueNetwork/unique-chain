@@ -43,7 +43,7 @@ pub trait WeightInfo {
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn approve_from() -> Weight;
-	fn transfer_from() -> Weight;
+	fn checks_for_transfer_from() -> Weight;
 	fn burn_from() -> Weight;
 	fn set_token_property_permissions(b: u32, ) -> Weight;
 	fn set_token_properties(b: u32, ) -> Weight;

@@ -22,8 +22,9 @@ use pallet_evm::account::CrossAccountId;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
 	CollectionMode, CollectionFlags, CreateCollectionData, CollectionId, Property, PropertyKey,
-	PropertyValue, CollectionPermissions, NestingPermissions, MAX_COLLECTION_NAME_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
+	PropertyValue, CollectionPermissions, NestingPermissions, AccessMode,
+	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
 	traits::{Currency, Get},
@@ -193,4 +194,38 @@ benchmarks! {
 		<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?;
 		let to_delete = (0..b).map(|p| property_key(p as usize)).collect::<Vec<_>>();
 	}: {<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete.into_iter())?}
+
+	check_accesslist{
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); receiver: cross_sub;
+		};
+
+		let mut collection_handle = <CollectionHandle<T>>::try_get(collection.id)?;
+			<Pallet<T>>::update_permissions(
+				&sender,
+				&mut collection_handle,
+				CollectionPermissions { access: Some(AccessMode::AllowList), ..Default::default() }
+			)?;
+
+		<Pallet<T>>::toggle_allowlist(
+				&collection,
+				&sender,
+				&sender,
+				true,
+			)?;
+
+		<Pallet<T>>::toggle_allowlist(
+				&collection,
+				&sender,
+				&receiver,
+				true,
+			)?;
+
+		assert_eq!(collection_handle.permissions.access(), AccessMode::AllowList);
+
+		collection_handle.check_allowlist(&sender)?;
+		collection_handle.check_allowlist(&receiver)?;
+
+	}: {collection_handle.check_allowlist(&sender)?;}
 }

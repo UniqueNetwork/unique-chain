@@ -108,7 +108,8 @@ use up_data_structs::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	eth::collection_id_to_address,
+	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as CommonWeightInfo,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -802,7 +803,7 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
@@ -812,7 +813,8 @@ impl<T: Config> Pallet<T> {
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(&token_data.owner == from, <CommonError<T>>::NoPermission);
 
-		if collection.permissions.access() == AccessMode::AllowList {
+		let is_allow_list_mode = collection.permissions.access() == AccessMode::AllowList;
+		if is_allow_list_mode {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
 		}
@@ -884,7 +886,18 @@ impl<T: Config> Pallet<T> {
 			to.clone(),
 			1,
 		));
-		Ok(())
+
+		let actual_weight = match is_allow_list_mode {
+			true => Some(
+				<SelfWeightOf<T>>::transfer() + <PalletCommonWeightOf<T>>::check_accesslist() * 2,
+			),
+			false => Some(<SelfWeightOf<T>>::transfer()),
+		};
+
+		Ok(PostDispatchInfo {
+			actual_weight,
+			pays_fee: Pays::Yes,
+		})
 	}
 
 	/// Batch operation to mint multiple NFT tokens.
@@ -1228,13 +1241,18 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		Self::check_allowed(collection, spender, from, token, nesting_budget)?;
 
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		Self::transfer(collection, from, to, token, nesting_budget)
+		Self::transfer(collection, from, to, token, nesting_budget).map(|mut p| {
+			p.actual_weight = Some(
+				p.actual_weight.unwrap_or_default() + <SelfWeightOf<T>>::checks_for_transfer_from(),
+			);
+			p
+		})
 	}
 
 	/// Burn NFT token for `from` account.
