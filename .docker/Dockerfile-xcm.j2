@@ -23,6 +23,7 @@ WORKDIR /unique_parachain
 
 COPY ./xcm-config/launch-config-xcm-{{ NETWORK }}.json ./launch-config-xcm-{{ NETWORK }}.json
 COPY ./xcm-config/5validators.jsonnet ./5validators.jsonnet
+COPY ./xcm-config/6validators.jsonnet ./6validators.jsonnet
 
 RUN git clone -b {{ BRANCH }} https://github.com/UniqueNetwork/unique-chain.git && \
     cd unique-chain && \
@@ -50,6 +51,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 
 COPY --from=builder-unique /unique_parachain/launch-config-xcm-{{ NETWORK }}.json /polkadot-launch/
 COPY --from=builder-unique /unique_parachain/5validators.jsonnet /polkadot-launch/5validators.jsonnet
+COPY --from=builder-unique /unique_parachain/6validators.jsonnet /polkadot-launch/6validators.jsonnet
 
 COPY --from=builder-unique /unique_parachain/unique-chain/target/release/unique-collator /unique-chain/target/release/
 
