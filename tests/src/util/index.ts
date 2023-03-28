@@ -11,7 +11,7 @@ import {Context} from 'mocha';
 import config from '../config';
 import {ChainHelperBase} from './playgrounds/unique';
 import {ILogger} from './playgrounds/types';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper} from './playgrounds/unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper} from './playgrounds/unique.dev';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -100,6 +100,11 @@ export const usingMoonbeamPlaygrounds = (url: string, code: (helper: DevMoonbeam
 export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
   return usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
 };
+
+export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
+  return usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
+};
+
 
 export const MINIMUM_DONOR_FUND = 100_000n;
 export const DONOR_FUNDING = 2_000_000n;

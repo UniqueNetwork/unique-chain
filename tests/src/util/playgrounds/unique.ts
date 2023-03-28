@@ -3243,6 +3243,26 @@ export class MoonbeamHelper extends XcmChainHelper {
   }
 }
 
+export class AstarHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<AstarHelper>;
+  assets: AssetsGroup<AstarHelper>;
+  xcm: XcmGroup<AstarHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? AstarHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.assets = new AssetsGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
+}
+
 export class AcalaHelper extends XcmChainHelper {
   balance: SubstrateBalanceGroup<AcalaHelper>;
   assetRegistry: AcalaAssetRegistryGroup;
