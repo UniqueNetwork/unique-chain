@@ -113,7 +113,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X3: [
             {
@@ -145,7 +145,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -154,7 +154,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -166,7 +166,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -191,7 +191,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   itSub('Should connect and send USDT from Statemine to Quartz', async ({helper}) => {
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
       const dest = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -200,7 +200,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -212,7 +212,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -276,7 +276,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
   itSub('Should connect and send USDT from Quartz to Statemine back', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {X2: [
           {
@@ -332,7 +332,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -341,7 +341,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -353,7 +353,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -401,7 +401,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     });
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1:{
@@ -470,7 +470,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -501,7 +501,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
   itSub('Should connect and send QTZ to Karura', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -512,7 +512,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     };
 
     const beneficiary = {
-      V1: {
+      V2: {
         parents: 0,
         interior: {
           X1: {
@@ -526,7 +526,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     };
 
     const assets = {
-      V1: [
+      V2: [
         {
           id: {
             Concrete: {
@@ -580,7 +580,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   itSub('Should connect to Karura and send QTZ back', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -644,7 +644,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -865,7 +865,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       NativeAssetId: 'Here',
     };
     const dest = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X2: [
@@ -905,7 +905,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   itSub('Should connect to Moonriver and send QTZ back', async ({helper}) => {
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       const asset = {
-        V1: {
+        V2: {
           id: {
             Concrete: {
               parents: 1,
@@ -920,7 +920,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
         },
       };
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
