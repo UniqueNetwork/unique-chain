@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip} from '../util';
+import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '../util';
 
 describe('Integration Test: Collection Properties', () => {
   let alice: IKeyringPair;
@@ -134,9 +134,10 @@ describe('Integration Test: Collection Properties', () => {
         return `${propDataChar}`.repeat(propDataSize);
       };
 
-      await collection.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
+      const property = {key: propKey, value: makeNewPropData()};
+      await collection.setProperties(alice, [property]);
       const originalSpace = await collection.getPropertiesConsumedSpace();
-      expect(originalSpace).to.be.equal(propDataSize);
+      expect(originalSpace).to.be.equal(sizeOfProperty(property));
 
       const sameSizePropertiesPossibleNum = maxCollectionPropertiesSize / propDataSize;
 
@@ -158,9 +159,10 @@ describe('Integration Test: Collection Properties', () => {
       const propDataSize = 4096;
       const propData = 'a'.repeat(propDataSize);
 
-      await collection.setProperties(alice, [{key: propKey, value: propData}]);
+      const property = {key: propKey, value: propData};
+      await collection.setProperties(alice, [property]);
       let consumedSpace = await collection.getPropertiesConsumedSpace();
-      expect(consumedSpace).to.be.equal(propDataSize);
+      expect(consumedSpace).to.be.equal(sizeOfProperty(property));
 
       await collection.deleteProperties(alice, [propKey]);
       consumedSpace = await collection.getPropertiesConsumedSpace();
@@ -173,31 +175,27 @@ describe('Integration Test: Collection Properties', () => {
       const collection = await helper[testSuite.mode].mintCollection(alice);
       const originalSpace = await collection.getPropertiesConsumedSpace();
 
-      const initPropDataSize = 4096;
-      const biggerPropDataSize = 5000;
-      const smallerPropDataSize = 4000;
-
-      const initPropData = 'a'.repeat(initPropDataSize);
-      const biggerPropData = 'b'.repeat(biggerPropDataSize);
-      const smallerPropData = 'c'.repeat(smallerPropDataSize);
+      const initProp = {key: propKey, value: 'a'.repeat(4096)};
+      const biggerProp = {key: propKey, value: 'b'.repeat(5000)};
+      const smallerProp = {key: propKey, value: 'c'.repeat(4000)};
 
       let consumedSpace;
       let expectedConsumedSpaceDiff;
 
-      await collection.setProperties(alice, [{key: propKey, value: initPropData}]);
+      await collection.setProperties(alice, [initProp]);
       consumedSpace = await collection.getPropertiesConsumedSpace();
-      expectedConsumedSpaceDiff = initPropDataSize - originalSpace;
+      expectedConsumedSpaceDiff = sizeOfProperty(initProp) - originalSpace;
       expect(consumedSpace).to.be.equal(originalSpace + expectedConsumedSpaceDiff);
 
-      await collection.setProperties(alice, [{key: propKey, value: biggerPropData}]);
+      await collection.setProperties(alice, [biggerProp]);
       consumedSpace = await collection.getPropertiesConsumedSpace();
-      expectedConsumedSpaceDiff = biggerPropDataSize - initPropDataSize;
-      expect(consumedSpace).to.be.equal(initPropDataSize + expectedConsumedSpaceDiff);
+      expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(initProp);
+      expect(consumedSpace).to.be.equal(sizeOfProperty(initProp) + expectedConsumedSpaceDiff);
 
-      await collection.setProperties(alice, [{key: propKey, value: smallerPropData}]);
+      await collection.setProperties(alice, [smallerProp]);
       consumedSpace = await collection.getPropertiesConsumedSpace();
-      expectedConsumedSpaceDiff = biggerPropDataSize - smallerPropDataSize;
-      expect(consumedSpace).to.be.equal(biggerPropDataSize - expectedConsumedSpaceDiff);
+      expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(smallerProp);
+      expect(consumedSpace).to.be.equal(sizeOfProperty(biggerProp) - expectedConsumedSpaceDiff);
     });
   }));
 });
@@ -237,7 +235,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     itSub('Fails to set properties that exceed the limits', async ({helper}) =>  {
       const collection = await helper[testSuite.mode].mintCollection(alice);
 
-      const spaceLimit = (await (collection.helper!.api! as any).query.common.collectionProperties(collection.collectionId)).spaceLimit.toNumber();
+      const spaceLimit = helper.getApi().consts.unique.maxCollectionPropertiesSize.toNumber();
 
       // Mute the general tx parsing error, too many bytes to process
       {

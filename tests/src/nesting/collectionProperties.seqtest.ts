@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip} from '../util';
+import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '../util';
 
 describe('Integration Test: Collection Properties with sudo', () => {
   let superuser: IKeyringPair;
@@ -48,10 +48,10 @@ describe('Integration Test: Collection Properties with sudo', () => {
       ];
       const collection = await helper[testSuite.mode].mintCollection(alice, {properties});
 
-      const newProperty = ' '.repeat(4096);
-      await collection.setProperties(alice, [{key: 'space', value: newProperty}]);
+      const newProperty = {key: 'space', value: ' '.repeat(4096)};
+      await collection.setProperties(alice, [newProperty]);
       const originalSpace = await collection.getPropertiesConsumedSpace();
-      expect(originalSpace).to.be.equal(properties[0].value.length + properties[1].value.length + newProperty.length);
+      expect(originalSpace).to.be.equal(sizeOfProperty(properties[0]) + sizeOfProperty(properties[1]) + sizeOfProperty(newProperty));
 
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.unique.forceRepairCollection', [collection.collectionId], true);
       const recomputedSpace = await collection.getPropertiesConsumedSpace();

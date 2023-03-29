@@ -176,3 +176,26 @@ export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts
 }
 
 describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
+
+export function sizeOfInt(i: number) {
+  if (i < 0 || i > 0xffffffff) throw new Error('out of range');
+  if(i < 0b11_1111) {
+    return 1;
+  } else if (i < 0b11_1111_1111_1111) {
+    return 2;
+  } else if (i < 0b11_1111_1111_1111_1111_1111_1111_1111) {
+    return 4;
+  } else {
+    return 5;
+  }
+}
+
+const UTF8_ENCODER = new TextEncoder();
+export function sizeOfEncodedStr(v: string) {
+  const encoded = UTF8_ENCODER.encode(v);
+  return sizeOfInt(encoded.length) + encoded.length;
+}
+
+export function sizeOfProperty(prop: {key: string, value: string}) {
+  return sizeOfEncodedStr(prop.key) + sizeOfEncodedStr(prop.value);
+}
