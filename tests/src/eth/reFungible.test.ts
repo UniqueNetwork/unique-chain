@@ -29,7 +29,7 @@ describe('Refungible: Plain calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [minter, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -593,7 +593,7 @@ describe('RFT: Fees', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -634,7 +634,7 @@ describe('Common metadata', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -699,7 +699,7 @@ describe('Negative tests', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [minter, alice] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });

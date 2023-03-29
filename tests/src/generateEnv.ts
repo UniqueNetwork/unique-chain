@@ -1,6 +1,9 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {readFile} from 'fs/promises';
 import {join} from 'path';
+import {makeNames} from './util';
+
+const {dirname} = makeNames(import.meta.url);
 
 async function fetchVersion(chain: string): Promise<string> {
   const api = await ApiPromise.create({provider: new WsProvider(chain)});
@@ -29,7 +32,7 @@ function fixupUnique(version: string): string {
 }
 
 (async () => {
-  let env = (await readFile(join(__dirname, '../../.env'))).toString();
+  let env = (await readFile(join(dirname, '../../.env'))).toString();
   await Promise.all([
     ff('wss://rpc.polkadot.io/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v => env = setVar(env, 'POLKADOT_MAINNET_BRANCH', v)),
     ff('wss://statemint-rpc.polkadot.io/', /^(....)$/, 'release-parachains-v$1').then(v => env = setVar(env, 'STATEMINT_BUILD_BRANCH', v)),

@@ -29,7 +29,7 @@ describe('Scheduling token and balance transfers', () => {
       requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
 
       superuser = await privateKey('//Alice');
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
 
       await helper.testUtils.enable();
@@ -575,7 +575,7 @@ describe('Negative Test: Scheduling', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
 
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
 
       await helper.testUtils.enable();

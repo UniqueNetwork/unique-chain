@@ -17,13 +17,16 @@
 import {IKeyringPair} from '@polkadot/types/types';
 
 import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util';
+import {makeNames} from '../util';
+
+const {dirname} = makeNames(import.meta.url);
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -110,7 +113,7 @@ describe('EVM transaction fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -257,11 +260,11 @@ describe('EVM transaction fees', () => {
       [
         {
           solPath: 'api/CollectionHelpers.sol',
-          fsPath: `${__dirname}/api/CollectionHelpers.sol`,
+          fsPath: `${dirname}/api/CollectionHelpers.sol`,
         },
         {
           solPath: 'api/UniqueNFT.sol',
-          fsPath: `${__dirname}/api/UniqueNFT.sol`,
+          fsPath: `${dirname}/api/UniqueNFT.sol`,
         },
       ],
     );

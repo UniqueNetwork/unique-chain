@@ -17,17 +17,20 @@
 import {readFile} from 'fs/promises';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from '../util';
+import {makeNames} from '../../util';
+
+const {dirname} = makeNames(import.meta.url);
 
 
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
   const owner = await helper.eth.createAccountWithBalance(donor);
   const web3 = helper.getWeb3();
-  const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${__dirname}/UniqueNFTProxy.abi`)).toString()), undefined, {
+  const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${dirname}/UniqueNFTProxy.abi`)).toString()), undefined, {
     from: owner,
     gas: helper.eth.DEFAULT_GAS,
   });
-  const proxy = await proxyContract.deploy({data: (await readFile(`${__dirname}/UniqueNFTProxy.bin`)).toString(), arguments: [wrapped.options.address]}).send({from: owner});
+  const proxy = await proxyContract.deploy({data: (await readFile(`${dirname}/UniqueNFTProxy.bin`)).toString(), arguments: [wrapped.options.address]}).send({from: owner});
   return proxy;
 }
 
@@ -37,7 +40,7 @@ describe('NFT (Via EVM proxy): Information getting', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
@@ -94,7 +97,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

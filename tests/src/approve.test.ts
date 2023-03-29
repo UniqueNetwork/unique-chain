@@ -31,7 +31,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -110,7 +110,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -147,7 +147,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -190,7 +190,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -241,7 +241,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
       });
     });
@@ -271,7 +271,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -326,7 +326,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -362,7 +362,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -383,7 +383,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
-        const donor = await privateKey({filename: __filename});
+        const donor = await privateKey({url: import.meta.url});
         [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
       });
     });
@@ -498,7 +498,7 @@ describe('Normal user can approve other users to be wallet operator:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
@@ -542,7 +542,7 @@ describe('Administrator and collection owner do not need approval in order to ex
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });
@@ -608,7 +608,7 @@ describe('Repeated approvals add up', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
     });
   });

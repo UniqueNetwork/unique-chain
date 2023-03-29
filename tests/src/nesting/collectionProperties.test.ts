@@ -23,7 +23,7 @@ describe('Integration Test: Collection Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([200n, 10n], donor);
     });
   });
@@ -206,7 +206,7 @@ describe('Negative Integration Test: Collection Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([1000n, 100n], donor);
     });
   });

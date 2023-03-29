@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-  usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD,
+  usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD, makeNames,
 } from './index';
 import * as path from 'path';
 import {promises as fs} from 'fs';
+
+const {dirname} = makeNames(import.meta.url);
 
 // This function should be called before running test suites.
 const globalSetup = async (): Promise<void> => {
@@ -62,7 +64,7 @@ const fundFilenames = async () => {
     const oneToken = helper.balance.getOneTokenNominal();
     const alice = await privateKey('//Alice');
     const nonce = await helper.chain.getNonce(alice.address);
-    const filenames = await getFiles(path.resolve(__dirname, '..'));
+    const filenames = await getFiles(path.resolve(dirname, '..'));
 
     // batching is actually undesireable, it takes away the time while all the transactions actually succeed
     const batchSize = 300;

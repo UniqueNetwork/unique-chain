@@ -23,7 +23,7 @@ describe('Vesting', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       nominal = helper.balance.getOneTokenNominal();
     });
   });

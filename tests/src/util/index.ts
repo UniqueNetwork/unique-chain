@@ -12,6 +12,8 @@ import config from '../config';
 import {ChainHelperBase} from './playgrounds/unique';
 import {ILogger} from './playgrounds/types';
 import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper} from './playgrounds/unique.dev';
+import {dirname} from 'path';
+import {fileURLToPath} from 'url';
 
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
@@ -25,7 +27,7 @@ export const getTestSeed = (filename: string) => {
   return `//Alice+${getTestHash(filename)}`;
 };
 
-async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
+async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
@@ -34,20 +36,26 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
   try {
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
-    const privateKey = async (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => {
+    const privateKey = async (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => {
       if (typeof seed === 'string') {
         return helper.util.fromSeed(seed, ss58Format);
       }
-      else {
-        const actualSeed = getTestSeed(seed.filename);
-        let account = helper.util.fromSeed(actualSeed, ss58Format);
-        // here's to hoping that no
-        if (!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
-          console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
-          account = helper.util.fromSeed('//Alice', ss58Format);
-        }
-        return account;
+      if (seed.url) {
+        const {filename} = makeNames(seed.url);
+        seed.filename = filename;
+      } else if (seed.filename) {
+        // Pass
+      } else {
+        throw new Error('no url nor filename set');
       }
+      const actualSeed = getTestSeed(seed.filename);
+      let account = helper.util.fromSeed(actualSeed, ss58Format);
+      // here's to hoping that no
+      if (!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
+        console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
+        account = helper.util.fromSeed('//Alice', ss58Format);
+      }
+      return account;
     };
     await code(helper, privateKey);
   }
@@ -57,7 +65,7 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
   }
 }
 
-export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
+export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
   return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
 };
 
@@ -198,4 +206,12 @@ export function sizeOfEncodedStr(v: string) {
 
 export function sizeOfProperty(prop: {key: string, value: string}) {
   return sizeOfEncodedStr(prop.key) + sizeOfEncodedStr(prop.value);
+}
+
+export function makeNames(url: string) {
+  const filename = fileURLToPath(url);
+  return {
+    filename,
+    dirname: dirname(filename),
+  };
 }

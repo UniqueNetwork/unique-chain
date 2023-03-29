@@ -25,7 +25,7 @@ describe('evm nft collection sponsoring', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([100n], donor);
       nominal = helper.balance.getOneTokenNominal();
     });
@@ -327,7 +327,7 @@ describe('evm RFT collection sponsoring', () => {
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([100n], donor);
       nominal = helper.balance.getOneTokenNominal();
     });
@@ -739,7 +739,7 @@ describe('evm RFT token sponsoring', () => {
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

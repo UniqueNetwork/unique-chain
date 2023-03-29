@@ -1,7 +1,7 @@
 // Auto-generated via `yarn polkadot-types-from-defs`, do not edit
 /* eslint-disable */
 
-export * from './unique/types';
-export * from './appPromotion/types';
-export * from './povinfo/types';
-export * from './default/types';
+export * from './appPromotion/types.js';
+export * from './default/types.js';
+export * from './povinfo/types.js';
+export * from './unique/types.js';
