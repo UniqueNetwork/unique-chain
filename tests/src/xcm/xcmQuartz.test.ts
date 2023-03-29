@@ -1043,7 +1043,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     });
   });
 
-  itSub.only('Should connect and send QTZ to Shiden', async ({helper}) => {
+  itSub('Should connect and send QTZ to Shiden', async ({helper}) => {
     const destination = {
       V1: {
         parents: 1,
@@ -1113,7 +1113,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     });
   });
 
-  itSub.only('Should connect to Shiden and send QTZ back', async ({helper}) => {
+  itSub('Should connect to Shiden and send QTZ back', async ({helper}) => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       const destination = {
         V1: {

@@ -1045,7 +1045,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     });
   });
 
-  itSub.only('Should connect and send UNQ to Astar', async ({helper}) => {
+  itSub('Should connect and send UNQ to Astar', async ({helper}) => {
     const destination = {
       V1: {
         parents: 1,
@@ -1115,7 +1115,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     });
   });
 
-  itSub.only('Should connect to Astar and send UNQ back', async ({helper}) => {
+  itSub('Should connect to Astar and send UNQ back', async ({helper}) => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       const destination = {
         V1: {
