@@ -987,8 +987,17 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
-  const astarInitialBalance = 1n * (10n ** 18n);
-  const unqToAstarAmount = 10n * (10n ** 18n);
+  // Unique -> Astar
+  const astarInitialBalance = 1n * (10n ** 18n); // 1 ASTR. Existencial deposit required in order to perform XCM call
+  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
+  const unqToAstarTransferred = 10n * (10n ** 18n); // 10 UNQ
+  const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Shiden takes a commision in foreign tokens
+  const senderIinitialBalanceUNQ = 100n * (10n ** 18n); // How many UNQ sender has initially
+  const senderBalanceAfterXCM = 89_941967662676666465n; // 89.94... UNQ after XCM call
+
+  // Astar -> Unique
+  const unqFromAstarTransfered = 5n * (10n ** 18n); // 5 UNQ
+  const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -1029,8 +1038,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, 1]);
 
       console.log('3. Set payment for computation');
-      // TODO this is Phala's price, what price will be for Unique?
-      const unitsPerSecond = 228_000_000_000n;
       await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
 
       console.log('4. Transfer 1 ASTR to recepient');
@@ -1074,29 +1081,37 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
             },
           },
           fun: {
-            Fungible: unqToAstarAmount,
+            Fungible: unqToAstarTransferred,
           },
         },
       ],
     };
 
     // Initial balance is 100 UNQ
-    expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(100n * (10n ** 18n));
+    const balanceBefore = await helper.balance.getSubstrate(randomAccount.address);
+    console.log(`Initial balance is: ${balanceBefore}`);
+    expect(balanceBefore).to.eq(senderIinitialBalanceUNQ);
 
     const feeAssetItem = 0;
     await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
 
     // Balance after reserve transfer is less than 90
-    expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(89_941967662676666465n);
+    const balanceAfter = await helper.balance.getSubstrate(randomAccount.address);
+    console.log(`UNQ Balance on Unique after XCM is: ${balanceAfter}`);
+    console.log(`Unique's UNQ commission is: ${balanceBefore - balanceAfter}`);
+    expect(balanceAfter).to.eq(senderBalanceAfterXCM);
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.wait.newBlocks(3);
       const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
       const astarBalance = await helper.balance.getSubstrate(randomAccount.address);
 
-      expect(xcUNQbalance).to.eq(9_999_999_999_088_000_000n);
+      console.log(`xcUNQ balance on Astar after XCM is: ${xcUNQbalance}`);
+      console.log(`Astar's UNQ commission is: ${unqToAstarTransferred - xcUNQbalance!}`);
+
+      expect(xcUNQbalance).to.eq(unqToAstarArrived);
       // Astar balance does not changed
-      expect(astarBalance).to.eq(1_000_000_000_000_000_000n);
+      expect(astarBalance).to.eq(astarInitialBalance);
     });
   });
 
@@ -1141,30 +1156,35 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
               },
             },
             fun: {
-              Fungible: 5_000_000_000_000_000_000n,
+              Fungible: unqFromAstarTransfered,
             },
           },
         ],
       };
 
       // Initial balance is 1 ASTR
-      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(1_000_000_000_000_000_000n);
+      const balanceASTRbefore = await helper.balance.getSubstrate(randomAccount.address);
+      console.log(`ASTR balance is: ${balanceASTRbefore}, it does not changed`);
+      expect(balanceASTRbefore).to.eq(astarInitialBalance);
 
       const feeAssetItem = 0;
+      // this is non-standard polkadotXcm extension for Astar only. It calls InitiateReserveWithdraw
       await helper.executeExtrinsic(randomAccount, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
 
       const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
       const balanceAstar = await helper.balance.getSubstrate(randomAccount.address);
+      console.log(`xcUNQ balance on Astar after XCM is: ${xcUNQbalance}`);
 
-      // Assert: xcUNQ balance decreased
-      expect(xcUNQbalance).to.eq(4_999_999_999_088_000_000n);
+      // Assert: xcUNQ balance correctly decreased
+      expect(xcUNQbalance).to.eq(unqOnAstarLeft);
       // Assert: ASTR balance is 0.996...
       expect(balanceAstar / (10n ** 15n)).to.eq(996n);
     });
 
     await helper.wait.newBlocks(3);
     const balanceUNQ = await helper.balance.getSubstrate(randomAccount.address);
-    expect(balanceUNQ).to.eq(89_941967662676666465n + 5_000_000_000_000_000_000n);
+    console.log(`UNQ Balance on Unique after XCM is: ${balanceUNQ}`);
+    expect(balanceUNQ).to.eq(senderBalanceAfterXCM + unqFromAstarTransfered);
   });
 
   itSub.skip('Should not accept limitedReserveTransfer of UNQ from ASTAR', async ({helper}) => {
@@ -1208,30 +1228,18 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
               },
             },
             fun: {
-              Fungible: 5_000_000_000_000_000_000n, // TODO set another value
+              Fungible: unqFromAstarTransfered,
             },
           },
         ],
       };
 
       // Initial balance is 1 ASTAR
-      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(1_000_000_000_000_000_000n);
+      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(astarInitialBalance);
 
       const feeAssetItem = 0;
+      // TODO: expect rejected:
       await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
-
-      // Balance after reserve transfer is less than 1 ASTAR
-      const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
-      const balanceAstar = await helper.balance.getSubstrate(randomAccount.address);
-
-      // xcUNQ balance decreased
-      expect(xcUNQbalance).to.eq(4_999_999_999_088_000_000n);
-      // Astar balance is 0.997...
-      expect(balanceAstar / (10n ** 15n)).to.eq(997n);
     });
-
-    await helper.wait.newBlocks(3);
-    const balanceUNQ = await helper.balance.getSubstrate(randomAccount.address);
-    expect(balanceUNQ).to.eq(89_941967662676666465n + 5_000_000_000_000_000_000n);
   });
 });
