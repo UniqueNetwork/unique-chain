@@ -4,7 +4,7 @@ FROM uniquenetwork/builder-cumulus:{{ STATEMINT_BUILD_BRANCH }} as cumulus
 FROM uniquenetwork/builder-acala:{{ ACALA_BUILD_BRANCH }} as acala
 
 # ===== Rust builder =====
-FROM ubuntu:20.04 as rust-builder
+FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
@@ -43,7 +43,7 @@ RUN git clone -b {{ BRANCH }} https://github.com/UniqueNetwork/unique-chain.git 
   cargo build --features=unique-runtime --$PROFILE
 
 # ===== RUN ======
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \

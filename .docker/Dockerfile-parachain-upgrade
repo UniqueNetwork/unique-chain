@@ -45,7 +45,7 @@ WORKDIR /unique_parachain
 RUN cargo build --features=${NETWORK}-runtime --$PROFILE
 
 # ===== RUN ======
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 ARG NETWORK
 ARG POLKADOT_LAUNCH_BRANCH
