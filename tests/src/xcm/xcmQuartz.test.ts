@@ -18,12 +18,13 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
 import {XcmV2TraitsError} from '../interfaces';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds} from '../util';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingAstarPlaygrounds} from '../util';
 
 const QUARTZ_CHAIN = 2095;
 const STATEMINE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const MOONRIVER_CHAIN = 2023;
+const SHIDEN_CHAIN = 2007;
 
 const STATEMINE_PALLET_INSTANCE = 50;
 
@@ -31,6 +32,7 @@ const relayUrl = config.relayUrl;
 const statemineUrl = config.statemineUrl;
 const karuraUrl = config.karuraUrl;
 const moonriverUrl = config.moonriverUrl;
+const shidenUrl = config.shidenUrl;
 
 const RELAY_DECIMALS = 12;
 const STATEMINE_DECIMALS = 12;
@@ -976,5 +978,191 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
     console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
+  });
+});
+
+describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+
+  const shidenInitialBalance = 1n * (10n ** 18n);
+  const qtzToShidenAmount = 10n * (10n ** 18n);
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      [randomAccount] = await helper.arrange.createAccounts([100n], alice);
+      console.log('randomAccount', randomAccount.address);
+    });
+
+    await usingAstarPlaygrounds(shidenUrl, async (helper) => {
+      console.log('1. Create foreign asset and metadata');
+      await helper.assets.create(
+        alice,
+        1,
+        alice.address,
+        1n,
+      );
+
+      await helper.assets.setMetadata(
+        alice,
+        1,
+        'Cross chain QTZ',
+        'xcQTZ',
+        18,
+      );
+
+      console.log('2. Register asset location');
+      const assetLocation = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      };
+
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, 1]);
+
+      console.log('3. Set payment for computation');
+      // TODO this is Phala's price, what price will be for Unique?
+      const unitsPerSecond = 228_000_000_000n;
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+
+      console.log('4. Transfer 1 SDN to recepient');
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, shidenInitialBalance);
+    });
+  });
+
+  itSub.only('Should connect and send QTZ to Shiden', async ({helper}) => {
+    const destination = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: SHIDEN_CHAIN,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V1: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V1: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: qtzToShidenAmount,
+          },
+        },
+      ],
+    };
+
+    // Initial balance is 100 UNQ
+    expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(100n * (10n ** 18n));
+
+    const feeAssetItem = 0;
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+
+    // Balance after reserve transfer is less than 90
+    expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(89_941967662676666465n);
+
+    await usingAstarPlaygrounds(shidenUrl, async (helper) => {
+      await helper.wait.newBlocks(3);
+      const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
+      const astarBalance = await helper.balance.getSubstrate(randomAccount.address);
+
+      expect(xcUNQbalance).to.eq(9_999_999_999_088_000_000n);
+      // Astar balance does not changed
+      expect(astarBalance).to.eq(1_000_000_000_000_000_000n);
+    });
+  });
+
+  itSub.only('Should connect to Shiden and send QTZ back', async ({helper}) => {
+    await usingAstarPlaygrounds(shidenUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      };
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: {
+              AccountId32: {
+                network: 'Any',
+                id: randomAccount.addressRaw,
+              },
+            },
+          },
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 1,
+                interior: {
+                  X1: {
+                    Parachain: QUARTZ_CHAIN,
+                  },
+                },
+              },
+            },
+            fun: {
+              Fungible: 5_000_000_000_000_000_000n,
+            },
+          },
+        ],
+      };
+
+      // Initial balance is 1 SDN
+      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(1_000_000_000_000_000_000n);
+
+      const feeAssetItem = 0;
+      await helper.executeExtrinsic(randomAccount, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
+
+      // Balance after reserve transfer is less than 1 SDN
+      const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
+      const balanceSDN = await helper.balance.getSubstrate(randomAccount.address);
+
+      // Assert: xcQTZ balance decreased
+      expect(xcUNQbalance).to.eq(4_999_999_999_088_000_000n);
+      // Assert: SDN balance is 0.996...
+      expect(balanceSDN / (10n ** 15n)).to.eq(996n);
+    });
+
+    await helper.wait.newBlocks(3);
+    const balanceUNQ = await helper.balance.getSubstrate(randomAccount.address);
+    expect(balanceUNQ).to.eq(89_941967662676666465n + 5_000_000_000_000_000_000n);
   });
 });

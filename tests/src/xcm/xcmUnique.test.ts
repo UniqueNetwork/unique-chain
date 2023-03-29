@@ -1003,7 +1003,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
         alice,
         1,
         alice.address,
-        1n, // TODO set correct minimal balance
+        1n,
       );
 
       await helper.assets.setMetadata(
@@ -1033,7 +1033,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       const unitsPerSecond = 228_000_000_000n;
       await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
 
-      console.log('4. Transfer 1 ASTAR for recepient');
+      console.log('4. Transfer 1 ASTR to recepient');
       await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);
     });
   });
@@ -1101,6 +1101,73 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   });
 
   itSub.only('Should connect to Astar and send UNQ back', async ({helper}) => {
+    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      };
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: {
+              AccountId32: {
+                network: 'Any',
+                id: randomAccount.addressRaw,
+              },
+            },
+          },
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 1,
+                interior: {
+                  X1: {
+                    Parachain: UNIQUE_CHAIN,
+                  },
+                },
+              },
+            },
+            fun: {
+              Fungible: 5_000_000_000_000_000_000n,
+            },
+          },
+        ],
+      };
+
+      // Initial balance is 1 ASTR
+      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(1_000_000_000_000_000_000n);
+
+      const feeAssetItem = 0;
+      await helper.executeExtrinsic(randomAccount, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
+
+      const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
+      const balanceAstar = await helper.balance.getSubstrate(randomAccount.address);
+
+      // Assert: xcUNQ balance decreased
+      expect(xcUNQbalance).to.eq(4_999_999_999_088_000_000n);
+      // Assert: ASTR balance is 0.996...
+      expect(balanceAstar / (10n ** 15n)).to.eq(996n);
+    });
+
+    await helper.wait.newBlocks(3);
+    const balanceUNQ = await helper.balance.getSubstrate(randomAccount.address);
+    expect(balanceUNQ).to.eq(89_941967662676666465n + 5_000_000_000_000_000_000n);
+  });
+
+  itSub.skip('Should not accept limitedReserveTransfer of UNQ from ASTAR', async ({helper}) => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       const destination = {
         V1: {
