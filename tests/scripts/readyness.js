@@ -1,4 +1,4 @@
-const { ApiPromise, WsProvider } = require('@polkadot/api');
+import { ApiPromise, WsProvider } from '@polkadot/api';
 
 const connect = async () => {
   const wsEndpoint = 'ws://127.0.0.1:9944';
