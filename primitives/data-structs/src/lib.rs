@@ -24,10 +24,7 @@ use core::{
 	convert::{TryFrom, TryInto},
 	fmt,
 };
-use frame_support::{
-	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
-	traits::Get,
-};
+use frame_support::storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet};
 
 #[cfg(feature = "serde")]
 use serde::{Serialize, Deserialize};
@@ -1107,14 +1104,19 @@ pub enum PropertyScope {
 }
 
 impl PropertyScope {
+	pub fn prefix(&self) -> &'static [u8] {
+		match self {
+			Self::None => b"",
+			Self::Rmrk => b"rmrk:",
+		}
+	}
 	/// Apply scope to property key.
 	pub fn apply(self, key: PropertyKey) -> Result<PropertyKey, PropertiesError> {
-		let scope_str: &[u8] = match self {
-			Self::None => return Ok(key),
-			Self::Rmrk => b"rmrk",
-		};
-
-		[scope_str, b":", key.as_slice()]
+		let prefix = self.prefix();
+		if prefix == b"" {
+			return Ok(key);
+		}
+		[prefix, key.as_slice()]
 			.concat()
 			.try_into()
 			.map_err(|_| PropertiesError::PropertyKeyIsTooLong)
@@ -1220,6 +1222,10 @@ impl<Value> PropertiesMap<Value> {
 	pub fn values(&self) -> impl Iterator<Item = &Value> {
 		self.0.values()
 	}
+
+	pub fn iter(&self) -> impl Iterator<Item = (&PropertyKey, &Value)> {
+		self.0.iter()
+	}
 }
 
 impl<Value> IntoIterator for PropertiesMap<Value> {
@@ -1258,21 +1264,46 @@ impl<Value> TrySetProperty for PropertiesMap<Value> {
 /// Alias for property permissions map.
 pub type PropertiesPermissionMap = PropertiesMap<PropertyPermission>;
 
-/// Wrapper for properties map with consumed space control.
-#[derive(Encode, Decode, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
-pub struct Properties {
-	map: PropertiesMap<PropertyValue>,
-	consumed_space: u32,
-	space_limit: u32,
+fn slice_size(data: &[u8]) -> u32 {
+	scoped_slice_size(PropertyScope::None, data)
+}
+fn scoped_slice_size(scope: PropertyScope, data: &[u8]) -> u32 {
+	use codec::Compact;
+	let prefix = scope.prefix();
+	<Compact<u32>>::encoded_size(&Compact(data.len() as u32 + prefix.len() as u32)) as u32
+		+ data.len() as u32
+		+ prefix.len() as u32
 }
 
-impl Properties {
+/// Wrapper for properties map with consumed space control.
+#[derive(Encode, Decode, TypeInfo, Clone, PartialEq)]
+pub struct Properties<const S: u32> {
+	map: PropertiesMap<PropertyValue>,
+	consumed_space: u32,
+	// May be not zero, previously served as a current S generic
+	_reserved: u32,
+}
+
+impl<const S: u32> MaxEncodedLen for Properties<S> {
+	fn max_encoded_len() -> usize {
+		// len of map + len of consumed_space + len of space_limit
+		u32::max_encoded_len() * 3 + S as usize
+	}
+}
+
+impl<const S: u32> Default for Properties<S> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
+impl<const S: u32> Properties<S> {
 	/// Create new properies container.
-	pub fn new(space_limit: u32) -> Self {
+	pub fn new() -> Self {
 		Self {
 			map: PropertiesMap::new(),
 			consumed_space: 0,
-			space_limit,
+			_reserved: 0,
 		}
 	}
 
@@ -1281,8 +1312,8 @@ impl Properties {
 		let value = self.map.remove(key)?;
 
 		if let Some(ref value) = value {
-			let value_len = value.len() as u32;
-			self.consumed_space -= value_len;
+			let kv_len = slice_size(key) + slice_size(value);
+			self.consumed_space = self.consumed_space.saturating_sub(kv_len);
 		}
 
 		Ok(value)
@@ -1296,11 +1327,15 @@ impl Properties {
 	/// Recomputes the consumed space for the current properties state.
 	/// Needed to repair a token due to a bug fixed in the [PR #733](https://github.com/UniqueNetwork/unique-chain/pull/773).
 	pub fn recompute_consumed_space(&mut self) {
-		self.consumed_space = self.map.values().map(|value| value.len() as u32).sum();
+		self.consumed_space = self
+			.map
+			.iter()
+			.map(|(key, value)| slice_size(key) + slice_size(value))
+			.sum();
 	}
 }
 
-impl IntoIterator for Properties {
+impl<const S: u32> IntoIterator for Properties<S> {
 	type Item = (PropertyKey, PropertyValue);
 	type IntoIter = <PropertiesMap<PropertyValue> as IntoIterator>::IntoIter;
 
@@ -1309,7 +1344,7 @@ impl IntoIterator for Properties {
 	}
 }
 
-impl TrySetProperty for Properties {
+impl<const S: u32> TrySetProperty for Properties<S> {
 	type Value = PropertyValue;
 
 	fn try_scoped_set(
@@ -1318,43 +1353,26 @@ impl TrySetProperty for Properties {
 		key: PropertyKey,
 		value: Self::Value,
 	) -> Result<Option<Self::Value>, PropertiesError> {
-		let value_len = value.len();
+		let key_size = scoped_slice_size(scope, &key);
+		let value_size = slice_size(&value) as u32;
 
-		if self.consumed_space as usize + value_len > self.space_limit as usize
-			&& !cfg!(feature = "runtime-benchmarks")
+		if self.consumed_space + value_size + key_size > S && !cfg!(feature = "runtime-benchmarks")
 		{
 			return Err(PropertiesError::NoSpaceForProperty);
 		}
 
-		let value_len = value_len as u32;
 		let old_value = self.map.try_scoped_set(scope, key, value)?;
 
-		let old_value_len = old_value.as_ref().map(|v| v.len() as u32).unwrap_or(0);
-
-		if value_len > old_value_len {
-			self.consumed_space += value_len - old_value_len;
+		if let Some(old_value) = old_value.as_ref() {
+			let old_value_size = slice_size(&old_value);
+			self.consumed_space = self.consumed_space.saturating_sub(old_value_size) + value_size;
 		} else {
-			self.consumed_space -= old_value_len - value_len;
+			self.consumed_space += key_size + value_size;
 		}
 
 		Ok(old_value)
 	}
 }
 
-/// Utility struct for using in `StorageMap`.
-pub struct CollectionProperties;
-
-impl Get<Properties> for CollectionProperties {
-	fn get() -> Properties {
-		Properties::new(MAX_COLLECTION_PROPERTIES_SIZE)
-	}
-}
-
-/// Utility struct for using in `StorageMap`.
-pub struct TokenProperties;
-
-impl Get<Properties> for TokenProperties {
-	fn get() -> Properties {
-		Properties::new(MAX_TOKEN_PROPERTIES_SIZE)
-	}
-}
+pub type CollectionProperties = Properties<MAX_COLLECTION_PROPERTIES_SIZE>;
+pub type TokenProperties = Properties<MAX_TOKEN_PROPERTIES_SIZE>;

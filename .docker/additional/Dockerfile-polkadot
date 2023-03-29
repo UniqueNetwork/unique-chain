@@ -1,5 +1,5 @@
 # ===== Rust builder =====
-FROM ubuntu:20.04 as rust-builder
+FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ARG RUST_TOOLCHAIN=nightly-2022-10-09
@@ -39,7 +39,7 @@ RUN git clone -b $POLKADOT_BUILD_BRANCH --depth 1 https://github.com/paritytech/
 
 # ===== BIN ======
 
-FROM ubuntu:20.04 as builder-polkadot
+FROM ubuntu:22.04 as builder-polkadot
 
 COPY --from=builder-polkadot-bin /unique_parachain/polkadot/target/release/polkadot /unique_parachain/polkadot/target/release/polkadot
 COPY --from=builder-polkadot-bin /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm

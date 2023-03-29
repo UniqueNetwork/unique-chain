@@ -1,5 +1,5 @@
 # ===== Rust builder =====
-FROM ubuntu:20.04 as rust-builder
+FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
@@ -36,6 +36,6 @@ RUN git clone -b {{ MOONBEAM_BUILD_BRANCH }} --depth 1 https://github.com/PureSt
 
 # ===== BIN ======
 
-FROM ubuntu:20.04 as builder-moonbeam
+FROM ubuntu:22.04 as builder-moonbeam
 
 COPY --from=builder-moonbeam-bin /unique_parachain/moonbeam/target/release/moonbeam /unique_parachain/moonbeam/target/release/moonbeam

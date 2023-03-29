@@ -1,5 +1,5 @@
 # ===== Rust builder =====
-FROM ubuntu:20.04 as rust-builder
+FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
@@ -35,6 +35,6 @@ RUN git clone -b {{ CUMULUS_BUILD_BRANCH }} --depth 1 https://github.com/parityt
 
 # ===== BIN ======
 
-FROM ubuntu:20.04 as builder-cumulus
+FROM ubuntu:22.04 as builder-cumulus
 
 COPY --from=builder-cumulus-bin /unique_parachain/cumulus/target/release/polkadot-parachain /unique_parachain/cumulus/target/release/polkadot-parachain

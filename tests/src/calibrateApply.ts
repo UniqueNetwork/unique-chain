@@ -1,6 +1,9 @@
 import {readFile, writeFile} from 'fs/promises';
 import path from 'path';
 import usingApi from './.outdated/substrate/substrate-api';
+import {makeNames} from './util';
+
+const {dirname} = makeNames(import.meta.url);
 
 const formatNumber = (num: string): string => num.split('').reverse().join('').replace(/([0-9]{3})/g, '$1_').split('').reverse().join('').replace(/^_/, '');
 
@@ -11,7 +14,7 @@ const formatNumber = (num: string): string => num.split('').reverse().join('').r
     weightToFeeCoefficientOverride = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt().toString();
     minGasPriceOverride = (await api.query.configuration.minGasPriceOverride() as any).toBigInt().toString();
   });
-  const constantsFile = path.resolve(__dirname, '../../primitives/common/src/constants.rs');
+  const constantsFile = path.resolve(dirname, '../../primitives/common/src/constants.rs');
   let constants = (await readFile(constantsFile)).toString();
 
   let weight2feeFound = false;

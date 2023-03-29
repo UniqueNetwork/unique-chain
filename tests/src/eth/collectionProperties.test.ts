@@ -25,7 +25,7 @@ describe('EVM collection properties', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await _helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -139,7 +139,7 @@ describe('Supports ERC721Metadata', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

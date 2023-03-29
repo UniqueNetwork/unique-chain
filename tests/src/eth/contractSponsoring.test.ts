@@ -26,7 +26,7 @@ describe('Sponsoring EVM contracts', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       nominal = helper.balance.getOneTokenNominal();
     });
   });
@@ -444,7 +444,7 @@ describe('Sponsoring Fee Limit', () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([100n], donor);
     });
   });

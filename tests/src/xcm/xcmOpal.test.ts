@@ -80,7 +80,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X3: [
             {
@@ -111,7 +111,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     // Providing the relay currency to the unique sender account
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -120,7 +120,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -132,7 +132,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -157,7 +157,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   itSub('Should connect and send USDT from Westmint to Opal', async ({helper}) => {
     await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       const dest = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -166,7 +166,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -178,7 +178,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -243,7 +243,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
   itSub('Should connect and send USDT from Unique to Statemine back', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {X2: [
           {
@@ -301,7 +301,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     // Providing the relay currency to the unique sender account
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -310,7 +310,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -322,7 +322,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -368,7 +368,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     });
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1:{

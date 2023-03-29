@@ -113,7 +113,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X3: [
             {
@@ -145,7 +145,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -154,7 +154,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -166,7 +166,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -191,7 +191,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   itSub('Should connect and send USDT from Statemint to Unique', async ({helper}) => {
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
       const dest = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -200,7 +200,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -212,7 +212,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -276,7 +276,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
   itSub('Should connect and send USDT from Unique to Statemint back', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {X2: [
           {
@@ -332,7 +332,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -341,7 +341,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -353,7 +353,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -401,7 +401,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     });
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1:{
@@ -470,7 +470,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -502,7 +502,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect and send UNQ to Acala', async ({helper}) => {
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -513,7 +513,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     };
 
     const beneficiary = {
-      V1: {
+      V2: {
         parents: 0,
         interior: {
           X1: {
@@ -527,7 +527,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     };
 
     const assets = {
-      V1: [
+      V2: [
         {
           id: {
             Concrete: {
@@ -581,7 +581,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect to Acala and send UNQ back', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -645,7 +645,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -866,7 +866,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       NativeAssetId: 'Here',
     };
     const dest = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X2: [
@@ -907,7 +907,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   itSub('Should connect to Moonbeam and send UNQ back', async ({helper}) => {
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const asset = {
-        V1: {
+        V2: {
           id: {
             Concrete: {
               parents: 1,
@@ -922,7 +922,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
         },
       };
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
