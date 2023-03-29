@@ -215,17 +215,9 @@ benchmarks! {
 				true,
 			)?;
 
-		<Pallet<T>>::toggle_allowlist(
-				&collection,
-				&sender,
-				&receiver,
-				true,
-			)?;
-
 		assert_eq!(collection_handle.permissions.access(), AccessMode::AllowList);
 
 		collection_handle.check_allowlist(&sender)?;
-		collection_handle.check_allowlist(&receiver)?;
 
 	}: {collection_handle.check_allowlist(&sender)?;}
 }

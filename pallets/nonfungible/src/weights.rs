@@ -43,7 +43,7 @@ pub trait WeightInfo {
 	fn transfer() -> Weight;
 	fn approve() -> Weight;
 	fn approve_from() -> Weight;
-	fn checks_for_transfer_from() -> Weight;
+	fn checks_allowed_raw() -> Weight;
 	fn burn_from() -> Weight;
 	fn set_token_property_permissions(b: u32, ) -> Weight;
 	fn set_token_properties(b: u32, ) -> Weight;
@@ -252,22 +252,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	/// Storage: Nonfungible Allowance (r:1 w:1)
-	/// Proof: Nonfungible Allowance (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
-	/// Storage: Nonfungible TokenData (r:1 w:1)
-	/// Proof: Nonfungible TokenData (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
-	/// Storage: Nonfungible AccountBalance (r:2 w:2)
-	/// Proof: Nonfungible AccountBalance (max_values: None, max_size: Some(65), added: 2540, mode: MaxEncodedLen)
-	/// Storage: Nonfungible Owned (r:0 w:2)
-	/// Proof: Nonfungible Owned (max_values: None, max_size: Some(74), added: 2549, mode: MaxEncodedLen)
-	fn transfer_from() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `527`
-		//  Estimated: `10144`
-		// Minimum execution time: 24_919_000 picoseconds.
-		Weight::from_parts(25_333_000, 10144)
-			.saturating_add(T::DbWeight::get().reads(4_u64))
-			.saturating_add(T::DbWeight::get().writes(6_u64))
+	// Storage: Nonfungible Allowance (r:1 w:0)
+	fn checks_allowed_raw() -> Weight {
+		Weight::from_ref_time(3_341_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(1 as u64))
 	}
 	/// Storage: Nonfungible Allowance (r:1 w:1)
 	/// Proof: Nonfungible Allowance (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
@@ -578,22 +566,10 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
-	/// Storage: Nonfungible Allowance (r:1 w:1)
-	/// Proof: Nonfungible Allowance (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
-	/// Storage: Nonfungible TokenData (r:1 w:1)
-	/// Proof: Nonfungible TokenData (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
-	/// Storage: Nonfungible AccountBalance (r:2 w:2)
-	/// Proof: Nonfungible AccountBalance (max_values: None, max_size: Some(65), added: 2540, mode: MaxEncodedLen)
-	/// Storage: Nonfungible Owned (r:0 w:2)
-	/// Proof: Nonfungible Owned (max_values: None, max_size: Some(74), added: 2549, mode: MaxEncodedLen)
-	fn transfer_from() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `527`
-		//  Estimated: `10144`
-		// Minimum execution time: 24_919_000 picoseconds.
-		Weight::from_parts(25_333_000, 10144)
-			.saturating_add(RocksDbWeight::get().reads(4_u64))
-			.saturating_add(RocksDbWeight::get().writes(6_u64))
+	// Storage: Nonfungible Allowance (r:1 w:0)
+	fn checks_allowed_raw() -> Weight {
+		Weight::from_ref_time(3_341_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(1 as u64))
 	}
 	/// Storage: Nonfungible Allowance (r:1 w:1)
 	/// Proof: Nonfungible Allowance (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)

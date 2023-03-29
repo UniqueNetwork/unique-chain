@@ -109,7 +109,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
 	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo,
+	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -809,14 +809,15 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
+		let mut actual_weight = <SelfWeightOf<T>>::transfer();
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(&token_data.owner == from, <CommonError<T>>::NoPermission);
 
-		let is_allow_list_mode = collection.permissions.access() == AccessMode::AllowList;
-		if is_allow_list_mode {
+		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
+			actual_weight += <PalletCommonWeightOf<T>>::check_accesslist() * 2;
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
@@ -887,15 +888,8 @@ impl<T: Config> Pallet<T> {
 			1,
 		));
 
-		let actual_weight = match is_allow_list_mode {
-			true => Some(
-				<SelfWeightOf<T>>::transfer() + <PalletCommonWeightOf<T>>::check_accesslist() * 2,
-			),
-			false => Some(<SelfWeightOf<T>>::transfer()),
-		};
-
 		Ok(PostDispatchInfo {
-			actual_weight,
+			actual_weight: Some(actual_weight),
 			pays_fee: Pays::Yes,
 		})
 	}
@@ -1247,12 +1241,9 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		Self::transfer(collection, from, to, token, nesting_budget).map(|mut p| {
-			p.actual_weight = Some(
-				p.actual_weight.unwrap_or_default() + <SelfWeightOf<T>>::checks_for_transfer_from(),
-			);
-			p
-		})
+		let mut result = Self::transfer(collection, from, to, token, nesting_budget);
+		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::checks_allowed_raw());
+		result
 	}
 
 	/// Burn NFT token for `from` account.
