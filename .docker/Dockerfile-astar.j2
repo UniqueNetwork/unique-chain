@@ -1,5 +1,5 @@
 # ===== Rust builder =====
-FROM ubuntu:20.04 as rust-builder
+FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
@@ -35,6 +35,6 @@ RUN git clone --recurse-submodules -b {{ ASTAR_BUILD_BRANCH }} --depth 1 https:/
 
 # ===== BIN ======
 
-FROM ubuntu:20.04 as builder-astar
+FROM ubuntu:22.04 as builder-astar
 
 COPY --from=builder-astar-bin /unique_parachain/Astar/target/release/astar-collator /unique_parachain/astar/target/release/astar
