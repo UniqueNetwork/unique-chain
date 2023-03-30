@@ -90,7 +90,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer_from() -> Weight {
-		<SelfWeightOf<T>>::transfer()
+		Self::transfer()
 			+ <SelfWeightOf<T>>::check_allowed_raw()
 			+ <SelfWeightOf<T>>::set_allowance_unchecked_raw()
 	}
