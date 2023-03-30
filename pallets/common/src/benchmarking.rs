@@ -198,7 +198,7 @@ benchmarks! {
 	check_accesslist{
 		bench_init!{
 			owner: sub; collection: collection(owner);
-			sender: cross_from_sub(owner); receiver: cross_sub;
+			sender: cross_from_sub(owner);
 		};
 
 		let mut collection_handle = <CollectionHandle<T>>::try_get(collection.id)?;
@@ -216,8 +216,6 @@ benchmarks! {
 			)?;
 
 		assert_eq!(collection_handle.permissions.access(), AccessMode::AllowList);
-
-		collection_handle.check_allowlist(&sender)?;
 
 	}: {collection_handle.check_allowlist(&sender)?;}
 }
