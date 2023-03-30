@@ -998,7 +998,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   const unqToAstarTransferred = 10n * (10n ** UNQ_DECIMALS); // 10 UNQ
   const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Shiden takes a commision in foreign tokens
   const senderIinitialBalanceUNQ = 100n * (10n ** UNQ_DECIMALS); // How many UNQ sender has initially
-  const senderBalanceAfterXCM = 89_941967662676666465n; // 89.94... UNQ after XCM call
+  const senderBalanceAfterXCM = 89_946678090945539197n; // 89.94... UNQ after XCM call
 
   // Astar -> Unique
   const unqFromAstarTransfered = 5n * (10n ** UNQ_DECIMALS); // 5 UNQ
@@ -1009,6 +1009,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([100n], alice);
       console.log('randomAccount', randomAccount.address);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
@@ -1053,7 +1056,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
   itSub('Should connect and send UNQ to Astar', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1064,7 +1067,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     };
 
     const beneficiary = {
-      V1: {
+      V2: {
         parents: 0,
         interior: {
           X1: {
@@ -1078,7 +1081,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     };
 
     const assets = {
-      V1: [
+      V2: [
         {
           id: {
             Concrete: {

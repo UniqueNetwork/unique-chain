@@ -996,7 +996,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   const qtzToShidenTransferred = 10n * (10n ** QTZ_DECIMALS); // 10 QTZ
   const qtzToShidenArrived = 9_999_999_999_088_000_000n; // 9.999 ... QTZ, Shiden takes a commision in foreign tokens
   const senderIinitialBalanceQTZ = 100n * (10n ** QTZ_DECIMALS); // How many QTZ sender has initially
-  const senderBalanceAfterXCM = 89_941967662676666465n; // 89.94... QTZ after XCM call
+  const senderBalanceAfterXCM = 89_946678090945539197n; // 89.94... QTZ after XCM call
 
   // Shiden -> Quartz
   const qtzFromShidenTransfered = 5n * (10n ** QTZ_DECIMALS); // 5 QTZ
@@ -1007,6 +1007,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       alice = await privateKey('//Alice');
       [sender] = await helper.arrange.createAccounts([100n], alice);
       console.log('sender', sender.address);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
@@ -1051,7 +1054,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
   itSub('Should connect and send QTZ to Shiden', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1062,7 +1065,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     };
 
     const beneficiary = {
-      V1: {
+      V2: {
         parents: 0,
         interior: {
           X1: {
@@ -1076,7 +1079,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     };
 
     const assets = {
-      V1: [
+      V2: [
         {
           id: {
             Concrete: {
