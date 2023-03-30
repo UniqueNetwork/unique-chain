@@ -49,6 +49,8 @@ const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
+const SAFE_XCM_VERSION = 2;
+
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -69,9 +71,12 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       bob = await privateKey('//Bob'); // sovereign account on Statemint funds donor
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -314,7 +319,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     // the commission has been paid in parachain native token
     balanceUniqueFinal = await helper.balance.getSubstrate(alice.address);
-    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueFinal - balanceUniqueAfter));
+    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueAfter - balanceUniqueFinal));
     expect(balanceUniqueAfter > balanceUniqueFinal).to.be.true;
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
@@ -466,6 +471,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
@@ -637,8 +645,11 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
   });
 
@@ -727,6 +738,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       [randomAccountUnique] = await helper.arrange.createAccounts([0n], uniqueDonor);
 
       balanceForeignUnqTokenInit = 0n;
+
+      // Set the default version to wrap the first message to other chains.
+      const alice = uniqueDonor;
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
