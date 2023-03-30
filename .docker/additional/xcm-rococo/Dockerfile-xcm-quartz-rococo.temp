@@ -70,7 +70,7 @@ COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkado
 COPY --from=moonbeam /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=cumulus /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
 COPY --from=acala /unique_parachain/Acala/target/production/acala /acala/target/release/
-COPY --from=astar /unique_parachain/Astar/target/production/astar /astar/target/release/
+COPY --from=astar /unique_parachain/astar/target/release/astar /astar/target/release/
 COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
 
 EXPOSE 9844
