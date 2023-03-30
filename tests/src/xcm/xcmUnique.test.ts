@@ -49,6 +49,8 @@ const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
+const SAFE_XCM_VERSION = 2;
+
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -69,9 +71,12 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       bob = await privateKey('//Bob'); // sovereign account on Statemint funds donor
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -145,7 +150,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -154,7 +159,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -166,7 +171,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V2: [
+        V1: [
           {
             id: {
               Concrete: {
@@ -191,7 +196,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   itSub('Should connect and send USDT from Statemint to Unique', async ({helper}) => {
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
       const dest = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -200,7 +205,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -212,7 +217,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V2: [
+        V1: [
           {
             id: {
               Concrete: {
@@ -314,7 +319,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     // the commission has been paid in parachain native token
     balanceUniqueFinal = await helper.balance.getSubstrate(alice.address);
-    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueFinal - balanceUniqueAfter));
+    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueAfter - balanceUniqueFinal));
     expect(balanceUniqueAfter > balanceUniqueFinal).to.be.true;
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
@@ -332,7 +337,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -341,7 +346,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -353,7 +358,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V2: [
+        V1: [
           {
             id: {
               Concrete: {
@@ -466,11 +471,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X1: {
@@ -581,7 +589,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect to Acala and send UNQ back', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X2: [
@@ -637,15 +645,18 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
   });
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X2: [
@@ -727,6 +738,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       [randomAccountUnique] = await helper.arrange.createAccounts([0n], uniqueDonor);
 
       balanceForeignUnqTokenInit = 0n;
+
+      // Set the default version to wrap the first message to other chains.
+      const alice = uniqueDonor;
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
@@ -907,7 +922,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   itSub('Should connect to Moonbeam and send UNQ back', async ({helper}) => {
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const asset = {
-        V2: {
+        V1: {
           id: {
             Concrete: {
               parents: 1,
@@ -922,7 +937,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
         },
       };
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X2: [

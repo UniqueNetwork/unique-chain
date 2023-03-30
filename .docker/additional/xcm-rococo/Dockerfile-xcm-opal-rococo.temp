@@ -1,5 +1,5 @@
-FROM uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} as polkadot
-FROM uniquenetwork/builder-cumulus:{{ STATEMINE_BUILD_BRANCH }} as cumulus
+FROM uniquenetwork/builder-polkadot:{{ UNIQUEWEST_MAINNET_BRANCH }} as polkadot
+FROM uniquenetwork/builder-cumulus:{{ WESTMINT_BUILD_BRANCH }} as cumulus
 
 # ===== Rust builder =====
 FROM ubuntu:22.04 as rust-builder
@@ -60,6 +60,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     yarn install
 
 COPY --from=builder-unique /unique_parachain/.docker/additional/xcm-rococo/launch-config-xcm-opal-rococo.json /polkadot-launch/launch-config.json
+COPY --from=builder-unique /unique_parachain/.docker/xcm-config/5validators.jsonnet /polkadot-launch/5validators.jsonnet
 
 COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/

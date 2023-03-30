@@ -49,6 +49,8 @@ const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
+const SAFE_XCM_VERSION = 2;
+
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -69,9 +71,12 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       bob = await privateKey('//Bob'); // sovereign account on Statemine(t) funds donor
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -145,7 +150,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -154,7 +159,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -166,7 +171,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V2: [
+        V1: [
           {
             id: {
               Concrete: {
@@ -191,7 +196,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   itSub('Should connect and send USDT from Statemine to Quartz', async ({helper}) => {
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
       const dest = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -200,7 +205,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -212,7 +217,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V2: [
+        V1: [
           {
             id: {
               Concrete: {
@@ -314,7 +319,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     // the commission has been paid in parachain native token
     balanceQuartzFinal = await helper.balance.getSubstrate(alice.address);
-    console.log('[Quartz -> Statemine] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(balanceQuartzFinal - balanceQuartzAfter));
+    console.log('[Quartz -> Statemine] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(balanceQuartzAfter - balanceQuartzFinal));
     expect(balanceQuartzAfter > balanceQuartzFinal).to.be.true;
 
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
@@ -332,7 +337,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -341,7 +346,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V2: {
+        V1: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -353,7 +358,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V2: [
+        V1: [
           {
             id: {
               Concrete: {
@@ -466,11 +471,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X1: {
@@ -580,7 +588,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   itSub('Should connect to Karura and send QTZ back', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X2: [
@@ -636,15 +644,18 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
   });
 
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X2: [
@@ -726,6 +737,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       [randomAccountQuartz] = await helper.arrange.createAccounts([0n], quartzDonor);
 
       balanceForeignQtzTokenInit = 0n;
+      
+      // Set the default version to wrap the first message to other chains.
+      const alice = quartzDonor;
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
@@ -905,7 +920,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   itSub('Should connect to Moonriver and send QTZ back', async ({helper}) => {
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       const asset = {
-        V2: {
+        V1: {
           id: {
             Concrete: {
               parents: 1,
@@ -920,7 +935,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
         },
       };
       const destination = {
-        V2: {
+        V1: {
           parents: 1,
           interior: {
             X2: [

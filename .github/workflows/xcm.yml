@@ -40,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
-            network {unique}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, runtest {testXcmOpal}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, runtest {testXcmQuartz}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, runtest {testXcmUnique}
 
   xcm-build:
     
@@ -90,10 +90,10 @@ jobs:
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ env.POLKADOT_BUILD_BRANCH }}.yml
+          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
 
       - name: Check if the dockerhub repository contains the needed version POLKADOT
         run: |
@@ -107,14 +107,14 @@ jobs:
             echo "POLKADOT TAGS:"
             echo $POLKADOT_TAGS
           # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
-            if [[ ${POLKADOT_TAGS[*]} =~ (^|[[:space:]])"${{ env.POLKADOT_BUILD_BRANCH }}"($|[[:space:]]) ]]; then
+            if [[ ${POLKADOT_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.relay_branch }}"($|[[:space:]]) ]]; then
                 echo "Repository has needed POLKADOT version";
-                docker pull uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}
+                docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
             else
                 echo "Repository has not needed POLKADOT version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-polkadot.${{ env.POLKADOT_BUILD_BRANCH }}.yml --tag uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }} .
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-polkadot.${{ matrix.relay_branch }}.yml --tag uniquenetwork/builder-polkadot:${{ matrix.relay_branch }} .
                 echo "Push needed POLKADOT version to the repository";
-                docker push uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}
+                docker push uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
             fi
         shell: bash
 
@@ -238,7 +238,7 @@ jobs:
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}           
             BRANCH=${{ github.head_ref }}
             ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
