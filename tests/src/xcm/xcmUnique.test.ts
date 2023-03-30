@@ -989,6 +989,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
+  const UNQ_ASSET_ID_ON_SHIDEN = 1;
+  const UNQ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
+
   // Unique -> Astar
   const astarInitialBalance = 1n * ASTAR_DECIMALS; // 1 ASTR, existential deposit required to actually create the account on Shiden.
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
@@ -1010,22 +1013,23 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       console.log('1. Create foreign asset and metadata');
+      // TODO update metadata with values from production
       await helper.assets.create(
         alice,
-        1,
+        UNQ_ASSET_ID_ON_SHIDEN,
         alice.address,
-        1n,
+        UNQ_MINIMAL_BALANCE_ON_SHIDEN,
       );
 
       await helper.assets.setMetadata(
         alice,
-        1,
+        UNQ_ASSET_ID_ON_SHIDEN,
         'Cross chain UNQ',
         'xcUNQ',
-        18,
+        Number(UNQ_DECIMALS),
       );
 
-      console.log('2. Register asset location');
+      console.log('2. Register asset location on Astar');
       const assetLocation = {
         V1: {
           parents: 1,
@@ -1037,12 +1041,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
         },
       };
 
-      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, 1]);
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_SHIDEN]);
 
-      console.log('3. Set payment for computation');
+      console.log('3. Set UNQ payment for XCM execution on Astar');
       await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
 
-      console.log('4. Transfer 1 ASTR to recepient');
+      console.log('4. Transfer 1 ASTR to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);
     });
   });
@@ -1105,7 +1109,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-      const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
+      const xcUNQbalance = await helper.assets.account(UNQ_ASSET_ID_ON_SHIDEN, randomAccount.address);
       const astarBalance = await helper.balance.getSubstrate(randomAccount.address);
 
       console.log(`xcUNQ balance on Astar after XCM is: ${xcUNQbalance}`);
@@ -1173,14 +1177,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       // this is non-standard polkadotXcm extension for Astar only. It calls InitiateReserveWithdraw
       await helper.executeExtrinsic(randomAccount, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
 
-      const xcUNQbalance = await helper.assets.account(1, randomAccount.address);
+      const xcUNQbalance = await helper.assets.account(UNQ_ASSET_ID_ON_SHIDEN, randomAccount.address);
       const balanceAstar = await helper.balance.getSubstrate(randomAccount.address);
       console.log(`xcUNQ balance on Astar after XCM is: ${xcUNQbalance}`);
 
       // Assert: xcUNQ balance correctly decreased
       expect(xcUNQbalance).to.eq(unqOnAstarLeft);
       // Assert: ASTR balance is 0.996...
-      expect(balanceAstar / (10n ** 15n)).to.eq(996n);
+      expect(balanceAstar / (ASTAR_DECIMALS - 3n)).to.eq(996n);
     });
 
     await helper.wait.newBlocks(3);

@@ -987,6 +987,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   let alice: IKeyringPair;
   let sender: IKeyringPair;
 
+  const QTZ_ASSET_ID_ON_SHIDEN = 1;
+  const QTZ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
+
   // Quartz -> Shiden
   const shidenInitialBalance = 1n * SHIDEN_DECIMALS; // 1 SHD, existential deposit required to actually create the account on Shiden
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
@@ -1008,22 +1011,23 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       console.log('1. Create foreign asset and metadata');
+      // TODO update metadata with values from production
       await helper.assets.create(
         alice,
-        1,
+        QTZ_ASSET_ID_ON_SHIDEN,
         alice.address,
-        1n,
+        QTZ_MINIMAL_BALANCE_ON_SHIDEN,
       );
 
       await helper.assets.setMetadata(
         alice,
-        1,
+        QTZ_ASSET_ID_ON_SHIDEN,
         'Cross chain QTZ',
         'xcQTZ',
-        18,
+        Number(QTZ_DECIMALS),
       );
 
-      console.log('2. Register asset location');
+      console.log('2. Register asset location on Shiden');
       const assetLocation = {
         V1: {
           parents: 1,
@@ -1035,12 +1039,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
         },
       };
 
-      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, 1]);
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, QTZ_ASSET_ID_ON_SHIDEN]);
 
-      console.log('3. Set payment for computation');
+      console.log('3. Set QTZ payment for XCM execution on Shiden');
       await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
 
-      console.log('4. Transfer 1 SDN to recepient');
+      console.log('4. Transfer 1 SDN to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, sender.address, shidenInitialBalance);
     });
   });
@@ -1103,7 +1107,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-      const xcQTZbalance = await helper.assets.account(1, sender.address);
+      const xcQTZbalance = await helper.assets.account(QTZ_ASSET_ID_ON_SHIDEN, sender.address);
       const shidenBalance = await helper.balance.getSubstrate(sender.address);
 
       console.log(`xcQTZ balance on Shiden after XCM is: ${xcQTZbalance}`);
@@ -1172,14 +1176,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       await helper.executeExtrinsic(sender, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
 
       // Balance after reserve transfer is less than 1 SDN
-      const xcQTZbalance = await helper.assets.account(1, sender.address);
+      const xcQTZbalance = await helper.assets.account(QTZ_ASSET_ID_ON_SHIDEN, sender.address);
       const balanceSDN = await helper.balance.getSubstrate(sender.address);
       console.log(`xcQTZ balance on Shiden after XCM is: ${xcQTZbalance}`);
 
       // Assert: xcQTZ balance correctly decreased
       expect(xcQTZbalance).to.eq(qtzOnShidenLeft);
       // Assert: SDN balance is 0.996...
-      expect(balanceSDN / (10n ** 15n)).to.eq(996n);
+      expect(balanceSDN / (SHIDEN_DECIMALS - 3n)).to.eq(996n);
     });
 
     await helper.wait.newBlocks(3);
