@@ -37,6 +37,8 @@ const astarUrl = config.astarUrl;
 const RELAY_DECIMALS = 12;
 const STATEMINT_DECIMALS = 12;
 const ACALA_DECIMALS = 12;
+const ASTAR_DECIMALS = 18n;
+const UNQ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -988,15 +990,15 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   let randomAccount: IKeyringPair;
 
   // Unique -> Astar
-  const astarInitialBalance = 1n * (10n ** 18n); // 1 ASTR. Existencial deposit required in order to perform XCM call
+  const astarInitialBalance = 1n * ASTAR_DECIMALS; // 1 ASTR, existential deposit required to actually create the account on Shiden.
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
-  const unqToAstarTransferred = 10n * (10n ** 18n); // 10 UNQ
+  const unqToAstarTransferred = 10n * UNQ_DECIMALS; // 10 UNQ
   const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Shiden takes a commision in foreign tokens
-  const senderIinitialBalanceUNQ = 100n * (10n ** 18n); // How many UNQ sender has initially
+  const senderIinitialBalanceUNQ = 100n * UNQ_DECIMALS; // How many UNQ sender has initially
   const senderBalanceAfterXCM = 89_941967662676666465n; // 89.94... UNQ after XCM call
 
   // Astar -> Unique
-  const unqFromAstarTransfered = 5n * (10n ** 18n); // 5 UNQ
+  const unqFromAstarTransfered = 5n * UNQ_DECIMALS; // 5 UNQ
   const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
 
   before(async () => {

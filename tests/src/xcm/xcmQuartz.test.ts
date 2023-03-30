@@ -37,6 +37,8 @@ const shidenUrl = config.shidenUrl;
 const RELAY_DECIMALS = 12;
 const STATEMINE_DECIMALS = 12;
 const KARURA_DECIMALS = 12;
+const SHIDEN_DECIMALS = 18n;
+const QTZ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -986,15 +988,15 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   let sender: IKeyringPair;
 
   // Quartz -> Shiden
-  const shidenInitialBalance = 1n * (10n ** 18n); // 1 SHD, existencial deposit required in order to perform XCM call
+  const shidenInitialBalance = 1n * SHIDEN_DECIMALS; // 1 SHD, existential deposit required to actually create the account on Shiden
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
-  const qtzToShidenTransferred = 10n * (10n ** 18n); // 10 QTZ
+  const qtzToShidenTransferred = 10n * QTZ_DECIMALS; // 10 QTZ
   const qtzToShidenArrived = 9_999_999_999_088_000_000n; // 9.999 ... QTZ, Shiden takes a commision in foreign tokens
-  const senderIinitialBalanceQTZ = 100n * (10n ** 18n); // How many QTZ sender has initially
+  const senderIinitialBalanceQTZ = 100n * QTZ_DECIMALS; // How many QTZ sender has initially
   const senderBalanceAfterXCM = 89_941967662676666465n; // 89.94... QTZ after XCM call
 
   // Shiden -> Quartz
-  const qtzFromShidenTransfered = 5n * (10n ** 18n); // 5 QTZ
+  const qtzFromShidenTransfered = 5n * QTZ_DECIMALS; // 5 QTZ
   const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 4.999_999_999_088_000_000n QTZ
 
   before(async () => {
