@@ -1082,6 +1082,17 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	pub fn get_allowance(
+		collection: &NonfungibleHandle<T>,
+		token_id: TokenId,
+	) -> Result<Option<T::CrossAccountId>, DispatchError> {
+		ensure!(
+			<TokenData<T>>::get((collection.id, token_id)).is_some(),
+			<CommonError<T>>::TokenNotFound
+		);
+		Ok(<Allowance<T>>::get((collection.id, token_id)))
+	}
+
 	/// Set allowance for the spender to `transfer` or `burn` sender's token.
 	///
 	/// - `token`: Token the spender is allowed to `transfer` or `burn`.

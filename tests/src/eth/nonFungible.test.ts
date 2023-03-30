@@ -230,6 +230,14 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
+      const badTokenId = await contract.methods.nextTokenId().call() + 1;
+      await expect(contract.methods.getApproved(badTokenId).call()).to.be.rejectedWith('revert TokenNotFound');
+    }
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
+    }
+    {
       const result = await contract.methods.approve(spender, tokenId).send({from: owner});
 
       const event = result.events.Approval;
@@ -237,6 +245,10 @@ describe('NFT: Plain calls', () => {
       expect(event.returnValues.owner).to.be.equal(owner);
       expect(event.returnValues.approved).to.be.equal(spender);
       expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+    }
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal(spender);
     }
   });
 
