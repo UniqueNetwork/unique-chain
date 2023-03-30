@@ -741,7 +741,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       [randomAccountQuartz] = await helper.arrange.createAccounts([0n], quartzDonor);
 
       balanceForeignQtzTokenInit = 0n;
-      
+
       // Set the default version to wrap the first message to other chains.
       const alice = quartzDonor;
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
