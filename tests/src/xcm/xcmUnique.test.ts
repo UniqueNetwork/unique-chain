@@ -993,15 +993,15 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   const UNQ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
 
   // Unique -> Astar
-  const astarInitialBalance = 1n * ASTAR_DECIMALS; // 1 ASTR, existential deposit required to actually create the account on Shiden.
+  const astarInitialBalance = 1n * (10n ** ASTAR_DECIMALS); // 1 ASTR, existential deposit required to actually create the account on Shiden.
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
-  const unqToAstarTransferred = 10n * UNQ_DECIMALS; // 10 UNQ
+  const unqToAstarTransferred = 10n * (10n ** UNQ_DECIMALS); // 10 UNQ
   const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Shiden takes a commision in foreign tokens
-  const senderIinitialBalanceUNQ = 100n * UNQ_DECIMALS; // How many UNQ sender has initially
+  const senderIinitialBalanceUNQ = 100n * (10n ** UNQ_DECIMALS); // How many UNQ sender has initially
   const senderBalanceAfterXCM = 89_941967662676666465n; // 89.94... UNQ after XCM call
 
   // Astar -> Unique
-  const unqFromAstarTransfered = 5n * UNQ_DECIMALS; // 5 UNQ
+  const unqFromAstarTransfered = 5n * (10n ** UNQ_DECIMALS); // 5 UNQ
   const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
 
   before(async () => {
@@ -1184,7 +1184,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       // Assert: xcUNQ balance correctly decreased
       expect(xcUNQbalance).to.eq(unqOnAstarLeft);
       // Assert: ASTR balance is 0.996...
-      expect(balanceAstar / (ASTAR_DECIMALS - 3n)).to.eq(996n);
+      expect(balanceAstar / (10n ** (ASTAR_DECIMALS - 3n))).to.eq(996n);
     });
 
     await helper.wait.newBlocks(3);
