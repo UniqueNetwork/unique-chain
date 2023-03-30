@@ -1,4 +1,4 @@
-FROM uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} as polkadot
+FROM uniquenetwork/builder-polkadot:{{ POLKADOT_MAINNET_BRANCH }} as polkadot
 FROM uniquenetwork/builder-moonbeam:{{ MOONBEAM_BUILD_BRANCH }} as moonbeam
 FROM uniquenetwork/builder-cumulus:{{ STATEMINT_BUILD_BRANCH }} as cumulus
 FROM uniquenetwork/builder-acala:{{ ACALA_BUILD_BRANCH }} as acala
