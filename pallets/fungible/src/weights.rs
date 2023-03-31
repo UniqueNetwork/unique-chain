@@ -93,11 +93,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
-	// Storage: Fungible Balance (r:2 w:2)
+	/// Storage: Fungible Balance (r:2 w:2)
+	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
 	fn transfer_raw() -> Weight {
-		Weight::from_ref_time(12_041_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(2 as u64))
-			.saturating_add(T::DbWeight::get().writes(2 as u64))
+		// Proof Size summary in bytes:
+		//  Measured:  `182`
+		//  Estimated: `5104`
+		// Minimum execution time: 6_678_000 picoseconds.
+		Weight::from_parts(7_151_000, 5104)
+			.saturating_add(T::DbWeight::get().reads(2_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 	/// Storage: Fungible Balance (r:1 w:0)
 	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
@@ -125,16 +130,25 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	// Storage: Fungible Allowance (r:1 w:0)
+	/// Storage: Fungible Allowance (r:1 w:0)
+	/// Proof: Fungible Allowance (max_values: None, max_size: Some(93), added: 2568, mode: MaxEncodedLen)
 	fn check_allowed_raw() -> Weight {
-		Weight::from_ref_time(3_550_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
+		// Proof Size summary in bytes:
+		//  Measured:  `210`
+		//  Estimated: `2568`
+		// Minimum execution time: 2_842_000 picoseconds.
+		Weight::from_parts(3_077_000, 2568)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 	}
-	// Storage: Fungible Allowance (r:1 w:1)
+	/// Storage: Fungible Allowance (r:0 w:1)
+	/// Proof: Fungible Allowance (max_values: None, max_size: Some(93), added: 2568, mode: MaxEncodedLen)
 	fn set_allowance_unchecked_raw() -> Weight {
-		Weight::from_ref_time(10_682_000 as u64)
-			.saturating_add(T::DbWeight::get().reads(1 as u64))
-			.saturating_add(T::DbWeight::get().writes(1 as u64))
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 2_532_000 picoseconds.
+		Weight::from_parts(2_680_000, 0)
+			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	/// Storage: Fungible Allowance (r:1 w:1)
 	/// Proof: Fungible Allowance (max_values: None, max_size: Some(93), added: 2568, mode: MaxEncodedLen)
@@ -200,11 +214,16 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
-	// Storage: Fungible Balance (r:2 w:2)
+	/// Storage: Fungible Balance (r:2 w:2)
+	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
 	fn transfer_raw() -> Weight {
-		Weight::from_ref_time(12_041_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(2 as u64))
-			.saturating_add(RocksDbWeight::get().writes(2 as u64))
+		// Proof Size summary in bytes:
+		//  Measured:  `182`
+		//  Estimated: `5104`
+		// Minimum execution time: 6_678_000 picoseconds.
+		Weight::from_parts(7_151_000, 5104)
+			.saturating_add(RocksDbWeight::get().reads(2_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 	/// Storage: Fungible Balance (r:1 w:0)
 	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
@@ -232,16 +251,25 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
-	// Storage: Fungible Allowance (r:1 w:0)
+	/// Storage: Fungible Allowance (r:1 w:0)
+	/// Proof: Fungible Allowance (max_values: None, max_size: Some(93), added: 2568, mode: MaxEncodedLen)
 	fn check_allowed_raw() -> Weight {
-		Weight::from_ref_time(3_550_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
+		// Proof Size summary in bytes:
+		//  Measured:  `210`
+		//  Estimated: `2568`
+		// Minimum execution time: 2_842_000 picoseconds.
+		Weight::from_parts(3_077_000, 2568)
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
 	}
-	// Storage: Fungible Allowance (r:1 w:1)
+	/// Storage: Fungible Allowance (r:0 w:1)
+	/// Proof: Fungible Allowance (max_values: None, max_size: Some(93), added: 2568, mode: MaxEncodedLen)
 	fn set_allowance_unchecked_raw() -> Weight {
-		Weight::from_ref_time(10_682_000 as u64)
-			.saturating_add(RocksDbWeight::get().reads(1 as u64))
-			.saturating_add(RocksDbWeight::get().writes(1 as u64))
+		// Proof Size summary in bytes:
+		//  Measured:  `0`
+		//  Estimated: `0`
+		// Minimum execution time: 2_532_000 picoseconds.
+		Weight::from_parts(2_680_000, 0)
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	/// Storage: Fungible Allowance (r:1 w:1)
 	/// Proof: Fungible Allowance (max_values: None, max_size: Some(93), added: 2568, mode: MaxEncodedLen)
