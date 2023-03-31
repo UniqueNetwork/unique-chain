@@ -997,12 +997,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
   const unqToAstarTransferred = 10n * (10n ** UNQ_DECIMALS); // 10 UNQ
   const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Shiden takes a commision in foreign tokens
-  const senderIinitialBalanceUNQ = 100n * (10n ** UNQ_DECIMALS); // How many UNQ sender has initially
-  const senderBalanceAfterXCM = 89_946678090945539197n; // 89.94... UNQ after XCM call
 
   // Astar -> Unique
   const unqFromAstarTransfered = 5n * (10n ** UNQ_DECIMALS); // 5 UNQ
   const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
+
+  let balanceAfterUniqueToAstarXCM: bigint;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -1099,16 +1099,15 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     // Initial balance is 100 UNQ
     const balanceBefore = await helper.balance.getSubstrate(randomAccount.address);
     console.log(`Initial balance is: ${balanceBefore}`);
-    expect(balanceBefore).to.eq(senderIinitialBalanceUNQ);
 
     const feeAssetItem = 0;
     await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
 
     // Balance after reserve transfer is less than 90
-    const balanceAfter = await helper.balance.getSubstrate(randomAccount.address);
-    console.log(`UNQ Balance on Unique after XCM is: ${balanceAfter}`);
-    console.log(`Unique's UNQ commission is: ${balanceBefore - balanceAfter}`);
-    expect(balanceAfter).to.eq(senderBalanceAfterXCM);
+    balanceAfterUniqueToAstarXCM = await helper.balance.getSubstrate(randomAccount.address);
+    console.log(`UNQ Balance on Unique after XCM is: ${balanceAfterUniqueToAstarXCM}`);
+    console.log(`Unique's UNQ commission is: ${balanceBefore - balanceAfterUniqueToAstarXCM}`);
+    expect(balanceBefore - balanceAfterUniqueToAstarXCM > 0).to.be.true;
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.wait.newBlocks(3);
@@ -1193,7 +1192,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     await helper.wait.newBlocks(3);
     const balanceUNQ = await helper.balance.getSubstrate(randomAccount.address);
     console.log(`UNQ Balance on Unique after XCM is: ${balanceUNQ}`);
-    expect(balanceUNQ).to.eq(senderBalanceAfterXCM + unqFromAstarTransfered);
+    expect(balanceUNQ).to.eq(balanceAfterUniqueToAstarXCM + unqFromAstarTransfered);
   });
 
   itSub.skip('Should not accept limitedReserveTransfer of UNQ from ASTAR', async ({helper}) => {

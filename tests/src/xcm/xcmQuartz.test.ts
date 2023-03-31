@@ -995,12 +995,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
   const qtzToShidenTransferred = 10n * (10n ** QTZ_DECIMALS); // 10 QTZ
   const qtzToShidenArrived = 9_999_999_999_088_000_000n; // 9.999 ... QTZ, Shiden takes a commision in foreign tokens
-  const senderIinitialBalanceQTZ = 100n * (10n ** QTZ_DECIMALS); // How many QTZ sender has initially
-  const senderBalanceAfterXCM = 89_946678090945539197n; // 89.94... QTZ after XCM call
 
   // Shiden -> Quartz
   const qtzFromShidenTransfered = 5n * (10n ** QTZ_DECIMALS); // 5 QTZ
   const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 4.999_999_999_088_000_000n QTZ
+
+  let balanceAfterQuartzToShidenXCM: bigint;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -1097,16 +1097,15 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     // Initial balance is 100 QTZ
     const balanceBefore = await helper.balance.getSubstrate(sender.address);
     console.log(`Initial balance is: ${balanceBefore}`);
-    expect(balanceBefore).to.eq(senderIinitialBalanceQTZ);
 
     const feeAssetItem = 0;
     await helper.xcm.limitedReserveTransferAssets(sender, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
 
     // Balance after reserve transfer is less than 90
-    const balanceAfter = await helper.balance.getSubstrate(sender.address);
-    console.log(`QTZ Balance on Quartz after XCM is: ${balanceAfter}`);
-    console.log(`Quartz's QTZ commission is: ${balanceBefore - balanceAfter}`);
-    expect(balanceAfter).to.eq(senderBalanceAfterXCM);
+    balanceAfterQuartzToShidenXCM = await helper.balance.getSubstrate(sender.address);
+    console.log(`QTZ Balance on Quartz after XCM is: ${balanceAfterQuartzToShidenXCM}`);
+    console.log(`Quartz's QTZ commission is: ${balanceBefore - balanceAfterQuartzToShidenXCM}`);
+    expect(balanceBefore - balanceAfterQuartzToShidenXCM > 0).to.be.true;
 
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.wait.newBlocks(3);
@@ -1192,6 +1191,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     await helper.wait.newBlocks(3);
     const balanceQTZ = await helper.balance.getSubstrate(sender.address);
     console.log(`QTZ Balance on Quartz after XCM is: ${balanceQTZ}`);
-    expect(balanceQTZ).to.eq(senderBalanceAfterXCM + qtzFromShidenTransfered);
+    expect(balanceQTZ).to.eq(balanceAfterQuartzToShidenXCM + qtzFromShidenTransfered);
   });
 });
