@@ -67,6 +67,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(6_684_000, 43467)
 			// Standard Error: 67_984
 			.saturating_add(Weight::from_parts(21_502_829, 0).saturating_mul(b.into()))
+			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
 	/// Storage: Common Allowlist (r:1 w:0)
@@ -108,6 +109,7 @@ impl WeightInfo for () {
 		Weight::from_parts(6_684_000, 43467)
 			// Standard Error: 67_984
 			.saturating_add(Weight::from_parts(21_502_829, 0).saturating_mul(b.into()))
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 	/// Storage: Common Allowlist (r:1 w:0)
