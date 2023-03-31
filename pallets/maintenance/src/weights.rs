@@ -65,13 +65,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: Preimage StatusFor (r:1 w:0)
 	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
 	/// Storage: Preimage PreimageFor (r:1 w:0)
-	/// Proof: Preimage PreimageFor (max_values: None, max_size: Some(4194344), added: 4196819, mode: MaxEncodedLen)
+	/// Proof: Preimage PreimageFor (max_values: None, max_size: Some(4194344), added: 4196819, mode: Measured)
 	fn execute_preimage() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `209`
-		//  Estimated: `4199385`
-		// Minimum execution time: 11_496_000 picoseconds.
-		Weight::from_parts(11_719_000, 4199385)
+		//  Estimated: `5250`
+		// Minimum execution time: 10_004_000 picoseconds.
+		Weight::from_parts(10_964_000, 5250)
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 	}
 }
@@ -101,13 +101,13 @@ impl WeightInfo for () {
 	/// Storage: Preimage StatusFor (r:1 w:0)
 	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
 	/// Storage: Preimage PreimageFor (r:1 w:0)
-	/// Proof: Preimage PreimageFor (max_values: None, max_size: Some(4194344), added: 4196819, mode: MaxEncodedLen)
+	/// Proof: Preimage PreimageFor (max_values: None, max_size: Some(4194344), added: 4196819, mode: Measured)
 	fn execute_preimage() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `209`
-		//  Estimated: `4199385`
-		// Minimum execution time: 11_496_000 picoseconds.
-		Weight::from_parts(11_719_000, 4199385)
+		//  Estimated: `5250`
+		// Minimum execution time: 10_004_000 picoseconds.
+		Weight::from_parts(10_964_000, 5250)
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 	}
 }
