@@ -400,7 +400,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed,
 		);
 
-		let mut actual_weight = <SelfWeightOf<T>>::transfer();
+		let mut actual_weight = <SelfWeightOf<T>>::transfer_raw();
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;

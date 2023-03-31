@@ -37,7 +37,7 @@ pub trait WeightInfo {
 	fn create_item() -> Weight;
 	fn create_multiple_items_ex(b: u32, ) -> Weight;
 	fn burn_item() -> Weight;
-	fn transfer() -> Weight;
+	fn transfer_raw() -> Weight;
 	fn approve() -> Weight;
 	fn approve_from() -> Weight;
 	fn check_allowed_raw() -> Weight;
@@ -93,16 +93,11 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(2_u64))
 			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
-	/// Storage: Fungible Balance (r:2 w:2)
-	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
-	fn transfer() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `182`
-		//  Estimated: `5104`
-		// Minimum execution time: 13_832_000 picoseconds.
-		Weight::from_parts(14_064_000, 5104)
-			.saturating_add(T::DbWeight::get().reads(2_u64))
-			.saturating_add(T::DbWeight::get().writes(2_u64))
+	// Storage: Fungible Balance (r:2 w:2)
+	fn transfer_raw() -> Weight {
+		Weight::from_ref_time(12_041_000 as u64)
+			.saturating_add(T::DbWeight::get().reads(2 as u64))
+			.saturating_add(T::DbWeight::get().writes(2 as u64))
 	}
 	/// Storage: Fungible Balance (r:1 w:0)
 	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
@@ -205,16 +200,11 @@ impl WeightInfo for () {
 			.saturating_add(RocksDbWeight::get().reads(2_u64))
 			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
-	/// Storage: Fungible Balance (r:2 w:2)
-	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)
-	fn transfer() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `182`
-		//  Estimated: `5104`
-		// Minimum execution time: 13_832_000 picoseconds.
-		Weight::from_parts(14_064_000, 5104)
-			.saturating_add(RocksDbWeight::get().reads(2_u64))
-			.saturating_add(RocksDbWeight::get().writes(2_u64))
+	// Storage: Fungible Balance (r:2 w:2)
+	fn transfer_raw() -> Weight {
+		Weight::from_ref_time(12_041_000 as u64)
+			.saturating_add(RocksDbWeight::get().reads(2 as u64))
+			.saturating_add(RocksDbWeight::get().writes(2 as u64))
 	}
 	/// Storage: Fungible Balance (r:1 w:0)
 	/// Proof: Fungible Balance (max_values: None, max_size: Some(77), added: 2552, mode: MaxEncodedLen)

@@ -121,7 +121,7 @@ benchmarks! {
 		}
 	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
 
-	transfer {
+	transfer_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; receiver: cross_sub;

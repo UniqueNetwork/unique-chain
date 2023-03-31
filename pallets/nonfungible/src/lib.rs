@@ -809,7 +809,7 @@ impl<T: Config> Pallet<T> {
 			<CommonError<T>>::TransferNotAllowed
 		);
 
-		let mut actual_weight = <SelfWeightOf<T>>::transfer();
+		let mut actual_weight = <SelfWeightOf<T>>::transfer_raw();
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(&token_data.owner == from, <CommonError<T>>::NoPermission);

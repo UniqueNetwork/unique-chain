@@ -66,7 +66,7 @@ benchmarks! {
 		<Pallet<T>>::create_item(&collection, &owner, (burner.clone(), 200), &Unlimited)?;
 	}: {<Pallet<T>>::burn(&collection, &burner, 100)?}
 
-	transfer {
+	transfer_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; to: cross_sub;

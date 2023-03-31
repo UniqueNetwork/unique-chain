@@ -91,7 +91,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
+		<SelfWeightOf<T>>::transfer_raw() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
 	}
 
 	fn approve() -> Weight {
