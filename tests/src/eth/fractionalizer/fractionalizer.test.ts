@@ -197,7 +197,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('Test fractionalizer NFT <-> RFT mapping ', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 200n);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
     const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
@@ -386,7 +386,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call rft2nft without owning all RFT pieces', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 200n);
     const receiver = await helper.eth.createAccountWithBalance(donor, 10n);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
