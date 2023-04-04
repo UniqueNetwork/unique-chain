@@ -57,7 +57,7 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
       }
       return account;
     };
-    return;
+    await code(helper, privateKey);
   }
   finally {
     await helper.disconnect();
