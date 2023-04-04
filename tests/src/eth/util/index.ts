@@ -59,7 +59,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
       }
       return account;
     };
-    await code(helper, privateKey);
+    return;
   }
   finally {
     await helper.disconnect();

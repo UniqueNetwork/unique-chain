@@ -7,8 +7,10 @@ import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {FunctionFeeVM, IFunctionFee} from '../utils/types';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common';
+import {makeNames} from '../../util';
 
 
+const {dirname} = makeNames(import.meta.url);
 
 const main = async () => {
 

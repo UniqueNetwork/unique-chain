@@ -8,7 +8,7 @@ import {UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common';
-import {makeNames} from '../utils';
+import {makeNames} from '../../util';
 import {ContractImports} from '../../eth/util/playgrounds/types';
 
 const {dirname} = makeNames(import.meta.url);
