@@ -103,7 +103,7 @@
     "testApiConsts": "yarn _test ./**/apiConsts.test.ts",
     "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/collator-selection/**.*test.ts --timeout 49999999",
     "testCollatorSelection": "RUN_COLLATOR_TESTS=1 yarn _test ./**/collatorSelection.*test.ts --timeout 49999999",
-    "testIdentity": "RUN_COLLATOR_TESTS=1 yarn _test ./**/identity.*test.ts",
+    "testIdentity": "RUN_COLLATOR_TESTS=1 yarn _test ./**/identity.*test.ts --timeout 49999999",
     "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmUnique.test.ts",
     "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmQuartz.test.ts",
     "testXcmOpal": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmOpal.test.ts",

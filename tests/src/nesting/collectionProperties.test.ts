@@ -235,7 +235,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     itSub('Fails to set properties that exceed the limits', async ({helper}) =>  {
       const collection = await helper[testSuite.mode].mintCollection(alice);
 
-      const spaceLimit = Number(helper.getApi().consts.unique.maxCollectionPropertiesSize);
+      const spaceLimit = (helper.getApi().consts.unique.maxCollectionPropertiesSize as any).toNumber();
 
       // Mute the general tx parsing error, too many bytes to process
       {
