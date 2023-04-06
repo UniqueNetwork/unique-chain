@@ -13,15 +13,21 @@ async function fetchVersion(chain: string): Promise<string> {
 }
 
 function setVar(env: string, key: string, value: string): string {
-  return env.replace(new RegExp(`${key}=.+?\n`), `${key}=${value}\n`);
+  let found = false;
+  const newEnv = env.replace(new RegExp(`${key}=.+?\n`), () => {
+    found = true;
+    return `${key}=${value}\n`;
+  });
+  if (!found) throw new Error(`env key "${key}" is not found`);
+  return newEnv;
 }
 
 // Fetch and format version string
-async function ff(url: string, regex: RegExp, rep: string): Promise<string> {
+async function ff(url: string, regex: RegExp, rep: string | ((substring: string, ...params:any[]) => string)): Promise<string> {
   const ver = await fetchVersion(url);
   if (ver.match(regex) === null)
     throw new Error(`bad regex for ${url}`);
-  return ver.replace(regex, rep);
+  return ver.replace(regex, rep as any);
 }
 function fixupUnique(version: string): string {
   if (version === 'release-v930033')
@@ -52,6 +58,19 @@ function fixupUnique(version: string): string {
 
     ff('wss://ws-eastend.unique.network/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v => env = setVar(env, 'UNIQUEEAST_MAINNET_BRANCH', v)),
     ff('wss://ws-sapphire.unique.network/', /^(......)$/, 'release-v$1').then(v => env = setVar(env, 'SAPPHIRE_MAINNET_BRANCH', fixupUnique(v))),
+
+    ff('wss://rpc.astar.network/', /^(.+)$/, (_, r) => {
+      switch (r) {
+        case '55': return 'v5.3.0';
+        default: throw new Error('unknown astar branch for runtime ' + r);
+      }
+    }).then(v => env = setVar(env, 'ASTAR_BUILD_BRANCH', v)),
+    ff('wss://shiden.api.onfinality.io/public-ws', /^(.+)$/, (_, r) => {
+      switch (r) {
+        case '90': return 'v4.49.0';
+        default: throw new Error('unknown shiden branch for runtime ' + r);
+      }
+    }).then(v => env = setVar(env, 'SHIDEN_BUILD_BRANCH', v)),
   ]);
   console.log(env);
 })().catch(e => {
