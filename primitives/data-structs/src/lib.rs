@@ -1479,7 +1479,7 @@ mod tests {
 			58, 50, 125, 125, 125, 125, 125, 125, 0,
 		];
 		let mut bytes = IoReader(encoded_rpc_collection.as_slice());
-		RpcCollectionVersion1::<[u8; 34]>::decode(&mut bytes).unwrap();
+		CollectionVersion1::<[u8; 34]>::decode(&mut bytes).unwrap();
 	}
 
 	#[test]
