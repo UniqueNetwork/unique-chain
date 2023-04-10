@@ -19,10 +19,10 @@ targets = ['x86_64-unknown-linux-gnu']
 default = ['opal-runtime', 'std']
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 opal-runtime = [
-	'governance',
 	'app-promotion',
 	'collator-selection',
 	'foreign-assets',
+	'governance',
 	'preimage',
 	'pallet-test-utils',
 	'refungible',

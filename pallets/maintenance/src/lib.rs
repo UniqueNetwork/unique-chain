@@ -55,6 +55,7 @@ pub mod pallet {
 		type Preimages: QueryPreimage + StorePreimage;
 
 		/// The Origin that has the right to enable or disable the maintenance mode
+		/// or to execute the preimage call as root.
 		type ManagerOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
 		/// Weight information for extrinsics in this pallet.

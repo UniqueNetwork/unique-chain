@@ -133,7 +133,7 @@ impl pallet_maintenance::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 
 	#[cfg(feature = "governance")]
-	type ManagerOrigin = governance::RootOrAllTechnicalCommittee;
+	type ManagerOrigin = governance::RootOrTechnicalCommitteeMember;
 
 	#[cfg(not(feature = "governance"))]
 	type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
