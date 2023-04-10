@@ -232,8 +232,7 @@ benchmarks! {
 			owner: cross_from_sub;
 		};
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-
-	}: {collection.token_owner(item)}
+	}: {collection.token_owner(item).unwrap()}
 
 	set_allowance_for_all {
 		bench_init!{

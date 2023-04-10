@@ -27,7 +27,7 @@ describe('Scheduing EVM smart contracts', () => {
   });
 
   itSchedEth.ifWithPallets('Successfully schedules and periodically executes an EVM contract', [Pallets.Scheduler], async (scheduleKind, {helper, privateKey}) => {
-    const donor = await privateKey({filename: __filename});
+    const donor = await privateKey({url: import.meta.url});
     const [alice] = await helper.arrange.createAccounts([1000n], donor);
 
     const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;

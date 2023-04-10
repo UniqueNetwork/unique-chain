@@ -19,7 +19,7 @@ use frame_support::{
 	parameter_types,
 	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
 };
-use cumulus_primitives_core::relay_chain::v2::MAX_POV_SIZE;
+use cumulus_primitives_core::relay_chain::MAX_POV_SIZE;
 use crate::types::{BlockNumber, Balance};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
@@ -52,10 +52,10 @@ pub const MAX_COLLATORS: u32 = 10;
 pub const SESSION_LENGTH: BlockNumber = HOURS;
 
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_246_728_691_397_557/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/78_240_337_566_697_829/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_017_135_340_028/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_031_842_664_630/*</mingasprice>*/;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.

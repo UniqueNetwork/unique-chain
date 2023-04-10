@@ -151,6 +151,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type MotionDuration = CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
@@ -180,6 +181,7 @@ impl pallet_collective::Config<FellowshipCollective> for Runtime {
 	type MotionDuration = FellowshipMotionDuration;
 	type MaxProposals = FellowshipMaxProposals;
 	type MaxMembers = FellowshipMaxMembers;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }
@@ -213,6 +215,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MotionDuration = TechnicalMotionDuration;
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
+	type SetMembersOrigin = EnsureRoot<AccountId>;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 }

@@ -1,10 +1,11 @@
-FROM uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} as polkadot
+FROM uniquenetwork/builder-polkadot:{{ KUSAMA_MAINNET_BRANCH }} as polkadot
 FROM uniquenetwork/builder-moonbeam:{{ MOONRIVER_BUILD_BRANCH }} as moonbeam
 FROM uniquenetwork/builder-cumulus:{{ STATEMINE_BUILD_BRANCH }} as cumulus
 FROM uniquenetwork/builder-acala:{{ KARURA_BUILD_BRANCH }} as acala
+FROM uniquenetwork/builder-astar:{{ SHIDEN_BUILD_BRANCH }} as astar
 
 # ===== Rust builder =====
-FROM ubuntu:20.04 as rust-builder
+FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
@@ -43,7 +44,7 @@ RUN git clone -b {{ BRANCH }} https://github.com/UniqueNetwork/unique-chain.git 
   cargo build --features=quartz-runtime --$PROFILE
 
 # ===== RUN ======
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \
@@ -62,13 +63,14 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     yarn install
 
 COPY --from=builder-unique /unique_parachain/.docker/additional/xcm-rococo/launch-config-xcm-quartz-rococo.json /polkadot-launch/launch-config.json
-COPY --from=builder-unique /unique_parachain/.docker/xcm-config/5validators.jsonnet /polkadot-launch/5validators.jsonnet
+COPY --from=builder-unique /unique_parachain/.docker/xcm-config/6validators.jsonnet /polkadot-launch/6validators.jsonnet
 
 COPY --from=builder-unique /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=moonbeam /unique_parachain/moonbeam/target/release/moonbeam /moonbeam/target/release/
 COPY --from=cumulus /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
 COPY --from=acala /unique_parachain/Acala/target/production/acala /acala/target/release/
+COPY --from=astar /unique_parachain/astar/target/release/astar /astar/target/release/
 COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
 
 EXPOSE 9844
@@ -76,6 +78,7 @@ EXPOSE 9944
 EXPOSE 9946
 EXPOSE 9947
 EXPOSE 9948
+EXPOSE 9949
 
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \

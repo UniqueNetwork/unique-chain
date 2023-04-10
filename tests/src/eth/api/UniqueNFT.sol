@@ -781,7 +781,10 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	///  or in textual repr: setApprovalForAll(address,bool)
 	function setApprovalForAll(address operator, bool approved) external;
 
-	/// @dev Not implemented
+	/// @notice Get the approved address for a single NFT
+	/// @dev Throws if `tokenId` is not a valid NFT
+	/// @param tokenId The NFT to find the approved address for
+	/// @return The approved address for this NFT, or the zero address if there is none
 	/// @dev EVM selector for this function is: 0x081812fc,
 	///  or in textual repr: getApproved(uint256)
 	function getApproved(uint256 tokenId) external view returns (address);

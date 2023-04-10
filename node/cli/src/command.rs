@@ -413,6 +413,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use std::{future::Future, pin::Pin};
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 
 			let runner = cli.create_runner(cmd)?;
 
@@ -425,6 +426,7 @@ pub fn run() -> Result<()> {
 			let task_manager =
 				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
 					.map_err(|e| format!("Error: {:?}", e))?;
+			let info_provider = Some(timestamp_with_aura_info(12000));
 
 			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
 				Ok((
@@ -433,18 +435,18 @@ pub fn run() -> Result<()> {
 						RuntimeId::Unique => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
 							sp_io::SubstrateHostFunctions,
 							<UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>>()),
+						>, _>(info_provider)),
 
 						#[cfg(feature = "quartz-runtime")]
 						RuntimeId::Quartz => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
 							sp_io::SubstrateHostFunctions,
 							<QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>>()),
+						>, _>(info_provider)),
 
 						RuntimeId::Opal => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
 							sp_io::SubstrateHostFunctions,
 							<OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>>()),
+						>, _>(info_provider)),
 						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
 					},
 					task_manager,

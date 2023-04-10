@@ -25,7 +25,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -264,7 +264,7 @@ describe('Negative test: createMultipleItemsEx', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

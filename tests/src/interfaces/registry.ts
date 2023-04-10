@@ -5,7 +5,7 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/types/types/registry';
 
-import type { CumulusPalletDmpQueueCall, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueueError, CumulusPalletDmpQueueEvent, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemCall, CumulusPalletParachainSystemError, CumulusPalletParachainSystemEvent, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmCall, CumulusPalletXcmError, CumulusPalletXcmEvent, CumulusPalletXcmpQueueCall, CumulusPalletXcmpQueueError, CumulusPalletXcmpQueueEvent, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundState, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundState, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, EthbloomBloom, EthereumBlock, EthereumHeader, EthereumLog, EthereumReceiptEip658ReceiptData, EthereumReceiptReceiptV3, EthereumTransactionAccessListItem, EthereumTransactionEip1559Transaction, EthereumTransactionEip2930Transaction, EthereumTransactionLegacyTransaction, EthereumTransactionTransactionAction, EthereumTransactionTransactionSignature, EthereumTransactionTransactionV2, EthereumTypesHashH64, EvmCoreErrorExitError, EvmCoreErrorExitFatal, EvmCoreErrorExitReason, EvmCoreErrorExitRevert, EvmCoreErrorExitSucceed, FpRpcTransactionStatus, FrameSupportDispatchDispatchClass, FrameSupportDispatchDispatchInfo, FrameSupportDispatchPays, FrameSupportDispatchPerDispatchClassU32, FrameSupportDispatchPerDispatchClassWeight, FrameSupportDispatchPerDispatchClassWeightsPerClass, FrameSupportPalletId, FrameSupportTokensMiscBalanceStatus, FrameSystemAccountInfo, FrameSystemCall, FrameSystemError, FrameSystemEvent, FrameSystemEventRecord, FrameSystemExtensionsCheckGenesis, FrameSystemExtensionsCheckNonce, FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckWeight, FrameSystemLastRuntimeUpgradeInfo, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, FrameSystemLimitsWeightsPerClass, FrameSystemPhase, OpalRuntimeRuntime, OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls, OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance, OpalRuntimeRuntimeCommonSessionKeys, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensModuleCall, OrmlTokensModuleError, OrmlTokensModuleEvent, OrmlTokensReserveData, OrmlVestingModuleCall, OrmlVestingModuleError, OrmlVestingModuleEvent, OrmlVestingVestingSchedule, OrmlXtokensModuleCall, OrmlXtokensModuleError, OrmlXtokensModuleEvent, PalletAppPromotionCall, PalletAppPromotionError, PalletAppPromotionEvent, PalletAuthorshipCall, PalletAuthorshipError, PalletAuthorshipUncleEntryItem, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesCall, PalletBalancesError, PalletBalancesEvent, PalletBalancesReasons, PalletBalancesReserveData, PalletCollatorSelectionCall, PalletCollatorSelectionError, PalletCollatorSelectionEvent, PalletCommonError, PalletCommonEvent, PalletConfigurationAppPromotionConfiguration, PalletConfigurationCall, PalletConfigurationError, PalletConfigurationEvent, PalletEthereumCall, PalletEthereumError, PalletEthereumEvent, PalletEthereumFakeTransactionFinalizer, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmCall, PalletEvmCoderSubstrateError, PalletEvmContractHelpersError, PalletEvmContractHelpersEvent, PalletEvmContractHelpersSponsoringModeT, PalletEvmError, PalletEvmEvent, PalletEvmMigrationCall, PalletEvmMigrationError, PalletEvmMigrationEvent, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, PalletForeignAssetsModuleCall, PalletForeignAssetsModuleError, PalletForeignAssetsModuleEvent, PalletForeignAssetsNativeCurrency, PalletFungibleError, PalletIdentityBitFlags, PalletIdentityCall, PalletIdentityError, PalletIdentityEvent, PalletIdentityIdentityField, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletInflationCall, PalletMaintenanceCall, PalletMaintenanceError, PalletMaintenanceEvent, PalletNonfungibleError, PalletNonfungibleItemData, PalletPreimageCall, PalletPreimageError, PalletPreimageEvent, PalletPreimageRequestStatus, PalletRefungibleError, PalletSessionCall, PalletSessionError, PalletSessionEvent, PalletStructureCall, PalletStructureError, PalletStructureEvent, PalletSudoCall, PalletSudoError, PalletSudoEvent, PalletTemplateTransactionPaymentCall, PalletTemplateTransactionPaymentChargeTransactionPayment, PalletTestUtilsCall, PalletTestUtilsError, PalletTestUtilsEvent, PalletTimestampCall, PalletTransactionPaymentEvent, PalletTransactionPaymentReleases, PalletTreasuryCall, PalletTreasuryError, PalletTreasuryEvent, PalletTreasuryProposal, PalletUniqueCall, PalletUniqueError, PalletXcmCall, PalletXcmError, PalletXcmEvent, PhantomTypeUpDataStructs, PolkadotCorePrimitivesInboundDownwardMessage, PolkadotCorePrimitivesInboundHrmpMessage, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2AbridgedHrmpChannel, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpArithmeticArithmeticError, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpCoreEcdsaSignature, SpCoreEd25519Signature, SpCoreSr25519Public, SpCoreSr25519Signature, SpRuntimeBlakeTwo256, SpRuntimeDigest, SpRuntimeDigestDigestItem, SpRuntimeDispatchError, SpRuntimeHeader, SpRuntimeModuleError, SpRuntimeMultiSignature, SpRuntimeTokenError, SpRuntimeTransactionValidityInvalidTransaction, SpRuntimeTransactionValidityTransactionValidityError, SpRuntimeTransactionValidityUnknownTransaction, SpRuntimeTransactionalError, SpTrieStorageProof, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, SpWeightsWeightV2Weight, UpDataStructsAccessMode, UpDataStructsCollection, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCollectionStats, UpDataStructsCreateCollectionData, UpDataStructsCreateFungibleData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsCreateNftData, UpDataStructsCreateNftExData, UpDataStructsCreateReFungibleData, UpDataStructsCreateRefungibleExMultipleOwners, UpDataStructsCreateRefungibleExSingleOwner, UpDataStructsNestingPermissions, UpDataStructsOwnerRestrictedSet, UpDataStructsProperties, UpDataStructsPropertiesMapBoundedVec, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsPropertyPermission, UpDataStructsPropertyScope, UpDataStructsRpcCollection, UpDataStructsRpcCollectionFlags, UpDataStructsSponsoringRateLimit, UpDataStructsSponsorshipStateAccountId32, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, UpDataStructsTokenChild, UpDataStructsTokenData, UpPovEstimateRpcPovInfo, UpPovEstimateRpcTrieKeyValue, XcmDoubleEncoded, XcmV0Junction, XcmV0JunctionBodyId, XcmV0JunctionBodyPart, XcmV0JunctionNetworkId, XcmV0MultiAsset, XcmV0MultiLocation, XcmV0Order, XcmV0OriginKind, XcmV0Response, XcmV0Xcm, XcmV1Junction, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetAssetId, XcmV1MultiassetAssetInstance, XcmV1MultiassetFungibility, XcmV1MultiassetMultiAssetFilter, XcmV1MultiassetMultiAssets, XcmV1MultiassetWildFungibility, XcmV1MultiassetWildMultiAsset, XcmV1MultilocationJunctions, XcmV1Order, XcmV1Response, XcmV1Xcm, XcmV2Instruction, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2WeightLimit, XcmV2Xcm, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedXcm } from '@polkadot/types/lookup';
+import type { CumulusPalletDmpQueueCall, CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueueError, CumulusPalletDmpQueueEvent, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemCall, CumulusPalletParachainSystemError, CumulusPalletParachainSystemEvent, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmCall, CumulusPalletXcmError, CumulusPalletXcmEvent, CumulusPalletXcmpQueueCall, CumulusPalletXcmpQueueError, CumulusPalletXcmpQueueEvent, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueInboundState, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueOutboundState, CumulusPalletXcmpQueueQueueConfigData, CumulusPrimitivesParachainInherentParachainInherentData, EthbloomBloom, EthereumBlock, EthereumHeader, EthereumLog, EthereumReceiptEip658ReceiptData, EthereumReceiptReceiptV3, EthereumTransactionAccessListItem, EthereumTransactionEip1559Transaction, EthereumTransactionEip2930Transaction, EthereumTransactionLegacyTransaction, EthereumTransactionTransactionAction, EthereumTransactionTransactionSignature, EthereumTransactionTransactionV2, EthereumTypesHashH64, EvmCoreErrorExitError, EvmCoreErrorExitFatal, EvmCoreErrorExitReason, EvmCoreErrorExitRevert, EvmCoreErrorExitSucceed, FpRpcTransactionStatus, FrameSupportDispatchDispatchClass, FrameSupportDispatchDispatchInfo, FrameSupportDispatchPays, FrameSupportDispatchPerDispatchClassU32, FrameSupportDispatchPerDispatchClassWeight, FrameSupportDispatchPerDispatchClassWeightsPerClass, FrameSupportPalletId, FrameSupportTokensMiscBalanceStatus, FrameSystemAccountInfo, FrameSystemCall, FrameSystemError, FrameSystemEvent, FrameSystemEventRecord, FrameSystemExtensionsCheckGenesis, FrameSystemExtensionsCheckNonce, FrameSystemExtensionsCheckSpecVersion, FrameSystemExtensionsCheckTxVersion, FrameSystemExtensionsCheckWeight, FrameSystemLastRuntimeUpgradeInfo, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, FrameSystemLimitsWeightsPerClass, FrameSystemPhase, OpalRuntimeRuntime, OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls, OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance, OpalRuntimeRuntimeCommonSessionKeys, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensModuleCall, OrmlTokensModuleError, OrmlTokensModuleEvent, OrmlTokensReserveData, OrmlVestingModuleCall, OrmlVestingModuleError, OrmlVestingModuleEvent, OrmlVestingVestingSchedule, OrmlXtokensModuleCall, OrmlXtokensModuleError, OrmlXtokensModuleEvent, PalletAppPromotionCall, PalletAppPromotionError, PalletAppPromotionEvent, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesCall, PalletBalancesError, PalletBalancesEvent, PalletBalancesReasons, PalletBalancesReserveData, PalletCollatorSelectionCall, PalletCollatorSelectionError, PalletCollatorSelectionEvent, PalletCommonError, PalletCommonEvent, PalletConfigurationAppPromotionConfiguration, PalletConfigurationCall, PalletConfigurationError, PalletConfigurationEvent, PalletEthereumCall, PalletEthereumError, PalletEthereumEvent, PalletEthereumFakeTransactionFinalizer, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmCall, PalletEvmCoderSubstrateCall, PalletEvmCoderSubstrateError, PalletEvmContractHelpersCall, PalletEvmContractHelpersError, PalletEvmContractHelpersEvent, PalletEvmContractHelpersSponsoringModeT, PalletEvmError, PalletEvmEvent, PalletEvmMigrationCall, PalletEvmMigrationError, PalletEvmMigrationEvent, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, PalletForeignAssetsModuleCall, PalletForeignAssetsModuleError, PalletForeignAssetsModuleEvent, PalletForeignAssetsNativeCurrency, PalletFungibleError, PalletIdentityBitFlags, PalletIdentityCall, PalletIdentityError, PalletIdentityEvent, PalletIdentityIdentityField, PalletIdentityIdentityInfo, PalletIdentityJudgement, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletInflationCall, PalletMaintenanceCall, PalletMaintenanceError, PalletMaintenanceEvent, PalletNonfungibleError, PalletNonfungibleItemData, PalletPreimageCall, PalletPreimageError, PalletPreimageEvent, PalletPreimageRequestStatus, PalletRefungibleError, PalletSessionCall, PalletSessionError, PalletSessionEvent, PalletStructureCall, PalletStructureError, PalletStructureEvent, PalletSudoCall, PalletSudoError, PalletSudoEvent, PalletTemplateTransactionPaymentCall, PalletTemplateTransactionPaymentChargeTransactionPayment, PalletTestUtilsCall, PalletTestUtilsError, PalletTestUtilsEvent, PalletTimestampCall, PalletTransactionPaymentEvent, PalletTransactionPaymentReleases, PalletTreasuryCall, PalletTreasuryError, PalletTreasuryEvent, PalletTreasuryProposal, PalletUniqueCall, PalletUniqueError, PalletXcmCall, PalletXcmError, PalletXcmEvent, PalletXcmQueryStatus, PalletXcmRemoteLockedFungibleRecord, PalletXcmVersionMigrationStage, ParachainInfoCall, PhantomTypeUpDataStructs, PolkadotCorePrimitivesInboundDownwardMessage, PolkadotCorePrimitivesInboundHrmpMessage, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotParachainPrimitivesXcmpMessageFormat, PolkadotPrimitivesV2AbridgedHostConfiguration, PolkadotPrimitivesV2AbridgedHrmpChannel, PolkadotPrimitivesV2PersistedValidationData, PolkadotPrimitivesV2UpgradeRestriction, SpArithmeticArithmeticError, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpCoreEcdsaSignature, SpCoreEd25519Signature, SpCoreSr25519Public, SpCoreSr25519Signature, SpRuntimeDigest, SpRuntimeDigestDigestItem, SpRuntimeDispatchError, SpRuntimeModuleError, SpRuntimeMultiSignature, SpRuntimeTokenError, SpRuntimeTransactionValidityInvalidTransaction, SpRuntimeTransactionValidityTransactionValidityError, SpRuntimeTransactionValidityUnknownTransaction, SpRuntimeTransactionalError, SpTrieStorageProof, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, SpWeightsWeightV2Weight, UpDataStructsAccessMode, UpDataStructsCollection, UpDataStructsCollectionLimits, UpDataStructsCollectionMode, UpDataStructsCollectionPermissions, UpDataStructsCollectionStats, UpDataStructsCreateCollectionData, UpDataStructsCreateFungibleData, UpDataStructsCreateItemData, UpDataStructsCreateItemExData, UpDataStructsCreateNftData, UpDataStructsCreateNftExData, UpDataStructsCreateReFungibleData, UpDataStructsCreateRefungibleExMultipleOwners, UpDataStructsCreateRefungibleExSingleOwner, UpDataStructsNestingPermissions, UpDataStructsOwnerRestrictedSet, UpDataStructsProperties, UpDataStructsPropertiesMapBoundedVec, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsPropertyPermission, UpDataStructsPropertyScope, UpDataStructsRpcCollection, UpDataStructsRpcCollectionFlags, UpDataStructsSponsoringRateLimit, UpDataStructsSponsorshipStateAccountId32, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, UpDataStructsTokenChild, UpDataStructsTokenData, UpPovEstimateRpcPovInfo, UpPovEstimateRpcTrieKeyValue, XcmDoubleEncoded, XcmV2BodyId, XcmV2BodyPart, XcmV2Instruction, XcmV2Junction, XcmV2MultiAsset, XcmV2MultiLocation, XcmV2MultiassetAssetId, XcmV2MultiassetAssetInstance, XcmV2MultiassetFungibility, XcmV2MultiassetMultiAssetFilter, XcmV2MultiassetMultiAssets, XcmV2MultiassetWildFungibility, XcmV2MultiassetWildMultiAsset, XcmV2MultilocationJunctions, XcmV2NetworkId, XcmV2OriginKind, XcmV2Response, XcmV2TraitsError, XcmV2WeightLimit, XcmV2Xcm, XcmV3Instruction, XcmV3Junction, XcmV3JunctionBodyId, XcmV3JunctionBodyPart, XcmV3JunctionNetworkId, XcmV3Junctions, XcmV3MaybeErrorCode, XcmV3MultiAsset, XcmV3MultiLocation, XcmV3MultiassetAssetId, XcmV3MultiassetAssetInstance, XcmV3MultiassetFungibility, XcmV3MultiassetMultiAssetFilter, XcmV3MultiassetMultiAssets, XcmV3MultiassetWildFungibility, XcmV3MultiassetWildMultiAsset, XcmV3PalletInfo, XcmV3QueryResponseInfo, XcmV3Response, XcmV3TraitsError, XcmV3TraitsOutcome, XcmV3WeightLimit, XcmV3Xcm, XcmVersionedAssetId, XcmVersionedMultiAsset, XcmVersionedMultiAssets, XcmVersionedMultiLocation, XcmVersionedResponse, XcmVersionedXcm } from '@polkadot/types/lookup';
 
 declare module '@polkadot/types/types/registry' {
   interface InterfaceTypes {
@@ -93,9 +93,6 @@ declare module '@polkadot/types/types/registry' {
     PalletAppPromotionCall: PalletAppPromotionCall;
     PalletAppPromotionError: PalletAppPromotionError;
     PalletAppPromotionEvent: PalletAppPromotionEvent;
-    PalletAuthorshipCall: PalletAuthorshipCall;
-    PalletAuthorshipError: PalletAuthorshipError;
-    PalletAuthorshipUncleEntryItem: PalletAuthorshipUncleEntryItem;
     PalletBalancesAccountData: PalletBalancesAccountData;
     PalletBalancesBalanceLock: PalletBalancesBalanceLock;
     PalletBalancesCall: PalletBalancesCall;
@@ -118,7 +115,9 @@ declare module '@polkadot/types/types/registry' {
     PalletEthereumFakeTransactionFinalizer: PalletEthereumFakeTransactionFinalizer;
     PalletEvmAccountBasicCrossAccountIdRepr: PalletEvmAccountBasicCrossAccountIdRepr;
     PalletEvmCall: PalletEvmCall;
+    PalletEvmCoderSubstrateCall: PalletEvmCoderSubstrateCall;
     PalletEvmCoderSubstrateError: PalletEvmCoderSubstrateError;
+    PalletEvmContractHelpersCall: PalletEvmContractHelpersCall;
     PalletEvmContractHelpersError: PalletEvmContractHelpersError;
     PalletEvmContractHelpersEvent: PalletEvmContractHelpersEvent;
     PalletEvmContractHelpersSponsoringModeT: PalletEvmContractHelpersSponsoringModeT;
@@ -180,6 +179,10 @@ declare module '@polkadot/types/types/registry' {
     PalletXcmCall: PalletXcmCall;
     PalletXcmError: PalletXcmError;
     PalletXcmEvent: PalletXcmEvent;
+    PalletXcmQueryStatus: PalletXcmQueryStatus;
+    PalletXcmRemoteLockedFungibleRecord: PalletXcmRemoteLockedFungibleRecord;
+    PalletXcmVersionMigrationStage: PalletXcmVersionMigrationStage;
+    ParachainInfoCall: ParachainInfoCall;
     PhantomTypeUpDataStructs: PhantomTypeUpDataStructs;
     PolkadotCorePrimitivesInboundDownwardMessage: PolkadotCorePrimitivesInboundDownwardMessage;
     PolkadotCorePrimitivesInboundHrmpMessage: PolkadotCorePrimitivesInboundHrmpMessage;
@@ -196,11 +199,9 @@ declare module '@polkadot/types/types/registry' {
     SpCoreEd25519Signature: SpCoreEd25519Signature;
     SpCoreSr25519Public: SpCoreSr25519Public;
     SpCoreSr25519Signature: SpCoreSr25519Signature;
-    SpRuntimeBlakeTwo256: SpRuntimeBlakeTwo256;
     SpRuntimeDigest: SpRuntimeDigest;
     SpRuntimeDigestDigestItem: SpRuntimeDigestDigestItem;
     SpRuntimeDispatchError: SpRuntimeDispatchError;
-    SpRuntimeHeader: SpRuntimeHeader;
     SpRuntimeModuleError: SpRuntimeModuleError;
     SpRuntimeMultiSignature: SpRuntimeMultiSignature;
     SpRuntimeTokenError: SpRuntimeTokenError;
@@ -246,39 +247,54 @@ declare module '@polkadot/types/types/registry' {
     UpPovEstimateRpcPovInfo: UpPovEstimateRpcPovInfo;
     UpPovEstimateRpcTrieKeyValue: UpPovEstimateRpcTrieKeyValue;
     XcmDoubleEncoded: XcmDoubleEncoded;
-    XcmV0Junction: XcmV0Junction;
-    XcmV0JunctionBodyId: XcmV0JunctionBodyId;
-    XcmV0JunctionBodyPart: XcmV0JunctionBodyPart;
-    XcmV0JunctionNetworkId: XcmV0JunctionNetworkId;
-    XcmV0MultiAsset: XcmV0MultiAsset;
-    XcmV0MultiLocation: XcmV0MultiLocation;
-    XcmV0Order: XcmV0Order;
-    XcmV0OriginKind: XcmV0OriginKind;
-    XcmV0Response: XcmV0Response;
-    XcmV0Xcm: XcmV0Xcm;
-    XcmV1Junction: XcmV1Junction;
-    XcmV1MultiAsset: XcmV1MultiAsset;
-    XcmV1MultiLocation: XcmV1MultiLocation;
-    XcmV1MultiassetAssetId: XcmV1MultiassetAssetId;
-    XcmV1MultiassetAssetInstance: XcmV1MultiassetAssetInstance;
-    XcmV1MultiassetFungibility: XcmV1MultiassetFungibility;
-    XcmV1MultiassetMultiAssetFilter: XcmV1MultiassetMultiAssetFilter;
-    XcmV1MultiassetMultiAssets: XcmV1MultiassetMultiAssets;
-    XcmV1MultiassetWildFungibility: XcmV1MultiassetWildFungibility;
-    XcmV1MultiassetWildMultiAsset: XcmV1MultiassetWildMultiAsset;
-    XcmV1MultilocationJunctions: XcmV1MultilocationJunctions;
-    XcmV1Order: XcmV1Order;
-    XcmV1Response: XcmV1Response;
-    XcmV1Xcm: XcmV1Xcm;
+    XcmV2BodyId: XcmV2BodyId;
+    XcmV2BodyPart: XcmV2BodyPart;
     XcmV2Instruction: XcmV2Instruction;
+    XcmV2Junction: XcmV2Junction;
+    XcmV2MultiAsset: XcmV2MultiAsset;
+    XcmV2MultiLocation: XcmV2MultiLocation;
+    XcmV2MultiassetAssetId: XcmV2MultiassetAssetId;
+    XcmV2MultiassetAssetInstance: XcmV2MultiassetAssetInstance;
+    XcmV2MultiassetFungibility: XcmV2MultiassetFungibility;
+    XcmV2MultiassetMultiAssetFilter: XcmV2MultiassetMultiAssetFilter;
+    XcmV2MultiassetMultiAssets: XcmV2MultiassetMultiAssets;
+    XcmV2MultiassetWildFungibility: XcmV2MultiassetWildFungibility;
+    XcmV2MultiassetWildMultiAsset: XcmV2MultiassetWildMultiAsset;
+    XcmV2MultilocationJunctions: XcmV2MultilocationJunctions;
+    XcmV2NetworkId: XcmV2NetworkId;
+    XcmV2OriginKind: XcmV2OriginKind;
     XcmV2Response: XcmV2Response;
     XcmV2TraitsError: XcmV2TraitsError;
-    XcmV2TraitsOutcome: XcmV2TraitsOutcome;
     XcmV2WeightLimit: XcmV2WeightLimit;
     XcmV2Xcm: XcmV2Xcm;
+    XcmV3Instruction: XcmV3Instruction;
+    XcmV3Junction: XcmV3Junction;
+    XcmV3JunctionBodyId: XcmV3JunctionBodyId;
+    XcmV3JunctionBodyPart: XcmV3JunctionBodyPart;
+    XcmV3JunctionNetworkId: XcmV3JunctionNetworkId;
+    XcmV3Junctions: XcmV3Junctions;
+    XcmV3MaybeErrorCode: XcmV3MaybeErrorCode;
+    XcmV3MultiAsset: XcmV3MultiAsset;
+    XcmV3MultiLocation: XcmV3MultiLocation;
+    XcmV3MultiassetAssetId: XcmV3MultiassetAssetId;
+    XcmV3MultiassetAssetInstance: XcmV3MultiassetAssetInstance;
+    XcmV3MultiassetFungibility: XcmV3MultiassetFungibility;
+    XcmV3MultiassetMultiAssetFilter: XcmV3MultiassetMultiAssetFilter;
+    XcmV3MultiassetMultiAssets: XcmV3MultiassetMultiAssets;
+    XcmV3MultiassetWildFungibility: XcmV3MultiassetWildFungibility;
+    XcmV3MultiassetWildMultiAsset: XcmV3MultiassetWildMultiAsset;
+    XcmV3PalletInfo: XcmV3PalletInfo;
+    XcmV3QueryResponseInfo: XcmV3QueryResponseInfo;
+    XcmV3Response: XcmV3Response;
+    XcmV3TraitsError: XcmV3TraitsError;
+    XcmV3TraitsOutcome: XcmV3TraitsOutcome;
+    XcmV3WeightLimit: XcmV3WeightLimit;
+    XcmV3Xcm: XcmV3Xcm;
+    XcmVersionedAssetId: XcmVersionedAssetId;
     XcmVersionedMultiAsset: XcmVersionedMultiAsset;
     XcmVersionedMultiAssets: XcmVersionedMultiAssets;
     XcmVersionedMultiLocation: XcmVersionedMultiLocation;
+    XcmVersionedResponse: XcmVersionedResponse;
     XcmVersionedXcm: XcmVersionedXcm;
   } // InterfaceTypes
 } // declare module

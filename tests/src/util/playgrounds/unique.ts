@@ -736,7 +736,7 @@ export class ChainHelperBase {
 
   fetchAllPalletNames(): string[] {
     if(this.api === null) throw Error('API not initialized');
-    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase()).sort();
   }
 
   fetchMissingPalletNames(requiredPallets: string[]): string[] {
@@ -2951,6 +2951,10 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
   }
 
+  async setSafeXcmVersion(signer: TSigner, version: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.forceDefaultXcmVersion`, [version], true);
+  }
+
   async teleportAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number) {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
   }
@@ -3236,6 +3240,26 @@ export class MoonbeamHelper extends XcmChainHelper {
       council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
       techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),
     };
+  }
+}
+
+export class AstarHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<AstarHelper>;
+  assets: AssetsGroup<AstarHelper>;
+  xcm: XcmGroup<AstarHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? AstarHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.assets = new AssetsGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
   }
 }
 

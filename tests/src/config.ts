@@ -24,6 +24,8 @@ const config = {
   karuraUrl: process.env.acalaUrl || 'ws://127.0.0.1:9946',
   moonbeamUrl: process.env.moonbeamUrl || 'ws://127.0.0.1:9947',
   moonriverUrl: process.env.moonbeamUrl || 'ws://127.0.0.1:9947',
+  astarUrl: process.env.astarUrl || 'ws://127.0.0.1:9949',
+  shidenUrl: process.env.shidenUrl || 'ws://127.0.0.1:9949',
   westmintUrl: process.env.westmintUrl || 'ws://127.0.0.1:9948',
   statemineUrl: process.env.statemineUrl || 'ws://127.0.0.1:9948',
   statemintUrl: process.env.statemintUrl || 'ws://127.0.0.1:9948',

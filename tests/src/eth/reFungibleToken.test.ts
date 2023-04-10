@@ -27,7 +27,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -86,7 +86,7 @@ describe('Refungible: Plain calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -476,7 +476,7 @@ describe('Refungible: Fees', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -531,7 +531,7 @@ describe('Refungible: Substrate calls', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
@@ -625,7 +625,7 @@ describe('ERC 1633 implementation', () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

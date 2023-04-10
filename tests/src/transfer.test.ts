@@ -25,7 +25,7 @@ describe('Integration Test Transfer(recipient, collection_id, item_id, value)', 
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -117,7 +117,7 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -276,7 +276,7 @@ describe('Transfers to self (potentially over substrate-evm boundary)', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

@@ -36,6 +36,10 @@ benchmarks! {
 		ensure!(!<Enabled<T>>::get(), "didn't disable the MM");
 	}
 
+	#[pov_mode = MaxEncodedLen {
+		// PoV size is deducted from weight_bound
+		Preimage::PreimageFor: Measured
+	}]
 	execute_preimage {
 		let call = <T as Config>::RuntimeCall::from(frame_system::Call::<T>::remark { remark: 1u32.encode() });
 		let hash = T::Preimages::note(call.encode().into())?;

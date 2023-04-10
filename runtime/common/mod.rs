@@ -22,7 +22,6 @@ pub mod identity;
 pub mod instance;
 pub mod maintenance;
 pub mod runtime_apis;
-pub mod xcm;
 
 #[cfg(feature = "unique-scheduler")]
 pub mod scheduler;

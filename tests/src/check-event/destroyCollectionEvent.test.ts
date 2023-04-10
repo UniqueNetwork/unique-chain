@@ -23,7 +23,7 @@ describe('Destroy collection event ', () => {
   let alice: IKeyringPair;
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });

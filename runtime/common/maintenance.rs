@@ -82,7 +82,6 @@ impl SignedExtension for CheckMaintenance {
 
 				#[cfg(feature = "collator-selection")]
 				RuntimeCall::CollatorSelection(_)
-				| RuntimeCall::Authorship(_)
 				| RuntimeCall::Session(_)
 				| RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 

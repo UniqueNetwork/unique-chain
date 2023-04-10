@@ -77,7 +77,7 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	(),
 >;
 
-pub type AssetTransactors = LocalAssetTransactor;
+pub type AssetTransactor = LocalAssetTransactor;
 
 pub type IsReserve = NativeAsset;
 

@@ -26,7 +26,7 @@ describe('Create NFT collection from EVM', () => {
 
   before(async function () {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -149,7 +149,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   before(async function () {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       nominal = helper.balance.getOneTokenNominal();
     });
   });

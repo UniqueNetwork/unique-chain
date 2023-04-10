@@ -28,7 +28,7 @@ describe('EVM token properties', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([100n], donor);
     });
   });
@@ -347,7 +347,7 @@ describe('EVM token properties negative', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([100n], donor);
     });
   });

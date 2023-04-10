@@ -41,7 +41,7 @@ describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
       nominal = helper.balance.getOneTokenNominal();

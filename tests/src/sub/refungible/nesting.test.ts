@@ -24,7 +24,7 @@ describe('Refungible nesting', () => {
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, charlie] = await helper.arrange.createAccounts([50n, 10n], donor);
     });
   });
@@ -111,7 +111,7 @@ describe('Refungible nesting negative tests', () => {
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 50n], donor);
     });
   });

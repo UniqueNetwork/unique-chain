@@ -80,7 +80,7 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 
-	#[cfg(feature = "pov-estimate")]
+	/// Runtime identification (read from the chain spec)
 	pub runtime_id: RuntimeId,
 	/// Executor params for PoV estimating
 	#[cfg(feature = "pov-estimate")]
@@ -115,18 +115,15 @@ where
 	let mut overrides_map = BTreeMap::new();
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
 	);
 	overrides_map.insert(
 		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
 	);
 	overrides_map.insert(
 		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
 	);
 
 	Arc::new(OverrideHandle {
@@ -197,8 +194,7 @@ where
 		deny_unsafe,
 		filter_pool,
 
-		#[cfg(feature = "pov-estimate")]
-		runtime_id,
+		runtime_id: _,
 
 		#[cfg(feature = "pov-estimate")]
 		exec_params,
