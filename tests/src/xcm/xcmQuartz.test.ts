@@ -154,7 +154,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -163,7 +163,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -175,7 +175,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -200,7 +200,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   itSub('Should connect and send USDT from Statemine to Quartz', async ({helper}) => {
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
       const dest = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -209,7 +209,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -221,7 +221,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -341,7 +341,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -350,7 +350,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -362,7 +362,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {

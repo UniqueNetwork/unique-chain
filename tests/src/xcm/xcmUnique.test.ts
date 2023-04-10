@@ -85,8 +85,9 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       // Fund accounts on Statemint
-      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT);
-      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT);
+      const relayXcmVersion = 2;
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT, relayXcmVersion);
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT, relayXcmVersion);
     });
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
