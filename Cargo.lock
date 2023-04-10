@@ -4495,7 +4495,11 @@ dependencies = [
  "pallet-child-bounties",
  "pallet-collective",
  "pallet-conviction-voting",
+<<<<<<< HEAD
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37)",
+=======
+ "pallet-democracy",
+>>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
@@ -5952,7 +5956,7 @@ dependencies = [
  "pallet-collective",
  "pallet-common",
  "pallet-configuration",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
@@ -8814,7 +8818,10 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
+<<<<<<< HEAD
  "pallet-conviction-voting",
+=======
+>>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
@@ -9494,7 +9501,7 @@ dependencies = [
  "pallet-collective",
  "pallet-common",
  "pallet-configuration",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
@@ -9989,7 +9996,11 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
+<<<<<<< HEAD
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37)",
+=======
+ "pallet-democracy",
+>>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-elections-phragmen",
  "pallet-grandpa",
  "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43)",
@@ -13992,7 +14003,7 @@ dependencies = [
  "pallet-collective",
  "pallet-common",
  "pallet-configuration",
- "pallet-democracy 4.0.0-dev",
+ "pallet-democracy",
  "pallet-ethereum",
  "pallet-evm",
  "pallet-evm-coder-substrate",
@@ -14898,7 +14909,11 @@ dependencies = [
  "pallet-bags-list",
  "pallet-balances",
  "pallet-collective",
+<<<<<<< HEAD
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37)",
+=======
+ "pallet-democracy",
+>>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
