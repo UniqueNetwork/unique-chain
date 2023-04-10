@@ -2959,7 +2959,7 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
   }
 
-  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint, xcmVersion: number = 3) {
+  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint, xcmVersion = 3) {
     const destinationContent = {
       parents: 0,
       interior: {
@@ -3000,17 +3000,17 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     let assets;
 
     if (xcmVersion == 2) {
-      destination = { V1: destinationContent };
-      beneficiary = { V1: beneficiaryContent };
-      assets = { V1: assetsContent };
+      destination = {V1: destinationContent};
+      beneficiary = {V1: beneficiaryContent};
+      assets = {V1: assetsContent};
 
     } else if (xcmVersion == 3) {
-      destination = { V2: destinationContent };
-      beneficiary = { V2: beneficiaryContent };
-      assets = { V2: assetsContent };
+      destination = {V2: destinationContent};
+      beneficiary = {V2: beneficiaryContent};
+      assets = {V2: assetsContent};
 
     } else {
-      throw Error("Unknown XCM version: " + xcmVersion);
+      throw Error('Unknown XCM version: ' + xcmVersion);
     }
 
     const feeAssetItem = 0;
