@@ -445,6 +445,16 @@ export class ArrangeGroup {
     return crowd;
   };
 
+  /**
+   * Generates one account with zero balance
+   * @returns the newly generated account
+   * @example const account = await helper.arrange.createEmptyAccount();
+   */
+  createEmptyAccount = (): IKeyringPair => {
+    const ss58Format = this.helper.chain.getChainProperties().ss58Format;
+    return this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
+  };
+
   isDevNode = async () => {
     let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     if(blockNumber == 0) {

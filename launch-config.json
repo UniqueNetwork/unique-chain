@@ -93,6 +93,12 @@
             "bin": "../unique-chain/target/release/unique-collator",
             "id": 1000,
             "balance": "1000000000000000000000000",
+            "chainRawInitializer": [
+                "chainql",
+                "--tla-code=rawSpec=import '${rawSpec}'",
+                "--tla-str=forkFrom=wss://ws-opal.unique.network:443",
+                "../unique-chain/.docker/forkless-config/fork.jsonnet"
+            ],
             "nodes": [
                 {
                     "port": 31200,

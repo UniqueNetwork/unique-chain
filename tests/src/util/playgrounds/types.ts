@@ -13,14 +13,16 @@ export interface IEvent {
   phase: {applyExtrinsic: number} | 'Initialization',
 }
 
+export interface IPhasicEvent {
+  phase: any, // {ApplyExtrinsic: number} | 'Initialization',
+  event: IEvent;
+}
+
 export interface ITransactionResult {
   status: 'Fail' | 'Success';
   result: {
       dispatchError: any,
-      events: {
-        phase: any, // {ApplyExtrinsic: number} | 'Initialization',
-        event: IEvent;
-      }[];
+      events: IPhasicEvent[];
   },
   blockHash: string,
   moduleError?: string | object;
@@ -244,6 +246,11 @@ export interface DemocracyStandardAccountVote {
     aye: boolean,
     conviction: number,
   },
+}
+
+export interface DemocracySplitAccount {
+  aye: bigint,
+  nay: bigint,
 }
 
 export type TSubstrateAccount = string;
