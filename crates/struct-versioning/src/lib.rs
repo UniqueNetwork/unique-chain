@@ -223,7 +223,7 @@ pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {
 		};
 		let current_fields = fields
 			.iter()
-			.filter_map(|(ver, field)| ver.exists_on(version).then(|| field));
+			.filter_map(|(ver, field)| ver.exists_on(version).then_some(field));
 
 		let mut doc = Vec::new();
 		if version > attr.first_version {

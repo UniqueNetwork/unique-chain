@@ -72,7 +72,7 @@ use frame_support::{
 	traits::{
 		Currency, Get, LockableCurrency, WithdrawReasons, tokens::Balance, ExistenceRequirement,
 	},
-	ensure,
+	ensure, BoundedVec,
 };
 
 use weights::WeightInfo;
@@ -97,7 +97,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{
 		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId,
-		traits::ReservableCurrency,
+		traits::ReservableCurrency, weights::Weight,
 	};
 	use frame_system::pallet_prelude::*;
 
@@ -156,7 +156,7 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// Staking recalculation was performed
 		///
@@ -208,6 +208,8 @@ pub mod pallet {
 		SponsorNotSet,
 		/// Errors caused by incorrect actions with a locked balance.
 		IncorrectLockedBalanceOperation,
+		/// Errors caused by insufficient staked balance.
+		InsufficientStakedBalance,
 	}
 
 	/// Stores the total staked amount.
@@ -234,7 +236,7 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Stores amount of stakes for an `Account`.
+	/// Stores number of stake records for an `Account`.
 	///
 	/// * **Key** - Staker account.
 	/// * **Value** - Amount of stakes.
@@ -242,7 +244,7 @@ pub mod pallet {
 	pub type StakesPerAccount<T: Config> =
 		StorageMap<_, Blake2_128Concat, T::AccountId, u8, ValueQuery>;
 
-	/// Stores amount of stakes for an `Account`.
+	/// Pending unstake records for an `Account`.
 	///
 	/// * **Key** - Staker account.
 	/// * **Value** - Amount of stakes.
@@ -262,6 +264,10 @@ pub mod pallet {
 	pub type PreviousCalculatedRecord<T: Config> =
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
+	#[pallet::storage]
+	pub(crate) type UpgradedToReserves<T: Config> =
+		StorageValue<Value = bool, QueryKind = ValueQuery>;
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
@@ -276,13 +282,20 @@ pub mod pallet {
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
-					<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::unreserve(
-						&staker, amount,
-					);
+					Self::get_locked_balance(&staker).map(|b| {
+						let new_state = b.amount.checked_sub(&amount).unwrap_or_default();
+						Self::set_lock_unchecked(&staker, new_state);
+					});
 				});
 			}
 
 			<T as Config>::WeightInfo::on_initialize(counter)
+		}
+
+		fn on_runtime_upgrade() -> Weight {
+			<UpgradedToReserves<T>>::kill();
+
+			T::DbWeight::get().reads_writes(0, 1)
 		}
 	}
 
@@ -340,14 +353,16 @@ pub mod pallet {
 				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
 
 			// checks that we can lock `amount` on the `staker` account.
-			<<T as Config>::Currency as Currency<T::AccountId>>::ensure_can_withdraw(
-				&staker_id,
-				amount,
-				WithdrawReasons::all(),
-				balance
-					.checked_sub(&amount)
-					.ok_or(ArithmeticError::Underflow)?,
-			)?;
+			ensure!(
+				amount
+					<= match Self::get_locked_balance(&staker_id) {
+						Some(lock) => balance
+							.checked_sub(&lock.amount)
+							.ok_or(ArithmeticError::Underflow)?,
+						None => balance,
+					},
+				ArithmeticError::Underflow
+			);
 
 			Self::add_lock_balance(&staker_id, amount)?;
 
@@ -392,60 +407,30 @@ pub mod pallet {
 		}
 
 		/// Unstakes all stakes.
-		/// Moves the sum of all stakes to the `reserved` state.
 		/// After the end of `PendingInterval` this sum becomes completely
 		/// free for further use.
 		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::unstake())]
-		pub fn unstake(staker: OriginFor<T>) -> DispatchResultWithPostInfo {
+		#[pallet::weight(<T as Config>::WeightInfo::unstake_all())]
+		pub fn unstake_all(staker: OriginFor<T>) -> DispatchResult {
 			let staker_id = ensure_signed(staker)?;
-			let config = <PalletConfiguration<T>>::get();
 
-			// calculate block number where the sum would be free
-			let block = <frame_system::Pallet<T>>::block_number() + config.pending_interval;
+			Self::unstake_all_internal(staker_id)
+		}
 
-			let mut pendings = <PendingUnstake<T>>::get(block);
+		/// Unstakes the amount of balance for the staker.
+		/// After the end of `PendingInterval` this sum becomes completely
+		/// free for further use.
+		///
+		///  # Arguments
+		///
+		/// * `staker`: staker account.
+		/// * `amount`: amount of unstaked funds.
+		#[pallet::call_index(8)]
+		#[pallet::weight(<T as Config>::WeightInfo::unstake_partial())]
+		pub fn unstake_partial(staker: OriginFor<T>, amount: BalanceOf<T>) -> DispatchResult {
+			let staker_id = ensure_signed(staker)?;
 
-			// checks that we can do unreserve stakes in the block
-			ensure!(!pendings.is_full(), Error::<T>::PendingForBlockOverflow);
-
-			let mut total_stakes = 0u64;
-
-			let total_staked: BalanceOf<T> = Staked::<T>::drain_prefix((&staker_id,))
-				.map(|(_, (amount, _))| {
-					total_stakes += 1;
-					amount
-				})
-				.sum();
-
-			if total_staked.is_zero() {
-				return Ok(None::<Weight>.into()); // TO-DO
-			}
-
-			pendings
-				.try_push((staker_id.clone(), total_staked))
-				.map_err(|_| Error::<T>::PendingForBlockOverflow)?;
-
-			<PendingUnstake<T>>::insert(block, pendings);
-
-			Self::unlock_balance(&staker_id, total_staked)?;
-
-			<<T as Config>::Currency as ReservableCurrency<T::AccountId>>::reserve(
-				&staker_id,
-				total_staked,
-			)?;
-
-			TotalStaked::<T>::set(
-				TotalStaked::<T>::get()
-					.checked_sub(&total_staked)
-					.ok_or(ArithmeticError::Underflow)?,
-			);
-
-			StakesPerAccount::<T>::remove(&staker_id);
-
-			Self::deposit_event(Event::Unstake(staker_id, total_staked));
-
-			Ok(None::<Weight>.into())
+			Self::unstake_partial_internal(staker_id, amount)
 		}
 
 		/// Sets the pallet to be the sponsor for the collection.
@@ -719,23 +704,97 @@ impl<T: Config> Pallet<T> {
 		T::PalletId::get().into_account_truncating()
 	}
 
-	/// Unlocks the balance that was locked by the pallet.
+	/// Unstakes the balance for the staker.
 	///
 	/// - `staker`: staker account.
-	/// - `amount`: amount of unlocked funds.
-	fn unlock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-		let locked_balance = Self::get_locked_balance(staker)
-			.map(|l| l.amount)
-			.ok_or(<Error<T>>::IncorrectLockedBalanceOperation)?;
+	/// - `amount`: amount of unstaked funds.
+	fn unstake_partial_internal(
+		staker_id: T::AccountId,
+		unstaked_balance: BalanceOf<T>,
+	) -> DispatchResult {
+		if unstaked_balance == Default::default() {
+			return Ok(());
+		}
 
-		// It is understood that we cannot unlock more funds than were locked by staking.
-		// Therefore, if implemented correctly, this error should not occur.
-		Self::set_lock_unchecked(
-			staker,
-			locked_balance
-				.checked_sub(&amount)
+		let config = <PalletConfiguration<T>>::get();
+
+		// calculate block number where the sum would be free
+		let unpending_block = <frame_system::Pallet<T>>::block_number() + config.pending_interval;
+
+		let mut pendings = <PendingUnstake<T>>::get(unpending_block);
+
+		// checks that we can do unstake in the block
+		ensure!(!pendings.is_full(), Error::<T>::PendingForBlockOverflow);
+
+		let mut stakes = Staked::<T>::iter_prefix((&staker_id,)).collect::<Vec<_>>();
+
+		let total_staked = stakes
+			.iter()
+			.fold(<BalanceOf<T>>::default(), |acc, (_, (balance, _))| {
+				acc + *balance
+			});
+
+		ensure!(
+			unstaked_balance <= total_staked,
+			<Error<T>>::InsufficientStakedBalance
+		);
+
+		<TotalStaked<T>>::set(
+			<TotalStaked<T>>::get()
+				.checked_sub(&unstaked_balance)
 				.ok_or(ArithmeticError::Underflow)?,
 		);
+
+		stakes.sort_by_key(|(block, _)| *block);
+
+		let mut acc_amount = unstaked_balance;
+		let mut will_deleted_stakes_count = 0u8;
+
+		let changed_stakes = stakes
+			.into_iter()
+			.map_while(|(block, (balance_per_block, _))| {
+				if acc_amount == <BalanceOf<T>>::default() {
+					return None;
+				}
+				if acc_amount < balance_per_block {
+					let res = (block, balance_per_block - acc_amount);
+					acc_amount = <BalanceOf<T>>::default();
+					return Some(res);
+				} else {
+					acc_amount -= balance_per_block;
+					will_deleted_stakes_count += 1;
+					return Some((block, <BalanceOf<T>>::default()));
+				}
+			})
+			.collect::<Vec<_>>();
+
+		pendings
+			.try_push((staker_id.clone(), unstaked_balance))
+			.map_err(|_| Error::<T>::PendingForBlockOverflow)?;
+
+		StakesPerAccount::<T>::try_mutate(&staker_id, |stakes| -> DispatchResult {
+			*stakes = stakes
+				.checked_sub(will_deleted_stakes_count)
+				.ok_or(ArithmeticError::Underflow)?;
+			Ok(())
+		})?;
+
+		changed_stakes
+			.into_iter()
+			.for_each(|(staked_block, current_stake_state)| {
+				if current_stake_state == Default::default() {
+					<Staked<T>>::remove((&staker_id, staked_block));
+				} else {
+					<Staked<T>>::mutate((&staker_id, staked_block), |(old_stake_state, _)| {
+						*old_stake_state = current_stake_state
+					});
+				}
+			});
+
+		<PendingUnstake<T>>::insert(unpending_block, pendings);
+
+		Self::deposit_event(Event::Unstake(staker_id, unstaked_balance));
+
 		Ok(())
 	}
 
@@ -934,5 +993,48 @@ where
 
 		unsorted_res.sort_by_key(|(block, _)| *block);
 		unsorted_res
+	}
+
+	fn unstake_all_internal(staker_id: T::AccountId) -> DispatchResult {
+		let config = <PalletConfiguration<T>>::get();
+
+		// calculate block number where the sum would be free
+		let block = <frame_system::Pallet<T>>::block_number() + config.pending_interval;
+
+		let mut pendings = <PendingUnstake<T>>::get(block);
+
+		// checks that we can do unstake in the block
+		ensure!(!pendings.is_full(), Error::<T>::PendingForBlockOverflow);
+
+		let mut total_stakes = 0u64;
+
+		let total_staked: BalanceOf<T> = Staked::<T>::drain_prefix((&staker_id,))
+			.map(|(_, (amount, _))| {
+				total_stakes += 1;
+				amount
+			})
+			.sum();
+
+		if total_staked.is_zero() {
+			return Ok(());
+		}
+
+		pendings
+			.try_push((staker_id.clone(), total_staked))
+			.map_err(|_| Error::<T>::PendingForBlockOverflow)?;
+
+		<PendingUnstake<T>>::insert(block, pendings);
+
+		TotalStaked::<T>::set(
+			TotalStaked::<T>::get()
+				.checked_sub(&total_staked)
+				.ok_or(ArithmeticError::Underflow)?,
+		);
+
+		StakesPerAccount::<T>::remove(&staker_id);
+
+		Self::deposit_event(Event::Unstake(staker_id, total_staked));
+
+		Ok(())
 	}
 }

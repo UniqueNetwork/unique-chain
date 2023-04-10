@@ -63,7 +63,7 @@ describe('query properties RPC', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      alice = await privateKey({filename: __filename});
+      alice = await privateKey({url: import.meta.url});
     });
   });
 

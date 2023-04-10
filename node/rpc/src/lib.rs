@@ -42,12 +42,6 @@ use std::{collections::BTreeMap, sync::Arc};
 
 use up_common::types::opaque::*;
 
-// RMRK
-use up_data_structs::{
-	RmrkCollectionInfo, RmrkInstanceInfo, RmrkResourceInfo, RmrkPropertyInfo, RmrkBaseInfo,
-	RmrkPartType, RmrkTheme,
-};
-
 #[cfg(feature = "pov-estimate")]
 type FullBackend = sc_service::TFullBackend<Block>;
 
@@ -86,7 +80,7 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	/// EthFilterApi pool.
 	pub filter_pool: Option<FilterPool>,
 
-	#[cfg(feature = "pov-estimate")]
+	/// Runtime identification (read from the chain spec)
 	pub runtime_id: RuntimeId,
 	/// Executor params for PoV estimating
 	#[cfg(feature = "pov-estimate")]
@@ -121,18 +115,15 @@ where
 	let mut overrides_map = BTreeMap::new();
 	overrides_map.insert(
 		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
 	);
 	overrides_map.insert(
 		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
 	);
 	overrides_map.insert(
 		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone()))
-			as Box<dyn StorageOverride<_> + Send + Sync>,
+		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
 	);
 
 	Arc::new(OverrideHandle {
@@ -164,17 +155,6 @@ where
 		<R as RuntimeInstance>::CrossAccountId,
 		AccountId,
 	>,
-	C::Api: rmrk_rpc::RmrkApi<
-		Block,
-		AccountId,
-		RmrkCollectionInfo<AccountId>,
-		RmrkInstanceInfo<AccountId>,
-		RmrkResourceInfo,
-		RmrkPropertyInfo,
-		RmrkBaseInfo<AccountId>,
-		RmrkPartType,
-		RmrkTheme,
-	>,
 	C::Api: up_pov_estimate_rpc::PovEstimateApi<Block>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
@@ -190,11 +170,7 @@ where
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
 
-	#[cfg(not(feature = "unique-runtime"))]
 	use uc_rpc::{AppPromotionApiServer, AppPromotion};
-
-	#[cfg(not(feature = "unique-runtime"))]
-	use uc_rpc::{RmrkApiServer, Rmrk};
 
 	#[cfg(feature = "pov-estimate")]
 	use uc_rpc::pov_estimate::{PovEstimateApiServer, PovEstimate};
@@ -218,8 +194,7 @@ where
 		deny_unsafe,
 		filter_pool,
 
-		#[cfg(feature = "pov-estimate")]
-		runtime_id,
+		runtime_id: _,
 
 		#[cfg(feature = "pov-estimate")]
 		exec_params,
@@ -265,11 +240,7 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	#[cfg(not(feature = "unique-runtime"))]
 	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
-
-	#[cfg(not(feature = "unique-runtime"))]
-	io.merge(Rmrk::new(client.clone()).into_rpc())?;
 
 	#[cfg(feature = "pov-estimate")]
 	io.merge(

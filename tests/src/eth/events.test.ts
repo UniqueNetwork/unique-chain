@@ -25,12 +25,14 @@ let donor: IKeyringPair;
 
 before(async function () {
   await usingEthPlaygrounds(async (_helper, privateKey) => {
-    donor = await privateKey({filename: __filename});
+    donor = await privateKey({url: import.meta.url});
   });
 });
 
-function clearEvents(ethEvents: NormalizedEvent[], subEvents: IEvent[]) {
-  ethEvents.splice(0);
+function clearEvents(ethEvents: NormalizedEvent[] | null, subEvents: IEvent[]) {
+  if (ethEvents !== null) {
+    ethEvents.splice(0);
+  }
   subEvents.splice(0);
 }
 
@@ -374,7 +376,6 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
   const owner = await helper.eth.createAccountWithBalance(donor);
   const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
-  const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const result = await collection.methods.mint(owner).send({from: owner});
   const tokenId = result.events.Transfer.returnValues.tokenId;
   await collection.methods.setTokenPropertyPermissions([
@@ -385,37 +386,28 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
     ],
   ]).send({from: owner});
 
-
-  const ethEvents: any = [];
-  collectionHelper.events.allEvents((_: any, event: any) => {
-    ethEvents.push(event);
-  });
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['TokenPropertySet', 'TokenPropertyDeleted']}]);
   {
-    await collection.methods.setProperties(tokenId, [{key: 'A', value: [1,2,3]}]).send({from: owner});
+    const result = await collection.methods.setProperties(tokenId, [{key: 'A', value: [1,2,3]}]).send({from: owner});
     await helper.wait.newBlocks(1);
-    expect(ethEvents).to.containSubset([
-      {
-        event: 'TokenChanged',
-        returnValues: {
-          collectionId: collectionAddress,
-        },
+    expect(result.events.TokenChanged).to.be.like({
+      event: 'TokenChanged',
+      returnValues: {
+        tokenId: tokenId,
       },
-    ]);
+    });
     expect(subEvents).to.containSubset([{method: 'TokenPropertySet'}]);
-    clearEvents(ethEvents, subEvents);
+    clearEvents(null, subEvents);
   }
   {
-    await collection.methods.deleteProperties(tokenId, ['A']).send({from: owner});
+    const result = await collection.methods.deleteProperties(tokenId, ['A']).send({from: owner});
     await helper.wait.newBlocks(1);
-    expect(ethEvents).to.containSubset([
-      {
-        event: 'TokenChanged',
-        returnValues: {
-          collectionId: collectionAddress,
-        },
+    expect(result.events.TokenChanged).to.be.like({
+      event: 'TokenChanged',
+      returnValues: {
+        tokenId: tokenId,
       },
-    ]);
+    });
     expect(subEvents).to.containSubset([{method: 'TokenPropertyDeleted'}]);
   }
   unsubscribe();
@@ -507,7 +499,7 @@ describe('[RFT] Sync sub & eth events', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      const _donor = await privateKey({filename: __filename});
+      const _donor = await privateKey({url: import.meta.url});
     });
   });
 

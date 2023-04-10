@@ -5,17 +5,23 @@ name = "pallet-evm-coder-substrate"
 version = "0.1.3"
 
 [dependencies]
-codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.2.2" }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
+scale-info = { workspace = true }
 
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
+evm-coder = { workspace = true }
+evm-core = { workspace = true }
+
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-evm = { workspace = true }
+sp-core = { workspace = true }
+sp-std = { workspace = true }
+up-data-structs = { workspace = true }
+
+evm-coder-substrate-procedural = { path = "./procedural" }
+spez = "0.1.1"
 
 [features]
 default = ["std"]

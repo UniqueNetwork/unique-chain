@@ -26,7 +26,7 @@ describe('integration test: Fungible functionality:', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });
@@ -156,7 +156,7 @@ describe('Fungible negative tests', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

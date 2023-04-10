@@ -34,13 +34,12 @@ use sp_runtime::create_runtime_str;
 
 use up_common::types::*;
 
+use ::xcm::latest::NetworkId;
+
 #[path = "../../common/mod.rs"]
 mod runtime_common;
 
 pub mod xcm_barrier;
-
-#[cfg(test)]
-mod tests;
 
 pub use runtime_common::*;
 
@@ -52,7 +51,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 936050,
+	spec_version: 939054,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
@@ -63,6 +62,7 @@ parameter_types! {
 	pub const Version: RuntimeVersion = VERSION;
 	pub const SS58Prefix: u16 = 7391;
 	pub const ChainId: u64 = 8880;
+	pub const RelayNetwork: NetworkId = NetworkId::Polkadot;
 }
 
 construct_runtime!();

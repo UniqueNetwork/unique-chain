@@ -25,7 +25,10 @@ use pallet_common::{
 	benchmarking::{create_collection_raw, property_key, property_value},
 };
 use sp_std::prelude::*;
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited};
+use up_data_structs::{
+	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited,
+	PropertyPermission,
+};
 
 const SEED: u32 = 1;
 
@@ -294,7 +297,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); owner: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
-	}: {<Pallet<T>>::token_owner(collection.id, item)}
+	}: {<Pallet<T>>::token_owner(collection.id, item).unwrap()}
 
 	set_allowance_for_all {
 		bench_init!{

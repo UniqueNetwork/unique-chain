@@ -21,6 +21,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       IncorrectLockedBalanceOperation: AugmentedError<ApiType>;
       /**
+       * Errors caused by insufficient staked balance.
+       **/
+      InsufficientStakedBalance: AugmentedError<ApiType>;
+      /**
        * No permission to perform an action.
        **/
       NoPermission: AugmentedError<ApiType>;
@@ -74,6 +78,64 @@ declare module '@polkadot/api-base/types/errors' {
        * Vesting balance too high to send value
        **/
       VestingBalance: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    collatorSelection: {
+      /**
+       * User is already a candidate
+       **/
+      AlreadyCandidate: AugmentedError<ApiType>;
+      /**
+       * User already holds license to collate
+       **/
+      AlreadyHoldingLicense: AugmentedError<ApiType>;
+      /**
+       * User is already an Invulnerable
+       **/
+      AlreadyInvulnerable: AugmentedError<ApiType>;
+      /**
+       * Account has no associated validator ID
+       **/
+      NoAssociatedValidatorId: AugmentedError<ApiType>;
+      /**
+       * User does not hold a license to collate
+       **/
+      NoLicense: AugmentedError<ApiType>;
+      /**
+       * User is not a candidate
+       **/
+      NotCandidate: AugmentedError<ApiType>;
+      /**
+       * User is not an Invulnerable
+       **/
+      NotInvulnerable: AugmentedError<ApiType>;
+      /**
+       * Permission issue
+       **/
+      Permission: AugmentedError<ApiType>;
+      /**
+       * Too few invulnerables
+       **/
+      TooFewInvulnerables: AugmentedError<ApiType>;
+      /**
+       * Too many candidates
+       **/
+      TooManyCandidates: AugmentedError<ApiType>;
+      /**
+       * Too many invulnerables
+       **/
+      TooManyInvulnerables: AugmentedError<ApiType>;
+      /**
+       * Unknown error
+       **/
+      Unknown: AugmentedError<ApiType>;
+      /**
+       * Validator ID is not yet registered
+       **/
+      ValidatorNotRegistered: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -425,6 +487,84 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
+    identity: {
+      /**
+       * Account ID is already named.
+       **/
+      AlreadyClaimed: AugmentedError<ApiType>;
+      /**
+       * Empty index.
+       **/
+      EmptyIndex: AugmentedError<ApiType>;
+      /**
+       * Fee is changed.
+       **/
+      FeeChanged: AugmentedError<ApiType>;
+      /**
+       * The index is invalid.
+       **/
+      InvalidIndex: AugmentedError<ApiType>;
+      /**
+       * Invalid judgement.
+       **/
+      InvalidJudgement: AugmentedError<ApiType>;
+      /**
+       * The target is invalid.
+       **/
+      InvalidTarget: AugmentedError<ApiType>;
+      /**
+       * The provided judgement was for a different identity.
+       **/
+      JudgementForDifferentIdentity: AugmentedError<ApiType>;
+      /**
+       * Judgement given.
+       **/
+      JudgementGiven: AugmentedError<ApiType>;
+      /**
+       * Error that occurs when there is an issue paying for judgement.
+       **/
+      JudgementPaymentFailed: AugmentedError<ApiType>;
+      /**
+       * No identity found.
+       **/
+      NoIdentity: AugmentedError<ApiType>;
+      /**
+       * Account isn't found.
+       **/
+      NotFound: AugmentedError<ApiType>;
+      /**
+       * Account isn't named.
+       **/
+      NotNamed: AugmentedError<ApiType>;
+      /**
+       * Sub-account isn't owned by sender.
+       **/
+      NotOwned: AugmentedError<ApiType>;
+      /**
+       * Sender is not a sub-account.
+       **/
+      NotSub: AugmentedError<ApiType>;
+      /**
+       * Sticky judgement.
+       **/
+      StickyJudgement: AugmentedError<ApiType>;
+      /**
+       * Too many additional fields.
+       **/
+      TooManyFields: AugmentedError<ApiType>;
+      /**
+       * Maximum amount of registrars reached. Cannot add any more.
+       **/
+      TooManyRegistrars: AugmentedError<ApiType>;
+      /**
+       * Too many subs-accounts.
+       **/
+      TooManySubAccounts: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
     maintenance: {
       /**
        * Generic error
@@ -490,6 +630,10 @@ declare module '@polkadot/api-base/types/errors' {
     };
     polkadotXcm: {
       /**
+       * The given account is not an identifiable sovereign account for any location.
+       **/
+      AccountNotSovereign: AugmentedError<ApiType>;
+      /**
        * The location is invalid since it already has a subscription from us.
        **/
       AlreadySubscribed: AugmentedError<ApiType>;
@@ -515,13 +659,33 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       Empty: AugmentedError<ApiType>;
       /**
+       * The operation required fees to be paid which the initiator could not meet.
+       **/
+      FeesNotMet: AugmentedError<ApiType>;
+      /**
        * The message execution fails the filter.
        **/
       Filtered: AugmentedError<ApiType>;
       /**
+       * The unlock operation cannot succeed because there are still users of the lock.
+       **/
+      InUse: AugmentedError<ApiType>;
+      /**
+       * Invalid asset for the operation.
+       **/
+      InvalidAsset: AugmentedError<ApiType>;
+      /**
        * Origin is invalid for sending.
        **/
       InvalidOrigin: AugmentedError<ApiType>;
+      /**
+       * A remote lock with the corresponding data could not be found.
+       **/
+      LockNotFound: AugmentedError<ApiType>;
+      /**
+       * The owner does not own (all) of the asset that they wish to do the operation on.
+       **/
+      LowBalance: AugmentedError<ApiType>;
       /**
        * The referenced subscription could not be found.
        **/
@@ -536,6 +700,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooManyAssets: AugmentedError<ApiType>;
       /**
+       * The asset owner has too many locks on the asset.
+       **/
+      TooManyLocks: AugmentedError<ApiType>;
+      /**
        * The desired destination was unreachable, generally because there is a no way of routing
        * to it.
        **/
@@ -544,6 +712,36 @@ declare module '@polkadot/api-base/types/errors' {
        * The message's weight could not be determined.
        **/
       UnweighableMessage: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    preimage: {
+      /**
+       * Preimage has already been noted on-chain.
+       **/
+      AlreadyNoted: AugmentedError<ApiType>;
+      /**
+       * The user is not authorized to perform this action.
+       **/
+      NotAuthorized: AugmentedError<ApiType>;
+      /**
+       * The preimage cannot be removed since it has not yet been noted.
+       **/
+      NotNoted: AugmentedError<ApiType>;
+      /**
+       * The preimage request cannot be removed since no outstanding requests exist.
+       **/
+      NotRequested: AugmentedError<ApiType>;
+      /**
+       * A preimage may not be removed when there are outstanding requests.
+       **/
+      Requested: AugmentedError<ApiType>;
+      /**
+       * Preimage is too large to store on-chain.
+       **/
+      TooBig: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -575,119 +773,27 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       [key: string]: AugmentedError<ApiType>;
     };
-    rmrkCore: {
+    session: {
       /**
-       * Not the target owner of the sent NFT.
+       * Registered duplicate key.
        **/
-      CannotAcceptNonOwnedNft: AugmentedError<ApiType>;
+      DuplicatedKey: AugmentedError<ApiType>;
       /**
-       * Not the target owner of the sent NFT.
+       * Invalid ownership proof.
        **/
-      CannotRejectNonOwnedNft: AugmentedError<ApiType>;
+      InvalidProof: AugmentedError<ApiType>;
       /**
-       * NFT was not sent and is not pending.
+       * Key setting account is not live, so it's impossible to associate keys.
        **/
-      CannotRejectNonPendingNft: AugmentedError<ApiType>;
+      NoAccount: AugmentedError<ApiType>;
       /**
-       * If an NFT is sent to a descendant, that would form a nesting loop, an ouroboros.
-       * Sending to self is redundant.
+       * No associated validator ID for account.
        **/
-      CannotSendToDescendentOrSelf: AugmentedError<ApiType>;
+      NoAssociatedValidatorId: AugmentedError<ApiType>;
       /**
-       * Too many tokens created in the collection, no new ones are allowed.
+       * No keys are associated with this account.
        **/
-      CollectionFullOrLocked: AugmentedError<ApiType>;
-      /**
-       * Only destroying collections without tokens is allowed.
-       **/
-      CollectionNotEmpty: AugmentedError<ApiType>;
-      /**
-       * Collection does not exist, has a wrong type, or does not map to a Unique ID.
-       **/
-      CollectionUnknown: AugmentedError<ApiType>;
-      /**
-       * Property of the type of RMRK collection could not be read successfully.
-       **/
-      CorruptedCollectionType: AugmentedError<ApiType>;
-      /**
-       * Could not find an ID for a collection. It is likely there were too many collections created on the chain, causing an overflow.
-       **/
-      NoAvailableCollectionId: AugmentedError<ApiType>;
-      /**
-       * Token does not exist, or there is no suitable ID for it, likely too many tokens were created in a collection, causing an overflow.
-       **/
-      NoAvailableNftId: AugmentedError<ApiType>;
-      /**
-       * Could not find an ID for the resource. It is likely there were too many resources created on an NFT, causing an overflow.
-       **/
-      NoAvailableResourceId: AugmentedError<ApiType>;
-      /**
-       * Token is marked as non-transferable, and thus cannot be transferred.
-       **/
-      NonTransferable: AugmentedError<ApiType>;
-      /**
-       * No permission to perform action.
-       **/
-      NoPermission: AugmentedError<ApiType>;
-      /**
-       * No such resource found.
-       **/
-      ResourceDoesntExist: AugmentedError<ApiType>;
-      /**
-       * Resource is not pending for the operation.
-       **/
-      ResourceNotPending: AugmentedError<ApiType>;
-      /**
-       * Could not find a property by the supplied key.
-       **/
-      RmrkPropertyIsNotFound: AugmentedError<ApiType>;
-      /**
-       * Too many symbols supplied as the property key. The maximum is [256](up_data_structs::MAX_PROPERTY_KEY_LENGTH).
-       **/
-      RmrkPropertyKeyIsTooLong: AugmentedError<ApiType>;
-      /**
-       * Too many bytes supplied as the property value. The maximum is [32768](up_data_structs::MAX_PROPERTY_VALUE_LENGTH).
-       **/
-      RmrkPropertyValueIsTooLong: AugmentedError<ApiType>;
-      /**
-       * Something went wrong when decoding encoded data from the storage.
-       * Perhaps, there was a wrong key supplied for the type, or the data was improperly stored.
-       **/
-      UnableToDecodeRmrkData: AugmentedError<ApiType>;
-      /**
-       * Generic error
-       **/
-      [key: string]: AugmentedError<ApiType>;
-    };
-    rmrkEquip: {
-      /**
-       * Base collection linked to this ID does not exist.
-       **/
-      BaseDoesntExist: AugmentedError<ApiType>;
-      /**
-       * No Theme named "default" is associated with the Base.
-       **/
-      NeedsDefaultThemeFirst: AugmentedError<ApiType>;
-      /**
-       * Could not find an ID for a Base collection. It is likely there were too many collections created on the chain, causing an overflow.
-       **/
-      NoAvailableBaseId: AugmentedError<ApiType>;
-      /**
-       * Could not find a suitable ID for a Part, likely too many Part tokens were created in the Base, causing an overflow
-       **/
-      NoAvailablePartId: AugmentedError<ApiType>;
-      /**
-       * Cannot assign equippables to a fixed Part.
-       **/
-      NoEquippableOnFixedPart: AugmentedError<ApiType>;
-      /**
-       * Part linked to this ID does not exist.
-       **/
-      PartDoesntExist: AugmentedError<ApiType>;
-      /**
-       * No permission to perform action.
-       **/
-      PermissionError: AugmentedError<ApiType>;
+      NoKeys: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
@@ -698,6 +804,10 @@ declare module '@polkadot/api-base/types/errors' {
        * While nesting, reached the breadth limit of nesting, exceeding the provided budget.
        **/
       BreadthLimit: AugmentedError<ApiType>;
+      /**
+       * Tried to nest token under collection contract address, instead of token address
+       **/
+      CantNestTokenUnderCollection: AugmentedError<ApiType>;
       /**
        * While nesting, reached the depth limit of nesting, exceeding the provided budget.
        **/

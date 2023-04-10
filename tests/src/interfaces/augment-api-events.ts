@@ -8,7 +8,7 @@ import '@polkadot/api-base/types/events';
 import type { ApiTypes, AugmentedEvent } from '@polkadot/api-base/types';
 import type { Bytes, Null, Option, Result, U8aFixed, bool, u128, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportDispatchDispatchInfo, FrameSupportTokensMiscBalanceStatus, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, RmrkTraitsNftAccountIdOrCollectionNftTuple, SpRuntimeDispatchError, SpWeightsWeightV2Weight, XcmV1MultiAsset, XcmV1MultiLocation, XcmV1MultiassetMultiAssets, XcmV2Response, XcmV2TraitsError, XcmV2TraitsOutcome, XcmV2Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { EthereumLog, EvmCoreErrorExitReason, FrameSupportDispatchDispatchInfo, FrameSupportTokensMiscBalanceStatus, OrmlVestingVestingSchedule, PalletEvmAccountBasicCrossAccountIdRepr, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, SpRuntimeDispatchError, SpWeightsWeightV2Weight, XcmV3MultiAsset, XcmV3MultiLocation, XcmV3MultiassetMultiAssets, XcmV3Response, XcmV3TraitsError, XcmV3TraitsOutcome, XcmV3Xcm, XcmVersionedMultiAssets, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedEvent<ApiType extends ApiTypes> = AugmentedEvent<ApiType>;
 
@@ -95,6 +95,18 @@ declare module '@polkadot/api-base/types/events' {
        * Some amount was withdrawn from the account (e.g. for transaction fees).
        **/
       Withdraw: AugmentedEvent<ApiType, [who: AccountId32, amount: u128], { who: AccountId32, amount: u128 }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    collatorSelection: {
+      CandidateAdded: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      CandidateRemoved: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
+      InvulnerableAdded: AugmentedEvent<ApiType, [invulnerable: AccountId32], { invulnerable: AccountId32 }>;
+      InvulnerableRemoved: AugmentedEvent<ApiType, [invulnerable: AccountId32], { invulnerable: AccountId32 }>;
+      LicenseObtained: AugmentedEvent<ApiType, [accountId: AccountId32, deposit: u128], { accountId: AccountId32, deposit: u128 }>;
+      LicenseReleased: AugmentedEvent<ApiType, [accountId: AccountId32, depositReturned: u128], { accountId: AccountId32, depositReturned: u128 }>;
       /**
        * Generic event
        **/
@@ -208,7 +220,7 @@ declare module '@polkadot/api-base/types/events' {
        * Downward message executed with the given outcome.
        * \[ id, outcome \]
        **/
-      ExecutedDownward: AugmentedEvent<ApiType, [U8aFixed, XcmV2TraitsOutcome]>;
+      ExecutedDownward: AugmentedEvent<ApiType, [U8aFixed, XcmV3TraitsOutcome]>;
       /**
        * Downward message is invalid XCM.
        * \[ id \]
@@ -228,11 +240,15 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Downward message executed with the given outcome.
        **/
-      ExecutedDownward: AugmentedEvent<ApiType, [messageId: U8aFixed, outcome: XcmV2TraitsOutcome], { messageId: U8aFixed, outcome: XcmV2TraitsOutcome }>;
+      ExecutedDownward: AugmentedEvent<ApiType, [messageId: U8aFixed, outcome: XcmV3TraitsOutcome], { messageId: U8aFixed, outcome: XcmV3TraitsOutcome }>;
       /**
        * Downward message is invalid XCM.
        **/
       InvalidFormat: AugmentedEvent<ApiType, [messageId: U8aFixed], { messageId: U8aFixed }>;
+      /**
+       * The maximum number of downward messages was.
+       **/
+      MaxMessagesExhausted: AugmentedEvent<ApiType, [messageId: U8aFixed], { messageId: U8aFixed }>;
       /**
        * Downward message is overweight and was placed in the overweight queue.
        **/
@@ -330,11 +346,70 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * The foreign asset registered.
        **/
-      ForeignAssetRegistered: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      ForeignAssetRegistered: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV3MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV3MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
       /**
        * The foreign asset updated.
        **/
-      ForeignAssetUpdated: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV1MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      ForeignAssetUpdated: AugmentedEvent<ApiType, [assetId: u32, assetAddress: XcmV3MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata], { assetId: u32, assetAddress: XcmV3MultiLocation, metadata: PalletForeignAssetsModuleAssetMetadata }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
+    identity: {
+      /**
+       * A number of identities and associated info were forcibly inserted.
+       **/
+      IdentitiesInserted: AugmentedEvent<ApiType, [amount: u32], { amount: u32 }>;
+      /**
+       * A number of identities and all associated info were forcibly removed.
+       **/
+      IdentitiesRemoved: AugmentedEvent<ApiType, [amount: u32], { amount: u32 }>;
+      /**
+       * A name was cleared, and the given balance returned.
+       **/
+      IdentityCleared: AugmentedEvent<ApiType, [who: AccountId32, deposit: u128], { who: AccountId32, deposit: u128 }>;
+      /**
+       * A name was removed and the given balance slashed.
+       **/
+      IdentityKilled: AugmentedEvent<ApiType, [who: AccountId32, deposit: u128], { who: AccountId32, deposit: u128 }>;
+      /**
+       * A name was set or reset (which will remove all judgements).
+       **/
+      IdentitySet: AugmentedEvent<ApiType, [who: AccountId32], { who: AccountId32 }>;
+      /**
+       * A judgement was given by a registrar.
+       **/
+      JudgementGiven: AugmentedEvent<ApiType, [target: AccountId32, registrarIndex: u32], { target: AccountId32, registrarIndex: u32 }>;
+      /**
+       * A judgement was asked from a registrar.
+       **/
+      JudgementRequested: AugmentedEvent<ApiType, [who: AccountId32, registrarIndex: u32], { who: AccountId32, registrarIndex: u32 }>;
+      /**
+       * A judgement request was retracted.
+       **/
+      JudgementUnrequested: AugmentedEvent<ApiType, [who: AccountId32, registrarIndex: u32], { who: AccountId32, registrarIndex: u32 }>;
+      /**
+       * A registrar was added.
+       **/
+      RegistrarAdded: AugmentedEvent<ApiType, [registrarIndex: u32], { registrarIndex: u32 }>;
+      /**
+       * A number of identities were forcibly updated with new sub-identities.
+       **/
+      SubIdentitiesInserted: AugmentedEvent<ApiType, [amount: u32], { amount: u32 }>;
+      /**
+       * A sub-identity was added to an identity and the deposit paid.
+       **/
+      SubIdentityAdded: AugmentedEvent<ApiType, [sub: AccountId32, main: AccountId32, deposit: u128], { sub: AccountId32, main: AccountId32, deposit: u128 }>;
+      /**
+       * A sub-identity was removed from an identity and the deposit freed.
+       **/
+      SubIdentityRemoved: AugmentedEvent<ApiType, [sub: AccountId32, main: AccountId32, deposit: u128], { sub: AccountId32, main: AccountId32, deposit: u128 }>;
+      /**
+       * A sub-identity was cleared, and the given deposit repatriated from the
+       * main identity account to the sub-identity account.
+       **/
+      SubIdentityRevoked: AugmentedEvent<ApiType, [sub: AccountId32, main: AccountId32, deposit: u128], { sub: AccountId32, main: AccountId32, deposit: u128 }>;
       /**
        * Generic event
        **/
@@ -362,6 +437,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       UpgradeAuthorized: AugmentedEvent<ApiType, [codeHash: H256], { codeHash: H256 }>;
       /**
+       * An upward message was sent to the relay chain.
+       **/
+      UpwardMessageSent: AugmentedEvent<ApiType, [messageHash: Option<U8aFixed>], { messageHash: Option<U8aFixed> }>;
+      /**
        * The validation function was applied as of the contained relay chain block number.
        **/
       ValidationFunctionApplied: AugmentedEvent<ApiType, [relayChainBlockNum: u32], { relayChainBlockNum: u32 }>;
@@ -384,19 +463,45 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ hash, origin, assets \]
        **/
-      AssetsClaimed: AugmentedEvent<ApiType, [H256, XcmV1MultiLocation, XcmVersionedMultiAssets]>;
+      AssetsClaimed: AugmentedEvent<ApiType, [H256, XcmV3MultiLocation, XcmVersionedMultiAssets]>;
       /**
        * Some assets have been placed in an asset trap.
        * 
        * \[ hash, origin, assets \]
        **/
-      AssetsTrapped: AugmentedEvent<ApiType, [H256, XcmV1MultiLocation, XcmVersionedMultiAssets]>;
+      AssetsTrapped: AugmentedEvent<ApiType, [H256, XcmV3MultiLocation, XcmVersionedMultiAssets]>;
       /**
        * Execution of an XCM message was attempted.
        * 
        * \[ outcome \]
        **/
-      Attempted: AugmentedEvent<ApiType, [XcmV2TraitsOutcome]>;
+      Attempted: AugmentedEvent<ApiType, [XcmV3TraitsOutcome]>;
+      /**
+       * Fees were paid from a location for an operation (often for using `SendXcm`).
+       * 
+       * \[ paying location, fees \]
+       **/
+      FeesPaid: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]>;
+      /**
+       * Expected query response has been received but the querier location of the response does
+       * not match the expected. The query remains registered for a later, valid, response to
+       * be received and acted upon.
+       * 
+       * \[ origin location, id, expected querier, maybe actual querier \]
+       **/
+      InvalidQuerier: AugmentedEvent<ApiType, [XcmV3MultiLocation, u64, XcmV3MultiLocation, Option<XcmV3MultiLocation>]>;
+      /**
+       * Expected query response has been received but the expected querier location placed in
+       * storage by this runtime previously cannot be decoded. The query remains registered.
+       * 
+       * This is unexpected (since a location placed in storage in a previously executing
+       * runtime should be readable prior to query timeout) and dangerous since the possibly
+       * valid response will be dropped. Manual governance intervention is probably going to be
+       * needed.
+       * 
+       * \[ origin location, id \]
+       **/
+      InvalidQuerierVersion: AugmentedEvent<ApiType, [XcmV3MultiLocation, u64]>;
       /**
        * Expected query response has been received but the origin location of the response does
        * not match that expected. The query remains registered for a later, valid, response to
@@ -404,7 +509,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ origin location, id, expected location \]
        **/
-      InvalidResponder: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64, Option<XcmV1MultiLocation>]>;
+      InvalidResponder: AugmentedEvent<ApiType, [XcmV3MultiLocation, u64, Option<XcmV3MultiLocation>]>;
       /**
        * Expected query response has been received but the expected origin location placed in
        * storage by this runtime previously cannot be decoded. The query remains registered.
@@ -416,7 +521,7 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ origin location, id \]
        **/
-      InvalidResponderVersion: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64]>;
+      InvalidResponderVersion: AugmentedEvent<ApiType, [XcmV3MultiLocation, u64]>;
       /**
        * Query response has been received and query is removed. The registered notification has
        * been dispatched and executed successfully.
@@ -460,14 +565,14 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ location, query ID, error \]
        **/
-      NotifyTargetSendFail: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64, XcmV2TraitsError]>;
+      NotifyTargetSendFail: AugmentedEvent<ApiType, [XcmV3MultiLocation, u64, XcmV3TraitsError]>;
       /**
        * Query response has been received and is ready for taking with `take_response`. There is
        * no registered notification call.
        * 
        * \[ id, response \]
        **/
-      ResponseReady: AugmentedEvent<ApiType, [u64, XcmV2Response]>;
+      ResponseReady: AugmentedEvent<ApiType, [u64, XcmV3Response]>;
       /**
        * Received query response has been read and removed.
        * 
@@ -479,14 +584,14 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ origin, destination, message \]
        **/
-      Sent: AugmentedEvent<ApiType, [XcmV1MultiLocation, XcmV1MultiLocation, XcmV2Xcm]>;
+      Sent: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiLocation, XcmV3Xcm]>;
       /**
        * The supported version of a location has been changed. This might be through an
        * automatic notification or a manual intervention.
        * 
        * \[ location, XCM version \]
        **/
-      SupportedVersionChanged: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
+      SupportedVersionChanged: AugmentedEvent<ApiType, [XcmV3MultiLocation, u32]>;
       /**
        * Query response received which does not match a registered query. This may be because a
        * matching query was never registered, it may be because it is a duplicate response, or
@@ -494,42 +599,63 @@ declare module '@polkadot/api-base/types/events' {
        * 
        * \[ origin location, id \]
        **/
-      UnexpectedResponse: AugmentedEvent<ApiType, [XcmV1MultiLocation, u64]>;
+      UnexpectedResponse: AugmentedEvent<ApiType, [XcmV3MultiLocation, u64]>;
       /**
        * An XCM version change notification message has been attempted to be sent.
        * 
-       * \[ destination, result \]
+       * The cost of sending it (borne by the chain) is included.
+       * 
+       * \[ destination, result, cost \]
        **/
-      VersionChangeNotified: AugmentedEvent<ApiType, [XcmV1MultiLocation, u32]>;
+      VersionChangeNotified: AugmentedEvent<ApiType, [XcmV3MultiLocation, u32, XcmV3MultiassetMultiAssets]>;
+      /**
+       * We have requested that a remote chain sends us XCM version change notifications.
+       * 
+       * \[ destination location, cost \]
+       **/
+      VersionNotifyRequested: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]>;
+      /**
+       * A remote has requested XCM version change notification from us and we have honored it.
+       * A version information message is sent to them and its cost is included.
+       * 
+       * \[ destination location, cost \]
+       **/
+      VersionNotifyStarted: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]>;
+      /**
+       * We have requested that a remote chain stops sending us XCM version change notifications.
+       * 
+       * \[ destination location, cost \]
+       **/
+      VersionNotifyUnrequested: AugmentedEvent<ApiType, [XcmV3MultiLocation, XcmV3MultiassetMultiAssets]>;
       /**
        * Generic event
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    rmrkCore: {
-      CollectionCreated: AugmentedEvent<ApiType, [issuer: AccountId32, collectionId: u32], { issuer: AccountId32, collectionId: u32 }>;
-      CollectionDestroyed: AugmentedEvent<ApiType, [issuer: AccountId32, collectionId: u32], { issuer: AccountId32, collectionId: u32 }>;
-      CollectionLocked: AugmentedEvent<ApiType, [issuer: AccountId32, collectionId: u32], { issuer: AccountId32, collectionId: u32 }>;
-      IssuerChanged: AugmentedEvent<ApiType, [oldIssuer: AccountId32, newIssuer: AccountId32, collectionId: u32], { oldIssuer: AccountId32, newIssuer: AccountId32, collectionId: u32 }>;
-      NFTAccepted: AugmentedEvent<ApiType, [sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32], { sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32 }>;
-      NFTBurned: AugmentedEvent<ApiType, [owner: AccountId32, nftId: u32], { owner: AccountId32, nftId: u32 }>;
-      NftMinted: AugmentedEvent<ApiType, [owner: AccountId32, collectionId: u32, nftId: u32], { owner: AccountId32, collectionId: u32, nftId: u32 }>;
-      NFTRejected: AugmentedEvent<ApiType, [sender: AccountId32, collectionId: u32, nftId: u32], { sender: AccountId32, collectionId: u32, nftId: u32 }>;
-      NFTSent: AugmentedEvent<ApiType, [sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32, approvalRequired: bool], { sender: AccountId32, recipient: RmrkTraitsNftAccountIdOrCollectionNftTuple, collectionId: u32, nftId: u32, approvalRequired: bool }>;
-      PrioritySet: AugmentedEvent<ApiType, [collectionId: u32, nftId: u32], { collectionId: u32, nftId: u32 }>;
-      PropertySet: AugmentedEvent<ApiType, [collectionId: u32, maybeNftId: Option<u32>, key: Bytes, value: Bytes], { collectionId: u32, maybeNftId: Option<u32>, key: Bytes, value: Bytes }>;
-      ResourceAccepted: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      ResourceAdded: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      ResourceRemoval: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
-      ResourceRemovalAccepted: AugmentedEvent<ApiType, [nftId: u32, resourceId: u32], { nftId: u32, resourceId: u32 }>;
+    preimage: {
+      /**
+       * A preimage has ben cleared.
+       **/
+      Cleared: AugmentedEvent<ApiType, [hash_: H256], { hash_: H256 }>;
+      /**
+       * A preimage has been noted.
+       **/
+      Noted: AugmentedEvent<ApiType, [hash_: H256], { hash_: H256 }>;
+      /**
+       * A preimage has been requested.
+       **/
+      Requested: AugmentedEvent<ApiType, [hash_: H256], { hash_: H256 }>;
       /**
        * Generic event
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
-    rmrkEquip: {
-      BaseCreated: AugmentedEvent<ApiType, [issuer: AccountId32, baseId: u32], { issuer: AccountId32, baseId: u32 }>;
-      EquippablesUpdated: AugmentedEvent<ApiType, [baseId: u32, slotId: u32], { baseId: u32, slotId: u32 }>;
+    session: {
+      /**
+       * New session has happened. Note that the argument is the session index, not the
+       * block number as the type might suggest.
+       **/
+      NewSession: AugmentedEvent<ApiType, [sessionIndex: u32], { sessionIndex: u32 }>;
       /**
        * Generic event
        **/
@@ -621,6 +747,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Endowed: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
+       * Some free balance was locked.
+       **/
+      Locked: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
+      /**
        * Some locked funds were unlocked
        **/
       LockRemoved: AugmentedEvent<ApiType, [lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32], { lockId: U8aFixed, currencyId: PalletForeignAssetsAssetIds, who: AccountId32 }>;
@@ -649,6 +779,10 @@ declare module '@polkadot/api-base/types/events' {
        * Transfer succeeded.
        **/
       Transfer: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, from: AccountId32, to: AccountId32, amount: u128 }>;
+      /**
+       * Some locked balance was freed.
+       **/
+      Unlocked: AugmentedEvent<ApiType, [currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128], { currencyId: PalletForeignAssetsAssetIds, who: AccountId32, amount: u128 }>;
       /**
        * Some balance was unreserved (moved from reserved to free).
        **/
@@ -707,6 +841,10 @@ declare module '@polkadot/api-base/types/events' {
        **/
       Spending: AugmentedEvent<ApiType, [budgetRemaining: u128], { budgetRemaining: u128 }>;
       /**
+       * The inactive funds of the pallet have been updated.
+       **/
+      UpdatedInactive: AugmentedEvent<ApiType, [reactivated: u128, deactivated: u128], { reactivated: u128, deactivated: u128 }>;
+      /**
        * Generic event
        **/
       [key: string]: AugmentedEvent<ApiType>;
@@ -733,15 +871,15 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Bad XCM format used.
        **/
-      BadFormat: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      BadFormat: AugmentedEvent<ApiType, [messageHash: Option<U8aFixed>], { messageHash: Option<U8aFixed> }>;
       /**
        * Bad XCM version used.
        **/
-      BadVersion: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      BadVersion: AugmentedEvent<ApiType, [messageHash: Option<U8aFixed>], { messageHash: Option<U8aFixed> }>;
       /**
        * Some XCM failed.
        **/
-      Fail: AugmentedEvent<ApiType, [messageHash: Option<H256>, error: XcmV2TraitsError, weight: SpWeightsWeightV2Weight], { messageHash: Option<H256>, error: XcmV2TraitsError, weight: SpWeightsWeightV2Weight }>;
+      Fail: AugmentedEvent<ApiType, [messageHash: Option<U8aFixed>, error: XcmV3TraitsError, weight: SpWeightsWeightV2Weight], { messageHash: Option<U8aFixed>, error: XcmV3TraitsError, weight: SpWeightsWeightV2Weight }>;
       /**
        * An XCM exceeded the individual message weight budget.
        **/
@@ -753,15 +891,11 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Some XCM was executed ok.
        **/
-      Success: AugmentedEvent<ApiType, [messageHash: Option<H256>, weight: SpWeightsWeightV2Weight], { messageHash: Option<H256>, weight: SpWeightsWeightV2Weight }>;
-      /**
-       * An upward message was sent to the relay chain.
-       **/
-      UpwardMessageSent: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      Success: AugmentedEvent<ApiType, [messageHash: Option<U8aFixed>, weight: SpWeightsWeightV2Weight], { messageHash: Option<U8aFixed>, weight: SpWeightsWeightV2Weight }>;
       /**
        * An HRMP message was sent to a sibling parachain.
        **/
-      XcmpMessageSent: AugmentedEvent<ApiType, [messageHash: Option<H256>], { messageHash: Option<H256> }>;
+      XcmpMessageSent: AugmentedEvent<ApiType, [messageHash: Option<U8aFixed>], { messageHash: Option<U8aFixed> }>;
       /**
        * Generic event
        **/
@@ -771,7 +905,7 @@ declare module '@polkadot/api-base/types/events' {
       /**
        * Transferred `MultiAsset` with fee.
        **/
-      TransferredMultiAssets: AugmentedEvent<ApiType, [sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation], { sender: AccountId32, assets: XcmV1MultiassetMultiAssets, fee: XcmV1MultiAsset, dest: XcmV1MultiLocation }>;
+      TransferredMultiAssets: AugmentedEvent<ApiType, [sender: AccountId32, assets: XcmV3MultiassetMultiAssets, fee: XcmV3MultiAsset, dest: XcmV3MultiLocation], { sender: AccountId32, assets: XcmV3MultiassetMultiAssets, fee: XcmV3MultiAsset, dest: XcmV3MultiLocation }>;
       /**
        * Generic event
        **/

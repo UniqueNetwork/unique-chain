@@ -11,26 +11,26 @@ import Web3 from 'web3';
 import {WebsocketProvider} from 'web3-core';
 import {Contract} from 'web3-eth-contract';
 
-import * as solc from 'solc';
+import solc from 'solc';
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
 
-import {DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
+import {ArrangeGroup, DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
 import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types';
 
 // Native contracts ABI
-import collectionHelpersAbi from '../../abi/collectionHelpers.json';
-import fungibleAbi from '../../abi/fungible.json';
-import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json';
-import nonFungibleAbi from '../../abi/nonFungible.json';
-import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json';
-import refungibleAbi from '../../abi/reFungible.json';
-import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json';
-import refungibleTokenAbi from '../../abi/reFungibleToken.json';
-import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json';
-import contractHelpersAbi from '../../abi/contractHelpers.json';
+import collectionHelpersAbi from '../../abi/collectionHelpers.json' assert {type: 'json'};
+import fungibleAbi from '../../abi/fungible.json' assert {type: 'json'};
+import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json' assert {type: 'json'};
+import nonFungibleAbi from '../../abi/nonFungible.json' assert {type: 'json'};
+import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json' assert {type: 'json'};
+import refungibleAbi from '../../abi/reFungible.json' assert {type: 'json'};
+import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json' assert {type: 'json'};
+import refungibleTokenAbi from '../../abi/reFungibleToken.json' assert {type: 'json'};
+import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json' assert {type: 'json'};
+import contractHelpersAbi from '../../abi/contractHelpers.json' assert {type: 'json'};
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 import {TCollectionMode} from '../../../util/playgrounds/types';
 
@@ -461,6 +461,41 @@ export class EthCrossAccountGroup extends EthGroupBase {
   }
 }
 
+export class FeeGas {
+  fee: number | bigint = 0n;
+
+  gas: number | bigint = 0n;
+
+  public static async build(helper: EthUniqueHelper, fee: bigint): Promise<FeeGas> {
+    const instance = new FeeGas();
+    instance.fee = instance.convertToTokens(fee);
+    instance.gas = await instance.convertToGas(fee, helper);
+    return instance;
+  }
+
+  private async convertToGas(fee: bigint, helper: EthUniqueHelper): Promise<bigint> {
+    const gasPrice = BigInt(await helper.getWeb3().eth.getGasPrice());
+    return fee / gasPrice;
+  }
+
+  private convertToTokens(value: bigint, nominal = 1_000_000_000_000_000_000n): number {
+    return Number((value * 1000n) / nominal) / 1000;
+  }
+}
+
+class EthArrangeGroup extends ArrangeGroup {
+  helper: EthUniqueHelper;
+
+  constructor(helper: EthUniqueHelper) {
+    super(helper);
+    this.helper = helper;
+  }
+
+  async calculcateFeeGas(payer: ICrossAccountId, promise: () => Promise<any>): Promise<FeeGas> {
+    const fee = await this.calculcateFee(payer, promise);
+    return await FeeGas.build(this.helper, fee);
+  }
+}
 export class EthUniqueHelper extends DevUniqueHelper {
   web3: Web3 | null = null;
   web3Provider: WebsocketProvider | null = null;
@@ -471,7 +506,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
   ethProperty: EthPropertyGroup;
-
+  arrange: EthArrangeGroup;
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? EthUniqueHelper;
 
@@ -482,6 +517,8 @@ export class EthUniqueHelper extends DevUniqueHelper {
     this.ethNativeContract = new NativeContractGroup(this);
     this.ethContract = new ContractGroup(this);
     this.ethProperty = new EthPropertyGroup(this);
+    this.arrange = new EthArrangeGroup(this);
+    super.arrange = this.arrange;
   }
 
   getWeb3(): Web3 {

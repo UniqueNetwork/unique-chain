@@ -20,7 +20,6 @@ import {itSub, usingPlaygrounds, expect} from './util';
 const requiredPallets = [
   'balances',
   'common',
-  'randomnesscollectiveflip',
   'timestamp',
   'transactionpayment',
   'treasury',
@@ -64,9 +63,9 @@ describe('Pallet presence', () => {
 
       const refungible = 'refungible';
       const foreignAssets = 'foreignassets';
-      const rmrkPallets = ['rmrkcore', 'rmrkequip'];
       const appPromotion = 'apppromotion';
       const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
+      const preimage = ['preimage'];
       const testUtils = 'testutils';
 
       if (chain.eq('OPAL by UNIQUE')) {
@@ -75,8 +74,8 @@ describe('Pallet presence', () => {
           foreignAssets,
           appPromotion,
           testUtils,
-          ...rmrkPallets,
           ...collatorSelection,
+          ...preimage,
         );
       } else if (chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
         requiredPallets.push(
@@ -84,20 +83,25 @@ describe('Pallet presence', () => {
           appPromotion,
           foreignAssets,
           ...collatorSelection,
+          ...preimage,
         );
       } else if (chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
-        requiredPallets.push(foreignAssets);
+        requiredPallets.push(
+          refungible,
+          foreignAssets,
+          appPromotion,
+        );
       }
     });
   });
 
   itSub('Required pallets are present', ({helper}) => {
-    expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets]);
+    expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets].sort());
   });
 
   itSub('Governance and consensus pallets are present', ({helper}) => {
-    expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets]);
+    expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets].sort());
   });
 
   itSub('No extra pallets are included', ({helper}) => {

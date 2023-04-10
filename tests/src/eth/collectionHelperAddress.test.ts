@@ -23,7 +23,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

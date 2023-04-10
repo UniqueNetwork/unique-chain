@@ -15,37 +15,6 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::traits::Everything;
-use xcm::{
-	latest::{Xcm, Weight},
-	v1::MultiLocation,
-};
 use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit};
-use xcm_executor::traits::ShouldExecute;
 
-use crate::runtime_common::config::xcm::{DenyThenTry, DenyTransact};
-
-/// Execution barrier that just takes `max_weight` from `weight_credit`.
-///
-/// Useful to allow XCM execution by local chain users via extrinsics.
-/// E.g. `pallet_xcm::reserve_asset_transfer` to transfer a reserve asset
-/// out of the local chain to another one.
-pub struct AllowAllDebug;
-impl ShouldExecute for AllowAllDebug {
-	fn should_execute<Call>(
-		_origin: &MultiLocation,
-		_message: &mut Xcm<Call>,
-		_max_weight: Weight,
-		_weight_credit: &mut Weight,
-	) -> Result<(), ()> {
-		Ok(())
-	}
-}
-
-pub type Barrier = DenyThenTry<
-	DenyTransact,
-	(
-		TakeWeightCredit,
-		AllowTopLevelPaidExecutionFrom<Everything>,
-		AllowAllDebug,
-	),
->;
+pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);

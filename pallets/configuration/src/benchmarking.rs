@@ -19,8 +19,7 @@
 use super::*;
 use frame_benchmarking::benchmarks;
 use frame_system::{EventRecord, RawOrigin};
-use frame_support::{assert_ok, BoundedVec, traits::Currency};
-use xcm::v1::MultiLocation;
+use frame_support::{assert_ok, traits::Currency};
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
@@ -46,14 +45,6 @@ benchmarks! {
 	}: {
 		assert_ok!(
 			<Pallet<T>>::set_min_gas_price_override(RawOrigin::Root.into(), Some(coeff))
-		);
-	}
-
-	set_xcm_allowed_locations {
-		let locations: BoundedVec<MultiLocation, T::MaxXcmAllowedLocations> = Default::default();
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_xcm_allowed_locations(RawOrigin::Root.into(), Some(locations))
 		);
 	}
 

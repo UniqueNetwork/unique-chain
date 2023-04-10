@@ -3,7 +3,7 @@
 
 import {stringToU8a} from '@polkadot/util';
 import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper} from './unique';
+import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -106,7 +106,6 @@ export class DevUniqueHelper extends UniqueHelper {
         unique: defs.unique.rpc,
         appPromotion: defs.appPromotion.rpc,
         povinfo: defs.povinfo.rpc,
-        rmrk: defs.rmrk.rpc,
         eth: {
           feeHistory: {
             description: 'Dummy',
@@ -159,7 +158,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
-    options.notePreimagePallet = options.notePreimagePallet ?? 'democracy';
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
 
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
@@ -171,6 +170,28 @@ export class DevMoonriverHelper extends DevMoonbeamHelper {
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
     super(logger, options);
+  }
+}
+
+export class DevAstarHelper extends AstarHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevAstarHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevShidenHelper extends AstarHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevShidenHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
   }
 }
 
@@ -187,7 +208,7 @@ export class DevAcalaHelper extends AcalaHelper {
 
 export class DevKaruraHelper extends DevAcalaHelper {}
 
-class ArrangeGroup {
+export class ArrangeGroup {
   helper: DevUniqueHelper;
 
   scheduledIdSlider = 0;
@@ -215,7 +236,7 @@ class ArrangeGroup {
       accounts.push(recipient);
       if (balance !== 0n) {
         const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
-        transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
+        transactions.push(this.helper.signTransaction(donor, tx, {nonce, era: 0}, 'account generation'));
         nonce++;
       }
     }
@@ -322,7 +343,7 @@ class ArrangeGroup {
   };
 
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
-    const address = payer.Substrate ? payer.Substrate : await this.helper.address.ethToSubstrate(payer.Ethereum!);
+    const address = payer.Substrate ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum!);
     let balance = await this.helper.balance.getSubstrate(address);
 
     await promise();
@@ -734,7 +755,7 @@ class AdminGroup {
     this.helper = helper;
   }
 
-  async payoutStakers(signer: IKeyringPair, stakersToPayout: number) {
+  async payoutStakers(signer: IKeyringPair, stakersToPayout: number):  Promise<{staker: string, stake: bigint, payout: bigint}[]> {
     const payoutResult = await this.helper.executeExtrinsic(signer, 'api.tx.appPromotion.payoutStakers', [stakersToPayout], true);
     return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => {
       return {

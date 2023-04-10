@@ -16,10 +16,13 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+extern crate self as pallet_evm_coder_substrate;
+
 #[cfg(not(feature = "std"))]
 extern crate alloc;
 #[cfg(not(feature = "std"))]
 use alloc::format;
+use execution::PreDispatch;
 use frame_support::dispatch::Weight;
 
 use core::marker::PhantomData;
@@ -37,10 +40,14 @@ use pallet_evm::{
 use sp_core::H160;
 // #[cfg(feature = "runtime-benchmarks")]
 // pub mod benchmarking;
+pub mod execution;
+pub use evm_coder::*;
+
+#[doc(hidden)]
+pub use spez::spez;
 
 use evm_coder::{
 	abi::{AbiReader, AbiWrite, AbiWriter},
-	execution,
 	types::{Msg, Value},
 };
 
@@ -175,7 +182,7 @@ impl<T: Config> SubstrateRecorder<T> {
 		handle: &mut impl PrecompileHandle,
 		result: execution::Result<Option<AbiWriter>>,
 	) -> Option<PrecompileResult> {
-		use evm_coder::execution::Error;
+		use execution::Error;
 		// We ignore error here, as it should not occur, as we have our own bookkeeping of gas
 		let _ = handle.record_cost(self.initial_gas - self.gas_left());
 		Some(match result {
@@ -193,14 +200,14 @@ impl<T: Config> SubstrateRecorder<T> {
 					output: writer.finish(),
 				})
 			}
-			Err(Error::Fatal(f)) => Err(f.into()),
+			Err(Error::Fatal(f)) => Err(PrecompileFailure::Fatal { exit_status: f }),
 			Err(Error::Error(e)) => Err(e.into()),
 		})
 	}
 }
 
 pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> execution::Error {
-	use evm_coder::execution::Error as ExError;
+	use execution::Error as ExError;
 	match err {
 		DispatchError::Module(ModuleError { index, error, .. })
 			if index
@@ -231,15 +238,14 @@ pub trait WithRecorder<T: Config> {
 }
 
 /// Helper to simplify implementing bridge between evm-coder definitions and pallet-evm
-pub fn call<
+pub fn call<T, C, E, H>(handle: &mut H, mut e: E) -> Option<PrecompileResult>
+where
 	T: Config,
-	C: evm_coder::Call + evm_coder::Weighted,
+	C: evm_coder::Call + PreDispatch,
 	E: evm_coder::Callable<C> + WithRecorder<T>,
 	H: PrecompileHandle,
->(
-	handle: &mut H,
-	mut e: E,
-) -> Option<PrecompileResult> {
+	execution::ResultWithPostInfo<AbiWriter>: From<ResultWithPostInfoOf<E, AbiWriter>>,
+{
 	let result = call_internal(
 		handle.context().caller,
 		&mut e,
@@ -249,16 +255,18 @@ pub fn call<
 	e.into_recorder().evm_to_precompile_output(handle, result)
 }
 
-fn call_internal<
-	T: Config,
-	C: evm_coder::Call + evm_coder::Weighted,
-	E: evm_coder::Callable<C> + WithRecorder<T>,
->(
+fn call_internal<T, C, E>(
 	caller: H160,
 	e: &mut E,
 	value: Value,
 	input: &[u8],
-) -> execution::Result<Option<AbiWriter>> {
+) -> execution::Result<Option<AbiWriter>>
+where
+	T: Config,
+	C: evm_coder::Call + PreDispatch,
+	E: Contract + evm_coder::Callable<C> + WithRecorder<T>,
+	execution::ResultWithPostInfo<AbiWriter>: From<ResultWithPostInfoOf<E, AbiWriter>>,
+{
 	let (selector, mut reader) = AbiReader::new_call(input)?;
 	let call = C::parse(selector, &mut reader)?;
 	if call.is_none() {
@@ -267,15 +275,15 @@ fn call_internal<
 	}
 	let call = call.unwrap();
 
-	let dispatch_info = call.weight();
+	let dispatch_info = call.dispatch_info();
 	e.recorder()
 		.consume_gas(T::GasWeightMapping::weight_to_gas(dispatch_info.weight))?;
 
-	match e.call(Msg {
+	match execution::ResultWithPostInfo::from(e.call(Msg {
 		call,
 		caller,
 		value,
-	}) {
+	})) {
 		Ok(v) => {
 			let unspent = v.post_info.calc_unspent(&dispatch_info);
 			e.recorder()
@@ -288,5 +296,28 @@ fn call_internal<
 				.return_gas(T::GasWeightMapping::weight_to_gas(unspent));
 			Err(v.data)
 		}
+	}
+}
+
+#[cfg(test)]
+#[allow(dead_code)]
+mod tests {
+	use core::marker::PhantomData;
+
+	use evm_coder::ERC165Call;
+	use frame_support::weights::Weight;
+
+	use crate::execution::PreDispatch;
+
+	#[derive(PreDispatch)]
+	enum ExampleCall<T: super::Config> {
+		ERC165Call(ERC165Call, PhantomData<fn() -> T>),
+		OtherCall(ERC165Call),
+
+		#[weight(Weight::from_ref_time(a + b))]
+		Example {
+			a: u64,
+			b: u64,
+		},
 	}
 }

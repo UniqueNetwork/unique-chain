@@ -25,19 +25,20 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{
-	abi::AbiType, ToLog, execution::*, generate_stubgen, solidity, solidity_interface, types::*,
-	weight,
-};
+use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	Error as CommonError,
 	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	eth,
+	eth::{self, TokenUri},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
-use pallet_evm_coder_substrate::{call, dispatch_to_evm};
+use pallet_evm_coder_substrate::{
+	call, dispatch_to_evm,
+	execution::{PreDispatch, Result, Error},
+	frontier_contract,
+};
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::{H160, U256, Get};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
@@ -47,14 +48,30 @@ use up_data_structs::{
 };
 
 use crate::{
-	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, SelfWeightOf,
-	TokenProperties, TokensMinted, TotalSupply, weights::WeightInfo,
+	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, TokenProperties,
+	TokensMinted, TotalSupply, SelfWeightOf, weights::WeightInfo,
 };
+
+frontier_contract! {
+	macro_rules! RefungibleHandle_result {...}
+	impl<T: Config> Contract for RefungibleHandle<T> {...}
+}
 
 pub const ADDRESS_FOR_PARTIALLY_OWNED_TOKENS: H160 = H160::repeat_byte(0xff);
 
+/// Rft events.
+#[derive(ToLog)]
+pub enum ERC721TokenEvent {
+	/// The token has been changed.
+	TokenChanged {
+		/// Token ID.
+		#[indexed]
+		token_id: U256,
+	},
+}
+
 /// @title A contract that allows to set and delete token properties and change token property permissions.
-#[solidity_interface(name = TokenProperties)]
+#[solidity_interface(name = TokenProperties, events(ERC721TokenEvent), enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Set permissions for token property.
 	/// @dev Throws error if `msg.sender` is not admin or owner of the collection.
@@ -62,8 +79,8 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param isMutable Permission to mutate property.
 	/// @param collectionAdmin Permission to mutate property by collection admin if property is mutable.
 	/// @param tokenOwner Permission to mutate property by token owner if property is mutable.
-	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
 	#[solidity(hide)]
+	#[weight(<SelfWeightOf<T>>::set_token_property_permissions(1))]
 	fn set_token_property_permission(
 		&mut self,
 		caller: Caller,
@@ -290,7 +307,7 @@ pub enum ERC721Events {
 
 /// @title ERC-721 Non-Fungible Token Standard, optional metadata extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = ERC721Metadata, expect_selector = 0x5b5e139f)]
+#[solidity_interface(name = ERC721Metadata, enum(derive(PreDispatch)), expect_selector = 0x5b5e139f)]
 impl<T: Config> RefungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
@@ -359,14 +376,14 @@ where
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
 /// @dev See https://eips.ethereum.org/EIPS/eip-721
-#[solidity_interface(name = ERC721Enumerable, expect_selector = 0x780e9d63)]
+#[solidity_interface(name = ERC721Enumerable, enum(derive(PreDispatch)), expect_selector = 0x780e9d63)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Enumerate valid RFTs
 	/// @param index A counter less than `totalSupply()`
 	/// @return The token identifier for the `index`th NFT,
 	///  (sort order not specified)
-	fn token_by_index(&self, index: U256) -> Result<U256> {
-		Ok(index)
+	fn token_by_index(&self, index: U256) -> U256 {
+		index
 	}
 
 	/// Not implemented
@@ -386,7 +403,7 @@ impl<T: Config> RefungibleHandle<T> {
 
 /// @title ERC-721 Non-Fungible Token Standard
 /// @dev See https://github.com/ethereum/EIPs/blob/master/EIPS/eip-721.md
-#[solidity_interface(name = ERC721, events(ERC721Events), expect_selector = 0x80ac58cd)]
+#[solidity_interface(name = ERC721, events(ERC721Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x80ac58cd)]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Count all RFTs assigned to an owner
 	/// @dev RFTs assigned to the zero address are considered invalid, and this
@@ -547,7 +564,7 @@ pub fn ensure_single_owner<T: Config>(
 }
 
 /// @title ERC721 Token that can be irreversibly burned (destroyed).
-#[solidity_interface(name = ERC721Burnable)]
+#[solidity_interface(name = ERC721Burnable, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Burns a specific ERC721 token.
 	/// @dev Throws unless `msg.sender` is the current RFT owner, or an authorized
@@ -567,7 +584,7 @@ impl<T: Config> RefungibleHandle<T> {
 }
 
 /// @title ERC721 minting logic.
-#[solidity_interface(name = ERC721UniqueMintable)]
+#[solidity_interface(name = ERC721UniqueMintable, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleHandle<T> {
 	/// @notice Function to mint a token.
 	/// @param to The new owner
@@ -739,7 +756,7 @@ fn get_token_permission<T: Config>(
 }
 
 /// @title Unique extensions for ERC721.
-#[solidity_interface(name = ERC721UniqueExtensions)]
+#[solidity_interface(name = ERC721UniqueExtensions, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> RefungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
@@ -999,7 +1016,7 @@ where
 		&mut self,
 		caller: Caller,
 		to: Address,
-		tokens: Vec<(U256, String)>,
+		tokens: Vec<TokenUri>,
 	) -> Result<bool> {
 		let key = key::url();
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -1017,7 +1034,7 @@ where
 			.collect::<BTreeMap<_, _>>()
 			.try_into()
 			.unwrap();
-		for (id, token_uri) in tokens {
+		for TokenUri { id, uri } in tokens {
 			let id: u32 = id.try_into().map_err(|_| "token id overflow")?;
 			if id != expected_index {
 				return Err("item id should be next".into());
@@ -1028,7 +1045,7 @@ where
 			properties
 				.try_push(Property {
 					key: key.clone(),
-					value: token_uri
+					value: uri
 						.into_bytes()
 						.try_into()
 						.map_err(|_| "token uri is too long")?,
@@ -1120,7 +1137,8 @@ where
 		ERC721Metadata(if(this.flags.erc721metadata)),
 		Collection(via(common_mut returns CollectionHandle<T>)),
 		TokenProperties,
-	)
+	),
+	enum(derive(PreDispatch)),
 )]
 impl<T: Config> RefungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
 

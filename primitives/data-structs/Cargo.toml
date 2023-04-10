@@ -9,18 +9,19 @@ repository = 'https://github.com/UniqueNetwork/unique-chain'
 version = "0.2.2"
 
 [dependencies]
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
+
+derivative = { workspace = true }
+frame-support = { workspace = true }
+pallet-evm = { workspace = true }
+scale-info = { workspace = true }
+serde = { workspace = true, optional = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
 bondrewd = { version = "0.1.14", features = ["derive"], default-features = false }
-codec = { package = "parity-scale-codec", version = "3.1.2", default-features = false, features = ['derive'] }
-derivative = { version = "2.2.0", features = ["use_core"] }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-rmrk-traits = { default-features = false, path = "../rmrk-traits" }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
-serde = { version = "1.0.130", features = ['derive'], default-features = false, optional = true }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-struct-versioning.path = "../../crates/struct-versioning"
+struct-versioning = { workspace = true }
 
 [features]
 default = ["std"]
@@ -31,7 +32,6 @@ std = [
 	"codec/std",
 	"frame-support/std",
 	"pallet-evm/std",
-	"rmrk-traits/std",
 	"serde/std",
 	"serde1",
 	"sp-core/std",

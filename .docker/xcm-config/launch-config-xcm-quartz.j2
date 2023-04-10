@@ -5,7 +5,7 @@
         "chainInitializer": [
                 "chainql",
                 "--tla-code=spec=import '${spec}'",
-                "5validators.jsonnet"
+                "6validators.jsonnet"
             ],	
         "nodes": [
             {
@@ -62,8 +62,18 @@
                     "--unsafe-ws-external",
                     "-lparachain::candidate_validation=debug"
                 ]
+            },
+            {
+                "name": "ferdie",
+                "wsPort": 9899,
+                "rpcPort": 9898,
+                "port": 30999,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
             }
-
         ],
         "genesis": {
             "runtime": {
@@ -124,11 +134,7 @@
             "id": 2023,
             "balance": "1000000000000000000000",
             "chain": "moonriver-local",
-            "chainInitializer": [
-                "chainql",
-                "--tla-code=spec=import '${spec}'",
-                "minBondFix.jsonnet"
-            ],		    
+            "specNamePrefix": "moonriver-local-",
             "nodes": [
                 {
                     "wsPort": 9947,
@@ -152,6 +158,23 @@
                 {
                     "wsPort": 9948,
                     "port": 31204,
+                    "name": "alice",
+                    "flags": [
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external"
+                    ]
+                }
+            ]
+        },
+        {
+            "bin": "/astar/target/release/astar",
+            "id": "2007",
+            "chain": "shiden-dev",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "wsPort": 9949,
+                    "port": 31205,
                     "name": "alice",
                     "flags": [
                        "--unsafe-rpc-external",
@@ -198,7 +221,19 @@
             "recipient": 2095,
             "maxCapacity": 8,
             "maxMessageSize": 512
-        }
+        },
+        {
+            "sender": 2007,
+            "recipient": 2095,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 2095,
+            "recipient": 2007,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }        
     ],
     "finalization": false
 }

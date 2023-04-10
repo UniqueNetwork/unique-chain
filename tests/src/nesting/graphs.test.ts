@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, usingPlaygrounds} from '../util';
-import {UniqueHelper, UniqueNFToken} from '../util/playgrounds/unique';
+import {UniqueHelper, UniqueNFTCollection, UniqueNFToken} from '../util/playgrounds/unique';
 
 /**
  * ```dot
@@ -25,7 +25,7 @@ import {UniqueHelper, UniqueNFToken} from '../util/playgrounds/unique';
  * 8 -> 5
  * ```
  */
-async function buildComplexObjectGraph(helper: UniqueHelper, sender: IKeyringPair): Promise<UniqueNFToken[]> {
+async function buildComplexObjectGraph(helper: UniqueHelper, sender: IKeyringPair): Promise<[UniqueNFTCollection,UniqueNFToken[]]> {
   const collection = await helper.nft.mintCollection(sender, {permissions: {nesting: {tokenOwner: true}}});
   const tokens = await collection.mintMultipleTokens(sender, Array(8).fill({owner: {Substrate: sender.address}}));
 
@@ -37,7 +37,7 @@ async function buildComplexObjectGraph(helper: UniqueHelper, sender: IKeyringPai
   await tokens[2].nest(sender, tokens[1]);
   await tokens[1].nest(sender, tokens[0]);
 
-  return tokens;
+  return [collection, tokens];
 }
 
 describe('Graphs', () => {
@@ -45,27 +45,42 @@ describe('Graphs', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
 
   itSub('Ouroboros can\'t be created in a complex graph', async ({helper}) => {
-    const tokens = await buildComplexObjectGraph(helper, alice);
+    const [collection, tokens] = await buildComplexObjectGraph(helper, alice);
 
-    // to self
+    await collection.setPermissions(alice, {nesting: {collectionAdmin: false, tokenOwner: true}});
+
+    // [token owner] to self
     await expect(
       tokens[0].nest(alice, tokens[0]),
-      'first transaction',
+      '[token owner] self-nesting is forbidden',
     ).to.be.rejectedWith(/structure\.OuroborosDetected/);
-    // to nested part of graph
+    // [token owner] to nested part of graph
     await expect(
       tokens[0].nest(alice, tokens[4]),
-      'second transaction',
+      '[token owner] cannot nest the root node into an internal node',
     ).to.be.rejectedWith(/structure\.OuroborosDetected/);
     await expect(
       tokens[1].transferFrom(alice, tokens[0].nestingAccount(), tokens[7].nestingAccount()),
-      'third transaction',
+      '[token owner] cannot nest higher internal node into lower internal node',
+    ).to.be.rejectedWith(/structure\.OuroborosDetected/);
+
+    await collection.setPermissions(alice, {nesting: {collectionAdmin: true, tokenOwner: false}});
+
+    // [collection owner] to self
+    await expect(
+      tokens[0].nest(alice, tokens[0]),
+      '[collection owner] self-nesting is forbidden',
+    ).to.be.rejectedWith(/structure\.OuroborosDetected/);
+    // [collection owner] to nested part of graph
+    await expect(
+      tokens[0].nest(alice, tokens[4]),
+      '[collection owner] cannot nest the root node into an internal node',
     ).to.be.rejectedWith(/structure\.OuroborosDetected/);
   });
 });

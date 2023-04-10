@@ -17,9 +17,14 @@ contract ERC165 is Dummy {
 	}
 }
 
+/// @dev inlined interface
+contract ERC721TokenEvent {
+	event TokenChanged(uint256 indexed tokenId);
+}
+
 /// @title A contract that allows to set and delete token properties and change token property permissions.
 /// @dev the ERC-165 identifier for this interface is 0xde0695c2
-contract TokenProperties is Dummy, ERC165 {
+contract TokenProperties is Dummy, ERC165, ERC721TokenEvent {
 	// /// @notice Set permissions for token property.
 	// /// @dev Throws error if `msg.sender` is not admin or owner of the collection.
 	// /// @param key Property key.
@@ -938,7 +943,7 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple14[] memory tokens) public returns (bool) {
+	// function mintBulkWithTokenURI(address to, TokenUri[] memory tokens) public returns (bool) {
 	// 	require(false, stub_error);
 	// 	to;
 	// 	tokens;
@@ -982,10 +987,12 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	}
 }
 
-/// @dev anonymous struct
-struct Tuple14 {
-	uint256 field_0;
-	string field_1;
+/// Data for creation token with uri.
+struct TokenUri {
+	/// Id of new token.
+	uint256 id;
+	/// Uri of new token.
+	string uri;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension

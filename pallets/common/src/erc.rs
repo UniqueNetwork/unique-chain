@@ -17,24 +17,28 @@
 //! This module contains the implementation of pallet methods for evm.
 
 pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
-use evm_coder::{
+use pallet_evm_coder_substrate::{
 	abi::AbiType,
-	solidity_interface, solidity, ToLog,
+	solidity_interface, ToLog,
 	types::*,
-	execution::{Result, Error},
-	weight,
+	execution::{Result, Error, PreDispatch},
+	frontier_contract,
 };
 use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::{vec, vec::Vec};
-use sp_core::U256;
 use up_data_structs::{
 	CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property, SponsoringRateLimit,
 	SponsorshipState,
 };
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties, SelfWeightOf, eth, weights::WeightInfo,
+	Pallet, CollectionHandle, Config, CollectionProperties, eth, SelfWeightOf, weights::WeightInfo,
 };
+
+frontier_contract! {
+	macro_rules! CollectionHandle_result {...}
+	impl<T: Config> Contract for CollectionHandle<T> {...}
+}
 
 /// Events for ethereum collection helper.
 #[derive(ToLog)]
@@ -61,15 +65,6 @@ pub enum CollectionHelpersEvents {
 		#[indexed]
 		collection_id: Address,
 	},
-
-	/// The token has been changed.
-	TokenChanged {
-		/// Collection ID.
-		#[indexed]
-		collection_id: Address,
-		/// Token ID.
-		token_id: U256,
-	},
 }
 
 /// Does not always represent a full collection, for RFT it is either
@@ -83,7 +78,7 @@ pub trait CommonEvmHandler {
 }
 
 /// @title A contract that allows you to work with collections.
-#[solidity_interface(name = Collection)]
+#[solidity_interface(name = Collection, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> CollectionHandle<T>
 where
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
@@ -272,7 +267,7 @@ where
 			None => return Ok(Default::default()),
 		};
 
-		Ok(eth::CrossAddress::from_sub::<T>(&sponsor))
+		Ok(eth::CrossAddress::from_sub::<T>(sponsor))
 	}
 
 	/// Get current collection limits.
@@ -280,11 +275,6 @@ where
 	/// @return Array of collection limits
 	fn collection_limits(&self) -> Result<Vec<eth::CollectionLimit>> {
 		let limits = &self.collection.limits;
-
-		let convert_value_from_bool = |ob: Option<bool>| match ob {
-			Some(b) => Some(b as u32),
-			None => None,
-		};
 
 		Ok(vec![
 			eth::CollectionLimit::new(
@@ -307,10 +297,12 @@ where
 						None
 					}
 				})
-				.unwrap_or(eth::CollectionLimit::new(
-					eth::CollectionLimitField::SponsoredDataRateLimit,
-					Default::default(),
-				)),
+				.unwrap_or_else(|| {
+					eth::CollectionLimit::new(
+						eth::CollectionLimitField::SponsoredDataRateLimit,
+						Default::default(),
+					)
+				}),
 			eth::CollectionLimit::new(eth::CollectionLimitField::TokenLimit, limits.token_limit),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::SponsorTransferTimeout,
@@ -322,15 +314,15 @@ where
 			),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::OwnerCanTransfer,
-				convert_value_from_bool(limits.owner_can_transfer),
+				limits.owner_can_transfer.map(u32::from),
 			),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::OwnerCanDestroy,
-				convert_value_from_bool(limits.owner_can_destroy),
+				limits.owner_can_destroy.map(u32::from),
 			),
 			eth::CollectionLimit::new(
 				eth::CollectionLimitField::TransferEnabled,
-				convert_value_from_bool(limits.transfers_enabled),
+				limits.transfers_enabled.map(u32::from),
 			),
 		])
 	}
@@ -680,7 +672,7 @@ where
 
 /// Contains static property keys and values.
 pub mod static_property {
-	use evm_coder::{
+	use pallet_evm_coder_substrate::{
 		execution::{Result, Error},
 	};
 	use alloc::format;

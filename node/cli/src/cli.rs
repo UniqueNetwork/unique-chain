@@ -15,10 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use crate::chain_spec;
-use std::{path::PathBuf, env};
+use std::path::PathBuf;
 use clap::Parser;
-
-const NODE_NAME_ENV: &str = "UNIQUE_NODE_NAME";
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -99,21 +97,7 @@ pub struct Cli {
 
 impl Cli {
 	pub fn node_name() -> String {
-		match env::var(NODE_NAME_ENV).ok() {
-			Some(name) => name,
-			None => {
-				if cfg!(feature = "unique-runtime") {
-					"Unique"
-				} else if cfg!(feature = "quartz-runtime") {
-					"Quartz"
-				} else if cfg!(feature = "sapphire-runtime") {
-					"Sapphire"
-				} else {
-					"Opal"
-				}
-			}
-			.into(),
-		}
+		"Unique".into()
 	}
 }
 

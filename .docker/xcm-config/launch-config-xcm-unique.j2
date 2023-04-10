@@ -5,7 +5,7 @@
         "chainInitializer": [
                 "chainql",
                 "--tla-code=spec=import '${spec}'",
-                "5validators.jsonnet"
+                "6validators.jsonnet"
             ],	
         "nodes": [
             {
@@ -62,8 +62,18 @@
                     "--unsafe-ws-external",
                     "-lparachain::candidate_validation=debug"
                 ]
-            }
-
+            },
+            {
+                "name": "ferdie",
+                "wsPort": 9899,
+                "rpcPort": 9898,
+                "port": 30999,
+                "flags": [
+                    "--unsafe-rpc-external",
+                    "--unsafe-ws-external",
+                    "-lparachain::candidate_validation=debug"
+                ]
+            }            
         ],
         "genesis": {
             "runtime": {
@@ -93,7 +103,7 @@
                         "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
-		    ]
+		            ]
                 }
             ]
         },
@@ -115,7 +125,7 @@
                     "flags": [
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
-		    ]
+		            ]
                 }
               ]
         },
@@ -124,6 +134,7 @@
             "id": "2004",
             "balance": "1000000000000000000000",
             "chain": "moonbeam-local",
+            "specNamePrefix": "moonbeam-local-",
             "nodes": [
                 {
                     "wsPort": 9947,
@@ -132,7 +143,7 @@
                     "flags": [
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external",
-  			"--",
+  			            "--",
                         "--execution=wasm"
                     ]
                 }
@@ -151,7 +162,24 @@
                     "flags": [
                         "--unsafe-rpc-external",
                         "--unsafe-ws-external"
-		    ]
+		            ]
+                }
+            ]
+        },
+        {
+            "bin": "/astar/target/release/astar",
+            "id": "2006",
+            "chain": "astar-dev",
+            "balance": "1000000000000000000000000",
+            "nodes": [
+                {
+                    "wsPort": 9949,
+                    "port": 31205,
+                    "name": "alice",
+                    "flags": [
+                       "--unsafe-rpc-external",
+                       "--unsafe-ws-external"
+                    ]
                 }
             ]
         }
@@ -193,7 +221,19 @@
             "recipient": 2037,
             "maxCapacity": 8,
             "maxMessageSize": 512
-        }
+        },
+        {
+            "sender": 2006,
+            "recipient": 2037,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        },
+        {
+            "sender": 2037,
+            "recipient": 2006,
+            "maxCapacity": 8,
+            "maxMessageSize": 512
+        }        
     ],
     "finalization": false
 }

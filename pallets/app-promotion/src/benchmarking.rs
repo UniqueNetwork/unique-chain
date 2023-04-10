@@ -65,7 +65,7 @@ benchmarks! {
 			let staker = account::<T::AccountId>("staker", index, SEED);
 			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 			PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())?;
-			PromototionPallet::<T>::unstake(RawOrigin::Signed(staker.clone()).into()).map_err(|e| e.error)?;
+			PromototionPallet::<T>::unstake_all(RawOrigin::Signed(staker.clone()).into())?;
 			Result::<(), sp_runtime::DispatchError>::Ok(())
 		})?;
 		let block_number = <frame_system::Pallet<T>>::current_block_number() + T::PendingInterval::get();
@@ -115,7 +115,7 @@ benchmarks! {
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 	} : _(RawOrigin::Signed(caller.clone()), share * <T as Config>::Currency::total_balance(&caller))
 
-	unstake {
+	unstake_all {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
@@ -129,6 +129,21 @@ benchmarks! {
 		}).collect::<Result<Vec<_>, _>>()?;
 
 	} : _(RawOrigin::Signed(caller.clone()))
+
+	unstake_partial {
+		let caller = account::<T::AccountId>("caller", 0, SEED);
+		let share = Perbill::from_rational(1u32, 20);
+		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		(1..11).map(|i| {
+			// used to change block number
+			<frame_system::Pallet<T>>::set_block_number(i.into());
+			T::RelayBlockNumberProvider::set_block_number((2*i).into());
+			assert_eq!(<frame_system::Pallet<T>>::block_number(), i.into());
+			assert_eq!(T::RelayBlockNumberProvider::current_block_number(), (2*i).into());
+			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())
+		}).collect::<Result<Vec<_>, _>>()?;
+
+	} : _(RawOrigin::Signed(caller.clone()), Into::<BalanceOf<T>>::into(1000u128) * T::Nominal::get())
 
 	sponsor_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);

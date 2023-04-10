@@ -19,11 +19,13 @@ use frame_support::{
 	weights::WeightToFeePolynomial,
 };
 use sp_runtime::traits::{CheckedConversion, Zero, Convert};
-use xcm::v1::{Junction::*, MultiLocation, Junctions::*};
 use xcm::latest::{
 	AssetId::{Concrete},
 	Fungibility::Fungible as XcmFungible,
 	MultiAsset, Error as XcmError, Weight,
+	Junction::*,
+	MultiLocation,
+	Junctions::*,
 };
 use xcm_builder::{CurrencyAdapter, NativeAsset};
 use xcm_executor::{
@@ -75,7 +77,7 @@ pub type LocalAssetTransactor = CurrencyAdapter<
 	(),
 >;
 
-pub type AssetTransactors = LocalAssetTransactor;
+pub type AssetTransactor = LocalAssetTransactor;
 
 pub type IsReserve = NativeAsset;
 

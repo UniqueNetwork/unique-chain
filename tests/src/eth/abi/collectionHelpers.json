@@ -45,25 +45,6 @@
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "collectionId",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      }
-    ],
-    "name": "TokenChanged",
-    "type": "event"
-  },
-  {
     "inputs": [
       { "internalType": "uint32", "name": "collectionId", "type": "uint32" }
     ],

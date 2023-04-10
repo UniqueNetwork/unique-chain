@@ -17,7 +17,7 @@
 // Original License
 use std::sync::Arc;
 
-use codec::{Decode, Encode};
+use codec::Decode;
 use jsonrpsee::{
 	core::{RpcResult as Result},
 	proc_macros::rpc,
@@ -28,19 +28,12 @@ use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
 	PropertyKeyPermission, TokenData, TokenChild,
 };
-use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
+use sp_api::{BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
 use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
 
-// RMRK
-use rmrk_rpc::RmrkApi as RmrkRuntimeApi;
-use up_data_structs::{
-	RmrkCollectionId, RmrkNftId, RmrkBaseId, RmrkNftChild, RmrkThemeName, RmrkResourceId,
-};
-
 pub use app_promotion_unique_rpc::AppPromotionApiServer;
-pub use rmrk_unique_rpc::RmrkApiServer;
 
 #[cfg(feature = "pov-estimate")]
 pub mod pov_estimate;
@@ -301,128 +294,6 @@ mod app_promotion_unique_rpc {
 	}
 }
 
-mod rmrk_unique_rpc {
-	use super::*;
-
-	#[rpc(server)]
-	#[async_trait]
-	pub trait RmrkApi<
-		BlockHash,
-		AccountId,
-		CollectionInfo,
-		NftInfo,
-		ResourceInfo,
-		PropertyInfo,
-		BaseInfo,
-		PartType,
-		Theme,
-	>
-	{
-		/// Get the latest created collection ID.
-		#[method(name = "rmrk_lastCollectionIdx")]
-		fn last_collection_idx(&self, at: Option<BlockHash>) -> Result<RmrkCollectionId>;
-
-		/// Get collection info by ID.
-		#[method(name = "rmrk_collectionById")]
-		fn collection_by_id(
-			&self,
-			id: RmrkCollectionId,
-			at: Option<BlockHash>,
-		) -> Result<Option<CollectionInfo>>;
-
-		/// Get NFT info by collection and NFT IDs.
-		#[method(name = "rmrk_nftById")]
-		fn nft_by_id(
-			&self,
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
-			at: Option<BlockHash>,
-		) -> Result<Option<NftInfo>>;
-
-		/// Get tokens owned by an account in a collection.
-		#[method(name = "rmrk_accountTokens")]
-		fn account_tokens(
-			&self,
-			account_id: AccountId,
-			collection_id: RmrkCollectionId,
-			at: Option<BlockHash>,
-		) -> Result<Vec<RmrkNftId>>;
-
-		/// Get tokens nested in an NFT - its direct children (not the children's children).
-		#[method(name = "rmrk_nftChildren")]
-		fn nft_children(
-			&self,
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
-			at: Option<BlockHash>,
-		) -> Result<Vec<RmrkNftChild>>;
-
-		/// Get collection properties, created by the user - not the proxy-specific properties.
-		#[method(name = "rmrk_collectionProperties")]
-		fn collection_properties(
-			&self,
-			collection_id: RmrkCollectionId,
-			filter_keys: Option<Vec<String>>,
-			at: Option<BlockHash>,
-		) -> Result<Vec<PropertyInfo>>;
-
-		/// Get NFT properties, created by the user - not the proxy-specific properties.
-		#[method(name = "rmrk_nftProperties")]
-		fn nft_properties(
-			&self,
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
-			filter_keys: Option<Vec<String>>,
-			at: Option<BlockHash>,
-		) -> Result<Vec<PropertyInfo>>;
-
-		/// Get data of resources of an NFT.
-		#[method(name = "rmrk_nftResources")]
-		fn nft_resources(
-			&self,
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
-			at: Option<BlockHash>,
-		) -> Result<Vec<ResourceInfo>>;
-
-		/// Get the priority of a resource in an NFT.
-		#[method(name = "rmrk_nftResourcePriority")]
-		fn nft_resource_priority(
-			&self,
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
-			resource_id: RmrkResourceId,
-			at: Option<BlockHash>,
-		) -> Result<Option<u32>>;
-
-		/// Get base info by its ID.
-		#[method(name = "rmrk_base")]
-		fn base(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Option<BaseInfo>>;
-
-		/// Get all parts of a base.
-		#[method(name = "rmrk_baseParts")]
-		fn base_parts(&self, base_id: RmrkBaseId, at: Option<BlockHash>) -> Result<Vec<PartType>>;
-
-		/// Get the theme names belonging to a base.
-		#[method(name = "rmrk_themeNames")]
-		fn theme_names(
-			&self,
-			base_id: RmrkBaseId,
-			at: Option<BlockHash>,
-		) -> Result<Vec<RmrkThemeName>>;
-
-		/// Get theme info, including properties, optionally limited to the provided keys.
-		#[method(name = "rmrk_themes")]
-		fn theme(
-			&self,
-			base_id: RmrkBaseId,
-			theme_name: String,
-			filter_keys: Option<Vec<String>>,
-			at: Option<BlockHash>,
-		) -> Result<Option<Theme>>;
-	}
-}
-
 #[macro_export]
 macro_rules! define_struct_for_server_api {
 	($name:ident { $($arg:ident: $arg_ty:ty),+ $(,)? }) => {
@@ -454,12 +325,6 @@ define_struct_for_server_api! {
 	}
 }
 
-define_struct_for_server_api! {
-	Rmrk {
-		client: Arc<Client>
-	}
-}
-
 macro_rules! pass_method {
 	(
 		$method_name:ident(
@@ -477,9 +342,9 @@ macro_rules! pass_method {
 			at: Option<<Block as BlockT>::Hash>,
 		) -> Result<$result> {
 			let api = self.client.runtime_api();
-			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+			let at = at.unwrap_or_else(|| self.client.info().best_hash);
 			let _api_version = if let Ok(Some(api_version)) =
-				api.api_version::<$runtime_api_macro!()>(&at)
+				api.api_version::<$runtime_api_macro!()>(at)
 			{
 				api_version
 			} else {
@@ -488,9 +353,9 @@ macro_rules! pass_method {
 			};
 
 			let result = $(if _api_version < $ver {
-				api.$changed_method_name(&at, $($changed_name),*).map(|r| r.map($fixer))
+				api.$changed_method_name(at, $($changed_name),*).map(|r| r.and_then($fixer))
 			} else)*
-			{ api.$method_name(&at, $($((|$map_arg: $ty| $map))? ($name)),*) };
+			{ api.$method_name(at, $($((|$map_arg: $ty| $map))? ($name)),*) };
 
 			Ok(result
 				.map_err(|e| anyhow!("unable to query: {e}"))?
@@ -508,12 +373,6 @@ macro_rules! unique_api {
 macro_rules! app_promotion_api {
 	() => {
 		dyn AppPromotionRuntimeApi<Block, BlockNumber, CrossAccountId, AccountId>
-	};
-}
-
-macro_rules! rmrk_api {
-	() => {
-		dyn RmrkRuntimeApi<Block, AccountId, CollectionInfo, NftInfo, ResourceInfo, PropertyInfo, BaseInfo, PartType, Theme>
 	};
 }
 
@@ -581,7 +440,7 @@ where
 			#[map(|keys| string_keys_to_bytes_keys(keys))]
 			keys: Option<Vec<String>>,
 		) -> TokenData<CrossAccountId>, unique_api;
-		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| value.into()
+		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| Ok(value.into())
 	);
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
@@ -590,7 +449,22 @@ where
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId, unique_api);
 	pass_method!(
 		collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api;
-		changed_in 3, collection_by_id_before_version_3(collection) => |value| value.map(|coll| coll.into())
+		changed_in 3, collection_by_id_before_version_3(collection) => |value| {
+			use codec::IoReader;
+			use up_data_structs::RpcCollectionVersion1;
+			use up_data_structs::CollectionVersion1;
+			use sp_runtime::DispatchError;
+
+			if let Some(bytes) = value {
+				let mut reader = IoReader(bytes.as_slice());
+				Ok(Some(RpcCollection::<AccountId>::decode(&mut reader)
+				.or_else(|_| RpcCollectionVersion1::<AccountId>::decode(&mut reader).map(|col| col.into()))
+				.or_else(|_| CollectionVersion1::<AccountId>::decode(&mut reader).map(|col| col.into()))
+				.map_err(|_| DispatchError::Other("API Error: UniqueApi_collection_by_id"))?))
+			} else {
+				Ok(None)
+			}
+		}
 	);
 	pass_method!(collection_stats() -> CollectionStats, unique_api);
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);
@@ -627,94 +501,6 @@ where
 		.into_iter()
 		.map(|(b, a)| (b, a.to_string()))
 		.collect::<Vec<_>>(), app_promotion_api);
-}
-
-#[allow(deprecated)]
-impl<
-		C,
-		Block,
-		AccountId,
-		CollectionInfo,
-		NftInfo,
-		ResourceInfo,
-		PropertyInfo,
-		BaseInfo,
-		PartType,
-		Theme,
-	>
-	rmrk_unique_rpc::RmrkApiServer<
-		<Block as BlockT>::Hash,
-		AccountId,
-		CollectionInfo,
-		NftInfo,
-		ResourceInfo,
-		PropertyInfo,
-		BaseInfo,
-		PartType,
-		Theme,
-	> for Rmrk<C, Block>
-where
-	C: Send + Sync + 'static + ProvideRuntimeApi<Block> + HeaderBackend<Block>,
-	C::Api: RmrkRuntimeApi<
-		Block,
-		AccountId,
-		CollectionInfo,
-		NftInfo,
-		ResourceInfo,
-		PropertyInfo,
-		BaseInfo,
-		PartType,
-		Theme,
-	>,
-	AccountId: Decode + Encode,
-	CollectionInfo: Decode,
-	NftInfo: Decode,
-	ResourceInfo: Decode,
-	PropertyInfo: Decode,
-	BaseInfo: Decode,
-	PartType: Decode,
-	Theme: Decode,
-	Block: BlockT,
-{
-	pass_method!(last_collection_idx() -> RmrkCollectionId, rmrk_api);
-	pass_method!(collection_by_id(id: RmrkCollectionId) -> Option<CollectionInfo>, rmrk_api);
-	pass_method!(nft_by_id(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Option<NftInfo>, rmrk_api);
-	pass_method!(account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Vec<RmrkNftId>, rmrk_api);
-	pass_method!(nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<RmrkNftChild>, rmrk_api);
-	pass_method!(
-		collection_properties(
-			collection_id: RmrkCollectionId,
-
-			#[map(|keys| string_keys_to_bytes_keys(keys))]
-			filter_keys: Option<Vec<String>>
-		) -> Vec<PropertyInfo>,
-		rmrk_api
-	);
-	pass_method!(
-		nft_properties(
-			collection_id: RmrkCollectionId,
-			nft_id: RmrkNftId,
-
-			#[map(|keys| string_keys_to_bytes_keys(keys))]
-			filter_keys: Option<Vec<String>>
-		) -> Vec<PropertyInfo>,
-		rmrk_api
-	);
-	pass_method!(nft_resources(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Vec<ResourceInfo>, rmrk_api);
-	pass_method!(nft_resource_priority(collection_id: RmrkCollectionId, nft_id: RmrkNftId, resource_id: RmrkResourceId) -> Option<u32>, rmrk_api);
-	pass_method!(base(base_id: RmrkBaseId) -> Option<BaseInfo>, rmrk_api);
-	pass_method!(base_parts(base_id: RmrkBaseId) -> Vec<PartType>, rmrk_api);
-	pass_method!(theme_names(base_id: RmrkBaseId) -> Vec<RmrkThemeName>, rmrk_api);
-	pass_method!(
-		theme(
-			base_id: RmrkBaseId,
-
-			#[map(|n| n.into_bytes())]
-			theme_name: String,
-
-			#[map(|keys| string_keys_to_bytes_keys(keys))]
-			filter_keys: Option<Vec<String>>
-		) -> Option<Theme>, rmrk_api);
 }
 
 fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {

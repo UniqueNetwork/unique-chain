@@ -5,21 +5,23 @@ name = "pallet-common"
 version = "0.1.13"
 
 [dependencies]
-codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.1.2" }
-scale-info = { version = "2.0.1", default-features = false, features = ["derive"] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
 
-ethereum = { version = "0.14.0", default-features = false }
-evm-coder = { default-features = false, path = "../../crates/evm-coder" }
-frame-benchmarking = { default-features = false, optional = true, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/frontier", branch = "unique-polkadot-v0.9.36" }
-pallet-evm-coder-substrate = { default-features = false, path = "../../pallets/evm-coder-substrate" }
-sp-core = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-runtime = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-up-data-structs = { default-features = false, path = "../../primitives/data-structs" }
-up-pov-estimate-rpc = { default-features = false, path = "../../primitives/pov-estimate-rpc" }
+scale-info = { workspace = true }
+
+ethereum = { workspace = true }
+evm-coder = { workspace = true }
+frame-benchmarking = { workspace = true, optional = true }
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-evm = { workspace = true }
+pallet-evm-coder-substrate = { workspace = true }
+sp-core = { workspace = true }
+sp-runtime = { workspace = true }
+sp-std = { workspace = true }
+up-data-structs = { workspace = true }
+up-pov-estimate-rpc = { workspace = true }
 
 [features]
 default = ["std"]

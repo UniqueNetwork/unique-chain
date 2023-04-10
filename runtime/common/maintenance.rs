@@ -70,11 +70,6 @@ impl SignedExtension for CheckMaintenance {
 				#[cfg(feature = "scheduler")]
 				RuntimeCall::Scheduler(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
-				#[cfg(feature = "rmrk")]
-				RuntimeCall::RmrkCore(_) | RuntimeCall::RmrkEquip(_) => {
-					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
-				}
-
 				#[cfg(feature = "app-promotion")]
 				RuntimeCall::AppPromotion(_) => {
 					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
@@ -87,7 +82,6 @@ impl SignedExtension for CheckMaintenance {
 
 				#[cfg(feature = "collator-selection")]
 				RuntimeCall::CollatorSelection(_)
-				| RuntimeCall::Authorship(_)
 				| RuntimeCall::Session(_)
 				| RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 

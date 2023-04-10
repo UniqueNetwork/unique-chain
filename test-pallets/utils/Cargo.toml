@@ -6,13 +6,15 @@ publish = false
 version = "0.1.0"
 
 [dependencies]
-codec = { package = "parity-scale-codec", version = "3.0.0", default-features = false, features = ["derive"] }
-frame-support = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-frame-system = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
-scale-info = { version = "2.1.1", default-features = false, features = ["derive"] }
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+scale-info = { workspace = true }
 # pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
-pallet-unique-scheduler-v2 = { path = "../../pallets/scheduler-v2", default-features = false }
-sp-std = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.36" }
+pallet-unique-scheduler-v2 = { workspace = true }
+sp-std = { workspace = true }
 
 [features]
 default = ["std"]

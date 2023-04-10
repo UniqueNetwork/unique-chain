@@ -33,9 +33,10 @@ pub const MAX_FEE_LIMITED_METHODS: u32 = 5;
 pub mod pallet {
 	pub use super::*;
 	use crate::eth::ContractHelpersEvents;
-	use frame_support::pallet_prelude::*;
-	use pallet_evm_coder_substrate::DispatchResult;
+	use frame_support::{pallet_prelude::*, sp_runtime::DispatchResult};
+	use frame_system::{pallet_prelude::OriginFor, ensure_root};
 	use sp_core::{H160, U256};
+	use sp_std::vec::Vec;
 	use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 	use up_data_structs::SponsorshipState;
 	use evm_coder::ToLog;
@@ -197,6 +198,28 @@ pub mod pallet {
 			/// Contract address of the affected collection.
 			H160,
 		),
+	}
+
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
+		/// Migrate contract to use `SponsoringMode` storage instead of `SelfSponsoring`
+		#[pallet::call_index(0)]
+		#[pallet::weight(<T as frame_system::Config>::DbWeight::get().reads_writes(
+			addresses.len() as u64, addresses.len() as u64 * 2
+		))]
+		pub fn migrate_from_self_sponsoring(
+			origin: OriginFor<T>,
+			addresses: Vec<H160>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			for address in addresses {
+				if <SelfSponsoring<T>>::get(address) {
+					<SponsoringMode<T>>::set(address, Some(SponsoringModeT::Allowlisted));
+					<SelfSponsoring<T>>::remove(address);
+				}
+			}
+			Ok(())
+		}
 	}
 
 	impl<T: Config> Pallet<T> {

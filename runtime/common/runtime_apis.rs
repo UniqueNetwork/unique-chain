@@ -42,6 +42,7 @@ macro_rules! impl_common_runtime_apis {
             transaction_validity::{TransactionSource, TransactionValidity},
             ApplyExtrinsicResult, DispatchError,
         };
+        use frame_support::pallet_prelude::Weight;
         use fp_rpc::TransactionStatus;
         use pallet_transaction_payment::{
             FeeDetails, RuntimeDispatchInfo,
@@ -228,149 +229,6 @@ macro_rules! impl_common_runtime_apis {
 
                     #[cfg(feature = "app-promotion")]
                     return Ok(<pallet_app_promotion::Pallet<Runtime>>::cross_id_pending_unstake_per_block(staker))
-                }
-            }
-
-            impl rmrk_rpc::RmrkApi<
-                Block,
-                AccountId,
-                RmrkCollectionInfo<AccountId>,
-                RmrkInstanceInfo<AccountId>,
-                RmrkResourceInfo,
-                RmrkPropertyInfo,
-                RmrkBaseInfo<AccountId>,
-                RmrkPartType,
-                RmrkTheme
-            > for Runtime {
-                fn last_collection_idx() -> Result<RmrkCollectionId, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::last_collection_idx::<Runtime>();
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn collection_by_id(collection_id: RmrkCollectionId) -> Result<Option<RmrkCollectionInfo<AccountId>>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::collection_by_id::<Runtime>(collection_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn nft_by_id(collection_id: RmrkCollectionId, nft_by_id: RmrkNftId) -> Result<Option<RmrkInstanceInfo<AccountId>>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::nft_by_id::<Runtime>(collection_id, nft_by_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn account_tokens(account_id: AccountId, collection_id: RmrkCollectionId) -> Result<Vec<RmrkNftId>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::account_tokens::<Runtime>(account_id, collection_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn nft_children(collection_id: RmrkCollectionId, nft_id: RmrkNftId) -> Result<Vec<RmrkNftChild>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::nft_children::<Runtime>(collection_id, nft_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn collection_properties(
-                    collection_id: RmrkCollectionId,
-                    filter_keys: Option<Vec<RmrkPropertyKey>>
-                ) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::collection_properties::<Runtime>(collection_id, filter_keys);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn nft_properties(
-                    collection_id: RmrkCollectionId,
-                    nft_id: RmrkNftId,
-                    filter_keys: Option<Vec<RmrkPropertyKey>>
-                ) -> Result<Vec<RmrkPropertyInfo>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::nft_properties::<Runtime>(collection_id, nft_id, filter_keys);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn nft_resources(collection_id: RmrkCollectionId,nft_id: RmrkNftId) -> Result<Vec<RmrkResourceInfo>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::nft_resources::<Runtime>(collection_id, nft_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn nft_resource_priority(
-                    collection_id: RmrkCollectionId,
-                    nft_id: RmrkNftId,
-                    resource_id: RmrkResourceId
-                ) -> Result<Option<u32>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_core::rpc::nft_resource_priority::<Runtime>(collection_id, nft_id, resource_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn base(base_id: RmrkBaseId) -> Result<Option<RmrkBaseInfo<AccountId>>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_equip::rpc::base::<Runtime>(base_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn base_parts(base_id: RmrkBaseId) -> Result<Vec<RmrkPartType>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_equip::rpc::base_parts::<Runtime>(base_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn theme_names(base_id: RmrkBaseId) -> Result<Vec<RmrkThemeName>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_equip::rpc::theme_names::<Runtime>(base_id);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
-                }
-
-                #[allow(unused_variables)]
-                fn theme(
-                    base_id: RmrkBaseId,
-                    theme_name: RmrkThemeName,
-                    filter_keys: Option<Vec<RmrkPropertyKey>>
-                ) -> Result<Option<RmrkTheme>, DispatchError> {
-                    #[cfg(feature = "rmrk")]
-                    return pallet_proxy_rmrk_equip::rpc::theme::<Runtime>(base_id, theme_name, filter_keys);
-
-                    #[cfg(not(feature = "rmrk"))]
-                    return unsupported!();
                 }
             }
 
@@ -629,6 +487,12 @@ macro_rules! impl_common_runtime_apis {
                 fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
                     TransactionPayment::query_fee_details(uxt, len)
                 }
+                fn query_weight_to_fee(weight: Weight) -> Balance {
+                    TransactionPayment::weight_to_fee(weight)
+                }
+                fn query_length_to_fee(length: u32) -> Balance {
+                    TransactionPayment::length_to_fee(length)
+                }
             }
 
             /*
@@ -682,6 +546,7 @@ macro_rules! impl_common_runtime_apis {
                     use frame_support::traits::StorageInfoTrait;
 
                     let mut list = Vec::<BenchmarkList>::new();
+                    list_benchmark!(list, extra, pallet_xcm, PolkadotXcm);
 
                     list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
                     list_benchmark!(list, extra, pallet_common, Common);
@@ -702,12 +567,6 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "scheduler")]
                     list_benchmark!(list, extra, pallet_unique_scheduler_v2, Scheduler);
 
-                    #[cfg(feature = "rmrk")]
-                    list_benchmark!(list, extra, pallet_proxy_rmrk_core, RmrkCore);
-
-                    #[cfg(feature = "rmrk")]
-                    list_benchmark!(list, extra, pallet_proxy_rmrk_equip, RmrkEquip);
-
                     #[cfg(feature = "collator-selection")]
                     list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 
@@ -717,6 +576,7 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "foreign-assets")]
                     list_benchmark!(list, extra, pallet_foreign_assets, ForeignAssets);
 
+                    list_benchmark!(list, extra, pallet_maintenance, Maintenance);
 
                     // list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
@@ -752,6 +612,7 @@ macro_rules! impl_common_runtime_apis {
 
                     let mut batches = Vec::<BenchmarkBatch>::new();
                     let params = (&config, &allowlist);
+                    add_benchmark!(params, batches, pallet_xcm, PolkadotXcm);
 
                     add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
                     add_benchmark!(params, batches, pallet_common, Common);
@@ -772,12 +633,6 @@ macro_rules! impl_common_runtime_apis {
                     #[cfg(feature = "scheduler")]
                     add_benchmark!(params, batches, pallet_unique_scheduler_v2, Scheduler);
 
-                    #[cfg(feature = "rmrk")]
-                    add_benchmark!(params, batches, pallet_proxy_rmrk_core, RmrkCore);
-
-                    #[cfg(feature = "rmrk")]
-                    add_benchmark!(params, batches, pallet_proxy_rmrk_equip, RmrkEquip);
-
                     #[cfg(feature = "collator-selection")]
                     add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);
 
@@ -786,6 +641,8 @@ macro_rules! impl_common_runtime_apis {
 
                     #[cfg(feature = "foreign-assets")]
                     add_benchmark!(params, batches, pallet_foreign_assets, ForeignAssets);
+
+                    add_benchmark!(params, batches, pallet_maintenance, Maintenance);
 
                     // add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
@@ -819,7 +676,7 @@ macro_rules! impl_common_runtime_apis {
 
             #[cfg(feature = "try-runtime")]
             impl frame_try_runtime::TryRuntime<Block> for Runtime {
-                fn on_runtime_upgrade(checks: bool) -> (frame_support::pallet_prelude::Weight, frame_support::pallet_prelude::Weight) {
+                fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
                     log::info!("try-runtime::on_runtime_upgrade unique-chain.");
                     let weight = Executive::try_runtime_upgrade(checks).unwrap();
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
@@ -830,7 +687,7 @@ macro_rules! impl_common_runtime_apis {
                     state_root_check: bool,
                     signature_check: bool,
                     select: frame_try_runtime::TryStateSelect
-                ) -> frame_support::pallet_prelude::Weight {
+                ) -> Weight {
                     log::info!(
                         target: "node-runtime",
                         "try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",

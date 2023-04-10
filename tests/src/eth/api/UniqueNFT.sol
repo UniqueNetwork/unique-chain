@@ -12,9 +12,14 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
+/// @dev inlined interface
+interface ERC721TokenEvent {
+	event TokenChanged(uint256 indexed tokenId);
+}
+
 /// @title A contract that allows to set and delete token properties and change token property permissions.
 /// @dev the ERC-165 identifier for this interface is 0xde0695c2
-interface TokenProperties is Dummy, ERC165 {
+interface TokenProperties is Dummy, ERC165, ERC721TokenEvent {
 	// /// @notice Set permissions for token property.
 	// /// @dev Throws error if `msg.sender` is not admin or owner of the collection.
 	// /// @param key Property key.
@@ -644,7 +649,7 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// /// @param tokens array of pairs of token ID and token URI for minted tokens
 	// /// @dev EVM selector for this function is: 0x36543006,
 	// ///  or in textual repr: mintBulkWithTokenURI(address,(uint256,string)[])
-	// function mintBulkWithTokenURI(address to, Tuple13[] memory tokens) external returns (bool);
+	// function mintBulkWithTokenURI(address to, TokenUri[] memory tokens) external returns (bool);
 
 	/// @notice Function to mint a token.
 	/// @param to The new owner crossAccountId
@@ -660,10 +665,12 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	function collectionHelperAddress() external view returns (address);
 }
 
-/// @dev anonymous struct
-struct Tuple13 {
-	uint256 field_0;
-	string field_1;
+/// Data for creation token with uri.
+struct TokenUri {
+	/// Id of new token.
+	uint256 id;
+	/// Uri of new token.
+	string uri;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
@@ -774,7 +781,10 @@ interface ERC721 is Dummy, ERC165, ERC721Events {
 	///  or in textual repr: setApprovalForAll(address,bool)
 	function setApprovalForAll(address operator, bool approved) external;
 
-	/// @dev Not implemented
+	/// @notice Get the approved address for a single NFT
+	/// @dev Throws if `tokenId` is not a valid NFT
+	/// @param tokenId The NFT to find the approved address for
+	/// @return The approved address for this NFT, or the zero address if there is none
 	/// @dev EVM selector for this function is: 0x081812fc,
 	///  or in textual repr: getApproved(uint256)
 	function getApproved(uint256 tokenId) external view returns (address);

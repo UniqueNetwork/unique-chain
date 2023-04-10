@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.5] - 2023-02-14
+
+### Added
+
+- `unstake_partial` extrinsic.
+
+## [0.1.4] - 2023-01-31
+
+### Changed
+
+- Balance reservation when calling the unstake method is removed.
+  Now the locked balance (by AppPromo) does not change until the unlock interval expires.
+
 ## [0.1.3] - 2022-12-25
 
 ### Fixed

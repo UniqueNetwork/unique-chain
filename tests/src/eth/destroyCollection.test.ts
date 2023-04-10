@@ -28,7 +28,7 @@ describe('Destroy Collection from EVM', function() {
 
   before(async function() {
     await usingEthPlaygrounds(async (_, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

@@ -24,7 +24,10 @@ use pallet_common::{
 	CommonCollectionOperations,
 };
 use sp_std::prelude::*;
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited};
+use up_data_structs::{
+	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited,
+	PropertyPermission,
+};
 
 const SEED: u32 = 1;
 
@@ -229,8 +232,7 @@ benchmarks! {
 			owner: cross_from_sub;
 		};
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-
-	}: {collection.token_owner(item)}
+	}: {collection.token_owner(item).unwrap()}
 
 	set_allowance_for_all {
 		bench_init!{
