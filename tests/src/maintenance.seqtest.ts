@@ -18,7 +18,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {itEth} from './eth/util';
-import {UniqueHelper} from './util/playgrounds/unique';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
   return (await api.query.maintenance.enabled()).toJSON() as boolean;
@@ -281,13 +280,6 @@ describe('Integration Test: Maintenance Functionality', () => {
   describe('Preimage Execution', () => {
     const preimageHashes: string[] = [];
 
-    async function notePreimage(helper: UniqueHelper, preimage: any): Promise<string> {
-      const result = await helper.preimage.notePreimage(bob, preimage);
-      const events = result.result.events.filter(x => x.event.method === 'Noted' && x.event.section === 'preimage');
-      const preimageHash = events[0].event.data[0].toHuman();
-      return preimageHash;
-    }
-
     before(async function() {
       await usingPlaygrounds(async (helper) => {
         requirePalletsOrSkip(this, helper, [Pallets.Preimage, Pallets.Maintenance]);
@@ -306,7 +298,7 @@ describe('Integration Test: Maintenance Functionality', () => {
           },
         ]);
         const preimage = helper.constructApiCall('api.tx.identity.forceInsertIdentities', [randomIdentities]).method.toHex();
-        preimageHashes.push(await notePreimage(helper, preimage));
+        preimageHashes.push(await helper.preimage.notePreimage(bob, preimage, true));
       });
     });
 
@@ -329,7 +321,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [
         {Id: zeroAccount.address}, {Id: superuser.address}, 1000n,
       ]).method.toHex();
-      const preimageHash = await notePreimage(helper, preimage);
+      const preimageHash = await helper.preimage.notePreimage(bob, preimage, true);
       preimageHashes.push(preimageHash);
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [

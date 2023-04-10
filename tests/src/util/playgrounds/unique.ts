@@ -42,6 +42,8 @@ import {
   MoonbeamAssetInfo,
   DemocracyStandardAccountVote,
   IEthCrossAccountId,
+  IPhasicEvent,
+  DemocracySplitAccount,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
@@ -2869,9 +2871,352 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
+class CollectiveGroup extends HelperGroup<UniqueHelper> {
+  /**
+   * Pallet name to make an API call to. Examples: 'council', 'technicalCommittee'
+   */
+  private collective: string;
+
+  constructor(helper: UniqueHelper, collective: string) {
+    super(helper);
+    this.collective = collective;
+  }
+
+  /**
+   * Check the result of a proposal execution for the success of the underlying proposed extrinsic.
+   * @param events events of the proposal execution
+   * @returns proposal hash
+   */
+  private checkExecutedEvent(events: IPhasicEvent[]): string {
+    const executionEvents = events.filter(x =>
+      x.event.section === this.collective && (x.event.method === 'Executed' || x.event.method === 'MemberExecuted'));
+
+    if (executionEvents.length != 1) {
+      if (events.filter(x => x.event.section === this.collective && x.event.method === 'Disapproved').length > 0)
+        throw new Error(`Disapproved by ${this.collective}`);
+      else
+        throw new Error(`Expected one 'Executed' or 'MemberExecuted' event for ${this.collective}`);
+    }
+
+    const result = (executionEvents[0].event.data as any).result;
+
+    if (result.isErr) {
+      if (result.asErr.isModule) {
+        const error = result.asErr.asModule;
+        const metaError = this.helper.getApi()?.registry.findMetaError(error);
+        throw new Error(`Proposal execution failed with ${metaError.section}.${metaError.name}`);
+      } else {
+        throw new Error('Proposal execution failed with ' + result.asErr.toHuman());
+      }
+    }
+
+    return (executionEvents[0].event.data as any).proposalHash;
+  }
+
+  /**
+   * Returns an array of members' addresses.
+   */
+  async getMembers() {
+    return (await this.helper.callRpc(`api.query.${this.collective}.members`, [])).toHuman();
+  }
+
+  /**
+   * Returns the optional address of the prime member of the collective.
+   */
+  async getPrimeMember() {
+    return (await this.helper.callRpc(`api.query.${this.collective}.prime`, [])).toHuman();
+  }
+
+  /**
+   * Returns an array of proposal hashes that are currently active for this collective.
+   */
+  async getProposals() {
+    return (await this.helper.callRpc(`api.query.${this.collective}.proposals`, [])).toHuman();
+  }
+
+  /**
+   * Returns the call originally encoded under the specified hash.
+   * @param hash h256-encoded proposal
+   * @returns the optional call that the proposal hash stands for.
+   */
+  async getProposalCallOf(hash: string) {
+    return (await this.helper.callRpc(`api.query.${this.collective}.proposalOf`, [hash])).toHuman();
+  }
+
+  /**
+   * Returns the total number of proposals so far.
+   */
+  async getTotalProposalsCount() {
+    return (await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, [])).toNumber();
+  }
+
+  /**
+   * Creates a new proposal up for voting. If the threshold is set to 1, the proposal will be executed immediately.
+   * @param signer keyring of the proposer
+   * @param proposal constructed call to be executed if the proposal is successful
+   * @param voteThreshold minimal number of votes for the proposal to be verified and executed
+   * @param lengthBound byte length of the encoded call
+   * @returns promise of extrinsic execution and the hash and index of the proposal, obtained from the result
+   */
+  async propose(signer: TSigner, proposal: any, voteThreshold: number, lengthBound = 10000): Promise<{hash: string, index: number}> {
+    const result = await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [voteThreshold, proposal, lengthBound]);
+    const events = result.result.events.filter(x => x.event.method === 'Proposed');
+    if (events.length != 1) {
+      try {
+        return {
+          hash: this.checkExecutedEvent(result.result.events),
+          index: -1,
+        };
+      } catch (e: any) {
+        if (e.message.includes('Expected one \'Executed\' event'))
+          throw new Error(`Expected one event per proposal, but got ${events.length}`);
+        else
+          throw e;
+      }
+    }
+    const args = events[0].event.data as any;
+    return {hash: args.proposalHash.toHuman(), index: args.proposalIndex.toNumber()};
+  }
+
+  /**
+   * Casts a vote to either approve or reject a proposal.
+   * @param signer keyring of the voter
+   * @param proposalHash hash of the proposal to be voted for
+   * @param proposalIndex absolute index of the proposal used for absolutely nothing but throwing pointless errors
+   * @param approve aye or nay
+   * @returns promise of extrinsic execution and its result
+   */
+  vote(signer: TSigner, proposalHash: string, proposalIndex: number, approve: boolean) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve]);
+  }
+
+  /**
+   * Executes a call immediately as a member of the collective. Needed for the Member origin.
+   * @param signer keyring of the executor member
+   * @param proposal constructed call to be executed by the member
+   * @param lengthBound byte length of the encoded call
+   * @returns promise of extrinsic execution
+   */
+  async execute(signer: TSigner, proposal: any, lengthBound = 10000) {
+    const result = await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.execute`, [proposal, lengthBound]);
+    this.checkExecutedEvent(result.result.events);
+    return result;
+  }
+
+  /**
+   * Attempt to close and execute a proposal. Note that there must already be enough votes to meet the threshold set when proposing.
+   * @param signer keyring of the executor. Can be absolutely anyone.
+   * @param proposalHash hash of the proposal to close
+   * @param proposalIndex index of the proposal generated on its creation
+   * @param weightBound weight of the proposed call. Can be obtained by calling `paymentInfo()` on the call.
+   * @param lengthBound byte length of the encoded call
+   * @returns promise of extrinsic execution and its result
+   */
+  async closeProposal(
+    signer: TSigner,
+    proposalHash: string,
+    proposalIndex: number,
+    weightBound: [number, number] | any = [100_000_000, 10_000],
+    lengthBound = 10_000,
+  ) {
+    const result = await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [
+      proposalHash,
+      proposalIndex,
+      weightBound,
+      lengthBound,
+    ]);
+    this.checkExecutedEvent(result.result.events);
+    return result;
+  }
+
+  /**
+   * Shut down a proposal, regardless of its current state.
+   * @param signer keyring of the disapprover. Must be root
+   * @param proposalHash hash of the proposal to close
+   * @returns promise of extrinsic execution and its result
+   */
+  disapproveProposal(signer: TSigner, proposalHash: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.disapproveProposal`, [proposalHash]);
+  }
+}
+
+class CollectiveMembershipGroup extends HelperGroup<UniqueHelper> {
+  /**
+   * Pallet name to make an API call to. Examples: 'councilMembership', 'technicalCommitteeMembership'
+   */
+  private membership: string;
+
+  constructor(helper: UniqueHelper, membership: string) {
+    super(helper);
+    this.membership = membership;
+  }
+
+  /**
+   * Returns an array of members' addresses according to the membership pallet's perception.
+   * Note that it does not recognize the original pallet's members set with `setMembers()`.
+   */
+  async getMembers() {
+    return (await this.helper.callRpc(`api.query.${this.membership}.members`, [])).toHuman();
+  }
+
+  /**
+   * Returns the optional address of the prime member of the collective.
+   */
+  async getPrimeMember() {
+    return (await this.helper.callRpc(`api.query.${this.membership}.prime`, [])).toHuman();
+  }
+
+  /**
+   * Add a member to the collective.
+   * @param signer keyring of the setter. Must be root
+   * @param member address of the member to add
+   * @returns promise of extrinsic execution and its result
+   */
+  addMember(signer: TSigner, member: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.membership}.addMember`, [member]);
+  }
+
+  /**
+   * Remove a member from the collective.
+   * @param signer keyring of the setter. Must be root
+   * @param member address of the member to remove
+   * @returns promise of extrinsic execution and its result
+   */
+  removeMember(signer: TSigner, member: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.membership}.removeMember`, [member]);
+  }
+
+  /**
+   * Set members of the collective to the given list of addresses.
+   * @param signer keyring of the setter. Must be root (for the direct call, bypassing a public motion)
+   * @param members addresses of the members to set
+   * @returns promise of extrinsic execution and its result
+   */
+  resetMembers(signer: TSigner, members: string[]) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.membership}.resetMembers`, [members]);
+  }
+
+  /**
+   * Set the collective's prime member to the given address.
+   * @param signer keyring of the setter. Must be root (for the direct call, bypassing a public motion)
+   * @param prime address of the prime member of the collective
+   * @returns promise of extrinsic execution and its result
+   */
+  setPrime(signer: TSigner, prime: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.membership}.setPrime`, [prime]);
+  }
+
+  /**
+   * Remove the collective's prime member.
+   * @param signer keyring of the setter. Must be root (for the direct call, bypassing a public motion)
+   * @returns promise of extrinsic execution and its result
+   */
+  clearPrime(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.membership}.clearPrime`, []);
+  }
+}
+
+class DemocracyGroup extends HelperGroup<UniqueHelper> {
+  // todo displace proposal into types?
+  propose(signer: TSigner, preimage: string, deposit: bigint) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.propose', [{Inline: preimage}, deposit]);
+  }
+
+  second(signer: TSigner, proposalIndex: number) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.second', [proposalIndex]);
+  }
+
+  // OneThirdsCouncil
+  externalPropose(signer: TSigner, proposalCall: any) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.externalPropose', [{Inline: proposalCall.method.toHex()}]);
+  }
+
+  // HalfCouncil
+  externalProposeMajority(signer: TSigner, proposalCall: any) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.externalProposeMajority', [{Inline: proposalCall.method.toHex()}]);
+  }
+
+  // RootOrThreeFourthsCouncil
+  externalProposeDefault(signer: TSigner, proposalCall: any) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.externalProposeDefault', [{Inline: proposalCall.method.toHex()}]);
+  }
+
+  // ... and blacklist external proposal hash.
+  vetoExternal(signer: TSigner, proposalHash: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vetoExternal', [proposalHash]);
+  }
+
+  blacklist(signer: TSigner, proposalHash: string, referendumIndex?: number) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.blacklist', [proposalHash, referendumIndex]);
+  }
+
+  // proposal. CancelProposalOrigin (root or all techcom)
+  cancelProposal(signer: TSigner, proposalIndex: number) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.cancelProposal', [proposalIndex]);
+  }
+
+  clearPublicProposals(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.clearPublicProposals', []);
+  }
+
+  fastTrack(signer: TSigner, proposalHash: string, votingPeriod: number, delayPeriod: number) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.fastTrack', [proposalHash, votingPeriod, delayPeriod]);
+  }
+
+  // referendum. CancellationOrigin (TechCom member)
+  emergencyCancel(signer: TSigner, referendumIndex: number) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.emergencyCancel', [referendumIndex]);
+  }
+
+  vote(signer: TSigner, referendumIndex: number, vote: DemocracyStandardAccountVote | DemocracySplitAccount) {
+    // todo wrap vote into standard/split
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, vote]);
+  }
+
+  removeVote(signer: TSigner, referendumIndex: number, targetAccount?: string) {
+    if (targetAccount) {
+      return this.helper.executeExtrinsic(signer, 'api.tx.democracy.removeOtherVote', [referendumIndex, targetAccount]);
+    } else {
+      return this.helper.executeExtrinsic(signer, 'api.tx.democracy.removeVote', [referendumIndex]);
+    }
+  }
+
+  unlock(signer: TSigner, targetAccount: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.unlock', [targetAccount]);
+  }
+
+  delegate(signer: TSigner, toAccount: string, conviction: null | 1 | 2 | 3 | 4 | 5 | 6, balance: bigint) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.delegate', [toAccount, conviction, balance]);
+  }
+
+  undelegate(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.undelegate', []);
+  }
+
+  /* setMetadata? */
+
+  /* todo?
+  referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
+  }*/
+}
+
 class PreimageGroup extends HelperGroup<UniqueHelper> {
   async getPreimageInfo(h256: string) {
     return (await this.helper.callRpc('api.query.preimage.statusFor', [h256])).toJSON();
+  }
+
+  /**
+   * Create a preimage from an API call.
+   * @param signer keyring of the signer.
+   * @param call an extrinsic call
+   * @example await notePreimageFromCall(preimageMaker,
+   *   helper.constructApiCall('api.tx.identity.forceInsertIdentities', [identitiesToAdd])
+   * );
+   * @returns promise of extrinsic execution.
+   */
+  notePreimageFromCall(signer: TSigner, call: any, returnPreimageHash = false) {
+    return this.notePreimage(signer, call.method.toHex(), returnPreimageHash);
   }
 
   /**
@@ -2883,8 +3228,15 @@ class PreimageGroup extends HelperGroup<UniqueHelper> {
    * );
    * @returns promise of extrinsic execution.
    */
-  notePreimage(signer: TSigner, bytes: string | Uint8Array) {
-    return this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
+  async notePreimage(signer: TSigner, bytes: string | Uint8Array, returnPreimageHash = false) {
+    const promise = this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
+    if (returnPreimageHash) {
+      const result = await promise;
+      const events = result.result.events.filter(x => x.event.method === 'Noted' && x.event.section === 'preimage');
+      const preimageHash = events[0].event.data[0].toHuman();
+      return preimageHash;
+    }
+    return promise;
   }
 
   /**
@@ -3147,6 +3499,13 @@ export class UniqueHelper extends ChainHelperBase {
   staking: StakingGroup;
   scheduler: SchedulerGroup;
   collatorSelection: CollatorSelectionGroup;
+  council: CollectiveGroup;
+  councilMembership: CollectiveMembershipGroup;
+  technicalCommittee: CollectiveGroup;
+  technicalCommitteeMembership: CollectiveMembershipGroup;
+  fellowship: CollectiveGroup;
+  fellowshipMembership: CollectiveMembershipGroup;
+  democracy: DemocracyGroup;
   preimage: PreimageGroup;
   foreignAssets: ForeignAssetsGroup;
   xcm: XcmGroup<UniqueHelper>;
@@ -3164,6 +3523,13 @@ export class UniqueHelper extends ChainHelperBase {
     this.staking = new StakingGroup(this);
     this.scheduler = new SchedulerGroup(this);
     this.collatorSelection = new CollatorSelectionGroup(this);
+    this.council = new CollectiveGroup(this, 'council');
+    this.councilMembership = new CollectiveMembershipGroup(this, 'councilMembership');
+    this.technicalCommittee = new CollectiveGroup(this, 'technicalCommittee');
+    this.technicalCommitteeMembership = new CollectiveMembershipGroup(this, 'technicalCommitteeMembership');
+    this.fellowship = new CollectiveGroup(this, 'fellowship');
+    this.fellowshipMembership = new CollectiveMembershipGroup(this, 'fellowshipMembership');
+    this.democracy = new DemocracyGroup(this);
     this.preimage = new PreimageGroup(this);
     this.foreignAssets = new ForeignAssetsGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
