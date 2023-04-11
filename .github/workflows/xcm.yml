@@ -452,7 +452,7 @@ jobs:
 
       - name: Show container logs
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.xcm-tests.${{ matrix.network }}.yml" logs
+        run: docker-compose -f ".docker/docker-compose.xcm.${{ matrix.network }}.yml" logs
 
       - name: Stop running containers
         if: always()                   # run this step always
