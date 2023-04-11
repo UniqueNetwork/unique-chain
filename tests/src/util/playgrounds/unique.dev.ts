@@ -632,6 +632,19 @@ class WaitGroup {
     });
     return promise;
   }
+
+  async eventOutcome<EventT>(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+    const eventRecord = await this.event(maxBlocksToWait, eventSection, eventMethod);
+
+    if (eventRecord == null) {
+      return null;
+    }
+
+    const event = eventRecord!.event;
+    const outcome = event.data[1] as EventT;
+
+    return outcome;
+  }
 }
 
 class SessionGroup {
