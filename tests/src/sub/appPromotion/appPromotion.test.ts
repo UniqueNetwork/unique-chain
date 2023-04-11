@@ -28,8 +28,15 @@ let palletAddress: string;
 let accounts: IKeyringPair[];
 let usedAccounts: IKeyringPair[] = [];
 
-function getAccount(accountsNumber: number) {
-  const accs = accounts.splice(0, accountsNumber);
+async function getAccounts(accountsNumber: number, balance?: bigint) {
+  let accs: IKeyringPair[] = [];
+  if (balance) {
+    await usingPlaygrounds(async (helper) => {
+      accs = await helper.arrange.createAccounts(new Array(accountsNumber).fill(balance), donor);
+    });
+  } else {
+    accs = accounts.splice(0, accountsNumber);
+  }
   usedAccounts.push(...accs);
   return accs;
 }
@@ -63,12 +70,13 @@ describe('App promotion', () => {
       }
       await Promise.all(unstakeTxs);
       usedAccounts = [];
+      expect(await helper.staking.getTotalStaked()).to.eq(0n); // there are no active stakes after each test
     });
   });
 
   describe('stake extrinsic', () => {
     itSub('should "lock" staking balance, add it to "staked" map, and increase "totalStaked" amount', async ({helper}) => {
-      const [staker, recepient] = getAccount(2);
+      const [staker, recepient] = await getAccounts(2);
       const totalStakedBefore = await helper.staking.getTotalStaked();
 
       // Minimum stake amount is 100:
@@ -98,8 +106,8 @@ describe('App promotion', () => {
       {unstake: 'unstakeAll' as const},
       {unstake: 'unstakePartial' as const},
     ].map(testCase => {
-      itSub('should allow to create maximum 10 stakes for account', async ({helper}) => {
-        const [staker] = await helper.arrange.createAccounts([2000n], donor);
+      itSub(`[${testCase.unstake}] should allow to create maximum 10 stakes for account`, async ({helper}) => {
+        const [staker] = await getAccounts(1, 2000n);
         const ONE_STAKE = 100n * nominal;
         for (let i = 0; i < 10; i++) {
           await helper.staking.stake(staker, ONE_STAKE);
@@ -135,7 +143,7 @@ describe('App promotion', () => {
     });
 
     itSub('should allow to stake() if balance is locked with different id', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
 
       // staker has tokens locked with vesting id:
       await helper.balance.vestedTransfer(donor, staker.address, {start: 0n, period: 1n, periodCount: 1n, perPeriod: 200n * nominal});
@@ -168,7 +176,7 @@ describe('App promotion', () => {
     });
 
     itSub('should not allow to stake(), if stake amount is more than total free balance minus locked by staking', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
 
       // Can't stake full balance because Alice needs to pay some fee
       await expect(helper.staking.stake(staker, 1000n * nominal)).to.be.rejected; // With('Arithmetic')
@@ -180,7 +188,7 @@ describe('App promotion', () => {
     });
 
     itSub('for different accounts in one block is possible', async ({helper}) => {
-      const crowd = getAccount(4);
+      const crowd = await getAccounts(4);
 
       const crowdStartsToStake = crowd.map(user => helper.staking.stake(user, 100n * nominal));
       await expect(Promise.all(crowdStartsToStake)).to.be.fulfilled;
@@ -196,7 +204,7 @@ describe('App promotion', () => {
       {method: 'unstakePartial' as const},
     ].map(testCase => {
       itSub(`[${testCase.method}] should move tokens to "pendingUnstake" and subtract it from totalStaked`, async ({helper}) => {
-        const [staker, recepient] = getAccount(2);
+        const [staker, recepient] = await getAccounts(2);
         const totalStakedBefore = await helper.staking.getTotalStaked();
         const STAKE_AMOUNT = 900n * nominal;
 
@@ -222,7 +230,7 @@ describe('App promotion', () => {
       {method: 'unstakePartial' as const},
     ].map(testCase => {
       itSub(`[${testCase.method}] should unlock balance after unlocking period ends and remove it from "pendingUnstake"`, async ({helper}) => {
-        const [staker] = getAccount(1);
+        const [staker] = await getAccounts(1);
         await helper.staking.stake(staker, 100n * nominal);
         testCase.method === 'unstakeAll'
           ? await helper.staking.unstakeAll(staker)
@@ -245,7 +253,7 @@ describe('App promotion', () => {
       {method: 'unstakePartial' as const},
     ].map(testCase => {
       itSub(`[${testCase.method}] should successfully unstake multiple stakes`, async ({helper}) => {
-        const [staker] = getAccount(1);
+        const [staker] = await getAccounts(1);
         await helper.staking.stake(staker, 100n * nominal);
         await helper.staking.stake(staker, 200n * nominal);
         await helper.staking.stake(staker, 300n * nominal);
@@ -285,7 +293,7 @@ describe('App promotion', () => {
       {method: 'unstakePartial' as const},
     ].map(testCase => {
       itSub(`[${testCase.method}] should not have any effects if no active stakes`, async ({helper}) => {
-        const [staker] = getAccount(1);
+        const [staker] = await getAccounts(1);
 
         // unstake has no effect if no stakes at all
         testCase.method === 'unstakeAll'
@@ -319,7 +327,7 @@ describe('App promotion', () => {
       {method: 'unstakePartial' as const},
     ].map(testCase => {
       itSub(`[${testCase.method}] should create different pending-unlock for each unlocking stake`, async ({helper}) => {
-        const [staker] = getAccount(1);
+        const [staker] = await getAccounts(1);
         await helper.staking.stake(staker, 100n * nominal);
         testCase.method === 'unstakeAll'
           ? await helper.staking.unstakeAll(staker)
@@ -342,7 +350,7 @@ describe('App promotion', () => {
       {method: 'unstakePartial' as const},
     ].map(testCase => {
       itSub(`[${testCase.method}] should be possible for 3 accounts in one block`, async ({helper}) => {
-        const stakers = getAccount(3);
+        const stakers = await getAccounts(3);
 
         await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
         await Promise.all(stakers.map(staker => {
@@ -360,7 +368,7 @@ describe('App promotion', () => {
 
     itSub('should not be possible for more than 3 accounts in one block', async ({helper}) => {
       if (!await helper.arrange.isDevNode()) {
-        const stakers = getAccount(10);
+        const stakers = await getAccounts(10);
 
         await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
         const unstakingResults = await Promise.allSettled(stakers.map((staker, i) => {
@@ -375,7 +383,7 @@ describe('App promotion', () => {
     });
 
     itSub('Cannot partially unstake more than staked', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       // Staker stakes 300:
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
@@ -395,7 +403,7 @@ describe('App promotion', () => {
     });
 
     itSub('Can partially unstake arbitrary amount', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
 
@@ -429,7 +437,7 @@ describe('App promotion', () => {
     });
 
     itSub('can mix different type of unstakes', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 200n * nominal);
 
@@ -454,7 +462,7 @@ describe('App promotion', () => {
   describe('collection sponsoring', () => {
     itSub('should actually sponsor transactions', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner, tokenSender, receiver] = getAccount(3);
+      const [collectionOwner, tokenSender, receiver] = await getAccounts(3);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'Name', description: 'Description', tokenPrefix: 'Prefix', limits: {sponsorTransferTimeout: 0}});
       const token = await collection.mintToken(collectionOwner, {Substrate: tokenSender.address});
       await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId));
@@ -471,7 +479,7 @@ describe('App promotion', () => {
 
     itSub('can not be set by non admin', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner, nonAdmin] = getAccount(2);
+      const [collectionOwner, nonAdmin] = await getAccounts(2);
 
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
 
@@ -481,7 +489,7 @@ describe('App promotion', () => {
 
     itSub('should set pallet address as confirmed admin', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner, oldSponsor] = getAccount(2);
+      const [collectionOwner, oldSponsor] = await getAccounts(2);
 
       // Can set sponsoring for collection without sponsor
       const collectionWithoutSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'No-sponsor', description: 'New Collection', tokenPrefix: 'Promotion'});
@@ -503,7 +511,7 @@ describe('App promotion', () => {
 
     itSub('can be overwritten by collection owner', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner, newSponsor] = getAccount(2);
+      const [collectionOwner, newSponsor] = await getAccounts(2);
       const collection  = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
       const collectionId = collection.collectionId;
 
@@ -520,9 +528,10 @@ describe('App promotion', () => {
     });
 
     itSub('should not overwrite collection limits set by the owner earlier', async ({helper}) => {
+      const [owner] = await getAccounts(1);
       const api = helper.getApi();
       const limits = {ownerCanDestroy: true, ownerCanTransfer: true, sponsorTransferTimeout: 0};
-      const collectionWithLimits = await helper.nft.mintCollection(getAccount(1)[0], {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits});
+      const collectionWithLimits = await helper.nft.mintCollection(owner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits});
 
       await expect(helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collectionWithLimits.collectionId))).to.be.fulfilled;
       expect((await collectionWithLimits.getData())?.raw.limits).to.be.deep.contain(limits);
@@ -530,7 +539,7 @@ describe('App promotion', () => {
 
     itSub('should reject transaction if collection doesn\'t exist', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner] = getAccount(1);
+      const [collectionOwner] = await getAccounts(1);
 
       // collection has never existed
       await expect(helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(999999999))).to.be.rejected;
@@ -545,7 +554,7 @@ describe('App promotion', () => {
   describe('stopSponsoringCollection', () => {
     itSub('can not be called by non-admin', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner, nonAdmin] = getAccount(2);
+      const [collectionOwner, nonAdmin] = await getAccounts(2);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
 
       await expect(helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId))).to.be.fulfilled;
@@ -556,7 +565,7 @@ describe('App promotion', () => {
 
     itSub('should set sponsoring as disabled', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner, recepient] = getAccount(2);
+      const [collectionOwner, recepient] = await getAccounts(2);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits: {sponsorTransferTimeout: 0}});
       const token = await collection.mintToken(collectionOwner, {Substrate: collectionOwner.address});
 
@@ -574,7 +583,7 @@ describe('App promotion', () => {
 
     itSub('should not affect collection which is not sponsored by pallete', async ({helper}) => {
       const api = helper.getApi();
-      const [collectionOwner] = getAccount(1);
+      const [collectionOwner] = await getAccounts(1);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: collectionOwner.address});
       await collection.confirmSponsorship(collectionOwner);
 
@@ -584,7 +593,7 @@ describe('App promotion', () => {
     });
 
     itSub('should reject transaction if collection does not exist', async ({helper}) => {
-      const [collectionOwner] = getAccount(1);
+      const [collectionOwner] = await getAccounts(1);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion'});
 
       await collection.burn(collectionOwner);
@@ -658,7 +667,7 @@ describe('App promotion', () => {
     });
 
     itEth('can not be set by non admin', async ({helper}) => {
-      const [nonAdmin] = getAccount(1);
+      const [nonAdmin] = await getAccounts(1);
       const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
       const flipper = await helper.eth.deployFlipper(contractOwner); // await deployFlipper(web3, contractOwner);
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
@@ -740,7 +749,7 @@ describe('App promotion', () => {
     });
 
     itEth('can not be called by non-admin', async ({helper}) => {
-      const [nonAdmin] = getAccount(1);
+      const [nonAdmin] = await getAccounts(1);
       const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
       const flipper = await helper.eth.deployFlipper(contractOwner);
 
@@ -750,7 +759,7 @@ describe('App promotion', () => {
     });
 
     itEth('should not affect a contract which is not sponsored by pallete', async ({helper}) => {
-      const [nonAdmin] = getAccount(1);
+      const [nonAdmin] = await getAccounts(1);
       const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
       const flipper = await helper.eth.deployFlipper(contractOwner);
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
@@ -762,12 +771,12 @@ describe('App promotion', () => {
 
   describe('payoutStakers', () => {
     itSub('can not be called by non admin', async ({helper}) => {
-      const [nonAdmin] = getAccount(1);
+      const [nonAdmin] = await getAccounts(1);
       await expect(helper.admin.payoutStakers(nonAdmin, 100)).to.be.rejectedWith('appPromotion.NoPermission');
     });
 
     itSub('should increase total staked', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       const totalStakedBefore = await helper.staking.getTotalStaked();
       await helper.staking.stake(staker, 100n * nominal);
 
@@ -784,7 +793,7 @@ describe('App promotion', () => {
     });
 
     itSub('should credit 0.05% for staking period', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
 
       await waitPromotionPeriodDoesntEnd(helper);
 
@@ -810,7 +819,7 @@ describe('App promotion', () => {
     });
 
     itSub('shoud be paid for more than one period if payments was missed', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
 
       await helper.staking.stake(staker, 100n * nominal);
       // wait for two rewards are available:
@@ -829,7 +838,7 @@ describe('App promotion', () => {
 
     itSub('should not be credited for pending-unstaked tokens', async ({helper}) => {
       // staker unstakes before rewards been payed
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       await helper.staking.stake(staker, 100n * nominal);
       const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block) + LOCKING_PERIOD);
@@ -844,7 +853,7 @@ describe('App promotion', () => {
     });
 
     itSub('should bring compound interest', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
 
       await helper.staking.stake(staker, 100n * nominal);
 
@@ -862,7 +871,7 @@ describe('App promotion', () => {
     });
 
     itSub('can calculate reward for tiny stake', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.stake(staker, 100n * nominal);
       await helper.staking.unstakePartial(staker, 100n * nominal - 1n);
@@ -875,7 +884,7 @@ describe('App promotion', () => {
     });
 
     itSub('can eventually pay all rewards', async ({helper}) => {
-      const stakers = getAccount(30);
+      const stakers = await getAccounts(30);
       // Create 30 stakes:
       await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
 
@@ -888,7 +897,7 @@ describe('App promotion', () => {
         unstakingTxs.push(helper.staking.unstakePartial(staker, 100n * nominal - 1n));
       }
 
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       await helper.staking.stake(staker, 100n * nominal);
       const [stake] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stake.block));
@@ -909,7 +918,7 @@ describe('App promotion', () => {
         const unstakeParams = testCase.method === 'unstakePartial'
           ? [100n * nominal - 1n]
           : [];
-        const [staker] = getAccount(1);
+        const [staker] = await getAccounts(1);
         await helper.staking.stake(staker, 100n * nominal);
         await helper.staking.stake(staker, 200n * nominal);
         const {result} = await helper.executeExtrinsic(staker, `api.tx.appPromotion.${testCase.method}`, unstakeParams);
@@ -923,7 +932,7 @@ describe('App promotion', () => {
     });
 
     itSub('stake', async ({helper}) => {
-      const [staker] = getAccount(1);
+      const [staker] = await getAccounts(1);
       const {result} = await helper.executeExtrinsic(staker, 'api.tx.appPromotion.stake', [100n * nominal]);
 
       const event = result.events.find(e => e.event.section === 'appPromotion' && e.event.method === 'Stake');
@@ -935,7 +944,7 @@ describe('App promotion', () => {
 
     // Flaky
     itSub.skip('payoutStakers', async ({helper}) => {
-      const [staker1, staker2] = getAccount(2);
+      const [staker1, staker2] = await getAccounts(2);
       const STAKE1 = 100n * nominal;
       const STAKE2 = 200n * nominal;
       await helper.staking.stake(staker1, STAKE1);
