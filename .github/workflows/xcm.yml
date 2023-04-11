@@ -286,7 +286,7 @@ jobs:
         run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
 
       - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@3
+        uses: mad9000/actions-find-and-replace-string@4
         id: branchname
         with:
           source: ${{ github.head_ref }}
@@ -347,7 +347,7 @@ jobs:
           echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
 
       - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@2
+        uses: mad9000/actions-find-and-replace-string@4
         id: branchname
         with:
           source: ${{ github.head_ref }}

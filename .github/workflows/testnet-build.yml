@@ -95,7 +95,7 @@ jobs:
         run: cat launch-config.json
 
       - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@2
+        uses: mad9000/actions-find-and-replace-string@4
         id: branchname
         with:
           source: ${{ github.head_ref }}
