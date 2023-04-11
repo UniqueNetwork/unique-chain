@@ -15,6 +15,7 @@ use crate::{
 	Runtime, Aura, Balances, RuntimeEvent, ChainId,
 };
 use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
+use pallet_ethereum::PostLogContent;
 use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
@@ -88,9 +89,14 @@ impl pallet_evm_migration::Config for Runtime {
 	type WeightInfo = pallet_evm_migration::weights::SubstrateWeight<Self>;
 }
 
+parameter_types! {
+	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
+}
+
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type PostLogContent = PostBlockAndTxnHashes;
 }
 
 parameter_types! {

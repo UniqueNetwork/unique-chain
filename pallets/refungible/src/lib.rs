@@ -108,6 +108,7 @@ use up_data_structs::{
 	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
 	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
 	PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
+	TokenProperties as TokenPropertiesT,
 };
 
 pub use pallet::*;
@@ -175,9 +176,8 @@ pub mod pallet {
 	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = up_data_structs::Properties,
+		Value = TokenPropertiesT,
 		QueryKind = ValueQuery,
-		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
 	/// Total amount of pieces for token

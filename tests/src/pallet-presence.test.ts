@@ -20,7 +20,6 @@ import {itSub, usingPlaygrounds, expect} from './util';
 const requiredPallets = [
   'balances',
   'common',
-  'randomnesscollectiveflip',
   'timestamp',
   'transactionpayment',
   'treasury',
@@ -98,11 +97,11 @@ describe('Pallet presence', () => {
   });
 
   itSub('Required pallets are present', ({helper}) => {
-    expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets]);
+    expect(helper.fetchAllPalletNames()).to.contain.members([...requiredPallets].sort());
   });
 
   itSub('Governance and consensus pallets are present', ({helper}) => {
-    expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets]);
+    expect(helper.fetchAllPalletNames()).to.contain.members([...consensusPallets].sort());
   });
 
   itSub('No extra pallets are included', ({helper}) => {

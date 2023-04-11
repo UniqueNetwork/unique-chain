@@ -190,10 +190,13 @@ pub mod module {
 		type WeightInfo: WeightInfo;
 	}
 
-	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo)]
+	pub type AssetName = BoundedVec<u8, ConstU32<32>>;
+	pub type AssetSymbol = BoundedVec<u8, ConstU32<7>>;
+
+	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 	pub struct AssetMetadata<Balance> {
-		pub name: Vec<u8>,
-		pub symbol: Vec<u8>,
+		pub name: AssetName,
+		pub symbol: AssetSymbol,
 		pub decimals: u8,
 		pub minimal_balance: Balance,
 	}
@@ -250,7 +253,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_locations)]
 	pub type ForeignAssetLocations<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, xcm::v2::MultiLocation, OptionQuery>;
+		StorageMap<_, Twox64Concat, ForeignAssetId, xcm::v3::MultiLocation, OptionQuery>;
 
 	/// The storages for CurrencyIds.
 	///
@@ -258,7 +261,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
 	pub type LocationToCurrencyIds<T: Config> =
-		StorageMap<_, Twox64Concat, xcm::v2::MultiLocation, ForeignAssetId, OptionQuery>;
+		StorageMap<_, Twox64Concat, xcm::v3::MultiLocation, ForeignAssetId, OptionQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
@@ -276,7 +279,6 @@ pub mod module {
 		StorageMap<_, Twox64Concat, ForeignAssetId, CollectionId, OptionQuery>;
 
 	#[pallet::pallet]
-	#[pallet::without_storage_info]
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
@@ -474,7 +476,7 @@ impl<
 	> WeightTrader for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn new() -> Self {
-		Self(0, Zero::zero(), PhantomData)
+		Self(Weight::default(), Zero::zero(), PhantomData)
 	}
 
 	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {

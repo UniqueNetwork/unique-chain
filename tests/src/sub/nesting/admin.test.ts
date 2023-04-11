@@ -24,7 +24,7 @@ describe('Collection admin', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 10n, 10n], donor);
     });
   });

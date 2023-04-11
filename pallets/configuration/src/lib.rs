@@ -43,11 +43,10 @@ mod pallet {
 	use super::*;
 	use frame_support::{
 		traits::{Get, ReservableCurrency, Currency},
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType, OptionQuery},
-		BoundedVec, log,
+		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType},
+		log,
 	};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
-	use xcm::latest::MultiLocation;
 
 	pub use crate::weights::WeightInfo;
 	pub type BalanceOf<T> =
@@ -115,12 +114,6 @@ mod pallet {
 		StorageValue<Value = u64, QueryKind = ValueQuery, OnEmpty = T::DefaultMinGasPrice>;
 
 	#[pallet::storage]
-	pub type XcmAllowedLocationsOverride<T: Config> = StorageValue<
-		Value = BoundedVec<xcm::v2::MultiLocation, T::MaxXcmAllowedLocations>,
-		QueryKind = OptionQuery,
-	>;
-
-	#[pallet::storage]
 	pub type AppPromomotionConfigurationOverride<T: Config> =
 		StorageValue<Value = AppPromotionConfiguration<T::BlockNumber>, QueryKind = ValueQuery>;
 
@@ -174,17 +167,6 @@ mod pallet {
 			} else {
 				<MinGasPriceOverride<T>>::kill();
 			}
-			Ok(())
-		}
-
-		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::set_xcm_allowed_locations())]
-		pub fn set_xcm_allowed_locations(
-			origin: OriginFor<T>,
-			locations: Option<BoundedVec<MultiLocation, T::MaxXcmAllowedLocations>>,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-			<XcmAllowedLocationsOverride<T>>::set(locations);
 			Ok(())
 		}
 

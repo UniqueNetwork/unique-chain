@@ -24,7 +24,7 @@ describe('Check ERC721 token URI for NFT', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -83,7 +83,7 @@ describe('NFT: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [minter, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });
@@ -230,6 +230,14 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
+      const badTokenId = await contract.methods.nextTokenId().call() + 1;
+      await expect(contract.methods.getApproved(badTokenId).call()).to.be.rejectedWith('revert TokenNotFound');
+    }
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
+    }
+    {
       const result = await contract.methods.approve(spender, tokenId).send({from: owner});
 
       const event = result.events.Approval;
@@ -237,6 +245,10 @@ describe('NFT: Plain calls', () => {
       expect(event.returnValues.owner).to.be.equal(owner);
       expect(event.returnValues.approved).to.be.equal(spender);
       expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+    }
+    {
+      const approved = await contract.methods.getApproved(tokenId).call();
+      expect(approved).to.be.equal(spender);
     }
   });
 
@@ -660,7 +672,7 @@ describe('NFT: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
     });
   });
@@ -747,7 +759,7 @@ describe('NFT: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -880,7 +892,7 @@ describe('Common metadata', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
@@ -943,7 +955,7 @@ describe('Negative tests', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [minter, alice] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });

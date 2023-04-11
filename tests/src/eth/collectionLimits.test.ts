@@ -9,7 +9,7 @@ describe('Can set collection limits', () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -80,7 +80,7 @@ describe('Cannot set invalid collection limits', () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

@@ -24,7 +24,7 @@ describe('Eth fees are correct', () => {
 
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [minter, alice] = await helper.arrange.createAccounts([100n, 200n], donor);
     });
   });

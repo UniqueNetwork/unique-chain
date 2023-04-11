@@ -4,7 +4,7 @@
     "moduleResolution": "node",
     "esModuleInterop": true,
     "resolveJsonModule": true,
-    "module": "commonjs",
+    "module": "ESNext",
     "sourceMap": true,
     "outDir": "dist",
     "strict": true,
@@ -14,7 +14,7 @@
       ],
       "@unique-nft/types/*": [
         "./src/interfaces/*"
-      ],
+      ]
     }
   },
   "include": [
@@ -27,4 +27,7 @@
   "lib": [
     "es2017"
   ],
+  "ts-node": {
+    "experimentalSpecifierResolution": "node"
+  }
 }

@@ -19,8 +19,8 @@
 extern crate alloc;
 
 use up_data_structs::{
-	CollectionId, TokenId, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData, TokenChild, RpcCollectionVersion1, TokenDataVersion1,
+	CollectionId, TokenId, RawEncoded, RpcCollection, CollectionStats, CollectionLimits, Property,
+	PropertyKeyPermission, TokenData, TokenChild, TokenDataVersion1,
 };
 
 use sp_std::vec::Vec;
@@ -117,7 +117,7 @@ sp_api::decl_runtime_apis! {
 		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>>;
 
 		#[changed_in(3)]
-		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollectionVersion1<AccountId>>>;
+		fn collection_by_id(collection: CollectionId) -> Result<Option<RawEncoded>>;
 
 		/// Get collection stats.
 		fn collection_stats() -> Result<CollectionStats>;

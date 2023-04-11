@@ -25,7 +25,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([20n, 10n, 10n], donor);
     });
   });
@@ -85,7 +85,7 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([20n, 10n, 10n], donor);
     });
   });

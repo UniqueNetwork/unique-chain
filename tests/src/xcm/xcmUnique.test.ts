@@ -18,12 +18,13 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
 import {XcmV2TraitsError} from '../interfaces';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds} from '../util';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds} from '../util';
 
 const UNIQUE_CHAIN = 2037;
 const STATEMINT_CHAIN = 1000;
 const ACALA_CHAIN = 2000;
 const MOONBEAM_CHAIN = 2004;
+const ASTAR_CHAIN = 2006;
 
 const STATEMINT_PALLET_INSTANCE = 50;
 
@@ -31,10 +32,13 @@ const relayUrl = config.relayUrl;
 const statemintUrl = config.statemintUrl;
 const acalaUrl = config.acalaUrl;
 const moonbeamUrl = config.moonbeamUrl;
+const astarUrl = config.astarUrl;
 
 const RELAY_DECIMALS = 12;
 const STATEMINT_DECIMALS = 12;
 const ACALA_DECIMALS = 12;
+const ASTAR_DECIMALS = 18n;
+const UNQ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -48,6 +52,8 @@ const USDT_ASSET_METADATA_NAME = 'USDT';
 const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
+
+const SAFE_XCM_VERSION = 2;
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
@@ -69,15 +75,19 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       bob = await privateKey('//Bob'); // sovereign account on Statemint funds donor
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       // Fund accounts on Statemint
-      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT);
-      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT);
+      const relayXcmVersion = 2;
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT, relayXcmVersion);
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT, relayXcmVersion);
     });
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
@@ -113,7 +123,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X3: [
             {
@@ -276,7 +286,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
   itSub('Should connect and send USDT from Unique to Statemint back', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {X2: [
           {
@@ -314,7 +324,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     // the commission has been paid in parachain native token
     balanceUniqueFinal = await helper.balance.getSubstrate(alice.address);
-    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueFinal - balanceUniqueAfter));
+    console.log('[Unique -> Statemint] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(balanceUniqueAfter - balanceUniqueFinal));
     expect(balanceUniqueAfter > balanceUniqueFinal).to.be.true;
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
@@ -401,7 +411,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     });
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1:{
@@ -466,6 +476,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
@@ -502,7 +515,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect and send UNQ to Acala', async ({helper}) => {
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -513,7 +526,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     };
 
     const beneficiary = {
-      V1: {
+      V2: {
         parents: 0,
         interior: {
           X1: {
@@ -527,7 +540,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     };
 
     const assets = {
-      V1: [
+      V2: [
         {
           id: {
             Concrete: {
@@ -637,8 +650,11 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let alice: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
   });
 
@@ -727,6 +743,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       [randomAccountUnique] = await helper.arrange.createAccounts([0n], uniqueDonor);
 
       balanceForeignUnqTokenInit = 0n;
+
+      // Set the default version to wrap the first message to other chains.
+      const alice = uniqueDonor;
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
@@ -866,7 +886,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       NativeAssetId: 'Here',
     };
     const dest = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X2: [
@@ -963,5 +983,272 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const unqFees = TRANSFER_AMOUNT - actuallyDelivered;
     console.log('[Moonbeam -> Unique] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(unqFees));
     expect(unqFees == 0n).to.be.true;
+  });
+});
+
+describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+
+  const UNQ_ASSET_ID_ON_SHIDEN = 1;
+  const UNQ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
+
+  // Unique -> Astar
+  const astarInitialBalance = 1n * (10n ** ASTAR_DECIMALS); // 1 ASTR, existential deposit required to actually create the account on Shiden.
+  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
+  const unqToAstarTransferred = 10n * (10n ** UNQ_DECIMALS); // 10 UNQ
+  const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Shiden takes a commision in foreign tokens
+
+  // Astar -> Unique
+  const unqFromAstarTransfered = 5n * (10n ** UNQ_DECIMALS); // 5 UNQ
+  const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
+
+  let balanceAfterUniqueToAstarXCM: bigint;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      [randomAccount] = await helper.arrange.createAccounts([100n], alice);
+      console.log('randomAccount', randomAccount.address);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+      console.log('1. Create foreign asset and metadata');
+      // TODO update metadata with values from production
+      await helper.assets.create(
+        alice,
+        UNQ_ASSET_ID_ON_SHIDEN,
+        alice.address,
+        UNQ_MINIMAL_BALANCE_ON_SHIDEN,
+      );
+
+      await helper.assets.setMetadata(
+        alice,
+        UNQ_ASSET_ID_ON_SHIDEN,
+        'Cross chain UNQ',
+        'xcUNQ',
+        Number(UNQ_DECIMALS),
+      );
+
+      console.log('2. Register asset location on Astar');
+      const assetLocation = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      };
+
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_SHIDEN]);
+
+      console.log('3. Set UNQ payment for XCM execution on Astar');
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+
+      console.log('4. Transfer 1 ASTR to recipient to create the account (needed due to existential balance)');
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);
+    });
+  });
+
+  itSub('Should connect and send UNQ to Astar', async ({helper}) => {
+    const destination = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: ASTAR_CHAIN,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V2: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V2: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: unqToAstarTransferred,
+          },
+        },
+      ],
+    };
+
+    // Initial balance is 100 UNQ
+    const balanceBefore = await helper.balance.getSubstrate(randomAccount.address);
+    console.log(`Initial balance is: ${balanceBefore}`);
+
+    const feeAssetItem = 0;
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+
+    // Balance after reserve transfer is less than 90
+    balanceAfterUniqueToAstarXCM = await helper.balance.getSubstrate(randomAccount.address);
+    console.log(`UNQ Balance on Unique after XCM is: ${balanceAfterUniqueToAstarXCM}`);
+    console.log(`Unique's UNQ commission is: ${balanceBefore - balanceAfterUniqueToAstarXCM}`);
+    expect(balanceBefore - balanceAfterUniqueToAstarXCM > 0).to.be.true;
+
+    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+      await helper.wait.newBlocks(3);
+      const xcUNQbalance = await helper.assets.account(UNQ_ASSET_ID_ON_SHIDEN, randomAccount.address);
+      const astarBalance = await helper.balance.getSubstrate(randomAccount.address);
+
+      console.log(`xcUNQ balance on Astar after XCM is: ${xcUNQbalance}`);
+      console.log(`Astar's UNQ commission is: ${unqToAstarTransferred - xcUNQbalance!}`);
+
+      expect(xcUNQbalance).to.eq(unqToAstarArrived);
+      // Astar balance does not changed
+      expect(astarBalance).to.eq(astarInitialBalance);
+    });
+  });
+
+  itSub('Should connect to Astar and send UNQ back', async ({helper}) => {
+    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      };
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: {
+              AccountId32: {
+                network: 'Any',
+                id: randomAccount.addressRaw,
+              },
+            },
+          },
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 1,
+                interior: {
+                  X1: {
+                    Parachain: UNIQUE_CHAIN,
+                  },
+                },
+              },
+            },
+            fun: {
+              Fungible: unqFromAstarTransfered,
+            },
+          },
+        ],
+      };
+
+      // Initial balance is 1 ASTR
+      const balanceASTRbefore = await helper.balance.getSubstrate(randomAccount.address);
+      console.log(`ASTR balance is: ${balanceASTRbefore}, it does not changed`);
+      expect(balanceASTRbefore).to.eq(astarInitialBalance);
+
+      const feeAssetItem = 0;
+      // this is non-standard polkadotXcm extension for Astar only. It calls InitiateReserveWithdraw
+      await helper.executeExtrinsic(randomAccount, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
+
+      const xcUNQbalance = await helper.assets.account(UNQ_ASSET_ID_ON_SHIDEN, randomAccount.address);
+      const balanceAstar = await helper.balance.getSubstrate(randomAccount.address);
+      console.log(`xcUNQ balance on Astar after XCM is: ${xcUNQbalance}`);
+
+      // Assert: xcUNQ balance correctly decreased
+      expect(xcUNQbalance).to.eq(unqOnAstarLeft);
+      // Assert: ASTR balance is 0.996...
+      expect(balanceAstar / (10n ** (ASTAR_DECIMALS - 3n))).to.eq(996n);
+    });
+
+    await helper.wait.newBlocks(3);
+    const balanceUNQ = await helper.balance.getSubstrate(randomAccount.address);
+    console.log(`UNQ Balance on Unique after XCM is: ${balanceUNQ}`);
+    expect(balanceUNQ).to.eq(balanceAfterUniqueToAstarXCM + unqFromAstarTransfered);
+  });
+
+  itSub.skip('Should not accept limitedReserveTransfer of UNQ from ASTAR', async ({helper}) => {
+    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      };
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: {
+              AccountId32: {
+                network: 'Any',
+                id: randomAccount.addressRaw,
+              },
+            },
+          },
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 1,
+                interior: {
+                  X1: {
+                    Parachain: UNIQUE_CHAIN,
+                  },
+                },
+              },
+            },
+            fun: {
+              Fungible: unqFromAstarTransfered,
+            },
+          },
+        ],
+      };
+
+      // Initial balance is 1 ASTAR
+      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(astarInitialBalance);
+
+      const feeAssetItem = 0;
+      // TODO: expect rejected:
+      await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+    });
   });
 });

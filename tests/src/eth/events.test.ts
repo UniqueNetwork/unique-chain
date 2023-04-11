@@ -25,7 +25,7 @@ let donor: IKeyringPair;
 
 before(async function () {
   await usingEthPlaygrounds(async (_helper, privateKey) => {
-    donor = await privateKey({filename: __filename});
+    donor = await privateKey({url: import.meta.url});
   });
 });
 
@@ -499,7 +499,7 @@ describe('[RFT] Sync sub & eth events', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      const _donor = await privateKey({filename: __filename});
+      const _donor = await privateKey({url: import.meta.url});
     });
   });
 

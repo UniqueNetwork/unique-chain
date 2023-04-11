@@ -38,7 +38,7 @@ RUN git clone -b $BRANCH https://github.com/UniqueNetwork/unique-chain.git && \
 
 # ===== RUN ======
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 
 RUN apt-get -y update && \
       apt-get -y install curl git && \

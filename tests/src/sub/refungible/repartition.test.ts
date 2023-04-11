@@ -26,7 +26,7 @@ describe('integration test: Refungible functionality:', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 10n], donor);
     });
   });

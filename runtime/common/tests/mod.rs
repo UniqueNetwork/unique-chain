@@ -14,13 +14,24 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use sp_runtime::BuildStorage;
+use sp_runtime::{BuildStorage, Storage};
 use sp_core::{Public, Pair};
 use sp_std::vec;
 use up_common::types::AuraId;
-use crate::{GenesisConfig, ParachainInfoConfig};
+use crate::{Runtime, GenesisConfig, ParachainInfoConfig, RuntimeEvent, System};
+
+pub use sp_runtime::AccountId32 as AccountId;
+pub type Balance = u128;
 
 pub mod xcm;
+
+#[cfg(any(feature = "opal-runtime", feature = "quartz-runtime"))]
+/// PARA_ID for Opal/Sapphire/Quartz
+const PARA_ID: u32 = 2095;
+
+#[cfg(feature = "unique-runtime")]
+/// PARA_ID for Unique
+const PARA_ID: u32 = 2037;
 
 fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
 	TPublic::Pair::from_string(&format!("//{}", seed), None)
@@ -28,8 +39,30 @@ fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
 		.public()
 }
 
+fn last_events(n: usize) -> Vec<RuntimeEvent> {
+	System::events()
+		.into_iter()
+		.map(|e| e.event)
+		.rev()
+		.take(n)
+		.rev()
+		.collect()
+}
+
+fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
+	let mut storage = make_basic_storage();
+
+	pallet_balances::GenesisConfig::<Runtime> { balances }
+		.assimilate_storage(&mut storage)
+		.unwrap();
+
+	let mut ext = sp_io::TestExternalities::new(storage);
+	ext.execute_with(|| System::set_block_number(1));
+	ext
+}
+
 #[cfg(feature = "collator-selection")]
-fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
+fn make_basic_storage() -> Storage {
 	use sp_core::{sr25519};
 	use sp_runtime::traits::{IdentifyAccount, Verify};
 	use crate::{AccountId, Signature, SessionKeys, CollatorSelectionConfig, SessionConfig};
@@ -66,7 +99,7 @@ fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
 		collator_selection: CollatorSelectionConfig { invulnerables },
 		session: SessionConfig { keys },
 		parachain_info: ParachainInfoConfig {
-			parachain_id: para_id.into(),
+			parachain_id: PARA_ID.into(),
 		},
 		..GenesisConfig::default()
 	};
@@ -75,7 +108,7 @@ fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
 }
 
 #[cfg(not(feature = "collator-selection"))]
-fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
+fn make_basic_storage() -> Storage {
 	use crate::AuraConfig;
 
 	let cfg = GenesisConfig {
@@ -86,7 +119,7 @@ fn new_test_ext(para_id: u32) -> sp_io::TestExternalities {
 			],
 		},
 		parachain_info: ParachainInfoConfig {
-			parachain_id: para_id.into(),
+			parachain_id: PARA_ID.into(),
 		},
 		..GenesisConfig::default()
 	};

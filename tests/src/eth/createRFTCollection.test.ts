@@ -27,7 +27,7 @@ describe('Create RFT collection from EVM', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -160,7 +160,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       nominal = helper.balance.getOneTokenNominal();
     });
   });

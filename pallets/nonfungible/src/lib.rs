@@ -102,8 +102,8 @@ use frame_support::{
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,
 	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey,
-	PropertyValue, PropertyKeyPermission, Properties, PropertyScope, TrySetProperty, TokenChild,
-	AuxPropertyValue, PropertiesPermissionMap,
+	PropertyValue, PropertyKeyPermission, PropertyScope, TrySetProperty, TokenChild,
+	AuxPropertyValue, PropertiesPermissionMap, TokenProperties as TokenPropertiesT,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -201,9 +201,8 @@ pub mod pallet {
 	#[pallet::getter(fn token_properties)]
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
-		Value = Properties,
+		Value = TokenPropertiesT,
 		QueryKind = ValueQuery,
-		OnEmpty = up_data_structs::TokenProperties,
 	>;
 
 	/// Custom data of a token that is serialized to bytes,
@@ -1081,6 +1080,17 @@ impl<T: Config> Pallet<T> {
 				));
 			}
 		}
+	}
+
+	pub fn get_allowance(
+		collection: &NonfungibleHandle<T>,
+		token_id: TokenId,
+	) -> Result<Option<T::CrossAccountId>, DispatchError> {
+		ensure!(
+			<TokenData<T>>::get((collection.id, token_id)).is_some(),
+			<CommonError<T>>::TokenNotFound
+		);
+		Ok(<Allowance<T>>::get((collection.id, token_id)))
 	}
 
 	/// Set allowance for the spender to `transfer` or `burn` sender's token.

@@ -11,7 +11,7 @@ import Web3 from 'web3';
 import {WebsocketProvider} from 'web3-core';
 import {Contract} from 'web3-eth-contract';
 
-import * as solc from 'solc';
+import solc from 'solc';
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -21,16 +21,16 @@ import {ArrangeGroup, DevUniqueHelper} from '../../../util/playgrounds/unique.de
 import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types';
 
 // Native contracts ABI
-import collectionHelpersAbi from '../../abi/collectionHelpers.json';
-import fungibleAbi from '../../abi/fungible.json';
-import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json';
-import nonFungibleAbi from '../../abi/nonFungible.json';
-import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json';
-import refungibleAbi from '../../abi/reFungible.json';
-import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json';
-import refungibleTokenAbi from '../../abi/reFungibleToken.json';
-import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json';
-import contractHelpersAbi from '../../abi/contractHelpers.json';
+import collectionHelpersAbi from '../../abi/collectionHelpers.json' assert {type: 'json'};
+import fungibleAbi from '../../abi/fungible.json' assert {type: 'json'};
+import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json' assert {type: 'json'};
+import nonFungibleAbi from '../../abi/nonFungible.json' assert {type: 'json'};
+import nonFungibleDeprecatedAbi from '../../abi/nonFungibleDeprecated.json' assert {type: 'json'};
+import refungibleAbi from '../../abi/reFungible.json' assert {type: 'json'};
+import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json' assert {type: 'json'};
+import refungibleTokenAbi from '../../abi/reFungibleToken.json' assert {type: 'json'};
+import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json' assert {type: 'json'};
+import contractHelpersAbi from '../../abi/contractHelpers.json' assert {type: 'json'};
 import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
 import {TCollectionMode} from '../../../util/playgrounds/types';
 

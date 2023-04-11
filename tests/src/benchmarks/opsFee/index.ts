@@ -7,8 +7,10 @@ import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {FunctionFeeVM, IFunctionFee} from '../utils/types';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common';
+import {makeNames} from '../../util';
 
 
+const {dirname} = makeNames(import.meta.url);
 
 const main = async () => {
 
@@ -74,8 +76,8 @@ async function erc721CalculateFeeGas(
 
   const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
   let zeppelelinContract: Contract | null = null;
-  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.bin`)).toString();
-  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.abi`)).toString());
+  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.bin`)).toString();
+  const ZEPPELIN_ABI = JSON.parse((await readFile(`${dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.abi`)).toString());
 
   const evmContract = await helper.ethNativeContract.collection(
     helper.ethAddress.fromCollectionId(collection.collectionId),
@@ -534,8 +536,8 @@ async function erc20CalculateFeeGas(
 
   const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
   let zeppelelinContract: Contract | null = null;
-  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${__dirname}/../utils/openZeppelin/ERC20/bin/ZeppelinContract.bin`)).toString();
-  const ZEPPELIN_ABI = JSON.parse((await readFile(`${__dirname}/../utils/openZeppelin/ERC20/bin/ZeppelinContract.abi`)).toString());
+  const ZEPPELIN_OBJECT = '0x' + (await readFile(`${dirname}/../utils/openZeppelin/ERC20/bin/ZeppelinContract.bin`)).toString();
+  const ZEPPELIN_ABI = JSON.parse((await readFile(`${dirname}/../utils/openZeppelin/ERC20/bin/ZeppelinContract.abi`)).toString());
 
   const evmContract = await helper.ethNativeContract.collection(
     helper.ethAddress.fromCollectionId(collection.collectionId),
