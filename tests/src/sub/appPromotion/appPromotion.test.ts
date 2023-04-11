@@ -71,6 +71,9 @@ describe('App promotion', () => {
       await Promise.all(unstakeTxs);
       usedAccounts = [];
       expect(await helper.staking.getTotalStaked()).to.eq(0n); // there are no active stakes after each test
+      // Make sure previousCalculatedRecord is None to avoid problem with payout stakers;
+      await helper.admin.payoutStakers(palletAdmin, 100);
+      expect((await helper.getApi().query.appPromotion.previousCalculatedRecord() as any).isNone).to.be.true;
     });
   });
 
@@ -783,7 +786,12 @@ describe('App promotion', () => {
       // Wait for rewards and pay
       const [stakedInBlock] = await helper.staking.getTotalStakedPerBlock({Substrate: staker.address});
       await helper.wait.forRelayBlockNumber(rewardAvailableInBlock(stakedInBlock.block));
-      const totalPayout = (await helper.admin.payoutStakers(palletAdmin, 100)).reduce((prev, payout) => prev + payout.payout, 0n);
+
+      const payout = await helper.admin.payoutStakers(palletAdmin, 100);
+      const totalPayout = payout.reduce((prev, payout) => prev + payout.payout, 0n);
+      const stakerReward = payout.find(p => p.staker === staker.address);
+
+      expect(stakerReward?.payout).to.eq(calculateIncome(100n * nominal) - (100n * nominal));
 
       const totalStakedAfter = await helper.staking.getTotalStaked();
       expect(totalStakedAfter).to.equal(totalStakedBefore + (100n * nominal) + totalPayout);
