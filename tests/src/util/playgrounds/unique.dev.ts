@@ -421,7 +421,7 @@ export class ArrangeGroup {
     return capture;
   }
 
-  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint | string) {
+  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
       V2: [
         {
@@ -468,7 +468,7 @@ export class ArrangeGroup {
     };
   }
 
-  makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint | string) {
+  makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
       V2: [
         {
