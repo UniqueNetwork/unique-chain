@@ -663,19 +663,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       },
     };
 
-    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, moreThanKaruraHas);
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanKaruraHas,
+    );
 
     // Try to trick Quartz
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          quartzMultilocation,
-          maliciousXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
     });
 
     const maxWaitBlocks = 3;
@@ -701,24 +702,81 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     // But Karura still can send the correct amount
     const validTransferAmount = karuraBalance / 2n;
-    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, validTransferAmount);
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          quartzMultilocation,
-          validXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Karura', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isUntrustedReserveLocation,
+      `The XCM error should be 'isUntrustedReserveLocation'`,
+    ).to.be.true;
+
+    const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });
 
@@ -1142,6 +1200,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   itSub.skip('Moonriver can send only up to its balance', async ({helper}) => {
     throw Error("Not yet implemented");
   });
+
+  itSub.skip('Should not accept reserve transfer of QTZ from Moonriver', async ({helper}) => {
+    throw Error("Not yet implemented");
+  });
 });
 
 describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
@@ -1375,19 +1437,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       },
     };
 
-    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, moreThanShidenHas);
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanShidenHas,
+    );
 
     // Try to trick Quartz
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          quartzMultilocation,
-          maliciousXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
     });
 
     const maxWaitBlocks = 3;
@@ -1413,23 +1476,80 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
     // But Shiden still can send the correct amount
     const validTransferAmount = shidenBalance / 2n;
-    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, validTransferAmount);
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
 
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          quartzMultilocation,
-          validXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Shiden', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isUntrustedReserveLocation,
+      `The XCM error should be 'isUntrustedReserveLocation'`,
+    ).to.be.true;
+
+    const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });
