@@ -421,18 +421,13 @@ export class ArrangeGroup {
     return capture;
   }
 
-  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, amount: bigint | string) {
+  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint | string) {
     return {
       V2: [
         {
           WithdrawAsset: [
             {
-              id: {
-                Concrete: {
-                  parents: 0,
-                  interior: 'Here',
-                },
-              },
+              id,
               fun: {
                 Fungible: amount,
               },
@@ -442,12 +437,7 @@ export class ArrangeGroup {
         {
           BuyExecution: {
             fees: {
-              id: {
-                Concrete: {
-                  parents: 0,
-                  interior: 'Here',
-                },
-              },
+              id,
               fun: {
                 Fungible: amount,
               },
@@ -472,7 +462,54 @@ export class ArrangeGroup {
                 },
               },
             },
-          }
+          },
+        },
+      ],
+    };
+  }
+
+  makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint | string) {
+    return {
+      V2: [
+        {
+          ReserveAssetDeposited: [
+            {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+            weightLimit: 'Unlimited'
+          },
+        },
+        {
+          DepositAsset: {
+            assets: {
+              Wild: 'All'
+            },
+            maxAssets: 1,
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary
+                  },
+                },
+              },
+            },
+          },
         },
       ],
     };

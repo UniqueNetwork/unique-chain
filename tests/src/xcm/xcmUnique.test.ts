@@ -664,19 +664,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       },
     };
 
-    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, moreThanAcalaHas);
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanAcalaHas,
+    );
 
     // Try to trick Unique
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          uniqueMultilocation,
-          maliciousXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
     });
 
     const maxWaitBlocks = 3;
@@ -702,24 +703,81 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     // But Acala still can send the correct amount
     const validTransferAmount = acalaBalance / 2n;
-    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, validTransferAmount);
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          uniqueMultilocation,
-          validXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of UNQ from Acala', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const uniqueMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isUntrustedReserveLocation,
+      `The XCM error should be 'isUntrustedReserveLocation'`,
+    ).to.be.true;
+
+    const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });
 
@@ -1066,6 +1124,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   itSub.skip('Moonbeam can send only up to its balance', async ({helper}) => {
     throw Error("Not yet implemented");
   });
+
+  itSub.skip('Should not accept reserve transfer of UNQ from Moonbeam', async ({helper}) => {
+    throw Error("Not yet implemented");
+  });
 });
 
 describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
@@ -1278,62 +1340,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     expect(balanceUNQ).to.eq(balanceAfterUniqueToAstarXCM + unqFromAstarTransfered);
   });
 
-  itSub.skip('Should not accept limitedReserveTransfer of UNQ from ASTAR', async ({helper}) => {
-    await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      const destination = {
-        V1: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      };
-
-      const beneficiary = {
-        V1: {
-          parents: 0,
-          interior: {
-            X1: {
-              AccountId32: {
-                network: 'Any',
-                id: randomAccount.addressRaw,
-              },
-            },
-          },
-        },
-      };
-
-      const assets = {
-        V1: [
-          {
-            id: {
-              Concrete: {
-                parents: 1,
-                interior: {
-                  X1: {
-                    Parachain: UNIQUE_CHAIN,
-                  },
-                },
-              },
-            },
-            fun: {
-              Fungible: unqFromAstarTransfered,
-            },
-          },
-        ],
-      };
-
-      // Initial balance is 1 ASTAR
-      expect(await helper.balance.getSubstrate(randomAccount.address)).to.eq(astarInitialBalance);
-
-      const feeAssetItem = 0;
-      // TODO: expect rejected:
-      await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
-    });
-  });
-
   itSub('Astar can send only up to its balance', async ({helper}) => {
     // set Astar's sovereign account's balance
     const astarBalance = 10000n * (10n ** UNQ_DECIMALS);
@@ -1354,19 +1360,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       },
     };
 
-    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, moreThanShidenHas);
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanShidenHas,
+    );
 
     // Try to trick Unique
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          uniqueMultilocation,
-          maliciousXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
     });
 
     const maxWaitBlocks = 3;
@@ -1392,18 +1399,19 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // But Astar still can send the correct amount
     const validTransferAmount = astarBalance / 2n;
-    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, validTransferAmount);
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().executeExtrinsic(
-        alice,
-        'api.tx.polkadotXcm.send',
-        [
-          uniqueMultilocation,
-          validXcmProgram,
-        ],
-        true,
-      );
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
@@ -1411,4 +1419,61 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
   });
+
+  itSub('Should not accept reserve transfer of UNQ from Astar', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const uniqueMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isUntrustedReserveLocation,
+      `The XCM error should be 'isUntrustedReserveLocation'`,
+    ).to.be.true;
+
+    const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+  });
+
 });
