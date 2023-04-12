@@ -420,6 +420,63 @@ export class ArrangeGroup {
 
     return capture;
   }
+
+  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, amount: bigint | string) {
+    return {
+      V2: [
+        {
+          WithdrawAsset: [
+            {
+              id: {
+                Concrete: {
+                  parents: 0,
+                  interior: 'Here',
+                },
+              },
+              fun: {
+                Fungible: amount,
+              },
+            },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id: {
+                Concrete: {
+                  parents: 0,
+                  interior: 'Here',
+                },
+              },
+              fun: {
+                Fungible: amount,
+              },
+            },
+            weightLimit: 'Unlimited'
+          },
+        },
+        {
+          DepositAsset: {
+            assets: {
+              Wild: 'All'
+            },
+            maxAssets: 1,
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary
+                  },
+                },
+              },
+            },
+          }
+        },
+      ],
+    };
+  }
 }
 
 class MoonbeamAccountGroup {
