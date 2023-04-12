@@ -641,6 +641,84 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
+
+  itSub('Karura can send only up to its balance', async ({helper}) => {
+    // set Karura's sovereign account's balance
+    const karuraBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const karuraSovereignAccount = helper.address.paraSiblingSovereignAccount(KARURA_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, karuraSovereignAccount, karuraBalance);
+
+    const moreThanKaruraHas = karuraBalance * 2n;
+
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, moreThanKaruraHas);
+
+    // Try to trick Quartz
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(
+        alice,
+        'api.tx.polkadotXcm.send',
+        [
+          quartzMultilocation,
+          maliciousXcmProgram,
+        ],
+        true,
+      );
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isFailedToTransactAsset,
+      `The XCM error should be 'FailedToTransactAsset'`,
+    ).to.be.true;
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Karura still can send the correct amount
+    const validTransferAmount = karuraBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, validTransferAmount);
+
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(
+        alice,
+        'api.tx.polkadotXcm.send',
+        [
+          quartzMultilocation,
+          validXcmProgram,
+        ],
+        true,
+      );
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
 });
 
 // These tests are relevant only when the foreign asset pallet is disabled
@@ -981,6 +1059,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
+
+  itSub.skip('Moonriver can send only up to its balance', async ({helper}) => {
+    throw Error("Not yet implemented");
+  });
 });
 
 describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
@@ -1192,5 +1274,83 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     const balanceQTZ = await helper.balance.getSubstrate(sender.address);
     console.log(`QTZ Balance on Quartz after XCM is: ${balanceQTZ}`);
     expect(balanceQTZ).to.eq(balanceAfterQuartzToShidenXCM + qtzFromShidenTransfered);
+  });
+
+  itSub('Shiden can send only up to its balance', async ({helper}) => {
+    // set Shiden's sovereign account's balance
+    const shidenBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const shidenSovereignAccount = helper.address.paraSiblingSovereignAccount(SHIDEN_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, shidenSovereignAccount, shidenBalance);
+
+    const moreThanShidenHas = shidenBalance * 2n;
+
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, moreThanShidenHas);
+
+    // Try to trick Quartz
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(
+        alice,
+        'api.tx.polkadotXcm.send',
+        [
+          quartzMultilocation,
+          maliciousXcmProgram,
+        ],
+        true,
+      );
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isFailedToTransactAsset,
+      `The XCM error should be 'FailedToTransactAsset'`,
+    ).to.be.true;
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Shiden still can send the correct amount
+    const validTransferAmount = shidenBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(targetAccount.addressRaw, validTransferAmount);
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(
+        alice,
+        'api.tx.polkadotXcm.send',
+        [
+          quartzMultilocation,
+          validXcmProgram,
+        ],
+        true,
+      );
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
   });
 });

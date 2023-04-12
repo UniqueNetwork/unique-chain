@@ -2446,6 +2446,10 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return this.ethBalanceGroup.getEthereum(address);
   }
 
+  async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string, reservedAmount: bigint | string = 0n) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.balances.setBalance', [address, amount, reservedAmount], true);
+  }
+
   /**
    * Transfer tokens to substrate address
    * @param signer keyring of signer
