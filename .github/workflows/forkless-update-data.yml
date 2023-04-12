@@ -9,7 +9,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  execution-marix:
+  prepare-execution-marix:
 
     name: Prepare execution matrix
 
@@ -23,7 +23,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -31,7 +31,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Create Execution matrix
-        uses: CertainLach/create-matrix-action@v3
+        uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
@@ -40,16 +40,16 @@ jobs:
             network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
             network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
 
-  forkless-update-data:
-    needs: execution-marix
+  forkless-data-build:
+    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}-data
+    name: ${{ matrix.network }}-data-build
     strategy:
       matrix:
-        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -58,9 +58,122 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
+      # Build main image for FORKLESS-UPDATE-NODATA
+      - name: Generate ENV related extend Dockerfile file
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-parachain-upgrade-data.j2
+          output_file: .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            NETWORK=${{ matrix.network }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
+            WASM_NAME=${{ matrix.wasm_name }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
+
+      - name: Show build configuration
+        run: cat .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
+
+      - name: Generate launch-config-forkless-data.json
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/forkless-config/launch-config-forkless-data.j2
+          output_file: .docker/forkless-config/launch-config-forkless-data.json
+          variables: |
+            WASM_NAME=${{ matrix.wasm_name }}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}            
+
+      - name: Show launch-config-forkless configuration
+        run: cat .docker/forkless-config/launch-config-forkless-data.json
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@4
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Build the stack
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml --tag uniquenetwork/ci-forkless-data-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Push docker image version
+        run: docker push uniquenetwork/ci-forkless-data-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
+  forkless-data-tests:
+    needs: [prepare-execution-marix, forkless-data-build]
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci, large]
+
+    timeout-minutes: 600
+
+    name: ${{ matrix.network }}-data-tests
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+    steps:
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Prepare
+        uses: ./.github/actions/prepare
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@4
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -68,54 +181,41 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-forkless-data.j2
-          output_file: .docker/docker-compose-forkless-data.${{ matrix.network }}.yml
+          template: .docker/docker-compose.forkless-data.j2
+          output_file: .docker/docker-compose.forkless-data.${{ matrix.network }}.yml
           variables: |
-            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            # POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            # MAINNET_TAG=${{ matrix.mainnet_tag }}
-            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
-            # BRANCH=${{ github.head_ref }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}
-            WASM_NAME=${{ matrix.wasm_name }}
+            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Show build configuration
-        run: cat .docker/docker-compose-forkless-data.${{ matrix.network }}.yml
+        run: cat .docker/docker-compose.forkless-data.${{ matrix.network }}.yml
 
-      - name: Generate launch-config-forkless-data.json
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
         with:
-          template: .docker/forkless-config/launch-config-forkless-data.j2
-          output_file: .docker/launch-config-forkless-data.json
-          variables: |
-            NETWORK=${{ matrix.network }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}
-            WASM_NAME=${{ matrix.wasm_name}}
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
-
-      - name: Show launch-config-forkless configuration
-        run: cat .docker/launch-config-forkless-data.json
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose-forkless-data.${{ matrix.network }}.yml" up -d --build  --force-recreate --timeout 300
+        run: docker-compose -f ".docker/docker-compose.forkless-data.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+
+      - uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 16
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
           counter=160
           function check_container_status {
-                docker inspect -f {{.State.Running}} node-parachain
+                docker inspect -f {{.State.Running}} forkless-data
           }
           function do_docker_logs {
-                docker logs --details node-parachain  2>&1
+                docker logs --details forkless-data  2>&1
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: node-parachain RUNNING";
+                        echo "Container: forkless-data RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
                         if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
@@ -129,7 +229,7 @@ jobs:
                                 return 1
                         fi
                 else
-                        echo "Container node-parachain not RUNNING"
+                        echo "Container forkless-data not RUNNING"
                         echo "Halting all future checks"
                         exit 1
                 fi
@@ -152,18 +252,17 @@ jobs:
 
       - name: Collect Docker Logs
         if: success() || failure()
-        uses: jwalton/gh-docker-logs@v2.2.0
+        uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './forkless-parachain-upgrade-data-logs.${{ matrix.features }}'
-          images: 'node-parachain'
 
       - name: Show Docker logs
         if: success() || failure()
-        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/node-parachain.log'
+        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/forkless-data.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose-forkless-data.${{ matrix.network }}.yml" down --volumes
+        run: docker-compose -f ".docker/docker-compose.forkless-data.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always

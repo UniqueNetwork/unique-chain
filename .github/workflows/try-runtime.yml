@@ -21,7 +21,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -29,7 +29,7 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Create Execution matrix
-        uses: CertainLach/create-matrix-action@v3
+        uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
@@ -38,14 +38,14 @@ jobs:
             network {quartz}, wasm_name {quartz}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
             network {unique}, wasm_name {unique}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
 
-  try-runtime:
+  try-runtime-build:
     needs: prepare-execution-marix
 
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci]
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
-    name: ${{ matrix.network }}-try-runtime
+    name: ${{ matrix.network }}-try-runtime-build
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
@@ -56,9 +56,107 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
+
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      # Build main image for TRY-RUNTIME
+      - name: Generate ENV related extend Dockerfile file
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-try-runtime.j2
+          output_file: .docker/Dockerfile-try-runtime.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            NETWORK=${{ matrix.network }}
+            WASM_NAME=${{ matrix.wasm_name }}
+            REPLICA_FROM=${{ matrix.replica_from_address }}
+
+      - name: Show build Dockerfile
+        run: cat .docker/Dockerfile-try-runtime.${{ matrix.network }}.yml
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@4
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Build the stack
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-try-runtime.${{ matrix.network }}.yml --tag uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
+
+      - name: Push docker image version
+        run: docker push uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
+
+  try-runtime-tests:
+    needs: [prepare-execution-marix, try-runtime-build]
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci]
+
+    timeout-minutes: 600
+
+    name: ${{ matrix.network }}-try-runtime-tests
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+    steps:
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Prepare
+        uses: ./.github/actions/prepare
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@4
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -66,26 +164,33 @@ jobs:
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-try-runtime.j2
+          template: .docker/docker-compose.try-runtime.j2
           output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
-            WASM_NAME=${{ matrix.wasm_name }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}
+            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
 
+      - uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 16
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from try-runtime
+        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
 
       - name: Collect Docker Logs
         if: success() || failure()
-        uses: jwalton/gh-docker-logs@v2.2.0
+        uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './try-runtime-logs.${{ matrix.network }}'
-          images: 'try-runtime'
 
       - name: Show docker logs
         run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'
