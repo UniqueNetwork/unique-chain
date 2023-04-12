@@ -420,6 +420,100 @@ export class ArrangeGroup {
 
     return capture;
   }
+
+  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint) {
+    return {
+      V2: [
+        {
+          WithdrawAsset: [
+            {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+            weightLimit: 'Unlimited',
+          },
+        },
+        {
+          DepositAsset: {
+            assets: {
+              Wild: 'All',
+            },
+            maxAssets: 1,
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary,
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint) {
+    return {
+      V2: [
+        {
+          ReserveAssetDeposited: [
+            {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+            weightLimit: 'Unlimited',
+          },
+        },
+        {
+          DepositAsset: {
+            assets: {
+              Wild: 'All',
+            },
+            maxAssets: 1,
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary,
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+  }
 }
 
 class MoonbeamAccountGroup {
@@ -631,6 +725,19 @@ class WaitGroup {
       });
     });
     return promise;
+  }
+
+  async eventOutcome<EventT>(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+    const eventRecord = await this.event(maxBlocksToWait, eventSection, eventMethod);
+
+    if (eventRecord == null) {
+      return null;
+    }
+
+    const event = eventRecord!.event;
+    const outcome = event.data[1] as EventT;
+
+    return outcome;
   }
 }
 

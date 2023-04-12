@@ -2446,6 +2446,10 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return this.ethBalanceGroup.getEthereum(address);
   }
 
+  async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint, reservedAmount = 0n) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.balances.setBalance', [address, amount, reservedAmount], true);
+  }
+
   /**
    * Transfer tokens to substrate address
    * @param signer keyring of signer
@@ -3017,6 +3021,18 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
     await this.teleportAssets(signer, destination, beneficiary, assets, feeAssetItem);
   }
+
+  async send(signer: IKeyringPair, destination: any, message: any) {
+    await this.helper.executeExtrinsic(
+      signer,
+      `api.tx.${this.palletName}.send`,
+      [
+        destination,
+        message,
+      ],
+      true,
+    );
+  }
 }
 
 class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
@@ -3280,6 +3296,7 @@ export class AcalaHelper extends XcmChainHelper {
   assetRegistry: AcalaAssetRegistryGroup;
   xTokens: XTokensGroup<AcalaHelper>;
   tokens: TokensGroup<AcalaHelper>;
+  xcm: XcmGroup<AcalaHelper>;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger, options.helperBase ?? AcalaHelper);
@@ -3288,6 +3305,7 @@ export class AcalaHelper extends XcmChainHelper {
     this.assetRegistry = new AcalaAssetRegistryGroup(this);
     this.xTokens = new XTokensGroup(this);
     this.tokens = new TokensGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
   }
 
   getSudo<T extends AcalaHelper>() {
