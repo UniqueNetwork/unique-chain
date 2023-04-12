@@ -689,12 +689,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     expect(
       xcmpQueueFailEvent != null,
-      `'xcmpQueue.FailEvent' event is expected`,
+      '\'xcmpQueue.FailEvent\' event is expected',
     ).to.be.true;
 
     expect(
       xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset'`,
+      'The XCM error should be \'FailedToTransactAsset\'',
     ).to.be.true;
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -767,12 +767,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     expect(
       xcmpQueueFailEvent != null,
-      `'xcmpQueue.FailEvent' event is expected`,
+      '\'xcmpQueue.FailEvent\' event is expected',
     ).to.be.true;
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'isUntrustedReserveLocation'`,
+      'The XCM error should be \'isUntrustedReserveLocation\'',
     ).to.be.true;
 
     const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1197,12 +1197,14 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     expect(qtzFees == 0n).to.be.true;
   });
 
+  // eslint-disable-next-line require-await
   itSub.skip('Moonriver can send only up to its balance', async ({helper}) => {
-    throw Error("Not yet implemented");
+    throw Error('Not yet implemented');
   });
 
+  // eslint-disable-next-line require-await
   itSub.skip('Should not accept reserve transfer of QTZ from Moonriver', async ({helper}) => {
-    throw Error("Not yet implemented");
+    throw Error('Not yet implemented');
   });
 });
 
@@ -1463,12 +1465,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
     expect(
       xcmpQueueFailEvent != null,
-      `'xcmpQueue.FailEvent' event is expected`,
+      '\'xcmpQueue.FailEvent\' event is expected',
     ).to.be.true;
 
     expect(
       xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset'`,
+      'The XCM error should be \'FailedToTransactAsset\'',
     ).to.be.true;
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1541,12 +1543,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
     expect(
       xcmpQueueFailEvent != null,
-      `'xcmpQueue.FailEvent' event is expected`,
+      '\'xcmpQueue.FailEvent\' event is expected',
     ).to.be.true;
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'isUntrustedReserveLocation'`,
+      'The XCM error should be \'isUntrustedReserveLocation\'',
     ).to.be.true;
 
     const accountBalance = await helper.balance.getSubstrate(targetAccount.address);

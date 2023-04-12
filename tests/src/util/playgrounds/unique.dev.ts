@@ -442,13 +442,13 @@ export class ArrangeGroup {
                 Fungible: amount,
               },
             },
-            weightLimit: 'Unlimited'
+            weightLimit: 'Unlimited',
           },
         },
         {
           DepositAsset: {
             assets: {
-              Wild: 'All'
+              Wild: 'All',
             },
             maxAssets: 1,
             beneficiary: {
@@ -457,7 +457,7 @@ export class ArrangeGroup {
                 X1: {
                   AccountId32: {
                     network: 'Any',
-                    id: beneficiary
+                    id: beneficiary,
                   },
                 },
               },
@@ -489,13 +489,13 @@ export class ArrangeGroup {
                 Fungible: amount,
               },
             },
-            weightLimit: 'Unlimited'
+            weightLimit: 'Unlimited',
           },
         },
         {
           DepositAsset: {
             assets: {
-              Wild: 'All'
+              Wild: 'All',
             },
             maxAssets: 1,
             beneficiary: {
@@ -504,7 +504,7 @@ export class ArrangeGroup {
                 X1: {
                   AccountId32: {
                     network: 'Any',
-                    id: beneficiary
+                    id: beneficiary,
                   },
                 },
               },
