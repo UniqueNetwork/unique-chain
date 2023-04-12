@@ -3031,7 +3031,7 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
         message,
       ],
       true,
-    ); 
+    );
   }
 }
 
