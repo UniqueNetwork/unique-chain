@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {stringToU8a} from '@polkadot/util';
-import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
+import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
@@ -155,6 +155,7 @@ export class DevStatemintHelper extends DevWestmintHelper {}
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;
+  fastDemocracy: MoonbeamFastDemocracyGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
@@ -163,6 +164,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
     this.wait = new WaitGroup(this);
+    this.fastDemocracy = new MoonbeamFastDemocracyGroup(this);
   }
 }
 
@@ -554,6 +556,103 @@ class MoonbeamAccountGroup {
   }
 }
 
+class MoonbeamFastDemocracyGroup {
+  helper: DevMoonbeamHelper;
+
+  constructor(helper: DevMoonbeamHelper) {
+    this.helper = helper;
+  }
+
+  async executeProposal(proposalDesciption: string, encodedProposal: string) {
+    const proposalHash = blake2AsHex(encodedProposal);
+
+    const alithAccount = this.helper.account.alithAccount();
+    const baltatharAccount = this.helper.account.baltatharAccount();
+    const dorothyAccount = this.helper.account.dorothyAccount();
+
+    const councilVotingThreshold = 2;
+    const technicalCommitteeThreshold = 2;
+    const fastTrackVotingPeriod = 3;
+    const fastTrackDelayPeriod = 0;
+
+    console.log(`[democracy] executing '${proposalDesciption}' proposal`);
+
+    // >>> Propose external motion through council >>>
+    console.log('\t* Propose external motion through council.......');
+    const externalMotion = this.helper.democracy.externalProposeMajority({Inline: encodedProposal});
+    const encodedMotion = externalMotion?.method.toHex() || '';
+    const motionHash = blake2AsHex(encodedMotion);
+    console.log('\t* Motion hash is %s', motionHash);
+
+    await this.helper.collective.council.propose(
+      baltatharAccount,
+      councilVotingThreshold,
+      externalMotion,
+      externalMotion.encodedLength,
+    );
+
+    const councilProposalIdx = await this.helper.collective.council.proposalCount() - 1;
+    await this.helper.collective.council.vote(dorothyAccount, motionHash, councilProposalIdx, true);
+    await this.helper.collective.council.vote(baltatharAccount, motionHash, councilProposalIdx, true);
+
+    await this.helper.collective.council.close(
+      dorothyAccount,
+      motionHash,
+      councilProposalIdx,
+      {
+        refTime: 1_000_000_000,
+        proofSize: 1_000_000,
+      },
+      externalMotion.encodedLength,
+    );
+    console.log('\t* Propose external motion through council.......DONE');
+    // <<< Propose external motion through council <<<
+
+    // >>> Fast track proposal through technical committee >>>
+    console.log('\t* Fast track proposal through technical committee.......');
+    const fastTrack = this.helper.democracy.fastTrack(proposalHash, fastTrackVotingPeriod, fastTrackDelayPeriod);
+    const encodedFastTrack = fastTrack?.method.toHex() || '';
+    const fastTrackHash = blake2AsHex(encodedFastTrack);
+    console.log('\t* FastTrack hash is %s', fastTrackHash);
+
+    await this.helper.collective.techCommittee.propose(alithAccount, technicalCommitteeThreshold, fastTrack, fastTrack.encodedLength);
+
+    const techProposalIdx = await this.helper.collective.techCommittee.proposalCount() - 1;
+    await this.helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
+    await this.helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
+
+    await this.helper.collective.techCommittee.close(
+      baltatharAccount,
+      fastTrackHash,
+      techProposalIdx,
+      {
+        refTime: 1_000_000_000,
+        proofSize: 1_000_000,
+      },
+      fastTrack.encodedLength,
+    );
+    console.log('\t* Fast track proposal through technical committee.......DONE');
+    // <<< Fast track proposal through technical committee <<<
+
+    const refIndexField = 0;
+    const referendumIndex = await this.helper.wait.eventData<any>(3, 'democracy', 'Started', refIndexField);
+
+    // >>> Referendum voting >>>
+    console.log(`\t* Referendum #${referendumIndex} voting.......`);
+    await this.helper.democracy.referendumVote(dorothyAccount, referendumIndex, {
+      balance: 10_000_000_000_000_000_000n,
+      vote: {aye: true, conviction: 1},
+    });
+    console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
+    // <<< Referendum voting <<<
+
+    // Wait for the democracy execute
+    await this.helper.wait.newBlocks(5);
+
+    console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
+  }
+}
+
 class WaitGroup {
   helper: ChainHelperBase;
 
@@ -727,7 +826,7 @@ class WaitGroup {
     return promise;
   }
 
-  async eventOutcome<EventT>(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+  async eventData<EventT>(maxBlocksToWait: number, eventSection: string, eventMethod: string, fieldIndex: number) {
     const eventRecord = await this.event(maxBlocksToWait, eventSection, eventMethod);
 
     if (eventRecord == null) {
@@ -735,9 +834,9 @@ class WaitGroup {
     }
 
     const event = eventRecord!.event;
-    const outcome = event.data[1] as EventT;
+    const data = event.data[fieldIndex] as EventT;
 
-    return outcome;
+    return data;
   }
 }
 
