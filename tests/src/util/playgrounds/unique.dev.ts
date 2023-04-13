@@ -635,19 +635,20 @@ class MoonbeamFastDemocracyGroup {
     // <<< Fast track proposal through technical committee <<<
 
     const refIndexField = 0;
-    const referendumIndex = await this.helper.wait.eventData<any>(3, 'democracy', 'Started', refIndexField);
+    const referendumIndex = await this.helper.wait.eventData<number>(3, 'democracy', 'Started', refIndexField);
 
     // >>> Referendum voting >>>
     console.log(`\t* Referendum #${referendumIndex} voting.......`);
-    await this.helper.democracy.referendumVote(dorothyAccount, referendumIndex, {
+    await this.helper.democracy.referendumVote(dorothyAccount, referendumIndex!, {
       balance: 10_000_000_000_000_000_000n,
       vote: {aye: true, conviction: 1},
     });
     console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
     // <<< Referendum voting <<<
 
-    // Wait for the democracy execute
-    await this.helper.wait.newBlocks(5);
+    // Wait the proposal to pass
+    await this.helper.wait.event(3, 'democracy', 'Passed');
+    await this.helper.wait.newBlocks(1);
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
   }
