@@ -697,7 +697,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     expect(
       xcmpQueueFailEvent!.isFailedToTransactAsset,
-      'The XCM error should be \'FailedToTransactAsset\'',
+      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -789,7 +789,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      'The XCM error should be \'isUntrustedReserveLocation\'',
+      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -814,7 +814,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      'The XCM error should be \'isUntrustedReserveLocation\'',
+      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -903,7 +903,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
 
     expect(
       xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `[reject ${network} tokens] The XCM error should be 'FailedToTransactAsset'`,
+      `[reject ${network} tokens] The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
   };
 
@@ -1222,7 +1222,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     expect(
       xcmpQueueFailEvent!.isFailedToTransactAsset,
-      'The XCM error should be \'FailedToTransactAsset\'',
+      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1322,7 +1322,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      'The XCM error should be \'isUntrustedReserveLocation\'',
+      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1351,7 +1351,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      'The XCM error should be \'isUntrustedReserveLocation\'',
+      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1622,7 +1622,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     expect(
       xcmpQueueFailEvent!.isFailedToTransactAsset,
-      'The XCM error should be \'FailedToTransactAsset\'',
+      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1714,7 +1714,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      'The XCM error should be \'isUntrustedReserveLocation\'',
+      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1739,7 +1739,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     expect(
       xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      'The XCM error should be \'isUntrustedReserveLocation\'',
+      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
     ).to.be.true;
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
