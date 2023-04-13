@@ -726,7 +726,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
   });
 
-  itSub.only('Should not accept reserve transfer of UNQ from Acala', async ({helper}) => {
+  itSub('Should not accept reserve transfer of UNQ from Acala', async ({helper}) => {
     const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
@@ -1255,7 +1255,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
   });
 
-  itSub.only('Should not accept reserve transfer of UNQ from Moonbeam', async ({helper}) => {
+  itSub('Should not accept reserve transfer of UNQ from Moonbeam', async ({helper}) => {
     const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
@@ -1651,7 +1651,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     expect(targetAccountBalance).to.be.equal(validTransferAmount);
   });
 
-  itSub.only('Should not accept reserve transfer of UNQ from Astar', async ({helper}) => {
+  itSub('Should not accept reserve transfer of UNQ from Astar', async ({helper}) => {
     const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
