@@ -30,10 +30,9 @@ use sp_runtime::{
 use pallet_transaction_payment::CurrencyAdapter;
 use frame_system as system;
 use pallet_evm::{
-	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
+	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping, BackwardsAddressMapping
 };
 use pallet_ethereum::PostLogContent;
-use fp_evm_mapping::EvmBackwardsAddressMapping;
 use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
@@ -162,7 +161,7 @@ impl AddressMapping<u64> for TestEvmAddressMapping {
 }
 
 pub struct TestEvmBackwardsAddressMapping;
-impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
+impl BackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 	fn from_account_id(_account_id: u64) -> sp_core::H160 {
 		unimplemented!()
 	}
