@@ -18,15 +18,11 @@ jobs:
 
   yarn-dev:
     uses: ./.github/workflows/yarn-dev.yml
+    secrets: inherit    
 
   unit-test:
     uses: ./.github/workflows/unit-test.yml
-
-  node-only-update:
-    uses: ./.github/workflows/node-only-update.yml
-
-  forkless:
-    uses: ./.github/workflows/forkless.yml
+    secrets: inherit    
 
   # canary:
   #   uses: ./.github/workflows/canary.yml
@@ -38,13 +34,30 @@ jobs:
     
   collator-selection:
     uses: ./.github/workflows/collator-selection.yml
+    secrets: inherit    
 
-  # testnet:
-  #   uses: ./.github/workflows/testnet-build.yml
-  #   secrets: inherit # pass all secrets from initial workflow to nested
+  forkless-update-data:
+    uses: ./.github/workflows/forkless-update-data.yml
+    secrets: inherit # pass all secrets from initial workflow to nested    
+
+  forkless-update-no-data:
+    uses: ./.github/workflows/forkless-update-nodata.yml
+    secrets: inherit # pass all secrets from initial workflow to nested    
+
+  try-runtime:
+    uses: ./.github/workflows/try-runtime.yml
+    secrets: inherit # pass all secrets from initial workflow to nested    
+
+  node-only-update:
+    uses: ./.github/workflows/node-only-update.yml
+    secrets: inherit
 
   codestyle:
     uses: ./.github/workflows/codestyle.yml
+    secrets: inherit
 
   polkadot-types:
     uses: ./.github/workflows/polkadot-types.yml
+
+
+    
