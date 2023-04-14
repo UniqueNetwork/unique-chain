@@ -41,11 +41,6 @@ jobs:
     uses: ./.github/workflows/collator-selection.yml
     secrets: inherit    
     
-  # forkless:
-  #   if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.
-  #   uses: ./.github/workflows/forkless.yml
-  #   secrets: inherit    
-
   forkless-update-data:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.  
     uses: ./.github/workflows/forkless-update-data.yml
