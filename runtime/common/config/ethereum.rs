@@ -56,8 +56,8 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 
 impl pallet_evm::Config for Runtime {
 	type CrossAccountId = CrossAccountId;
-	type EvmAddressMapping = pallet_evm::HashedAddressMapping<Self::Hashing>;
-	type EvmBackwardsAddressMapping = fp_evm_mapping::MapBackwardsAddressTruncated;
+	type AddressMapping = HashedAddressMapping<Self::Hashing>;
+	type BackwardsAddressMapping = HashedAddressMapping<Self::Hashing>;
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = pallet_configuration::FeeCalculator<Self>;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
@@ -65,7 +65,6 @@ impl pallet_evm::Config for Runtime {
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
 	type CallOrigin = EnsureAddressTruncated<Self>;
 	type WithdrawOrigin = EnsureAddressTruncated<Self>;
-	type AddressMapping = HashedAddressMapping<Self::Hashing>;
 	type PrecompilesType = UniquePrecompiles<Self>;
 	type PrecompilesValue = PrecompilesValue;
 	type Currency = Balances;

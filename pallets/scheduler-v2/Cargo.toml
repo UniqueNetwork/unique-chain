@@ -9,6 +9,9 @@ readme = "README.md"
 repository = "https://github.com/UniqueNetwork/unique-chain"
 version = "0.1.0"
 
+[package.metadata.deppatcher.originals.dev-dependencies]
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+
 [dependencies]
 # Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
 codec = { workspace = true, package = "parity-scale-codec" }
@@ -25,7 +28,7 @@ sp-std = { workspace = true }
 
 [dev-dependencies]
 pallet-preimage = { workspace = true }
-substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
+substrate-test-utils = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.41" }
 
 [features]
 default = ["std"]

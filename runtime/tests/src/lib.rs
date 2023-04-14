@@ -216,15 +216,14 @@ impl pallet_ethereum::Config for Test {
 
 impl pallet_evm::Config for Test {
 	type CrossAccountId = TestCrossAccountId;
-	type EvmAddressMapping = TestEvmAddressMapping;
-	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	type AddressMapping = TestEvmAddressMapping;
+	type BackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type RuntimeEvent = RuntimeEvent;
 	type FeeCalculator = ();
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type CallOrigin = EnsureAddressNever<Self>;
 	type WithdrawOrigin = EnsureAddressNever<Self>;
-	type AddressMapping = TestEvmAddressMapping;
 	type Currency = Balances;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();

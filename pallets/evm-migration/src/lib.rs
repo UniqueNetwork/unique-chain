@@ -46,7 +46,6 @@ pub mod pallet {
 	type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::event]

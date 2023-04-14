@@ -77,7 +77,6 @@ std = [
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
-	'fp-evm-mapping/std',
 	'fp-rpc/std',
 	'fp-self-contained/std',
 	'pallet-app-promotion/std',
@@ -245,7 +244,6 @@ xcm-executor = { workspace = true }
 app-promotion-rpc = { workspace = true }
 derivative = { workspace = true }
 fp-evm = { workspace = true }
-fp-evm-mapping = { workspace = true }
 log = { workspace = true }
 pallet-app-promotion = { workspace = true }
 pallet-collator-selection = { workspace = true }

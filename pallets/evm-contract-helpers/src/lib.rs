@@ -70,7 +70,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Store owner for contract.
