@@ -30,7 +30,8 @@ use sp_runtime::{
 use pallet_transaction_payment::CurrencyAdapter;
 use frame_system as system;
 use pallet_evm::{
-	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping, BackwardsAddressMapping
+	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
+	BackwardsAddressMapping,
 };
 use pallet_ethereum::PostLogContent;
 use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
