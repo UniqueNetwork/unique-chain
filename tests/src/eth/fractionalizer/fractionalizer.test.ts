@@ -24,19 +24,20 @@ import {Contract} from 'web3-eth-contract';
 
 import {usingEthPlaygrounds, expect, itEth, EthUniqueHelper} from '../util';
 import {CompiledContract} from '../util/playgrounds/types';
-import {requirePalletsOrSkip, Pallets} from '../../util';
+import {requirePalletsOrSkip, Pallets, makeNames} from '../../util';
 
+const {dirname} = makeNames(import.meta.url);
 
 let compiledFractionalizer: CompiledContract;
 
 const compileContract = async (helper: EthUniqueHelper): Promise<CompiledContract> => {
   if(!compiledFractionalizer) {
-    compiledFractionalizer = await helper.ethContract.compile('Fractionalizer', (await readFile(`${__dirname}/Fractionalizer.sol`)).toString(), [
-      {solPath: 'api/CollectionHelpers.sol', fsPath: `${__dirname}/../api/CollectionHelpers.sol`},
-      {solPath: 'api/ContractHelpers.sol', fsPath: `${__dirname}/../api/ContractHelpers.sol`},
-      {solPath: 'api/UniqueRefungibleToken.sol', fsPath: `${__dirname}/../api/UniqueRefungibleToken.sol`},
-      {solPath: 'api/UniqueRefungible.sol', fsPath: `${__dirname}/../api/UniqueRefungible.sol`},
-      {solPath: 'api/UniqueNFT.sol', fsPath: `${__dirname}/../api/UniqueNFT.sol`},
+    compiledFractionalizer = await helper.ethContract.compile('Fractionalizer', (await readFile(`${dirname}/Fractionalizer.sol`)).toString(), [
+      {solPath: 'api/CollectionHelpers.sol', fsPath: `${dirname}/../api/CollectionHelpers.sol`},
+      {solPath: 'api/ContractHelpers.sol', fsPath: `${dirname}/../api/ContractHelpers.sol`},
+      {solPath: 'api/UniqueRefungibleToken.sol', fsPath: `${dirname}/../api/UniqueRefungibleToken.sol`},
+      {solPath: 'api/UniqueRefungible.sol', fsPath: `${dirname}/../api/UniqueRefungible.sol`},
+      {solPath: 'api/UniqueNFT.sol', fsPath: `${dirname}/../api/UniqueNFT.sol`},
     ]);
   }
   return compiledFractionalizer;
@@ -85,7 +86,7 @@ describe('Fractionalizer contract usage', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -196,7 +197,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('Test fractionalizer NFT <-> RFT mapping ', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 200n);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
     const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
@@ -226,7 +227,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -385,7 +386,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call rft2nft without owning all RFT pieces', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor, 200n);
     const receiver = await helper.eth.createAccountWithBalance(donor, 10n);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);

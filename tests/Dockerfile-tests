@@ -1,7 +1,7 @@
 # ===== Integration Tests ======
 
 
-FROM ubuntu:20.04
+FROM ubuntu:22.04
 LABEL maintainer="UniqueNetwork.io"
 
 RUN apt -y update; apt -y upgrade; apt -y install curl

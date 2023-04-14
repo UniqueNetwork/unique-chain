@@ -28,7 +28,7 @@ use up_data_structs::{
 	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
 	PropertyKeyPermission, TokenData, TokenChild,
 };
-use sp_api::{BlockId, BlockT, ProvideRuntimeApi, ApiExt};
+use sp_api::{BlockT, ProvideRuntimeApi, ApiExt};
 use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
 use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
@@ -342,9 +342,9 @@ macro_rules! pass_method {
 			at: Option<<Block as BlockT>::Hash>,
 		) -> Result<$result> {
 			let api = self.client.runtime_api();
-			let at = BlockId::hash(at.unwrap_or_else(|| self.client.info().best_hash));
+			let at = at.unwrap_or_else(|| self.client.info().best_hash);
 			let _api_version = if let Ok(Some(api_version)) =
-				api.api_version::<$runtime_api_macro!()>(&at)
+				api.api_version::<$runtime_api_macro!()>(at)
 			{
 				api_version
 			} else {
@@ -353,9 +353,9 @@ macro_rules! pass_method {
 			};
 
 			let result = $(if _api_version < $ver {
-				api.$changed_method_name(&at, $($changed_name),*).map(|r| r.map($fixer))
+				api.$changed_method_name(at, $($changed_name),*).map(|r| r.and_then($fixer))
 			} else)*
-			{ api.$method_name(&at, $($((|$map_arg: $ty| $map))? ($name)),*) };
+			{ api.$method_name(at, $($((|$map_arg: $ty| $map))? ($name)),*) };
 
 			Ok(result
 				.map_err(|e| anyhow!("unable to query: {e}"))?
@@ -440,7 +440,7 @@ where
 			#[map(|keys| string_keys_to_bytes_keys(keys))]
 			keys: Option<Vec<String>>,
 		) -> TokenData<CrossAccountId>, unique_api;
-		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| value.into()
+		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| Ok(value.into())
 	);
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
@@ -449,7 +449,22 @@ where
 	pass_method!(last_token_id(collection: CollectionId) -> TokenId, unique_api);
 	pass_method!(
 		collection_by_id(collection: CollectionId) -> Option<RpcCollection<AccountId>>, unique_api;
-		changed_in 3, collection_by_id_before_version_3(collection) => |value| value.map(|coll| coll.into())
+		changed_in 3, collection_by_id_before_version_3(collection) => |value| {
+			use codec::IoReader;
+			use up_data_structs::RpcCollectionVersion1;
+			use up_data_structs::CollectionVersion1;
+			use sp_runtime::DispatchError;
+
+			if let Some(bytes) = value {
+				let mut reader = IoReader(bytes.as_slice());
+				Ok(Some(RpcCollection::<AccountId>::decode(&mut reader)
+				.or_else(|_| RpcCollectionVersion1::<AccountId>::decode(&mut reader).map(|col| col.into()))
+				.or_else(|_| CollectionVersion1::<AccountId>::decode(&mut reader).map(|col| col.into()))
+				.map_err(|_| DispatchError::Other("API Error: UniqueApi_collection_by_id"))?))
+			} else {
+				Ok(None)
+			}
+		}
 	);
 	pass_method!(collection_stats() -> CollectionStats, unique_api);
 	pass_method!(next_sponsored(collection: CollectionId, account: CrossAccountId, token: TokenId) -> Option<u64>, unique_api);

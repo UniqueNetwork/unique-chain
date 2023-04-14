@@ -22,7 +22,7 @@ describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', ()
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 
@@ -45,7 +45,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   before(async () => {
     await usingPlaygrounds(async (_, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

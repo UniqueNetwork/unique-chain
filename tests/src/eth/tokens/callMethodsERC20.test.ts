@@ -28,7 +28,7 @@ import {IKeyringPair} from '@polkadot/types/types';
     before(async function() {
       await usingEthPlaygrounds(async (helper, privateKey) => {
         requirePalletsOrSkip(this, helper, testCase.requiredPallets);
-        donor = await privateKey({filename: __filename});
+        donor = await privateKey({url: import.meta.url});
       });
     });
 

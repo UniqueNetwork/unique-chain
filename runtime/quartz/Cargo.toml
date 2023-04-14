@@ -95,7 +95,6 @@ std = [
 	'pallet-fungible/std',
 	'pallet-inflation/std',
 	'pallet-nonfungible/std',
-	'pallet-randomness-collective-flip/std',
 	'pallet-refungible/std',
 	'pallet-structure/std',
 	'pallet-sudo/std',
@@ -130,6 +129,7 @@ std = [
 	"orml-traits/std",
 	"orml-vesting/std",
 	"orml-xtokens/std",
+	"orml-xcm-support/std",
 	"pallet-foreign-assets/std",
 	"pallet-maintenance/std",
 ]
@@ -169,7 +169,6 @@ try-runtime = [
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
 	'pallet-nonfungible/try-runtime',
-	'pallet-randomness-collective-flip/try-runtime',
 	'pallet-refungible/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
@@ -211,11 +210,11 @@ orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
 orml-xtokens = { workspace = true }
+orml-xcm-support = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-preimage = { workspace = true }
-pallet-randomness-collective-flip = { workspace = true }
 pallet-session = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
@@ -302,9 +301,6 @@ pallet-test-utils = { workspace = true }
 # Other Dependencies
 
 impl-trait-for-tuples = { workspace = true }
-
-[dev-dependencies]
-logtest = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

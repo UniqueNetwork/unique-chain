@@ -1,0 +1,40 @@
+# ===== Rust builder =====
+FROM ubuntu:22.04 as rust-builder
+LABEL maintainer="Unique.Network"
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup default {{ RUST_TOOLCHAIN }} && \
+    rustup target list --installed && \
+    rustup show
+RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
+
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
+
+# ===== BUILD ACALA =====
+FROM rust-builder as builder-astar-bin
+
+WORKDIR /unique_parachain
+
+RUN git clone --recurse-submodules -b {{ ASTAR_BUILD_BRANCH }} --depth 1 https://github.com/AstarNetwork/Astar.git && \
+    cd Astar && \
+    cargo build --release
+
+# ===== BIN ======
+
+FROM ubuntu:22.04 as builder-astar
+
+COPY --from=builder-astar-bin /unique_parachain/Astar/target/release/astar-collator /unique_parachain/astar/target/release/astar

@@ -736,7 +736,7 @@ export class ChainHelperBase {
 
   fetchAllPalletNames(): string[] {
     if(this.api === null) throw Error('API not initialized');
-    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase());
+    return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase()).sort();
   }
 
   fetchMissingPalletNames(requiredPallets: string[]): string[] {
@@ -2446,6 +2446,10 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return this.ethBalanceGroup.getEthereum(address);
   }
 
+  async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint, reservedAmount = 0n) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.balances.setBalance', [address, amount, reservedAmount], true);
+  }
+
   /**
    * Transfer tokens to substrate address
    * @param signer keyring of signer
@@ -2951,55 +2955,83 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
   }
 
+  async setSafeXcmVersion(signer: TSigner, version: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.forceDefaultXcmVersion`, [version], true);
+  }
+
   async teleportAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number) {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
   }
 
-  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint) {
-    const destination = {
-      V1: {
-        parents: 0,
-        interior: {
-          X1: {
-            Parachain: destinationParaId,
+  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint, xcmVersion = 3) {
+    const destinationContent = {
+      parents: 0,
+      interior: {
+        X1: {
+          Parachain: destinationParaId,
+        },
+      },
+    };
+
+    const beneficiaryContent = {
+      parents: 0,
+      interior: {
+        X1: {
+          AccountId32: {
+            network: 'Any',
+            id: targetAccount,
           },
         },
       },
     };
 
-    const beneficiary = {
-      V1: {
-        parents: 0,
-        interior: {
-          X1: {
-            AccountId32: {
-              network: 'Any',
-              id: targetAccount,
-            },
+    const assetsContent = [
+      {
+        id: {
+          Concrete: {
+            parents: 0,
+            interior: 'Here',
           },
+        },
+        fun: {
+          Fungible: amount,
         },
       },
-    };
+    ];
 
-    const assets = {
-      V1: [
-        {
-          id: {
-            Concrete: {
-              parents: 0,
-              interior: 'Here',
-            },
-          },
-          fun: {
-            Fungible: amount,
-          },
-        },
-      ],
-    };
+    let destination;
+    let beneficiary;
+    let assets;
+
+    if (xcmVersion == 2) {
+      destination = {V1: destinationContent};
+      beneficiary = {V1: beneficiaryContent};
+      assets = {V1: assetsContent};
+
+    } else if (xcmVersion == 3) {
+      destination = {V2: destinationContent};
+      beneficiary = {V2: beneficiaryContent};
+      assets = {V2: assetsContent};
+
+    } else {
+      throw Error('Unknown XCM version: ' + xcmVersion);
+    }
 
     const feeAssetItem = 0;
 
     await this.teleportAssets(signer, destination, beneficiary, assets, feeAssetItem);
+  }
+
+  async send(signer: IKeyringPair, destination: any, message: any) {
+    await this.helper.executeExtrinsic(
+      signer,
+      `api.tx.${this.palletName}.send`,
+      [
+        destination,
+        message,
+      ],
+      true,
+    );
   }
 }
 
@@ -3239,11 +3271,32 @@ export class MoonbeamHelper extends XcmChainHelper {
   }
 }
 
+export class AstarHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<AstarHelper>;
+  assets: AssetsGroup<AstarHelper>;
+  xcm: XcmGroup<AstarHelper>;
+
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    super(logger, options.helperBase ?? AstarHelper);
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.assets = new AssetsGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+  }
+
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
+}
+
 export class AcalaHelper extends XcmChainHelper {
   balance: SubstrateBalanceGroup<AcalaHelper>;
   assetRegistry: AcalaAssetRegistryGroup;
   xTokens: XTokensGroup<AcalaHelper>;
   tokens: TokensGroup<AcalaHelper>;
+  xcm: XcmGroup<AcalaHelper>;
 
   constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     super(logger, options.helperBase ?? AcalaHelper);
@@ -3252,6 +3305,7 @@ export class AcalaHelper extends XcmChainHelper {
     this.assetRegistry = new AcalaAssetRegistryGroup(this);
     this.xTokens = new XTokensGroup(this);
     this.tokens = new TokensGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
   }
 
   getSudo<T extends AcalaHelper>() {

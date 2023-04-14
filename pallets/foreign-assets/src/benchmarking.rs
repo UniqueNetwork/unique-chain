@@ -22,18 +22,23 @@ use frame_system::RawOrigin;
 use crate::AssetMetadata;
 use xcm::opaque::latest::Junction::Parachain;
 use xcm::VersionedMultiLocation;
-use frame_support::{
-	traits::{Currency},
-};
-use sp_std::boxed::Box;
+use xcm::v3::Junctions::X1;
+use frame_support::traits::Currency;
+use sp_std::{vec::Vec, boxed::Box};
+
+fn bounded<T: TryFrom<Vec<u8>>>(slice: &[u8]) -> T {
+	T::try_from(slice.to_vec())
+		.map_err(|_| "slice doesn't fit")
+		.unwrap()
+}
 
 benchmarks! {
 	register_foreign_asset {
 		let owner: T::AccountId = account("user", 0, 1);
-		let location: VersionedMultiLocation = VersionedMultiLocation::from(Parachain(1000).into());
+		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(1000)));
 		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
-			name: "name".into(),
-			symbol: "symbol".into(),
+			name: bounded(b"name"),
+			symbol: bounded(b"symbol"),
 			decimals: 18,
 			minimal_balance: 1u32.into()
 		};
@@ -46,16 +51,16 @@ benchmarks! {
 
 	update_foreign_asset {
 		let owner: T::AccountId = account("user", 0, 1);
-		let location: VersionedMultiLocation = VersionedMultiLocation::from(Parachain(2000).into());
+		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(2000)));
 		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
-			name: "name".into(),
-			symbol: "symbol".into(),
+			name: bounded(b"name"),
+			symbol: bounded(b"symbol"),
 			decimals: 18,
 			minimal_balance: 1u32.into()
 		};
 		let metadata2: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
-			name: "name2".into(),
-			symbol: "symbol2".into(),
+			name: bounded(b"name2"),
+			symbol: bounded(b"symbol2"),
 			decimals: 18,
 			minimal_balance: 1u32.into()
 		};

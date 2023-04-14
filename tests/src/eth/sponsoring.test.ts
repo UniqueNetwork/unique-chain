@@ -23,7 +23,7 @@ describe('EVM sponsoring', () => {
 
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

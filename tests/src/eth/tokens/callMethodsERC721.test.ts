@@ -24,7 +24,7 @@ describe('ERC-721 call methods', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
     });
   });
 

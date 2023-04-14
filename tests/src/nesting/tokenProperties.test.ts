@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../util';
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect, sizeOfProperty} from '../util';
 import {UniqueHelper, UniqueNFToken, UniqueRFToken} from '../util/playgrounds/unique';
 
 describe('Integration Test: Token Properties', () => {
@@ -27,7 +27,7 @@ describe('Integration Test: Token Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 100n, 100n], donor);
     });
 
@@ -353,9 +353,10 @@ describe('Integration Test: Token Properties', () => {
           : collection.mintToken(alice)
       );
 
-      await token.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
+      const property = {key: propKey, value: makeNewPropData()};
+      await token.setProperties(alice, [property]);
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
-      expect(originalSpace).to.be.equal(propDataSize);
+      expect(originalSpace).to.be.equal(sizeOfProperty(property));
 
       const sameSizePropertiesPossibleNum = maxTokenPropertiesSize / propDataSize;
 
@@ -393,9 +394,10 @@ describe('Integration Test: Token Properties', () => {
       const propDataSize = 4096;
       const propData = 'a'.repeat(propDataSize);
 
-      await token.setProperties(alice, [{key: propKey, value: propData}]);
+      const property = {key: propKey, value: propData};
+      await token.setProperties(alice, [property]);
       let consumedSpace = await token.getTokenPropertiesConsumedSpace();
-      expect(consumedSpace).to.be.equal(propDataSize);
+      expect(consumedSpace).to.be.equal(sizeOfProperty(property));
 
       await token.deleteProperties(alice, [propKey]);
       consumedSpace = await token.getTokenPropertiesConsumedSpace();
@@ -424,31 +426,27 @@ describe('Integration Test: Token Properties', () => {
       );
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
 
-      const initPropDataSize = 4096;
-      const biggerPropDataSize = 5000;
-      const smallerPropDataSize = 4000;
-
-      const initPropData = 'a'.repeat(initPropDataSize);
-      const biggerPropData = 'b'.repeat(biggerPropDataSize);
-      const smallerPropData = 'c'.repeat(smallerPropDataSize);
+      const initProp = {key: propKey, value: 'a'.repeat(4096)};
+      const biggerProp = {key: propKey, value: 'b'.repeat(5000)};
+      const smallerProp = {key: propKey, value: 'c'.repeat(4000)};
 
       let consumedSpace;
       let expectedConsumedSpaceDiff;
 
-      await token.setProperties(alice, [{key: propKey, value: initPropData}]);
+      await token.setProperties(alice, [initProp]);
       consumedSpace = await token.getTokenPropertiesConsumedSpace();
-      expectedConsumedSpaceDiff = initPropDataSize - originalSpace;
+      expectedConsumedSpaceDiff = sizeOfProperty(initProp) - originalSpace;
       expect(consumedSpace).to.be.equal(originalSpace + expectedConsumedSpaceDiff);
 
-      await token.setProperties(alice, [{key: propKey, value: biggerPropData}]);
+      await token.setProperties(alice, [biggerProp]);
       consumedSpace = await token.getTokenPropertiesConsumedSpace();
-      expectedConsumedSpaceDiff = biggerPropDataSize - initPropDataSize;
-      expect(consumedSpace).to.be.equal(initPropDataSize + expectedConsumedSpaceDiff);
+      expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(initProp);
+      expect(consumedSpace).to.be.equal(sizeOfProperty(initProp) + expectedConsumedSpaceDiff);
 
-      await token.setProperties(alice, [{key: propKey, value: smallerPropData}]);
+      await token.setProperties(alice, [smallerProp]);
       consumedSpace = await token.getTokenPropertiesConsumedSpace();
-      expectedConsumedSpaceDiff = biggerPropDataSize - smallerPropDataSize;
-      expect(consumedSpace).to.be.equal(biggerPropDataSize - expectedConsumedSpaceDiff);
+      expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(smallerProp);
+      expect(consumedSpace).to.be.equal(sizeOfProperty(biggerProp) - expectedConsumedSpaceDiff);
     }));
 });
 
@@ -461,7 +459,7 @@ describe('Negative Integration Test: Token Properties', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       let dave: IKeyringPair;
       [alice, bob, charlie, dave] = await helper.arrange.createAccounts([100n, 100n, 100n, 100n], donor);
 
@@ -704,7 +702,7 @@ describe('ReFungible token properties permissions tests', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
   });

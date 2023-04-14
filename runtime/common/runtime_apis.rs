@@ -42,6 +42,7 @@ macro_rules! impl_common_runtime_apis {
             transaction_validity::{TransactionSource, TransactionValidity},
             ApplyExtrinsicResult, DispatchError,
         };
+        use frame_support::pallet_prelude::Weight;
         use fp_rpc::TransactionStatus;
         use pallet_transaction_payment::{
             FeeDetails, RuntimeDispatchInfo,
@@ -486,6 +487,12 @@ macro_rules! impl_common_runtime_apis {
                 fn query_fee_details(uxt: <Block as BlockT>::Extrinsic, len: u32) -> FeeDetails<Balance> {
                     TransactionPayment::query_fee_details(uxt, len)
                 }
+                fn query_weight_to_fee(weight: Weight) -> Balance {
+                    TransactionPayment::weight_to_fee(weight)
+                }
+                fn query_length_to_fee(length: u32) -> Balance {
+                    TransactionPayment::length_to_fee(length)
+                }
             }
 
             /*
@@ -539,6 +546,7 @@ macro_rules! impl_common_runtime_apis {
                     use frame_support::traits::StorageInfoTrait;
 
                     let mut list = Vec::<BenchmarkList>::new();
+                    list_benchmark!(list, extra, pallet_xcm, PolkadotXcm);
 
                     list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
                     list_benchmark!(list, extra, pallet_common, Common);
@@ -604,6 +612,7 @@ macro_rules! impl_common_runtime_apis {
 
                     let mut batches = Vec::<BenchmarkBatch>::new();
                     let params = (&config, &allowlist);
+                    add_benchmark!(params, batches, pallet_xcm, PolkadotXcm);
 
                     add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
                     add_benchmark!(params, batches, pallet_common, Common);
@@ -667,7 +676,7 @@ macro_rules! impl_common_runtime_apis {
 
             #[cfg(feature = "try-runtime")]
             impl frame_try_runtime::TryRuntime<Block> for Runtime {
-                fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (frame_support::pallet_prelude::Weight, frame_support::pallet_prelude::Weight) {
+                fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
                     log::info!("try-runtime::on_runtime_upgrade unique-chain.");
                     let weight = Executive::try_runtime_upgrade(checks).unwrap();
                     (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
@@ -678,7 +687,7 @@ macro_rules! impl_common_runtime_apis {
                     state_root_check: bool,
                     signature_check: bool,
                     select: frame_try_runtime::TryStateSelect
-                ) -> frame_support::pallet_prelude::Weight {
+                ) -> Weight {
                     log::info!(
                         target: "node-runtime",
                         "try-runtime: executing block {:?} / root checks: {:?} / try-state-select: {:?}",

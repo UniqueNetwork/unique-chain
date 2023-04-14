@@ -82,8 +82,8 @@ _bench:
 	cargo run --release --features runtime-benchmarks,$(RUNTIME) -- \
 	benchmark pallet --pallet pallet-$(if $(PALLET),$(PALLET),$(error Must set PALLET)) \
 	--wasm-execution compiled --extrinsic '*' \
-	--template .maintain/frame-weight-template.hbs --steps=50 --repeat=80 --heap-pages=4096 \
-	--output=./pallets/$(if $(PALLET_DIR),$(PALLET_DIR),$(PALLET))/src/weights.rs
+	$(if $(TEMPLATE),$(TEMPLATE),--template=.maintain/frame-weight-template.hbs) --steps=50 --repeat=80 --heap-pages=4096 \
+	--output=$(if $(OUTPUT),$(OUTPUT),./pallets/$(if $(PALLET_DIR),$(PALLET_DIR),$(PALLET))/src/weights.rs)
 
 .PHONY: bench-evm-migration
 bench-evm-migration:
@@ -135,15 +135,19 @@ bench-identity:
 
 .PHONY: bench-app-promotion
 bench-app-promotion:
-	make _bench PALLET=app-promotion PALLET_DIR=app-promotion
+	make _bench PALLET=app-promotion
 
 .PHONY: bench-maintenance
 bench-maintenance:
 	make _bench PALLET=maintenance
 
+.PHONY: bench-xcm
+bench-xcm:
+	make _bench PALLET=xcm OUTPUT=./runtime/common/weights/xcm.rs TEMPLATE="--template=.maintain/external-weight-template.hbs"
+
 .PHONY: bench
 # Disabled: bench-scheduler, bench-collator-selection, bench-identity
-bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance
+bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm
 
 .PHONY: check
 check:

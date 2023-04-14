@@ -27,11 +27,12 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup},
 	testing::Header,
 };
-use pallet_transaction_payment::{CurrencyAdapter};
+use pallet_transaction_payment::CurrencyAdapter;
 use frame_system as system;
 use pallet_evm::{
 	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
 };
+use pallet_ethereum::PostLogContent;
 use fp_evm_mapping::EvmBackwardsAddressMapping;
 use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -43,7 +44,7 @@ mod dispatch;
 
 use dispatch::CollectionDispatchT;
 
-#[path = "../../common/weights.rs"]
+#[path = "../../common/weights/mod.rs"]
 mod weights;
 
 use weights::CommonWeights;
@@ -204,11 +205,13 @@ impl Default for TestCrossAccountId {
 parameter_types! {
 	pub BlockGasLimit: U256 = 0u32.into();
 	pub WeightPerGas: Weight = Weight::from_ref_time(20);
+	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
 }
 
 impl pallet_ethereum::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type PostLogContent = PostBlockAndTxnHashes;
 }
 
 impl pallet_evm::Config for Test {

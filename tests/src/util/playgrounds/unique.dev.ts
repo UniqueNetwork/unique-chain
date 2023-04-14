@@ -3,7 +3,7 @@
 
 import {stringToU8a} from '@polkadot/util';
 import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper} from './unique';
+import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -170,6 +170,28 @@ export class DevMoonriverHelper extends DevMoonbeamHelper {
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
     super(logger, options);
+  }
+}
+
+export class DevAstarHelper extends AstarHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevAstarHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevShidenHelper extends AstarHelper {
+  wait: WaitGroup;
+
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevShidenHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
   }
 }
 
@@ -398,6 +420,100 @@ export class ArrangeGroup {
 
     return capture;
   }
+
+  makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint) {
+    return {
+      V2: [
+        {
+          WithdrawAsset: [
+            {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+            weightLimit: 'Unlimited',
+          },
+        },
+        {
+          DepositAsset: {
+            assets: {
+              Wild: 'All',
+            },
+            maxAssets: 1,
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary,
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint) {
+    return {
+      V2: [
+        {
+          ReserveAssetDeposited: [
+            {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id,
+              fun: {
+                Fungible: amount,
+              },
+            },
+            weightLimit: 'Unlimited',
+          },
+        },
+        {
+          DepositAsset: {
+            assets: {
+              Wild: 'All',
+            },
+            maxAssets: 1,
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary,
+                  },
+                },
+              },
+            },
+          },
+        },
+      ],
+    };
+  }
 }
 
 class MoonbeamAccountGroup {
@@ -609,6 +725,19 @@ class WaitGroup {
       });
     });
     return promise;
+  }
+
+  async eventOutcome<EventT>(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+    const eventRecord = await this.event(maxBlocksToWait, eventSection, eventMethod);
+
+    if (eventRecord == null) {
+      return null;
+    }
+
+    const event = eventRecord!.event;
+    const outcome = event.data[1] as EventT;
+
+    return outcome;
   }
 }
 

@@ -33,7 +33,7 @@ describe('Integration Test: Maintenance Functionality', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Maintenance]);
       superuser = await privateKey('//Alice');
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [bob] = await helper.arrange.createAccounts([10000n], donor);
 
     });

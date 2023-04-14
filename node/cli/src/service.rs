@@ -68,7 +68,6 @@ use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
 
 use up_common::types::opaque::*;
 
-#[cfg(feature = "pov-estimate")]
 use crate::chain_spec::RuntimeIdentification;
 
 /// Unique native executor instance.
@@ -469,7 +468,7 @@ where
 			block_announce_validator_builder: Some(Box::new(|_| {
 				Box::new(block_announce_validator)
 			})),
-			warp_sync: None,
+			warp_sync_params: None,
 		})?;
 
 	let rpc_client = client.clone();
@@ -495,6 +494,7 @@ where
 			Duration::new(6, 0),
 			client.clone(),
 			backend.clone(),
+			overrides_handle::<_, _, Runtime>(client.clone()),
 			frontier_backend.clone(),
 			3,
 			0,
@@ -506,12 +506,10 @@ where
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
-	#[cfg(feature = "pov-estimate")]
 	let runtime_id = parachain_config.chain_spec.runtime_id();
 
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			#[cfg(feature = "pov-estimate")]
 			runtime_id: runtime_id.clone(),
 
 			#[cfg(feature = "pov-estimate")]
@@ -587,6 +585,10 @@ where
 
 	let relay_chain_slot_duration = Duration::from_secs(6);
 
+	let overseer_handle = relay_chain_interface
+		.overseer_handle()
+		.map_err(|e| sc_service::Error::Application(Box::new(e)))?;
+
 	if validator {
 		let parachain_consensus = build_consensus(
 			client.clone(),
@@ -615,6 +617,7 @@ where
 			collator_key: collator_key.expect("Command line arguments do not allow this. qed"),
 			relay_chain_interface,
 			relay_chain_slot_duration,
+			recovery_handle: Box::new(overseer_handle),
 		};
 
 		start_collator(params).await?;
@@ -627,6 +630,7 @@ where
 			import_queue: import_queue_service,
 			relay_chain_interface,
 			relay_chain_slot_duration,
+			recovery_handle: Box::new(overseer_handle),
 		};
 
 		start_full_node(params)?;
@@ -900,7 +904,7 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync: None,
+			warp_sync_params: None,
 		})?;
 
 	if config.offchain_worker.enabled {
@@ -1016,6 +1020,7 @@ where
 			Duration::new(6, 0),
 			client.clone(),
 			backend.clone(),
+			overrides_handle::<_, _, Runtime>(client.clone()),
 			frontier_backend.clone(),
 			3,
 			0,
@@ -1032,12 +1037,10 @@ where
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
-	#[cfg(feature = "pov-estimate")]
 	let runtime_id = config.chain_spec.runtime_id();
 
 	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
 		let full_deps = unique_rpc::FullDeps {
-			#[cfg(feature = "pov-estimate")]
 			runtime_id: runtime_id.clone(),
 
 			#[cfg(feature = "pov-estimate")]

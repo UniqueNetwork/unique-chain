@@ -25,7 +25,7 @@ describe('integration test: RPC methods', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([20n, 10n], donor);
     });
   });

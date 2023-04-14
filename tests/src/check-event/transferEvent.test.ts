@@ -25,7 +25,7 @@ describe('Transfer event ', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      const donor = await privateKey({filename: __filename});
+      const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
   });

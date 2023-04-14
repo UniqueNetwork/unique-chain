@@ -27,7 +27,7 @@ describe('App promotion', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
       superuser = await privateKey('//Alice');
-      donor = await privateKey({filename: __filename});
+      donor = await privateKey({url: import.meta.url});
       palletAdmin = await privateKey('//PromotionAdmin');
       const api = helper.getApi();
       await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));

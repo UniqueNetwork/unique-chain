@@ -8,27 +8,30 @@ import {UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common';
+import {makeNames} from '../../util';
 import {ContractImports} from '../../eth/util/playgrounds/types';
+
+const {dirname} = makeNames(import.meta.url);
 
 export const CONTRACT_IMPORT: ContractImports[] = [
   {
-    fsPath: `${__dirname}/../../eth/api/CollectionHelpers.sol`,
+    fsPath: `${dirname}/../../eth/api/CollectionHelpers.sol`,
     solPath: 'eth/api/CollectionHelpers.sol',
   },
   {
-    fsPath: `${__dirname}/../../eth/api/ContractHelpers.sol`,
+    fsPath: `${dirname}/../../eth/api/ContractHelpers.sol`,
     solPath: 'eth/api/ContractHelpers.sol',
   },
   {
-    fsPath: `${__dirname}/../../eth/api/UniqueRefungibleToken.sol`,
+    fsPath: `${dirname}/../../eth/api/UniqueRefungibleToken.sol`,
     solPath: 'eth/api/UniqueRefungibleToken.sol',
   },
   {
-    fsPath: `${__dirname}/../../eth/api/UniqueRefungible.sol`,
+    fsPath: `${dirname}/../../eth/api/UniqueRefungible.sol`,
     solPath: 'eth/api/UniqueRefungible.sol',
   },
   {
-    fsPath: `${__dirname}/../../eth/api/UniqueNFT.sol`,
+    fsPath: `${dirname}/../../eth/api/UniqueNFT.sol`,
     solPath: 'eth/api/UniqueNFT.sol',
   },
 ];
@@ -65,7 +68,7 @@ const main = async () => {
 
   await usingEthPlaygrounds(async (helper, privateKey) => {
     const CONTRACT_SOURCE = (
-      await readFile(`${__dirname}/proxyContract.sol`)
+      await readFile(`${dirname}/proxyContract.sol`)
     ).toString();
 
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network

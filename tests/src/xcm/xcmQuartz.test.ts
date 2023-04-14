@@ -18,12 +18,14 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
 import {XcmV2TraitsError} from '../interfaces';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds} from '../util';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
+import {DevUniqueHelper} from '../util/playgrounds/unique.dev';
 
 const QUARTZ_CHAIN = 2095;
 const STATEMINE_CHAIN = 1000;
 const KARURA_CHAIN = 2000;
 const MOONRIVER_CHAIN = 2023;
+const SHIDEN_CHAIN = 2007;
 
 const STATEMINE_PALLET_INSTANCE = 50;
 
@@ -31,10 +33,13 @@ const relayUrl = config.relayUrl;
 const statemineUrl = config.statemineUrl;
 const karuraUrl = config.karuraUrl;
 const moonriverUrl = config.moonriverUrl;
+const shidenUrl = config.shidenUrl;
 
 const RELAY_DECIMALS = 12;
 const STATEMINE_DECIMALS = 12;
 const KARURA_DECIMALS = 12;
+const SHIDEN_DECIMALS = 18n;
+const QTZ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -48,6 +53,8 @@ const USDT_ASSET_METADATA_NAME = 'USDT';
 const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
+
+const SAFE_XCM_VERSION = 2;
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   let alice: IKeyringPair;
@@ -69,9 +76,12 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
 
   before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       bob = await privateKey('//Bob'); // sovereign account on Statemine(t) funds donor
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -113,7 +123,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X3: [
             {
@@ -145,7 +155,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -154,7 +164,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -166,7 +176,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -191,7 +201,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   itSub('Should connect and send USDT from Statemine to Quartz', async ({helper}) => {
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
       const dest = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -200,7 +210,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -212,7 +222,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -276,7 +286,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
   itSub('Should connect and send USDT from Quartz to Statemine back', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {X2: [
           {
@@ -314,7 +324,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     // the commission has been paid in parachain native token
     balanceQuartzFinal = await helper.balance.getSubstrate(alice.address);
-    console.log('[Quartz -> Statemine] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(balanceQuartzFinal - balanceQuartzAfter));
+    console.log('[Quartz -> Statemine] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(balanceQuartzAfter - balanceQuartzFinal));
     expect(balanceQuartzAfter > balanceQuartzFinal).to.be.true;
 
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
@@ -332,7 +342,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: QUARTZ_CHAIN,
@@ -341,7 +351,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -353,7 +363,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -401,7 +411,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     });
 
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1:{
@@ -466,6 +476,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
@@ -501,7 +514,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
   itSub('Should connect and send QTZ to Karura', async ({helper}) => {
     const destination = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -512,7 +525,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     };
 
     const beneficiary = {
-      V1: {
+      V2: {
         parents: 0,
         interior: {
           X1: {
@@ -526,7 +539,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     };
 
     const assets = {
-      V1: [
+      V2: [
         {
           id: {
             Concrete: {
@@ -629,60 +642,277 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
-});
 
-// These tests are relevant only when the foreign asset pallet is disabled
-describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
-  let alice: IKeyringPair;
+  itSub('Karura can send only up to its balance', async ({helper}) => {
+    // set Karura's sovereign account's balance
+    const karuraBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const karuraSovereignAccount = helper.address.paraSiblingSovereignAccount(KARURA_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, karuraSovereignAccount, karuraBalance);
 
-  before(async () => {
-    await usingPlaygrounds(async (_helper, privateKey) => {
-      alice = await privateKey('//Alice');
-    });
-  });
+    const moreThanKaruraHas = karuraBalance * 2n;
 
-  itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
-    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
-      const destination = {
-        V1: {
-          parents: 1,
-          interior: {
-            X2: [
-              {Parachain: QUARTZ_CHAIN},
-              {
-                AccountId32: {
-                  network: 'Any',
-                  id: alice.addressRaw,
-                },
-              },
-            ],
-          },
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
         },
-      };
+      },
+    };
 
-      const id = {
-        Token: 'KAR',
-      };
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanKaruraHas,
+    );
 
-      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, 'Unlimited');
+    // Try to trick Quartz
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
     });
 
     const maxWaitBlocks = 3;
 
-    const xcmpQueueFailEvent = await helper.wait.event(maxWaitBlocks, 'xcmpQueue', 'Fail');
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
 
     expect(
       xcmpQueueFailEvent != null,
-      '[Karura] xcmpQueue.FailEvent event is expected',
+      '\'xcmpQueue.FailEvent\' event is expected',
     ).to.be.true;
-
-    const event = xcmpQueueFailEvent!.event;
-    const outcome = event.data[1] as XcmV2TraitsError;
 
     expect(
-      outcome.isFailedToTransactAsset,
-      '[Karura] The XCM error should be `FailedToTransactAsset`',
+      xcmpQueueFailEvent!.isFailedToTransactAsset,
+      'The XCM error should be \'FailedToTransactAsset\'',
     ).to.be.true;
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Karura still can send the correct amount
+    const validTransferAmount = karuraBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
+
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, validXcmProgram);
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Karura', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      '\'xcmpQueue.FailEvent\' event is expected',
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isUntrustedReserveLocation,
+      'The XCM error should be \'isUntrustedReserveLocation\'',
+    ).to.be.true;
+
+    const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+  });
+});
+
+// These tests are relevant only when
+// the the corresponding foreign assets are not registered
+describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
+  let alice: IKeyringPair;
+  let alith: IKeyringPair;
+
+  const testAmount = 100_000_000_000n;
+  let quartzParachainJunction;
+  let quartzAccountJunction;
+
+  let quartzParachainMultilocation: any;
+  let quartzAccountMultilocation: any;
+  let quartzCombinedMultilocation: any;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+
+      quartzParachainJunction = {Parachain: QUARTZ_CHAIN};
+      quartzAccountJunction = {
+        AccountId32: {
+          network: 'Any',
+          id: alice.addressRaw,
+        },
+      };
+
+      quartzParachainMultilocation = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: quartzParachainJunction,
+          },
+        },
+      };
+
+      quartzAccountMultilocation = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: quartzAccountJunction,
+          },
+        },
+      };
+
+      quartzCombinedMultilocation = {
+        V1: {
+          parents: 1,
+          interior: {
+            X2: [quartzParachainJunction, quartzAccountJunction],
+          },
+        },
+      };
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    // eslint-disable-next-line require-await
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      alith = helper.account.alithAccount();
+    });
+  });
+
+  const expectFailedToTransact = async (network: string, helper: DevUniqueHelper) => {
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      `[reject ${network} tokens] 'xcmpQueue.FailEvent' event is expected`,
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isFailedToTransactAsset,
+      `[reject ${network} tokens] The XCM error should be 'FailedToTransactAsset'`,
+    ).to.be.true;
+  };
+
+  itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      const id = {
+        Token: 'KAR',
+      };
+      const destination = quartzCombinedMultilocation;
+      await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
+    });
+
+    await expectFailedToTransact('KAR', helper);
+  });
+
+  itSub('Quartz rejects MOVR tokens from Moonriver', async ({helper}) => {
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const id = 'SelfReserve';
+      const destination = quartzCombinedMultilocation;
+      await helper.xTokens.transfer(alith, id, testAmount, destination, 'Unlimited');
+    });
+
+    await expectFailedToTransact('MOVR', helper);
+  });
+
+  itSub('Quartz rejects SDN tokens from Shiden', async ({helper}) => {
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      const destinationParachain = quartzParachainMultilocation;
+      const beneficiary = quartzAccountMultilocation;
+      const assets = {
+        V1: [{
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: testAmount,
+          },
+        }],
+      };
+      const feeAssetItem = 0;
+
+      await helper.executeExtrinsic(alice, 'api.tx.polkadotXcm.reserveWithdrawAssets', [
+        destinationParachain,
+        beneficiary,
+        assets,
+        feeAssetItem,
+      ]);
+    });
+
+    await expectFailedToTransact('SDN', helper);
   });
 });
 
@@ -726,6 +956,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       [randomAccountQuartz] = await helper.arrange.createAccounts([0n], quartzDonor);
 
       balanceForeignQtzTokenInit = 0n;
+
+      // Set the default version to wrap the first message to other chains.
+      const alice = quartzDonor;
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
@@ -865,7 +1099,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       NativeAssetId: 'Here',
     };
     const dest = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X2: [
@@ -961,5 +1195,363 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
     console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
+  });
+
+  // eslint-disable-next-line require-await
+  itSub.skip('Moonriver can send only up to its balance', async ({helper}) => {
+    throw Error('Not yet implemented');
+  });
+
+  // eslint-disable-next-line require-await
+  itSub.skip('Should not accept reserve transfer of QTZ from Moonriver', async ({helper}) => {
+    throw Error('Not yet implemented');
+  });
+});
+
+describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
+  let alice: IKeyringPair;
+  let sender: IKeyringPair;
+
+  const QTZ_ASSET_ID_ON_SHIDEN = 1;
+  const QTZ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
+
+  // Quartz -> Shiden
+  const shidenInitialBalance = 1n * (10n ** SHIDEN_DECIMALS); // 1 SHD, existential deposit required to actually create the account on Shiden
+  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
+  const qtzToShidenTransferred = 10n * (10n ** QTZ_DECIMALS); // 10 QTZ
+  const qtzToShidenArrived = 9_999_999_999_088_000_000n; // 9.999 ... QTZ, Shiden takes a commision in foreign tokens
+
+  // Shiden -> Quartz
+  const qtzFromShidenTransfered = 5n * (10n ** QTZ_DECIMALS); // 5 QTZ
+  const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 4.999_999_999_088_000_000n QTZ
+
+  let balanceAfterQuartzToShidenXCM: bigint;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      [sender] = await helper.arrange.createAccounts([100n], alice);
+      console.log('sender', sender.address);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      console.log('1. Create foreign asset and metadata');
+      // TODO update metadata with values from production
+      await helper.assets.create(
+        alice,
+        QTZ_ASSET_ID_ON_SHIDEN,
+        alice.address,
+        QTZ_MINIMAL_BALANCE_ON_SHIDEN,
+      );
+
+      await helper.assets.setMetadata(
+        alice,
+        QTZ_ASSET_ID_ON_SHIDEN,
+        'Cross chain QTZ',
+        'xcQTZ',
+        Number(QTZ_DECIMALS),
+      );
+
+      console.log('2. Register asset location on Shiden');
+      const assetLocation = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      };
+
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, QTZ_ASSET_ID_ON_SHIDEN]);
+
+      console.log('3. Set QTZ payment for XCM execution on Shiden');
+      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+
+      console.log('4. Transfer 1 SDN to recipient to create the account (needed due to existential balance)');
+      await helper.balance.transferToSubstrate(alice, sender.address, shidenInitialBalance);
+    });
+  });
+
+  itSub('Should connect and send QTZ to Shiden', async ({helper}) => {
+    const destination = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: SHIDEN_CHAIN,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V2: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: sender.addressRaw,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V2: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: qtzToShidenTransferred,
+          },
+        },
+      ],
+    };
+
+    // Initial balance is 100 QTZ
+    const balanceBefore = await helper.balance.getSubstrate(sender.address);
+    console.log(`Initial balance is: ${balanceBefore}`);
+
+    const feeAssetItem = 0;
+    await helper.xcm.limitedReserveTransferAssets(sender, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+
+    // Balance after reserve transfer is less than 90
+    balanceAfterQuartzToShidenXCM = await helper.balance.getSubstrate(sender.address);
+    console.log(`QTZ Balance on Quartz after XCM is: ${balanceAfterQuartzToShidenXCM}`);
+    console.log(`Quartz's QTZ commission is: ${balanceBefore - balanceAfterQuartzToShidenXCM}`);
+    expect(balanceBefore - balanceAfterQuartzToShidenXCM > 0).to.be.true;
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.wait.newBlocks(3);
+      const xcQTZbalance = await helper.assets.account(QTZ_ASSET_ID_ON_SHIDEN, sender.address);
+      const shidenBalance = await helper.balance.getSubstrate(sender.address);
+
+      console.log(`xcQTZ balance on Shiden after XCM is: ${xcQTZbalance}`);
+      console.log(`Shiden's QTZ commission is: ${qtzToShidenTransferred - xcQTZbalance!}`);
+
+      expect(xcQTZbalance).to.eq(qtzToShidenArrived);
+      // SHD balance does not changed:
+      expect(shidenBalance).to.eq(shidenInitialBalance);
+    });
+  });
+
+  itSub('Should connect to Shiden and send QTZ back', async ({helper}) => {
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      const destination = {
+        V1: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      };
+
+      const beneficiary = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: {
+              AccountId32: {
+                network: 'Any',
+                id: sender.addressRaw,
+              },
+            },
+          },
+        },
+      };
+
+      const assets = {
+        V1: [
+          {
+            id: {
+              Concrete: {
+                parents: 1,
+                interior: {
+                  X1: {
+                    Parachain: QUARTZ_CHAIN,
+                  },
+                },
+              },
+            },
+            fun: {
+              Fungible: qtzFromShidenTransfered,
+            },
+          },
+        ],
+      };
+
+      // Initial balance is 1 SDN
+      const balanceSDNbefore = await helper.balance.getSubstrate(sender.address);
+      console.log(`SDN balance is: ${balanceSDNbefore}, it does not changed`);
+      expect(balanceSDNbefore).to.eq(shidenInitialBalance);
+
+      const feeAssetItem = 0;
+      // this is non-standard polkadotXcm extension for Astar only. It calls InitiateReserveWithdraw
+      await helper.executeExtrinsic(sender, 'api.tx.polkadotXcm.reserveWithdrawAssets', [destination, beneficiary, assets, feeAssetItem]);
+
+      // Balance after reserve transfer is less than 1 SDN
+      const xcQTZbalance = await helper.assets.account(QTZ_ASSET_ID_ON_SHIDEN, sender.address);
+      const balanceSDN = await helper.balance.getSubstrate(sender.address);
+      console.log(`xcQTZ balance on Shiden after XCM is: ${xcQTZbalance}`);
+
+      // Assert: xcQTZ balance correctly decreased
+      expect(xcQTZbalance).to.eq(qtzOnShidenLeft);
+      // Assert: SDN balance is 0.996...
+      expect(balanceSDN / (10n ** (SHIDEN_DECIMALS - 3n))).to.eq(996n);
+    });
+
+    await helper.wait.newBlocks(3);
+    const balanceQTZ = await helper.balance.getSubstrate(sender.address);
+    console.log(`QTZ Balance on Quartz after XCM is: ${balanceQTZ}`);
+    expect(balanceQTZ).to.eq(balanceAfterQuartzToShidenXCM + qtzFromShidenTransfered);
+  });
+
+  itSub('Shiden can send only up to its balance', async ({helper}) => {
+    // set Shiden's sovereign account's balance
+    const shidenBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const shidenSovereignAccount = helper.address.paraSiblingSovereignAccount(SHIDEN_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, shidenSovereignAccount, shidenBalance);
+
+    const moreThanShidenHas = shidenBalance * 2n;
+
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanShidenHas,
+    );
+
+    // Try to trick Quartz
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      '\'xcmpQueue.FailEvent\' event is expected',
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isFailedToTransactAsset,
+      'The XCM error should be \'FailedToTransactAsset\'',
+    ).to.be.true;
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Shiden still can send the correct amount
+    const validTransferAmount = shidenBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, validXcmProgram);
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Shiden', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+    });
+
+    const maxWaitBlocks = 3;
+
+    const xcmpQueueFailEvent = await helper.wait.eventOutcome<XcmV2TraitsError>(
+      maxWaitBlocks,
+      'xcmpQueue',
+      'Fail',
+    );
+
+    expect(
+      xcmpQueueFailEvent != null,
+      '\'xcmpQueue.FailEvent\' event is expected',
+    ).to.be.true;
+
+    expect(
+      xcmpQueueFailEvent!.isUntrustedReserveLocation,
+      'The XCM error should be \'isUntrustedReserveLocation\'',
+    ).to.be.true;
+
+    const accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });

@@ -297,7 +297,7 @@ benchmarks! {
 			sender: cross_from_sub(owner); owner: cross_sub;
 		};
 		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
-	}: {<Pallet<T>>::token_owner(collection.id, item)}
+	}: {<Pallet<T>>::token_owner(collection.id, item).unwrap()}
 
 	set_allowance_for_all {
 		bench_init!{
