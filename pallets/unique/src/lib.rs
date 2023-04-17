@@ -81,6 +81,7 @@ use frame_support::{
 	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
 	BoundedVec,
 };
+use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use frame_system::{self as system, ensure_signed, ensure_root};
 use sp_std::{vec, vec::Vec};
@@ -106,6 +107,23 @@ use weights::WeightInfo;
 /// A maximum number of levels of depth in the token nesting tree.
 pub const NESTING_BUDGET: u32 = 5;
 
+/// Collection Type.
+///
+/// Collection can represent various types of tokens.
+/// Each collection can contain only one type of tokens at a time.
+/// This type helps to understand which tokens the collection contains.
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[repr(u8)]
+pub enum CollectionType {
+	/// Non fungible tokens.
+	NFT = 1,
+	/// Fungible tokens.
+	Fungible = 2,
+	/// Refungible tokens.
+	ReFungible = 3,
+}
+
 decl_error! {
 	/// Errors for the common Unique transactions.
 	pub enum Error for Module<T: Config> {
@@ -115,11 +133,21 @@ decl_error! {
 		EmptyArgument,
 		/// Repertition is only supported by refungible collection.
 		RepartitionCalledOnNonRefungibleCollection,
+		/// Invalid collection type specified.
+		InvalidCollectionType
 	}
 }
 
 /// Configuration trait of this pallet.
-pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
+pub trait Config:
+	system::Config
+	+ pallet_common::Config
+	+ pallet_fungible::Config
+	+ pallet_nonfungible::Config
+	+ pallet_refungible::Config
+	+ Sized
+	+ TypeInfo
+{
 	/// Weight information for extrinsics in this pallet.
 	type WeightInfo: WeightInfo;
 
@@ -829,6 +857,49 @@ decl_module! {
 			let budget = budget::Value::new(NESTING_BUDGET);
 
 			dispatch_tx::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
+		}
+
+		// Change ownership of the token.
+		///
+		/// # Permissions
+		///
+		/// * Collection owner
+		/// * Collection admin
+		/// * Current token owner
+		///
+		/// # Arguments
+		///
+		/// * `recipient`: Address of token recipient.
+		/// * `collection_type`: Type of the collection.
+		/// * `collection_id`: ID of the collection the item belongs to.
+		/// * `item_id`: ID of the item.
+		///     * Non-Fungible Mode: Required.
+		///     * Fungible Mode: Ignored.
+		///     * Re-Fungible Mode: Required.
+		///
+		/// * `value`: Amount to transfer.
+		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
+		///     * Fungible Mode: The desired number of pieces to transfer.
+		///     * Re-Fungible Mode: The desired number of pieces to transfer.
+		#[weight = match collection_type {
+			CollectionType::NFT => pallet_nonfungible::common::CommonWeights::<T>::transfer(),
+			CollectionType::Fungible => pallet_fungible::common::CommonWeights::<T>::transfer(),
+			CollectionType::ReFungible => pallet_refungible::common::CommonWeights::<T>::transfer(),
+		} + pallet_common::dispatch::dispatch_weight::<T>()]
+		pub fn transfer_ex(origin, recipient: T::CrossAccountId, collection_type: CollectionType, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResult {
+			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
+			let budget = budget::Value::new(NESTING_BUDGET);
+
+			let handle = <CollectionHandle<T>>::try_get(collection_id)?;
+			ensure!(handle.mode.id() == collection_type as u8, <Error<T>>::InvalidCollectionType);
+
+			handle.check_is_internal()?;
+
+			let dispatched_handle = T::CollectionDispatch::dispatch(handle);
+			let r =
+			dispatched_handle.as_dyn().transfer(sender, recipient, item_id, value, &budget);
+				r.map(|_| ())
+				.map_err(|e| e.error)
 		}
 
 		/// Allow a non-permissioned address to transfer or burn an item.

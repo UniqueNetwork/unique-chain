@@ -51,6 +51,7 @@ pallet-evm = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-nonfungible = { workspace = true }
 pallet-refungible = { workspace = true }
+pallet-fungible = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
