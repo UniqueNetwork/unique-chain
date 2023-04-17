@@ -662,6 +662,38 @@ describe('NFT: Plain calls', () => {
     // Cannot transfer token if it does not exist:
     await expect(collectionEvm.methods[testCase](receiver, 999999).send({from: sender})).to.be.rejected;
   }));
+
+  itEth('Check crossBalanceOf()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {});
+    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
+
+    expect(BigInt(await collectionEvm.methods.crossBalanceOf(owner).call({from: owner.eth})) === 0n).to.be.true;
+
+    for (let i = 1n; i < 100n; i++) {
+      await collection.mintToken(minter, {Ethereum: owner.eth});
+      expect(BigInt(await collectionEvm.methods.crossBalanceOf(owner).call({from: owner.eth})) === i).to.be.true;
+    }
+  });
+
+  itEth('Check crossOwnerOf()', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(minter, {});
+    let owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.eth});
+
+    for (let i = 1n; i < 100n; i++) {
+      const ownerCross = await collectionEvm.methods.crossOwnerOf(tokenId).call({from: owner.eth});
+      expect(ownerCross.eth).to.be.eq(owner.eth);
+      expect(ownerCross.sub).to.be.eq(owner.sub);
+
+      const newOwner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+      await collectionEvm.methods.transferCross(newOwner, tokenId).send({from: owner.eth});
+      owner = newOwner;
+    }
+  });
 });
 
 describe('NFT: Fees', () => {

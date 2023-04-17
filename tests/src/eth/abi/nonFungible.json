@@ -386,6 +386,23 @@
   },
   {
     "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct CrossAddress",
+        "name": "owner",
+        "type": "tuple"
+      }
+    ],
+    "name": "crossBalanceOf",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "crossOwnerOf",

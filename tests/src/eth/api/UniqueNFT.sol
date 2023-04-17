@@ -533,7 +533,7 @@ interface ERC721UniqueMintable is Dummy, ERC165 {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x16de3152
+/// @dev the ERC-165 identifier for this interface is 0x323b1db8
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -556,6 +556,15 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x2b29dace,
 	///  or in textual repr: crossOwnerOf(uint256)
 	function crossOwnerOf(uint256 tokenId) external view returns (CrossAddress memory);
+
+	/// @notice Count all NFTs assigned to an owner
+	/// @dev NFTs assigned to the zero address are considered invalid, and this
+	///  function throws for queries about the zero address.
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of NFTs owned by `owner`, possibly zero
+	/// @dev EVM selector for this function is: 0x24e52cea,
+	///  or in textual repr: crossBalanceOf((address,uint256))
+	function crossBalanceOf(CrossAddress memory owner) external view returns (uint256);
 
 	/// Returns the token properties.
 	///

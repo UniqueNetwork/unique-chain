@@ -774,7 +774,7 @@ contract ERC721UniqueMintable is Dummy, ERC165 {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0xb365c124
+/// @dev the ERC-165 identifier for this interface is 0x9780edce
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -813,6 +813,20 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		tokenId;
 		dummy;
 		return CrossAddress(0x0000000000000000000000000000000000000000, 0);
+	}
+
+	/// @notice Count all RFTs assigned to an owner
+	/// @dev RFTs assigned to the zero address are considered invalid, and this
+	///  function throws for queries about the zero address.
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of RFTs owned by `owner`, possibly zero
+	/// @dev EVM selector for this function is: 0x24e52cea,
+	///  or in textual repr: crossBalanceOf((address,uint256))
+	function crossBalanceOf(CrossAddress memory owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
 	}
 
 	/// Returns the token properties.

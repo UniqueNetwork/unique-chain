@@ -755,6 +755,17 @@ where
 			.map_err(|_| Error::Revert("token not found".into()))
 	}
 
+	/// @notice Count all NFTs assigned to an owner
+	/// @dev NFTs assigned to the zero address are considered invalid, and this
+	///  function throws for queries about the zero address.
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of NFTs owned by `owner`, possibly zero
+	fn cross_balance_of(&self, owner: eth::CrossAddress) -> Result<U256> {
+		self.consume_store_reads(1)?;
+		let balance = <AccountBalance<T>>::get((self.id, owner.into_sub_cross_account::<T>()?));
+		Ok(balance.into())
+	}
+
 	/// Returns the token properties.
 	///
 	/// @param tokenId Id for the token.
