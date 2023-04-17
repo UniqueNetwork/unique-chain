@@ -86,12 +86,7 @@ pub mod weights;
 pub mod pallet {
 	use super::*;
 
-	use frame_support::{
-		dispatch::DispatchResult,
-		ensure, fail,
-		BoundedVec,
-		storage::Key,
-	};
+	use frame_support::{dispatch::DispatchResult, ensure, fail, BoundedVec, storage::Key};
 	use scale_info::TypeInfo;
 	use frame_system::{ensure_signed, ensure_root};
 	use sp_std::{vec, vec::Vec};
