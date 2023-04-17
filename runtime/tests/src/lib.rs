@@ -31,9 +31,9 @@ use pallet_transaction_payment::CurrencyAdapter;
 use frame_system as system;
 use pallet_evm::{
 	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
+	BackwardsAddressMapping,
 };
 use pallet_ethereum::PostLogContent;
-use fp_evm_mapping::EvmBackwardsAddressMapping;
 use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
@@ -162,7 +162,7 @@ impl AddressMapping<u64> for TestEvmAddressMapping {
 }
 
 pub struct TestEvmBackwardsAddressMapping;
-impl EvmBackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
+impl BackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 	fn from_account_id(_account_id: u64) -> sp_core::H160 {
 		unimplemented!()
 	}
@@ -216,15 +216,14 @@ impl pallet_ethereum::Config for Test {
 
 impl pallet_evm::Config for Test {
 	type CrossAccountId = TestCrossAccountId;
-	type EvmAddressMapping = TestEvmAddressMapping;
-	type EvmBackwardsAddressMapping = TestEvmBackwardsAddressMapping;
+	type AddressMapping = TestEvmAddressMapping;
+	type BackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type RuntimeEvent = RuntimeEvent;
 	type FeeCalculator = ();
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type CallOrigin = EnsureAddressNever<Self>;
 	type WithdrawOrigin = EnsureAddressNever<Self>;
-	type AddressMapping = TestEvmAddressMapping;
 	type Currency = Balances;
 	type PrecompilesType = ();
 	type PrecompilesValue = ();

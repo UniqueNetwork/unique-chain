@@ -92,6 +92,7 @@ pub mod benchmarking;
 pub mod dispatch;
 pub mod erc;
 pub mod eth;
+#[allow(missing_docs)]
 pub mod weights;
 
 /// Weight info.
@@ -157,10 +158,12 @@ impl<T: Config> CollectionHandle<T> {
 		reads: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
 				<T as frame_system::Config>::DbWeight::get()
 					.read
 					.saturating_mul(reads),
+				// TODO: measure proof
+				0,
 			)))
 	}
 
@@ -170,10 +173,12 @@ impl<T: Config> CollectionHandle<T> {
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
 				<T as frame_system::Config>::DbWeight::get()
 					.write
 					.saturating_mul(writes),
+				// TODO: measure proof
+				0,
 			)))
 	}
 
@@ -187,8 +192,10 @@ impl<T: Config> CollectionHandle<T> {
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
 				reads.saturating_add(writes),
+				// TODO: measure proof
+				0,
 			)))
 	}
 
@@ -462,7 +469,6 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::extra_constants]

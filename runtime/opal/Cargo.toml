@@ -76,7 +76,6 @@ std = [
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
-	'fp-evm-mapping/std',
 	'fp-rpc/std',
 	'fp-self-contained/std',
 	'pallet-app-promotion/std',
@@ -254,7 +253,6 @@ app-promotion-rpc = { workspace = true }
 derivative = { workspace = true }
 evm-coder = { workspace = true }
 fp-evm = { workspace = true }
-fp-evm-mapping = { workspace = true }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 log = { workspace = true }

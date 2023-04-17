@@ -73,42 +73,44 @@
 
 extern crate alloc;
 
-use frame_support::{
-	decl_module, decl_storage, decl_error,
-	dispatch::DispatchResult,
-	ensure, fail,
-	weights::{Weight},
-	pallet_prelude::{DispatchResultWithPostInfo, ConstU32},
-	BoundedVec,
-};
-use scale_info::TypeInfo;
-use frame_system::{self as system, ensure_signed, ensure_root};
-use sp_std::{vec, vec::Vec};
-use up_data_structs::{
-	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
-	MAX_COLLECTION_PROPERTIES_SIZE, COLLECTION_ADMINS_LIMIT, MAX_TOKEN_PROPERTIES_SIZE,
-	CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode, TokenId,
-	CreateCollectionData, CreateItemExData, budget, Property, PropertyKey, PropertyKeyPermission,
-};
-use pallet_evm::account::CrossAccountId;
-use pallet_common::{
-	CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
-	dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
-};
+pub use pallet::*;
+use frame_support::pallet_prelude::*;
+use frame_system::pallet_prelude::*;
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod weights;
-use weights::WeightInfo;
 
-/// A maximum number of levels of depth in the token nesting tree.
-pub const NESTING_BUDGET: u32 = 5;
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
 
-decl_error! {
+	use frame_support::{dispatch::DispatchResult, ensure, fail, BoundedVec, storage::Key};
+	use scale_info::TypeInfo;
+	use frame_system::{ensure_signed, ensure_root};
+	use sp_std::{vec, vec::Vec};
+	use up_data_structs::{
+		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+		MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
+		MAX_COLLECTION_PROPERTIES_SIZE, COLLECTION_ADMINS_LIMIT, MAX_TOKEN_PROPERTIES_SIZE,
+		CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode,
+		TokenId, CreateCollectionData, CreateItemExData, budget, Property, PropertyKey,
+		PropertyKeyPermission,
+	};
+	use pallet_evm::account::CrossAccountId;
+	use pallet_common::{
+		CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
+		dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
+	};
+	use weights::WeightInfo;
+
+	/// A maximum number of levels of depth in the token nesting tree.
+	pub const NESTING_BUDGET: u32 = 5;
+
 	/// Errors for the common Unique transactions.
-	pub enum Error for Module<T: Config> {
+	#[pallet::error]
+	pub enum Error<T> {
 		/// Decimal_points parameter must be lower than [`up_data_structs::MAX_DECIMAL_POINTS`].
 		CollectionDecimalPointLimitExceeded,
 		/// Length of items properties must be greater than 0.
@@ -116,135 +118,219 @@ decl_error! {
 		/// Repertition is only supported by refungible collection.
 		RepartitionCalledOnNonRefungibleCollection,
 	}
-}
 
-/// Configuration trait of this pallet.
-pub trait Config: system::Config + pallet_common::Config + Sized + TypeInfo {
-	/// Weight information for extrinsics in this pallet.
-	type WeightInfo: WeightInfo;
+	/// Configuration trait of this pallet.
+	#[pallet::config]
+	pub trait Config: frame_system::Config + pallet_common::Config + Sized + TypeInfo {
+		/// Weight information for extrinsics in this pallet.
+		type WeightInfo: WeightInfo;
 
-	/// Weight information for common pallet operations.
-	type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
+		/// Weight information for common pallet operations.
+		type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
 
-	/// Weight info information for extra refungible pallet operations.
-	type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
-}
-
-type SelfWeightOf<T> = <T as Config>::WeightInfo;
-
-// # Used definitions
-//
-// ## User control levels
-//
-// chain-controlled - key is uncontrolled by user
-//                    i.e autoincrementing index
-//                    can use non-cryptographic hash
-// real - key is controlled by user
-//        but it is hard to generate enough colliding values, i.e owner of signed txs
-//        can use non-cryptographic hash
-// controlled - key is completly controlled by users
-//              i.e maps with mutable keys
-//              should use cryptographic hash
-//
-// ## User control level downgrade reasons
-//
-// ?1 - chain-controlled -> controlled
-//      collections/tokens can be destroyed, resulting in massive holes
-// ?2 - chain-controlled -> controlled
-//      same as ?1, but can be only added, resulting in easier exploitation
-// ?3 - real -> controlled
-//      no confirmation required, so addresses can be easily generated
-decl_storage! {
-	trait Store for Module<T: Config> as Unique {
-
-		//#region Private members
-		/// Used for migrations
-		ChainVersion: u64;
-		//#endregion
-
-		//#region Tokens transfer sponosoring rate limit baskets
-		/// (Collection id (controlled?2), who created (real))
-		/// TODO: Off chain worker should remove from this map when collection gets removed
-		pub CreateItemBasket get(fn create_item_basket): map hasher(blake2_128_concat) (CollectionId, T::AccountId) => Option<T::BlockNumber>;
-		/// Collection id (controlled?2), token id (controlled?2)
-		pub NftTransferBasket get(fn nft_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
-		/// Collection id (controlled?2), owning user (real)
-		pub FungibleTransferBasket get(fn fungible_transfer_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
-		/// Collection id (controlled?2), token id (controlled?2)
-		pub ReFungibleTransferBasket get(fn refungible_transfer_basket): nmap hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
-		//#endregion
-
-		/// Variable metadata sponsoring
-		/// Collection id (controlled?2), token id (controlled?2)
-		#[deprecated]
-		pub VariableMetaDataBasket get(fn variable_meta_data_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
-		/// Last sponsoring of token property setting // todo:doc rephrase this and the following
-		pub TokenPropertyBasket get(fn token_property_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
-
-		/// Last sponsoring of NFT approval in a collection
-		pub NftApproveBasket get(fn nft_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId => Option<T::BlockNumber>;
-		/// Last sponsoring of fungible tokens approval in a collection
-		pub FungibleApproveBasket get(fn fungible_approve_basket): double_map hasher(blake2_128_concat) CollectionId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
-		/// Last sponsoring of RFT approval in a collection
-		pub RefungibleApproveBasket get(fn refungible_approve_basket): nmap hasher(blake2_128_concat) CollectionId, hasher(blake2_128_concat) TokenId, hasher(twox_64_concat) T::AccountId => Option<T::BlockNumber>;
+		/// Weight info information for extra refungible pallet operations.
+		type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
 	}
-}
 
-decl_module! {
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
+
+	// # Used definitions
+	//
+	// ## User control levels
+	//
+	// chain-controlled - key is uncontrolled by user
+	//                    i.e autoincrementing index
+	//                    can use non-cryptographic hash
+	// real - key is controlled by user
+	//        but it is hard to generate enough colliding values, i.e owner of signed txs
+	//        can use non-cryptographic hash
+	// controlled - key is completly controlled by users
+	//              i.e maps with mutable keys
+	//              should use cryptographic hash
+	//
+	// ## User control level downgrade reasons
+	//
+	// ?1 - chain-controlled -> controlled
+	//      collections/tokens can be destroyed, resulting in massive holes
+	// ?2 - chain-controlled -> controlled
+	//      same as ?1, but can be only added, resulting in easier exploitation
+	// ?3 - real -> controlled
+	//      no confirmation required, so addresses can be easily generated
+
+	//#region Private members
+	/// Used for migrations
+	#[pallet::storage]
+	pub type ChainVersion<T> = StorageValue<_, u64, ValueQuery>;
+	//#endregion
+
+	//#region Tokens transfer sponosoring rate limit baskets
+	/// (Collection id (controlled?2), who created (real))
+	/// TODO: Off chain worker should remove from this map when collection gets removed
+	#[pallet::storage]
+	#[pallet::getter(fn create_item_busket)]
+	pub type CreateItemBasket<T: Config> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = (CollectionId, T::AccountId),
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+	/// Collection id (controlled?2), token id (controlled?2)
+	#[pallet::storage]
+	#[pallet::getter(fn nft_transfer_basket)]
+	pub type NftTransferBasket<T: Config> = StorageDoubleMap<
+		Hasher1 = Blake2_128Concat,
+		Key1 = CollectionId,
+		Hasher2 = Blake2_128Concat,
+		Key2 = TokenId,
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+	/// Collection id (controlled?2), owning user (real)
+	#[pallet::storage]
+	#[pallet::getter(fn fungible_transfer_basket)]
+	pub type FungibleTransferBasket<T: Config> = StorageDoubleMap<
+		Hasher1 = Blake2_128Concat,
+		Key1 = CollectionId,
+		Hasher2 = Twox64Concat,
+		Key2 = T::AccountId,
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+	/// Collection id (controlled?2), token id (controlled?2)
+	#[pallet::storage]
+	#[pallet::getter(fn refungible_transfer_basket)]
+	pub type ReFungibleTransferBasket<T: Config> = StorageNMap<
+		Key = (
+			Key<Blake2_128Concat, CollectionId>,
+			Key<Blake2_128Concat, TokenId>,
+			Key<Twox64Concat, T::AccountId>,
+		),
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+	//#endregion
+
+	/// Last sponsoring of token property setting // todo:doc rephrase this and the following
+	#[pallet::storage]
+	#[pallet::getter(fn token_property_basket)]
+	pub type TokenPropertyBasket<T: Config> = StorageDoubleMap<
+		Hasher1 = Blake2_128Concat,
+		Key1 = CollectionId,
+		Hasher2 = Blake2_128Concat,
+		Key2 = TokenId,
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+
+	/// Last sponsoring of NFT approval in a collection
+	#[pallet::storage]
+	#[pallet::getter(fn nft_approve_basket)]
+	pub type NftApproveBasket<T: Config> = StorageDoubleMap<
+		Hasher1 = Blake2_128Concat,
+		Key1 = CollectionId,
+		Hasher2 = Blake2_128Concat,
+		Key2 = TokenId,
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+	/// Last sponsoring of fungible tokens approval in a collection
+	#[pallet::storage]
+	#[pallet::getter(fn fungible_approve_basket)]
+	pub type FungibleApproveBasket<T: Config> = StorageDoubleMap<
+		Hasher1 = Blake2_128Concat,
+		Key1 = CollectionId,
+		Hasher2 = Twox64Concat,
+		Key2 = T::AccountId,
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+	/// Last sponsoring of RFT approval in a collection
+	#[pallet::storage]
+	#[pallet::getter(fn refungible_approve_basket)]
+	pub type RefungibleApproveBasket<T: Config> = StorageNMap<
+		Key = (
+			Key<Blake2_128Concat, CollectionId>,
+			Key<Blake2_128Concat, TokenId>,
+			Key<Twox64Concat, T::AccountId>,
+		),
+		Value = T::BlockNumber,
+		QueryKind = OptionQuery,
+	>;
+
+	#[pallet::extra_constants]
+	impl<T: Config> Pallet<T> {
+		/// A maximum number of levels of depth in the token nesting tree.
+		fn nesting_budget() -> u32 {
+			NESTING_BUDGET
+		}
+
+		/// Maximal length of a collection name.
+		fn max_collection_name_length() -> u32 {
+			MAX_COLLECTION_NAME_LENGTH
+		}
+
+		/// Maximal length of a collection description.
+		fn max_collection_description_length() -> u32 {
+			MAX_COLLECTION_DESCRIPTION_LENGTH
+		}
+
+		/// Maximal length of a token prefix.
+		fn max_token_prefix_length() -> u32 {
+			MAX_TOKEN_PREFIX_LENGTH
+		}
+
+		/// Maximum admins per collection.
+		fn collection_admins_limit() -> u32 {
+			COLLECTION_ADMINS_LIMIT
+		}
+
+		/// Maximal length of a property key.
+		fn max_property_key_length() -> u32 {
+			MAX_PROPERTY_KEY_LENGTH
+		}
+
+		/// Maximal length of a property value.
+		fn max_property_value_length() -> u32 {
+			MAX_PROPERTY_VALUE_LENGTH
+		}
+
+		/// A maximum number of token properties.
+		fn max_properties_per_item() -> u32 {
+			MAX_PROPERTIES_PER_ITEM
+		}
+
+		/// Maximum size for all collection properties.
+		fn max_collection_properties_size() -> u32 {
+			MAX_COLLECTION_PROPERTIES_SIZE
+		}
+
+		/// Maximum size of all token properties.
+		fn max_token_properties_size() -> u32 {
+			MAX_TOKEN_PROPERTIES_SIZE
+		}
+
+		/// Default NFT collection limit.
+		fn nft_default_collection_limits() -> CollectionLimits {
+			CollectionLimits::with_default_limits(CollectionMode::NFT)
+		}
+
+		/// Default RFT collection limit.
+		fn rft_default_collection_limits() -> CollectionLimits {
+			CollectionLimits::with_default_limits(CollectionMode::ReFungible)
+		}
+
+		/// Default FT collection limit.
+		fn ft_default_collection_limits() -> CollectionLimits {
+			CollectionLimits::with_default_limits(CollectionMode::Fungible(0))
+		}
+	}
+
 	/// Type alias to Pallet, to be used by construct_runtime.
-	pub struct Module<T: Config> for enum Call
-	where
-		origin: T::RuntimeOrigin
-	{
-		type Error = Error<T>;
-
-		#[doc = "A maximum number of levels of depth in the token nesting tree."]
-		const NESTING_BUDGET: u32 = NESTING_BUDGET;
-
-		#[doc = "Maximal length of a collection name."]
-		const MAX_COLLECTION_NAME_LENGTH: u32 = MAX_COLLECTION_NAME_LENGTH;
-
-		#[doc = "Maximal length of a collection description."]
-		const MAX_COLLECTION_DESCRIPTION_LENGTH: u32 = MAX_COLLECTION_DESCRIPTION_LENGTH;
-
-		#[doc = "Maximal length of a token prefix."]
-		const MAX_TOKEN_PREFIX_LENGTH: u32 = MAX_TOKEN_PREFIX_LENGTH;
-
-		#[doc = "Maximum admins per collection."]
-		const COLLECTION_ADMINS_LIMIT: u32 = COLLECTION_ADMINS_LIMIT;
-
-		#[doc = "Maximal length of a property key."]
-		const MAX_PROPERTY_KEY_LENGTH: u32 = MAX_PROPERTY_KEY_LENGTH;
-
-		#[doc = "Maximal length of a property value."]
-		const MAX_PROPERTY_VALUE_LENGTH: u32 = MAX_PROPERTY_VALUE_LENGTH;
-
-		#[doc = "A maximum number of token properties."]
-		const MAX_PROPERTIES_PER_ITEM: u32 = MAX_PROPERTIES_PER_ITEM;
-
-		#[doc = "Maximum size for all collection properties."]
-		const MAX_COLLECTION_PROPERTIES_SIZE: u32 = MAX_COLLECTION_PROPERTIES_SIZE;
-
-		#[doc = "Maximum size of all token properties."]
-		const MAX_TOKEN_PROPERTIES_SIZE: u32 = MAX_TOKEN_PROPERTIES_SIZE;
-
-		#[doc = "Default NFT collection limit."]
-		const NFT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::NFT);
-
-		#[doc = "Default RFT collection limit."]
-		const RFT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::ReFungible);
-
-		#[doc = "Default FT collection limit."]
-		const FT_DEFAULT_COLLECTION_LIMITS: CollectionLimits = CollectionLimits::with_default_limits(CollectionMode::Fungible(0));
-
-		fn on_initialize(_now: T::BlockNumber) -> Weight {
-			Weight::zero()
-		}
-
-		fn on_runtime_upgrade() -> Weight {
-			Weight::zero()
-		}
-
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {
 		/// Create a collection of tokens.
 		///
 		/// Each Token may have multiple properties encoded as an array of bytes
@@ -270,13 +356,14 @@ decl_module! {
 		/// returns collection ID
 		///
 		/// Deprecated: `create_collection_ex` is more up-to-date and advanced, prefer it instead.
-		#[weight = <SelfWeightOf<T>>::create_collection()]
-		fn create_collection(
-			origin,
+		#[pallet::call_index(0)]
+		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
+		pub fn create_collection(
+			origin: OriginFor<T>,
 			collection_name: BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>,
 			collection_description: BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>,
 			token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
-			mode: CollectionMode
+			mode: CollectionMode,
 		) -> DispatchResult {
 			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
 				name: collection_name,
@@ -299,13 +386,18 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `data`: Explicit data of a collection used for its creation.
-		#[weight = <SelfWeightOf<T>>::create_collection()]
-		pub fn create_collection_ex(origin, data: CreateCollectionData<T::AccountId>) -> DispatchResult {
+		#[pallet::call_index(1)]
+		#[pallet::weight(<SelfWeightOf<T>>::create_collection())]
+		pub fn create_collection_ex(
+			origin: OriginFor<T>,
+			data: CreateCollectionData<T::AccountId>,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 
 			// =========
 			let sender = T::CrossAccountId::from_sub(sender);
-			let _id = T::CollectionDispatch::create(sender.clone(), sender, data, Default::default())?;
+			let _id =
+				T::CollectionDispatch::create(sender.clone(), sender, data, Default::default())?;
 
 			Ok(())
 		}
@@ -319,8 +411,12 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `collection_id`: Collection to destroy.
-		#[weight = <SelfWeightOf<T>>::destroy_collection()]
-		pub fn destroy_collection(origin, collection_id: CollectionId) -> DispatchResult {
+		#[pallet::call_index(2)]
+		#[pallet::weight(<SelfWeightOf<T>>::destroy_collection())]
+		pub fn destroy_collection(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
 			Self::destroy_collection_internal(sender, collection_id)
@@ -337,19 +433,18 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the modified collection.
 		/// * `address`: ID of the address to be added to the allowlist.
-		#[weight = <SelfWeightOf<T>>::add_to_allow_list()]
-		pub fn add_to_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
-
+		#[pallet::call_index(3)]
+		#[pallet::weight(<SelfWeightOf<T>>::add_to_allow_list())]
+		pub fn add_to_allow_list(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			address: T::CrossAccountId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			collection.check_is_internal()?;
 
-			<PalletCommon<T>>::toggle_allowlist(
-				&collection,
-				&sender,
-				&address,
-				true,
-			)?;
+			<PalletCommon<T>>::toggle_allowlist(&collection, &sender, &address, true)?;
 
 			Ok(())
 		}
@@ -365,19 +460,18 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the modified collection.
 		/// * `address`: ID of the address to be removed from the allowlist.
-		#[weight = <SelfWeightOf<T>>::remove_from_allow_list()]
-		pub fn remove_from_allow_list(origin, collection_id: CollectionId, address: T::CrossAccountId) -> DispatchResult{
-
+		#[pallet::call_index(4)]
+		#[pallet::weight(<SelfWeightOf<T>>::remove_from_allow_list())]
+		pub fn remove_from_allow_list(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			address: T::CrossAccountId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			collection.check_is_internal()?;
 
-			<PalletCommon<T>>::toggle_allowlist(
-				&collection,
-				&sender,
-				&address,
-				false,
-			)?;
+			<PalletCommon<T>>::toggle_allowlist(&collection, &sender, &address, false)?;
 
 			Ok(())
 		}
@@ -392,8 +486,13 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the modified collection.
 		/// * `new_owner`: ID of the account that will become the owner.
-		#[weight = <SelfWeightOf<T>>::change_collection_owner()]
-		pub fn change_collection_owner(origin, collection_id: CollectionId, new_owner: T::AccountId) -> DispatchResult {
+		#[pallet::call_index(5)]
+		#[pallet::weight(<SelfWeightOf<T>>::change_collection_owner())]
+		pub fn change_collection_owner(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			new_owner: T::AccountId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let new_owner = T::CrossAccountId::from_sub(new_owner);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -416,8 +515,13 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the Collection to add an admin for.
 		/// * `new_admin`: Address of new admin to add.
-		#[weight = <SelfWeightOf<T>>::add_collection_admin()]
-		pub fn add_collection_admin(origin, collection_id: CollectionId, new_admin_id: T::CrossAccountId) -> DispatchResult {
+		#[pallet::call_index(6)]
+		#[pallet::weight(<SelfWeightOf<T>>::add_collection_admin())]
+		pub fn add_collection_admin(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			new_admin_id: T::CrossAccountId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
@@ -437,8 +541,13 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection to remove the admin for.
 		/// * `account_id`: Address of the admin to remove.
-		#[weight = <SelfWeightOf<T>>::remove_collection_admin()]
-		pub fn remove_collection_admin(origin, collection_id: CollectionId, account_id: T::CrossAccountId) -> DispatchResult {
+		#[pallet::call_index(7)]
+		#[pallet::weight(<SelfWeightOf<T>>::remove_collection_admin())]
+		pub fn remove_collection_admin(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			account_id: T::CrossAccountId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
@@ -457,8 +566,13 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the modified collection.
 		/// * `new_sponsor`: ID of the account of the sponsor-to-be.
-		#[weight = <SelfWeightOf<T>>::set_collection_sponsor()]
-		pub fn set_collection_sponsor(origin, collection_id: CollectionId, new_sponsor: T::AccountId) -> DispatchResult {
+		#[pallet::call_index(8)]
+		#[pallet::weight(<SelfWeightOf<T>>::set_collection_sponsor())]
+		pub fn set_collection_sponsor(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			new_sponsor: T::AccountId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.set_sponsor(&sender, new_sponsor.clone())
@@ -477,8 +591,12 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection with the pending sponsor.
-		#[weight = <SelfWeightOf<T>>::confirm_sponsorship()]
-		pub fn confirm_sponsorship(origin, collection_id: CollectionId) -> DispatchResult {
+		#[pallet::call_index(9)]
+		#[pallet::weight(<SelfWeightOf<T>>::confirm_sponsorship())]
+		pub fn confirm_sponsorship(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.confirm_sponsorship(&sender)
@@ -493,8 +611,12 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection with the sponsor to remove.
-		#[weight = <SelfWeightOf<T>>::remove_collection_sponsor()]
-		pub fn remove_collection_sponsor(origin, collection_id: CollectionId) -> DispatchResult {
+		#[pallet::call_index(10)]
+		#[pallet::weight(<SelfWeightOf<T>>::remove_collection_sponsor())]
+		pub fn remove_collection_sponsor(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.remove_sponsor(&sender)
@@ -518,12 +640,20 @@ decl_module! {
 		/// * `collection_id`: ID of the collection to which an item would belong.
 		/// * `owner`: Address of the initial owner of the item.
 		/// * `data`: Token data describing the item to store on chain.
-		#[weight = T::CommonWeightInfo::create_item(&data)]
-		pub fn create_item(origin, collection_id: CollectionId, owner: T::CrossAccountId, data: CreateItemData) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(11)]
+		#[pallet::weight(T::CommonWeightInfo::create_item(&data))]
+		pub fn create_item(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			owner: T::CrossAccountId,
+			data: CreateItemData,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.create_item(sender, owner, data, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.create_item(sender, owner, data, &budget)
+			})
 		}
 
 		/// Create multiple items within a collection.
@@ -544,13 +674,21 @@ decl_module! {
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `owner`: Address of the initial owner of the tokens.
 		/// * `items_data`: Vector of data describing each item to be created.
-		#[weight = T::CommonWeightInfo::create_multiple_items(&items_data)]
-		pub fn create_multiple_items(origin, collection_id: CollectionId, owner: T::CrossAccountId, items_data: Vec<CreateItemData>) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(12)]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(&items_data))]
+		pub fn create_multiple_items(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			owner: T::CrossAccountId,
+			items_data: Vec<CreateItemData>,
+		) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.create_multiple_items(sender, owner, items_data, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.create_multiple_items(sender, owner, items_data, &budget)
+			})
 		}
 
 		/// Add or change collection properties.
@@ -565,17 +703,20 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `properties`: Vector of key-value pairs stored as the collection's metadata.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
-		#[weight = T::CommonWeightInfo::set_collection_properties(properties.len() as u32)]
+		#[pallet::call_index(13)]
+		#[pallet::weight(T::CommonWeightInfo::set_collection_properties(properties.len() as u32))]
 		pub fn set_collection_properties(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
-			properties: Vec<Property>
+			properties: Vec<Property>,
 		) -> DispatchResultWithPostInfo {
 			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.set_collection_properties(sender, properties))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.set_collection_properties(sender, properties)
+			})
 		}
 
 		/// Delete specified collection properties.
@@ -590,9 +731,10 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `property_keys`: Vector of keys of the properties to be deleted.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
-		#[weight = T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32)]
+		#[pallet::call_index(14)]
+		#[pallet::weight(T::CommonWeightInfo::delete_collection_properties(property_keys.len() as u32))]
 		pub fn delete_collection_properties(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			property_keys: Vec<PropertyKey>,
 		) -> DispatchResultWithPostInfo {
@@ -600,7 +742,9 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.delete_collection_properties(&sender, property_keys))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.delete_collection_properties(&sender, property_keys)
+			})
 		}
 
 		/// Add or change token properties according to collection's permissions.
@@ -621,19 +765,22 @@ decl_module! {
 		/// * `token_id`: ID of the modified token.
 		/// * `properties`: Vector of key-value pairs stored as the token's metadata.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
-		#[weight = T::CommonWeightInfo::set_token_properties(properties.len() as u32)]
+		#[pallet::call_index(15)]
+		#[pallet::weight(T::CommonWeightInfo::set_token_properties(properties.len() as u32))]
 		pub fn set_token_properties(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			token_id: TokenId,
-			properties: Vec<Property>
+			properties: Vec<Property>,
 		) -> DispatchResultWithPostInfo {
 			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.set_token_properties(sender, token_id, properties, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.set_token_properties(sender, token_id, properties, &budget)
+			})
 		}
 
 		/// Delete specified token properties. Currently properties only work with NFTs.
@@ -651,19 +798,22 @@ decl_module! {
 		/// * `token_id`: ID of the modified token.
 		/// * `property_keys`: Vector of keys of the properties to be deleted.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
-		#[weight = T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32)]
+		#[pallet::call_index(16)]
+		#[pallet::weight(T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32))]
 		pub fn delete_token_properties(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			token_id: TokenId,
-			property_keys: Vec<PropertyKey>
+			property_keys: Vec<PropertyKey>,
 		) -> DispatchResultWithPostInfo {
 			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.delete_token_properties(sender, token_id, property_keys, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.delete_token_properties(sender, token_id, property_keys, &budget)
+			})
 		}
 
 		/// Add or change token property permissions of a collection.
@@ -681,9 +831,10 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `property_permissions`: Vector of permissions for property keys.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
-		#[weight = T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32)]
+		#[pallet::call_index(17)]
+		#[pallet::weight(T::CommonWeightInfo::set_token_property_permissions(property_permissions.len() as u32))]
 		pub fn set_token_property_permissions(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			property_permissions: Vec<PropertyKeyPermission>,
 		) -> DispatchResultWithPostInfo {
@@ -691,7 +842,9 @@ decl_module! {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.set_token_property_permissions(&sender, property_permissions))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.set_token_property_permissions(&sender, property_permissions)
+			})
 		}
 
 		/// Create multiple items within a collection with explicitly specified initial parameters.
@@ -709,12 +862,19 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `data`: Explicit item creation data.
-		#[weight = T::CommonWeightInfo::create_multiple_items_ex(&data)]
-		pub fn create_multiple_items_ex(origin, collection_id: CollectionId, data: CreateItemExData<T::CrossAccountId>) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(18)]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(&data))]
+		pub fn create_multiple_items_ex(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			data: CreateItemExData<T::CrossAccountId>,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.create_multiple_items_ex(sender, data, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.create_multiple_items_ex(sender, data, &budget)
+			})
 		}
 
 		/// Completely allow or disallow transfers for a particular collection.
@@ -727,8 +887,13 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection.
 		/// * `value`: New value of the flag, are transfers allowed?
-		#[weight = <SelfWeightOf<T>>::set_transfers_enabled_flag()]
-		pub fn set_transfers_enabled_flag(origin, collection_id: CollectionId, value: bool) -> DispatchResult {
+		#[pallet::call_index(19)]
+		#[pallet::weight(<SelfWeightOf<T>>::set_transfers_enabled_flag())]
+		pub fn set_transfers_enabled_flag(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			value: bool,
+		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_internal()?;
@@ -756,11 +921,18 @@ decl_module! {
 		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
 		///     * Fungible Mode: The desired number of pieces to burn.
 		///     * Re-Fungible Mode: The desired number of pieces to burn.
-		#[weight = T::CommonWeightInfo::burn_item()]
-		pub fn burn_item(origin, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(20)]
+		#[pallet::weight(T::CommonWeightInfo::burn_item())]
+		pub fn burn_item(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			item_id: TokenId,
+			value: u128,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			let post_info = dispatch_tx::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))?;
+			let post_info =
+				dispatch_tx::<T, _>(collection_id, |d| d.burn_item(sender, item_id, value))?;
 			if value == 1 {
 				<NftTransferBasket<T>>::remove(collection_id, item_id);
 				<NftApproveBasket<T>>::remove(collection_id, item_id);
@@ -794,12 +966,21 @@ decl_module! {
 		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
 		///     * Fungible Mode: The desired number of pieces to burn.
 		///     * Re-Fungible Mode: The desired number of pieces to burn.
-		#[weight = T::CommonWeightInfo::burn_from()]
-		pub fn burn_from(origin, collection_id: CollectionId, from: T::CrossAccountId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(21)]
+		#[pallet::weight(T::CommonWeightInfo::burn_from())]
+		pub fn burn_from(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			from: T::CrossAccountId,
+			item_id: TokenId,
+			value: u128,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.burn_from(sender, from, item_id, value, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.burn_from(sender, from, item_id, value, &budget)
+			})
 		}
 
 		/// Change ownership of the token.
@@ -823,12 +1004,21 @@ decl_module! {
 		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
 		///     * Fungible Mode: The desired number of pieces to transfer.
 		///     * Re-Fungible Mode: The desired number of pieces to transfer.
-		#[weight = T::CommonWeightInfo::transfer()]
-		pub fn transfer(origin, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(22)]
+		#[pallet::weight(T::CommonWeightInfo::transfer())]
+		pub fn transfer(
+			origin: OriginFor<T>,
+			recipient: T::CrossAccountId,
+			collection_id: CollectionId,
+			item_id: TokenId,
+			value: u128,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.transfer(sender, recipient, item_id, value, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.transfer(sender, recipient, item_id, value, &budget)
+			})
 		}
 
 		/// Allow a non-permissioned address to transfer or burn an item.
@@ -846,11 +1036,20 @@ decl_module! {
 		/// * `item_id`: ID of the item transactions on which are now approved.
 		/// * `amount`: Number of pieces of the item approved for a transaction (maximum of 1 for NFTs).
 		/// Set to 0 to revoke the approval.
-		#[weight = T::CommonWeightInfo::approve()]
-		pub fn approve(origin, spender: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(23)]
+		#[pallet::weight(T::CommonWeightInfo::approve())]
+		pub fn approve(
+			origin: OriginFor<T>,
+			spender: T::CrossAccountId,
+			collection_id: CollectionId,
+			item_id: TokenId,
+			amount: u128,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.approve(sender, spender, item_id, amount))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.approve(sender, spender, item_id, amount)
+			})
 		}
 
 		/// Allow a non-permissioned address to transfer or burn an item from owner's eth mirror.
@@ -869,11 +1068,21 @@ decl_module! {
 		/// * `item_id`: ID of the item transactions on which are now approved.
 		/// * `amount`: Number of pieces of the item approved for a transaction (maximum of 1 for NFTs).
 		/// Set to 0 to revoke the approval.
-		#[weight = T::CommonWeightInfo::approve_from()]
-		pub fn approve_from(origin, from:T::CrossAccountId, to: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, amount: u128) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(24)]
+		#[pallet::weight(T::CommonWeightInfo::approve_from())]
+		pub fn approve_from(
+			origin: OriginFor<T>,
+			from: T::CrossAccountId,
+			to: T::CrossAccountId,
+			collection_id: CollectionId,
+			item_id: TokenId,
+			amount: u128,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.approve_from(sender, from, to, item_id, amount))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.approve_from(sender, from, to, item_id, amount)
+			})
 		}
 
 		/// Change ownership of an item on behalf of the owner as a non-owner account.
@@ -900,12 +1109,22 @@ decl_module! {
 		/// 	* Non-Fungible Mode: An NFT is indivisible, there is always 1 corresponding to an ID.
 		///     * Fungible Mode: The desired number of pieces to transfer.
 		///     * Re-Fungible Mode: The desired number of pieces to transfer.
-		#[weight = T::CommonWeightInfo::transfer_from()]
-		pub fn transfer_from(origin, from: T::CrossAccountId, recipient: T::CrossAccountId, collection_id: CollectionId, item_id: TokenId, value: u128 ) -> DispatchResultWithPostInfo {
+		#[pallet::call_index(25)]
+		#[pallet::weight(T::CommonWeightInfo::transfer_from())]
+		pub fn transfer_from(
+			origin: OriginFor<T>,
+			from: T::CrossAccountId,
+			recipient: T::CrossAccountId,
+			collection_id: CollectionId,
+			item_id: TokenId,
+			value: u128,
+		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = budget::Value::new(NESTING_BUDGET);
 
-			dispatch_tx::<T, _>(collection_id, |d| d.transfer_from(sender, from, recipient, item_id, value, &budget))
+			dispatch_tx::<T, _>(collection_id, |d| {
+				d.transfer_from(sender, from, recipient, item_id, value, &budget)
+			})
 		}
 
 		/// Set specific limits of a collection. Empty, or None fields mean chain default.
@@ -920,9 +1139,10 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `new_limit`: New limits of the collection. Fields that are not set (None)
 		/// will not overwrite the old ones.
-		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
+		#[pallet::call_index(26)]
+		#[pallet::weight(<SelfWeightOf<T>>::set_collection_limits())]
 		pub fn set_collection_limits(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			new_limit: CollectionLimits,
 		) -> DispatchResult {
@@ -943,19 +1163,16 @@ decl_module! {
 		/// * `collection_id`: ID of the modified collection.
 		/// * `new_permission`: New permissions of the collection. Fields that are not set (None)
 		/// will not overwrite the old ones.
-		#[weight = <SelfWeightOf<T>>::set_collection_limits()]
+		#[pallet::call_index(27)]
+		#[pallet::weight(<SelfWeightOf<T>>::set_collection_limits())]
 		pub fn set_collection_permissions(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			new_permission: CollectionPermissions,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			<PalletCommon<T>>::update_permissions(
-				&sender,
-				&mut target_collection,
-				new_permission
-			)
+			<PalletCommon<T>>::update_permissions(&sender, &mut target_collection, new_permission)
 		}
 
 		/// Re-partition a refungible token, while owning all of its parts/pieces.
@@ -969,9 +1186,10 @@ decl_module! {
 		/// * `collection_id`: ID of the collection the RFT belongs to.
 		/// * `token_id`: ID of the RFT.
 		/// * `amount`: New number of parts/pieces into which the token shall be partitioned.
-		#[weight = T::RefungibleExtensionsWeightInfo::repartition()]
+		#[pallet::call_index(28)]
+		#[pallet::weight(T::RefungibleExtensionsWeightInfo::repartition())]
 		pub fn repartition(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			token_id: TokenId,
 			amount: u128,
@@ -995,9 +1213,10 @@ decl_module! {
 		/// * `owner`: Token owner
 		/// * `operator`: Operator
 		/// * `approve`: Should operator status be granted or revoked?
-		#[weight = T::CommonWeightInfo::set_allowance_for_all()]
+		#[pallet::call_index(29)]
+		#[pallet::weight(T::CommonWeightInfo::set_allowance_for_all())]
 		pub fn set_allowance_for_all(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			operator: T::CrossAccountId,
 			approve: bool,
@@ -1013,9 +1232,10 @@ decl_module! {
 		/// # Arguments
 		///
 		/// * `collection_id`: ID of the collection to repair.
-		#[weight = <SelfWeightOf<T>>::force_repair_collection()]
+		#[pallet::call_index(30)]
+		#[pallet::weight(<SelfWeightOf<T>>::force_repair_collection())]
 		pub fn force_repair_collection(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
 			ensure_root(origin)?;
@@ -1028,69 +1248,71 @@ decl_module! {
 		///
 		/// * `collection_id`: ID of the collection the item belongs to.
 		/// * `item_id`: ID of the item.
-		#[weight = T::CommonWeightInfo::force_repair_item()]
+		#[pallet::call_index(31)]
+		#[pallet::weight(T::CommonWeightInfo::force_repair_item())]
 		pub fn force_repair_item(
-			origin,
+			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			item_id: TokenId,
 		) -> DispatchResultWithPostInfo {
 			ensure_root(origin)?;
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.repair_item(item_id)
-			})
+			dispatch_tx::<T, _>(collection_id, |d| d.repair_item(item_id))
 		}
 	}
-}
 
-impl<T: Config> Pallet<T> {
-	/// Force set `sponsor` for `collection`.
-	///
-	/// Differs from [`set_collection_sponsor`][`Pallet::set_collection_sponsor`] in that confirmation
-	/// from the `sponsor` is not required.
-	///
-	/// # Arguments
-	///
-	/// * `sponsor`: ID of the account of the sponsor-to-be.
-	/// * `collection_id`: ID of the modified collection.
-	pub fn force_set_sponsor(sponsor: T::AccountId, collection_id: CollectionId) -> DispatchResult {
-		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		target_collection.force_set_sponsor(sponsor.clone())
-	}
+	impl<T: Config> Pallet<T> {
+		/// Force set `sponsor` for `collection`.
+		///
+		/// Differs from [`set_collection_sponsor`][`Pallet::set_collection_sponsor`] in that confirmation
+		/// from the `sponsor` is not required.
+		///
+		/// # Arguments
+		///
+		/// * `sponsor`: ID of the account of the sponsor-to-be.
+		/// * `collection_id`: ID of the modified collection.
+		pub fn force_set_sponsor(
+			sponsor: T::AccountId,
+			collection_id: CollectionId,
+		) -> DispatchResult {
+			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.force_set_sponsor(sponsor.clone())
+		}
 
-	/// Force remove `sponsor` for `collection`.
-	///
-	/// Differs from `remove_sponsor` in that
-	/// it doesn't require consent from the `owner` of the collection.
-	///
-	/// # Arguments
-	///
-	/// * `collection_id`: ID of the modified collection.
-	pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
-		let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		target_collection.force_remove_sponsor()
-	}
+		/// Force remove `sponsor` for `collection`.
+		///
+		/// Differs from `remove_sponsor` in that
+		/// it doesn't require consent from the `owner` of the collection.
+		///
+		/// # Arguments
+		///
+		/// * `collection_id`: ID of the modified collection.
+		pub fn force_remove_collection_sponsor(collection_id: CollectionId) -> DispatchResult {
+			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.force_remove_sponsor()
+		}
 
-	#[inline(always)]
-	pub(crate) fn destroy_collection_internal(
-		sender: T::CrossAccountId,
-		collection_id: CollectionId,
-	) -> DispatchResult {
-		let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		collection.check_is_internal()?;
+		#[inline(always)]
+		pub(crate) fn destroy_collection_internal(
+			sender: T::CrossAccountId,
+			collection_id: CollectionId,
+		) -> DispatchResult {
+			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 
-		T::CollectionDispatch::destroy(sender, collection)?;
+			T::CollectionDispatch::destroy(sender, collection)?;
 
-		// TODO: basket cleanup should be moved elsewhere
-		// Maybe runtime dispatch.rs should perform it?
+			// TODO: basket cleanup should be moved elsewhere
+			// Maybe runtime dispatch.rs should perform it?
 
-		let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
+			let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
 
-		let _ = <NftApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <FungibleApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
-		let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
+			let _ = <NftApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <FungibleApproveBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
+			let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
 
-		Ok(())
+			Ok(())
+		}
 	}
 }

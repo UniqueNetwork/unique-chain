@@ -21,6 +21,7 @@
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+#[allow(missing_docs)]
 pub mod weights;
 
 #[frame_support::pallet]
@@ -46,7 +47,6 @@ pub mod pallet {
 	type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::event]
