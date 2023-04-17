@@ -147,7 +147,7 @@ bench-xcm:
 
 .PHONY: bench
 # Disabled: bench-scheduler, bench-collator-selection, bench-identity
-bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm
+bench: bench-app-promotion bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm
 
 .PHONY: check
 check:
