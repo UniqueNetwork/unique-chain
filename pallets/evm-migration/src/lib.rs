@@ -21,6 +21,7 @@
 pub use pallet::*;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
+#[allow(missing_docs)]
 pub mod weights;
 
 #[frame_support::pallet]

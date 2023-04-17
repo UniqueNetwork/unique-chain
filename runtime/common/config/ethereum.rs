@@ -28,7 +28,7 @@ parameter_types! {
 	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
 	pub const WeightTimePerGas: u64 = WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
 
-	pub const WeightPerGas: Weight = Weight::from_ref_time(WeightTimePerGas::get());
+	pub const WeightPerGas: Weight = Weight::from_parts(WeightTimePerGas::get(), 0);
 }
 
 /// Limiting EVM execution to 50% of block for substrate users and management tasks

@@ -89,14 +89,11 @@ pub mod pallet {
 	use frame_support::{
 		dispatch::DispatchResult,
 		ensure, fail,
-		weights::{Weight},
-		pallet_prelude::{*},
 		BoundedVec,
 		storage::Key,
 	};
-	use frame_system::pallet_prelude::*;
 	use scale_info::TypeInfo;
-	use frame_system::{self as system, ensure_signed, ensure_root};
+	use frame_system::{ensure_signed, ensure_root};
 	use sp_std::{vec, vec::Vec};
 	use up_data_structs::{
 		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
