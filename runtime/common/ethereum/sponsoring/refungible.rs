@@ -227,7 +227,8 @@ mod erc721 {
 			| Symbol
 			| Description
 			| CrossOwnerOf { .. }
-			| CrossBalanceOf { .. }
+			| OwnerOfCross { .. }
+			| BalanceOfCross { .. }
 			| Properties { .. }
 			| NextTokenId
 			| TokenContractAddress { .. }

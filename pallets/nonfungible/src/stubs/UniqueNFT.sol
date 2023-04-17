@@ -774,7 +774,7 @@ contract ERC721UniqueMintable is Dummy, ERC165 {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x323b1db8
+/// @dev the ERC-165 identifier for this interface is 0x307b061a
 contract ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -803,12 +803,24 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 		return "";
 	}
 
+	// /// Returns the owner (in cross format) of the token.
+	// ///
+	// /// @param tokenId Id for the token.
+	// /// @dev EVM selector for this function is: 0x2b29dace,
+	// ///  or in textual repr: crossOwnerOf(uint256)
+	// function crossOwnerOf(uint256 tokenId) public view returns (CrossAddress memory) {
+	// 	require(false, stub_error);
+	// 	tokenId;
+	// 	dummy;
+	// 	return CrossAddress(0x0000000000000000000000000000000000000000,0);
+	// }
+
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
-	/// @dev EVM selector for this function is: 0x2b29dace,
-	///  or in textual repr: crossOwnerOf(uint256)
-	function crossOwnerOf(uint256 tokenId) public view returns (CrossAddress memory) {
+	/// @dev EVM selector for this function is: 0xcaa3a4d0,
+	///  or in textual repr: ownerOfCross(uint256)
+	function ownerOfCross(uint256 tokenId) public view returns (CrossAddress memory) {
 		require(false, stub_error);
 		tokenId;
 		dummy;
@@ -816,13 +828,11 @@ contract ERC721UniqueExtensions is Dummy, ERC165 {
 	}
 
 	/// @notice Count all NFTs assigned to an owner
-	/// @dev NFTs assigned to the zero address are considered invalid, and this
-	///  function throws for queries about the zero address.
 	/// @param owner An cross address for whom to query the balance
 	/// @return The number of NFTs owned by `owner`, possibly zero
-	/// @dev EVM selector for this function is: 0x24e52cea,
-	///  or in textual repr: crossBalanceOf((address,uint256))
-	function crossBalanceOf(CrossAddress memory owner) public view returns (uint256) {
+	/// @dev EVM selector for this function is: 0xec069398,
+	///  or in textual repr: balanceOfCross((address,uint256))
+	function balanceOfCross(CrossAddress memory owner) public view returns (uint256) {
 		require(false, stub_error);
 		owner;
 		dummy;

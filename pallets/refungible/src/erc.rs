@@ -783,7 +783,15 @@ where
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
+	#[solidity(hide)]
 	fn cross_owner_of(&self, token_id: U256) -> Result<eth::CrossAddress> {
+		Self::owner_of_cross(&self, token_id)
+	}
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	fn owner_of_cross(&self, token_id: U256) -> Result<eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
 			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
 			.or_else(|err| match err {
@@ -795,11 +803,9 @@ where
 	}
 
 	/// @notice Count all RFTs assigned to an owner
-	/// @dev RFTs assigned to the zero address are considered invalid, and this
-	///  function throws for queries about the zero address.
 	/// @param owner An cross address for whom to query the balance
 	/// @return The number of RFTs owned by `owner`, possibly zero
-	fn cross_balance_of(&self, owner: eth::CrossAddress) -> Result<U256> {
+	fn balance_of_cross(&self, owner: eth::CrossAddress) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let balance = <AccountBalance<T>>::get((self.id, owner.into_sub_cross_account::<T>()?));
 		Ok(balance.into())

@@ -591,15 +591,15 @@ describe('Refungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
 
-    expect(BigInt(await collectionEvm.methods.crossBalanceOf(owner).call({from: owner.eth})) === 0n).to.be.true;
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 0n).to.be.true;
 
     for (let i = 1n; i < 100n; i++) {
       await collection.mintToken(minter, 100n, {Ethereum: owner.eth});
-      expect(BigInt(await collectionEvm.methods.crossBalanceOf(owner).call({from: owner.eth})) === i).to.be.true;
+      expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === i).to.be.true;
     }
   });
 
-  itEth.only('Check crossOwnerOf()', async ({helper}) => {
+  itEth('Check ownerOfCross()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {});
     let owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -607,7 +607,7 @@ describe('Refungible: Plain calls', () => {
     const {tokenId} = await collection.mintToken(minter, 100n,{Ethereum: owner.eth});
 
     for (let i = 1n; i < 100n; i++) {
-      const ownerCross = await collectionEvm.methods.crossOwnerOf(tokenId).call({from: owner.eth});
+      const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
       expect(ownerCross.eth).to.be.eq(owner.eth);
       expect(ownerCross.sub).to.be.eq(owner.sub);
 
@@ -620,7 +620,7 @@ describe('Refungible: Plain calls', () => {
     const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner.eth, true);
     const newOwner = await helper.ethCrossAccount.createAccountWithBalance(donor);
     await tokenContract.methods.transferCross(newOwner, 50).send({from: owner.eth});
-    const ownerCross = await collectionEvm.methods.crossOwnerOf(tokenId).call({from: owner.eth});
+    const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
     expect(ownerCross.eth.toUpperCase()).to.be.eq('0XFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
     expect(ownerCross.sub).to.be.eq('0');
   });

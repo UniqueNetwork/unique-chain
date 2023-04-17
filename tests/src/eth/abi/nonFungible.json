@@ -177,6 +177,23 @@
   },
   {
     "inputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct CrossAddress",
+        "name": "owner",
+        "type": "tuple"
+      }
+    ],
+    "name": "balanceOfCross",
+    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
       { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
     ],
     "name": "burn",
@@ -386,42 +403,6 @@
   },
   {
     "inputs": [
-      {
-        "components": [
-          { "internalType": "address", "name": "eth", "type": "address" },
-          { "internalType": "uint256", "name": "sub", "type": "uint256" }
-        ],
-        "internalType": "struct CrossAddress",
-        "name": "owner",
-        "type": "tuple"
-      }
-    ],
-    "name": "crossBalanceOf",
-    "outputs": [{ "internalType": "uint256", "name": "", "type": "uint256" }],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
-    ],
-    "name": "crossOwnerOf",
-    "outputs": [
-      {
-        "components": [
-          { "internalType": "address", "name": "eth", "type": "address" },
-          { "internalType": "uint256", "name": "sub", "type": "uint256" }
-        ],
-        "internalType": "struct CrossAddress",
-        "name": "",
-        "type": "tuple"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
       { "internalType": "string[]", "name": "keys", "type": "string[]" }
     ],
     "name": "deleteCollectionProperties",
@@ -552,6 +533,25 @@
     ],
     "name": "ownerOf",
     "outputs": [{ "internalType": "address", "name": "", "type": "address" }],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "uint256", "name": "tokenId", "type": "uint256" }
+    ],
+    "name": "ownerOfCross",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "address", "name": "eth", "type": "address" },
+          { "internalType": "uint256", "name": "sub", "type": "uint256" }
+        ],
+        "internalType": "struct CrossAddress",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
     "stateMutability": "view",
     "type": "function"
   },
