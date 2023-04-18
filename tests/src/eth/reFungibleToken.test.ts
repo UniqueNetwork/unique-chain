@@ -475,25 +475,25 @@ describe('Refungible: Plain calls', () => {
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
     const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner.eth);
 
-    expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === 200n).to.be.true;
-    expect(BigInt(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})) === 0n).to.be.true;
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('200');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
 
     await tokenContract.methods.repartition(100n).send({from: owner.eth});
-    expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === 100n).to.be.true;
-    expect(BigInt(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})) === 0n).to.be.true;
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('100');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
 
     await tokenContract.methods.transferCross(other, 50n).send({from: owner.eth});
-    expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === 50n).to.be.true;
-    expect(BigInt(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})) === 50n).to.be.true;
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('50');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('50');
 
     await tokenContract.methods.transferCross(other, 50n).send({from: owner.eth});
-    expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === 0n).to.be.true;
-    expect(BigInt(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})) === 100n).to.be.true;
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('100');
 
     await tokenContract.methods.repartition(1000n).send({from: other.eth});
     await tokenContract.methods.transferCross(owner, 500n).send({from: other.eth});
-    expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === 500n).to.be.true;
-    expect(BigInt(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})) === 500n).to.be.true;
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('500');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('500');
   });
 });
 

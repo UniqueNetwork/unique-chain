@@ -669,11 +669,11 @@ describe('NFT: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
 
-    expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 0n).to.be.true;
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
 
-    for (let i = 1n; i < 10n; i++) {
+    for (let i = 1; i < 10; i++) {
       await collection.mintToken(minter, {Ethereum: owner.eth});
-      expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === i).to.be.true;
+      expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
     }
   });
 
