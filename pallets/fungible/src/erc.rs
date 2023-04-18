@@ -327,6 +327,15 @@ where
 	fn collection_helper_address(&self) -> Result<Address> {
 		Ok(T::ContractAddress::get())
 	}
+
+	/// @notice Balance of account
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of fingibles owned by `owner`, possibly zero
+	fn balance_of_cross(&self, owner: CrossAddress) -> Result<U256> {
+		self.consume_store_reads(1)?;
+		let balance = <Balance<T>>::get((self.id, owner.into_sub_cross_account::<T>()?));
+		Ok(balance.into())
+	}
 }
 
 #[solidity_interface(

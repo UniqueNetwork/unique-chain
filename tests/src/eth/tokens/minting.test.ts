@@ -19,7 +19,7 @@ import {Pallets} from '../../util';
 import {expect, itEth, usingEthPlaygrounds} from '../util';
 
 
-describe.only('Minting tokens', () => {
+describe('Minting tokens', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
 

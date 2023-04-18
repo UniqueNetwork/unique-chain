@@ -585,7 +585,7 @@ describe('Refungible: Plain calls', () => {
     expect(event.returnValues.tokenId).to.equal(tokenId.toString());
   });
 
-  itEth('Check crossBalanceOf()', async ({helper}) => {
+  itEth('Check balanceOfCross()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {});
     const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);

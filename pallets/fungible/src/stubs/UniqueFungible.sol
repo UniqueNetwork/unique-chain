@@ -511,7 +511,7 @@ struct Property {
 	bytes value;
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x85d7dea6
+/// @dev the ERC-165 identifier for this interface is 0x69d14d3e
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
 	/// @param owner crossAddress The address which owns the funds.
@@ -629,6 +629,18 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		require(false, stub_error);
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
+	}
+
+	/// @notice Balance of account
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of fingibles owned by `owner`, possibly zero
+	/// @dev EVM selector for this function is: 0xec069398,
+	///  or in textual repr: balanceOfCross((address,uint256))
+	function balanceOfCross(CrossAddress memory owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
 	}
 }
 
