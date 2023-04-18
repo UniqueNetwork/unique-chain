@@ -431,17 +431,28 @@ describe('Fungible: Plain calls', () => {
   itEth('Check balanceOfCross()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {});
     const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const other = await helper.ethCrossAccount.createAccountWithBalance(donor);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner.eth);
 
     expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 0n).to.be.true;
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})) === 0n).to.be.true;
 
-    let sum = 0n;
-    for (let i = 1n; i < 100n; i++) {
-      await collection.mint(alice, 100n, {Ethereum: owner.eth});
-      sum += 100n;
-      expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === sum).to.be.true;
-    }
+    await collection.mint(alice, 100n, {Ethereum: owner.eth});
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 100n).to.be.true;
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})) === 0n).to.be.true;
+
+    await collectionEvm.methods.transferCross(other, 50n).send({from: owner.eth});
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 50n).to.be.true;
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})) === 50n).to.be.true;
+
+    await collectionEvm.methods.transferCross(other, 50n).send({from: owner.eth});
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 0n).to.be.true;
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})) === 100n).to.be.true;
+
+    await collectionEvm.methods.transferCross(owner, 100n).send({from: other.eth});
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 100n).to.be.true;
+    expect(BigInt(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})) === 0n).to.be.true;
   });
 });
 

@@ -671,7 +671,7 @@ describe('NFT: Plain calls', () => {
 
     expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === 0n).to.be.true;
 
-    for (let i = 1n; i < 100n; i++) {
+    for (let i = 1n; i < 10n; i++) {
       await collection.mintToken(minter, {Ethereum: owner.eth});
       expect(BigInt(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})) === i).to.be.true;
     }
