@@ -466,6 +466,21 @@ describe('Refungible: Plain calls', () => {
       expect(await collection.getTokenBalance(tokenId, {Substrate: ownerSub.address})).to.be.equal(150n);
     }
   });
+
+  itEth('Check balanceOfCross()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner.eth});
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner.eth);
+
+    expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === 200n).to.be.true;
+
+    for (let i = 1n; i < 100n; i++) {
+      await tokenContract.methods.repartition(i).send({from: owner.eth});
+      expect(BigInt(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})) === i).to.be.true;
+    }
+  });
 });
 
 describe('Refungible: Fees', () => {
