@@ -1,0 +1,13 @@
+[package]
+edition = "2021"
+license = "GPLv3"
+name = "pallet-balances-adapter"
+version = "0.1.0"
+
+[dependencies]
+
+[features]
+default = ["std"]
+std = []
+# stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
+# try-runtime = ["frame-support/try-runtime"]
