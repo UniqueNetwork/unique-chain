@@ -1,14 +1,14 @@
-pub fn add(left: usize, right: usize) -> usize {
-	left + right
-}
+// #![doc = include_str!("../README.md")]
+#![cfg_attr(not(feature = "std"), no_std)]
+#![warn(missing_docs)]
 
-#[cfg(test)]
-mod tests {
-	use super::*;
+#[frame_support::pallet]
+pub mod pallet {
+	#[pallet::config]
+	pub trait Config: frame_system::Config {}
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
 
-	#[test]
-	fn it_works() {
-		let result = add(2, 2);
-		assert_eq!(result, 4);
-	}
+	#[pallet::call]
+	impl<T: Config> Pallet<T> {}
 }
