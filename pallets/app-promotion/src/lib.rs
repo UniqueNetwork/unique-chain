@@ -845,7 +845,6 @@ impl<T: Config> Pallet<T> {
 	/// - `staker`: staker account.
 	pub fn total_staked_by_id(staker: impl EncodeLike<T::AccountId>) -> Option<BalanceOf<T>> {
 		let staked = Staked::<T>::iter_prefix((staker,))
-			.into_iter()
 			.fold(<BalanceOf<T>>::default(), |acc, (_, (amount, _))| {
 				acc + amount
 			});
@@ -864,7 +863,6 @@ impl<T: Config> Pallet<T> {
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<Vec<(T::BlockNumber, BalanceOf<T>)>> {
 		let mut staked = Staked::<T>::iter_prefix((staker,))
-			.into_iter()
 			.map(|(block, (amount, _))| (block, amount))
 			.collect::<Vec<_>>();
 		staked.sort_by_key(|(block, _)| *block);
@@ -883,12 +881,6 @@ impl<T: Config> Pallet<T> {
 			Self::total_staked_by_id(s.as_sub())
 		})
 	}
-
-	// pub fn cross_id_locked_balance(staker: T::CrossAccountId) -> BalanceOf<T> {
-	// 	Self::get_locked_balance(staker.as_sub())
-	// 		.map(|l| l.amount)
-	// 		.unwrap_or_default()
-	// }
 
 	/// Returns all relay block numbers when stake was made,
 	/// the amount of the stake.

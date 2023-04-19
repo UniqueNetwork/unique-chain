@@ -36,6 +36,7 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn set_collection_properties(b: u32, ) -> Weight;
 	fn delete_collection_properties(b: u32, ) -> Weight;
+	fn check_accesslist() -> Weight;
 }
 
 /// Weights for pallet_common using the Substrate node and recommended hardware.
@@ -69,6 +70,16 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
+	/// Storage: Common Allowlist (r:1 w:0)
+	/// Proof: Common Allowlist (max_values: None, max_size: Some(70), added: 2545, mode: MaxEncodedLen)
+	fn check_accesslist() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `340`
+		//  Estimated: `2545`
+		// Minimum execution time: 2_887_000 picoseconds.
+		Weight::from_parts(3_072_000, 2545)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -100,6 +111,16 @@ impl WeightInfo for () {
 			.saturating_add(Weight::from_parts(21_502_829, 0).saturating_mul(b.into()))
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
+	/// Storage: Common Allowlist (r:1 w:0)
+	/// Proof: Common Allowlist (max_values: None, max_size: Some(70), added: 2545, mode: MaxEncodedLen)
+	fn check_accesslist() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `340`
+		//  Estimated: `2545`
+		// Minimum execution time: 2_887_000 picoseconds.
+		Weight::from_parts(3_072_000, 2545)
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
 	}
 }
 

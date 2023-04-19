@@ -26,6 +26,7 @@ use pallet_common::{
 	CollectionHandle,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
 	eth::CrossAddress,
+	CommonWeightInfo as _,
 };
 use sp_std::vec::Vec;
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
@@ -39,7 +40,7 @@ use sp_core::{U256, Get};
 
 use crate::{
 	Allowance, Balance, Config, FungibleHandle, Pallet, TotalSupply, SelfWeightOf,
-	weights::WeightInfo,
+	weights::WeightInfo, common::CommonWeights,
 };
 
 frontier_contract! {
@@ -99,7 +100,7 @@ impl<T: Config> FungibleHandle<T> {
 		let balance = <Balance<T>>::get((self.id, owner));
 		Ok(balance.into())
 	}
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -112,7 +113,7 @@ impl<T: Config> FungibleHandle<T> {
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer_from())]
+	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
 		caller: Caller,
@@ -129,7 +130,7 @@ impl<T: Config> FungibleHandle<T> {
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 	#[weight(<SelfWeightOf<T>>::approve())]
@@ -201,7 +202,7 @@ where
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		<Pallet<T>>::create_item(&self, &caller, (to, amount), &budget)
+		<Pallet<T>>::create_item(self, &caller, (to, amount), &budget)
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -289,7 +290,7 @@ where
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -302,7 +303,7 @@ where
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer_from())]
+	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
@@ -319,7 +320,7 @@ where
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 

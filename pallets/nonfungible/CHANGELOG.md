@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.1.14] - 2023-03-28
+
+### Fixed
+
+- The weight of `transfer` and `transfer_from`.
+
 ## [0.1.13] - 2023-01-20
 
 ### Fixed

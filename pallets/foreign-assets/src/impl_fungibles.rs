@@ -452,7 +452,8 @@ where
 					&T::CrossAccountId::from_sub(dest.clone()),
 					amount.into(),
 					&Value::new(0),
-				)?;
+				)
+				.map_err(|e| e.error)?;
 
 				Ok(amount)
 			}

@@ -23,7 +23,7 @@ use up_data_structs::{
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _,
+	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
 };
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
@@ -91,7 +91,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer()
+		<SelfWeightOf<T>>::transfer_raw() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
 	}
 
 	fn approve() -> Weight {
@@ -103,7 +103,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer_from() -> Weight {
-		<SelfWeightOf<T>>::transfer_from()
+		Self::transfer() + <SelfWeightOf<T>>::check_allowed_raw()
 	}
 
 	fn burn_from() -> Weight {
@@ -325,10 +325,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 		if amount == 1 {
-			with_weight(
-				<Pallet<T>>::transfer(self, &from, &to, token, nesting_budget),
-				<CommonWeights<T>>::transfer(),
-			)
+			<Pallet<T>>::transfer(self, &from, &to, token, nesting_budget)
 		} else {
 			<Pallet<T>>::check_token_immediate_ownership(self, token, &from)?;
 			Ok(().into())
@@ -386,10 +383,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		ensure!(amount <= 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 
 		if amount == 1 {
-			with_weight(
-				<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, nesting_budget),
-				<CommonWeights<T>>::transfer_from(),
-			)
+			<Pallet<T>>::transfer_from(self, &sender, &from, &to, token, nesting_budget)
 		} else {
 			<Pallet<T>>::check_allowed(self, &sender, &from, token, nesting_budget)?;
 

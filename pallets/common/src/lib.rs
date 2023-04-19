@@ -92,9 +92,9 @@ pub mod benchmarking;
 pub mod dispatch;
 pub mod erc;
 pub mod eth;
+pub mod helpers;
 #[allow(missing_docs)]
 pub mod weights;
-
 /// Weight info.
 pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 

@@ -39,6 +39,7 @@ use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	eth::{self, TokenUri},
+	CommonWeightInfo,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -47,7 +48,7 @@ use sp_core::{U256, Get};
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	TokenProperties, SelfWeightOf, weights::WeightInfo,
+	TokenProperties, SelfWeightOf, weights::WeightInfo, common::CommonWeights,
 };
 
 /// Nft events.
@@ -458,7 +459,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param from The current owner of the NFT
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer_from())]
+	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
 		caller: Caller,
@@ -475,7 +476,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -824,7 +825,7 @@ where
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer(&mut self, caller: Caller, to: Address, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -833,7 +834,8 @@ where
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, token, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -842,7 +844,7 @@ where
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer_cross(
 		&mut self,
 		caller: Caller,
@@ -856,7 +858,8 @@ where
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, token, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -866,7 +869,7 @@ where
 	/// @param from Cross acccount address of current owner
 	/// @param to Cross acccount address of new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
@@ -882,7 +885,7 @@ where
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 

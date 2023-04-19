@@ -2,7 +2,7 @@
 edition = "2021"
 license = "GPLv3"
 name = "pallet-common"
-version = "0.1.13"
+version = "0.1.14"
 
 [dependencies]
 # Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
