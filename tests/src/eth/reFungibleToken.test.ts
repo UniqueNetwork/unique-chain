@@ -466,6 +466,35 @@ describe('Refungible: Plain calls', () => {
       expect(await collection.getTokenBalance(tokenId, {Substrate: ownerSub.address})).to.be.equal(150n);
     }
   });
+
+  itEth('Check balanceOfCross()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const other = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const {tokenId} = await collection.mintToken(alice, 200n, {Ethereum: owner.eth});
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner.eth);
+
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('200');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
+
+    await tokenContract.methods.repartition(100n).send({from: owner.eth});
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('100');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
+
+    await tokenContract.methods.transferCross(other, 50n).send({from: owner.eth});
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('50');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('50');
+
+    await tokenContract.methods.transferCross(other, 50n).send({from: owner.eth});
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('100');
+
+    await tokenContract.methods.repartition(1000n).send({from: other.eth});
+    await tokenContract.methods.transferCross(owner, 500n).send({from: other.eth});
+    expect(await tokenContract.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('500');
+    expect(await tokenContract.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('500');
+  });
 });
 
 describe('Refungible: Fees', () => {
