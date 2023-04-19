@@ -6123,6 +6123,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-balances-adapter"
+version = "0.1.0"
+
+[[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
 source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-v0.9.41#1ed335108b39dcdaeacdaed8eeb33c2e7657273e"
@@ -7284,6 +7288,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "pallet-balances-adapter",
  "pallet-common",
  "pallet-evm",
  "pallet-evm-coder-substrate",
