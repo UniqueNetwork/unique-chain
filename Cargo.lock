@@ -5749,6 +5749,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-balances-adapter",
  "pallet-base-fee",
  "pallet-collator-selection",
  "pallet-common",
@@ -6132,13 +6133,19 @@ dependencies = [
 name = "pallet-balances-adapter"
 version = "0.1.0"
 dependencies = [
+ "evm-coder",
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-common",
+ "pallet-evm",
+ "pallet-evm-coder-substrate",
+ "pallet-evm-transaction-payment",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-std",
+ "up-data-structs",
 ]
 
 [[package]]
@@ -9202,6 +9209,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-balances-adapter",
  "pallet-base-fee",
  "pallet-collator-selection",
  "pallet-common",
@@ -13571,6 +13579,7 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
+ "pallet-balances-adapter",
  "pallet-base-fee",
  "pallet-collator-selection",
  "pallet-common",

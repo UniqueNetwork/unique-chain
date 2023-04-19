@@ -20,6 +20,7 @@ default = ['std', 'unique-runtime']
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
 runtime-benchmarks = [
+	"pallet-preimage/runtime-benchmarks",
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
@@ -39,7 +40,6 @@ runtime-benchmarks = [
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
-	"pallet-preimage/runtime-benchmarks",
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
@@ -68,9 +68,9 @@ std = [
 	# 'pallet-contracts-primitives/std',
 	# 'pallet-contracts-rpc-runtime-api/std',
 	# 'pallet-contract-helpers/std',
-	"pallet-preimage/std",
 	"pallet-authorship/std",
 	"pallet-identity/std",
+	"pallet-preimage/std",
 	"pallet-session/std",
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
@@ -78,6 +78,7 @@ std = [
 	'fp-rpc/std',
 	'fp-self-contained/std',
 	'pallet-app-promotion/std',
+	'pallet-balances-adapter/std',
 	'pallet-base-fee/std',
 	'pallet-charge-transaction/std',
 	'pallet-collator-selection/std',
@@ -124,8 +125,8 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-vesting/std",
-	"orml-xtokens/std",
 	"orml-xcm-support/std",
+	"orml-xtokens/std",
 	"pallet-foreign-assets/std",
 	"pallet-maintenance/std",
 ]
@@ -134,8 +135,8 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-identity/try-runtime",
-	"pallet-session/try-runtime",
 	"pallet-preimage/try-runtime",
+	"pallet-session/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
 	'cumulus-pallet-dmp-queue/try-runtime',
 	'cumulus-pallet-parachain-system/try-runtime',
@@ -207,8 +208,8 @@ frame-system-rpc-runtime-api = { workspace = true }
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
-orml-xtokens = { workspace = true }
 orml-xcm-support = { workspace = true }
+orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { workspace = true }
@@ -244,6 +245,7 @@ app-promotion-rpc = { workspace = true }
 derivative = { workspace = true }
 log = { workspace = true }
 pallet-app-promotion = { workspace = true }
+pallet-balances-adapter = { workspace = true }
 pallet-collator-selection = { workspace = true }
 pallet-common = { workspace = true }
 pallet-configuration = { workspace = true }
@@ -282,11 +284,11 @@ up-sponsorship = { workspace = true }
 ################################################################################
 # Optional dependencies
 
-frame-system-benchmarking = { workspace = true, optional = true }
 frame-benchmarking = { workspace = true, optional = true }
+frame-system-benchmarking = { workspace = true, optional = true }
 frame-try-runtime = { workspace = true, optional = true }
-serde = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
 
 ################################################################################
 # Test dependencies
