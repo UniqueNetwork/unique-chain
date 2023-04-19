@@ -869,15 +869,6 @@ pub mod pallet {
 		),
 		QueryKind = OptionQuery,
 	>;
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
-
-			Weight::zero()
-		}
-	}
 }
 
 impl<T: Config> Pallet<T> {

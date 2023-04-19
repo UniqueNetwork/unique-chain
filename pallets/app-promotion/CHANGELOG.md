@@ -3,6 +3,11 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+## [0.1.6] - 2023-04-19
+
+- ### Fixed
+
+- Useless `on_runtime_upgrade()` has been removed
 
 ## [0.1.5] - 2023-02-14
 

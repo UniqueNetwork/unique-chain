@@ -281,16 +281,6 @@ pub mod pallet {
 		Value = bool,
 		QueryKind = ValueQuery,
 	>;
-
-	/// Upgrade from the old schema to properties.
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
-
-			Weight::zero()
-		}
-	}
 }
 
 pub struct NonfungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);

@@ -263,10 +263,6 @@ pub mod pallet {
 	pub type PreviousCalculatedRecord<T: Config> =
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
-	#[pallet::storage]
-	pub(crate) type UpgradedToReserves<T: Config> =
-		StorageValue<Value = bool, QueryKind = ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
@@ -289,12 +285,6 @@ pub mod pallet {
 			}
 
 			<T as Config>::WeightInfo::on_initialize(counter)
-		}
-
-		fn on_runtime_upgrade() -> Weight {
-			<UpgradedToReserves<T>>::kill();
-
-			T::DbWeight::get().reads_writes(0, 1)
 		}
 	}
 
