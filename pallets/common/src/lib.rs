@@ -420,10 +420,11 @@ impl<T: Config> CollectionHandle<T> {
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::marker::PhantomData;
+
 	use super::*;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use frame_system::pallet_prelude::*;
 	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
@@ -479,6 +480,22 @@ pub mod pallet {
 		}
 	}
 
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			StorageVersion::new(1).put::<Pallet<T>>();
+		}
+	}
 	impl<T: Config> Pallet<T> {
 		/// Helper function that handles deposit events
 		pub fn deposit_event(event: Event<T>) {
