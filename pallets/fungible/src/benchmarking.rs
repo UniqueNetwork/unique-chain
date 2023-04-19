@@ -92,7 +92,7 @@ benchmarks! {
 		<Pallet<T>>::create_item(&collection, &owner, (owner_eth.clone(), 200), &Unlimited)?;
 	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, &spender, 100)?}
 
-	 check_allowed_raw {
+	check_allowed_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;

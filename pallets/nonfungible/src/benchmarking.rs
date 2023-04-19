@@ -146,7 +146,7 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, owner_eth.clone())?;
 	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, item, Some(&spender))?}
 
-	checks_allowed_raw {
+	check_allowed_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; spender: cross_sub; receiver: cross_sub;

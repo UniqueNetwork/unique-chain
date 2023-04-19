@@ -43,7 +43,7 @@ pub trait WeightInfo {
 	fn transfer_raw() -> Weight;
 	fn approve() -> Weight;
 	fn approve_from() -> Weight;
-	fn checks_allowed_raw() -> Weight;
+	fn check_allowed_raw() -> Weight;
 	fn burn_from() -> Weight;
 	fn set_token_property_permissions(b: u32, ) -> Weight;
 	fn set_token_properties(b: u32, ) -> Weight;
@@ -254,7 +254,7 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	}
 	/// Storage: Nonfungible Allowance (r:1 w:0)
 	/// Proof: Nonfungible Allowance (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
-	fn checks_allowed_raw() -> Weight {
+	fn check_allowed_raw() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `394`
 		//  Estimated: `2532`
@@ -573,7 +573,7 @@ impl WeightInfo for () {
 	}
 	/// Storage: Nonfungible Allowance (r:1 w:0)
 	/// Proof: Nonfungible Allowance (max_values: None, max_size: Some(57), added: 2532, mode: MaxEncodedLen)
-	fn checks_allowed_raw() -> Weight {
+	fn check_allowed_raw() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `394`
 		//  Estimated: `2532`

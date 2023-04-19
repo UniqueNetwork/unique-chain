@@ -1242,7 +1242,7 @@ impl<T: Config> Pallet<T> {
 
 		// Allowance is reset in [`transfer`]
 		let mut result = Self::transfer(collection, from, to, token, nesting_budget);
-		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::checks_allowed_raw());
+		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result
 	}
 
