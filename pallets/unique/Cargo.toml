@@ -24,6 +24,7 @@ std = [
 	'frame-benchmarking/std',
 	'frame-support/std',
 	'frame-system/std',
+	'pallet-balances-adapter/std',
 	'pallet-common/std',
 	'pallet-evm-coder-substrate/std',
 	'pallet-evm/std',
@@ -46,6 +47,7 @@ evm-coder = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+pallet-balances-adapter = { workspace = true }
 pallet-common = { workspace = true }
 pallet-evm = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
