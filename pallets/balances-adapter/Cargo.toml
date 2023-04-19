@@ -5,9 +5,19 @@ name = "pallet-balances-adapter"
 version = "0.1.0"
 
 [dependencies]
+# Substrate
+frame-support = { workspace = true }
+frame-system = { workspace = true }
+pallet-balances = { workspace = true }
+sp-core = { workspace = true }
+sp-std = { workspace = true }
+
+#Parity
+codec = { workspace = true, package = "parity-scale-codec" }
+scale-info = { workspace = true }
 
 [features]
 default = ["std"]
-std = []
+std = ["frame-support/std", "frame-system/std", "pallet-balances/std", "sp-core/std", "sp-std/std"]
 # stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
-# try-runtime = ["frame-support/try-runtime"]
+try-runtime = ["frame-support/try-runtime"]
