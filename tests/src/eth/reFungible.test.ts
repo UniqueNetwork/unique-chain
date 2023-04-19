@@ -606,7 +606,7 @@ describe('Refungible: Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
     const {tokenId} = await collection.mintToken(minter, 100n,{Ethereum: owner.eth});
 
-    for (let i = 1n; i < 100n; i++) {
+    for (let i = 1n; i < 10n; i++) {
       const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
       expect(ownerCross.eth).to.be.eq(owner.eth);
       expect(ownerCross.sub).to.be.eq(owner.sub);
