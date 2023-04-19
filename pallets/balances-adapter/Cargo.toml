@@ -16,8 +16,28 @@ sp-std = { workspace = true }
 codec = { workspace = true, package = "parity-scale-codec" }
 scale-info = { workspace = true }
 
+# Unique
+evm-coder = { workspace = true }
+pallet-evm = { workspace = true }
+
+#Local
+pallet-common = { workspace = true }
+pallet-evm-coder-substrate = { workspace = true }
+pallet-evm-transaction-payment = { workspace = true }
+up-data-structs = { workspace = true, features = ['serde1'] }
+
 [features]
 default = ["std"]
-std = ["frame-support/std", "frame-system/std", "pallet-balances/std", "sp-core/std", "sp-std/std"]
-# stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
+std = [
+	"evm-coder/std",
+	"frame-support/std",
+	"frame-system/std",
+	"pallet-balances/std",
+	"pallet-common/std",
+	"pallet-evm-coder-substrate/std",
+	"pallet-evm/std",
+	"sp-core/std",
+	"sp-std/std",
+]
+stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
 try-runtime = ["frame-support/try-runtime"]

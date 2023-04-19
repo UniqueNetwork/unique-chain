@@ -83,6 +83,9 @@ impl pallet_refungible::Config for Runtime {
 impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
+impl pallet_balances_adapter::Config for Runtime {
+	// type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
 
 parameter_types! {
 	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
