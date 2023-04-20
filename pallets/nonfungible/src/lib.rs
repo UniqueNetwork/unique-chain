@@ -283,13 +283,20 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Upgrade from the old schema to properties.
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
 
-			Weight::zero()
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			StorageVersion::new(1).put::<Pallet<T>>();
 		}
 	}
 }

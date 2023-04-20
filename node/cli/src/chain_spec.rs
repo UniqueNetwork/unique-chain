@@ -167,6 +167,8 @@ macro_rules! testnet_genesis {
 					.map(|k| (k, 1 << 100))
 					.collect(),
 			},
+			common: Default::default(),
+			nonfungible: Default::default(),
 			treasury: Default::default(),
 			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
@@ -225,6 +227,8 @@ macro_rules! testnet_genesis {
 					.expect("WASM binary was not build, please build it!")
 					.to_vec(),
 			},
+			common: Default::default(),
+			nonfungible: Default::default(),
 			balances: BalancesConfig {
 				balances: $endowed_accounts
 					.iter()

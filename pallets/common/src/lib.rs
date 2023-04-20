@@ -420,10 +420,11 @@ impl<T: Config> CollectionHandle<T> {
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::marker::PhantomData;
+
 	use super::*;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use frame_system::pallet_prelude::*;
 	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
@@ -476,6 +477,23 @@ pub mod pallet {
 		/// Maximum admins per collection.
 		pub fn collection_admins_limit() -> u32 {
 			COLLECTION_ADMINS_LIMIT
+		}
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			StorageVersion::new(1).put::<Pallet<T>>();
 		}
 	}
 
@@ -869,15 +887,6 @@ pub mod pallet {
 		),
 		QueryKind = OptionQuery,
 	>;
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
-
-			Weight::zero()
-		}
-	}
 }
 
 impl<T: Config> Pallet<T> {
