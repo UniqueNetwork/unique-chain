@@ -8,6 +8,7 @@ pub mod erc;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use frame_support::traits::Get;
 	use sp_core::U256;
 
 	#[pallet::config]
@@ -17,6 +18,10 @@ pub mod pallet {
 			Balance = Self::CurrencyBalance,
 		>;
 		type CurrencyBalance: Into<U256>;
+
+		type Decimals: Get<u8>;
+		type Name: Get<String>;
+		type Symbol: Get<String>;
 	}
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
