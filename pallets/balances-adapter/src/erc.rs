@@ -1,6 +1,7 @@
 use crate::Config;
 use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
-use pallet_common::erc::{CommonEvmHandler, PrecompileHandle, PrecompileResult};
+use frame_support::traits::Currency;
+use pallet_common::erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{PreDispatch, Result},
@@ -45,6 +46,33 @@ impl<T: Config> WithRecorder<T> for NativeFungibleHandle<T> {
 
 #[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
 impl<T: Config> NativeFungibleHandle<T> {
+	fn allowance(&self, owner: Address, spender: Address) -> Result<U256> {
+		Ok(U256::zero())
+	}
+
+	// #[weight(<SelfWeightOf<T>>::approve())]
+	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
+		// self.consume_store_reads(1)?;
+		Err("Approve not supported now".into())
+	}
+	fn balance_of(&self, owner: Address) -> Result<U256> {
+		// self.consume_store_reads(1)?;
+		let owner = T::CrossAccountId::from_eth(owner);
+		let a = <T as Config>::Currency::free_balance(owner.as_sub());
+		Ok(a.into())
+	}
+
+	fn decimals(&self) -> Result<u8> {
+		// Ok(if let CollectionMode::Fungible(decimals) = &self.mode {
+		// 	*decimals
+		// } else {
+		// 	unreachable!
+		// })
+
+		// From config 18
+		todo!()
+	}
+
 	fn name(&self) -> Result<String> {
 		// Ok(decode_utf16(self.name.iter().copied())
 		// 	.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
@@ -56,26 +84,10 @@ impl<T: Config> NativeFungibleHandle<T> {
 		// Ok(String::from_utf8_lossy(&self.token_prefix).into())
 		todo!()
 	}
+
 	fn total_supply(&self) -> Result<U256> {
 		// self.consume_store_reads(1)?;
 		// Ok(<TotalSupply<T>>::get(self.id).into())
-		todo!()
-	}
-
-	fn decimals(&self) -> Result<u8> {
-		// Ok(if let CollectionMode::Fungible(decimals) = &self.mode {
-		// 	*decimals
-		// } else {
-		// 	unreachable!()
-		// })
-		todo!()
-	}
-
-	fn balance_of(&self, owner: Address) -> Result<U256> {
-		// self.consume_store_reads(1)?;
-		// let owner = T::CrossAccountId::from_eth(owner);
-		// let balance = <Balance<T>>::get((self.id, owner));
-		// Ok(balance.into())
 		todo!()
 	}
 
@@ -112,27 +124,6 @@ impl<T: Config> NativeFungibleHandle<T> {
 		// <Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 		// 	.map_err(dispatch_to_evm::<T>)?;
 		// Ok(true)
-		todo!()
-	}
-
-	// #[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
-		// let caller = T::CrossAccountId::from_eth(caller);
-		// let spender = T::CrossAccountId::from_eth(spender);
-		// let amount = amount.try_into().map_err(|_| "amount overflow")?;
-
-		// <Pallet<T>>::set_allowance(self, &caller, &spender, amount)
-		// 	.map_err(dispatch_to_evm::<T>)?;
-		// Ok(true)
-		todo!()
-	}
-
-	fn allowance(&self, owner: Address, spender: Address) -> Result<U256> {
-		// self.consume_store_reads(1)?;
-		// let owner = T::CrossAccountId::from_eth(owner);
-		// let spender = T::CrossAccountId::from_eth(spender);
-
-		// Ok(<Allowance<T>>::get((self.id, owner, spender)).into())
 		todo!()
 	}
 }
