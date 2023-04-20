@@ -74,6 +74,8 @@ mod benchmarking;
 mod mock;
 #[cfg(test)]
 mod tests;
+// We dont use this pallet right now
+#[allow(deprecated)]
 pub mod weights;
 
 use codec::{Codec, Decode, Encode, MaxEncodedLen};
