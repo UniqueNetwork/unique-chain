@@ -58,8 +58,8 @@ impl<T: Config> NativeFungibleHandle<T> {
 	fn balance_of(&self, owner: Address) -> Result<U256> {
 		// self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
-		let a = <T as Config>::Currency::free_balance(owner.as_sub());
-		Ok(a.into())
+		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
+		Ok(balance.into())
 	}
 
 	fn decimals(&self) -> Result<u8> {
@@ -76,8 +76,8 @@ impl<T: Config> NativeFungibleHandle<T> {
 
 	fn total_supply(&self) -> Result<U256> {
 		// self.consume_store_reads(1)?;
-		// Ok(<TotalSupply<T>>::get(self.id).into())
-		todo!()
+		let total = <T as Config>::Currency::total_issuance();
+		Ok(total.into())
 	}
 
 	// #[weight(<SelfWeightOf<T>>::transfer())]
