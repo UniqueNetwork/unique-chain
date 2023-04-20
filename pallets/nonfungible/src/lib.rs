@@ -281,6 +281,23 @@ pub mod pallet {
 		Value = bool,
 		QueryKind = ValueQuery,
 	>;
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			StorageVersion::new(1).put::<Pallet<T>>();
+		}
+	}
 }
 
 pub struct NonfungibleHandle<T: Config>(pallet_common::CollectionHandle<T>);

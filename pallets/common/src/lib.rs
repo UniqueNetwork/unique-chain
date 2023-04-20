@@ -496,6 +496,7 @@ pub mod pallet {
 			StorageVersion::new(1).put::<Pallet<T>>();
 		}
 	}
+
 	impl<T: Config> Pallet<T> {
 		/// Helper function that handles deposit events
 		pub fn deposit_event(event: Event<T>) {
