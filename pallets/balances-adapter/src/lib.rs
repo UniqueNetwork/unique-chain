@@ -8,8 +8,16 @@ pub mod erc;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use sp_core::U256;
+
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {}
+	pub trait Config: frame_system::Config + pallet_evm_coder_substrate::Config {
+		type Currency: frame_support::traits::Currency<
+			Self::AccountId,
+			Balance = Self::CurrencyBalance,
+		>;
+		type CurrencyBalance: Into<U256>;
+	}
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 

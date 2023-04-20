@@ -25,7 +25,7 @@ use crate::{
 	},
 	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, Balances,
 };
-use frame_support::traits::{ConstU32, ConstU64};
+use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{
 	types::{AccountId, Balance, BlockNumber},
 	constants::*,
@@ -84,7 +84,8 @@ impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
 }
 impl pallet_balances_adapter::Config for Runtime {
-	// type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+	type Currency = Balances;
+	type CurrencyBalance = <Balances as Currency<Self::AccountId>>::Balance;
 }
 
 parameter_types! {
