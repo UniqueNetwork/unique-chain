@@ -23,7 +23,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, Balances,
+	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, RUNTIME_NAME, TOKEN_SYMBOL, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{
@@ -51,8 +51,11 @@ pub mod collator_selection;
 pub mod preimage;
 
 parameter_types! {
-	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
+	pub const Decimals: u8 = 32;
+	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
+	pub Name: String = RUNTIME_NAME.to_string();
+	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 
 impl pallet_common::Config for Runtime {
@@ -86,6 +89,9 @@ impl pallet_nonfungible::Config for Runtime {
 impl pallet_balances_adapter::Config for Runtime {
 	type Currency = Balances;
 	type CurrencyBalance = <Balances as Currency<Self::AccountId>>::Balance;
+	type Decimals = Decimals;
+	type Name = Name;
+	type Symbol = Symbol;
 }
 
 parameter_types! {

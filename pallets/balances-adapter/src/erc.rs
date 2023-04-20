@@ -7,7 +7,7 @@ use pallet_evm_coder_substrate::{
 	execution::{PreDispatch, Result},
 	frontier_contract, WithRecorder, SubstrateRecorder,
 };
-use sp_core::{U256};
+use sp_core::{U256, Get};
 use sp_std::vec::Vec;
 
 frontier_contract! {
@@ -63,26 +63,15 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn decimals(&self) -> Result<u8> {
-		// Ok(if let CollectionMode::Fungible(decimals) = &self.mode {
-		// 	*decimals
-		// } else {
-		// 	unreachable!
-		// })
-
-		// From config 18
-		todo!()
+		Ok(T::Decimals::get())
 	}
 
 	fn name(&self) -> Result<String> {
-		// Ok(decode_utf16(self.name.iter().copied())
-		// 	.map(|r| r.unwrap_or(REPLACEMENT_CHARACTER))
-		// 	.collect::<String>())
-		todo!()
+		Ok(T::Name::get())
 	}
 
 	fn symbol(&self) -> Result<String> {
-		// Ok(String::from_utf8_lossy(&self.token_prefix).into())
-		todo!()
+		Ok(T::Symbol::get())
 	}
 
 	fn total_supply(&self) -> Result<U256> {
