@@ -1,5 +1,5 @@
-use crate::Config;
-use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
+use crate::{Config, NativeFungibleHandle};
+use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::traits::{Currency, ExistenceRequirement};
 use pallet_common::{
 	erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult},
@@ -34,17 +34,6 @@ pub enum ERC20Events {
 		spender: Address,
 		value: U256,
 	},
-}
-
-pub struct NativeFungibleHandle<T: Config>(SubstrateRecorder<T>);
-
-impl<T: Config> WithRecorder<T> for NativeFungibleHandle<T> {
-	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
-		&self.0
-	}
-	fn into_recorder(self) -> pallet_evm_coder_substrate::SubstrateRecorder<T> {
-		self.0
-	}
 }
 
 #[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
