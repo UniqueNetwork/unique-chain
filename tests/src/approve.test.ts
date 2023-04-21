@@ -386,6 +386,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
     let alice: IKeyringPair;
     let bob: IKeyringPair;
     let charlie: IKeyringPair;
+    const NONEXISTENT_COLLECTION = (2 ** 32) - 1;
 
     before(async () => {
       await usingPlaygrounds(async (helper, privateKey) => {
@@ -395,20 +396,17 @@ import {CrossAccountId} from './util/playgrounds/unique';
     });
 
     itSub('[nft] Approve for a collection that does not exist', async ({helper}) => {
-      const collectionId = 999999;
-      const approveTx = (helper.nft as any)[testCase.method](bob, collectionId, 1, {Substrate: charlie.address});
+      const approveTx = (helper.nft as any)[testCase.method](bob, NONEXISTENT_COLLECTION, 1, {Substrate: charlie.address});
       await expect(approveTx).to.be.rejectedWith('common.CollectionNotFound');
     });
 
     itSub('[fungible] Approve for a collection that does not exist', async ({helper}) => {
-      const collectionId = 999999;
-      const approveTx = (helper.ft as any)[testCase.method](bob, collectionId, 1, {Substrate: charlie.address});
+      const approveTx = (helper.ft as any)[testCase.method](bob, NONEXISTENT_COLLECTION, 1, {Substrate: charlie.address});
       await expect(approveTx).to.be.rejectedWith('common.CollectionNotFound');
     });
 
     itSub.ifWithPallets('[refungible] Approve for a collection that does not exist', [Pallets.ReFungible], async ({helper}) => {
-      const collectionId = 999999;
-      const approveTx = (helper.rft as any)[testCase.method](bob, collectionId, 1, {Substrate: charlie.address});
+      const approveTx = (helper.rft as any)[testCase.method](bob, NONEXISTENT_COLLECTION, 1, {Substrate: charlie.address});
       await expect(approveTx).to.be.rejectedWith('common.CollectionNotFound');
     });
 
