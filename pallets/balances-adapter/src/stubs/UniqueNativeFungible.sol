@@ -17,6 +17,40 @@ contract ERC165 is Dummy {
 	}
 }
 
+/// @dev the ERC-165 identifier for this interface is 0xff15c6f4
+contract ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @dev EVM selector for this function is: 0x2ada85ff,
+	///  or in textual repr: transferCross((address,uint256),uint256)
+	function transferCross(CrossAddress memory to, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev EVM selector for this function is: 0xd5cf430b,
+	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
+	function transferFromCross(
+		CrossAddress memory from,
+		CrossAddress memory to,
+		uint256 amount
+	) public returns (bool) {
+		require(false, stub_error);
+		from;
+		to;
+		amount;
+		dummy = 0;
+		return false;
+	}
+}
+
+/// Cross account struct
+struct CrossAddress {
+	address eth;
+	uint256 sub;
+}
+
 /// @dev inlined interface
 contract ERC20Events {
 	event Transfer(address indexed from, address indexed to, uint256 value);
@@ -25,6 +59,43 @@ contract ERC20Events {
 
 /// @dev the ERC-165 identifier for this interface is 0x942e8b22
 contract ERC20 is Dummy, ERC165, ERC20Events {
+	/// @dev EVM selector for this function is: 0xdd62ed3e,
+	///  or in textual repr: allowance(address,address)
+	function allowance(address owner, address spender) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		spender;
+		dummy;
+		return 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x095ea7b3,
+	///  or in textual repr: approve(address,uint256)
+	function approve(address spender, uint256 amount) public returns (bool) {
+		require(false, stub_error);
+		spender;
+		amount;
+		dummy = 0;
+		return false;
+	}
+
+	/// @dev EVM selector for this function is: 0x70a08231,
+	///  or in textual repr: balanceOf(address)
+	function balanceOf(address owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
+	}
+
+	/// @dev EVM selector for this function is: 0x313ce567,
+	///  or in textual repr: decimals()
+	function decimals() public view returns (uint8) {
+		require(false, stub_error);
+		dummy;
+		return 0;
+	}
+
 	/// @dev EVM selector for this function is: 0x06fdde03,
 	///  or in textual repr: name()
 	function name() public view returns (string memory) {
@@ -45,23 +116,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	///  or in textual repr: totalSupply()
 	function totalSupply() public view returns (uint256) {
 		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-
-	/// @dev EVM selector for this function is: 0x313ce567,
-	///  or in textual repr: decimals()
-	function decimals() public view returns (uint8) {
-		require(false, stub_error);
-		dummy;
-		return 0;
-	}
-
-	/// @dev EVM selector for this function is: 0x70a08231,
-	///  or in textual repr: balanceOf(address)
-	function balanceOf(address owner) public view returns (uint256) {
-		require(false, stub_error);
-		owner;
 		dummy;
 		return 0;
 	}
@@ -90,26 +144,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
-	/// @dev EVM selector for this function is: 0x095ea7b3,
-	///  or in textual repr: approve(address,uint256)
-	function approve(address spender, uint256 amount) public returns (bool) {
-		require(false, stub_error);
-		spender;
-		amount;
-		dummy = 0;
-		return false;
-	}
-
-	/// @dev EVM selector for this function is: 0xdd62ed3e,
-	///  or in textual repr: allowance(address,address)
-	function allowance(address owner, address spender) public view returns (uint256) {
-		require(false, stub_error);
-		owner;
-		spender;
-		dummy;
-		return 0;
-	}
 }
 
-contract UniqueNativeFungible is Dummy, ERC165, ERC20 {}
+contract UniqueNativeFungible is Dummy, ERC165, ERC20, ERC20UniqueExtensions {}
