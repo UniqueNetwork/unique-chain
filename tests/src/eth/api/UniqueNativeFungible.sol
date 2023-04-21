@@ -12,8 +12,12 @@ interface ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0xff15c6f4
+/// @dev the ERC-165 identifier for this interface is 0x1313556c
 interface ERC20UniqueExtensions is Dummy, ERC165 {
+	/// @dev EVM selector for this function is: 0xec069398,
+	///  or in textual repr: balanceOfCross((address,uint256))
+	function balanceOfCross(CrossAddress memory owner) external view returns (uint256);
+
 	/// @dev EVM selector for this function is: 0x2ada85ff,
 	///  or in textual repr: transferCross((address,uint256),uint256)
 	function transferCross(CrossAddress memory to, uint256 amount) external returns (bool);
