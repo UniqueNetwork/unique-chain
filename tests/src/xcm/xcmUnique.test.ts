@@ -16,9 +16,8 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
-import {XcmV2TraitsError} from '../interfaces';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds} from '../util';
-import {DevUniqueHelper} from '../util/playgrounds/unique.dev';
+import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 
 const UNIQUE_CHAIN = 2037;
 const STATEMINT_CHAIN = 1000;
@@ -675,30 +674,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       moreThanAcalaHas,
     );
 
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Unique
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -767,30 +756,21 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       testAmount,
     );
 
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Unique using full UNQ identification
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    let xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -798,24 +778,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     // Try to trick Unique using shortened UNQ identification
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -835,6 +805,10 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let uniqueParachainMultilocation: any;
   let uniqueAccountMultilocation: any;
   let uniqueCombinedMultilocation: any;
+
+  let messageSent: any;
+
+  const maxWaitBlocks = 3;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -885,26 +859,11 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     });
   });
 
-  const expectFailedToTransact = async (network: string, helper: DevUniqueHelper) => {
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      `[reject ${network} tokens] 'xcmpQueue.FailEvent' event is expected`,
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `[reject ${network} tokens] The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+  const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == messageSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
   };
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
@@ -914,9 +873,11 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
       const destination = uniqueCombinedMultilocation;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact('ACA', helper);
+    await expectFailedToTransact(helper, messageSent);
   });
 
   itSub('Unique rejects GLMR tokens from Moonbeam', async ({helper}) => {
@@ -924,9 +885,11 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const id = 'SelfReserve';
       const destination = uniqueCombinedMultilocation;
       await helper.xTokens.transfer(alith, id, testAmount, destination, 'Unlimited');
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact('GLMR', helper);
+    await expectFailedToTransact(helper, messageSent);
   });
 
   itSub('Unique rejects ASTR tokens from Astar', async ({helper}) => {
@@ -954,9 +917,11 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         assets,
         feeAssetItem,
       ]);
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact('ASTR', helper);
+    await expectFailedToTransact(helper, messageSent);
   });
 });
 
@@ -1196,6 +1161,9 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       moreThanMoonbeamHas,
     );
 
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Unique
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgram]);
@@ -1203,27 +1171,14 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       await helper.fastDemocracy.executeProposal('try to spend more UNQ than Moonbeam has', batchCall);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1296,6 +1251,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       testAmount,
     );
 
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Unique using full UNQ identification
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramFullId]);
@@ -1303,27 +1262,14 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       await helper.fastDemocracy.executeProposal('try to act like a reserve location for UNQ using path asset identification', batchCall);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    let xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1335,24 +1281,14 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       await helper.fastDemocracy.executeProposal('try to act like a reserve location for UNQ using "here" asset identification', batchCall);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1600,30 +1536,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       moreThanAstarHas,
     );
 
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Unique
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1692,30 +1618,21 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       testAmount,
     );
 
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Unique using full UNQ identification
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    let xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1723,24 +1640,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     // Try to trick Unique using shortened UNQ identification
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);

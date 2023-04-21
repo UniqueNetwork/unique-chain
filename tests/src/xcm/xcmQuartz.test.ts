@@ -16,9 +16,8 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
-import {XcmV2TraitsError} from '../interfaces';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
-import {DevUniqueHelper} from '../util/playgrounds/unique.dev';
+import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 
 const QUARTZ_CHAIN = 2095;
 const STATEMINE_CHAIN = 1000;
@@ -673,30 +672,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       moreThanKaruraHas,
     );
 
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Quartz
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -765,30 +754,21 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       testAmount,
     );
 
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Quartz using full QTZ identification
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    let xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -796,24 +776,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     // Try to trick Quartz using shortened QTZ identification
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'UntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -833,6 +803,10 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let quartzParachainMultilocation: any;
   let quartzAccountMultilocation: any;
   let quartzCombinedMultilocation: any;
+
+  let messageSent: any;
+
+  const maxWaitBlocks = 3;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -883,26 +857,11 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
     });
   });
 
-  const expectFailedToTransact = async (network: string, helper: DevUniqueHelper) => {
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      `[reject ${network} tokens] 'xcmpQueue.FailEvent' event is expected`,
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `[reject ${network} tokens] The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+  const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == messageSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
   };
 
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
@@ -912,9 +871,11 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       };
       const destination = quartzCombinedMultilocation;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact('KAR', helper);
+    await expectFailedToTransact(helper, messageSent);
   });
 
   itSub('Quartz rejects MOVR tokens from Moonriver', async ({helper}) => {
@@ -922,9 +883,11 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       const id = 'SelfReserve';
       const destination = quartzCombinedMultilocation;
       await helper.xTokens.transfer(alith, id, testAmount, destination, 'Unlimited');
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact('MOVR', helper);
+    await expectFailedToTransact(helper, messageSent);
   });
 
   itSub('Quartz rejects SDN tokens from Shiden', async ({helper}) => {
@@ -952,9 +915,11 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
         assets,
         feeAssetItem,
       ]);
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact('SDN', helper);
+    await expectFailedToTransact(helper, messageSent);
   });
 });
 
@@ -1193,6 +1158,9 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       moreThanMoonriverHas,
     );
 
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Quartz
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [quartzMultilocation, maliciousXcmProgram]);
@@ -1200,27 +1168,14 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       await helper.fastDemocracy.executeProposal('try to spend more QTZ than Moonriver has', batchCall);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1293,6 +1248,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       testAmount,
     );
 
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Quartz using full QTZ identification
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [quartzMultilocation, maliciousXcmProgramFullId]);
@@ -1300,27 +1259,14 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       await helper.fastDemocracy.executeProposal('try to act like a reserve location for QTZ using path asset identification', batchCall);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    let xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'isUntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1332,24 +1278,14 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       await helper.fastDemocracy.executeProposal('try to act like a reserve location for QTZ using "here" asset identification', batchCall);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'isUntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1598,30 +1534,20 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       moreThanShidenHas,
     );
 
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Quartz
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    const xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isFailedToTransactAsset,
-      `The XCM error should be 'FailedToTransactAsset', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1690,30 +1616,21 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       testAmount,
     );
 
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
     // Try to trick Quartz using full QTZ identification
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
-    const outcomeField = 1;
-
-    let xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'isUntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1721,24 +1638,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     // Try to trick Quartz using shortened QTZ identification
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    xcmpQueueFailEvent = await helper.wait.eventData<XcmV2TraitsError>(
-      maxWaitBlocks,
-      'xcmpQueue',
-      'Fail',
-      outcomeField,
-    );
-
-    expect(
-      xcmpQueueFailEvent != null,
-      '\'xcmpQueue.FailEvent\' event is expected',
-    ).to.be.true;
-
-    expect(
-      xcmpQueueFailEvent!.isUntrustedReserveLocation,
-      `The XCM error should be 'isUntrustedReserveLocation', got '${xcmpQueueFailEvent!.toHuman()}'`,
-    ).to.be.true;
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
