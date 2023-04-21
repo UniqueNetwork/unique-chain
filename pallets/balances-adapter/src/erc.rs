@@ -58,6 +58,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		// self.consume_store_reads(1)?;
 		Err("Approve not supported now".into())
 	}
+
 	fn balance_of(&self, owner: Address) -> Result<U256> {
 		// self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
@@ -141,6 +142,13 @@ impl<T: Config> NativeFungibleHandle<T>
 where
 	T::AccountId: From<[u8; 32]>,
 {
+	fn balance_of_cross(&self, owner: CrossAddress) -> Result<U256> {
+		// self.consume_store_reads(1)?;
+		let owner = owner.into_sub_cross_account::<T>()?;
+		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
+		Ok(balance.into())
+	}
+
 	// #[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
