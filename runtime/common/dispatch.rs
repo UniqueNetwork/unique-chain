@@ -25,6 +25,7 @@ use pallet_common::{
 };
 pub use pallet_common::dispatch::CollectionDispatch;
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
+use pallet_balances_adapter::{Pallet as PalletNativeFungible, NativeFungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
 use pallet_refungible::{
 	Pallet as PalletRefungible, RefungibleHandle, erc_token::RefungibleTokenHandle,
@@ -39,11 +40,15 @@ use pallet_common::unsupported;
 
 pub enum CollectionDispatchT<T>
 where
-	T: pallet_fungible::Config + pallet_nonfungible::Config + pallet_refungible::Config,
+	T: pallet_fungible::Config
+		+ pallet_nonfungible::Config
+		+ pallet_refungible::Config
+		+ pallet_balances_adapter::Config,
 {
 	Fungible(FungibleHandle<T>),
 	Nonfungible(NonfungibleHandle<T>),
 	Refungible(RefungibleHandle<T>),
+	NativeFungible(NativeFungibleHandle<T>),
 }
 impl<T> CollectionDispatch<T> for CollectionDispatchT<T>
 where
@@ -51,7 +56,8 @@ where
 		+ pallet_unique::Config
 		+ pallet_fungible::Config
 		+ pallet_nonfungible::Config
-		+ pallet_refungible::Config,
+		+ pallet_refungible::Config
+		+ pallet_balances_adapter::Config,
 {
 	fn create(
 		sender: T::CrossAccountId,
@@ -100,7 +106,13 @@ where
 
 	fn dispatch(handle: CollectionHandle<T>) -> Self {
 		match handle.mode {
-			CollectionMode::Fungible(_) => Self::Fungible(FungibleHandle::cast(handle)),
+			CollectionMode::Fungible(_) => {
+				if handle.id != up_data_structs::CollectionId(0) {
+					Self::Fungible(FungibleHandle::cast(handle))
+				} else {
+					Self::NativeFungible(NativeFungibleHandle::cast(handle))
+				}
+			}
 			CollectionMode::NFT => Self::Nonfungible(NonfungibleHandle::cast(handle)),
 			CollectionMode::ReFungible => Self::Refungible(RefungibleHandle::cast(handle)),
 		}
@@ -111,6 +123,7 @@ where
 			Self::Fungible(f) => f.into_inner(),
 			Self::Nonfungible(f) => f.into_inner(),
 			Self::Refungible(f) => f.into_inner(),
+			Self::NativeFungible(f) => f.into_inner(),
 		}
 	}
 
@@ -119,6 +132,7 @@ where
 			Self::Fungible(h) => h,
 			Self::Nonfungible(h) => h,
 			Self::Refungible(h) => h,
+			Self::NativeFungible(h) => h,
 		}
 	}
 }
@@ -129,7 +143,8 @@ where
 		+ pallet_unique::Config
 		+ pallet_fungible::Config
 		+ pallet_nonfungible::Config
-		+ pallet_refungible::Config,
+		+ pallet_refungible::Config
+		+ pallet_balances_adapter::Config,
 	T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]>,
 {
 	fn is_reserved(target: &H160) -> bool {
@@ -174,6 +189,7 @@ where
 				Self::Fungible(h) => h.call(handle),
 				Self::Nonfungible(h) => h.call(handle),
 				Self::Refungible(h) => h.call(handle),
+				Self::NativeFungible(f) => todo!(),
 			}
 		} else if let Some((collection_id, token_id)) =
 			<T as pallet_common::Config>::EvmTokenAddressMapping::address_to_token(

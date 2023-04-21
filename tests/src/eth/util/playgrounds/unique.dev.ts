@@ -141,11 +141,16 @@ class NativeContractGroup extends EthGroupBase {
   }
 
   async collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
-    let abi = {
-      'nft': nonFungibleAbi,
-      'rft': refungibleAbi,
-      'ft': fungibleAbi,
-    }[mode];
+    let abi;
+    if (address === '0' && mode === 'ft') {
+      abi = nativeFungibleAbi;
+    } else {
+      abi ={
+        'nft': nonFungibleAbi,
+        'rft': refungibleAbi,
+        'ft': fungibleAbi,
+      }[mode];
+    }
     if (mergeDeprecated) {
       const deprecated = {
         'nft': nonFungibleDeprecatedAbi,
