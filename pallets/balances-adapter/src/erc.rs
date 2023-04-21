@@ -1,7 +1,10 @@
 use crate::Config;
 use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
-use frame_support::traits::Currency;
-use pallet_common::erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult};
+use frame_support::traits::{Currency, ExistenceRequirement};
+use pallet_common::{
+	erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult},
+	eth::CrossAddress,
+};
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{PreDispatch, Result},
@@ -82,16 +85,22 @@ impl<T: Config> NativeFungibleHandle<T> {
 
 	// #[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
-		// let caller = T::CrossAccountId::from_eth(caller);
-		// let to = T::CrossAccountId::from_eth(to);
-		// let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = T::CrossAccountId::from_eth(to);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 		// let budget = self
 		// 	.recorder
 		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		// <Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
-		// Ok(true)
-		todo!()
+		<T as Config>::Currency::transfer(
+			caller.as_sub(),
+			to.as_sub(),
+			amount,
+			ExistenceRequirement::KeepAlive,
+		)
+		.map_err(dispatch_to_evm::<T>);
+		Ok(true)
 	}
 
 	// #[weight(<SelfWeightOf<T>>::transfer_from())]
@@ -102,24 +111,93 @@ impl<T: Config> NativeFungibleHandle<T> {
 		to: Address,
 		amount: U256,
 	) -> Result<bool> {
-		// let caller = T::CrossAccountId::from_eth(caller);
-		// let from = T::CrossAccountId::from_eth(from);
-		// let to = T::CrossAccountId::from_eth(to);
-		// let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = T::CrossAccountId::from_eth(from);
+		let to = T::CrossAccountId::from_eth(to);
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+
+		if (from != to) {
+			return Err("no permission".into());
+		}
 		// let budget = self
 		// 	.recorder
 		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		// <Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
 		// 	.map_err(dispatch_to_evm::<T>)?;
-		// Ok(true)
-		todo!()
+		<T as Config>::Currency::transfer(
+			caller.as_sub(),
+			to.as_sub(),
+			amount,
+			ExistenceRequirement::KeepAlive,
+		)
+		.map_err(dispatch_to_evm::<T>);
+		Ok(true)
+	}
+}
+
+#[solidity_interface(name = ERC20UniqueExtensions, enum(derive(PreDispatch)), enum_attr(weight))]
+impl<T: Config> NativeFungibleHandle<T>
+where
+	T::AccountId: From<[u8; 32]>,
+{
+	// #[weight(<SelfWeightOf<T>>::transfer())]
+	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		// let budget = self
+		// 	.recorder
+		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		// <Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
+		<T as Config>::Currency::transfer(
+			caller.as_sub(),
+			to.as_sub(),
+			amount,
+			ExistenceRequirement::KeepAlive,
+		)
+		.map_err(dispatch_to_evm::<T>);
+		Ok(true)
+	}
+
+	// #[weight(<SelfWeightOf<T>>::transfer_from())]
+	fn transfer_from_cross(
+		&mut self,
+		caller: Caller,
+		from: CrossAddress,
+		to: CrossAddress,
+		amount: U256,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let from = from.into_sub_cross_account::<T>()?;
+		let to = to.into_sub_cross_account::<T>()?;
+		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+
+		if (from != to) {
+			return Err("no permission".into());
+		}
+
+		// let budget = self
+		// 	.recorder
+		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		// <Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
+		// 	.map_err(dispatch_to_evm::<T>)?;
+		<T as Config>::Currency::transfer(
+			caller.as_sub(),
+			to.as_sub(),
+			amount,
+			ExistenceRequirement::KeepAlive,
+		)
+		.map_err(dispatch_to_evm::<T>);
+		Ok(true)
 	}
 }
 
 #[solidity_interface(
 	name = UniqueNativeFungible,
-	is(ERC20),
+	is(ERC20, ERC20UniqueExtensions),
 	enum(derive(PreDispatch))
 )]
 impl<T: Config> NativeFungibleHandle<T> where T::AccountId: From<[u8; 32]> + AsRef<[u8; 32]> {}
