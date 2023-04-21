@@ -2,12 +2,14 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 
+extern crate alloc;
 pub use pallet::*;
 
 pub mod erc;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use alloc::string::String;
 	use frame_support::traits::Get;
 	use sp_core::U256;
 

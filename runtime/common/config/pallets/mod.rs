@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+use alloc::string::{String, ToString};
 use frame_support::parameter_types;
 use sp_runtime::traits::AccountIdConversion;
 use crate::{

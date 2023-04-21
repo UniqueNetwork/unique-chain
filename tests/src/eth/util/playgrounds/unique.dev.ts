@@ -22,6 +22,7 @@ import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthPro
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../abi/collectionHelpers.json' assert {type: 'json'};
+import nativeFungibleAbi from '../../abi/nativeFungible.json' assert {type: 'json'};
 import fungibleAbi from '../../abi/fungible.json' assert {type: 'json'};
 import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json' assert {type: 'json'};
 import nonFungibleAbi from '../../abi/nonFungible.json' assert {type: 'json'};
