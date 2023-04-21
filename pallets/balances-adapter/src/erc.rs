@@ -100,7 +100,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 			amount,
 			ExistenceRequirement::KeepAlive,
 		)
-		.map_err(dispatch_to_evm::<T>);
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -117,7 +117,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		if (from != to) {
+		if from != to {
 			return Err("no permission".into());
 		}
 		// let budget = self
@@ -132,7 +132,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 			amount,
 			ExistenceRequirement::KeepAlive,
 		)
-		.map_err(dispatch_to_evm::<T>);
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
@@ -165,7 +165,7 @@ where
 			amount,
 			ExistenceRequirement::KeepAlive,
 		)
-		.map_err(dispatch_to_evm::<T>);
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -182,7 +182,7 @@ where
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		if (from != to) {
+		if from != to {
 			return Err("no permission".into());
 		}
 
@@ -198,7 +198,7 @@ where
 			amount,
 			ExistenceRequirement::KeepAlive,
 		)
-		.map_err(dispatch_to_evm::<T>);
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }
