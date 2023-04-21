@@ -277,45 +277,51 @@ import {CrossAccountId} from './util/playgrounds/unique';
     });
 
     itSub('NFT', async ({helper}) => {
+      const owner = testCase.account(alice);
       const {collectionId} = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: testCase.account(alice)});
+      const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: owner});
+
       await (helper.nft as any)[testCase.method](alice, collectionId, tokenId, {Substrate: bob.address});
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.true;
+
       await (helper.nft as any)[testCase.method](alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
       expect(await helper.nft.isTokenApproved(collectionId, tokenId, {Substrate: bob.address})).to.be.false;
-      const transferTokenFromTx = () => helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: bob.address});
-      await expect(transferTokenFromTx()).to.be.rejected;
+
+      const transferTokenFromTx = helper.nft.transferTokenFrom(bob, collectionId, tokenId, owner, {Substrate: bob.address});
+      await expect(transferTokenFromTx).to.be.rejectedWith('common.ApprovedValueTooLow');
     });
 
     itSub('Fungible', async ({helper}) => {
+      const owner = testCase.account(alice);
       const {collectionId} = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
-      await helper.ft.mintTokens(alice, collectionId, 10n, testCase.account(alice));
+      await helper.ft.mintTokens(alice, collectionId, 10n, owner);
       const tokenId = await helper.ft.getLastTokenId(collectionId);
       await (helper.ft as any)[testCase.method](alice, collectionId, tokenId, {Substrate: bob.address});
-      const amountBefore = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, testCase.account(alice));
-      expect(amountBefore).to.be.equal(BigInt(1));
+      const amountBefore = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, owner);
+      expect(amountBefore).to.be.equal(1n);
 
       await (helper.ft as any)[testCase.method](alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
-      const amountAfter = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, testCase.account(alice));
+      const amountAfter = await helper.ft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, owner);
       expect(amountAfter).to.be.equal(BigInt(0));
 
-      const transferTokenFromTx = () => helper.ft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address}, 1n);
-      await expect(transferTokenFromTx()).to.be.rejected;
+      const transferTokenFromTx = helper.ft.transferTokenFrom(bob, collectionId, tokenId, owner, {Substrate: charlie.address}, 1n);
+      await expect(transferTokenFromTx).to.be.rejectedWith('common.ApprovedValueTooLow');
     });
 
     itSub.ifWithPallets('ReFungible', [Pallets.ReFungible], async ({helper}) => {
+      const owner = testCase.account(alice);
       const {collectionId} = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner: testCase.account(alice), pieces: 100n});
+      const {tokenId} = await helper.rft.mintToken(alice, {collectionId: collectionId, owner, pieces: 100n});
       await (helper.rft as any)[testCase.method](alice, collectionId, tokenId, {Substrate: bob.address});
-      const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, testCase.account(alice));
-      expect(amountBefore).to.be.equal(BigInt(1));
+      const amountBefore = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, owner);
+      expect(amountBefore).to.be.equal(1n);
 
       await (helper.rft as any)[testCase.method](alice, collectionId, tokenId, {Substrate: bob.address}, 0n);
-      const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, testCase.account(alice));
-      expect(amountAfter).to.be.equal(BigInt(0));
+      const amountAfter = await helper.rft.getTokenApprovedPieces(collectionId, tokenId, {Substrate: bob.address}, owner);
+      expect(amountAfter).to.be.equal(0n);
 
-      const transferTokenFromTx = () => helper.rft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address}, 100n);
-      await expect(transferTokenFromTx()).to.be.rejected;
+      const transferTokenFromTx = helper.rft.transferTokenFrom(bob, collectionId, tokenId, owner, {Substrate: charlie.address}, 1n);
+      await expect(transferTokenFromTx).to.be.rejectedWith('common.ApprovedValueTooLow');
     });
   });
 
