@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './eth/util/playgrounds/types';
 
 describe('Integration Test transferFrom(from, recipient, collection_id, item_id, value):', () => {
   let alice: IKeyringPair;
@@ -97,10 +98,9 @@ describe('Negative Integration Test transferFrom(from, recipient, collection_id,
   });
 
   itSub('transferFrom for a collection that does not exist', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
-    await expect(helper.collection.approveToken(alice, collectionId, 0, {Substrate: bob.address}, 1n))
+    await expect(helper.collection.approveToken(alice, NON_EXISTENT_COLLECTION_ID, 0, {Substrate: bob.address}, 1n))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
-    await expect(helper.collection.transferTokenFrom(bob, collectionId, 0, {Substrate: alice.address}, {Substrate: bob.address}, 1n))
+    await expect(helper.collection.transferTokenFrom(bob, NON_EXISTENT_COLLECTION_ID, 0, {Substrate: alice.address}, {Substrate: bob.address}, 1n))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 

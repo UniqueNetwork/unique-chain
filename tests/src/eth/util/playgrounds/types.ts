@@ -48,3 +48,5 @@ export interface CollectionLimit {
   field: CollectionLimitField,
   value: OptionUint,
 }
+
+export const NON_EXISTENT_COLLECTION_ID = 4_294_967_295;

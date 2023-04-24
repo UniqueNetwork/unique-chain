@@ -42,7 +42,7 @@ benchmarks! {
 			},
 			CollectionFlags::default(),
 		)?;
-		let dispatch = T::CollectionDispatch::dispatch(CollectionHandle::try_get(CollectionId(1))?);
+		let dispatch = T::CollectionDispatch::dispatch(CollectionId(1))?;
 		let dispatch = dispatch.as_dyn();
 
 		dispatch.create_item(caller_cross.clone(), caller_cross.clone(), CreateItemData::NFT(CreateNftData::default()), &Unlimited)?;
