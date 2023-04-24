@@ -125,11 +125,7 @@ impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
 impl<T: Config> CollectionHandle<T> {
 	/// Same as [CollectionHandle::new] but with an explicit gas limit.
 	pub fn new_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
-		<CollectionById<T>>::get(id).map(|collection| Self {
-			id,
-			collection,
-			recorder: SubstrateRecorder::new(gas_limit),
-		})
+		Self::new_with_recorder(id, SubstrateRecorder::new(gas_limit))
 	}
 
 	/// Same as [CollectionHandle::new] but with an existed [`SubstrateRecorder`].

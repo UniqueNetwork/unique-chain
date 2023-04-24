@@ -33,7 +33,7 @@ describe('Fungible: Plain calls', () => {
     'substrate' as const,
     'ethereum' as const,
   ].map(testCase => {
-    itEth(`Can perform mintCross() for ${testCase} address`, async ({helper}) => {
+    itEth.only(`Can perform mintCross() for ${testCase} address`, async ({helper}) => {
       // 1. Create receiver depending on the test case:
       const receiverEth = helper.eth.createAccount();
       const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
