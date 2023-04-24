@@ -38,7 +38,6 @@ describe('NativeFungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-
     await contract.methods.approve(spender, 100).send({from: owner});
   });
 });
