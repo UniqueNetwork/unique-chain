@@ -118,15 +118,6 @@ where
 		}
 	}
 
-	fn into_inner(self) -> CollectionHandle<T> {
-		match self {
-			Self::Fungible(f) => f.into_inner(),
-			Self::Nonfungible(f) => f.into_inner(),
-			Self::Refungible(f) => f.into_inner(),
-			Self::NativeFungible(f) => f.into_inner(),
-		}
-	}
-
 	fn as_dyn(&self) -> &dyn CommonCollectionOperations<T> {
 		match self {
 			Self::Fungible(h) => h,
@@ -189,7 +180,7 @@ where
 				Self::Fungible(h) => h.call(handle),
 				Self::Nonfungible(h) => h.call(handle),
 				Self::Refungible(h) => h.call(handle),
-				Self::NativeFungible(f) => todo!(),
+				Self::NativeFungible(h) => h.call(handle),
 			}
 		} else if let Some((collection_id, token_id)) =
 			<T as pallet_common::Config>::EvmTokenAddressMapping::address_to_token(
