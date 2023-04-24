@@ -94,9 +94,6 @@ pub trait CollectionDispatch<T: Config> {
 	/// * `handle` - Collection handle.
 	fn dispatch(handle: CollectionHandle<T>) -> Self;
 
-	/// Get the collection handle for the corresponding implementation.
-	fn into_inner(self) -> CollectionHandle<T>;
-
 	/// Get the implementation of [`CommonCollectionOperations`].
 	fn as_dyn(&self) -> &dyn CommonCollectionOperations<T>;
 }
