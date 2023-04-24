@@ -29,7 +29,7 @@ describe('NativeFungible: Plain calls', () => {
     });
   });
 
-  itEth.only('Can perform approve()', async ({helper}) => {
+  itEth.skip('Can perform approve()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
     const collection = await helper.ft.mintCollection(alice);

@@ -155,11 +155,10 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 	) -> Result<Parent<T::CrossAccountId>, DispatchError> {
 		// TODO: Reduce cost by not reading collection config
-		let handle = match CollectionHandle::try_get(collection) {
+		let handle = match T::CollectionDispatch::dispatch(collection) {
 			Ok(v) => v,
 			Err(_) => return Ok(Parent::TokenNotFound),
 		};
-		let handle = T::CollectionDispatch::dispatch(handle);
 		let handle = handle.as_dyn();
 
 		Ok(match handle.token_owner(token) {
@@ -279,8 +278,7 @@ impl<T: Config> Pallet<T> {
 		self_budget: &dyn Budget,
 		breadth_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		let handle = <CollectionHandle<T>>::try_get(collection)?;
-		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = T::CollectionDispatch::dispatch(collection)?;
 		let dispatch = dispatch.as_dyn();
 		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
 	}
@@ -405,9 +403,7 @@ impl<T: Config> Pallet<T> {
 			return Ok(())
 		};
 
-		let handle = <CollectionHandle<T>>::try_get(collection)?;
-
-		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = T::CollectionDispatch::dispatch(collection)?;
 		let dispatch = dispatch.as_dyn();
 
 		action(dispatch, token)

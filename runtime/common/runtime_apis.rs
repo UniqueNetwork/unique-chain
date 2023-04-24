@@ -17,7 +17,7 @@
 #[macro_export]
 macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*) $($rest:tt)*) => {{
-		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch($collection)?;
 		let dispatch = collection.as_dyn();
 
 		Ok::<_, DispatchError>(dispatch.$method($($name),*) $($rest)*)

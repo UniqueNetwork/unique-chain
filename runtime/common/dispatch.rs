@@ -50,6 +50,7 @@ where
 	Refungible(RefungibleHandle<T>),
 	NativeFungible(NativeFungibleHandle<T>),
 }
+
 impl<T> CollectionDispatch<T> for CollectionDispatchT<T>
 where
 	T: pallet_common::Config
@@ -59,6 +60,15 @@ where
 		+ pallet_refungible::Config
 		+ pallet_balances_adapter::Config,
 {
+	fn check_is_internal(&self) -> DispatchResult {
+		match self {
+			Self::Fungible(h) => h.check_is_internal(),
+			Self::Nonfungible(h) => h.check_is_internal(),
+			Self::Refungible(h) => h.check_is_internal(),
+			Self::NativeFungible(h) => h.check_is_internal(),
+		}
+	}
+
 	fn create(
 		sender: T::CrossAccountId,
 		payer: T::CrossAccountId,
@@ -104,18 +114,17 @@ where
 		Ok(())
 	}
 
-	fn dispatch(handle: CollectionHandle<T>) -> Self {
-		match handle.mode {
-			CollectionMode::Fungible(_) => {
-				if handle.id != up_data_structs::CollectionId(0) {
-					Self::Fungible(FungibleHandle::cast(handle))
-				} else {
-					Self::NativeFungible(NativeFungibleHandle::cast(handle))
-				}
-			}
+	fn dispatch(collection_id: CollectionId) -> Result<Self, DispatchError> {
+		if collection_id == CollectionId(0) {
+			return Ok(Self::NativeFungible(NativeFungibleHandle::new()));
+		}
+
+		let handle = <CollectionHandle<T>>::try_get(collection_id)?;
+		Ok(match handle.mode {
+			CollectionMode::Fungible(_) => Self::Fungible(FungibleHandle::cast(handle)),
 			CollectionMode::NFT => Self::Nonfungible(NonfungibleHandle::cast(handle)),
 			CollectionMode::ReFungible => Self::Refungible(RefungibleHandle::cast(handle)),
-		}
+		})
 	}
 
 	fn as_dyn(&self) -> &dyn CommonCollectionOperations<T> {
@@ -172,15 +181,19 @@ where
 	}
 	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		if let Some(collection_id) = map_eth_to_id(&handle.code_address()) {
-			let collection =
-				<CollectionHandle<T>>::new_with_gas_limit(collection_id, handle.remaining_gas())?;
-			let dispatched = Self::dispatch(collection);
+			if collection_id == CollectionId(0) {
+				<NativeFungibleHandle<T>>::new().call(handle)
+			} else {
+				let collection = <CollectionHandle<T>>::new_with_gas_limit(
+					collection_id,
+					handle.remaining_gas(),
+				)?;
 
-			match dispatched {
-				Self::Fungible(h) => h.call(handle),
-				Self::Nonfungible(h) => h.call(handle),
-				Self::Refungible(h) => h.call(handle),
-				Self::NativeFungible(h) => h.call(handle),
+				match collection.mode {
+					CollectionMode::Fungible(_) => FungibleHandle::cast(collection).call(handle),
+					CollectionMode::NFT => NonfungibleHandle::cast(collection).call(handle),
+					CollectionMode::ReFungible => RefungibleHandle::cast(collection).call(handle),
+				}
 			}
 		} else if let Some((collection_id, token_id)) =
 			<T as pallet_common::Config>::EvmTokenAddressMapping::address_to_token(
