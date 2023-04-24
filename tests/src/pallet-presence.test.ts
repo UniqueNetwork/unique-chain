@@ -19,6 +19,7 @@ import {itSub, usingPlaygrounds, expect} from './util';
 // Pallets that must always be present
 const requiredPallets = [
   'balances',
+  'balancesadapter',
   'common',
   'timestamp',
   'transactionpayment',

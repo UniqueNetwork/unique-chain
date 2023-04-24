@@ -3,6 +3,7 @@
 #![warn(missing_docs)]
 
 extern crate alloc;
+use frame_support::sp_runtime::DispatchResult;
 pub use pallet::*;
 use pallet_common::CollectionHandle;
 use pallet_evm_coder_substrate::{WithRecorder, SubstrateRecorder};
@@ -10,24 +11,23 @@ use pallet_evm_coder_substrate::{WithRecorder, SubstrateRecorder};
 pub mod common;
 pub mod erc;
 
-pub struct NativeFungibleHandle<T: Config>(CollectionHandle<T>);
+pub struct NativeFungibleHandle<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> NativeFungibleHandle<T> {
-	pub fn cast(inner: CollectionHandle<T>) -> Self {
-		Self(inner)
+	pub fn new() -> NativeFungibleHandle<T> {
+		Self(SubstrateRecorder::new(u64::MAX))
 	}
 
-	/// Casts [`NativeFungibleHandle`] into [`CollectionHandle`][`pallet_common::CollectionHandle`].
-	pub fn into_inner(self) -> pallet_common::CollectionHandle<T> {
-		self.0
+	pub fn check_is_internal(&self) -> DispatchResult {
+		Ok(())
 	}
 }
 
 impl<T: Config> WithRecorder<T> for NativeFungibleHandle<T> {
 	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
-		&self.0.recorder
+		&self.0
 	}
 	fn into_recorder(self) -> pallet_evm_coder_substrate::SubstrateRecorder<T> {
-		self.0.recorder
+		self.0
 	}
 }
 #[frame_support::pallet]
