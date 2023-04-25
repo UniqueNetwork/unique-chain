@@ -38,14 +38,14 @@ pub enum ERC20Events {
 
 #[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
 impl<T: Config> NativeFungibleHandle<T> {
-	fn allowance(&self, owner: Address, spender: Address) -> Result<U256> {
+	fn allowance(&self, _owner: Address, _spender: Address) -> Result<U256> {
 		Ok(U256::zero())
 	}
 
 	// #[weight(<SelfWeightOf<T>>::approve())]
-	fn approve(&mut self, caller: Caller, spender: Address, amount: U256) -> Result<bool> {
+	fn approve(&mut self, _caller: Caller, _spender: Address, _amount: U256) -> Result<bool> {
 		// self.consume_store_reads(1)?;
-		Err("Approve not supported now".into())
+		Err("Approve not supported".into())
 	}
 
 	fn balance_of(&self, owner: Address) -> Result<U256> {
@@ -106,7 +106,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		if from != to {
+		if from != caller {
 			return Err("no permission".into());
 		}
 		// let budget = self
@@ -171,7 +171,7 @@ where
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
 
-		if from != to {
+		if from != caller {
 			return Err("no permission".into());
 		}
 

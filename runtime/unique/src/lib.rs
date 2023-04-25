@@ -45,6 +45,7 @@ pub use runtime_common::*;
 
 pub const RUNTIME_NAME: &str = "unique";
 pub const TOKEN_SYMBOL: &str = "UNQ";
+pub const DECIMALS: u8 = 18;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
