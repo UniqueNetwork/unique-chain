@@ -165,7 +165,7 @@ class NativeContractGroup extends EthGroupBase {
 
   async collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
     let abi;
-    if (address === '0x17C4e6453cC49aaAAEaCA894E6d9683e00000000' && mode === 'ft') {
+    if (address === '0x17C4e6453cC49aaAAEaCA894E6d9683e00000000') {
       abi = nativeFungibleAbi;
     } else {
       abi ={

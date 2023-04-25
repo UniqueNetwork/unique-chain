@@ -1296,10 +1296,7 @@ pub mod pallet {
 			sender: T::CrossAccountId,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
-
-			T::CollectionDispatch::destroy(sender, collection)?;
+			T::CollectionDispatch::destroy(sender, collection_id)?;
 
 			// TODO: basket cleanup should be moved elsewhere
 			// Maybe runtime dispatch.rs should perform it?
