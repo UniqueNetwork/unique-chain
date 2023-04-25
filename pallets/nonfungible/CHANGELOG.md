@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+## [0.1.14] - 2023-04-19
+
+- ### Fixed
+
+- Useless `on_runtime_upgrade()` has been removed
+
+## [0.1.14] - 2023-03-28
+
+### Fixed
+
+- The weight of `transfer` and `transfer_from`.
 
 ## [0.1.13] - 2023-01-20
 
@@ -77,7 +88,7 @@ in the same block
 However, we don't use prefix removal limits, so upgrade is
 straightforward
 
-Upstream-Change: https://github.com/paritytech/substrate/pull/11490
+Upstream-Change: <https://github.com/paritytech/substrate/pull/11490>
 
 - build: Upgrade polkadot to v0.9.25 cdfb9bdc7b205ff1b5134f034ef9973d769e5e6b
 

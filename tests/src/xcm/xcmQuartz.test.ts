@@ -15,10 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {blake2AsHex} from '@polkadot/util-crypto';
 import config from '../config';
-import {XcmV2TraitsError} from '../interfaces';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
+import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 
 const QUARTZ_CHAIN = 2095;
 const STATEMINE_CHAIN = 1000;
@@ -641,69 +640,292 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
+
+  itSub('Karura can send only up to its balance', async ({helper}) => {
+    // set Karura's sovereign account's balance
+    const karuraBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const karuraSovereignAccount = helper.address.paraSiblingSovereignAccount(KARURA_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, karuraSovereignAccount, karuraBalance);
+
+    const moreThanKaruraHas = karuraBalance * 2n;
+
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanKaruraHas,
+    );
+
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Quartz
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Karura still can send the correct amount
+    const validTransferAmount = karuraBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
+
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, validXcmProgram);
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Karura', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      testAmount,
+    );
+
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Quartz using full QTZ identification
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
+
+    let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+
+    // Try to trick Quartz using shortened QTZ identification
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
+
+    accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+  });
 });
 
-// These tests are relevant only when the foreign asset pallet is disabled
+// These tests are relevant only when
+// the the corresponding foreign assets are not registered
 describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let alice: IKeyringPair;
+  let alith: IKeyringPair;
+
+  const testAmount = 100_000_000_000n;
+  let quartzParachainJunction;
+  let quartzAccountJunction;
+
+  let quartzParachainMultilocation: any;
+  let quartzAccountMultilocation: any;
+  let quartzCombinedMultilocation: any;
+
+  let messageSent: any;
+
+  const maxWaitBlocks = 3;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
 
-      // Set the default version to wrap the first message to other chains.
-      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
-    });
-  });
+      quartzParachainJunction = {Parachain: QUARTZ_CHAIN};
+      quartzAccountJunction = {
+        AccountId32: {
+          network: 'Any',
+          id: alice.addressRaw,
+        },
+      };
 
-  itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
-    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
-      const destination = {
+      quartzParachainMultilocation = {
         V1: {
           parents: 1,
           interior: {
-            X2: [
-              {Parachain: QUARTZ_CHAIN},
-              {
-                AccountId32: {
-                  network: 'Any',
-                  id: alice.addressRaw,
-                },
-              },
-            ],
+            X1: quartzParachainJunction,
           },
         },
       };
 
+      quartzAccountMultilocation = {
+        V1: {
+          parents: 0,
+          interior: {
+            X1: quartzAccountJunction,
+          },
+        },
+      };
+
+      quartzCombinedMultilocation = {
+        V1: {
+          parents: 1,
+          interior: {
+            X2: [quartzParachainJunction, quartzAccountJunction],
+          },
+        },
+      };
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    // eslint-disable-next-line require-await
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      alith = helper.account.alithAccount();
+    });
+  });
+
+  const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == messageSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
+  };
+
+  itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
+    await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const id = {
         Token: 'KAR',
       };
+      const destination = quartzCombinedMultilocation;
+      await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
-      await helper.xTokens.transfer(alice, id, 100_000_000_000n, destination, 'Unlimited');
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    const maxWaitBlocks = 3;
+    await expectFailedToTransact(helper, messageSent);
+  });
 
-    const xcmpQueueFailEvent = await helper.wait.event(maxWaitBlocks, 'xcmpQueue', 'Fail');
+  itSub('Quartz rejects MOVR tokens from Moonriver', async ({helper}) => {
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const id = 'SelfReserve';
+      const destination = quartzCombinedMultilocation;
+      await helper.xTokens.transfer(alith, id, testAmount, destination, 'Unlimited');
 
-    expect(
-      xcmpQueueFailEvent != null,
-      '[Karura] xcmpQueue.FailEvent event is expected',
-    ).to.be.true;
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
 
-    const event = xcmpQueueFailEvent!.event;
-    const outcome = event.data[1] as XcmV2TraitsError;
+    await expectFailedToTransact(helper, messageSent);
+  });
 
-    expect(
-      outcome.isFailedToTransactAsset,
-      '[Karura] The XCM error should be `FailedToTransactAsset`',
-    ).to.be.true;
+  itSub('Quartz rejects SDN tokens from Shiden', async ({helper}) => {
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      const destinationParachain = quartzParachainMultilocation;
+      const beneficiary = quartzAccountMultilocation;
+      const assets = {
+        V1: [{
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: testAmount,
+          },
+        }],
+      };
+      const feeAssetItem = 0;
+
+      await helper.executeExtrinsic(alice, 'api.tx.polkadotXcm.reserveWithdrawAssets', [
+        destinationParachain,
+        beneficiary,
+        assets,
+        feeAssetItem,
+      ]);
+
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectFailedToTransact(helper, messageSent);
   });
 });
 
 describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   // Quartz constants
-  let quartzDonor: IKeyringPair;
+  let alice: IKeyringPair;
   let quartzAssetLocation;
 
   let randomAccountQuartz: IKeyringPair;
@@ -711,11 +933,6 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
   // Moonriver constants
   let assetId: string;
-
-  const councilVotingThreshold = 2;
-  const technicalCommitteeThreshold = 2;
-  const votingPeriod = 3;
-  const delayPeriod = 0;
 
   const quartzAssetMetadata = {
     name: 'xcQuartz',
@@ -737,13 +954,12 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      quartzDonor = await privateKey('//Alice');
-      [randomAccountQuartz] = await helper.arrange.createAccounts([0n], quartzDonor);
+      alice = await privateKey('//Alice');
+      [randomAccountQuartz] = await helper.arrange.createAccounts([0n], alice);
 
       balanceForeignQtzTokenInit = 0n;
 
       // Set the default version to wrap the first message to other chains.
-      const alice = quartzDonor;
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
@@ -779,84 +995,13 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
         unitsPerSecond,
         numAssetsWeightHint,
       });
-      const proposalHash = blake2AsHex(encodedProposal);
 
       console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
-      console.log('Encoded length %d', encodedProposal.length);
-      console.log('Encoded proposal hash for batch utility after schedule is %s', proposalHash);
 
-      // >>> Note motion preimage >>>
-      console.log('Note motion preimage.......');
-      await helper.democracy.notePreimage(baltatharAccount, encodedProposal);
-      console.log('Note motion preimage.......DONE');
-      // <<< Note motion preimage <<<
-
-      // >>> Propose external motion through council >>>
-      console.log('Propose external motion through council.......');
-      const externalMotion = helper.democracy.externalProposeMajority({Legacy: proposalHash});
-      const encodedMotion = externalMotion?.method.toHex() || '';
-      const motionHash = blake2AsHex(encodedMotion);
-      console.log('Motion hash is %s', motionHash);
-
-      await helper.collective.council.propose(baltatharAccount, councilVotingThreshold, externalMotion, externalMotion.encodedLength);
-
-      const councilProposalIdx = await helper.collective.council.proposalCount() - 1;
-      await helper.collective.council.vote(dorothyAccount, motionHash, councilProposalIdx, true);
-      await helper.collective.council.vote(baltatharAccount, motionHash, councilProposalIdx, true);
-
-      await helper.collective.council.close(
-        dorothyAccount,
-        motionHash,
-        councilProposalIdx,
-        {
-          refTime: 1_000_000_000,
-          proofSize: 1_000_000,
-        },
-        externalMotion.encodedLength,
-      );
-      console.log('Propose external motion through council.......DONE');
-      // <<< Propose external motion through council <<<
-
-      // >>> Fast track proposal through technical committee >>>
-      console.log('Fast track proposal through technical committee.......');
-      const fastTrack = helper.democracy.fastTrack(proposalHash, votingPeriod, delayPeriod);
-      const encodedFastTrack = fastTrack?.method.toHex() || '';
-      const fastTrackHash = blake2AsHex(encodedFastTrack);
-      console.log('FastTrack hash is %s', fastTrackHash);
-
-      await helper.collective.techCommittee.propose(alithAccount, technicalCommitteeThreshold, fastTrack, fastTrack.encodedLength);
-
-      const techProposalIdx = await helper.collective.techCommittee.proposalCount() - 1;
-      await helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
-      await helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
-
-      await helper.collective.techCommittee.close(
-        baltatharAccount,
-        fastTrackHash,
-        techProposalIdx,
-        {
-          refTime: 1_000_000_000,
-          proofSize: 1_000_000,
-        },
-        fastTrack.encodedLength,
-      );
-      console.log('Fast track proposal through technical committee.......DONE');
-      // <<< Fast track proposal through technical committee <<<
-
-      // >>> Referendum voting >>>
-      console.log('Referendum voting.......');
-      await helper.democracy.referendumVote(dorothyAccount, 0, {
-        balance: 10_000_000_000_000_000_000n,
-        vote: {aye: true, conviction: 1},
-      });
-      console.log('Referendum voting.......DONE');
-      // <<< Referendum voting <<<
+      await helper.fastDemocracy.executeProposal('register QTZ foreign asset', encodedProposal);
 
       // >>> Acquire Quartz AssetId Info on Moonriver >>>
       console.log('Acquire Quartz AssetId Info on Moonriver.......');
-
-      // Wait for the democracy execute
-      await helper.wait.newBlocks(5);
 
       assetId = (await helper.assetManager.assetTypeId(quartzAssetLocation)).toString();
 
@@ -874,7 +1019,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     });
 
     await usingPlaygrounds(async (helper) => {
-      await helper.balance.transferToSubstrate(quartzDonor, randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
+      await helper.balance.transferToSubstrate(alice, randomAccountQuartz.address, 10n * TRANSFER_AMOUNT);
       balanceQuartzTokenInit = await helper.balance.getSubstrate(randomAccountQuartz.address);
     });
   });
@@ -980,6 +1125,170 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const qtzFees = TRANSFER_AMOUNT - actuallyDelivered;
     console.log('[Moonriver -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
+  });
+
+  itSub('Moonriver can send only up to its balance', async ({helper}) => {
+    // set Moonriver's sovereign account's balance
+    const moonriverBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const moonriverSovereignAccount = helper.address.paraSiblingSovereignAccount(MOONRIVER_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, moonriverSovereignAccount, moonriverBalance);
+
+    const moreThanMoonriverHas = moonriverBalance * 2n;
+
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanMoonriverHas,
+    );
+
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Quartz
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [quartzMultilocation, maliciousXcmProgram]);
+
+      // Needed to bypass the call filter.
+      const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+      await helper.fastDemocracy.executeProposal('try to spend more QTZ than Moonriver has', batchCall);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Moonriver still can send the correct amount
+    const validTransferAmount = moonriverBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
+
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [quartzMultilocation, validXcmProgram]);
+
+      // Needed to bypass the call filter.
+      const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+      await helper.fastDemocracy.executeProposal('Spend the correct amount of QTZ', batchCall);
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Moonriver', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      testAmount,
+    );
+
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Quartz using full QTZ identification
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [quartzMultilocation, maliciousXcmProgramFullId]);
+
+      // Needed to bypass the call filter.
+      const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+      await helper.fastDemocracy.executeProposal('try to act like a reserve location for QTZ using path asset identification', batchCall);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
+
+    let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+
+    // Try to trick Quartz using shortened QTZ identification
+    await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [quartzMultilocation, maliciousXcmProgramHereId]);
+
+      // Needed to bypass the call filter.
+      const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+      await helper.fastDemocracy.executeProposal('try to act like a reserve location for QTZ using "here" asset identification', batchCall);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
+
+    accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });
 
@@ -1192,5 +1501,153 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     const balanceQTZ = await helper.balance.getSubstrate(sender.address);
     console.log(`QTZ Balance on Quartz after XCM is: ${balanceQTZ}`);
     expect(balanceQTZ).to.eq(balanceAfterQuartzToShidenXCM + qtzFromShidenTransfered);
+  });
+
+  itSub('Shiden can send only up to its balance', async ({helper}) => {
+    // set Shiden's sovereign account's balance
+    const shidenBalance = 10000n * (10n ** QTZ_DECIMALS);
+    const shidenSovereignAccount = helper.address.paraSiblingSovereignAccount(SHIDEN_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, shidenSovereignAccount, shidenBalance);
+
+    const moreThanShidenHas = shidenBalance * 2n;
+
+    let targetAccountBalance = 0n;
+    const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: QUARTZ_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanShidenHas,
+    );
+
+    let maliciousXcmProgramSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Quartz
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset;
+    });
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+
+    // But Shiden still can send the correct amount
+    const validTransferAmount = shidenBalance / 2n;
+    const validXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      validTransferAmount,
+    );
+
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, validXcmProgram);
+    });
+
+    await helper.wait.newBlocks(maxWaitBlocks);
+
+    targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(validTransferAmount);
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Shiden', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** QTZ_DECIMALS);
+    const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
+
+    const quartzMultilocation = {
+      V1: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: QUARTZ_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: QUARTZ_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      testAmount,
+    );
+
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Quartz using full QTZ identification
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
+
+    let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+
+    // Try to trick Quartz using shortened QTZ identification
+    await usingShidenPlaygrounds(shidenUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation;
+    });
+
+    accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });

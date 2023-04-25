@@ -74,6 +74,8 @@ mod benchmarking;
 mod mock;
 #[cfg(test)]
 mod tests;
+// We dont use this pallet right now
+#[allow(deprecated)]
 pub mod weights;
 
 use codec::{Codec, Decode, Encode, MaxEncodedLen};
@@ -460,7 +462,6 @@ pub mod pallet {
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(0);
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 

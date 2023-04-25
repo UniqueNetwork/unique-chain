@@ -27,7 +27,7 @@ use pallet_common::{
 	dispatch::CollectionDispatch,
 	erc::{CollectionHelpersEvents, static_property::key},
 	eth::{map_eth_to_id, collection_id_to_address},
-	Pallet as PalletCommon,
+	Pallet as PalletCommon, CollectionHandle,
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{
@@ -262,7 +262,7 @@ where
 		let collection =
 			pallet_common::eth::map_eth_to_id(&collection).ok_or("not a collection address")?;
 		let mut collection =
-			<crate::CollectionHandle<T>>::new(collection).ok_or("collection not found")?;
+			<CollectionHandle<T>>::new(collection).ok_or("collection not found")?;
 
 		if !matches!(
 			collection.mode,

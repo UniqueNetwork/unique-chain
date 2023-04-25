@@ -138,6 +138,12 @@ fn create_identity_info<T: Config>(num_fields: u32) -> IdentityInfo<T::MaxAdditi
 	}
 }
 
+/// `Currency::minimum_balance` was used originally, but in unique-chain, we have
+/// zero existential deposit, thus triggering zero bond assertion.
+fn balance_unit<T: Config>() -> <T::Currency as Currency<T::AccountId>>::Balance {
+	200u32.into()
+}
+
 benchmarks! {
 	add_registrar {
 		let r in 1 .. T::MaxRegistrars::get() - 1 => add_registrars::<T>(r)?;
@@ -167,7 +173,7 @@ benchmarks! {
 			for i in 0..r {
 				let registrar: T::AccountId = account("registrar", i, SEED);
 				let registrar_lookup = T::Lookup::unlookup(registrar.clone());
-				let balance_to_use =  T::Currency::minimum_balance() * 10u32.into();
+				let balance_to_use =  balance_unit::<T>() * 10u32.into();
 				let _ = T::Currency::make_free_balance_be(&registrar, balance_to_use);
 
 				Identity::<T>::request_judgement(caller_origin.clone(), i, 10u32.into())?;
@@ -240,7 +246,7 @@ benchmarks! {
 		// User requests judgement from all the registrars, and they approve
 		for i in 0..r {
 			let registrar: T::AccountId = account("registrar", i, SEED);
-			let balance_to_use =  T::Currency::minimum_balance() * 10u32.into();
+			let balance_to_use =  balance_unit::<T>() * 10u32.into();
 			let _ = T::Currency::make_free_balance_be(&registrar, balance_to_use);
 
 			Identity::<T>::request_judgement(caller_origin.clone(), i, 10u32.into())?;
@@ -393,7 +399,7 @@ benchmarks! {
 		// User requests judgement from all the registrars, and they approve
 		for i in 0..r {
 			let registrar: T::AccountId = account("registrar", i, SEED);
-			let balance_to_use =  T::Currency::minimum_balance() * 10u32.into();
+			let balance_to_use =  balance_unit::<T>() * 10u32.into();
 			let _ = T::Currency::make_free_balance_be(&registrar, balance_to_use);
 
 			Identity::<T>::request_judgement(target_origin.clone(), i, 10u32.into())?;

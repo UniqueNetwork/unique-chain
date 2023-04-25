@@ -78,7 +78,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// starting year total issuance
@@ -119,7 +118,7 @@ pub mod pallet {
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 			let current_relay_block = T::BlockNumberProvider::current_block_number();
 			let next_inflation: T::BlockNumber = <NextInflationBlock<T>>::get();
-			add_weight(1, 0, Weight::from_ref_time(5_000_000));
+			add_weight(1, 0, Weight::from_parts(5_000_000, 0));
 
 			// Apply inflation every InflationBlockInterval blocks
 			// If next_inflation == 0, this means inflation wasn't yet initialized
@@ -131,7 +130,7 @@ pub mod pallet {
 				add_weight(1, 0, Weight::zero());
 				if current_relay_block >= next_recalculation {
 					Self::recalculate_inflation(next_recalculation);
-					add_weight(0, 4, Weight::from_ref_time(5_000_000));
+					add_weight(0, 4, Weight::from_parts(5_000_000, 0));
 				}
 
 				T::Currency::deposit_into_existing(
@@ -143,7 +142,7 @@ pub mod pallet {
 				// Update inflation block
 				<NextInflationBlock<T>>::set(next_inflation + block_interval.into());
 
-				add_weight(3, 3, Weight::from_ref_time(10_000_000));
+				add_weight(3, 3, Weight::from_parts(10_000_000, 0));
 			}
 
 			consumed_weight

@@ -27,6 +27,7 @@ pub mod runtime_apis;
 pub mod scheduler;
 
 pub mod sponsoring;
+#[allow(missing_docs)]
 pub mod weights;
 
 #[cfg(test)]
@@ -152,7 +153,7 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn set_block_number(block: Self::BlockNumber) {
-		cumulus_pallet_parachain_system::RelaychainBlockNumberProvider::<T>::set_block_number(block)
+		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::set_block_number(block)
 	}
 }
 

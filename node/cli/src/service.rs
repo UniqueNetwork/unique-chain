@@ -44,14 +44,15 @@ use cumulus_client_cli::CollatorOptions;
 use cumulus_client_network::BlockAnnounceValidator;
 use cumulus_primitives_core::ParaId;
 use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_interface::{RelayChainError, RelayChainInterface, RelayChainResult};
+use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 
 // Substrate Imports
 use sp_api::BlockT;
 use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
-use sc_network::{NetworkService, NetworkBlock};
+use sc_network::NetworkBlock;
+use sc_network_sync::SyncingService;
 use sc_service::{BasePath, Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_keystore::SyncCryptoStorePtr;
@@ -420,7 +421,7 @@ where
 		&TaskManager,
 		Arc<dyn RelayChainInterface>,
 		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>>,
-		Arc<NetworkService<Block, Hash>>,
+		Arc<SyncingService<Block>>,
 		SyncCryptoStorePtr,
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
@@ -445,10 +446,7 @@ where
 		hwbench.clone(),
 	)
 	.await
-	.map_err(|e| match e {
-		RelayChainError::ServiceError(polkadot_service::Error::Sub(x)) => x,
-		s => s.to_string().into(),
-	})?;
+	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
 	let block_announce_validator = BlockAnnounceValidator::new(relay_chain_interface.clone(), id);
 
@@ -458,7 +456,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let (network, system_rpc_tx, tx_handler_controller, start_network) =
+	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
 			client: client.clone(),
@@ -475,6 +473,7 @@ where
 	let rpc_pool = transaction_pool.clone();
 	let select_chain = params.select_chain.clone();
 	let rpc_network = network.clone();
+	let rpc_sync_service = sync_service.clone();
 
 	let rpc_frontier_backend = frontier_backend.clone();
 
@@ -532,6 +531,7 @@ where
 			enable_dev_signer: false,
 			filter_pool: filter_pool.clone(),
 			network: rpc_network.clone(),
+			sync: rpc_sync_service.clone(),
 			select_chain: select_chain.clone(),
 			is_authority: validator,
 			// TODO: Unhardcode
@@ -558,6 +558,7 @@ where
 		keystore: params.keystore_container.sync_keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
+		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
 		tx_handler_controller,
@@ -577,9 +578,9 @@ where
 	}
 
 	let announce_block = {
-		let network = network.clone();
+		let sync_service = sync_service.clone();
 		Arc::new(Box::new(move |hash, data| {
-			network.announce_block(hash, data)
+			sync_service.announce_block(hash, data)
 		}))
 	};
 
@@ -598,7 +599,7 @@ where
 			&task_manager,
 			relay_chain_interface.clone(),
 			transaction_pool,
-			network,
+			sync_service.clone(),
 			params.keystore_container.sync_keystore(),
 			force_authoring,
 		)?;
@@ -896,7 +897,7 @@ where
 		prometheus_registry.clone(),
 	));
 
-	let (network, system_rpc_tx, tx_handler_controller, network_starter) =
+	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			client: client.clone(),
@@ -1032,6 +1033,7 @@ where
 	let rpc_client = client.clone();
 	let rpc_pool = transaction_pool.clone();
 	let rpc_network = network.clone();
+	let rpc_sync_service = sync_service.clone();
 	let rpc_frontier_backend = frontier_backend.clone();
 
 	#[cfg(feature = "pov-estimate")]
@@ -1062,6 +1064,7 @@ where
 			enable_dev_signer: false,
 			filter_pool: filter_pool.clone(),
 			network: rpc_network.clone(),
+			sync: rpc_sync_service.clone(),
 			select_chain: select_chain.clone(),
 			is_authority: collator,
 			// TODO: Unhardcode
@@ -1081,6 +1084,7 @@ where
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network,
+		sync_service,
 		client,
 		keystore: keystore_container.sync_keystore(),
 		task_manager: &mut task_manager,

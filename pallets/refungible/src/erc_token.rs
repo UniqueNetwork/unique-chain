@@ -283,6 +283,16 @@ where
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
+
+	/// @notice Balance of account
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of fingibles owned by `owner`, possibly zero
+	fn balance_of_cross(&self, owner: CrossAddress) -> Result<U256> {
+		self.consume_store_reads(1)?;
+		let balance = <Balance<T>>::get((self.id, self.1, owner.into_sub_cross_account::<T>()?));
+		Ok(balance.into())
+	}
+
 	/// @dev Function that changes total amount of the tokens.
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
 	/// @param amount New total amount of the tokens.

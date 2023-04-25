@@ -77,7 +77,7 @@ fn create_funded_user<T: Config>(
 	balance_factor: u32,
 ) -> T::AccountId {
 	let user = account(string, n, SEED);
-	let balance = T::Currency::minimum_balance() * balance_factor.into();
+	let balance = balance_unit::<T>() * balance_factor.into();
 	let _ = T::Currency::make_free_balance_be(&user, balance);
 	user
 }
@@ -158,6 +158,15 @@ fn get_licenses<T: Config + configuration::Config>(count: u32) {
 	}
 }
 
+/// `Currency::minimum_balance` was used originally, but in unique-chain, we have
+/// zero existential deposit, thus triggering zero bond assertion.
+fn balance_unit<T: Config>() -> <T::Currency as Currency<T::AccountId>>::Balance {
+	200u32.into()
+}
+
+/// Our benchmarking environment already has invulnerables registered.
+const INITIAL_INVULNERABLES: u32 = 2;
+
 benchmarks! {
 	where_clause { where T: pallet_authorship::Config + session::Config + configuration::Config }
 
@@ -165,14 +174,14 @@ benchmarks! {
 	// Both invulnerables and candidates count together against MaxCollators.
 	// Maybe try putting it in braces? 1 .. (T::MaxCollators::get() - 2)
 	add_invulnerable {
-		let b in 1 .. T::MaxCollators::get() - 3;
+		let b in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES - 1;
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
 		// log::info!("{} {}", <Invulnerables<T>>::get().len(), b);
 
 		let new_invulnerable: T::AccountId = whitelisted_caller();
-		let bond: BalanceOf<T> = T::Currency::minimum_balance() * 2u32.into();
+		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
 		T::Currency::make_free_balance_be(&new_invulnerable, bond.clone());
 
 		<session::Pallet<T>>::set_keys(
@@ -192,7 +201,7 @@ benchmarks! {
 	}
 
 	remove_invulnerable {
-		let b in 1 .. T::MaxCollators::get();
+		let b in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES - 1;
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
@@ -209,15 +218,15 @@ benchmarks! {
 	}
 
 	get_license {
-		let c in 1 .. T::MaxCollators::get();
+		let c in 1 .. T::MaxCollators::get() - 1;
 
-		<LicenseBond<T>>::put(T::Currency::minimum_balance());
+		<LicenseBond<T>>::put(balance_unit::<T>());
 
 		register_validators::<T>(c);
 		get_licenses::<T>(c);
 
 		let caller: T::AccountId = whitelisted_caller();
-		let bond: BalanceOf<T> = T::Currency::minimum_balance() * 2u32.into();
+		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
 		T::Currency::make_free_balance_be(&caller, bond.clone());
 
 		<session::Pallet<T>>::set_keys(
@@ -234,16 +243,16 @@ benchmarks! {
 	// worst case is when we have all the max-candidate slots filled except one, and we fill that
 	// one.
 	onboard {
-		let c in 1 .. 5;
+		let c in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES - 1;
 
-		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCollators<T>>::put(c + 2);
+		<LicenseBond<T>>::put(balance_unit::<T>());
+		<DesiredCollators<T>>::put(c + INITIAL_INVULNERABLES + 1);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
 		let caller: T::AccountId = whitelisted_caller();
-		let bond: BalanceOf<T> = T::Currency::minimum_balance() * 2u32.into();
+		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
 		T::Currency::make_free_balance_be(&caller, bond.clone());
 
 		let origin = RawOrigin::Signed(caller.clone());
@@ -265,8 +274,8 @@ benchmarks! {
 	// worst case is the last candidate leaving.
 	offboard {
 		let c in 1 .. T::MaxCollators::get();
-		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCollators<T>>::put(c + 2);
+		<LicenseBond<T>>::put(balance_unit::<T>());
+		<DesiredCollators<T>>::put(c + INITIAL_INVULNERABLES);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
@@ -281,9 +290,9 @@ benchmarks! {
 	// worst case is the last candidate leaving.
 	release_license {
 		let c in 1 .. T::MaxCollators::get();
-		let bond = T::Currency::minimum_balance();
+		let bond = balance_unit::<T>();
 		<LicenseBond<T>>::put(bond);
-		<DesiredCollators<T>>::put(c);
+		<DesiredCollators<T>>::put(c + INITIAL_INVULNERABLES);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
@@ -298,9 +307,9 @@ benchmarks! {
 	// worst case is the last candidate leaving.
 	force_release_license {
 		let c in 1 .. T::MaxCollators::get();
-		let bond = T::Currency::minimum_balance();
+		let bond = balance_unit::<T>();
 		<LicenseBond<T>>::put(bond);
-		<DesiredCollators<T>>::put(c);
+		<DesiredCollators<T>>::put(c + INITIAL_INVULNERABLES);
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
@@ -319,10 +328,10 @@ benchmarks! {
 
 	// worst case is paying a non-existing candidate account.
 	note_author {
-		<LicenseBond<T>>::put(T::Currency::minimum_balance());
+		<LicenseBond<T>>::put(balance_unit::<T>());
 		T::Currency::make_free_balance_be(
 			&<CollatorSelection<T>>::account_id(),
-			T::Currency::minimum_balance() * 4u32.into(),
+			balance_unit::<T>() * 4u32.into(),
 		);
 		let author = account("author", 0, SEED);
 		let new_block: T::BlockNumber = 10u32.into();
@@ -341,8 +350,8 @@ benchmarks! {
 		let r in 1 .. T::MaxCollators::get();
 		let c in 1 .. T::MaxCollators::get();
 
-		<LicenseBond<T>>::put(T::Currency::minimum_balance());
-		<DesiredCollators<T>>::put(c);
+		<LicenseBond<T>>::put(balance_unit::<T>());
+		<DesiredCollators<T>>::put(c + INITIAL_INVULNERABLES);
 		frame_system::Pallet::<T>::set_block_number(0u32.into());
 
 		register_validators::<T>(c);

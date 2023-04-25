@@ -39,6 +39,7 @@ use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
 	eth::{self, TokenUri},
+	CommonWeightInfo,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::call;
@@ -47,7 +48,7 @@ use sp_core::{U256, Get};
 
 use crate::{
 	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	TokenProperties, SelfWeightOf, weights::WeightInfo,
+	TokenProperties, SelfWeightOf, weights::WeightInfo, common::CommonWeights,
 };
 
 /// Nft events.
@@ -458,7 +459,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param from The current owner of the NFT
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer_from())]
+	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from(
 		&mut self,
 		caller: Caller,
@@ -475,7 +476,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -749,10 +750,27 @@ where
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
+	#[solidity(hide)]
 	fn cross_owner_of(&self, token_id: U256) -> Result<eth::CrossAddress> {
+		Self::owner_of_cross(&self, token_id)
+	}
+
+	/// Returns the owner (in cross format) of the token.
+	///
+	/// @param tokenId Id for the token.
+	fn owner_of_cross(&self, token_id: U256) -> Result<eth::CrossAddress> {
 		Self::token_owner(&self, token_id.try_into()?)
 			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
 			.map_err(|_| Error::Revert("token not found".into()))
+	}
+
+	/// @notice Count all NFTs assigned to an owner
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of NFTs owned by `owner`, possibly zero
+	fn balance_of_cross(&self, owner: eth::CrossAddress) -> Result<U256> {
+		self.consume_store_reads(1)?;
+		let balance = <AccountBalance<T>>::get((self.id, owner.into_sub_cross_account::<T>()?));
+		Ok(balance.into())
 	}
 
 	/// Returns the token properties.
@@ -807,7 +825,7 @@ where
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer(&mut self, caller: Caller, to: Address, token_id: U256) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -816,7 +834,8 @@ where
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, token, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -825,7 +844,7 @@ where
 	///  is the zero address. Throws if `tokenId` is not a valid NFT.
 	/// @param to The new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer())]
 	fn transfer_cross(
 		&mut self,
 		caller: Caller,
@@ -839,7 +858,8 @@ where
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token, &budget).map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, token, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -849,7 +869,7 @@ where
 	/// @param from Cross acccount address of current owner
 	/// @param to Cross acccount address of new owner
 	/// @param tokenId The NFT to transfer
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<CommonWeights<T>>::transfer_from())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,
@@ -865,7 +885,7 @@ where
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
