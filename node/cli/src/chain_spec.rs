@@ -267,7 +267,7 @@ macro_rules! testnet_genesis {
 pub fn development_config() -> DefaultChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
-	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenDecimals".into(), default_runtime::DECIMALS.into());
 	properties.insert(
 		"ss58Format".into(),
 		default_runtime::SS58Prefix::get().into(),
@@ -341,7 +341,7 @@ pub fn development_config() -> DefaultChainSpec {
 pub fn local_testnet_config() -> DefaultChainSpec {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
-	properties.insert("tokenDecimals".into(), 18.into());
+	properties.insert("tokenDecimals".into(), default_runtime::DECIMALS.into());
 	properties.insert(
 		"ss58Format".into(),
 		default_runtime::SS58Prefix::get().into(),

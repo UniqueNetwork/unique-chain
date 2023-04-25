@@ -15,29 +15,157 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds} from './util';
+import {expect, itEth, usingEthPlaygrounds} from './util';
 
-describe('NativeFungible: Plain calls', () => {
+describe('NativeFungible: ERC20 calls', () => {
   let donor: IKeyringPair;
-  let alice: IKeyringPair;
-  let owner: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice, owner] = await helper.arrange.createAccounts([30n, 20n], donor);
+      // [alice] = await helper.arrange.createAccounts([30n], donor);
     });
   });
 
-  itEth.skip('Can perform approve()', async ({helper}) => {
+  itEth('approve()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
-    const collection = await helper.ft.mintCollection(alice);
-    await collection.mint(alice, 200n, {Ethereum: owner});
-
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await contract.methods.approve(spender, 100).send({from: owner});
+    await expect(contract.methods.approve(spender, 100).call({from: owner})).to.be.rejectedWith('Approve not supported');
+  });
+
+  itEth('balanceOf()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor, 123n);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const balance = await contract.methods.balanceOf(owner).call({from: owner});
+    expect(balance).to.be.eq('123000000000000000000');
+  });
+
+  itEth('decimals()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const decimals = await contract.methods.decimals().call({from: owner});
+    expect(decimals).to.be.eq('18');
+  });
+
+  itEth('name()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const name = await contract.methods.name().call({from: owner});
+    expect(name).to.be.eq('opal');
+  });
+
+  itEth('symbol()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const name = await contract.methods.symbol().call({from: owner});
+    expect(name).to.be.eq('OPL');
+  });
+
+  itEth('totalSupply()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const totalSupplyEth = BigInt(await contract.methods.totalSupply().call({from: owner}));
+    const totalSupplySub = await helper.balance.getTotalIssuance();
+    expect(totalSupplyEth).to.be.eq(totalSupplySub);
+  });
+
+  itEth('transfer()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const balanceOwnerBefore = await helper.balance.getEthereum(owner);
+    const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
+
+    await contract.methods.transfer(receiver, 50).send({from: owner});
+
+    const balanceOwnerAfter = await helper.balance.getEthereum(owner);
+    const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
+
+    expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
+    expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
+  });
+
+  itEth('transferFrom()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const balanceOwnerBefore = await helper.balance.getEthereum(owner);
+    const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
+
+    await contract.methods.transferFrom(owner, receiver, 50).send({from: owner});
+
+    const balanceOwnerAfter = await helper.balance.getEthereum(owner);
+    const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
+
+    expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
+    expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
+
+    await expect(contract.methods.transferFrom(receiver, receiver, 50).call({from: owner})).to.be.rejectedWith('no permission');
+  });
+});
+
+describe('NativeFungible: ERC20UniqueExtensions calls', () => {
+  let donor: IKeyringPair;
+
+  before(async function() {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
+      donor = await privateKey({url: import.meta.url});
+      // [alice] = await helper.arrange.createAccounts([30n], donor);
+    });
+  });
+
+  itEth('transferCross()', async ({helper}) => {
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+
+    const balanceOwnerBefore = await helper.balance.getEthereum(owner);
+    const balanceReceiverBefore = await helper.balance.getEthereum(receiver.eth);
+
+    await contract.methods.transferCross(receiver, 50).send({from: owner});
+
+    const balanceOwnerAfter = await helper.balance.getEthereum(owner);
+    const balanceReceiverAfter = await helper.balance.getEthereum(receiver.eth);
+
+    expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
+    expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
+  });
+
+  itEth('transferFromCross()', async ({helper}) => {
+    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const receiver = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(0);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner.eth);
+
+    const balanceOwnerBefore = await helper.balance.getEthereum(owner.eth);
+    const balanceReceiverBefore = await helper.balance.getEthereum(receiver.eth);
+
+    await contract.methods.transferFromCross(owner, receiver, 50).send({from: owner.eth});
+
+    const balanceOwnerAfter = await helper.balance.getEthereum(owner.eth);
+    const balanceReceiverAfter = await helper.balance.getEthereum(receiver.eth);
+
+    expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
+    expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
+
+    await expect(contract.methods.transferFromCross(receiver, receiver, 50).call({from: owner.eth})).to.be.rejectedWith('no permission');
   });
 });

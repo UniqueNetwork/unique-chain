@@ -83,7 +83,7 @@ pub trait CollectionDispatch<T: Config> {
 	///
 	/// * `sender` - The owner of the collection.
 	/// * `handle` - Collection handle.
-	fn destroy(sender: T::CrossAccountId, handle: CollectionHandle<T>) -> DispatchResult;
+	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult;
 
 	/// Get a specialized collection from the handle.
 	///

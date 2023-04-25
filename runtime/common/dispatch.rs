@@ -99,7 +99,10 @@ where
 		Ok(id)
 	}
 
-	fn destroy(sender: T::CrossAccountId, collection: CollectionHandle<T>) -> DispatchResult {
+	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {
+		let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+		collection.check_is_internal()?;
+
 		match collection.mode {
 			CollectionMode::ReFungible => {
 				PalletRefungible::destroy_collection(RefungibleHandle::cast(collection), &sender)?
