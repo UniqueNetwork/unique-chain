@@ -24,7 +24,8 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, RUNTIME_NAME, TOKEN_SYMBOL, Balances,
+	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, RUNTIME_NAME, TOKEN_SYMBOL, DECIMALS,
+	Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{
@@ -53,7 +54,7 @@ pub mod preimage;
 
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
-	pub const Decimals: u8 = 32;
+	pub const Decimals: u8 = DECIMALS;
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 	pub Name: String = RUNTIME_NAME.to_string();
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
