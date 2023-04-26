@@ -463,6 +463,7 @@ pub mod pallet {
 	}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	pub const NATIVE_FINGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]

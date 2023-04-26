@@ -44,7 +44,7 @@ pub mod pallet {
 			Self::AccountId,
 			Balance = Self::CurrencyBalance,
 		>;
-		type CurrencyBalance: Into<U256> + TryFrom<U256>;
+		type CurrencyBalance: Into<U256> + TryFrom<U256> + PartialEq<u128> + From<u128> + Into<u128>;
 
 		type Decimals: Get<u8>;
 		type Name: Get<String>;
