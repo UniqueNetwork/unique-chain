@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{dispatch::DispatchResult, ensure};
+use frame_support::{dispatch::DispatchResult, ensure, fail};
 use pallet_evm::{PrecompileHandle, PrecompileResult};
 use sp_core::H160;
 use sp_runtime::DispatchError;
@@ -100,6 +100,10 @@ where
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {
+		if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		}
+
 		let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 		collection.check_is_internal()?;
 
