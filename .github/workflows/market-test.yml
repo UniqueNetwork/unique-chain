@@ -11,7 +11,37 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
+  prepare-execution-marix:
+
+    name: Prepare execution matrix
+
+    runs-on: [self-hosted-ci]
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v4
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+
+
   market_test:
+    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 360
@@ -22,8 +52,7 @@ jobs:
     
     strategy:
       matrix:
-        include:
-          - network: "opal", relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
     steps:
       - name: Clean Workspace
