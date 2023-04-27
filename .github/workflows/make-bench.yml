@@ -38,9 +38,9 @@ jobs:
         with:
           node-version: 16
 
-      - name: RUN benchmarking
-        run: |
-          time make bench
+      # - name: RUN benchmarking
+      #   run: |
+      #     time make bench
 
       - name: Run node dev mode in background
         working-directory: ./
@@ -51,8 +51,8 @@ jobs:
         working-directory: ./tests
         run: |
           yarn install
-          yarn ts-node src/calibrate.ts
-          yarn ts-node src/calibrateApply.ts
+          yarn ts-node --esm src/calibrate.ts
+          yarn ts-node --esm src/calibrateApply.ts
           
       - name: show git diff
         run: |
