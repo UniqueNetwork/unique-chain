@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// Copyright 2019-2023 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 //
 // Pulls identities and sub-identities from a chain and then makes a preimage to later force upload them into another.

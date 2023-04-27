@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// Copyright 2019-2023 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 
 // Unique Network is free software: you can redistribute it and/or modify
@@ -227,6 +227,8 @@ mod erc721 {
 			| Symbol
 			| Description
 			| CrossOwnerOf { .. }
+			| OwnerOfCross { .. }
+			| BalanceOfCross { .. }
 			| Properties { .. }
 			| NextTokenId
 			| TokenContractAddress { .. }
@@ -341,9 +343,11 @@ mod erc20 {
 			ERC165Call(_, _) => None,
 
 			// Not sponsored
-			AllowanceCross { .. } | BurnFrom { .. } | BurnFromCross { .. } | Repartition { .. } => {
-				None
-			}
+			AllowanceCross { .. }
+			| BalanceOfCross { .. }
+			| BurnFrom { .. }
+			| BurnFromCross { .. }
+			| Repartition { .. } => None,
 
 			TransferCross { .. } | TransferFromCross { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;

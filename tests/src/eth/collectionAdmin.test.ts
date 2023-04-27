@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// Copyright 2019-2023 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 // Unique Network is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
