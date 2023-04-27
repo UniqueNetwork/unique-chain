@@ -231,9 +231,12 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		amount: u128,
 		budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
+		if sender != from {
+			fail!(<pallet_common::Error<T>>::NoPermission);
+		}
 		with_weight(
 			<T as Config>::Currency::transfer(
-				sender.as_sub(),
+				from.as_sub(),
 				to.as_sub(),
 				amount.into(),
 				ExistenceRequirement::KeepAlive,
