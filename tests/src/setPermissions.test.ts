@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test: Set Permissions', () => {
   let alice: IKeyringPair;
@@ -85,7 +86,7 @@ describe('Negative Integration Test: Set Permissions', () => {
   });
 
   itSub('fails on not existing collection', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
+    const collectionId = NON_EXISTENT_COLLECTION_ID;
     await expect(helper.collection.setPermissions(alice, collectionId, {access: 'AllowList', mintMode: true}))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
