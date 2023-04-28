@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {ICollectionCreationOptions} from './util/playgrounds/types';
 
-describe.only('Native fungible', () => {
+describe('Native fungible', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
@@ -142,20 +142,6 @@ describe.only('Native fungible', () => {
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
   });
 
-  itSub('approve()', async ({helper}) => {
-    const collection = helper.ft.getCollectionObject(0);
-    await expect(collection.approveTokens(alice, {Substrate: bob.address}, 100n)).to.be.rejectedWith('common.UnsupportedOperation');
-  });
-
-  itSub('approve_from()', async ({helper}) => {
-    await expect(helper.executeExtrinsic(
-      alice,
-      'api.tx.unique.approveFrom',
-      [{Substrate: alice.address}, {Substrate: bob.address}, 0, 0, 100n],
-      true,
-    )).to.be.rejectedWith('common.UnsupportedOperation');
-  });
-
   itSub('transfer_from()', async ({helper}) => {
     const collection = helper.ft.getCollectionObject(0);
     const balanceAliceBefore = await helper.balance.getSubstrate(alice.address);
@@ -169,6 +155,20 @@ describe.only('Native fungible', () => {
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
 
     await expect(collection.transferFrom(alice, {Substrate: bob.address}, {Substrate: alice.address}, 100n)).to.be.rejectedWith('common.NoPermission');
+  });
+
+  itSub('approve()', async ({helper}) => {
+    const collection = helper.ft.getCollectionObject(0);
+    await expect(collection.approveTokens(alice, {Substrate: bob.address}, 100n)).to.be.rejectedWith('common.UnsupportedOperation');
+  });
+
+  itSub('approve_from()', async ({helper}) => {
+    await expect(helper.executeExtrinsic(
+      alice,
+      'api.tx.unique.approveFrom',
+      [{Substrate: alice.address}, {Substrate: bob.address}, 0, 0, 100n],
+      true,
+    )).to.be.rejectedWith('common.UnsupportedOperation');
   });
 
   itSub('set_collection_limits()', async ({helper}) => {
