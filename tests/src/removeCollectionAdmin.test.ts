@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test removeCollectionAdmin(collection_id, account_id):', () => {
   let alice: IKeyringPair;
@@ -68,7 +69,7 @@ describe('Negative Integration Test removeCollectionAdmin(collection_id, account
   });
 
   itSub('Can\'t remove collection admin from not existing collection', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
+    const collectionId = NON_EXISTENT_COLLECTION_ID;
 
     await expect(helper.collection.removeAdmin(alice, collectionId, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.CollectionNotFound/);

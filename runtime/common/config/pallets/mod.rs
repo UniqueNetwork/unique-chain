@@ -94,6 +94,7 @@ impl pallet_balances_adapter::Config for Runtime {
 	type Decimals = Decimals;
 	type Name = Name;
 	type Symbol = Symbol;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {
