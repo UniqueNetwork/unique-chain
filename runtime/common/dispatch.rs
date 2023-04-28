@@ -25,7 +25,7 @@ use pallet_common::{
 };
 pub use pallet_common::dispatch::CollectionDispatch;
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
-use pallet_balances_adapter::{Pallet as PalletNativeFungible, NativeFungibleHandle};
+use pallet_balances_adapter::{NativeFungibleHandle};
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
 use pallet_refungible::{
 	Pallet as PalletRefungible, RefungibleHandle, erc_token::RefungibleTokenHandle,

@@ -463,6 +463,7 @@ pub mod pallet {
 	}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	/// Collection id for native fungible collction.
 	pub const NATIVE_FINGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
 
 	#[pallet::pallet]
