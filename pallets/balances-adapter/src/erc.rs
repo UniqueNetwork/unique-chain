@@ -9,7 +9,7 @@ use pallet_common::{
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{PreDispatch, Result},
-	frontier_contract, WithRecorder, SubstrateRecorder,
+	frontier_contract,
 };
 use sp_core::{U256, Get};
 use sp_std::vec::Vec;
@@ -26,13 +26,6 @@ pub enum ERC20Events {
 		from: Address,
 		#[indexed]
 		to: Address,
-		value: U256,
-	},
-	Approval {
-		#[indexed]
-		owner: Address,
-		#[indexed]
-		spender: Address,
 		value: U256,
 	},
 }

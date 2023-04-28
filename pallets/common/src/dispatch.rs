@@ -11,7 +11,7 @@ use frame_support::{
 use sp_runtime::DispatchError;
 use up_data_structs::{CollectionId, CreateCollectionData, CollectionFlags};
 
-use crate::{pallet::Config, CommonCollectionOperations, CollectionHandle};
+use crate::{pallet::Config, CommonCollectionOperations};
 
 // TODO: move to benchmarking
 /// Price of [`dispatch_tx`] call with noop `call` argument
@@ -66,6 +66,7 @@ pub fn dispatch_tx<
 
 /// Interface for working with different collections through the dispatcher.
 pub trait CollectionDispatch<T: Config> {
+	/// Check if the collection is internal.
 	fn check_is_internal(&self) -> DispatchResult;
 
 	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).

@@ -80,7 +80,7 @@ pub trait CommonEvmHandler {
 impl CommonEvmHandler for () {
 	const CODE: &'static [u8] = &[];
 
-	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
+	fn call(self, _handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		None
 	}
 }
