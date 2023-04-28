@@ -3,6 +3,8 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 
+export const NON_EXISTENT_COLLECTION_ID = 4_294_967_295;
+
 export interface IEvent {
   section: string;
   method: string;

@@ -1,6 +1,7 @@
-use crate::{Config, NativeFungibleHandle};
+use crate::{Config, NativeFungibleHandle, SelfWeightOf};
 use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::traits::{Currency, ExistenceRequirement};
+use pallet_balances::WeightInfo;
 use pallet_common::{
 	erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult},
 	eth::CrossAddress,
@@ -73,7 +74,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Ok(total.into())
 	}
 
-	// #[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -93,7 +94,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Ok(true)
 	}
 
-	// #[weight(<SelfWeightOf<T>>::transfer_from())]
+	#[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer_from(
 		&mut self,
 		caller: Caller,
@@ -138,7 +139,7 @@ where
 		Ok(balance.into())
 	}
 
-	// #[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -158,7 +159,7 @@ where
 		Ok(true)
 	}
 
-	// #[weight(<SelfWeightOf<T>>::transfer_from())]
+	#[weight(<SelfWeightOf<T>>::transfer())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,

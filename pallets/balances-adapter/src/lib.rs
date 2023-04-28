@@ -11,6 +11,8 @@ use pallet_evm_coder_substrate::{WithRecorder, SubstrateRecorder};
 pub mod common;
 pub mod erc;
 
+pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
+
 pub struct NativeFungibleHandle<T: Config>(SubstrateRecorder<T>);
 impl<T: Config> NativeFungibleHandle<T> {
 	pub fn new() -> NativeFungibleHandle<T> {
@@ -34,6 +36,7 @@ impl<T: Config> WithRecorder<T> for NativeFungibleHandle<T> {
 pub mod pallet {
 	use alloc::string::String;
 	use frame_support::{traits::Get, sp_runtime::DispatchResult};
+	use pallet_balances::WeightInfo;
 	use sp_core::U256;
 
 	#[pallet::config]
@@ -49,6 +52,8 @@ pub mod pallet {
 		type Decimals: Get<u8>;
 		type Name: Get<String>;
 		type Symbol: Get<String>;
+
+		type WeightInfo: WeightInfo;
 	}
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
