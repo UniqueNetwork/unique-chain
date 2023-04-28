@@ -1,10 +1,10 @@
-# To launch this zombienet out-of-the-box, you can use `yarn frankenstein` in the `tests` folder.
+# To launch this zombienet out-of-the-box, run `yarn frankenstein` in the `tests` folder.
 
 [settings]
 provider = "native"
 
 [relaychain]
-# RELAY_DIR is an environment variable. You should likely specify it as ../polkadot/
+# RELAY_DIR is an environment variable. If you're launching ZN from the repository's root, you should likely specify it as ../polkadot/
 default_command = "{{RELAY_DIR}}target/release/polkadot"
 default_args = [ "-lparachain::candidate_validation=debug", "-lxcm=trace", ]
 chain = "rococo-local"
@@ -24,7 +24,7 @@ id = 1000
 
   [[parachains.collators]]
   name = "alice"
-  # PARA_DIR is an environment variable. You should likely specify it as ./
+  # PARA_DIR is an environment variable. If you're launching ZN from the repository's root, you should likely specify it as ./
   command = "{{PARA_DIR}}target/release/unique-collator"
   ws_port = 9944
   rpc_port = 9933
@@ -33,7 +33,7 @@ id = 1000
 
   [[parachains.collators]]
   name = "bob"
-  # PARA_DIR is an environment variable. You should likely specify it as ./
+  # PARA_DIR is an environment variable. If you're launching ZN from the repository's root, you should likely specify it as ./
   command = "{{PARA_DIR}}target/release/unique-collator"
   ws_port = 9945
   rpc_port = 9934

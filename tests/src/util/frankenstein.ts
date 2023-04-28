@@ -96,7 +96,7 @@ async function toggleMaintenanceMode(value: boolean, wsUri: string) {
 }
 
 const raiseZombienet = async (): Promise<void> => {
-  const isUpgradeTesting = !!NEW_RELAY_BIN || !!NEW_RELAY_WASM || !!NEW_RELAY_BIN && !!NEW_PARA_WASM;
+  const isUpgradeTesting = !!NEW_RELAY_BIN || !!NEW_RELAY_WASM || !!NEW_PARA_BIN || !!NEW_PARA_WASM;
   /*
   // If there is nothing to upgrade, what is the point
   if (!isUpgradeTesting) {
@@ -120,18 +120,19 @@ const raiseZombienet = async (): Promise<void> => {
 
   await cryptoWaitReady();
 
+  // Launch Zombienet!
+  network = await zombie.start(ZOMBIENET_CREDENTIALS, networkConfig, {silent: false});
+
   // Get the relay chain info like the epoch length and spec version
   // Then restart each parachain's binaries
   // // Stop and restart each node
   // // Send specified keys to parachain nodes in case the parachain requires it
   // If it is not needed to upgrade runtimes themselves, the job is done!
 
-  network = await zombie.start(ZOMBIENET_CREDENTIALS, networkConfig, {silent: false});
-
   // Record some required information regarding the relay chain
   await network.relay[0].connectApi();
   let relayInfo = getRelayInfo(network.relay[0].apiInstance!);
-  await network.relay[0].apiInstance?.disconnect();
+  await network.relay[0].apiInstance!.disconnect();
   if (isUpgradeTesting) {
     console.log('Relay stats:', relayInfo);
   }
@@ -172,6 +173,7 @@ const raiseZombienet = async (): Promise<void> => {
 
         await node.restart();
         // applyaurakey?
+        // Zombienet handles it on first-time node creation
       }
     }
 
