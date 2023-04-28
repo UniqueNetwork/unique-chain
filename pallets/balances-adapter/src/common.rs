@@ -2,88 +2,88 @@ use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
 use crate::{Config, NativeFungibleHandle};
 use frame_support::{
-	traits::{Currency, ExistenceRequirement},
 	fail,
+	traits::{Currency, ExistenceRequirement},
+	weights::Weight,
 };
+use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
 use pallet_common::{erc::CrossAccountId, CommonCollectionOperations, CommonWeightInfo, with_weight};
 use up_data_structs::TokenId;
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
-	fn create_multiple_items(
-		amount: &[up_data_structs::CreateItemData],
-	) -> frame_support::weights::Weight {
-		todo!()
+	fn create_multiple_items(amount: &[up_data_structs::CreateItemData]) -> Weight {
+		Weight::default()
 	}
 
 	fn create_multiple_items_ex(
 		cost: &up_data_structs::CreateItemExData<T::CrossAccountId>,
-	) -> frame_support::weights::Weight {
-		todo!()
+	) -> Weight {
+		Weight::default()
 	}
 
-	fn burn_item() -> frame_support::weights::Weight {
-		todo!()
+	fn burn_item() -> Weight {
+		Weight::default()
 	}
 
-	fn set_collection_properties(amount: u32) -> frame_support::weights::Weight {
-		todo!()
+	fn set_collection_properties(amount: u32) -> Weight {
+		Weight::default()
 	}
 
-	fn delete_collection_properties(amount: u32) -> frame_support::weights::Weight {
-		todo!()
+	fn delete_collection_properties(amount: u32) -> Weight {
+		Weight::default()
 	}
 
-	fn set_token_properties(amount: u32) -> frame_support::weights::Weight {
-		todo!()
+	fn set_token_properties(amount: u32) -> Weight {
+		Weight::default()
 	}
 
-	fn delete_token_properties(amount: u32) -> frame_support::weights::Weight {
-		todo!()
+	fn delete_token_properties(amount: u32) -> Weight {
+		Weight::default()
 	}
 
-	fn set_token_property_permissions(amount: u32) -> frame_support::weights::Weight {
-		todo!()
+	fn set_token_property_permissions(amount: u32) -> Weight {
+		Weight::default()
 	}
 
-	fn transfer() -> frame_support::weights::Weight {
-		todo!()
+	fn transfer() -> Weight {
+		<BalancesWeight<T> as WeightInfo>::transfer()
 	}
 
-	fn approve() -> frame_support::weights::Weight {
-		todo!()
+	fn approve() -> Weight {
+		Weight::default()
 	}
 
-	fn approve_from() -> frame_support::weights::Weight {
-		todo!()
+	fn approve_from() -> Weight {
+		Weight::default()
 	}
 
-	fn transfer_from() -> frame_support::weights::Weight {
-		todo!()
+	fn transfer_from() -> Weight {
+		<BalancesWeight<T> as WeightInfo>::transfer()
 	}
 
-	fn burn_from() -> frame_support::weights::Weight {
-		todo!()
+	fn burn_from() -> Weight {
+		Weight::default()
 	}
 
-	fn burn_recursively_self_raw() -> frame_support::weights::Weight {
-		todo!()
+	fn burn_recursively_self_raw() -> Weight {
+		Weight::default()
 	}
 
-	fn burn_recursively_breadth_raw(amount: u32) -> frame_support::weights::Weight {
-		todo!()
+	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
+		Weight::default()
 	}
 
-	fn token_owner() -> frame_support::weights::Weight {
-		todo!()
+	fn token_owner() -> Weight {
+		Weight::default()
 	}
 
-	fn set_allowance_for_all() -> frame_support::weights::Weight {
-		todo!()
+	fn set_allowance_for_all() -> Weight {
+		Weight::default()
 	}
 
-	fn force_repair_item() -> frame_support::weights::Weight {
-		todo!()
+	fn force_repair_item() -> Weight {
+		Weight::default()
 	}
 }
 
