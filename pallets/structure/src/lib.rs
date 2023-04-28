@@ -60,7 +60,7 @@ use sp_std::collections::btree_set::BTreeSet;
 use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
 use frame_support::fail;
 pub use pallet::*;
-use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
+use pallet_common::{dispatch::CollectionDispatch};
 use up_data_structs::{
 	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
 };
