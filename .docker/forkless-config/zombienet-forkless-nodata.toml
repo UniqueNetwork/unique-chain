@@ -18,12 +18,6 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
 
 [[parachains]]
 id = 1000
-chain_spec_modifier_commands = [[
-  "chainql",
-  "--tla-code=rawSpec=import '{{'raw'|chainSpec}}'",
-  "--tla-str=forkFrom={{ REPLICA_FROM }}",
-  "fork.jsonnet",
-]]
 
   [[parachains.collators]]
   name = "alice"
