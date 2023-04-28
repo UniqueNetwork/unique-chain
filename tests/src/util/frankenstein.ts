@@ -89,17 +89,17 @@ async function toggleMaintenanceMode(value: boolean, wsUri: string) {
       const toggle = value ? 'enable' : 'disable';
       await helper.getSudo().executeExtrinsic(superuser, `api.tx.maintenance.${toggle}`, []);
       console.log(`Maintenance mode ${value ? 'engaged' : 'disengaged'}.`);
-    } catch (_) {
-      console.error('Couldn\'t set maintenance mode. The maintenance pallet probably does not exist.');
+    } catch (e) {
+      console.error('Couldn\'t set maintenance mode. The maintenance pallet probably does not exist. Log:', e);
     }
   }, wsUri);
 }
 
 const raiseZombienet = async (): Promise<void> => {
-  const upgradeTesting = !!NEW_RELAY_BIN || !!NEW_RELAY_WASM || !!NEW_RELAY_BIN && !!NEW_PARA_WASM;
+  const isUpgradeTesting = !!NEW_RELAY_BIN || !!NEW_RELAY_WASM || !!NEW_RELAY_BIN && !!NEW_PARA_WASM;
   /*
   // If there is nothing to upgrade, what is the point
-  if (!upgradeTesting) {
+  if (!isUpgradeTesting) {
     console.warn('\nNeither the relay nor the parachain were selected for an upgrade! ' +
       'Please pass environment vars `NEW_RELAY_BIN`, `NEW_RELAY_WASM`, `NEW_PARA_BIN`, `NEW_PARA_WASM`.');
     process.exit(1);
@@ -132,7 +132,9 @@ const raiseZombienet = async (): Promise<void> => {
   await network.relay[0].connectApi();
   let relayInfo = getRelayInfo(network.relay[0].apiInstance!);
   await network.relay[0].apiInstance?.disconnect();
-  console.log(relayInfo);
+  if (isUpgradeTesting) {
+    console.log('Relay stats:', relayInfo);
+  }
 
   // non-exported functionality of NativeClient
   const networkClient = (network.client as any);
@@ -196,11 +198,15 @@ const raiseZombienet = async (): Promise<void> => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const superuser = await privateKey('//Alice');
 
-      await helper.executeExtrinsic(
+      const result = await helper.executeExtrinsic(
         superuser,
         'api.tx.sudo.sudoUncheckedWeight',
         [helper.constructApiCall('api.tx.system.setCode', [`0x${code}`]), 0],
       );
+
+      if (result.status == 'Fail') {
+        console.error('Failed to upgrade the runtime:', result);
+      }
 
       // Get the updated information from the relay's new runtime
       relayInfo = getRelayInfo(helper.getApi());
@@ -252,18 +258,27 @@ const raiseZombienet = async (): Promise<void> => {
         upgradingParas[paraId] = {version: getSpecVersion(helper.getApi()), upgraded: false};
 
         console.log('--- Authorizing the parachain runtime upgrade \t---');
-        await helper.executeExtrinsic(
+        let result = await helper.executeExtrinsic(
           superuser,
           'api.tx.sudo.sudoUncheckedWeight',
           [helper.constructApiCall('api.tx.parachainSystem.authorizeUpgrade', [codeHash]), 0],
         );
 
+        if (result.status == 'Fail') {
+          console.error('Failed to authorize the upgrade:', result);
+          return;
+        }
+
         console.log('--- Enacting the parachain runtime upgrade \t---');
-        await helper.executeExtrinsic(
+        result = await helper.executeExtrinsic(
           superuser,
           'api.tx.sudo.sudoUncheckedWeight',
           [helper.constructApiCall('api.tx.parachainSystem.enactAuthorizedUpgrade', [`0x${code.toString('hex')}`]), 0],
         );
+
+        if (result.status == 'Fail') {
+          console.error('Failed to upgrade the runtime:', result);
+        }
       }, para.nodes[0].wsUri);
     }
 
@@ -315,12 +330,14 @@ const raiseZombienet = async (): Promise<void> => {
 
   // await network.stop();
 
-  if (upgradeTesting) {
+  if (isUpgradeTesting) {
     if (paraUpgradeCompleted && relayUpgradeCompleted) {
       console.log("\n🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸");
     } else {
       console.error("\n🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧");
     }
+  } else {
+    console.log('🚀 ZOMBIENET RAISED 🚀');
   }
 };
 
