@@ -60,7 +60,7 @@ RUN export NVM_DIR="$HOME/.nvm" && \
 
 COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm {{ NEW_PARA_WASM }}
+COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
 
 COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/zombienet-forkless-data.toml /unique-chain/zombienet-forkless.toml
 COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/fork.jsonnet /unique-chain/tests/fork.jsonnet
