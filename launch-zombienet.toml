@@ -1,0 +1,41 @@
+# To launch this zombienet out-of-the-box, you can use `yarn frankenstein` in the `tests` folder.
+
+[settings]
+provider = "native"
+
+[relaychain]
+# RELAY_DIR is an environment variable. You should likely specify it as ../polkadot/
+default_command = "{{RELAY_DIR}}target/release/polkadot"
+default_args = [ "-lparachain::candidate_validation=debug", "-lxcm=trace", ]
+chain = "rococo-local"
+
+  [[relaychain.nodes]]
+  name = "relay-alice"
+  ws_port = 9844
+  rpc_port = 9843
+  p2p_port = 30444
+
+  [[relaychain.node_groups]]
+  name = "relay"
+  count = 4
+
+[[parachains]]
+id = 1000
+
+  [[parachains.collators]]
+  name = "alice"
+  # PARA_DIR is an environment variable. You should likely specify it as ./
+  command = "{{PARA_DIR}}target/release/unique-collator"
+  ws_port = 9944
+  rpc_port = 9933
+  p2p_port = 31200
+  args = [ "-lxcm=trace", ]
+
+  [[parachains.collators]]
+  name = "bob"
+  # PARA_DIR is an environment variable. You should likely specify it as ./
+  command = "{{PARA_DIR}}target/release/unique-collator"
+  ws_port = 9945
+  rpc_port = 9934
+  p2p_port = 31201
+  args = [ "-lxcm=trace", ]
