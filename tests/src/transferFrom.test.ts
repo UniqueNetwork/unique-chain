@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, Pallets, usingPlaygrounds, expect} from './util';
-import {NON_EXISTENT_COLLECTION_ID} from './eth/util/playgrounds/types';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test transferFrom(from, recipient, collection_id, item_id, value):', () => {
   let alice: IKeyringPair;

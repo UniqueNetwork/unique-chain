@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test changeCollectionOwner(collection_id, new_owner):', () => {
   let alice: IKeyringPair;
@@ -127,7 +128,7 @@ describe('Negative Integration Test changeCollectionOwner(collection_id, new_own
   });
 
   itSub('Can\'t change owner of a non-existing collection.', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
+    const collectionId = NON_EXISTENT_COLLECTION_ID;
     const changeOwnerTx = () => helper.collection.changeOwner(bob, collectionId, bob.address);
     await expect(changeOwnerTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
