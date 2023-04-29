@@ -40,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}
-            network {quartz}
-            network {unique}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
   testnet-build:
     needs: prepare-execution-marix
@@ -83,7 +83,7 @@ jobs:
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
@@ -109,7 +109,7 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Pull polkadot docker image
-        run: docker pull uniquenetwork/builder-polkadot:${{ env.POLKADOT_BUILD_BRANCH }}           
+        run: docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}           
 
       - name: Build the stack
         run: cd .docker/ && docker build --file ./Dockerfile-testnet.${{ matrix.network }}.yml --tag uniquenetwork/${{ matrix.network }}-testnet-local-nightly:nightly-${{ steps.branchname.outputs.value }}-${{ github.sha }} . 

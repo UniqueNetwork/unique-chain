@@ -67,7 +67,7 @@ jobs:
           output_file: .docker/docker-compose.collators.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ env.POLKADOT_BUILD_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             NETWORK=${{ matrix.network }}
             BRANCH=${{ github.head_ref }}
