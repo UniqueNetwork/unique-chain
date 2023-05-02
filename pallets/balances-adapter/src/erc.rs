@@ -3,6 +3,7 @@ use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types
 use frame_support::traits::{Currency, ExistenceRequirement};
 use pallet_balances::WeightInfo;
 use pallet_common::{
+	consume_store_reads,
 	erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult},
 	eth::CrossAddress,
 };
@@ -43,7 +44,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn balance_of(&self, owner: Address) -> Result<U256> {
-		// self.consume_store_reads(1)?;
+		consume_store_reads(self, 1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
 		Ok(balance.into())
@@ -62,7 +63,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn total_supply(&self) -> Result<U256> {
-		// self.consume_store_reads(1)?;
+		consume_store_reads(self, 1)?;
 		let total = <T as Config>::Currency::total_issuance();
 		Ok(total.into())
 	}
@@ -126,7 +127,7 @@ where
 	T::AccountId: From<[u8; 32]>,
 {
 	fn balance_of_cross(&self, owner: CrossAddress) -> Result<U256> {
-		// self.consume_store_reads(1)?;
+		consume_store_reads(self, 1)?;
 		let owner = owner.into_sub_cross_account::<T>()?;
 		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
 		Ok(balance.into())
