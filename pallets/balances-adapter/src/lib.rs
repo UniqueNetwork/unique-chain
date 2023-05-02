@@ -2,6 +2,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
+use core::ops::Deref;
+
 use frame_support::sp_runtime::DispatchResult;
 pub use pallet::*;
 use pallet_evm_coder_substrate::{WithRecorder, SubstrateRecorder};
@@ -31,6 +33,14 @@ impl<T: Config> WithRecorder<T> for NativeFungibleHandle<T> {
 	}
 	fn into_recorder(self) -> pallet_evm_coder_substrate::SubstrateRecorder<T> {
 		self.0
+	}
+}
+
+impl<T: Config> Deref for NativeFungibleHandle<T> {
+	type Target = SubstrateRecorder<T>;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }
 #[frame_support::pallet]
