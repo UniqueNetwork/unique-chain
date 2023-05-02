@@ -52,17 +52,12 @@ RUN apt-get -y update && \
     nvm install v16.16.0 && \
     nvm use v16.16.0
 
-RUN export NVM_DIR="$HOME/.nvm" && \
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-    cd /unique-chain/tests && \
-    npm install --global yarn && \
-    yarn install
-
 COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
 
-COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/zombienet-forkless-data.toml /unique-chain/zombienet-forkless.toml
+COPY --from=builder-unique-target /unique_parachain/tests /unique-chain/tests
+COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/zombienet-forkless-data.toml /unique-chain/tests/zombienet-forkless.toml
 COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/fork.jsonnet /unique-chain/tests/fork.jsonnet
 
 COPY --from=uniquenetwork/builder-chainql:{{ CHAINQL }} /chainql/target/release/chainql /chainql/target/release/
@@ -73,4 +68,6 @@ COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/westend-ru
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FROM NEW_PARA_BIN NEW_PARA_WASM && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /unique-chain/tests && \
+    npm install --global yarn && \
+    yarn install && \
     yarn frankenstein zombienet-forkless.json
