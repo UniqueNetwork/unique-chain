@@ -36,11 +36,7 @@ ARG PROFILE=release
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
-<<<<<<< HEAD
-RUN cargo build --features={{ NETWORK }}-runtime{{ EXTRA_FEATURES }} --$PROFILE
-=======
-#RUN cargo build --features={{ NETWORK }}-runtime --$PROFILE
->>>>>>> 4e7f3eb75 (test DOCKERFILE for zombienet)
+#RUN cargo build --features={{ NETWORK }}-runtime{{ EXTRA_FEATURES }} --$PROFILE
 
 # ===== RUN ======
 FROM ubuntu:22.04
