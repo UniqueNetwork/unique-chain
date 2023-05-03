@@ -90,17 +90,17 @@ jobs:
       - name: Show build configuration
         run: cat .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
 
-      - name: Generate zombienet-forkless-data.toml
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/forkless-config/zombienet-forkless-data.j2
-          output_file: .docker/forkless-config/zombienet-forkless-data.toml
-          variables: |
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}            
+      # - name: Generate zombienet-forkless-data.toml
+      #   uses: cuchi/jinja2-action@v1.2.0
+      #   with:
+      #     template: .docker/forkless-config/zombienet-forkless-data.j2
+      #     output_file: .docker/forkless-config/zombienet-forkless-data.toml
+      #     variables: |
+      #       RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
+      #       REPLICA_FROM=${{ matrix.replica_from_address }}            
 
-      - name: Show zombienet-forkless-data configuration
-        run: cat .docker/forkless-config/zombienet-forkless-data.toml
+      # - name: Show zombienet-forkless-data configuration
+      #   run: cat .docker/forkless-config/zombienet-forkless-data.toml
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
