@@ -40,6 +40,7 @@ RUN cargo build --features={{ NETWORK }}-runtime{{ EXTRA_FEATURES }} --$PROFILE
 # ===== RUN ======
 FROM ubuntu:22.04
 
+ENV RELAY_CHAIN_TYPE={{ RELAY_CHAIN_TYPE }}
 ENV REPLICA_FROM={{ REPLICA_FROM }}
 ENV NEW_PARA_BIN=/unique-chain/target/release/unique-collator
 ENV NEW_PARA_WASM=/unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
@@ -68,7 +69,7 @@ COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkado
 COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
 COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/rococo-runtime/rococo_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/rococo-runtime/rococo_runtime.compact.compressed.wasm
 
-CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FROM NEW_PARA_BIN NEW_PARA_WASM && \
+CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FROM NEW_PARA_BIN NEW_PARA_WASM RELAY_CHAIN_TYPE && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /unique-chain/tests && \
     npm install --global yarn && \
