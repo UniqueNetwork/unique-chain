@@ -83,6 +83,7 @@ jobs:
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
+            CHAINQL=${{ env.CHAINQL }}
 
       - name: Show build configuration
         run: cat .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
