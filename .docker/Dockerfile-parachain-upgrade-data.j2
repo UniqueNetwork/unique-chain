@@ -36,6 +36,8 @@ ARG PROFILE=release
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
+RUN ls -lah /unique_parachain/
+
 #RUN cargo build --features={{ NETWORK }}-runtime{{ EXTRA_FEATURES }} --$PROFILE
 
 # ===== RUN ======
