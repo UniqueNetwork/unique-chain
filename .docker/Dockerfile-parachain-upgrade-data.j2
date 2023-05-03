@@ -63,7 +63,7 @@ RUN env
 #COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 #COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
 
-RUN ls --recursive /unique_parachain/
+RUN ls --recursive /unique-chain/
 
 COPY --from=builder-unique-target /unique_parachain/tests/ /unique-chain/tests/
 COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/zombienet-forkless-data.toml /unique-chain/tests/zombienet-forkless.toml
