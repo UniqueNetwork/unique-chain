@@ -251,8 +251,42 @@ jobs:
             fi
         shell: bash
 
-      - name: Pull chainql docker image
-        run: docker pull uniquenetwork/builder-chainql:latest
+
+      # Check CHAINQL version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for CHAINQL
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-chainql.j2
+          output_file: .docker/Dockerfile-chainql.${{ env.CHAINQL }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            CHAINQL=${{ env.CHAINQL }}
+
+      - name: Check if the dockerhub repository contains the needed CHAINQL version
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            CHAINQL_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-chainql/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "CHAINQL TAGS:"
+            echo $CHAINQL_TAGS
+          # Check correct version CHAINQL and build it if it doesn't exist in CHAINQL TAGS
+            if [[ ${CHAINQL_TAGS[*]} =~ (^|[[:space:]])"${{ env.CHAINQL }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed CHAINQL version";
+                docker pull uniquenetwork/builder-chainql:${{ env.CHAINQL }}
+            else
+                echo "Repository has not needed CHAINQL version, so build it";
+                cd .docker/ && docker build --no-cache --file ./Dockerfile-chainql.${{ env.CHAINQL }}.yml --tag uniquenetwork/builder-chainql:${{ env.CHAINQL }} .
+                echo "Push needed CHAINQL version to the repository";
+                docker push uniquenetwork/builder-chainql:${{ env.CHAINQL }}
+            fi
+        shell: bash
+
+      # - name: Pull chainql docker image
+      #   run: docker pull uniquenetwork/builder-chainql:${{ env.CHAINQL }}
 
       - name: Generate ENV related extend launch-config file
         uses: cuchi/jinja2-action@v1.2.0
@@ -281,6 +315,7 @@ jobs:
             ASTAR_BUILD_BRANCH=${{ matrix.astar_version }}
             MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
             CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
+            CHAINQL=${{ env.CHAINQL }}
 
       - name: Show build Dockerfile
         run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
