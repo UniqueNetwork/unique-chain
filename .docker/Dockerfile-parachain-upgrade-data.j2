@@ -25,7 +25,7 @@ ARG PROFILE=release
 WORKDIR /unique_parachain
 
 RUN git clone https://github.com/UniqueNetwork/unique-chain.git -b {{ MAINNET_BRANCH }} . && \
-    cargo build --features={{ NETWORK }}-runtime --$PROFILE
+#   cargo build --features={{ NETWORK }}-runtime --$PROFILE
 
 # ===== BUILD target version ======
 FROM rust-builder as builder-unique-target
@@ -35,7 +35,11 @@ ARG PROFILE=release
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
+<<<<<<< HEAD
 RUN cargo build --features={{ NETWORK }}-runtime{{ EXTRA_FEATURES }} --$PROFILE
+=======
+#RUN cargo build --features={{ NETWORK }}-runtime --$PROFILE
+>>>>>>> 4e7f3eb75 (test DOCKERFILE for zombienet)
 
 # ===== RUN ======
 FROM ubuntu:22.04
@@ -52,18 +56,25 @@ RUN apt-get -y update && \
     nvm install v16.16.0 && \
     nvm use v16.16.0
 
-COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
-COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
+RUN env
+
+#COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
+#COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
+#COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
+
+RUN ls --recursive /unique_parachain/
 
 COPY --from=builder-unique-target /unique_parachain/tests/ /unique-chain/tests/
 COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/zombienet-forkless-data.toml /unique-chain/tests/zombienet-forkless.toml
 COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/fork.jsonnet /unique-chain/tests/fork.jsonnet
 
+RUN ls --recursive /unique-chain/
+
 COPY --from=uniquenetwork/builder-chainql:{{ CHAINQL }} /chainql/target/release/chainql /chainql/target/release/
 
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm
+COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/rococo-runtime/rococo_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/rococo-runtime/rococo_runtime.compact.compressed.wasm
 
 CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FROM NEW_PARA_BIN NEW_PARA_WASM && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
