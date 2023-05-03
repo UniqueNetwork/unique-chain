@@ -239,10 +239,10 @@ const raiseZombienet = async (): Promise<void> => {
     }, network.relay[0].wsUri);
 
     // Wait for the next epoch so that the parachains will start cooperating with the relay
-    //if (relayUpgradeCompleted) {
-    console.log('\n🚥 Starting timeout for the next epoch before upgrading the parachains code...');
-    await waitWithTimer(relayInfo.epochTime);
-    //}
+    if (relayUpgradeCompleted) {
+      console.log('\n🚥 Starting timeout for the next epoch before upgrading the parachains code...');
+      await waitWithTimer(relayInfo.epochTime);
+    }
 
     for (const paraId in network.paras) {
       console.log(`\n--- Upgrading the runtime of parachain ${paraId} \t---`);
