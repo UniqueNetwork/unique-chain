@@ -74,7 +74,7 @@ macro_rules! construct_runtime {
 
 				Configuration: pallet_configuration = 63,
 
-				Charging: pallet_charge_transaction::{Pallet, Call, Storage} = 64,
+				Charging: pallet_charge_transaction = 64,
 				// ContractHelpers: pallet_contract_helpers::{Pallet, Call, Storage} = 65,
 				Common: pallet_common = 66,
 				Fungible: pallet_fungible = 67,
