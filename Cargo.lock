@@ -6135,9 +6135,11 @@ dependencies = [
  "pallet-evm",
  "pallet-evm-coder-substrate",
  "pallet-evm-transaction-payment",
+ "pallet-structure",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
+ "sp-runtime",
  "sp-std",
  "up-data-structs",
 ]
