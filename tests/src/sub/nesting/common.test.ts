@@ -88,6 +88,27 @@ before(async () => {
   });
 });
 
+[
+  {restrictedMode: true},
+  {restrictedMode: false},
+].map(testCase => {
+  itSub(`Token owner can nest Native FT in NFT if "tokenOwner" permission set  ${testCase.restrictedMode ? 'in restricted mode': ''}`, async ({helper}) => {
+    // Only NFT allows nesting, permissions should be set:
+    const targetNFTCollection = await helper.nft.mintCollection(alice);
+    const targetTokenBob = await targetNFTCollection.mintToken(alice, {Substrate: bob.address});
+
+    const collectionForNesting = helper.ft.getCollectionObject(0);
+    // permissions should be set:
+    await targetNFTCollection.setPermissions(alice, {
+      nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
+    });
+
+    // Alice can mint and nest token:
+    await collectionForNesting.transfer(bob, targetTokenBob.nestingAccount(), 50n);
+    expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(50n);
+  });
+});
+
 
 itSub.ifWithPallets('Owner can unnest tokens using transferFrom', [Pallets.ReFungible], async ({helper}) => {
   const collectionToNest = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
@@ -98,18 +119,22 @@ itSub.ifWithPallets('Owner can unnest tokens using transferFrom', [Pallets.ReFun
   const nftCollectionToBeNested = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
   const rftCollectionToBeNested = await helper.rft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
   const ftCollectionToBeNested = await helper.ft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+  const nativeFtCollectionToBeNested = helper.ft.getCollectionObject(0);
 
   const nestedNFT = await nftCollectionToBeNested.mintToken(alice, tokenA.nestingAccount());
   const nestedRFT = await rftCollectionToBeNested.mintToken(alice, 100n, tokenA.nestingAccount());
   const _nestedFT = await ftCollectionToBeNested.mint(alice, 100n, tokenA.nestingAccount());
+  await nativeFtCollectionToBeNested.transfer(alice, tokenA.nestingAccount(), 100n);
   expect(await nestedNFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
   expect(await nestedRFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
   expect(await ftCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(100n);
+  expect(await nativeFtCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(100n);
 
   // Transfer the nested token to another token
   await nestedNFT.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount());
   await nestedRFT.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount(), 25n);
   await ftCollectionToBeNested.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount(), 25n);
+  await nativeFtCollectionToBeNested.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount(), 25n);
 
   expect(await nestedNFT.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
   expect(await nestedNFT.getOwner()).to.be.deep.equal(tokenB.nestingAccount().toLowerCase());
@@ -119,4 +144,7 @@ itSub.ifWithPallets('Owner can unnest tokens using transferFrom', [Pallets.ReFun
 
   expect(await ftCollectionToBeNested.getBalance(tokenB.nestingAccount())).to.equal(25n);
   expect(await ftCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(75n);
+
+  expect(await nativeFtCollectionToBeNested.getBalance(tokenB.nestingAccount())).to.equal(25n);
+  expect(await nativeFtCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(75n);
 });

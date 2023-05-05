@@ -117,7 +117,7 @@ describe('NativeFungible: ERC20 calls', () => {
     expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
     expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
 
-    await expect(contract.methods.transferFrom(receiver, receiver, 50).call({from: owner})).to.be.rejectedWith('no permission');
+    await expect(contract.methods.transferFrom(receiver, receiver, 50).call({from: owner})).to.be.rejectedWith('ApprovedValueTooLow');
   });
 });
 

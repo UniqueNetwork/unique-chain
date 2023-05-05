@@ -47,6 +47,20 @@ describe('Integration Test: Unnesting', () => {
     await expect(nestedToken.getOwner()).to.be.rejected;
   });
 
+  itSub('NativeFungible: allows the owner to successfully unnest a token', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const targetToken = await collection.mintToken(alice);
+
+    const collectionFT = helper.ft.getCollectionObject(0);
+
+    // Nest
+    await collectionFT.transfer(alice, targetToken.nestingAccount(), 10n);
+    // Unnest
+    await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
+
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
+  });
+
   itSub('Fungible: allows the owner to successfully unnest a token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
