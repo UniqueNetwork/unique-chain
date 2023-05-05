@@ -11,7 +11,7 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
 
-  nodes-execution-matrix:
+  prepare-execution-matrix:
 
     name: execution matrix
 
@@ -43,8 +43,8 @@ jobs:
             network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
 
-  nodes-only-update:
-    needs: nodes-execution-matrix
+  nodes-only-update-build:
+    needs: prepare-execution-matrix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci]
 
@@ -56,9 +56,13 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.nodes-execution-matrix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-matrix.outputs.matrix)}}
 
     steps:
+
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
 
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -68,8 +72,20 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
@@ -77,16 +93,12 @@ jobs:
           template: .docker/docker-compose.tmp-node.j2
           output_file: .docker/docker-compose.node.${{ matrix.network }}.yml
           variables: |
-            REPO_URL=${{ github.server_url }}/${{ github.repository }}.git
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            # POLKADOT_MAINNET_BRANCH=${{ env.POLKADOT_MAINNET_BRANCH }}
-            # MAINNET_TAG=${{ matrix.mainnet_tag }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
-            # BRANCH=${{ github.head_ref }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
