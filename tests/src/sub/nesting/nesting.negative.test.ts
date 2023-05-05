@@ -53,25 +53,35 @@ before(async () => {
   });
 });
 
-itSub('Owner cannot nest FT if nesting is disabled', async ({helper}) => {
+[
+  {mode: 'ft'},
+  {mode: 'nativeFt'},
+].map(testCase => {
+  itSub(`Owner cannot nest [${testCase.mode}] if nesting is disabled`, async ({helper}) => {
   // Create default collection, permissions are not set:
-  const aliceNFTCollection = await helper.nft.mintCollection(alice);
-  const targetToken = await aliceNFTCollection.mintToken(alice);
+    const aliceNFTCollection = await helper.nft.mintCollection(alice);
+    const targetToken = await aliceNFTCollection.mintToken(alice);
 
-  const collectionForNesting = await helper.ft.mintCollection(alice);
+    const collectionForNesting = testCase.mode === 'ft' ? await helper.ft.mintCollection(alice) : helper.ft.getCollectionObject(0);
 
-  // 1. Alice cannot create immediately nested tokens:
-  await expect(collectionForNesting.mint(alice, 100n, targetToken.nestingAccount())).to.be.rejectedWith('common.UserIsNotAllowedToNest');
+    // Alice cannot create immediately nested tokens:
+    await expect(testCase.mode === 'ft'
+      ? collectionForNesting.mint(alice, 100n, targetToken.nestingAccount())
+      : collectionForNesting.transfer(alice, targetToken.nestingAccount(), 100n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
 
-  // 2. Alice can mint and nest token:
-  await collectionForNesting.mint(alice, 100n);
-  await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
+    // Alice can mint and nest token:
+    if (testCase.mode === 'ft') {
+      await collectionForNesting.mint(alice, 100n);
+    }
+    await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
+  });
 });
 
 [
   {mode: 'nft' as const},
   {mode: 'rft' as const},
   {mode: 'ft' as const},
+  {mode: 'native ft' as const},
 ].map(testCase => {
   itSub(`Non-owner and non-admin cannot nest ${testCase.mode.toUpperCase()} in someone else's tokens`, async ({helper}) => {
     const targetCollection = await helper.nft.mintCollection(alice, {permissions:
@@ -79,13 +89,18 @@ itSub('Owner cannot nest FT if nesting is disabled', async ({helper}) => {
     });
     const targetToken = await targetCollection.mintToken(alice);
 
-    const nestedCollectionBob = await helper[testCase.mode].mintCollection(bob);
+    const nestedCollectionBob = await (
+      testCase.mode === 'native ft'
+        ? helper.ft.getCollectionObject(0)
+        : helper[testCase.mode].mintCollection(bob)
+    );
 
     let nestedTokenBob: UniqueNFToken | UniqueRFToken;
     switch (testCase.mode) {
       case 'nft': nestedTokenBob = await (nestedCollectionBob as UniqueNFTCollection).mintToken(bob); break;
       case 'rft': nestedTokenBob = await (nestedCollectionBob as UniqueRFTCollection).mintToken(bob, 100n); break;
       case 'ft': await (nestedCollectionBob as UniqueFTCollection).mint(bob, 100n); break;
+      case 'native ft': break;
     }
 
     // Bob non-owner of targetToken and non admin of targetCollection, so
@@ -94,6 +109,7 @@ itSub('Owner cannot nest FT if nesting is disabled', async ({helper}) => {
       case 'nft': await expect((nestedCollectionBob as UniqueNFTCollection).mintToken(bob, targetToken.nestingAccount())).to.be.rejectedWith('common.UserIsNotAllowedToNest'); break;
       case 'rft': await expect((nestedCollectionBob as UniqueRFTCollection).mintToken(bob, 100n, targetToken.nestingAccount())).to.be.rejectedWith('common.UserIsNotAllowedToNest'); break;
       case 'ft': await expect((nestedCollectionBob as UniqueFTCollection).mint(bob, 100n, targetToken.nestingAccount())).to.be.rejectedWith('common.UserIsNotAllowedToNest'); break;
+      case 'native ft': break;
     }
 
     // 2. cannot nest existing token:
@@ -101,6 +117,7 @@ itSub('Owner cannot nest FT if nesting is disabled', async ({helper}) => {
       case 'nft':
       case 'rft': await expect(nestedTokenBob!.transfer(bob, targetToken.nestingAccount())).to.be.rejectedWith('common.UserIsNotAllowedToNest'); break;
       case 'ft': await expect((nestedCollectionBob as UniqueFTCollection).transfer(bob, targetToken.nestingAccount(), 100n)).to.be.rejectedWith('common.UserIsNotAllowedToNest'); break;
+      case 'native ft': await expect((nestedCollectionBob as UniqueFTCollection).transfer(bob, targetToken.nestingAccount(), 100n)).to.be.rejectedWith('common.UserIsNotAllowedToNest'); break;
     }
   });
 });
@@ -140,6 +157,7 @@ itSub.ifWithPallets('Cannot nest in non existing token', [Pallets.ReFungible], a
   const nftCollectionForNesting = await helper.nft.mintCollection(alice);
   const rftCollectionForNesting = await helper.rft.mintCollection(alice);
   const ftCollectionForNesting = await helper.ft.mintCollection(alice);
+  const nativeFtCollectionForNesting = helper.ft.getCollectionObject(0);
 
   const testCases = [
     {token: tokenFromNonExistingCollection, error: 'CollectionNotFound'},
@@ -160,6 +178,7 @@ itSub.ifWithPallets('Cannot nest in non existing token', [Pallets.ReFungible], a
     await expect(nft.transfer(alice, testCase.token.nestingAccount())).to.be.rejectedWith(testCase.error);
     await expect(rft.transfer(alice, testCase.token.nestingAccount())).to.be.rejectedWith(testCase.error);
     await expect(ftCollectionForNesting.transfer(alice, testCase.token.nestingAccount(), 50n)).to.be.rejectedWith(testCase.error);
+    await expect(nativeFtCollectionForNesting.transfer(alice, testCase.token.nestingAccount(), 50n)).to.be.rejectedWith(testCase.error);
   }
 });
 
@@ -184,6 +203,7 @@ itEth.ifWithPallets('Cannot nest in RFT or FT', [Pallets.ReFungible], async ({he
   // Create default collection, permissions are not set:
   const rftCollection = await helper.rft.mintCollection(alice);
   const ftCollection = await helper.ft.mintCollection(alice);
+  const nativeFtCollection = helper.ft.getCollectionObject(0);
 
   const rftToken = await rftCollection.mintToken(alice);
   const _ftToken = await ftCollection.mint(alice, 100n);
@@ -193,11 +213,13 @@ itEth.ifWithPallets('Cannot nest in RFT or FT', [Pallets.ReFungible], async ({he
   // 1. Alice cannot create immediately nested tokens:
   await expect(collectionForNesting.mintToken(alice, rftToken.nestingAccount())).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
   await expect(collectionForNesting.mintToken(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
+  await expect(collectionForNesting.mintToken(alice, {Ethereum: helper.ethAddress.fromTokenId(nativeFtCollection.collectionId, 0)})).to.be.rejectedWith('common.UnsupportedOperation');
 
   // 2. Alice cannot mint and nest token:
   const nestedToken2 = await collectionForNesting.mintToken(alice);
   await expect(nestedToken2.nest(alice, rftToken)).to.be.rejectedWith('refungible.RefungibleDisallowsNesting');
   await expect(ftCollection.transfer(alice, {Ethereum: helper.ethAddress.fromTokenId(ftCollection.collectionId, 0)})).to.be.rejectedWith('fungible.FungibleDisallowsNesting');
+  await expect(nativeFtCollection.transfer(alice, {Ethereum: helper.ethAddress.fromTokenId(nativeFtCollection.collectionId, 0)})).to.be.rejectedWith('common.UnsupportedOperation');
 });
 
 itSub('Cannot nest in restricted collection if collection is not in the list', async ({helper}) => {
@@ -205,6 +227,7 @@ itSub('Cannot nest in restricted collection if collection is not in the list', a
   const notAllowedCollectionNFT = await helper.nft.mintCollection(alice);
   const notAllowedCollectionRFT = await helper.rft.mintCollection(alice);
   const notAllowedCollectionFT = await helper.ft.mintCollection(alice);
+  const notAllowedCollectionNativeFT = helper.ft.getCollectionObject(0);
 
   // Collection restricted to allowedCollectionId
   const restrictedCollectionA = await helper.nft.mintCollection(alice, {permissions:
@@ -229,6 +252,8 @@ itSub('Cannot nest in restricted collection if collection is not in the list', a
   await expect(notAllowedCollectionRFT.mintToken(alice, 100n, targetTokenB.nestingAccount())).to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
   await expect(notAllowedCollectionFT.mint(alice, 100n, targetTokenA.nestingAccount())).to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
   await expect(notAllowedCollectionFT.mint(alice, 100n, targetTokenB.nestingAccount())).to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
+  await expect(notAllowedCollectionNativeFT.transfer(alice, targetTokenA.nestingAccount(), 100n)).to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
+  await expect(notAllowedCollectionNativeFT.transfer(alice, targetTokenB.nestingAccount(), 100n)).to.be.rejectedWith(/common\.SourceCollectionIsNotAllowedToNest/);
 });
 
 itSub('Cannot create nesting chains greater than 5', async ({helper}) => {
