@@ -36,7 +36,7 @@ contract ERC1633 is Dummy, ERC165 {
 	}
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x01d536fc
+/// @dev the ERC-165 identifier for this interface is 0xedd3a564
 contract ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
 	/// @param owner crossAddress The address which owns the funds.
@@ -95,6 +95,18 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		amount;
 		dummy = 0;
 		return false;
+	}
+
+	/// @notice Balance of account
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of fingibles owned by `owner`, possibly zero
+	/// @dev EVM selector for this function is: 0xec069398,
+	///  or in textual repr: balanceOfCross((address,uint256))
+	function balanceOfCross(CrossAddress memory owner) public view returns (uint256) {
+		require(false, stub_error);
+		owner;
+		dummy;
+		return 0;
 	}
 
 	/// @dev Function that changes total amount of the tokens.

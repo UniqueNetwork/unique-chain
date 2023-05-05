@@ -75,7 +75,6 @@ std = [
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
-	'fp-evm-mapping/std',
 	'fp-rpc/std',
 	'fp-self-contained/std',
 	'pallet-app-promotion/std',
@@ -263,7 +262,6 @@ up-rpc = { workspace = true }
 # pallet-contract-helpers = { path = '../pallets/contract-helpers', default-features = false, version = '0.1.0' }
 evm-coder = { workspace = true }
 fp-evm = { workspace = true }
-fp-evm-mapping = { workspace = true }
 fp-rpc = { workspace = true }
 fp-self-contained = { workspace = true }
 num_enum = { workspace = true }

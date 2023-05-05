@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {stringToU8a} from '@polkadot/util';
-import {encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
+import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
 import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, IPovInfo, TSigner} from './types';
-import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, XcmV2TraitsError} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
@@ -57,6 +57,130 @@ export class SilentConsole {
     console.log = this.consoleLog;
     console.warn = this.consoleWarn;
   }
+}
+
+export interface IEventHelper {
+  section(): string;
+
+  method(): string;
+
+  bindEventRecord(e: FrameSystemEventRecord): void;
+
+  raw(): FrameSystemEventRecord;
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function EventHelper(section: string, method: string) {
+  return class implements IEventHelper {
+    eventRecord: FrameSystemEventRecord | null;
+    _section: string;
+    _method: string;
+
+    constructor() {
+      this.eventRecord = null;
+      this._section = section;
+      this._method = method;
+    }
+
+    section(): string {
+      return this._section;
+    }
+
+    method(): string {
+      return this._method;
+    }
+
+    bindEventRecord(e: FrameSystemEventRecord) {
+      this.eventRecord = e;
+    }
+
+    raw() {
+      return this.eventRecord!;
+    }
+
+    eventJsonData<T = any>(index: number) {
+      return this.raw().event.data[index].toJSON() as T;
+    }
+
+    eventData<T>(index: number) {
+      return this.raw().event.data[index] as T;
+    }
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function EventSection(section: string) {
+  return class Section {
+    static section = section;
+
+    static Method(name: string) {
+      return EventHelper(Section.section, name);
+    }
+  };
+}
+
+export class Event {
+  static Democracy = class extends EventSection('democracy') {
+    static Started = class extends this.Method('Started') {
+      referendumIndex() {
+        return this.eventJsonData<number>(0);
+      }
+
+      threshold() {
+        return this.eventJsonData(1);
+      }
+    };
+
+    static Voted = class extends this.Method('Voted') {
+      voter() {
+        return this.eventJsonData(0);
+      }
+
+      referendumIndex() {
+        return this.eventJsonData<number>(1);
+      }
+
+      vote() {
+        return this.eventJsonData(2);
+      }
+    };
+
+    static Passed = class extends this.Method('Passed') {
+      referendumIndex() {
+        return this.eventJsonData<number>(0);
+      }
+    };
+  };
+
+  static Scheduler = class extends EventSection('scheduler') {
+    static PriorityChanged = class extends this.Method('PriorityChanged') {
+      task() {
+        return this.eventJsonData(0);
+      }
+
+      priority() {
+        return this.eventJsonData(1);
+      }
+    };
+  };
+
+  static XcmpQueue = class extends EventSection('xcmpQueue') {
+    static XcmpMessageSent = class extends this.Method('XcmpMessageSent') {
+      messageHash() {
+        return this.eventJsonData(0);
+      }
+    };
+
+    static Fail = class extends this.Method('Fail') {
+      messageHash() {
+        return this.eventJsonData(0);
+      }
+
+      outcome() {
+        return this.eventData<XcmV2TraitsError>(1);
+      }
+    };
+  };
 }
 
 export class DevUniqueHelper extends UniqueHelper {
@@ -155,6 +279,7 @@ export class DevStatemintHelper extends DevWestmintHelper {}
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;
+  fastDemocracy: MoonbeamFastDemocracyGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
@@ -163,6 +288,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
     super(logger, options);
     this.account = new MoonbeamAccountGroup(this);
     this.wait = new WaitGroup(this);
+    this.fastDemocracy = new MoonbeamFastDemocracyGroup(this);
   }
 }
 
@@ -554,6 +680,107 @@ class MoonbeamAccountGroup {
   }
 }
 
+class MoonbeamFastDemocracyGroup {
+  helper: DevMoonbeamHelper;
+
+  constructor(helper: DevMoonbeamHelper) {
+    this.helper = helper;
+  }
+
+  async executeProposal(proposalDesciption: string, encodedProposal: string) {
+    const proposalHash = blake2AsHex(encodedProposal);
+
+    const alithAccount = this.helper.account.alithAccount();
+    const baltatharAccount = this.helper.account.baltatharAccount();
+    const dorothyAccount = this.helper.account.dorothyAccount();
+
+    const councilVotingThreshold = 2;
+    const technicalCommitteeThreshold = 2;
+    const fastTrackVotingPeriod = 3;
+    const fastTrackDelayPeriod = 0;
+
+    console.log(`[democracy] executing '${proposalDesciption}' proposal`);
+
+    // >>> Propose external motion through council >>>
+    console.log('\t* Propose external motion through council.......');
+    const externalMotion = this.helper.democracy.externalProposeMajority({Inline: encodedProposal});
+    const encodedMotion = externalMotion?.method.toHex() || '';
+    const motionHash = blake2AsHex(encodedMotion);
+    console.log('\t* Motion hash is %s', motionHash);
+
+    await this.helper.collective.council.propose(
+      baltatharAccount,
+      councilVotingThreshold,
+      externalMotion,
+      externalMotion.encodedLength,
+    );
+
+    const councilProposalIdx = await this.helper.collective.council.proposalCount() - 1;
+    await this.helper.collective.council.vote(dorothyAccount, motionHash, councilProposalIdx, true);
+    await this.helper.collective.council.vote(baltatharAccount, motionHash, councilProposalIdx, true);
+
+    await this.helper.collective.council.close(
+      dorothyAccount,
+      motionHash,
+      councilProposalIdx,
+      {
+        refTime: 1_000_000_000,
+        proofSize: 1_000_000,
+      },
+      externalMotion.encodedLength,
+    );
+    console.log('\t* Propose external motion through council.......DONE');
+    // <<< Propose external motion through council <<<
+
+    // >>> Fast track proposal through technical committee >>>
+    console.log('\t* Fast track proposal through technical committee.......');
+    const fastTrack = this.helper.democracy.fastTrack(proposalHash, fastTrackVotingPeriod, fastTrackDelayPeriod);
+    const encodedFastTrack = fastTrack?.method.toHex() || '';
+    const fastTrackHash = blake2AsHex(encodedFastTrack);
+    console.log('\t* FastTrack hash is %s', fastTrackHash);
+
+    await this.helper.collective.techCommittee.propose(alithAccount, technicalCommitteeThreshold, fastTrack, fastTrack.encodedLength);
+
+    const techProposalIdx = await this.helper.collective.techCommittee.proposalCount() - 1;
+    await this.helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
+    await this.helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
+
+    await this.helper.collective.techCommittee.close(
+      baltatharAccount,
+      fastTrackHash,
+      techProposalIdx,
+      {
+        refTime: 1_000_000_000,
+        proofSize: 1_000_000,
+      },
+      fastTrack.encodedLength,
+    );
+    console.log('\t* Fast track proposal through technical committee.......DONE');
+    // <<< Fast track proposal through technical committee <<<
+
+    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
+    const referendumIndex = democracyStarted.referendumIndex();
+
+    // >>> Referendum voting >>>
+    console.log(`\t* Referendum #${referendumIndex} voting.......`);
+    await this.helper.democracy.referendumVote(dorothyAccount, referendumIndex, {
+      balance: 10_000_000_000_000_000_000n,
+      vote: {aye: true, conviction: 1},
+    });
+    console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
+    // <<< Referendum voting <<<
+
+    // Wait the proposal to pass
+    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => {
+      return event.referendumIndex() == referendumIndex;
+    });
+
+    await this.helper.wait.newBlocks(1);
+
+    console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
+  }
+}
+
 class WaitGroup {
   helper: ChainHelperBase;
 
@@ -694,13 +921,18 @@ class WaitGroup {
     return promise;
   }
 
-  event(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
+  event<T extends IEventHelper>(
+    maxBlocksToWait: number,
+    eventHelperType: new () => T,
+    filter: (_: T) => boolean = () => { return true; },
+  ) {
     // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<EventRecord | null>(async (resolve) => {
+    const promise = new Promise<T | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
+        const eventHelper = new eventHelperType();
         const blockNumber = header.number.toHuman();
         const blockHash = header.hash;
-        const eventIdStr = `${eventSection}.${eventMethod}`;
+        const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
 
         this.helper.logger.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
@@ -709,16 +941,24 @@ class WaitGroup {
         const eventRecords = (await apiAt.query.system.events()) as any;
 
         const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
-          return r.event.section == eventSection && r.event.method == eventMethod;
+          if (
+            r.event.section == eventHelper.section()
+            && r.event.method == eventHelper.method()
+          ) {
+            eventHelper.bindEventRecord(r);
+            return filter(eventHelper);
+          } else {
+            return false;
+          }
         });
 
         if (neededEvent) {
           unsubscribe();
-          resolve(neededEvent);
+          resolve(eventHelper);
         } else if (maxBlocksToWait > 0) {
           maxBlocksToWait--;
         } else {
-          this.helper.logger.log(`Event \`${eventIdStr}\` is NOT found`);
+          this.helper.logger.log(`Eligible event \`${eventIdStr}\` is NOT found`);
           unsubscribe();
           resolve(null);
         }
@@ -727,17 +967,18 @@ class WaitGroup {
     return promise;
   }
 
-  async eventOutcome<EventT>(maxBlocksToWait: number, eventSection: string, eventMethod: string) {
-    const eventRecord = await this.event(maxBlocksToWait, eventSection, eventMethod);
-
-    if (eventRecord == null) {
-      return null;
+  async expectEvent<T extends IEventHelper>(
+    maxBlocksToWait: number,
+    eventHelperType: new () => T,
+    filter: (e: T) => boolean = () => { return true; },
+  ) {
+    const e = await this.event(maxBlocksToWait, eventHelperType, filter);
+    if (e == null) {
+      const eventHelper = new eventHelperType();
+      throw Error(`The event '${eventHelper.section()}.${eventHelper.method()}' is expected`);
+    } else {
+      return e;
     }
-
-    const event = eventRecord!.event;
-    const outcome = event.data[1] as EventT;
-
-    return outcome;
   }
 }
 

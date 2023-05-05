@@ -2,8 +2,8 @@ version: "3.5"
 
 services:
   xcm_nodes:
-    image: uniquenetwork/xcm-{{ NETWORK }}-testnet-local:latest
-    container_name: xcm-{{ NETWORK }}-testnet-local
+    image: uniquenetwork/ci-xcm-local:{{ NETWORK }}-{{ BUILD_TAG }}
+    container_name: xcm-{{ NETWORK }}-local
     expose:
       - 9844
       - 9933
@@ -20,8 +20,5 @@ services:
       - 127.0.0.1:9947:9947
       - 127.0.0.1:9948:9948
       - 127.0.0.1:9949:9949
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "3"
+
 

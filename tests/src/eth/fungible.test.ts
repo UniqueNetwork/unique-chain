@@ -427,6 +427,33 @@ describe('Fungible: Plain calls', () => {
     const toBalanceAfter = await collection.getBalance({Ethereum: receiver});
     expect(toBalanceAfter - toBalanceBefore).to.be.eq(51n);
   });
+
+  itEth('Check balanceOfCross()', async ({helper}) => {
+    const collection = await helper.ft.mintCollection(alice, {});
+    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const other = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner.eth);
+
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
+    expect(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
+
+    await collection.mint(alice, 100n, {Ethereum: owner.eth});
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('100');
+    expect(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
+
+    await collectionEvm.methods.transferCross(other, 50n).send({from: owner.eth});
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('50');
+    expect(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('50');
+
+    await collectionEvm.methods.transferCross(other, 50n).send({from: owner.eth});
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
+    expect(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('100');
+
+    await collectionEvm.methods.transferCross(owner, 100n).send({from: other.eth});
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('100');
+    expect(await collectionEvm.methods.balanceOfCross(other).call({from: owner.eth})).to.be.eq('0');
+  });
 });
 
 describe('Fungible: Fees', () => {

@@ -1,21 +1,19 @@
 ARG POLKADOT_BUILD_BRANCH
-FROM uniquenetwork/builder-polkadot:${POLKADOT_BUILD_BRANCH} as polkadot
+FROM uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} as polkadot
 
 # ===== Rust builder =====
 FROM uniquenetwork/services:latest as rust-builder
-ARG RUST_TOOLCHAIN=
 
-ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install $RUST_TOOLCHAIN && \
-    rustup default $RUST_TOOLCHAIN && \
+    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup default {{ RUST_TOOLCHAIN }} && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
+RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -24,36 +22,26 @@ WORKDIR /unique_parachain
 FROM rust-builder as builder-unique-current
 
 ARG PROFILE=release
-ARG NETWORK
-ARG MAINNET_BRANCH
-ARG REPO_URL
 
 WORKDIR /unique_parachain
 
-RUN git clone $REPO_URL -b $MAINNET_BRANCH . && \
-    cargo build --features=${NETWORK}-runtime --$PROFILE
+RUN git clone https://github.com/UniqueNetwork/unique-chain.git -b {{ MAINNET_BRANCH }} . && \
+    cargo build --features={{ NETWORK }}-runtime --$PROFILE
 
 # ===== BUILD target version ======
 FROM rust-builder as builder-unique-target
 
 ARG PROFILE=release
-ARG NETWORK
-ARG BRANCH
-ARG REPO_URL
 
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
-RUN cargo build --features=${NETWORK}-runtime --$PROFILE
+RUN cargo build --features={{ NETWORK }}-runtime --$PROFILE
 
 # ===== RUN ======
 FROM ubuntu:22.04
 
-ARG NETWORK
-ARG REPLICA_FROM
-ENV REPLICA_FROM=${REPLICA_FROM}
-ARG POLKADOT_LAUNCH_BRANCH
-ARG WASM_NAME
+ENV REPLICA_FROM={{ REPLICA_FROM }}
 
 RUN apt-get -y update && \
     apt-get -y install curl git && \
@@ -63,7 +51,7 @@ RUN apt-get -y update && \
     nvm install v16.16.0 && \
     nvm use v16.16.0
 
-RUN git clone https://github.com/uniquenetwork/polkadot-launch.git -b ${POLKADOT_LAUNCH_BRANCH}
+RUN git clone https://github.com/uniquenetwork/polkadot-launch.git -b {{ POLKADOT_LAUNCH_BRANCH }}
 
 RUN export NVM_DIR="$HOME/.nvm" && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
@@ -71,14 +59,15 @@ RUN export NVM_DIR="$HOME/.nvm" && \
     npm install --global yarn && \
     yarn install
 
-RUN echo "$NETWORK"
-RUN echo "$REPLICA_FROM"
-
 COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
-COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/"$WASM_NAME"-runtime/"$WASM_NAME"_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/"$WASM_NAME"-runtime/"$WASM_NAME"_runtime.compact.compressed.wasm
+COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
 
-COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
+COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/launch-config-forkless-data.json /polkadot-launch/launch-config.json
+COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/fork.jsonnet /polkadot-launch/fork.jsonnet
+COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/typeNames.jsonnet /polkadot-launch/typeNames.jsonnet
+
+COPY --from=uniquenetwork/builder-chainql:{{ CHAINQL }} /chainql/target/release/chainql /chainql/target/release/
 
 COPY --from=polkadot /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=polkadot /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm

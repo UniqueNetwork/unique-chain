@@ -80,7 +80,11 @@
 
 use core::ops::Deref;
 use evm_coder::ToLog;
-use frame_support::ensure;
+use frame_support::{
+	ensure,
+	pallet_prelude::{DispatchResultWithPostInfo, Pays},
+	dispatch::PostDispatchInfo,
+};
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionFlags, TokenId, CreateCollectionData,
@@ -88,7 +92,8 @@ use up_data_structs::{
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
-	eth::collection_id_to_address,
+	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
 };
 use pallet_evm::Pallet as PalletEvm;
 use pallet_structure::Pallet as PalletStructure;
@@ -96,7 +101,7 @@ use pallet_evm_coder_substrate::WithRecorder;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
-
+use weights::WeightInfo;
 pub use pallet::*;
 
 use crate::erc::ERC20Events;
@@ -141,7 +146,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Total amount of fungible tokens inside a collection.
@@ -390,18 +394,20 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		amount: u128,
 		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed,
 		);
 
+		let mut actual_weight = <SelfWeightOf<T>>::transfer_raw();
+
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
+			actual_weight += <PalletCommonWeightOf<T>>::check_accesslist() * 2;
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
-
 		let balance_from = <Balance<T>>::get((collection.id, from))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -452,7 +458,11 @@ impl<T: Config> Pallet<T> {
 			to.clone(),
 			amount,
 		));
-		Ok(())
+
+		Ok(PostDispatchInfo {
+			actual_weight: Some(actual_weight),
+			pays_fee: Pays::Yes,
+		})
 	}
 
 	/// Minting tokens for multiple IDs.
@@ -465,8 +475,8 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let total_supply = data
-			.iter()
-			.map(|(_, v)| *v)
+			.values()
+			.copied()
 			.try_fold(<TotalSupply<T>>::get(collection.id), |acc, v| {
 				acc.checked_add(v)
 			})
@@ -719,7 +729,6 @@ impl<T: Config> Pallet<T> {
 	/// Same as the [`transfer`][`Pallet::transfer`] but spender doesn't needs to be an owner of the token pieces.
 	/// The owner should set allowance for the spender to transfer pieces.
 	///	See [`set_allowance`][`Pallet::set_allowance`] for more details.
-
 	pub fn transfer_from(
 		collection: &FungibleHandle<T>,
 		spender: &T::CrossAccountId,
@@ -727,16 +736,23 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		amount: u128,
 		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		let allowance = Self::check_allowed(collection, spender, from, amount, nesting_budget)?;
 
 		// =========
 
-		Self::transfer(collection, from, to, amount, nesting_budget)?;
+		let mut result = Self::transfer(collection, from, to, amount, nesting_budget);
+		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
+		result?;
+
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, allowance);
+			add_weight_to_post_info(
+				&mut result,
+				<SelfWeightOf<T>>::set_allowance_unchecked_raw(),
+			)
 		}
-		Ok(())
+		result
 	}
 
 	/// Burn fungible tokens from the account.

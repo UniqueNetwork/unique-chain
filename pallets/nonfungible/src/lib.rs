@@ -108,7 +108,8 @@ use up_data_structs::{
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	eth::collection_id_to_address,
+	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -175,7 +176,6 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	/// Total amount of minted tokens in a collection.
@@ -283,13 +283,20 @@ pub mod pallet {
 		QueryKind = ValueQuery,
 	>;
 
-	/// Upgrade from the old schema to properties.
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
 
-			Weight::zero()
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			StorageVersion::new(1).put::<Pallet<T>>();
 		}
 	}
 }
@@ -803,12 +810,13 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
 		);
 
+		let mut actual_weight = <SelfWeightOf<T>>::transfer_raw();
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(&token_data.owner == from, <CommonError<T>>::NoPermission);
@@ -816,6 +824,7 @@ impl<T: Config> Pallet<T> {
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(from)?;
 			collection.check_allowlist(to)?;
+			actual_weight += <PalletCommonWeightOf<T>>::check_accesslist() * 2;
 		}
 		<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
@@ -885,7 +894,11 @@ impl<T: Config> Pallet<T> {
 			to.clone(),
 			1,
 		));
-		Ok(())
+
+		Ok(PostDispatchInfo {
+			actual_weight: Some(actual_weight),
+			pays_fee: Pays::Yes,
+		})
 	}
 
 	/// Batch operation to mint multiple NFT tokens.
@@ -1229,13 +1242,15 @@ impl<T: Config> Pallet<T> {
 		to: &T::CrossAccountId,
 		token: TokenId,
 		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
+	) -> DispatchResultWithPostInfo {
 		Self::check_allowed(collection, spender, from, token, nesting_budget)?;
 
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		Self::transfer(collection, from, to, token, nesting_budget)
+		let mut result = Self::transfer(collection, from, to, token, nesting_budget);
+		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
+		result
 	}
 
 	/// Burn NFT token for `from` account.

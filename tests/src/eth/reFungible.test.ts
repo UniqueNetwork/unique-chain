@@ -584,6 +584,46 @@ describe('Refungible: Plain calls', () => {
     expect(event.returnValues.to).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
     expect(event.returnValues.tokenId).to.equal(tokenId.toString());
   });
+
+  itEth('Check balanceOfCross()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {});
+    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
+
+    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
+
+    for (let i = 1n; i < 10n; i++) {
+      await collection.mintToken(minter, 100n, {Ethereum: owner.eth});
+      expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
+    }
+  });
+
+  itEth('Check ownerOfCross()', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(minter, {});
+    let owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
+    const {tokenId} = await collection.mintToken(minter, 100n,{Ethereum: owner.eth});
+
+    for (let i = 1n; i < 10n; i++) {
+      const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
+      expect(ownerCross.eth).to.be.eq(owner.eth);
+      expect(ownerCross.sub).to.be.eq(owner.sub);
+
+      const newOwner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+      await collectionEvm.methods.transferCross(newOwner, tokenId).send({from: owner.eth});
+      owner = newOwner;
+    }
+
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner.eth, true);
+    const newOwner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    await tokenContract.methods.transferCross(newOwner, 50).send({from: owner.eth});
+    const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
+    expect(ownerCross.eth.toUpperCase()).to.be.eq('0XFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF');
+    expect(ownerCross.sub).to.be.eq('0');
+  });
 });
 
 describe('RFT: Fees', () => {

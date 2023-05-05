@@ -92,8 +92,9 @@ pub mod benchmarking;
 pub mod dispatch;
 pub mod erc;
 pub mod eth;
+pub mod helpers;
+#[allow(missing_docs)]
 pub mod weights;
-
 /// Weight info.
 pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
@@ -157,10 +158,12 @@ impl<T: Config> CollectionHandle<T> {
 		reads: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
 				<T as frame_system::Config>::DbWeight::get()
 					.read
 					.saturating_mul(reads),
+				// TODO: measure proof
+				0,
 			)))
 	}
 
@@ -170,10 +173,12 @@ impl<T: Config> CollectionHandle<T> {
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
 				<T as frame_system::Config>::DbWeight::get()
 					.write
 					.saturating_mul(writes),
+				// TODO: measure proof
+				0,
 			)))
 	}
 
@@ -187,8 +192,10 @@ impl<T: Config> CollectionHandle<T> {
 		let reads = weight.read.saturating_mul(reads);
 		let writes = weight.read.saturating_mul(writes);
 		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_ref_time(
+			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
 				reads.saturating_add(writes),
+				// TODO: measure proof
+				0,
 			)))
 	}
 
@@ -413,10 +420,11 @@ impl<T: Config> CollectionHandle<T> {
 
 #[frame_support::pallet]
 pub mod pallet {
+	use core::marker::PhantomData;
+
 	use super::*;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use frame_system::pallet_prelude::*;
 	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
@@ -462,7 +470,6 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::extra_constants]
@@ -470,6 +477,23 @@ pub mod pallet {
 		/// Maximum admins per collection.
 		pub fn collection_admins_limit() -> u32 {
 			COLLECTION_ADMINS_LIMIT
+		}
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			StorageVersion::new(1).put::<Pallet<T>>();
 		}
 	}
 
@@ -863,15 +887,6 @@ pub mod pallet {
 		),
 		QueryKind = OptionQuery,
 	>;
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			StorageVersion::new(1).put::<Pallet<T>>();
-
-			Weight::zero()
-		}
-	}
 }
 
 impl<T: Config> Pallet<T> {

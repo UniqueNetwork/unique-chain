@@ -23,7 +23,7 @@ interface ERC1633 is Dummy, ERC165 {
 	function parentTokenId() external view returns (uint256);
 }
 
-/// @dev the ERC-165 identifier for this interface is 0x01d536fc
+/// @dev the ERC-165 identifier for this interface is 0xedd3a564
 interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
 	/// @param owner crossAddress The address which owns the funds.
@@ -59,6 +59,13 @@ interface ERC20UniqueExtensions is Dummy, ERC165 {
 	/// @dev EVM selector for this function is: 0x0ecd0ab0,
 	///  or in textual repr: approveCross((address,uint256),uint256)
 	function approveCross(CrossAddress memory spender, uint256 amount) external returns (bool);
+
+	/// @notice Balance of account
+	/// @param owner An cross address for whom to query the balance
+	/// @return The number of fingibles owned by `owner`, possibly zero
+	/// @dev EVM selector for this function is: 0xec069398,
+	///  or in textual repr: balanceOfCross((address,uint256))
+	function balanceOfCross(CrossAddress memory owner) external view returns (uint256);
 
 	/// @dev Function that changes total amount of the tokens.
 	///  Throws if `msg.sender` doesn't owns all of the tokens.

@@ -26,6 +26,11 @@ use pallet_common::{
 	Config as CommonConfig,
 	benchmarking::{create_data, create_u16_data},
 };
+use up_data_structs::{
+	CollectionId, CollectionMode, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, CollectionLimits,
+};
+use pallet_common::erc::CrossAccountId;
 
 const SEED: u32 = 1;
 
@@ -34,9 +39,9 @@ fn create_collection_helper<T: Config>(
 	mode: CollectionMode,
 ) -> Result<CollectionId, DispatchError> {
 	<T as CommonConfig>::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
-	let col_name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
-	let col_desc = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
-	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
+	let col_name = create_u16_data::<{ MAX_COLLECTION_NAME_LENGTH }>();
+	let col_desc = create_u16_data::<{ MAX_COLLECTION_DESCRIPTION_LENGTH }>();
+	let token_prefix = create_data::<{ MAX_TOKEN_PREFIX_LENGTH }>();
 	<Pallet<T>>::create_collection(
 		RawOrigin::Signed(owner).into(),
 		col_name,
@@ -54,9 +59,9 @@ pub fn create_nft_collection<T: Config>(
 
 benchmarks! {
 	create_collection {
-		let col_name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
-		let col_desc = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
-		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
+		let col_name = create_u16_data::<{MAX_COLLECTION_NAME_LENGTH}>();
+		let col_desc = create_u16_data::<{MAX_COLLECTION_DESCRIPTION_LENGTH}>();
+		let token_prefix = create_data::<{MAX_TOKEN_PREFIX_LENGTH}>();
 		let mode: CollectionMode = CollectionMode::NFT;
 		let caller: T::AccountId = account("caller", 0, SEED);
 		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
