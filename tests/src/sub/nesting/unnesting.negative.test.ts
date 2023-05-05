@@ -52,12 +52,19 @@ describe('Negative Test: Unnesting', () => {
   });
 
   [
-    {restrictedMode: true},
-    {restrictedMode: false},
+    {mode: 'ft' as const},
+    {mode: 'native ft' as const},
+  ].map(md => [
+    {mode: md.mode, restrictedMode: true},
+    {mode: md.mode, restrictedMode: false},
   ].map(testCase => {
-    itSub(`Fungible: disallows a non-Owner to unnest someone else's token ${testCase.restrictedMode ? '(Restricted nesting)' : ''}`, async ({helper}) => {
+    itSub.only(`Fungible: disallows a non-Owner to unnest someone else's token [${testCase.mode}${testCase.restrictedMode ? ' (Restricted nesting)' : ''}]`, async ({helper}) => {
       const collectionNFT = await helper.nft.mintCollection(alice);
-      const collectionFT = await helper.ft.mintCollection(alice);
+      const collectionFT = await (
+        testCase.mode === 'ft'
+          ? helper.ft.mintCollection(alice)
+          : helper.ft.getCollectionObject(0)
+      );
       const targetToken = await collectionNFT.mintToken(alice, {Substrate: bob.address});
 
       await collectionNFT.setPermissions(alice, {nesting: {
@@ -65,12 +72,16 @@ describe('Negative Test: Unnesting', () => {
       }});
 
       // Nest some tokens as Alice into Bob's token
-      await collectionFT.mint(alice, 5n, targetToken.nestingAccount());
+      await (
+        testCase.mode === 'ft'
+          ? collectionFT.mint(alice, 5n, targetToken.nestingAccount())
+          : collectionFT.transfer(alice, targetToken.nestingAccount(), 5n)
+      );
 
       // Try to pull it out as Alice still
       await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: bob.address}, 1n))
         .to.be.rejectedWith(/common\.ApprovedValueTooLow/);
       expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
     });
-  });
+  }));
 });

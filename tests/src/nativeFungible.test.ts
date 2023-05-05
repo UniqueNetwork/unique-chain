@@ -15,8 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
-import {ICollectionCreationOptions} from './util/playgrounds/types';
+import {expect, itSub, usingPlaygrounds} from './util';
 
 describe('Native fungible', () => {
   let alice: IKeyringPair;
@@ -154,7 +153,7 @@ describe('Native fungible', () => {
     expect(balanceAliceBefore - balanceAliceAfter > 100n).to.be.true;
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
 
-    await expect(collection.transferFrom(alice, {Substrate: bob.address}, {Substrate: alice.address}, 100n)).to.be.rejectedWith('common.NoPermission');
+    await expect(collection.transferFrom(alice, {Substrate: bob.address}, {Substrate: alice.address}, 100n)).to.be.rejectedWith('common.ApprovedValueTooLow');
   });
 
   itSub('approve()', async ({helper}) => {
@@ -206,5 +205,15 @@ describe('Native fungible', () => {
       [0, 0],
       true,
     )).to.be.rejectedWith('BadOrigin');
+  });
+
+  itSub.only('Nest into NFT token()', async ({helper}) => {
+    const nftCollection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const targetToken = await nftCollection.mintToken(alice);
+
+    const collection = helper.ft.getCollectionObject(0);
+    await collection.transfer(alice, targetToken.nestingAccount(), 100n);
+
+    await collection.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 100n);
   });
 });
