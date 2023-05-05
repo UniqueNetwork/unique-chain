@@ -60,7 +60,7 @@ COPY --from=uniquenetwork/builder-moonbeam:{{ MOONBEAM_BUILD_BRANCH }} /unique_p
 COPY --from=uniquenetwork/builder-cumulus:{{ CUMULUS_BUILD_BRANCH }} /unique_parachain/cumulus/target/release/polkadot-parachain /cumulus/target/release/cumulus
 COPY --from=uniquenetwork/builder-acala:{{ ACALA_BUILD_BRANCH }} /unique_parachain/Acala/target/production/acala /acala/target/release/
 COPY --from=uniquenetwork/builder-astar:{{ ASTAR_BUILD_BRANCH }} /unique_parachain/astar/target/release/astar /astar/target/release/
-COPY --from=uniquenetwork/builder-chainql:latest /chainql/target/release/chainql /chainql/target/release/
+COPY --from=uniquenetwork/builder-chainql:{{ CHAINQL }} /chainql/target/release/chainql /chainql/target/release/
 
 EXPOSE 9844
 EXPOSE 9933
