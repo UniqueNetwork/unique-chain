@@ -1,13 +1,9 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
-use crate::{Config, NativeFungibleHandle};
-use frame_support::{
-	fail,
-	traits::{Currency, ExistenceRequirement},
-	weights::Weight,
-};
+use crate::{Config, NativeFungibleHandle, Pallet};
+use frame_support::{fail, traits::Currency, weights::Weight};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
-use pallet_common::{erc::CrossAccountId, CommonCollectionOperations, CommonWeightInfo, with_weight};
+use pallet_common::{erc::CrossAccountId, CommonCollectionOperations, CommonWeightInfo};
 use up_data_structs::TokenId;
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -188,17 +184,9 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		to: <T>::CrossAccountId,
 		_token: TokenId,
 		amount: u128,
-		_budget: &dyn up_data_structs::budget::Budget,
+		budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		with_weight(
-			<T as Config>::Currency::transfer(
-				sender.as_sub(),
-				to.as_sub(),
-				amount.into(),
-				ExistenceRequirement::KeepAlive,
-			),
-			Default::default(),
-		)
+		<Pallet<T>>::transfer(self, &sender, &to, amount, budget)
 	}
 
 	fn approve(
@@ -229,20 +217,9 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		to: <T>::CrossAccountId,
 		_token: TokenId,
 		amount: u128,
-		_budget: &dyn up_data_structs::budget::Budget,
+		budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		if sender != from {
-			fail!(<pallet_common::Error<T>>::NoPermission);
-		}
-		with_weight(
-			<T as Config>::Currency::transfer(
-				from.as_sub(),
-				to.as_sub(),
-				amount.into(),
-				ExistenceRequirement::KeepAlive,
-			),
-			Default::default(),
-		)
+		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, budget)
 	}
 
 	fn burn_from(
