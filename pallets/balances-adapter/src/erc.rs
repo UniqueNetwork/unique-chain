@@ -1,4 +1,4 @@
-use crate::{Config, NativeFungibleHandle, SelfWeightOf};
+use crate::{Config, NativeFungibleHandle, Pallet, SelfWeightOf};
 use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::traits::{Currency, ExistenceRequirement};
 use pallet_balances::WeightInfo;
@@ -10,8 +10,9 @@ use pallet_common::{
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{PreDispatch, Result},
-	frontier_contract,
+	frontier_contract, WithRecorder,
 };
+use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::{U256, Get};
 use sp_std::vec::Vec;
 
@@ -73,18 +74,12 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		// let budget = self
-		// 	.recorder
-		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let budget = self
+			.recorder()
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		// <Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
-		<T as Config>::Currency::transfer(
-			caller.as_sub(),
-			to.as_sub(),
-			amount,
-			ExistenceRequirement::KeepAlive,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 
@@ -100,23 +95,12 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
+		let budget = self
+			.recorder()
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		if from != caller {
-			return Err("no permission".into());
-		}
-		// let budget = self
-		// 	.recorder
-		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
-
-		// <Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
-		// 	.map_err(dispatch_to_evm::<T>)?;
-		<T as Config>::Currency::transfer(
-			caller.as_sub(),
-			to.as_sub(),
-			amount,
-			ExistenceRequirement::KeepAlive,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 }
