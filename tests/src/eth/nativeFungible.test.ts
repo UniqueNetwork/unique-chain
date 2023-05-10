@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itEth, usingEthPlaygrounds} from './util';
+import {UniqueHelper} from '../util/playgrounds/unique';
 
 describe('NativeFungible: ERC20 calls', () => {
   let donor: IKeyringPair;
@@ -60,13 +61,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    let realName;
-    switch ((await helper.chain.getChainProperties().tokenSymbol)[0]) {
-      case 'OPL': realName = 'opal'; break;
-      case 'QTZ': realName = 'quartz'; break;
-      case 'UNC': realName = 'unique'; break;
-      default: realName = ''; break;
-    }
+    const realName = await UniqueHelper.detectNetwork(helper.getApi());
     const name = await contract.methods.name().call({from: owner});
     expect(name).to.be.eq(realName);
   });
