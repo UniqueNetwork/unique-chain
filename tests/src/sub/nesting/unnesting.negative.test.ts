@@ -58,7 +58,7 @@ describe('Negative Test: Unnesting', () => {
     {mode: md.mode, restrictedMode: true},
     {mode: md.mode, restrictedMode: false},
   ].map(testCase => {
-    itSub.only(`Fungible: disallows a non-Owner to unnest someone else's token [${testCase.mode}${testCase.restrictedMode ? ' (Restricted nesting)' : ''}]`, async ({helper}) => {
+    itSub(`Fungible: disallows a non-Owner to unnest someone else's token [${testCase.mode}${testCase.restrictedMode ? ' (Restricted nesting)' : ''}]`, async ({helper}) => {
       const collectionNFT = await helper.nft.mintCollection(alice);
       const collectionFT = await (
         testCase.mode === 'ft'
