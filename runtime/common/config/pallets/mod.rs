@@ -54,10 +54,7 @@ pub mod preimage;
 
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
-	pub const Decimals: u8 = DECIMALS;
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
-	pub Name: String = RUNTIME_NAME.to_string();
-	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 
 impl pallet_common::Config for Runtime {
@@ -87,6 +84,12 @@ impl pallet_refungible::Config for Runtime {
 }
 impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
+
+parameter_types! {
+	pub const Decimals: u8 = DECIMALS;
+	pub Name: String = RUNTIME_NAME.to_string();
+	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 impl pallet_balances_adapter::Config for Runtime {
 	type Currency = Balances;

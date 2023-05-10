@@ -19,7 +19,7 @@
 use sp_core::{H160, H256, U256};
 use frame_support::{
 	parameter_types,
-	traits::{Everything, ConstU32, ConstU64},
+	traits::{Everything, ConstU32, ConstU64, Currency},
 	weights::IdentityFee,
 	pallet_prelude::Weight,
 };
@@ -264,6 +264,19 @@ impl pallet_refungible::Config for Test {
 	type WeightInfo = ();
 }
 impl pallet_nonfungible::Config for Test {
+	type WeightInfo = ();
+}
+parameter_types! {
+	pub const Decimals: u8 = 18;
+	pub Name: String = "Test".to_string();
+	pub Symbol: String = "TST".to_string();
+}
+impl pallet_balances_adapter::Config for Test {
+	type Currency = Balances;
+	type CurrencyBalance = <Balances as Currency<Self::AccountId>>::Balance;
+	type Decimals = Decimals;
+	type Name = Name;
+	type Symbol = Symbol;
 	type WeightInfo = ();
 }
 
