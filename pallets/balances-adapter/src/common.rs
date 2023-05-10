@@ -249,6 +249,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 
 	fn account_tokens(&self, account: <T>::CrossAccountId) -> Vec<TokenId> {
 		let balance = <T as Config>::Currency::total_balance(account.as_sub());
+		let balance: u128 = balance.into();
 		if balance != 0 {
 			vec![TokenId::default()]
 		} else {
