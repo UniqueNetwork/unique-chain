@@ -76,7 +76,7 @@ pub mod pallet {
 			Balance = Self::CurrencyBalance,
 		>;
 		/// Balance type of chain
-		type CurrencyBalance: Into<U256> + TryFrom<U256> + PartialEq<u128> + From<u128> + Into<u128>;
+		type CurrencyBalance: Into<U256> + TryFrom<U256> + TryFrom<u128> + Into<u128>;
 
 		/// Decimals of balance
 		type Decimals: Get<u8>;
@@ -144,7 +144,9 @@ pub mod pallet {
 				<T as Config>::Currency::transfer(
 					from.as_sub(),
 					to.as_sub(),
-					amount.into(),
+					amount
+						.try_into()
+						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
 					ExistenceRequirement::KeepAlive,
 				)?;
 

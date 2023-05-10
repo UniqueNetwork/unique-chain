@@ -12728,6 +12728,7 @@ dependencies = [
  "frame-support",
  "frame-system",
  "pallet-balances",
+ "pallet-balances-adapter",
  "pallet-common",
  "pallet-configuration",
  "pallet-ethereum",
