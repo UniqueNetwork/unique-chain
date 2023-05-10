@@ -146,8 +146,8 @@ bench-xcm:
 	make _bench PALLET=xcm OUTPUT=./runtime/common/weights/xcm.rs TEMPLATE="--template=.maintain/external-weight-template.hbs"
 
 .PHONY: bench
-# Disabled: bench-scheduler, bench-collator-selection, bench-identity
-bench: bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm
+# Disabled: bench-scheduler
+bench: bench-app-promotion bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm bench-collator-selection bench-identity
 
 .PHONY: check
 check:

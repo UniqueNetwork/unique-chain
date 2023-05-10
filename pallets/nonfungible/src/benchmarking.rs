@@ -121,7 +121,7 @@ benchmarks! {
 		}
 	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
 
-	transfer {
+	transfer_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; receiver: cross_sub;
@@ -146,14 +146,14 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, owner_eth.clone())?;
 	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, item, Some(&spender))?}
 
-	transfer_from {
+	check_allowed_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; spender: cross_sub; receiver: cross_sub;
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&spender))?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, item, &Unlimited)?}
+	}: {<Pallet<T>>::check_allowed(&collection, &spender, &sender, item, &Unlimited)?}
 
 	burn_from {
 		bench_init!{

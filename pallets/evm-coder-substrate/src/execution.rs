@@ -61,7 +61,7 @@ impl PreDispatch for ERC165Call {
 	fn dispatch_info(&self) -> DispatchInfo {
 		DispatchInfo {
 			// ERC165 impl should be cheap
-			weight: Weight::from_ref_time(200),
+			weight: Weight::from_parts(200, 0),
 		}
 	}
 }
@@ -77,10 +77,11 @@ impl From<Weight> for DispatchInfo {
 		Self { weight }
 	}
 }
+// TODO: use 2-dimensional weight after frontier upgrade
 impl From<u64> for DispatchInfo {
 	fn from(weight: u64) -> Self {
 		Self {
-			weight: Weight::from_ref_time(weight),
+			weight: Weight::from_parts(weight, 0),
 		}
 	}
 }

@@ -27,10 +27,11 @@ use sc_client_api::{
 	client::BlockchainEvents,
 	StateBackend, Backend,
 };
-use sc_finality_grandpa::{
+use sc_consensus_grandpa::{
 	FinalityProofProvider, GrandpaJustificationStream, SharedAuthoritySet, SharedVoterState,
 };
 use sc_network::NetworkService;
+use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
 use sc_transaction_pool::{ChainApi, Pool};
@@ -75,6 +76,8 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub enable_dev_signer: bool,
 	/// Network service
 	pub network: Arc<NetworkService<Block, Hash>>,
+	/// Syncing service
+	pub sync: Arc<SyncingService<Block>>,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
 	/// EthFilterApi pool.
@@ -162,6 +165,12 @@ where
 	CA: ChainApi<Block = Block> + 'static,
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
+	C: sp_api::CallApiAt<
+		sp_runtime::generic::Block<
+			sp_runtime::generic::Header<u32, BlakeTwo256>,
+			sp_runtime::OpaqueExtrinsic,
+		>,
+	>,
 	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {
 	use fc_rpc::{
@@ -191,6 +200,7 @@ where
 		enable_dev_signer,
 		is_authority,
 		network,
+		sync,
 		deny_unsafe,
 		filter_pool,
 
@@ -225,7 +235,7 @@ where
 			pool.clone(),
 			graph,
 			Some(<R as RuntimeInstance>::get_transaction_converter()),
-			network.clone(),
+			sync.clone(),
 			signers,
 			overrides.clone(),
 			eth_backend.clone(),
@@ -280,9 +290,7 @@ where
 
 	io.merge(Web3::new(client.clone()).into_rpc())?;
 
-	io.merge(
-		EthPubSub::new(pool, client, network, subscription_task_executor, overrides).into_rpc(),
-	)?;
+	io.merge(EthPubSub::new(pool, client, sync, subscription_task_executor, overrides).into_rpc())?;
 
 	Ok(io)
 }

@@ -22,7 +22,7 @@ use up_data_structs::{
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _,
+	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_structure::Error as StructureError;
 use sp_runtime::ArithmeticError;
@@ -78,7 +78,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer()
+		<SelfWeightOf<T>>::transfer_raw() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
 	}
 
 	fn approve() -> Weight {
@@ -90,7 +90,9 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer_from() -> Weight {
-		<SelfWeightOf<T>>::transfer_from()
+		Self::transfer()
+			+ <SelfWeightOf<T>>::check_allowed_raw()
+			+ <SelfWeightOf<T>>::set_allowance_unchecked_raw()
 	}
 
 	fn burn_from() -> Weight {
@@ -232,10 +234,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 			<Error<T>>::FungibleItemsHaveNoId
 		);
 
-		with_weight(
-			<Pallet<T>>::transfer(self, &from, &to, amount, nesting_budget),
-			<CommonWeights<T>>::transfer(),
-		)
+		<Pallet<T>>::transfer(self, &from, &to, amount, nesting_budget)
 	}
 
 	fn approve(
@@ -289,10 +288,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 			<Error<T>>::FungibleItemsHaveNoId
 		);
 
-		with_weight(
-			<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, nesting_budget),
-			<CommonWeights<T>>::transfer_from(),
-		)
+		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, nesting_budget)
 	}
 
 	fn burn_from(

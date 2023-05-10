@@ -20,12 +20,13 @@ local
 		// There should be at most one element with this prefix
 		if std.startsWith(field, prefix)
 	},
+	makeObject(keyValues) = std.foldl(function(o, kv) if kv[0] in o then o else o + {[kv[0]]: kv[1]}, keyValues, {}),
 ;
 
-local typesRaw = {
-	[typeName(id)]: id
+local typesRaw = makeObject([
+	[typeName(id), id]
 	for id in std.range(0, std.length(chain._meta.types.types)-1)
-};
+]);
 
 local types = typesRaw + shortenPrefix(typesRaw, 'frame_system::AccountInfo<', 'AccountInfo');
 

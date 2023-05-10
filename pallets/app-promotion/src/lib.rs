@@ -152,7 +152,6 @@ pub mod pallet {
 	}
 
 	#[pallet::pallet]
-	#[pallet::generate_store(pub(super) trait Store)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::event]
@@ -264,10 +263,6 @@ pub mod pallet {
 	pub type PreviousCalculatedRecord<T: Config> =
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
-	#[pallet::storage]
-	pub(crate) type UpgradedToReserves<T: Config> =
-		StorageValue<Value = bool, QueryKind = ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
@@ -290,12 +285,6 @@ pub mod pallet {
 			}
 
 			<T as Config>::WeightInfo::on_initialize(counter)
-		}
-
-		fn on_runtime_upgrade() -> Weight {
-			<UpgradedToReserves<T>>::kill();
-
-			T::DbWeight::get().reads_writes(0, 1)
 		}
 	}
 
@@ -846,7 +835,6 @@ impl<T: Config> Pallet<T> {
 	/// - `staker`: staker account.
 	pub fn total_staked_by_id(staker: impl EncodeLike<T::AccountId>) -> Option<BalanceOf<T>> {
 		let staked = Staked::<T>::iter_prefix((staker,))
-			.into_iter()
 			.fold(<BalanceOf<T>>::default(), |acc, (_, (amount, _))| {
 				acc + amount
 			});
@@ -865,7 +853,6 @@ impl<T: Config> Pallet<T> {
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<Vec<(T::BlockNumber, BalanceOf<T>)>> {
 		let mut staked = Staked::<T>::iter_prefix((staker,))
-			.into_iter()
 			.map(|(block, (amount, _))| (block, amount))
 			.collect::<Vec<_>>();
 		staked.sort_by_key(|(block, _)| *block);
@@ -884,12 +871,6 @@ impl<T: Config> Pallet<T> {
 			Self::total_staked_by_id(s.as_sub())
 		})
 	}
-
-	// pub fn cross_id_locked_balance(staker: T::CrossAccountId) -> BalanceOf<T> {
-	// 	Self::get_locked_balance(staker.as_sub())
-	// 		.map(|l| l.amount)
-	// 		.unwrap_or_default()
-	// }
 
 	/// Returns all relay block numbers when stake was made,
 	/// the amount of the stake.

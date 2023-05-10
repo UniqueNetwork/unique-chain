@@ -642,6 +642,10 @@ export class ChainHelperBase {
     return call(...params);
   }
 
+  encodeApiCall(apiCall: string, params: any[]) {
+    return this.constructApiCall(apiCall, params).method.toHex();
+  }
+
   async executeExtrinsic(sender: TSigner, extrinsic: string, params: any[], expectSuccess=true, options: Partial<SignerOptions>|null = null/*, failureMessage='expected success'*/) {
     if(this.api === null) throw Error('API not initialized');
     if(!extrinsic.startsWith('api.tx.')) throw Error(`${extrinsic} is not transaction`);

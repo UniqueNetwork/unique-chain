@@ -66,7 +66,7 @@ benchmarks! {
 		<Pallet<T>>::create_item(&collection, &owner, (burner.clone(), 200), &Unlimited)?;
 	}: {<Pallet<T>>::burn(&collection, &burner, 100)?}
 
-	transfer {
+	transfer_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; to: cross_sub;
@@ -92,14 +92,22 @@ benchmarks! {
 		<Pallet<T>>::create_item(&collection, &owner, (owner_eth.clone(), 200), &Unlimited)?;
 	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, &spender, 100)?}
 
-	transfer_from {
+	check_allowed_raw {
 		bench_init!{
 			owner: sub; collection: collection(owner);
-			owner: cross_from_sub; sender: cross_sub; spender: cross_sub; receiver: cross_sub;
+			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;
 		};
 		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200), &Unlimited)?;
 		<Pallet<T>>::set_allowance(&collection, &sender, &spender, 200)?;
-	}: {<Pallet<T>>::transfer_from(&collection, &spender, &sender, &receiver, 100, &Unlimited)?}
+	}: {<Pallet<T>>::check_allowed(&collection, &spender, &sender, 200, &Unlimited)?;}
+
+	set_allowance_unchecked_raw {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;
+		};
+		<Pallet<T>>::create_item(&collection, &owner, (sender.clone(), 200), &Unlimited)?;
+	}: {<Pallet<T>>::set_allowance_unchecked(&collection, &sender, &spender, 200);}
 
 	burn_from {
 		bench_init!{
