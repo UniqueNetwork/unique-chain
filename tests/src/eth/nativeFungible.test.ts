@@ -50,8 +50,9 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
+    const realDecimals = (await helper.chain.getChainProperties().tokenDecimals)[0].toString();
     const decimals = await contract.methods.decimals().call({from: owner});
-    expect(decimals).to.be.eq('18');
+    expect(decimals).to.be.eq(realDecimals);
   });
 
   itEth('name()', async ({helper}) => {
@@ -59,8 +60,15 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
+    let realName;
+    switch ((await helper.chain.getChainProperties().tokenSymbol)[0]) {
+      case 'OPL': realName = 'opal'; break;
+      case 'QTZ': realName = 'quartz'; break;
+      case 'UNC': realName = 'unique'; break;
+      default: realName = ''; break;
+    }
     const name = await contract.methods.name().call({from: owner});
-    expect(name).to.be.eq('opal');
+    expect(name).to.be.eq(realName);
   });
 
   itEth('symbol()', async ({helper}) => {
@@ -68,8 +76,9 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
+    const realName = (await helper.chain.getChainProperties().tokenSymbol)[0];
     const name = await contract.methods.symbol().call({from: owner});
-    expect(name).to.be.eq('OPL');
+    expect(name).to.be.eq(realName);
   });
 
   itEth('totalSupply()', async ({helper}) => {
