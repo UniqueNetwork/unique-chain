@@ -187,4 +187,80 @@ describe('EVM nesting tests group', () => {
         .call()).to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
     });
   });
+
+  describe('Fungible', () => {
+    async function createFungibleCollection(helper: EthUniqueHelper, owner: string, mode: 'ft' | 'native ft') {
+      if (mode === 'ft') {
+        const {collectionAddress} = await helper.eth.createFungibleCollection(owner, '', 18, '', '');
+        const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+        await contract.methods.mint(owner, 100n).send({from: owner});
+        return {collectionAddress, contract};
+      }
+
+      // native ft
+      const collectionAddress = helper.ethAddress.fromCollectionId(0);
+      const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+      return {collectionAddress, contract};
+    }
+
+    [
+      {mode: 'ft' as const},
+      {mode: 'native ft' as const},
+    ].map(testCase => {
+      itEth(`Allow nest [${testCase.mode}]`, async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const {collectionId: targetCollectionId, contract: targetContract} = await createNestingCollection(helper, owner);
+        const {contract: ftContract} = await createFungibleCollection(helper, owner, testCase.mode);
+
+        const mintingTargetTokenIdResult = await targetContract.methods.mint(owner).send({from: owner});
+        const targetTokenId = mintingTargetTokenIdResult.events.Transfer.returnValues.tokenId;
+        const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
+
+        await ftContract.methods.transfer(targetTokenAddress, 10n).send({from: owner});
+        expect(await ftContract.methods.balanceOf(targetTokenAddress).call({from: owner})).to.be.equal('10');
+      });
+    });
+
+    [
+      {mode: 'ft' as const},
+      {mode: 'native ft' as const},
+    ].map(testCase => {
+      itEth(`Allow partial/full unnest [${testCase.mode}]`, async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const {collectionId: targetCollectionId, contract: targetContract} = await createNestingCollection(helper, owner);
+        const {contract: ftContract} = await createFungibleCollection(helper, owner, testCase.mode);
+
+        const mintingTargetTokenIdResult = await targetContract.methods.mint(owner).send({from: owner});
+        const targetTokenId = mintingTargetTokenIdResult.events.Transfer.returnValues.tokenId;
+        const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
+
+        await ftContract.methods.transfer(targetTokenAddress, 10n).send({from: owner});
+
+        await ftContract.methods.transferFrom(targetTokenAddress, owner, 5n).send({from: owner});
+        expect(await ftContract.methods.balanceOf(targetTokenAddress).call({from: owner})).to.be.equal('5');
+
+        await ftContract.methods.transferFrom(targetTokenAddress, owner, 5n).send({from: owner});
+        expect(await ftContract.methods.balanceOf(targetTokenAddress).call({from: owner})).to.be.equal('0');
+      });
+    });
+
+    [
+      {mode: 'ft' as const},
+      {mode: 'native ft' as const},
+    ].map(testCase => {
+      itEth(`Disallow nest into collection without nesting permission [${testCase.mode}]`, async ({helper}) => {
+        const owner = await helper.eth.createAccountWithBalance(donor);
+        const {collectionId: targetCollectionId, contract: targetContract} = await createNestingCollection(helper, owner);
+        await targetContract.methods.setCollectionNesting(false).send({from: owner});
+
+        const {contract: ftContract} = await createFungibleCollection(helper, owner, testCase.mode);
+
+        const mintingTargetTokenIdResult = await targetContract.methods.mint(owner).send({from: owner});
+        const targetTokenId = mintingTargetTokenIdResult.events.Transfer.returnValues.tokenId;
+        const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
+
+        await expect(ftContract.methods.transfer(targetTokenAddress, 10n).call({from: owner})).to.be.rejectedWith('UserIsNotAllowedToNest');
+      });
+    });
+  });
 });
