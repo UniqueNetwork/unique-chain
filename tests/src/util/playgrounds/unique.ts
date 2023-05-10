@@ -470,7 +470,7 @@ export class ChainHelperBase {
 
     if(xcmChains.indexOf(spec.specName) > -1) return spec.specName;
 
-    if(['quartz', 'unique'].indexOf(spec.specName) > -1) return spec.specName;
+    if(['quartz', 'unique', 'sapphire'].indexOf(spec.specName) > -1) return spec.specName;
     return 'opal';
   }
 
