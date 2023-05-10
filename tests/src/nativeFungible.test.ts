@@ -207,7 +207,7 @@ describe('Native fungible', () => {
     )).to.be.rejectedWith('BadOrigin');
   });
 
-  itSub.only('Nest into NFT token()', async ({helper}) => {
+  itSub('Nest into NFT token()', async ({helper}) => {
     const nftCollection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await nftCollection.mintToken(alice);
 

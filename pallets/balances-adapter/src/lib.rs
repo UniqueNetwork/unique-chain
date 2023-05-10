@@ -104,22 +104,20 @@ pub mod pallet {
 			from: &T::CrossAccountId,
 			nesting_budget: &dyn Budget,
 		) -> Result<u128, DispatchError> {
-			if spender.conv_eq(from) {
-				return Ok(0);
-			}
-
-			if let Some(source) = T::CrossTokenAddressMapping::address_to_token(from) {
+			if let Some((collection_id, token_id)) =
+				T::CrossTokenAddressMapping::address_to_token(from)
+			{
 				ensure!(
 					<PalletStructure<T>>::check_indirectly_owned(
 						spender.clone(),
-						source.0,
-						source.1,
+						collection_id,
+						token_id,
 						None,
 						nesting_budget
 					)?,
 					<CommonError<T>>::ApprovedValueTooLow,
 				);
-			} else if spender != from {
+			} else if !spender.conv_eq(from) {
 				return Ok(0);
 			}
 
@@ -183,7 +181,7 @@ pub mod pallet {
 			amount: u128,
 			nesting_budget: &dyn Budget,
 		) -> DispatchResultWithPostInfo {
-			let allowance = Self::check_allowed(collection, spender, from, amount, nesting_budget)?;
+			let allowance = Self::check_allowed(spender, from, nesting_budget)?;
 			if allowance < amount {
 				return Err(<CommonError<T>>::ApprovedValueTooLow.into());
 			}

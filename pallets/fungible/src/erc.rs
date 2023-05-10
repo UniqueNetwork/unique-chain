@@ -109,7 +109,8 @@ impl<T: Config> FungibleHandle<T> {
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 
