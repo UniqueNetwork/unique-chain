@@ -187,7 +187,7 @@ orml-xcm-support = { default-features = false , git = "https://github.com/unique
 derivative = { version = "2.2.0", features = ["use_core"] }
 ethereum = { version = "0.14.0", default-features = false }
 evm-core = { default-features = false, version = "0.37.0" }
-hex-literal = "0.3.4"
+hex-literal = "0.4.1"
 impl-trait-for-tuples = "0.2.2"
 jsonrpsee = { version = "0.16.2", features = ["macros", "server"] }
 log = { version = "0.4.16", default-features = false }
