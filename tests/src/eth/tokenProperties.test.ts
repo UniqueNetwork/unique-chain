@@ -553,6 +553,63 @@ describe('EVM token properties negative', () => {
         ]).call({from: owner})).to.be.rejectedWith('NoPermission');
       }
     }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Can't be multiple set/read for non-existed token`, testCase.requiredPallets, async({helper}) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+
+      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
+      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
+        collectionAdmin: true,
+        mutable: true}}; });
+
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPrefix: 'ethp',
+        tokenPropertyPermissions: permissions,
+      }) as UniqueNFTCollection | UniqueRFTCollection;
+
+      await collection.addAdmin(alice, {Ethereum: caller});
+
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contract = await helper.ethNativeContract.collection(address, testCase.mode, caller);
+
+      await expect(contract.methods.setProperties(1, properties).call({from: caller})).to.be.rejectedWith('TokenNotFound');
+    }));
+
+  [
+    {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itEth.ifWithPallets(`[${testCase.mode}] Can' be deleted for non-existed token`, testCase.requiredPallets, async({helper}) => {
+      const caller = await helper.eth.createAccountWithBalance(donor);
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [{
+          key: 'testKey',
+          permission: {
+            mutable: true,
+            collectionAdmin: true,
+          },
+        },
+        {
+          key: 'testKey_1',
+          permission: {
+            mutable: true,
+            collectionAdmin: true,
+          },
+        }],
+      });
+
+
+      await collection.addAdmin(alice, {Ethereum: caller});
+
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contract = await helper.ethNativeContract.collection(address, testCase.mode, caller);
+
+      await expect(contract.methods.deleteProperties(1, ['testKey', 'testKey_1']).call({from: caller})).to.be.rejectedWith('TokenNotFound');
+    }));
 });
 
 
