@@ -1233,6 +1233,7 @@ impl<T: Config> Pallet<T> {
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
+		is_token_exist: impl FnOnce() -> bool,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_create: bool,
 		mut stored_properties: TokenProperties,
@@ -1240,6 +1241,9 @@ impl<T: Config> Pallet<T> {
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
+		if !(is_token_create || is_token_exist()) {
+			return Err(<Error<T>>::TokenNotFound.into());
+		}
 		let is_collection_admin = collection.is_owner_or_admin(sender);
 		let permissions = Self::property_permissions(collection.id);
 

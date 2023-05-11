@@ -622,6 +622,7 @@ impl<T: Config> Pallet<T> {
 			collection,
 			sender,
 			token_id,
+			|| Self::token_exists(collection, token_id),
 			properties_updates,
 			is_token_create,
 			stored_properties,
