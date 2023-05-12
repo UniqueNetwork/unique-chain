@@ -1241,9 +1241,6 @@ impl<T: Config> Pallet<T> {
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
-		// if !(is_token_create || is_token_exist()) {
-		// 	return Err(<Error<T>>::TokenNotFound.into());
-		// }
 		let is_collection_admin = collection.is_owner_or_admin(sender);
 		let permissions = Self::property_permissions(collection.id);
 
