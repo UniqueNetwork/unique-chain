@@ -1233,7 +1233,7 @@ impl<T: Config> Pallet<T> {
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		is_token_exist: impl FnOnce() -> bool,
+		is_token_exist: impl Fn() -> bool,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_create: bool,
 		mut stored_properties: TokenProperties,
@@ -1241,9 +1241,9 @@ impl<T: Config> Pallet<T> {
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
-		if !(is_token_create || is_token_exist()) {
-			return Err(<Error<T>>::TokenNotFound.into());
-		}
+		// if !(is_token_create || is_token_exist()) {
+		// 	return Err(<Error<T>>::TokenNotFound.into());
+		// }
 		let is_collection_admin = collection.is_owner_or_admin(sender);
 		let permissions = Self::property_permissions(collection.id);
 
@@ -1251,6 +1251,10 @@ impl<T: Config> Pallet<T> {
 		let mut is_token_owner = || -> Result<bool, DispatchError> {
 			*token_owner_result.get_or_insert_with(&is_token_owner)
 		};
+
+		let mut token_exists_result = None;
+		let mut is_token_exist =
+			|| -> bool { *token_exists_result.get_or_insert_with(&is_token_exist) };
 
 		for (key, value) in properties_updates {
 			let permission = permissions
@@ -1273,11 +1277,17 @@ impl<T: Config> Pallet<T> {
 					//TODO: investigate threats during public minting.
 					let is_token_create =
 						is_token_create && (collection_admin || token_owner) && value.is_some();
-					if !(is_token_create
-						|| (collection_admin && is_collection_admin)
-						|| (token_owner && is_token_owner()?))
-					{
+					let partial_permission =
+						is_token_create || (collection_admin && is_collection_admin);
+
+					if !(partial_permission || (token_owner && is_token_owner()?)) {
 						fail!(<Error<T>>::NoPermission);
+					}
+
+					let has_token_owner = !partial_permission && token_owner;
+					let need_check_token_exist = !(has_token_owner && is_token_owner()?);
+					if need_check_token_exist && !is_token_exist() {
+						fail!(<Error<T>>::TokenNotFound);
 					}
 				}
 			}
