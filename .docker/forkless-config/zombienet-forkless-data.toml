@@ -11,6 +11,8 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
   ws_port = 9844
   rpc_port = 9843
   p2p_port = 30444
+  # Zombienet does not grant the default balance to nodes created with [[nodes]].
+  balance = 2000000000000
 
   [[relaychain.node_groups]]
   name = "relay"
