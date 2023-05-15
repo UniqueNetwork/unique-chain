@@ -131,7 +131,7 @@ const raiseZombienet = async (): Promise<void> => {
 
   // Record some required information regarding the relay chain
   await network.relay[0].connectApi();
-  let relayInfo = getRelayInfo(network.relay[0].apiInstance!);
+  let relayInfo = getRelayInfo((network.relay[0] as any).apiInstance!);
   await network.relay[0].apiInstance!.disconnect();
   if (isUpgradeTesting) {
     console.log('Relay stats:', relayInfo);
