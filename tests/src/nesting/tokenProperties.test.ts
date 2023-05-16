@@ -475,6 +475,27 @@ describe('Negative Integration Test: Token Properties', () => {
     });
   });
 
+  [
+    {mode: 'nft' as const, requiredPallets: [Pallets.NFT]},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itSub.ifWithPallets(`Forbids adding/deleting properties of a token if token doesn't exist (${testCase.mode.toLocaleUpperCase})`, testCase.requiredPallets, async({helper}) => {
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: constitution.slice(0, 1).map(({permission}) => ({key: '1', permission})),
+      });
+      const nonExistentToken = collection.getTokenObject(1);
+
+      await expect(
+        nonExistentToken.setProperties(alice, [{key: '1', value: 'Serotonin increase'}]),
+        'on expecting failure whilst adding a property by alice',
+      ).to.be.rejectedWith(/common\.TokenNotFound/);
+
+      await expect(
+        nonExistentToken.deleteProperties(alice, ['1']),
+        'on expecting failure whilst deleting a property by alice',
+      ).to.be.rejectedWith(/common\.TokenNotFound/);
+    }));
+
   async function mintCollectionWithAllPermissionsAndToken(helper: UniqueHelper, mode: 'NFT' | 'RFT'): Promise<[UniqueNFToken | UniqueRFToken, bigint]> {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {
       tokenPropertyPermissions: constitution.map(({permission}, i) => ({key: `${i+1}`, permission})),
