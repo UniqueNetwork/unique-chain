@@ -248,7 +248,7 @@ describe('EVM nesting tests group', () => {
       {mode: 'ft' as const},
       {mode: 'native ft' as const},
     ].map(testCase => {
-      itEth(`Disallow nest into collection without nesting permission [${testCase.mode}]`, async ({helper}) => {
+      itEth(`Disallow nest into collection without nesting permission [${testCase.mode}] (except for native fungible collection)`, async ({helper}) => {
         const owner = await helper.eth.createAccountWithBalance(donor);
         const {collectionId: targetCollectionId, contract: targetContract} = await createNestingCollection(helper, owner);
         await targetContract.methods.setCollectionNesting(false).send({from: owner});
@@ -259,7 +259,11 @@ describe('EVM nesting tests group', () => {
         const targetTokenId = mintingTargetTokenIdResult.events.Transfer.returnValues.tokenId;
         const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
 
-        await expect(ftContract.methods.transfer(targetTokenAddress, 10n).call({from: owner})).to.be.rejectedWith('UserIsNotAllowedToNest');
+        if (testCase.mode === 'ft') {
+          await expect(ftContract.methods.transfer(targetTokenAddress, 10n).call({from: owner})).to.be.rejectedWith('UserIsNotAllowedToNest');
+        } else {
+          await expect(ftContract.methods.transfer(targetTokenAddress, 10n).call({from: owner})).to.be.not.rejected;
+        }
       });
     });
   });

@@ -148,24 +148,6 @@ pub mod pallet {
 						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
 					ExistenceRequirement::AllowDeath,
 				)?;
-
-				<PalletStructure<T>>::nest_if_sent_to_token(
-					from.clone(),
-					to,
-					NATIVE_FUNGIBLE_COLLECTION_ID,
-					TokenId::default(),
-					nesting_budget,
-				)?;
-
-				let balance_from: u128 =
-					<T as Config>::Currency::free_balance(from.as_sub()).into();
-				if balance_from == 0 {
-					<PalletStructure<T>>::unnest_if_nested(
-						from,
-						NATIVE_FUNGIBLE_COLLECTION_ID,
-						TokenId::default(),
-					);
-				}
 			};
 
 			Ok(PostDispatchInfo {
