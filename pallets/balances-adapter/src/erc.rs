@@ -1,9 +1,8 @@
 use crate::{Config, NativeFungibleHandle, Pallet, SelfWeightOf};
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
-use frame_support::traits::{Currency, ExistenceRequirement};
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*};
+use frame_support::traits::{Currency};
 use pallet_balances::WeightInfo;
 use pallet_common::{
-	consume_store_reads,
 	erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult},
 	eth::CrossAddress,
 };
@@ -14,38 +13,24 @@ use pallet_evm_coder_substrate::{
 };
 use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
 use sp_core::{U256, Get};
-use sp_std::vec::Vec;
 
 frontier_contract! {
 	macro_rules! NativeFungibleHandle_result {...}
 	impl<T: Config> Contract for NativeFungibleHandle<T> {...}
 }
 
-#[derive(ToLog)]
-pub enum ERC20Events {
-	Transfer {
-		#[indexed]
-		from: Address,
-		#[indexed]
-		to: Address,
-		value: U256,
-	},
-}
-
-#[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
+#[solidity_interface(name = ERC20, enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
 impl<T: Config> NativeFungibleHandle<T> {
 	fn allowance(&self, _owner: Address, _spender: Address) -> Result<U256> {
 		Ok(U256::zero())
 	}
 
-	// #[weight(<SelfWeightOf<T>>::approve())]
 	fn approve(&mut self, _caller: Caller, _spender: Address, _amount: U256) -> Result<bool> {
-		// self.consume_store_reads(1)?;
 		Err("Approve not supported".into())
 	}
 
 	fn balance_of(&self, owner: Address) -> Result<U256> {
-		consume_store_reads(self, 1)?;
+		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
 		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
 		Ok(balance.into())
@@ -64,7 +49,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn total_supply(&self) -> Result<U256> {
-		consume_store_reads(self, 1)?;
+		self.consume_store_reads(1)?;
 		let total = <T as Config>::Currency::total_issuance();
 		Ok(total.into())
 	}
@@ -111,7 +96,7 @@ where
 	T::AccountId: From<[u8; 32]>,
 {
 	fn balance_of_cross(&self, owner: CrossAddress) -> Result<U256> {
-		consume_store_reads(self, 1)?;
+		self.consume_store_reads(1)?;
 		let owner = owner.into_sub_cross_account::<T>()?;
 		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
 		Ok(balance.into())
@@ -122,18 +107,13 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		// let budget = self
-		// 	.recorder
-		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let budget = self
+			.recorder()
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		// <Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
-		<T as Config>::Currency::transfer(
-			caller.as_sub(),
-			to.as_sub(),
-			amount,
-			ExistenceRequirement::KeepAlive,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+
 		Ok(true)
 	}
 
@@ -154,19 +134,13 @@ where
 			return Err("no permission".into());
 		}
 
-		// let budget = self
-		// 	.recorder
-		// 	.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let budget = self
+			.recorder()
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		// <Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
-		// 	.map_err(dispatch_to_evm::<T>)?;
-		<T as Config>::Currency::transfer(
-			caller.as_sub(),
-			to.as_sub(),
-			amount,
-			ExistenceRequirement::KeepAlive,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
+			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+
 		Ok(true)
 	}
 }
