@@ -24,7 +24,6 @@ describe('NativeFungible: ERC20 calls', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      // [alice] = await helper.arrange.createAccounts([30n], donor);
     });
   });
 
@@ -101,7 +100,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
 
     expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
-    expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
+    expect(balanceReceiverBefore + 50n).to.be.equal(balanceReceiverAfter);
   });
 
   itEth('transferFrom()', async ({helper}) => {
@@ -131,7 +130,6 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      // [alice] = await helper.arrange.createAccounts([30n], donor);
     });
   });
 
