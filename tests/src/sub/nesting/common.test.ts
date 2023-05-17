@@ -103,7 +103,7 @@ before(async () => {
       nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
     });
 
-    // Alice can mint and nest token:
+    // Bob can nest Native FT into their NFT:
     await collectionForNesting.transfer(bob, targetTokenBob.nestingAccount(), 50n);
     expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(50n);
   });
