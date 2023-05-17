@@ -17,44 +17,45 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, Pallets, usingPlaygrounds} from '../../util';
 
-// ReFungible specific nesting tests
-let alice: IKeyringPair;
+describe('ReFungible-specific nesting tests', () => {
+  let alice: IKeyringPair;
 
-before(async () => {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const donor = await privateKey({url: import.meta.url});
-    [alice] = await helper.arrange.createAccounts([200n], donor);
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const donor = await privateKey({url: import.meta.url});
+      [alice] = await helper.arrange.createAccounts([200n], donor);
+    });
   });
-});
 
-itSub.ifWithPallets('ReFungible: getTopmostOwner works correctly with Nesting', [Pallets.ReFungible], async({helper}) => {
-  const collectionNFT = await helper.nft.mintCollection(alice, {
-    permissions: {
-      nesting: {
-        tokenOwner: true,
+  itSub.ifWithPallets('ReFungible: getTopmostOwner works correctly with Nesting', [Pallets.ReFungible], async({helper}) => {
+    const collectionNFT = await helper.nft.mintCollection(alice, {
+      permissions: {
+        nesting: {
+          tokenOwner: true,
+        },
       },
-    },
+    });
+    const collectionRFT = await helper.rft.mintCollection(alice);
+
+    const nft = await collectionNFT.mintToken(alice, {Substrate: alice.address});
+    const rft = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
+
+    expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
+
+    await rft.transfer(alice, nft.nestingAccount(), 40n);
+
+    expect(await rft.getTopmostOwner()).deep.equal(null);
+
+    await rft.transfer(alice, nft.nestingAccount(), 60n);
+
+    expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
+
+    await rft.transferFrom(alice, nft.nestingAccount(), {Substrate: alice.address}, 30n);
+
+    expect(await rft.getTopmostOwner()).deep.equal(null);
+
+    await rft.transferFrom(alice, nft.nestingAccount(), {Substrate: alice.address}, 70n);
+
+    expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
   });
-  const collectionRFT = await helper.rft.mintCollection(alice);
-
-  const nft = await collectionNFT.mintToken(alice, {Substrate: alice.address});
-  const rft = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
-
-  expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
-
-  await rft.transfer(alice, nft.nestingAccount(), 40n);
-
-  expect(await rft.getTopmostOwner()).deep.equal(null);
-
-  await rft.transfer(alice, nft.nestingAccount(), 60n);
-
-  expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
-
-  await rft.transferFrom(alice, nft.nestingAccount(), {Substrate: alice.address}, 30n);
-
-  expect(await rft.getTopmostOwner()).deep.equal(null);
-
-  await rft.transferFrom(alice, nft.nestingAccount(), {Substrate: alice.address}, 70n);
-
-  expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
 });
