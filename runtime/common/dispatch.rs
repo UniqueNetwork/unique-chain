@@ -100,12 +100,11 @@ where
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {
-		if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+		if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 			fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 		}
 
 		let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-		collection.check_is_internal()?;
 
 		match collection.mode {
 			CollectionMode::ReFungible => {
@@ -122,7 +121,7 @@ where
 	}
 
 	fn dispatch(collection_id: CollectionId) -> Result<Self, DispatchError> {
-		if collection_id == CollectionId(0) {
+		if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 			return Ok(Self::NativeFungible(NativeFungibleHandle::new()));
 		}
 
@@ -188,7 +187,7 @@ where
 	}
 	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		if let Some(collection_id) = map_eth_to_id(&handle.code_address()) {
-			if collection_id == CollectionId(0) {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				<NativeFungibleHandle<T>>::new().call(handle)
 			} else {
 				let collection = <CollectionHandle<T>>::new_with_gas_limit(
