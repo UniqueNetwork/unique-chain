@@ -166,7 +166,11 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_common::Config + pallet_structure::Config + pallet_evm::Config
+		frame_system::Config
+		+ pallet_common::Config
+		+ pallet_structure::Config
+		+ pallet_evm::Config
+		+ pallet_balances::Config
 	{
 		type WeightInfo: WeightInfo;
 	}
@@ -1326,11 +1330,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn nest(under: (CollectionId, TokenId), to_nest: (CollectionId, TokenId)) {
-		<TokenChildren<T>>::insert((under.0, under.1, (to_nest.0, to_nest.1)), true);
+		if to_nest.0 != pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+			<TokenChildren<T>>::insert((under.0, under.1, to_nest), true);
+		}
 	}
 
 	fn unnest(under: (CollectionId, TokenId), to_unnest: (CollectionId, TokenId)) {
-		<TokenChildren<T>>::remove((under.0, under.1, to_unnest));
+		if to_unnest.0 != pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+			<TokenChildren<T>>::remove((under.0, under.1, to_unnest));
+		}
 	}
 
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {
@@ -1340,18 +1348,37 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn token_has_children(collection_id: CollectionId, token_id: TokenId) -> bool {
-		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
-			.next()
-			.is_some()
+		let address = T::CrossTokenAddressMapping::token_to_address(collection_id, token_id);
+		let balance = <pallet_balances::Pallet<T>>::free_balance(address.as_sub());
+
+		balance > T::Balance::default()
+			|| <TokenChildren<T>>::iter_prefix((collection_id, token_id))
+				.next()
+				.is_some()
 	}
 
 	pub fn token_children_ids(collection_id: CollectionId, token_id: TokenId) -> Vec<TokenChild> {
-		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
-			.map(|((child_collection_id, child_id), _)| TokenChild {
-				collection: child_collection_id,
-				token: child_id,
+		let mut tokens: Vec<_> = vec![];
+
+		let address = T::CrossTokenAddressMapping::token_to_address(collection_id, token_id);
+		let balance = <pallet_balances::Pallet<T>>::free_balance(address.as_sub());
+		if balance > T::Balance::default() {
+			tokens.push(TokenChild {
+				token: TokenId(0),
+				collection: pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID,
 			})
-			.collect()
+		}
+
+		tokens.extend(
+			<TokenChildren<T>>::iter_prefix((collection_id, token_id)).map(
+				|((child_collection_id, child_id), _)| TokenChild {
+					collection: child_collection_id,
+					token: child_id,
+				},
+			),
+		);
+
+		tokens
 	}
 
 	/// Mint single NFT token.
