@@ -440,7 +440,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			address: T::CrossAccountId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 
@@ -471,7 +471,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			address: T::CrossAccountId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 
@@ -501,7 +501,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_owner: T::AccountId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -533,7 +533,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_admin_id: T::CrossAccountId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -562,7 +562,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			account_id: T::CrossAccountId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -590,7 +590,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_sponsor: T::AccountId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -617,7 +617,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = ensure_signed(origin)?;
@@ -640,7 +640,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -920,7 +920,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			value: bool,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1175,7 +1175,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_limit: CollectionLimits,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1202,7 +1202,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_permission: CollectionPermissions,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
@@ -1273,7 +1273,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			if collection_id == pallet_common::NATIVE_FINGIBLE_COLLECTION_ID {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
 				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 			}
 			ensure_root(origin)?;
