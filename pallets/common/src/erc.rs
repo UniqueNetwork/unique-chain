@@ -77,14 +77,6 @@ pub trait CommonEvmHandler {
 	fn call(self, handle: &mut impl PrecompileHandle) -> Option<PrecompileResult>;
 }
 
-impl CommonEvmHandler for () {
-	const CODE: &'static [u8] = &[];
-
-	fn call(self, _handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
-		None
-	}
-}
-
 /// @title A contract that allows you to work with collections.
 #[solidity_interface(name = Collection, enum(derive(PreDispatch)), enum_attr(weight))]
 impl<T: Config> CollectionHandle<T>

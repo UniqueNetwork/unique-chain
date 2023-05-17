@@ -7,6 +7,8 @@ use pallet_common::{erc::CrossAccountId, CommonCollectionOperations, CommonWeigh
 use up_data_structs::TokenId;
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
+
+// All implementations with `Weight::default` used in methods that return error `UnsupportedOperation`.
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items(_amount: &[up_data_structs::CreateItemData]) -> Weight {
 		Weight::default()

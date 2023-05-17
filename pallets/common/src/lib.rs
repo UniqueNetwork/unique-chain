@@ -68,7 +68,6 @@ use frame_support::{
 	dispatch::Pays,
 	transactional, fail,
 };
-use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
 	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
@@ -101,7 +100,7 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
 ///
-/// CollectionHandle is used as a generic wrapper for collections of all types.
+/// CollectionHandle is used as a generic wrapper for collections of all types (except native fungible).
 /// It allows to perform common operations and queries on any collection type,
 /// both completely general for all, as well as their respective implementations of [`CommonCollectionOperations`].
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
@@ -153,7 +152,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		consume_store_reads(self.recorder(), reads)
+		self.recorder().consume_store_reads(reads)
 	}
 
 	/// Consume gas for writing.
@@ -161,7 +160,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		consume_store_writes(self.recorder(), writes)
+		self.recorder().consume_store_writes(writes)
 	}
 
 	/// Consume gas for reading and writing.
@@ -170,7 +169,8 @@ impl<T: Config> CollectionHandle<T> {
 		reads: u64,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		consume_store_reads_and_writes(self.recorder(), reads, writes)
+		self.recorder()
+			.consume_store_reads_and_writes(reads, writes)
 	}
 
 	/// Save collection to storage.
@@ -441,7 +441,7 @@ pub mod pallet {
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 	/// Collection id for native fungible collction.
-	pub const NATIVE_FINGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
+	pub const NATIVE_FUNGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -2322,48 +2322,4 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
 	}
-}
-
-/// Consume gas for reading.
-pub fn consume_store_reads<T: Config>(
-	recorder: &SubstrateRecorder<T>,
-	reads: u64,
-) -> pallet_evm_coder_substrate::execution::Result<()> {
-	recorder.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-		<T as frame_system::Config>::DbWeight::get()
-			.read
-			.saturating_mul(reads),
-		// TODO: measure proof
-		0,
-	)))
-}
-
-/// Consume gas for writing.
-pub fn consume_store_writes<T: Config>(
-	recorder: &SubstrateRecorder<T>,
-	writes: u64,
-) -> pallet_evm_coder_substrate::execution::Result<()> {
-	recorder.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-		<T as frame_system::Config>::DbWeight::get()
-			.write
-			.saturating_mul(writes),
-		// TODO: measure proof
-		0,
-	)))
-}
-
-/// Consume gas for reading and writing.
-pub fn consume_store_reads_and_writes<T: Config>(
-	recorder: &SubstrateRecorder<T>,
-	reads: u64,
-	writes: u64,
-) -> pallet_evm_coder_substrate::execution::Result<()> {
-	let weight = <T as frame_system::Config>::DbWeight::get();
-	let reads = weight.read.saturating_mul(reads);
-	let writes = weight.read.saturating_mul(writes);
-	recorder.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-		reads.saturating_add(writes),
-		// TODO: measure proof
-		0,
-	)))
 }

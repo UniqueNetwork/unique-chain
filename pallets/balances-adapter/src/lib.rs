@@ -1,4 +1,3 @@
-// #![doc = include_str!("../README.md")]
 #![cfg_attr(not(feature = "std"), no_std)]
 
 extern crate alloc;
@@ -12,9 +11,6 @@ pub mod common;
 pub mod erc;
 
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
-
-const NATIVE_FUNGIBLE_COLLECTION_ID: up_data_structs::CollectionId =
-	up_data_structs::CollectionId(0);
 
 /// Handle for native fungible collection
 pub struct NativeFungibleHandle<T: Config>(SubstrateRecorder<T>);
@@ -57,7 +53,10 @@ pub mod pallet {
 		traits::{Currency, ExistenceRequirement, Get},
 	};
 	use pallet_balances::WeightInfo;
-	use pallet_common::{erc::CrossAccountId, Error as CommonError, Pallet as PalletCommon};
+	use pallet_common::{
+		erc::CrossAccountId, Error as CommonError, Pallet as PalletCommon,
+		NATIVE_FUNGIBLE_COLLECTION_ID,
+	};
 	use pallet_structure::Pallet as PalletStructure;
 	use sp_core::U256;
 	use sp_runtime::DispatchError;
@@ -95,10 +94,9 @@ pub mod pallet {
 		/// Checks if a non-owner has (enough) allowance from the owner to perform operations on the tokens.
 		/// Returns the expected remaining allowance - it should be set manually if the transaction proceeds.
 		///
-		/// - `collection`: Collection that contains the token.
 		/// - `spender`: CrossAccountId who has the allowance rights.
 		/// - `from`: The owner of the tokens who sets the allowance.
-		/// - `amount`: Amount of tokens by which the allowance sholud be reduced.
+		/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
 		fn check_allowed(
 			spender: &T::CrossAccountId,
 			from: &T::CrossAccountId,
@@ -127,10 +125,11 @@ pub mod pallet {
 		/// Transfers the specified amount of tokens. Will check that
 		/// the transfer is allowed for the token.
 		///
+		/// - `collection`: Collection that contains the token.
 		/// - `from`: Owner of tokens to transfer.
 		/// - `to`: Recepient of transfered tokens.
 		/// - `amount`: Amount of tokens to transfer.
-		/// - `collection`: Collection that contains the token
+		/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
 		pub fn transfer(
 			_collection: &NativeFungibleHandle<T>,
 			from: &T::CrossAccountId,
@@ -147,7 +146,7 @@ pub mod pallet {
 					amount
 						.try_into()
 						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
-					ExistenceRequirement::KeepAlive,
+					ExistenceRequirement::AllowDeath,
 				)?;
 
 				<PalletStructure<T>>::nest_if_sent_to_token(
@@ -175,6 +174,17 @@ pub mod pallet {
 			})
 		}
 
+		/// Transfer NFT token from one account to another.
+		///
+		/// Same as the [`Self::transfer`] but spender doesn't needs to be the owner of the token.
+		/// The owner should set allowance for the spender to transfer token.
+		///
+		/// - `collection`: Collection that contains the token.
+		/// - `spender`: Account that spend the money.
+		/// - `from`: Owner of tokens to transfer.
+		/// - `to`: Recepient of transfered tokens.
+		/// - `amount`: Amount of tokens to transfer.
+		/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
 		pub fn transfer_from(
 			collection: &NativeFungibleHandle<T>,
 			spender: &T::CrossAccountId,
