@@ -35,7 +35,7 @@ describe('Integration Test: Unnesting', () => {
     {mode: 'rft' as const},
     {mode: 'ft' as const},
   ].map(testCase => {
-    itSub.only('NFT: allows the owner to successfully unnest a token', async ({helper}) => {
+    itSub.only(`${testCase.mode.toUpperCase()}: token owner can unnest token`, async ({helper}) => {
       // Create parent collection and token:
       const collectionOwner = alice;
       const tokenOwner = bob;
@@ -59,73 +59,41 @@ describe('Integration Test: Unnesting', () => {
       else {
         expect(await nestedToken.getOwner()).to.be.deep.equal({Substrate: tokenOwner.address});
       }
+      expect(await targetToken.getChildren()).to.has.length(0);
     });
   });
 
-  itSub('TODO: token owner can burn from', async ({helper}) => {
-    // // tokenOwner can nest again and burn
-    // await nestedToken.nest(tokenOwner, targetToken);
-    // await nestedToken.burnFrom(tokenOwner, targetToken.nestingAccount());
-    // expect(await nestedToken.doesExist()).to.be.false;
+  [
+    {mode: 'nft' as const},
+    {mode: 'rft' as const},
+    {mode: 'ft' as const},
+  ].map(testCase => {
+    itSub.only(`${testCase.mode.toUpperCase()}: token owner can burn nested token`, async ({helper}) => {
+      // Create parent collection and token:
+      const collectionOwner = alice;
+      const tokenOwner = bob;
+      const parentCollection = await helper.nft.mintCollection(collectionOwner, {permissions: {nesting: {tokenOwner: true}}});
+      const targetToken = await parentCollection.mintToken(collectionOwner, {owner: bob.address});
 
-  });
+      // Create a nested token
+      const nestedCollection = await helper[testCase.mode].mintCollection(collectionOwner, {permissions: {nesting: {tokenOwner: true}}});
+      const nestedToken = await nestedCollection.mintToken(collectionOwner, {owner: tokenOwner.address});
+      await nestedToken.nest(tokenOwner, targetToken, 1n);
 
+      // tokenOwner can burn using burnFrom
+      await nestedToken.burnFrom(tokenOwner, targetToken.nestingAccount());
 
-  itSub('NFT: allows the owner to successfully unnest a token', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const targetToken = await collection.mintToken(alice);
-
-    // Create a nested token
-    const nestedToken = await collection.mintToken(alice, {owner: targetToken.nestingAccount()});
-
-    // Unnest
-    await expect(nestedToken.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}), 'while unnesting').to.be.fulfilled;
-    expect(await nestedToken.getOwner()).to.be.deep.equal({Substrate: alice.address});
-
-    // Nest and burn
-    await nestedToken.nest(alice, targetToken);
-    await expect(nestedToken.burnFrom(alice, targetToken.nestingAccount()), 'while burning').to.be.fulfilled;
-    await expect(nestedToken.getOwner()).to.be.rejected;
-  });
-
-  itSub('Fungible: allows the owner to successfully unnest a token', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const targetToken = await collection.mintToken(alice);
-
-    const collectionFT = await helper.ft.mintCollection(alice);
-
-    // Nest and unnest
-    await collectionFT.mint(alice, 10n, targetToken.nestingAccount());
-    await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
-    expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(9n);
-    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
-
-    // Nest and burn
-    await collectionFT.transfer(alice, targetToken.nestingAccount(), 5n);
-    await expect(collectionFT.burnTokensFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
-    expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(4n);
-    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
-    expect(await targetToken.getChildren()).to.be.length(0);
-  });
-
-  itSub.ifWithPallets('ReFungible: allows the owner to successfully unnest a token', [Pallets.ReFungible], async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
-    const targetToken = await collection.mintToken(alice);
-
-    const collectionRFT = await helper.rft.mintCollection(alice);
-
-    // Nest and unnest
-    const token = await collectionRFT.mintToken(alice, {pieces: 10n, owner: targetToken.nestingAccount()});
-    await expect(token.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(9n);
-    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
-
-    // Nest and burn
-    await token.transfer(alice, targetToken.nestingAccount(), 5n);
-    await expect(token.burnFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
-    expect(await token.getBalance({Substrate: alice.address})).to.be.equal(4n);
-    expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
-    expect(await targetToken.getChildren()).to.be.length(0);
+      // FT case
+      if (nestedToken instanceof UniqueFTCollection) {
+        expect(await nestedToken.getBalance({Substrate: tokenOwner.address})).to.eq(0n);
+        expect(await nestedToken.getBalance(targetToken.nestingAccount())).to.eq(0n);
+      }
+      // NFT and RFT cases
+      else {
+        expect(await nestedToken.doesExist()).to.be.false;
+      }
+      expect(await targetToken.getChildren()).to.has.length(0);
+    });
   });
 
   async function checkNestedAmountState({
@@ -234,7 +202,7 @@ describe('Integration Test: Unnesting', () => {
           expect(await nested.getBalance({Substrate: bob.address})).to.be.equal(bobBalanceBeforeOp + amount);
         } else {
           if (nested instanceof UniqueFTCollection) {
-            await nested.burnTokensFrom(unnester, targetNft.nestingAccount(), amount);
+            await nested.burnFrom(unnester, targetNft.nestingAccount(), amount);
           } else {
             await nested.burnFrom(unnester, targetNft.nestingAccount(), amount);
           }

@@ -3847,7 +3847,7 @@ export class UniqueFTCollection extends UniqueBaseCollection {
     return await this.helper.ft.burnTokens(signer, this.collectionId, amount);
   }
 
-  async burnTokensFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount=1n) {
+  async burnFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount=1n) {
     return await this.helper.ft.burnTokensFrom(signer, this.collectionId, fromAddressObj, amount);
   }
 

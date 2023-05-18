@@ -137,7 +137,7 @@ describe('integration test: Fungible functionality:', () => {
     expect(await collection.getBalance({Substrate: bob.address})).to.be.equal(20n);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(40n);
 
-    await collection.burnTokensFrom(bob, {Substrate: alice.address}, 10n);
+    await collection.burnFrom(bob, {Substrate: alice.address}, 10n);
 
     expect(await collection.getBalance({Substrate: alice.address})).to.be.equal(70n);
     expect(await collection.getApprovedTokens({Substrate: alice.address}, {Substrate: bob.address})).to.be.equal(30n);

@@ -74,7 +74,7 @@ describe('integration test: ext. burnItem() with admin permissions:', () => {
     await collection.addAdmin(alice, {Substrate: bob.address});
     await collection.mint(alice, 10n);
 
-    await collection.burnTokensFrom(bob, {Substrate: alice.address}, 1n);
+    await collection.burnFrom(bob, {Substrate: alice.address}, 1n);
     expect(await collection.getBalance({Substrate: alice.address})).to.eq(9n);
   });
 });

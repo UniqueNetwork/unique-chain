@@ -61,7 +61,7 @@ describe('Integration Test: Unnesting', () => {
 
     // Nest and burn
     await collectionFT.transfer(alice, targetToken.nestingAccount(), 5n);
-    await expect(collectionFT.burnTokensFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
+    await expect(collectionFT.burnFrom(alice, targetToken.nestingAccount(), 6n), 'while burning').to.be.fulfilled;
     expect(await collectionFT.getBalance({Substrate: alice.address})).to.be.equal(4n);
     expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(0n);
     expect(await targetToken.getChildren()).to.be.length(0);
@@ -193,7 +193,7 @@ describe('Integration Test: Unnesting', () => {
           expect(await nested.getBalance({Substrate: bob.address})).to.be.equal(bobBalanceBeforeOp + amount);
         } else {
           if (nested instanceof UniqueFTCollection) {
-            await nested.burnTokensFrom(unnester, targetNft.nestingAccount(), amount);
+            await nested.burnFrom(unnester, targetNft.nestingAccount(), amount);
           } else {
             await nested.burnFrom(unnester, targetNft.nestingAccount(), amount);
           }

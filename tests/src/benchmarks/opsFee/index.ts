@@ -707,7 +707,7 @@ async function erc20CalculateFeeGas(
 
   res['burnFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: subReceiver.address},
-    () => collection.burnTokensFrom(subReceiver, {Substrate: donor.address}, 1n),
+    () => collection.burnFrom(subReceiver, {Substrate: donor.address}, 1n),
   )));
 
   res['setCollectionSponsorCross'] =
