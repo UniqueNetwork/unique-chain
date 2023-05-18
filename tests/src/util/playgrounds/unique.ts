@@ -42,6 +42,9 @@ import {
   MoonbeamAssetInfo,
   DemocracyStandardAccountVote,
   IEthCrossAccountId,
+  NFTCollectionData,
+  RFTCollectionData,
+  FTCollectionData,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
@@ -1171,6 +1174,17 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
     return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertyDeleted');
   }
 
+  async mint(signer: TSigner, collectionId: number, owner: ICrossAccountId, data: NFTCollectionData | RFTCollectionData | FTCollectionData) {
+    const result: ITransactionResult = await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.unique.createItem',
+      [collectionId, owner, data],
+    );
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(result);
+    if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
+    if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
+    return createdTokens.tokens[0];
+  }
   /**
    * Changes the owner of the token.
    *
@@ -1728,19 +1742,14 @@ class NFTGroup extends NFTnRFT {
    * @returns created token object
    */
   async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }): Promise<UniqueNFToken> {
-    const creationResult = await this.helper.executeExtrinsic(
-      signer,
-      'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
-        nft: {
-          properties: data.properties,
-        },
-      }],
-      true,
-    );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
-    if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
-    if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
-    return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
+    const owner = (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner;
+    const token = await this.helper.collection.mint(signer, data.collectionId, owner, {
+      nft: {
+        properties: data.properties,
+      },
+    });
+
+    return this.getTokenObject(token.collectionId, token.tokenId);
   }
 
   /**
@@ -1915,20 +1924,15 @@ class RFTGroup extends NFTnRFT {
    * @returns created token object
    */
   async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }): Promise<UniqueRFToken> {
-    const creationResult = await this.helper.executeExtrinsic(
-      signer,
-      'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
-        refungible: {
-          pieces: data.pieces,
-          properties: data.properties,
-        },
-      }],
-      true,
-    );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
-    if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
-    if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
-    return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
+    const owner = (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner;
+    const token = await this.helper.collection.mint(signer, data.collectionId, owner, {
+      refungible: {
+        pieces: data.pieces,
+        properties: data.properties,
+      },
+    });
+
+    return this.getTokenObject(token.collectionId, token.tokenId);
   }
 
   async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: {owner: ICrossAccountId, pieces: bigint, properties?: IProperty[]}[]): Promise<UniqueRFToken[]> {
@@ -2089,17 +2093,20 @@ class FTGroup extends CollectionGroup {
    * @example mintTokens(aliceKeyring, 10, {Substrate: "5GHoZe9c73RYbVzq"}, 1000n);
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async mintTokens(signer: TSigner, collectionId: number, amount: bigint, owner: ICrossAccountId | string): Promise<boolean> {
-    const creationResult = await this.helper.executeExtrinsic(
-      signer,
-      'api.tx.unique.createItem', [collectionId, (typeof owner === 'string') ? {Substrate: owner} : owner, {
-        fungible: {
-          value: amount,
-        },
-      }],
-      true, // `Unable to mint fungible tokens for ${label}`,
-    );
-    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated');
+  async mintTokens(signer: TSigner, collectionId: number, amount: bigint, owner: ICrossAccountId | string): Promise<UniqueFTCollection> {
+    owner = (typeof owner === 'string') ? {Substrate: owner} : owner;
+    const token = await this.helper.collection.mint(signer, collectionId, owner, {
+      fungible: {
+        value: amount,
+      },
+    });
+
+    return this.helper.ft.getCollectionObject(token.collectionId);
+  }
+
+  mintToken(signer: TSigner, data: {collectionId: number, owner: ICrossAccountId | string, amount: bigint}): Promise<UniqueFTCollection> {
+    const owner = (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner;
+    return this.mintTokens(signer, data.collectionId, data.amount, owner);
   }
 
   /**
@@ -3606,8 +3613,9 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.isTokenApproved(this.collectionId, tokenId, toAddressObj);
   }
 
-  async mintToken(signer: TSigner, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
-    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties});
+  async mintToken(signer: TSigner, data: {owner?: ICrossAccountId | string, properties?: IProperty[]}) {
+    const owner = data.owner ? data.owner : {Substrate: signer.address};
+    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties: data.properties});
   }
 
   async mintMultipleTokens(signer: TSigner, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[]) {
@@ -3732,8 +3740,10 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
     return await this.helper.rft.repartitionToken(signer, this.collectionId, tokenId, amount);
   }
 
-  async mintToken(signer: TSigner, pieces = 1n, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
-    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties});
+  async mintToken(signer: TSigner, data: {pieces?: bigint, owner?: ICrossAccountId | string, properties?: IProperty[]}) {
+    const owner = data.owner ? data.owner : {Substrate: signer.address};
+    const pieces = data.pieces ? data.pieces : 1n;
+    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties: data.properties});
   }
 
   async mintMultipleTokens(signer: TSigner, tokens: {pieces: bigint, owner: ICrossAccountId, properties?: IProperty[]}[]) {
@@ -3807,8 +3817,16 @@ export class UniqueFTCollection extends UniqueBaseCollection {
     return await this.helper.ft.getTop10Owners(this.collectionId);
   }
 
-  async mint(signer: TSigner, amount=1n, owner: ICrossAccountId = {Substrate: signer.address}) {
+  async mint(signer: TSigner, amount=1n, owner: ICrossAccountId | string = {Substrate: signer.address}) {
+    owner = owner ? owner : signer.address;
     return await this.helper.ft.mintTokens(signer, this.collectionId, amount, owner);
+  }
+
+  // for NFT api compliance
+  mintToken(signer: TSigner, data: {amount?: bigint, owner?: ICrossAccountId | string}) {
+    const amount = data.amount || 1n;
+    const owner = data.owner ? data.owner : signer.address;
+    return this.mint(signer, amount, owner);
   }
 
   async mintWithOneOwner(signer: TSigner, tokens: {value: bigint}[], owner: ICrossAccountId = {Substrate: signer.address}) {
@@ -3833,6 +3851,10 @@ export class UniqueFTCollection extends UniqueBaseCollection {
 
   async approveTokens(signer: TSigner, toAddressObj: ICrossAccountId, amount=1n) {
     return await this.helper.ft.approveTokens(signer, this.collectionId, toAddressObj, amount);
+  }
+
+  nest(signer: TSigner, targetToken: UniqueNFToken, amount: bigint) {
+    return this.transfer(signer, targetToken.nestingAccount(), amount);
   }
 
   scheduleAt<T extends UniqueHelper>(

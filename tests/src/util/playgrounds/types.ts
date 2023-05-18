@@ -226,6 +226,25 @@ export interface DemocracyStandardAccountVote {
   },
 }
 
+export type NFTCollectionData = {
+  nft: {
+    properties?: IProperty[]
+  }
+}
+
+export type RFTCollectionData = {
+  refungible: {
+    pieces: bigint,
+    properties?: IProperty[],
+  }
+}
+
+export type FTCollectionData = {
+  fungible: {
+    value: bigint
+  }
+}
+
 export type TSubstrateAccount = string;
 export type TEthereumAccount = string;
 export type TApiAllowedListeners = 'connected' | 'disconnected' | 'error' | 'ready' | 'decorated';
