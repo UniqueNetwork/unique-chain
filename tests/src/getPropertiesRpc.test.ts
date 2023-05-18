@@ -138,14 +138,14 @@ describe('query properties RPC', () => {
       });
     });
 
-    itSub(`[${testCase.mode}] set token property for non-existed token`, async ({helper}) => {
+    itSub(`[${testCase.mode}] set token property for non-existent token`, async ({helper}) => {
       const collection = await helper[testCase.mode].mintCollection(alice);
       await collection.setTokenPropertyPermissions(alice, [{key: 'key', permission: {mutable: true, tokenOwner: true, collectionAdmin: true}}]);
       await expect(collection.setTokenProperties(alice, 1, [{key: 'key', value: 'value'}])).to.be.rejectedWith('common.TokenNotFound');
       expect(await collection.getTokenProperties(1, ['key'])).to.be.empty;
     });
 
-    itSub(`[${testCase.mode}] delete token property for non-existed token`, async ({helper}) => {
+    itSub(`[${testCase.mode}] delete token property for non-existent token`, async ({helper}) => {
       const collection = await helper[testCase.mode].mintCollection(alice);
       await collection.setTokenPropertyPermissions(alice, [{key: 'key', permission: {mutable: true, tokenOwner: true, collectionAdmin: true}}]);
       await expect(collection.deleteTokenProperties(alice, 1, ['key'])).to.be.rejectedWith('common.TokenNotFound');

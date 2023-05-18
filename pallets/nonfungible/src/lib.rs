@@ -151,7 +151,6 @@ pub mod pallet {
 	use frame_support::{
 		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion,
 	};
-	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -586,7 +585,7 @@ impl<T: Config> Pallet<T> {
 	/// A batch operation to add, edit or remove properties for a token.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_create`: Indicates that method is called during token initialization.
+	/// - `is_token_being_created`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
@@ -602,7 +601,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_create: bool,
+		is_token_being_created: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let is_token_owner = || {
@@ -625,7 +624,7 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			|| Self::token_exists(collection, token_id),
 			properties_updates,
-			is_token_create,
+			is_token_being_created,
 			stored_properties,
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),

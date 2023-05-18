@@ -1245,7 +1245,7 @@ impl<T: Config> Pallet<T> {
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_create`: Indicates that method is called during token initialization.
+	/// - `is_token_being_created`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
@@ -1259,25 +1259,27 @@ impl<T: Config> Pallet<T> {
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		is_token_exist: impl Fn() -> bool,
+		check_token_existence: impl Fn() -> bool,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_create: bool,
+		is_token_being_created: bool,
 		mut stored_properties: TokenProperties,
-		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
+		check_token_ownership: impl Fn() -> Result<bool, DispatchError>,
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
 		let is_collection_admin = collection.is_owner_or_admin(sender);
-		let permissions = Self::property_permissions(collection.id);
 
 		let mut token_owner_result = None;
-		let mut is_token_owner = || -> Result<bool, DispatchError> {
-			*token_owner_result.get_or_insert_with(&is_token_owner)
+		let mut token_exists_result = None;
+
+		let mut check_token_ownership = || -> Result<bool, DispatchError> {
+			*token_owner_result.get_or_insert_with(&check_token_ownership)
 		};
 
-		let mut token_exists_result = None;
-		let mut is_token_exist =
-			|| -> bool { *token_exists_result.get_or_insert_with(&is_token_exist) };
+		let mut check_token_existence =
+			|| -> bool { *token_exists_result.get_or_insert_with(&check_token_existence) };
+
+		let permissions = Self::property_permissions(collection.id);
 
 		for (key, value) in properties_updates {
 			let permission = permissions
@@ -1285,35 +1287,35 @@ impl<T: Config> Pallet<T> {
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
-			let is_property_exists = stored_properties.get(&key).is_some();
+			let property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
-				PropertyPermission { mutable: false, .. } if is_property_exists => {
+				PropertyPermission { mutable: false, .. } if property_exists => {
 					return Err(<Error<T>>::NoPermission.into());
 				}
 
 				PropertyPermission {
-					collection_admin: collection_admin_permission,
-					token_owner: token_owner_permission,
+					collection_admin: collection_admin_permitted,
+					token_owner: token_owner_permitted,
 					..
 				} => {
 					//TODO: investigate threats during public minting.
-					let is_valid_token_create = is_token_create
-						&& (collection_admin_permission || token_owner_permission)
+					let valid_new_token_creation = is_token_being_created
+						&& (collection_admin_permitted || token_owner_permitted)
 						&& value.is_some();
-					let admin_role_match = collection_admin_permission && is_collection_admin;
-					let mut owner_role_match = || -> Result<bool, DispatchError> {
-						Ok(token_owner_permission && is_token_owner()?)
+					let sender_is_admin = collection_admin_permitted && is_collection_admin;
+					let mut sender_is_owner = || -> Result<bool, DispatchError> {
+						Ok(token_owner_permitted && check_token_ownership()?)
 					};
 
-					if !(is_valid_token_create || admin_role_match || owner_role_match()?) {
+					if !(valid_new_token_creation || sender_is_admin || sender_is_owner()?) {
 						fail!(<Error<T>>::NoPermission);
 					}
 
-					let is_token_owner_evaluated =
-						!(is_valid_token_create || admin_role_match) && token_owner_permission;
-					let need_check_token_exist = !(is_token_owner_evaluated && is_token_owner()?);
-					if need_check_token_exist && !is_token_exist() {
+					let token_owner_check_needed =
+						!(valid_new_token_creation || sender_is_admin) && token_owner_permitted;
+					let token_must_exist = !(token_owner_check_needed && check_token_ownership()?);
+					if token_must_exist && !check_token_existence() {
 						fail!(<Error<T>>::TokenNotFound);
 					}
 				}
