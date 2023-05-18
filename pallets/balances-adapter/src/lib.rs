@@ -53,14 +53,11 @@ pub mod pallet {
 		traits::{Currency, ExistenceRequirement, Get},
 	};
 	use pallet_balances::WeightInfo;
-	use pallet_common::{
-		erc::CrossAccountId, Error as CommonError, Pallet as PalletCommon,
-		NATIVE_FUNGIBLE_COLLECTION_ID,
-	};
+	use pallet_common::{erc::CrossAccountId, Error as CommonError, Pallet as PalletCommon};
 	use pallet_structure::Pallet as PalletStructure;
 	use sp_core::U256;
 	use sp_runtime::DispatchError;
-	use up_data_structs::{budget::Budget, mapping::TokenAddressMapping, TokenId};
+	use up_data_structs::{budget::Budget, mapping::TokenAddressMapping};
 
 	#[pallet::config]
 	pub trait Config:
@@ -135,7 +132,7 @@ pub mod pallet {
 			from: &T::CrossAccountId,
 			to: &T::CrossAccountId,
 			amount: u128,
-			nesting_budget: &dyn Budget,
+			_nesting_budget: &dyn Budget,
 		) -> DispatchResultWithPostInfo {
 			<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
