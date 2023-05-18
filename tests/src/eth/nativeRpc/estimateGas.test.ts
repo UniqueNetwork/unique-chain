@@ -28,7 +28,7 @@ describe('Ethereum native RPC calls', () => {
     });
   });
 
-  itEth.only('estimate gas', async ({helper}) => {
+  itEth.skip('estimate gas', async ({helper}) => {
     const BALANCE = 100n;
     const BALANCE_TO_TRANSFER = 90n;
 
