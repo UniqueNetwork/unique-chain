@@ -69,7 +69,7 @@ describe('Matcher contract usage', () => {
     await helpers.methods.toggleAllowed(matcher.options.address, aliceMirror, true).send({from: matcherOwner});
     await helpers.methods.toggleAllowed(matcher.options.address, sellerMirror, true).send({from: matcherOwner});
 
-    const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
+    const token = await collection.mintToken(alice, {owner: {Ethereum: sellerMirror}});
 
     // Token is owned by seller initially
     expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
@@ -125,7 +125,7 @@ describe('Matcher contract usage', () => {
 
     await helpers.methods.toggleAllowed(matcher.options.address, sellerMirror, true).send({from: matcherOwner});
 
-    const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
+    const token = await collection.mintToken(alice, {owner: {Ethereum: sellerMirror}});
 
     // Token is owned by seller initially
     expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
@@ -175,7 +175,7 @@ describe('Matcher contract usage', () => {
 
     await helper.balance.transferToSubstrate(donor, seller.address, 100_000_000_000_000_000_000n);
 
-    const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
+    const token = await collection.mintToken(alice, {owner: {Ethereum: sellerMirror}});
 
     // Token is owned by seller initially
     expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});

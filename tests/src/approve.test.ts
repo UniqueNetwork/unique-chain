@@ -630,7 +630,7 @@ describe('Repeated approvals add up', () => {
 
   itSub.skip('Owned 10, approval 1: 1, approval 2: 1, resulting approved value: 2. ReFungible', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice, 10n);
+    const token = await collection.mintToken(alice, {pieces: 10n});
     await token.approve(alice, {Substrate: bob.address}, 1n);
     await token.approve(alice, {Substrate: charlie.address}, 1n);
     // const allowances1 = await getAllowance(collectionId, itemId, Alice.address, Bob.address);
@@ -650,7 +650,7 @@ describe('Repeated approvals add up', () => {
   // Canceled by changing approve logic
   itSub.skip('Cannot approve for more than total user\'s amount (owned: 100, approval 1: 50 - should succeed, approval 2: 51 - should fail). ReFungible', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice, 100n, {Substrate: dave.address});
+    const token = await collection.mintToken(alice, {pieces: 100n, owner: dave.address});
     await token.approve(dave, {Substrate: bob.address}, 50n);
     await expect(token.approve(dave, {Substrate: charlie.address}, 51n))
       .to.be.rejectedWith('this test would fail (since it is skipped), replace this expecting message with what would have been received');

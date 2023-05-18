@@ -40,7 +40,7 @@ describe('integration test: ext. removeCollectionSponsor():', () => {
     const [zeroBalance] = await helper.arrange.createAccounts([0n], donor);
 
     // Mint token for unused address
-    const token = await collection.mintToken(alice, {Substrate: zeroBalance.address});
+    const token = await collection.mintToken(alice, {owner: zeroBalance.address});
 
     // Transfer this tokens from unused address to Alice - should fail
     const sponsorBalanceBefore = await helper.balance.getSubstrate(bob.address);

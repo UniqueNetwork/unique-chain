@@ -66,7 +66,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const token = await collection.mintToken(alice, {Substrate: zeroBalance.address});
+    const token = await collection.mintToken(alice, {owner: zeroBalance.address});
     await token.transfer(zeroBalance, {Substrate: alice.address});
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
     expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
@@ -77,7 +77,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    await collection.mint(alice, 100n, {Substrate: zeroBalance.address});
+    await collection.mintToken(alice, {amount: 100n, owner: zeroBalance.address});
     await collection.transfer(zeroBalance, {Substrate: alice.address}, 1n);
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
     expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
@@ -88,7 +88,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const token = await collection.mintToken(alice, 100n, {Substrate: zeroBalance.address});
+    const token = await collection.mintToken(alice, {pieces: 100n, owner: zeroBalance.address});
     await token.transfer(zeroBalance, {Substrate: alice.address}, 1n);
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
     expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
@@ -102,7 +102,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.addToAllowList(alice, {Substrate: zeroBalance.address});
 
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    await collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
+    await collection.mintToken(zeroBalance, {owner: zeroBalance.address});
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
     expect(bobBalanceAfter < bobBalanceBefore).to.be.true;
@@ -115,7 +115,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
 
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
     await token.transfer(alice, {Substrate: zeroBalance.address});
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
@@ -151,7 +151,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
 
-    const token = await collection.mintToken(alice, 100n, {Substrate: zeroBalance.address});
+    const token = await collection.mintToken(alice, {pieces: 100n, owner: zeroBalance.address});
     await token.transfer(zeroBalance, {Substrate: alice.address});
 
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
@@ -172,10 +172,10 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await collection.setPermissions(alice, {mintMode: true, access: 'AllowList'});
     await collection.addToAllowList(alice, {Substrate: zeroBalance.address});
 
-    await collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
+    await collection.mintToken(zeroBalance, {owner: zeroBalance.address});
 
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const mintTx = () => collection.mintToken(zeroBalance, {Substrate: zeroBalance.address});
+    const mintTx = () => collection.mintToken(zeroBalance, {owner: zeroBalance.address});
     await expect(mintTx()).to.be.rejectedWith('Inability to pay some fees');
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
@@ -242,7 +242,7 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.setSponsor(alice, bob.address);
     await collection.confirmSponsorship(bob);
-    const token = await collection.mintToken(alice, {Substrate: ownerZeroBalance.address});
+    const token = await collection.mintToken(alice, {owner: ownerZeroBalance.address});
     const sponsorBalanceBefore = await helper.balance.getSubstrate(bob.address);
     const transferTx = () =>  token.transfer(senderZeroBalance, {Substrate: alice.address});
     await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');

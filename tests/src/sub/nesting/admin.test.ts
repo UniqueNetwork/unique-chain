@@ -43,13 +43,13 @@ describe('Collection admin', () => {
         {collectionAdmin: true, restricted: testCase.restricted ? [collectionA.collectionId, collectionB.collectionId] : null},
       });
       // Token for nesting in from collectionA:
-      const targetTokenA = await collectionA.mintToken(alice, {Substrate: charlie.address});
+      const targetTokenA = await collectionA.mintToken(alice, {owner: charlie.address});
 
       // 1. Create an immediately nested tokens:
       // 1.1 From own collection:
-      const nestedTokenA = await collectionA.mintToken(bob, targetTokenA.nestingAccount());
+      const nestedTokenA = await collectionA.mintToken(bob, {owner: targetTokenA.nestingAccount()});
       // 1.2 From different collection:
-      const nestedTokenB = await collectionB.mintToken(bob, targetTokenA.nestingAccount());
+      const nestedTokenB = await collectionB.mintToken(bob, {owner: targetTokenA.nestingAccount()});
       expect(await nestedTokenA.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
       expect(await nestedTokenA.getOwner()).to.be.deep.equal(targetTokenA.nestingAccount().toLowerCase());
       expect(await nestedTokenB.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
@@ -70,15 +70,15 @@ describe('Collection admin', () => {
   itSub('can operate together with token owner if "collectionAdmin" and "tokenOwner" permissions set', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {collectionAdmin: true, tokenOwner: true}}});
     await collection.addAdmin(alice, {Substrate: bob.address});
-    const targetToken = await collection.mintToken(alice, {Substrate: charlie.address});
+    const targetToken = await collection.mintToken(alice, {owner: charlie.address});
 
     // Admin can create an immediately nested token:
-    const nestedToken = await collection.mintToken(bob, targetToken.nestingAccount());
+    const nestedToken = await collection.mintToken(bob, {owner: targetToken.nestingAccount()});
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
     expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 
     // Owner can create and and nest:
-    const newToken = await collection.mintToken(alice, {Substrate: charlie.address});
+    const newToken = await collection.mintToken(alice, {owner: charlie.address});
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
     expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());

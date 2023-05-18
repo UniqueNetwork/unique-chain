@@ -467,7 +467,7 @@ describe('App promotion', () => {
       const api = helper.getApi();
       const [collectionOwner, tokenSender, receiver] = await getAccounts(3);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'Name', description: 'Description', tokenPrefix: 'Prefix', limits: {sponsorTransferTimeout: 0}});
-      const token = await collection.mintToken(collectionOwner, {Substrate: tokenSender.address});
+      const token = await collection.mintToken(collectionOwner, {owner: tokenSender.address});
       await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId));
       const palletBalanceBefore = await helper.balance.getSubstrate(palletAddress);
 
@@ -570,7 +570,7 @@ describe('App promotion', () => {
       const api = helper.getApi();
       const [collectionOwner, recepient] = await getAccounts(2);
       const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', limits: {sponsorTransferTimeout: 0}});
-      const token = await collection.mintToken(collectionOwner, {Substrate: collectionOwner.address});
+      const token = await collection.mintToken(collectionOwner, {owner: collectionOwner.address});
 
       await helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collection.collectionId));
       await helper.signTransaction(palletAdmin, api.tx.appPromotion.stopSponsoringCollection(collection.collectionId));

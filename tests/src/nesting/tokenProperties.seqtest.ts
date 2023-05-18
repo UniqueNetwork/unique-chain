@@ -53,7 +53,7 @@ describe('Integration Test: Token Properties with sudo', () => {
       });
       const token = await (
         testSuite.pieces
-          ? collection.mintToken(alice, testSuite.pieces)
+          ? collection.mintToken(alice, {pieces: testSuite.pieces})
           : collection.mintToken(alice)
       );
 

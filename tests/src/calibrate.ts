@@ -190,7 +190,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
@@ -205,7 +205,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
 
     const coefficient = new Fract((await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt());
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
 
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
     await token.transfer(alice, {Substrate: bob.address});
@@ -226,7 +226,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
     await token.transfer(alice, {Substrate: bob.address});
     const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
@@ -243,7 +243,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Ethereum: caller});
+    const token = await collection.mintToken(alice, {owner: {Ethereum: caller}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
@@ -263,7 +263,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
     const coefficient = new Fract((await api.query.configuration.minGasPriceOverride() as any).toBigInt());
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Ethereum: caller});
+    const token = await collection.mintToken(alice, {owner: {Ethereum: caller}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
@@ -284,7 +284,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Ethereum: caller});
+    const token = await collection.mintToken(alice, {owner: {Ethereum: caller}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);

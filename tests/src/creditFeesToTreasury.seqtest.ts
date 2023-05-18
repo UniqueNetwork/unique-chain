@@ -149,7 +149,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       tokenPrefix: 'test',
     });
     // const tokenId = await createItemExpectSuccess(alice, collectionId, 'NFT');
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
 
     const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
     await token.transfer(alice, {Substrate: bob.address});

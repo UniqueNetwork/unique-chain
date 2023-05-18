@@ -76,7 +76,7 @@ describe('Integration Test getNextSponsored(collection_id, owner, item_id):', ()
 
   itSub.ifWithPallets('ReFungible', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice, 10n);
+    const token = await collection.mintToken(alice, {pieces: 10n});
 
     // Check with Disabled sponsoring state
     expect(await token.getNextSponsored({Substrate: alice.address})).to.be.null;

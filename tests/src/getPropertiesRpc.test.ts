@@ -57,7 +57,7 @@ describe('query properties RPC', () => {
   };
 
   const mintToken = async (collection: UniqueNFTCollection) => {
-    return await collection.mintToken(alice, {Substrate: alice.address}, tokenProps);
+    return await collection.mintToken(alice, {owner: alice.address, properties: tokenProps});
   };
 
 

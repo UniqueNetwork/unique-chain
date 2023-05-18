@@ -36,7 +36,7 @@ describe('Refungible nesting', () => {
     itSub(`Owner can nest their token${testCase.restrictedMode ? ': Restricted mode' : ''}`, async ({helper}) => {
       const collectionNFT = await helper.nft.mintCollection(alice, {permissions: {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true}}});
       const collectionRFT = await helper.rft.mintCollection(alice);
-      const targetToken = await collectionNFT.mintToken(alice, {Substrate: charlie.address});
+      const targetToken = await collectionNFT.mintToken(alice, {owner: charlie.address});
 
       await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionRFT.collectionId] : null}});
       await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
@@ -47,11 +47,11 @@ describe('Refungible nesting', () => {
       await collectionRFT.addToAllowList(alice, targetToken.nestingAccount());
 
       // Create an immediately nested token
-      const nestedToken = await collectionRFT.mintToken(charlie, 5n, targetToken.nestingAccount());
+      const nestedToken = await collectionRFT.mintToken(charlie, {pieces: 5n, owner: targetToken.nestingAccount()});
       expect(await nestedToken.getBalance(targetToken.nestingAccount())).to.be.equal(5n);
 
       // Create a token to be nested and nest
-      const newToken = await collectionRFT.mintToken(charlie, 5n);
+      const newToken = await collectionRFT.mintToken(charlie, {pieces: 5n});
       await newToken.transfer(charlie, targetToken.nestingAccount(), 2n);
       expect(await newToken.getBalance(targetToken.nestingAccount())).to.be.equal(2n);
       expect(await newToken.getBalance({Substrate: charlie.address})).to.be.equal(3n);
@@ -64,7 +64,7 @@ describe('Refungible nesting', () => {
 
     // Owner mints nested RFT token:
     const collectionRFT = await helper.rft.mintCollection(alice);
-    const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
+    const token = await collectionRFT.mintToken(alice, {pieces: 10n, owner: targetToken.nestingAccount()});
 
     // 1.1 Owner can partially unnest token pieces with transferFrom:
     await token.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n);
@@ -83,7 +83,7 @@ describe('Refungible nesting', () => {
 
     // Owner mints nested RFT token:
     const collectionRFT = await helper.rft.mintCollection(alice);
-    const token = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
+    const token = await collectionRFT.mintToken(alice, {pieces: 100n, owner: {Substrate: alice.address}});
     await token.transfer(alice, targetToken.nestingAccount(), 30n);
 
     // 1.1 Owner can partially burnFrom nested pieces:

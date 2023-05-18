@@ -152,7 +152,7 @@ async function benchMintFee(
 
   const substrateFee = await helper.arrange.calculcateFee(
     {Substrate: donor.address},
-    () => collection.mintToken(donor, {Substrate: substrateReceiver.address}),
+    () => collection.mintToken(donor, {owner: substrateReceiver.address}),
   );
 
   const collectionEthAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -221,10 +221,12 @@ async function benchMintWithProperties(
     async (collection) => {
       await collection.mintToken(
         donor,
-        {Substrate: susbstrateReceiver.address},
-        PROPERTIES.slice(0, setup.propertiesNumber).map((p) => {
-          return {key: p.key, value: Buffer.from(p.value).toString()};
-        }),
+        {
+          owner: susbstrateReceiver.address,
+          properties: PROPERTIES.slice(0, setup.propertiesNumber).map((p) => {
+            return {key: p.key, value: Buffer.from(p.value).toString()};
+          }),
+        },
       );
     },
   );

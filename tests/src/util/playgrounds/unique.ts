@@ -3613,9 +3613,10 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.isTokenApproved(this.collectionId, tokenId, toAddressObj);
   }
 
-  async mintToken(signer: TSigner, data: {owner?: ICrossAccountId | string, properties?: IProperty[]}) {
-    const owner = data.owner ? data.owner : {Substrate: signer.address};
-    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties: data.properties});
+  async mintToken(signer: TSigner, data?: {owner?: ICrossAccountId | string, properties?: IProperty[]}) {
+    const owner = data && data.owner ? data.owner : signer.address;
+    const properties = data && data.properties ? data.properties : undefined;
+    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties: properties});
   }
 
   async mintMultipleTokens(signer: TSigner, tokens: {owner: ICrossAccountId, properties?: IProperty[]}[]) {
@@ -3740,10 +3741,11 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
     return await this.helper.rft.repartitionToken(signer, this.collectionId, tokenId, amount);
   }
 
-  async mintToken(signer: TSigner, data: {pieces?: bigint, owner?: ICrossAccountId | string, properties?: IProperty[]}) {
-    const owner = data.owner ? data.owner : {Substrate: signer.address};
-    const pieces = data.pieces ? data.pieces : 1n;
-    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties: data.properties});
+  async mintToken(signer: TSigner, data?: {pieces?: bigint, owner?: ICrossAccountId | string, properties?: IProperty[]}) {
+    const owner = data && data.owner ? data.owner : {Substrate: signer.address};
+    const pieces = data && data.pieces ? data.pieces : 1n;
+    const properties = data && data.properties ? data.properties : undefined;
+    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties});
   }
 
   async mintMultipleTokens(signer: TSigner, tokens: {pieces: bigint, owner: ICrossAccountId, properties?: IProperty[]}[]) {

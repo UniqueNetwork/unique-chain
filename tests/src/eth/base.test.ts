@@ -54,7 +54,7 @@ describe('Contract calls', () => {
 
     const [alice] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
+    const {tokenId} = await collection.mintToken(alice, {owner: {Ethereum: caller}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);

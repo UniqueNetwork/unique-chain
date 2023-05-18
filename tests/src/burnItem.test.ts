@@ -121,8 +121,8 @@ describe('Negative integration test: ext. burnItem():', () => {
 
   itSub('Zero burn NFT', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Coll', description: 'Desc', tokenPrefix: 'T'});
-    const tokenAlice = await collection.mintToken(alice, {Substrate: alice.address});
-    const tokenBob = await collection.mintToken(alice, {Substrate: bob.address});
+    const tokenAlice = await collection.mintToken(alice, {owner: alice.address});
+    const tokenBob = await collection.mintToken(alice, {owner: bob.address});
 
     // 1. Zero burn of own tokens allowed:
     await helper.executeExtrinsic(alice, 'api.tx.unique.burnItem', [collection.collectionId, tokenAlice.tokenId, 0]);
@@ -142,8 +142,8 @@ describe('Negative integration test: ext. burnItem():', () => {
 
   itSub('zero burnFrom NFT', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'Zero', description: 'Zero transfer', tokenPrefix: 'TF'});
-    const notApprovedNft = await collection.mintToken(alice, {Substrate: bob.address});
-    const approvedNft = await collection.mintToken(alice, {Substrate: bob.address});
+    const notApprovedNft = await collection.mintToken(alice, {owner: bob.address});
+    const approvedNft = await collection.mintToken(alice, {owner: bob.address});
     await approvedNft.approve(bob, {Substrate: alice.address});
 
     // 1. Zero burnFrom of non-existing tokens not allowed:

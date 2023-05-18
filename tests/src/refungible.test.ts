@@ -37,7 +37,7 @@ describe('integration test: Refungible functionality:', () => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
     const itemCountBefore = await collection.getLastTokenId();
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     const itemCountAfter = await collection.getLastTokenId();
 
@@ -50,7 +50,7 @@ describe('integration test: Refungible functionality:', () => {
   itSub('Checking RPC methods when interacting with maximum allowed values (MAX_REFUNGIBLE_PIECES)', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    const token = await collection.mintToken(alice, MAX_REFUNGIBLE_PIECES);
+    const token = await collection.mintToken(alice, {pieces: MAX_REFUNGIBLE_PIECES});
 
     expect(await collection.getTokenBalance(token.tokenId, {Substrate: alice.address})).to.be.equal(MAX_REFUNGIBLE_PIECES);
 
@@ -58,7 +58,7 @@ describe('integration test: Refungible functionality:', () => {
     expect(await collection.getTokenBalance(token.tokenId, {Substrate: bob.address})).to.be.equal(MAX_REFUNGIBLE_PIECES);
     expect(await token.getTotalPieces()).to.be.equal(MAX_REFUNGIBLE_PIECES);
 
-    await expect(collection.mintToken(alice, MAX_REFUNGIBLE_PIECES + 1n))
+    await expect(collection.mintToken(alice, {pieces: MAX_REFUNGIBLE_PIECES + 1n}))
       .to.eventually.be.rejectedWith(/refungible\.WrongRefungiblePieces/);
   });
 
@@ -68,7 +68,7 @@ describe('integration test: Refungible functionality:', () => {
 
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 
-    const token = await collection.mintToken(alice, 10_000n);
+    const token = await collection.mintToken(alice, {pieces: 10_000n});
 
     await token.transfer(alice, {Substrate: bob.address}, 1000n);
     await token.transfer(alice, ethAcc, 900n);
@@ -108,7 +108,7 @@ describe('integration test: Refungible functionality:', () => {
 
   itSub('Set allowance for token', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
 

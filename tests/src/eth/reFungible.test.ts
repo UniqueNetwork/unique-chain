@@ -179,7 +179,7 @@ describe('Refungible: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const operator = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
@@ -208,7 +208,7 @@ describe('Refungible: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const operator = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
@@ -239,7 +239,7 @@ describe('Refungible: Plain calls', () => {
     const operator = await helper.eth.createAccountWithBalance(donor);
     const receiver = charlie;
 
-    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
@@ -334,7 +334,7 @@ describe('Refungible: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft', spender, true);
@@ -367,7 +367,7 @@ describe('Refungible: Plain calls', () => {
     const owner = bob;
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Substrate: owner.address}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
@@ -400,7 +400,7 @@ describe('Refungible: Plain calls', () => {
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
     const receiver = charlie;
 
-    const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Substrate: owner.address}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
@@ -467,7 +467,7 @@ describe('Refungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', sender);
 
-    const token = await collection.mintToken(minter, 50n, {Ethereum: sender});
+    const token = await collection.mintToken(minter, {pieces: 50n, owner: {Ethereum: sender}});
 
     {
       // Can transferCross to ethereum address:
@@ -518,8 +518,8 @@ describe('Refungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', sender);
 
-    await collection.mintToken(minter, 50n, {Ethereum: sender});
-    const nonSendersToken = await collection.mintToken(minter, 50n, {Ethereum: tokenOwner});
+    await collection.mintToken(minter, {pieces: 50n, owner: {Ethereum: sender}});
+    const nonSendersToken = await collection.mintToken(minter, {pieces: 50n, owner: {Ethereum: tokenOwner}});
 
     // Cannot transferCross someone else's token:
     const receiver = testCase === 'transfer' ? helper.address.substrateToEth(receiverSub.address) : receiverCrossSub;
@@ -594,7 +594,7 @@ describe('Refungible: Plain calls', () => {
     expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
 
     for (let i = 1n; i < 10n; i++) {
-      await collection.mintToken(minter, 100n, {Ethereum: owner.eth});
+      await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner.eth}});
       expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
     }
   });
@@ -604,7 +604,7 @@ describe('Refungible: Plain calls', () => {
     let owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
-    const {tokenId} = await collection.mintToken(minter, 100n,{Ethereum: owner.eth});
+    const {tokenId} = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner.eth}});
 
     for (let i = 1n; i < 10n; i++) {
       const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
@@ -750,7 +750,7 @@ describe('Negative tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');
@@ -772,7 +772,7 @@ describe('Negative tests', () => {
 
     const spender = await helper.eth.createAccountWithBalance(donor, 100n);
 
-    const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {pieces: 100n, owner: {Ethereum: owner}});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'rft');

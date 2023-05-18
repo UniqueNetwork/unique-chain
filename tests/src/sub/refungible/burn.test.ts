@@ -33,7 +33,7 @@ describe('Refungible: burn', () => {
 
   itSub('can burn some pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
     expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
     await token.burn(alice, 99n);
@@ -43,7 +43,7 @@ describe('Refungible: burn', () => {
 
   itSub('can burn all pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     expect(await collection.doesTokenExist(token.tokenId)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(100n);
@@ -54,7 +54,7 @@ describe('Refungible: burn', () => {
 
   itSub('burn pieces for multiple users', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     await token.transfer(alice, {Substrate: bob.address}, 60n);
 
@@ -80,7 +80,7 @@ describe('Refungible: burn', () => {
     const collection = await helper.rft.mintCollection(alice);
     await collection.setLimits(alice, {ownerCanTransfer: true});
     await collection.addAdmin(alice, {Substrate: bob.address});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     await token.burnFrom(bob, {Substrate: alice.address}, 100n);
     expect(await token.doesExist()).to.be.false;
@@ -102,8 +102,8 @@ describe('Refungible: burn negative tests', () => {
 
   itSub('cannot burn non-owned token pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice);
-    const aliceToken = await collection.mintToken(alice, 10n, {Substrate: alice.address});
-    const bobToken = await collection.mintToken(alice, 10n, {Substrate: bob.address});
+    const aliceToken = await collection.mintToken(alice, {pieces: 10n, owner: {Substrate: alice.address}});
+    const bobToken = await collection.mintToken(alice, {pieces: 10n, owner: {Substrate: bob.address}});
 
     // 1. Cannot burn non-owned token:
     await expect(bobToken.burn(alice, 0n)).to.be.rejectedWith('common.TokenValueTooLow');

@@ -37,7 +37,7 @@ before(async () => {
   itSub.ifWithPallets(`Token owner can nest ${testCase.mode.toUpperCase()} in NFT if "tokenOwner" permission set ${testCase.restrictedMode ? 'in restricted mode': ''}`, testCase.requiredPallets, async ({helper}) => {
     // Only NFT can be target for nesting in
     const targetNFTCollection = await helper.nft.mintCollection(alice);
-    const targetTokenBob = await targetNFTCollection.mintToken(alice, {Substrate: bob.address});
+    const targetTokenBob = await targetNFTCollection.mintToken(alice, {owner: bob.address});
 
     const collectionForNesting = await helper[testCase.mode].mintCollection(bob);
     // permissions should be set:
@@ -47,8 +47,8 @@ before(async () => {
 
     // 1. Bob can immediately create nested token:
     const nestedToken1 = testCase.mode === 'nft'
-      ? await (collectionForNesting as UniqueNFTCollection).mintToken(bob, targetTokenBob.nestingAccount())
-      : await (collectionForNesting as UniqueRFTCollection).mintToken(bob, 10n, targetTokenBob.nestingAccount());
+      ? await (collectionForNesting as UniqueNFTCollection).mintToken(bob, {owner: targetTokenBob.nestingAccount()})
+      : await (collectionForNesting as UniqueRFTCollection).mintToken(bob, {pieces: 10n, owner: targetTokenBob.nestingAccount()});
     expect(await nestedToken1.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
     expect(await nestedToken1.getOwner()).to.be.deep.equal(targetTokenBob.nestingAccount().toLowerCase());
 
@@ -68,7 +68,7 @@ before(async () => {
   itSub(`Token owner can nest FT in NFT if "tokenOwner" permission set  ${testCase.restrictedMode ? 'in restricted mode': ''}`, async ({helper}) => {
     // Only NFT allows nesting, permissions should be set:
     const targetNFTCollection = await helper.nft.mintCollection(alice);
-    const targetTokenBob = await targetNFTCollection.mintToken(alice, {Substrate: bob.address});
+    const targetTokenBob = await targetNFTCollection.mintToken(alice, {owner: bob.address});
 
     const collectionForNesting = await helper.ft.mintCollection(bob);
     // permissions should be set:
@@ -99,8 +99,8 @@ itSub.ifWithPallets('Owner can unnest tokens using transferFrom', [Pallets.ReFun
   const rftCollectionToBeNested = await helper.rft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
   const ftCollectionToBeNested = await helper.ft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
 
-  const nestedNFT = await nftCollectionToBeNested.mintToken(alice, tokenA.nestingAccount());
-  const nestedRFT = await rftCollectionToBeNested.mintToken(alice, 100n, tokenA.nestingAccount());
+  const nestedNFT = await nftCollectionToBeNested.mintToken(alice, {owner: tokenA.nestingAccount()});
+  const nestedRFT = await rftCollectionToBeNested.mintToken(alice, {pieces: 100n, owner: tokenA.nestingAccount()});
   const _nestedFT = await ftCollectionToBeNested.mint(alice, 100n, tokenA.nestingAccount());
   expect(await nestedNFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
   expect(await nestedRFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());

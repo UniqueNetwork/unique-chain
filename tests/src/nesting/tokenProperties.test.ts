@@ -46,7 +46,7 @@ describe('Integration Test: Token Properties', () => {
       tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) =>
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
-    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n), 100n];
+    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, {pieces: 100n}), 100n];
   }
 
   async function testReadsYetEmptyProperties(token: UniqueNFToken | UniqueRFToken) {
@@ -204,7 +204,7 @@ describe('Integration Test: Token Properties', () => {
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     const targetToken = await collectionA.mintToken(alice);
-    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collectionB.mintToken(alice, {owner: targetToken.nestingAccount()});
 
     await collectionB.addAdmin(alice, {Substrate: bob.address});
     await targetToken.transfer(alice, {Substrate: charlie.address});
@@ -242,7 +242,7 @@ describe('Integration Test: Token Properties', () => {
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     const targetToken = await collectionA.mintToken(alice);
-    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collectionB.mintToken(alice, {owner: targetToken.nestingAccount()});
 
     await collectionB.addAdmin(alice, {Substrate: bob.address});
     await targetToken.transfer(alice, {Substrate: charlie.address});
@@ -287,7 +287,7 @@ describe('Integration Test: Token Properties', () => {
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
     const targetToken = await collectionA.mintToken(alice);
-    const nestedToken = await collectionB.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collectionB.mintToken(alice, {owner: targetToken.nestingAccount()});
 
     await collectionB.addAdmin(alice, {Substrate: bob.address});
     await targetToken.transfer(alice, {Substrate: charlie.address});
@@ -349,7 +349,7 @@ describe('Integration Test: Token Properties', () => {
 
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, {pieces: testCase.pieces})
           : collection.mintToken(alice)
       );
 
@@ -386,7 +386,7 @@ describe('Integration Test: Token Properties', () => {
       });
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, {pieces: testCase.pieces})
           : collection.mintToken(alice)
       );
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
@@ -421,7 +421,7 @@ describe('Integration Test: Token Properties', () => {
       });
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, {pieces: testCase.pieces})
           : collection.mintToken(alice)
       );
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
@@ -479,7 +479,7 @@ describe('Negative Integration Test: Token Properties', () => {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {
       tokenPropertyPermissions: constitution.map(({permission}, i) => {return {key: `${i+1}`, permission};}),
     });
-    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n), 100n];
+    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, {pieces: 100n}), 100n];
   }
 
   async function getConsumedSpace(api: any, collectionId: number, tokenId: number, mode: 'NFT' | 'RFT'): Promise<number> {
@@ -680,7 +680,7 @@ describe('Negative Integration Test: Token Properties', () => {
       });
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, {pieces: testCase.pieces})
           : collection.mintToken(alice)
       );
 
@@ -709,7 +709,7 @@ describe('ReFungible token properties permissions tests', () => {
 
   async function prepare(helper: UniqueHelper): Promise<UniqueRFToken> {
     const collection = await helper.rft.mintCollection(alice);
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     await collection.addAdmin(alice, {Substrate: bob.address});
     await collection.setTokenPropertyPermissions(alice, [{key: 'fractals', permission: {mutable: true, tokenOwner: true}}]);

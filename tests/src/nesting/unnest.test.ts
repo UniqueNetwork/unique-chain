@@ -35,7 +35,7 @@ describe('Integration Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Create a nested token
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collection.mintToken(alice, {owner: targetToken.nestingAccount()});
 
     // Unnest
     await expect(nestedToken.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}), 'while unnesting').to.be.fulfilled;
@@ -74,7 +74,7 @@ describe('Integration Test: Unnesting', () => {
     const collectionRFT = await helper.rft.mintCollection(alice);
 
     // Nest and unnest
-    const token = await collectionRFT.mintToken(alice, 10n, targetToken.nestingAccount());
+    const token = await collectionRFT.mintToken(alice, {pieces: 10n, owner: targetToken.nestingAccount()});
     await expect(token.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(9n);
     expect(await token.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
@@ -162,7 +162,7 @@ describe('Integration Test: Unnesting', () => {
       });
       await collectionNested.addAdmin(owner, {Substrate: admin.address});
 
-      const targetNft = await collectionNFT.mintToken(owner, {Substrate: charlie.address});
+      const targetNft = await collectionNFT.mintToken(owner, {owner: charlie.address});
 
       let nested: UniqueFTCollection | UniqueRFToken;
       const totalAmount = 5n;
@@ -173,7 +173,7 @@ describe('Integration Test: Unnesting', () => {
         await collectionNested.mint(owner, totalAmount, {Substrate: charlie.address});
         nested = collectionNested;
       } else {
-        nested = await collectionNested.mintToken(owner, totalAmount, {Substrate: charlie.address});
+        nested = await collectionNested.mintToken(owner, {pieces: totalAmount, owner: charlie.address});
       }
 
       // transfer/burn `amount` of nested assets by `unnester`.
@@ -251,8 +251,8 @@ describe('Integration Test: Unnesting', () => {
       });
       await collectionNested.addAdmin(owner, {Substrate: admin.address});
 
-      const targetNft = await collectionNFT.mintToken(owner, {Substrate: charlie.address});
-      const nested = await collectionNested.mintToken(owner, {Substrate: charlie.address});
+      const targetNft = await collectionNFT.mintToken(owner, {owner: charlie.address});
+      const nested = await collectionNested.mintToken(owner, {owner: charlie.address});
 
       await nested.transfer(charlie, targetNft.nestingAccount());
       expect(await targetNft.getChildren()).to.be.deep.equal([{
@@ -286,7 +286,7 @@ describe('Negative Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Create a nested token
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collection.mintToken(alice, {owner: targetToken.nestingAccount()});
 
     // Try to unnest
     await expect(nestedToken.unnest(bob, targetToken, {Substrate: alice.address})).to.be.rejectedWith(/common\.ApprovedValueTooLow/);
@@ -305,7 +305,7 @@ describe('Negative Test: Unnesting', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Fail to create a nested token ouroboros
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collection.mintToken(alice, {owner: targetToken.nestingAccount()});
     await expect(targetToken.nest(alice, nestedToken)).to.be.rejectedWith(/^structure\.OuroborosDetected$/);
   });
 });

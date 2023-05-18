@@ -70,9 +70,9 @@ describe('Number of tokens per address (ReFungible)', () => {
     await collection.setLimits(alice, {accountTokenOwnershipLimit: 20});
 
     for(let i = 0; i < 10; i++){
-      await expect(collection.mintToken(alice, 10n)).to.be.not.rejected;
+      await expect(collection.mintToken(alice, {pieces: 10n})).to.be.not.rejected;
     }
-    await expect(collection.mintToken(alice, 10n)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
+    await expect(collection.mintToken(alice, {pieces: 10n})).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
     for(let i = 1; i < 11; i++) {
       await expect(collection.burnToken(alice, i, 10n)).to.be.not.rejected;
     }
@@ -383,7 +383,7 @@ describe('Collection zero limits (ReFungible)', () => {
   itSub('Limits have 0 in sponsor timeout, no limits are applied', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
     await collection.setLimits(alice, {sponsorTransferTimeout: 0});
-    const token = await collection.mintToken(alice, 3n);
+    const token = await collection.mintToken(alice, {pieces: 3n});
 
     await collection.setSponsor(alice, alice.address);
     await collection.confirmSponsorship(alice);

@@ -114,7 +114,7 @@ describe('(!negative test!) integration test: ext. destroyCollection():', () => 
       description: 'test',
       tokenPrefix: 'test',
     });
-    await collection.mintToken(alice, {Substrate: alice.address});
+    await collection.mintToken(alice, {owner: alice.address});
     await expect(collection.burn(alice)).to.be.rejectedWith(/common\.CantDestroyNotEmptyCollection/);
   });
 });

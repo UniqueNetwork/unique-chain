@@ -32,7 +32,7 @@ describe('Negative Test: Unnesting', () => {
   itSub('Admin (NFT): disallows an Admin to unnest someone else\'s token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {limits: {ownerCanTransfer: true}, permissions: {access: 'AllowList', mintMode: true, nesting: {collectionAdmin: true}}});
     //await collection.addAdmin(alice, {Substrate: bob.address});
-    const targetToken = await collection.mintToken(alice, {Substrate: bob.address});
+    const targetToken = await collection.mintToken(alice, {owner: bob.address});
     await collection.addToAllowList(alice, {Substrate: bob.address});
     await collection.addToAllowList(alice, targetToken.nestingAccount());
 
@@ -42,7 +42,7 @@ describe('Negative Test: Unnesting', () => {
       .to.be.rejectedWith(/common\.NoPermission/);
 
     // Try to unnest a token belonging to someone else as collection admin
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collection.mintToken(alice, {owner: targetToken.nestingAccount()});
     await expect(nestedToken.unnest(alice, targetToken, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.AddressNotInAllowlist/);
 
@@ -58,7 +58,7 @@ describe('Negative Test: Unnesting', () => {
     itSub(`Fungible: disallows a non-Owner to unnest someone else's token ${testCase.restrictedMode ? '(Restricted nesting)' : ''}`, async ({helper}) => {
       const collectionNFT = await helper.nft.mintCollection(alice);
       const collectionFT = await helper.ft.mintCollection(alice);
-      const targetToken = await collectionNFT.mintToken(alice, {Substrate: bob.address});
+      const targetToken = await collectionNFT.mintToken(alice, {owner: bob.address});
 
       await collectionNFT.setPermissions(alice, {nesting: {
         collectionAdmin: true, tokenOwner: true, restricted: testCase.restrictedMode ? [collectionFT.collectionId] : null,

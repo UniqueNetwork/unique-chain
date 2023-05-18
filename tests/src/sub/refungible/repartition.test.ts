@@ -33,7 +33,7 @@ describe('integration test: Refungible functionality:', () => {
 
   itSub('Repartition', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     expect(await token.repartition(alice, 200n)).to.be.true;
     expect(await token.getBalance({Substrate: alice.address})).to.be.equal(200n);
@@ -57,7 +57,7 @@ describe('integration test: Refungible functionality:', () => {
 
   itSub('Repartition with increased amount', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
     await token.repartition(alice, 200n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
     const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemCreated');
@@ -76,7 +76,7 @@ describe('integration test: Refungible functionality:', () => {
 
   itSub('Repartition with decreased amount', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
     await token.repartition(alice, 50n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
     const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemDestroyed');

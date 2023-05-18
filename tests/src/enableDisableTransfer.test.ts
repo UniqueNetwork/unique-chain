@@ -37,7 +37,7 @@ describe('Enable/Disable Transfers', () => {
         transfersEnabled: true,
       },
     });
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
     await token.transfer(alice, {Substrate: bob.address});
     expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
   });
@@ -51,7 +51,7 @@ describe('Enable/Disable Transfers', () => {
         transfersEnabled: false,
       },
     });
-    const token = await collection.mintToken(alice, {Substrate: alice.address});
+    const token = await collection.mintToken(alice, {owner: alice.address});
     await expect(token.transfer(alice, {Substrate: bob.address})).to.be.rejectedWith(/common\.TransferNotAllowed/);
   });
 });

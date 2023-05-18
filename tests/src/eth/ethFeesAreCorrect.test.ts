@@ -37,8 +37,8 @@ describe('Eth fees are correct', () => {
     const receiver = await helper.eth.createAccountWithBalance(donor);
     const aliceEth = helper.address.substrateToEth(alice.address);
 
-    const {tokenId: tokenA} = await collection.mintToken(minter, {Ethereum: owner});
-    const {tokenId: tokenB} = await collection.mintToken(minter, {Ethereum: aliceEth});
+    const {tokenId: tokenA} = await collection.mintToken(minter, {owner: {Ethereum: owner}});
+    const {tokenId: tokenB} = await collection.mintToken(minter, {owner: {Ethereum: aliceEth}});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);

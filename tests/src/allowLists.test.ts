@@ -316,9 +316,9 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
         await collection.addToAllowList(alice, {Substrate: bob.address});
 
         if (allowlistedMintingShouldFail)
-          await expect(collection.mintToken(bob, {Substrate: bob.address})).to.be.rejectedWith(appropriateRejectionMessage);
+          await expect(collection.mintToken(bob, {owner: bob.address})).to.be.rejectedWith(appropriateRejectionMessage);
         else
-          await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
+          await expect(collection.mintToken(bob, {owner: bob.address})).to.not.be.rejected;
       },
     );
 
@@ -328,14 +328,14 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
         itSub('With the condtions above, tokens can be created by owner', async ({helper}) => {
           const collection = await helper.nft.mintCollection(alice, {});
           await collection.setPermissions(alice, permissions);
-          await expect(collection.mintToken(alice, {Substrate: alice.address})).to.not.be.rejected;
+          await expect(collection.mintToken(alice, {owner: alice.address})).to.not.be.rejected;
         });
 
         itSub('With the condtions above, tokens can be created by admin', async ({helper}) => {
           const collection = await helper.nft.mintCollection(alice, {});
           await collection.setPermissions(alice, permissions);
           await collection.addAdmin(alice, {Substrate: bob.address});
-          await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
+          await expect(collection.mintToken(bob, {owner: bob.address})).to.not.be.rejected;
         });
 
         if (!allowlistedMintingShouldFail) allowlistedMintingTest();
@@ -345,7 +345,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
         itSub('With the condtions above, tokens can\'t be created by non-priviliged non-allow-listed address', async ({helper}) => {
           const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
           await collection.setPermissions(alice, permissions);
-          await expect(collection.mintToken(bob, {Substrate: bob.address}))
+          await expect(collection.mintToken(bob, {owner: bob.address}))
             .to.be.rejectedWith(appropriateRejectionMessage);
         });
 

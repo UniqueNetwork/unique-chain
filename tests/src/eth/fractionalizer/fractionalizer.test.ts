@@ -414,7 +414,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const nftCollection = await helper.nft.mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(donor, 20n);
-    const nftToken = await nftCollection.mintToken(donor, {Ethereum: owner});
+    const nftToken = await nftCollection.mintToken(donor, {owner: {Ethereum: owner}});
     await helper.executeExtrinsic(donor, 'api.tx.unique.setTransfersEnabledFlag', [nftCollection.collectionId, false], true);
     const nftCollectionAddress = helper.ethAddress.fromCollectionId(nftCollection.collectionId);
     const {contract: fractionalizer} = await initContract(helper, owner);

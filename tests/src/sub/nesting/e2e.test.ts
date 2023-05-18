@@ -37,7 +37,7 @@ describe('Composite nesting tests', () => {
     expect((await targetToken.getChildren()).length).to.be.equal(0, 'Children length check at creation');
 
     // Create a nested NFT token
-    const tokenA = await collectionA.mintToken(alice, targetToken.nestingAccount());
+    const tokenA = await collectionA.mintToken(alice, {owner: targetToken.nestingAccount()});
     expect(await targetToken.getChildren()).to.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
     ]).and.has.length(1);
@@ -65,7 +65,7 @@ describe('Composite nesting tests', () => {
     ]).and.has.length(2);
 
     // Create a refungible token in another collection and then nest
-    const tokenC = await collectionC.mintToken(alice, 10n);
+    const tokenC = await collectionC.mintToken(alice, {pieces: 10n});
     await tokenC.transfer(alice, targetToken.nestingAccount(), 2n);
     expect(await targetToken.getChildren()).to.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
@@ -108,7 +108,7 @@ describe('Composite nesting tests', () => {
     const targetToken = await collection.mintToken(alice);
 
     // Create an immediately nested token
-    const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
+    const nestedToken = await collection.mintToken(alice, {owner: targetToken.nestingAccount()});
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
     expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
 

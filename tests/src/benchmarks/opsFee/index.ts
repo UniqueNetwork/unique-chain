@@ -132,7 +132,7 @@ async function erc721CalculateFeeGas(
     {Substrate: donor.address},
     () => collection.mintToken(
       donor,
-      {Substrate: donor.address},
+      {owner: donor.address},
     ),
   )));
 
@@ -153,8 +153,10 @@ async function erc721CalculateFeeGas(
     {Substrate: donor.address},
     () => collection.mintToken(
       donor,
-      {Ethereum: ethSigner},
-      [{key: 'URI', value: 'Test URI'}],
+      {
+        owner:  {Ethereum: ethSigner},
+        properties: [{key: 'URI', value: 'Test URI'}],
+      },
     ),
   )));
 

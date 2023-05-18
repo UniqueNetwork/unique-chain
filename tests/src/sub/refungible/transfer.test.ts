@@ -34,7 +34,7 @@ describe('Refungible transfer tests', () => {
 
   itSub('Can transfer token pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const token = await collection.mintToken(alice, 100n);
+    const token = await collection.mintToken(alice, {pieces: 100n});
 
     expect(await token.transfer(alice, {Substrate: bob.address}, 60n)).to.be.true;
     // 1. Can transfer less or equal than have:
@@ -44,8 +44,8 @@ describe('Refungible transfer tests', () => {
 
   itSub('Cannot transfer incorrect amount of token pieces', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const tokenAlice = await collection.mintToken(alice, 10n, {Substrate: alice.address});
-    const tokenBob = await collection.mintToken(alice, 10n, {Substrate: bob.address});
+    const tokenAlice = await collection.mintToken(alice, {pieces: 10n, owner: alice.address});
+    const tokenBob = await collection.mintToken(alice, {pieces: 10n, owner: bob.address});
 
     // 1. Alice cannot transfer Bob's token:
     await expect(tokenBob.transfer(alice, {Substrate: charlie.address}, 0n)).to.be.rejectedWith('common.TokenValueTooLow');

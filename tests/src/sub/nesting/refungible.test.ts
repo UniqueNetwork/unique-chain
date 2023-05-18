@@ -37,8 +37,8 @@ itSub.ifWithPallets('ReFungible: getTopmostOwner works correctly with Nesting', 
   });
   const collectionRFT = await helper.rft.mintCollection(alice);
 
-  const nft = await collectionNFT.mintToken(alice, {Substrate: alice.address});
-  const rft = await collectionRFT.mintToken(alice, 100n, {Substrate: alice.address});
+  const nft = await collectionNFT.mintToken(alice, {owner: alice.address});
+  const rft = await collectionRFT.mintToken(alice, {pieces: 100n, owner: alice.address});
 
   expect(await rft.getTopmostOwner()).deep.equal({Substrate: alice.address});
 

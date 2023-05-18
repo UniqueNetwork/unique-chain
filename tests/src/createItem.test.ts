@@ -186,7 +186,7 @@ describe('Negative integration test: ext. createItem():', () => {
 
   itSub('Regular user cannot create new item in NFT collection', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = () => collection.mintToken(bob, {Substrate: bob.address});
+    const mintTx = () => collection.mintToken(bob, {owner: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
   itSub('Regular user cannot create new item in Fungible collection', async ({helper}) => {
@@ -196,7 +196,7 @@ describe('Negative integration test: ext. createItem():', () => {
   });
   itSub.ifWithPallets('Regular user cannot create new item in ReFungible collection', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = () => collection.mintToken(bob, 100n, {Substrate: bob.address});
+    const mintTx = () => collection.mintToken(bob, {pieces: 100n, owner: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
   });
 
@@ -204,7 +204,7 @@ describe('Negative integration test: ext. createItem():', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
       tokenPropertyPermissions: [{key: 'k', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}],
     });
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    const mintTx = () => collection.mintToken(alice, {owner: bob.address, properties: [{key: 'k', value: 'v'}]});
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
@@ -212,26 +212,26 @@ describe('Negative integration test: ext. createItem():', () => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
       tokenPropertyPermissions: [{key: 'k', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
     });
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    const mintTx = () => collection.mintToken(alice, {owner: bob.address, properties: [{key: 'k', value: 'v'}]});
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Adding property without access rights', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    const mintTx = () => collection.mintToken(alice, {owner: bob.address, properties: [{key: 'k', value: 'v'}]});
     await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Adding more than 64 prps', async ({helper}) => {
-    const props: IProperty[] = [];
+    const properties: IProperty[] = [];
 
     for (let i = 0; i < 65; i++) {
-      props.push({key: `key${i}`, value: `value${i}`});
+      properties.push({key: `key${i}`, value: `value${i}`});
     }
 
 
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, props);
+    const mintTx = () => collection.mintToken(alice, {owner: bob.address, properties});
     await expect(mintTx()).to.be.rejectedWith('Verification Error');
   });
 
@@ -242,10 +242,10 @@ describe('Negative integration test: ext. createItem():', () => {
         {key: 'k2', permission: {mutable: true, collectionAdmin: true, tokenOwner: true}},
       ],
     });
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [
+    const mintTx = () => collection.mintToken(alice, {owner: bob.address, properties: [
       {key: 'k1', value: 'vvvvvv'.repeat(5000)},
       {key: 'k2', value: 'vvv'.repeat(5000)},
-    ]);
+    ]});
     await expect(mintTx()).to.be.rejectedWith(/common\.NoSpaceForProperty/);
   });
 
