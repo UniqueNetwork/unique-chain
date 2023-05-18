@@ -558,7 +558,7 @@ describe('EVM token properties negative', () => {
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
-    itEth.ifWithPallets(`[${testCase.mode}] Can't be multiple set/read for non-existed token`, testCase.requiredPallets, async({helper}) => {
+    itEth.ifWithPallets(`[${testCase.mode}] Can't be multiple set/read for non-existent token`, testCase.requiredPallets, async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
@@ -583,7 +583,7 @@ describe('EVM token properties negative', () => {
     {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
-    itEth.ifWithPallets(`[${testCase.mode}] Can' be deleted for non-existed token`, testCase.requiredPallets, async({helper}) => {
+    itEth.ifWithPallets(`[${testCase.mode}] Can't be deleted for non-existent token`, testCase.requiredPallets, async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const collection = await helper[testCase.mode].mintCollection(alice, {
         tokenPropertyPermissions: [{

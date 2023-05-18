@@ -1293,21 +1293,25 @@ impl<T: Config> Pallet<T> {
 				}
 
 				PropertyPermission {
-					collection_admin,
-					token_owner,
+					collection_admin: collection_admin_permission,
+					token_owner: token_owner_permission,
 					..
 				} => {
 					//TODO: investigate threats during public minting.
-					let is_token_create =
-						is_token_create && (collection_admin || token_owner) && value.is_some();
-					let partial_permission =
-						is_token_create || (collection_admin && is_collection_admin);
+					let is_valid_token_create = is_token_create
+						&& (collection_admin_permission || token_owner_permission)
+						&& value.is_some();
+					let admin_role_match = collection_admin_permission && is_collection_admin;
+					let mut owner_role_match = || -> Result<bool, DispatchError> {
+						Ok(token_owner_permission && is_token_owner()?)
+					};
 
-					if !(partial_permission || (token_owner && is_token_owner()?)) {
+					if !(is_valid_token_create || admin_role_match || owner_role_match()?) {
 						fail!(<Error<T>>::NoPermission);
 					}
 
-					let has_token_owner = !partial_permission && token_owner;
+					let has_token_owner =
+						!(is_valid_token_create || admin_role_match) && token_owner_permission;
 					let need_check_token_exist = !(has_token_owner && is_token_owner()?);
 					if need_check_token_exist && !is_token_exist() {
 						fail!(<Error<T>>::TokenNotFound);
