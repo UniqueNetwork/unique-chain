@@ -1284,9 +1284,9 @@ impl<T: Config> Pallet<T> {
 						fail!(<Error<T>>::NoPermission);
 					}
 
-					let has_token_owner =
+					let is_token_owner_evaluated =
 						!(is_valid_token_create || admin_role_match) && token_owner_permission;
-					let need_check_token_exist = !(has_token_owner && is_token_owner()?);
+					let need_check_token_exist = !(is_token_owner_evaluated && is_token_owner()?);
 					if need_check_token_exist && !is_token_exist() {
 						fail!(<Error<T>>::TokenNotFound);
 					}
