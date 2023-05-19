@@ -288,7 +288,7 @@ use sp_runtime::DispatchError;
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
-					Self::get_freezed_balance(&staker).map(|b| {
+					Self::get_frozen_balance(&staker).map(|b| {
 						let new_state = b.checked_sub(&amount).unwrap_or_default();
 						Self::set_freeze_unchecked(&staker, new_state);
 					});
@@ -395,17 +395,17 @@ use sp_runtime::DispatchError;
 
 		// 	let pre_state: BTreeMap<T::AccountId, BalanceOf<T>> =
 		// 		Decode::decode(&mut &pre_state[..]).map_err(|_| "failed to decode pre_state")?;
-		// 	for (staker, freezed_by_promo) in pre_state.into_iter() {
+		// 	for (staker, frozen_by_promo) in pre_state.into_iter() {
 		// 		let storage_freeze_state = <<T as Config>::Currency as InspectFreeze<
 		// 			T::AccountId,
 		// 		>>::balance_frozen(
 		// 			&<T as Config>::FreezeIdentifier::get(), staker
 		// 		);
-		// 		if storage_freeze_state != freezed_by_promo {
+		// 		if storage_freeze_state != frozen_by_promo {
 		// 			is_ok = false;
 		// 			log::error!(
-		// 						"Incorrect freezed balance for {:?}. New balance: {:?}. Before runtime upgrade: locked by promo - {:?}",
-		// 						staker, storage_freeze_state, freezed_by_promo
+		// 						"Incorrect frozen balance for {:?}. New balance: {:?}. Before runtime upgrade: locked by promo - {:?}",
+		// 						staker, storage_freeze_state, frozen_by_promo
 		// 					);
 		// 		}
 
@@ -481,9 +481,9 @@ use sp_runtime::DispatchError;
 			// checks that we can freeze `amount` on the `staker` account.
 			ensure!(
 				amount
-					<= match Self::get_freezed_balance(&staker_id) {
-						Some(freezed_by_pallet) => balance
-							.checked_sub(&freezed_by_pallet)
+					<= match Self::get_frozen_balance(&staker_id) {
+						Some(frozen_by_pallet) => balance
+							.checked_sub(&frozen_by_pallet)
 							.ok_or(ArithmeticError::Underflow)?,
 						None => balance,
 					},
@@ -836,7 +836,7 @@ use sp_runtime::DispatchError;
 			stakers.into_iter().try_for_each(|s| -> Result<_, DispatchError> {
 				if let Some(lock) = Self::get_locked_balance(&s) {
 					
-					if let Some(_) = Self::get_freezed_balance(&s) {
+					if let Some(_) = Self::get_frozen_balance(&s) {
 						return Err(Error::<T>::InconsistencyState.into())
 					}
 					
@@ -972,12 +972,12 @@ impl<T: Config> Pallet<T> {
 	// 		.ok_or(ArithmeticError::Overflow.into())
 	// }
 
-	/// Adds the balance to freezed by the pallet.
+	/// Adds the balance to frozen by the pallet.
 	///
 	/// - `staker`: staker account.
-	/// - `amount`: amount of added freezed funds.
+	/// - `amount`: amount of added frozen funds.
 	fn add_freeze_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-		Self::get_freezed_balance(staker)
+		Self::get_frozen_balance(staker)
 			.unwrap_or_default()
 			.checked_add(&amount)
 			.map(|freeze| Self::set_freeze_unchecked(staker, freeze))
@@ -1004,10 +1004,10 @@ impl<T: Config> Pallet<T> {
 	// 	}
 	// }
 
-	/// Sets the new state of a balance freezed by the pallet.
+	/// Sets the new state of a balance frozen by the pallet.
 	///
 	/// - `staker`: staker account.
-	/// - `amount`: amount of freezed funds.
+	/// - `amount`: amount of frozen funds.
 	fn set_freeze_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
 		if amount.is_zero() {
 			<<T as Config>::Currency as MutateFreeze<T::AccountId>>::thaw(
@@ -1034,10 +1034,10 @@ impl<T: Config> Pallet<T> {
 			.find(|l| l.id == LOCK_IDENTIFIER)
 	}
 
-	/// Returns the balance freezed by the pallet for the staker.
+	/// Returns the balance frozen by the pallet for the staker.
 	///
 	/// - `staker`: staker account.
-	pub fn get_freezed_balance(staker: &T::AccountId) -> Option<BalanceOf<T>> {
+	pub fn get_frozen_balance(staker: &T::AccountId) -> Option<BalanceOf<T>> {
 		let res = <<T as Config>::Currency as InspectFreeze<T::AccountId>>::balance_frozen(
 			&T::FreezeIdentifier::get(),
 			staker,
