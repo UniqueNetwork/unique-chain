@@ -18,11 +18,13 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, usingPlaygrounds} from './util';
 
 describe('Native fungible', () => {
+  let root: IKeyringPair;
   let alice: IKeyringPair;
   let bob: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
+      root = await privateKey('//Alice');
       const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([10n, 10n], donor);
     });
@@ -199,12 +201,12 @@ describe('Native fungible', () => {
   });
 
   itSub('force_repair_item()', async ({helper}) => {
-    await expect(helper.executeExtrinsic(
-      alice,
+    await expect(helper.getSudo().executeExtrinsic(
+      root,
       'api.tx.unique.forceRepairItem',
       [0, 0],
       true,
-    )).to.be.rejectedWith('BadOrigin');
+    )).to.be.rejectedWith('common.UnsupportedOperation');
   });
 
   itSub('Nest into NFT token()', async ({helper}) => {
