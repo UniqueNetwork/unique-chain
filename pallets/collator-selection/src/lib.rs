@@ -92,6 +92,7 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+	use super::*;
 	pub use crate::weights::WeightInfo;
 	use core::ops::Div;
 	use frame_support::{
@@ -100,8 +101,10 @@ pub mod pallet {
 		pallet_prelude::*,
 		sp_runtime::traits::{AccountIdConversion, CheckedSub, Saturating, Zero},
 		traits::{
-			Currency, EnsureOrigin, ExistenceRequirement::KeepAlive, ReservableCurrency,
+			EnsureOrigin,
+			fungible::{Balanced, BalancedHold, Inspect, InspectHold, Mutate, MutateHold},
 			ValidatorRegistration,
+			tokens::{Precision, Preservation},
 		},
 		BoundedVec, PalletId,
 	};
@@ -158,6 +161,9 @@ pub mod pallet {
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
+
+		#[pallet::constant]
+		type LicenceBondIdentifier: Get<<<Self as pallet_configuration::Config>::Currency as InspectHold<Self::AccountId>>::Reason>;
 	}
 
 	#[pallet::pallet]
@@ -361,7 +367,7 @@ pub mod pallet {
 
 			let deposit = <LicenseBond<T>>::get();
 
-			T::Currency::reserve(&who, deposit)?;
+			T::Currency::hold(&T::LicenceBondIdentifier::get(), &who, deposit)?;
 			LicenseDepositOf::<T>::insert(who.clone(), deposit);
 
 			Self::deposit_event(Event::LicenseObtained {
@@ -523,17 +529,24 @@ pub mod pallet {
 						let slashed = T::SlashRatio::get() * deposit;
 						let remaining = deposit - slashed;
 
-						let (imbalance, _) = T::Currency::slash_reserved(who, slashed);
+						let (imbalance, _) =
+							T::Currency::slash(&T::LicenceBondIdentifier::get(), who, slashed);
 						//T::Currency::unreserve(who, remaining);
 						deposit_returned = remaining;
 
-						T::Currency::resolve_creating(&T::TreasuryAccountId::get(), imbalance);
+						T::Currency::resolve(&T::TreasuryAccountId::get(), imbalance)
+							.map_err(|_| DispatchError::Other("Failed to deposit imbalance"))?;
 					} else {
 						//T::Currency::unreserve(who, deposit);
 						deposit_returned = deposit;
 					}
 
-					T::Currency::unreserve(who, deposit_returned);
+					T::Currency::release(
+						&T::LicenceBondIdentifier::get(),
+						who,
+						deposit_returned,
+						Precision::Exact,
+					)?;
 					Ok(())
 				} else {
 					Err(Error::<T>::NoLicense.into())
@@ -594,12 +607,12 @@ pub mod pallet {
 		fn note_author(author: T::AccountId) {
 			let pot = Self::account_id();
 			// assumes an ED will be sent to pot.
-			let reward = T::Currency::free_balance(&pot)
+			let reward = T::Currency::balance(&pot)
 				.checked_sub(&T::Currency::minimum_balance())
 				.unwrap_or_else(Zero::zero)
 				.div(2u32.into());
 			// `reward` is half of pot account minus ED, this should never fail.
-			let _success = T::Currency::transfer(&pot, &author, reward, KeepAlive);
+			let _success = T::Currency::transfer(&pot, &author, reward, Preservation::Preserve);
 			debug_assert!(_success.is_ok());
 			<LastAuthoredBlock<T>>::insert(author, frame_system::Pallet::<T>::block_number());
 
