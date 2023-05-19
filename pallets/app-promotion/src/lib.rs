@@ -101,7 +101,7 @@ pub mod pallet {
 		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId, weights::Weight,
 	};
 	use frame_system::pallet_prelude::*;
-use sp_runtime::DispatchError;
+	use sp_runtime::DispatchError;
 
 	#[pallet::config]
 	pub trait Config:
@@ -109,8 +109,11 @@ use sp_runtime::DispatchError;
 	{
 		/// Type to interact with the native token
 		type Currency: MutateFreeze<Self::AccountId>
-			+ Mutate<Self::AccountId> 
-			+ ExtendedLockableCurrency<Self::AccountId, Balance = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance>;
+			+ Mutate<Self::AccountId>
+			+ ExtendedLockableCurrency<
+				Self::AccountId,
+				Balance = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
+			>;
 
 		/// Type for interacting with collections
 		type CollectionHandler: CollectionHandler<
@@ -130,7 +133,9 @@ use sp_runtime::DispatchError;
 
 		/// Freeze identifier used by the pallet
 		#[pallet::constant]
-		type FreezeIdentifier: Get<<<Self as Config>::Currency as InspectFreeze<Self::AccountId>>::Id>;
+		type FreezeIdentifier: Get<
+			<<Self as Config>::Currency as InspectFreeze<Self::AccountId>>::Id,
+		>;
 
 		/// In relay blocks.
 		#[pallet::constant]
@@ -215,7 +220,7 @@ use sp_runtime::DispatchError;
 		/// Errors caused by insufficient staked balance.
 		InsufficientStakedBalance,
 		/// Errors caused by incorrect state of a staker in context of the pallet.
-		InconsistencyState
+		InconsistencyState,
 	}
 
 	/// Stores the total staked amount.
@@ -833,25 +838,26 @@ use sp_runtime::DispatchError;
 		) -> DispatchResult {
 			ensure_signed(origin)?;
 
-			stakers.into_iter().try_for_each(|s| -> Result<_, DispatchError> {
-				if let Some(lock) = Self::get_locked_balance(&s) {
-					
-					if let Some(_) = Self::get_frozen_balance(&s) {
-						return Err(Error::<T>::InconsistencyState.into())
-					}
-					
-					<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
-						LOCK_IDENTIFIER,
-						&s,
-					);
+			stakers
+				.into_iter()
+				.try_for_each(|s| -> Result<_, DispatchError> {
+					if let Some(lock) = Self::get_locked_balance(&s) {
+						if let Some(_) = Self::get_frozen_balance(&s) {
+							return Err(Error::<T>::InconsistencyState.into());
+						}
 
-					Self::set_freeze_unchecked(&s, lock.amount);
-					Ok(())
-				} else {
-					Ok(())
-				}
-			})?;
-			
+						<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
+							LOCK_IDENTIFIER,
+							&s,
+						);
+
+						Self::set_freeze_unchecked(&s, lock.amount);
+						Ok(())
+					} else {
+						Ok(())
+					}
+				})?;
+
 			Ok(())
 		}
 	}
