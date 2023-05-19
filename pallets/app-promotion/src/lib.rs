@@ -212,8 +212,6 @@ use sp_runtime::DispatchError;
 		PendingForBlockOverflow,
 		/// The error is due to the fact that the collection/contract must already be sponsored in order to perform the action.
 		SponsorNotSet,
-		/// 
-		IncorrectLockedBalanceOperation,
 		/// Errors caused by insufficient staked balance.
 		InsufficientStakedBalance,
 		/// Errors caused by incorrect state of a staker in context of the pallet.
