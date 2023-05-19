@@ -1,5 +1,5 @@
 use codec::EncodeLike;
-use frame_support::{traits::LockableCurrency, WeakBoundedVec, Parameter, dispatch::DispatchResult};
+use frame_support::{traits::tokens::Balance, WeakBoundedVec, Parameter, dispatch::DispatchResult};
 
 use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBalances};
 use pallet_common::CollectionHandle;
@@ -16,19 +16,25 @@ pub(crate) const DEFAULT_NUMBER_PAYOUTS: u8 = 20;
 
 /// This trait was defined because `LockableCurrency`
 /// has no way to know the state of the lock for an account.
-pub trait ExtendedLockableCurrency<AccountId: Parameter>: LockableCurrency<AccountId> {
+pub trait ExtendedLockableCurrency {
+	type Balance: Balance;
+	type MaxLocks: Get<u32>;
+	type AccountId: Parameter;
+
 	/// Returns lock balance for an account. Allows to determine the cause of the lock.
 	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
 	where
-		KArg: EncodeLike<AccountId>;
+		KArg: EncodeLike<Self::AccountId>;
 }
 
-impl<T: BalancesConfig<I>, I: 'static> ExtendedLockableCurrency<T::AccountId>
-	for PalletBalances<T, I>
-{
+impl<T: BalancesConfig> ExtendedLockableCurrency for PalletBalances<T> {
+	type Balance = T::Balance;
+	type MaxLocks = T::MaxLocks;
+	type AccountId = T::AccountId;
+
 	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
 	where
-		KArg: EncodeLike<T::AccountId>,
+		KArg: EncodeLike<Self::AccountId>,
 	{
 		Self::locks(who)
 	}

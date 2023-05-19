@@ -42,7 +42,7 @@ pub mod weights;
 mod pallet {
 	use super::*;
 	use frame_support::{
-		traits::{fungible, Get, ReservableCurrency, Currency},
+		traits::{fungible, Get},
 		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType},
 		log,
 	};

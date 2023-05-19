@@ -69,9 +69,7 @@ use up_data_structs::CollectionId;
 
 use frame_support::{
 	dispatch::{DispatchResult},
-	traits::{
-		Currency, Get, LockableCurrency, WithdrawReasons, tokens::Balance, ExistenceRequirement,
-	},
+	traits::{fungible, Get, tokens::Balance},
 	ensure, BoundedVec,
 };
 
@@ -89,26 +87,24 @@ pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
 
 const PENDING_LIMIT_PER_BLOCK: u32 = 3;
 
-type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+type BalanceOf<T> = <T as pallet_balances::Config>::Balance;
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::{
-		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId,
-		traits::ReservableCurrency, weights::Weight,
+		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId, weights::Weight,
+		traits::tokens::Preservation,
 	};
 	use frame_system::pallet_prelude::*;
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config + pallet_evm::Config + pallet_configuration::Config
+		frame_system::Config
+		+ pallet_evm::Config
+		+ pallet_configuration::Config
+		+ pallet_balances::Config
 	{
-		/// Type to interact with the native token
-		type Currency: ExtendedLockableCurrency<Self::AccountId>
-			+ ReservableCurrency<Self::AccountId>;
-
 		/// Type for interacting with collections
 		type CollectionHandler: CollectionHandler<
 			AccountId = Self::AccountId,
@@ -264,7 +260,10 @@ pub mod pallet {
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
+	where
+		<T as pallet_balances::Config>::FreezeIdentifier: From<[u8; 8]>,
+	{
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
 		/// implies the execution of a strictly limited number of relatively lightweight operations.
 		/// A separate benchmark has been implemented to scale the weight depending on the number of pendings.
@@ -292,7 +291,8 @@ pub mod pallet {
 	impl<T: Config> Pallet<T>
 	where
 		T::BlockNumber: From<u32> + Into<u32>,
-		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>,
+		BalanceOf<T>: Sum + From<u128>,
+		T::FreezeIdentifier: From<[u8; 8]>,
 	{
 		/// Sets an address as the the admin.
 		///
@@ -338,8 +338,9 @@ pub mod pallet {
 			);
 			let config = <PalletConfiguration<T>>::get();
 
-			let balance =
-				<<T as Config>::Currency as Currency<T::AccountId>>::free_balance(&staker_id);
+			let balance = <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::balance(
+				&staker_id,
+			);
 
 			// checks that we can lock `amount` on the `staker` account.
 			ensure!(
@@ -581,7 +582,7 @@ pub mod pallet {
 
 			{
 				// Address handled in the last payout loop iteration (below)
-				let last_id = RefCell::new(None);
+				let last_id: RefCell<Option<T::AccountId>> = RefCell::new(None);
 				// Block number (as a part of the key) for which calculation was performed in the last payout loop iteration
 				let mut last_staked_calculated_block = Default::default();
 				// Reward balance for the address in the iteration
@@ -599,11 +600,11 @@ pub mod pallet {
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
-							<<T as Config>::Currency as Currency<T::AccountId>>::transfer(
+							<pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::transfer(
 								&T::TreasuryAccountId::get(),
 								last_id,
 								*income_acc.borrow(),
-								ExistenceRequirement::KeepAlive,
+								Preservation::Preserve,
 							)?;
 
 							Self::add_lock_balance(last_id, *income_acc.borrow())?;
@@ -684,7 +685,10 @@ pub mod pallet {
 	}
 }
 
-impl<T: Config> Pallet<T> {
+impl<T: Config> Pallet<T>
+where
+	T::FreezeIdentifier: From<[u8; 8]>,
+{
 	/// The account address of the app promotion pot.
 	///
 	/// This actually does computation. If you need to keep using it, then make sure you cache the
@@ -803,19 +807,22 @@ impl<T: Config> Pallet<T> {
 	///
 	/// - `staker`: staker account.
 	/// - `amount`: amount of locked funds.
+	///
+	/// Panics if failed to update freezes
 	fn set_lock_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
 		if amount.is_zero() {
-			<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
-				LOCK_IDENTIFIER,
+			<pallet_balances::Pallet<T> as fungible::freeze::Mutate<T::AccountId>>::thaw(
+				&LOCK_IDENTIFIER.into(),
 				&staker,
-			);
+			)
+			.unwrap()
 		} else {
-			<<T as Config>::Currency as LockableCurrency<T::AccountId>>::set_lock(
-				LOCK_IDENTIFIER,
+			<pallet_balances::Pallet<T> as fungible::freeze::Mutate<T::AccountId>>::set_freeze(
+				&LOCK_IDENTIFIER.into(),
 				staker,
 				amount,
-				WithdrawReasons::all(),
 			)
+			.unwrap()
 		}
 	}
 
@@ -825,7 +832,7 @@ impl<T: Config> Pallet<T> {
 	pub fn get_locked_balance(
 		staker: impl EncodeLike<T::AccountId>,
 	) -> Option<BalanceLock<BalanceOf<T>>> {
-		<<T as Config>::Currency as ExtendedLockableCurrency<T::AccountId>>::locks(staker)
+		<pallet_balances::Pallet<T> as ExtendedLockableCurrency>::locks(staker)
 			.into_iter()
 			.find(|l| l.id == LOCK_IDENTIFIER)
 	}
@@ -926,7 +933,7 @@ impl<T: Config> Pallet<T> {
 
 impl<T: Config> Pallet<T>
 where
-	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum,
+	BalanceOf<T>: Sum,
 {
 	/// Returns the amount reserved by the pending.
 	/// If `staker` is `None`, returns the total pending.

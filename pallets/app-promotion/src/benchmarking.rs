@@ -31,13 +31,14 @@ const SEED: u32 = 0;
 
 fn set_admin<T>() -> Result<T::AccountId, sp_runtime::DispatchError>
 where
-	T: Config + pallet_unique::Config + pallet_evm_migration::Config,
+	T: Config + pallet_unique::Config + pallet_evm_migration::Config + pallet_balances::Config,
 	T::BlockNumber: From<u32> + Into<u32>,
-	<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>,
+	<T as pallet_balances::Config>::Balance: Sum + From<u128>,
+	<T as pallet_balances::Config>::FreezeIdentifier: From<[u8; 8]>,
 {
 	let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 
-	<T as Config>::Currency::make_free_balance_be(
+	<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::set_balance(
 		&pallet_admin,
 		Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value(),
 	);
@@ -52,9 +53,10 @@ where
 
 benchmarks! {
 	where_clause{
-		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
+		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config + pallet_balances::Config,
 		T::BlockNumber: From<u32> + Into<u32>,
-		<<T as Config>::Currency as Currency<T::AccountId>>::Balance: Sum + From<u128>
+		<T as pallet_balances::Config>::Balance: Sum + From<u128>,
+		<T as pallet_balances::Config>::FreezeIdentifier: From<[u8; 8]>
 	}
 
 	on_initialize {
@@ -63,7 +65,7 @@ benchmarks! {
 
 		(0..b).try_for_each(|index| {
 			let staker = account::<T::AccountId>("staker", index, SEED);
-			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+			<pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 			PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())?;
 			PromototionPallet::<T>::unstake_all(RawOrigin::Signed(staker.clone()).into())?;
 			Result::<(), sp_runtime::DispatchError>::Ok(())
@@ -73,7 +75,7 @@ benchmarks! {
 
 	set_admin_address {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
-		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 	} : _(RawOrigin::Root, T::CrossAccountId::from_sub(pallet_admin))
 
 	payout_stakers{
@@ -82,12 +84,12 @@ benchmarks! {
 		let pallet_admin = account::<T::AccountId>("admin", 1, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		<T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		<T as Config>::Currency::make_free_balance_be(&<T as pallet::Config>::TreasuryAccountId::get(),  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		<pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		<pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&<T as pallet::Config>::TreasuryAccountId::get(),  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 
 		let stakers: Vec<T::AccountId> = (0..b).map(|index| account("staker", index, SEED)).collect();
 		stakers.iter().for_each(|staker| {
-			<T as Config>::Currency::make_free_balance_be(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+			<pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		});
 		(1..11).try_for_each(|i| {
 			<frame_system::Pallet<T>>::set_block_number(i.into());
@@ -112,20 +114,20 @@ benchmarks! {
 	stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 10);
-		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-	} : _(RawOrigin::Signed(caller.clone()), share * <T as Config>::Currency::total_balance(&caller))
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+	} : _(RawOrigin::Signed(caller.clone()), share * <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::total_balance(&caller))
 
 	unstake_all {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
-		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		(1..11).map(|i| {
 			// used to change block number
 			<frame_system::Pallet<T>>::set_block_number(i.into());
 			T::RelayBlockNumberProvider::set_block_number((2*i).into());
 			assert_eq!(<frame_system::Pallet<T>>::block_number(), i.into());
 			assert_eq!(T::RelayBlockNumberProvider::current_block_number(), (2*i).into());
-			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <T as Config>::Currency::total_balance(&caller))
+			PromototionPallet::<T>::stake(RawOrigin::Signed(caller.clone()).into(), share * <pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::total_balance(&caller))
 		}).collect::<Result<Vec<_>, _>>()?;
 
 	} : _(RawOrigin::Signed(caller.clone()))
@@ -133,7 +135,7 @@ benchmarks! {
 	unstake_partial {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
-		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		(1..11).map(|i| {
 			// used to change block number
 			<frame_system::Pallet<T>>::set_block_number(i.into());
@@ -148,18 +150,18 @@ benchmarks! {
 	sponsor_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let collection = create_nft_collection::<T>(caller.clone())?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), collection)
 
 	stop_sponsoring_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let _ = <T as Config>::Currency::make_free_balance_be(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let collection = create_nft_collection::<T>(caller.clone())?;
 		PromototionPallet::<T>::sponsor_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), collection)
@@ -168,7 +170,7 @@ benchmarks! {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 
-		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let address = H160::from_low_u64_be(SEED as u64);
 		let data: Vec<u8> = (0..20 as u8).collect();
 		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
@@ -179,7 +181,7 @@ benchmarks! {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 
-		let _ = <T as Config>::Currency::make_free_balance_be(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <pallet_balances::Pallet<T> as fungible::Mutate::<T::AccountId>>::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let address = H160::from_low_u64_be(SEED as u64);
 		let data: Vec<u8> = (0..20 as u8).collect();
 		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
