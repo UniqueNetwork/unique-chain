@@ -420,7 +420,6 @@ impl<T: Config> CollectionHandle<T> {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::marker::PhantomData;
 
 	use super::*;
 	use dispatch::CollectionDispatch;
