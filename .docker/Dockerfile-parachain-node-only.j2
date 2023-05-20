@@ -50,8 +50,10 @@ RUN apt-get -y update && \
 RUN git clone https://github.com/uniquenetwork/polkadot-launch -b {{ POLKADOT_LAUNCH_BRANCH }}
 
 COPY --from=builder-unique-current /unique_parachain/target/release/unique-collator /unique-chain/current/release/
+
 COPY --from=builder-unique-target /unique_parachain/target/release/unique-collator /unique-chain/target/release/
 COPY --from=builder-unique-target /unique_parachain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm /unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
+COPY --from=builder-unique-target /unique_parachain/.docker/forkless-config/launch-config-forkless-data.json /polkadot-launch/launch-config.json
 
 COPY --from=uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} /unique_parachain/polkadot/target/release/polkadot /polkadot/target/release/
 COPY --from=uniquenetwork/builder-polkadot:{{ POLKADOT_BUILD_BRANCH }} /unique_parachain/polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm /polkadot/target/release/wbuild/westend-runtime/westend_runtime.compact.compressed.wasm

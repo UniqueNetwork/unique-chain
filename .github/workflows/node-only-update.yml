@@ -44,6 +44,7 @@ jobs:
 
 
   nodes-only-update-build:
+
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci]
@@ -85,29 +86,30 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-
-
-      - name: Generate ENV related extend file for docker-compose
+      # Build main image for NODE-ONLY-UPDATE
+      - name: Generate ENV related extend Dockerfile file
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-node.j2
-          output_file: .docker/docker-compose.node.${{ matrix.network }}.yml
+          template: .docker/Dockerfile-parachain-node-only.j2
+          output_file: .docker/Dockerfile-parachain-node-only.${{ matrix.network }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             NETWORK=${{ matrix.network }}
+            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             WASM_NAME=${{ matrix.wasm_name }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+
+            REPLICA_FROM=${{ matrix.replica_from_address }}
 
       - name: Show build configuration
-        run: cat .docker/docker-compose.node.${{ matrix.network }}.yml
+        run: cat .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
 
-      - name: Generate launch-config-forkless-nodata.json
+      - name: Generate launch-config.json
         uses: cuchi/jinja2-action@v1.2.0
         with:
           template: .docker/forkless-config/launch-config-forkless-nodata.j2
-          output_file: .docker/launch-config-forkless-nodata.json
+          output_file: .docker/launch-config-node-only.json
           variables: |
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
