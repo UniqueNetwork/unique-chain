@@ -824,7 +824,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueParachainMultilocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: uniqueParachainJunction,
