@@ -20,12 +20,15 @@ use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
-// Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case
-// (contract, which only writes a lot of data),
-// approximating on top of our real store write weight
+// ~~Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case~~
+// ~~(contract, which only writes a lot of data),~~
+// ~~approximating on top of our real store write weight~~
+//
+// The above approach is very wrong, and the reason is described there:
+// https://forum.polkadot.network/t/frontier-support-for-evm-weight-v2/2470/5#problem-2
 parameter_types! {
-	pub const WritesPerSecond: u64 = WEIGHT_REF_TIME_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
-	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
+	pub const ReadsPerSecond: u64 = WEIGHT_REF_TIME_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().read;
+	pub const GasPerSecond: u64 = ReadsPerSecond::get() * 2100;
 	pub const WeightTimePerGas: u64 = WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
 
 	pub const WeightPerGas: Weight = Weight::from_parts(WeightTimePerGas::get(), 0);
