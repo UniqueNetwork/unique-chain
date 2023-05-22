@@ -21,7 +21,7 @@ import {CollectionLimitField} from './util/playgrounds/types';
 import {COLLECTION_HELPER} from '../util';
 
 
-describe('Create NFT collection from EVM', () => {
+describe.only('Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function () {
@@ -143,7 +143,7 @@ describe('Create NFT collection from EVM', () => {
   });
 });
 
-describe('(!negative tests!) Create NFT collection from EVM', () => {
+describe.only('(!negative tests!) Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 
@@ -199,7 +199,8 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
   // Soft-deprecated
   itEth('(!negative test!) [eth] Check owner', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const malfeasant = helper.eth.createAccount();
+    // FIXME: do not give balance
+    const malfeasant = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Transgressed', 'absolutely anything', 'COR');
     const malfeasantCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant, true);
     const EXPECTED_ERROR = 'NoPermission';

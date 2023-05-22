@@ -61,8 +61,8 @@ async function erc721CalculateFeeGas(
   const res: IFunctionFee = {};
   const donor = await privateKey('//Alice');
   const [subReceiver] = await helper.arrange.createAccounts([10n], donor);
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
-  const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
+  const ethReceiver = await helper.eth.createAccountWithBalance(donor);
   const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
   const crossReceiver = helper.ethCrossAccount.fromAddress(ethReceiver);
   const collection = (await createCollectionForBenchmarks(
@@ -521,8 +521,8 @@ async function erc20CalculateFeeGas(
   const res: IFunctionFee = {};
   const donor = await privateKey('//Alice');
   const [subReceiver] = await helper.arrange.createAccounts([10n], donor);
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
-  const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
+  const ethReceiver = await helper.eth.createAccountWithBalance(donor);
   const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
   const crossReceiver = helper.ethCrossAccount.fromAddress(ethReceiver);
   const collection = (await createCollectionForBenchmarks(

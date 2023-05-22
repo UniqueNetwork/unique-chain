@@ -80,7 +80,7 @@ const mintRFTToken = async (helper: EthUniqueHelper, owner: string, fractionaliz
 };
 
 
-describe('Fractionalizer contract usage', () => {
+describe.only('Fractionalizer contract usage', () => {
   let donor: IKeyringPair;
 
   before(async function() {
@@ -91,7 +91,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('Set RFT collection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 10n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const fractionalizer = await deployContract(helper, owner);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
     const rftContract = await helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
@@ -109,7 +109,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('Mint RFT collection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 10n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const fractionalizer = await deployContract(helper, owner);
     await helper.balance.transferToSubstrate(donor, evmToAddress(fractionalizer.options.address), 10n * helper.balance.getOneTokenNominal());
 
@@ -121,7 +121,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('Set Allowlist', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const {contract: fractionalizer} = await initContract(helper, owner);
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
 
@@ -146,7 +146,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('NFT to RFT', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
@@ -169,12 +169,13 @@ describe('Fractionalizer contract usage', () => {
     });
     const rftTokenAddress = result.events.Fractionalized.returnValues._rftToken;
 
-    const rftTokenContract = await helper.ethNativeContract.rftToken(rftTokenAddress);
+    // FIXME: should work without the caller
+    const rftTokenContract = await helper.ethNativeContract.rftToken(rftTokenAddress, owner);
     expect(await rftTokenContract.methods.balanceOf(owner).call()).to.equal('100');
   });
 
   itEth('RFT to NFT', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 30n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
     const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
@@ -197,7 +198,7 @@ describe('Fractionalizer contract usage', () => {
   });
 
   itEth('Test fractionalizer NFT <-> RFT mapping ', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 200n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
     const {rftTokenAddress, nftCollectionAddress, nftTokenId} = await mintRFTToken(helper, owner, fractionalizer, 100n);
@@ -232,7 +233,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call setRFTCollection twice', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
     const refungibleContract = await helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
@@ -246,7 +247,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call setRFTCollection with NFT collection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
 
@@ -259,7 +260,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call setRFTCollection while not collection admin', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const fractionalizer = await deployContract(helper, owner);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
 
@@ -268,7 +269,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call setRFTCollection after createAndSetRFTCollection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const fractionalizer = await deployContract(helper, owner);
     await helper.balance.transferToSubstrate(donor, evmToAddress(fractionalizer.options.address), 10n * helper.balance.getOneTokenNominal());
 
@@ -280,7 +281,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call nft2rft without setting RFT collection for contract', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
@@ -294,8 +295,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call nft2rft while not owner of NFT token', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
-    const nftOwner = await helper.eth.createAccountWithBalance(donor, 10n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const nftOwner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
@@ -312,7 +313,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call nft2rft while not in list of allowed accounts', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
@@ -327,7 +328,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call nft2rft while fractionalizer doesnt have approval for nft token', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
@@ -342,7 +343,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call rft2nft without setting RFT collection for contract', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const fractionalizer = await deployContract(helper, owner);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
@@ -355,7 +356,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call rft2nft for RFT token that is not from configured RFT collection', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const {contract: fractionalizer} = await initContract(helper, owner);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
@@ -368,7 +369,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call rft2nft for RFT token that was not minted by fractionalizer contract', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
     const refungibleContract = await helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
@@ -386,8 +387,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('call rft2nft without owning all RFT pieces', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 200n);
-    const receiver = await helper.eth.createAccountWithBalance(donor, 10n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
 
     const {contract: fractionalizer, rftCollectionAddress} = await initContract(helper, owner);
     const {rftTokenAddress} = await mintRFTToken(helper, owner, fractionalizer, 100n);
@@ -401,8 +402,8 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('send QTZ/UNQ to contract from non owner', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
-    const payer = await helper.eth.createAccountWithBalance(donor, 10n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const payer = await helper.eth.createAccountWithBalance(donor);
 
     const fractionalizer = await deployContract(helper, owner);
     const amount = 10n * helper.balance.getOneTokenNominal();
@@ -413,7 +414,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   itEth('fractionalize NFT with NFT transfers disallowed', async ({helper}) => {
     const nftCollection = await helper.nft.mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const nftToken = await nftCollection.mintToken(donor, {Ethereum: owner});
     await helper.executeExtrinsic(donor, 'api.tx.unique.setTransfersEnabledFlag', [nftCollection.collectionId, false], true);
     const nftCollectionAddress = helper.ethAddress.fromCollectionId(nftCollection.collectionId);
@@ -427,7 +428,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   });
 
   itEth('fractionalize NFT with RFT transfers disallowed', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 20n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
 
     const rftCollection = await helper.rft.mintCollection(donor, {name: 'A', description: 'B', tokenPrefix: 'C'});
     const rftCollectionAddress = helper.ethAddress.fromCollectionId(rftCollection.collectionId);

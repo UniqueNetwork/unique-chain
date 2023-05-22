@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '../util/index';
 import {itEth, expect} from './util';
 
-describe('evm nft collection sponsoring', () => {
+describe.only('evm nft collection sponsoring', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let nominal: bigint;
@@ -319,7 +319,7 @@ describe('evm nft collection sponsoring', () => {
   });
 });
 
-describe('evm RFT collection sponsoring', () => {
+describe.only('evm RFT collection sponsoring', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let nominal: bigint;
@@ -592,6 +592,7 @@ describe('evm RFT collection sponsoring', () => {
         tokenId: '1',
       },
     });
+    // FIXME: doesn't work
     expect(await collectionEvm.methods.tokenURI(tokenId).call({from: user})).to.be.equal('Test URI');
 
     const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));

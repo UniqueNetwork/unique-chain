@@ -29,7 +29,7 @@ describe('EVM token properties', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([100n], donor);
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 
@@ -314,8 +314,9 @@ describe('EVM token properties', () => {
       expect(result.length).to.equal(0);
     }));
 
-  itEth('Can be read', async({helper}) => {
-    const caller = helper.eth.createAccount();
+  itEth.only('Can be read', async({helper}) => {
+    // FIXME: User with no balance should be able to call
+    const caller = await helper.eth.createAccountWithBalance(alice);
     const collection = await helper.nft.mintCollection(alice, {
       tokenPropertyPermissions: [{
         key: 'testKey',

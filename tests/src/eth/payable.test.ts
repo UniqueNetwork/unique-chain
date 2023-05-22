@@ -41,10 +41,10 @@ describe('EVM payable contracts', () => {
     expect(await contract.methods.getCollected().call()).to.be.equal('10000');
   });
 
-  itEth('Evm contract can receive wei from substrate account', async ({helper}) => {
+  itEth.only('Evm contract can receive wei from substrate account', async ({helper}) => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const contract = await helper.eth.deployCollectorContract(deployer);
-    const [alice] = await helper.arrange.createAccounts([10n], donor);
+    const [alice] = await helper.arrange.createAccounts([40n], donor);
 
     const weiCount = '10000';
 

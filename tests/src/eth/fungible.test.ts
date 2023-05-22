@@ -205,7 +205,7 @@ describe('Fungible: Plain calls', () => {
 
 
   itEth('Can perform burnFromCross()', async ({helper}) => {
-    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const sender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
@@ -382,7 +382,7 @@ describe('Fungible: Plain calls', () => {
   });
 
   itEth('Can perform transferFromCross()', async ({helper}) => {
-    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const sender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
@@ -603,7 +603,7 @@ describe('Fungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transferFromCross()', async ({helper}) => {
-    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const sender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
