@@ -114,12 +114,26 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub trait TryPass {
+<<<<<<< HEAD
 	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()>;
+=======
+	fn try_pass<Call>(
+		origin: &MultiLocation,
+		message: &mut [Instruction<Call>],
+	) -> Result<(), ProcessMessageError>;
+>>>>>>> fd33b0ac (fixup pallets)
 }
 
 #[impl_trait_for_tuples::impl_for_tuples(30)]
 impl TryPass for Tuple {
+<<<<<<< HEAD
 	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()> {
+=======
+	fn try_pass<Call>(
+		origin: &MultiLocation,
+		message: &mut [Instruction<Call>],
+	) -> Result<(), ProcessMessageError> {
+>>>>>>> fd33b0ac (fixup pallets)
 		for_tuples!( #(
 			Tuple::try_pass(origin, message)?;
 		)* );
