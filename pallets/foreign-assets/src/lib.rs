@@ -448,9 +448,7 @@ impl<T: Config> Pallet<T> {
 
 pub use frame_support::{
 	traits::{
-		fungibles::{Balanced, CreditOf},
-		tokens::currency::Currency as CurrencyT,
-		OnUnbalanced as OnUnbalancedT,
+		fungibles::Balanced, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT,
 	},
 	weights::{WeightToFeePolynomial, WeightToFee},
 };

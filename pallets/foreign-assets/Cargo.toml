@@ -15,7 +15,7 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 log = { workspace = true }
 orml-tokens = { workspace = true }
-pallet-balances = { workspace = true }
+pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-common = { workspace = true }
 pallet-fungible = { workspace = true }
 serde = { workspace = true, optional = true }
