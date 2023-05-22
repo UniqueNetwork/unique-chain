@@ -4,7 +4,7 @@ use frame_support::{
 	traits::{FindAuthor},
 	parameter_types, ConsensusEngineId,
 };
-use sp_runtime::{RuntimeAppPublic, Perbill};
+use sp_runtime::{RuntimeAppPublic, Perbill, traits::ConstU32};
 use crate::{
 	runtime_common::{
 		config::sponsoring::DefaultSponsoringRateLimit,
@@ -84,6 +84,8 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
 	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
+	type Timestamp = crate::Timestamp;
+	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_evm_migration::Config for Runtime {
@@ -99,6 +101,9 @@ impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
+	// Space for revert reason. Ethereum transactions are not cheap, and overall size is much less
+	// than the substrate tx size, so we can afford this
+	type ExtraDataLength = ConstU32<32>;
 }
 
 parameter_types! {
