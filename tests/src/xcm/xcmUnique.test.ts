@@ -805,6 +805,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let uniqueParachainMultilocation: any;
   let uniqueAccountMultilocation: any;
   let uniqueCombinedMultilocation: any;
+  let uniqueCombinedMultilocationAcala: any;
 
   let messageSent: any;
 
@@ -849,6 +850,15 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         },
       };
 
+      uniqueCombinedMultilocationAcala = {
+        V1: {
+          parents: 1,
+          interior: {
+            X2: [uniqueParachainJunction, uniqueAccountJunction],
+          },
+        },
+      };
+
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
@@ -871,7 +881,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const id = {
         Token: 'ACA',
       };
-      const destination = uniqueCombinedMultilocation;
+      const destination = uniqueCombinedMultilocationAcala;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
