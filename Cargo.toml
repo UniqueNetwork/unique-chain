@@ -192,7 +192,6 @@ impl-trait-for-tuples = "0.2.2"
 jsonrpsee = { version = "0.16.2", features = ["macros", "server"] }
 log = { version = "0.4.16", default-features = false }
 num_enum = { version = "0.5.3", default-features = false }
-primitive-types = { version = "0.12.1", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.136" }
 smallvec = "1.6.1"
 
