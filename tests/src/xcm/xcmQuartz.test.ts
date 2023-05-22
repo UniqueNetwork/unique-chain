@@ -815,7 +815,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       };
 
       quartzParachainMultilocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: quartzParachainJunction,
@@ -824,7 +824,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       };
 
       quartzAccountMultilocation = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {
             X1: quartzAccountJunction,
@@ -833,7 +833,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       };
 
       quartzCombinedMultilocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [quartzParachainJunction, quartzAccountJunction],
@@ -887,7 +887,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       const destinationParachain = quartzParachainMultilocation;
       const beneficiary = quartzAccountMultilocation;
       const assets = {
-        V1: [{
+        V2: [{
           id: {
             Concrete: {
               parents: 0,
@@ -1061,7 +1061,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   itSub('Should connect to Moonriver and send QTZ back', async ({helper}) => {
     await usingMoonriverPlaygrounds(moonriverUrl, async (helper) => {
       const asset = {
-        V1: {
+        V2: {
           id: {
             Concrete: {
               parents: 1,
@@ -1076,7 +1076,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
         },
       };
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -1131,7 +1131,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const quartzMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: QUARTZ_CHAIN},
@@ -1202,7 +1202,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const quartzMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1327,7 +1327,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
       console.log('2. Register asset location on Shiden');
       const assetLocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
