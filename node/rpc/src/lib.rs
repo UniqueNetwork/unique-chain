@@ -102,6 +102,12 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub fee_history_cache: FeeHistoryCache,
 	/// Cache for Ethereum block data.
 	pub block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
+
+	pub pubsub_notification_sinks: Arc<
+		fc_mapping_sync::EthereumBlockNotificationSinks<
+			fc_mapping_sync::EthereumBlockNotification<Block>,
+		>,
+	>,
 }
 
 pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
@@ -214,6 +220,7 @@ where
 
 		eth_backend,
 		max_past_logs,
+		pubsub_notification_sinks,
 	} = deps;
 
 	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
@@ -244,6 +251,7 @@ where
 			fee_history_cache,
 			fee_history_limit,
 			execute_gas_limit_multiplier,
+			None,
 		)
 		.into_rpc(),
 	)?;
@@ -290,7 +298,17 @@ where
 
 	io.merge(Web3::new(client.clone()).into_rpc())?;
 
-	io.merge(EthPubSub::new(pool, client, sync, subscription_task_executor, overrides).into_rpc())?;
+	io.merge(
+		EthPubSub::new(
+			pool,
+			client,
+			sync,
+			subscription_task_executor,
+			overrides,
+			pubsub_notification_sinks,
+		)
+		.into_rpc(),
+	)?;
 
 	Ok(io)
 }
