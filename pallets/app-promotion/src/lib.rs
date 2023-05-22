@@ -826,7 +826,11 @@ pub mod pallet {
 
 		///  Migrates lock state into freeze one
 		///
-		///  # Arguments
+		/// # Permissions
+		///
+		/// * Sudo
+		///
+		///   # Arguments
 		///
 		/// * `origin`: Must be `Signed`.
 		/// * `stakers`: Accounts to be upgraded.
@@ -836,7 +840,7 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			stakers: Vec<T::AccountId>,
 		) -> DispatchResult {
-			ensure_signed(origin)?;
+			ensure_root(origin)?;
 
 			stakers
 				.into_iter()
