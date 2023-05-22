@@ -132,6 +132,7 @@ parameter_types! {
 	pub const ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
+	pub const MaxFreezes: u32 = 20;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -150,7 +151,7 @@ impl pallet_balances::Config for Runtime {
 	type HoldIdentifier = [u8; 16];
 	type FreezeIdentifier = [u8; 16];
 	type MaxHolds = ();
-	type MaxFreezes = ();
+	type MaxFreezes = MaxFreezes;
 }
 
 parameter_types! {
