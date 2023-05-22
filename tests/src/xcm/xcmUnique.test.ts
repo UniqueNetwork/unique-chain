@@ -1436,7 +1436,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   itSub('Should connect to Astar and send UNQ back', async ({helper}) => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -1447,7 +1447,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       };
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {
             X1: {
@@ -1461,7 +1461,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -1517,7 +1517,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: UNIQUE_CHAIN},
@@ -1582,7 +1582,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1652,5 +1652,4 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
   });
-
 });
