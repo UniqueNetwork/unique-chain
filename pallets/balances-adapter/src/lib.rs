@@ -20,6 +20,11 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Self(SubstrateRecorder::new(u64::MAX))
 	}
 
+	/// Creates a handle
+	pub fn new_with_gas_limit(gas_limit: u64) -> NativeFungibleHandle<T> {
+		Self(SubstrateRecorder::new(gas_limit))
+	}
+
 	/// Check if the collection is internal
 	pub fn check_is_internal(&self) -> DispatchResult {
 		Ok(())
