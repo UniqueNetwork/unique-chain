@@ -122,7 +122,9 @@ where
 
 	fn dispatch(collection_id: CollectionId) -> Result<Self, DispatchError> {
 		if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
-			return Ok(Self::NativeFungible(NativeFungibleHandle::new()));
+			return Ok(Self::NativeFungible(
+				NativeFungibleHandle::new_with_gas_limit(u64::MAX),
+			));
 		}
 
 		let handle = <CollectionHandle<T>>::try_get(collection_id)?;
@@ -188,7 +190,7 @@ where
 	fn call(handle: &mut impl PrecompileHandle) -> Option<PrecompileResult> {
 		if let Some(collection_id) = map_eth_to_id(&handle.code_address()) {
 			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
-				<NativeFungibleHandle<T>>::new().call(handle)
+				<NativeFungibleHandle<T>>::new_with_gas_limit(handle.remaining_gas()).call(handle)
 			} else {
 				let collection = <CollectionHandle<T>>::new_with_gas_limit(
 					collection_id,
