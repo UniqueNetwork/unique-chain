@@ -102,7 +102,8 @@ impl<
 	for UsingOnlySelfCurrencyComponents<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
 {
 	fn new() -> Self {
-		Self(0, Zero::zero(), PhantomData)
+		// FIXME: benchmark
+		Self(Weight::from_parts(0, 0), Zero::zero(), PhantomData)
 	}
 
 	fn buy_weight(&mut self, _weight: Weight, payment: Assets) -> Result<Assets, XcmError> {

@@ -36,7 +36,7 @@ use frame_system::{
 use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
 use crate::{
 	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, PalletInfo,
-	System, Balances, Treasury, SS58Prefix, Version,
+	System, Balances, SS58Prefix, Version,
 };
 use up_common::{types::*, constants::*};
 
@@ -142,10 +142,15 @@ impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = Treasury;
+	// FIXME: Is () the new treasury?
+	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
+	type HoldIdentifier = [u8; 16];
+	type FreezeIdentifier = [u8; 16];
+	type MaxHolds = ();
+	type MaxFreezes = ();
 }
 
 parameter_types! {

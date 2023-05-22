@@ -13701,6 +13701,7 @@ version = "0.1.2"
 dependencies = [
  "app-promotion-rpc",
  "fc-db",
+ "fc-mapping-sync",
  "fc-rpc",
  "fc-rpc-core",
  "fp-rpc",

@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Everything, Nothing, Get, ConstU32},
+	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError},
 	parameter_types,
 };
 use frame_system::EnsureRoot;
@@ -114,26 +114,18 @@ pub type XcmOriginToTransactDispatchOrigin = (
 );
 
 pub trait TryPass {
-<<<<<<< HEAD
-	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()>;
-=======
 	fn try_pass<Call>(
 		origin: &MultiLocation,
 		message: &mut [Instruction<Call>],
 	) -> Result<(), ProcessMessageError>;
->>>>>>> fd33b0ac (fixup pallets)
 }
 
 #[impl_trait_for_tuples::impl_for_tuples(30)]
 impl TryPass for Tuple {
-<<<<<<< HEAD
-	fn try_pass<Call>(origin: &MultiLocation, message: &mut [Instruction<Call>]) -> Result<(), ()> {
-=======
 	fn try_pass<Call>(
 		origin: &MultiLocation,
 		message: &mut [Instruction<Call>],
 	) -> Result<(), ProcessMessageError> {
->>>>>>> fd33b0ac (fixup pallets)
 		for_tuples!( #(
 			Tuple::try_pass(origin, message)?;
 		)* );
@@ -159,7 +151,7 @@ where
 		message: &mut [Instruction<Call>],
 		max_weight: Weight,
 		weight_credit: &mut Weight,
-	) -> Result<(), ()> {
+	) -> Result<(), ProcessMessageError> {
 		Deny::try_pass(origin, message)?;
 		Allow::should_execute(origin, message, max_weight, weight_credit)
 	}
@@ -227,6 +219,7 @@ impl pallet_xcm::Config for Runtime {
 	type SovereignAccountOf = LocationToAccountId;
 	type MaxLockers = ConstU32<8>;
 	type WeightInfo = crate::weights::xcm::SubstrateWeight<Runtime>;
+	type AdminOrigin = EnsureRoot<AccountId>;
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
 }
