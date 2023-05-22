@@ -31,6 +31,7 @@ parameter_types! {
 	pub const RecalculationInterval: BlockNumber = RELAY_DAYS;
 	pub const PendingInterval: BlockNumber = 7 * DAYS;
 	pub const Nominal: Balance = UNIQUE;
+	pub const HoldAndFreezeIdentifier: [u8; 16] = *b"appstakeappstake";
 	pub IntervalIncome: Perbill = Perbill::from_rational(5u32, 10_000);
 }
 
@@ -47,4 +48,5 @@ impl pallet_app_promotion::Config for Runtime {
 	type Nominal = Nominal;
 	type IntervalIncome = IntervalIncome;
 	type RuntimeEvent = RuntimeEvent;
+	type FreezeIdentifier = HoldAndFreezeIdentifier;
 }

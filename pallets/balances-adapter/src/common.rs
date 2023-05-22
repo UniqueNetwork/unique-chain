@@ -45,7 +45,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<BalancesWeight<T> as WeightInfo>::transfer()
+		<BalancesWeight<T> as WeightInfo>::transfer_allow_death()
 	}
 
 	fn approve() -> Weight {
@@ -57,7 +57,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer_from() -> Weight {
-		<BalancesWeight<T> as WeightInfo>::transfer()
+		<BalancesWeight<T> as WeightInfo>::transfer_allow_death()
 	}
 
 	fn burn_from() -> Weight {

@@ -54,7 +54,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Ok(total.into())
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -68,7 +68,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer_from(
 		&mut self,
 		caller: Caller,
@@ -102,7 +102,7 @@ where
 		Ok(balance.into())
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -117,7 +117,7 @@ where
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,

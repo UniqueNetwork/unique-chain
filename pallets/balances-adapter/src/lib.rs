@@ -153,7 +153,7 @@ pub mod pallet {
 			};
 
 			Ok(PostDispatchInfo {
-				actual_weight: Some(<SelfWeightOf<T>>::transfer()),
+				actual_weight: Some(<SelfWeightOf<T>>::transfer_allow_death()),
 				pays_fee: Pays::Yes,
 			})
 		}
