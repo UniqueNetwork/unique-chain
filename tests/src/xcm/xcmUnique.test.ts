@@ -832,7 +832,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueAccountMultilocation = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {
             X1: uniqueAccountJunction,
@@ -841,7 +841,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueCombinedMultilocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [uniqueParachainJunction, uniqueAccountJunction],
@@ -897,7 +897,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const destinationParachain = uniqueParachainMultilocation;
       const beneficiary = uniqueAccountMultilocation;
       const assets = {
-        V1: [{
+        V2: [{
           id: {
             Concrete: {
               parents: 0,
@@ -1072,7 +1072,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   itSub('Should connect to Moonbeam and send UNQ back', async ({helper}) => {
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const asset = {
-        V1: {
+        V2: {
           id: {
             Concrete: {
               parents: 1,
@@ -1087,7 +1087,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
         },
       };
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -1142,7 +1142,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: UNIQUE_CHAIN},
@@ -1215,7 +1215,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1344,7 +1344,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
       console.log('2. Register asset location on Astar');
       const assetLocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
