@@ -153,6 +153,7 @@ try-runtime = [
 	'pallet-app-promotion/try-runtime',
 	'pallet-aura/try-runtime',
 	'pallet-balances/try-runtime',
+	'pallet-balances-adapter/try-runtime',
 	'pallet-charge-transaction/try-runtime',
 	'pallet-common/try-runtime',
 	'pallet-configuration/try-runtime',
