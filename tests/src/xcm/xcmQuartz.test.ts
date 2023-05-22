@@ -803,6 +803,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let quartzParachainMultilocation: any;
   let quartzAccountMultilocation: any;
   let quartzCombinedMultilocation: any;
+  let quartzCombinedMultilocationKarura: any; // TODO remove it when Karura goes V2
 
   let messageSent: any;
 
@@ -847,6 +848,15 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
         },
       };
 
+      quartzCombinedMultilocationKarura = {
+        V1: {
+          parents: 1,
+          interior: {
+            X2: [quartzParachainJunction, quartzAccountJunction],
+          },
+        },
+      };
+
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
@@ -869,7 +879,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       const id = {
         Token: 'KAR',
       };
-      const destination = quartzCombinedMultilocation;
+      const destination = quartzCombinedMultilocationKarura;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
@@ -1433,7 +1443,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   itSub('Should connect to Shiden and send QTZ back', async ({helper}) => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -1444,7 +1454,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       };
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {
             X1: {
@@ -1458,7 +1468,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -1515,7 +1525,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const quartzMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: QUARTZ_CHAIN},
@@ -1580,7 +1590,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const quartzMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
