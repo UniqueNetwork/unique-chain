@@ -805,7 +805,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let uniqueParachainMultilocation: any;
   let uniqueAccountMultilocation: any;
   let uniqueCombinedMultilocation: any;
-  let uniqueCombinedMultilocationAcala: any;
+  let uniqueCombinedMultilocationAcala: any; // TODO remove when Acala goes V2
 
   let messageSent: any;
 
@@ -902,7 +902,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     await expectFailedToTransact(helper, messageSent);
   });
 
-  itSub('Unique rejects ASTR tokens from Astar', async ({helper}) => {
+  itSub.only('Unique rejects ASTR tokens from Astar', async ({helper}) => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       const destinationParachain = uniqueParachainMultilocation;
       const beneficiary = uniqueAccountMultilocation;

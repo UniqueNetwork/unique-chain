@@ -803,7 +803,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let quartzParachainMultilocation: any;
   let quartzAccountMultilocation: any;
   let quartzCombinedMultilocation: any;
-  let quartzCombinedMultilocationKarura: any; // TODO remove it when Karura go V2
+  let quartzCombinedMultilocationKarura: any; // TODO remove it when Karura goes V2
 
   let messageSent: any;
 
