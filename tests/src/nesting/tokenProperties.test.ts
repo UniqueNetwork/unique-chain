@@ -46,7 +46,7 @@ describe('Integration Test: Token Properties', () => {
       tokenPropertyPermissions: permissions.flatMap(({permission, signers}, i) =>
         signers.map(signer => {return {key: `${i+1}_${signer.address}`, permission};})),
     });
-    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n), 100n];
+    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n as any), 100n];
   }
 
   async function testReadsYetEmptyProperties(token: UniqueNFToken | UniqueRFToken) {
@@ -322,8 +322,8 @@ describe('Integration Test: Token Properties', () => {
   });
 
   [
-    {mode: 'nft' as const, storage: 'nonfungible' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, storage: 'refungible' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, storage: 'nonfungible' as const, pieces: undefined, requiredPallets: []} as const,
+    {mode: 'rft' as const, storage: 'refungible' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]} as const,
   ].map(testCase =>
     itSub.ifWithPallets(`Allows modifying a token property multiple times with the same size (${testCase.mode})`, testCase.requiredPallets, async({helper}) => {
       const propKey = 'tok-prop';
@@ -349,7 +349,7 @@ describe('Integration Test: Token Properties', () => {
 
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, testCase.pieces as any)
           : collection.mintToken(alice)
       );
 
@@ -386,7 +386,7 @@ describe('Integration Test: Token Properties', () => {
       });
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, testCase.pieces as any)
           : collection.mintToken(alice)
       );
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
@@ -421,7 +421,7 @@ describe('Integration Test: Token Properties', () => {
       });
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, testCase.pieces as any)
           : collection.mintToken(alice)
       );
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
@@ -479,7 +479,7 @@ describe('Negative Integration Test: Token Properties', () => {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {
       tokenPropertyPermissions: constitution.map(({permission}, i) => {return {key: `${i+1}`, permission};}),
     });
-    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n), 100n];
+    return mode == 'NFT' ? [await collection.mintToken(alice), 1n] : [await collection.mintToken(alice, 100n as any), 100n];
   }
 
   async function getConsumedSpace(api: any, collectionId: number, tokenId: number, mode: 'NFT' | 'RFT'): Promise<number> {
@@ -680,7 +680,7 @@ describe('Negative Integration Test: Token Properties', () => {
       });
       const token = await (
         testCase.pieces
-          ? collection.mintToken(alice, testCase.pieces)
+          ? collection.mintToken(alice, testCase.pieces as any)
           : collection.mintToken(alice)
       );
 

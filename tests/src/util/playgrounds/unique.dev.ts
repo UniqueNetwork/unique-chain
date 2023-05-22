@@ -469,7 +469,7 @@ export class ArrangeGroup {
   };
 
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
-    const address = payer.Substrate ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum!);
+    const address = 'Substrate' in payer ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum);
     let balance = await this.helper.balance.getSubstrate(address);
 
     await promise();
@@ -991,7 +991,7 @@ class SessionGroup {
 
   //todo:collator documentation
   async getIndex(): Promise<number> {
-    return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
+    return (await this.helper.callRpc('api.query.session.currentIndex', [])).toNumber();
   }
 
   newSessions(sessionCount = 1, blockTimeout = 24000): Promise<void> {

@@ -135,7 +135,7 @@ export enum Pallets {
   TestUtils = 'testutils',
 }
 
-export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {
+export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: readonly string[]) {
   const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
 
   if (missingPallets.length > 0) {
@@ -145,7 +145,7 @@ export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, req
   }
 }
 
-export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: readonly string[] } = {}) {
   (opts.only ? it.only :
     opts.skip ? it.skip : it)(name, async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -157,14 +157,14 @@ export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privat
     });
   });
 }
-export function itSubIfWithPallet(name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itSubIfWithPallet(name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: readonly string[] } = {}) {
   return itSub(name, cb, {requiredPallets: required, ...opts});
 }
 itSub.only = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {only: true});
 itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {skip: true});
 
-itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
-itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
+itSubIfWithPallet.only = (name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
+itSubIfWithPallet.skip = (name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
 
 export type SchedKind = 'anon' | 'named';

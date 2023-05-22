@@ -177,7 +177,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+    const operator = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -206,7 +206,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+    const operator = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -331,8 +331,8 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform burnFrom()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -365,7 +365,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = bob;
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
 
@@ -397,7 +397,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = bob;
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
     const receiver = charlie;
 
     const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
@@ -679,8 +679,9 @@ describe('Common metadata', () => {
     });
   });
 
-  itEth('Returns collection name', async ({helper}) => {
-    const caller = helper.eth.createAccount();
+  itEth.only('Returns collection name', async ({helper}) => {
+    // FIXME: should not have balance to use .call()
+    const caller = await helper.eth.createAccountWithBalance(alice);
     const tokenPropertyPermissions = [{
       key: 'URI',
       permission: {
@@ -747,8 +748,8 @@ describe('Negative tests', () => {
   itEth('[negative] Cant perform burn without approval', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -767,10 +768,10 @@ describe('Negative tests', () => {
 
   itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = alice;
 
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 

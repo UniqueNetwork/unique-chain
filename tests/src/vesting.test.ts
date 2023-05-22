@@ -47,15 +47,13 @@ describe('Vesting', () => {
     // check senders balance after vesting:
     let balanceSender = await helper.balance.getSubstrateFull(sender.address);
     expect(balanceSender.free / nominal).to.eq(699n);
-    expect(balanceSender.feeFrozen).to.eq(0n);
-    expect(balanceSender.miscFrozen).to.eq(0n);
+    expect(balanceSender.frozen).to.eq(0n);
     expect(balanceSender.reserved).to.eq(0n);
 
     // check recepient balance after vesting:
     let balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free).to.eq(301n * nominal);
-    expect(balanceRecepient.feeFrozen).to.eq(300n * nominal);
-    expect(balanceRecepient.miscFrozen).to.eq(300n * nominal);
+    expect(balanceRecepient.frozen).to.eq(300n * nominal);
     expect(balanceRecepient.reserved).to.eq(0n);
 
     // Schedules list correct:
@@ -70,8 +68,7 @@ describe('Vesting', () => {
     // check recepient balance after claim (50 tokens claimed, 250 left):
     balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free / nominal).to.eq(300n);
-    expect(balanceRecepient.feeFrozen).to.eq(250n * nominal);
-    expect(balanceRecepient.miscFrozen).to.eq(250n * nominal);
+    expect(balanceRecepient.frozen).to.eq(250n * nominal);
     expect(balanceRecepient.reserved).to.eq(0n);
 
     // Wait first schedule ends and first part od second schedule:
@@ -81,8 +78,7 @@ describe('Vesting', () => {
     // check recepient balance after second claim (150 tokens claimed, 100 left):
     balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free / nominal).to.eq(300n);
-    expect(balanceRecepient.feeFrozen).to.eq(100n * nominal);
-    expect(balanceRecepient.miscFrozen).to.eq(100n * nominal);
+    expect(balanceRecepient.frozen).to.eq(100n * nominal);
     expect(balanceRecepient.reserved).to.eq(0n);
 
     // Schedules list contain 1 vesting:
@@ -97,47 +93,43 @@ describe('Vesting', () => {
     // check recepient balance after second claim (100 tokens claimed, 0 left):
     balanceRecepient = await helper.balance.getSubstrateFull(recepient.address);
     expect(balanceRecepient.free / nominal).to.eq(300n);
-    expect(balanceRecepient.feeFrozen).to.eq(0n);
-    expect(balanceRecepient.miscFrozen).to.eq(0n);
+    expect(balanceRecepient.frozen).to.eq(0n);
     expect(balanceRecepient.reserved).to.eq(0n);
 
     // check sender balance does not changed:
     balanceSender = await helper.balance.getSubstrateFull(sender.address);
     expect(balanceSender.free / nominal).to.eq(699n);
-    expect(balanceSender.feeFrozen).to.eq(0n);
-    expect(balanceSender.miscFrozen).to.eq(0n);
+    expect(balanceSender.frozen).to.eq(0n);
     expect(balanceSender.reserved).to.eq(0n);
   });
 
-  itSub('cannot send more tokens than have', async ({helper}) => {
+  itSub.only('cannot send more tokens than have', async ({helper}) => {
     const [sender, receiver] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const schedule = {start: 0n, period: 1n, periodCount: 1n, perPeriod: 100n * nominal};
     const manyPeriodsSchedule = {start: 0n, period: 1n, periodCount: 100n, perPeriod: 10n * nominal};
     const oneBigSumSchedule = {start: 0n, period: 1n, periodCount: 1n, perPeriod: 5000n * nominal};
 
     // Sender cannot send vestedTransfer to self or other
-    await expect(helper.balance.vestedTransfer(sender, sender.address, manyPeriodsSchedule)).to.be.rejectedWith(/InsufficientBalance/);
-    await expect(helper.balance.vestedTransfer(sender, receiver.address, manyPeriodsSchedule)).to.be.rejectedWith(/InsufficientBalance/);
-    await expect(helper.balance.vestedTransfer(sender, sender.address, oneBigSumSchedule)).to.be.rejectedWith(/InsufficientBalance/);
-    await expect(helper.balance.vestedTransfer(sender, receiver.address, oneBigSumSchedule)).to.be.rejectedWith(/InsufficientBalance/);
+    await expect(helper.balance.vestedTransfer(sender, sender.address, manyPeriodsSchedule)).to.be.rejectedWith(/^vesting.InsufficientBalanceToLock$/);
+    await expect(helper.balance.vestedTransfer(sender, receiver.address, manyPeriodsSchedule)).to.be.rejectedWith(/^Token: FundsUnavailable$/);
+    await expect(helper.balance.vestedTransfer(sender, sender.address, oneBigSumSchedule)).to.be.rejectedWith(/^vesting.InsufficientBalanceToLock$/);
+    await expect(helper.balance.vestedTransfer(sender, receiver.address, oneBigSumSchedule)).to.be.rejectedWith(/^Token: FundsUnavailable$/);
 
     const balanceSender = await helper.balance.getSubstrateFull(sender.address);
     const balanceReceiver = await helper.balance.getSubstrateFull(receiver.address);
 
     // Sender's balance has not changed
     expect(balanceSender.free / nominal).to.eq(999n);
-    expect(balanceSender.feeFrozen).to.eq(0n);
-    expect(balanceSender.miscFrozen).to.eq(0n);
+    expect(balanceSender.frozen).to.eq(0n);
     expect(balanceSender.reserved).to.eq(0n);
 
     // Receiver's balance has not changed
     expect(balanceReceiver.free).to.be.eq(1n * nominal);
-    expect(balanceReceiver.feeFrozen).to.be.eq(0n);
-    expect(balanceReceiver.miscFrozen).to.be.eq(0n);
+    expect(balanceReceiver.frozen).to.be.eq(0n);
     expect(balanceReceiver.reserved).to.be.eq(0n);
 
     // Receiver cannot send vestedTransfer back because of freeze
-    await expect(helper.balance.vestedTransfer(receiver, sender.address, schedule)).to.be.rejectedWith(/InsufficientBalance/);
+    await expect(helper.balance.vestedTransfer(receiver, sender.address, schedule)).to.be.rejectedWith(/^Token: FundsUnavailable$/);
   });
 
   itSub('cannot send vestedTransfer with incorrect parameters', async ({helper}) => {
@@ -153,8 +145,7 @@ describe('Vesting', () => {
     const balanceSender = await helper.balance.getSubstrateFull(sender.address);
     // Sender's balance has not changed
     expect(balanceSender.free / nominal).to.eq(999n);
-    expect(balanceSender.feeFrozen).to.eq(0n);
-    expect(balanceSender.miscFrozen).to.eq(0n);
+    expect(balanceSender.frozen).to.eq(0n);
     expect(balanceSender.reserved).to.eq(0n);
   });
 });

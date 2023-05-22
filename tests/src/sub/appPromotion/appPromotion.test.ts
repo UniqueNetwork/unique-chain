@@ -86,11 +86,11 @@ describe('App promotion', () => {
       await expect(helper.staking.stake(staker, 100n * nominal - 1n)).to.be.rejected;
       await helper.staking.stake(staker, 100n * nominal);
 
-      // Staker balance is: miscFrozen: 100, feeFrozen: 100, reserved: 0n...
+      // Staker balance is: frozen: 100, reserved: 0n...
       // ...so he can not transfer 900
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.contain({miscFrozen: 100n * nominal, feeFrozen: 100n * nominal, reserved: 0n});
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.contain({frozen: 100n * nominal, reserved: 0n});
       expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: 100n * nominal, reasons: 'All'}]);
-      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 900n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
+      await expect(helper.balance.transferToSubstrate(staker, recepient.address, 900n * nominal)).to.be.rejectedWith(/^Token: Frozen$/);
 
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(100n * nominal);
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
@@ -151,14 +151,14 @@ describe('App promotion', () => {
       // staker has tokens locked with vesting id:
       await helper.balance.vestedTransfer(donor, staker.address, {start: 0n, period: 1n, periodCount: 1n, perPeriod: 200n * nominal});
       expect(await helper.balance.getSubstrateFull(staker.address))
-        .to.deep.contain({free: 1200n * nominal, miscFrozen: 200n * nominal, feeFrozen: 200n * nominal, reserved: 0n});
+        .to.deep.contain({free: 1200n * nominal, frozen: 200n * nominal, reserved: 0n});
 
       // Locked balance can be staked. staker can stake 1200 tokens (minus fee):
       await helper.staking.stake(staker, 1000n * nominal);
       await helper.staking.stake(staker, 199n * nominal);
       // check balances
       expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'ormlvest', amount: 200n * nominal, reasons: 'All'}, {id: 'appstake', amount: 1199n * nominal, reasons: 'All'}]);
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 1199n * nominal, feeFrozen: 1199n * nominal});
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 1199n * nominal});
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.eq(1199n);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.eq(1199n * nominal);
 
@@ -170,7 +170,7 @@ describe('App promotion', () => {
 
       // check balances
       expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'ormlvest', amount: 200n * nominal, reasons: 'All'}]);
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 200n * nominal, feeFrozen: 200n * nominal});
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 200n * nominal});
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.eq(1199n);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.eq(0n);
 
@@ -219,9 +219,9 @@ describe('App promotion', () => {
         // Right after unstake tokens are still locked
         expect(await helper.staking.getStakesNumber({Substrate: staker.address})).to.eq(0);
         expect(await helper.balance.getLocked(staker.address)).to.deep.eq([{id: 'appstake', amount: STAKE_AMOUNT, reasons: 'All'}]);
-        expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: STAKE_AMOUNT, feeFrozen: STAKE_AMOUNT});
+        expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: STAKE_AMOUNT});
         // Staker can not transfer
-        await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith('balances.LiquidityRestrictions');
+        await expect(helper.balance.transferToSubstrate(staker, recepient.address, 100n * nominal)).to.be.rejectedWith(/^Token: Frozen$/);
         expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(STAKE_AMOUNT);
         expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(0n);
         expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore);
@@ -242,7 +242,7 @@ describe('App promotion', () => {
 
         // Wait for unstaking period. Balance now free ~1000; reserved, frozen, miscFrozeb: 0n
         await helper.wait.forParachainBlockNumber(pendingUnstake.block);
-        expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 0n, feeFrozen: 0n});
+        expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 0n});
         expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
 
         // staker can transfer:
@@ -283,10 +283,10 @@ describe('App promotion', () => {
         expect(stakes).to.be.deep.equal([]);
         expect(pendingUnstake[0].amount).to.equal(600n * nominal);
 
-        expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 600n * nominal, miscFrozen: 600n * nominal});
+        expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 600n * nominal});
         expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
         await helper.wait.forParachainBlockNumber(pendingUnstake[0].block);
-        expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, feeFrozen: 0n, miscFrozen: 0n});
+        expect (await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 0n});
         expect (await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
       });
     });
@@ -454,7 +454,7 @@ describe('App promotion', () => {
       await helper.wait.forParachainBlockNumber(unstake2.block);
 
       expect(await helper.balance.getLocked(staker.address)).to.deep.eq([]);
-      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, miscFrozen: 0n, feeFrozen: 0n});
+      expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 0n});
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.eq(999n);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.eq(0n);
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.eq(0n);
@@ -822,7 +822,7 @@ describe('App promotion', () => {
       expect(totalStakedPerBlock[1].amount).to.equal(income2);
 
       const stakerBalance = await helper.balance.getSubstrateFull(staker.address);
-      expect(stakerBalance).to.contain({miscFrozen: income1 + income2, feeFrozen: income1 + income2, reserved: 0n});
+      expect(stakerBalance).to.contain({frozen: income1 + income2, reserved: 0n});
       expect(stakerBalance.free / nominal).to.eq(999n);
     });
 
@@ -841,7 +841,7 @@ describe('App promotion', () => {
 
       const stakerFullBalance = await helper.balance.getSubstrateFull(staker.address);
 
-      expect(stakerFullBalance).to.contain({reserved: 0n, feeFrozen: frozenBalanceShouldBe, miscFrozen: frozenBalanceShouldBe});
+      expect(stakerFullBalance).to.contain({reserved: 0n, frozen: frozenBalanceShouldBe});
     });
 
     itSub('should not be credited for pending-unstaked tokens', async ({helper}) => {
@@ -923,7 +923,7 @@ describe('App promotion', () => {
       {method: 'unstakeAll' as const},
     ].map(testCase => {
       itSub(testCase.method, async ({helper}) => {
-        const unstakeParams = testCase.method === 'unstakePartial'
+        const unstakeParams: [] | [bigint] = testCase.method === 'unstakePartial'
           ? [100n * nominal - 1n]
           : [];
         const [staker] = await getAccounts(1);

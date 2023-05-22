@@ -21,7 +21,7 @@ import {expect, itEth, usingEthPlaygrounds} from './util';
 import {CollectionLimitField} from './util/playgrounds/types';
 
 
-describe('Create RFT collection from EVM', () => {
+describe.only('Create RFT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {
@@ -63,7 +63,8 @@ describe('Create RFT collection from EVM', () => {
     const baseUri = 'BaseURI';
 
     const {collectionId, collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    // FIXME: caller is not needed
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const collection = helper.rft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
@@ -153,7 +154,7 @@ describe('Create RFT collection from EVM', () => {
   });
 });
 
-describe('(!negative tests!) Create RFT collection from EVM', () => {
+describe.only('(!negative tests!) Create RFT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 

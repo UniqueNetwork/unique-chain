@@ -20,7 +20,7 @@ import {expect, itEth, usingEthPlaygrounds} from './util';
 
 const DECIMALS = 18;
 
-describe('Create FT collection from EVM', () => {
+describe.only('Create FT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {

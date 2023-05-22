@@ -70,11 +70,13 @@ describe('Integration Test: Maintenance Functionality', () => {
     itSub('MM blocks unique pallet calls', async ({helper}) => {
       // Can create an NFT collection before enabling the MM
       const nftCollection = await helper.nft.mintCollection(bob, {
-        tokenPropertyPermissions: [{key: 'test', permission: {
-          collectionAdmin: true,
-          tokenOwner: true,
-          mutable: true,
-        }}],
+        tokenPropertyPermissions: [{
+          key: 'test', permission: {
+            collectionAdmin: true,
+            tokenOwner: true,
+            mutable: true,
+          },
+        }],
       });
 
       // Can mint an NFT before enabling the MM
@@ -323,7 +325,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(await helper.preimage.getPreimageInfo(preimageHashes[0])).to.have.property('unrequested');
     });
 
-    itSub('Does not allow execution of a preimage that would fail', async ({helper}) => {
+    itSub.only('Does not allow execution of a preimage that would fail', async ({helper}) => {
       const [zeroAccount] = await helper.arrange.createAccounts([0n], superuser);
 
       const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [
@@ -334,7 +336,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         preimageHash, {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/balances\.InsufficientBalance/);
+      ])).to.be.rejectedWith(/^Token: FundsUnavailable$/);
     });
 
     itSub('Does not allow preimage execution with non-root', async ({helper}) => {

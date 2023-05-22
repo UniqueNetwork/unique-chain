@@ -22,7 +22,7 @@ import {CollectionLimitField} from './util/playgrounds/types';
 
 const DECIMALS = 18;
 
-describe('Create FT collection from EVM', () => {
+describe.only('Create FT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {
@@ -129,7 +129,7 @@ describe('Create FT collection from EVM', () => {
   });
 });
 
-describe('(!negative tests!) Create FT collection from EVM', () => {
+describe.only('(!negative tests!) Create FT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 

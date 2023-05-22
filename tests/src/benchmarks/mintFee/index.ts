@@ -72,7 +72,7 @@ const main = async () => {
     ).toString();
 
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-    const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
     const contract = await helper.ethContract.deployByCode(
       ethSigner,
@@ -131,7 +131,7 @@ async function benchMintFee(
 }> {
   const donor = await privateKey('//Alice');
   const substrateReceiver = await privateKey('//Bob');
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
   const nominal = helper.balance.getOneTokenNominal();
 
@@ -205,7 +205,7 @@ async function benchMintWithProperties(
   setup: { propertiesNumber: number },
 ): Promise<IBenchmarkResultForProp> {
   const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
   const susbstrateReceiver = await privateKey('//Bob');
   const receiverEthAddress = helper.address.substrateToEth(susbstrateReceiver.address);
