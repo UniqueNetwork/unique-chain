@@ -902,7 +902,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     await expectFailedToTransact(helper, messageSent);
   });
 
-  itSub.only('Unique rejects ASTR tokens from Astar', async ({helper}) => {
+  itSub('Unique rejects ASTR tokens from Astar', async ({helper}) => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       const destinationParachain = uniqueParachainMultilocation;
       const beneficiary = uniqueAccountMultilocation;
