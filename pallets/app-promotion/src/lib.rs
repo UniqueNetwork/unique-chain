@@ -84,7 +84,7 @@ use pallet_evm::account::CrossAccountId;
 use sp_runtime::{
 	Perbill,
 	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, AccountIdConversion, Zero},
-	ArithmeticError,
+	ArithmeticError, DispatchError,
 };
 
 pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
@@ -845,7 +845,7 @@ pub mod pallet {
 			stakers
 				.into_iter()
 				.try_for_each(|s| -> Result<_, DispatchError> {
-					if let Some(lock) = Self::get_locked_balance(&s) {
+					if let Some(BalanceLock { amount, .. }) = Self::get_locked_balance(&s) {
 						if let Some(_) = Self::get_frozen_balance(&s) {
 							return Err(Error::<T>::InconsistencyState.into());
 						}
@@ -855,7 +855,7 @@ pub mod pallet {
 							&s,
 						);
 
-						Self::set_freeze_unchecked(&s, lock.amount);
+						Self::set_freeze_with_result(&s, amount)?;
 						Ok(())
 					} else {
 						Ok(())
@@ -990,8 +990,8 @@ impl<T: Config> Pallet<T> {
 		Self::get_frozen_balance(staker)
 			.unwrap_or_default()
 			.checked_add(&amount)
-			.map(|freeze| Self::set_freeze_unchecked(staker, freeze))
-			.ok_or(ArithmeticError::Overflow.into())
+			.map(|freeze| Self::set_freeze_with_result(staker, freeze))
+			.ok_or::<DispatchError>(ArithmeticError::Overflow.into())?
 	}
 
 	/// Sets the new state of a balance locked by the pallet.
@@ -1019,17 +1019,25 @@ impl<T: Config> Pallet<T> {
 	/// - `staker`: staker account.
 	/// - `amount`: amount of frozen funds.
 	fn set_freeze_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
+		Self::set_freeze_with_result(staker, amount);
+	}
+
+	/// Sets the new state of a balance frozen by the pallet.
+	///
+	/// - `staker`: staker account.
+	/// - `amount`: amount of frozen funds.
+	fn set_freeze_with_result(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
 		if amount.is_zero() {
 			<<T as Config>::Currency as MutateFreeze<T::AccountId>>::thaw(
 				&T::FreezeIdentifier::get(),
 				&staker,
-			);
+			)
 		} else {
 			<<T as Config>::Currency as MutateFreeze<T::AccountId>>::set_freeze(
 				&T::FreezeIdentifier::get(),
 				staker,
 				amount,
-			);
+			)
 		}
 	}
 
