@@ -42,7 +42,7 @@ pub mod weights;
 mod pallet {
 	use super::*;
 	use frame_support::{
-		traits::{Get, ReservableCurrency, Currency},
+		traits::{fungible, Get, ReservableCurrency, Currency},
 		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType},
 		log,
 	};
@@ -50,15 +50,19 @@ mod pallet {
 
 	pub use crate::weights::WeightInfo;
 	pub type BalanceOf<T> =
-		<<T as Config>::Currency as Currency<<T as SystemConfig>::AccountId>>::Balance;
+		<<T as Config>::Currency as fungible::Inspect<<T as SystemConfig>::AccountId>>::Balance;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// The currency mechanism.
-		type Currency: ReservableCurrency<Self::AccountId>;
+		type Currency: fungible::Inspect<Self::AccountId>
+			+ fungible::Mutate<Self::AccountId>
+			+ fungible::MutateFreeze<Self::AccountId>
+			+ fungible::InspectHold<Self::AccountId>
+			+ fungible::MutateHold<Self::AccountId>
+			+ fungible::BalancedHold<Self::AccountId>;
 
 		#[pallet::constant]
 		type DefaultWeightToFeeCoefficient: Get<u64>;

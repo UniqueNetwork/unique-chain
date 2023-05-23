@@ -417,7 +417,10 @@ fn force_release_license() {
 fn authorship_event_handler() {
 	new_test_ext().execute_with(|| {
 		// put 100 in the pot + 5 for ED
-		Balances::make_free_balance_be(&CollatorSelection::account_id(), 105);
+		<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::set_balance(
+			&CollatorSelection::account_id(),
+			105,
+		);
 
 		// 4 is the default author.
 		assert_eq!(Balances::free_balance(4), 100);
@@ -441,7 +444,10 @@ fn fees_edgecases() {
 		// Nothing panics, no reward when no ED in balance
 		Authorship::on_initialize(1);
 		// put some money into the pot at ED
-		Balances::make_free_balance_be(&CollatorSelection::account_id(), 5);
+		<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::set_balance(
+			&CollatorSelection::account_id(),
+			5,
+		);
 		// 4 is the default author.
 		assert_eq!(Balances::free_balance(4), 100);
 		get_license_and_onboard(4);

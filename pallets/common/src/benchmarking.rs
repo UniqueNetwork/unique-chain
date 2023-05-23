@@ -27,12 +27,12 @@ use up_data_structs::{
 	MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
-	traits::{Currency, Get},
+	traits::{Get, fungible::Balanced, Imbalance, tokens::Precision},
 	pallet_prelude::ConstU32,
 	BoundedVec,
 };
 use core::convert::TryInto;
-use sp_runtime::DispatchError;
+use sp_runtime::{DispatchError, traits::Zero};
 
 const SEED: u32 = 1;
 
@@ -85,7 +85,12 @@ pub fn create_collection_raw<T: Config, R>(
 	) -> Result<CollectionId, DispatchError>,
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {
-	<T as Config>::Currency::deposit_creating(&owner.as_sub(), T::CollectionCreationPrice::get());
+	let imbalance = <T as Config>::Currency::deposit(
+		&owner.as_sub(),
+		T::CollectionCreationPrice::get(),
+		Precision::Exact,
+	)?;
+	debug_assert!(imbalance.peek().is_zero());
 	let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 	let description = create_u16_data::<MAX_COLLECTION_DESCRIPTION_LENGTH>();
 	let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();

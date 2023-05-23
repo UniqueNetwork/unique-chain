@@ -64,7 +64,11 @@ use evm_coder::ToLog;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure,
-	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
+	traits::{
+		Get,
+		fungible::{Balanced, Debt, Inspect},
+		tokens::{Imbalance, Precision, Preservation},
+	},
 	dispatch::Pays,
 	transactional, fail,
 };
@@ -85,7 +89,7 @@ use up_pov_estimate_rpc::PovInfo;
 
 pub use pallet::*;
 use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, traits::Zero};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -424,7 +428,6 @@ pub mod pallet {
 	use super::*;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
 	use weights::WeightInfo;
@@ -440,12 +443,12 @@ pub mod pallet {
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Handler of accounts and payment.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Balanced<Self::AccountId> + Inspect<Self::AccountId>;
 
 		/// Set price to create a collection.
 		#[pallet::constant]
 		type CollectionCreationPrice: Get<
-			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
+			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
 		>;
 
 		/// Dispatcher of operations on collections.
@@ -1112,21 +1115,17 @@ impl<T: Config> Pallet<T> {
 
 		// Take a (non-refundable) deposit of collection creation
 		{
-			let mut imbalance =
-				<<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
-			imbalance.subsume(
-				<<T as Config>::Currency as Currency<T::AccountId>>::deposit_creating(
-					&T::TreasuryAccountId::get(),
-					T::CollectionCreationPrice::get(),
-				),
-			);
-			<T as Config>::Currency::settle(
-				payer.as_sub(),
-				imbalance,
-				WithdrawReasons::TRANSFER,
-				ExistenceRequirement::KeepAlive,
-			)
-			.map_err(|_| Error::<T>::NotSufficientFounds)?;
+			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+			imbalance.subsume(<T as Config>::Currency::deposit(
+				&T::TreasuryAccountId::get(),
+				T::CollectionCreationPrice::get(),
+				Precision::Exact,
+			)?);
+			let credit =
+				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
+					.map_err(|_| Error::<T>::NotSufficientFounds)?;
+
+			debug_assert!(credit.peek().is_zero())
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
