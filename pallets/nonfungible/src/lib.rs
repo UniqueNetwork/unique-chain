@@ -1347,37 +1347,18 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn token_has_children(collection_id: CollectionId, token_id: TokenId) -> bool {
-		let address = T::CrossTokenAddressMapping::token_to_address(collection_id, token_id);
-		let balance = <pallet_balances::Pallet<T>>::free_balance(address.as_sub());
-
-		balance > T::Balance::default()
-			|| <TokenChildren<T>>::iter_prefix((collection_id, token_id))
-				.next()
-				.is_some()
+		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
+			.next()
+			.is_some()
 	}
 
 	pub fn token_children_ids(collection_id: CollectionId, token_id: TokenId) -> Vec<TokenChild> {
-		let mut tokens: Vec<_> = vec![];
-
-		let address = T::CrossTokenAddressMapping::token_to_address(collection_id, token_id);
-		let balance = <pallet_balances::Pallet<T>>::free_balance(address.as_sub());
-		if balance > T::Balance::default() {
-			tokens.push(TokenChild {
-				token: TokenId(0),
-				collection: pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID,
+		<TokenChildren<T>>::iter_prefix((collection_id, token_id))
+			.map(|((child_collection_id, child_id), _)| TokenChild {
+				collection: child_collection_id,
+				token: child_id,
 			})
-		}
-
-		tokens.extend(
-			<TokenChildren<T>>::iter_prefix((collection_id, token_id)).map(
-				|((child_collection_id, child_id), _)| TokenChild {
-					collection: child_collection_id,
-					token: child_id,
-				},
-			),
-		);
-
-		tokens
+			.collect()
 	}
 
 	/// Mint single NFT token.
