@@ -154,7 +154,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
   });
 
-  itSub.only('Should connect and send USDT from Westmint to Opal', async ({helper}) => {
+  itSub('Should connect and send USDT from Westmint to Opal', async ({helper}) => {
     await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
       const dest = {
         V2: {
@@ -241,7 +241,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     expect(balanceOpalAfter == balanceOpalBefore).to.be.true;
   });
 
-  itSub.only('Should connect and send USDT from Unique to Statemine back', async ({helper}) => {
+  itSub('Should connect and send USDT from Unique to Statemine back', async ({helper}) => {
     const destination = {
       V2: {
         parents: 1,
@@ -292,7 +292,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     });
   });
 
-  itSub.only('Should connect and send Relay token to Unique', async ({helper}) => {
+  itSub('Should connect and send Relay token to Unique', async ({helper}) => {
     const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
 
     balanceBobBefore = await helper.balance.getSubstrate(bob.address);
@@ -360,7 +360,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     expect(balanceBobRelayTokenBefore < balanceBobRelayTokenAfter).to.be.true;
   });
 
-  itSub.only('Should connect and send Relay token back', async ({helper}) => {
+  itSub('Should connect and send Relay token back', async ({helper}) => {
     let relayTokenBalanceBefore: bigint;
     let relayTokenBalanceAfter: bigint;
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
