@@ -68,7 +68,7 @@ benchmarks! {
 	}
 
 	set_collator_selection_license_bond {
-		let bond_cost: Option<BalanceOf<T>> = Some(T::Balances::minimum_balance() * 10u32.into());
+		let bond_cost: Option<BalanceOf<T>> = Some(T::Currency::minimum_balance() * 10u32.into());
 	}: {
 		assert_ok!(
 			<Pallet<T>>::set_collator_selection_license_bond(RawOrigin::Root.into(), bond_cost.clone())
