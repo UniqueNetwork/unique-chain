@@ -85,7 +85,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 }
 
-/// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallete
+/// Implementation of `CommonCollectionOperations` for `FungibleHandle`. It wraps FungibleHandle Pallet
 /// methods and adds weight info.
 impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 	fn create_item(

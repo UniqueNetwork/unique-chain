@@ -80,25 +80,22 @@ describe('Composite nesting tests', () => {
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
       {tokenId: 0, collectionId: collectionB.collectionId},
       {tokenId: tokenC.tokenId, collectionId: collectionC.collectionId},
-      {tokenId: 0, collectionId: collectionNative.collectionId},
-    ]).and.has.length(4);
+    ]).and.has.length(3);
 
     // Burn all nested pieces
     await tokenC.burnFrom(alice, targetToken.nestingAccount(), 2n);
     expect(await targetToken.getChildren()).to.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
       {tokenId: 0, collectionId: collectionB.collectionId},
-      {tokenId: 0, collectionId: collectionNative.collectionId},
     ])
-      .and.has.length(3);
+      .and.has.length(2);
 
     // Move part of the fungible token inside token A deeper in the nesting tree
     await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
     expect(await targetToken.getChildren()).to.be.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
       {tokenId: 0, collectionId: collectionB.collectionId},
-      {tokenId: 0, collectionId: collectionNative.collectionId},
-    ]).and.has.length(3);
+    ]).and.has.length(2);
     // Nested token also has children now:
     expect(await tokenA.getChildren()).to.have.deep.members([
       {tokenId: 0, collectionId: collectionB.collectionId},
@@ -108,8 +105,7 @@ describe('Composite nesting tests', () => {
     await collectionB.transferFrom(alice, targetToken.nestingAccount(), tokenA.nestingAccount(), 1n);
     expect(await targetToken.getChildren()).to.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
-      {tokenId: 0, collectionId: collectionNative.collectionId},
-    ]).and.has.length(2);
+    ]).and.has.length(1);
     expect(await tokenA.getChildren()).to.have.deep.members([
       {tokenId: 0, collectionId: collectionB.collectionId},
     ]).and.has.length(1);

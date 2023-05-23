@@ -109,7 +109,8 @@ describe('Common nesting tests', () => {
       // Bob can nest Native FT into their NFT:
       await collectionForNesting.transfer(bob, targetTokenBob.nestingAccount(), 50n);
       expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(50n);
-      expect(await targetTokenBob.getChildren()).to.be.deep.equal([{collectionId: 0, tokenId: 0}]);
+      // Native FT should't be visible in NFT children:
+      expect(await targetTokenBob.getChildren()).to.be.deep.equal([]);
     });
   });
 
@@ -134,7 +135,7 @@ describe('Common nesting tests', () => {
     expect(await ftCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(100n);
     expect(await nativeFtCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(100n);
 
-    expect(await tokenA.getChildren()).to.be.length(4);
+    expect(await tokenA.getChildren()).to.be.length(3);
     expect(await tokenB.getChildren()).to.be.length(0);
 
     // Transfer the nested token to another token
@@ -155,9 +156,9 @@ describe('Common nesting tests', () => {
     expect(await nativeFtCollectionToBeNested.getBalance(tokenB.nestingAccount())).to.equal(25n);
     expect(await nativeFtCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(75n);
 
-    // RFT, FT, and native FT
-    expect(await tokenA.getChildren()).to.be.length(3);
-    // NFT, RFT, FT, and native FT
-    expect(await tokenB.getChildren()).to.be.length(4);
+    // RFT, FT, and without native FT
+    expect(await tokenA.getChildren()).to.be.length(2);
+    // NFT, RFT, FT, and without native FT
+    expect(await tokenB.getChildren()).to.be.length(3);
   });
 });
