@@ -55,7 +55,11 @@ pub mod pallet {
 		dispatch::PostDispatchInfo,
 		ensure,
 		pallet_prelude::{DispatchResultWithPostInfo, Pays},
-		traits::{Currency, ExistenceRequirement, Get},
+		traits::{
+			Get,
+			fungible::{Inspect, Mutate},
+			tokens::Preservation,
+		},
 	};
 	use pallet_balances::WeightInfo;
 	use pallet_common::{erc::CrossAccountId, Error as CommonError, Pallet as PalletCommon};
@@ -71,11 +75,18 @@ pub mod pallet {
 		+ pallet_common::Config
 		+ pallet_structure::Config
 	{
-		/// Currency from `pallet_balances`
-		type Currency: frame_support::traits::Currency<
+		/// Inspect from `pallet_balances`
+		type Inspect: frame_support::traits::tokens::fungible::Inspect<
 			Self::AccountId,
 			Balance = Self::CurrencyBalance,
 		>;
+
+		/// Mutate from `pallet_balances`
+		type Mutate: frame_support::traits::tokens::fungible::Mutate<
+			Self::AccountId,
+			Balance = Self::CurrencyBalance,
+		>;
+
 		/// Balance type of chain
 		type CurrencyBalance: Into<U256> + TryFrom<U256> + TryFrom<u128> + Into<u128>;
 
@@ -93,6 +104,18 @@ pub mod pallet {
 	pub struct Pallet<T>(_);
 
 	impl<T: Config> Pallet<T> {
+		pub fn balance_of(account: &T::CrossAccountId) -> u128 {
+			T::Inspect::balance(account.as_sub()).into()
+		}
+
+		pub fn total_balance(account: &T::CrossAccountId) -> u128 {
+			T::Inspect::total_balance(account.as_sub()).into()
+		}
+
+		pub fn total_issuance() -> u128 {
+			T::Inspect::total_issuance().into()
+		}
+
 		/// Checks if a non-owner has (enough) allowance from the owner to perform operations on the tokens.
 		/// Returns the expected remaining allowance - it should be set manually if the transaction proceeds.
 		///
@@ -121,7 +144,7 @@ pub mod pallet {
 				return Ok(0);
 			}
 
-			Ok(<T as Config>::Currency::free_balance(from.as_sub()).into())
+			Ok(Self::balance_of(from))
 		}
 
 		/// Transfers the specified amount of tokens. Will check that
@@ -142,14 +165,10 @@ pub mod pallet {
 			<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
 			if from != to && amount != 0 {
-				<T as Config>::Currency::transfer(
-					from.as_sub(),
-					to.as_sub(),
-					amount
-						.try_into()
-						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
-					ExistenceRequirement::AllowDeath,
-				)?;
+				let amount = amount
+					.try_into()
+					.map_err(|_| sp_runtime::ArithmeticError::Overflow)?;
+				T::Mutate::transfer(from.as_sub(), to.as_sub(), amount, Preservation::Expendable)?;
 			};
 
 			Ok(PostDispatchInfo {

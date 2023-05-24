@@ -92,7 +92,8 @@ parameter_types! {
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 impl pallet_balances_adapter::Config for Runtime {
-	type Currency = Balances;
+	type Inspect = Balances;
+	type Mutate = Balances;
 	type CurrencyBalance = <Balances as Currency<Self::AccountId>>::Balance;
 	type Decimals = Decimals;
 	type Name = Name;
