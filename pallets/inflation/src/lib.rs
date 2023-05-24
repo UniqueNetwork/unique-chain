@@ -187,12 +187,11 @@ pub mod pallet {
 				<NextInflationBlock<T>>::set(inflation_start_relay_block + block_interval.into());
 
 				// First time deposit - create Treasury account so that we can call deposit_into_existing everywhere else
-				let imbalance = T::Currency::deposit(
+				let _ = T::Currency::deposit(
 					&T::TreasuryAccountId::get(),
 					<BlockInflation<T>>::get(),
 					Precision::Exact,
 				)?;
-				debug_assert!(imbalance.peek().is_zero());
 			}
 
 			Ok(())
