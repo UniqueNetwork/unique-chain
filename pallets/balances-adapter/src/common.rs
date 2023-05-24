@@ -1,9 +1,9 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
 use crate::{Config, NativeFungibleHandle, Pallet};
-use frame_support::{fail, traits::Currency, weights::Weight};
+use frame_support::{fail, weights::Weight};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
-use pallet_common::{erc::CrossAccountId, CommonCollectionOperations, CommonWeightInfo};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo};
 use up_data_structs::TokenId;
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -250,8 +250,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 	fn unnest(&self, _under: TokenId, _to_nest: (up_data_structs::CollectionId, TokenId)) {}
 
 	fn account_tokens(&self, account: <T>::CrossAccountId) -> Vec<TokenId> {
-		let balance = <T as Config>::Currency::total_balance(account.as_sub());
-		let balance: u128 = balance.into();
+		let balance = <Pallet<T>>::total_balance(&account);
 		if balance != 0 {
 			vec![TokenId::default()]
 		} else {
@@ -302,24 +301,23 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		1
 	}
 
-	fn account_balance(&self, account: <T>::CrossAccountId) -> u32 {
-		let balance: u128 = <T as Config>::Currency::free_balance(account.as_sub()).into();
+	fn account_balance(&self, account: T::CrossAccountId) -> u32 {
+		let balance = <Pallet<T>>::balance_of(&account);
 		(balance != 0).into()
 	}
 
-	fn balance(&self, account: <T>::CrossAccountId, token: TokenId) -> u128 {
+	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128 {
 		if token != TokenId::default() {
 			return 0;
 		}
-		<T as Config>::Currency::free_balance(account.as_sub()).into()
+		<Pallet<T>>::balance_of(&account)
 	}
 
 	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		if token != TokenId::default() {
 			return None;
 		}
-		let total = <T as Config>::Currency::total_issuance();
-		Some(total.into())
+		Some(<Pallet<T>>::total_issuance())
 	}
 
 	fn allowance(
