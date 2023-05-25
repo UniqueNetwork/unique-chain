@@ -20,7 +20,11 @@ use crate as pallet_inflation;
 
 use frame_support::{
 	assert_ok, parameter_types,
-	traits::{fungible::{Balanced, Inspect}, OnInitialize, Everything, ConstU32, tokens::Precision},
+	traits::{
+		fungible::{Balanced, Inspect},
+		OnInitialize, Everything, ConstU32,
+		tokens::Precision,
+	},
 	weights::Weight,
 };
 use frame_system::RawOrigin;

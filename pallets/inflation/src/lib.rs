@@ -41,15 +41,12 @@ use frame_support::{
 	dispatch::{DispatchResult},
 	traits::{
 		fungible::{Balanced, Inspect, Mutate},
-		Get, Imbalance,
+		Get,
 		tokens::Precision,
 	},
 };
 pub use pallet::*;
-use sp_runtime::{
-	Perbill,
-	traits::{BlockNumberProvider, Zero},
-};
+use sp_runtime::{Perbill, traits::BlockNumberProvider};
 
 use sp_std::convert::TryInto;
 
