@@ -2404,6 +2404,11 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
     return locks.map((lock: any) => { return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}; });
   }
+
+  async getFrozen(address: TSubstrateAccount): Promise<[{ id: string, amount: bigint}]> {
+    const locks = (await this.helper.callRpc('api.query.balances.freezes', [address])).toHuman();
+    return locks.map((lock: any) => { return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, ''))}; });
+  }
 }
 
 class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
@@ -2494,6 +2499,15 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    */
   getLocked(address: TSubstrateAccount) {
     return this.subBalanceGroup.getLocked(address);
+  }
+
+  /**
+   * Get frozen balances
+   * @param address substrate address
+   * @returns frozen balances with id via api.query.balances.freezes
+   */
+  getFrozen(address: TSubstrateAccount) {
+    return this.subBalanceGroup.getFrozen(address);
   }
 
   /**
