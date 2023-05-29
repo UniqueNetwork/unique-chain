@@ -95,22 +95,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3.1.0
         with:
-          persist-credentials: false
           ref: ${{ github.head_ref }}  #Checking out head commit
-
-
-
-      - name: checkout team-core-utils
-        uses: actions/checkout@v3.5.2
-        with:
-          repository: UniqueNetwork/team-core-utils
-          #token: ${{ secrets.CORE_TEAM_CORE_UTILS_CHECKOUT }}
-          ssh-key: ${{ secrets.CORE_TEAM_CORE_UTILS_CHECKOUT }}
-          path: team-core-utils
-          ref: app-promo-migration
-
-
-
 
       - name: Prepare
         uses: ./.github/actions/prepare
@@ -218,10 +203,10 @@ jobs:
 
 
       - name: checkout team-core-utils
-        uses: actions/checkout@v3.1.0
+        uses: actions/checkout@v3.5.2
         with:
           repository: UniqueNetwork/team-core-utils
-          token: ${{ secrets.CORE_GITHUB_CHECKOUT }}
+          ssh-key: ${{ secrets.CORE_TEAM_CORE_UTILS_CHECKOUT }}
           path: team-core-utils
           ref: app-promo-migration
 
