@@ -215,7 +215,7 @@ jobs:
         run: |
           yarn install
           cd migration/appPromotion    
-          docker run -t uniquenetwork/builder-chainql /chainql/target/release/chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
+          docker run uniquenetwork/builder-chainql /chainql/target/release/chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
           npx ts-node lockedToFreeze.ts
         env:
           WS_RPC: ws://127.0.0.1:9944
