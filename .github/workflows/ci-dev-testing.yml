@@ -97,6 +97,14 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
+      - name: checkout team-core-utils
+        uses: actions/checkout@v3.1.0
+        with:
+          repository: UniqueNetwork/team-core-utils
+          token: ${{ secrets.CORE_GITHUB_CHECKOUT }}
+          path: team-core-utils
+          ref: app-promo-migration
+
       - name: Prepare
         uses: ./.github/actions/prepare
 
