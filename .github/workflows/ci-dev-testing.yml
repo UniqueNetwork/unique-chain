@@ -208,6 +208,7 @@ jobs:
           repository: UniqueNetwork/team-core-utils
           token: ${{ secrets.CORE_GITHUB_CHECKOUT }}
           path: team-core-utils
+          ref: app-promo-migration
 
       - name: Run AppPromo migration
         working-directory: team-core-utils
