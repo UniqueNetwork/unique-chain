@@ -202,19 +202,19 @@ jobs:
 
 
 
-      - name: checkout team-core-utils
-        uses: actions/checkout@v3.5.2
-        with:
-          repository: UniqueNetwork/team-core-utils
-          ssh-key: ${{ secrets.CORE_TEAM_CORE_UTILS_CHECKOUT }}
-          path: team-core-utils
-          ref: app-promo-migration
+      # - name: checkout team-core-utils
+      #   uses: actions/checkout@v3.5.2
+      #   with:
+      #     repository: UniqueNetwork/team-core-utils
+      #     ssh-key: ${{ secrets.CORE_TEAM_CORE_UTILS_CHECKOUT }}
+      #     path: team-core-utils
+      #     ref: app-promo-migration
 
       - name: Run AppPromo migration
-        working-directory: team-core-utils
+        working-directory: tests
         run: |
           yarn install
-          cd migration/appPromotion    
+          cd tests/src/migrations/942057-appPromotion   
           docker run uniquenetwork/builder-chainql /chainql/target/release/chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
           npx ts-node lockedToFreeze.ts
         env:
