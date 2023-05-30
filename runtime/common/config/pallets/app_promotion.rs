@@ -16,7 +16,7 @@
 
 use crate::{
 	runtime_common::config::pallets::{TreasuryAccountId, RelayChainBlockNumberProvider},
-	Runtime, Balances, BlockNumber, Unique, RuntimeEvent, EvmContractHelpers,
+	Runtime, Balances, BlockNumber, Unique, RuntimeEvent, EvmContractHelpers, Maintenance,
 };
 
 use frame_support::{parameter_types, PalletId};
@@ -33,6 +33,7 @@ parameter_types! {
 	pub const Nominal: Balance = UNIQUE;
 	pub const HoldAndFreezeIdentifier: [u8; 16] = *b"appstakeappstake";
 	pub IntervalIncome: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub MaintenanceMode: bool =  Maintenance::is_enabled();
 }
 
 impl pallet_app_promotion::Config for Runtime {
@@ -49,4 +50,5 @@ impl pallet_app_promotion::Config for Runtime {
 	type IntervalIncome = IntervalIncome;
 	type RuntimeEvent = RuntimeEvent;
 	type FreezeIdentifier = HoldAndFreezeIdentifier;
+	type IsMaintenanceModeEnabled = MaintenanceMode;
 }
