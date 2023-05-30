@@ -7,11 +7,8 @@
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {SignerOptions} from '@polkadot/api/types/submittable';
-import '../../interfaces/augment-api-tx';
+import '../../interfaces/augment-api';
 import {AugmentedSubmittables} from '@polkadot/api-base/types/submittable';
-import {RpcInterface} from '@polkadot/rpc-core/types';
-import {QueryableStorage} from '@polkadot/api-base/types/storage';
-import {DecoratedRpc} from '@polkadot/api-base/types/rpc';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
 import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -50,7 +47,7 @@ import {
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
-import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, PalletBalancesIdAmount} from '@polkadot/types/lookup';
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
@@ -379,15 +376,6 @@ export type Invalid<ErrorMessage> =
 type Get2<T, P extends string, E> =
   P extends `${infer Key}.${infer Key2}` ? Key extends keyof T ? Key2 extends keyof T[Key] ? T[Key][Key2] : E : E : E;
 type ForceFunction<T> = T extends (...args: any) => any ? T : (...args: any) => Invalid<'not a function'>;
-type ReturnTypeWithArgs<T extends (...args: any[]) => any, ARGS_T> =
-  Extract<
-    T extends { (...args: infer A1): infer R1; (...args: infer A2): infer R2; (...args: infer A3): infer R3; (...args: infer A4): infer R4; } ? [A1, R1] | [A2, R2] | [A3, R3] | [A4, R4] :
-    T extends { (...args: infer A1): infer R1; (...args: infer A2): infer R2; (...args: infer A3): infer R3; } ? [A1, R1] | [A2, R2] | [A3, R3] :
-    T extends { (...args: infer A1): infer R1; (...args: infer A2): infer R2; } ? [A1, R1] | [A2, R2] :
-    T extends { (...args: infer A1): infer R1; } ? [A1, R1] :
-    never,
-    [ARGS_T, any]
-  >[1]
 
 export class ChainHelperBase {
   helperBase: any;
@@ -677,12 +665,12 @@ export class ChainHelperBase {
   async executeExtrinsic<
     E extends string,
     V extends (
-...args: any) => any = ForceFunction<
-      Get2<
-        AugmentedSubmittables<'promise'>,
-        E, (...args: any) => Invalid<'not found'>
+      ...args: any) => any = ForceFunction<
+        Get2<
+          AugmentedSubmittables<'promise'>,
+          E, (...args: any) => Invalid<'not found'>
+        >
       >
-    >
   >(
     sender: TSigner,
     extrinsic: `api.tx.${E}`,
@@ -1756,9 +1744,7 @@ class NFTGroup extends NFTnRFT {
       children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId, blockHashAt]);
     }
 
-    return children.toJSON().map((x: any) => {
-      return {collectionId: x.collection, tokenId: x.token};
-    });
+    return children.toJSON().map((x: any) => ({collectionId: x.collection, tokenId: x.token}));
   }
 
   /**
@@ -2409,14 +2395,13 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return total.toBigInt();
   }
 
-  async getLocked(address: TSubstrateAccount): Promise<[{id: string, amount: bigint, reason: string}]> {
+  async getLocked(address: TSubstrateAccount): Promise<[{ id: string, amount: bigint, reason: string }]> {
     const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
-    return locks.map((lock: any) => { return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}; });
+    return locks.map((lock: any) => ({id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}));
   }
-
-  async getFrozen(address: TSubstrateAccount): Promise<[{ id: string, amount: bigint}]> {
-    const locks = (await this.helper.callRpc('api.query.balances.freezes', [address])).toHuman();
-    return locks.map((lock: any) => { return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, ''))}; });
+  async getFrozen(address: TSubstrateAccount): Promise<{ id: string, amount: bigint }[]> {
+    const locks = await this.helper.api!.query.balances.freezes(address);
+    return locks.map(lock => ({id: lock.id.toString(), amount: lock.amount.toBigInt()}));
   }
 }
 
@@ -2513,6 +2498,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * Get locked balances
    * @param address substrate address
    * @returns locked balances with reason via api.query.balances.locks
+   * @deprecated all the methods should switch to getFrozen
    */
   getLocked(address: TSubstrateAccount) {
     return this.subBalanceGroup.getLocked(address);
@@ -2521,7 +2507,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   /**
    * Get frozen balances
    * @param address substrate address
-   * @returns frozen balances with id via api.query.balances.freezes
+   * @returns locked balances with reason via api.query.balances.locks
    */
   getFrozen(address: TSubstrateAccount) {
     return this.subBalanceGroup.getFrozen(address);
