@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '../util/index';
 import {itEth, expect} from './util';
 
-describe.only('evm nft collection sponsoring', () => {
+describe('evm nft collection sponsoring', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let nominal: bigint;
@@ -319,7 +319,7 @@ describe.only('evm nft collection sponsoring', () => {
   });
 });
 
-describe.only('evm RFT collection sponsoring', () => {
+describe('evm RFT collection sponsoring', () => {
   let donor: IKeyringPair;
   let alice: IKeyringPair;
   let nominal: bigint;

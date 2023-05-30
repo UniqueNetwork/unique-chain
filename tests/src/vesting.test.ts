@@ -103,7 +103,7 @@ describe('Vesting', () => {
     expect(balanceSender.reserved).to.eq(0n);
   });
 
-  itSub.only('cannot send more tokens than have', async ({helper}) => {
+  itSub('cannot send more tokens than have', async ({helper}) => {
     const [sender, receiver] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const schedule = {start: 0n, period: 1n, periodCount: 1n, perPeriod: 100n * nominal};
     const manyPeriodsSchedule = {start: 0n, period: 1n, periodCount: 100n, perPeriod: 10n * nominal};

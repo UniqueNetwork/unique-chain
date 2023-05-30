@@ -88,7 +88,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     expect(treasuryIncrease).to.be.equal(fee);
   });
 
-  itSub.only('Treasury balance increased by failed tx fee', async ({helper}) => {
+  itSub('Treasury balance increased by failed tx fee', async ({helper}) => {
     const api = helper.getApi();
     await helper.wait.newBlocks(1);
 

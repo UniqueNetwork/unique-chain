@@ -21,7 +21,7 @@ import {CollectionLimitField} from './util/playgrounds/types';
 import {COLLECTION_HELPER} from '../util';
 
 
-describe.only('Create NFT collection from EVM', () => {
+describe('Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function () {
@@ -143,7 +143,7 @@ describe.only('Create NFT collection from EVM', () => {
   });
 });
 
-describe.only('(!negative tests!) Create NFT collection from EVM', () => {
+describe('(!negative tests!) Create NFT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 

@@ -80,7 +80,7 @@ const mintRFTToken = async (helper: EthUniqueHelper, owner: string, fractionaliz
 };
 
 
-describe.only('Fractionalizer contract usage', () => {
+describe('Fractionalizer contract usage', () => {
   let donor: IKeyringPair;
 
   before(async function() {
