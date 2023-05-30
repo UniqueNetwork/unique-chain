@@ -153,6 +153,9 @@ pub mod pallet {
 		#[pallet::constant]
 		type Nominal: Get<BalanceOf<Self>>;
 
+		/// Maintenance mode status.
+		type IsMaintenanceModeEnabled: Get<bool>;
+
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
 
@@ -288,6 +291,10 @@ pub mod pallet {
 		where
 			<T as frame_system::Config>::BlockNumber: From<u32>,
 		{
+			if T::IsMaintenanceModeEnabled::get() {
+				return T::DbWeight::get().reads_writes(1, 0);
+			}
+
 			let block_pending = PendingUnstake::<T>::take(current_block_number);
 			let counter = block_pending.len() as u32;
 
@@ -846,7 +853,7 @@ pub mod pallet {
 				.into_iter()
 				.try_for_each(|s| -> Result<_, DispatchError> {
 					if let Some(BalanceLock { amount, .. }) = Self::get_locked_balance(&s) {
-						if let Some(_) = Self::get_frozen_balance(&s) {
+						if Self::get_frozen_balance(&s).is_some() {
 							return Err(Error::<T>::InconsistencyState.into());
 						}
 
@@ -861,6 +868,47 @@ pub mod pallet {
 						Ok(())
 					}
 				})?;
+
+			Ok(())
+		}
+
+		/// Called for blocks that, for some reason, have not been unstacked
+		///
+		/// # Permissions
+		///
+		/// * Sudo
+		///
+		///   # Arguments
+		///
+		/// * `origin`: Must be `Signed`.
+		/// * `pending_blocks`: Block numbers that will be processed.
+		#[pallet::call_index(10)]
+		#[pallet::weight(<T as Config>::WeightInfo::on_initialize(PENDING_LIMIT_PER_BLOCK*pending_blocks.len() as u32))]
+		pub fn force_unstake(
+			origin: OriginFor<T>,
+			pending_blocks: Vec<T::BlockNumber>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+
+			ensure!(
+				pending_blocks
+					.iter()
+					.all(|b| *b < <frame_system::Pallet<T>>::block_number()),
+				<Error<T>>::NoPermission
+			);
+
+			let mut pendings =
+				Vec::with_capacity(PENDING_LIMIT_PER_BLOCK as usize * pending_blocks.len());
+			pending_blocks
+				.into_iter()
+				.for_each(|b| pendings.append(&mut PendingUnstake::<T>::take(b).into_inner()));
+
+			pendings.into_iter().for_each(|(staker, amount)| {
+				Self::get_frozen_balance(&staker).map(|b| {
+					let new_state = b.checked_sub(&amount).unwrap_or_default();
+					Self::set_freeze_unchecked(&staker, new_state);
+				});
+			});
 
 			Ok(())
 		}
@@ -1158,7 +1206,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn get_next_calculated_key() -> Option<Vec<u8>> {
-		Self::get_next_calculated_record().map(|key| Staked::<T>::hashed_key_for(key))
+		Self::get_next_calculated_record().map(Staked::<T>::hashed_key_for)
 	}
 }
 
