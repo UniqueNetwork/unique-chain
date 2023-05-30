@@ -225,6 +225,7 @@ jobs:
       #     ref: app-promo-migration
 
       - name: Run AppPromo migration
+        if: success() || failure()
         working-directory: tests
         run: |
           yarn install
