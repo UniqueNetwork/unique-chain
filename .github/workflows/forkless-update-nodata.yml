@@ -268,7 +268,7 @@ jobs:
           yarn install
           cd src/migrations/942057-appPromotion   
           chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
-          npx ts-node lockedToFreeze.ts
+          npx ts-node --esm lockedToFreeze.ts
         env:
           WS_RPC: ws://127.0.0.1:9944
           SUPERUSER_SEED: //Alice
