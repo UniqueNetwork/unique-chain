@@ -3,20 +3,6 @@ edition = "2021"
 name = "tests"
 version = "0.1.1"
 
-[package.metadata.deppatcher.originals.dependencies]
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.39" }
-pallet-evm = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.39" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-up-sponsorship = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.39" }
-
 [features]
 default = ['refungible']
 
