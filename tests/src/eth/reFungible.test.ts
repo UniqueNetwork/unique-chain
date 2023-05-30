@@ -46,12 +46,11 @@ describe('Refungible: Plain calls', () => {
       const receiverSub = bob;
       const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
 
-      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {
+      const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
+      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {
         tokenOwner: false,
         collectionAdmin: true,
-        mutable: false}};
-      });
+        mutable: false}}));
 
 
       const collection = await helper.rft.mintCollection(minter, {
@@ -86,7 +85,7 @@ describe('Refungible: Plain calls', () => {
       expect(tokenId).to.be.equal(expectedTokenId);
 
       expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
-        .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
+        .map(p => helper.ethProperty.property(p.key, p.value.toString())));
 
       expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
         .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.toLowerCase()} : {Substrate: receiverSub.address});

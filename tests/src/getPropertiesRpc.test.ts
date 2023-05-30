@@ -48,17 +48,13 @@ const tokenPropPermissions = [
 describe('query properties RPC', () => {
   let alice: IKeyringPair;
 
-  const mintCollection = async (helper: UniqueHelper) => {
-    return await helper.nft.mintCollection(alice, {
-      tokenPrefix: 'prps',
-      properties: collectionProps,
-      tokenPropertyPermissions: tokenPropPermissions,
-    });
-  };
+  const mintCollection = async (helper: UniqueHelper) => await helper.nft.mintCollection(alice, {
+    tokenPrefix: 'prps',
+    properties: collectionProps,
+    tokenPropertyPermissions: tokenPropPermissions,
+  });
 
-  const mintToken = async (collection: UniqueNFTCollection) => {
-    return await collection.mintToken(alice, {Substrate: alice.address}, tokenProps);
-  };
+  const mintToken = async (collection: UniqueNFTCollection) => await collection.mintToken(alice, {Substrate: alice.address}, tokenProps);
 
 
   before(async () => {
