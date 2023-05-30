@@ -11,7 +11,7 @@ use frame_support::{
 use sp_runtime::DispatchError;
 use up_data_structs::{CollectionId, CreateCollectionData, CollectionFlags};
 
-use crate::{pallet::Config, CommonCollectionOperations, CollectionHandle};
+use crate::{pallet::Config, CommonCollectionOperations};
 
 // TODO: move to benchmarking
 /// Price of [`dispatch_tx`] call with noop `call` argument
@@ -34,16 +34,11 @@ pub fn dispatch_tx<
 	collection: CollectionId,
 	call: C,
 ) -> DispatchResultWithPostInfo {
-	let handle =
-		CollectionHandle::try_get(collection).map_err(|error| DispatchErrorWithPostInfo {
-			post_info: PostDispatchInfo {
-				actual_weight: Some(dispatch_weight::<T>()),
-				pays_fee: Pays::Yes,
-			},
-			error,
-		})?;
-	handle
-		.check_is_internal()
+	let dispatched = T::CollectionDispatch::dispatch(collection)
+		.and_then(|dispatched| {
+			dispatched.check_is_internal()?;
+			Ok(dispatched)
+		})
 		.map_err(|error| DispatchErrorWithPostInfo {
 			post_info: PostDispatchInfo {
 				actual_weight: Some(dispatch_weight::<T>()),
@@ -51,7 +46,6 @@ pub fn dispatch_tx<
 			},
 			error,
 		})?;
-	let dispatched = T::CollectionDispatch::dispatch(handle);
 	let mut result = call(dispatched.as_dyn());
 	match &mut result {
 		Ok(PostDispatchInfo {
@@ -72,6 +66,9 @@ pub fn dispatch_tx<
 
 /// Interface for working with different collections through the dispatcher.
 pub trait CollectionDispatch<T: Config> {
+	/// Check if the collection is internal.
+	fn check_is_internal(&self) -> DispatchResult;
+
 	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	///
 	/// * `sender` - The user who will become the owner of the collection.
@@ -87,15 +84,14 @@ pub trait CollectionDispatch<T: Config> {
 	///
 	/// * `sender` - The owner of the collection.
 	/// * `handle` - Collection handle.
-	fn destroy(sender: T::CrossAccountId, handle: CollectionHandle<T>) -> DispatchResult;
+	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult;
 
 	/// Get a specialized collection from the handle.
 	///
 	/// * `handle` - Collection handle.
-	fn dispatch(handle: CollectionHandle<T>) -> Self;
-
-	/// Get the collection handle for the corresponding implementation.
-	fn into_inner(self) -> CollectionHandle<T>;
+	fn dispatch(collection_id: CollectionId) -> Result<Self, DispatchError>
+	where
+		Self: Sized;
 
 	/// Get the implementation of [`CommonCollectionOperations`].
 	fn as_dyn(&self) -> &dyn CommonCollectionOperations<T>;

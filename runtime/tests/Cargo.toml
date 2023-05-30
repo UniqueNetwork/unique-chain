@@ -3,20 +3,6 @@ edition = "2021"
 name = "tests"
 version = "0.1.1"
 
-[package.metadata.deppatcher.originals.dependencies]
-sp-core = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-io = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-runtime = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-sp-std = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-support = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-frame-system = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-balances = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-timestamp = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.39" }
-up-sponsorship = { git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.39" }
-pallet-ethereum = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.39" }
-pallet-evm = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.39" }
-
 [features]
 default = ['refungible']
 
@@ -40,6 +26,7 @@ pallet-transaction-payment = { git = "https://github.com/paritytech/substrate", 
 pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.41" }
 pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v0.9.41" }
 
+pallet-balances-adapter.path = "../../pallets/balances-adapter"
 pallet-common.path = "../../pallets/common"
 pallet-fungible.path = "../../pallets/fungible"
 pallet-nonfungible.path = "../../pallets/nonfungible"
@@ -53,7 +40,7 @@ parity-scale-codec = { version = "3.2.2", default-features = false, features = [
 scale-info = "*"
 
 evm-coder = { workspace = true }
+pallet-configuration = { workspace = true }
+pallet-xcm = { workspace = true }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.41" }
 xcm = { workspace = true }
-pallet-xcm = { workspace = true }
-pallet-configuration = { workspace = true }

@@ -92,7 +92,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await token.getProperties(propertyKeys);
     const tokenData = await token.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for (let i = 0; i < propertyKeys.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin increase');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin increase');
     }
@@ -138,7 +138,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await token.getProperties(propertyKeys);
     const tokenData = await token.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for (let i = 0; i < propertyKeys.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin stable');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin stable');
     }
@@ -228,7 +228,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await nestedToken.getProperties(propertyKeys);
     const tokenData = await nestedToken.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for (let i = 0; i < propertyKeys.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin increase');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin increase');
     }
@@ -273,7 +273,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await nestedToken.getProperties(propertyKeys);
     const tokenData = await nestedToken.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for (let i = 0; i < propertyKeys.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin stable');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin stable');
     }
@@ -474,6 +474,27 @@ describe('Negative Integration Test: Token Properties', () => {
       ];
     });
   });
+
+  [
+    {mode: 'nft' as const, requiredPallets: [Pallets.NFT]},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itSub.ifWithPallets(`Forbids adding/deleting properties of a token if token doesn't exist (${testCase.mode.toLocaleUpperCase})`, testCase.requiredPallets, async({helper}) => {
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: constitution.slice(0, 1).map(({permission}) => {return {key: '1', permission};}),
+      });
+      const nonExistentToken = collection.getTokenObject(1);
+
+      await expect(
+        nonExistentToken.setProperties(alice, [{key: '1', value: 'Serotonin increase'}]),
+        'on expecting failure whilst adding a property by alice',
+      ).to.be.rejectedWith(/common\.TokenNotFound/);
+
+      await expect(
+        nonExistentToken.deleteProperties(alice, ['1']),
+        'on expecting failure whilst deleting a property by alice',
+      ).to.be.rejectedWith(/common\.TokenNotFound/);
+    }));
 
   async function mintCollectionWithAllPermissionsAndToken(helper: UniqueHelper, mode: 'NFT' | 'RFT'): Promise<[UniqueNFToken | UniqueRFToken, bigint]> {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {

@@ -68,7 +68,6 @@ use frame_support::{
 	dispatch::Pays,
 	transactional, fail,
 };
-use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
 	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
@@ -101,7 +100,7 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
 ///
-/// CollectionHandle is used as a generic wrapper for collections of all types.
+/// CollectionHandle is used as a generic wrapper for collections of all types (except native fungible).
 /// It allows to perform common operations and queries on any collection type,
 /// both completely general for all, as well as their respective implementations of [`CommonCollectionOperations`].
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
@@ -125,11 +124,7 @@ impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
 impl<T: Config> CollectionHandle<T> {
 	/// Same as [CollectionHandle::new] but with an explicit gas limit.
 	pub fn new_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
-		<CollectionById<T>>::get(id).map(|collection| Self {
-			id,
-			collection,
-			recorder: SubstrateRecorder::new(gas_limit),
-		})
+		Self::new_with_recorder(id, SubstrateRecorder::new(gas_limit))
 	}
 
 	/// Same as [CollectionHandle::new] but with an existed [`SubstrateRecorder`].
@@ -157,14 +152,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				<T as frame_system::Config>::DbWeight::get()
-					.read
-					.saturating_mul(reads),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder().consume_store_reads(reads)
 	}
 
 	/// Consume gas for writing.
@@ -172,14 +160,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				<T as frame_system::Config>::DbWeight::get()
-					.write
-					.saturating_mul(writes),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder().consume_store_writes(writes)
 	}
 
 	/// Consume gas for reading and writing.
@@ -188,15 +169,8 @@ impl<T: Config> CollectionHandle<T> {
 		reads: u64,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		let weight = <T as frame_system::Config>::DbWeight::get();
-		let reads = weight.read.saturating_mul(reads);
-		let writes = weight.read.saturating_mul(writes);
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				reads.saturating_add(writes),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder()
+			.consume_store_reads_and_writes(reads, writes)
 	}
 
 	/// Save collection to storage.
@@ -467,6 +441,8 @@ pub mod pallet {
 	}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	/// Collection id for native fungible collction.
+	pub const NATIVE_FUNGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -1245,7 +1221,7 @@ impl<T: Config> Pallet<T> {
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_create`: Indicates that method is called during token initialization.
+	/// - `is_token_being_created`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
@@ -1259,20 +1235,27 @@ impl<T: Config> Pallet<T> {
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
+		check_token_existence: impl Fn() -> bool,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_create: bool,
+		is_token_being_created: bool,
 		mut stored_properties: TokenProperties,
-		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
+		check_token_ownership: impl Fn() -> Result<bool, DispatchError>,
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
 		let is_collection_admin = collection.is_owner_or_admin(sender);
-		let permissions = Self::property_permissions(collection.id);
 
 		let mut token_owner_result = None;
-		let mut is_token_owner = || -> Result<bool, DispatchError> {
-			*token_owner_result.get_or_insert_with(&is_token_owner)
+		let mut token_exists_result = None;
+
+		let mut check_token_ownership = || -> Result<bool, DispatchError> {
+			*token_owner_result.get_or_insert_with(&check_token_ownership)
 		};
+
+		let mut check_token_existence =
+			|| -> bool { *token_exists_result.get_or_insert_with(&check_token_existence) };
+
+		let permissions = Self::property_permissions(collection.id);
 
 		for (key, value) in properties_updates {
 			let permission = permissions
@@ -1280,26 +1263,36 @@ impl<T: Config> Pallet<T> {
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
-			let is_property_exists = stored_properties.get(&key).is_some();
+			let property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
-				PropertyPermission { mutable: false, .. } if is_property_exists => {
+				PropertyPermission { mutable: false, .. } if property_exists => {
 					return Err(<Error<T>>::NoPermission.into());
 				}
 
 				PropertyPermission {
-					collection_admin,
-					token_owner,
+					collection_admin: collection_admin_permitted,
+					token_owner: token_owner_permitted,
 					..
 				} => {
 					//TODO: investigate threats during public minting.
-					let is_token_create =
-						is_token_create && (collection_admin || token_owner) && value.is_some();
-					if !(is_token_create
-						|| (collection_admin && is_collection_admin)
-						|| (token_owner && is_token_owner()?))
-					{
+					let valid_new_token_creation = is_token_being_created
+						&& (collection_admin_permitted || token_owner_permitted)
+						&& value.is_some();
+					let sender_is_admin = collection_admin_permitted && is_collection_admin;
+					let mut sender_is_owner = || -> Result<bool, DispatchError> {
+						Ok(token_owner_permitted && check_token_ownership()?)
+					};
+
+					if !(valid_new_token_creation || sender_is_admin || sender_is_owner()?) {
 						fail!(<Error<T>>::NoPermission);
+					}
+
+					let token_owner_check_needed =
+						!(valid_new_token_creation || sender_is_admin) && token_owner_permitted;
+					let token_must_exist = !(token_owner_check_needed && check_token_ownership()?);
+					if token_must_exist && !check_token_existence() {
+						fail!(<Error<T>>::TokenNotFound);
 					}
 				}
 			}

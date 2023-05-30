@@ -18,6 +18,9 @@ use core::marker::PhantomData;
 use frame_support::{weights::Weight};
 use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight, RefungibleExtensionsWeightInfo};
 
+use pallet_balances_adapter::{
+	Config as NativeFungibleConfig, common::CommonWeights as NativeFungibleWeights,
+};
 use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
 use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
 
@@ -32,6 +35,7 @@ pub mod xcm;
 macro_rules! max_weight_of {
 	($method:ident ( $($args:tt)* )) => {{
 		let max_weight = <FungibleWeights<T>>::$method($($args)*)
+			.max(<NativeFungibleWeights<T>>::$method($($args)*))
 			.max(<NonfungibleWeights<T>>::$method($($args)*));
 
 		#[cfg(feature = "refungible")]
@@ -42,16 +46,22 @@ macro_rules! max_weight_of {
 }
 
 #[cfg(not(feature = "refungible"))]
-pub trait CommonWeightConfigs: FungibleConfig + NonfungibleConfig {}
+pub trait CommonWeightConfigs: FungibleConfig + NativeFungibleConfig + NonfungibleConfig {}
 
 #[cfg(not(feature = "refungible"))]
-impl<T: FungibleConfig + NonfungibleConfig> CommonWeightConfigs for T {}
+impl<T: FungibleConfig + NativeFungibleConfig + NonfungibleConfig> CommonWeightConfigs for T {}
 
 #[cfg(feature = "refungible")]
-pub trait CommonWeightConfigs: FungibleConfig + NonfungibleConfig + RefungibleConfig {}
+pub trait CommonWeightConfigs:
+	FungibleConfig + NativeFungibleConfig + NonfungibleConfig + RefungibleConfig
+{
+}
 
 #[cfg(feature = "refungible")]
-impl<T: FungibleConfig + NonfungibleConfig + RefungibleConfig> CommonWeightConfigs for T {}
+impl<T: FungibleConfig + NativeFungibleConfig + NonfungibleConfig + RefungibleConfig>
+	CommonWeightConfigs for T
+{
+}
 
 pub struct CommonWeights<T>(PhantomData<T>);
 

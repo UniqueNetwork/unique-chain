@@ -470,7 +470,7 @@ export class ChainHelperBase {
 
     if(xcmChains.indexOf(spec.specName) > -1) return spec.specName;
 
-    if(['quartz', 'unique'].indexOf(spec.specName) > -1) return spec.specName;
+    if(['quartz', 'unique', 'sapphire'].indexOf(spec.specName) > -1) return spec.specName;
     return 'opal';
   }
 
@@ -2344,6 +2344,15 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return {free: accountInfo.free.toBigInt(), miscFrozen: accountInfo.miscFrozen.toBigInt(), feeFrozen: accountInfo.feeFrozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
   }
 
+  /**
+   * Get total issuance
+   * @returns
+   */
+  async getTotalIssuance(): Promise<bigint> {
+    const total = (await this.helper.callRpc('api.query.balances.totalIssuance', []));
+    return total.toBigInt();
+  }
+
   async getLocked(address: TSubstrateAccount): Promise<[{id: string, amount: bigint, reason: string}]> {
     const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
     return locks.map((lock: any) => {return {id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons};});
@@ -2429,6 +2438,14 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    */
   getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
     return this.subBalanceGroup.getSubstrateFull(address);
+  }
+
+  /**
+   * Get total issuance
+   * @returns
+   */
+  getTotalIssuance(): Promise<bigint> {
+    return this.subBalanceGroup.getTotalIssuance();
   }
 
   /**

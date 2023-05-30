@@ -106,6 +106,8 @@ macro_rules! construct_runtime {
 
 				Maintenance: pallet_maintenance = 154,
 
+				BalancesAdapter: pallet_balances_adapter = 155,
+
 				#[cfg(feature = "pallet-test-utils")]
 				TestUtils: pallet_test_utils = 255,
 			}

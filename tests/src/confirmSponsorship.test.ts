@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, Pallets} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 async function setSponsorHelper(collection: any, signer: IKeyringPair, sponsorAddress: string) {
   await collection.setSponsor(signer, sponsorAddress);
@@ -198,7 +199,7 @@ describe('(!negative test!) integration test: ext. confirmSponsorship():', () =>
   });
 
   itSub('(!negative test!) Confirm sponsorship for a collection that never existed', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
+    const collectionId = NON_EXISTENT_COLLECTION_ID;
     const confirmSponsorshipTx = () => helper.collection.confirmSponsorship(bob, collectionId);
     await expect(confirmSponsorshipTx()).to.be.rejectedWith(/common\.CollectionNotFound/);
   });

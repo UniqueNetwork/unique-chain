@@ -62,12 +62,14 @@ function fixupUnique(version: string): string {
     ff('wss://rpc.astar.network/', /^(.+)$/, (_, r) => {
       switch (r) {
         case '55': return 'v5.3.0';
+        case '57': return 'v5.4.0';
         default: throw new Error('unknown astar branch for runtime ' + r);
       }
     }).then(v => env = setVar(env, 'ASTAR_BUILD_BRANCH', v)),
     ff('wss://shiden.api.onfinality.io/public-ws', /^(.+)$/, (_, r) => {
       switch (r) {
         case '90': return 'v4.49.0';
+        case '96': return 'v5.4.0';
         default: throw new Error('unknown shiden branch for runtime ' + r);
       }
     }).then(v => env = setVar(env, 'SHIDEN_BUILD_BRANCH', v)),

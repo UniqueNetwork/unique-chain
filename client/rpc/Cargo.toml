@@ -40,6 +40,9 @@ opal-runtime = { workspace = true, optional = true }
 quartz-runtime = { workspace = true, optional = true }
 unique-runtime = { workspace = true, optional = true }
 
+[dev-dependencies]
+hex-literal = { workspace = true }
+
 [features]
 default = ['opal-runtime']
 all-runtimes = [

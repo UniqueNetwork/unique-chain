@@ -17,6 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds} from './eth/util';
 import {itSub, Pallets, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   let donor: IKeyringPair;
@@ -124,20 +125,17 @@ describe('Negative Integration Test Transfer(recipient, collection_id, item_id, 
 
 
   itSub('[nft] Transfer with not existed collection_id', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
-    await expect(helper.nft.transferToken(alice, collectionId, 1, {Substrate: bob.address}))
+    await expect(helper.nft.transferToken(alice, NON_EXISTENT_COLLECTION_ID, 1, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
   itSub('[fungible] Transfer with not existed collection_id', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
-    await expect(helper.ft.transfer(alice, collectionId, {Substrate: bob.address}))
+    await expect(helper.ft.transfer(alice, NON_EXISTENT_COLLECTION_ID, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
   itSub.ifWithPallets('[refungible] Transfer with not existed collection_id', [Pallets.ReFungible], async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
-    await expect(helper.rft.transferToken(alice, collectionId, 1, {Substrate: bob.address}))
+    await expect(helper.rft.transferToken(alice, NON_EXISTENT_COLLECTION_ID, 1, {Substrate: bob.address}))
       .to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 
