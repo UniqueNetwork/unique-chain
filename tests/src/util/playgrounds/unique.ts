@@ -2401,7 +2401,7 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
   async getFrozen(address: TSubstrateAccount): Promise<{ id: string, amount: bigint }[]> {
     const locks = await this.helper.api!.query.balances.freezes(address);
-    return locks.map(lock => ({id: lock.id.toString(), amount: lock.amount.toBigInt()}));
+    return locks.map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()}));
   }
 }
 
