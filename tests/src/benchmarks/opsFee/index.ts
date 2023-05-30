@@ -379,7 +379,7 @@ async function erc721CalculateFeeGas(
   res['setCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     () => collection.setProperties(donor, PROPERTIES.slice(0, 1)
-      .map(p => { return {key: p.key, value: p.value.toString()}; })),
+      .map(p => ({key: p.key, value: p.value.toString()}))),
   )));
 
   res['deleteCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -755,7 +755,7 @@ async function erc20CalculateFeeGas(
   res['setCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     () => collection.setProperties(donor, PROPERTIES.slice(0, 1)
-      .map(p => { return {key: p.key, value: p.value.toString()}; })),
+      .map(p => ({key: p.key, value: p.value.toString()}))),
   )));
 
   res['deleteCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(

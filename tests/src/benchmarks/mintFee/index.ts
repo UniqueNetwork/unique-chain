@@ -222,9 +222,7 @@ async function benchMintWithProperties(
       await collection.mintToken(
         donor,
         {Substrate: susbstrateReceiver.address},
-        PROPERTIES.slice(0, setup.propertiesNumber).map((p) => {
-          return {key: p.key, value: Buffer.from(p.value).toString()};
-        }),
+        PROPERTIES.slice(0, setup.propertiesNumber).map((p) => ({key: p.key, value: Buffer.from(p.value).toString()})),
       );
     },
   );

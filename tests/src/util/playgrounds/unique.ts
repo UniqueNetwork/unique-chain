@@ -2395,7 +2395,7 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return total.toBigInt();
   }
 
-  async getLocked(address: TSubstrateAccount): Promise<[{ id: string, amount: bigint, reason: string }]> {
+  async getLocked(address: TSubstrateAccount): Promise<{ id: string, amount: bigint, reason: string }[]> {
     const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
     return locks.map((lock: any) => ({id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}));
   }
@@ -2581,14 +2581,12 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    */
   async getVestingSchedules(address: TSubstrateAccount): Promise<{ start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint }[]> {
     const schedule = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])).toJSON();
-    return schedule.map((schedule: any) => {
-      return {
-        start: BigInt(schedule.start),
-        period: BigInt(schedule.period),
-        periodCount: BigInt(schedule.periodCount),
-        perPeriod: BigInt(schedule.perPeriod),
-      };
-    });
+    return schedule.map((schedule: any) => ({
+      start: BigInt(schedule.start),
+      period: BigInt(schedule.period),
+      periodCount: BigInt(schedule.periodCount),
+      perPeriod: BigInt(schedule.perPeriod),
+    }));
   }
 
   /**
@@ -2804,12 +2802,10 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    */
   async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
     const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
-    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => {
-      return {
-        block: block.toBigInt(),
-        amount: amount.toBigInt(),
-      };
-    });
+    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => ({
+      block: block.toBigInt(),
+      amount: amount.toBigInt(),
+    }));
   }
 
   /**
@@ -2828,12 +2824,10 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    */
   async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
     const rawUnstakedPerBlock = await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address]);
-    const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => {
-      return {
-        block: block.toBigInt(),
-        amount: amount.toBigInt(),
-      };
-    });
+    const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => ({
+      block: block.toBigInt(),
+      amount: amount.toBigInt(),
+    }));
     return result;
   }
 }

@@ -684,10 +684,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramSent.messageHash()
-        && event.outcome().isFailedToTransactAsset;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -767,10 +765,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
-        && event.outcome().isUntrustedReserveLocation;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -782,10 +778,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
-        && event.outcome().isUntrustedReserveLocation;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -860,10 +854,8 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   });
 
   const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == messageSent.messageHash()
-        && event.outcome().isFailedToTransactAsset;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == messageSent.messageHash()
+        && event.outcome().isFailedToTransactAsset);
   };
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
@@ -1175,10 +1167,8 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramSent.messageHash()
-        && event.outcome().isFailedToTransactAsset;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1266,10 +1256,8 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
-        && event.outcome().isUntrustedReserveLocation;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1285,10 +1273,8 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
-        && event.outcome().isUntrustedReserveLocation;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1546,10 +1532,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramSent.messageHash()
-        && event.outcome().isFailedToTransactAsset;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramSent.messageHash()
+        && event.outcome().isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1629,10 +1613,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
-        && event.outcome().isUntrustedReserveLocation;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramFullIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1644,10 +1626,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
-        && event.outcome().isUntrustedReserveLocation;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash() == maliciousXcmProgramHereIdSent.messageHash()
+        && event.outcome().isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);

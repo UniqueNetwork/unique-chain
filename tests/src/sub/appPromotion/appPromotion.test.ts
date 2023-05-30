@@ -357,11 +357,9 @@ describe('App promotion', () => {
         const stakers = await getAccounts(3);
 
         await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
-        await Promise.all(stakers.map(staker => {
-          return testCase.method === 'unstakeAll'
-            ? helper.staking.unstakeAll(staker)
-            : helper.staking.unstakePartial(staker, 100n * nominal);
-        }));
+        await Promise.all(stakers.map(staker => testCase.method === 'unstakeAll'
+          ? helper.staking.unstakeAll(staker)
+          : helper.staking.unstakePartial(staker, 100n * nominal)));
 
         await Promise.all(stakers.map(async (staker) => {
           expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.be.equal(100n * nominal);
@@ -375,11 +373,9 @@ describe('App promotion', () => {
         const stakers = await getAccounts(10);
 
         await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
-        const unstakingResults = await Promise.allSettled(stakers.map((staker, i) => {
-          return i % 2 === 0
-            ? helper.staking.unstakeAll(staker)
-            : helper.staking.unstakePartial(staker, 100n * nominal);
-        }));
+        const unstakingResults = await Promise.allSettled(stakers.map((staker, i) => i % 2 === 0
+          ? helper.staking.unstakeAll(staker)
+          : helper.staking.unstakePartial(staker, 100n * nominal)));
 
         const successfulUnstakes = unstakingResults.filter(result => result.status === 'fulfilled');
         expect(successfulUnstakes).to.have.length(3);
