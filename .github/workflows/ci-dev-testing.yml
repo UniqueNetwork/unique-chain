@@ -147,7 +147,7 @@ jobs:
         run: |
           yarn install
           cd src/migrations/942057-appPromotion   
-          docker run uniquenetwork/builder-chainql /chainql/target/release/chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
+          chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
           npx ts-node lockedToFreeze.ts
         env:
           WS_RPC: ws://127.0.0.1:9944
@@ -156,7 +156,7 @@ jobs:
 
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
-        if: success()
+        if: success() || failure()
         run: |
           counter=160
           function check_container_status {
@@ -224,16 +224,16 @@ jobs:
       #     path: team-core-utils
       #     ref: app-promo-migration
 
-      # - name: Run AppPromo migration
-      #   working-directory: tests
-      #   run: |
-      #     yarn install
-      #     cd src/migrations/942057-appPromotion   
-      #     docker run uniquenetwork/builder-chainql /chainql/target/release/chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
-      #     npx ts-node lockedToFreeze.ts
-      #   env:
-      #     WS_RPC: ws://127.0.0.1:9944
-      #     SUPERUSER_SEED: //Alice
+      - name: Run AppPromo migration
+        working-directory: tests
+        run: |
+          yarn install
+          cd src/migrations/942057-appPromotion   
+          chainql --tla-str=chainUrl=$WS_RPC stakersParser.jsonnet > output.json
+          npx ts-node lockedToFreeze.ts
+        env:
+          WS_RPC: ws://127.0.0.1:9944
+          SUPERUSER_SEED: //Alice
 
 
 
