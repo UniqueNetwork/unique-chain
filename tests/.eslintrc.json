@@ -86,6 +86,14 @@
         "array-bracket-spacing": "warn",
         "template-curly-spacing": "warn",
         "space-in-parens": "warn",
+        "arrow-body-style": ["warn", "as-needed"],
+        "no-restricted-syntax": [
+            "warn",
+            {
+                "message": "toHuman results in horrible, hard to debug conversions with no stability guarantees, use Codec/at least .toJson instead",
+                "selector": "MemberExpression > Identifier[name=\"toHuman\"]"
+            }
+        ],
         "@typescript-eslint/naming-convention": [
             "warn",
             {
