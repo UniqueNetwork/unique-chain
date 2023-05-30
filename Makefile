@@ -6,6 +6,9 @@ _help:
 	@echo "  bench-evm-migration"
 	@echo "  bench-unique"
 
+NATIVE_FUNGIBLE_EVM_STUBS=./pallets/balances-adapter/src/stubs
+NATIVE_FUNGIBLE_EVM_ABI=./tests/src/eth/abi/nativeFungible.json
+
 FUNGIBLE_EVM_STUBS=./pallets/fungible/src/stubs
 FUNGIBLE_EVM_ABI=./tests/src/eth/abi/fungible.json
 
@@ -27,6 +30,10 @@ TESTS_API=./tests/src/eth/api/
 .PHONY: regenerate_solidity
 regenerate_solidity: UniqueFungible.sol UniqueNFT.sol UniqueRefungible.sol UniqueRefungibleToken.sol ContractHelpers.sol CollectionHelpers.sol
 
+UniqueNativeFungible.sol:
+	PACKAGE=pallet-balances-adapter NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
+	PACKAGE=pallet-balances-adapter NAME=erc::gen_impl OUTPUT=$(NATIVE_FUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
+	
 UniqueFungible.sol:
 	PACKAGE=pallet-fungible NAME=erc::gen_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
 	PACKAGE=pallet-fungible NAME=erc::gen_impl OUTPUT=$(FUNGIBLE_EVM_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
@@ -51,6 +58,10 @@ CollectionHelpers.sol:
 	PACKAGE=pallet-unique NAME=eth::collection_helper_iface OUTPUT=$(TESTS_API)/$@ ./.maintain/scripts/generate_sol.sh
 	PACKAGE=pallet-unique NAME=eth::collection_helper_impl OUTPUT=$(COLLECTION_HELPER_STUBS)/$@ ./.maintain/scripts/generate_sol.sh
 
+UniqueNativeFungible: UniqueNativeFungible.sol
+	INPUT=$(NATIVE_FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(NATIVE_FUNGIBLE_EVM_STUBS)/UniqueNativeFungible.raw ./.maintain/scripts/compile_stub.sh
+	INPUT=$(NATIVE_FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(NATIVE_FUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh
+	
 UniqueFungible: UniqueFungible.sol
 	INPUT=$(FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(FUNGIBLE_EVM_STUBS)/UniqueFungible.raw ./.maintain/scripts/compile_stub.sh
 	INPUT=$(FUNGIBLE_EVM_STUBS)/$< OUTPUT=$(FUNGIBLE_EVM_ABI) ./.maintain/scripts/generate_abi.sh

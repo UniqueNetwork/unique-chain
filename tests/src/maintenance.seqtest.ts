@@ -325,7 +325,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(await helper.preimage.getPreimageInfo(preimageHashes[0])).to.have.property('unrequested');
     });
 
-    itSub.only('Does not allow execution of a preimage that would fail', async ({helper}) => {
+    itSub('Does not allow execution of a preimage that would fail', async ({helper}) => {
       const [zeroAccount] = await helper.arrange.createAccounts([0n], superuser);
 
       const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [

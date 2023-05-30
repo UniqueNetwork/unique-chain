@@ -26,6 +26,7 @@ pallet-transaction-payment = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
 
+pallet-balances-adapter = { workspace = true }
 pallet-common = { workspace = true }
 pallet-fungible = { workspace = true }
 pallet-nonfungible = { workspace = true }
@@ -41,5 +42,3 @@ scale-info = { workspace = true }
 evm-coder = { workspace = true }
 up-sponsorship = { workspace = true }
 xcm = { workspace = true }
-pallet-xcm = { workspace = true }
-pallet-configuration = { workspace = true }

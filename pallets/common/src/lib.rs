@@ -72,7 +72,6 @@ use frame_support::{
 	dispatch::Pays,
 	transactional, fail,
 };
-use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
 	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
@@ -105,7 +104,7 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
 ///
-/// CollectionHandle is used as a generic wrapper for collections of all types.
+/// CollectionHandle is used as a generic wrapper for collections of all types (except native fungible).
 /// It allows to perform common operations and queries on any collection type,
 /// both completely general for all, as well as their respective implementations of [`CommonCollectionOperations`].
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
@@ -129,11 +128,7 @@ impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
 impl<T: Config> CollectionHandle<T> {
 	/// Same as [CollectionHandle::new] but with an explicit gas limit.
 	pub fn new_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
-		<CollectionById<T>>::get(id).map(|collection| Self {
-			id,
-			collection,
-			recorder: SubstrateRecorder::new(gas_limit),
-		})
+		Self::new_with_recorder(id, SubstrateRecorder::new(gas_limit))
 	}
 
 	/// Same as [CollectionHandle::new] but with an existed [`SubstrateRecorder`].
@@ -161,14 +156,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				<T as frame_system::Config>::DbWeight::get()
-					.read
-					.saturating_mul(reads),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder().consume_store_reads(reads)
 	}
 
 	/// Consume gas for writing.
@@ -176,14 +164,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				<T as frame_system::Config>::DbWeight::get()
-					.write
-					.saturating_mul(writes),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder().consume_store_writes(writes)
 	}
 
 	/// Consume gas for reading and writing.
@@ -192,15 +173,8 @@ impl<T: Config> CollectionHandle<T> {
 		reads: u64,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		let weight = <T as frame_system::Config>::DbWeight::get();
-		let reads = weight.read.saturating_mul(reads);
-		let writes = weight.read.saturating_mul(writes);
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				reads.saturating_add(writes),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder()
+			.consume_store_reads_and_writes(reads, writes)
 	}
 
 	/// Save collection to storage.
@@ -469,6 +443,8 @@ pub mod pallet {
 	}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	/// Collection id for native fungible collction.
+	pub const NATIVE_FUNGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]

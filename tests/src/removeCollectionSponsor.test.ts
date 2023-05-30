@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('integration test: ext. removeCollectionSponsor():', () => {
   let donor: IKeyringPair;
@@ -91,7 +92,7 @@ describe('(!negative test!) integration test: ext. removeCollectionSponsor():', 
   });
 
   itSub('(!negative test!) Remove sponsor for a collection that never existed', async ({helper}) => {
-    const collectionId = (1 << 32) - 1;
+    const collectionId = NON_EXISTENT_COLLECTION_ID;
     await expect(helper.collection.removeSponsor(alice, collectionId)).to.be.rejectedWith(/common\.CollectionNotFound/);
   });
 

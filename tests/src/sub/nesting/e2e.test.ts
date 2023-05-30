@@ -32,6 +32,7 @@ describe('Composite nesting tests', () => {
     const collectionA = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const collectionB = await helper.ft.mintCollection(alice);
     const collectionC = await helper.rft.mintCollection(alice);
+    const collectionNative = helper.ft.getCollectionObject(0);
 
     const targetToken = await collectionA.mintToken(alice);
     expect((await targetToken.getChildren()).length).to.be.equal(0, 'Children length check at creation');
@@ -67,6 +68,14 @@ describe('Composite nesting tests', () => {
     // Create a refungible token in another collection and then nest
     const tokenC = await collectionC.mintToken(alice, 10n);
     await tokenC.transfer(alice, targetToken.nestingAccount(), 2n);
+    expect(await targetToken.getChildren()).to.have.deep.members([
+      {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
+      {tokenId: 0, collectionId: collectionB.collectionId},
+      {tokenId: tokenC.tokenId, collectionId: collectionC.collectionId},
+    ]).and.has.length(3);
+
+    // Nest native fungible token into another collection
+    await collectionNative.transfer(alice, targetToken.nestingAccount(), 2n);
     expect(await targetToken.getChildren()).to.have.deep.members([
       {tokenId: tokenA.tokenId, collectionId: collectionA.collectionId},
       {tokenId: 0, collectionId: collectionB.collectionId},

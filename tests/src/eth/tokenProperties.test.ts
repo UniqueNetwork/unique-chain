@@ -314,7 +314,7 @@ describe('EVM token properties', () => {
       expect(result.length).to.equal(0);
     }));
 
-  itEth.only('Can be read', async({helper}) => {
+  itEth('Can be read', async({helper}) => {
     // FIXME: User with no balance should be able to call
     const caller = await helper.eth.createAccountWithBalance(alice);
     const collection = await helper.nft.mintCollection(alice, {

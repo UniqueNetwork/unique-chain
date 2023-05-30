@@ -22,6 +22,7 @@ import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthPro
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../abi/collectionHelpers.json' assert {type: 'json'};
+import nativeFungibleAbi from '../../abi/nativeFungible.json' assert {type: 'json'};
 import fungibleAbi from '../../abi/fungible.json' assert {type: 'json'};
 import fungibleDeprecatedAbi from '../../abi/fungibleDeprecated.json' assert {type: 'json'};
 import nonFungibleAbi from '../../abi/nonFungible.json' assert {type: 'json'};
@@ -112,7 +113,6 @@ class ContractGroup extends EthGroupBase {
       data: object,
       from: signer,
       gas: gas ?? this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
     });
     return await contract.deploy({data: object}).send({from: signer});
   }
@@ -121,30 +121,33 @@ class ContractGroup extends EthGroupBase {
 
 class NativeContractGroup extends EthGroupBase {
 
-  async contractHelpers(caller: string): Promise<Contract> {
+  contractHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {
       from: caller,
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
     });
   }
 
-  async collectionHelpers(caller: string) {
+  collectionHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {
       from: caller,
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
     });
   }
 
-  async collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
-    let abi = {
-      'nft': nonFungibleAbi,
-      'rft': refungibleAbi,
-      'ft': fungibleAbi,
-    }[mode];
+  collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
+    let abi;
+    if (address === this.helper.ethAddress.fromCollectionId(0)) {
+      abi = nativeFungibleAbi;
+    } else {
+      abi ={
+        'nft': nonFungibleAbi,
+        'rft': refungibleAbi,
+        'ft': fungibleAbi,
+      }[mode];
+    }
     if (mergeDeprecated) {
       const deprecated = {
         'nft': nonFungibleDeprecatedAbi,
@@ -156,7 +159,6 @@ class NativeContractGroup extends EthGroupBase {
     const web3 = this.helper.getWeb3();
     return new web3.eth.Contract(abi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
       ...(caller ? {from: caller} : {}),
     });
   }
@@ -165,12 +167,11 @@ class NativeContractGroup extends EthGroupBase {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller, mergeDeprecated);
   }
 
-  async rftToken(address: string, caller?: string, mergeDeprecated = false) {
+  rftToken(address: string, caller?: string, mergeDeprecated = false) {
     const web3 = this.helper.getWeb3();
     const abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
     return new web3.eth.Contract(abi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
       ...(caller ? {from: caller} : {}),
     });
   }
@@ -210,6 +211,7 @@ class EthGroup extends EthGroupBase {
   async sendEVM(signer: IKeyringPair, contractAddress: string, abi: string, value: string, gasLimit?: number) {
     if (!gasLimit) gasLimit = this.DEFAULT_GAS;
     const web3 = this.helper.getWeb3();
+    // FIXME: can't send legacy transaction using tx.evm.call
     const gasPrice = await web3.eth.getGasPrice();
     // TODO: check execution status
     await this.helper.executeExtrinsic(
@@ -377,7 +379,7 @@ class EthGroup extends EthGroupBase {
 class EthAddressGroup extends EthGroupBase {
   extractCollectionId(address: string): number {
     if (!(address.length === 42 || address.length === 40)) throw new Error('address wrong format');
-    return parseInt(address.substr(address.length - 8), 16);
+    return parseInt(address.slice(address.length - 8), 16);
   }
 
   fromCollectionId(collectionId: number): string {

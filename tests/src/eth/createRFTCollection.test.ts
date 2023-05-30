@@ -21,7 +21,7 @@ import {expect, itEth, usingEthPlaygrounds} from './util';
 import {CollectionLimitField} from './util/playgrounds/types';
 
 
-describe.only('Create RFT collection from EVM', () => {
+describe('Create RFT collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {
@@ -154,7 +154,7 @@ describe.only('Create RFT collection from EVM', () => {
   });
 });
 
-describe.only('(!negative tests!) Create RFT collection from EVM', () => {
+describe('(!negative tests!) Create RFT collection from EVM', () => {
   let donor: IKeyringPair;
   let nominal: bigint;
 
