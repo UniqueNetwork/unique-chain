@@ -63,7 +63,7 @@ jobs:
 
   dev-testing:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-dev-testing')) }}  # Conditional check for draft & labels per job.
-    uses: ./.github/workflows/ci-dev-testing.yml
+    uses: ./.github/workflows/forkless-update-nodata.yml
     secrets: inherit
 
   codestyle:
