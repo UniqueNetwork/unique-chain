@@ -516,7 +516,7 @@ describe('Sponsoring Fee Limit', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const user = await helper.eth.createAccountWithBalance(donor);
-    const helpers = await helper.ethNativeContract.contractHelpers(owner);
+    const helpers = helper.ethNativeContract.contractHelpers(owner);
 
     const testContract = await deployTestContract(helper, owner);
 
@@ -531,10 +531,10 @@ describe('Sponsoring Fee Limit', () => {
     await helpers.methods.setSponsoringFeeLimit(testContract.options.address, 2_000_000n * gasPrice).send();
 
     const originalUserBalance = await helper.balance.getEthereum(user);
-    await testContract.methods.test(100).send({from: user, gas: 2_000_000});
+    await testContract.methods.test(100).send({from: user, gas: 2_000_000, maxFeePerGas: gasPrice.toString()});
     expect(await helper.balance.getEthereum(user)).to.be.equal(originalUserBalance);
 
-    await testContract.methods.test(100).send({from: user, gas: 2_100_000});
+    await testContract.methods.test(100).send({from: user, gas: 2_100_000, maxFeePerGas: gasPrice.toString()});
     expect(await helper.balance.getEthereum(user)).to.not.be.equal(originalUserBalance);
   });
 

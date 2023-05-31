@@ -24,6 +24,7 @@ const requiredPallets = [
   'timestamp',
   'transactionpayment',
   'treasury',
+  'statetriemigration',
   'structure',
   'system',
   'vesting',
