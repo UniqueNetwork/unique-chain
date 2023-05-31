@@ -25,6 +25,7 @@ macro_rules! construct_runtime {
 				UncheckedExtrinsic = UncheckedExtrinsic
 			{
 				System: frame_system = 0,
+				StateTrieMigration: pallet_state_trie_migration = 1,
 
 				ParachainSystem: cumulus_pallet_parachain_system = 20,
 				ParachainInfo: parachain_info = 21,

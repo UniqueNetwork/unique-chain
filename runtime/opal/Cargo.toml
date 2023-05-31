@@ -73,6 +73,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-preimage/std",
 	"pallet-session/std",
+	"pallet-state-trie-migration/std",
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
@@ -225,6 +226,7 @@ pallet-authorship = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-preimage = { workspace = true }
 pallet-session = { workspace = true }
+pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
