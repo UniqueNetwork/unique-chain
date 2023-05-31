@@ -31,7 +31,7 @@ use sp_runtime::{
 use sp_arithmetic::traits::One;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureNever,
 };
 use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
 use crate::{
@@ -113,6 +113,22 @@ impl frame_system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	type MaxConsumers = ConstU32<16>;
+}
+
+parameter_types! {
+	pub const MigrationMaxKeyLen: u32 = 512;
+}
+
+impl pallet_state_trie_migration::Config for Runtime {
+	type WeightInfo = pallet_state_trie_migration::weights::SubstrateWeight<Self>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type SignedDepositPerItem = ();
+	type SignedDepositBase = ();
+	type ControlOrigin = EnsureRoot<AccountId>;
+	// Only root can perform this migration
+	type SignedFilter = EnsureNever<AccountId>;
+	type MaxKeyLen = MigrationMaxKeyLen;
 }
 
 parameter_types! {
