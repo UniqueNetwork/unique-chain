@@ -278,10 +278,6 @@ pub mod pallet {
 	pub type PreviousCalculatedRecord<T: Config> =
 		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
 
-	// #[pallet::storage]
-	// pub(crate) type UpgradedToFreezes<T: Config> =
-	// 	StorageValue<Value = bool, QueryKind = ValueQuery>;
-
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
@@ -302,6 +298,12 @@ pub mod pallet {
 				block_pending.into_iter().for_each(|(staker, amount)| {
 					Self::get_frozen_balance(&staker).map(|b| {
 						let new_state = b.checked_sub(&amount).unwrap_or_default();
+
+						// In this case, setting a new state for the frozen funds cannot fail
+						// because the state change goes in the direction of decreasing the frozen funds
+						// and the validity of this transition is ensured by the fact
+						// that we cannot (in the current implementation) unfreeze more funds
+						// than were originally frozen by the pallet. Either way, `on_initialize()` cannot fail.
 						Self::set_freeze_unchecked(&staker, new_state);
 					});
 				});
@@ -309,133 +311,6 @@ pub mod pallet {
 
 			<T as Config>::WeightInfo::on_initialize(counter)
 		}
-
-		// fn on_runtime_upgrade() -> Weight {
-		// 	use scale_info::prelude::collections::HashSet;
-		// 	let mut consumed_weight = Weight::zero();
-		// 	let mut add_weight = |reads, writes, weight| {
-		// 		consumed_weight += T::DbWeight::get().reads_writes(reads, writes);
-		// 		consumed_weight += weight;
-		// 	};
-
-		// 	let mut stakes_unstakes = vec![];
-
-		// 	if <UpgradedToFreezes<T>>::get() {
-		// 		add_weight(1, 0, Weight::zero());
-		// 		return consumed_weight;
-		// 	} else {
-		// 		add_weight(1, 1, Weight::zero());
-		// 		<UpgradedToFreezes<T>>::set(true);
-		// 	}
-		// 	<Staked<T>>::iter_keys().for_each(|(staker_id, _)| {
-		// 		add_weight(1, 0, Weight::zero());
-		// 		stakes_unstakes.push(staker_id);
-		// 	});
-
-		// 	<PendingUnstake<T>>::iter().for_each(|(_, v)| {
-		// 		add_weight(1, 0, Weight::zero());
-		// 		v.into_iter().for_each(|(staker, _)| {
-		// 			stakes_unstakes.push(staker);
-		// 		});
-		// 	});
-
-		// 	// filter duplicated id.
-		// 	stakes_unstakes = stakes_unstakes
-		// 		.into_iter()
-		// 		.map(|key| key)
-		// 		.collect::<HashSet<_>>()
-		// 		.into_iter()
-		// 		.collect();
-
-		// 	stakes_unstakes
-		// 		.map(|a| (a, <Pallet<T>>::get_locked_balance(&a).amount))
-		// 		.for_each(|(staker, amount)| {
-		// 			<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
-		// 				LOCK_IDENTIFIER,
-		// 				&staker,
-		// 			);
-		// 			<<T as Config>::Currency as MutateFreeze<T::AccountId>>::set_freeze(
-		// 				&<T as Config>::FreezeIdentifier::get(),
-		// 				&staker,
-		// 				amount,
-		// 			);
-		// 			add_weight(1, 2, Weight::zero())
-		// 		});
-
-		// 	consumed_weight
-		// }
-
-		// #[cfg(feature = "try-runtime")]
-		// fn pre_upgrade() -> Result<Vec<u8>, &'static str> {
-		// 	use sp_std::collections::btree_map::BTreeMap;
-		// 	if <UpgradedToFreezes<T>>::get() {
-		// 		return Ok(Default::default());
-		// 	}
-		// 	// Staker -> (total (stakes and unstakes) locked by promotion);
-		// 	let mut pre_state: BTreeMap<T::AccountId, BalanceOf<T>> = BTreeMap::new();
-
-		// 	<Staked<T>>::iter().for_each(|((staker, _), (amount, _))| {
-		// 		if let Some(locked_balance) = pre_state.get_mut(&staker) {
-		// 			*locked_balance += amount;
-		// 		} else {
-		// 			pre_state.insert(staker, amount);
-		// 		}
-		// 	});
-
-		// 	<PendingUnstake<T>>::iter().for_each(|(_, v)| {
-		// 		v.into_iter().for_each(|(staker, amount)| {
-		// 			if let Some(locked_balance) = pre_state.get_mut(&staker) {
-		// 				*locked_balance += amount;
-		// 			} else {
-		// 				pre_state.insert(staker, amount);
-		// 			}
-		// 		})
-		// 	});
-
-		// 	Ok(pre_state.encode())
-		// }
-
-		// #[cfg(feature = "try-runtime")]
-		// fn post_upgrade(pre_state: Vec<u8>) -> Result<(), &'static str> {
-		// 	use sp_std::collections::btree_map::BTreeMap;
-
-		// 	if <UpgradedToFreezes<T>>::get() {
-		// 		return Ok(());
-		// 	}
-
-		// 	let mut is_ok = true;
-
-		// 	let pre_state: BTreeMap<T::AccountId, BalanceOf<T>> =
-		// 		Decode::decode(&mut &pre_state[..]).map_err(|_| "failed to decode pre_state")?;
-		// 	for (staker, frozen_by_promo) in pre_state.into_iter() {
-		// 		let storage_freeze_state = <<T as Config>::Currency as InspectFreeze<
-		// 			T::AccountId,
-		// 		>>::balance_frozen(
-		// 			&<T as Config>::FreezeIdentifier::get(), staker
-		// 		);
-		// 		if storage_freeze_state != frozen_by_promo {
-		// 			is_ok = false;
-		// 			log::error!(
-		// 						"Incorrect frozen balance for {:?}. New balance: {:?}. Before runtime upgrade: locked by promo - {:?}",
-		// 						staker, storage_freeze_state, frozen_by_promo
-		// 					);
-		// 		}
-
-		// 		if !<Pallet<T>>::get_locked_balance(&staker).amount.is_zero() {
-		// 			is_ok = false;
-		// 			log::error!(
-		// 				"Incorrect(non-zero) locked by app promo balance for {:?}",
-		// 				staker
-		// 			);
-		// 		}
-		// 	}
-
-		// 	if is_ok {
-		// 		Ok(())
-		// 	} else {
-		// 		Err("Incorrect balance for some of stakers... See logs")
-		// 	}
-		// }
 	}
 
 	#[pallet::call]
@@ -903,12 +778,16 @@ pub mod pallet {
 				.into_iter()
 				.for_each(|b| pendings.append(&mut PendingUnstake::<T>::take(b).into_inner()));
 
-			pendings.into_iter().for_each(|(staker, amount)| {
-				Self::get_frozen_balance(&staker).map(|b| {
-					let new_state = b.checked_sub(&amount).unwrap_or_default();
-					Self::set_freeze_unchecked(&staker, new_state);
-				});
-			});
+			pendings
+				.into_iter()
+				.try_for_each(|(staker, amount)| -> Result<(), DispatchError> {
+					if let Some(b) = Self::get_frozen_balance(&staker) {
+						let new_state = b.checked_sub(&amount).unwrap_or_default();
+						Self::set_freeze_with_result(&staker, new_state)?;
+					}
+
+					Ok(())
+				})?;
 
 			Ok(())
 		}
@@ -1018,18 +897,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Adds the balance to locked by the pallet.
-	///
-	/// - `staker`: staker account.
-	/// - `amount`: amount of added locked funds.
-	// fn add_lock_balance(staker: &T::AccountId, amount: BalanceOf<T>) -> DispatchResult {
-	// 	Self::get_locked_balance(staker)
-	// 		.map_or(<BalanceOf<T>>::default(), |l| l.amount)
-	// 		.checked_add(&amount)
-	// 		.map(|new_lock| Self::set_lock_unchecked(staker, new_lock))
-	// 		.ok_or(ArithmeticError::Overflow.into())
-	// }
-
 	/// Adds the balance to frozen by the pallet.
 	///
 	/// - `staker`: staker account.
@@ -1042,32 +909,12 @@ impl<T: Config> Pallet<T> {
 			.ok_or::<DispatchError>(ArithmeticError::Overflow.into())?
 	}
 
-	/// Sets the new state of a balance locked by the pallet.
-	///
-	/// - `staker`: staker account.
-	/// - `amount`: amount of locked funds.
-	// fn set_lock_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
-	// 	if amount.is_zero() {
-	// 		<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
-	// 			LOCK_IDENTIFIER,
-	// 			&staker,
-	// 		);
-	// 	} else {
-	// 		<<T as Config>::Currency as LockableCurrency<T::AccountId>>::set_lock(
-	// 			LOCK_IDENTIFIER,
-	// 			staker,
-	// 			amount,
-	// 			WithdrawReasons::all(),
-	// 		)
-	// 	}
-	// }
-
 	/// Sets the new state of a balance frozen by the pallet.
 	///
 	/// - `staker`: staker account.
 	/// - `amount`: amount of frozen funds.
 	fn set_freeze_unchecked(staker: &T::AccountId, amount: BalanceOf<T>) {
-		Self::set_freeze_with_result(staker, amount);
+		let _ = Self::set_freeze_with_result(staker, amount);
 	}
 
 	/// Sets the new state of a balance frozen by the pallet.
