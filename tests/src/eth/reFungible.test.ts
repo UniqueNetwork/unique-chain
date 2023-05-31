@@ -674,7 +674,7 @@ describe('Common metadata', () => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 
@@ -699,7 +699,7 @@ describe('Common metadata', () => {
       },
     );
 
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'rft', caller);
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'rft', caller);
     const name = await contract.methods.name().call();
     expect(name).to.equal('Leviathan');
   });

@@ -591,8 +591,11 @@ export class ChainHelperBase {
                   const errorMeta = dispatchError.registry.findMetaError(modErr);
 
                   moduleError = `${errorMeta.section}.${errorMeta.name}`;
+                } else if (dispatchError.isToken) {
+                  moduleError = `Token: ${dispatchError.asToken}`;
                 } else {
-                  moduleError = dispatchError.toHuman();
+                  // May be [object Object] in case of unhandled non-unit enum
+                  moduleError = `Misc: ${dispatchError.toHuman()}`;
                 }
               } else {
                 this.logger.log(result, this.logger.level.ERROR);
@@ -3480,6 +3483,8 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
         } else if (data.asErr.isToken) {
           throw new Error(`Token: ${data.asErr.asToken}`);
         }
+        // May be [object Object] in case of unhandled non-unit enum
+        throw new Error(`Misc: ${data.asErr.toHuman()}`);
       }
       return result;
     }
