@@ -16,8 +16,9 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {itEth, usingEthPlaygrounds} from '../util';
+import {EthUniqueHelper, itEth, usingEthPlaygrounds} from '../util';
 import {makeNames} from '../../util';
+import {expect} from 'chai';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -30,11 +31,9 @@ describe('Market V2 Contract', () => {
     });
   });
 
-  itEth('Deploy', async ({helper}) => {
-    const matcherOwner = await helper.eth.createAccountWithBalance(donor, 600n);
-
-    await helper.ethContract.deployByCode(
-      matcherOwner,
+  async function deployMarket(helper: EthUniqueHelper, marketOwner: string) {
+    return await helper.ethContract.deployByCode(
+      marketOwner,
       'Market',
       (await readFile(`${dirname}/Market.sol`)).toString(),
       [
@@ -74,5 +73,30 @@ describe('Market V2 Contract', () => {
       15000000,
       [1, 0],
     );
+  }
+
+  itEth('Deploy', async ({helper}) => {
+    const marketOwner = await helper.eth.createAccountWithBalance(donor, 600n);
+
+    await deployMarket(helper, marketOwner);
+  });
+
+  itEth('Put + Buy', async ({helper}) => {
+    const marketOwner = await helper.eth.createAccountWithBalance(donor, 600n);
+    const sellerCross = await helper.ethCrossAccount.createAccountWithBalance(donor, 600n);
+    const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(marketOwner, 'Sponsor', 'absolutely anything', 'ROC');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', marketOwner);
+    const result = await contract.methods.mint(sellerCross.eth).send();
+    const tokenId = result.events.Transfer.returnValues.tokenId;
+
+    const market = await deployMarket(helper, marketOwner);
+
+    await contract.methods.approve(market.options.address, tokenId).send({from: sellerCross.eth});
+    const putResult = await market.methods.put(collectionId, tokenId, 1, 1, sellerCross).send({from: sellerCross.eth});
+    expect(putResult.events.TokenIsUpForSale).is.not.undefined;
+
+    const buyerCross = await helper.ethCrossAccount.createAccountWithBalance(donor, 600n);
+    const buyResult = await market.methods.buy(collectionId, tokenId, 1, buyerCross).send({from: buyerCross.eth, value: 1});
+    expect(buyResult.events.TokenIsPurchased).is.not.undefined;
   });
 });
