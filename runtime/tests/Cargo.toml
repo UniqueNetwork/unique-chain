@@ -18,6 +18,7 @@ sp-std = { workspace = true }
 
 frame-support = { workspace = true }
 frame-system = { workspace = true }
+pallet-xcm = { workspace = true }
 
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-timestamp = { workspace = true }
@@ -36,7 +37,7 @@ pallet-unique = { workspace = true }
 
 pallet-evm-coder-substrate = { workspace = true }
 
-codec = { workspace = true }
+codec = { workspace = true, package = "parity-scale-codec" }
 scale-info = { workspace = true }
 
 evm-coder = { workspace = true }
