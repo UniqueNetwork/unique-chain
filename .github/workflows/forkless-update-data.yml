@@ -261,6 +261,18 @@ jobs:
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/forkless-data.log'
 
+      - name: Run AppPromo migration
+        if: success() || failure()
+        working-directory: tests
+        run: |
+          yarn install
+          cd src/migrations/942057-appPromotion   
+          /home/ubuntu/.cargo/bin/chainql --tla-str=chainUrl=ws://127.0.0.1:9944 stakersParser.jsonnet > output.json
+          npx ts-node --esm lockedToFreeze.ts
+        env:
+          WS_RPC: ws://127.0.0.1:9944
+          SUPERUSER_SEED: //Alice
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose.forkless-data.${{ matrix.network }}.yml" down --volumes

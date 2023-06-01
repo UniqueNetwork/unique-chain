@@ -261,18 +261,6 @@ jobs:
         if: success() || failure()
         run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.network }}/forkless-nodata.log'
 
-      - name: Run AppPromo migration
-        if: success() || failure()
-        working-directory: tests
-        run: |
-          yarn install
-          cd src/migrations/942057-appPromotion   
-          /home/ubuntu/.cargo/bin/chainql --tla-str=chainUrl=ws://127.0.0.1:9944 stakersParser.jsonnet > output.json
-          npx ts-node --esm lockedToFreeze.ts
-        env:
-          WS_RPC: ws://127.0.0.1:9944
-          SUPERUSER_SEED: //Alice
-
       - name: Run Parallel tests
         working-directory: tests
         run: |
