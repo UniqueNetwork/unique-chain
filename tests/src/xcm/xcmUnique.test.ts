@@ -799,6 +799,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
   let uniqueParachainMultilocation: any;
   let uniqueAccountMultilocation: any;
   let uniqueCombinedMultilocation: any;
+  let uniqueCombinedMultilocationAcala: any; // TODO remove when Acala goes V2
 
   let messageSent: any;
 
@@ -817,7 +818,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueParachainMultilocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: uniqueParachainJunction,
@@ -826,7 +827,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueAccountMultilocation = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {
             X1: uniqueAccountJunction,
@@ -835,6 +836,15 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueCombinedMultilocation = {
+        V2: {
+          parents: 1,
+          interior: {
+            X2: [uniqueParachainJunction, uniqueAccountJunction],
+          },
+        },
+      };
+
+      uniqueCombinedMultilocationAcala = {
         V1: {
           parents: 1,
           interior: {
@@ -863,7 +873,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const id = {
         Token: 'ACA',
       };
-      const destination = uniqueCombinedMultilocation;
+      const destination = uniqueCombinedMultilocationAcala;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
@@ -889,7 +899,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const destinationParachain = uniqueParachainMultilocation;
       const beneficiary = uniqueAccountMultilocation;
       const assets = {
-        V1: [{
+        V2: [{
           id: {
             Concrete: {
               parents: 0,
@@ -1064,7 +1074,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   itSub('Should connect to Moonbeam and send UNQ back', async ({helper}) => {
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       const asset = {
-        V1: {
+        V2: {
           id: {
             Concrete: {
               parents: 1,
@@ -1079,7 +1089,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
         },
       };
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -1134,7 +1144,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: UNIQUE_CHAIN},
@@ -1205,7 +1215,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1330,7 +1340,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
       console.log('2. Register asset location on Astar');
       const assetLocation = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -1422,7 +1432,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   itSub('Should connect to Astar and send UNQ back', async ({helper}) => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -1433,7 +1443,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       };
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {
             X1: {
@@ -1447,7 +1457,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -1503,7 +1513,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: UNIQUE_CHAIN},
@@ -1566,7 +1576,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -1632,5 +1642,4 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
   });
-
 });
