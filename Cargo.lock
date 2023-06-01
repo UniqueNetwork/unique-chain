@@ -12941,6 +12941,7 @@ dependencies = [
  "pallet-timestamp",
  "pallet-transaction-payment",
  "pallet-unique",
+ "pallet-xcm",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
