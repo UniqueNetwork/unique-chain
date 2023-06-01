@@ -138,6 +138,7 @@ try-runtime = [
 	"pallet-identity/try-runtime",
 	"pallet-preimage/try-runtime",
 	"pallet-session/try-runtime",
+	"pallet-state-trie-migration/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
 	'cumulus-pallet-dmp-queue/try-runtime',
 	'cumulus-pallet-parachain-system/try-runtime',
