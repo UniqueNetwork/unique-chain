@@ -31,8 +31,8 @@ async function resetInvulnerables() {
       // In case there are too many invulnerables already, remove some of them, leaving space for Alice and Bob.
       if (invulnerables.length + 2 >= helper.collatorSelection.maxCollators()) {
         await Promise.all([
-          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()], true, {nonce: nonce++}),
-          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()], true, {nonce: nonce++}),
+          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()!], true, {nonce: nonce++}),
+          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()!], true, {nonce: nonce++}),
         ]);
       }
 

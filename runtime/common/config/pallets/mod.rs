@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+use alloc::string::{String, ToString};
 use frame_support::parameter_types;
 use sp_runtime::traits::AccountIdConversion;
 use crate::{
@@ -23,9 +24,10 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, Balances,
+	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, RUNTIME_NAME, TOKEN_SYMBOL, DECIMALS,
+	Balances,
 };
-use frame_support::traits::{ConstU32, ConstU64};
+use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{
 	types::{AccountId, Balance, BlockNumber},
 	constants::*,
@@ -51,8 +53,8 @@ pub mod collator_selection;
 pub mod preimage;
 
 parameter_types! {
-	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
+	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 }
 
 impl pallet_common::Config for Runtime {
@@ -82,6 +84,21 @@ impl pallet_refungible::Config for Runtime {
 }
 impl pallet_nonfungible::Config for Runtime {
 	type WeightInfo = pallet_nonfungible::weights::SubstrateWeight<Self>;
+}
+
+parameter_types! {
+	pub const Decimals: u8 = DECIMALS;
+	pub Name: String = RUNTIME_NAME.to_string();
+	pub Symbol: String = TOKEN_SYMBOL.to_string();
+}
+impl pallet_balances_adapter::Config for Runtime {
+	type Inspect = Balances;
+	type Mutate = Balances;
+	type CurrencyBalance = <Balances as Currency<Self::AccountId>>::Balance;
+	type Decimals = Decimals;
+	type Name = Name;
+	type Symbol = Symbol;
+	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {

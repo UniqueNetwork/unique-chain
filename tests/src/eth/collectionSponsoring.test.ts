@@ -592,6 +592,7 @@ describe('evm RFT collection sponsoring', () => {
         tokenId: '1',
       },
     });
+    // FIXME: doesn't work
     expect(await collectionEvm.methods.tokenURI(tokenId).call({from: user})).to.be.equal('Test URI');
 
     const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));

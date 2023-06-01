@@ -39,18 +39,19 @@ mod tests;
 
 use frame_support::{
 	dispatch::{DispatchResult},
-	traits::{Currency, Get},
+	traits::{
+		fungible::{Balanced, Inspect, Mutate},
+		Get,
+		tokens::Precision,
+	},
 };
 pub use pallet::*;
-use sp_runtime::{
-	Perbill,
-	traits::{BlockNumberProvider},
-};
+use sp_runtime::{Perbill, traits::BlockNumberProvider};
 
 use sp_std::convert::TryInto;
 
 type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
+	<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub const YEAR: u32 = 5_259_600; // 6-second block
 								 // pub const YEAR: u32 = 2_629_800; // 12-second block
@@ -66,7 +67,9 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Balanced<Self::AccountId>
+			+ Inspect<Self::AccountId>
+			+ Mutate<Self::AccountId>;
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		// The block number provider
@@ -133,11 +136,8 @@ pub mod pallet {
 					add_weight(0, 4, Weight::from_parts(5_000_000, 0));
 				}
 
-				T::Currency::deposit_into_existing(
-					&T::TreasuryAccountId::get(),
-					<BlockInflation<T>>::get(),
-				)
-				.ok();
+				T::Currency::mint_into(&T::TreasuryAccountId::get(), <BlockInflation<T>>::get())
+					.ok();
 
 				// Update inflation block
 				<NextInflationBlock<T>>::set(next_inflation + block_interval.into());
@@ -184,10 +184,11 @@ pub mod pallet {
 				<NextInflationBlock<T>>::set(inflation_start_relay_block + block_interval.into());
 
 				// First time deposit - create Treasury account so that we can call deposit_into_existing everywhere else
-				T::Currency::deposit_creating(
+				let _ = T::Currency::deposit(
 					&T::TreasuryAccountId::get(),
 					<BlockInflation<T>>::get(),
-				);
+					Precision::Exact,
+				)?;
 			}
 
 			Ok(())

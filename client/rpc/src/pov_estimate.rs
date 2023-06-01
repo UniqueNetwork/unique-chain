@@ -213,12 +213,7 @@ where
 
 	let pre_root = *backend.root();
 
-	let executor = NativeElseWasmExecutor::<D>::new(
-		exec_params.wasm_method,
-		exec_params.default_heap_pages,
-		exec_params.max_runtime_instances,
-		exec_params.runtime_cache_size,
-	);
+	let executor = sc_service::new_native_or_wasm_executor(exec_params);
 	let execution = ExecutionStrategy::NativeElseWasm;
 
 	let mut results = Vec::new();

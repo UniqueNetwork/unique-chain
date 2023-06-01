@@ -469,7 +469,7 @@ export class ArrangeGroup {
   };
 
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
-    const address = payer.Substrate ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum!);
+    const address = 'Substrate' in payer ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum);
     let balance = await this.helper.balance.getSubstrate(address);
 
     await promise();
@@ -771,9 +771,7 @@ class MoonbeamFastDemocracyGroup {
     // <<< Referendum voting <<<
 
     // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => {
-      return event.referendumIndex() == referendumIndex;
-    });
+    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex() == referendumIndex);
 
     await this.helper.wait.newBlocks(1);
 
@@ -924,7 +922,7 @@ class WaitGroup {
   event<T extends IEventHelper>(
     maxBlocksToWait: number,
     eventHelperType: new () => T,
-    filter: (_: T) => boolean = () => { return true; },
+    filter: (_: T) => boolean = () => true,
   ) {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<T | null>(async (resolve) => {
@@ -970,7 +968,7 @@ class WaitGroup {
   async expectEvent<T extends IEventHelper>(
     maxBlocksToWait: number,
     eventHelperType: new () => T,
-    filter: (e: T) => boolean = () => { return true; },
+    filter: (e: T) => boolean = () => true,
   ) {
     const e = await this.event(maxBlocksToWait, eventHelperType, filter);
     if (e == null) {
@@ -991,7 +989,7 @@ class SessionGroup {
 
   //todo:collator documentation
   async getIndex(): Promise<number> {
-    return (await this.helper.callRpc('api.query.session.currentIndex')).toNumber();
+    return (await this.helper.callRpc('api.query.session.currentIndex', [])).toNumber();
   }
 
   newSessions(sessionCount = 1, blockTimeout = 24000): Promise<void> {
@@ -1077,9 +1075,7 @@ class EventCapture {
   async startCapture() {
     this.stopCapture();
     this.unsubscribe = (await this.helper.getApi().query.system.events((eventRecords: FrameSystemEventRecord[]) => {
-      const newEvents = eventRecords.filter(r => {
-        return r.event.section == this.eventSection && r.event.method == this.eventMethod;
-      });
+      const newEvents = eventRecords.filter(r => r.event.section == this.eventSection && r.event.method == this.eventMethod);
 
       this.events.push(...newEvents);
     })) as any;
@@ -1105,12 +1101,10 @@ class AdminGroup {
 
   async payoutStakers(signer: IKeyringPair, stakersToPayout: number):  Promise<{staker: string, stake: bigint, payout: bigint}[]> {
     const payoutResult = await this.helper.executeExtrinsic(signer, 'api.tx.appPromotion.payoutStakers', [stakersToPayout], true);
-    return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => {
-      return {
-        staker: e.event.data[0].toString(),
-        stake: e.event.data[1].toBigInt(),
-        payout: e.event.data[2].toBigInt(),
-      };
-    });
+    return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => ({
+      staker: e.event.data[0].toString(),
+      stake: e.event.data[1].toBigInt(),
+      payout: e.event.data[2].toBigInt(),
+    }));
   }
 }

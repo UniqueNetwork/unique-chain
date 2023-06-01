@@ -46,12 +46,11 @@ describe('Refungible: Plain calls', () => {
       const receiverSub = bob;
       const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
 
-      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {
+      const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
+      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {
         tokenOwner: false,
         collectionAdmin: true,
-        mutable: false}};
-      });
+        mutable: false}}));
 
 
       const collection = await helper.rft.mintCollection(minter, {
@@ -86,7 +85,7 @@ describe('Refungible: Plain calls', () => {
       expect(tokenId).to.be.equal(expectedTokenId);
 
       expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
-        .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
+        .map(p => helper.ethProperty.property(p.key, p.value.toString())));
 
       expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
         .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.toLowerCase()} : {Substrate: receiverSub.address});
@@ -177,7 +176,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+    const operator = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -206,7 +205,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+    const operator = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -331,8 +330,8 @@ describe('Refungible: Plain calls', () => {
   itEth('Can perform burnFrom()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -365,7 +364,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = bob;
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
 
@@ -397,7 +396,7 @@ describe('Refungible: Plain calls', () => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = bob;
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
     const receiver = charlie;
 
     const token = await collection.mintToken(minter, 100n, {Substrate: owner.address});
@@ -675,12 +674,13 @@ describe('Common metadata', () => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 
   itEth('Returns collection name', async ({helper}) => {
-    const caller = helper.eth.createAccount();
+    // FIXME: should not have balance to use .call()
+    const caller = await helper.eth.createAccountWithBalance(alice);
     const tokenPropertyPermissions = [{
       key: 'URI',
       permission: {
@@ -699,7 +699,7 @@ describe('Common metadata', () => {
       },
     );
 
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'rft', caller);
+    const contract = helper.ethNativeContract.collectionById(collection.collectionId, 'rft', caller);
     const name = await contract.methods.name().call();
     expect(name).to.equal('Leviathan');
   });
@@ -747,8 +747,8 @@ describe('Negative tests', () => {
   itEth('[negative] Cant perform burn without approval', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 
@@ -767,10 +767,10 @@ describe('Negative tests', () => {
 
   itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = alice;
 
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, 100n, {Ethereum: owner});
 

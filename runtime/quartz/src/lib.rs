@@ -48,6 +48,7 @@ pub const RUNTIME_NAME: &str = "sapphire";
 #[cfg(not(feature = "become-sapphire"))]
 pub const RUNTIME_NAME: &str = "quartz";
 pub const TOKEN_SYMBOL: &str = "QTZ";
+pub const DECIMALS: u8 = 18;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
@@ -58,7 +59,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
-	state_version: 0,
+	state_version: 1,
 };
 
 parameter_types! {

@@ -64,7 +64,7 @@ describe('integration test: Refungible functionality:', () => {
 
   itSub('RPC method tokenOwners for refungible collection and token', async ({helper}) => {
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
-    const facelessCrowd = (await helper.arrange.createAccounts(Array(7).fill(0n), donor)).map(keyring => {return {Substrate: keyring.address};});
+    const facelessCrowd = (await helper.arrange.createAccounts(Array(7).fill(0n), donor)).map(keyring => ({Substrate: keyring.address}));
 
     const collection = await helper.rft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
 

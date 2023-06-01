@@ -76,7 +76,7 @@ class Fract {
 
   sqrt() {
     if (this.a < 0n) {
-      throw 'square root of negative numbers is not supported';
+      throw new Error('square root of negative numbers is not supported');
     }
 
     if (this.lt(new Fract(2n))) {

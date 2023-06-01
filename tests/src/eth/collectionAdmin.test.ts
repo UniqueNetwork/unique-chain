@@ -76,9 +76,7 @@ describe('Add collection admins', () => {
 
       // 2. Expect methods.collectionAdmins == api.rpc.unique.adminlist
       let adminListEth = await collectionEvm.methods.collectionAdmins().call();
-      adminListEth = adminListEth.map((element: IEthCrossAccountId) => {
-        return helper.address.convertCrossAccountFromEthCrossAccount(element);
-      });
+      adminListEth = adminListEth.map((element: IEthCrossAccountId) => helper.address.convertCrossAccountFromEthCrossAccount(element));
       expect(adminListRpc).to.be.like(adminListEth);
 
       // 3. check isOwnerOrAdminCross returns true:

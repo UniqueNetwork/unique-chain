@@ -22,6 +22,7 @@ limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
 quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'preimage', 'refungible']
 runtime-benchmarks = [
+	"pallet-preimage/runtime-benchmarks",
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',
@@ -42,7 +43,6 @@ runtime-benchmarks = [
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
-	"pallet-preimage/runtime-benchmarks",
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
@@ -66,14 +66,16 @@ std = [
 	'frame-try-runtime/std',
 	'pallet-aura/std',
 	'pallet-balances/std',
+	'pallet-balances-adapter/std',
 	# 'pallet-contracts/std',
 	# 'pallet-contracts-primitives/std',
 	# 'pallet-contracts-rpc-runtime-api/std',
 	# 'pallet-contract-helpers/std',
-	"pallet-preimage/std",
 	"pallet-authorship/std",
 	"pallet-identity/std",
+	"pallet-preimage/std",
 	"pallet-session/std",
+	"pallet-state-trie-migration/std",
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
@@ -127,8 +129,8 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-vesting/std",
-	"orml-xtokens/std",
 	"orml-xcm-support/std",
+	"orml-xtokens/std",
 	"pallet-foreign-assets/std",
 	"pallet-maintenance/std",
 ]
@@ -136,8 +138,8 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-identity/try-runtime",
-	"pallet-session/try-runtime",
 	"pallet-preimage/try-runtime",
+	"pallet-session/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
 	'cumulus-pallet-dmp-queue/try-runtime',
 	'cumulus-pallet-parachain-system/try-runtime',
@@ -154,6 +156,7 @@ try-runtime = [
 	'pallet-app-promotion/try-runtime',
 	'pallet-aura/try-runtime',
 	'pallet-balances/try-runtime',
+	'pallet-balances-adapter/try-runtime',
 	'pallet-charge-transaction/try-runtime',
 	'pallet-common/try-runtime',
 	'pallet-configuration/try-runtime',
@@ -208,13 +211,14 @@ frame-system-rpc-runtime-api = { workspace = true }
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
-orml-xtokens = { workspace = true }
 orml-xcm-support = { workspace = true }
+orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
-pallet-balances = { workspace = true }
+pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-preimage = { workspace = true }
 pallet-session = { workspace = true }
+pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
@@ -246,6 +250,7 @@ derivative = { workspace = true }
 fp-evm = { workspace = true }
 log = { workspace = true }
 pallet-app-promotion = { workspace = true }
+pallet-balances-adapter = { workspace = true }
 pallet-collator-selection = { workspace = true }
 pallet-common = { workspace = true }
 pallet-configuration = { workspace = true }
@@ -283,11 +288,11 @@ up-sponsorship = { workspace = true }
 ################################################################################
 # Optional dependencies
 
-frame-system-benchmarking = { workspace = true, optional = true }
 frame-benchmarking = { workspace = true, optional = true }
+frame-system-benchmarking = { workspace = true, optional = true }
 frame-try-runtime = { workspace = true, optional = true }
-serde = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
 
 
 ################################################################################

@@ -70,11 +70,13 @@ describe('Integration Test: Maintenance Functionality', () => {
     itSub('MM blocks unique pallet calls', async ({helper}) => {
       // Can create an NFT collection before enabling the MM
       const nftCollection = await helper.nft.mintCollection(bob, {
-        tokenPropertyPermissions: [{key: 'test', permission: {
-          collectionAdmin: true,
-          tokenOwner: true,
-          mutable: true,
-        }}],
+        tokenPropertyPermissions: [{
+          key: 'test', permission: {
+            collectionAdmin: true,
+            tokenOwner: true,
+            mutable: true,
+          },
+        }],
       });
 
       // Can mint an NFT before enabling the MM
@@ -334,25 +336,25 @@ describe('Integration Test: Maintenance Functionality', () => {
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         preimageHash, {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/balances\.InsufficientBalance/);
+      ])).to.be.rejectedWith(/^Token: FundsUnavailable$/);
     });
 
     itSub('Does not allow preimage execution with non-root', async ({helper}) => {
       await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [
         preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/BadOrigin/);
+      ])).to.be.rejectedWith(/^Misc: BadOrigin$/);
     });
 
     itSub('Does not allow execution of non-existent preimages', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         '0x1010101010101010101010101010101010101010101010101010101010101010', {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/Unavailable/);
+      ])).to.be.rejectedWith(/^Misc: Unavailable$/);
     });
 
     itSub('Does not allow preimage execution with less than minimum weights', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         preimageHashes[0], {refTime: 1000, proofSize: 100},
-      ])).to.be.rejectedWith(/Exhausted/);
+      ])).to.be.rejectedWith(/^Misc: Exhausted$/);
     });
 
     after(async function() {

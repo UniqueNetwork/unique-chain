@@ -95,7 +95,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    await expect(helper.signTransaction(bob, api.tx.balances.setBalance(alice.address, 0, 0))).to.be.rejected;
+    await expect(helper.signTransaction(bob, api.tx.balances.forceSetBalance(alice.address, 0))).to.be.rejected;
 
     const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
