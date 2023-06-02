@@ -714,7 +714,7 @@ pub mod pallet {
 		///
 		///   # Arguments
 		///
-		/// * `origin`: Must be `Signed`.
+		/// * `origin`: Must be `Root`.
 		/// * `stakers`: Accounts to be upgraded.
 		#[pallet::call_index(9)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2) * stakers.len() as u64)]
@@ -755,7 +755,7 @@ pub mod pallet {
 		///
 		///   # Arguments
 		///
-		/// * `origin`: Must be `Signed`.
+		/// * `origin`: Must be `Root`.
 		/// * `pending_blocks`: Block numbers that will be processed.
 		#[pallet::call_index(10)]
 		#[pallet::weight(<T as Config>::WeightInfo::on_initialize(PENDING_LIMIT_PER_BLOCK*pending_blocks.len() as u32))]
