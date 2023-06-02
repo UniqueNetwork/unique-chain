@@ -19,7 +19,7 @@
 use sp_core::{H160, H256, U256};
 use frame_support::{
 	parameter_types,
-	traits::{Everything, ConstU32, ConstU64, Currency},
+	traits::{Everything, ConstU32, ConstU64, fungible::Inspect},
 	weights::IdentityFee,
 	pallet_prelude::Weight,
 };
@@ -282,7 +282,7 @@ parameter_types! {
 impl pallet_balances_adapter::Config for Test {
 	type Inspect = Balances;
 	type Mutate = Balances;
-	type CurrencyBalance = <Balances as Currency<Self::AccountId>>::Balance;
+	type CurrencyBalance = <Balances as Inspect<Self::AccountId>>::Balance;
 	type Decimals = Decimals;
 	type Name = Name;
 	type Symbol = Symbol;
