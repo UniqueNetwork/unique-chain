@@ -867,6 +867,36 @@ pub mod pallet {
 	>;
 }
 
+fn check_token_permissions<T: Config>(
+	is_token_being_created: bool,
+	value_is_some: bool,
+	collection_admin_permitted: bool,
+	is_collection_admin: bool,
+	token_owner_permitted: bool,
+	token_ownership_aqcuired: &mut bool,
+	check_token_ownership: &mut impl FnMut(&mut bool) -> Result<bool, DispatchError>,
+	check_token_existence: &mut impl FnMut() -> bool,
+) -> DispatchResult {
+	let sender_is_admin = collection_admin_permitted && is_collection_admin;
+
+	if is_token_being_created {
+		if !(value_is_some && sender_is_admin) {
+			fail!(<Error<T>>::NoPermission);
+		}
+	} else if !sender_is_admin
+		&& !(token_owner_permitted && check_token_ownership(token_ownership_aqcuired)?)
+	{
+		fail!(<Error<T>>::NoPermission);
+	}
+
+	let token_must_exist =
+		*token_ownership_aqcuired && check_token_ownership(token_ownership_aqcuired)?;
+	if !token_must_exist && !check_token_existence() {
+		fail!(<Error<T>>::TokenNotFound);
+	}
+	Ok(())
+}
+
 impl<T: Config> Pallet<T> {
 	/// Enshure that receiver address is correct.
 	///
@@ -1246,9 +1276,12 @@ impl<T: Config> Pallet<T> {
 		let mut token_owner_result = None;
 		let mut token_exists_result = None;
 
-		let mut check_token_ownership = || -> Result<bool, DispatchError> {
-			*token_owner_result.get_or_insert_with(&check_token_ownership)
-		};
+		let mut token_ownership_aqcuired = false;
+		let mut check_token_ownership =
+			|token_ownership_aqcuired: &mut bool| -> Result<bool, DispatchError> {
+				*token_ownership_aqcuired = true;
+				*token_owner_result.get_or_insert_with(&check_token_ownership)
+			};
 
 		let mut check_token_existence =
 			|| -> bool { *token_exists_result.get_or_insert_with(&check_token_existence) };
@@ -1269,30 +1302,19 @@ impl<T: Config> Pallet<T> {
 				}
 
 				PropertyPermission {
-					collection_admin: collection_admin_permitted,
-					token_owner: token_owner_permitted,
+					collection_admin,
+					token_owner,
 					..
-				} => {
-					//TODO: investigate threats during public minting.
-					let valid_new_token_creation = is_token_being_created
-						&& (collection_admin_permitted || token_owner_permitted)
-						&& value.is_some();
-					let sender_is_admin = collection_admin_permitted && is_collection_admin;
-					let mut sender_is_owner = || -> Result<bool, DispatchError> {
-						Ok(token_owner_permitted && check_token_ownership()?)
-					};
-
-					if !(valid_new_token_creation || sender_is_admin || sender_is_owner()?) {
-						fail!(<Error<T>>::NoPermission);
-					}
-
-					let token_owner_check_needed =
-						!(valid_new_token_creation || sender_is_admin) && token_owner_permitted;
-					let token_must_exist = !(token_owner_check_needed && check_token_ownership()?);
-					if token_must_exist && !check_token_existence() {
-						fail!(<Error<T>>::TokenNotFound);
-					}
-				}
+				} => check_token_permissions::<T>(
+					is_token_being_created,
+					value.is_some(),
+					collection_admin,
+					is_collection_admin,
+					token_owner,
+					&mut token_ownership_aqcuired,
+					&mut check_token_ownership,
+					&mut check_token_existence,
+				)?,
 			}
 
 			match value {
@@ -2337,5 +2359,106 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::PropertyKeyIsTooLong => Self::PropertyKeyIsTooLong,
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
+	}
+}
+
+#[cfg(feature = "tests")]
+pub mod tests {
+	use crate::{DispatchResult, DispatchError};
+
+	pub const table: [[u8; 7]; 64] = [
+		//┌╴is_token_being_created
+		//│  ┌╴value_is_some
+		//│  │  ┌╴collection_admin_permitted
+		//│  │  │  ┌╴is_collection_admin
+		//│  │  │  │  ┌╴token_owner_permitted
+		//│  │  │  │  │  ┌╴check_token_ownership
+		//│  │  │  │  │  │  ┌╴NoPermission
+		[0, 0, 0, 0, 0, 0, 1],
+		[0, 0, 0, 0, 0, 1, 1],
+		[0, 0, 0, 0, 1, 0, 1],
+		[0, 0, 0, 0, 1, 1, 0],
+		[0, 0, 0, 1, 0, 0, 1],
+		[0, 0, 0, 1, 0, 1, 1],
+		[0, 0, 0, 1, 1, 0, 1],
+		[0, 0, 0, 1, 1, 1, 0],
+		[0, 0, 1, 0, 0, 0, 1],
+		[0, 0, 1, 0, 0, 1, 1],
+		[0, 0, 1, 0, 1, 0, 1],
+		[0, 0, 1, 0, 1, 1, 0],
+		[0, 0, 1, 1, 0, 0, 0],
+		[0, 0, 1, 1, 0, 1, 0],
+		[0, 0, 1, 1, 1, 0, 0],
+		[0, 0, 1, 1, 1, 1, 0],
+		[0, 1, 0, 0, 0, 0, 1],
+		[0, 1, 0, 0, 0, 1, 1],
+		[0, 1, 0, 0, 1, 0, 1],
+		[0, 1, 0, 0, 1, 1, 0],
+		[0, 1, 0, 1, 0, 0, 1],
+		[0, 1, 0, 1, 0, 1, 1],
+		[0, 1, 0, 1, 1, 0, 1],
+		[0, 1, 0, 1, 1, 1, 0],
+		[0, 1, 1, 0, 0, 0, 1],
+		[0, 1, 1, 0, 0, 1, 1],
+		[0, 1, 1, 0, 1, 0, 1],
+		[0, 1, 1, 0, 1, 1, 0],
+		[0, 1, 1, 1, 0, 0, 0],
+		[0, 1, 1, 1, 0, 1, 0],
+		[0, 1, 1, 1, 1, 0, 0],
+		[0, 1, 1, 1, 1, 1, 0],
+		[1, 0, 0, 0, 0, 0, 1],
+		[1, 0, 0, 0, 0, 1, 1],
+		[1, 0, 0, 0, 1, 0, 1],
+		[1, 0, 0, 0, 1, 1, 1],
+		[1, 0, 0, 1, 0, 0, 1],
+		[1, 0, 0, 1, 0, 1, 1],
+		[1, 0, 0, 1, 1, 0, 1],
+		[1, 0, 0, 1, 1, 1, 1],
+		[1, 0, 1, 0, 0, 0, 1],
+		[1, 0, 1, 0, 0, 1, 1],
+		[1, 0, 1, 0, 1, 0, 1],
+		[1, 0, 1, 0, 1, 1, 1],
+		[1, 0, 1, 1, 0, 0, 1],
+		[1, 0, 1, 1, 0, 1, 1],
+		[1, 0, 1, 1, 1, 0, 1],
+		[1, 0, 1, 1, 1, 1, 1],
+		[1, 1, 0, 0, 0, 0, 1],
+		[1, 1, 0, 0, 0, 1, 1],
+		[1, 1, 0, 0, 1, 0, 1],
+		[1, 1, 0, 0, 1, 1, 1],
+		[1, 1, 0, 1, 0, 0, 1],
+		[1, 1, 0, 1, 0, 1, 1],
+		[1, 1, 0, 1, 1, 0, 1],
+		[1, 1, 0, 1, 1, 1, 1],
+		[1, 1, 1, 0, 0, 0, 1],
+		[1, 1, 1, 0, 0, 1, 1],
+		[1, 1, 1, 0, 1, 0, 1],
+		[1, 1, 1, 0, 1, 1, 1],
+		[1, 1, 1, 1, 0, 0, 0],
+		[1, 1, 1, 1, 0, 1, 0],
+		[1, 1, 1, 1, 1, 0, 0],
+		[1, 1, 1, 1, 1, 1, 0],
+	];
+
+	pub fn check_token_permissions<T: crate::Config>(
+		is_token_being_created: bool,
+		value_is_some: bool,
+		collection_admin_permitted: bool,
+		is_collection_admin: bool,
+		token_owner_permitted: bool,
+		token_ownership_aqcuired: &mut bool,
+		check_token_ownership: &mut impl FnMut(&mut bool) -> Result<bool, DispatchError>,
+		check_token_existence: &mut impl FnMut() -> bool,
+	) -> DispatchResult {
+		crate::check_token_permissions::<T>(
+			is_token_being_created,
+			value_is_some,
+			collection_admin_permitted,
+			is_collection_admin,
+			token_owner_permitted,
+			token_ownership_aqcuired,
+			check_token_ownership,
+			check_token_existence,
+		)
 	}
 }

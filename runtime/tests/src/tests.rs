@@ -2610,3 +2610,83 @@ fn collection_sponsoring() {
 		));
 	});
 }
+
+#[test]
+fn check_token_permissions() {
+	fn to_bool(u: u8) -> bool {
+		u != 0
+	}
+
+	fn test(
+		i: usize,
+		row: &[u8; 7],
+		token_ownership_aqcuired: &mut bool,
+		mut check_token_existence: impl FnMut() -> bool,
+	) {
+		let is_token_being_created = to_bool(row[0]);
+		let value_is_some = to_bool(row[1]);
+		let collection_admin_permitted = to_bool(row[2]);
+		let is_collection_admin = to_bool(row[3]);
+		let token_owner_permitted = to_bool(row[4]);
+		let mut check_token_ownership = |_: &mut bool| Ok(to_bool(row[5]));
+		let is_no_permission = to_bool(row[6]);
+
+		let result = pallet_common::tests::check_token_permissions::<Test>(
+			is_token_being_created,
+			value_is_some,
+			collection_admin_permitted,
+			is_collection_admin,
+			token_owner_permitted,
+			token_ownership_aqcuired,
+			&mut check_token_ownership,
+			&mut check_token_existence,
+		);
+		assert_eq!(
+			is_no_permission || !check_token_existence(),
+			result.is_err(),
+			"{i}: {row:?}, token_exist: {}",
+			check_token_existence()
+		);
+
+		if !is_token_being_created
+			&& !is_no_permission
+			&& !*token_ownership_aqcuired
+			&& !check_token_existence()
+		{
+			assert_eq!(
+				result.unwrap_err(),
+				pallet_common::Error::<Test>::TokenNotFound.into(),
+				"token_exist: {}",
+				check_token_existence()
+			);
+		}
+	}
+
+	// Test NoPermissions only
+	new_test_ext().execute_with(|| {
+		let mut token_ownership_aqcuired = false;
+		let mut check_token_existence = || true;
+		for (i, row) in pallet_common::tests::table.iter().enumerate() {
+			test(
+				i,
+				row,
+				&mut token_ownership_aqcuired,
+				&mut check_token_existence,
+			);
+		}
+	});
+
+	// Test NoPermissions and TokenNotFound
+	new_test_ext().execute_with(|| {
+		let mut token_ownership_aqcuired = false;
+		let mut check_token_existence = || false;
+		for (i, row) in pallet_common::tests::table.iter().enumerate() {
+			test(
+				i,
+				row,
+				&mut token_ownership_aqcuired,
+				&mut check_token_existence,
+			);
+		}
+	});
+}
