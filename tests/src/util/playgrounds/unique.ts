@@ -2526,8 +2526,8 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return this.ethBalanceGroup.getEthereum(address);
   }
 
-  async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint, reservedAmount = 0n) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.balances.setBalance', [address, amount, reservedAmount], true);
+  async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.balances.forceSetBalance', [address, amount], true);
   }
 
   /**
