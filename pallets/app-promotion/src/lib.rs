@@ -623,6 +623,7 @@ pub mod pallet {
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
+							// TO-DO: When moving to ED>0, reconsider the value of preservation
 							<<T as Config>::Currency as Mutate<T::AccountId>>::transfer(
 								&T::TreasuryAccountId::get(),
 								last_id,
