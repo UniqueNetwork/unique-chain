@@ -54,7 +54,7 @@ use crate::service::DefaultRuntimeExecutor;
 use codec::Encode;
 use cumulus_primitives_core::ParaId;
 use cumulus_client_cli::generate_genesis_block;
-use log::info;
+use log::{debug, info};
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
 	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
@@ -510,8 +510,7 @@ pub fn run() -> Result<()> {
 						&para_id,
 					);
 
-				let state_version =
-					RelayChainCli::native_runtime_version(&config.chain_spec).state_version();
+				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
 				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
 					.map_err(|e| format!("{:?}", e))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
@@ -528,13 +527,10 @@ pub fn run() -> Result<()> {
 				info!("Parachain Account: {}", parachain_account);
 				info!("Parachain genesis state: {}", genesis_state);
 				info!("Parachain genesis hash: {}", genesis_hash);
+				debug!("Parachain genesis block: {:?}", block);
 				info!(
 					"Is collating: {}",
-					if config.role.is_authority() {
-						"yes"
-					} else {
-						"no"
-					}
+					config.role.is_authority().then_some("yes").unwrap_or("no")
 				);
 
 				start_node_using_chain_runtime! {
