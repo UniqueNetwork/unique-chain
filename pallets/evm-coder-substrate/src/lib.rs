@@ -260,9 +260,9 @@ pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> execution::Error {
 			message: Some(msg), ..
 		}) => ExError::Revert(msg.into()),
 		DispatchError::Module(ModuleError { index, error, .. }) => {
-			ExError::Revert(format!("error {:?} in pallet {}", error, index))
+			ExError::Revert(format!("error {error:?} in pallet {index}"))
 		}
-		e => ExError::Revert(format!("substrate error: {:?}", e)),
+		e => ExError::Revert(format!("substrate error: {e:?}")),
 	}
 }
 

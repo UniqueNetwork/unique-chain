@@ -83,7 +83,7 @@ fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, St
 		"" | "local" => Box::new(chain_spec::local_testnet_config()),
 		path => {
 			let path = std::path::PathBuf::from(path);
-			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(path.clone())?)
+			let chain_spec = Box::new(chain_spec::OpalChainSpec::from_json_file(path)?)
 				as Box<dyn sc_service::ChainSpec>;
 
 			match chain_spec.runtime_id() {
@@ -352,7 +352,7 @@ pub fn run() -> Result<()> {
 					&polkadot_cli,
 					config.tokio_handle.clone(),
 				)
-				.map_err(|err| format!("Relay chain argument error: {}", err))?;
+				.map_err(|err| format!("Relay chain argument error: {err}"))?;
 
 				cmd.run(config, polkadot_config)
 			})
@@ -464,7 +464,7 @@ pub fn run() -> Result<()> {
 			runner.run_node_until_exit(|config| async move {
 				let hwbench = if !cli.no_hardware_benchmarks {
 					config.database.path().map(|database_path| {
-						let _ = std::fs::create_dir_all(&database_path);
+						let _ = std::fs::create_dir_all(database_path);
 						sc_sysinfo::gather_hwbench(Some(database_path))
 					})
 				} else {
@@ -512,7 +512,7 @@ pub fn run() -> Result<()> {
 
 				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
 				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
-					.map_err(|e| format!("{:?}", e))?;
+					.map_err(|e| format!("{e:?}"))?;
 				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
 				let genesis_hash = format!("0x{:?}", HexDisplay::from(&block.header().hash().0));
 
@@ -521,7 +521,7 @@ pub fn run() -> Result<()> {
 					&polkadot_cli,
 					config.tokio_handle.clone(),
 				)
-				.map_err(|err| format!("Relay chain argument error: {}", err))?;
+				.map_err(|err| format!("Relay chain argument error: {err}"))?;
 
 				info!("Parachain id: {:?}", para_id);
 				info!("Parachain Account: {}", parachain_account);

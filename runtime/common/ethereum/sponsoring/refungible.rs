@@ -16,7 +16,6 @@
 
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
-use core::convert::TryInto;
 use pallet_common::CollectionHandle;
 use pallet_evm::account::CrossAccountId;
 use pallet_fungible::Config as FungibleConfig;
@@ -95,7 +94,7 @@ where
 			..
 		} => {
 			let token_id = TokenId::try_from(token_id).ok()?;
-			withdraw_set_token_property::<T>(&collection, &who, &token_id, key.len() + value.len())
+			withdraw_set_token_property::<T>(&collection, who, &token_id, key.len() + value.len())
 		}
 	}
 }
@@ -242,7 +241,7 @@ mod erc721 {
 
 			MintCross { .. } => withdraw_create_item::<T>(
 				&collection,
-				&who,
+				who,
 				&CreateItemData::NFT(CreateNftData::default()),
 			),
 
@@ -250,7 +249,7 @@ mod erc721 {
 			| TransferFromCross { token_id, .. }
 			| Transfer { token_id, .. } => {
 				let token_id = TokenId::try_from(token_id).ok()?;
-				withdraw_transfer::<T>(&collection, &who, &token_id)
+				withdraw_transfer::<T>(&collection, who, &token_id)
 			}
 		}
 	}
@@ -275,7 +274,7 @@ mod erc721 {
 			| MintWithTokenUri { .. }
 			| MintWithTokenUriCheckId { .. } => withdraw_create_item::<T>(
 				&collection,
-				&who,
+				who,
 				&CreateItemData::NFT(CreateNftData::default()),
 			),
 		}
@@ -311,18 +310,15 @@ mod erc20 {
 
 			Transfer { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;
-				let token_id = token_id.try_into().ok()?;
-				withdraw_transfer::<T>(&handle, &who, &token_id)
+				withdraw_transfer::<T>(&handle, who, &token_id)
 			}
 			TransferFrom { from, .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;
-				let token_id = token_id.try_into().ok()?;
 				let from = T::CrossAccountId::from_eth(from);
 				withdraw_transfer::<T>(&handle, &from, &token_id)
 			}
 			Approve { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;
-				let token_id = token_id.try_into().ok()?;
 				withdraw_approve::<T>(&handle, who.as_sub(), &token_id)
 			}
 		}
@@ -351,13 +347,11 @@ mod erc20 {
 
 			TransferCross { .. } | TransferFromCross { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;
-				let token_id = token_id.try_into().ok()?;
-				withdraw_transfer::<T>(&handle, &who, &token_id)
+				withdraw_transfer::<T>(&handle, who, &token_id)
 			}
 
 			ApproveCross { .. } => {
 				let RefungibleTokenHandle(handle, token_id) = token;
-				let token_id = token_id.try_into().ok()?;
 				withdraw_approve::<T>(&handle, who.as_sub(), &token_id)
 			}
 		}
