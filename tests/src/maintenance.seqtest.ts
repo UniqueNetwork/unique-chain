@@ -159,8 +159,8 @@ describe('Integration Test: Maintenance Functionality', () => {
       // RPCs work while in maintenance
       expect(await helper.collection.getTotalCount()).to.be.deep.equal(totalCount);
 
-      // We still able to transfer funds
-      await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
+      // Transfers are disabled during MM
+      await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.rejected;
 
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
       expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
