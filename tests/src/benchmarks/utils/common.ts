@@ -77,11 +77,11 @@ export async function createCollectionForBenchmarks(
     Ethereum: helper.address.substrateToEth(donor.address),
   });
 
-  if (proxyContract) {
+  if(proxyContract) {
     await collection.addToAllowList(donor, {Ethereum: proxyContract});
     await collection.addAdmin(donor, {Ethereum: proxyContract});
   }
-  if (collection instanceof UniqueNFTCollection || collection instanceof UniqueRFTCollection)
+  if(collection instanceof UniqueNFTCollection || collection instanceof UniqueRFTCollection)
     await collection.setTokenPropertyPermissions(donor, permissions);
 
   return collection;

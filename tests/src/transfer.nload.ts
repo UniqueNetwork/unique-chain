@@ -29,7 +29,7 @@ async function findUnusedAddress(helper: UniqueHelper, privateKey: (account: str
     const randomSeed = 'seed' + Math.floor(Math.random() * Math.floor(10000)) + seedAddition;
     unused = await privateKey(`//${randomSeed}`);
     bal = await helper.balance.getSubstrate(unused.address);
-  } while (bal !== 0n);
+  } while(bal !== 0n);
   return unused;
 }
 
@@ -42,13 +42,13 @@ const FEE = 10n ** 8n;
 
 let counters: { [key: string]: number } = {};
 function increaseCounter(name: string, amount: number) {
-  if (!counters[name]) {
+  if(!counters[name]) {
     counters[name] = 0;
   }
   counters[name] += amount;
 }
 function flushCounterToMaster() {
-  if (Object.keys(counters).length === 0) {
+  if(Object.keys(counters).length === 0) {
     return;
   }
     process.send!(counters);
@@ -65,12 +65,12 @@ async function distributeBalance(source: IKeyringPair, helper: UniqueHelper, pri
   // findUnusedAddresses produces at least 1 request per user
   increaseCounter('requests', finalUserAmount);
 
-  for (let stage = 0; stage < stages; stage++) {
+  for(let stage = 0; stage < stages; stage++) {
     const usersWithBalance = 2 ** stage;
     const amount = totalAmount / (2n ** BigInt(stage)) - FEE * BigInt(stage);
     // console.log(`Stage ${stage}/${stages}, ${usersWithBalance} => ${usersWithBalance * 2} = ${amount}`);
     const txs: Promise<boolean | void>[] = [];
-    for (let i = 0; i < usersWithBalance; i++) {
+    for(let i = 0; i < usersWithBalance; i++) {
       const newUser = accounts[i + usersWithBalance];
       // console.log(`${accounts[i].address} => ${newUser.address} = ${amountToSplit}`);
       const tx = helper.balance.transferToSubstrate(accounts[i], newUser.address, amount);
@@ -83,19 +83,19 @@ async function distributeBalance(source: IKeyringPair, helper: UniqueHelper, pri
     await Promise.all(txs);
   }
 
-  for (const account of failedAccounts.reverse()) {
+  for(const account of failedAccounts.reverse()) {
     accounts.splice(account, 1);
   }
   return accounts;
 }
 
-if (cluster.isMaster) {
+if(cluster.isMaster) {
   let testDone = false;
   usingPlaygrounds(async (helper) => {
     const prevCounters: { [key: string]: number } = {};
-    while (!testDone) {
-      for (const name in counters) {
-        if (!(name in prevCounters)) {
+    while(!testDone) {
+      for(const name in counters) {
+        if(!(name in prevCounters)) {
           prevCounters[name] = 0;
         }
         if(counters[name] === prevCounters[name]) {
@@ -111,7 +111,7 @@ if (cluster.isMaster) {
   console.log(`Starting ${os.cpus().length} workers`);
   usingPlaygrounds(async (helper, privateKey) => {
     const alice = await privateKey('//Alice');
-    for (const id in os.cpus()) {
+    for(const id in os.cpus()) {
       const WORKER_NAME = `//LoadWorker${id}_${Date.now()}`;
       const workerAccount = await privateKey(WORKER_NAME);
       await helper.balance.transferToSubstrate(alice, workerAccount.address, 400n * 10n ** 23n);
@@ -121,7 +121,7 @@ if (cluster.isMaster) {
         STAGES: id + 2,
       });
       worker.on('message', msg => {
-        for (const key in msg) {
+        for(const key in msg) {
           increaseCounter(key, msg[key]);
         }
       });

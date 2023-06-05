@@ -41,7 +41,7 @@ describe('Integration Test: Identities Manipulation', () => {
   let superuser: IKeyringPair;
 
   before(async function() {
-    if (!process.env.RUN_COLLATOR_TESTS) this.skip();
+    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
 
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Identity]);
@@ -126,7 +126,7 @@ describe('Integration Test: Identities Manipulation', () => {
       ]);
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo] as any);
 
-      for (let i = 0; i < supers.length; i++) {
+      for(let i = 0; i < supers.length; i++) {
         // check deposit
         expect(((await helper.getApi().query.identity.subsOf(supers[i].address)).toJSON() as any)[0]).to.be.equal(1000001 + i);
 
@@ -134,7 +134,7 @@ describe('Integration Test: Identities Manipulation', () => {
         // check sub-identities as account ids
         expect(subsAccounts).to.include.members(subs[i].map(x => x.address));
 
-        for (let j = 0; j < subsAccounts.length; j++) {
+        for(let j = 0; j < subsAccounts.length; j++) {
           // check sub-identities' names
           expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `accounter #${j}`});
         }
@@ -179,7 +179,7 @@ describe('Integration Test: Identities Manipulation', () => {
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2] as any);
 
       // make sure everything else is the same
-      for (let i = 0; i < supers.length - 1; i++) {
+      for(let i = 0; i < supers.length - 1; i++) {
         // check deposit
         expect(((await helper.getApi().query.identity.subsOf(supers[i].address)).toJSON() as any)[0]).to.be.equal(1000001 + i);
 
@@ -187,7 +187,7 @@ describe('Integration Test: Identities Manipulation', () => {
         // check sub-identities as account ids
         expect(subsAccounts).to.include.members(subs[i].map(x => x.address));
 
-        for (let j = 0; j < subsAccounts; j++) {
+        for(let j = 0; j < subsAccounts; j++) {
           // check sub-identities' names
           expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `accounter #${j}`});
         }
@@ -200,7 +200,7 @@ describe('Integration Test: Identities Manipulation', () => {
       // check sub-identities as account ids
       expect(subsAccounts).to.include.members(subs[2].map(x => x.address));
 
-      for (let j = 0; j < subsAccounts.length; j++) {
+      for(let j = 0; j < subsAccounts.length; j++) {
         // check sub-identities' names
         expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `discounter #${j}`});
       }
@@ -233,7 +233,7 @@ describe('Integration Test: Identities Manipulation', () => {
       // check deposit
       expect((await helper.getApi().query.identity.subsOf(sup.address)).toHuman()).to.be.deep.equal(['0', []]);
 
-      for (let j = 0; j < crowd.length; j++) {
+      for(let j = 0; j < crowd.length; j++) {
         // check sub-identities' names
         expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
       }
@@ -264,7 +264,7 @@ describe('Integration Test: Identities Manipulation', () => {
       // check that sub-identities are deleted
       expect((await helper.getApi().query.identity.subsOf(sup.address)).toHuman()).to.be.deep.equal(['0', []]);
 
-      for (let j = 0; j < crowd.length; j++) {
+      for(let j = 0; j < crowd.length; j++) {
         // check sub-identities' names
         expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
       }
@@ -272,10 +272,10 @@ describe('Integration Test: Identities Manipulation', () => {
   });
 
   after(async function() {
-    if (!process.env.RUN_COLLATOR_TESTS) return;
+    if(!process.env.RUN_COLLATOR_TESTS) return;
 
     await usingPlaygrounds(async helper => {
-      if (helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
+      if(helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
 
       const identitiesToRemove: string[] = await getIdentityAccounts(helper);
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [identitiesToRemove]);

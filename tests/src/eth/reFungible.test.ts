@@ -111,7 +111,7 @@ describe('Refungible: Plain calls', () => {
       ).send();
 
       const events = result.events.Transfer;
-      for (let i = 0; i < 2; i++) {
+      for(let i = 0; i < 2; i++) {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
         expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
@@ -300,7 +300,7 @@ describe('Refungible: Plain calls', () => {
         tokenEvents.push(event);
       });
       const result = await contract.methods.transferFrom(caller, receiver, tokenId).send();
-      if (tokenEvents.length == 0) await helper.wait.newBlocks(1);
+      if(tokenEvents.length == 0) await helper.wait.newBlocks(1);
 
       let event = result.events.Transfer;
       expect(event.address).to.equal(collectionAddress);
@@ -547,7 +547,7 @@ describe('Refungible: Plain calls', () => {
     });
 
     await tokenContract.methods.transfer(receiver, 1).send();
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.equal(collectionAddress);
@@ -575,7 +575,7 @@ describe('Refungible: Plain calls', () => {
     });
 
     await tokenContract.methods.transfer(receiver, 1).send();
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.equal(collectionAddress);
@@ -592,7 +592,7 @@ describe('Refungible: Plain calls', () => {
 
     expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
 
-    for (let i = 1n; i < 10n; i++) {
+    for(let i = 1n; i < 10n; i++) {
       await collection.mintToken(minter, 100n, {Ethereum: owner.eth});
       expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
     }
@@ -605,7 +605,7 @@ describe('Refungible: Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
     const {tokenId} = await collection.mintToken(minter, 100n,{Ethereum: owner.eth});
 
-    for (let i = 1n; i < 10n; i++) {
+    for(let i = 1n; i < 10n; i++) {
       const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
       expect(ownerCross.eth).to.be.eq(owner.eth);
       expect(ownerCross.sub).to.be.eq(owner.sub);

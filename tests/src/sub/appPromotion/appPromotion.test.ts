@@ -30,7 +30,7 @@ let usedAccounts: IKeyringPair[] = [];
 
 async function getAccounts(accountsNumber: number, balance?: bigint) {
   let accs: IKeyringPair[] = [];
-  if (balance) {
+  if(balance) {
     await usingPlaygrounds(async (helper) => {
       accs = await helper.arrange.createAccounts(new Array(accountsNumber).fill(balance), donor);
     });
@@ -61,8 +61,8 @@ describe('App promotion', () => {
   afterEach(async () => {
     await usingPlaygrounds(async (helper) => {
       let unstakeTxs = [];
-      for (const account of usedAccounts) {
-        if (unstakeTxs.length === 3) {
+      for(const account of usedAccounts) {
+        if(unstakeTxs.length === 3) {
           await Promise.all(unstakeTxs);
           unstakeTxs = [];
         }
@@ -112,7 +112,7 @@ describe('App promotion', () => {
       itSub(`[${testCase.unstake}] should allow to create maximum 10 stakes for account`, async ({helper}) => {
         const [staker] = await getAccounts(1, 2000n);
         const ONE_STAKE = 100n * nominal;
-        for (let i = 0; i < 10; i++) {
+        for(let i = 0; i < 10; i++) {
           await helper.staking.stake(staker, ONE_STAKE);
         }
 
@@ -125,7 +125,7 @@ describe('App promotion', () => {
         // After unstake can stake again
 
         // CASE 1: unstakeAll
-        if (testCase.unstake === 'unstakeAll') {
+        if(testCase.unstake === 'unstakeAll') {
           await helper.staking.unstakeAll(staker);
           expect(await helper.staking.getStakesNumber({Substrate: staker.address})).to.eq(0);
           await helper.staking.stake(staker, 100n * nominal);
@@ -312,7 +312,7 @@ describe('App promotion', () => {
         // can't unstake if there are only pendingUnstakes
         await helper.staking.stake(staker, 100n * nominal);
 
-        if (testCase.method === 'unstakeAll') {
+        if(testCase.method === 'unstakeAll') {
           await helper.staking.unstakeAll(staker);
           await helper.staking.unstakeAll(staker);
         } else {
@@ -369,7 +369,7 @@ describe('App promotion', () => {
     });
 
     itSub('should not be possible for more than 3 accounts in one block', async ({helper}) => {
-      if (!await helper.arrange.isDevNode()) {
+      if(!await helper.arrange.isDevNode()) {
         const stakers = await getAccounts(10);
 
         await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
@@ -894,8 +894,8 @@ describe('App promotion', () => {
       await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
 
       let unstakingTxs = [];
-      for (const staker of stakers) {
-        if (unstakingTxs.length == 3) {
+      for(const staker of stakers) {
+        if(unstakingTxs.length == 3) {
           await Promise.all(unstakingTxs);
           unstakingTxs = [];
         }
@@ -910,7 +910,7 @@ describe('App promotion', () => {
       let payouts;
       do {
         payouts = await helper.admin.payoutStakers(palletAdmin, 20);
-      } while (payouts.length !== 0);
+      } while(payouts.length !== 0);
     });
   });
 
@@ -972,10 +972,10 @@ describe('App promotion', () => {
 
 // Sometimes is is required to make a cycle in order for the payment to be calculated for a specific account
 async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
-  for (let i = 0; i < 3; i++) {
+  for(let i = 0; i < 3; i++) {
     const payouts = await helper.admin.payoutStakers(palletAdmin, 100);
     const accountPayout = payouts.find(p => p.staker === account);
-    if (accountPayout) return accountPayout;
+    if(accountPayout) return accountPayout;
   }
   throw Error(`Cannot find payout for ${account}`);
 }
@@ -986,13 +986,13 @@ function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_
   // 5n / 10_000n = 0.05% p/day
   const income = base + base * (ACCURACY * (calcPeriod * 5n) / (10_000n * DAY)) / ACCURACY ;
 
-  if (iter > 1) {
+  if(iter > 1) {
     return calculateIncome(income, iter - 1, calcPeriod);
   } else return income;
 }
 
 function rewardAvailableInBlock(stakedInBlock: bigint) {
-  if (stakedInBlock % LOCKING_PERIOD === 0n) return stakedInBlock + LOCKING_PERIOD;
+  if(stakedInBlock % LOCKING_PERIOD === 0n) return stakedInBlock + LOCKING_PERIOD;
   return (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
 }
 
@@ -1002,7 +1002,7 @@ async function waitPromotionPeriodDoesntEnd(helper: DevUniqueHelper, waitBlockLe
   const relayBlockNumber = (await helper.callRpc('api.query.parachainSystem.validationData', [])).value.relayParentNumber.toNumber(); // await helper.chain.getLatestBlockNumber();
   const currentPeriodBlock = BigInt(relayBlockNumber) % LOCKING_PERIOD;
 
-  if (currentPeriodBlock > waitBlockLessThan) {
+  if(currentPeriodBlock > waitBlockLessThan) {
     await helper.wait.forRelayBlockNumber(BigInt(relayBlockNumber) + LOCKING_PERIOD - currentPeriodBlock);
   }
 }

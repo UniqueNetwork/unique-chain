@@ -315,7 +315,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
         await collection.setPermissions(alice, permissions);
         await collection.addToAllowList(alice, {Substrate: bob.address});
 
-        if (allowlistedMintingShouldFail)
+        if(allowlistedMintingShouldFail)
           await expect(collection.mintToken(bob, {Substrate: bob.address})).to.be.rejectedWith(appropriateRejectionMessage);
         else
           await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
@@ -338,7 +338,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
           await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
         });
 
-        if (!allowlistedMintingShouldFail) allowlistedMintingTest();
+        if(!allowlistedMintingShouldFail) allowlistedMintingTest();
       });
 
       describe('Negative', () => {
@@ -349,12 +349,12 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
             .to.be.rejectedWith(appropriateRejectionMessage);
         });
 
-        if (allowlistedMintingShouldFail) allowlistedMintingTest();
+        if(allowlistedMintingShouldFail) allowlistedMintingTest();
       });
     });
   };
 
-  for (const permissions of permissionSet) {
+  for(const permissions of permissionSet) {
     testPermissionSuite(permissions);
   }
 });

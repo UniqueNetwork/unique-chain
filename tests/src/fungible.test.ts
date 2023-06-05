@@ -55,7 +55,7 @@ describe('integration test: Fungible functionality:', () => {
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);
 
-    for (let i = 0; i < 7; i++) {
+    for(let i = 0; i < 7; i++) {
       await collection.transfer(alice, facelessCrowd[i], 1n);
     }
 

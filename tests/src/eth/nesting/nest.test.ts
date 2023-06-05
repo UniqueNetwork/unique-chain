@@ -190,7 +190,7 @@ describe('EVM nesting tests group', () => {
 
   describe('Fungible', () => {
     async function createFungibleCollection(helper: EthUniqueHelper, owner: string, mode: 'ft' | 'native ft') {
-      if (mode === 'ft') {
+      if(mode === 'ft') {
         const {collectionAddress} = await helper.eth.createFungibleCollection(owner, '', 18, '', '');
         const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
         await contract.methods.mint(owner, 100n).send({from: owner});
@@ -259,7 +259,7 @@ describe('EVM nesting tests group', () => {
         const targetTokenId = mintingTargetTokenIdResult.events.Transfer.returnValues.tokenId;
         const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
 
-        if (testCase.mode === 'ft') {
+        if(testCase.mode === 'ft') {
           await expect(ftContract.methods.transfer(targetTokenAddress, 10n).call({from: owner})).to.be.rejectedWith('UserIsNotAllowedToNest');
         } else {
           await expect(ftContract.methods.transfer(targetTokenAddress, 10n).call({from: owner})).to.be.not.rejected;

@@ -447,7 +447,7 @@ describe('Sponsoring Fee Limit', () => {
   let testContract: CompiledContract;
 
   async function compileTestContract(helper: EthUniqueHelper) {
-    if (!testContract) {
+    if(!testContract) {
       testContract = await helper.ethContract.compile(
         'TestContract',
         `

@@ -45,13 +45,13 @@ export abstract class FunctionFeeVM {
 
     Object.keys(model).forEach(key => {
       res[key] = {};
-      if (model[key].fee && model[key].gas) {
+      if(model[key].fee && model[key].gas) {
         res[key].ethFee = model[key].fee;
         res[key].ethGas = model[key].gas;
       }
-      if (model[key].substrate)
+      if(model[key].substrate)
         res[key].substrate = model[key].substrate;
-      if (model[key].zeppelin) {
+      if(model[key].zeppelin) {
         res[key].zeppelinFee = model[key].zeppelin?.fee;
         res[key].zeppelinGas = model[key].zeppelin?.gas;
       }

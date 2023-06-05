@@ -30,7 +30,7 @@ before(async function () {
 });
 
 function clearEvents(ethEvents: NormalizedEvent[] | null, subEvents: IEvent[]) {
-  if (ethEvents !== null) {
+  if(ethEvents !== null) {
     ethEvents.splice(0);
   }
   subEvents.splice(0);
