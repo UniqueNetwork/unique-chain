@@ -244,7 +244,8 @@ jobs:
                 if [ "$counter" -gt "0" ]; then
                          continue
                 else
-                         break
+                         echo "Counter reached zero, yet upgrade is not finished"
+                         exit 1
                 fi
           done
           echo "Halting script"
