@@ -170,7 +170,7 @@ describe('Fractionalizer contract usage', () => {
     const rftTokenAddress = result.events.Fractionalized.returnValues._rftToken;
 
     // FIXME: should work without the caller
-    const rftTokenContract = await helper.ethNativeContract.rftToken(rftTokenAddress, owner);
+    const rftTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress);
     expect(await rftTokenContract.methods.balanceOf(owner).call()).to.equal('100');
   });
 
