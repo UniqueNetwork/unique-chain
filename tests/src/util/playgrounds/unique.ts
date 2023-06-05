@@ -682,7 +682,6 @@ export class ChainHelperBase {
     options: Partial<SignerOptions> | null = null,/*, failureMessage='expected success'*/
   ): Promise<ITransactionResult> {
     if(this.api === null) throw Error('API not initialized');
-    if(!extrinsic.startsWith('api.tx.')) throw Error(`${extrinsic} is not transaction`);
 
     const startTime = (new Date()).getTime();
     let result: ITransactionResult;
@@ -734,6 +733,7 @@ export class ChainHelperBase {
   }
 
   async callRpc
+  // TODO: make it strongly typed, or use api.query/api.rpc directly
   // <
   // K extends 'rpc' | 'query',
   // E extends string,
