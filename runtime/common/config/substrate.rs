@@ -161,6 +161,8 @@ impl pallet_balances::Config for Runtime {
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
 	// FIXME: Is () the new treasury?
+	// Switch to real treasury once we start having dust removals
+	// Related issue: https://github.com/paritytech/polkadot/issues/7323
 	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
