@@ -679,8 +679,7 @@ describe('Common metadata', () => {
   });
 
   itEth('Returns collection name', async ({helper}) => {
-    // FIXME: should not have balance to use .call()
-    const caller = await helper.eth.createAccountWithBalance(alice);
+    const caller = helper.eth.createAccount();
     const tokenPropertyPermissions = [{
       key: 'URI',
       permission: {
