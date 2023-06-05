@@ -204,10 +204,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 				&[],
 			);
 
-			let should_upgrade = match version {
-				None => true,
-				Some(_) => false,
-			};
+			let should_upgrade = version.is_none();
 
 			if should_upgrade {
 				log::info!(
@@ -220,7 +217,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					.cloned()
 					.filter_map(|authority_id| {
 						weight.saturating_accrue(<Runtime as frame_system::Config>::DbWeight::get().reads_writes(1, 1));
-						let vec = authority_id.clone().to_raw_vec();
+						let vec = authority_id.to_raw_vec();
 						let slice = vec.as_slice();
 						let array: Option<[u8; 32]> = match slice.try_into() {
 							Ok(a) => Some(a),
@@ -248,20 +245,20 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					.into_iter()
 					.map(|(acc, aura)| {
 						(
-							acc.clone(),                        // account id
-							acc,                                // validator id
-							SessionKeys { aura: aura.clone() }, // session keys
+							acc.clone(),          // account id
+							acc,                  // validator id
+							SessionKeys { aura }, // session keys
 						)
 					})
 					.collect::<Vec<_>>();
 
-				for (account, val, keys) in keys.iter().cloned() {
+				for (account, val, keys) in keys.iter() {
 					for id in <Runtime as pallet_session::Config>::Keys::key_ids() {
-						<pallet_session::KeyOwner<Runtime>>::insert((*id, keys.get_raw(*id)), &val)
+						<pallet_session::KeyOwner<Runtime>>::insert((*id, keys.get_raw(*id)), val)
 					}
-					<pallet_session::NextKeys<Runtime>>::insert(&val, &keys);
+					<pallet_session::NextKeys<Runtime>>::insert(val, keys);
 					// todo exercise caution, the following is taken from genesis
-					if frame_system::Pallet::<Runtime>::inc_consumers_without_limit(&account)
+					if frame_system::Pallet::<Runtime>::inc_consumers_without_limit(account)
 						.is_err()
 					{
 						log::warn!(
@@ -271,7 +268,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 						// genesis) so it's really not a big deal and we assume that the user wants to
 						// do this since it's the only way a non-endowed account can contain a session
 						// key.
-						frame_system::Pallet::<Runtime>::inc_providers(&account);
+						frame_system::Pallet::<Runtime>::inc_providers(account);
 					}
 				}
 

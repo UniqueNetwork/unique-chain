@@ -161,7 +161,7 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
-		Pallet::<T>::location_to_currency_ids(multi_location).map(|id| AssetIds::ForeignAssetId(id))
+		Pallet::<T>::location_to_currency_ids(multi_location).map(AssetIds::ForeignAssetId)
 	}
 }
 
@@ -378,7 +378,7 @@ impl<T: Config> Pallet<T> {
 				foreign_asset_id,
 				|maybe_location| -> DispatchResult {
 					ensure!(maybe_location.is_none(), Error::<T>::MultiLocationExisted);
-					*maybe_location = Some(location.clone());
+					*maybe_location = Some(*location);
 
 					AssetMetadatas::<T>::try_mutate(
 						AssetIds::ForeignAssetId(foreign_asset_id),
@@ -422,7 +422,7 @@ impl<T: Config> Pallet<T> {
 
 						// modify location
 						if location != old_multi_locations {
-							LocationToCurrencyIds::<T>::remove(old_multi_locations.clone());
+							LocationToCurrencyIds::<T>::remove(*old_multi_locations);
 							LocationToCurrencyIds::<T>::try_mutate(
 								location,
 								|maybe_currency_ids| -> DispatchResult {
@@ -437,7 +437,7 @@ impl<T: Config> Pallet<T> {
 							)?;
 						}
 						*maybe_asset_metadatas = Some(metadata.clone());
-						*old_multi_locations = location.clone();
+						*old_multi_locations = *location;
 						Ok(())
 					},
 				)
