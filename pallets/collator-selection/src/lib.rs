@@ -531,7 +531,6 @@ pub mod pallet {
 
 						let (imbalance, _) =
 							T::Currency::slash(&T::LicenceBondIdentifier::get(), who, slashed);
-						//T::Currency::unreserve(who, remaining);
 						deposit_returned = remaining;
 
 						T::Currency::resolve(&T::TreasuryAccountId::get(), imbalance)
