@@ -376,7 +376,7 @@ pub mod pallet {
 			<SponsoringMode<T>>::get(contract)
 				.or_else(|| {
 					#[allow(deprecated)]
-					<SelfSponsoring<T>>::get(contract).then(|| SponsoringModeT::Allowlisted)
+					<SelfSponsoring<T>>::get(contract).then_some(SponsoringModeT::Allowlisted)
 				})
 				.unwrap_or_default()
 		}
@@ -410,7 +410,7 @@ pub mod pallet {
 
 		/// Is user added to allowlist, or he is owner of specified contract
 		pub fn allowed(contract: H160, user: H160) -> bool {
-			<Allowlist<T>>::get(&contract, &user) || <Owner<T>>::get(&contract) == user
+			<Allowlist<T>>::get(contract, user) || <Owner<T>>::get(contract) == user
 		}
 
 		/// Toggle contract allowlist access
@@ -425,7 +425,7 @@ pub mod pallet {
 
 		/// Throw error if user is not allowed to reconfigure target contract
 		pub fn ensure_owner(contract: H160, user: H160) -> DispatchResult {
-			ensure!(<Owner<T>>::get(&contract) == user, Error::<T>::NoPermission);
+			ensure!(<Owner<T>>::get(contract) == user, Error::<T>::NoPermission);
 			Ok(())
 		}
 	}

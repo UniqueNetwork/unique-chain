@@ -507,7 +507,7 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let new_owner = T::CrossAccountId::from_sub(new_owner);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.change_owner(sender, new_owner.clone())
+			target_collection.change_owner(sender, new_owner)
 		}
 
 		/// Add an admin to a collection.
@@ -667,7 +667,7 @@ pub mod pallet {
 		/// * `owner`: Address of the initial owner of the item.
 		/// * `data`: Token data describing the item to store on chain.
 		#[pallet::call_index(11)]
-		#[pallet::weight(T::CommonWeightInfo::create_item(&data))]
+		#[pallet::weight(T::CommonWeightInfo::create_item(data))]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -701,7 +701,7 @@ pub mod pallet {
 		/// * `owner`: Address of the initial owner of the tokens.
 		/// * `items_data`: Vector of data describing each item to be created.
 		#[pallet::call_index(12)]
-		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(&items_data))]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(items_data))]
 		pub fn create_multiple_items(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -889,7 +889,7 @@ pub mod pallet {
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `data`: Explicit item creation data.
 		#[pallet::call_index(18)]
-		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(&data))]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(data))]
 		pub fn create_multiple_items_ex(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -1313,7 +1313,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 		) -> DispatchResult {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.force_set_sponsor(sponsor.clone())
+			target_collection.force_set_sponsor(sponsor)
 		}
 
 		/// Force remove `sponsor` for `collection`.

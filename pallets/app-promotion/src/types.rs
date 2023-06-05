@@ -149,16 +149,16 @@ impl<T: crate::Config> PalletConfiguration<T> {
 		Self {
 			recalculation_interval: config
 				.recalculation_interval
-				.unwrap_or_else(|| T::RecalculationInterval::get()),
+				.unwrap_or_else(T::RecalculationInterval::get),
 			pending_interval: config
 				.pending_interval
-				.unwrap_or_else(|| T::PendingInterval::get()),
+				.unwrap_or_else(T::PendingInterval::get),
 			interval_income: config
 				.interval_income
-				.unwrap_or_else(|| T::IntervalIncome::get()),
+				.unwrap_or_else(T::IntervalIncome::get),
 			max_stakers_per_calculation: config
 				.max_stakers_per_calculation
-				.unwrap_or_else(|| MAX_NUMBER_PAYOUTS),
+				.unwrap_or(MAX_NUMBER_PAYOUTS),
 		}
 	}
 }

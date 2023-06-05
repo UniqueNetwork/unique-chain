@@ -536,7 +536,7 @@ impl Deref for RawEncoded {
 	type Target = Vec<u8>;
 
 	fn deref(&self) -> &Self::Target {
-		return &self.0;
+		&self.0
 	}
 }
 
@@ -814,6 +814,11 @@ impl OwnerRestrictedSet {
 	/// Create new set.
 	pub fn new() -> Self {
 		Self(Default::default())
+	}
+}
+impl Default for OwnerRestrictedSet {
+	fn default() -> Self {
+		Self::new()
 	}
 }
 impl core::ops::Deref for OwnerRestrictedSet {
@@ -1098,9 +1103,9 @@ pub struct Property {
 	pub value: PropertyValue,
 }
 
-impl Into<(PropertyKey, PropertyValue)> for Property {
-	fn into(self) -> (PropertyKey, PropertyValue) {
-		(self.key, self.value)
+impl From<Property> for (PropertyKey, PropertyValue) {
+	fn from(value: Property) -> Self {
+		(value.key, value.value)
 	}
 }
 
@@ -1116,9 +1121,9 @@ pub struct PropertyKeyPermission {
 	pub permission: PropertyPermission,
 }
 
-impl Into<(PropertyKey, PropertyPermission)> for PropertyKeyPermission {
-	fn into(self) -> (PropertyKey, PropertyPermission) {
-		(self.key, self.permission)
+impl From<PropertyKeyPermission> for (PropertyKey, PropertyPermission) {
+	fn from(value: PropertyKeyPermission) -> Self {
+		(value.key, value.permission)
 	}
 }
 
@@ -1415,7 +1420,7 @@ impl<const S: u32> TrySetProperty for Properties<S> {
 		value: Self::Value,
 	) -> Result<Option<Self::Value>, PropertiesError> {
 		let key_size = scoped_slice_size(scope, &key);
-		let value_size = slice_size(&value) as u32;
+		let value_size = slice_size(&value);
 
 		if self.consumed_space + value_size + key_size > S && !cfg!(feature = "runtime-benchmarks")
 		{
@@ -1425,7 +1430,7 @@ impl<const S: u32> TrySetProperty for Properties<S> {
 		let old_value = self.map.try_scoped_set(scope, key, value)?;
 
 		if let Some(old_value) = old_value.as_ref() {
-			let old_value_size = slice_size(&old_value);
+			let old_value_size = slice_size(old_value);
 			self.consumed_space = self.consumed_space.saturating_sub(old_value_size) + value_size;
 		} else {
 			self.consumed_space += key_size + value_size;

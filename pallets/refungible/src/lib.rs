@@ -1124,7 +1124,7 @@ impl<T: Config> Pallet<T> {
 
 		if collection.ignores_token_restrictions(spender) {
 			return Ok(Self::compute_allowance_decrease(
-				collection, token, from, &spender, amount,
+				collection, token, from, spender, amount,
 			));
 		}
 
@@ -1143,7 +1143,7 @@ impl<T: Config> Pallet<T> {
 			return Ok(None);
 		}
 
-		let allowance = Self::compute_allowance_decrease(collection, token, from, &spender, amount);
+		let allowance = Self::compute_allowance_decrease(collection, token, from, spender, amount);
 		if allowance.is_some() {
 			return Ok(allowance);
 		}
