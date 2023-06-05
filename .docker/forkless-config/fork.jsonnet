@@ -14,9 +14,10 @@ local
 auraKeys = [
 	sourceChain.AuraExt._key.Authorities,
 	sourceChain.Aura._key.Authorities,
+] + (if 'CollatorSelection' in sourceChain then [
 	sourceChain.CollatorSelection._key.Candidates,
 	sourceChain.CollatorSelection._key.Invulnerables,
-],
+] else []),
 
 // Keys, which should be migrated from passed spec, rather than from forked chain
 wantedKeys = [
