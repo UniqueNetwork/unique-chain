@@ -170,7 +170,6 @@ pub mod pallet {
 		+ pallet_common::Config
 		+ pallet_structure::Config
 		+ pallet_evm::Config
-		+ pallet_balances::Config
 	{
 		type WeightInfo: WeightInfo;
 	}
