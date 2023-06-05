@@ -121,7 +121,7 @@ describe('EVM Migrations', () => {
     ], ADDRESS, {from: caller, gas: helper.eth.DEFAULT_GAS});
 
     expect(await contract.methods.counterValue().call()).to.be.equal('10');
-    for (let i = 1; i <= 4; i++) {
+    for(let i = 1; i <= 4; i++) {
       expect(await contract.methods.get(i).call()).to.be.equal(i.toString());
     }
   });
@@ -196,7 +196,7 @@ describe('EVM Migrations', () => {
       await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEthLogs]);
     }
 
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.be.equal(collectionAddress);

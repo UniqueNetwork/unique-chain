@@ -66,18 +66,18 @@ describe('Negative Test: Nesting', () => {
       const collectionForNesting = testCase.mode === 'ft' ? await helper.ft.mintCollection(alice) : helper.ft.getCollectionObject(0);
 
       // Alice cannot create immediately nested tokens:
-      if (testCase.mode === 'ft') {
+      if(testCase.mode === 'ft') {
         await expect(collectionForNesting.mint(alice, 100n, targetToken.nestingAccount())).to.be.rejectedWith('common.UserIsNotAllowedToNest');
       } else {
         await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 100n)).to.be.not.rejected;
       }
 
       // Alice can't mint and nest tokens:
-      if (testCase.mode === 'ft') {
+      if(testCase.mode === 'ft') {
         await collectionForNesting.mint(alice, 100n);
       }
 
-      if (testCase.mode === 'ft') {
+      if(testCase.mode === 'ft') {
         await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.rejectedWith('common.UserIsNotAllowedToNest');
       } else {
         await expect(collectionForNesting.transfer(alice, targetToken.nestingAccount(), 50n)).to.be.not.rejected;
@@ -271,7 +271,7 @@ describe('Negative Test: Nesting', () => {
     const maxNestingLevel = 5;
 
     // Create a nested-token matryoshka
-    for (let i = 0; i < maxNestingLevel; i++) {
+    for(let i = 0; i < maxNestingLevel; i++) {
       token = await collection.mintToken(alice, token.nestingAccount());
     }
 

@@ -49,7 +49,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
     ];
 
     const tokens = await collection.mintMultipleTokens(alice, args);
-    for (const [i, token] of tokens.entries()) {
+    for(const [i, token] of tokens.entries()) {
       expect(await token.getOwner()).to.be.deep.equal(args[i].owner);
     }
   });
@@ -87,7 +87,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
     ];
 
     const tokens = await collection.mintMultipleTokens(alice, args);
-    for (const [i, token] of tokens.entries()) {
+    for(const [i, token] of tokens.entries()) {
       expect(await token.getOwner()).to.be.deep.equal(args[i].owner);
       expect(await token.getData()).to.not.be.empty;
     }
@@ -126,7 +126,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
     ];
 
     const tokens = await collection.mintMultipleTokens(alice, args);
-    for (const [i, token] of tokens.entries()) {
+    for(const [i, token] of tokens.entries()) {
       expect(await token.getOwner()).to.be.deep.equal(args[i].owner);
       expect(await token.getData()).to.not.be.empty;
     }
@@ -165,7 +165,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
     ];
 
     const tokens = await collection.mintMultipleTokens(alice, args);
-    for (const [i, token] of tokens.entries()) {
+    for(const [i, token] of tokens.entries()) {
       expect(await token.getOwner()).to.be.deep.equal(args[i].owner);
       expect(await token.getData()).to.not.be.empty;
     }
@@ -383,7 +383,7 @@ describe('Negative test: createMultipleItemsEx', () => {
 
     const properties: IProperty[] = [];
 
-    for (let i = 0; i < 65; i++) {
+    for(let i = 0; i < 65; i++) {
       properties.push({key: `k${i}`, value: `v${i}`});
     }
 

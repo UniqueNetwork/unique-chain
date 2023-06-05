@@ -33,13 +33,13 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const privateKey = async (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => {
-      if (typeof seed === 'string') {
+      if(typeof seed === 'string') {
         return helper.util.fromSeed(seed, ss58Format);
       }
-      if (seed.url) {
+      if(seed.url) {
         const {filename} = makeNames(seed.url);
         seed.filename = filename;
-      } else if (seed.filename) {
+      } else if(seed.filename) {
         // Pass
       } else {
         throw new Error('no url nor filename set');
@@ -47,7 +47,7 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
       const actualSeed = getTestSeed(seed.filename);
       let account = helper.util.fromSeed(actualSeed, ss58Format);
       // here's to hoping that no
-      if (!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
+      if(!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
         console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
         account = helper.util.fromSeed('//Alice', ss58Format);
       }
@@ -112,7 +112,7 @@ export enum Pallets {
 export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: readonly string[]) {
   const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
 
-  if (missingPallets.length > 0) {
+  if(missingPallets.length > 0) {
     const skipMsg = `\tSkipping test '${test.test?.title}'.\n\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
     console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
     test.skip();
@@ -123,7 +123,7 @@ export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privat
   (opts.only ? it.only :
     opts.skip ? it.skip : it)(name, async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
-      if (opts.requiredPallets) {
+      if(opts.requiredPallets) {
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
@@ -168,12 +168,12 @@ export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts
 describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
 
 export function sizeOfInt(i: number) {
-  if (i < 0 || i > 0xffffffff) throw new Error('out of range');
+  if(i < 0 || i > 0xffffffff) throw new Error('out of range');
   if(i < 0b11_1111) {
     return 1;
-  } else if (i < 0b11_1111_1111_1111) {
+  } else if(i < 0b11_1111_1111_1111) {
     return 2;
-  } else if (i < 0b11_1111_1111_1111_1111_1111_1111_1111) {
+  } else if(i < 0b11_1111_1111_1111_1111_1111_1111_1111) {
     return 4;
   } else {
     return 5;

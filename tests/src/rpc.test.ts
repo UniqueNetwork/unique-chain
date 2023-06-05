@@ -49,7 +49,7 @@ describe('integration test: RPC methods', () => {
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);
 
-    for (let i = 0; i < facelessCrowd.length; i++) {
+    for(let i = 0; i < facelessCrowd.length; i++) {
       await collection.transfer(alice, facelessCrowd[i], 1n);
     }
     // Set-up over

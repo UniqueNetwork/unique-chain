@@ -22,7 +22,7 @@ async function pullIdentities(relayUrl: string): Promise<[any[], any[]]> {
       // iterate over every identity
       for(const [key, value] of await getIdentities(helper)) {
         // if any of the judgements resulted in a good confirmed outcome, keep this identity
-        if (value.toHuman().judgements.filter((x: any) => x[1] == 'Reasonable' || x[1] == 'KnownGood').length == 0) continue;
+        if(value.toHuman().judgements.filter((x: any) => x[1] == 'Reasonable' || x[1] == 'KnownGood').length == 0) continue;
         identities.push([key, value]);
       }
 
@@ -31,7 +31,7 @@ async function pullIdentities(relayUrl: string): Promise<[any[], any[]]> {
       // iterate over every sub-identity
       for(const [key, value] of await getSubs(helper)) {
         // only get subs of the identities interesting to us
-        if (identities.find((x: any) => x[0] == key) == -1) continue;
+        if(identities.find((x: any) => x[0] == key) == -1) continue;
         subs.push(constructSubInfo(key, value, supersOfSubs));
       }
     } catch (error) {
@@ -56,15 +56,15 @@ const checkRelayIdentities = async (): Promise<void> => {
     const matchingAddresses: string[] = [];
     const inequalIdentities: {[name: string]: [any, any]} = {};
 
-    for (const [key1, value1] of identitiesOnRelay1) {
+    for(const [key1, value1] of identitiesOnRelay1) {
       const address = encodeAddress(key1);
       const identity2 = identitiesOnRelay2.find(([key2, _value2]) => address === encodeAddress(key2));
-      if (!identity2) continue;
+      if(!identity2) continue;
       matchingAddresses.push(address);
 
       //const [[key2, value2]] = identitiesOnRelay2.splice(index2, 1);
       const [_key2, value2] = identity2;
-      if (JSON.stringify(value1.info) === JSON.stringify(value2.info)) continue;
+      if(JSON.stringify(value1.info) === JSON.stringify(value2.info)) continue;
       inequalIdentities[address] = [value1, value2];
     }
 
@@ -81,16 +81,16 @@ const checkRelayIdentities = async (): Promise<void> => {
 
     const inequalSubIdentities = [];
     let matchesFound = 0;
-    for (const address of matchingAddresses) {
+    for(const address of matchingAddresses) {
       const sub1 = subIdentitiesOnRelay1.find(([key1, _value1]) => address === encodeAddress(key1));
-      if (!sub1) continue;
+      if(!sub1) continue;
       const sub2 = subIdentitiesOnRelay2.find(([key2, _value2]) => address === encodeAddress(key2));
-      if (!sub2) continue;
+      if(!sub2) continue;
 
       const [value1, value2] = [sub1[1], sub2[1]];
       matchesFound++;
 
-      if (JSON.stringify(value1[1]) === JSON.stringify(value2[1])) {
+      if(JSON.stringify(value1[1]) === JSON.stringify(value2[1])) {
         continue;
       }
       inequalSubIdentities.push([value1, value2]);
@@ -110,5 +110,5 @@ const checkRelayIdentities = async (): Promise<void> => {
   }
 };
 
-if (process.argv[1] === module.filename)
+if(process.argv[1] === module.filename)
   checkRelayIdentities().catch(() => process.exit(1));

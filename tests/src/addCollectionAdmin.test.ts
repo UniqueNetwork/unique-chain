@@ -109,7 +109,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const chainAdminLimit = (helper.getApi().consts.common.collectionAdminsLimit as any).toNumber();
     expect(chainAdminLimit).to.be.equal(5);
 
-    for (let i = 0; i < chainAdminLimit; i++) {
+    for(let i = 0; i < chainAdminLimit; i++) {
       await collection.addAdmin(alice, {Substrate: accounts[i].address});
       const adminListAfterAddAdmin = await collection.getAdmins();
       expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: accounts[i].address});

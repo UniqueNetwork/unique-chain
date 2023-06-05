@@ -157,7 +157,7 @@ describe('Scheduling token and balance transfers', () => {
     let fillScheduledIds = new Array(maxScheduledPerBlock);
     let extraScheduledId = undefined;
 
-    if (scheduleKind == 'named') {
+    if(scheduleKind == 'named') {
       const scheduledIds = helper.arrange.makeScheduledIds(maxScheduledPerBlock + 1);
       fillScheduledIds = scheduledIds.slice(0, maxScheduledPerBlock);
       extraScheduledId = scheduledIds[maxScheduledPerBlock];
@@ -178,7 +178,7 @@ describe('Scheduling token and balance transfers', () => {
     const balanceBefore = await helper.balance.getSubstrate(bob.address);
 
     // Fill the target block
-    for (let i = 0; i < maxScheduledPerBlock; i++) {
+    for(let i = 0; i < maxScheduledPerBlock; i++) {
       await helper.scheduler.scheduleAt(executionBlock, {scheduledId: fillScheduledIds[i]})
         .balance.transferToSubstrate(superuser, bob.address, amount);
     }
@@ -313,7 +313,7 @@ describe('Scheduling token and balance transfers', () => {
     expect(await helper.testUtils.testValue())
       .to.be.equal(finalTestVal);
 
-    for (let i = 1; i < periodic.repetitions; i++) {
+    for(let i = 1; i < periodic.repetitions; i++) {
       await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + periodic.period * (i + 1));
       expect(await helper.testUtils.testValue())
         .to.be.equal(finalTestVal);
@@ -505,8 +505,8 @@ describe('Scheduling token and balance transfers', () => {
 
     // Fill `numFilledBlocks` blocks beginning from the block in which the second execution should occur
     const txs = [];
-    for (let offset = 0; offset < numFilledBlocks; offset ++) {
-      for (let i = 0; i < maxScheduledPerBlock; i++) {
+    for(let offset = 0; offset < numFilledBlocks; offset ++) {
+      for(let i = 0; i < maxScheduledPerBlock; i++) {
 
         const scheduledTx = helper.constructApiCall('api.tx.balances.transfer', [bob.address, 1n]);
 
@@ -534,7 +534,7 @@ describe('Scheduling token and balance transfers', () => {
     await helper.wait.forParachainBlockNumber(firstExecutionBlockNumber + period + numFilledBlocks);
 
     // The periodic operation should be postponed by `numFilledBlocks`
-    for (let i = 0; i < numFilledBlocks; i++) {
+    for(let i = 0; i < numFilledBlocks; i++) {
       expect(await helper.testUtils.testValue(firstExecutionBlockNumber + period + i)).to.be.equal(firstExecTestVal);
     }
 
