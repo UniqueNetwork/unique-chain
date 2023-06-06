@@ -17,7 +17,7 @@
 use scale_info::TypeInfo;
 use codec::{Encode, Decode};
 use up_common::types::AccountId;
-use crate::{RuntimeCall, Maintenance, VERSION};
+use crate::{RuntimeCall, Maintenance};
 
 use sp_runtime::{
 	traits::{DispatchInfoOf, SignedExtension},
@@ -66,20 +66,6 @@ impl SignedExtension for CheckMaintenance {
 				| RuntimeCall::Inflation(_)
 				| RuntimeCall::Structure(_)
 				| RuntimeCall::Unique(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
-
-				RuntimeCall::Balances(_) if VERSION.spec_version == 942057 => {
-					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
-				}
-
-				RuntimeCall::PolkadotXcm(
-					pallet_xcm::Call::execute { .. }
-					| pallet_xcm::Call::teleport_assets { .. }
-					| pallet_xcm::Call::reserve_transfer_assets { .. }
-					| pallet_xcm::Call::limited_reserve_transfer_assets { .. }
-					| pallet_xcm::Call::limited_teleport_assets { .. },
-				) if VERSION.spec_version == 942057 => {
-					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
-				}
 
 				#[cfg(feature = "scheduler")]
 				RuntimeCall::Scheduler(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
