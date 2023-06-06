@@ -61,11 +61,6 @@ jobs:
     uses: ./.github/workflows/node-only-update.yml
     secrets: inherit
 
-  dev-testing:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-dev-testing')) }}  # Conditional check for draft & labels per job.
-    uses: ./.github/workflows/forkless-update-data.yml
-    secrets: inherit
-
   codestyle:
     if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
     uses: ./.github/workflows/codestyle.yml

@@ -16,11 +16,10 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const api = helper.getApi();
     // 1. Check version equal 942057 or skip
     console.log((api.consts.system.version as any).specVersion.toNumber());
-    // if ((api.consts.system.version as any).specVersion.toNumber() != 941055) {
-    //   // if ((api.consts.system.version as any).specVersion.toNumber() != 942057) { TODO return back
-    //   console.log("Version isn't 942057.");
-    //   return;
-    // }
+    if ((api.consts.system.version as any).specVersion.toNumber() != 942057) {
+      console.log("Version isn't 942057.");
+      return;
+    }
 
     // 2. Get sudo signer
     const signer = await privateKey(options.donorSeed);
