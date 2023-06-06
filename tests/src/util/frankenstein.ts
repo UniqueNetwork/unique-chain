@@ -32,6 +32,7 @@ const NEW_RELAY_WASM = process.env.NEW_RELAY_WASM;
 const NEW_PARA_BIN = process.env.NEW_PARA_BIN;
 const NEW_PARA_WASM = process.env.NEW_PARA_WASM;
 const PARACHAIN_BLOCK_TIME = 12_000;
+const SUPERUSER_KEY = '//Alice';
 
 let network: zombie.Network | undefined;
 
@@ -84,7 +85,7 @@ function getRelayInfo(api: ApiPromise): {specVersion: number, epochBlockLength: 
 // Enable or disable maintenance mode if present on the chain
 async function toggleMaintenanceMode(value: boolean, wsUri: string) {
   await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey('//Alice');
+    const superuser = await privateKey(SUPERUSER_KEY);
     try {
       const toggle = value ? 'enable' : 'disable';
       await helper.getSudo().executeExtrinsic(superuser, `api.tx.maintenance.${toggle}`, []);
@@ -198,7 +199,7 @@ const raiseZombienet = async (): Promise<void> => {
     // Read the new WASM code and set it as the relay's new code
     const code = fs.readFileSync(NEW_RELAY_WASM).toString('hex');
     await usingPlaygrounds(async (helper, privateKey) => {
-      const superuser = await privateKey('//Alice');
+      const superuser = await privateKey(SUPERUSER_KEY);
 
       const result = await helper.executeExtrinsic(
         superuser,
@@ -255,7 +256,7 @@ const raiseZombienet = async (): Promise<void> => {
       const code = fs.readFileSync(NEW_PARA_WASM);
       const codeHash = blake2AsHex(code);
       await usingPlaygrounds(async (helper, privateKey) => {
-        const superuser = await privateKey('//Alice');
+        const superuser = await privateKey(SUPERUSER_KEY);
 
         upgradingParas[paraId] = {version: getSpecVersion(helper.getApi()), upgraded: false};
 
