@@ -540,24 +540,28 @@ impl<T: Config> Pallet<T> {
 		check_token_permission_flags: pallet_common::CheckTokenPermissionsFlags,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_token_owner = || -> Result<bool, DispatchError> {
-			let balance = collection.balance(sender.clone(), token_id);
-			let total_pieces: u128 =
-				Self::total_pieces(collection.id, token_id).unwrap_or(u128::MAX);
-			if balance != total_pieces {
-				return Ok(false);
-			}
+		let mut is_token_owner =
+			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
+				let balance = collection.balance(sender.clone(), token_id);
+				let total_pieces: u128 =
+					Self::total_pieces(collection.id, token_id).unwrap_or(u128::MAX);
+				if balance != total_pieces {
+					return Ok(false);
+				}
 
-			let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
-				sender.clone(),
-				collection.id,
-				token_id,
-				None,
-				nesting_budget,
-			)?;
+				let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
+					sender.clone(),
+					collection.id,
+					token_id,
+					None,
+					nesting_budget,
+				)?;
 
-			Ok(is_bundle_owner)
-		};
+				Ok(is_bundle_owner)
+			});
+
+		let mut is_token_exist =
+			pallet_common::LazyValue::new(|| Self::token_exists(collection, token_id));
 
 		let stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
 
@@ -565,11 +569,11 @@ impl<T: Config> Pallet<T> {
 			collection,
 			sender,
 			token_id,
-			|| Self::token_exists(collection, token_id),
+			&mut is_token_exist,
 			properties_updates,
 			check_token_permission_flags,
 			stored_properties,
-			is_token_owner,
+			&mut is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
 			erc::ERC721TokenEvent::TokenChanged {
 				token_id: token_id.into(),

@@ -867,6 +867,32 @@ pub mod pallet {
 	>;
 }
 
+pub struct LazyValue<T, F: FnOnce() -> T> {
+	value: Option<T>,
+	f: Option<F>,
+}
+
+impl<T, F: FnOnce() -> T> LazyValue<T, F> {
+	pub fn new(f: F) -> Self {
+		Self {
+			value: None,
+			f: Some(f),
+		}
+	}
+
+	pub fn value(&mut self) -> &T {
+		if self.value.is_none() {
+			self.value = Some(self.f.take().unwrap()())
+		}
+
+		self.value.as_ref().unwrap()
+	}
+
+	pub fn has_value(&self) -> bool {
+		self.value.is_some()
+	}
+}
+
 #[derive(Default)]
 pub struct CheckTokenPermissionsFlags {
 	pub is_token_being_created: bool,
@@ -876,7 +902,7 @@ pub struct CheckTokenPermissionsFlags {
 	pub is_collection_admin: bool,
 	pub token_owner_permitted: bool,
 }
-fn check_token_permissions<T: Config>(
+fn check_token_permissions<T, FTO, FTE>(
 	CheckTokenPermissionsFlags {
 		is_token_being_created,
 		self_mint,
@@ -885,23 +911,27 @@ fn check_token_permissions<T: Config>(
 		is_collection_admin,
 		token_owner_permitted,
 	}: CheckTokenPermissionsFlags,
-	token_ownership_aqcuired: &mut bool,
-	check_token_ownership: &mut impl FnMut(&mut bool) -> Result<bool, DispatchError>,
-	check_token_existence: &mut impl FnMut() -> bool,
-) -> DispatchResult {
+	check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
+	check_token_existence: &mut LazyValue<bool, FTE>,
+) -> DispatchResult
+where
+	T: Config,
+	FTO: FnOnce() -> Result<bool, DispatchError>,
+	FTE: FnOnce() -> bool,
+{
 	if is_token_being_created {
 		if !(value_is_some && (is_collection_admin || self_mint)) {
 			fail!(<Error<T>>::NoPermission);
 		}
 	} else if !(collection_admin_permitted && is_collection_admin)
-		&& !(token_owner_permitted && check_token_ownership(token_ownership_aqcuired)?)
+		&& !(token_owner_permitted && check_token_ownership.value().clone()?)
 	{
 		fail!(<Error<T>>::NoPermission);
 	}
 
 	let token_must_exist =
-		*token_ownership_aqcuired && check_token_ownership(token_ownership_aqcuired)?;
-	if !token_must_exist && !check_token_existence() {
+		check_token_ownership.has_value() && check_token_ownership.value().clone()?;
+	if !token_must_exist && !check_token_existence.value() {
 		fail!(<Error<T>>::TokenNotFound);
 	}
 	Ok(())
@@ -1269,33 +1299,23 @@ impl<T: Config> Pallet<T> {
 	/// This function fires an event for each property change.
 	/// In case of an error, all the changes (including the events) will be reverted
 	/// since the function is transactional.
-	pub fn modify_token_properties(
+	pub fn modify_token_properties<FTO, FTE>(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		check_token_existence: impl Fn() -> bool,
+		check_token_existence: &mut LazyValue<bool, FTE>,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		check_token_permission_flags: CheckTokenPermissionsFlags,
 		mut stored_properties: TokenProperties,
-		check_token_ownership: impl Fn() -> Result<bool, DispatchError>,
+		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
-	) -> DispatchResult {
+	) -> DispatchResult
+	where
+		FTO: FnOnce() -> Result<bool, DispatchError>,
+		FTE: FnOnce() -> bool,
+	{
 		let is_collection_admin = collection.is_owner_or_admin(sender);
-
-		let mut token_owner_result = None;
-		let mut token_exists_result = None;
-
-		let mut token_ownership_aqcuired = false;
-		let mut check_token_ownership =
-			|token_ownership_aqcuired: &mut bool| -> Result<bool, DispatchError> {
-				*token_ownership_aqcuired = true;
-				*token_owner_result.get_or_insert_with(&check_token_ownership)
-			};
-
-		let mut check_token_existence =
-			|| -> bool { *token_exists_result.get_or_insert_with(&check_token_existence) };
-
 		let permissions = Self::property_permissions(collection.id);
 
 		for (key, value) in properties_updates {
@@ -1315,7 +1335,7 @@ impl<T: Config> Pallet<T> {
 					collection_admin,
 					token_owner,
 					..
-				} => check_token_permissions::<T>(
+				} => check_token_permissions::<T, FTO, FTE>(
 					CheckTokenPermissionsFlags {
 						value_is_some: value.is_some(),
 						collection_admin_permitted: collection_admin,
@@ -1323,9 +1343,8 @@ impl<T: Config> Pallet<T> {
 						token_owner_permitted: token_owner,
 						..check_token_permission_flags
 					},
-					&mut token_ownership_aqcuired,
-					&mut check_token_ownership,
-					&mut check_token_existence,
+					check_token_ownership,
+					check_token_existence,
 				)?,
 			}
 
