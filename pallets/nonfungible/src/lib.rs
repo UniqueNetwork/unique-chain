@@ -602,7 +602,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_being_created: bool,
+		check_token_permission_flags: pallet_common::CheckTokenPermissionsFlags,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let is_token_owner = || {
@@ -625,7 +625,7 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			|| Self::token_exists(collection, token_id),
 			properties_updates,
-			is_token_being_created,
+			check_token_permission_flags,
 			stored_properties,
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
@@ -646,7 +646,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		is_token_create: bool,
+		check_token_permission_flags: pallet_common::CheckTokenPermissionsFlags,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -654,7 +654,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			is_token_create,
+			check_token_permission_flags,
 			nesting_budget,
 		)
 	}
@@ -671,14 +671,12 @@ impl<T: Config> Pallet<T> {
 		property: Property,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_token_create = false;
-
 		Self::set_token_properties(
 			collection,
 			sender,
 			token_id,
 			[property].into_iter(),
-			is_token_create,
+			Default::default(),
 			nesting_budget,
 		)
 	}
@@ -695,14 +693,12 @@ impl<T: Config> Pallet<T> {
 		property_keys: impl Iterator<Item = PropertyKey>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_token_create = false;
-
 		Self::modify_token_properties(
 			collection,
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			is_token_create,
+			Default::default(),
 			nesting_budget,
 		)
 	}
@@ -987,7 +983,11 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token),
 					data.properties.clone().into_iter(),
-					true,
+					pallet_common::CheckTokenPermissionsFlags {
+						is_token_being_created: true,
+						self_mint: sender.conv_eq(&data.owner),
+						..Default::default()
+					},
 					nesting_budget,
 				) {
 					return TransactionOutcome::Rollback(Err(e));

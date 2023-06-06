@@ -399,7 +399,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 				&sender,
 				token_id,
 				properties.into_iter(),
-				false,
+				Default::default(),
 				nesting_budget,
 			),
 			weight,

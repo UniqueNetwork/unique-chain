@@ -1737,6 +1737,11 @@ fn allow_list_test_1() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
 		let origin1 = RuntimeOrigin::signed(1);
+		assert_ok!(Unique::add_collection_admin(
+			origin1.clone(),
+			collection_id,
+			account(1)
+		));
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -2611,32 +2616,37 @@ fn collection_sponsoring() {
 	});
 }
 
-#[test]
-fn check_token_permissions() {
+mod check_token_permissions {
+	use super::*;
+
 	fn to_bool(u: u8) -> bool {
 		u != 0
 	}
 
 	fn test(
 		i: usize,
-		row: &[u8; 7],
+		row: &[u8; 8],
 		token_ownership_aqcuired: &mut bool,
 		mut check_token_existence: impl FnMut() -> bool,
 	) {
 		let is_token_being_created = to_bool(row[0]);
-		let value_is_some = to_bool(row[1]);
-		let collection_admin_permitted = to_bool(row[2]);
-		let is_collection_admin = to_bool(row[3]);
-		let token_owner_permitted = to_bool(row[4]);
-		let mut check_token_ownership = |_: &mut bool| Ok(to_bool(row[5]));
-		let is_no_permission = to_bool(row[6]);
+		let self_mint = to_bool(row[1]);
+		let value_is_some = to_bool(row[2]);
+		let collection_admin_permitted = to_bool(row[3]);
+		let is_collection_admin = to_bool(row[4]);
+		let token_owner_permitted = to_bool(row[5]);
+		let mut check_token_ownership = |_: &mut bool| Ok(to_bool(row[6]));
+		let is_no_permission = to_bool(row[7]);
 
 		let result = pallet_common::tests::check_token_permissions::<Test>(
-			is_token_being_created,
-			value_is_some,
-			collection_admin_permitted,
-			is_collection_admin,
-			token_owner_permitted,
+			pallet_common::CheckTokenPermissionsFlags {
+				is_token_being_created,
+				self_mint,
+				value_is_some,
+				collection_admin_permitted,
+				is_collection_admin,
+				token_owner_permitted,
+			},
 			token_ownership_aqcuired,
 			&mut check_token_ownership,
 			&mut check_token_existence,
@@ -2662,31 +2672,35 @@ fn check_token_permissions() {
 		}
 	}
 
-	// Test NoPermissions only
-	new_test_ext().execute_with(|| {
-		let mut token_ownership_aqcuired = false;
-		let mut check_token_existence = || true;
-		for (i, row) in pallet_common::tests::table.iter().enumerate() {
-			test(
-				i,
-				row,
-				&mut token_ownership_aqcuired,
-				&mut check_token_existence,
-			);
-		}
-	});
+	#[test]
+	fn no_permission_only() {
+		new_test_ext().execute_with(|| {
+			let mut token_ownership_aqcuired = false;
+			let mut check_token_existence = || true;
+			for (i, row) in pallet_common::tests::table.iter().enumerate() {
+				test(
+					i,
+					row,
+					&mut token_ownership_aqcuired,
+					&mut check_token_existence,
+				);
+			}
+		});
+	}
 
-	// Test NoPermissions and TokenNotFound
-	new_test_ext().execute_with(|| {
-		let mut token_ownership_aqcuired = false;
-		let mut check_token_existence = || false;
-		for (i, row) in pallet_common::tests::table.iter().enumerate() {
-			test(
-				i,
-				row,
-				&mut token_ownership_aqcuired,
-				&mut check_token_existence,
-			);
-		}
-	});
+	#[test]
+	fn no_permission_and_token_not_found() {
+		new_test_ext().execute_with(|| {
+			let mut token_ownership_aqcuired = false;
+			let mut check_token_existence = || false;
+			for (i, row) in pallet_common::tests::table.iter().enumerate() {
+				test(
+					i,
+					row,
+					&mut token_ownership_aqcuired,
+					&mut check_token_existence,
+				);
+			}
+		});
+	}
 }

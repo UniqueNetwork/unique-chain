@@ -196,7 +196,7 @@ impl<T: Config> RefungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			properties.into_iter(),
-			false,
+			Default::default(),
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)
