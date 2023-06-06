@@ -73,7 +73,7 @@ describe('integration test: Refungible functionality:', () => {
     await token.transfer(alice, {Substrate: bob.address}, 1000n);
     await token.transfer(alice, ethAcc, 900n);
 
-    for (let i = 0; i < 7; i++) {
+    for(let i = 0; i < 7; i++) {
       await token.transfer(alice, facelessCrowd[i], 50n * BigInt(i + 1));
     }
 

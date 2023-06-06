@@ -289,7 +289,7 @@ where
 	io.merge(
 		Net::new(
 			client.clone(),
-			network.clone(),
+			network,
 			// Whether to format the `peer_count` response as Hex (default) or not.
 			true,
 		)

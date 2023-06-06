@@ -17,6 +17,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [features]
 default = ['std', 'unique-runtime']
+state-version-0 = []
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
 runtime-benchmarks = [
@@ -138,6 +139,7 @@ try-runtime = [
 	"pallet-identity/try-runtime",
 	"pallet-preimage/try-runtime",
 	"pallet-session/try-runtime",
+	"pallet-state-trie-migration/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
 	'cumulus-pallet-dmp-queue/try-runtime',
 	'cumulus-pallet-parachain-system/try-runtime',

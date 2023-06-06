@@ -4,8 +4,8 @@ import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util';
 class Fract {
   static ZERO = new Fract(0n);
   constructor(public readonly a: bigint, public readonly b: bigint = 1n) {
-    if (b === 0n) throw new Error('division by zero');
-    if (b < 0n) throw new Error('missing normalization');
+    if(b === 0n) throw new Error('division by zero');
+    if(b < 0n) throw new Error('missing normalization');
   }
 
   mul(other: Fract) {
@@ -17,7 +17,7 @@ class Fract {
   }
 
   plus(other: Fract) {
-    if (this.b === other.b) {
+    if(this.b === other.b) {
       return new Fract(this.a + other.a, this.b);
     }
     return new Fract(this.a * other.b + other.a * this.b, this.b * other.b).optimize();
@@ -31,7 +31,7 @@ class Fract {
     return new Fract(-this.a, this.b);
   }
   inv() {
-    if (this.a < 0) {
+    if(this.a < 0) {
       return new Fract(-this.b, -this.a);
     } else {
       return new Fract(this.b, this.a);
@@ -40,9 +40,9 @@ class Fract {
 
   optimize() {
     function gcd(x: bigint, y: bigint) {
-      if (x < 0n)
+      if(x < 0n)
         x = -x;
-      if (y < 0n)
+      if(y < 0n)
         y = -y;
       while(y) {
         const t = y;
@@ -75,17 +75,17 @@ class Fract {
   }
 
   sqrt() {
-    if (this.a < 0n) {
+    if(this.a < 0n) {
       throw new Error('square root of negative numbers is not supported');
     }
 
-    if (this.lt(new Fract(2n))) {
+    if(this.lt(new Fract(2n))) {
       return this;
     }
 
     function newtonIteration(n: Fract, x0: Fract): Fract {
       const x1 = rpn(n, x0, '/', x0, '+', new Fract(2n), '/');
-      if (x0.eq(x1) || x0.eq(x1.minus(new Fract(1n)))) {
+      if(x0.eq(x1) || x0.eq(x1.minus(new Fract(1n)))) {
         return x0;
       }
       return newtonIteration(n, x1);
@@ -98,46 +98,46 @@ class Fract {
 type Op = Fract | '+' | '-' | '*' | '/' | 'dup' | Op[];
 function rpn(...ops: (Op)[]) {
   const stack: Fract[] = [];
-  for (const op of ops) {
-    if (op instanceof Fract) {
+  for(const op of ops) {
+    if(op instanceof Fract) {
       stack.push(op);
-    } else if (op === '+') {
-      if (stack.length < 2)
+    } else if(op === '+') {
+      if(stack.length < 2)
         throw new Error('stack underflow');
       const b = stack.pop()!;
       const a = stack.pop()!;
       stack.push(a.plus(b));
-    } else if (op === '*') {
-      if (stack.length < 2)
+    } else if(op === '*') {
+      if(stack.length < 2)
         throw new Error('stack underflow');
       const b = stack.pop()!;
       const a = stack.pop()!;
       stack.push(a.mul(b));
-    } else if (op === '-') {
-      if (stack.length < 2)
+    } else if(op === '-') {
+      if(stack.length < 2)
         throw new Error('stack underflow');
       const b = stack.pop()!;
       const a = stack.pop()!;
       stack.push(a.minus(b));
-    } else if (op === '/') {
-      if (stack.length < 2)
+    } else if(op === '/') {
+      if(stack.length < 2)
         throw new Error('stack underflow');
       const b = stack.pop()!;
       const a = stack.pop()!;
       stack.push(a.div(b));
-    } else if (op === 'dup') {
-      if (stack.length < 1)
+    } else if(op === 'dup') {
+      if(stack.length < 1)
         throw new Error('stack underflow');
       const a = stack.pop()!;
       stack.push(a);
       stack.push(a);
-    } else if (Array.isArray(op)) {
+    } else if(Array.isArray(op)) {
       stack.push(rpn(...op));
     } else {
       throw new Error(`unknown operand: ${op}`);
     }
   }
-  if (stack.length != 1)
+  if(stack.length != 1)
     throw new Error('one element should be left on stack');
   return stack[0]!;
 }
@@ -148,7 +148,7 @@ function linearRegression(points: { x: Fract, y: Fract }[]) {
   let sumy = Fract.ZERO;
   let sumx2 = Fract.ZERO;
   const n = points.length;
-  for (let i = 0; i < n; i++) {
+  for(let i = 0; i < n; i++) {
     const p = points[i];
     sumxy = rpn(p.x, p.y, '*', sumxy, '+');
     sumx = sumx.plus(p.x);
@@ -200,7 +200,7 @@ async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (accoun
 
   const api = helper.getApi();
   const base = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt();
-  for (let i = -5; i < 5; i++) {
+  for(let i = -5; i < 5; i++) {
     await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setWeightToFeeCoefficientOverride(base + base / 1000n * BigInt(i))));
 
     const coefficient = new Fract((await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt());
@@ -256,7 +256,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   const api = helper.getApi();
   // const defaultCoeff = (api.consts.configuration.defaultMinGasPrice as any).toBigInt();
   const base = (await api.query.configuration.minGasPriceOverride() as any).toBigInt();
-  for (let i = -8; i < 8; i++) {
+  for(let i = -8; i < 8; i++) {
     const gasPrice = base + base / 100000n * BigInt(i);
     const gasPriceStr = '0x' + gasPrice.toString(16);
     await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(gasPrice)));
@@ -303,14 +303,14 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const iterations = 3;
 
     console.log('[Calibrate WeightToFee]');
-    for (let i = 0; i < iterations; i++) {
+    for(let i = 0; i < iterations; i++) {
       await calibrateWeightToFee(helper, privateKey);
     }
 
     console.log();
 
     console.log('[Calibrate MinGasPrice]');
-    for (let i = 0; i < iterations; i++) {
+    for(let i = 0; i < iterations; i++) {
       await calibrateMinGasPrice(helper, privateKey);
     }
   });

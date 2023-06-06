@@ -23,9 +23,9 @@ async function mintTokenHelper(helper: UniqueHelper, collection: any, signer: IK
   let token;
   const itemCountBefore = await helper.collection.getLastTokenId(collection.collectionId);
   const itemBalanceBefore = (await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0])).toBigInt();
-  if (type === 'nft') {
+  if(type === 'nft') {
     token = await collection.mintToken(signer, owner, properties);
-  } else if (type === 'fungible') {
+  } else if(type === 'fungible') {
     await collection.mint(signer, 10n, owner);
   } else {
     token = await collection.mintToken(signer, 100n, owner, properties);
@@ -34,7 +34,7 @@ async function mintTokenHelper(helper: UniqueHelper, collection: any, signer: IK
   const itemCountAfter = await helper.collection.getLastTokenId(collection.collectionId);
   const itemBalanceAfter = (await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0])).toBigInt();
 
-  if (type === 'fungible') {
+  if(type === 'fungible') {
     expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
   } else {
     expect(itemCountAfter).to.be.equal(itemCountBefore + 1);
@@ -225,7 +225,7 @@ describe('Negative integration test: ext. createItem():', () => {
   itSub('Adding more than 64 prps', async ({helper}) => {
     const props: IProperty[] = [];
 
-    for (let i = 0; i < 65; i++) {
+    for(let i = 0; i < 65; i++) {
       props.push({key: `key${i}`, value: `value${i}`});
     }
 

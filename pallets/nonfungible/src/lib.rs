@@ -166,11 +166,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config
-		+ pallet_common::Config
-		+ pallet_structure::Config
-		+ pallet_evm::Config
-		+ pallet_balances::Config
+		frame_system::Config + pallet_common::Config + pallet_structure::Config + pallet_evm::Config
 	{
 		type WeightInfo: WeightInfo;
 	}
@@ -861,13 +857,7 @@ impl<T: Config> Pallet<T> {
 
 		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				owner: to.clone(),
-				..token_data
-			},
-		);
+		<TokenData<T>>::insert((collection.id, token), ItemData { owner: to.clone() });
 
 		if let Some(balance_to) = balance_to {
 			// from != to

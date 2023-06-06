@@ -333,7 +333,7 @@ where
 					&Value::new(0),
 				)?;
 
-				Ok(amount.into())
+				Ok(amount)
 			}
 		}
 	}

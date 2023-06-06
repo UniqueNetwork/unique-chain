@@ -43,7 +43,7 @@ class EthGroupBase {
     this.helper = helper;
   }
   async getGasPrice() {
-    if (this.gasPrice)
+    if(this.gasPrice)
       return this.gasPrice;
     this.gasPrice = await this.helper.getWeb3().eth.getGasPrice();
     return this.gasPrice;
@@ -53,17 +53,17 @@ class EthGroupBase {
 
 class ContractGroup extends EthGroupBase {
   async findImports(imports?: ContractImports[]) {
-    if (!imports) return function(path: string) {
+    if(!imports) return function(path: string) {
       return {error: `File not found: ${path}`};
     };
 
     const knownImports = {} as { [key: string]: string };
-    for (const imp of imports) {
+    for(const imp of imports) {
       knownImports[imp.solPath] = (await readFile(imp.fsPath)).toString();
     }
 
     return function(path: string) {
-      if (path in knownImports) return {contents: knownImports[path]};
+      if(path in knownImports) return {contents: knownImports[path]};
       return {error: `File not found: ${path}`};
     };
   }
@@ -91,7 +91,7 @@ class ContractGroup extends EthGroupBase {
         return err.severity == 'error';
       });
 
-    if (hasErrors) {
+    if(hasErrors) {
       throw compiled.errors;
     }
     const out = compiled.contracts[`${name}.sol`][name];
@@ -139,7 +139,7 @@ class NativeContractGroup extends EthGroupBase {
 
   collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
     let abi;
-    if (address === this.helper.ethAddress.fromCollectionId(0)) {
+    if(address === this.helper.ethAddress.fromCollectionId(0)) {
       abi = nativeFungibleAbi;
     } else {
       abi ={
@@ -148,7 +148,7 @@ class NativeContractGroup extends EthGroupBase {
         'ft': fungibleAbi,
       }[mode];
     }
-    if (mergeDeprecated) {
+    if(mergeDeprecated) {
       const deprecated = {
         'nft': nonFungibleDeprecatedAbi,
         'rft': refungibleDeprecatedAbi,
@@ -209,7 +209,7 @@ class EthGroup extends EthGroupBase {
   }
 
   async sendEVM(signer: IKeyringPair, contractAddress: string, abi: string, value: string, gasLimit?: number) {
-    if (!gasLimit) gasLimit = this.DEFAULT_GAS;
+    if(!gasLimit) gasLimit = this.DEFAULT_GAS;
     const web3 = this.helper.getWeb3();
     // FIXME: can't send legacy transaction using tx.evm.call
     const gasPrice = await web3.eth.getGasPrice();
@@ -341,10 +341,10 @@ class EthGroup extends EthGroupBase {
 
   normalizeEvents(events: any): NormalizedEvent[] {
     const output = [];
-    for (const key of Object.keys(events)) {
-      if (key.match(/^[0-9]+$/)) {
+    for(const key of Object.keys(events)) {
+      if(key.match(/^[0-9]+$/)) {
         output.push(events[key]);
-      } else if (Array.isArray(events[key])) {
+      } else if(Array.isArray(events[key])) {
         output.push(...events[key]);
       } else {
         output.push(events[key]);
@@ -353,8 +353,8 @@ class EthGroup extends EthGroupBase {
     output.sort((a, b) => a.logIndex - b.logIndex);
     return output.map(({address, event, returnValues}) => {
       const args: { [key: string]: string } = {};
-      for (const key of Object.keys(returnValues)) {
-        if (!key.match(/^[0-9]+$/)) {
+      for(const key of Object.keys(returnValues)) {
+        if(!key.match(/^[0-9]+$/)) {
           args[key] = returnValues[key];
         }
       }
@@ -378,19 +378,19 @@ class EthGroup extends EthGroupBase {
 
 class EthAddressGroup extends EthGroupBase {
   extractCollectionId(address: string): number {
-    if (!(address.length === 42 || address.length === 40)) throw new Error('address wrong format');
+    if(!(address.length === 42 || address.length === 40)) throw new Error('address wrong format');
     return parseInt(address.slice(address.length - 8), 16);
   }
 
   fromCollectionId(collectionId: number): string {
-    if (collectionId >= 0xffffffff || collectionId < 0) throw new Error('collectionId overflow');
+    if(collectionId >= 0xffffffff || collectionId < 0) throw new Error('collectionId overflow');
     return Web3.utils.toChecksumAddress(`0x17c4e6453cc49aaaaeaca894e6d9683e${collectionId.toString(16).padStart(8, '0')}`);
   }
 
   extractTokenId(address: string): { collectionId: number, tokenId: number } {
-    if (!address.startsWith('0x'))
+    if(!address.startsWith('0x'))
       throw 'address not starts with "0x"';
-    if (address.length > 42)
+    if(address.length > 42)
       throw 'address length is more than 20 bytes';
     return {
       collectionId: Number('0x' + address.substring(address.length - 16, address.length - 8)),
@@ -501,18 +501,18 @@ export class EthUniqueHelper extends DevUniqueHelper {
   }
 
   getWeb3(): Web3 {
-    if (this.web3 === null) throw Error('Web3 not connected');
+    if(this.web3 === null) throw Error('Web3 not connected');
     return this.web3;
   }
 
   connectWeb3(wsEndpoint: string) {
-    if (this.web3 !== null) return;
+    if(this.web3 !== null) return;
     this.web3Provider = new Web3.providers.WebsocketProvider(wsEndpoint);
     this.web3 = new Web3(this.web3Provider);
   }
 
   async disconnect() {
-    if (this.web3 === null) return;
+    if(this.web3 === null) return;
     this.web3Provider?.connection.close();
 
     await super.disconnect();

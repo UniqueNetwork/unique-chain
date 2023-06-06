@@ -63,8 +63,7 @@ describe('Create RFT collection from EVM', () => {
     const baseUri = 'BaseURI';
 
     const {collectionId, collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
-    // FIXME: caller is not needed
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     const collection = helper.rft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;

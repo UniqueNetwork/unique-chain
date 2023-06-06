@@ -42,7 +42,7 @@ describe('Integration Test: Maintenance Functionality', () => {
   describe('Maintenance Mode', () => {
     before(async function() {
       await usingPlaygrounds(async (helper) => {
-        if (await maintenanceEnabled(helper.getApi())) {
+        if(await maintenanceEnabled(helper.getApi())) {
           console.warn('\tMaintenance mode was left enabled BEFORE the test suite! Disabling it now.');
           await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', [])).to.be.fulfilled;
         }
@@ -159,8 +159,8 @@ describe('Integration Test: Maintenance Functionality', () => {
       // RPCs work while in maintenance
       expect(await helper.collection.getTotalCount()).to.be.deep.equal(totalCount);
 
-      // We still able to transfer funds
-      await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
+      // Transfers are disabled during MM
+      await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.rejected;
 
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
       expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
@@ -270,8 +270,8 @@ describe('Integration Test: Maintenance Functionality', () => {
 
     afterEach(async () => {
       await usingPlaygrounds(async helper => {
-        if (helper.fetchMissingPalletNames([Pallets.Maintenance]).length != 0) return;
-        if (await maintenanceEnabled(helper.getApi())) {
+        if(helper.fetchMissingPalletNames([Pallets.Maintenance]).length != 0) return;
+        if(await maintenanceEnabled(helper.getApi())) {
           console.warn('\tMaintenance mode was left enabled AFTER a test has finished! Be careful. Disabling it now.');
           await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
         }
@@ -359,9 +359,9 @@ describe('Integration Test: Maintenance Functionality', () => {
 
     after(async function() {
       await usingPlaygrounds(async (helper) => {
-        if (helper.fetchMissingPalletNames([Pallets.Preimage, Pallets.Maintenance]).length != 0) return;
+        if(helper.fetchMissingPalletNames([Pallets.Preimage, Pallets.Maintenance]).length != 0) return;
 
-        for (const hash of preimageHashes) {
+        for(const hash of preimageHashes) {
           await helper.preimage.unnotePreimage(bob, hash);
         }
       });

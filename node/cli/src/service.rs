@@ -698,7 +698,7 @@ where
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
-	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+	let block_import = ParachainBlockImport::new(client.clone(), backend);
 
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
@@ -709,7 +709,7 @@ where
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import,
-		client: client.clone(),
+		client,
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -787,7 +787,7 @@ where
 				telemetry.clone(),
 			);
 
-			let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+			let block_import = ParachainBlockImport::new(client.clone(), backend);
 
 			Ok(AuraConsensus::build::<
 				sp_consensus_aura::sr25519::AuthorityPair,
@@ -864,7 +864,7 @@ where
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	Ok(sc_consensus_manual_seal::import_queue(
-		Box::new(client.clone()),
+		Box::new(client),
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 	))
@@ -956,7 +956,7 @@ where
 
 	let collator = config.role.is_authority();
 
-	let select_chain = maybe_select_chain.clone();
+	let select_chain = maybe_select_chain;
 
 	if collator {
 		let block_import =

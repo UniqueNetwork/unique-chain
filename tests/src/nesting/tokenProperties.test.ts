@@ -75,10 +75,10 @@ describe('Integration Test: Token Properties', () => {
 
     const propertyKeys: string[] = [];
     let i = 0;
-    for (const permission of permissions) {
+    for(const permission of permissions) {
       i++;
       let j = 0;
-      for (const signer of permission.signers) {
+      for(const signer of permission.signers) {
         j++;
         const key = i + '_' + signer.address;
         propertyKeys.push(key);
@@ -92,7 +92,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await token.getProperties(propertyKeys);
     const tokenData = await token.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for(let i = 0; i < properties.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin increase');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin increase');
     }
@@ -114,12 +114,12 @@ describe('Integration Test: Token Properties', () => {
 
     const propertyKeys: string[] = [];
     let i = 0;
-    for (const permission of permissions) {
+    for(const permission of permissions) {
       i++;
-      if (!permission.permission.mutable) continue;
+      if(!permission.permission.mutable) continue;
 
       let j = 0;
-      for (const signer of permission.signers) {
+      for(const signer of permission.signers) {
         j++;
         const key = i + '_' + signer.address;
         propertyKeys.push(key);
@@ -138,7 +138,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await token.getProperties(propertyKeys);
     const tokenData = await token.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for(let i = 0; i < properties.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin stable');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin stable');
     }
@@ -161,12 +161,12 @@ describe('Integration Test: Token Properties', () => {
     const propertyKeys: string[] = [];
     let i = 0;
 
-    for (const permission of permissions) {
+    for(const permission of permissions) {
       i++;
-      if (!permission.permission.mutable) continue;
+      if(!permission.permission.mutable) continue;
 
       let j = 0;
-      for (const signer of permission.signers) {
+      for(const signer of permission.signers) {
         j++;
         const key = i + '_' + signer.address;
         propertyKeys.push(key);
@@ -211,10 +211,10 @@ describe('Integration Test: Token Properties', () => {
 
     const propertyKeys: string[] = [];
     let i = 0;
-    for (const permission of permissions) {
+    for(const permission of permissions) {
       i++;
       let j = 0;
-      for (const signer of permission.signers) {
+      for(const signer of permission.signers) {
         j++;
         const key = i + '_' + signer.address;
         propertyKeys.push(key);
@@ -228,7 +228,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await nestedToken.getProperties(propertyKeys);
     const tokenData = await nestedToken.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for(let i = 0; i < properties.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin increase');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin increase');
     }
@@ -249,12 +249,12 @@ describe('Integration Test: Token Properties', () => {
 
     const propertyKeys: string[] = [];
     let i = 0;
-    for (const permission of permissions) {
+    for(const permission of permissions) {
       i++;
-      if (!permission.permission.mutable) continue;
+      if(!permission.permission.mutable) continue;
 
       let j = 0;
-      for (const signer of permission.signers) {
+      for(const signer of permission.signers) {
         j++;
         const key = i + '_' + signer.address;
         propertyKeys.push(key);
@@ -273,7 +273,7 @@ describe('Integration Test: Token Properties', () => {
 
     const properties = await nestedToken.getProperties(propertyKeys);
     const tokenData = await nestedToken.getData();
-    for (let i = 0; i < properties.length; i++) {
+    for(let i = 0; i < properties.length; i++) {
       expect(properties[i].value).to.be.equal('Serotonin stable');
       expect(tokenData!.properties[i].value).to.be.equal('Serotonin stable');
     }
@@ -294,12 +294,12 @@ describe('Integration Test: Token Properties', () => {
 
     const propertyKeys: string[] = [];
     let i = 0;
-    for (const permission of permissions) {
+    for(const permission of permissions) {
       i++;
-      if (!permission.permission.mutable) continue;
+      if(!permission.permission.mutable) continue;
 
       let j = 0;
-      for (const signer of permission.signers) {
+      for(const signer of permission.signers) {
         j++;
         const key = i + '_' + signer.address;
         propertyKeys.push(key);
@@ -362,7 +362,7 @@ describe('Integration Test: Token Properties', () => {
 
       // It is possible to modify a property as many times as needed.
       // It will not consume any additional space.
-      for (let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
+      for(let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
         await token.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
         const consumedSpace = await token.getTokenPropertiesConsumedSpace();
         expect(consumedSpace).to.be.equal(originalSpace);
@@ -491,7 +491,7 @@ describe('Negative Integration Test: Token Properties', () => {
     await token.transfer(alice, {Substrate: charlie.address}, pieces);
 
     let i = 0;
-    for (const passage of constitution) {
+    for(const passage of constitution) {
       i++;
       const signer = passage.signers[0];
       await expect(
@@ -508,9 +508,9 @@ describe('Negative Integration Test: Token Properties', () => {
     const originalSpace = await prepare(token, pieces);
 
     let i = 0;
-    for (const forbiddance of constitution) {
+    for(const forbiddance of constitution) {
       i++;
-      if (!forbiddance.permission.mutable) continue;
+      if(!forbiddance.permission.mutable) continue;
 
       await expect(
         token.setProperties(forbiddance.sinner, [{key: `${i}`, value: 'Serotonin down'}]),
@@ -541,9 +541,9 @@ describe('Negative Integration Test: Token Properties', () => {
     const originalSpace = await prepare(token, pieces);
 
     let i = 0;
-    for (const permission of constitution) {
+    for(const permission of constitution) {
       i++;
-      if (permission.permission.mutable) continue;
+      if(permission.permission.mutable) continue;
 
       await expect(
         token.setProperties(permission.signers[0], [{key: `${i}`, value: 'Serotonin down'}]),
@@ -650,7 +650,7 @@ describe('Negative Integration Test: Token Properties', () => {
       const collection = await helper[testCase.mode].mintCollection(alice);
       const maxPropertiesPerItem = 64;
 
-      for (let i = 0; i < maxPropertiesPerItem; i++) {
+      for(let i = 0; i < maxPropertiesPerItem; i++) {
         await collection.setTokenPropertyPermissions(alice, [{
           key: `${i+1}`,
           permission: {mutable: true, tokenOwner: true, collectionAdmin: true},

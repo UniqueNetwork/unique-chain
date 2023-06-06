@@ -531,13 +531,11 @@ pub mod pallet {
 
 						let (imbalance, _) =
 							T::Currency::slash(&T::LicenceBondIdentifier::get(), who, slashed);
-						//T::Currency::unreserve(who, remaining);
 						deposit_returned = remaining;
 
 						T::Currency::resolve(&T::TreasuryAccountId::get(), imbalance)
 							.map_err(|_| DispatchError::Other("Failed to deposit imbalance"))?;
 					} else {
-						//T::Currency::unreserve(who, deposit);
 						deposit_returned = deposit;
 					}
 

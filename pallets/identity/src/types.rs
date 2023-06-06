@@ -104,7 +104,7 @@ impl Encode for Data {
 			Data::Raw(ref x) => {
 				let l = x.len().min(32);
 				let mut r = vec![l as u8 + 1; l + 1];
-				r[1..].copy_from_slice(&x[..l as usize]);
+				r[1..].copy_from_slice(&x[..l]);
 				r
 			}
 			Data::BlakeTwo256(ref h) => once(34u8).chain(h.iter().cloned()).collect(),
@@ -287,7 +287,7 @@ impl Decode for IdentityFields {
 	fn decode<I: codec::Input>(input: &mut I) -> sp_std::result::Result<Self, codec::Error> {
 		let field = u64::decode(input)?;
 		Ok(Self(
-			<BitFlags<IdentityField>>::from_bits(field as u64).map_err(|_| "invalid value")?,
+			<BitFlags<IdentityField>>::from_bits(field).map_err(|_| "invalid value")?,
 		))
 	}
 }

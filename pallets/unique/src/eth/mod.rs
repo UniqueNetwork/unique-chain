@@ -113,13 +113,9 @@ fn create_collection_internal<T: Config>(
 	let collection_helpers_address =
 		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-	let collection_id = T::CollectionDispatch::create(
-		caller.clone(),
-		collection_helpers_address,
-		data,
-		Default::default(),
-	)
-	.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	let collection_id =
+		T::CollectionDispatch::create(caller, collection_helpers_address, data, Default::default())
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
 }
@@ -132,8 +128,7 @@ fn check_sent_amount_equals_collection_creation_price<T: Config>(value: Value) -
 		.expect("Collection creation price should be convertible to u128");
 	if value != creation_price {
 		return Err(format!(
-			"Sent amount not equals to collection creation price ({0})",
-			creation_price
+			"Sent amount not equals to collection creation price ({creation_price})",
 		)
 		.into());
 	}
@@ -383,8 +378,7 @@ where
 		map_eth_to_id(&collection_address)
 			.map(|id| id.0)
 			.ok_or(Error::Revert(format!(
-				"failed to convert address {} into collectionId.",
-				collection_address
+				"failed to convert address {collection_address} into collectionId."
 			)))
 	}
 }
@@ -422,5 +416,5 @@ generate_stubgen!(collection_helper_impl, CollectionHelpersCall<()>, true);
 generate_stubgen!(collection_helper_iface, CollectionHelpersCall<()>, false);
 
 fn error_field_too_long(feild: &str, bound: usize) -> Error {
-	Error::Revert(format!("{} is too long. Max length is {}.", feild, bound))
+	Error::Revert(format!("{feild} is too long. Max length is {bound}."))
 }

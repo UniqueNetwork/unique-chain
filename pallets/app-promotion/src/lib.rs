@@ -296,7 +296,7 @@ pub mod pallet {
 
 			if !block_pending.is_empty() {
 				block_pending.into_iter().for_each(|(staker, amount)| {
-					Self::get_frozen_balance(&staker).map(|b| {
+					if let Some(b) = Self::get_frozen_balance(&staker) {
 						let new_state = b.checked_sub(&amount).unwrap_or_default();
 
 						// In this case, setting a new state for the frozen funds cannot fail
@@ -305,7 +305,7 @@ pub mod pallet {
 						// that we cannot (in the current implementation) unfreeze more funds
 						// than were originally frozen by the pallet. Either way, `on_initialize()` cannot fail.
 						Self::set_freeze_unchecked(&staker, new_state);
-					});
+					};
 				});
 			}
 
@@ -598,8 +598,8 @@ pub mod pallet {
 			// this value is set for the stakers to whom the recalculation will be performed
 			let next_recalc_block = current_recalc_block + config.recalculation_interval;
 
-			let mut storage_iterator = Self::get_next_calculated_key()
-				.map_or(Staked::<T>::iter(), |key| Staked::<T>::iter_from(key));
+			let storage_iterator =
+				Self::get_next_calculated_key().map_or(Staked::<T>::iter(), Staked::<T>::iter_from);
 
 			PreviousCalculatedRecord::<T>::set(None);
 
@@ -623,6 +623,7 @@ pub mod pallet {
 				let flush_stake = || -> DispatchResult {
 					if let Some(last_id) = &*last_id.borrow() {
 						if !income_acc.borrow().is_zero() {
+							// TO-DO: When moving to ED>0, reconsider the value of preservation
 							<<T as Config>::Currency as Mutate<T::AccountId>>::transfer(
 								&T::TreasuryAccountId::get(),
 								last_id,
@@ -657,10 +658,8 @@ pub mod pallet {
 				// stakers_number - keeps the remaining number of iterations (staker addresses to handle)
 				// next_recalc_block_for_stake - is taken from the state and stores the starting relay block from which reward should be paid out
 				// income_acc - stores the reward amount to pay to the staker address (accumulates over all address stake records)
-				while let Some((
-					(current_id, staked_block),
-					(amount, next_recalc_block_for_stake),
-				)) = storage_iterator.next()
+				for ((current_id, staked_block), (amount, next_recalc_block_for_stake)) in
+					storage_iterator
 				{
 					// last_id is not equal current_id when we switch to handling a new staker address
 					// or just start handling the very first address. In the latter case last_id will be None and
@@ -714,7 +713,7 @@ pub mod pallet {
 		///
 		///   # Arguments
 		///
-		/// * `origin`: Must be `Signed`.
+		/// * `origin`: Must be `Root`.
 		/// * `stakers`: Accounts to be upgraded.
 		#[pallet::call_index(9)]
 		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2) * stakers.len() as u64)]
@@ -755,7 +754,7 @@ pub mod pallet {
 		///
 		///   # Arguments
 		///
-		/// * `origin`: Must be `Signed`.
+		/// * `origin`: Must be `Root`.
 		/// * `pending_blocks`: Block numbers that will be processed.
 		#[pallet::call_index(10)]
 		#[pallet::weight(<T as Config>::WeightInfo::on_initialize(PENDING_LIMIT_PER_BLOCK*pending_blocks.len() as u32))]
@@ -858,11 +857,11 @@ impl<T: Config> Pallet<T> {
 				if acc_amount < balance_per_block {
 					let res = (block, balance_per_block - acc_amount);
 					acc_amount = <BalanceOf<T>>::default();
-					return Some(res);
+					Some(res)
 				} else {
 					acc_amount -= balance_per_block;
 					will_deleted_stakes_count += 1;
-					return Some((block, <BalanceOf<T>>::default()));
+					Some((block, <BalanceOf<T>>::default()))
 				}
 			})
 			.collect::<Vec<_>>();
@@ -925,7 +924,7 @@ impl<T: Config> Pallet<T> {
 		if amount.is_zero() {
 			<<T as Config>::Currency as MutateFreeze<T::AccountId>>::thaw(
 				&T::FreezeIdentifier::get(),
-				&staker,
+				staker,
 			)
 		} else {
 			<<T as Config>::Currency as MutateFreeze<T::AccountId>>::set_freeze(
@@ -1025,10 +1024,10 @@ impl<T: Config> Pallet<T> {
 	) {
 		let income = Self::calculate_income(base, iters);
 
-		base.checked_add(&income).map(|res| {
+		if let Some(res) = base.checked_add(&income) {
 			<Staked<T>>::insert((staker, staked_block), (res, next_recalc_block));
 			*income_acc += income;
-		});
+		};
 	}
 
 	fn calculate_income<I>(base: I, iters: u32) -> I

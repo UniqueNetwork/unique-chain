@@ -39,7 +39,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const tokenId = result.events.Transfer.returnValues.tokenId;
     expect(tokenId).to.be.equal('1');
 
-    if (propertyKey && propertyValue) {
+    if(propertyKey && propertyValue) {
       // Set URL or suffix
       await contract.methods.setProperties(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}]).send();
     }
@@ -185,7 +185,7 @@ describe('NFT: Plain calls', () => {
       ).send({from: caller});
 
       const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
-      for (let i = 0; i < bulkSize; i++) {
+      for(let i = 0; i < bulkSize; i++) {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
         expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
@@ -669,7 +669,7 @@ describe('NFT: Plain calls', () => {
 
     expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
 
-    for (let i = 1; i < 10; i++) {
+    for(let i = 1; i < 10; i++) {
       await collection.mintToken(minter, {Ethereum: owner.eth});
       expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
     }
@@ -682,7 +682,7 @@ describe('NFT: Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
     const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.eth});
 
-    for (let i = 1n; i < 10n; i++) {
+    for(let i = 1n; i < 10n; i++) {
       const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
       expect(ownerCross.eth).to.be.eq(owner.eth);
       expect(ownerCross.sub).to.be.eq(owner.sub);
@@ -805,7 +805,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     const {tokenId} = await collection.mintToken(alice);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Transfer');
@@ -828,7 +828,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.burn(alice);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Transfer');
@@ -853,7 +853,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.approve(alice, {Ethereum: receiver});
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Approval');
@@ -881,7 +881,7 @@ describe('NFT: Substrate calls', () => {
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
 
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.be.equal(collectionAddress);
@@ -906,7 +906,7 @@ describe('NFT: Substrate calls', () => {
 
     await token.transfer(alice, {Ethereum: receiver});
 
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.be.equal(collectionAddress);
@@ -928,8 +928,7 @@ describe('Common metadata', () => {
   });
 
   itEth('Returns collection name', async ({helper}) => {
-    // FIXME: should not have balance to use .call()
-    const caller = await helper.eth.createAccountWithBalance(donor);
+    const caller = helper.eth.createAccount();
     const tokenPropertyPermissions = [{
       key: 'URI',
       permission: {

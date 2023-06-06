@@ -38,10 +38,10 @@ export class SilentConsole {
 
   enable() {
     const outFn = (printer: any) => (...args: any[]) => {
-      for (const arg of args) {
-        if (typeof arg !== 'string')
+      for(const arg of args) {
+        if(typeof arg !== 'string')
           continue;
-        if (arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis:') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
+        if(arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis:') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
           return;
       }
       printer(...args);
@@ -357,10 +357,10 @@ export class ArrangeGroup {
     const tokenNominal = this.helper.balance.getOneTokenNominal();
     const transactions = [];
     const accounts: IKeyringPair[] = [];
-    for (const balance of balances) {
+    for(const balance of balances) {
       const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
       accounts.push(recipient);
-      if (balance !== 0n) {
+      if(balance !== 0n) {
         const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
         transactions.push(this.helper.signTransaction(donor, tx, {nonce, era: 0}, 'account generation'));
         nonce++;
@@ -372,9 +372,9 @@ export class ArrangeGroup {
     //#region TODO remove this region, when nonce problem will be solved
     const checkBalances = async () => {
       let isSuccess = true;
-      for (let i = 0; i < balances.length; i++) {
+      for(let i = 0; i < balances.length; i++) {
         const balance = await this.helper.balance.getSubstrate(accounts[i].address);
-        if (balance !== balances[i] * tokenNominal) {
+        if(balance !== balances[i] * tokenNominal) {
           isSuccess = false;
           break;
         }
@@ -385,13 +385,13 @@ export class ArrangeGroup {
     let accountsCreated = false;
     const maxBlocksChecked = await this.helper.arrange.isDevNode() ? 50 : 5;
     // checkBalances retry up to 5-50 blocks
-    for (let index = 0; index < maxBlocksChecked; index++) {
+    for(let index = 0; index < maxBlocksChecked; index++) {
       accountsCreated = await checkBalances();
       if(accountsCreated) break;
       await wait.newBlocks(1);
     }
 
-    if (!accountsCreated) throw Error('Accounts generation failed');
+    if(!accountsCreated) throw Error('Accounts generation failed');
     //#endregion
 
     return accounts;
@@ -405,15 +405,15 @@ export class ArrangeGroup {
       let nonce = await this.helper.chain.getNonce(donor.address);
       const tokenNominal = this.helper.balance.getOneTokenNominal();
       const ss58Format = this.helper.chain.getChainProperties().ss58Format;
-      for (let i = 0; i < accountsToCreate; i++) {
-        if (i === 500) { // if there are too many accounts to create
+      for(let i = 0; i < accountsToCreate; i++) {
+        if(i === 500) { // if there are too many accounts to create
           await Promise.allSettled(transactions); // wait while first 500 (should be 100 for devnode) tx will be settled
           transactions = []; //
           nonce = await this.helper.chain.getNonce(donor.address); // update nonce
         }
         const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
         accounts.push(recipient);
-        if (withBalance !== 0n) {
+        if(withBalance !== 0n) {
           const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, withBalance * tokenNominal]);
           transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
           nonce++;
@@ -422,9 +422,9 @@ export class ArrangeGroup {
 
       const fullfilledAccounts = [];
       await Promise.allSettled(transactions);
-      for (const account of accounts) {
+      for(const account of accounts) {
         const accountBalance = await this.helper.balance.getSubstrate(account.address);
-        if (accountBalance === withBalance * tokenNominal) {
+        if(accountBalance === withBalance * tokenNominal) {
           fullfilledAccounts.push(account);
         }
       }
@@ -434,20 +434,20 @@ export class ArrangeGroup {
 
     const crowd: IKeyringPair[] = [];
     // do up to 5 retries
-    for (let index = 0; index < 5 && accountsToCreate !== 0; index++) {
+    for(let index = 0; index < 5 && accountsToCreate !== 0; index++) {
       const asManyAsCan = await createAsManyAsCan();
       crowd.push(...asManyAsCan);
       accountsToCreate -= asManyAsCan.length;
     }
 
-    if (accountsToCreate !== 0) throw Error(`Crowd generation failed: ${accountsToCreate} accounts left`);
+    if(accountsToCreate !== 0) throw Error(`Crowd generation failed: ${accountsToCreate} accounts left`);
 
     return crowd;
   };
 
   isDevNode = async () => {
     let blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
-    if (blockNumber == 0) {
+    if(blockNumber == 0) {
       await this.helper.wait.newBlocks(1);
       blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     }
@@ -484,7 +484,7 @@ export class ArrangeGroup {
 
     const kvJson: {[key: string]: string} = {};
 
-    for (const kv of rawPovInfo.keyValues) {
+    for(const kv of rawPovInfo.keyValues) {
       kvJson[kv.key.toHex()] = kv.value.toHex();
     }
 
@@ -498,7 +498,7 @@ export class ArrangeGroup {
       ],
     );
 
-    if (!chainql.stdout) {
+    if(!chainql.stdout) {
       throw Error('unable to get an output from the `chainql`');
     }
 
@@ -528,7 +528,7 @@ export class ArrangeGroup {
     }
 
     const ids = [];
-    for (let i = 0; i < num; i++) {
+    for(let i = 0; i < num; i++) {
       ids.push(makeId(this.scheduledIdSlider));
       this.scheduledIdSlider += 1;
     }
@@ -834,7 +834,7 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
-        if (blocksCount > 0) {
+        if(blocksCount > 0) {
           blocksCount--;
         } else {
           unsubscribe();
@@ -860,7 +860,7 @@ class WaitGroup {
     const expectedSessionIndex = await (this.helper as DevUniqueHelper).session.getIndex() + sessionCount;
     let currentSessionIndex = -1;
 
-    while (currentSessionIndex < expectedSessionIndex) {
+    while(currentSessionIndex < expectedSessionIndex) {
       // eslint-disable-next-line no-async-promise-executor
       currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
         await this.newBlocks(1);
@@ -875,7 +875,7 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
-        if (data.number.toNumber() >= blockNumber) {
+        if(data.number.toNumber() >= blockNumber) {
           unsubscribe();
           resolve();
         }
@@ -890,7 +890,7 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
-        if (data.value.relayParentNumber.toNumber() >= blockNumber) {
+        if(data.value.relayParentNumber.toNumber() >= blockNumber) {
           // @ts-ignore
           unsubscribe();
           resolve();
@@ -939,7 +939,7 @@ class WaitGroup {
         const eventRecords = (await apiAt.query.system.events()) as any;
 
         const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
-          if (
+          if(
             r.event.section == eventHelper.section()
             && r.event.method == eventHelper.method()
           ) {
@@ -950,10 +950,10 @@ class WaitGroup {
           }
         });
 
-        if (neededEvent) {
+        if(neededEvent) {
           unsubscribe();
           resolve(eventHelper);
-        } else if (maxBlocksToWait > 0) {
+        } else if(maxBlocksToWait > 0) {
           maxBlocksToWait--;
         } else {
           this.helper.logger.log(`Eligible event \`${eventIdStr}\` is NOT found`);
@@ -971,7 +971,7 @@ class WaitGroup {
     filter: (e: T) => boolean = () => true,
   ) {
     const e = await this.event(maxBlocksToWait, eventHelperType, filter);
-    if (e == null) {
+    if(e == null) {
       const eventHelper = new eventHelperType();
       throw Error(`The event '${eventHelper.section()}.${eventHelper.method()}' is expected`);
     } else {
@@ -1018,7 +1018,7 @@ class TestUtilGroup {
   }
 
   async enable() {
-    if (this.helper.fetchMissingPalletNames([Pallets.TestUtils]).length != 0) {
+    if(this.helper.fetchMissingPalletNames([Pallets.TestUtils]).length != 0) {
       return;
     }
 
@@ -1082,7 +1082,7 @@ class EventCapture {
   }
 
   stopCapture() {
-    if (this.unsubscribe !== null) {
+    if(this.unsubscribe !== null) {
       this.unsubscribe();
     }
   }

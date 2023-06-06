@@ -29,6 +29,16 @@
             }
         ],
         "no-trailing-spaces": "warn",
+        "keyword-spacing": [
+            "error",
+            {
+                "overrides": {
+                    "if": {"after": false},
+                    "while": {"after": false},
+                    "for": {"after": false}
+                }
+            }
+        ],
         "function-call-argument-newline": [
             "error",
             "consistent"
@@ -81,9 +91,9 @@
             }
         ],
         "@typescript-eslint/ban-ts-comment": "off",
-        "object-curly-spacing": "warn",
+        "object-curly-spacing": ["warn", "never"],
         "arrow-spacing": "warn",
-        "array-bracket-spacing": "warn",
+        "array-bracket-spacing": ["warn", "never"],
         "template-curly-spacing": "warn",
         "space-in-parens": "warn",
         "arrow-body-style": ["warn", "as-needed"],

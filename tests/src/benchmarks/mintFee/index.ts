@@ -88,7 +88,7 @@ const main = async () => {
     const result: IBenchmarkResultForProp[] = [];
     const csvResult: IBenchmarkResultForProp[] = [];
 
-    for (let i = 1; i <= 20; i++) {
+    for(let i = 1; i <= 20; i++) {
       const benchResult = await benchMintWithProperties(helper, privateKey, contract, {
         propertiesNumber: i,
       }) as any;
@@ -254,7 +254,7 @@ async function benchMintWithProperties(
         '0',
       );
 
-      for (const val of PROPERTIES.slice(0, setup.propertiesNumber)) {
+      for(const val of PROPERTIES.slice(0, setup.propertiesNumber)) {
         encodedCall = await evmContract.methods
           .setProperty(subTokenId, val.key, Buffer.from(val.value))
           .encodeABI();

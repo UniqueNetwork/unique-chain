@@ -31,6 +31,12 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 }
 
+impl<T: Config> Default for NativeFungibleHandle<T> {
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl<T: Config> WithRecorder<T> for NativeFungibleHandle<T> {
 	fn recorder(&self) -> &pallet_evm_coder_substrate::SubstrateRecorder<T> {
 		&self.0

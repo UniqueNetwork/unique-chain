@@ -18,21 +18,21 @@ function setVar(env: string, key: string, value: string): string {
     found = true;
     return `${key}=${value}\n`;
   });
-  if (!found) throw new Error(`env key "${key}" is not found`);
+  if(!found) throw new Error(`env key "${key}" is not found`);
   return newEnv;
 }
 
 // Fetch and format version string
 async function ff(url: string, regex: RegExp, rep: string | ((substring: string, ...params:any[]) => string)): Promise<string> {
   const ver = await fetchVersion(url);
-  if (ver.match(regex) === null)
+  if(ver.match(regex) === null)
     throw new Error(`bad regex for ${url}`);
   return ver.replace(regex, rep as any);
 }
 function fixupUnique(version: string): string {
-  if (version === 'release-v930033')
+  if(version === 'release-v930033')
     return 'release-v930033-fix-gas-price';
-  if (version === 'release-v930034')
+  if(version === 'release-v930034')
     return 'release-v930034-fix-gas-price';
   return version;
 }
