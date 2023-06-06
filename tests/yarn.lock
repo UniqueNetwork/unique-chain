@@ -1162,9 +1162,9 @@
     "@typescript-eslint/types" "5.59.6"
     eslint-visitor-keys "^3.3.0"
 
-"@zombienet/orchestrator@https://gitpkg.now.sh/Fahrrader/zombienet/javascript/packages/orchestrator?767fa6226b7f6a43d674063d63c5bc505db1253c":
+"@zombienet/orchestrator@https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/orchestrator?767fa6226b7f6a43d674063d63c5bc505db1253c":
   version "0.0.41"
-  resolved "https://gitpkg.now.sh/Fahrrader/zombienet/javascript/packages/orchestrator?767fa6226b7f6a43d674063d63c5bc505db1253c#41f589f64638aad0ea9ec6519b4a0be1214d3e91"
+  resolved "https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/orchestrator?767fa6226b7f6a43d674063d63c5bc505db1253c#41f589f64638aad0ea9ec6519b4a0be1214d3e91"
   dependencies:
     "@polkadot/api" "^10.7.1"
     "@polkadot/keyring" "^12.1.2"
@@ -1198,9 +1198,9 @@
     toml "^3.0.0"
     ts-node "^10.9.1"
 
-"@zombienet/utils@https://gitpkg.now.sh/Fahrrader/zombienet/javascript/packages/utils?767fa6226b7f6a43d674063d63c5bc505db1253c":
+"@zombienet/utils@https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/utils?767fa6226b7f6a43d674063d63c5bc505db1253c":
   version "0.0.20"
-  resolved "https://gitpkg.now.sh/Fahrrader/zombienet/javascript/packages/utils?767fa6226b7f6a43d674063d63c5bc505db1253c#e0ae62f61a115cc036c1168ae175622726d0fdbf"
+  resolved "https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/utils?767fa6226b7f6a43d674063d63c5bc505db1253c#e0ae62f61a115cc036c1168ae175622726d0fdbf"
   dependencies:
     cli-table3 "^0.6.2"
     debug "^4.3.4"
