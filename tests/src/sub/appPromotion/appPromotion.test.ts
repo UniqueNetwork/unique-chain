@@ -144,7 +144,7 @@ describe('App promotion', () => {
         }
       });
     });
-    // Now AppPromo makes freezes. Probably this test should be changed\removed.
+    // TODO: Now AppPromo makes freezes. Probably this test should be changed\removed.
     itSub.skip('should allow to stake() if balance is locked with different id', async ({helper}) => {
       const [staker] = await getAccounts(1);
 
