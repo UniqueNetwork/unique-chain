@@ -609,9 +609,12 @@ pub mod pallet {
 				.checked_sub(&T::Currency::minimum_balance())
 				.unwrap_or_else(Zero::zero)
 				.div(2u32.into());
-			// `reward` is half of pot account minus ED, this should never fail.
-			let _success = T::Currency::transfer(&pot, &author, reward, Preservation::Preserve);
-			debug_assert!(_success.is_ok());
+
+			if reward.is_zero() {
+				// `reward` is half of pot account minus ED, this should never fail.
+				let _success = T::Currency::transfer(&pot, &author, reward, Preservation::Preserve);
+				debug_assert!(_success.is_ok());
+			}
 			<LastAuthoredBlock<T>>::insert(author, frame_system::Pallet::<T>::block_number());
 
 			frame_system::Pallet::<T>::register_extra_weight_unchecked(
