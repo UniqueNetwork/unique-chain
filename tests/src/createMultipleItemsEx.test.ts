@@ -30,6 +30,102 @@ describe('Integration Test: createMultipleItemsEx', () => {
     });
   });
 
+  itSub('No editing rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {
+          key: 'k',
+          permission: {
+            mutable: true,
+            collectionAdmin: false,
+            tokenOwner: false,
+          },
+        },
+      ],
+    });
+
+    const args = [
+      {
+        owner: {Substrate: alice.address},
+        properties: [{key: 'k', value: 'v1'}],
+      },
+      {
+        owner: {Substrate: bob.address},
+        properties: [{key: 'k', value: 'v2'}],
+      },
+      {
+        owner: {Substrate: charlie.address},
+        properties: [{key: 'k', value: 'v3'}],
+      },
+    ];
+
+    await expect(collection.mintMultipleTokens(alice, args)).to.be.not.rejectedWith(/common\.NoPermission/);
+  });
+
+  itSub('User doesnt have editing rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+      tokenPropertyPermissions: [
+        {
+          key: 'k',
+          permission: {
+            mutable: false,
+            collectionAdmin: false,
+            tokenOwner: false,
+          },
+        },
+      ],
+    });
+
+    const args = [
+      {
+        owner: {Substrate: alice.address},
+        properties: [{key: 'k', value: 'v1'}],
+      },
+      {
+        owner: {Substrate: bob.address},
+        properties: [{key: 'k', value: 'v2'}],
+      },
+      {
+        owner: {Substrate: charlie.address},
+        properties: [{key: 'k', value: 'v3'}],
+      },
+    ];
+
+    await expect(collection.mintMultipleTokens(alice, args)).to.be.not.rejectedWith(/common\.NoPermission/);
+  });
+
+  itSub('Adding property without access rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {
+      name: 'name',
+      description: 'descr',
+      tokenPrefix: 'COL',
+    });
+
+    const args = [
+      {
+        owner: {Substrate: alice.address},
+        properties: [{key: 'k', value: 'v1'}],
+      },
+      {
+        owner: {Substrate: bob.address},
+        properties: [{key: 'k', value: 'v2'}],
+      },
+      {
+        owner: {Substrate: charlie.address},
+        properties: [{key: 'k', value: 'v3'}],
+      },
+    ];
+
+    await expect(collection.mintMultipleTokens(alice, args)).to.be.not.rejectedWith(/common\.NoPermission/);
+  });
+
+
   itSub('can initialize multiple NFT with different owners', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {
       name: 'name',
@@ -267,101 +363,6 @@ describe('Negative test: createMultipleItemsEx', () => {
       const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
     });
-  });
-
-  itSub('No editing rights', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {
-      name: 'name',
-      description: 'descr',
-      tokenPrefix: 'COL',
-      tokenPropertyPermissions: [
-        {
-          key: 'k',
-          permission: {
-            mutable: true,
-            collectionAdmin: false,
-            tokenOwner: false,
-          },
-        },
-      ],
-    });
-
-    const args = [
-      {
-        owner: {Substrate: alice.address},
-        properties: [{key: 'k', value: 'v1'}],
-      },
-      {
-        owner: {Substrate: bob.address},
-        properties: [{key: 'k', value: 'v2'}],
-      },
-      {
-        owner: {Substrate: charlie.address},
-        properties: [{key: 'k', value: 'v3'}],
-      },
-    ];
-
-    await expect(collection.mintMultipleTokens(alice, args)).to.be.rejectedWith(/common\.NoPermission/);
-  });
-
-  itSub('User doesnt have editing rights', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {
-      name: 'name',
-      description: 'descr',
-      tokenPrefix: 'COL',
-      tokenPropertyPermissions: [
-        {
-          key: 'k',
-          permission: {
-            mutable: false,
-            collectionAdmin: false,
-            tokenOwner: false,
-          },
-        },
-      ],
-    });
-
-    const args = [
-      {
-        owner: {Substrate: alice.address},
-        properties: [{key: 'k', value: 'v1'}],
-      },
-      {
-        owner: {Substrate: bob.address},
-        properties: [{key: 'k', value: 'v2'}],
-      },
-      {
-        owner: {Substrate: charlie.address},
-        properties: [{key: 'k', value: 'v3'}],
-      },
-    ];
-
-    await expect(collection.mintMultipleTokens(alice, args)).to.be.rejectedWith(/common\.NoPermission/);
-  });
-
-  itSub('Adding property without access rights', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {
-      name: 'name',
-      description: 'descr',
-      tokenPrefix: 'COL',
-    });
-
-    const args = [
-      {
-        owner: {Substrate: alice.address},
-        properties: [{key: 'k', value: 'v1'}],
-      },
-      {
-        owner: {Substrate: bob.address},
-        properties: [{key: 'k', value: 'v2'}],
-      },
-      {
-        owner: {Substrate: charlie.address},
-        properties: [{key: 'k', value: 'v3'}],
-      },
-    ];
-
-    await expect(collection.mintMultipleTokens(alice, args)).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Adding more than 64 properties', async ({helper}) => {
