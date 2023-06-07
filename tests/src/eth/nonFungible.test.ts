@@ -39,7 +39,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const tokenId = result.events.Transfer.returnValues.tokenId;
     expect(tokenId).to.be.equal('1');
 
-    if (propertyKey && propertyValue) {
+    if(propertyKey && propertyValue) {
       // Set URL or suffix
       await contract.methods.setProperties(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}]).send();
     }
@@ -102,17 +102,15 @@ describe('NFT: Plain calls', () => {
       const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
 
       // const receiverCross = helper.ethCrossAccount.fromKeyringPair(bob);
-      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
+      const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
       const permissions: ITokenPropertyPermission[] = properties
-        .map(p => {
-          return {
-            key: p.key, permission: {
-              tokenOwner: false,
-              collectionAdmin: true,
-              mutable: false,
-            },
-          };
-        });
+        .map(p => ({
+          key: p.key, permission: {
+            tokenOwner: false,
+            collectionAdmin: true,
+            mutable: false,
+          },
+        }));
 
       const collection = await helper.nft.mintCollection(minter, {
         tokenPrefix: 'ethp',
@@ -146,7 +144,7 @@ describe('NFT: Plain calls', () => {
       expect(tokenId).to.be.equal(expectedTokenId);
 
       expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
-        .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
+        .map(p => helper.ethProperty.property(p.key, p.value.toString())));
 
       expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
         .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.toLowerCase()} : {Substrate: receiverSub.address});
@@ -187,7 +185,7 @@ describe('NFT: Plain calls', () => {
       ).send({from: caller});
 
       const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
-      for (let i = 0; i < bulkSize; i++) {
+      for(let i = 0; i < bulkSize; i++) {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
         expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
@@ -303,7 +301,7 @@ describe('NFT: Plain calls', () => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const operator = await helper.eth.createAccountWithBalance(donor, 100n);
+    const operator = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, {Ethereum: owner});
 
@@ -366,10 +364,10 @@ describe('NFT: Plain calls', () => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
     const ownerSub = bob;
     const ownerCrossSub = helper.ethCrossAccount.fromKeyringPair(ownerSub);
-    const ownerEth = await helper.eth.createAccountWithBalance(donor, 100n);
+    const ownerEth = await helper.eth.createAccountWithBalance(donor);
     const ownerCrossEth = helper.ethCrossAccount.fromAddress(ownerEth);
 
-    const burnerEth = await helper.eth.createAccountWithBalance(donor, 100n);
+    const burnerEth = await helper.eth.createAccountWithBalance(donor);
     const burnerCrossEth = helper.ethCrossAccount.fromAddress(burnerEth);
 
     const token1 = await collection.mintToken(minter, {Substrate: ownerSub.address});
@@ -411,11 +409,11 @@ describe('NFT: Plain calls', () => {
   // TODO combine all approve tests in one place
   itEth('Can perform approveCross()', async ({helper}) => {
     // arrange: create accounts
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const ownerCross = helper.ethCrossAccount.fromAddress(owner);
     const receiverSub = charlie;
     const recieverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
-    const receiverEth = await helper.eth.createAccountWithBalance(donor, 100n);
+    const receiverEth = await helper.eth.createAccountWithBalance(donor);
     const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
 
     // arrange: create collection and tokens:
@@ -469,7 +467,7 @@ describe('NFT: Plain calls', () => {
   });
 
   itEth('Can reaffirm approved address', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
     const ownerCrossEth = helper.ethCrossAccount.fromAddress(owner);
     const [receiver1, receiver2] = await helper.arrange.createAccounts([100n, 100n], donor);
     const receiver1Cross = helper.ethCrossAccount.fromKeyringPair(receiver1);
@@ -671,7 +669,7 @@ describe('NFT: Plain calls', () => {
 
     expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
 
-    for (let i = 1; i < 10; i++) {
+    for(let i = 1; i < 10; i++) {
       await collection.mintToken(minter, {Ethereum: owner.eth});
       expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
     }
@@ -684,7 +682,7 @@ describe('NFT: Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
     const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.eth});
 
-    for (let i = 1n; i < 10n; i++) {
+    for(let i = 1n; i < 10n; i++) {
       const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
       expect(ownerCross.eth).to.be.eq(owner.eth);
       expect(ownerCross.sub).to.be.eq(owner.sub);
@@ -743,7 +741,7 @@ describe('NFT: Fees', () => {
     const receiver = charlie;
     const collection = await helper.nft.mintCollection(collectionMinter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(collectionMinter, {Substrate: owner.address});
 
@@ -807,7 +805,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     const {tokenId} = await collection.mintToken(alice);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Transfer');
@@ -830,7 +828,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.burn(alice);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Transfer');
@@ -855,7 +853,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.approve(alice, {Ethereum: receiver});
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Approval');
@@ -883,7 +881,7 @@ describe('NFT: Substrate calls', () => {
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
 
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.be.equal(collectionAddress);
@@ -908,7 +906,7 @@ describe('NFT: Substrate calls', () => {
 
     await token.transfer(alice, {Ethereum: receiver});
 
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.address).to.be.equal(collectionAddress);
@@ -930,7 +928,7 @@ describe('Common metadata', () => {
   });
 
   itEth('Returns collection name', async ({helper}) => {
-    const caller = await helper.eth.createAccountWithBalance(donor);
+    const caller = helper.eth.createAccount();
     const tokenPropertyPermissions = [{
       key: 'URI',
       permission: {
@@ -995,8 +993,8 @@ describe('Negative tests', () => {
   itEth('[negative] Cant perform burn without approval', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, {Ethereum: owner});
 
@@ -1016,8 +1014,8 @@ describe('Negative tests', () => {
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
     const receiver = alice;
 
-    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
-    const spender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const owner = await helper.eth.createAccountWithBalance(donor);
+    const spender = await helper.eth.createAccountWithBalance(donor);
 
     const token = await collection.mintToken(minter, {Ethereum: owner});
 

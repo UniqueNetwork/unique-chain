@@ -181,17 +181,11 @@ describe('Supports ERC721Metadata', () => {
       const propertyPermissions = data2?.raw.tokenPropertyPermissions;
       expect(propertyPermissions?.length).to.equal(2);
 
-      expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => {
-        return tpp.key === 'URI' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner;
-      })).to.be.not.null;
+      expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => tpp.key === 'URI' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner)).to.be.not.null;
 
-      expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => {
-        return tpp.key === 'URISuffix' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner;
-      })).to.be.not.null;
+      expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => tpp.key === 'URISuffix' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner)).to.be.not.null;
 
-      expect(data2?.raw.properties?.find((property: IProperty) => {
-        return property.key === 'baseURI' && property.value === BASE_URI;
-      })).to.be.not.null;
+      expect(data2?.raw.properties?.find((property: IProperty) => property.key === 'baseURI' && property.value === BASE_URI)).to.be.not.null;
 
       const token1Result = await contract.methods.mint(bruh).send();
       const tokenId1 = token1Result.events.Transfer.returnValues.tokenId;

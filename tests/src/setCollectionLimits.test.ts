@@ -17,6 +17,7 @@
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;
@@ -110,7 +111,7 @@ describe('setCollectionLimits negative', () => {
   });
 
   itSub('execute setCollectionLimits for not exists collection', async ({helper}) => {
-    const nonExistentCollectionId = (1 << 32) - 1;
+    const nonExistentCollectionId = NON_EXISTENT_COLLECTION_ID;
     await expect(helper.collection.setLimits(
       alice,
       nonExistentCollectionId,

@@ -22,7 +22,7 @@ const formatNumber = (num: string): string => num.split('').reverse().join('').r
     weight2feeFound = true;
     return p+formatNumber(weightToFeeCoefficientOverride)+s;
   });
-  if (!weight2feeFound) {
+  if(!weight2feeFound) {
     throw new Error('failed to find weight2fee marker in source code');
   }
 
@@ -31,7 +31,7 @@ const formatNumber = (num: string): string => num.split('').reverse().join('').r
     minGasPriceFound = true;
     return p+formatNumber(minGasPriceOverride)+s;
   });
-  if (!minGasPriceFound) {
+  if(!minGasPriceFound) {
     throw new Error('failed to find mingasprice marker in source code');
   }
 

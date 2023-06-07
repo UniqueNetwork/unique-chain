@@ -42,7 +42,7 @@ describe('Integration Test: Maintenance Functionality', () => {
   describe('Maintenance Mode', () => {
     before(async function() {
       await usingPlaygrounds(async (helper) => {
-        if (await maintenanceEnabled(helper.getApi())) {
+        if(await maintenanceEnabled(helper.getApi())) {
           console.warn('\tMaintenance mode was left enabled BEFORE the test suite! Disabling it now.');
           await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', [])).to.be.fulfilled;
         }
@@ -70,11 +70,13 @@ describe('Integration Test: Maintenance Functionality', () => {
     itSub('MM blocks unique pallet calls', async ({helper}) => {
       // Can create an NFT collection before enabling the MM
       const nftCollection = await helper.nft.mintCollection(bob, {
-        tokenPropertyPermissions: [{key: 'test', permission: {
-          collectionAdmin: true,
-          tokenOwner: true,
-          mutable: true,
-        }}],
+        tokenPropertyPermissions: [{
+          key: 'test', permission: {
+            collectionAdmin: true,
+            tokenOwner: true,
+            mutable: true,
+          },
+        }],
       });
 
       // Can mint an NFT before enabling the MM
@@ -268,8 +270,8 @@ describe('Integration Test: Maintenance Functionality', () => {
 
     afterEach(async () => {
       await usingPlaygrounds(async helper => {
-        if (helper.fetchMissingPalletNames([Pallets.Maintenance]).length != 0) return;
-        if (await maintenanceEnabled(helper.getApi())) {
+        if(helper.fetchMissingPalletNames([Pallets.Maintenance]).length != 0) return;
+        if(await maintenanceEnabled(helper.getApi())) {
           console.warn('\tMaintenance mode was left enabled AFTER a test has finished! Be careful. Disabling it now.');
           await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
         }
@@ -334,32 +336,32 @@ describe('Integration Test: Maintenance Functionality', () => {
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         preimageHash, {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/balances\.InsufficientBalance/);
+      ])).to.be.rejectedWith(/^Token: FundsUnavailable$/);
     });
 
     itSub('Does not allow preimage execution with non-root', async ({helper}) => {
       await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [
         preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/BadOrigin/);
+      ])).to.be.rejectedWith(/^Misc: BadOrigin$/);
     });
 
     itSub('Does not allow execution of non-existent preimages', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         '0x1010101010101010101010101010101010101010101010101010101010101010', {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/Unavailable/);
+      ])).to.be.rejectedWith(/^Misc: Unavailable$/);
     });
 
     itSub('Does not allow preimage execution with less than minimum weights', async ({helper}) => {
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         preimageHashes[0], {refTime: 1000, proofSize: 100},
-      ])).to.be.rejectedWith(/Exhausted/);
+      ])).to.be.rejectedWith(/^Misc: Exhausted$/);
     });
 
     after(async function() {
       await usingPlaygrounds(async (helper) => {
-        if (helper.fetchMissingPalletNames([Pallets.Preimage, Pallets.Maintenance]).length != 0) return;
+        if(helper.fetchMissingPalletNames([Pallets.Preimage, Pallets.Maintenance]).length != 0) return;
 
-        for (const hash of preimageHashes) {
+        for(const hash of preimageHashes) {
           await helper.preimage.unnotePreimage(bob, hash);
         }
       });

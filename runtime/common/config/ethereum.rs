@@ -4,7 +4,7 @@ use frame_support::{
 	traits::{FindAuthor},
 	parameter_types, ConsensusEngineId,
 };
-use sp_runtime::{RuntimeAppPublic, Perbill};
+use sp_runtime::{RuntimeAppPublic, Perbill, traits::ConstU32};
 use crate::{
 	runtime_common::{
 		config::sponsoring::DefaultSponsoringRateLimit,
@@ -20,12 +20,15 @@ use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
-// Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case
-// (contract, which only writes a lot of data),
-// approximating on top of our real store write weight
+// ~~Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case~~
+// ~~(contract, which only writes a lot of data),~~
+// ~~approximating on top of our real store write weight~~
+//
+// The above approach is very wrong, and the reason is described there:
+// https://forum.polkadot.network/t/frontier-support-for-evm-weight-v2/2470/5#problem-2
 parameter_types! {
-	pub const WritesPerSecond: u64 = WEIGHT_REF_TIME_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().write;
-	pub const GasPerSecond: u64 = WritesPerSecond::get() * 20000;
+	pub const ReadsPerSecond: u64 = WEIGHT_REF_TIME_PER_SECOND / <Runtime as frame_system::Config>::DbWeight::get().read;
+	pub const GasPerSecond: u64 = ReadsPerSecond::get() * 2100;
 	pub const WeightTimePerGas: u64 = WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
 
 	pub const WeightPerGas: Weight = Weight::from_parts(WeightTimePerGas::get(), 0);
@@ -81,6 +84,8 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
 	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
+	type Timestamp = crate::Timestamp;
+	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 }
 
 impl pallet_evm_migration::Config for Runtime {
@@ -96,6 +101,9 @@ impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
+	// Space for revert reason. Ethereum transactions are not cheap, and overall size is much less
+	// than the substrate tx size, so we can afford this
+	type ExtraDataLength = ConstU32<32>;
 }
 
 parameter_types! {

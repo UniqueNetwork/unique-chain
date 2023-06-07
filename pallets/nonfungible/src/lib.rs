@@ -151,7 +151,6 @@ pub mod pallet {
 	use frame_support::{
 		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion,
 	};
-	use frame_system::pallet_prelude::*;
 	use up_data_structs::{CollectionId, TokenId};
 	use super::weights::WeightInfo;
 
@@ -858,13 +857,7 @@ impl<T: Config> Pallet<T> {
 
 		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				owner: to.clone(),
-				..token_data
-			},
-		);
+		<TokenData<T>>::insert((collection.id, token), ItemData { owner: to.clone() });
 
 		if let Some(balance_to) = balance_to {
 			// from != to
@@ -1326,11 +1319,15 @@ impl<T: Config> Pallet<T> {
 	}
 
 	fn nest(under: (CollectionId, TokenId), to_nest: (CollectionId, TokenId)) {
-		<TokenChildren<T>>::insert((under.0, under.1, (to_nest.0, to_nest.1)), true);
+		if to_nest.0 != pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+			<TokenChildren<T>>::insert((under.0, under.1, to_nest), true);
+		}
 	}
 
 	fn unnest(under: (CollectionId, TokenId), to_unnest: (CollectionId, TokenId)) {
-		<TokenChildren<T>>::remove((under.0, under.1, to_unnest));
+		if to_unnest.0 != pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+			<TokenChildren<T>>::remove((under.0, under.1, to_unnest));
+		}
 	}
 
 	fn collection_has_tokens(collection_id: CollectionId) -> bool {

@@ -26,6 +26,7 @@ use futures::{
 	stream::select,
 	task::{Context, Poll},
 };
+use sp_keystore::KeystorePtr;
 use tokio::time::Interval;
 
 use unique_rpc::overrides_handle;
@@ -55,7 +56,6 @@ use sc_network::NetworkBlock;
 use sc_network_sync::SyncingService;
 use sc_service::{BasePath, Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_keystore::SyncCryptoStorePtr;
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
 use sc_client_api::BlockchainEvents;
@@ -270,12 +270,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = NativeElseWasmExecutor::<ExecutorDispatch>::new(
-		config.wasm_method,
-		config.default_heap_pages,
-		config.max_runtime_instances,
-		config.runtime_cache_size,
-	);
+	let executor = sc_service::new_native_or_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -366,6 +361,14 @@ async fn build_relay_chain_interface(
 	}
 }
 
+macro_rules! clone {
+    ($($i:ident),* $(,)?) => {
+		$(
+			let $i = $i.clone();
+		)*
+    };
+}
+
 /// Start a node with the given parachain `Configuration` and relay chain `Configuration`.
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
@@ -422,7 +425,7 @@ where
 		Arc<dyn RelayChainInterface>,
 		Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>>,
 		Arc<SyncingService<Block>>,
-		SyncCryptoStorePtr,
+		KeystorePtr,
 		bool,
 	) -> Result<Box<dyn ParachainConsensus<Block>>, sc_service::Error>,
 {
@@ -469,13 +472,7 @@ where
 			warp_sync_params: None,
 		})?;
 
-	let rpc_client = client.clone();
-	let rpc_pool = transaction_pool.clone();
 	let select_chain = params.select_chain.clone();
-	let rpc_network = network.clone();
-	let rpc_sync_service = sync_service.clone();
-
-	let rpc_frontier_backend = frontier_backend.clone();
 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
 		task_manager.spawn_handle(),
@@ -485,9 +482,14 @@ where
 		prometheus_registry.clone(),
 	));
 
+	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+		fc_mapping_sync::EthereumBlockNotification<Block>,
+	> = Default::default();
+	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+
 	task_manager.spawn_essential_handle().spawn(
 		"frontier-mapping-sync-worker",
-		None,
+		Some("frontier"),
 		MappingSyncWorker::new(
 			client.import_notification_stream(),
 			Duration::new(6, 0),
@@ -497,56 +499,84 @@ where
 			frontier_backend.clone(),
 			3,
 			0,
-			SyncStrategy::Normal,
+			SyncStrategy::Parachain,
+			sync_service.clone(),
+			pubsub_notification_sinks.clone(),
 		)
 		.for_each(|()| futures::future::ready(())),
 	);
 
-	#[cfg(feature = "pov-estimate")]
-	let rpc_backend = backend.clone();
-
 	let runtime_id = parachain_config.chain_spec.runtime_id();
 
-	let rpc_builder = Box::new(move |deny_unsafe, subscription_task_executor| {
-		let full_deps = unique_rpc::FullDeps {
-			runtime_id: runtime_id.clone(),
+	let rpc_builder = Box::new({
+		clone!(
+			client,
+			backend,
+			pubsub_notification_sinks,
+			transaction_pool,
+			network,
+			sync_service,
+			frontier_backend,
+		);
+		move |deny_unsafe, subscription_task_executor| {
+			clone!(
+				backend,
+				runtime_id,
+				client,
+				transaction_pool,
+				filter_pool,
+				network,
+				select_chain,
+				block_data_cache,
+				fee_history_cache,
+				pubsub_notification_sinks,
+				frontier_backend,
+			);
 
-			#[cfg(feature = "pov-estimate")]
-			exec_params: uc_rpc::pov_estimate::ExecutorParams {
-				wasm_method: parachain_config.wasm_method,
-				default_heap_pages: parachain_config.default_heap_pages,
-				max_runtime_instances: parachain_config.max_runtime_instances,
-				runtime_cache_size: parachain_config.runtime_cache_size,
-			},
+			#[cfg(not(feature = "pov-estimate"))]
+			let _ = backend;
 
-			#[cfg(feature = "pov-estimate")]
-			backend: rpc_backend.clone(),
+			let full_deps = unique_rpc::FullDeps {
+				runtime_id,
 
-			eth_backend: rpc_frontier_backend.clone(),
-			deny_unsafe,
-			client: rpc_client.clone(),
-			pool: rpc_pool.clone(),
-			graph: rpc_pool.pool().clone(),
-			// TODO: Unhardcode
-			enable_dev_signer: false,
-			filter_pool: filter_pool.clone(),
-			network: rpc_network.clone(),
-			sync: rpc_sync_service.clone(),
-			select_chain: select_chain.clone(),
-			is_authority: validator,
-			// TODO: Unhardcode
-			max_past_logs: 10000,
-			block_data_cache: block_data_cache.clone(),
-			fee_history_cache: fee_history_cache.clone(),
-			// TODO: Unhardcode
-			fee_history_limit: 2048,
-		};
+				#[cfg(feature = "pov-estimate")]
+				exec_params: uc_rpc::pov_estimate::ExecutorParams {
+					wasm_method: parachain_config.wasm_method,
+					default_heap_pages: parachain_config.default_heap_pages,
+					max_runtime_instances: parachain_config.max_runtime_instances,
+					runtime_cache_size: parachain_config.runtime_cache_size,
+				},
 
-		unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-			full_deps,
-			subscription_task_executor,
-		)
-		.map_err(Into::into)
+				#[cfg(feature = "pov-estimate")]
+				backend,
+
+				eth_backend: frontier_backend,
+				deny_unsafe,
+				client,
+				graph: transaction_pool.pool().clone(),
+				pool: transaction_pool,
+				// TODO: Unhardcode
+				enable_dev_signer: false,
+				filter_pool,
+				network,
+				sync: sync_service.clone(),
+				select_chain,
+				is_authority: validator,
+				// TODO: Unhardcode
+				max_past_logs: 10000,
+				block_data_cache,
+				fee_history_cache,
+				// TODO: Unhardcode
+				fee_history_limit: 2048,
+				pubsub_notification_sinks,
+			};
+
+			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+				full_deps,
+				subscription_task_executor,
+			)
+			.map_err(Into::into)
+		}
 	});
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -555,7 +585,7 @@ where
 		transaction_pool: transaction_pool.clone(),
 		task_manager: &mut task_manager,
 		config: parachain_config,
-		keystore: params.keystore_container.sync_keystore(),
+		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
 		network: network.clone(),
 		sync_service: sync_service.clone(),
@@ -600,7 +630,7 @@ where
 			relay_chain_interface.clone(),
 			transaction_pool,
 			sync_service.clone(),
-			params.keystore_container.sync_keystore(),
+			params.keystore_container.keystore(),
 			force_authoring,
 		)?;
 
@@ -619,6 +649,7 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			recovery_handle: Box::new(overseer_handle),
+			sync_service,
 		};
 
 		start_collator(params).await?;
@@ -632,6 +663,7 @@ where
 			relay_chain_interface,
 			relay_chain_slot_duration,
 			recovery_handle: Box::new(overseer_handle),
+			sync_service,
 		};
 
 		start_full_node(params)?;
@@ -666,7 +698,7 @@ where
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
-	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+	let block_import = ParachainBlockImport::new(client.clone(), backend);
 
 	cumulus_client_consensus_aura::import_queue::<
 		sp_consensus_aura::sr25519::AuthorityPair,
@@ -677,7 +709,7 @@ where
 		_,
 	>(cumulus_client_consensus_aura::ImportQueueParams {
 		block_import,
-		client: client.clone(),
+		client,
 		create_inherent_data_providers: move |_, _| async move {
 			let time = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -755,7 +787,7 @@ where
 				telemetry.clone(),
 			);
 
-			let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
+			let block_import = ParachainBlockImport::new(client.clone(), backend);
 
 			Ok(AuraConsensus::build::<
 				sp_consensus_aura::sr25519::AuthorityPair,
@@ -832,7 +864,7 @@ where
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	Ok(sc_consensus_manual_seal::import_queue(
-		Box::new(client.clone()),
+		Box::new(client),
 		&task_manager.spawn_essential_handle(),
 		config.prometheus_registry(),
 	))
@@ -897,6 +929,11 @@ where
 		prometheus_registry.clone(),
 	));
 
+	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
+		fc_mapping_sync::EthereumBlockNotification<Block>,
+	> = Default::default();
+	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
+
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
@@ -919,7 +956,7 @@ where
 
 	let collator = config.role.is_authority();
 
-	let select_chain = maybe_select_chain.clone();
+	let select_chain = maybe_select_chain;
 
 	if collator {
 		let block_import =
@@ -1026,67 +1063,88 @@ where
 			3,
 			0,
 			SyncStrategy::Normal,
+			sync_service.clone(),
+			pubsub_notification_sinks.clone(),
 		)
 		.for_each(|()| futures::future::ready(())),
 	);
-
-	let rpc_client = client.clone();
-	let rpc_pool = transaction_pool.clone();
-	let rpc_network = network.clone();
-	let rpc_sync_service = sync_service.clone();
-	let rpc_frontier_backend = frontier_backend.clone();
 
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
 	let runtime_id = config.chain_spec.runtime_id();
 
-	let rpc_builder = Box::new(move |deny_unsafe, subscription_executor| {
-		let full_deps = unique_rpc::FullDeps {
-			runtime_id: runtime_id.clone(),
+	let rpc_builder = Box::new({
+		clone!(
+			backend,
+			client,
+			sync_service,
+			frontier_backend,
+			network,
+			transaction_pool,
+			pubsub_notification_sinks
+		);
+		move |deny_unsafe, subscription_executor| {
+			clone!(
+				backend,
+				block_data_cache,
+				client,
+				fee_history_cache,
+				filter_pool,
+				network,
+				pubsub_notification_sinks,
+			);
 
-			#[cfg(feature = "pov-estimate")]
-			exec_params: uc_rpc::pov_estimate::ExecutorParams {
-				wasm_method: config.wasm_method,
-				default_heap_pages: config.default_heap_pages,
-				max_runtime_instances: config.max_runtime_instances,
-				runtime_cache_size: config.runtime_cache_size,
-			},
+			#[cfg(not(feature = "pov-estimate"))]
+			let _ = backend;
 
-			#[cfg(feature = "pov-estimate")]
-			backend: rpc_backend.clone(),
-			eth_backend: rpc_frontier_backend.clone(),
-			deny_unsafe,
-			client: rpc_client.clone(),
-			pool: rpc_pool.clone(),
-			graph: rpc_pool.pool().clone(),
-			// TODO: Unhardcode
-			enable_dev_signer: false,
-			filter_pool: filter_pool.clone(),
-			network: rpc_network.clone(),
-			sync: rpc_sync_service.clone(),
-			select_chain: select_chain.clone(),
-			is_authority: collator,
-			// TODO: Unhardcode
-			max_past_logs: 10000,
-			block_data_cache: block_data_cache.clone(),
-			fee_history_cache: fee_history_cache.clone(),
-			// TODO: Unhardcode
-			fee_history_limit: 2048,
-		};
+			let full_deps = unique_rpc::FullDeps {
+				runtime_id: runtime_id.clone(),
 
-		unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-			full_deps,
-			subscription_executor,
-		)
-		.map_err(Into::into)
+				#[cfg(feature = "pov-estimate")]
+				exec_params: uc_rpc::pov_estimate::ExecutorParams {
+					wasm_method: config.wasm_method,
+					default_heap_pages: config.default_heap_pages,
+					max_runtime_instances: config.max_runtime_instances,
+					runtime_cache_size: config.runtime_cache_size,
+				},
+
+				#[cfg(feature = "pov-estimate")]
+				backend,
+				eth_backend: frontier_backend.clone(),
+				deny_unsafe,
+				client,
+				pool: transaction_pool.clone(),
+				graph: transaction_pool.pool().clone(),
+				// TODO: Unhardcode
+				enable_dev_signer: false,
+				filter_pool,
+				network,
+				sync: sync_service.clone(),
+				select_chain: select_chain.clone(),
+				is_authority: collator,
+				// TODO: Unhardcode
+				max_past_logs: 10000,
+				block_data_cache,
+				fee_history_cache,
+				// TODO: Unhardcode
+				fee_history_limit: 2048,
+				pubsub_notification_sinks,
+			};
+
+			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
+				full_deps,
+				subscription_executor,
+			)
+			.map_err(Into::into)
+		}
 	});
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		network,
 		sync_service,
 		client,
-		keystore: keystore_container.sync_keystore(),
+		keystore: keystore_container.keystore(),
 		task_manager: &mut task_manager,
 		transaction_pool,
 		rpc_builder,

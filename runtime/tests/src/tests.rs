@@ -31,11 +31,10 @@ use pallet_unique::Error as UniqueError;
 
 fn add_balance(user: u64, value: u64) {
 	const DONOR_USER: u64 = 999;
-	assert_ok!(<pallet_balances::Pallet<Test>>::set_balance(
+	assert_ok!(<pallet_balances::Pallet<Test>>::force_set_balance(
 		RuntimeOrigin::root(),
 		DONOR_USER,
 		value,
-		0
 	));
 	assert_ok!(<pallet_balances::Pallet<Test>>::force_transfer(
 		RuntimeOrigin::root(),
@@ -199,7 +198,7 @@ fn account(sub: u64) -> TestCrossAccountId {
 fn check_not_sufficient_founds() {
 	new_test_ext().execute_with(|| {
 		let acc: u64 = 1;
-		<pallet_balances::Pallet<Test>>::set_balance(RuntimeOrigin::root(), acc, 0, 0).unwrap();
+		<pallet_balances::Pallet<Test>>::force_set_balance(RuntimeOrigin::root(), acc, 0).unwrap();
 
 		let name: Vec<u16> = "Test1\0".encode_utf16().collect::<Vec<u16>>();
 		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();

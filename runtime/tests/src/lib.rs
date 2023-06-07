@@ -19,7 +19,7 @@
 use sp_core::{H160, H256, U256};
 use frame_support::{
 	parameter_types,
-	traits::{Everything, ConstU32, ConstU64},
+	traits::{Everything, ConstU32, ConstU64, fungible::Inspect},
 	weights::IdentityFee,
 	pallet_prelude::Weight,
 };
@@ -34,7 +34,7 @@ use pallet_evm::{
 	BackwardsAddressMapping,
 };
 use pallet_ethereum::PostLogContent;
-use parity_scale_codec::{Encode, Decode, MaxEncodedLen};
+use codec::{Encode, Decode, MaxEncodedLen};
 use scale_info::TypeInfo;
 
 use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
@@ -63,6 +63,7 @@ frame_support::construct_runtime!(
 		UncheckedExtrinsic = UncheckedExtrinsic,
 	{
 		System: frame_system,
+		Timestamp: pallet_timestamp,
 		Unique: pallet_unique::{Pallet, Call, Storage},
 		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
 		Common: pallet_common::{Pallet, Storage, Event<T>},
@@ -123,6 +124,10 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
+	type MaxFreezes = MaxLocks;
+	type FreezeIdentifier = [u8; 8];
+	type MaxHolds = MaxLocks;
+	type HoldIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -212,9 +217,11 @@ impl pallet_ethereum::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
 	type PostLogContent = PostBlockAndTxnHashes;
+	type ExtraDataLength = ConstU32<32>;
 }
 
 impl pallet_evm::Config for Test {
+	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type CrossAccountId = TestCrossAccountId;
 	type AddressMapping = TestEvmAddressMapping;
 	type BackwardsAddressMapping = TestEvmBackwardsAddressMapping;
@@ -236,6 +243,7 @@ impl pallet_evm::Config for Test {
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type TransactionValidityHack = ();
+	type Timestamp = Timestamp;
 }
 impl pallet_evm_coder_substrate::Config for Test {}
 
@@ -264,6 +272,20 @@ impl pallet_refungible::Config for Test {
 	type WeightInfo = ();
 }
 impl pallet_nonfungible::Config for Test {
+	type WeightInfo = ();
+}
+parameter_types! {
+	pub const Decimals: u8 = 18;
+	pub Name: String = "Test".to_string();
+	pub Symbol: String = "TST".to_string();
+}
+impl pallet_balances_adapter::Config for Test {
+	type Inspect = Balances;
+	type Mutate = Balances;
+	type CurrencyBalance = <Balances as Inspect<Self::AccountId>>::Balance;
+	type Decimals = Decimals;
+	type Name = Name;
+	type Symbol = Symbol;
 	type WeightInfo = ();
 }
 

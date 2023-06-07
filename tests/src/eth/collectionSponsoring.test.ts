@@ -555,7 +555,7 @@ describe('evm RFT collection sponsoring', () => {
     const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
 
     const collectionSub = helper.rft.getCollectionObject(collectionId);
-    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner, false);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner, false);
     // Set collection sponsor:
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
     await collectionEvm.methods.setCollectionSponsorCross(sponsorCross).send();
@@ -592,7 +592,7 @@ describe('evm RFT collection sponsoring', () => {
         tokenId: '1',
       },
     });
-    expect(await collectionEvm.methods.tokenURI(tokenId).call({from: user})).to.be.equal('Test URI');
+    expect(await collectionEvm.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
 
     const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
     expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);

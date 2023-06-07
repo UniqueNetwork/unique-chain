@@ -136,7 +136,7 @@ impl TryFrom<up_data_structs::Property> for Property {
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
 		let key = evm_coder::types::String::from_utf8(from.key.into())
-			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {}", e)))?;
+			.map_err(|e| Self::Error::Revert(format!("utf8 conversion error: {e}")))?;
 		let value = evm_coder::types::Bytes(from.value.to_vec());
 		Ok(Property { key, value })
 	}
@@ -201,10 +201,7 @@ impl CollectionLimit {
 	pub fn new(field: CollectionLimitField, value: Option<u32>) -> Self {
 		Self {
 			field,
-			value: match value {
-				Some(value) => Some(value.into()),
-				None => None,
-			},
+			value: value.map(|value| value.into()),
 		}
 	}
 	/// Whether the field contains a value.
@@ -222,8 +219,7 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 			.ok_or::<Self::Error>("can't convert `None` value to boolean".into())?;
 		let value = Some(value.try_into().map_err(|error| {
 			Self::Error::Revert(format!(
-				"can't convert value to u32 \"{}\" because: \"{error}\"",
-				value
+				"can't convert value to u32 \"{value}\" because: \"{error}\""
 			))
 		})?);
 
@@ -249,10 +245,8 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 				limits.sponsored_data_size = value;
 			}
 			CollectionLimitField::SponsoredDataRateLimit => {
-				limits.sponsored_data_rate_limit = match value {
-					Some(value) => Some(up_data_structs::SponsoringRateLimit::Blocks(value)),
-					None => None,
-				};
+				limits.sponsored_data_rate_limit =
+					value.map(up_data_structs::SponsoringRateLimit::Blocks);
 			}
 			CollectionLimitField::TokenLimit => {
 				limits.token_limit = value;
@@ -454,9 +448,9 @@ impl From<up_data_structs::AccessMode> for AccessMode {
 	}
 }
 
-impl Into<up_data_structs::AccessMode> for AccessMode {
-	fn into(self) -> up_data_structs::AccessMode {
-		match self {
+impl From<AccessMode> for up_data_structs::AccessMode {
+	fn from(value: AccessMode) -> Self {
+		match value {
 			AccessMode::Normal => up_data_structs::AccessMode::Normal,
 			AccessMode::AllowList => up_data_structs::AccessMode::AllowList,
 		}

@@ -33,7 +33,7 @@ frame-benchmarking = { workspace = true, optional = true }
 
 [dev-dependencies]
 pallet-aura = { workspace = true }
-pallet-balances = { workspace = true }
+pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-timestamp = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-core = { workspace = true }
@@ -55,9 +55,12 @@ std = [
 	"frame-system/std",
 	"log/std",
 	"pallet-authorship/std",
+	'pallet-aura/std',
+	'pallet-balances/std',
 	"pallet-session/std",
 	"rand/std",
 	"scale-info/std",
+	"sp-consensus-aura/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",

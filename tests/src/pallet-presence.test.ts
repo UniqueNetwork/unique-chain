@@ -19,10 +19,12 @@ import {itSub, usingPlaygrounds, expect} from './util';
 // Pallets that must always be present
 const requiredPallets = [
   'balances',
+  'balancesadapter',
   'common',
   'timestamp',
   'transactionpayment',
   'treasury',
+  'statetriemigration',
   'structure',
   'system',
   'vesting',
@@ -68,7 +70,7 @@ describe('Pallet presence', () => {
       const preimage = ['preimage'];
       const testUtils = 'testutils';
 
-      if (chain.eq('OPAL by UNIQUE')) {
+      if(chain.eq('OPAL by UNIQUE')) {
         requiredPallets.push(
           refungible,
           foreignAssets,
@@ -77,7 +79,7 @@ describe('Pallet presence', () => {
           ...collatorSelection,
           ...preimage,
         );
-      } else if (chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
+      } else if(chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
         requiredPallets.push(
           refungible,
           appPromotion,
@@ -85,7 +87,7 @@ describe('Pallet presence', () => {
           ...collatorSelection,
           ...preimage,
         );
-      } else if (chain.eq('UNIQUE')) {
+      } else if(chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here
         requiredPallets.push(
           refungible,

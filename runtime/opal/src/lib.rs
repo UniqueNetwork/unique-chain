@@ -45,17 +45,21 @@ pub use runtime_common::*;
 
 pub const RUNTIME_NAME: &str = "opal";
 pub const TOKEN_SYMBOL: &str = "OPL";
+pub const DECIMALS: u8 = 18;
 
 /// This runtime version.
 pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!(RUNTIME_NAME),
 	impl_name: create_runtime_str!(RUNTIME_NAME),
 	authoring_version: 1,
-	spec_version: 941056,
+	spec_version: 942057,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
+	#[cfg(feature = "state-version-0")]
 	state_version: 0,
+	#[cfg(not(feature = "state-version-0"))]
+	state_version: 1,
 };
 
 parameter_types! {

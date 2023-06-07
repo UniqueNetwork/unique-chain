@@ -47,6 +47,20 @@ describe('Integration Test: Unnesting', () => {
     await expect(nestedToken.getOwner()).to.be.rejected;
   });
 
+  itSub('NativeFungible: allows the owner to successfully unnest a token', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
+    const targetToken = await collection.mintToken(alice);
+
+    const collectionFT = helper.ft.getCollectionObject(0);
+
+    // Nest
+    await collectionFT.transfer(alice, targetToken.nestingAccount(), 10n);
+    // Unnest
+    await expect(collectionFT.transferFrom(alice, targetToken.nestingAccount(), {Substrate: alice.address}, 9n), 'while unnesting').to.be.fulfilled;
+
+    expect(await collectionFT.getBalance(targetToken.nestingAccount())).to.be.equal(1n);
+  });
+
   itSub('Fungible: allows the owner to successfully unnest a token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {permissions: {nesting: {tokenOwner: true}}});
     const targetToken = await collection.mintToken(alice);
@@ -103,7 +117,7 @@ describe('Integration Test: Unnesting', () => {
 
     const children = await targetNft.getChildren();
 
-    if (childrenShouldPresent) {
+    if(childrenShouldPresent) {
       expect(children[0]).to.be.deep.equal({
         collectionId: nested.collectionId,
         tokenId: (nested instanceof UniqueFTCollection) ? 0 : nested.tokenId,
@@ -123,13 +137,13 @@ describe('Integration Test: Unnesting', () => {
     const ops = ['transfer', 'burn'];
 
     const cases = [];
-    for (const mode of modes) {
+    for(const mode of modes) {
       const requiredPallets = (mode === 'rft')
         ? [Pallets.ReFungible]
         : [];
 
-      for (const sender of senders) {
-        for (const op of ops) {
+      for(const sender of senders) {
+        for(const op of ops) {
           cases.push({
             mode: mode as 'ft' | 'nft' | 'rft',
             sender,
@@ -169,7 +183,7 @@ describe('Integration Test: Unnesting', () => {
       const firstUnnestAmount = 2n;
       const restUnnestAmount = totalAmount - firstUnnestAmount;
 
-      if (collectionNested instanceof UniqueFTCollection) {
+      if(collectionNested instanceof UniqueFTCollection) {
         await collectionNested.mint(owner, totalAmount, {Substrate: charlie.address});
         nested = collectionNested;
       } else {
@@ -186,13 +200,13 @@ describe('Integration Test: Unnesting', () => {
       }) => {
         const nestedBalanceBeforeOp = await nested.getBalance(targetNft.nestingAccount());
 
-        if (testCase.op === 'transfer') {
+        if(testCase.op === 'transfer') {
           const bobBalanceBeforeOp = await nested.getBalance({Substrate: bob.address});
 
           await nested.transferFrom(unnester, targetNft.nestingAccount(), {Substrate: bob.address}, amount);
           expect(await nested.getBalance({Substrate: bob.address})).to.be.equal(bobBalanceBeforeOp + amount);
         } else {
-          if (nested instanceof UniqueFTCollection) {
+          if(nested instanceof UniqueFTCollection) {
             await nested.burnTokensFrom(unnester, targetNft.nestingAccount(), amount);
           } else {
             await nested.burnFrom(unnester, targetNft.nestingAccount(), amount);
@@ -260,7 +274,7 @@ describe('Integration Test: Unnesting', () => {
         tokenId: nested.tokenId,
       }]);
 
-      if (testCase.op === 'transfer') {
+      if(testCase.op === 'transfer') {
         await nested.transferFrom(unnester, targetNft.nestingAccount(), {Substrate: bob.address});
       } else {
         await nested.burnFrom(unnester, targetNft.nestingAccount());

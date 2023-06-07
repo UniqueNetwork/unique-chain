@@ -178,7 +178,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
   itEth.skip('Can perform mintBulk()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(donor, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
 
-    const caller = await helper.eth.createAccountWithBalance(donor, 30n);
+    const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);

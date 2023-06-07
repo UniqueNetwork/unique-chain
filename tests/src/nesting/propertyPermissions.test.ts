@@ -110,7 +110,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
 
   async function testPreventFromAddingTooManyPossibleProperties(collection: UniqueNFTCollection | UniqueRFTCollection) {
     const constitution = [];
-    for (let i = 0; i < 65; i++) {
+    for(let i = 0; i < 65; i++) {
       constitution.push({
         key: 'property_' + i,
         permission: Math.random() > 0.5 ? {mutable: true, collectionAdmin: true, tokenOwner: true} : {},
@@ -160,7 +160,7 @@ describe('Negative Integration Test: Access Rights to Token Properties', () => {
       [{key: 'HÆMILTON', permission: {mutable: false, collectionAdmin: true, tokenOwner: true}}],
     ];
 
-    for (let i = 0; i < invalidProperties.length; i++) {
+    for(let i = 0; i < invalidProperties.length; i++) {
       await expect(
         collection.setTokenPropertyPermissions(alice, invalidProperties[i]),
         `on setting the new badly-named property #${i}`,

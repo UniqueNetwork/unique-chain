@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, usingPlaygrounds} from '../../util';
 
-describe('Collection admin', () => {
+describe('Nesting by collection admin', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
@@ -84,4 +84,3 @@ describe('Collection admin', () => {
     expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
   });
 });
-

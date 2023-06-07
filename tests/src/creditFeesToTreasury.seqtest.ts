@@ -32,7 +32,7 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
     const blockInterval = api.consts.inflation.inflationBlockInterval.toNumber();
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
-      if (currentBlock % blockInterval < blockInterval - 10) {
+      if(currentBlock % blockInterval < blockInterval - 10) {
         unsubscribe();
         resolve();
       } else {
@@ -95,7 +95,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
-    await expect(helper.signTransaction(bob, api.tx.balances.setBalance(alice.address, 0, 0))).to.be.rejected;
+    await expect(helper.signTransaction(bob, api.tx.balances.forceSetBalance(alice.address, 0))).to.be.rejected;
 
     const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);

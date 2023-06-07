@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub} from './util';
-import {ICollectionPermissions} from './util/playgrounds/types';
+import {ICollectionPermissions, NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test ext. Allow list tests', () => {
   let alice: IKeyringPair;
@@ -60,7 +60,7 @@ describe('Integration Test ext. Allow list tests', () => {
 
   describe('Negative', () => {
     itSub('Nobody can add address to allow list of non-existing collection', async ({helper}) => {
-      const collectionId = (1<<32) - 1;
+      const collectionId = NON_EXISTENT_COLLECTION_ID;
       await expect(helper.nft.addToAllowList(bob, collectionId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.CollectionNotFound/);
     });
@@ -140,7 +140,7 @@ describe('Integration Test ext. Remove from Allow List', () => {
     });
 
     itSub('Nobody can remove address from allow list of non-existing collection', async ({helper}) => {
-      const collectionId = (1<<32) - 1;
+      const collectionId = NON_EXISTENT_COLLECTION_ID;
       await expect(helper.collection.removeFromAllowList(bob, collectionId, {Substrate: charlie.address}))
         .to.be.rejectedWith(/common\.CollectionNotFound/);
     });
@@ -315,7 +315,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
         await collection.setPermissions(alice, permissions);
         await collection.addToAllowList(alice, {Substrate: bob.address});
 
-        if (allowlistedMintingShouldFail)
+        if(allowlistedMintingShouldFail)
           await expect(collection.mintToken(bob, {Substrate: bob.address})).to.be.rejectedWith(appropriateRejectionMessage);
         else
           await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
@@ -338,7 +338,7 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
           await expect(collection.mintToken(bob, {Substrate: bob.address})).to.not.be.rejected;
         });
 
-        if (!allowlistedMintingShouldFail) allowlistedMintingTest();
+        if(!allowlistedMintingShouldFail) allowlistedMintingTest();
       });
 
       describe('Negative', () => {
@@ -349,12 +349,12 @@ describe('Integration Test ext. Mint if included in Allow List', () => {
             .to.be.rejectedWith(appropriateRejectionMessage);
         });
 
-        if (allowlistedMintingShouldFail) allowlistedMintingTest();
+        if(allowlistedMintingShouldFail) allowlistedMintingTest();
       });
     });
   };
 
-  for (const permissions of permissionSet) {
+  for(const permissions of permissionSet) {
     testPermissionSuite(permissions);
   }
 });

@@ -58,8 +58,8 @@ describe('Fungible: Plain calls', () => {
 
       // 3. Get balance depending on the test case:
       let balance;
-      if (testCase === 'ethereum') balance = await collection.getBalance({Ethereum: receiverEth});
-      else if (testCase === 'substrate') balance = await collection.getBalance({Substrate: receiverSub.address});
+      if(testCase === 'ethereum') balance = await collection.getBalance({Ethereum: receiverEth});
+      else if(testCase === 'substrate') balance = await collection.getBalance({Substrate: receiverSub.address});
       // 3.1 Check balance:
       expect(balance).to.eq(100n);
     });
@@ -79,7 +79,7 @@ describe('Fungible: Plain calls', () => {
       [receivers[i], (i + 1) * 10]
     ))).send();
     const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.value - b.returnValues.value);
-    for (let i = 0; i < bulkSize; i++) {
+    for(let i = 0; i < bulkSize; i++) {
       const event = events[i];
       expect(event.address).to.equal(collectionAddress);
       expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
@@ -205,7 +205,7 @@ describe('Fungible: Plain calls', () => {
 
 
   itEth('Can perform burnFromCross()', async ({helper}) => {
-    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const sender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
@@ -382,7 +382,7 @@ describe('Fungible: Plain calls', () => {
   });
 
   itEth('Can perform transferFromCross()', async ({helper}) => {
-    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const sender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 
@@ -535,7 +535,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.approveTokens(alice, {Ethereum: receiver}, 100n);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Approval');
@@ -561,7 +561,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver}, 51n);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     let event = events[0];
 
     expect(event.event).to.be.equal('Transfer');
@@ -592,7 +592,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.transfer(alice, {Ethereum:receiver}, 51n);
-    if (events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(1);
     const event = events[0];
 
     expect(event.event).to.be.equal('Transfer');
@@ -603,7 +603,7 @@ describe('Fungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transferFromCross()', async ({helper}) => {
-    const sender = await helper.eth.createAccountWithBalance(donor, 100n);
+    const sender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.ft.mintCollection(owner, {name: 'A', description: 'B', tokenPrefix: 'C'}, 0);
 

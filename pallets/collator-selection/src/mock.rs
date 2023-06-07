@@ -102,6 +102,8 @@ impl system::Config for Test {
 parameter_types! {
 	pub const ExistentialDeposit: u64 = 5;
 	pub const MaxReserves: u32 = 50;
+	pub const MaxHolds: u32 = 2;
+	pub const MaxFreezes: u32 = 2;
 }
 
 impl pallet_balances::Config for Test {
@@ -114,6 +116,10 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
+	type HoldIdentifier = [u8; 16];
+	type FreezeIdentifier = [u8; 16];
+	type MaxHolds = MaxHolds;
+	type MaxFreezes = MaxFreezes;
 }
 
 pub struct Author4;
@@ -209,6 +215,7 @@ parameter_types! {
 	pub const MaxXcmAllowedLocations: u32 = 16;
 	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
 	pub const DayRelayBlocks: u32 = 1;
+	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
 }
 
 impl pallet_configuration::Config for Test {
@@ -257,6 +264,7 @@ impl Config for Test {
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	type ValidatorIdOf = IdentityCollator;
 	type ValidatorRegistration = IsRegistered;
+	type LicenceBondIdentifier = LicenceBondIdentifier;
 	type WeightInfo = ();
 }
 
@@ -267,7 +275,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		.unwrap();
 	let invulnerables = vec![1, 2];
 
-	let balances = vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100)];
+	let ed = <Test as pallet_balances::Config>::ExistentialDeposit::get();
+
+	let balances = vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (33, ed)];
 	let keys = balances
 		.iter()
 		.map(|&(i, _)| {

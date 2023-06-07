@@ -40,7 +40,11 @@ use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whiteli
 use frame_support::{
 	assert_ok,
 	codec::Decode,
-	traits::{Currency, EnsureOrigin, Get},
+	traits::{
+		EnsureOrigin,
+		fungible::{Inspect, Mutate},
+		Get,
+	},
 };
 use frame_system::{EventRecord, RawOrigin};
 use pallet_authorship::EventHandler;
@@ -78,7 +82,7 @@ fn create_funded_user<T: Config>(
 ) -> T::AccountId {
 	let user = account(string, n, SEED);
 	let balance = balance_unit::<T>() * balance_factor.into();
-	let _ = T::Currency::make_free_balance_be(&user, balance);
+	let _ = T::Currency::set_balance(&user, balance);
 	user
 }
 
@@ -137,7 +141,7 @@ fn register_candidates<T: Config + configuration::Config>(count: u32) {
 	);
 
 	for who in candidates {
-		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
+		T::Currency::set_balance(&who, <LicenseBond<T>>::get() * 2u32.into());
 		<CollatorSelection<T>>::get_license(RawOrigin::Signed(who.clone()).into()).unwrap();
 		<CollatorSelection<T>>::onboard(RawOrigin::Signed(who).into()).unwrap();
 	}
@@ -153,14 +157,14 @@ fn get_licenses<T: Config + configuration::Config>(count: u32) {
 	);
 
 	for who in candidates {
-		T::Currency::make_free_balance_be(&who, <LicenseBond<T>>::get() * 2u32.into());
+		T::Currency::set_balance(&who, <LicenseBond<T>>::get() * 2u32.into());
 		<CollatorSelection<T>>::get_license(RawOrigin::Signed(who.clone()).into()).unwrap();
 	}
 }
 
 /// `Currency::minimum_balance` was used originally, but in unique-chain, we have
 /// zero existential deposit, thus triggering zero bond assertion.
-fn balance_unit<T: Config>() -> <T::Currency as Currency<T::AccountId>>::Balance {
+fn balance_unit<T: Config>() -> BalanceOf<T> {
 	200u32.into()
 }
 
@@ -168,7 +172,9 @@ fn balance_unit<T: Config>() -> <T::Currency as Currency<T::AccountId>>::Balance
 const INITIAL_INVULNERABLES: u32 = 2;
 
 benchmarks! {
-	where_clause { where T: pallet_authorship::Config + session::Config + configuration::Config }
+	where_clause { where
+		T: pallet_authorship::Config + session::Config + configuration::Config
+	}
 
 	// todo:collator this and all the following do not work for some reason, going all the way up to 10 in length
 	// Both invulnerables and candidates count together against MaxCollators.
@@ -182,7 +188,7 @@ benchmarks! {
 
 		let new_invulnerable: T::AccountId = whitelisted_caller();
 		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
-		T::Currency::make_free_balance_be(&new_invulnerable, bond.clone());
+		T::Currency::set_balance(&new_invulnerable, bond.clone());
 
 		<session::Pallet<T>>::set_keys(
 			RawOrigin::Signed(new_invulnerable.clone()).into(),
@@ -227,7 +233,7 @@ benchmarks! {
 
 		let caller: T::AccountId = whitelisted_caller();
 		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
-		T::Currency::make_free_balance_be(&caller, bond.clone());
+		T::Currency::set_balance(&caller, bond.clone());
 
 		<session::Pallet<T>>::set_keys(
 			RawOrigin::Signed(caller.clone()).into(),
@@ -253,7 +259,7 @@ benchmarks! {
 
 		let caller: T::AccountId = whitelisted_caller();
 		let bond: BalanceOf<T> = balance_unit::<T>() * 2u32.into();
-		T::Currency::make_free_balance_be(&caller, bond.clone());
+		T::Currency::set_balance(&caller, bond.clone());
 
 		let origin = RawOrigin::Signed(caller.clone());
 
@@ -329,7 +335,7 @@ benchmarks! {
 	// worst case is paying a non-existing candidate account.
 	note_author {
 		<LicenseBond<T>>::put(balance_unit::<T>());
-		T::Currency::make_free_balance_be(
+		T::Currency::set_balance(
 			&<CollatorSelection<T>>::account_id(),
 			balance_unit::<T>() * 4u32.into(),
 		);
@@ -337,11 +343,11 @@ benchmarks! {
 		let new_block: T::BlockNumber = 10u32.into();
 
 		frame_system::Pallet::<T>::set_block_number(new_block);
-		assert!(T::Currency::free_balance(&author) == 0u32.into());
+		assert!(T::Currency::balance(&author) == 0u32.into());
 	}: {
 		<CollatorSelection<T> as EventHandler<_, _>>::note_author(author.clone())
 	} verify {
-		assert!(T::Currency::free_balance(&author) > 0u32.into());
+		assert!(T::Currency::balance(&author) > 0u32.into());
 		assert_eq!(frame_system::Pallet::<T>::block_number(), new_block);
 	}
 

@@ -16,6 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, expect} from './util';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
 
 describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {
   let donor: IKeyringPair;
@@ -82,7 +83,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
 
   itSub("Can't add collection admin of not existing collection.", async ({helper}) => {
     const [alice, bob] = await helper.arrange.createAccounts([10n, 10n, 10n], donor);
-    const collectionId = (1 << 32) - 1;
+    const collectionId = NON_EXISTENT_COLLECTION_ID;
 
     await expect(helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address})).to.be.rejectedWith(/common\.CollectionNotFound/);
 
@@ -108,7 +109,7 @@ describe('Negative Integration Test addCollectionAdmin(collection_id, new_admin_
     const chainAdminLimit = (helper.getApi().consts.common.collectionAdminsLimit as any).toNumber();
     expect(chainAdminLimit).to.be.equal(5);
 
-    for (let i = 0; i < chainAdminLimit; i++) {
+    for(let i = 0; i < chainAdminLimit; i++) {
       await collection.addAdmin(alice, {Substrate: accounts[i].address});
       const adminListAfterAddAdmin = await collection.getAdmins();
       expect(adminListAfterAddAdmin).to.be.deep.contains({Substrate: accounts[i].address});

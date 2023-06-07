@@ -17,8 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {itEth, expect, usingEthPlaygrounds} from './util';
 
-const getContractSource = (collectionAddress: string, contractAddress: string): string => {
-  return `
+const getContractSource = (collectionAddress: string, contractAddress: string): string => `
   // SPDX-License-Identifier: MIT
   pragma solidity ^0.8.0;
   interface ITest {
@@ -51,7 +50,6 @@ const getContractSource = (collectionAddress: string, contractAddress: string): 
     }
   }
   `;
-};
 
 
 describe('Evm Coder tests', () => {
