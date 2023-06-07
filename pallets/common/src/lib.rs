@@ -2395,7 +2395,7 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 
 #[cfg(feature = "tests")]
 pub mod tests {
-	use crate::{DispatchResult, DispatchError, CheckTokenPermissionsFlags};
+	use crate::{DispatchResult, DispatchError, CheckTokenPermissionsFlags, LazyValue, Config};
 
 	#[rustfmt::skip]
 	pub const table: [[u8; 8]; 128] = [
@@ -2537,15 +2537,18 @@ pub mod tests {
 		/*127*/ [1, 1, 1,  1, 1,  1, 1,  0],
 	];
 
-	pub fn check_token_permissions<T: crate::Config>(
+	pub fn check_token_permissions<T, FTO, FTE>(
 		check_token_permission_flags: CheckTokenPermissionsFlags,
-		token_ownership_aqcuired: &mut bool,
-		check_token_ownership: &mut impl FnMut(&mut bool) -> Result<bool, DispatchError>,
-		check_token_existence: &mut impl FnMut() -> bool,
-	) -> DispatchResult {
-		crate::check_token_permissions::<T>(
+		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
+		check_token_existence: &mut LazyValue<bool, FTE>,
+	) -> DispatchResult
+	where
+		T: Config,
+		FTO: FnOnce() -> Result<bool, DispatchError>,
+		FTE: FnOnce() -> bool,
+	{
+		crate::check_token_permissions::<T, FTO, FTE>(
 			check_token_permission_flags,
-			token_ownership_aqcuired,
 			check_token_ownership,
 			check_token_existence,
 		)

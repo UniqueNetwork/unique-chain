@@ -2618,16 +2618,18 @@ fn collection_sponsoring() {
 
 mod check_token_permissions {
 	use super::*;
+	use frame_support::once_cell::sync::Lazy;
+	use pallet_common::LazyValue;
+	use sp_runtime::DispatchError;
 
 	fn to_bool(u: u8) -> bool {
 		u != 0
 	}
 
-	fn test(
+	fn test<FTE: FnOnce() -> bool>(
 		i: usize,
 		row: &[u8; 8],
-		token_ownership_aqcuired: &mut bool,
-		mut check_token_existence: impl FnMut() -> bool,
+		check_token_existence: &mut LazyValue<bool, FTE>,
 	) {
 		let is_token_being_created = to_bool(row[0]);
 		let self_mint = to_bool(row[1]);
@@ -2635,10 +2637,10 @@ mod check_token_permissions {
 		let collection_admin_permitted = to_bool(row[3]);
 		let is_collection_admin = to_bool(row[4]);
 		let token_owner_permitted = to_bool(row[5]);
-		let mut check_token_ownership = |_: &mut bool| Ok(to_bool(row[6]));
+		let mut check_token_ownership = LazyValue::new(|| Ok(to_bool(row[6])));
 		let is_no_permission = to_bool(row[7]);
 
-		let result = pallet_common::tests::check_token_permissions::<Test>(
+		let result = pallet_common::tests::check_token_permissions::<Test, _, FTE>(
 			pallet_common::CheckTokenPermissionsFlags {
 				is_token_being_created,
 				self_mint,
@@ -2647,43 +2649,36 @@ mod check_token_permissions {
 				is_collection_admin,
 				token_owner_permitted,
 			},
-			token_ownership_aqcuired,
 			&mut check_token_ownership,
-			&mut check_token_existence,
-		);
-		assert_eq!(
-			is_no_permission || !check_token_existence(),
-			result.is_err(),
-			"{i}: {row:?}, token_exist: {}",
-			check_token_existence()
+			check_token_existence,
 		);
 
-		if !is_token_being_created
-			&& !is_no_permission
-			&& !*token_ownership_aqcuired
-			&& !check_token_existence()
-		{
-			assert_eq!(
-				result.unwrap_err(),
-				pallet_common::Error::<Test>::TokenNotFound.into(),
-				"token_exist: {}",
-				check_token_existence()
+		if is_no_permission {
+			assert!(
+				result.is_err(),
+				"{i}: {row:?}, token_exist: {}",
+				check_token_existence.value()
 			);
+			assert_err!(result, pallet_common::Error::<Test>::NoPermission,);
+		} else if !is_token_being_created
+			&& check_token_existence.has_value()
+			&& !check_token_existence.value()
+		{
+			assert!(
+				result.is_err(),
+				"{i}: {row:?}, token_exist: {}",
+				check_token_existence.value()
+			);
+			assert_err!(result, pallet_common::Error::<Test>::TokenNotFound,);
 		}
 	}
 
 	#[test]
 	fn no_permission_only() {
 		new_test_ext().execute_with(|| {
-			let mut token_ownership_aqcuired = false;
-			let mut check_token_existence = || true;
+			let mut check_token_existence = LazyValue::new(|| true);
 			for (i, row) in pallet_common::tests::table.iter().enumerate() {
-				test(
-					i,
-					row,
-					&mut token_ownership_aqcuired,
-					&mut check_token_existence,
-				);
+				test(i, row, &mut check_token_existence);
 			}
 		});
 	}
@@ -2691,15 +2686,9 @@ mod check_token_permissions {
 	#[test]
 	fn no_permission_and_token_not_found() {
 		new_test_ext().execute_with(|| {
-			let mut token_ownership_aqcuired = false;
-			let mut check_token_existence = || false;
 			for (i, row) in pallet_common::tests::table.iter().enumerate() {
-				test(
-					i,
-					row,
-					&mut token_ownership_aqcuired,
-					&mut check_token_existence,
-				);
+				let mut check_token_existence = LazyValue::new(|| false);
+				test(i, row, &mut check_token_existence);
 			}
 		});
 	}
