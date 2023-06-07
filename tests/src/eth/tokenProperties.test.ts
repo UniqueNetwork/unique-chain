@@ -29,7 +29,7 @@ describe('EVM token properties', () => {
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([100n], donor);
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 
@@ -241,10 +241,10 @@ describe('EVM token properties', () => {
     itEth.ifWithPallets(`Can be multiple set/read for ${testCase.mode}`, testCase.requiredPallets, async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
-      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
+      const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
+      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {tokenOwner: true,
         collectionAdmin: true,
-        mutable: true}}; });
+        mutable: true}}));
 
       const collection = await helper[testCase.mode].mintCollection(alice, {
         tokenPrefix: 'ethp',
@@ -267,10 +267,10 @@ describe('EVM token properties', () => {
       await contract.methods.setProperties(token.tokenId, properties).send({from: caller});
 
       const values = await token.getProperties(properties.map(p => p.key));
-      expect(values).to.be.deep.equal(properties.map(p => { return {key: p.key, value: p.value.toString()}; }));
+      expect(values).to.be.deep.equal(properties.map(p => ({key: p.key, value: p.value.toString()})));
 
       expect(await contract.methods.properties(token.tokenId, []).call()).to.be.like(properties
-        .map(p => { return helper.ethProperty.property(p.key, p.value.toString()); }));
+        .map(p => helper.ethProperty.property(p.key, p.value.toString())));
 
       expect(await contract.methods.properties(token.tokenId, [properties[0].key]).call())
         .to.be.like([helper.ethProperty.property(properties[0].key, properties[0].value.toString())]);

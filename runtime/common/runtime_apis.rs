@@ -17,7 +17,7 @@
 #[macro_export]
 macro_rules! dispatch_unique_runtime {
 	($collection:ident.$method:ident($($name:ident),*) $($rest:tt)*) => {{
-		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch(<pallet_common::CollectionHandle<Runtime>>::try_get($collection)?);
+		let collection = <Runtime as pallet_common::Config>::CollectionDispatch::dispatch($collection)?;
 		let dispatch = collection.as_dyn();
 
 		Ok::<_, DispatchError>(dispatch.$method($($name),*) $($rest)*)
@@ -35,7 +35,7 @@ macro_rules! impl_common_runtime_apis {
     ) => {
         use sp_std::prelude::*;
         use sp_api::impl_runtime_apis;
-        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160, Bytes};
+        use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
         use sp_runtime::{
             Permill,
             traits::Block as BlockT,
@@ -84,7 +84,7 @@ macro_rules! impl_common_runtime_apis {
                 fn topmost_token_owner(collection: CollectionId, token: TokenId) -> Result<Option<CrossAccountId>, DispatchError> {
                     let budget = up_data_structs::budget::Value::new(10);
 
-                    Ok(<pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)?)
+                    <pallet_structure::Pallet<Runtime>>::find_topmost_owner(collection, token, &budget)
                 }
                 fn token_children(collection: CollectionId, token: TokenId) -> Result<Vec<TokenChild>, DispatchError> {
                     Ok(<pallet_nonfungible::Pallet<Runtime>>::token_children_ids(collection, token))
@@ -250,6 +250,14 @@ macro_rules! impl_common_runtime_apis {
                 fn metadata() -> OpaqueMetadata {
                     OpaqueMetadata::new(Runtime::metadata().into())
                 }
+
+                fn metadata_at_version(version: u32) -> Option<OpaqueMetadata> {
+                    Runtime::metadata_at_version(version)
+                }
+
+                fn metadata_versions() -> sp_std::vec::Vec<u32> {
+                    Runtime::metadata_versions()
+                }
             }
 
             impl sp_block_builder::BlockBuilder<Block> for Runtime {
@@ -311,7 +319,7 @@ macro_rules! impl_common_runtime_apis {
                 fn account_code_at(address: H160) -> Vec<u8> {
                     use pallet_evm::OnMethodCall;
                     <Runtime as pallet_evm::Config>::OnMethodCall::get_code(&address)
-                        .unwrap_or_else(|| EVM::account_codes(address))
+                        .unwrap_or_else(|| pallet_evm::AccountCodes::<Runtime>::get(address))
                 }
 
                 fn author() -> H160 {
@@ -321,7 +329,7 @@ macro_rules! impl_common_runtime_apis {
                 fn storage_at(address: H160, index: U256) -> H256 {
                     let mut tmp = [0u8; 32];
                     index.to_big_endian(&mut tmp);
-                    EVM::account_storages(address, H256::from_slice(&tmp[..]))
+                    pallet_evm::AccountStorages::<Runtime>::get(address, H256::from_slice(&tmp[..]))
                 }
 
                 #[allow(clippy::redundant_closure)]
@@ -401,15 +409,15 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn current_transaction_statuses() -> Option<Vec<TransactionStatus>> {
-                    Ethereum::current_transaction_statuses()
+                    pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
                 }
 
                 fn current_block() -> Option<pallet_ethereum::Block> {
-                    Ethereum::current_block()
+                    pallet_ethereum::CurrentBlock::<Runtime>::get()
                 }
 
                 fn current_receipts() -> Option<Vec<pallet_ethereum::Receipt>> {
-                    Ethereum::current_receipts()
+                    pallet_ethereum::CurrentReceipts::<Runtime>::get()
                 }
 
                 fn current_all() -> (
@@ -418,9 +426,9 @@ macro_rules! impl_common_runtime_apis {
                     Option<Vec<TransactionStatus>>
                 ) {
                     (
-                        Ethereum::current_block(),
-                        Ethereum::current_receipts(),
-                        Ethereum::current_transaction_statuses()
+                        pallet_ethereum::CurrentBlock::<Runtime>::get(),
+                        pallet_ethereum::CurrentReceipts::<Runtime>::get(),
+                        pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
                     )
                 }
 
@@ -653,12 +661,12 @@ macro_rules! impl_common_runtime_apis {
 
             impl up_pov_estimate_rpc::PovEstimateApi<Block> for Runtime {
                 #[allow(unused_variables)]
-                fn pov_estimate(uxt: Bytes) -> ApplyExtrinsicResult {
+                fn pov_estimate(uxt: Vec<u8>) -> ApplyExtrinsicResult {
                     #[cfg(feature = "pov-estimate")]
                     {
                         use codec::Decode;
 
-                        let uxt_decode = <<Block as BlockT>::Extrinsic as Decode>::decode(&mut &*uxt)
+                        let uxt_decode = <<Block as BlockT>::Extrinsic as Decode>::decode(&mut &uxt)
                             .map_err(|_| DispatchError::Other("failed to decode the extrinsic"));
 
                         let uxt = match uxt_decode {

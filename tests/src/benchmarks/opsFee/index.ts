@@ -61,8 +61,8 @@ async function erc721CalculateFeeGas(
   const res: IFunctionFee = {};
   const donor = await privateKey('//Alice');
   const [subReceiver] = await helper.arrange.createAccounts([10n], donor);
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
-  const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
+  const ethReceiver = await helper.eth.createAccountWithBalance(donor);
   const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
   const crossReceiver = helper.ethCrossAccount.fromAddress(ethReceiver);
   const collection = (await createCollectionForBenchmarks(
@@ -379,7 +379,7 @@ async function erc721CalculateFeeGas(
   res['setCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     () => collection.setProperties(donor, PROPERTIES.slice(0, 1)
-      .map(p => { return {key: p.key, value: p.value.toString()}; })),
+      .map(p => ({key: p.key, value: p.value.toString()}))),
   )));
 
   res['deleteCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -521,8 +521,8 @@ async function erc20CalculateFeeGas(
   const res: IFunctionFee = {};
   const donor = await privateKey('//Alice');
   const [subReceiver] = await helper.arrange.createAccounts([10n], donor);
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
-  const ethReceiver = await helper.eth.createAccountWithBalance(donor, 10n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
+  const ethReceiver = await helper.eth.createAccountWithBalance(donor);
   const crossSigner = helper.ethCrossAccount.fromAddress(ethSigner);
   const crossReceiver = helper.ethCrossAccount.fromAddress(ethReceiver);
   const collection = (await createCollectionForBenchmarks(
@@ -755,7 +755,7 @@ async function erc20CalculateFeeGas(
   res['setCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     () => collection.setProperties(donor, PROPERTIES.slice(0, 1)
-      .map(p => { return {key: p.key, value: p.value.toString()}; })),
+      .map(p => ({key: p.key, value: p.value.toString()}))),
   )));
 
   res['deleteCollectionProperties'].substrate = convertToTokens((await helper.arrange.calculcateFee(

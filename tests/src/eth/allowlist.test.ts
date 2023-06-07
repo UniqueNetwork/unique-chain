@@ -130,7 +130,7 @@ describe('EVM collection allowlist', () => {
       await collectionEvm.methods.transfer(owner, 1).send({from: userEth});
       await collectionEvm.methods.transferCross(userCrossSub, 2).send({from: userEth});
 
-      if (testCase.mode === 'ft') {
+      if(testCase.mode === 'ft') {
         expect(await helper.ft.getBalance(collectionId, {Ethereum: owner})).to.eq(1n);
         expect(await helper.ft.getBalance(collectionId, {Substrate: userSub.address})).to.eq(2n);
       } else {
@@ -188,14 +188,14 @@ describe('EVM collection allowlist', () => {
       // 1.1 plain ethereum or cross address:
       await expect(collectionEvm.methods[addToAllowList](testCase.cross ? userCrossEth : userEth).call({from: notOwner})).to.be.rejectedWith('NoPermission');
       // 1.2 cross-substrate address:
-      if (testCase.cross)
+      if(testCase.cross)
         await expect(collectionEvm.methods[addToAllowList](userCrossSub).call({from: notOwner})).to.be.rejectedWith('NoPermission');
 
       // 2. owner can add to allow list:
       // 2.1 plain ethereum or cross address:
       await collectionEvm.methods[addToAllowList](testCase.cross ? userCrossEth : userEth).send({from: owner});
       // 2.2 cross-substrate address:
-      if (testCase.cross) {
+      if(testCase.cross) {
         await collectionEvm.methods[addToAllowList](userCrossSub).send({from: owner});
         expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.true;
       }
@@ -205,7 +205,7 @@ describe('EVM collection allowlist', () => {
       // 3.1 plain ethereum or cross address:
       await expect(collectionEvm.methods[removeFromAllowList](testCase.cross ? userCrossEth : userEth).call({from: notOwner})).to.be.rejectedWith('NoPermission');
       // 3.2 cross-substrate address:
-      if (testCase.cross)
+      if(testCase.cross)
         await expect(collectionEvm.methods[removeFromAllowList](userCrossSub).call({from: notOwner})).to.be.rejectedWith('NoPermission');
     }));
 });

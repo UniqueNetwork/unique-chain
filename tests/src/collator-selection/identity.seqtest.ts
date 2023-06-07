@@ -41,7 +41,7 @@ describe('Integration Test: Identities Manipulation', () => {
   let superuser: IKeyringPair;
 
   before(async function() {
-    if (!process.env.RUN_COLLATOR_TESTS) this.skip();
+    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
 
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Identity]);
@@ -51,7 +51,7 @@ describe('Integration Test: Identities Manipulation', () => {
 
   itSub('Normal calls do not work', async ({helper}) => {
     // console.error = () => {};
-    await expect(helper.executeExtrinsic(superuser, 'api.tx.identity.setIdentity', [{info: {display: {Raw: 'Meowser'}}}]))
+    await expect(helper.executeExtrinsic(superuser, 'api.tx.identity.setIdentity', [{info: {display: {Raw: 'Meowser'}}}] as any))
       .to.be.rejectedWith(/Transaction call is not expected/);
   });
 
@@ -62,7 +62,7 @@ describe('Integration Test: Identities Manipulation', () => {
       const crowdSize = 10;
       const crowd = await helper.arrange.createCrowd(crowdSize, 0n, superuser);
       const identities = crowd.map((acc, i) => [acc.address, {info: {display: {Raw: `accounter #${i}`}}}]);
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities] as any);
 
       expect((await getIdentityAccounts(helper)).length).to.be.equal(oldIdentitiesCount + crowdSize);
     });
@@ -73,14 +73,14 @@ describe('Integration Test: Identities Manipulation', () => {
 
       // insert a single identity
       let singleIdentity = identities.pop()!;
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [[singleIdentity]]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [[singleIdentity]] as any);
 
       const oldIdentitiesCount = (await getIdentityAccounts(helper)).length;
 
       // change an identity and push it with a few new others
       singleIdentity = [singleIdentity[0], {info: {display: {Raw: 'something special'}}}];
       identities.push(singleIdentity);
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities] as any);
 
       // oldIdentitiesCount + 9 because one identity is overwritten, not inserted on top
       expect((await getIdentityAccounts(helper)).length).to.be.equal(oldIdentitiesCount + 9);
@@ -91,7 +91,7 @@ describe('Integration Test: Identities Manipulation', () => {
     itSub('Removes identities', async ({helper}) => {
       const crowd = await helper.arrange.createCrowd(10, 0n, superuser);
       const identities = crowd.map((acc, i) => [acc.address, {info: {display: {Raw: `accounter #${i}`}}}]);
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities] as any);
       const oldIdentities = await getIdentityAccounts(helper);
 
       // delete a couple, check that they are no longer there
@@ -124,9 +124,9 @@ describe('Integration Test: Identities Manipulation', () => {
           ]),
         ],
       ]);
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo] as any);
 
-      for (let i = 0; i < supers.length; i++) {
+      for(let i = 0; i < supers.length; i++) {
         // check deposit
         expect(((await helper.getApi().query.identity.subsOf(supers[i].address)).toJSON() as any)[0]).to.be.equal(1000001 + i);
 
@@ -134,7 +134,7 @@ describe('Integration Test: Identities Manipulation', () => {
         // check sub-identities as account ids
         expect(subsAccounts).to.include.members(subs[i].map(x => x.address));
 
-        for (let j = 0; j < subsAccounts.length; j++) {
+        for(let j = 0; j < subsAccounts.length; j++) {
           // check sub-identities' names
           expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `accounter #${j}`});
         }
@@ -162,7 +162,7 @@ describe('Integration Test: Identities Manipulation', () => {
           ]),
         ],
       ]);
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo1]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo1] as any);
 
       // change some sub-identities...
       subs[2].pop(); subs[2].pop(); subs[2].push(...await helper.arrange.createAccounts([0n], superuser));
@@ -176,10 +176,10 @@ describe('Integration Test: Identities Manipulation', () => {
           ]),
         ],
       ]];
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2] as any);
 
       // make sure everything else is the same
-      for (let i = 0; i < supers.length - 1; i++) {
+      for(let i = 0; i < supers.length - 1; i++) {
         // check deposit
         expect(((await helper.getApi().query.identity.subsOf(supers[i].address)).toJSON() as any)[0]).to.be.equal(1000001 + i);
 
@@ -187,7 +187,7 @@ describe('Integration Test: Identities Manipulation', () => {
         // check sub-identities as account ids
         expect(subsAccounts).to.include.members(subs[i].map(x => x.address));
 
-        for (let j = 0; j < subsAccounts; j++) {
+        for(let j = 0; j < subsAccounts; j++) {
           // check sub-identities' names
           expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `accounter #${j}`});
         }
@@ -200,7 +200,7 @@ describe('Integration Test: Identities Manipulation', () => {
       // check sub-identities as account ids
       expect(subsAccounts).to.include.members(subs[2].map(x => x.address));
 
-      for (let j = 0; j < subsAccounts.length; j++) {
+      for(let j = 0; j < subsAccounts.length; j++) {
         // check sub-identities' names
         expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `discounter #${j}`});
       }
@@ -219,7 +219,7 @@ describe('Integration Test: Identities Manipulation', () => {
           ]),
         ],
       ]];
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo1]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo1] as any);
 
       // empty sub-identities should delete the records
       const subsInfo2 = [[
@@ -228,12 +228,12 @@ describe('Integration Test: Identities Manipulation', () => {
           [],
         ],
       ]];
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2] as any);
 
       // check deposit
       expect((await helper.getApi().query.identity.subsOf(sup.address)).toHuman()).to.be.deep.equal(['0', []]);
 
-      for (let j = 0; j < crowd.length; j++) {
+      for(let j = 0; j < crowd.length; j++) {
         // check sub-identities' names
         expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
       }
@@ -245,7 +245,7 @@ describe('Integration Test: Identities Manipulation', () => {
 
       // insert identity
       const identities = [[sup.address, {info: {display: {Raw: 'mental'}}}]];
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceInsertIdentities', [identities] as any);
 
       // and its sub-identities
       const subsInfo = [[
@@ -256,7 +256,7 @@ describe('Integration Test: Identities Manipulation', () => {
           ]),
         ],
       ]];
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo]);
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo] as any);
 
       // delete top identity
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [[sup.address]]);
@@ -264,7 +264,7 @@ describe('Integration Test: Identities Manipulation', () => {
       // check that sub-identities are deleted
       expect((await helper.getApi().query.identity.subsOf(sup.address)).toHuman()).to.be.deep.equal(['0', []]);
 
-      for (let j = 0; j < crowd.length; j++) {
+      for(let j = 0; j < crowd.length; j++) {
         // check sub-identities' names
         expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
       }
@@ -272,10 +272,10 @@ describe('Integration Test: Identities Manipulation', () => {
   });
 
   after(async function() {
-    if (!process.env.RUN_COLLATOR_TESTS) return;
+    if(!process.env.RUN_COLLATOR_TESTS) return;
 
     await usingPlaygrounds(async helper => {
-      if (helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
+      if(helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
 
       const identitiesToRemove: string[] = await getIdentityAccounts(helper);
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [identitiesToRemove]);

@@ -65,7 +65,7 @@ where
 			return ConvertAssetId::convert_ref(AssetIds::NativeAssetId(NativeCurrency::Here));
 		}
 
-		match XcmForeignAssetIdMapping::<Runtime>::get_currency_id(id.clone()) {
+		match XcmForeignAssetIdMapping::<Runtime>::get_currency_id(*id) {
 			Some(AssetIds::ForeignAssetId(foreign_asset_id)) => {
 				ConvertAssetId::convert_ref(AssetIds::ForeignAssetId(foreign_asset_id))
 			}
@@ -206,9 +206,7 @@ impl Convert<MultiLocation, Option<CurrencyId>> for CurrencyIdConvert {
 			return Some(AssetIds::NativeAssetId(NativeCurrency::Parent));
 		}
 
-		if let Some(currency_id) =
-			XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location.clone())
-		{
+		if let Some(currency_id) = XcmForeignAssetIdMapping::<Runtime>::get_currency_id(location) {
 			return Some(currency_id);
 		}
 

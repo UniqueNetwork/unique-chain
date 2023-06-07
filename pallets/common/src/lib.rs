@@ -64,11 +64,14 @@ use evm_coder::ToLog;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure,
-	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
+	traits::{
+		Get,
+		fungible::{Balanced, Debt, Inspect},
+		tokens::{Imbalance, Precision, Preservation},
+	},
 	dispatch::Pays,
 	transactional, fail,
 };
-use pallet_evm::GasWeightMapping;
 use up_data_structs::{
 	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
 	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
@@ -85,7 +88,7 @@ use up_pov_estimate_rpc::PovInfo;
 
 pub use pallet::*;
 use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, traits::Zero};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -101,7 +104,7 @@ pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 /// Collection handle contains information about collection data and id.
 /// Also provides functionality to count consumed gas.
 ///
-/// CollectionHandle is used as a generic wrapper for collections of all types.
+/// CollectionHandle is used as a generic wrapper for collections of all types (except native fungible).
 /// It allows to perform common operations and queries on any collection type,
 /// both completely general for all, as well as their respective implementations of [`CommonCollectionOperations`].
 #[must_use = "Should call submit_logs or save, otherwise some data will be lost for evm side"]
@@ -125,11 +128,7 @@ impl<T: Config> WithRecorder<T> for CollectionHandle<T> {
 impl<T: Config> CollectionHandle<T> {
 	/// Same as [CollectionHandle::new] but with an explicit gas limit.
 	pub fn new_with_gas_limit(id: CollectionId, gas_limit: u64) -> Option<Self> {
-		<CollectionById<T>>::get(id).map(|collection| Self {
-			id,
-			collection,
-			recorder: SubstrateRecorder::new(gas_limit),
-		})
+		Self::new_with_recorder(id, SubstrateRecorder::new(gas_limit))
 	}
 
 	/// Same as [CollectionHandle::new] but with an existed [`SubstrateRecorder`].
@@ -157,14 +156,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		reads: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				<T as frame_system::Config>::DbWeight::get()
-					.read
-					.saturating_mul(reads),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder().consume_store_reads(reads)
 	}
 
 	/// Consume gas for writing.
@@ -172,14 +164,7 @@ impl<T: Config> CollectionHandle<T> {
 		&self,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				<T as frame_system::Config>::DbWeight::get()
-					.write
-					.saturating_mul(writes),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder().consume_store_writes(writes)
 	}
 
 	/// Consume gas for reading and writing.
@@ -188,15 +173,8 @@ impl<T: Config> CollectionHandle<T> {
 		reads: u64,
 		writes: u64,
 	) -> pallet_evm_coder_substrate::execution::Result<()> {
-		let weight = <T as frame_system::Config>::DbWeight::get();
-		let reads = weight.read.saturating_mul(reads);
-		let writes = weight.read.saturating_mul(writes);
-		self.recorder
-			.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
-				reads.saturating_add(writes),
-				// TODO: measure proof
-				0,
-			)))
+		self.recorder()
+			.consume_store_reads_and_writes(reads, writes)
 	}
 
 	/// Save collection to storage.
@@ -420,12 +398,10 @@ impl<T: Config> CollectionHandle<T> {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::marker::PhantomData;
 
 	use super::*;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
 	use weights::WeightInfo;
@@ -441,12 +417,12 @@ pub mod pallet {
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Handler of accounts and payment.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Balanced<Self::AccountId> + Inspect<Self::AccountId>;
 
 		/// Set price to create a collection.
 		#[pallet::constant]
 		type CollectionCreationPrice: Get<
-			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
+			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
 		>;
 
 		/// Dispatcher of operations on collections.
@@ -467,6 +443,8 @@ pub mod pallet {
 	}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
+	/// Collection id for native fungible collction.
+	pub const NATIVE_FUNGIBLE_COLLECTION_ID: CollectionId = CollectionId(0);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -1113,21 +1091,17 @@ impl<T: Config> Pallet<T> {
 
 		// Take a (non-refundable) deposit of collection creation
 		{
-			let mut imbalance =
-				<<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
-			imbalance.subsume(
-				<<T as Config>::Currency as Currency<T::AccountId>>::deposit_creating(
-					&T::TreasuryAccountId::get(),
-					T::CollectionCreationPrice::get(),
-				),
-			);
-			<T as Config>::Currency::settle(
-				payer.as_sub(),
-				imbalance,
-				WithdrawReasons::TRANSFER,
-				ExistenceRequirement::KeepAlive,
-			)
-			.map_err(|_| Error::<T>::NotSufficientFounds)?;
+			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+			imbalance.subsume(<T as Config>::Currency::deposit(
+				&T::TreasuryAccountId::get(),
+				T::CollectionCreationPrice::get(),
+				Precision::Exact,
+			)?);
+			let credit =
+				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
+					.map_err(|_| Error::<T>::NotSufficientFounds)?;
+
+			debug_assert!(credit.peek().is_zero())
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);

@@ -4,13 +4,13 @@
   "description": "Unique Chain Tests",
   "main": "",
   "devDependencies": {
-    "@polkadot/typegen": "10.2.1",
+    "@polkadot/typegen": "10.7.2",
     "@types/chai": "^4.3.3",
     "@types/chai-as-promised": "^7.1.5",
     "@types/chai-like": "^1.1.1",
     "@types/chai-subset": "^1.3.3",
     "@types/mocha": "^10.0.0",
-    "@types/node": "^18.11.2",
+    "@types/node": "^20.2.3",
     "@typescript-eslint/eslint-plugin": "^5.47.0",
     "@typescript-eslint/parser": "^5.47.0",
     "chai": "^4.3.6",
@@ -19,7 +19,7 @@
     "eslint-plugin-mocha": "^10.1.0",
     "mocha": "^10.1.0",
     "ts-node": "^10.9.1",
-    "typescript": "^4.8.4"
+    "typescript": "^5.0.4"
   },
   "mocha": {
     "timeout": 9999999,
@@ -39,12 +39,14 @@
     "testParallelFull": "yarn testParallel && yarn testSequential",
     "testParallel": "yarn _testParallel './src/**/*.test.ts'",
     "testSequential": "yarn _test './src/**/*.seqtest.ts'",
-    "testStructure": "yarn setup && yarn _test ./**/nesting/*.*test.ts",
-    "testEth": "yarn setup && yarn _test './**/eth/**/*.*test.ts'",
-    "testEthNesting": "yarn setup && yarn _test './**/eth/nesting/**/*.*test.ts'",
-    "testEthFractionalizer": "yarn setup && yarn _test './**/eth/fractionalizer/**/*.*test.ts'",
-    "testEthMarketplace": "yarn setup && yarn _test './**/eth/marketplace/**/*.*test.ts'",
-    "testEvent": "yarn setup && yarn _test ./src/check-event/*.*test.ts",
+    "testStructure": "yarn _test ./**/nesting/*.*test.ts",
+    "testEth": "yarn _test './**/eth/**/*.*test.ts'",
+    "testEthNesting": "yarn _test './**/eth/nesting/**/*.*test.ts'",
+    "testEthFractionalizer": "yarn _test './**/eth/fractionalizer/**/*.*test.ts'",
+    "testEthMarketplace": "yarn _test './**/eth/marketplace/**/*.*test.ts'",
+    "testSub": "yarn _test './**/sub/**/*.*test.ts'",
+    "testSubNesting": "yarn _test './**/sub/nesting/**/*.*test.ts'",
+    "testEvent": "yarn _test ./src/check-event/*.*test.ts",
     "testEthPayable": "yarn _test './**/eth/payable.test.ts'",
     "testEvmCoder": "yarn _test './**/eth/evmCoder.test.ts'",
     "testNesting": "yarn _test ./**/nest.test.ts",
@@ -123,15 +125,18 @@
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
-    "@polkadot/api": "10.2.1",
-    "@polkadot/util": "11.1.2",
-    "@polkadot/util-crypto": "11.1.2",
+    "@polkadot/api": "10.7.2",
+    "@polkadot/rpc-core": "^10.7.2",
+    "@polkadot/util": "12.2.1",
+    "@polkadot/util-crypto": "12.2.1",
+    "@polkadot/wasm-crypto-asmjs": "^7.2.1",
+    "@polkadot/wasm-crypto-wasm": "^7.2.1",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
     "find-process": "^1.4.7",
     "solc": "0.8.17",
-    "web3": "1.8.2"
+    "web3": "1.10.0"
   },
   "resolutions": {
     "decode-uri-component": "^0.2.1"

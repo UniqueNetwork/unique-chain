@@ -440,6 +440,10 @@ pub mod pallet {
 			collection_id: CollectionId,
 			address: T::CrossAccountId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
+
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			collection.check_is_internal()?;
@@ -467,6 +471,10 @@ pub mod pallet {
 			collection_id: CollectionId,
 			address: T::CrossAccountId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
+
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			collection.check_is_internal()?;
@@ -493,10 +501,13 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_owner: T::AccountId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let new_owner = T::CrossAccountId::from_sub(new_owner);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.change_owner(sender, new_owner.clone())
+			target_collection.change_owner(sender, new_owner)
 		}
 
 		/// Add an admin to a collection.
@@ -522,6 +533,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_admin_id: T::CrossAccountId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &new_admin_id, true)
@@ -548,6 +562,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			account_id: T::CrossAccountId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			<PalletCommon<T>>::toggle_admin(&collection, &sender, &account_id, false)
@@ -573,6 +590,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_sponsor: T::AccountId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.set_sponsor(&sender, new_sponsor.clone())
@@ -597,6 +617,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = ensure_signed(origin)?;
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.confirm_sponsorship(&sender)
@@ -617,6 +640,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.remove_sponsor(&sender)
@@ -641,7 +667,7 @@ pub mod pallet {
 		/// * `owner`: Address of the initial owner of the item.
 		/// * `data`: Token data describing the item to store on chain.
 		#[pallet::call_index(11)]
-		#[pallet::weight(T::CommonWeightInfo::create_item(&data))]
+		#[pallet::weight(T::CommonWeightInfo::create_item(data))]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -675,7 +701,7 @@ pub mod pallet {
 		/// * `owner`: Address of the initial owner of the tokens.
 		/// * `items_data`: Vector of data describing each item to be created.
 		#[pallet::call_index(12)]
-		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(&items_data))]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(items_data))]
 		pub fn create_multiple_items(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -863,7 +889,7 @@ pub mod pallet {
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `data`: Explicit item creation data.
 		#[pallet::call_index(18)]
-		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(&data))]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(data))]
 		pub fn create_multiple_items_ex(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -894,6 +920,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			value: bool,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			target_collection.check_is_internal()?;
@@ -1146,6 +1175,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_limit: CollectionLimits,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			<PalletCommon<T>>::update_limits(&sender, &mut target_collection, new_limit)
@@ -1170,6 +1202,9 @@ pub mod pallet {
 			collection_id: CollectionId,
 			new_permission: CollectionPermissions,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
 			<PalletCommon<T>>::update_permissions(&sender, &mut target_collection, new_permission)
@@ -1238,6 +1273,9 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 		) -> DispatchResult {
+			if collection_id == pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID {
+				fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+			}
 			ensure_root(origin)?;
 			<PalletCommon<T>>::repair_collection(collection_id)
 		}
@@ -1275,7 +1313,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 		) -> DispatchResult {
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.force_set_sponsor(sponsor.clone())
+			target_collection.force_set_sponsor(sponsor)
 		}
 
 		/// Force remove `sponsor` for `collection`.
@@ -1296,10 +1334,7 @@ pub mod pallet {
 			sender: T::CrossAccountId,
 			collection_id: CollectionId,
 		) -> DispatchResult {
-			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
-
-			T::CollectionDispatch::destroy(sender, collection)?;
+			T::CollectionDispatch::destroy(sender, collection_id)?;
 
 			// TODO: basket cleanup should be moved elsewhere
 			// Maybe runtime dispatch.rs should perform it?

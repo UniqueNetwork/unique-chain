@@ -78,7 +78,7 @@ pub mod pallet {
 		pub fn begin(origin: OriginFor<T>, address: H160) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(
-				<PalletEvm<T>>::is_account_empty(&address) && !<MigrationPending<T>>::get(&address),
+				<PalletEvm<T>>::is_account_empty(&address) && !<MigrationPending<T>>::get(address),
 				<Error<T>>::AccountNotEmpty,
 			);
 
@@ -97,12 +97,12 @@ pub mod pallet {
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(
-				<MigrationPending<T>>::get(&address),
+				<MigrationPending<T>>::get(address),
 				<Error<T>>::AccountIsNotMigrating,
 			);
 
 			for (k, v) in data {
-				<pallet_evm::AccountStorages<T>>::insert(&address, k, v);
+				<pallet_evm::AccountStorages<T>>::insert(address, k, v);
 			}
 			Ok(())
 		}
@@ -115,11 +115,11 @@ pub mod pallet {
 		pub fn finish(origin: OriginFor<T>, address: H160, code: Vec<u8>) -> DispatchResult {
 			ensure_root(origin)?;
 			ensure!(
-				<MigrationPending<T>>::get(&address),
+				<MigrationPending<T>>::get(address),
 				<Error<T>>::AccountIsNotMigrating,
 			);
 
-			<pallet_evm::AccountCodes<T>>::insert(&address, code);
+			<pallet_evm::AccountCodes<T>>::insert(address, code);
 			<MigrationPending<T>>::remove(address);
 			Ok(())
 		}
@@ -166,7 +166,7 @@ pub mod pallet {
 	pub struct OnMethodCall<T>(PhantomData<T>);
 	impl<T: Config> pallet_evm::OnMethodCall<T> for OnMethodCall<T> {
 		fn is_reserved(contract: &H160) -> bool {
-			<MigrationPending<T>>::get(&contract)
+			<MigrationPending<T>>::get(contract)
 		}
 
 		fn is_used(_contract: &H160) -> bool {

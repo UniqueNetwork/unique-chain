@@ -34,16 +34,16 @@ use crate as collator_selection;
 use crate::{mock::*, Error};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{Currency, GenesisBuild, OnInitialize},
+	traits::{fungible, GenesisBuild, OnInitialize},
 };
 use frame_system::RawOrigin;
-use pallet_balances::Error as BalancesError;
-use sp_runtime::traits::BadOrigin;
+use sp_runtime::{traits::BadOrigin, TokenError};
 use pallet_configuration::{
 	CollatorSelectionDesiredCollatorsOverride as DesiredCollators,
 	CollatorSelectionKickThresholdOverride as KickThreshold,
 	CollatorSelectionLicenseBondOverride as LicenseBond,
 };
+use scale_info::prelude::*;
 
 fn get_license_and_onboard(account_id: <Test as frame_system::Config>::AccountId) {
 	assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(
@@ -226,8 +226,9 @@ fn cannot_obtain_license_if_keys_not_registered() {
 #[test]
 fn cannot_obtain_license_if_poor() {
 	new_test_ext().execute_with(|| {
+		let ed = <Test as pallet_balances::Config>::ExistentialDeposit::get();
 		assert_eq!(Balances::free_balance(&3), 100);
-		assert_eq!(Balances::free_balance(&33), 0);
+		assert_eq!(Balances::free_balance(&33), ed);
 
 		// works
 		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(3)));
@@ -235,7 +236,7 @@ fn cannot_obtain_license_if_poor() {
 		// poor
 		assert_noop!(
 			CollatorSelection::get_license(RuntimeOrigin::signed(33)),
-			BalancesError::<Test>::InsufficientBalance,
+			TokenError::FundsUnavailable,
 		);
 	});
 }
@@ -417,7 +418,7 @@ fn force_release_license() {
 fn authorship_event_handler() {
 	new_test_ext().execute_with(|| {
 		// put 100 in the pot + 5 for ED
-		Balances::make_free_balance_be(&CollatorSelection::account_id(), 105);
+		<Balances as fungible::Mutate<_>>::set_balance(&CollatorSelection::account_id(), 105);
 
 		// 4 is the default author.
 		assert_eq!(Balances::free_balance(4), 100);
@@ -441,7 +442,7 @@ fn fees_edgecases() {
 		// Nothing panics, no reward when no ED in balance
 		Authorship::on_initialize(1);
 		// put some money into the pot at ED
-		Balances::make_free_balance_be(&CollatorSelection::account_id(), 5);
+		<Balances as fungible::Mutate<_>>::set_balance(&CollatorSelection::account_id(), 5);
 		// 4 is the default author.
 		assert_eq!(Balances::free_balance(4), 100);
 		get_license_and_onboard(4);

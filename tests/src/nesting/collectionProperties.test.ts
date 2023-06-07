@@ -143,7 +143,7 @@ describe('Integration Test: Collection Properties', () => {
 
       // It is possible to modify a property as many times as needed.
       // It will not consume any additional space.
-      for (let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
+      for(let i = 0; i < sameSizePropertiesPossibleNum + 1; i++) {
         await collection.setProperties(alice, [{key: propKey, value: makeNewPropData()}]);
         const consumedSpace = await collection.getPropertiesConsumedSpace();
         expect(consumedSpace).to.be.equal(originalSpace);
@@ -259,7 +259,7 @@ describe('Negative Integration Test: Collection Properties', () => {
       const collection = await helper[testSuite.mode].mintCollection(alice);
 
       const propertiesToBeSet = [];
-      for (let i = 0; i < 65; i++) {
+      for(let i = 0; i < 65; i++) {
         propertiesToBeSet.push({
           key: 'electron_' + i,
           value: Math.random() > 0.5 ? 'high' : 'low',
@@ -281,7 +281,7 @@ describe('Negative Integration Test: Collection Properties', () => {
         [{key: 'déjà vu', value: 'hmm...'}],
       ];
 
-      for (let i = 0; i < invalidProperties.length; i++) {
+      for(let i = 0; i < invalidProperties.length; i++) {
         await expect(
           collection.setProperties(alice, invalidProperties[i]),
           `on rejecting the new badly-named property #${i}`,
@@ -305,7 +305,7 @@ describe('Negative Integration Test: Collection Properties', () => {
         {key: 'CRISPR-Cas9', value: 'rewriting nature!'},
       ]);
 
-      for (let i = 0; i < invalidProperties.length; i++) {
+      for(let i = 0; i < invalidProperties.length; i++) {
         await expect(
           collection.deleteProperties(alice, invalidProperties[i].map(propertySet => propertySet.key)),
           `on trying to delete the non-existent badly-named property #${i}`,

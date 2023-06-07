@@ -17,10 +17,12 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [features]
 default = ['opal-runtime', 'std']
+state-version-0 = []
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
-opal-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'preimage', 'pallet-test-utils', 'refungible']
+opal-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'pallet-test-utils', 'preimage', 'refungible']
 pov-estimate = []
 runtime-benchmarks = [
+	"pallet-preimage/runtime-benchmarks",
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',
@@ -41,7 +43,6 @@ runtime-benchmarks = [
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
-	"pallet-preimage/runtime-benchmarks",
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
@@ -70,15 +71,17 @@ std = [
 	# 'pallet-contracts-primitives/std',
 	# 'pallet-contracts-rpc-runtime-api/std',
 	# 'pallet-contract-helpers/std',
-	"pallet-preimage/std",
 	"pallet-authorship/std",
+	"pallet-preimage/std",
 	"pallet-session/std",
+	"pallet-state-trie-migration/std",
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
 	'fp-rpc/std',
 	'fp-self-contained/std',
 	'pallet-app-promotion/std',
+	'pallet-balances-adapter/std',
 	'pallet-base-fee/std',
 	'pallet-charge-transaction/std',
 	'pallet-collator-selection/std',
@@ -128,8 +131,8 @@ std = [
 	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-vesting/std",
-	"orml-xtokens/std",
 	"orml-xcm-support/std",
+	"orml-xtokens/std",
 	"pallet-foreign-assets/std",
 
 	'pallet-maintenance/std',
@@ -139,8 +142,9 @@ try-runtime = [
 	"pallet-authorship/try-runtime",
 	"pallet-collator-selection/try-runtime",
 	"pallet-identity/try-runtime",
-	"pallet-session/try-runtime",
 	"pallet-preimage/try-runtime",
+	"pallet-session/try-runtime",
+	"pallet-state-trie-migration/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
 	'cumulus-pallet-dmp-queue/try-runtime',
 	'cumulus-pallet-parachain-system/try-runtime',
@@ -158,6 +162,7 @@ try-runtime = [
 	'pallet-app-promotion/try-runtime',
 	'pallet-aura/try-runtime',
 	'pallet-balances/try-runtime',
+	'pallet-balances-adapter/try-runtime',
 	'pallet-base-fee/try-runtime',
 	'pallet-charge-transaction/try-runtime',
 	'pallet-common/try-runtime',
@@ -189,8 +194,8 @@ try-runtime = [
 app-promotion = []
 collator-selection = []
 foreign-assets = []
-preimage = []
 pallet-test-utils = []
+preimage = []
 refungible = []
 scheduler = []
 
@@ -216,13 +221,14 @@ frame-system-rpc-runtime-api = { workspace = true }
 orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
-orml-xtokens = { workspace = true }
 orml-xcm-support = { workspace = true }
+orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
-pallet-balances = { workspace = true }
+pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-preimage = { workspace = true }
 pallet-session = { workspace = true }
+pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
@@ -258,6 +264,7 @@ fp-self-contained = { workspace = true }
 log = { workspace = true }
 num_enum = { workspace = true }
 pallet-app-promotion = { workspace = true }
+pallet-balances-adapter = { workspace = true }
 pallet-base-fee = { workspace = true }
 pallet-charge-transaction = { workspace = true }
 pallet-collator-selection = { workspace = true }
@@ -291,11 +298,11 @@ up-sponsorship = { workspace = true }
 ################################################################################
 # Optional dependencies
 
-frame-system-benchmarking = { workspace = true, optional = true}
 frame-benchmarking = { workspace = true, optional = true }
+frame-system-benchmarking = { workspace = true, optional = true }
 frame-try-runtime = { workspace = true, optional = true }
-serde = { workspace = true, optional = true }
 hex-literal = { workspace = true, optional = true }
+serde = { workspace = true, optional = true }
 
 ################################################################################
 # Test dependencies

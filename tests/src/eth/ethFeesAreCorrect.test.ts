@@ -41,10 +41,10 @@ describe('Eth fees are correct', () => {
     const {tokenId: tokenB} = await collection.mintToken(minter, {Ethereum: aliceEth});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const balanceBeforeWeb3Transfer = await helper.balance.getEthereum(owner);
-    await contract.methods.transfer(receiver, tokenA).send({from: owner});
+    await contract.methods.transfer(receiver, tokenA).send({from: owner, maxFeePerGas: (await helper.eth.getGasPrice()).toString()});
     const balanceAfterWeb3Transfer = await helper.balance.getEthereum(owner);
     const web3Diff = balanceBeforeWeb3Transfer - balanceAfterWeb3Transfer;
 

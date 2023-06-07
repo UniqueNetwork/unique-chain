@@ -969,7 +969,7 @@ impl<T: Config> Pallet<T> {
 		call: ScheduledCall<T>,
 	) -> Result<TaskAddress<T::BlockNumber>, DispatchError> {
 		// ensure id it is unique
-		if Lookup::<T>::contains_key(&id) {
+		if Lookup::<T>::contains_key(id) {
 			return Err(Error::<T>::FailedToSchedule.into());
 		}
 

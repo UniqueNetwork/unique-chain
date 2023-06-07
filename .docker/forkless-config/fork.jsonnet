@@ -12,28 +12,30 @@ local typeNames = (import './typeNames.jsonnet')(sourceChain);
 
 local
 auraKeys = [
-	// AuraExt.Authorities, we don't have aura pallet enabled for some reason, to refer using cql api
-	'0x3c311d57d4daf52904616cf69648081e5e0621c4869aa60c02be9adcc98a0d1d',
-	// Aura.Authorities
-	'0x57f8dc2f5ab09467896f47300f0424385e0621c4869aa60c02be9adcc98a0d1d',
-],
+	sourceChain.AuraExt._key.Authorities,
+	sourceChain.Aura._key.Authorities,
+] + (if 'CollatorSelection' in sourceChain then [
+	sourceChain.CollatorSelection._key.Candidates,
+	sourceChain.CollatorSelection._key.Invulnerables,
+] else []),
 
 // Keys, which should be migrated from passed spec, rather than from forked chain
 wantedKeys = [
 	sourceChain.ParachainInfo._key.ParachainId,
 	sourceChain.Sudo._key.Key,
 	sourceChain.System.BlockHash._key['0'],
+	// Always [69, 69, 69, ..., 69, 69, 69]
 	sourceChain.System._key.ParentHash,
 ] + auraKeys,
 
 // Keys to remove from original chain
 unwantedPrefixes = [
-	// Aura.CurrentSlot
-	'0x57f8dc2f5ab09467896f47300f04243806155b3cd9a8c9e5e9a23fd5dc13a5ed',
+	sourceChain.Aura._key.CurrentSlot,
 	// Ensure there will be no panics caused by unexpected kept state
 	sourceChain.ParachainSystem._key.ValidationData,
 	sourceChain.ParachainSystem._key.RelayStateProof,
 	sourceChain.ParachainSystem._key.HostConfiguration,
+	sourceChain.ParachainSystem._key.LastRelayChainBlockNumber,
 	sourceChain.ParachainSystem._key.LastDmqMqcHead,
 	// Part of head
 	sourceChain.System._key.BlockHash,
@@ -72,12 +74,12 @@ outSpec {
 	genesis+: {
 		raw+: {
 			top+: {
-				[totalIssuance]: cql.calc([
+				[totalIssuance]: sourceChain._encode(typeNames.u128, cql.calc([
 					Munique,
 					if std.objectHas(super, totalIssuance) then sourceChain._decode(typeNames.u128, super[totalIssuance]) else '0',
 					if std.objectHas(super, aliceAccount) then sourceChain._decode(typeNames.AccountInfo, super[aliceAccount]).data.free else '0',
 					'-', '+',
-				]),
+				])),
 				[aliceAccount]: sourceChain._encode(typeNames.AccountInfo, {
 					nonce: 0,
 					consumers: 3,

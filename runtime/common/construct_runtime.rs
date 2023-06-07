@@ -25,6 +25,7 @@ macro_rules! construct_runtime {
 				UncheckedExtrinsic = UncheckedExtrinsic
 			{
 				System: frame_system = 0,
+				StateTrieMigration: pallet_state_trie_migration = 1,
 
 				ParachainSystem: cumulus_pallet_parachain_system = 20,
 				ParachainInfo: parachain_info = 21,
@@ -105,6 +106,8 @@ macro_rules! construct_runtime {
 				EvmMigration: pallet_evm_migration = 153,
 
 				Maintenance: pallet_maintenance = 154,
+
+				BalancesAdapter: pallet_balances_adapter = 155,
 
 				#[cfg(feature = "pallet-test-utils")]
 				TestUtils: pallet_test_utils = 255,

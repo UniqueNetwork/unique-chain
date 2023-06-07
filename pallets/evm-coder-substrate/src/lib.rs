@@ -37,7 +37,7 @@ use pallet_evm::{
 	ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
 	PrecompileResult, PrecompileHandle,
 };
-use sp_core::H160;
+use sp_core::{Get, H160};
 // #[cfg(feature = "runtime-benchmarks")]
 // pub mod benchmarking;
 pub mod execution;
@@ -204,6 +204,40 @@ impl<T: Config> SubstrateRecorder<T> {
 			Err(Error::Error(e)) => Err(e.into()),
 		})
 	}
+
+	/// Consume gas for reading.
+	pub fn consume_store_reads(&self, reads: u64) -> execution::Result<()> {
+		self.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
+			<T as frame_system::Config>::DbWeight::get()
+				.read
+				.saturating_mul(reads),
+			// TODO: measure proof
+			0,
+		)))
+	}
+
+	/// Consume gas for writing.
+	pub fn consume_store_writes(&self, writes: u64) -> execution::Result<()> {
+		self.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
+			<T as frame_system::Config>::DbWeight::get()
+				.write
+				.saturating_mul(writes),
+			// TODO: measure proof
+			0,
+		)))
+	}
+
+	/// Consume gas for reading and writing.
+	pub fn consume_store_reads_and_writes(&self, reads: u64, writes: u64) -> execution::Result<()> {
+		let weight = <T as frame_system::Config>::DbWeight::get();
+		let reads = weight.read.saturating_mul(reads);
+		let writes = weight.read.saturating_mul(writes);
+		self.consume_gas(T::GasWeightMapping::weight_to_gas(Weight::from_parts(
+			reads.saturating_add(writes),
+			// TODO: measure proof
+			0,
+		)))
+	}
 }
 
 pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> execution::Error {
@@ -226,9 +260,9 @@ pub fn dispatch_to_evm<T: Config>(err: DispatchError) -> execution::Error {
 			message: Some(msg), ..
 		}) => ExError::Revert(msg.into()),
 		DispatchError::Module(ModuleError { index, error, .. }) => {
-			ExError::Revert(format!("error {:?} in pallet {}", error, index))
+			ExError::Revert(format!("error {error:?} in pallet {index}"))
 		}
-		e => ExError::Revert(format!("substrate error: {:?}", e)),
+		e => ExError::Revert(format!("substrate error: {e:?}")),
 	}
 }
 

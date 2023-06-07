@@ -21,9 +21,9 @@ import {UniqueHelper} from './util/playgrounds/unique';
 
 async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
   let collection;
-  if (type === 'nft') {
+  if(type === 'nft') {
     collection = await helper.nft.mintCollection(signer, options);
-  } else if (type === 'fungible') {
+  } else if(type === 'fungible') {
     collection = await helper.ft.mintCollection(signer, options, 0);
   } else {
     collection = await helper.rft.mintCollection(signer, options);
@@ -33,11 +33,11 @@ async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, 
   expect(data?.name).to.be.equal(options.name);
   expect(data?.description).to.be.equal(options.description);
   expect(data?.raw.tokenPrefix).to.be.equal(options.tokenPrefix);
-  if (options.properties) {
+  if(options.properties) {
     expect(data?.raw.properties).to.be.deep.equal(options.properties);
   }
 
-  if (options.tokenPropertyPermissions) {
+  if(options.tokenPropertyPermissions) {
     expect(data?.raw.tokenPropertyPermissions).to.be.deep.equal(options.tokenPropertyPermissions);
   }
 
@@ -136,7 +136,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
   itSub('(!negative test!) create collection with incorrect property limit (64 elements)', async ({helper}) => {
     const props: IProperty[] = [];
 
-    for (let i = 0; i < 65; i++) {
+    for(let i = 0; i < 65; i++) {
       props.push({key: `key${i}`, value: `value${i}`});
     }
     const mintCollectionTx = () => helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL', properties: props});
@@ -146,7 +146,7 @@ describe('(!negative test!) integration test: ext. createCollection():', () => {
   itSub('(!negative test!) create collection with incorrect property limit (40 kb)', async ({helper}) => {
     const props: IProperty[] = [];
 
-    for (let i = 0; i < 32; i++) {
+    for(let i = 0; i < 32; i++) {
       props.push({key: `key${i}`.repeat(80), value: `value${i}`.repeat(80)});
     }
 

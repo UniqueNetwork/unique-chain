@@ -60,7 +60,7 @@ use sp_std::collections::btree_set::BTreeSet;
 use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
 use frame_support::fail;
 pub use pallet::*;
-use pallet_common::{dispatch::CollectionDispatch, CollectionHandle};
+use pallet_common::{dispatch::CollectionDispatch};
 use up_data_structs::{
 	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
 };
@@ -155,11 +155,10 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 	) -> Result<Parent<T::CrossAccountId>, DispatchError> {
 		// TODO: Reduce cost by not reading collection config
-		let handle = match CollectionHandle::try_get(collection) {
+		let handle = match T::CollectionDispatch::dispatch(collection) {
 			Ok(v) => v,
 			Err(_) => return Ok(Parent::TokenNotFound),
 		};
-		let handle = T::CollectionDispatch::dispatch(handle);
 		let handle = handle.as_dyn();
 
 		Ok(match handle.token_owner(token) {
@@ -279,10 +278,9 @@ impl<T: Config> Pallet<T> {
 		self_budget: &dyn Budget,
 		breadth_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		let handle = <CollectionHandle<T>>::try_get(collection)?;
-		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = T::CollectionDispatch::dispatch(collection)?;
 		let dispatch = dispatch.as_dyn();
-		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
+		dispatch.burn_item_recursively(from, token, self_budget, breadth_budget)
 	}
 
 	/// Check if `token` indirectly owned by `user`
@@ -398,16 +396,14 @@ impl<T: Config> Pallet<T> {
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult,
 	) -> DispatchResult {
-		if is_collection(&account.as_eth()) {
+		if is_collection(account.as_eth()) {
 			fail!(<Error<T>>::CantNestTokenUnderCollection);
 		}
 		let Some((collection, token)) = T::CrossTokenAddressMapping::address_to_token(account) else {
 			return Ok(())
 		};
 
-		let handle = <CollectionHandle<T>>::try_get(collection)?;
-
-		let dispatch = T::CollectionDispatch::dispatch(handle);
+		let dispatch = T::CollectionDispatch::dispatch(collection)?;
 		let dispatch = dispatch.as_dyn();
 
 		action(dispatch, token)
