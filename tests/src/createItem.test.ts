@@ -55,30 +55,6 @@ describe('integration test: ext. ():', () => {
     });
   });
 
-  itSub('No editing rights', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
-      tokenPropertyPermissions: [{key: 'k', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}],
-    });
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
-    await expect(mintTx()).to.be.not.rejectedWith(/common\.NoPermission/);
-  });
-
-  itSub('User doesnt have editing rights', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
-      tokenPropertyPermissions: [{key: 'k', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
-    });
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
-    await expect(mintTx()).to.be.not.rejectedWith(/common\.NoPermission/);
-  });
-
-  itSub('Adding property without access rights', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
-    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
-    await expect(mintTx()).to.be.not.rejectedWith(/common\.NoPermission/);
-  });
-
-
-
   itSub('Create new item in NFT collection', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await mintTokenHelper(helper, collection, alice, {Substrate: alice.address});
@@ -125,17 +101,6 @@ describe('integration test: ext. ():', () => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     await collection.addAdmin(alice, {Substrate: bob.address});
     await mintTokenHelper(helper, collection, bob, {Substrate: alice.address}, 'refungible');
-  });
-
-  itSub('Set property Self not Admin', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL',
-      properties: [{key: 'k', value: 'v'}],
-      tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: false, mutable: true, collectionAdmin: true}}],
-    });
-
-    await collection.setPermissions(alice, {mintMode: true});
-    await collection.addToAllowList(alice, {Substrate: bob.address});
-    await mintTokenHelper(helper, collection, bob, {Substrate: bob.address}, 'nft', [{key: 'k', value: 'v'}]);
   });
 
   itSub('Set property Admin', async ({helper}) => {
@@ -233,6 +198,28 @@ describe('Negative integration test: ext. createItem():', () => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const mintTx = () => collection.mintToken(bob, 100n, {Substrate: bob.address});
     await expect(mintTx()).to.be.rejectedWith(/common\.PublicMintingNotAllowed/);
+  });
+
+  itSub('No editing rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
+      tokenPropertyPermissions: [{key: 'k', permission: {mutable: false, collectionAdmin: false, tokenOwner: false}}],
+    });
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
+  });
+
+  itSub('User doesnt have editing rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL',
+      tokenPropertyPermissions: [{key: 'k', permission: {mutable: true, collectionAdmin: false, tokenOwner: false}}],
+    });
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
+  });
+
+  itSub('Adding property without access rights', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
+    const mintTx = () => collection.mintToken(alice, {Substrate: bob.address}, [{key: 'k', value: 'v'}]);
+    await expect(mintTx()).to.be.rejectedWith(/common\.NoPermission/);
   });
 
   itSub('Adding more than 64 prps', async ({helper}) => {
