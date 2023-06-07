@@ -7,7 +7,7 @@ import path from 'path';
 
 const WS_ENDPOINT = 'ws://localhost:9944';
 const DONOR_SEED = '//Alice';
-const UPDATE_IF_VERSION = 942057;
+const UPDATE_IF_VERSION = 943057;
 
 const main = async(options: { wsEndpoint: string; donorSeed: string } = {
   wsEndpoint: WS_ENDPOINT,
