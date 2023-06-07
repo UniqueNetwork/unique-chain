@@ -531,7 +531,11 @@ pub fn run() -> Result<()> {
 				debug!("Parachain genesis block: {:?}", block);
 				info!(
 					"Is collating: {}",
-					config.role.is_authority().then_some("yes").unwrap_or("no")
+					if config.role.is_authority() {
+						"yes"
+					} else {
+						"no"
+					}
 				);
 
 				start_node_using_chain_runtime! {
