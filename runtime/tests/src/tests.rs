@@ -2628,27 +2628,19 @@ mod check_token_permissions {
 
 	fn test<FTE: FnOnce() -> bool>(
 		i: usize,
-		row: &[u8; 8],
+		row: &[u8; 5],
 		check_token_existence: &mut LazyValue<bool, FTE>,
 	) {
-		let is_token_being_created = to_bool(row[0]);
-		let self_mint = to_bool(row[1]);
-		let value_is_some = to_bool(row[2]);
-		let collection_admin_permitted = to_bool(row[3]);
-		let is_collection_admin = to_bool(row[4]);
-		let token_owner_permitted = to_bool(row[5]);
-		let mut check_token_ownership = LazyValue::new(|| Ok(to_bool(row[6])));
-		let is_no_permission = to_bool(row[7]);
+		let collection_admin_permitted = to_bool(row[0]);
+		let is_collection_admin = to_bool(row[1]);
+		let token_owner_permitted = to_bool(row[2]);
+		let mut check_token_ownership = LazyValue::new(|| Ok(to_bool(row[3])));
+		let is_no_permission = to_bool(row[4]);
 
 		let result = pallet_common::tests::check_token_permissions::<Test, _, FTE>(
-			pallet_common::CheckTokenPermissionsFlags {
-				is_token_being_created,
-				self_mint,
-				value_is_some,
-				collection_admin_permitted,
-				is_collection_admin,
-				token_owner_permitted,
-			},
+			collection_admin_permitted,
+			is_collection_admin,
+			token_owner_permitted,
 			&mut check_token_ownership,
 			check_token_existence,
 		);
@@ -2660,10 +2652,7 @@ mod check_token_permissions {
 				check_token_existence.value()
 			);
 			assert_err!(result, pallet_common::Error::<Test>::NoPermission,);
-		} else if !is_token_being_created
-			&& check_token_existence.has_value()
-			&& !check_token_existence.value()
-		{
+		} else if check_token_existence.has_value() && !check_token_existence.value() {
 			assert!(
 				result.is_err(),
 				"{i}: {row:?}, token_exist: {}",
@@ -2687,6 +2676,7 @@ mod check_token_permissions {
 	fn no_permission_and_token_not_found() {
 		new_test_ext().execute_with(|| {
 			for (i, row) in pallet_common::tests::table.iter().enumerate() {
+				// This is inside the loop to keep track of whether the lambda was called
 				let mut check_token_existence = LazyValue::new(|| false);
 				test(i, row, &mut check_token_existence);
 			}

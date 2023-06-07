@@ -893,45 +893,26 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 	}
 }
 
-#[derive(Default)]
-pub struct CheckTokenPermissionsFlags {
-	pub is_token_being_created: bool,
-	pub self_mint: bool,
-	pub value_is_some: bool,
-	pub collection_admin_permitted: bool,
-	pub is_collection_admin: bool,
-	pub token_owner_permitted: bool,
-}
 fn check_token_permissions<T, FTO, FTE>(
-	CheckTokenPermissionsFlags {
-		is_token_being_created,
-		self_mint,
-		value_is_some,
-		collection_admin_permitted,
-		is_collection_admin,
-		token_owner_permitted,
-	}: CheckTokenPermissionsFlags,
-	check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
-	check_token_existence: &mut LazyValue<bool, FTE>,
+	collection_admin_permitted: bool,
+	is_collection_admin: bool,
+	token_owner_permitted: bool,
+	is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
+	is_token_exist: &mut LazyValue<bool, FTE>,
 ) -> DispatchResult
 where
 	T: Config,
 	FTO: FnOnce() -> Result<bool, DispatchError>,
 	FTE: FnOnce() -> bool,
 {
-	if is_token_being_created {
-		if !(value_is_some && (is_collection_admin || self_mint)) {
-			fail!(<Error<T>>::NoPermission);
-		}
-	} else if !(collection_admin_permitted && is_collection_admin)
-		&& !(token_owner_permitted && check_token_ownership.value().clone()?)
+	if !(collection_admin_permitted && is_collection_admin
+		|| token_owner_permitted && is_token_owner.value().clone()?)
 	{
 		fail!(<Error<T>>::NoPermission);
 	}
 
-	let token_must_exist =
-		check_token_ownership.has_value() && check_token_ownership.value().clone()?;
-	if !token_must_exist && !check_token_existence.value() {
+	let token_certainly_exist = is_token_owner.has_value() && is_token_owner.value().clone()?;
+	if !token_certainly_exist && !is_token_exist.value() {
 		fail!(<Error<T>>::TokenNotFound);
 	}
 	Ok(())
@@ -1303,11 +1284,10 @@ impl<T: Config> Pallet<T> {
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		check_token_existence: &mut LazyValue<bool, FTE>,
+		is_token_exist: &mut LazyValue<bool, FTE>,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		check_token_permission_flags: CheckTokenPermissionsFlags,
 		mut stored_properties: TokenProperties,
-		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
+		is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult
@@ -1336,15 +1316,11 @@ impl<T: Config> Pallet<T> {
 					token_owner,
 					..
 				} => check_token_permissions::<T, FTO, FTE>(
-					CheckTokenPermissionsFlags {
-						value_is_some: value.is_some(),
-						collection_admin_permitted: collection_admin,
-						is_collection_admin,
-						token_owner_permitted: token_owner,
-						..check_token_permission_flags
-					},
-					check_token_ownership,
-					check_token_existence,
+					collection_admin,
+					is_collection_admin,
+					token_owner,
+					is_token_owner,
+					is_token_exist,
 				)?,
 			}
 
@@ -2395,150 +2371,37 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 
 #[cfg(feature = "tests")]
 pub mod tests {
-	use crate::{DispatchResult, DispatchError, CheckTokenPermissionsFlags, LazyValue, Config};
+	use crate::{DispatchResult, DispatchError, LazyValue, Config};
 
 	#[rustfmt::skip]
-	pub const table: [[u8; 8]; 128] = [
-		//       ┌╴is_token_being_created
-		//       │  ┌╴self_mint
-		//       │  │  ┌╴value_is_some
-		//       │  │  │   ┌╴collection_admin_permitted
-		//       │  │  │   │  ┌╴is_collection_admin
-		//       │  │  │   │  │   ┌╴token_owner_permitted
-		//       │  │  │   │  │   │  ┌╴check_token_ownership
-		//       │  │  │   │  │   │  │   ┌╴NoPermission
-		/*  0*/ [0, 0, 0,  0, 0,  0, 0,  1],
-		/*  1*/ [0, 0, 0,  0, 0,  0, 1,  1],
-		/*  2*/ [0, 0, 0,  0, 0,  1, 0,  1],
-		/*  3*/ [0, 0, 0,  0, 0,  1, 1,  0],
-		/*  4*/ [0, 0, 0,  0, 1,  0, 0,  1],
-		/*  5*/ [0, 0, 0,  0, 1,  0, 1,  1],
-		/*  6*/ [0, 0, 0,  0, 1,  1, 0,  1],
-		/*  7*/ [0, 0, 0,  0, 1,  1, 1,  0],
-		/*  8*/ [0, 0, 0,  1, 0,  0, 0,  1],
-		/*  9*/ [0, 0, 0,  1, 0,  0, 1,  1],
-		/* 10*/ [0, 0, 0,  1, 0,  1, 0,  1],
-		/* 11*/ [0, 0, 0,  1, 0,  1, 1,  0],
-		/* 12*/ [0, 0, 0,  1, 1,  0, 0,  0],
-		/* 13*/ [0, 0, 0,  1, 1,  0, 1,  0],
-		/* 14*/ [0, 0, 0,  1, 1,  1, 0,  0],
-		/* 15*/ [0, 0, 0,  1, 1,  1, 1,  0],
-		/* 16*/ [0, 0, 1,  0, 0,  0, 0,  1],
-		/* 17*/ [0, 0, 1,  0, 0,  0, 1,  1],
-		/* 18*/ [0, 0, 1,  0, 0,  1, 0,  1],
-		/* 19*/ [0, 0, 1,  0, 0,  1, 1,  0],
-		/* 20*/ [0, 0, 1,  0, 1,  0, 0,  1],
-		/* 21*/ [0, 0, 1,  0, 1,  0, 1,  1],
-		/* 22*/ [0, 0, 1,  0, 1,  1, 0,  1],
-		/* 23*/ [0, 0, 1,  0, 1,  1, 1,  0],
-		/* 24*/ [0, 0, 1,  1, 0,  0, 0,  1],
-		/* 25*/ [0, 0, 1,  1, 0,  0, 1,  1],
-		/* 26*/ [0, 0, 1,  1, 0,  1, 0,  1],
-		/* 27*/ [0, 0, 1,  1, 0,  1, 1,  0],
-		/* 28*/ [0, 0, 1,  1, 1,  0, 0,  0],
-		/* 29*/ [0, 0, 1,  1, 1,  0, 1,  0],
-		/* 30*/ [0, 0, 1,  1, 1,  1, 0,  0],
-		/* 31*/ [0, 0, 1,  1, 1,  1, 1,  0],
-		/* 32*/ [0, 1, 0,  0, 0,  0, 0,  1],
-		/* 33*/ [0, 1, 0,  0, 0,  0, 1,  1],
-		/* 34*/ [0, 1, 0,  0, 0,  1, 0,  1],
-		/* 35*/ [0, 1, 0,  0, 0,  1, 1,  0],
-		/* 36*/ [0, 1, 0,  0, 1,  0, 0,  1],
-		/* 37*/ [0, 1, 0,  0, 1,  0, 1,  1],
-		/* 38*/ [0, 1, 0,  0, 1,  1, 0,  1],
-		/* 39*/ [0, 1, 0,  0, 1,  1, 1,  0],
-		/* 40*/ [0, 1, 0,  1, 0,  0, 0,  1],
-		/* 41*/ [0, 1, 0,  1, 0,  0, 1,  1],
-		/* 42*/ [0, 1, 0,  1, 0,  1, 0,  1],
-		/* 43*/ [0, 1, 0,  1, 0,  1, 1,  0],
-		/* 44*/ [0, 1, 0,  1, 1,  0, 0,  0],
-		/* 45*/ [0, 1, 0,  1, 1,  0, 1,  0],
-		/* 46*/ [0, 1, 0,  1, 1,  1, 0,  0],
-		/* 47*/ [0, 1, 0,  1, 1,  1, 1,  0],
-		/* 48*/ [0, 1, 1,  0, 0,  0, 0,  1],
-		/* 49*/ [0, 1, 1,  0, 0,  0, 1,  1],
-		/* 50*/ [0, 1, 1,  0, 0,  1, 0,  1],
-		/* 51*/ [0, 1, 1,  0, 0,  1, 1,  0],
-		/* 52*/ [0, 1, 1,  0, 1,  0, 0,  1],
-		/* 53*/ [0, 1, 1,  0, 1,  0, 1,  1],
-		/* 54*/ [0, 1, 1,  0, 1,  1, 0,  1],
-		/* 55*/ [0, 1, 1,  0, 1,  1, 1,  0],
-		/* 56*/ [0, 1, 1,  1, 0,  0, 0,  1],
-		/* 57*/ [0, 1, 1,  1, 0,  0, 1,  1],
-		/* 58*/ [0, 1, 1,  1, 0,  1, 0,  1],
-		/* 59*/ [0, 1, 1,  1, 0,  1, 1,  0],
-		/* 60*/ [0, 1, 1,  1, 1,  0, 0,  0],
-		/* 61*/ [0, 1, 1,  1, 1,  0, 1,  0],
-		/* 62*/ [0, 1, 1,  1, 1,  1, 0,  0],
-		/* 63*/ [0, 1, 1,  1, 1,  1, 1,  0],
-		/* 64*/ [1, 0, 0,  0, 0,  0, 0,  1],
-		/* 65*/ [1, 0, 0,  0, 0,  0, 1,  1],
-		/* 66*/ [1, 0, 0,  0, 0,  1, 0,  1],
-		/* 67*/ [1, 0, 0,  0, 0,  1, 1,  1],
-		/* 68*/ [1, 0, 0,  0, 1,  0, 0,  1],
-		/* 69*/ [1, 0, 0,  0, 1,  0, 1,  1],
-		/* 70*/ [1, 0, 0,  0, 1,  1, 0,  1],
-		/* 71*/ [1, 0, 0,  0, 1,  1, 1,  1],
-		/* 72*/ [1, 0, 0,  1, 0,  0, 0,  1],
-		/* 73*/ [1, 0, 0,  1, 0,  0, 1,  1],
-		/* 74*/ [1, 0, 0,  1, 0,  1, 0,  1],
-		/* 75*/ [1, 0, 0,  1, 0,  1, 1,  1],
-		/* 76*/ [1, 0, 0,  1, 1,  0, 0,  1],
-		/* 77*/ [1, 0, 0,  1, 1,  0, 1,  1],
-		/* 78*/ [1, 0, 0,  1, 1,  1, 0,  1],
-		/* 79*/ [1, 0, 0,  1, 1,  1, 1,  1],
-		/* 80*/ [1, 0, 1,  0, 0,  0, 0,  1],
-		/* 81*/ [1, 0, 1,  0, 0,  0, 1,  1],
-		/* 82*/ [1, 0, 1,  0, 0,  1, 0,  1],
-		/* 83*/ [1, 0, 1,  0, 0,  1, 1,  1],
-		/* 84*/ [1, 0, 1,  0, 1,  0, 0,  0],
-		/* 85*/ [1, 0, 1,  0, 1,  0, 1,  0],
-		/* 86*/ [1, 0, 1,  0, 1,  1, 0,  0],
-		/* 87*/ [1, 0, 1,  0, 1,  1, 1,  0],
-		/* 88*/ [1, 0, 1,  1, 0,  0, 0,  1],
-		/* 89*/ [1, 0, 1,  1, 0,  0, 1,  1],
-		/* 90*/ [1, 0, 1,  1, 0,  1, 0,  1],
-		/* 91*/ [1, 0, 1,  1, 0,  1, 1,  1],
-		/* 92*/ [1, 0, 1,  1, 1,  0, 0,  0],
-		/* 93*/ [1, 0, 1,  1, 1,  0, 1,  0],
-		/* 94*/ [1, 0, 1,  1, 1,  1, 0,  0],
-		/* 95*/ [1, 0, 1,  1, 1,  1, 1,  0],
-		/* 96*/ [1, 1, 0,  0, 0,  0, 0,  1],
-		/* 97*/ [1, 1, 0,  0, 0,  0, 1,  1],
-		/* 98*/ [1, 1, 0,  0, 0,  1, 0,  1],
-		/* 99*/ [1, 1, 0,  0, 0,  1, 1,  1],
-		/*100*/ [1, 1, 0,  0, 1,  0, 0,  1],
-		/*101*/ [1, 1, 0,  0, 1,  0, 1,  1],
-		/*102*/ [1, 1, 0,  0, 1,  1, 0,  1],
-		/*103*/ [1, 1, 0,  0, 1,  1, 1,  1],
-		/*104*/ [1, 1, 0,  1, 0,  0, 0,  1],
-		/*105*/ [1, 1, 0,  1, 0,  0, 1,  1],
-		/*106*/ [1, 1, 0,  1, 0,  1, 0,  1],
-		/*107*/ [1, 1, 0,  1, 0,  1, 1,  1],
-		/*108*/ [1, 1, 0,  1, 1,  0, 0,  1],
-		/*109*/ [1, 1, 0,  1, 1,  0, 1,  1],
-		/*110*/ [1, 1, 0,  1, 1,  1, 0,  1],
-		/*111*/ [1, 1, 0,  1, 1,  1, 1,  1],
-		/*112*/ [1, 1, 1,  0, 0,  0, 0,  0],
-		/*113*/ [1, 1, 1,  0, 0,  0, 1,  0],
-		/*114*/ [1, 1, 1,  0, 0,  1, 0,  0],
-		/*115*/ [1, 1, 1,  0, 0,  1, 1,  0],
-		/*116*/ [1, 1, 1,  0, 1,  0, 0,  0],
-		/*117*/ [1, 1, 1,  0, 1,  0, 1,  0],
-		/*118*/ [1, 1, 1,  0, 1,  1, 0,  0],
-		/*119*/ [1, 1, 1,  0, 1,  1, 1,  0],
-		/*120*/ [1, 1, 1,  1, 0,  0, 0,  0],
-		/*121*/ [1, 1, 1,  1, 0,  0, 1,  0],
-		/*122*/ [1, 1, 1,  1, 0,  1, 0,  0],
-		/*123*/ [1, 1, 1,  1, 0,  1, 1,  0],
-		/*124*/ [1, 1, 1,  1, 1,  0, 0,  0],
-		/*125*/ [1, 1, 1,  1, 1,  0, 1,  0],
-		/*126*/ [1, 1, 1,  1, 1,  1, 0,  0],
-		/*127*/ [1, 1, 1,  1, 1,  1, 1,  0],
+	pub const table: [[u8; 5]; 16] = [
+		//       ┌╴collection_admin_permitted
+		//       │  ┌╴is_collection_admin
+		//       │  │   ┌╴token_owner_permitted
+		//       │  │   │  ┌╴check_token_ownership
+		//       │  │   │  │   ┌╴NoPermission
+		/*  0*/ [0, 0,  0, 0,  1],
+		/*  1*/ [0, 0,  0, 1,  1],
+		/*  2*/ [0, 0,  1, 0,  1],
+		/*  3*/ [0, 0,  1, 1,  0],
+		/*  4*/ [0, 1,  0, 0,  1],
+		/*  5*/ [0, 1,  0, 1,  1],
+		/*  6*/ [0, 1,  1, 0,  1],
+		/*  7*/ [0, 1,  1, 1,  0],
+		/*  8*/ [1, 0,  0, 0,  1],
+		/*  9*/ [1, 0,  0, 1,  1],
+		/* 10*/ [1, 0,  1, 0,  1],
+		/* 11*/ [1, 0,  1, 1,  0],
+		/* 12*/ [1, 1,  0, 0,  0],
+		/* 13*/ [1, 1,  0, 1,  0],
+		/* 14*/ [1, 1,  1, 0,  0],
+		/* 15*/ [1, 1,  1, 1,  0],
 	];
 
 	pub fn check_token_permissions<T, FTO, FTE>(
-		check_token_permission_flags: CheckTokenPermissionsFlags,
+		collection_admin_permitted: bool,
+		is_collection_admin: bool,
+		token_owner_permitted: bool,
 		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
 		check_token_existence: &mut LazyValue<bool, FTE>,
 	) -> DispatchResult
@@ -2548,7 +2411,9 @@ pub mod tests {
 		FTE: FnOnce() -> bool,
 	{
 		crate::check_token_permissions::<T, FTO, FTE>(
-			check_token_permission_flags,
+			collection_admin_permitted,
+			is_collection_admin,
+			token_owner_permitted,
 			check_token_ownership,
 			check_token_existence,
 		)

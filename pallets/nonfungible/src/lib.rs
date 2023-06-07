@@ -602,10 +602,15 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		check_token_permission_flags: pallet_common::CheckTokenPermissionsFlags,
+		is_token_being_created: bool,
+		self_mint: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut is_token_owner = pallet_common::LazyValue::new(|| {
+			if is_token_being_created {
+				return Ok(self_mint);
+			}
+
 			let is_owned = <PalletStructure<T>>::check_indirectly_owned(
 				sender.clone(),
 				collection.id,
@@ -628,7 +633,6 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			&mut is_token_exist,
 			properties_updates,
-			check_token_permission_flags,
 			stored_properties,
 			&mut is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
@@ -649,7 +653,8 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		check_token_permission_flags: pallet_common::CheckTokenPermissionsFlags,
+		is_token_being_created: bool,
+		self_mint: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -657,7 +662,8 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			check_token_permission_flags,
+			is_token_being_created,
+			self_mint,
 			nesting_budget,
 		)
 	}
@@ -679,7 +685,8 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			Default::default(),
+			false,
+			false,
 			nesting_budget,
 		)
 	}
@@ -701,7 +708,8 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			Default::default(),
+			false,
+			false,
 			nesting_budget,
 		)
 	}
@@ -986,11 +994,8 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token),
 					data.properties.clone().into_iter(),
-					pallet_common::CheckTokenPermissionsFlags {
-						is_token_being_created: true,
-						self_mint: sender.conv_eq(&data.owner),
-						..Default::default()
-					},
+					true,
+					sender.conv_eq(&data.owner),
 					nesting_budget,
 				) {
 					return TransactionOutcome::Rollback(Err(e));
