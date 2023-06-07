@@ -7,6 +7,7 @@ import path from 'path';
 
 const WS_ENDPOINT = 'ws://localhost:9944';
 const DONOR_SEED = '//Alice';
+const UPDATE_IF_VERSION = 942057;
 
 const main = async(options: { wsEndpoint: string; donorSeed: string } = {
   wsEndpoint: WS_ENDPOINT,
@@ -16,7 +17,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const api = helper.getApi();
     // 1. Check version equal 942057 or skip
     console.log((api.consts.system.version as any).specVersion.toNumber());
-    if ((api.consts.system.version as any).specVersion.toNumber() != 942057) {
+    if((api.consts.system.version as any).specVersion.toNumber() != UPDATE_IF_VERSION) {
       console.log("Version isn't 942057.");
       return;
     }
@@ -29,7 +30,19 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     const chainqlImportData = parsingResult as {
       address: string;
-      balance: any;
+      balance: bigint;
+      account: {
+        fee_frozen: bigint,
+        free: bigint,
+        misc_frozen: bigint,
+        reserved: bigint,
+      },
+      locks: {
+        amount: bigint,
+        id: string,
+      }[],
+      stakes: any[],
+      unstakes: any[]
     }[];
 
     const stakers = chainqlImportData.map((i) => i.address);
@@ -46,7 +59,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     // 5. Only sign upgradeAccounts-transactions for each chunk
     const signedTxs = [];
-    for (const chunk of stakersChunks) {
+    for(const chunk of stakersChunks) {
       const tx = api.tx.sudo.sudo(api.tx.appPromotion.upgradeAccounts(chunk));
       const signed = tx.sign(signer, {
         blockHash: api.genesisHash,
@@ -67,7 +80,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     console.log('failedTx', failedTx.length);
 
     // 6.3 Log the reasons of failed tx
-    for (const tx of failedTx) {
+    for(const tx of failedTx) {
       console.log(tx.reason);
     }
 
@@ -76,7 +89,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     let notMigrated = stakers;
     do {
       const _notMigrated: string[] = [];
-      for (const accountToMigrate of notMigrated) {
+      for(const accountToMigrate of notMigrated) {
         // 7.1 system.account
         const balance = await api.query.system.account(accountToMigrate) as any;
         const free = BigInt(balance.data.free);
@@ -85,26 +98,26 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
         // 7.2 balances.locks: no id appstake
         const locks = await helper.balance.getLocked(accountToMigrate);
+        const appPromoLocks = locks.filter(lock => lock.id === 'appstake');
+        if(appPromoLocks.length > 0) _notMigrated.push(accountToMigrate);
 
         // 7.3 TODO balances.freezes: set...
         let freezes = await api.query.balances.freezes(accountToMigrate) as any;
         freezes = freezes.map((freez: any) => ({id: freez.id.toString(), amount: freez.amount.toBigInt()}));
         freezes.forEach(console.log);
+        // TODO check freezes
 
         // 7.4 TODO appPromotion staked
         const staked = await helper.staking.getTotalStakedPerBlock({Substrate: accountToMigrate});
-
-        const appPromoLocks = locks.filter(lock => lock.id === 'appstake');
-        if (appPromoLocks.length > 0) _notMigrated.push(accountToMigrate);
       }
 
       blocksLeft--;
       notMigrated = _notMigrated;
       await helper.wait.newBlocks(1);
-    } while (blocksLeft !== 0 || notMigrated.length !== 0);
+    } while(blocksLeft !== 0 || notMigrated.length !== 0);
 
 
-    if (notMigrated.length > 0) {
+    if(notMigrated.length > 0) {
       console.log('Not migrated list:');
       notMigrated.forEach(console.log);
       process.exit(1);
