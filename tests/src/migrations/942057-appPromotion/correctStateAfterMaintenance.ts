@@ -12,7 +12,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
   await usingPlaygrounds(async (helper, privateKey) => {
     const api = helper.getApi();
 
-    if ((await api.query.maintenance.enabled()).valueOf()) {
+    if((await api.query.maintenance.enabled()).valueOf()) {
       throw Error('The network is still in maintenance mode');
     }
 
@@ -25,7 +25,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     const filteredBlocks = pendingBlocks.filter((b) => b < currentBlock);
 
-    if (filteredBlocks.length != 0) {
+    if(filteredBlocks.length != 0) {
       console.log(
         'During maintenance mode, %d block(s) were not processed',
         filteredBlocks.length,
@@ -59,11 +59,11 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const failedTx = res.filter((r) => r.status == 'rejected') as PromiseRejectedResult[];
     const isSuccess = failedTx.length == 0;
 
-    if (isSuccess) {
+    if(isSuccess) {
       console.log('Done. %d block(s) were processed.', filteredBlocks.length);
     } else {
       console.log('Something went wrong.');
-      for (const tx of failedTx) {
+      for(const tx of failedTx) {
         console.log(tx.reason);
       }
     }
