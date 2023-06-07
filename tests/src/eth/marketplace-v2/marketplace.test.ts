@@ -77,9 +77,9 @@ describe('Market V2 Contract', () => {
   }
 
   function substrateAddressToHex(sub: Uint8Array| string, web3: Web3) {
-    if (typeof sub === 'string')
+    if(typeof sub === 'string')
       return web3.utils.padLeft(web3.utils.toHex(web3.utils.toBN(sub)), 64);
-    else if (sub instanceof Uint8Array)
+    else if(sub instanceof Uint8Array)
       return web3.utils.padLeft(web3.utils.bytesToHex(Array.from(sub)), 64);
   }
 
