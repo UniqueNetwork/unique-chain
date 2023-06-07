@@ -499,7 +499,7 @@ where
 			frontier_backend.clone(),
 			3,
 			0,
-			SyncStrategy::Normal,
+			SyncStrategy::Parachain,
 			sync_service.clone(),
 			pubsub_notification_sinks.clone(),
 		)
