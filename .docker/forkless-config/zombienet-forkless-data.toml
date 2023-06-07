@@ -11,7 +11,8 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
   ws_port = 9844
   rpc_port = 9843
   p2p_port = 30444
-  prometheus_port = 33044
+  #prometheus_port = 33044
+  prometheus = false
   # Zombienet does not grant the default balance to nodes created with [[nodes]].
   balance = 2000000000000
 
@@ -20,7 +21,8 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
   ws_port = 9855
   rpc_port = 9854
   p2p_port = 30555
-  prometheus_port = 33055
+  #prometheus_port = 33055
+  prometheus = false
   # Zombienet does not grant the default balance to nodes created with [[nodes]].
   balance = 2000000000000
 
@@ -29,7 +31,8 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
   ws_port = 9866
   rpc_port = 9865
   p2p_port = 30666
-  prometheus_port = 33066
+  #prometheus_port = 33066
+  prometheus = false
   # Zombienet does not grant the default balance to nodes created with [[nodes]].
   balance = 2000000000000
 
@@ -38,7 +41,8 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
   ws_port = 9877
   rpc_port = 9876
   p2p_port = 30777
-  prometheus_port = 33077
+  #prometheus_port = 33077
+  prometheus = false
   # Zombienet does not grant the default balance to nodes created with [[nodes]].
   balance = 2000000000000
 
@@ -47,7 +51,8 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
   ws_port = 9888
   rpc_port = 9887
   p2p_port = 3088
-  prometheus_port = 33088
+  #prometheus_port = 33088
+  prometheus = false
   # Zombienet does not grant the default balance to nodes created with [[nodes]].
   balance = 2000000000000
 
@@ -66,7 +71,8 @@ chain_spec_modifier_commands = [[
   ws_port = 9944
   rpc_port = 9933
   p2p_port = 31200
-  prometheus_port = 33144
+  #prometheus_port = 33144
+  prometheus = false
   args = [
     "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
   ]
@@ -77,7 +83,8 @@ chain_spec_modifier_commands = [[
   ws_port = 9945
   rpc_port = 9934
   p2p_port = 31201
-  prometheus_port = 33155
+  #prometheus_port = 33155
+  prometheus = false
   args = [
     "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
   ]
