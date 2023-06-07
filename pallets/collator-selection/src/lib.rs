@@ -610,7 +610,7 @@ pub mod pallet {
 				.unwrap_or_else(Zero::zero)
 				.div(2u32.into());
 
-			if reward.is_zero() {
+			if !reward.is_zero() {
 				// `reward` is half of pot account minus ED, this should never fail.
 				let _success = T::Currency::transfer(&pot, &author, reward, Preservation::Preserve);
 				debug_assert!(_success.is_ok());
