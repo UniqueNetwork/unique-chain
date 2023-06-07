@@ -95,8 +95,13 @@ mod tests;
 mod types;
 pub mod weights;
 
-use frame_support::traits::{BalanceStatus, Currency, OnUnbalanced, ReservableCurrency};
-use sp_runtime::traits::{AppendZerosInput, Hash, Saturating, StaticLookup, Zero};
+use frame_support::{
+	traits::{BalanceStatus, Currency, OnUnbalanced, ReservableCurrency},
+};
+use sp_runtime::{
+	BoundedVec,
+	traits::{AppendZerosInput, Hash, Saturating, StaticLookup, Zero},
+};
 use sp_std::prelude::*;
 pub use weights::WeightInfo;
 
@@ -112,6 +117,18 @@ type NegativeImbalanceOf<T> = <<T as Config>::Currency as Currency<
 	<T as frame_system::Config>::AccountId,
 >>::NegativeImbalance;
 type AccountIdLookupOf<T> = <<T as frame_system::Config>::Lookup as StaticLookup>::Source;
+type RegistrarInfoOf<T> = RegistrarInfo<BalanceOf<T>, <T as frame_system::Config>::AccountId>;
+type RegistrationOf<T> =
+	Registration<BalanceOf<T>, <T as Config>::MaxRegistrars, <T as Config>::MaxAdditionalFields>;
+type SubAccounts<T> =
+	sp_runtime::BoundedVec<<T as frame_system::Config>::AccountId, <T as Config>::MaxSubAccounts>;
+type SubAccountsByAccountId<T> = (
+	<T as frame_system::Config>::AccountId,
+	(
+		BalanceOf<T>,
+		BoundedVec<(<T as frame_system::Config>::AccountId, Data), <T as Config>::MaxSubAccounts>,
+	),
+);
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -198,13 +215,8 @@ pub mod pallet {
 	/// TWOX-NOTE: OK ― `AccountId` is a secure hash.
 	#[pallet::storage]
 	#[pallet::getter(fn subs_of)]
-	pub(super) type SubsOf<T: Config> = StorageMap<
-		_,
-		Twox64Concat,
-		T::AccountId,
-		(BalanceOf<T>, BoundedVec<T::AccountId, T::MaxSubAccounts>),
-		ValueQuery,
-	>;
+	pub(super) type SubsOf<T: Config> =
+		StorageMap<_, Twox64Concat, T::AccountId, (BalanceOf<T>, SubAccounts<T>), ValueQuery>;
 
 	/// The set of registrars. Not expected to get very big as can only be added through a
 	/// special origin (likely a council motion).
@@ -212,11 +224,8 @@ pub mod pallet {
 	/// The index into this can be cast to `RegistrarIndex` to get a valid value.
 	#[pallet::storage]
 	#[pallet::getter(fn registrars)]
-	pub(super) type Registrars<T: Config> = StorageValue<
-		_,
-		BoundedVec<Option<RegistrarInfo<BalanceOf<T>, T::AccountId>>, T::MaxRegistrars>,
-		ValueQuery,
-	>;
+	pub(super) type Registrars<T: Config> =
+		StorageValue<_, BoundedVec<Option<RegistrarInfoOf<T>>, T::MaxRegistrars>, ValueQuery>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -482,18 +491,21 @@ pub mod pallet {
 				.all(|i| i.0 == sender);
 			ensure!(not_other_sub, Error::<T>::AlreadyClaimed);
 
-			if old_deposit < new_deposit {
-				T::Currency::reserve(&sender, new_deposit - old_deposit)?;
-			} else if old_deposit > new_deposit {
-				let err_amount = T::Currency::unreserve(&sender, old_deposit - new_deposit);
-				debug_assert!(err_amount.is_zero());
+			match old_deposit.cmp(&new_deposit) {
+				core::cmp::Ordering::Less => {
+					T::Currency::reserve(&sender, new_deposit - old_deposit)?
+				}
+				core::cmp::Ordering::Equal => { /* do nothing if they're equal. */ }
+				core::cmp::Ordering::Greater => {
+					let err_amount = T::Currency::unreserve(&sender, old_deposit - new_deposit);
+					debug_assert!(err_amount.is_zero());
+				}
 			}
-			// do nothing if they're equal.
 
 			for s in old_ids.iter() {
 				<SuperOf<T>>::remove(s);
 			}
-			let mut ids = BoundedVec::<T::AccountId, T::MaxSubAccounts>::default();
+			let mut ids = <SubAccounts<T>>::default();
 			for (id, name) in subs {
 				<SuperOf<T>>::insert(&id, (sender.clone(), name));
 				ids.try_push(id)
@@ -1107,10 +1119,7 @@ pub mod pallet {
 		))]
 		pub fn force_insert_identities(
 			origin: OriginFor<T>,
-			identities: Vec<(
-				T::AccountId,
-				Registration<BalanceOf<T>, T::MaxRegistrars, T::MaxAdditionalFields>,
-			)>,
+			identities: Vec<(T::AccountId, RegistrationOf<T>)>,
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 			for identity in identities.clone() {
@@ -1162,13 +1171,7 @@ pub mod pallet {
 		))]
 		pub fn force_set_subs(
 			origin: OriginFor<T>,
-			subs: Vec<(
-				T::AccountId,
-				(
-					BalanceOf<T>,
-					BoundedVec<(T::AccountId, Data), T::MaxSubAccounts>,
-				),
-			)>,
+			subs: Vec<SubAccountsByAccountId<T>>,
 		) -> DispatchResult {
 			T::ForceOrigin::ensure_origin(origin)?;
 			for identity in subs.clone() {
@@ -1178,7 +1181,7 @@ pub mod pallet {
 					<SuperOf<T>>::remove(old_sub);
 				}
 
-				let mut ids = BoundedVec::<T::AccountId, T::MaxSubAccounts>::default();
+				let mut ids = <SubAccounts<T>>::default();
 				for (id, name) in identity.1 .1 {
 					<SuperOf<T>>::insert(&id, (account.clone(), name));
 					ids.try_push(id)

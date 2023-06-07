@@ -30,11 +30,11 @@
 //!
 //!
 //! ## Interface
-//!	The pallet provides interfaces for funds, collection/contract operations (see [types] module).
+//! The pallet provides interfaces for funds, collection/contract operations (see [types] module).
 
 //!
 //! ### Dispatchable Functions
-//!	- [`set_admin_address`][`Pallet::set_admin_address`] - sets an address as the the admin.
+//! - [`set_admin_address`][`Pallet::set_admin_address`] - sets an address as the the admin.
 //! - [`stake`][`Pallet::stake`] - stakes the amount of native tokens.
 //! - [`unstake`][`Pallet::unstake`] - unstakes all stakes.
 //! - [`sponsor_collection`][`Pallet::sponsor_collection`] - sets the pallet to be the sponsor for the collection.
