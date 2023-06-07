@@ -125,6 +125,7 @@
   "license": "SEE LICENSE IN ../LICENSE",
   "homepage": "",
   "dependencies": {
+    "@openzeppelin/contracts": "^4.9.0",
     "@polkadot/api": "10.7.2",
     "@polkadot/rpc-core": "^10.7.2",
     "@polkadot/util": "12.2.1",
