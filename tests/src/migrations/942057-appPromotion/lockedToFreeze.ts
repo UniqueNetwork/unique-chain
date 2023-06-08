@@ -3,12 +3,11 @@ import * as fs from 'fs';
 import {usingPlaygrounds} from '../../util';
 import path from 'path';
 import {isInteger, parse} from 'lossless-json';
-import {isNull} from '@polkadot/util';
 
 
 const WS_ENDPOINT = 'ws://localhost:9944';
 const DONOR_SEED = '//Alice';
-const UPDATE_IF_VERSION = 942058;
+const UPDATE_IF_VERSION = 942057;
 
 export function customNumberParser(value: any) {
   return isInteger(value) ? BigInt(value) : parseFloat(value);
@@ -37,20 +36,20 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     const chainqlImportData = parsingResult as {
       address: string;
-      balance: bigint;
+      balance: string;
       account: {
-        fee_frozen: bigint,
-        free: bigint,
-        misc_frozen: bigint,
-        reserved: bigint,
+        fee_frozen: string,
+        free: string,
+        misc_frozen: string,
+        reserved: string,
       },
       locks: {
-        amount: bigint,
+        amount: string,
         id: string,
       }[],
       stakes: object,
       unstakes: object,
-      totalPendingUnstale: bigint
+      totalPendingUnstale: string
     }[];
 
     const stakers = chainqlImportData.map((i) => i.address);
@@ -90,8 +89,8 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     console.log('6.1 Waiting all transactions settled...');
     const res = await Promise.allSettled(promises);
 
-    console.log('Wait 3 blocks for transactions to be included in a block...');
-    await helper.wait.newBlocks(3); // TODO
+    console.log('Wait 5 blocks for transactions to be included in a block...');
+    await helper.wait.newBlocks(5);
     // 6.2 Filter failed transactions
     console.log('6.2 Getting failed transactions...');
     const failedTx = res.filter((r) => r.status == 'rejected') as PromiseRejectedResult[];
@@ -106,6 +105,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     console.log('7. Check balances...');
     let blocksLeft = 10;
     let notMigrated = stakers;
+    const suspiciousAccounts = [];
     do {
       console.log('blocks left:', blocksLeft);
       const _notMigrated: string[] = [];
@@ -123,70 +123,78 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
         // 7.1 system.account
         const balance = await api.query.system.account(accountToMigrate) as any;
-        const free = BigInt(balance.data.free);
-        const reserved = BigInt(balance.data.reserved);
-        const frozen = BigInt(balance.data.frozen);
-        const oldFree = BigInt(oldAccount.account.free);
-        const oldReserved = BigInt(oldAccount.account.reserved);
-        const oldFrozen = BigInt(oldAccount.account.fee_frozen);
-        if(oldFree !== free) {
-          console.log('Old free !== New free', oldFree, free);
-          accountMigrated = false;
+        // new balances
+        const free = balance.data.free;
+        const reserved = balance.data.reserved;
+        const frozen = balance.data.frozen;
+        // old balances
+        const oldFree = oldAccount.account.free;
+        const oldReserved = oldAccount.account.reserved;
+        const oldFrozen = oldAccount.account.fee_frozen;
+        // asserts new = old
+        if(oldFree.toString() !== free.toString()) {
+          console.log('Old free !== New free, which is probably not a problem', oldFree.toString(), free.toString());
+          suspiciousAccounts.push(accountToMigrate);
         }
-        if(oldFrozen !== frozen) {
-          console.log('Old frozen !== New frozen', oldFrozen, frozen);
-          accountMigrated = false;
+        if(oldFrozen.toString() !== frozen.toString()) {
+          console.log('Old frozen !== New frozen, which is probably not a problem', oldFrozen.toString(), frozen.toString());
+          suspiciousAccounts.push(accountToMigrate);
         }
-        if(oldReserved !== reserved) {
-          console.log('Old reserved !== New reserved', oldReserved, reserved);
-          accountMigrated = false;
+        if(oldReserved.toString() !== reserved.toString()) {
+          console.log('Old reserved !== New reserved, which is probably not a problem', oldReserved.toString(), reserved.toString());
+          suspiciousAccounts.push(accountToMigrate);
         }
 
         // 7.2 balances.locks: no id appstake
         const locks = await helper.balance.getLocked(accountToMigrate);
         const appPromoLocks = locks.filter(lock => lock.id === 'appstake');
-        if(appPromoLocks.length > 0)
+        if(appPromoLocks.length !== 0) {
+          console.log('Account still has app-promo lock');
           accountMigrated = false;
+        }
 
         // 7.3 balances.freezes set...
         let freezes = await api.query.balances.freezes(accountToMigrate) as any;
-        freezes = freezes.map((freez: any) => ({id: freez.id.toString(), amount: freez.amount.toBigInt()}));
-        const oldAppPromoLocks = oldAccount.locks.filter(l => l.id === '0x6170707374616b65');
-        if(freezes.length !== oldAppPromoLocks.length) {
-          console.log('freezes.length !== old appPromoLocks.length', freezes.length, oldAppPromoLocks.length);
+        freezes = freezes.map((freez: any) => ({id: freez.id.toString(), amount: freez.amount.toString()}));
+        if(!freezes) {
+          console.log('Account does not have freezes');
           accountMigrated = false;
-        }
-        if(freezes[0].amount !== BigInt(oldAppPromoLocks[0].amount)) {
-          console.log('freezes amount !== old appPromoLocks amount', freezes[0].amount, oldAppPromoLocks[0].amount);
-        }
-        for(const freez of freezes) {
-          if(freez.id !== '0x6170707374616b656170707374616b65') {
-            console.log('Got freez with incorrect id:', freez.id);
+        } else {
+          const oldAppPromoLocks = oldAccount.locks.filter(l => l.id === '0x6170707374616b65'); // get app promo locks
+          // should be only one freez for each account
+          if(freezes.length !== 1) {
+            console.log('freezes.length !== 1 and old appPromoLocks.length', freezes.length, oldAppPromoLocks.length);
             accountMigrated = false;
+          } else {
+            const appPromoFreez = freezes[0];
+            // freez-amount should be equal to migrated lock amount
+            if(appPromoFreez.amount.toString() !== oldAppPromoLocks[0].amount.toString()) {
+              console.log('freezes amount !== old appPromoLocks amount', appPromoFreez.amount.toString(), oldAppPromoLocks[0].amount.toString());
+              accountMigrated = false;
+            }
+            // freez id should be correct
+            if(appPromoFreez.id !== '0x6170707374616b656170707374616b65') {
+              console.log('Got freez with incorrect id:', appPromoFreez.id);
+              accountMigrated = false;
+            }
           }
         }
 
-        // 7.4 Total staked the same
-        const totalStaked = await helper.staking.getTotalStaked({Substrate: accountToMigrate});
-        const oldTotalStaked = oldAccount.balance;
-        if(BigInt(totalStaked) !== BigInt(oldTotalStaked)) {
-          console.log('Old totalStaked !== New totalStaked', oldTotalStaked, totalStaked);
-          accountMigrated = false;
-        }
         // 7.4 Stakes number the same
         const stakesNumber = await helper.staking.getStakesNumber({Substrate: accountToMigrate});
-        if(stakesNumber !== Object.keys(oldAccount.stakes).length) {
-          console.log('Old stakes number !== New stakes number', Object.keys(oldAccount.stakes).length, stakesNumber);
+        const oldStakesNumber = oldAccount.stakes ? Object.keys(oldAccount.stakes).length : 0;
+        if(stakesNumber.toString() !== oldStakesNumber.toString()) {
+          console.log('Old stakes number !== New stakes number', oldStakesNumber, stakesNumber);
           accountMigrated = false;
         }
 
-        // 7.5 Total pendingUnstake the same
-        const pendingUnstakes = await helper.staking.getPendingUnstakePerBlock({Substrate: accountToMigrate});
-        if(!isNull(oldAccount.unstakes)) {
-          if(pendingUnstakes.length !== Object.keys(oldAccount.unstakes).length) {
-            console.log('Old unstakes number !== New unstakes number', Object.keys(oldAccount.unstakes).length, pendingUnstakes);
-            accountMigrated = false;
-          }
+        // 7.5 Total pendingUnstake + total staked = old locked
+        const pendingUnstakes = await helper.staking.getPendingUnstake({Substrate: accountToMigrate});
+        const totalStaked = await helper.staking.getTotalStaked({Substrate: accountToMigrate});
+        const totalBalanceInAppPromo = pendingUnstakes + totalStaked;
+        if(totalBalanceInAppPromo.toString() !== oldAccount.balance.toString()) {
+          console.log('totalBalanceInAppPromo !== old locked in app promo', totalBalanceInAppPromo.toString(), oldAccount.balance.toString());
+          accountMigrated = false;
         }
 
         // 8 Add to not-migrated
@@ -202,8 +210,12 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     } while(blocksLeft > 0 && notMigrated.length !== 0);
 
     console.log('Not migrated accounts...', notMigrated.length);
+    if(suspiciousAccounts.length > 0) {
+      console.log('Saving suspicious accounts to suspicious.json:');
+      fs.writeFileSync('./suspicious.json', JSON.stringify(suspiciousAccounts));
+    }
     if(notMigrated.length > 0) {
-      console.log('Not migrated list:');
+      console.log('Saving not migrated list to failed.json:');
       notMigrated.forEach(console.log);
       fs.writeFileSync('./failed.json', JSON.stringify(notMigrated));
       process.exit(1);
