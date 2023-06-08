@@ -49,16 +49,16 @@ function delay(ms: number) {
 // Countdown with time left on display
 async function waitWithTimer(time: number) {
   const secondsTotal = Math.ceil(time / 1000);
-  for (let i = secondsTotal; i > 0; i--) {
+  for(let i = secondsTotal; i > 0; i--) {
     // could also introduce hours, but wth
     const seconds = i % 60;
     const text = `Time left: ${Math.floor(i / 60)}:${seconds < 10 ? '0' + seconds : seconds}`;
-    if (process.stdout.isTTY)
+    if(process.stdout.isTTY)
       process.stdout.write(text);
-    else if (seconds % 10 == 0)
+    else if(seconds % 10 == 0)
       console.log(text);
     await delay(1000);
-    if (process.stdout.isTTY) {
+    if(process.stdout.isTTY) {
       process.stdout.clearLine(0);
       process.stdout.cursorTo(0);
     }
@@ -115,7 +115,7 @@ const raiseZombienet = async (): Promise<void> => {
   const configPath = resolve(NETWORK_CONFIG_FILE);
   const networkConfig = readNetworkConfig(configPath);
   // console.log(networkConfig);
-  if (networkConfig.settings.provider !== 'native') {
+  if(networkConfig.settings.provider !== 'native') {
     throw new Error(`Oh no! Expected native network, got ${networkConfig.settings.provider}.`);
   }
 
@@ -134,17 +134,17 @@ const raiseZombienet = async (): Promise<void> => {
   await network.relay[0].connectApi();
   let relayInfo = getRelayInfo((network.relay[0] as any).apiInstance!);
   await network.relay[0].apiInstance!.disconnect();
-  if (isUpgradeTesting) {
+  if(isUpgradeTesting) {
     console.log('Relay stats:', relayInfo);
   }
 
   // non-exported functionality of NativeClient
   const networkClient = (network.client as any);
 
-  if (NEW_RELAY_BIN) {
+  if(NEW_RELAY_BIN) {
     console.log('\n🧶 Restarting relay nodes');
 
-    for (const [index, node] of network.relay.entries()) {
+    for(const [index, node] of network.relay.entries()) {
       await node.apiInstance?.disconnect();
 
       console.log(`\n🚦 Starting timeout for the epoch change (node ${index + 1}/${network.relay.length})...`);
@@ -160,12 +160,12 @@ const raiseZombienet = async (): Promise<void> => {
     console.log('\n🌒 All relay nodes restarted with the new binaries.');
   }
 
-  if (NEW_PARA_BIN) {
-    for (const paraId in network.paras) {
+  if(NEW_PARA_BIN) {
+    for(const paraId in network.paras) {
       const para = network.paras[paraId];
       console.log(`\n🧶 Restarting collator nodes of parachain ${paraId}`);
 
-      for (const [_index, node] of para.nodes.entries()) {
+      for(const [_index, node] of para.nodes.entries()) {
         await node.apiInstance?.disconnect();
 
         // Replace the node-starting command with the new binary
@@ -189,7 +189,7 @@ const raiseZombienet = async (): Promise<void> => {
 
   let relayUpgradeCompleted = false, paraUpgradeCompleted = false;
 
-  if (NEW_RELAY_WASM) {
+  if(NEW_RELAY_WASM) {
     const relayOldVersion = relayInfo.specVersion;
     console.log('\n🚦 Starting timeout for the next epoch before upgrading the relay runtime code...');
     await waitWithTimer(relayInfo.epochTime);
@@ -204,10 +204,10 @@ const raiseZombienet = async (): Promise<void> => {
       const result = await helper.executeExtrinsic(
         superuser,
         'api.tx.sudo.sudoUncheckedWeight',
-        [helper.constructApiCall('api.tx.system.setCode', [`0x${code}`]), 0],
+        [helper.constructApiCall('api.tx.system.setCode', [`0x${code}`]), {}],
       );
 
-      if (result.status == 'Fail') {
+      if(result.status == 'Fail') {
         console.error('Failed to upgrade the runtime:', result);
       }
 
@@ -215,7 +215,7 @@ const raiseZombienet = async (): Promise<void> => {
       relayInfo = getRelayInfo(helper.getApi());
     }, network.relay[0].wsUri);
 
-    if (relayOldVersion != relayInfo.specVersion) {
+    if(relayOldVersion != relayInfo.specVersion) {
       // eslint-disable-next-line no-useless-escape
       console.log(`\n\🛰️ The relay has successfully upgraded from version ${relayOldVersion} to ${relayInfo.specVersion}!`);
       relayUpgradeCompleted = true;
@@ -227,7 +227,7 @@ const raiseZombienet = async (): Promise<void> => {
     relayUpgradeCompleted = true;
   }
 
-  if (NEW_PARA_WASM) {
+  if(NEW_PARA_WASM) {
     let codeValidationDelayBlocks = 0;
     const upgradingParas: {[id: string]: {version: number, upgraded: boolean}} = {};
     // Calculate the code validation delay of the relay chain,
@@ -240,12 +240,12 @@ const raiseZombienet = async (): Promise<void> => {
     }, network.relay[0].wsUri);
 
     // Wait for the next epoch so that the parachains will start cooperating with the relay
-    if (relayUpgradeCompleted && NEW_RELAY_WASM) {
+    if(relayUpgradeCompleted && NEW_RELAY_WASM) {
       console.log('\n🚥 Starting timeout for the next epoch before upgrading the parachains code...');
       await waitWithTimer(relayInfo.epochTime);
     }
 
-    for (const paraId in network.paras) {
+    for(const paraId in network.paras) {
       console.log(`\n--- Upgrading the runtime of parachain ${paraId} \t---`);
       const para = network.paras[paraId];
 
@@ -264,10 +264,10 @@ const raiseZombienet = async (): Promise<void> => {
         let result = await helper.executeExtrinsic(
           superuser,
           'api.tx.sudo.sudoUncheckedWeight',
-          [helper.constructApiCall('api.tx.parachainSystem.authorizeUpgrade', [codeHash]), 0],
+          [helper.constructApiCall('api.tx.parachainSystem.authorizeUpgrade', [codeHash, false]), {}],
         );
 
-        if (result.status == 'Fail') {
+        if(result.status == 'Fail') {
           console.error('Failed to authorize the upgrade:', result);
           return;
         }
@@ -276,10 +276,10 @@ const raiseZombienet = async (): Promise<void> => {
         result = await helper.executeExtrinsic(
           superuser,
           'api.tx.sudo.sudoUncheckedWeight',
-          [helper.constructApiCall('api.tx.parachainSystem.enactAuthorizedUpgrade', [`0x${code.toString('hex')}`]), 0],
+          [helper.constructApiCall('api.tx.parachainSystem.enactAuthorizedUpgrade', [`0x${code.toString('hex')}`]), {}],
         );
 
-        if (result.status == 'Fail') {
+        if(result.status == 'Fail') {
           console.error('Failed to upgrade the runtime:', result);
         }
       }, para.nodes[0].wsUri);
@@ -287,8 +287,8 @@ const raiseZombienet = async (): Promise<void> => {
 
     // Check the upgrades of the parachains, first after the minimum code validation delay, and then after some block time increments
     let firstPass = true;
-    for (let attempt = 0; attempt < 3 && !paraUpgradeCompleted; attempt++) {
-      if (firstPass) {
+    for(let attempt = 0; attempt < 3 && !paraUpgradeCompleted; attempt++) {
+      if(firstPass) {
         console.log('\nCode validation delay:', codeValidationDelayBlocks, 'blocks');
         console.log('🚥 Waiting for the minimum code validation delay before the parachain can upgrade...');
         await waitWithTimer(relayInfo.blockTime * codeValidationDelayBlocks);
@@ -300,15 +300,15 @@ const raiseZombienet = async (): Promise<void> => {
 
       // Ping the parachains' nodes for new runtime versions
       let upgradeFailed = false;
-      for (const paraId in network.paras) {
-        if (upgradingParas[paraId].upgraded) continue;
+      for(const paraId in network.paras) {
+        if(upgradingParas[paraId].upgraded) continue;
 
         const para = network.paras[paraId];
         // eslint-disable-next-line require-await
         await usingPlaygrounds(async (helper) => {
           const specVersion = getSpecVersion(helper.getApi());
 
-          if (specVersion != upgradingParas[paraId].version) {
+          if(specVersion != upgradingParas[paraId].version) {
             // eslint-disable-next-line no-useless-escape
             console.log(`\n\🛰️  Parachain ${paraId} has successfully upgraded from version ${upgradingParas[paraId].version} to ${specVersion}!`);
             upgradingParas[paraId].upgraded = true;
@@ -323,7 +323,7 @@ const raiseZombienet = async (): Promise<void> => {
     }
 
     // Disable maintenance mode if present
-    for (const paraId in network.paras) {
+    for(const paraId in network.paras) {
       await toggleMaintenanceMode(false, network.paras[paraId].nodes[0].wsUri);
     }
   } else {
@@ -333,8 +333,8 @@ const raiseZombienet = async (): Promise<void> => {
 
   // await network.stop();
 
-  if (isUpgradeTesting) {
-    if (paraUpgradeCompleted && relayUpgradeCompleted) {
+  if(isUpgradeTesting) {
+    if(paraUpgradeCompleted && relayUpgradeCompleted) {
       console.log("\n🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸");
     } else {
       console.error("\n🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧");
