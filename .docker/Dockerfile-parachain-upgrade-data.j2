@@ -82,4 +82,4 @@ CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FRO
     cd /unique-chain/tests && \
     npm install --global yarn && \
     yarn install && \
-    yarn frankenstein zombienet-forkless.toml
+    export DEBUG=zombie && yarn frankenstein zombienet-forkless.toml
