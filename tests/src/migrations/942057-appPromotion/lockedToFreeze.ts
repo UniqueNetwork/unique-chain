@@ -126,16 +126,19 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
         const free = BigInt(balance.data.free);
         const reserved = BigInt(balance.data.reserved);
         const frozen = BigInt(balance.data.frozen);
-        if(oldAccount.account.free !== free) {
-          console.log('Old free !== New free', oldAccount.account.free, free);
+        const oldFree = BigInt(oldAccount.account.free);
+        const oldReserved = BigInt(oldAccount.account.reserved);
+        const oldFrozen = BigInt(oldAccount.account.fee_frozen);
+        if(oldFree !== free) {
+          console.log('Old free !== New free', oldFree, free);
           accountMigrated = false;
         }
-        if(oldAccount.account.fee_frozen !== frozen) {
-          console.log('Old frozen !== New frozen', oldAccount.account.fee_frozen, frozen);
+        if(oldFrozen !== frozen) {
+          console.log('Old frozen !== New frozen', oldFrozen, frozen);
           accountMigrated = false;
         }
-        if(oldAccount.account.reserved !== reserved) {
-          console.log('Old reserved !== New reserved', oldAccount.account.reserved, reserved);
+        if(oldReserved !== reserved) {
+          console.log('Old reserved !== New reserved', oldReserved, reserved);
           accountMigrated = false;
         }
 
@@ -145,7 +148,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
         if(appPromoLocks.length > 0)
           accountMigrated = false;
 
-        // 7.3 balances.freezes: set...
+        // 7.3 balances.freezes set...
         let freezes = await api.query.balances.freezes(accountToMigrate) as any;
         freezes = freezes.map((freez: any) => ({id: freez.id.toString(), amount: freez.amount.toBigInt()}));
         const oldAppPromoLocks = oldAccount.locks.filter(l => l.id === '0x6170707374616b65');
@@ -153,7 +156,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
           console.log('freezes.length !== old appPromoLocks.length', freezes.length, oldAppPromoLocks.length);
           accountMigrated = false;
         }
-        if(freezes[0].amount !== oldAppPromoLocks[0].amount) {
+        if(freezes[0].amount !== BigInt(oldAppPromoLocks[0].amount)) {
           console.log('freezes amount !== old appPromoLocks amount', freezes[0].amount, oldAppPromoLocks[0].amount);
         }
         for(const freez of freezes) {
@@ -165,11 +168,11 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
         // 7.4 Total staked the same
         const totalStaked = await helper.staking.getTotalStaked({Substrate: accountToMigrate});
-        if(totalStaked !== oldAccount.balance) {
-          console.log('Old totalStaked !== New totalStaked', oldAccount.balance, totalStaked);
+        const oldTotalStaked = oldAccount.balance;
+        if(BigInt(totalStaked) !== BigInt(oldTotalStaked)) {
+          console.log('Old totalStaked !== New totalStaked', oldTotalStaked, totalStaked);
           accountMigrated = false;
         }
-
         // 7.4 Stakes number the same
         const stakesNumber = await helper.staking.getStakesNumber({Substrate: accountToMigrate});
         if(stakesNumber !== Object.keys(oldAccount.stakes).length) {
