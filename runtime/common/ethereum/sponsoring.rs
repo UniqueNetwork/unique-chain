@@ -84,12 +84,31 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 							)
 							.map(|()| sponsor)
 						}
-						UniqueNFTCall::ERC721UniqueExtensions(
-							ERC721UniqueExtensionsCall::Transfer { token_id, .. },
-						) => {
-							let token_id: TokenId = token_id.try_into().ok()?;
-							withdraw_transfer::<T>(&collection, who, &token_id).map(|()| sponsor)
-						}
+						UniqueNFTCall::ERC721UniqueExtensions(call) => match call {
+							ERC721UniqueExtensionsCall::Transfer { token_id, .. } => {
+								let token_id: TokenId = token_id.try_into().ok()?;
+								withdraw_transfer::<T>(&collection, who, &token_id)
+									.map(|()| sponsor)
+							}
+							ERC721UniqueExtensionsCall::MintCross { properties, .. } => {
+								let properties = properties
+									.into_iter()
+									.map(pallet_common::eth::Property::try_into)
+									.collect::<Result<Vec<_>, pallet_evm_coder_substrate::execution::Error>>(
+									)
+									.ok()?
+									.try_into()
+									.ok()?;
+
+								withdraw_create_item::<T>(
+									&collection,
+									&who,
+									&CreateItemData::NFT(CreateNftData { properties }),
+								)
+								.map(|()| sponsor)
+							}
+							_ => None,
+						},
 						UniqueNFTCall::ERC721UniqueMintable(
 							ERC721UniqueMintableCall::Mint { .. }
 							| ERC721UniqueMintableCall::MintCheckId { .. }

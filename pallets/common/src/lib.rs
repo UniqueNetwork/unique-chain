@@ -216,7 +216,6 @@ impl<T: Config> CollectionHandle<T> {
 	///
 	/// # Arguments
 	///
-	/// * `sender`: Caller's account.
 	/// * `sponsor`: ID of the account of the sponsor-to-be.
 	pub fn force_set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
 		self.check_is_internal()?;
@@ -867,12 +866,14 @@ pub mod pallet {
 	>;
 }
 
+/// Value representation with delayed initialization time.
 pub struct LazyValue<T, F: FnOnce() -> T> {
 	value: Option<T>,
 	f: Option<F>,
 }
 
 impl<T, F: FnOnce() -> T> LazyValue<T, F> {
+	/// Create a new LazyValue.
 	pub fn new(f: F) -> Self {
 		Self {
 			value: None,
@@ -880,6 +881,7 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 		}
 	}
 
+	/// Get the value. If it call furst time the value will be initialized.
 	pub fn value(&mut self) -> &T {
 		if self.value.is_none() {
 			self.value = Some(self.f.take().unwrap()())
@@ -888,6 +890,7 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 		self.value.as_ref().unwrap()
 	}
 
+	/// Is value initialized.
 	pub fn has_value(&self) -> bool {
 		self.value.is_some()
 	}
