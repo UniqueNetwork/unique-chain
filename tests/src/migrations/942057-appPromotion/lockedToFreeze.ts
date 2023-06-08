@@ -49,8 +49,8 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
       }[],
       stakes: object,
       unstakes: object,
-      totalPendingUnstale: string
     }[];
+    testChainqlData(chainqlImportData);
 
     const stakers = chainqlImportData.map((i) => i.address);
 
@@ -229,7 +229,33 @@ const chunk = <T>(arr: T[], size: number) =>
   Array.from({length: Math.ceil(arr.length / size)}, (_: any, i: number) =>
     arr.slice(i * size, i * size + size));
 
-main().then(() => process.exit(0))
+const testChainqlData = (data: any) => {
+  const wrongData = [];
+  for(const account of data) {
+    try {
+      if(account.address == null) throw Error('no address in data');
+      if(account.balance == null) throw Error('no balance in data');
+      if(account.account == null) throw Error('no account in data');
+      if(account.account.fee_frozen == null) throw Error('no account.fee_frozen in data');
+      if(account.account.misc_frozen == null) throw Error('no account.misc_frozen in data');
+      if(account.account.free == null) throw Error('no account.free in data');
+      if(account.account.reserved == null) throw Error('no account.reserved in data');
+      if(account.locks == null) throw Error('no locks in data');
+      if(account.locks[0].amount == null) throw Error('no locks.amount in data');
+      if(account.locks[0].id == null) throw Error('no locks.id in data');
+    } catch (error) {
+      wrongData.push(account.address);
+      console.log((error as Error).message, account.address);
+    }
+    if(wrongData.length > 0) throw Error('Chainql data not correct');
+  }
+  console.log('Chainql data correct');
+};
+
+main({
+  wsEndpoint: process.env.WS_RPC!,
+  donorSeed: process.env.SUPERUSER_SEED!,
+}).then(() => process.exit(0))
   .catch((e) => {
     console.error(e);
     process.exit(1);
