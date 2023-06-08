@@ -247,7 +247,10 @@ const testChainqlData = (data: any) => {
       wrongData.push(account.address);
       console.log((error as Error).message, account.address);
     }
-    if(wrongData.length > 0) throw Error('Chainql data not correct');
+    if(wrongData.length > 0) {
+      console.log(data);
+      throw Error('Chainql data not correct');
+    }
   }
   console.log('Chainql data correct');
 };
