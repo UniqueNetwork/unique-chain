@@ -8,7 +8,7 @@ import {isNull} from '@polkadot/util';
 
 const WS_ENDPOINT = 'ws://localhost:9944';
 const DONOR_SEED = '//Alice';
-const UPDATE_IF_VERSION = 942057;
+const UPDATE_IF_VERSION = 942058;
 
 export function customNumberParser(value: any) {
   return isInteger(value) ? BigInt(value) : parseFloat(value);
