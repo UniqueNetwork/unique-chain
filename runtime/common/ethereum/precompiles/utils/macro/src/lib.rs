@@ -35,8 +35,8 @@ use syn::{parse_macro_input, spanned::Spanned, Expr, ExprLit, Ident, ItemEnum, L
 /// ```ignore
 /// #[generate_function_selector]
 /// enum Action {
-/// 	Toto = "toto()",
-/// 	Tata = "tata()",
+///     Toto = "toto()",
+///     Tata = "tata()",
 /// }
 /// ```
 ///
@@ -45,8 +45,8 @@ use syn::{parse_macro_input, spanned::Spanned, Expr, ExprLit, Ident, ItemEnum, L
 /// ```rust
 /// #[repr(u32)]
 /// enum Action {
-/// 	Toto = 119097542u32,
-/// 	Tata = 1414311903u32,
+///     Toto = 119097542u32,
+///     Tata = 1414311903u32,
 /// }
 /// ```
 ///

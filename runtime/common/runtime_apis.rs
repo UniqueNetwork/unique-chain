@@ -687,7 +687,7 @@ macro_rules! impl_common_runtime_apis {
                 fn on_runtime_upgrade(checks: frame_try_runtime::UpgradeCheckSelect) -> (Weight, Weight) {
                     log::info!("try-runtime::on_runtime_upgrade unique-chain.");
                     let weight = Executive::try_runtime_upgrade(checks).unwrap();
-                    (weight, crate::config::substrate::RuntimeBlockWeights::get().max_block)
+                    (weight, $crate::config::substrate::RuntimeBlockWeights::get().max_block)
                 }
 
                 fn execute_block(
