@@ -206,16 +206,6 @@ jobs:
         with:
           node-version: 16
 
-      - name: Collect app-promo data
-        if: success() || failure()
-        working-directory: tests
-        run: |
-          cd src/migrations/942057-appPromotion   
-          /home/ubuntu/.cargo/bin/chainql --tla-str=chainUrl=ws://127.0.0.1:9944 stakersParser.jsonnet > output.json
-        env:
-          WS_RPC: ws://127.0.0.1:9944
-          SUPERUSER_SEED: //Alice
-
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
         run: |
@@ -280,6 +270,7 @@ jobs:
         run: |
           yarn install
           cd src/migrations/942057-appPromotion   
+          /home/ubuntu/.cargo/bin/chainql --tla-str=chainUrl=ws://127.0.0.1:9944 stakersParser.jsonnet > output.json
           npx ts-node --esm lockedToFreeze.ts
         env:
           WS_RPC: ws://127.0.0.1:9944
