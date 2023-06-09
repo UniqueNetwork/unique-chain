@@ -82,6 +82,7 @@ jobs:
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             WASM_NAME=${{ matrix.wasm_name }}
             RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
+            DESTINATION_SPEC_VERSION=${{ env.DESTINATION_SPEC_VERSION }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
             CHAINQL=${{ env.CHAINQL }}
