@@ -5,7 +5,7 @@ import {usingPlaygrounds} from '../../util';
 const WS_ENDPOINT = 'ws://localhost:9944';
 const DONOR_SEED = '//Alice';
 
-const main = async(options: { wsEndpoint: string; donorSeed: string } = {
+export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
   wsEndpoint: WS_ENDPOINT,
   donorSeed: DONOR_SEED,
 }) => {
@@ -23,7 +23,7 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     const currentBlock = await api.query.system.number();
 
-    const filteredBlocks = pendingBlocks.filter((b) => b < currentBlock);
+    const filteredBlocks = pendingBlocks.filter((b) => currentBlock.gt(b));
 
     if(filteredBlocks.length != 0) {
       console.log(
@@ -38,34 +38,29 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const skippedBlocks = chunk(filteredBlocks, 10);
 
     const signer = await privateKey(options.donorSeed);
-    const signerAccount = (
-      await api.query.system.account(signer.address)
-    ).toJSON() as any;
-
-    let nonce = signerAccount.nonce;
 
     const txs = skippedBlocks.map((b) =>
-      api.tx.sudo.sudo(api.tx.appPromotion.forceUnstake(b))
-        .sign(signer, {
-          blockHash: api.genesisHash,
-          genesisHash: api.genesisHash,
-          runtimeVersion: api.runtimeVersion,
-          nonce: nonce++,
-        }));
+      api.tx.sudo.sudo(api.tx.appPromotion.forceUnstake(b)));
 
-    const promises = txs.map((tx) => () => api.rpc.author.submitAndWatchExtrinsic(tx));
 
-    const res = await Promise.allSettled(promises.map((p) => p()));
-    const failedTx = res.filter((r) => r.status == 'rejected') as PromiseRejectedResult[];
-    const isSuccess = failedTx.length == 0;
+    const promises = txs.map((tx) => () => helper.signTransaction(signer, tx));
+
+    await Promise.allSettled(promises.map((p) => p()));
+
+    const failedBlocks: bigint[] = [];
+    let isSuccess = true;
+
+    for(const b of filteredBlocks) {
+      if(((await api.query.appPromotion.pendingUnstake(b)).toJSON() as any[]).length != 0) {
+        failedBlocks.push(b.toBigInt());
+        isSuccess = false;
+      }
+    }
 
     if(isSuccess) {
       console.log('Done. %d block(s) were processed.', filteredBlocks.length);
     } else {
-      console.log('Something went wrong.');
-      for(const tx of failedTx) {
-        console.log(tx.reason);
-      }
+      throw new Error(`Something went wrong. Block(s) have not been processed: ${failedBlocks}`);
     }
 
 
@@ -75,12 +70,3 @@ const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 const chunk = <T>(arr: T[], size: number) =>
   Array.from({length: Math.ceil(arr.length / size)}, (_: any, i: number) =>
     arr.slice(i * size, i * size + size));
-
-main({
-  wsEndpoint: process.env.WS_RPC!,
-  donorSeed: process.env.SUPERUSER_SEED!,
-}).then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
