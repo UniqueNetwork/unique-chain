@@ -36,10 +36,10 @@ jobs:
         with:
           # TODO: Remove state-version-0 after mainnet upgrade
           matrix: |
-            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, extra_features {,state-version-0}
-            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, extra_features {,state-version-0}
-            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, extra_features {,state-version-0}
-            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, extra_features {,state-version-0}
+            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, destination_spec_version {${{ env.DESTINATION_SPEC_VERSION }}}, extra_features {,state-version-0}
+            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, destination_spec_version {${{ env.DESTINATION_SPEC_VERSION }}}, extra_features {,state-version-0}
+            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, destination_spec_version {${{ env.DESTINATION_SPEC_VERSION }}}, extra_features {,state-version-0}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, destination_spec_version {${{ env.DESTINATION_SPEC_VERSION }}}, extra_features {,state-version-0}
 
   forkless-data-build:
     needs: prepare-execution-marix
@@ -82,7 +82,7 @@ jobs:
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             WASM_NAME=${{ matrix.wasm_name }}
             RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
-            DESTINATION_SPEC_VERSION=${{ env.DESTINATION_SPEC_VERSION }}
+            DESTINATION_SPEC_VERSION=${{ matrix.destination_spec_version }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
             CHAINQL=${{ env.CHAINQL }}
@@ -177,7 +177,7 @@ jobs:
           variables: |
             NETWORK=${{ matrix.network }}
             BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
-            DESTINATION_SPEC_VERSION=${{ env.DESTINATION_SPEC_VERSION }}
+            DESTINATION_SPEC_VERSION=${{ matrix.destination_spec_version }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.forkless-data.${{ matrix.network }}.yml
