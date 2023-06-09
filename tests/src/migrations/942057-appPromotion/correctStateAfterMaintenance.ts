@@ -49,6 +49,7 @@ export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     const failedBlocks: bigint[] = [];
     let isSuccess = true;
+    await helper.wait.newBlocks(1);
 
     for(const b of filteredBlocks) {
       if(((await api.query.appPromotion.pendingUnstake(b)).toJSON() as any[]).length != 0) {
