@@ -32,7 +32,7 @@ export const migrateLockedToFreeze = async(options: { wsEndpoint: string; donorS
 
     // 3. Parse data to migrate
     console.log('3. Parsing chainql results...');
-    const parsingResult = parse(fs.readFileSync(path.resolve('output.json'), 'utf-8'), undefined, customNumberParser);
+    const parsingResult = parse(fs.readFileSync(path.resolve('src', 'migrations', '942057-appPromotion', 'output.json'), 'utf-8'), undefined, customNumberParser);
 
     const chainqlImportData = parsingResult as {
       address: string;
