@@ -176,6 +176,7 @@ jobs:
           variables: |
             NETWORK=${{ matrix.network }}
             BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
+            DESTINATION_SPEC_VERSION=${{ env.DESTINATION_SPEC_VERSION }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.forkless-data.${{ matrix.network }}.yml
