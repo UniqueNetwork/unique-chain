@@ -17,6 +17,7 @@
     "@zombienet/utils": "https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/utils?2476ea76a368f1b1e94038dbfec29c27f114288e",
     "chai": "^4.3.6",
     "chai-subset": "^1.6.0",
+    "dotenv": "^16.1.4",
     "eslint": "^8.25.0",
     "eslint-plugin-mocha": "^10.1.0",
     "mocha": "^10.1.0",
