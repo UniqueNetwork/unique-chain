@@ -34,6 +34,7 @@ const NEW_RELAY_BIN = process.env.NEW_RELAY_BIN;
 const NEW_RELAY_WASM = process.env.NEW_RELAY_WASM;
 const NEW_PARA_BIN = process.env.NEW_PARA_BIN;
 const NEW_PARA_WASM = process.env.NEW_PARA_WASM;
+const DESTINATION_SPEC_VERSION = process.env.DESTINATION_SPEC_VERSION!;
 const PARACHAIN_BLOCK_TIME = 12_000;
 const SUPERUSER_KEY = '//Alice';
 
@@ -248,8 +249,8 @@ const raiseZombienet = async (): Promise<void> => {
       await waitWithTimer(relayInfo.epochTime);
     }
 
-    const migration = migrations[process.env.DESTINATION_SPEC_VERSION!];
-    console.log('⭐️⭐️⭐️ DESTINATION_SPEC_VERSION ⭐️⭐️⭐️', process.env.DESTINATION_SPEC_VERSION!);
+    const migration = migrations[DESTINATION_SPEC_VERSION];
+    console.log('⭐️⭐️⭐️ DESTINATION_SPEC_VERSION ⭐️⭐️⭐️', DESTINATION_SPEC_VERSION);
     for(const paraId in network.paras) {
       console.log(`\n--- Upgrading the runtime of parachain ${paraId} \t---`);
       const para = network.paras[paraId];
