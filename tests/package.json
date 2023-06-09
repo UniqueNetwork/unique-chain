@@ -139,6 +139,7 @@
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
     "find-process": "^1.4.7",
+    "lossless-json": "^2.0.9",
     "solc": "0.8.17",
     "web3": "1.10.0"
   },
