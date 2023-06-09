@@ -81,27 +81,14 @@ jobs:
             NETWORK=${{ matrix.network }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             WASM_NAME=${{ matrix.wasm_name }}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
             CHAINQL=${{ env.CHAINQL }}
             EXTRA_FEATURES=${{ matrix.extra_features }}
 
       - name: Show build configuration
         run: cat .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
-
-      - name: Generate launch-config-forkless-data.json
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/forkless-config/launch-config-forkless-data.j2
-          output_file: .docker/forkless-config/launch-config-forkless-data.json
-          variables: |
-            WASM_NAME=${{ matrix.wasm_name }}
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}            
-
-      - name: Show launch-config-forkless configuration
-        run: cat .docker/forkless-config/launch-config-forkless-data.json
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
@@ -258,11 +245,11 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
-          dest: './forkless-parachain-upgrade-data-logs.${{ matrix.features }}'
+          dest: './forkless-parachain-upgrade-data-logs.${{ matrix.network }}'
 
       - name: Show Docker logs
         if: success() || failure()
-        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/forkless-data.log'
+        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.network }}/forkless-data.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
