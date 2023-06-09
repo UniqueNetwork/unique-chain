@@ -247,13 +247,19 @@ const raiseZombienet = async (): Promise<void> => {
     }
 
     const migration = migrations[process.env.DESTINATION_SPEC_VERSION!];
+    console.log('⭐️⭐️⭐️ DESTINATION_SPEC_VERSION ⭐️⭐️⭐️', process.env.DESTINATION_SPEC_VERSION!);
     for(const paraId in network.paras) {
       console.log(`\n--- Upgrading the runtime of parachain ${paraId} \t---`);
       const para = network.paras[paraId];
 
       // Enable maintenance mode if present
       await toggleMaintenanceMode(true, para.nodes[0].wsUri);
-      if(migration) await migration.before();
+      if(migration) {
+        console.log('⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️');
+        console.log('⭐️⭐️⭐️ Running pre-upgrade scripts... ⭐️⭐️⭐️');
+        console.log('⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️');
+        await migration.before();
+      }
 
       // Read the WASM code and authorize the upgrade with its hash and set it as the new runtime
       const code = fs.readFileSync(NEW_PARA_WASM);
@@ -328,7 +334,10 @@ const raiseZombienet = async (): Promise<void> => {
     // Disable maintenance mode if present
     for(const paraId in network.paras) {
       // TODO only if our parachain
-      if(migration) await migration.after();
+      if(migration) {
+        console.log('⭐️⭐️⭐️ Running post-upgrade scripts... ⭐️⭐️⭐️');
+        await migration.after();
+      }
       await toggleMaintenanceMode(false, network.paras[paraId].nodes[0].wsUri);
     }
   } else {
