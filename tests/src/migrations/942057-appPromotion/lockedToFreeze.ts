@@ -13,7 +13,7 @@ export function customNumberParser(value: any) {
   return isInteger(value) ? BigInt(value) : parseFloat(value);
 }
 
-const main = async(options: { wsEndpoint: string; donorSeed: string } = {
+export const migrateLockedToFreeze = async(options: { wsEndpoint: string; donorSeed: string } = {
   wsEndpoint: WS_ENDPOINT,
   donorSeed: DONOR_SEED,
 }) => {
@@ -254,12 +254,3 @@ const testChainqlData = (data: any) => {
   }
   console.log('Chainql data correct');
 };
-
-main({
-  wsEndpoint: process.env.WS_RPC!,
-  donorSeed: process.env.SUPERUSER_SEED!,
-}).then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e);
-    process.exit(1);
-  });
