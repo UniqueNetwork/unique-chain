@@ -22,8 +22,6 @@ import {resolve} from 'path';
 import {usingPlaygrounds} from '.';
 import {migrations} from './frankensteinMigrate';
 import fs from 'fs';
-import * as dotenv from 'dotenv';
-dotenv.config();
 
 const ZOMBIENET_CREDENTIALS = process.env.ZOMBIENET_CREDENTIALS || '../.env';
 const NETWORK_CONFIG_FILE = process.argv[2] ?? '../launch-zombienet.toml';
