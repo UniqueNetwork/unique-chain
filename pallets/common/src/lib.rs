@@ -896,25 +896,26 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 	}
 }
 
-fn check_token_permissions<T, FTO, FTE>(
+fn check_token_permissions<T, FCA, FTO, FTE>(
 	collection_admin_permitted: bool,
-	is_collection_admin: bool,
 	token_owner_permitted: bool,
+	is_collection_admin: &mut LazyValue<bool, FCA>,
 	is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
 	is_token_exist: &mut LazyValue<bool, FTE>,
 ) -> DispatchResult
 where
 	T: Config,
+	FCA: FnOnce() -> bool,
 	FTO: FnOnce() -> Result<bool, DispatchError>,
 	FTE: FnOnce() -> bool,
 {
-	if !(collection_admin_permitted && is_collection_admin
-		|| token_owner_permitted && is_token_owner.value().clone()?)
+	if !(collection_admin_permitted && *is_collection_admin.value()
+		|| token_owner_permitted && (*is_token_owner.value())?)
 	{
 		fail!(<Error<T>>::NoPermission);
 	}
 
-	let token_certainly_exist = is_token_owner.has_value() && is_token_owner.value().clone()?;
+	let token_certainly_exist = is_token_owner.has_value() && (*is_token_owner.value())?;
 	if !token_certainly_exist && !is_token_exist.value() {
 		fail!(<Error<T>>::TokenNotFound);
 	}
@@ -1298,7 +1299,7 @@ impl<T: Config> Pallet<T> {
 		FTO: FnOnce() -> Result<bool, DispatchError>,
 		FTE: FnOnce() -> bool,
 	{
-		let is_collection_admin = collection.is_owner_or_admin(sender);
+		let mut is_collection_admin = LazyValue::new(|| collection.is_owner_or_admin(sender));
 		let permissions = Self::property_permissions(collection.id);
 
 		for (key, value) in properties_updates {
@@ -1318,10 +1319,10 @@ impl<T: Config> Pallet<T> {
 					collection_admin,
 					token_owner,
 					..
-				} => check_token_permissions::<T, FTO, FTE>(
+				} => check_token_permissions::<T, _, FTO, FTE>(
 					collection_admin,
-					is_collection_admin,
 					token_owner,
+					&mut is_collection_admin,
 					is_token_owner,
 					is_token_exist,
 				)?,
@@ -2376,47 +2377,79 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 pub mod tests {
 	use crate::{DispatchResult, DispatchError, LazyValue, Config};
 
+	const fn to_bool(u: u8) -> bool {
+		u != 0
+	}
+
+	#[derive(Debug)]
+	pub struct TestCase {
+		pub collection_admin: bool,
+		pub is_collection_admin: bool,
+		pub token_owner: bool,
+		pub is_token_owner: bool,
+		pub no_permission: bool,
+	}
+
+	impl TestCase {
+		const fn new(
+			collection_admin: u8,
+			is_collection_admin: u8,
+			token_owner: u8,
+			is_token_owner: u8,
+			no_permission: u8,
+		) -> Self {
+			Self {
+				collection_admin: to_bool(collection_admin),
+				is_collection_admin: to_bool(is_collection_admin),
+				token_owner: to_bool(token_owner),
+				is_token_owner: to_bool(is_token_owner),
+				no_permission: to_bool(no_permission),
+			}
+		}
+	}
+
 	#[rustfmt::skip]
-	pub const table: [[u8; 5]; 16] = [
-		//       ┌╴collection_admin_permitted
-		//       │  ┌╴is_collection_admin
-		//       │  │   ┌╴token_owner_permitted
-		//       │  │   │  ┌╴check_token_ownership
-		//       │  │   │  │   ┌╴NoPermission
-		/*  0*/ [0, 0,  0, 0,  1],
-		/*  1*/ [0, 0,  0, 1,  1],
-		/*  2*/ [0, 0,  1, 0,  1],
-		/*  3*/ [0, 0,  1, 1,  0],
-		/*  4*/ [0, 1,  0, 0,  1],
-		/*  5*/ [0, 1,  0, 1,  1],
-		/*  6*/ [0, 1,  1, 0,  1],
-		/*  7*/ [0, 1,  1, 1,  0],
-		/*  8*/ [1, 0,  0, 0,  1],
-		/*  9*/ [1, 0,  0, 1,  1],
-		/* 10*/ [1, 0,  1, 0,  1],
-		/* 11*/ [1, 0,  1, 1,  0],
-		/* 12*/ [1, 1,  0, 0,  0],
-		/* 13*/ [1, 1,  0, 1,  0],
-		/* 14*/ [1, 1,  1, 0,  0],
-		/* 15*/ [1, 1,  1, 1,  0],
+	pub const table: [TestCase; 16] = [
+		//                    ┌╴collection_admin
+		//                    │  ┌╴is_collection_admin
+		//                    │  │   ┌╴token_owner
+		//                    │  │   │  ┌╴is_token_ownership
+		//                    │  │   │  │   ┌╴no_permission
+		/*  0*/ TestCase::new(0, 0,  0, 0,  1),
+		/*  1*/ TestCase::new(0, 0,  0, 1,  1),
+		/*  2*/ TestCase::new(0, 0,  1, 0,  1),
+		/*  3*/ TestCase::new(0, 0,  1, 1,  0),
+		/*  4*/ TestCase::new(0, 1,  0, 0,  1),
+		/*  5*/ TestCase::new(0, 1,  0, 1,  1),
+		/*  6*/ TestCase::new(0, 1,  1, 0,  1),
+		/*  7*/ TestCase::new(0, 1,  1, 1,  0),
+		/*  8*/ TestCase::new(1, 0,  0, 0,  1),
+		/*  9*/ TestCase::new(1, 0,  0, 1,  1),
+		/* 10*/ TestCase::new(1, 0,  1, 0,  1),
+		/* 11*/ TestCase::new(1, 0,  1, 1,  0),
+		/* 12*/ TestCase::new(1, 1,  0, 0,  0),
+		/* 13*/ TestCase::new(1, 1,  0, 1,  0),
+		/* 14*/ TestCase::new(1, 1,  1, 0,  0),
+		/* 15*/ TestCase::new(1, 1,  1, 1,  0),
 	];
 
-	pub fn check_token_permissions<T, FTO, FTE>(
+	pub fn check_token_permissions<T, FCA, FTO, FTE>(
 		collection_admin_permitted: bool,
-		is_collection_admin: bool,
 		token_owner_permitted: bool,
+		is_collection_admin: &mut LazyValue<bool, FCA>,
 		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
 		check_token_existence: &mut LazyValue<bool, FTE>,
 	) -> DispatchResult
 	where
 		T: Config,
+		FCA: FnOnce() -> bool,
 		FTO: FnOnce() -> Result<bool, DispatchError>,
 		FTE: FnOnce() -> bool,
 	{
-		crate::check_token_permissions::<T, FTO, FTE>(
+		crate::check_token_permissions::<T, FCA, FTO, FTE>(
 			collection_admin_permitted,
-			is_collection_admin,
 			token_owner_permitted,
+			is_collection_admin,
 			check_token_ownership,
 			check_token_existence,
 		)

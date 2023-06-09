@@ -20,9 +20,9 @@ use frame_support::{
 	traits::{IsSubType},
 };
 use up_data_structs::{
-	CollectionId, CUSTOM_DATA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode,
-	CreateItemData, CreateNftData, CreateReFungibleData,
+	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, NFT_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode, CreateItemData, CreateNftData,
+	CreateReFungibleData,
 };
 use sp_runtime::traits::Saturating;
 use pallet_common::{CollectionHandle};
@@ -168,24 +168,11 @@ pub fn withdraw_create_item<T: Config>(
 			CreateItemData::ReFungible(_) => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 		});
 
-	if let Some(last_tx_block) = <CreateItemBasket<T>>::get((collection.id, who.as_sub())) {
-		let timeout = last_tx_block + limit.into();
-		if block_number < timeout {
-			return None;
-		}
-	}
-
 	match properties {
 		CreateItemData::NFT(CreateNftData { properties })
 		| CreateItemData::ReFungible(CreateReFungibleData { properties, .. }) => {
-			let data_limit = collection
-				.limits
-				.sponsored_data_size
-				.unwrap_or(CUSTOM_DATA_LIMIT) as usize;
-			let data_size = properties
-				.iter()
-				.map(|p| p.key.len() + p.value.len())
-				.fold(0, |acc, s| acc + s);
+			let data_limit = collection.limits.sponsored_data_size() as usize;
+			let data_size: usize = properties.iter().map(|p| p.key.len() + p.value.len()).sum();
 
 			if data_size > data_limit {
 				return None;
@@ -194,6 +181,12 @@ pub fn withdraw_create_item<T: Config>(
 		CreateItemData::Fungible(_) => (),
 	}
 
+	if let Some(last_tx_block) = <CreateItemBasket<T>>::get((collection.id, who.as_sub())) {
+		let timeout = last_tx_block + limit.into();
+		if block_number < timeout {
+			return None;
+		}
+	}
 	CreateItemBasket::<T>::insert((collection.id, who.as_sub()), block_number);
 
 	Some(())

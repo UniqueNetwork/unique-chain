@@ -131,6 +131,18 @@ pub struct Property {
 	value: evm_coder::types::Bytes,
 }
 
+impl Property {
+	/// Property key.
+	pub fn key(&self) -> &str {
+		&self.key.as_str()
+	}
+
+	/// Property value.
+	pub fn value(&self) -> &[u8] {
+		self.value.0.as_slice()
+	}
+}
+
 impl TryFrom<up_data_structs::Property> for Property {
 	type Error = pallet_evm_coder_substrate::execution::Error;
 

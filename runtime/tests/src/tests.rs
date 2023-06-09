@@ -2622,40 +2622,36 @@ mod check_token_permissions {
 	use pallet_common::LazyValue;
 	use sp_runtime::DispatchError;
 
-	fn to_bool(u: u8) -> bool {
-		u != 0
-	}
-
 	fn test<FTE: FnOnce() -> bool>(
 		i: usize,
-		row: &[u8; 5],
+		test_case: &pallet_common::tests::TestCase,
 		check_token_existence: &mut LazyValue<bool, FTE>,
 	) {
-		let collection_admin_permitted = to_bool(row[0]);
-		let is_collection_admin = to_bool(row[1]);
-		let token_owner_permitted = to_bool(row[2]);
-		let mut check_token_ownership = LazyValue::new(|| Ok(to_bool(row[3])));
-		let is_no_permission = to_bool(row[4]);
+		let collection_admin = test_case.collection_admin;
+		let mut is_collection_admin = LazyValue::new(|| test_case.is_collection_admin);
+		let token_owner = test_case.token_owner;
+		let mut is_token_owner = LazyValue::new(|| Ok(test_case.is_token_owner));
+		let is_no_permission = test_case.no_permission;
 
-		let result = pallet_common::tests::check_token_permissions::<Test, _, FTE>(
-			collection_admin_permitted,
-			is_collection_admin,
-			token_owner_permitted,
-			&mut check_token_ownership,
+		let result = pallet_common::tests::check_token_permissions::<Test, _, _, FTE>(
+			collection_admin,
+			token_owner,
+			&mut is_collection_admin,
+			&mut is_token_owner,
 			check_token_existence,
 		);
 
 		if is_no_permission {
 			assert!(
 				result.is_err(),
-				"{i}: {row:?}, token_exist: {}",
+				"{i}: {test_case:?}, token_exist: {}",
 				check_token_existence.value()
 			);
 			assert_err!(result, pallet_common::Error::<Test>::NoPermission,);
 		} else if check_token_existence.has_value() && !check_token_existence.value() {
 			assert!(
 				result.is_err(),
-				"{i}: {row:?}, token_exist: {}",
+				"{i}: {test_case:?}, token_exist: {}",
 				check_token_existence.value()
 			);
 			assert_err!(result, pallet_common::Error::<Test>::TokenNotFound,);

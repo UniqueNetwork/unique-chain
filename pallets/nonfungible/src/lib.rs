@@ -603,12 +603,12 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_being_created: bool,
-		self_mint: bool,
+		mint_target_is_sender: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut is_token_owner = pallet_common::LazyValue::new(|| {
 			if is_token_being_created {
-				return Ok(self_mint);
+				return Ok(mint_target_is_sender);
 			}
 
 			let is_owned = <PalletStructure<T>>::check_indirectly_owned(
@@ -654,7 +654,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
 		is_token_being_created: bool,
-		self_mint: bool,
+		mint_target_is_sender: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -663,7 +663,7 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
 			is_token_being_created,
-			self_mint,
+			mint_target_is_sender,
 			nesting_budget,
 		)
 	}

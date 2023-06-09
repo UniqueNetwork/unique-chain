@@ -538,13 +538,13 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		is_token_being_created: bool,
-		self_mint: bool,
+		mint_target_is_sender: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut is_token_owner =
 			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
 				if is_token_being_created {
-					return Ok(self_mint);
+					return Ok(mint_target_is_sender);
 				}
 
 				let balance = collection.balance(sender.clone(), token_id);
@@ -592,7 +592,7 @@ impl<T: Config> Pallet<T> {
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
 		is_token_being_created: bool,
-		self_mint: bool,
+		mint_target_is_sender: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -601,7 +601,7 @@ impl<T: Config> Pallet<T> {
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
 			is_token_being_created,
-			self_mint,
+			mint_target_is_sender,
 			nesting_budget,
 		)
 	}
@@ -923,12 +923,14 @@ impl<T: Config> Pallet<T> {
 				let token_id = first_token_id + i as u32 + 1;
 				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
 
-				let mut self_mint = true;
+				let mut mint_target_is_sender = true;
 				for (user, amount) in data.users.iter() {
-					self_mint = self_mint && sender.conv_eq(user);
 					if *amount == 0 {
 						continue;
 					}
+
+					mint_target_is_sender = mint_target_is_sender && sender.conv_eq(user);
+
 					<Balance<T>>::insert((collection.id, token_id, &user), amount);
 					<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
 					<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
@@ -944,7 +946,7 @@ impl<T: Config> Pallet<T> {
 					TokenId(token_id),
 					data.properties.clone().into_iter(),
 					true,
-					self_mint,
+					mint_target_is_sender,
 					nesting_budget,
 				) {
 					return TransactionOutcome::Rollback(Err(e));
