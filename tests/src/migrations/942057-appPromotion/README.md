@@ -31,10 +31,12 @@ cargo install chainql
 
 ## Execute offchain migration
 
-To run, you need to add an environment variable (`SUPERUSER_SEED`) with the sudo key seed.
+To run, you need to set an environment variables:
+- `SUPERUSER_SEED` – the sudo key seed.
+- `WS_RPC` – the network address
 
-Run the script by executing the following command:
+Run the migration by executing the following command:
 
 ```sh
-npx ts-node --esm lockedToFreeze.ts
+npx ts-node --esm executeMigration.ts
 ```

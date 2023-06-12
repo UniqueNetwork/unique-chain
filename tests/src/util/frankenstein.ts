@@ -263,9 +263,7 @@ const raiseZombienet = async (): Promise<void> => {
       // Enable maintenance mode if present
       await toggleMaintenanceMode(true, para.nodes[0].wsUri);
       if(migration) {
-        console.log('⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️');
         console.log('⭐️⭐️⭐️ Running pre-upgrade scripts... ⭐️⭐️⭐️');
-        console.log('⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️⭐️');
         await migration.before();
       }
 
