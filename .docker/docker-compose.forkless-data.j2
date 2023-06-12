@@ -3,7 +3,7 @@ version: "3.5"
 services:
   forkless-data:
     image: uniquenetwork/ci-forkless-data-local:{{ NETWORK }}-{{ BUILD_TAG }}
-    container_name: forkless-data
+    container_name: forkless-data-{{ NETWORK }}
     expose:
       - 9944
       - 9933
