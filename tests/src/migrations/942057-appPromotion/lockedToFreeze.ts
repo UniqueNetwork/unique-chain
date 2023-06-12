@@ -1,8 +1,9 @@
 // import { usingApi, privateKey, onlySign } from "./../../load/lib";
 import * as fs from 'fs';
 import {usingPlaygrounds} from '../../util';
-import path from 'path';
+import path, {dirname} from 'path';
 import {isInteger, parse} from 'lossless-json';
+import {fileURLToPath} from 'url';
 
 
 const WS_ENDPOINT = 'ws://localhost:9944';
@@ -32,7 +33,8 @@ export const migrateLockedToFreeze = async(options: { wsEndpoint: string; donorS
 
     // 3. Parse data to migrate
     console.log('3. Parsing chainql results...');
-    const parsingResult = parse(fs.readFileSync(path.resolve('src', 'migrations', '942057-appPromotion', 'output.json'), 'utf-8'), undefined, customNumberParser);
+    const dirName = dirname(fileURLToPath(import.meta.url));
+    const parsingResult = parse(fs.readFileSync(path.resolve(dirName, 'output.json'), 'utf-8'), undefined, customNumberParser);
 
     const chainqlImportData = parsingResult as {
       address: string;
