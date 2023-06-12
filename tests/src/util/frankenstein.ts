@@ -105,7 +105,18 @@ async function toggleMaintenanceMode(value: boolean, wsUri: string, retries = 5)
   }
 }
 
+async function skipIfAlreadyUpgraded() {
+  await usingPlaygrounds(async (helper) => {
+    const specVersion = await getSpecVersion(helper.getApi());
+    if(`v${specVersion}` === DESTINATION_SPEC_VERSION) {
+      console.log('\n🛸 Current version equal DESTINATION_SPEC_VERSION 🛸');
+      console.log("\n🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸");
+    }
+  }, REPLICA_FROM);
+}
+
 const raiseZombienet = async (): Promise<void> => {
+  await skipIfAlreadyUpgraded();
   const isUpgradeTesting = !!NEW_RELAY_BIN || !!NEW_RELAY_WASM || !!NEW_PARA_BIN || !!NEW_PARA_WASM;
   /*
   // If there is nothing to upgrade, what is the point
