@@ -28,7 +28,6 @@ runtime-benchmarks = [
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
 	'frame-system/runtime-benchmarks',
-	'hex-literal',
 	'pallet-app-promotion/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-collator-selection/runtime-benchmarks',
@@ -301,7 +300,6 @@ up-sponsorship = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-system-benchmarking = { workspace = true, optional = true }
 frame-try-runtime = { workspace = true, optional = true }
-hex-literal = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 ################################################################################
@@ -313,6 +311,7 @@ pallet-test-utils = { workspace = true }
 # Other Dependencies
 
 impl-trait-for-tuples = { workspace = true }
+hex-literal = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

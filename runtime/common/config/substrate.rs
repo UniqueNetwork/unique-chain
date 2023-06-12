@@ -21,7 +21,7 @@ use frame_support::{
 		ConstantMultiplier,
 	},
 	dispatch::DispatchClass,
-	parameter_types, PalletId,
+	parameter_types, ord_parameter_types, PalletId,
 };
 use sp_runtime::{
 	generic,
@@ -31,7 +31,7 @@ use sp_runtime::{
 use sp_arithmetic::traits::One;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot, EnsureNever,
+	EnsureRoot, EnsureSignedBy,
 };
 use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
 use crate::{
@@ -39,6 +39,7 @@ use crate::{
 	System, Balances, SS58Prefix, Version,
 };
 use up_common::{types::*, constants::*};
+use sp_std::vec;
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
@@ -118,6 +119,9 @@ impl frame_system::Config for Runtime {
 parameter_types! {
 	pub const MigrationMaxKeyLen: u32 = 512;
 }
+ord_parameter_types! {
+	pub const TrieMigrationSigned: AccountId = AccountId::from(hex_literal::hex!("3e2ee9b68b52c239488e8abbeb31284c0d4342ec7c3b53f8e50855051d54a319"));
+}
 
 impl pallet_state_trie_migration::Config for Runtime {
 	type WeightInfo = pallet_state_trie_migration::weights::SubstrateWeight<Self>;
@@ -127,7 +131,7 @@ impl pallet_state_trie_migration::Config for Runtime {
 	type SignedDepositBase = ();
 	type ControlOrigin = EnsureRoot<AccountId>;
 	// Only root can perform this migration
-	type SignedFilter = EnsureNever<AccountId>;
+	type SignedFilter = EnsureSignedBy<TrieMigrationSigned, AccountId>;
 	type MaxKeyLen = MigrationMaxKeyLen;
 }
 
