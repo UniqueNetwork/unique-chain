@@ -10,6 +10,12 @@ function(chainUrl)
       { [k]: std.filter(function(l) l.id == '0x6170707374616b65', locked_balances[k]) }
       for k in std.objectFields(locked_balances)
     ],
+    unstakersData = [
+      { [pair[0]]: { block: block, value: pair[1] } }
+
+      for block in std.objectFields(unstakes)
+      for pair in unstakes[block]
+    ],
     non_empty_locks = std.prune(locks)
   ;
 
@@ -19,5 +25,5 @@ function(chainUrl)
     account: accountsRaw[std.objectFields(a)[0]].data,
     locks: locked_balances[std.objectFields(a)[0]],
     stakes: if std.objectHas(stakers, std.objectFields(a)[0]) then stakers[std.objectFields(a)[0]] else null,
-    unstakes: if std.objectHas(unstakes, std.objectFields(a)[0]) then unstakes[std.objectFields(a)[0]] else null,
+    unstakes: std.filterMap(function(b) std.objectHas(b, std.objectFields(a)[0]), function(c) std.objectValues(c)[0], unstakersData),
   }, non_empty_locks)
