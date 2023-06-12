@@ -85,17 +85,24 @@ function getRelayInfo(api: ApiPromise): {specVersion: number, epochBlockLength: 
 }
 
 // Enable or disable maintenance mode if present on the chain
-async function toggleMaintenanceMode(value: boolean, wsUri: string) {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey(SUPERUSER_KEY);
-    try {
-      const toggle = value ? 'enable' : 'disable';
-      await helper.getSudo().executeExtrinsic(superuser, `api.tx.maintenance.${toggle}`, []);
-      console.log(`Maintenance mode ${value ? 'engaged' : 'disengaged'}.`);
-    } catch (e) {
-      console.error('Couldn\'t set maintenance mode. The maintenance pallet probably does not exist. Log:', e);
-    }
-  }, wsUri);
+async function toggleMaintenanceMode(value: boolean, wsUri: string, retries = 5) {
+  try {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const superuser = await privateKey(SUPERUSER_KEY);
+      try {
+        const toggle = value ? 'enable' : 'disable';
+        await helper.getSudo().executeExtrinsic(superuser, `api.tx.maintenance.${toggle}`, []);
+        console.log(`Maintenance mode ${value ? 'engaged' : 'disengaged'}.`);
+      } catch (e) {
+        console.error('Couldn\'t set maintenance mode. The maintenance pallet probably does not exist. Log:', e);
+      }
+    }, wsUri);
+  } catch (error) {
+    console.error(error);
+    console.log('Trying for retry toggle maintanence mode');
+    await delay(12_000);
+    await toggleMaintenanceMode(value, wsUri, retries - 1);
+  }
 }
 
 const raiseZombienet = async (): Promise<void> => {
