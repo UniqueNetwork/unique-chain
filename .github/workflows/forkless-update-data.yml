@@ -199,14 +199,14 @@ jobs:
         run: |
           counter=160
           function check_container_status {
-                docker inspect -f {{.State.Running}} forkless-data
+                docker inspect -f {{.State.Running}} forkless-data-${{ matrix.network }}
           }
           function do_docker_logs {
-                docker logs --details forkless-data  2>&1
+                docker logs --details forkless-data-${{ matrix.network }}  2>&1
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: forkless-data RUNNING";
+                        echo "Container: forkless-data-${{ matrix.network }} RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
                         if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
@@ -220,7 +220,7 @@ jobs:
                                 return 1
                         fi
                 else
-                        echo "Container forkless-data not RUNNING"
+                        echo "Container forkless-data-${{ matrix.network }} not RUNNING"
                         echo "Halting all future checks"
                         exit 1
                 fi
@@ -250,7 +250,7 @@ jobs:
 
       - name: Show Docker logs
         if: success() || failure()
-        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.network }}/forkless-data.log'
+        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.network }}/forkless-data-${{ matrix.network }}.log'
 
       - name: Stop running containers
         if: always()                   # run this step always
