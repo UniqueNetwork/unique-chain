@@ -56,8 +56,9 @@ describe('Integration Test: Maintenance mode & App Promo', () => {
           '0x046170707374616b656170707374616b65000020c65abc8ed70a00000000000000'],
       ])]);
 
-      expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([['5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY', '0x00000000000000056bc75e2d63100000']]);
-      expect((await api.query.appPromotion.pendingUnstake(2)).toJSON()).to.be.deep.equal([['5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY', '0x00000000000000056bc75e2d63100000']]);
+      // const pendingUnstaked = await helper.staking.getPendingUnstakePerBlock()
+      expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([[helper.address.normalizeSubstrateToChainFormat('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'), '0x00000000000000056bc75e2d63100000']]);
+      expect((await api.query.appPromotion.pendingUnstake(2)).toJSON()).to.be.deep.equal([[helper.address.normalizeSubstrateToChainFormat('5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY'), '0x00000000000000056bc75e2d63100000']]);
       await testedScript();
 
       expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([]);
