@@ -42,6 +42,7 @@ FROM ubuntu:22.04
 
 ENV RELAY_CHAIN_TYPE={{ RELAY_CHAIN_TYPE }}
 ENV REPLICA_FROM={{ REPLICA_FROM }}
+ENV DESTINATION_SPEC_VERSION={{ DESTINATION_SPEC_VERSION }}
 ENV NEW_PARA_BIN=/unique-chain/target/release/unique-collator
 ENV NEW_PARA_WASM=/unique-chain/target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm
 
@@ -77,7 +78,7 @@ EXPOSE 33088
 EXPOSE 33144
 EXPOSE 33155
 
-CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FROM NEW_PARA_BIN NEW_PARA_WASM RELAY_CHAIN_TYPE && \
+CMD export NVM_DIR="$HOME/.nvm" PATH="$PATH:/chainql/target/release" REPLICA_FROM NEW_PARA_BIN NEW_PARA_WASM RELAY_CHAIN_TYPE DESTINATION_SPEC_VERSION && \
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
     cd /unique-chain/tests && \
     npm install --global yarn && \
