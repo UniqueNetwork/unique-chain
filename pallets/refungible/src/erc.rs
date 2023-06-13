@@ -973,9 +973,8 @@ where
 	/// @notice Returns next free RFT ID.
 	fn next_token_id(&self) -> Result<U256> {
 		self.consume_store_reads(1)?;
-		Ok(<TokensMinted<T>>::get(self.id)
-			.checked_add(1)
-			.ok_or("item id overflow")?
+		Ok(<Pallet<T>>::next_token_id(self)
+			.map_err(dispatch_to_evm::<T>)?
 			.into())
 	}
 

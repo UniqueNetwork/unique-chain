@@ -588,6 +588,19 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	pub fn next_token_id(collection: &RefungibleHandle<T>) -> Result<TokenId, DispatchError> {
+		let next_token_id = <TokensMinted<T>>::get(collection.id)
+			.checked_add(1)
+			.ok_or(<CommonError<T>>::CollectionTokenLimitExceeded)?;
+
+		ensure!(
+			collection.limits.token_limit() >= next_token_id,
+			<CommonError<T>>::CollectionTokenLimitExceeded
+		);
+
+		Ok(TokenId(next_token_id))
+	}
+
 	pub fn set_token_properties(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,

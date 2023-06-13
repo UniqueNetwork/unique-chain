@@ -645,6 +645,19 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	pub fn next_token_id(collection: &NonfungibleHandle<T>) -> Result<TokenId, DispatchError> {
+		let next_token_id = <TokensMinted<T>>::get(collection.id)
+			.checked_add(1)
+			.ok_or(<CommonError<T>>::CollectionTokenLimitExceeded)?;
+
+		ensure!(
+			collection.limits.token_limit() >= next_token_id,
+			<CommonError<T>>::CollectionTokenLimitExceeded
+		);
+
+		Ok(TokenId(next_token_id))
+	}
+
 	/// Batch operation to add or edit properties for the token
 	///
 	/// Same as [`modify_token_properties`] but doesn't allow to remove properties
