@@ -3406,6 +3406,11 @@ long@^4.0.0:
   resolved "https://registry.yarnpkg.com/long/-/long-4.0.0.tgz#9a7b71cfb7d361a194ea555241c92f7468d5bf28"
   integrity sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==
 
+lossless-json@^2.0.9:
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/lossless-json/-/lossless-json-2.0.9.tgz#2e9a71a3dcbc6c59dee565e537b9084107b7fe37"
+  integrity sha512-PUfJ5foxULG1x/dXpSckmt0woBDqyq/WFoI885vEqjGwuP41K2EBYh2IT3zYx9dWqcTLIfXiCE5AjhF1jk9Sbg==
+
 loupe@^2.3.1:
   version "2.3.6"
   resolved "https://registry.yarnpkg.com/loupe/-/loupe-2.3.6.tgz#76e4af498103c532d1ecc9be102036a21f787b53"

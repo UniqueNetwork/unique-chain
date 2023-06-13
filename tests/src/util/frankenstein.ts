@@ -20,6 +20,7 @@ import zombie from '@zombienet/orchestrator/dist';
 import {readNetworkConfig} from '@zombienet/utils/dist';
 import {resolve} from 'path';
 import {usingPlaygrounds} from '.';
+import {migrations} from './frankensteinMigrate';
 import fs from 'fs';
 
 const ZOMBIENET_CREDENTIALS = process.env.ZOMBIENET_CREDENTIALS || '../.env';
@@ -31,6 +32,7 @@ const NEW_RELAY_BIN = process.env.NEW_RELAY_BIN;
 const NEW_RELAY_WASM = process.env.NEW_RELAY_WASM;
 const NEW_PARA_BIN = process.env.NEW_PARA_BIN;
 const NEW_PARA_WASM = process.env.NEW_PARA_WASM;
+const DESTINATION_SPEC_VERSION = process.env.DESTINATION_SPEC_VERSION!;
 const PARACHAIN_BLOCK_TIME = 12_000;
 const SUPERUSER_KEY = '//Alice';
 
@@ -83,20 +85,38 @@ function getRelayInfo(api: ApiPromise): {specVersion: number, epochBlockLength: 
 }
 
 // Enable or disable maintenance mode if present on the chain
-async function toggleMaintenanceMode(value: boolean, wsUri: string) {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey(SUPERUSER_KEY);
-    try {
-      const toggle = value ? 'enable' : 'disable';
-      await helper.getSudo().executeExtrinsic(superuser, `api.tx.maintenance.${toggle}`, []);
-      console.log(`Maintenance mode ${value ? 'engaged' : 'disengaged'}.`);
-    } catch (e) {
-      console.error('Couldn\'t set maintenance mode. The maintenance pallet probably does not exist. Log:', e);
+async function toggleMaintenanceMode(value: boolean, wsUri: string, retries = 5) {
+  try {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const superuser = await privateKey(SUPERUSER_KEY);
+      try {
+        const toggle = value ? 'enable' : 'disable';
+        await helper.getSudo().executeExtrinsic(superuser, `api.tx.maintenance.${toggle}`, []);
+        console.log(`Maintenance mode ${value ? 'engaged' : 'disengaged'}.`);
+      } catch (e) {
+        console.error('Couldn\'t set maintenance mode. The maintenance pallet probably does not exist. Log:', e);
+      }
+    }, wsUri);
+  } catch (error) {
+    console.error(error);
+    console.log('Trying for retry toggle maintanence mode');
+    await delay(12_000);
+    await toggleMaintenanceMode(value, wsUri, retries - 1);
+  }
+}
+
+async function skipIfAlreadyUpgraded() {
+  await usingPlaygrounds(async (helper) => {
+    const specVersion = await getSpecVersion(helper.getApi());
+    if(`v${specVersion}` === DESTINATION_SPEC_VERSION) {
+      console.log('\n🛸 Current version equal DESTINATION_SPEC_VERSION 🛸');
+      console.log("\n🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸");
     }
-  }, wsUri);
+  }, REPLICA_FROM);
 }
 
 const raiseZombienet = async (): Promise<void> => {
+  await skipIfAlreadyUpgraded();
   const isUpgradeTesting = !!NEW_RELAY_BIN || !!NEW_RELAY_WASM || !!NEW_PARA_BIN || !!NEW_PARA_WASM;
   /*
   // If there is nothing to upgrade, what is the point
@@ -245,12 +265,18 @@ const raiseZombienet = async (): Promise<void> => {
       await waitWithTimer(relayInfo.epochTime);
     }
 
+    const migration = migrations[DESTINATION_SPEC_VERSION];
+    console.log('⭐️⭐️⭐️ DESTINATION_SPEC_VERSION ⭐️⭐️⭐️', DESTINATION_SPEC_VERSION);
     for(const paraId in network.paras) {
       console.log(`\n--- Upgrading the runtime of parachain ${paraId} \t---`);
       const para = network.paras[paraId];
 
       // Enable maintenance mode if present
       await toggleMaintenanceMode(true, para.nodes[0].wsUri);
+      if(migration) {
+        console.log('⭐️⭐️⭐️ Running pre-upgrade scripts... ⭐️⭐️⭐️');
+        await migration.before();
+      }
 
       // Read the WASM code and authorize the upgrade with its hash and set it as the new runtime
       const code = fs.readFileSync(NEW_PARA_WASM);
@@ -324,6 +350,11 @@ const raiseZombienet = async (): Promise<void> => {
 
     // Disable maintenance mode if present
     for(const paraId in network.paras) {
+      // TODO only if our parachain
+      if(migration) {
+        console.log('⭐️⭐️⭐️ Running post-upgrade scripts... ⭐️⭐️⭐️');
+        await migration.after();
+      }
       await toggleMaintenanceMode(false, network.paras[paraId].nodes[0].wsUri);
     }
   } else {
