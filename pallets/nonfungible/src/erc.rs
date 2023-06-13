@@ -194,8 +194,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			properties.into_iter(),
-			false,
-			false,
+			pallet_common::SetPropertyMod::ExistingToken,
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)

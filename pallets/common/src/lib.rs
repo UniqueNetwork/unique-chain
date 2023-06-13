@@ -866,6 +866,18 @@ pub mod pallet {
 	>;
 }
 
+/// Represents the change mode for the token property.
+pub enum SetPropertyMod {
+	/// The token already exists.
+	ExistingToken,
+
+	/// New token.
+	NewToken {
+		/// The creator of the token is the recipient.
+		mint_target_is_sender: bool,
+	},
+}
+
 /// Value representation with delayed initialization time.
 pub struct LazyValue<T, F: FnOnce() -> T> {
 	value: Option<T>,
@@ -1272,10 +1284,6 @@ impl<T: Config> Pallet<T> {
 	/// `properties_updates` contents:
 	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
-	///
-	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_being_created`: Indicates that method is called during token initialization.
-	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
 	/// to be **deleted** or to be **set more than once**,

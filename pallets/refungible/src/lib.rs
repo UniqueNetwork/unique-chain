@@ -97,7 +97,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
 	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon,
+	Event as CommonEvent, Pallet as PalletCommon, SetPropertyMod,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
@@ -537,13 +537,15 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_being_created: bool,
-		mint_target_is_sender: bool,
+		mode: SetPropertyMod,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut is_token_owner =
 			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
-				if is_token_being_created {
+				if let SetPropertyMod::NewToken {
+					mint_target_is_sender,
+				} = mode
+				{
 					return Ok(mint_target_is_sender);
 				}
 
@@ -591,8 +593,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		is_token_being_created: bool,
-		mint_target_is_sender: bool,
+		mode: SetPropertyMod,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -600,8 +601,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			is_token_being_created,
-			mint_target_is_sender,
+			mode,
 			nesting_budget,
 		)
 	}
@@ -618,8 +618,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			false,
-			false,
+			SetPropertyMod::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -636,8 +635,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			false,
-			false,
+			SetPropertyMod::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -945,8 +943,9 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token_id),
 					data.properties.clone().into_iter(),
-					true,
-					mint_target_is_sender,
+					SetPropertyMod::NewToken {
+						mint_target_is_sender,
+					},
 					nesting_budget,
 				) {
 					return TransactionOutcome::Rollback(Err(e));
