@@ -388,24 +388,31 @@ describe('Integration Test: Maintenance Functionality', () => {
           }
         });
       });
-      itSub('Can find and fix inconsistent state', async({helper}) => {
+      itSub('Can find and fix inconsistent state', async ({helper}) => {
         const api = helper.getApi();
 
         await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.system.setStorage([
+          // pendingUnstake(1 -> [superuser.address, 100UNQ])
           ['0x42b67acb8bd223c60d0c8f621ffefc0ae280fa2db99bd3827aac976de75af95f5153cb1f00942ff401000000',
             '0x04d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d000010632d5ec76b0500000000000000'],
+          // pendingUnstake(2 -> [superuser.address, 100UNQ])
           ['0x42b67acb8bd223c60d0c8f621ffefc0ae280fa2db99bd3827aac976de75af95f9eb2dcce60f37a2702000000',
             '0x04d43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d000010632d5ec76b0500000000000000'],
+          // Balances.freezes(superuser.address -> freeze with app promo id and 200 UNQ )
           ['0xc2261276cc9d1f8598ea4b6a74b15c2fb1c0eb12e038e5c7f91e120ed4b7ebf1de1e86a9a8c739864cf3cc5ec2bea59fd43593c715fdd31c61141abd04a99fd6822c8558854ccde39a5684e7a56da27d',
             '0x046170707374616b656170707374616b65000020c65abc8ed70a00000000000000'],
         ])]);
 
         expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([[superuser.address, '0x00000000000000056bc75e2d63100000']]);
         expect((await api.query.appPromotion.pendingUnstake(2)).toJSON()).to.be.deep.equal([[superuser.address, '0x00000000000000056bc75e2d63100000']]);
+        expect((await api.query.balances.freezes(superuser.address))
+          .map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()})))
+          .to.be.deep.equal([{id: 'appstakeappstake', amount: 200000000000000000000n}]);
         await correctState();
 
         expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([]);
         expect((await api.query.appPromotion.pendingUnstake(2)).toJSON()).to.be.deep.equal([]);
+        expect((await api.query.balances.freezes(superuser.address)).toJSON()).to.be.deep.equal([]);
 
       });
 
