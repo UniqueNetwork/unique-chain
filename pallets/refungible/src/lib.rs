@@ -97,7 +97,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
 	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon, SetPropertyMod,
+	Event as CommonEvent, Pallet as PalletCommon, SetPropertyMode,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
@@ -521,8 +521,6 @@ impl<T: Config> Pallet<T> {
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_being_created`: Indicates that method is called during token initialization.
-	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
 	/// to be **deleted** or to be **set more than once**,
@@ -537,12 +535,12 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mode: SetPropertyMod,
+		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut is_token_owner =
 			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
-				if let SetPropertyMod::NewToken {
+				if let SetPropertyMode::NewToken {
 					mint_target_is_sender,
 				} = mode
 				{
@@ -606,7 +604,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		mode: SetPropertyMod,
+		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -631,7 +629,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			SetPropertyMod::ExistingToken,
+			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -648,7 +646,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			SetPropertyMod::ExistingToken,
+			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -956,7 +954,7 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token_id),
 					data.properties.clone().into_iter(),
-					SetPropertyMod::NewToken {
+					SetPropertyMode::NewToken {
 						mint_target_is_sender,
 					},
 					nesting_budget,

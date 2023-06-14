@@ -867,7 +867,7 @@ pub mod pallet {
 }
 
 /// Represents the change mode for the token property.
-pub enum SetPropertyMod {
+pub enum SetPropertyMode {
 	/// The token already exists.
 	ExistingToken,
 

@@ -109,7 +109,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
 	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info, SetPropertyMod,
+	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info, SetPropertyMode,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -585,8 +585,6 @@ impl<T: Config> Pallet<T> {
 	/// A batch operation to add, edit or remove properties for a token.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_being_created`: Indicates that method is called during token initialization.
-	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
 	/// to be **deleted** or to be **set more than once**,
@@ -601,11 +599,11 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mode: SetPropertyMod,
+		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut is_token_owner = pallet_common::LazyValue::new(|| {
-			if let SetPropertyMod::NewToken {
+			if let SetPropertyMode::NewToken {
 				mint_target_is_sender,
 			} = mode
 			{
@@ -667,7 +665,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		mode: SetPropertyMod,
+		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -697,7 +695,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			SetPropertyMod::ExistingToken,
+			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -719,7 +717,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			SetPropertyMod::ExistingToken,
+			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -1004,7 +1002,7 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token),
 					data.properties.clone().into_iter(),
-					SetPropertyMod::NewToken {
+					SetPropertyMode::NewToken {
 						mint_target_is_sender: sender.conv_eq(&data.owner),
 					},
 					nesting_budget,
