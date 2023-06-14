@@ -22,7 +22,7 @@ use pallet_common::{CollectionHandle, eth::map_eth_to_id};
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_transaction_payment::CallContext;
 use pallet_nonfungible::{
-	Config as NonfungibleConfig,
+	Config as NonfungibleConfig, Pallet as NonfungiblePallet, NonfungibleHandle,
 	erc::{
 		UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721UniqueMintableCall, ERC721Call,
 		TokenPropertiesCall,
@@ -56,6 +56,8 @@ pub type EvmSponsorshipHandler = (
 pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
 impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 	SponsorshipHandler<T::CrossAccountId, CallContext> for UniqueEthSponsorshipHandler<T>
+where
+	T::AccountId: From<[u8; 32]>,
 {
 	fn get_sponsor(
 		who: &T::CrossAccountId,
@@ -67,23 +69,46 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
 			Some(T::CrossAccountId::from_sub(match &collection.mode {
 				CollectionMode::NFT => {
+					let collection = NonfungibleHandle::cast(collection);
 					let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
 					match call {
-						UniqueNFTCall::TokenProperties(TokenPropertiesCall::SetProperty {
-							token_id,
-							key,
-							value,
-							..
-						}) => {
-							let token_id: TokenId = token_id.try_into().ok()?;
-							withdraw_set_token_property::<T>(
-								&collection,
-								who,
-								&token_id,
-								key.len() + value.len(),
-							)
-							.map(|()| sponsor)
-						}
+						UniqueNFTCall::TokenProperties(call) => match call {
+							TokenPropertiesCall::SetProperty {
+								token_id,
+								key,
+								value,
+								..
+							} => {
+								let token_id: TokenId = token_id.try_into().ok()?;
+								withdraw_set_existing_token_property::<T>(
+									&collection,
+									who,
+									&token_id,
+									key.len() + value.len(),
+								)
+								.map(|()| sponsor)
+							}
+							TokenPropertiesCall::SetProperties {
+								token_id,
+								properties,
+								..
+							} => {
+								let token_id: TokenId = token_id.try_into().ok()?;
+								let data_size = properties
+									.into_iter()
+									.map(|p| p.key().len() + p.value().len())
+									.sum();
+
+								withdraw_set_existing_token_property::<T>(
+									&collection,
+									who,
+									&token_id,
+									data_size,
+								)
+								.map(|()| sponsor)
+							}
+							_ => None,
+						},
 						UniqueNFTCall::ERC721UniqueExtensions(call) => match call {
 							ERC721UniqueExtensionsCall::Transfer { token_id, .. } => {
 								let token_id: TokenId = token_id.try_into().ok()?;
@@ -91,21 +116,21 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 									.map(|()| sponsor)
 							}
 							ERC721UniqueExtensionsCall::MintCross { properties, .. } => {
-								let properties = properties
-									.into_iter()
-									.map(pallet_common::eth::Property::try_into)
-									.collect::<Result<Vec<_>, pallet_evm_coder_substrate::execution::Error>>(
-									)
-									.ok()?
-									.try_into()
-									.ok()?;
-
 								withdraw_create_item::<T>(
 									&collection,
-									&who,
-									&CreateItemData::NFT(CreateNftData { properties }),
-								)
-								.map(|()| sponsor)
+									who,
+									&CreateItemData::NFT(CreateNftData::default()),
+								)?;
+
+								let token_id =
+									<NonfungiblePallet<T>>::next_token_id(&collection).ok()?;
+								let data_size: usize = properties
+									.into_iter()
+									.map(|p| p.key().len() + p.value().len())
+									.sum();
+
+								withdraw_set_token_property::<T>(&collection, &token_id, data_size)
+									.map(|()| sponsor)
 							}
 							_ => None,
 						},

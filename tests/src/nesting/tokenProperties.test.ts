@@ -448,6 +448,29 @@ describe('Integration Test: Token Properties', () => {
       expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(smallerProp);
       expect(consumedSpace).to.be.equal(sizeOfProperty(biggerProp) - expectedConsumedSpaceDiff);
     }));
+
+  itSub('Set sponsored properties', async({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: true}}]});
+
+    await collection.setSponsor(alice, alice.address);
+    await collection.confirmSponsorship(alice);
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
+    await collection.setLimits(alice, {sponsoredDataRateLimit: {blocks: 30}});
+
+    const token = await collection.mintToken(alice, {Substrate: bob.address});
+
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
+
+    await token.setProperties(bob, [{key: 'k', value: 'val'}]);
+
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+    const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
+
+    expect(bobBalanceAfter).to.be.equal(bobBalanceBefore);
+    expect(aliceBalanceBefore > aliceBalanceAfter).to.be.true;
+  });
 });
 
 describe('Negative Integration Test: Token Properties', () => {

@@ -21,7 +21,7 @@ use frame_support::{
 };
 use up_data_structs::{
 	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode, CreateItemData, CreateNftData,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode, CreateItemData,
 	CreateReFungibleData,
 };
 use sp_runtime::traits::Saturating;
@@ -40,7 +40,7 @@ pub trait Config: UniqueConfig + FungibleConfig + NonfungibleConfig + Refungible
 impl<T> Config for T where T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
 
 // TODO: permission check?
-pub fn withdraw_set_token_property<T: Config>(
+pub fn withdraw_set_existing_token_property<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
 	item_id: &TokenId,
@@ -65,6 +65,17 @@ pub fn withdraw_set_token_property<T: Config>(
 		}
 	}
 
+	withdraw_set_token_property(collection, item_id, data_size)
+}
+
+pub fn withdraw_set_token_property<T: Config>(
+	collection: &CollectionHandle<T>,
+	item_id: &TokenId,
+	data_size: usize,
+) -> Option<()> {
+	if data_size == 0 {
+		return Some(());
+	}
 	if data_size > collection.limits.sponsored_data_size() as usize {
 		return None;
 	}
@@ -168,19 +179,6 @@ pub fn withdraw_create_item<T: Config>(
 			CreateItemData::ReFungible(_) => REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 		});
 
-	match properties {
-		CreateItemData::NFT(CreateNftData { properties })
-		| CreateItemData::ReFungible(CreateReFungibleData { properties, .. }) => {
-			let data_limit = collection.limits.sponsored_data_size() as usize;
-			let data_size: usize = properties.iter().map(|p| p.key.len() + p.value.len()).sum();
-
-			if data_size > data_limit {
-				return None;
-			}
-		}
-		CreateItemData::Fungible(_) => (),
-	}
-
 	if let Some(last_tx_block) = <CreateItemBasket<T>>::get((collection.id, who.as_sub())) {
 		let timeout = last_tx_block + limit.into();
 		if block_number < timeout {
@@ -250,7 +248,7 @@ where
 				..
 			} => {
 				let (sponsor, collection) = load::<T>(*collection_id)?;
-				withdraw_set_token_property(
+				withdraw_set_existing_token_property(
 					&collection,
 					&T::CrossAccountId::from_sub(who.clone()),
 					token_id,
