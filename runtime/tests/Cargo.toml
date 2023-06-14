@@ -5,6 +5,7 @@ version = "0.1.1"
 
 [features]
 default = ['refungible']
+tests = ['pallet-common/tests']
 
 refungible = []
 

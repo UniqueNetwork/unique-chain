@@ -195,7 +195,7 @@ describe('Integration Test: createMultipleItemsEx', () => {
       description: 'descr',
       tokenPrefix: 'COL',
       tokenPropertyPermissions: [
-        {key: 'k', permission: {tokenOwner: true, mutable: false, collectionAdmin: false}},
+        {key: 'k', permission: {tokenOwner: false, mutable: false, collectionAdmin: true}},
       ],
     });
 

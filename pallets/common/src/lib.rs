@@ -216,7 +216,6 @@ impl<T: Config> CollectionHandle<T> {
 	///
 	/// # Arguments
 	///
-	/// * `sender`: Caller's account.
 	/// * `sponsor`: ID of the account of the sponsor-to-be.
 	pub fn force_set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
 		self.check_is_internal()?;
@@ -867,6 +866,74 @@ pub mod pallet {
 	>;
 }
 
+/// Represents the change mode for the token property.
+pub enum SetPropertyMode {
+	/// The token already exists.
+	ExistingToken,
+
+	/// New token.
+	NewToken {
+		/// The creator of the token is the recipient.
+		mint_target_is_sender: bool,
+	},
+}
+
+/// Value representation with delayed initialization time.
+pub struct LazyValue<T, F: FnOnce() -> T> {
+	value: Option<T>,
+	f: Option<F>,
+}
+
+impl<T, F: FnOnce() -> T> LazyValue<T, F> {
+	/// Create a new LazyValue.
+	pub fn new(f: F) -> Self {
+		Self {
+			value: None,
+			f: Some(f),
+		}
+	}
+
+	/// Get the value. If it call furst time the value will be initialized.
+	pub fn value(&mut self) -> &T {
+		if self.value.is_none() {
+			self.value = Some(self.f.take().unwrap()())
+		}
+
+		self.value.as_ref().unwrap()
+	}
+
+	/// Is value initialized.
+	pub fn has_value(&self) -> bool {
+		self.value.is_some()
+	}
+}
+
+fn check_token_permissions<T, FCA, FTO, FTE>(
+	collection_admin_permitted: bool,
+	token_owner_permitted: bool,
+	is_collection_admin: &mut LazyValue<bool, FCA>,
+	is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
+	is_token_exist: &mut LazyValue<bool, FTE>,
+) -> DispatchResult
+where
+	T: Config,
+	FCA: FnOnce() -> bool,
+	FTO: FnOnce() -> Result<bool, DispatchError>,
+	FTE: FnOnce() -> bool,
+{
+	if !(collection_admin_permitted && *is_collection_admin.value()
+		|| token_owner_permitted && (*is_token_owner.value())?)
+	{
+		fail!(<Error<T>>::NoPermission);
+	}
+
+	let token_certainly_exist = is_token_owner.has_value() && (*is_token_owner.value())?;
+	if !token_certainly_exist && !is_token_exist.value() {
+		fail!(<Error<T>>::TokenNotFound);
+	}
+	Ok(())
+}
+
 impl<T: Config> Pallet<T> {
 	/// Enshure that receiver address is correct.
 	///
@@ -1218,10 +1285,6 @@ impl<T: Config> Pallet<T> {
 	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
-	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_create`: Indicates that method is called during token initialization.
-	///   Allows to bypass ownership check.
-	///
 	/// All affected properties should have `mutable` permission
 	/// to be **deleted** or to be **set more than once**,
 	/// and the sender should have permission to edit those properties.
@@ -1229,35 +1292,36 @@ impl<T: Config> Pallet<T> {
 	/// This function fires an event for each property change.
 	/// In case of an error, all the changes (including the events) will be reverted
 	/// since the function is transactional.
-	pub fn modify_token_properties(
+	#[allow(clippy::too_many_arguments)]
+	pub fn modify_token_properties<FTO, FTE>(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
+		is_token_exist: &mut LazyValue<bool, FTE>,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_create: bool,
 		mut stored_properties: TokenProperties,
-		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
+		is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
-	) -> DispatchResult {
-		let is_collection_admin = collection.is_owner_or_admin(sender);
+	) -> DispatchResult
+	where
+		FTO: FnOnce() -> Result<bool, DispatchError>,
+		FTE: FnOnce() -> bool,
+	{
+		let mut is_collection_admin = LazyValue::new(|| collection.is_owner_or_admin(sender));
 		let permissions = Self::property_permissions(collection.id);
 
-		let mut token_owner_result = None;
-		let mut is_token_owner = || -> Result<bool, DispatchError> {
-			*token_owner_result.get_or_insert_with(&is_token_owner)
-		};
-
+		let mut changed = false;
 		for (key, value) in properties_updates {
 			let permission = permissions
 				.get(&key)
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
-			let is_property_exists = stored_properties.get(&key).is_some();
+			let property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
-				PropertyPermission { mutable: false, .. } if is_property_exists => {
+				PropertyPermission { mutable: false, .. } if property_exists => {
 					return Err(<Error<T>>::NoPermission.into());
 				}
 
@@ -1265,17 +1329,13 @@ impl<T: Config> Pallet<T> {
 					collection_admin,
 					token_owner,
 					..
-				} => {
-					//TODO: investigate threats during public minting.
-					let is_token_create =
-						is_token_create && (collection_admin || token_owner) && value.is_some();
-					if !(is_token_create
-						|| (collection_admin && is_collection_admin)
-						|| (token_owner && is_token_owner()?))
-					{
-						fail!(<Error<T>>::NoPermission);
-					}
-				}
+				} => check_token_permissions::<T, _, FTO, FTE>(
+					collection_admin,
+					token_owner,
+					&mut is_collection_admin,
+					is_token_owner,
+					is_token_exist,
+				)?,
 			}
 
 			match value {
@@ -1293,7 +1353,11 @@ impl<T: Config> Pallet<T> {
 				}
 			}
 
-			<PalletEvm<T>>::deposit_log(log.clone());
+			changed = true;
+		}
+
+		if changed {
+			<PalletEvm<T>>::deposit_log(log);
 		}
 
 		set_token_properties(stored_properties);
@@ -2320,5 +2384,88 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::PropertyKeyIsTooLong => Self::PropertyKeyIsTooLong,
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
+	}
+}
+
+#[cfg(feature = "tests")]
+pub mod tests {
+	use crate::{DispatchResult, DispatchError, LazyValue, Config};
+
+	const fn to_bool(u: u8) -> bool {
+		u != 0
+	}
+
+	#[derive(Debug)]
+	pub struct TestCase {
+		pub collection_admin: bool,
+		pub is_collection_admin: bool,
+		pub token_owner: bool,
+		pub is_token_owner: bool,
+		pub no_permission: bool,
+	}
+
+	impl TestCase {
+		const fn new(
+			collection_admin: u8,
+			is_collection_admin: u8,
+			token_owner: u8,
+			is_token_owner: u8,
+			no_permission: u8,
+		) -> Self {
+			Self {
+				collection_admin: to_bool(collection_admin),
+				is_collection_admin: to_bool(is_collection_admin),
+				token_owner: to_bool(token_owner),
+				is_token_owner: to_bool(is_token_owner),
+				no_permission: to_bool(no_permission),
+			}
+		}
+	}
+
+	#[rustfmt::skip]
+	pub const table: [TestCase; 16] = [
+		//                    ┌╴collection_admin
+		//                    │  ┌╴is_collection_admin
+		//                    │  │   ┌╴token_owner
+		//                    │  │   │  ┌╴is_token_ownership
+		//                    │  │   │  │   ┌╴no_permission
+		/*  0*/ TestCase::new(0, 0,  0, 0,  1),
+		/*  1*/ TestCase::new(0, 0,  0, 1,  1),
+		/*  2*/ TestCase::new(0, 0,  1, 0,  1),
+		/*  3*/ TestCase::new(0, 0,  1, 1,  0),
+		/*  4*/ TestCase::new(0, 1,  0, 0,  1),
+		/*  5*/ TestCase::new(0, 1,  0, 1,  1),
+		/*  6*/ TestCase::new(0, 1,  1, 0,  1),
+		/*  7*/ TestCase::new(0, 1,  1, 1,  0),
+		/*  8*/ TestCase::new(1, 0,  0, 0,  1),
+		/*  9*/ TestCase::new(1, 0,  0, 1,  1),
+		/* 10*/ TestCase::new(1, 0,  1, 0,  1),
+		/* 11*/ TestCase::new(1, 0,  1, 1,  0),
+		/* 12*/ TestCase::new(1, 1,  0, 0,  0),
+		/* 13*/ TestCase::new(1, 1,  0, 1,  0),
+		/* 14*/ TestCase::new(1, 1,  1, 0,  0),
+		/* 15*/ TestCase::new(1, 1,  1, 1,  0),
+	];
+
+	pub fn check_token_permissions<T, FCA, FTO, FTE>(
+		collection_admin_permitted: bool,
+		token_owner_permitted: bool,
+		is_collection_admin: &mut LazyValue<bool, FCA>,
+		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
+		check_token_existence: &mut LazyValue<bool, FTE>,
+	) -> DispatchResult
+	where
+		T: Config,
+		FCA: FnOnce() -> bool,
+		FTO: FnOnce() -> Result<bool, DispatchError>,
+		FTE: FnOnce() -> bool,
+	{
+		crate::check_token_permissions::<T, FCA, FTO, FTE>(
+			collection_admin_permitted,
+			token_owner_permitted,
+			is_collection_admin,
+			check_token_ownership,
+			check_token_existence,
+		)
 	}
 }

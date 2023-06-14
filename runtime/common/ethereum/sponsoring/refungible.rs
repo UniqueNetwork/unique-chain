@@ -94,7 +94,12 @@ where
 			..
 		} => {
 			let token_id = TokenId::try_from(token_id).ok()?;
-			withdraw_set_token_property::<T>(&collection, who, &token_id, key.len() + value.len())
+			withdraw_set_existing_token_property::<T>(
+				&collection,
+				who,
+				&token_id,
+				key.len() + value.len(),
+			)
 		}
 	}
 }
