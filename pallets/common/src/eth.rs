@@ -134,7 +134,7 @@ pub struct Property {
 impl Property {
 	/// Property key.
 	pub fn key(&self) -> &str {
-		&self.key.as_str()
+		self.key.as_str()
 	}
 
 	/// Property value.
@@ -239,11 +239,9 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 			Some(value) => match value {
 				0 => Ok(Some(false)),
 				1 => Ok(Some(true)),
-				_ => {
-					return Err(Self::Error::Revert(format!(
-						"can't convert value to boolean \"{value}\""
-					)))
-				}
+				_ => Err(Self::Error::Revert(format!(
+					"can't convert value to boolean \"{value}\""
+				))),
 			},
 			None => Ok(None),
 		};

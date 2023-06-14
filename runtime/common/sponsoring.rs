@@ -22,7 +22,6 @@ use frame_support::{
 use up_data_structs::{
 	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, NFT_SPONSOR_TRANSFER_TIMEOUT,
 	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode, CreateItemData,
-	CreateReFungibleData,
 };
 use sp_runtime::traits::Saturating;
 use pallet_common::{CollectionHandle};

@@ -1292,6 +1292,7 @@ impl<T: Config> Pallet<T> {
 	/// This function fires an event for each property change.
 	/// In case of an error, all the changes (including the events) will be reverted
 	/// since the function is transactional.
+	#[allow(clippy::too_many_arguments)]
 	pub fn modify_token_properties<FTO, FTE>(
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
@@ -1310,6 +1311,7 @@ impl<T: Config> Pallet<T> {
 		let mut is_collection_admin = LazyValue::new(|| collection.is_owner_or_admin(sender));
 		let permissions = Self::property_permissions(collection.id);
 
+		let mut changed = false;
 		for (key, value) in properties_updates {
 			let permission = permissions
 				.get(&key)
@@ -1351,7 +1353,11 @@ impl<T: Config> Pallet<T> {
 				}
 			}
 
-			<PalletEvm<T>>::deposit_log(log.clone());
+			changed = true;
+		}
+
+		if changed {
+			<PalletEvm<T>>::deposit_log(log);
 		}
 
 		set_token_properties(stored_properties);
