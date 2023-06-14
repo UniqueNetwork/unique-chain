@@ -3,6 +3,13 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+## [0.2.0] - 2023-05-19
+
+### Changed
+
+- **Breaking:** migration from `Currency` traits to `Fungible` ones in constraints
+  for `Config::Currency` associated type.
+
 ## [0.1.6] - 2023-04-19
 
 - ### Fixed

@@ -21,7 +21,7 @@ use frame_support::{
 		ConstantMultiplier,
 	},
 	dispatch::DispatchClass,
-	parameter_types, PalletId,
+	parameter_types, ord_parameter_types, PalletId,
 };
 use sp_runtime::{
 	generic,
@@ -31,14 +31,15 @@ use sp_runtime::{
 use sp_arithmetic::traits::One;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
-	EnsureRoot,
+	EnsureRoot, EnsureSignedBy,
 };
 use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
 use crate::{
 	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, PalletInfo,
-	System, Balances, Treasury, SS58Prefix, Version,
+	System, Balances, SS58Prefix, Version,
 };
 use up_common::{types::*, constants::*};
+use sp_std::vec;
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
@@ -116,6 +117,25 @@ impl frame_system::Config for Runtime {
 }
 
 parameter_types! {
+	pub const MigrationMaxKeyLen: u32 = 512;
+}
+ord_parameter_types! {
+	pub const TrieMigrationSigned: AccountId = AccountId::from(hex_literal::hex!("3e2ee9b68b52c239488e8abbeb31284c0d4342ec7c3b53f8e50855051d54a319"));
+}
+
+impl pallet_state_trie_migration::Config for Runtime {
+	type WeightInfo = pallet_state_trie_migration::weights::SubstrateWeight<Self>;
+	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
+	type SignedDepositPerItem = ();
+	type SignedDepositBase = ();
+	type ControlOrigin = EnsureRoot<AccountId>;
+	// Only root can perform this migration
+	type SignedFilter = EnsureSignedBy<TrieMigrationSigned, AccountId>;
+	type MaxKeyLen = MigrationMaxKeyLen;
+}
+
+parameter_types! {
 	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
 }
 
@@ -132,6 +152,8 @@ parameter_types! {
 	pub const ExistentialDeposit: u128 = EXISTENTIAL_DEPOSIT;
 	pub const MaxLocks: u32 = 50;
 	pub const MaxReserves: u32 = 50;
+	pub const MaxHolds: u32 = 10;
+	pub const MaxFreezes: u32 = 10;
 }
 
 impl pallet_balances::Config for Runtime {
@@ -142,10 +164,17 @@ impl pallet_balances::Config for Runtime {
 	type Balance = Balance;
 	/// The ubiquitous event type.
 	type RuntimeEvent = RuntimeEvent;
-	type DustRemoval = Treasury;
+	// FIXME: Is () the new treasury?
+	// Switch to real treasury once we start having dust removals
+	// Related issue: https://github.com/paritytech/polkadot/issues/7323
+	type DustRemoval = ();
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
+	type HoldIdentifier = [u8; 16];
+	type FreezeIdentifier = [u8; 16];
+	type MaxHolds = MaxHolds;
+	type MaxFreezes = MaxFreezes;
 }
 
 parameter_types! {

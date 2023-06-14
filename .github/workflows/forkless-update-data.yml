@@ -34,11 +34,12 @@ jobs:
         uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
+          # TODO: Remove state-version-0 after mainnet upgrade
           matrix: |
-            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
-            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, extra_features {,state-version-0}
+            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, extra_features {,state-version-0}
+            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, replica_from_address {${{ env.OPAL_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, extra_features {,state-version-0}
+            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, extra_features {,state-version-0}
 
   forkless-data-build:
     needs: prepare-execution-marix
@@ -80,26 +81,15 @@ jobs:
             NETWORK=${{ matrix.network }}
             MAINNET_BRANCH=${{ matrix.mainnet_branch }}
             WASM_NAME=${{ matrix.wasm_name }}
+            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
+            DESTINATION_SPEC_VERSION=${{ env.DESTINATION_SPEC_VERSION }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
             CHAINQL=${{ env.CHAINQL }}
+            EXTRA_FEATURES=${{ matrix.extra_features }}
 
       - name: Show build configuration
         run: cat .docker/Dockerfile-parachain-upgrade-data.${{ matrix.network }}.yml
-
-      - name: Generate launch-config-forkless-data.json
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/forkless-config/launch-config-forkless-data.j2
-          output_file: .docker/forkless-config/launch-config-forkless-data.json
-          variables: |
-            WASM_NAME=${{ matrix.wasm_name }}
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}            
-
-      - name: Show launch-config-forkless configuration
-        run: cat .docker/forkless-config/launch-config-forkless-data.json
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
@@ -209,14 +199,14 @@ jobs:
         run: |
           counter=160
           function check_container_status {
-                docker inspect -f {{.State.Running}} forkless-data
+                docker inspect -f {{.State.Running}} forkless-data-${{ matrix.network }}
           }
           function do_docker_logs {
-                docker logs --details forkless-data  2>&1
+                docker logs --details forkless-data-${{ matrix.network }}  2>&1
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: forkless-data RUNNING";
+                        echo "Container: forkless-data-${{ matrix.network }} RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
                         if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
@@ -230,7 +220,7 @@ jobs:
                                 return 1
                         fi
                 else
-                        echo "Container forkless-data not RUNNING"
+                        echo "Container forkless-data-${{ matrix.network }} not RUNNING"
                         echo "Halting all future checks"
                         exit 1
                 fi
@@ -244,7 +234,8 @@ jobs:
                 if [ "$counter" -gt "0" ]; then
                          continue
                 else
-                         break
+                         echo "Counter reached zero, yet upgrade is not finished"
+                         exit 1
                 fi
           done
           echo "Halting script"
@@ -255,11 +246,11 @@ jobs:
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
-          dest: './forkless-parachain-upgrade-data-logs.${{ matrix.features }}'
+          dest: './forkless-parachain-upgrade-data-logs.${{ matrix.network }}'
 
       - name: Show Docker logs
         if: success() || failure()
-        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.features }}/forkless-data.log'
+        run: cat './forkless-parachain-upgrade-data-logs.${{ matrix.network }}/forkless-data-${{ matrix.network }}.log'
 
       - name: Stop running containers
         if: always()                   # run this step always

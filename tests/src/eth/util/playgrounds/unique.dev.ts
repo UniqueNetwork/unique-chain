@@ -43,44 +43,21 @@ class EthGroupBase {
     this.helper = helper;
   }
   async getGasPrice() {
-    if (this.gasPrice)
+    if(this.gasPrice)
       return this.gasPrice;
     this.gasPrice = await this.helper.getWeb3().eth.getGasPrice();
     return this.gasPrice;
   }
 }
 
-function unlimitedMoneyHack<C>(_contract: C): C {
-  const contract = _contract as any;
-  // Hack: fight against gasPrice override
-  for (const method in contract.methods) {
-    const _method = contract.methods[method];
-    contract.methods[method] = function (...args: any) {
-      const encodedCall = _method.call(this, ...args);
-      const _call = encodedCall.call;
-      encodedCall.call = function (...args: any) {
-        if (args.length === 0) {
-          return _call.call(this, {gasPrice: '0'});
-        }
-        // No support for callback/defaultBlock, they may be placed as first argument
-        if (typeof args[0] !== 'object')
-          throw new Error('only options are supported');
-        args[0].gasPrice = '0';
-        return _call.call(this, ...args);
-      };
-      return encodedCall;
-    };
-  }
-  return contract;
-}
 
 class ContractGroup extends EthGroupBase {
-  async findImports(imports?: ContractImports[]){
+  async findImports(imports?: ContractImports[]) {
     if(!imports) return function(path: string) {
       return {error: `File not found: ${path}`};
     };
 
-    const knownImports = {} as {[key: string]: string};
+    const knownImports = {} as { [key: string]: string };
     for(const imp of imports) {
       knownImports[imp.solPath] = (await readFile(imp.fsPath)).toString();
     }
@@ -114,7 +91,7 @@ class ContractGroup extends EthGroupBase {
         return err.severity == 'error';
       });
 
-    if (hasErrors) {
+    if(hasErrors) {
       throw compiled.errors;
     }
     const out = compiled.contracts[`${name}.sol`][name];
@@ -125,47 +102,44 @@ class ContractGroup extends EthGroupBase {
     };
   }
 
-  async deployByCode(signer: string, name: string, src: string, imports?: ContractImports[], gas?: number): Promise<Contract> {
+  async deployByCode(signer: string, name: string, src: string, imports?: ContractImports[], gas?: number, args?: any[]): Promise<Contract> {
     const compiledContract = await this.compile(name, src, imports);
-    return this.deployByAbi(signer, compiledContract.abi, compiledContract.object, gas);
+    return this.deployByAbi(signer, compiledContract.abi, compiledContract.object, gas, args);
   }
 
-  async deployByAbi(signer: string, abi: any, object: string, gas?: number): Promise<Contract> {
+  async deployByAbi(signer: string, abi: any, object: string, gas?: number, args?: any[]): Promise<Contract> {
     const web3 = this.helper.getWeb3();
     const contract = new web3.eth.Contract(abi, undefined, {
       data: object,
       from: signer,
       gas: gas ?? this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
     });
-    return unlimitedMoneyHack(await contract.deploy({data: object}).send({from: signer}));
+    return await contract.deploy({data: object, arguments: args}).send({from: signer});
   }
 
 }
 
 class NativeContractGroup extends EthGroupBase {
 
-  async contractHelpers(caller: string): Promise<Contract> {
+  contractHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
-    return unlimitedMoneyHack(new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {
+    return new web3.eth.Contract(contractHelpersAbi as any, this.helper.getApi().consts.evmContractHelpers.contractAddress.toString(), {
       from: caller,
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
-    }));
+    });
   }
 
-  async collectionHelpers(caller: string) {
+  collectionHelpers(caller: string) {
     const web3 = this.helper.getWeb3();
-    return unlimitedMoneyHack(new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {
+    return new web3.eth.Contract(collectionHelpersAbi as any, this.helper.getApi().consts.common.contractAddress.toString(), {
       from: caller,
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
-    }));
+    });
   }
 
-  async collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
+  collection(address: string, mode: TCollectionMode, caller?: string, mergeDeprecated = false) {
     let abi;
-    if (address === this.helper.ethAddress.fromCollectionId(0)) {
+    if(address === this.helper.ethAddress.fromCollectionId(0)) {
       abi = nativeFungibleAbi;
     } else {
       abi ={
@@ -174,34 +148,32 @@ class NativeContractGroup extends EthGroupBase {
         'ft': fungibleAbi,
       }[mode];
     }
-    if (mergeDeprecated) {
+    if(mergeDeprecated) {
       const deprecated = {
         'nft': nonFungibleDeprecatedAbi,
         'rft': refungibleDeprecatedAbi,
         'ft': fungibleDeprecatedAbi,
       }[mode];
-      abi = [...abi,...deprecated];
+      abi = [...abi, ...deprecated];
     }
     const web3 = this.helper.getWeb3();
-    return unlimitedMoneyHack(new web3.eth.Contract(abi as any, address, {
+    return new web3.eth.Contract(abi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
       ...(caller ? {from: caller} : {}),
-    }));
+    });
   }
 
   collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', caller?: string, mergeDeprecated = false) {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, caller, mergeDeprecated);
   }
 
-  async rftToken(address: string, caller?: string, mergeDeprecated = false) {
+  rftToken(address: string, caller?: string, mergeDeprecated = false) {
     const web3 = this.helper.getWeb3();
     const abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
-    return unlimitedMoneyHack(new web3.eth.Contract(abi as any, address, {
+    return new web3.eth.Contract(abi as any, address, {
       gas: this.helper.eth.DEFAULT_GAS,
-      gasPrice: await this.getGasPrice(),
       ...(caller ? {from: caller} : {}),
-    }));
+    });
   }
 
   rftTokenById(collectionId: number, tokenId: number, caller?: string, mergeDeprecated = false) {
@@ -220,14 +192,14 @@ class EthGroup extends EthGroupBase {
     return account.address;
   }
 
-  async createAccountWithBalance(donor: IKeyringPair, amount=100n) {
+  async createAccountWithBalance(donor: IKeyringPair, amount = 600n) {
     const account = this.createAccount();
     await this.transferBalanceFromSubstrate(donor, account, amount);
 
     return account;
   }
 
-  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount=100n, inTokens=true) {
+  async transferBalanceFromSubstrate(donor: IKeyringPair, recepient: string, amount = 100n, inTokens = true) {
     return await this.helper.balance.transferToSubstrate(donor, evmToAddress(recepient), amount * (inTokens ? this.helper.balance.getOneTokenNominal() : 1n));
   }
 
@@ -239,6 +211,7 @@ class EthGroup extends EthGroupBase {
   async sendEVM(signer: IKeyringPair, contractAddress: string, abi: string, value: string, gasLimit?: number) {
     if(!gasLimit) gasLimit = this.DEFAULT_GAS;
     const web3 = this.helper.getWeb3();
+    // FIXME: can't send legacy transaction using tx.evm.call
     const gasPrice = await web3.eth.getGasPrice();
     // TODO: check execution status
     await this.helper.executeExtrinsic(
@@ -283,7 +256,7 @@ class EthGroup extends EthGroupBase {
     return this.createCollection('nft', signer, name, description, tokenPrefix);
   }
 
-  async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
     const {collectionId, collectionAddress, events} = await this.createCollection('nft', signer, name, description, tokenPrefix);
@@ -293,15 +266,15 @@ class EthGroup extends EthGroupBase {
     return {collectionId, collectionAddress, events};
   }
 
-  createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+  createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     return this.createCollection('rft', signer, name, description, tokenPrefix);
   }
 
-  createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[]}> {
+  createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     return this.createCollection('ft', signer, name, description, tokenPrefix, decimals);
   }
 
-  async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
     const {collectionId, collectionAddress, events} = await this.createCollection('rft', signer, name, description, tokenPrefix);
@@ -368,10 +341,10 @@ class EthGroup extends EthGroupBase {
 
   normalizeEvents(events: any): NormalizedEvent[] {
     const output = [];
-    for (const key of Object.keys(events)) {
-      if (key.match(/^[0-9]+$/)) {
+    for(const key of Object.keys(events)) {
+      if(key.match(/^[0-9]+$/)) {
         output.push(events[key]);
-      } else if (Array.isArray(events[key])) {
+      } else if(Array.isArray(events[key])) {
         output.push(...events[key]);
       } else {
         output.push(events[key]);
@@ -380,8 +353,8 @@ class EthGroup extends EthGroupBase {
     output.sort((a, b) => a.logIndex - b.logIndex);
     return output.map(({address, event, returnValues}) => {
       const args: { [key: string]: string } = {};
-      for (const key of Object.keys(returnValues)) {
-        if (!key.match(/^[0-9]+$/)) {
+      for(const key of Object.keys(returnValues)) {
+        if(!key.match(/^[0-9]+$/)) {
           args[key] = returnValues[key];
         }
       }
@@ -405,19 +378,19 @@ class EthGroup extends EthGroupBase {
 
 class EthAddressGroup extends EthGroupBase {
   extractCollectionId(address: string): number {
-    if (!(address.length === 42 || address.length === 40)) throw new Error('address wrong format');
-    return parseInt(address.substr(address.length - 8), 16);
+    if(!(address.length === 42 || address.length === 40)) throw new Error('address wrong format');
+    return parseInt(address.slice(address.length - 8), 16);
   }
 
   fromCollectionId(collectionId: number): string {
-    if (collectionId >= 0xffffffff || collectionId < 0) throw new Error('collectionId overflow');
+    if(collectionId >= 0xffffffff || collectionId < 0) throw new Error('collectionId overflow');
     return Web3.utils.toChecksumAddress(`0x17c4e6453cc49aaaaeaca894e6d9683e${collectionId.toString(16).padStart(8, '0')}`);
   }
 
-  extractTokenId(address: string): {collectionId: number, tokenId: number} {
-    if (!address.startsWith('0x'))
+  extractTokenId(address: string): { collectionId: number, tokenId: number } {
+    if(!address.startsWith('0x'))
       throw 'address not starts with "0x"';
-    if (address.length > 42)
+    if(address.length > 42)
       throw 'address length is more than 20 bytes';
     return {
       collectionId: Number('0x' + address.substring(address.length - 16, address.length - 8)),
@@ -425,7 +398,7 @@ class EthAddressGroup extends EthGroupBase {
     };
   }
 
-  fromTokenId(collectionId: number, tokenId: number): string  {
+  fromTokenId(collectionId: number, tokenId: number): string {
     return this.helper.util.getTokenAddress({collectionId, tokenId});
   }
 
@@ -437,7 +410,7 @@ export class EthPropertyGroup extends EthGroupBase {
   property(key: string, value: string): EthProperty {
     return [
       key,
-      '0x'+Buffer.from(value).toString('hex'),
+      '0x' + Buffer.from(value).toString('hex'),
     ];
   }
 }
@@ -448,7 +421,7 @@ export class EthCrossAccountGroup extends EthGroupBase {
     return this.fromAddress(this.helper.eth.createAccount());
   }
 
-  async createAccountWithBalance(donor: IKeyringPair, amount=100n) {
+  async createAccountWithBalance(donor: IKeyringPair, amount = 100n) {
     return this.fromAddress(await this.helper.eth.createAccountWithBalance(donor, amount));
   }
 
@@ -513,7 +486,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethContract: ContractGroup;
   ethProperty: EthPropertyGroup;
   arrange: EthArrangeGroup;
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: { [key: string]: any } = {}) {
     options.helperBase = options.helperBase ?? EthUniqueHelper;
 
     super(logger, options);

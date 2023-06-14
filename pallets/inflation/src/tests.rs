@@ -20,7 +20,11 @@ use crate as pallet_inflation;
 
 use frame_support::{
 	assert_ok, parameter_types,
-	traits::{Currency, OnInitialize, Everything, ConstU32},
+	traits::{
+		fungible::{Balanced, Inspect},
+		OnInitialize, Everything, ConstU32,
+		tokens::Precision,
+	},
 	weights::Weight,
 };
 use frame_system::RawOrigin;
@@ -53,6 +57,10 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
+	type HoldIdentifier = ();
+	type FreezeIdentifier = ();
+	type MaxHolds = ();
+	type MaxFreezes = ();
 }
 
 frame_support::construct_runtime!(
@@ -141,7 +149,7 @@ macro_rules! block_inflation {
 fn uninitialized_inflation() {
 	new_test_ext().execute_with(|| {
 		let initial_issuance: u64 = 1_000_000_000;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 
 		// BlockInflation should be set after inflation is started
@@ -157,7 +165,7 @@ fn inflation_works() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
 		let initial_issuance: u64 = 1_000_000_000;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 
 		// BlockInflation should be set after inflation is started
@@ -187,7 +195,7 @@ fn inflation_second_deposit() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
 		let initial_issuance: u64 = 1_000_000_000;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		MockBlockNumberProvider::set(1);
 
@@ -218,7 +226,7 @@ fn inflation_in_1_year() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
 		let initial_issuance: u64 = 1_000_000_000;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		MockBlockNumberProvider::set(1);
 
@@ -234,7 +242,7 @@ fn inflation_in_1_year() {
 		}
 		assert_eq!(
 			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * (YEAR / 100)),
-			<Balances as Currency<_>>::total_issuance()
+			<Balances as Inspect<_>>::total_issuance()
 		);
 
 		MockBlockNumberProvider::set(YEAR + 1);
@@ -254,7 +262,7 @@ fn inflation_start_large_kusama_block() {
 		// Total issuance = 1_000_000_000
 		let initial_issuance: u64 = 1_000_000_000;
 		let start_block: u64 = 10457457;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		MockBlockNumberProvider::set(start_block);
 
@@ -273,7 +281,7 @@ fn inflation_start_large_kusama_block() {
 		}
 		assert_eq!(
 			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * (YEAR / 100)),
-			<Balances as Currency<_>>::total_issuance()
+			<Balances as Inspect<_>>::total_issuance()
 		);
 
 		MockBlockNumberProvider::set(start_block + YEAR + 1);
@@ -292,7 +300,7 @@ fn inflation_after_year_10_is_flat() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
 		let initial_issuance: u64 = 1_000_000_000;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		MockBlockNumberProvider::set(YEAR * 9 + 1);
 
@@ -327,7 +335,7 @@ fn inflation_rate_by_year() {
 
 		// For accuracy total issuance = payout0 * payouts * 10;
 		let initial_issuance: u64 = payout_by_year[0] * payouts * 10;
-		let _ = <Balances as Currency<_>>::deposit_creating(&1234, initial_issuance);
+		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 
 		// Start inflation as sudo

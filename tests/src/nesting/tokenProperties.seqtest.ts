@@ -30,8 +30,8 @@ describe('Integration Test: Token Properties with sudo', () => {
   });
 
   [
-    {mode: 'nft' as const, pieces: undefined, requiredPallets: []},
-    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []} as const,
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]} as const,
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
@@ -53,7 +53,7 @@ describe('Integration Test: Token Properties with sudo', () => {
       });
       const token = await (
         testSuite.pieces
-          ? collection.mintToken(alice, testSuite.pieces)
+          ? collection.mintToken(alice, testSuite.pieces as any)
           : collection.mintToken(alice)
       );
 

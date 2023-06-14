@@ -19,7 +19,9 @@
 use super::*;
 use frame_system::Config as SystemConfig;
 
-use frame_support::traits::tokens::{DepositConsequence, WithdrawConsequence};
+use frame_support::traits::tokens::{
+	DepositConsequence, WithdrawConsequence, Preservation, Fortitude, Provenance, Precision,
+};
 use pallet_common::CollectionHandle;
 use pallet_fungible::FungibleHandle;
 use pallet_common::CommonCollectionOperations;
@@ -118,17 +120,24 @@ where
 		}
 	}
 
+	fn total_balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
+		Self::balance(asset, who)
+	}
+
 	fn reducible_balance(
 		asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
-		keep_alive: bool,
+		preservation: Preservation,
+		fortitude: Fortitude,
 	) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible reducible_balance");
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::reducible_balance(
-					who, keep_alive,
+					who,
+					preservation,
+					fortitude,
 				)
 				.into()
 			}
@@ -136,7 +145,8 @@ where
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::reducible_balance(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
-					keep_alive,
+					preservation,
+					fortitude,
 				)
 				.into()
 			}
@@ -148,7 +158,7 @@ where
 		asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
-		mint: bool,
+		provenance: Provenance,
 	) -> DepositConsequence {
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible can_deposit");
 
@@ -157,7 +167,7 @@ where
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::can_deposit(
 					who,
 					amount.into(),
-					mint,
+					provenance,
 				)
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
@@ -165,7 +175,7 @@ where
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
 					amount.into(),
-					mint,
+					provenance,
 				)
 			}
 			_ => {
@@ -220,14 +230,14 @@ where
 					who,
 					this_amount,
 				) {
-					WithdrawConsequence::NoFunds => WithdrawConsequence::NoFunds,
+					WithdrawConsequence::BalanceLow => WithdrawConsequence::BalanceLow,
 					WithdrawConsequence::WouldDie => WithdrawConsequence::WouldDie,
 					WithdrawConsequence::UnknownAsset => WithdrawConsequence::UnknownAsset,
 					WithdrawConsequence::Underflow => WithdrawConsequence::Underflow,
 					WithdrawConsequence::Overflow => WithdrawConsequence::Overflow,
 					WithdrawConsequence::Frozen => WithdrawConsequence::Frozen,
 					WithdrawConsequence::Success => WithdrawConsequence::Success,
-					_ => WithdrawConsequence::NoFunds,
+					_ => WithdrawConsequence::BalanceLow,
 				}
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
@@ -242,19 +252,19 @@ where
 					who,
 					parent_amount,
 				) {
-					WithdrawConsequence::NoFunds => WithdrawConsequence::NoFunds,
+					WithdrawConsequence::BalanceLow => WithdrawConsequence::BalanceLow,
 					WithdrawConsequence::WouldDie => WithdrawConsequence::WouldDie,
 					WithdrawConsequence::UnknownAsset => WithdrawConsequence::UnknownAsset,
 					WithdrawConsequence::Underflow => WithdrawConsequence::Underflow,
 					WithdrawConsequence::Overflow => WithdrawConsequence::Overflow,
 					WithdrawConsequence::Frozen => WithdrawConsequence::Frozen,
 					WithdrawConsequence::Success => WithdrawConsequence::Success,
-					_ => WithdrawConsequence::NoFunds,
+					_ => WithdrawConsequence::BalanceLow,
 				}
 			}
 			_ => match Self::balance(asset, who).checked_sub(&amount) {
 				Some(_) => WithdrawConsequence::Success,
-				None => WithdrawConsequence::NoFunds,
+				None => WithdrawConsequence::BalanceLow,
 			},
 		}
 	}
@@ -280,7 +290,7 @@ where
 		asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
-	) -> DispatchResult {
+	) -> Result<BalanceOf<T>, DispatchError> {
 		//Self::do_mint(asset, who, amount, None)
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible mint_into {:?}", asset);
 
@@ -290,7 +300,7 @@ where
 					who,
 					amount.into(),
 				)
-				.into()
+				.map(Into::into)
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::mint_into(
@@ -298,7 +308,7 @@ where
 					who,
 					amount.into(),
 				)
-				.into()
+				.map(Into::into)
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
@@ -323,7 +333,7 @@ where
 					&Value::new(0),
 				)?;
 
-				Ok(())
+				Ok(amount)
 			}
 		}
 	}
@@ -332,29 +342,31 @@ where
 		asset: Self::AssetId,
 		who: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
+		precision: Precision,
+		fortitude: Fortitude,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = DebitFlags { keep_alive: false, best_effort: false };
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible burn_from");
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				match <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::burn_from(
+				<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::burn_from(
 					who,
 					amount.into(),
-				) {
-					Ok(v) => Ok(v.into()),
-					Err(e) => Err(e),
-				}
+					precision,
+					fortitude,
+				)
+				.map(Into::into)
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				match <orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::burn_from(
+				<orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::burn_from(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					who,
 					amount.into(),
-				) {
-					Ok(v) => Ok(v.into()),
-					Err(e) => Err(e),
-				}
+					precision,
+					fortitude,
+				)
+				.map(Into::into)
 			}
 			AssetIds::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
@@ -378,43 +390,23 @@ where
 		}
 	}
 
-	fn slash(
-		asset: Self::AssetId,
-		who: &<T as SystemConfig>::AccountId,
-		amount: Self::Balance,
-	) -> Result<Self::Balance, DispatchError> {
-		// let f = DebitFlags { keep_alive: false, best_effort: true };
-		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible slash");
-		Ok(Self::burn_from(asset, who, amount)?)
-	}
-}
-
-impl<T: Config> fungibles::Transfer<T::AccountId> for Pallet<T>
-where
-	T: orml_tokens::Config<CurrencyId = AssetIds>,
-	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
-	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
-	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
-	<T as orml_tokens::Config>::Balance: From<BalanceOf<T>>,
-	u128: From<BalanceOf<T>>,
-{
 	fn transfer(
 		asset: Self::AssetId,
 		source: &<T as SystemConfig>::AccountId,
 		dest: &<T as SystemConfig>::AccountId,
 		amount: Self::Balance,
-		keep_alive: bool,
+		preservation: Preservation,
 	) -> Result<Self::Balance, DispatchError> {
 		// let f = TransferFlags { keep_alive, best_effort: false, burn_dust: false };
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible transfer");
 
 		match asset {
 			AssetIds::NativeAssetId(NativeCurrency::Here) => {
-				match <pallet_balances::Pallet<T> as fungible::Transfer<T::AccountId>>::transfer(
+				match <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::transfer(
 					source,
 					dest,
 					amount.into(),
-					keep_alive,
+					preservation,
 				) {
 					Ok(_) => Ok(amount),
 					Err(_) => Err(DispatchError::Other(
@@ -423,12 +415,12 @@ where
 				}
 			}
 			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
-				match <orml_tokens::Pallet<T> as fungibles::Transfer<T::AccountId>>::transfer(
+				match <orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::transfer(
 					AssetIds::NativeAssetId(NativeCurrency::Parent),
 					source,
 					dest,
 					amount.into(),
-					keep_alive,
+					preservation,
 				) {
 					Ok(_) => Ok(amount),
 					Err(e) => Err(e),
@@ -458,5 +450,53 @@ where
 				Ok(amount)
 			}
 		}
+	}
+}
+
+#[cfg(not(debug_assertions))]
+extern "C" {
+	// This function does not exists, thus compilation will fail, if its call is
+	// not optimized away, which is only possible if it's not called at all.
+	//
+	// not(debug_assertions) is used to ensure compiler is dropping unused functions, as
+	// this option is enabled in release by defailt
+	//
+	// FIXME: maybe use build.rs, to ensure it will fail even in release with debug_assertions
+	// enabled?
+	fn unbalanced_fungible_is_called();
+}
+macro_rules! ensure_balanced {
+	() => {{
+		#[cfg(debug_assertions)]
+		panic!("unbalanced fungible methods should not be used");
+		#[cfg(not(debug_assertions))]
+		{
+			unsafe { unbalanced_fungible_is_called() };
+			unreachable!();
+		}
+	}};
+}
+
+impl<T: Config> fungibles::Unbalanced<<T as SystemConfig>::AccountId> for Pallet<T>
+where
+	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
+	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
+	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
+	<T as orml_tokens::Config>::Balance: From<BalanceOf<T>>,
+	u128: From<BalanceOf<T>>,
+{
+	fn handle_dust(_dust: fungibles::Dust<<T as SystemConfig>::AccountId, Self>) {
+		ensure_balanced!();
+	}
+	fn write_balance(
+		_asset: Self::AssetId,
+		_who: &<T as SystemConfig>::AccountId,
+		_amount: Self::Balance,
+	) -> Result<Option<Self::Balance>, DispatchError> {
+		ensure_balanced!();
+	}
+	fn set_total_issuance(_asset: Self::AssetId, _amount: Self::Balance) {
+		ensure_balanced!();
 	}
 }

@@ -19,13 +19,9 @@ chai.use(chaiAsPromised);
 chai.use(chaiSubset);
 export const expect = chai.expect;
 
-const getTestHash = (filename: string) => {
-  return crypto.createHash('md5').update(filename).digest('hex');
-};
+const getTestHash = (filename: string) => crypto.createHash('md5').update(filename).digest('hex');
 
-export const getTestSeed = (filename: string) => {
-  return `//Alice+${getTestHash(filename)}`;
-};
+export const getTestSeed = (filename: string) => `//Alice+${getTestHash(filename)}`;
 
 async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
   const silentConsole = new SilentConsole();
@@ -37,13 +33,13 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const privateKey = async (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => {
-      if (typeof seed === 'string') {
+      if(typeof seed === 'string') {
         return helper.util.fromSeed(seed, ss58Format);
       }
-      if (seed.url) {
+      if(seed.url) {
         const {filename} = makeNames(seed.url);
         seed.filename = filename;
-      } else if (seed.filename) {
+      } else if(seed.filename) {
         // Pass
       } else {
         throw new Error('no url nor filename set');
@@ -51,7 +47,7 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
       const actualSeed = getTestSeed(seed.filename);
       let account = helper.util.fromSeed(actualSeed, ss58Format);
       // here's to hoping that no
-      if (!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
+      if(!seed.ignoreFundsPresence && ((helper as any)['balance'] == undefined || await (helper as any).balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND)) {
         console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
         account = helper.util.fromSeed('//Alice', ss58Format);
       }
@@ -65,49 +61,27 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
   }
 }
 
-export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => {
-  return usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
-};
+export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
 
-export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
-};
+export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 
-export const usingStateminePlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
-};
+export const usingStateminePlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
 
-export const usingStatemintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
-};
+export const usingStatemintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
 
-export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
-};
+export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
 
-export const usingAcalaPlaygrounds = (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
-};
+export const usingAcalaPlaygrounds = (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
 
-export const usingKaruraPlaygrounds = (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
-};
+export const usingKaruraPlaygrounds = (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
 
-export const usingMoonbeamPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
-};
+export const usingMoonbeamPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
 
-export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
-};
+export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
 
-export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
-};
+export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
 
-export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => {
-  return usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
-};
+export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
 
 export const MINIMUM_DONOR_FUND = 100_000n;
 export const DONOR_FUNDING = 2_000_000n;
@@ -135,21 +109,21 @@ export enum Pallets {
   TestUtils = 'testutils',
 }
 
-export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: string[]) {
+export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: readonly string[]) {
   const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
 
-  if (missingPallets.length > 0) {
+  if(missingPallets.length > 0) {
     const skipMsg = `\tSkipping test '${test.test?.title}'.\n\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
     console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
     test.skip();
   }
 }
 
-export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: readonly string[] } = {}) {
   (opts.only ? it.only :
     opts.skip ? it.skip : it)(name, async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
-      if (opts.requiredPallets) {
+      if(opts.requiredPallets) {
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
@@ -157,14 +131,14 @@ export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privat
     });
   });
 }
-export function itSubIfWithPallet(name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+export function itSubIfWithPallet(name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: readonly string[] } = {}) {
   return itSub(name, cb, {requiredPallets: required, ...opts});
 }
 itSub.only = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {only: true});
 itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {skip: true});
 
-itSubIfWithPallet.only = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
-itSubIfWithPallet.skip = (name: string, required: string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
+itSubIfWithPallet.only = (name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
+itSubIfWithPallet.skip = (name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
 itSub.ifWithPallets = itSubIfWithPallet;
 
 export type SchedKind = 'anon' | 'named';
@@ -194,12 +168,12 @@ export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts
 describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
 
 export function sizeOfInt(i: number) {
-  if (i < 0 || i > 0xffffffff) throw new Error('out of range');
+  if(i < 0 || i > 0xffffffff) throw new Error('out of range');
   if(i < 0b11_1111) {
     return 1;
-  } else if (i < 0b11_1111_1111_1111) {
+  } else if(i < 0b11_1111_1111_1111) {
     return 2;
-  } else if (i < 0b11_1111_1111_1111_1111_1111_1111_1111) {
+  } else if(i < 0b11_1111_1111_1111_1111_1111_1111_1111) {
     return 4;
   } else {
     return 5;

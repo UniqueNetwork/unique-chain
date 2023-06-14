@@ -72,7 +72,7 @@ const main = async () => {
     ).toString();
 
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-    const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
     const contract = await helper.ethContract.deployByCode(
       ethSigner,
@@ -88,7 +88,7 @@ const main = async () => {
     const result: IBenchmarkResultForProp[] = [];
     const csvResult: IBenchmarkResultForProp[] = [];
 
-    for (let i = 1; i <= 20; i++) {
+    for(let i = 1; i <= 20; i++) {
       const benchResult = await benchMintWithProperties(helper, privateKey, contract, {
         propertiesNumber: i,
       }) as any;
@@ -131,7 +131,7 @@ async function benchMintFee(
 }> {
   const donor = await privateKey('//Alice');
   const substrateReceiver = await privateKey('//Bob');
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
   const nominal = helper.balance.getOneTokenNominal();
 
@@ -205,7 +205,7 @@ async function benchMintWithProperties(
   setup: { propertiesNumber: number },
 ): Promise<IBenchmarkResultForProp> {
   const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-  const ethSigner = await helper.eth.createAccountWithBalance(donor, 100n);
+  const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
   const susbstrateReceiver = await privateKey('//Bob');
   const receiverEthAddress = helper.address.substrateToEth(susbstrateReceiver.address);
@@ -222,9 +222,7 @@ async function benchMintWithProperties(
       await collection.mintToken(
         donor,
         {Substrate: susbstrateReceiver.address},
-        PROPERTIES.slice(0, setup.propertiesNumber).map((p) => {
-          return {key: p.key, value: Buffer.from(p.value).toString()};
-        }),
+        PROPERTIES.slice(0, setup.propertiesNumber).map((p) => ({key: p.key, value: Buffer.from(p.value).toString()})),
       );
     },
   );
@@ -256,7 +254,7 @@ async function benchMintWithProperties(
         '0',
       );
 
-      for (const val of PROPERTIES.slice(0, setup.propertiesNumber)) {
+      for(const val of PROPERTIES.slice(0, setup.propertiesNumber)) {
         encodedCall = await evmContract.methods
           .setProperty(subTokenId, val.key, Buffer.from(val.value))
           .encodeABI();

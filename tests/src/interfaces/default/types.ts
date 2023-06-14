@@ -148,8 +148,8 @@ export interface CumulusPalletParachainSystemEvent extends Enum {
 export interface CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot extends Struct {
   readonly dmqMqcHead: H256;
   readonly relayDispatchQueueSize: ITuple<[u32, u32]>;
-  readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
-  readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV2AbridgedHrmpChannel]>>;
+  readonly ingressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV4AbridgedHrmpChannel]>>;
+  readonly egressChannels: Vec<ITuple<[u32, PolkadotPrimitivesV4AbridgedHrmpChannel]>>;
 }
 
 /** @name CumulusPalletXcmCall */
@@ -297,7 +297,7 @@ export interface CumulusPalletXcmpQueueQueueConfigData extends Struct {
 
 /** @name CumulusPrimitivesParachainInherentParachainInherentData */
 export interface CumulusPrimitivesParachainInherentParachainInherentData extends Struct {
-  readonly validationData: PolkadotPrimitivesV2PersistedValidationData;
+  readonly validationData: PolkadotPrimitivesV4PersistedValidationData;
   readonly relayChainState: SpTrieStorageProof;
   readonly downwardMessages: Vec<PolkadotCorePrimitivesInboundDownwardMessage>;
   readonly horizontalMessages: BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>;
@@ -1094,8 +1094,8 @@ export interface PalletAppPromotionEvent extends Enum {
 export interface PalletBalancesAccountData extends Struct {
   readonly free: u128;
   readonly reserved: u128;
-  readonly miscFrozen: u128;
-  readonly feeFrozen: u128;
+  readonly frozen: u128;
+  readonly flags: u128;
 }
 
 /** @name PalletBalancesBalanceLock */
@@ -1107,16 +1107,16 @@ export interface PalletBalancesBalanceLock extends Struct {
 
 /** @name PalletBalancesCall */
 export interface PalletBalancesCall extends Enum {
-  readonly isTransfer: boolean;
-  readonly asTransfer: {
+  readonly isTransferAllowDeath: boolean;
+  readonly asTransferAllowDeath: {
     readonly dest: MultiAddress;
     readonly value: Compact<u128>;
   } & Struct;
-  readonly isSetBalance: boolean;
-  readonly asSetBalance: {
+  readonly isSetBalanceDeprecated: boolean;
+  readonly asSetBalanceDeprecated: {
     readonly who: MultiAddress;
     readonly newFree: Compact<u128>;
-    readonly newReserved: Compact<u128>;
+    readonly oldReserved: Compact<u128>;
   } & Struct;
   readonly isForceTransfer: boolean;
   readonly asForceTransfer: {
@@ -1139,7 +1139,21 @@ export interface PalletBalancesCall extends Enum {
     readonly who: MultiAddress;
     readonly amount: u128;
   } & Struct;
-  readonly type: 'Transfer' | 'SetBalance' | 'ForceTransfer' | 'TransferKeepAlive' | 'TransferAll' | 'ForceUnreserve';
+  readonly isUpgradeAccounts: boolean;
+  readonly asUpgradeAccounts: {
+    readonly who: Vec<AccountId32>;
+  } & Struct;
+  readonly isTransfer: boolean;
+  readonly asTransfer: {
+    readonly dest: MultiAddress;
+    readonly value: Compact<u128>;
+  } & Struct;
+  readonly isForceSetBalance: boolean;
+  readonly asForceSetBalance: {
+    readonly who: MultiAddress;
+    readonly newFree: Compact<u128>;
+  } & Struct;
+  readonly type: 'TransferAllowDeath' | 'SetBalanceDeprecated' | 'ForceTransfer' | 'TransferKeepAlive' | 'TransferAll' | 'ForceUnreserve' | 'UpgradeAccounts' | 'Transfer' | 'ForceSetBalance';
 }
 
 /** @name PalletBalancesError */
@@ -1148,11 +1162,13 @@ export interface PalletBalancesError extends Enum {
   readonly isLiquidityRestrictions: boolean;
   readonly isInsufficientBalance: boolean;
   readonly isExistentialDeposit: boolean;
-  readonly isKeepAlive: boolean;
+  readonly isExpendability: boolean;
   readonly isExistingVestingSchedule: boolean;
   readonly isDeadAccount: boolean;
   readonly isTooManyReserves: boolean;
-  readonly type: 'VestingBalance' | 'LiquidityRestrictions' | 'InsufficientBalance' | 'ExistentialDeposit' | 'KeepAlive' | 'ExistingVestingSchedule' | 'DeadAccount' | 'TooManyReserves';
+  readonly isTooManyHolds: boolean;
+  readonly isTooManyFreezes: boolean;
+  readonly type: 'VestingBalance' | 'LiquidityRestrictions' | 'InsufficientBalance' | 'ExistentialDeposit' | 'Expendability' | 'ExistingVestingSchedule' | 'DeadAccount' | 'TooManyReserves' | 'TooManyHolds' | 'TooManyFreezes';
 }
 
 /** @name PalletBalancesEvent */
@@ -1177,7 +1193,6 @@ export interface PalletBalancesEvent extends Enum {
   readonly asBalanceSet: {
     readonly who: AccountId32;
     readonly free: u128;
-    readonly reserved: u128;
   } & Struct;
   readonly isReserved: boolean;
   readonly asReserved: {
@@ -1211,7 +1226,65 @@ export interface PalletBalancesEvent extends Enum {
     readonly who: AccountId32;
     readonly amount: u128;
   } & Struct;
-  readonly type: 'Endowed' | 'DustLost' | 'Transfer' | 'BalanceSet' | 'Reserved' | 'Unreserved' | 'ReserveRepatriated' | 'Deposit' | 'Withdraw' | 'Slashed';
+  readonly isMinted: boolean;
+  readonly asMinted: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isBurned: boolean;
+  readonly asBurned: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isSuspended: boolean;
+  readonly asSuspended: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isRestored: boolean;
+  readonly asRestored: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isUpgraded: boolean;
+  readonly asUpgraded: {
+    readonly who: AccountId32;
+  } & Struct;
+  readonly isIssued: boolean;
+  readonly asIssued: {
+    readonly amount: u128;
+  } & Struct;
+  readonly isRescinded: boolean;
+  readonly asRescinded: {
+    readonly amount: u128;
+  } & Struct;
+  readonly isLocked: boolean;
+  readonly asLocked: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isUnlocked: boolean;
+  readonly asUnlocked: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isFrozen: boolean;
+  readonly asFrozen: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isThawed: boolean;
+  readonly asThawed: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly type: 'Endowed' | 'DustLost' | 'Transfer' | 'BalanceSet' | 'Reserved' | 'Unreserved' | 'ReserveRepatriated' | 'Deposit' | 'Withdraw' | 'Slashed' | 'Minted' | 'Burned' | 'Suspended' | 'Restored' | 'Upgraded' | 'Issued' | 'Rescinded' | 'Locked' | 'Unlocked' | 'Frozen' | 'Thawed';
+}
+
+/** @name PalletBalancesIdAmount */
+export interface PalletBalancesIdAmount extends Struct {
+  readonly id: U8aFixed;
+  readonly amount: u128;
 }
 
 /** @name PalletBalancesReasons */
@@ -1473,6 +1546,7 @@ export interface PalletEthereumEvent extends Enum {
     readonly to: H160;
     readonly transactionHash: H256;
     readonly exitReason: EvmCoreErrorExitReason;
+    readonly extraData: Bytes;
   } & Struct;
   readonly type: 'Executed';
 }
@@ -2612,7 +2686,11 @@ export interface PalletXcmCall extends Enum {
     readonly feeAssetItem: u32;
     readonly weightLimit: XcmV3WeightLimit;
   } & Struct;
-  readonly type: 'Send' | 'TeleportAssets' | 'ReserveTransferAssets' | 'Execute' | 'ForceXcmVersion' | 'ForceDefaultXcmVersion' | 'ForceSubscribeVersionNotify' | 'ForceUnsubscribeVersionNotify' | 'LimitedReserveTransferAssets' | 'LimitedTeleportAssets';
+  readonly isForceSuspension: boolean;
+  readonly asForceSuspension: {
+    readonly suspended: bool;
+  } & Struct;
+  readonly type: 'Send' | 'TeleportAssets' | 'ReserveTransferAssets' | 'Execute' | 'ForceXcmVersion' | 'ForceDefaultXcmVersion' | 'ForceSubscribeVersionNotify' | 'ForceUnsubscribeVersionNotify' | 'LimitedReserveTransferAssets' | 'LimitedTeleportAssets' | 'ForceSuspension';
 }
 
 /** @name PalletXcmError */
@@ -2763,8 +2841,8 @@ export interface PolkadotParachainPrimitivesXcmpMessageFormat extends Enum {
   readonly type: 'ConcatenatedVersionedXcm' | 'ConcatenatedEncodedBlob' | 'Signals';
 }
 
-/** @name PolkadotPrimitivesV2AbridgedHostConfiguration */
-export interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
+/** @name PolkadotPrimitivesV4AbridgedHostConfiguration */
+export interface PolkadotPrimitivesV4AbridgedHostConfiguration extends Struct {
   readonly maxCodeSize: u32;
   readonly maxHeadDataSize: u32;
   readonly maxUpwardQueueCount: u32;
@@ -2776,8 +2854,8 @@ export interface PolkadotPrimitivesV2AbridgedHostConfiguration extends Struct {
   readonly validationUpgradeDelay: u32;
 }
 
-/** @name PolkadotPrimitivesV2AbridgedHrmpChannel */
-export interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
+/** @name PolkadotPrimitivesV4AbridgedHrmpChannel */
+export interface PolkadotPrimitivesV4AbridgedHrmpChannel extends Struct {
   readonly maxCapacity: u32;
   readonly maxTotalSize: u32;
   readonly maxMessageSize: u32;
@@ -2786,16 +2864,16 @@ export interface PolkadotPrimitivesV2AbridgedHrmpChannel extends Struct {
   readonly mqcHead: Option<H256>;
 }
 
-/** @name PolkadotPrimitivesV2PersistedValidationData */
-export interface PolkadotPrimitivesV2PersistedValidationData extends Struct {
+/** @name PolkadotPrimitivesV4PersistedValidationData */
+export interface PolkadotPrimitivesV4PersistedValidationData extends Struct {
   readonly parentHead: Bytes;
   readonly relayParentNumber: u32;
   readonly relayParentStorageRoot: H256;
   readonly maxPovSize: u32;
 }
 
-/** @name PolkadotPrimitivesV2UpgradeRestriction */
-export interface PolkadotPrimitivesV2UpgradeRestriction extends Enum {
+/** @name PolkadotPrimitivesV4UpgradeRestriction */
+export interface PolkadotPrimitivesV4UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
 }
@@ -2886,14 +2964,16 @@ export interface SpRuntimeMultiSignature extends Enum {
 
 /** @name SpRuntimeTokenError */
 export interface SpRuntimeTokenError extends Enum {
-  readonly isNoFunds: boolean;
-  readonly isWouldDie: boolean;
+  readonly isFundsUnavailable: boolean;
+  readonly isOnlyProvider: boolean;
   readonly isBelowMinimum: boolean;
   readonly isCannotCreate: boolean;
   readonly isUnknownAsset: boolean;
   readonly isFrozen: boolean;
   readonly isUnsupported: boolean;
-  readonly type: 'NoFunds' | 'WouldDie' | 'BelowMinimum' | 'CannotCreate' | 'UnknownAsset' | 'Frozen' | 'Unsupported';
+  readonly isCannotCreateHold: boolean;
+  readonly isNotExpendable: boolean;
+  readonly type: 'FundsUnavailable' | 'OnlyProvider' | 'BelowMinimum' | 'CannotCreate' | 'UnknownAsset' | 'Frozen' | 'Unsupported' | 'CannotCreateHold' | 'NotExpendable';
 }
 
 /** @name SpRuntimeTransactionalError */

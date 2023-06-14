@@ -23,7 +23,6 @@ use sp_std::vec::Vec;
 use serde::Serialize;
 
 use sp_runtime::ApplyExtrinsicResult;
-use sp_core::Bytes;
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Debug, TypeInfo)]
@@ -44,6 +43,6 @@ pub struct TrieKeyValue {
 
 sp_api::decl_runtime_apis! {
 	pub trait PovEstimateApi {
-		fn pov_estimate(uxt: Bytes) -> ApplyExtrinsicResult;
+		fn pov_estimate(uxt: Vec<u8>) -> ApplyExtrinsicResult;
 	}
 }

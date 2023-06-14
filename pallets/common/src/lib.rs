@@ -64,7 +64,11 @@ use evm_coder::ToLog;
 use frame_support::{
 	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
 	ensure,
-	traits::{Imbalance, Get, Currency, WithdrawReasons, ExistenceRequirement},
+	traits::{
+		Get,
+		fungible::{Balanced, Debt, Inspect},
+		tokens::{Imbalance, Precision, Preservation},
+	},
 	dispatch::Pays,
 	transactional, fail,
 };
@@ -84,7 +88,7 @@ use up_pov_estimate_rpc::PovInfo;
 
 pub use pallet::*;
 use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
+use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, traits::Zero};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -394,12 +398,10 @@ impl<T: Config> CollectionHandle<T> {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use core::marker::PhantomData;
 
 	use super::*;
 	use dispatch::CollectionDispatch;
 	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use frame_support::traits::Currency;
 	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
 	use scale_info::TypeInfo;
 	use weights::WeightInfo;
@@ -415,12 +417,12 @@ pub mod pallet {
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
 
 		/// Handler of accounts and payment.
-		type Currency: Currency<Self::AccountId>;
+		type Currency: Balanced<Self::AccountId> + Inspect<Self::AccountId>;
 
 		/// Set price to create a collection.
 		#[pallet::constant]
 		type CollectionCreationPrice: Get<
-			<<Self as Config>::Currency as Currency<Self::AccountId>>::Balance,
+			<<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
 		>;
 
 		/// Dispatcher of operations on collections.
@@ -1089,21 +1091,17 @@ impl<T: Config> Pallet<T> {
 
 		// Take a (non-refundable) deposit of collection creation
 		{
-			let mut imbalance =
-				<<<T as Config>::Currency as Currency<T::AccountId>>::PositiveImbalance>::zero();
-			imbalance.subsume(
-				<<T as Config>::Currency as Currency<T::AccountId>>::deposit_creating(
-					&T::TreasuryAccountId::get(),
-					T::CollectionCreationPrice::get(),
-				),
-			);
-			<T as Config>::Currency::settle(
-				payer.as_sub(),
-				imbalance,
-				WithdrawReasons::TRANSFER,
-				ExistenceRequirement::KeepAlive,
-			)
-			.map_err(|_| Error::<T>::NotSufficientFounds)?;
+			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+			imbalance.subsume(<T as Config>::Currency::deposit(
+				&T::TreasuryAccountId::get(),
+				T::CollectionCreationPrice::get(),
+				Precision::Exact,
+			)?);
+			let credit =
+				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
+					.map_err(|_| Error::<T>::NotSufficientFounds)?;
+
+			debug_assert!(credit.peek().is_zero())
 		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
@@ -1221,7 +1219,7 @@ impl<T: Config> Pallet<T> {
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_being_created`: Indicates that method is called during token initialization.
+	/// - `is_token_create`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
@@ -1235,27 +1233,20 @@ impl<T: Config> Pallet<T> {
 		collection: &CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
-		check_token_existence: impl Fn() -> bool,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_being_created: bool,
+		is_token_create: bool,
 		mut stored_properties: TokenProperties,
-		check_token_ownership: impl Fn() -> Result<bool, DispatchError>,
+		is_token_owner: impl Fn() -> Result<bool, DispatchError>,
 		set_token_properties: impl FnOnce(TokenProperties),
 		log: evm_coder::ethereum::Log,
 	) -> DispatchResult {
 		let is_collection_admin = collection.is_owner_or_admin(sender);
+		let permissions = Self::property_permissions(collection.id);
 
 		let mut token_owner_result = None;
-		let mut token_exists_result = None;
-
-		let mut check_token_ownership = || -> Result<bool, DispatchError> {
-			*token_owner_result.get_or_insert_with(&check_token_ownership)
+		let mut is_token_owner = || -> Result<bool, DispatchError> {
+			*token_owner_result.get_or_insert_with(&is_token_owner)
 		};
-
-		let mut check_token_existence =
-			|| -> bool { *token_exists_result.get_or_insert_with(&check_token_existence) };
-
-		let permissions = Self::property_permissions(collection.id);
 
 		for (key, value) in properties_updates {
 			let permission = permissions
@@ -1263,36 +1254,26 @@ impl<T: Config> Pallet<T> {
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
 
-			let property_exists = stored_properties.get(&key).is_some();
+			let is_property_exists = stored_properties.get(&key).is_some();
 
 			match permission {
-				PropertyPermission { mutable: false, .. } if property_exists => {
+				PropertyPermission { mutable: false, .. } if is_property_exists => {
 					return Err(<Error<T>>::NoPermission.into());
 				}
 
 				PropertyPermission {
-					collection_admin: collection_admin_permitted,
-					token_owner: token_owner_permitted,
+					collection_admin,
+					token_owner,
 					..
 				} => {
 					//TODO: investigate threats during public minting.
-					let valid_new_token_creation = is_token_being_created
-						&& (collection_admin_permitted || token_owner_permitted)
-						&& value.is_some();
-					let sender_is_admin = collection_admin_permitted && is_collection_admin;
-					let mut sender_is_owner = || -> Result<bool, DispatchError> {
-						Ok(token_owner_permitted && check_token_ownership()?)
-					};
-
-					if !(valid_new_token_creation || sender_is_admin || sender_is_owner()?) {
+					let is_token_create =
+						is_token_create && (collection_admin || token_owner) && value.is_some();
+					if !(is_token_create
+						|| (collection_admin && is_collection_admin)
+						|| (token_owner && is_token_owner()?))
+					{
 						fail!(<Error<T>>::NoPermission);
-					}
-
-					let token_owner_check_needed =
-						!(valid_new_token_creation || sender_is_admin) && token_owner_permitted;
-					let token_must_exist = !(token_owner_check_needed && check_token_ownership()?);
-					if token_must_exist && !check_token_existence() {
-						fail!(<Error<T>>::TokenNotFound);
 					}
 				}
 			}

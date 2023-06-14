@@ -19,7 +19,7 @@
 use super::*;
 use crate::Pallet;
 use frame_system::RawOrigin;
-use frame_support::traits::{tokens::currency::Currency, Get};
+use frame_support::traits::{fungible::Balanced, Get, tokens::Precision};
 use frame_benchmarking::{benchmarks, account};
 use sp_runtime::DispatchError;
 use pallet_common::{
@@ -38,7 +38,12 @@ fn create_collection_helper<T: Config>(
 	owner: T::AccountId,
 	mode: CollectionMode,
 ) -> Result<CollectionId, DispatchError> {
-	<T as CommonConfig>::Currency::deposit_creating(&owner, T::CollectionCreationPrice::get());
+	let _ = <T as CommonConfig>::Currency::deposit(
+		&owner,
+		T::CollectionCreationPrice::get(),
+		Precision::Exact,
+	)
+	.unwrap();
 	let col_name = create_u16_data::<{ MAX_COLLECTION_NAME_LENGTH }>();
 	let col_desc = create_u16_data::<{ MAX_COLLECTION_DESCRIPTION_LENGTH }>();
 	let token_prefix = create_data::<{ MAX_TOKEN_PREFIX_LENGTH }>();
@@ -64,7 +69,7 @@ benchmarks! {
 		let token_prefix = create_data::<{MAX_TOKEN_PREFIX_LENGTH}>();
 		let mode: CollectionMode = CollectionMode::NFT;
 		let caller: T::AccountId = account("caller", 0, SEED);
-		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+		let _ = <T as CommonConfig>::Currency::deposit(&caller, T::CollectionCreationPrice::get(), Precision::Exact).unwrap();
 	}: _(RawOrigin::Signed(caller.clone()), col_name.clone(), col_desc.clone(), token_prefix.clone(), mode)
 	verify {
 		assert_eq!(<pallet_common::CollectionById<T>>::get(CollectionId(1)).unwrap().owner, caller);

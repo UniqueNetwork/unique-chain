@@ -19,12 +19,12 @@ const globalSetup = async (): Promise<void> => {
       // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
         .then((result) => {
-          if (!result) throw Error('Some problems with fundFilenamesWithRetries');
+          if(!result) throw Error('Some problems with fundFilenamesWithRetries');
         });
 
       // 3. Configure App Promotion
       const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
-      if (missingPallets.length === 0) {
+      if(missingPallets.length === 0) {
         const superuser = await privateKey('//Alice');
         const palletAddress = helper.arrange.calculatePalletAddress('appstake');
         const palletAdmin = await privateKey('//PromotionAdmin');
@@ -48,9 +48,9 @@ const globalSetup = async (): Promise<void> => {
 async function getFiles(rootPath: string): Promise<string[]> {
   const files = await fs.readdir(rootPath, {withFileTypes: true});
   const filenames: string[] = [];
-  for (const entry of files) {
+  for(const entry of files) {
     const res = path.resolve(rootPath, entry.name);
-    if (entry.isDirectory()) {
+    if(entry.isDirectory()) {
       filenames.push(...await getFiles(res));
     } else {
       filenames.push(res);
@@ -69,16 +69,16 @@ const fundFilenames = async () => {
     // batching is actually undesireable, it takes away the time while all the transactions actually succeed
     const batchSize = 300;
     let balanceGrantedCounter = 0;
-    for (let b = 0; b < filenames.length; b += batchSize) {
+    for(let b = 0; b < filenames.length; b += batchSize) {
       const tx = [];
       let batchBalanceGrantedCounter = 0;
-      for (let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filenames.length; i++) {
+      for(let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filenames.length; i++) {
         const f = filenames[b + i];
-        if (!f.endsWith('.test.ts') && !f.endsWith('seqtest.ts') || f.includes('.outdated')) continue;
+        if(!f.endsWith('.test.ts') && !f.endsWith('seqtest.ts') || f.includes('.outdated')) continue;
         const account = await privateKey({filename: f, ignoreFundsPresence: true});
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 
-        if (aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
+        if(aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
           tx.push(helper.executeExtrinsic(
             alice,
             'api.tx.balances.transfer',
@@ -93,16 +93,16 @@ const fundFilenames = async () => {
       if(tx.length > 0) {
         console.log(`Granting funds to ${batchBalanceGrantedCounter} filename accounts.`);
         const result = await Promise.all(tx);
-        if (result && result.lastIndexOf(false) > -1) throw new Error('The transactions actually probably succeeded, should check the balances.');
+        if(result && result.lastIndexOf(false) > -1) throw new Error('The transactions actually probably succeeded, should check the balances.');
       }
     }
 
-    if (balanceGrantedCounter == 0) console.log('No account needs additional funding.');
+    if(balanceGrantedCounter == 0) console.log('No account needs additional funding.');
   });
 };
 
 const fundFilenamesWithRetries = (retriesLeft: number): Promise<boolean> => {
-  if (retriesLeft <= 0) return Promise.resolve(false);
+  if(retriesLeft <= 0) return Promise.resolve(false);
   return fundFilenames()
     .then(() => Promise.resolve(true))
     .catch(e => {

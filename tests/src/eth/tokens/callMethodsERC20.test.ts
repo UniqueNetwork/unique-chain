@@ -37,7 +37,7 @@ import {IKeyringPair} from '@polkadot/types/types';
       const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
 
       const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'TotalSupply', '6', '6');
-      if (testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
+      if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -58,7 +58,7 @@ import {IKeyringPair} from '@polkadot/types/types';
       const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
 
       const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'BalanceOf', 'Descroption', 'Prefix');
-      if (testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
+      if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -77,7 +77,7 @@ import {IKeyringPair} from '@polkadot/types/types';
     itEth('decimals', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'BalanceOf', 'Descroption', 'Prefix');
-      if (testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
+      if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'

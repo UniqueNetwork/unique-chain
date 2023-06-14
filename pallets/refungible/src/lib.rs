@@ -90,7 +90,7 @@
 use crate::erc_token::ERC20Events;
 use crate::erc::ERC721Events;
 
-use core::ops::Deref;
+use core::{ops::Deref, cmp::Ordering};
 use evm_coder::ToLog;
 use frame_support::{ensure, storage::with_transaction, transactional};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
@@ -521,7 +521,7 @@ impl<T: Config> Pallet<T> {
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_being_created`: Indicates that method is called during token initialization.
+	/// - `is_token_create`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
@@ -537,7 +537,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_being_created: bool,
+		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let is_token_owner = || -> Result<bool, DispatchError> {
@@ -565,9 +565,8 @@ impl<T: Config> Pallet<T> {
 			collection,
 			sender,
 			token_id,
-			|| Self::token_exists(collection, token_id),
 			properties_updates,
-			is_token_being_created,
+			is_token_create,
 			stored_properties,
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
@@ -1125,7 +1124,7 @@ impl<T: Config> Pallet<T> {
 
 		if collection.ignores_token_restrictions(spender) {
 			return Ok(Self::compute_allowance_decrease(
-				collection, token, from, &spender, amount,
+				collection, token, from, spender, amount,
 			));
 		}
 
@@ -1144,7 +1143,7 @@ impl<T: Config> Pallet<T> {
 			return Ok(None);
 		}
 
-		let allowance = Self::compute_allowance_decrease(collection, token, from, &spender, amount);
+		let allowance = Self::compute_allowance_decrease(collection, token, from, spender, amount);
 		if allowance.is_some() {
 			return Ok(allowance);
 		}
@@ -1267,44 +1266,48 @@ impl<T: Config> Pallet<T> {
 		<Balance<T>>::insert((collection.id, token, owner), amount);
 		<TotalSupply<T>>::insert((collection.id, token), amount);
 
-		if amount > total_pieces {
-			let mint_amount = amount - total_pieces;
-			<PalletEvm<T>>::deposit_log(
-				ERC20Events::Transfer {
-					from: H160::default(),
-					to: *owner.as_eth(),
-					value: mint_amount.into(),
-				}
-				.to_log(T::EvmTokenAddressMapping::token_to_address(
+		match total_pieces.cmp(&amount) {
+			Ordering::Less => {
+				let mint_amount = amount - total_pieces;
+				<PalletEvm<T>>::deposit_log(
+					ERC20Events::Transfer {
+						from: H160::default(),
+						to: *owner.as_eth(),
+						value: mint_amount.into(),
+					}
+					.to_log(T::EvmTokenAddressMapping::token_to_address(
+						collection.id,
+						token,
+					)),
+				);
+				<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
 					collection.id,
 					token,
-				)),
-			);
-			<PalletCommon<T>>::deposit_event(CommonEvent::ItemCreated(
-				collection.id,
-				token,
-				owner.clone(),
-				mint_amount,
-			));
-		} else if total_pieces > amount {
-			let burn_amount = total_pieces - amount;
-			<PalletEvm<T>>::deposit_log(
-				ERC20Events::Transfer {
-					from: *owner.as_eth(),
-					to: H160::default(),
-					value: burn_amount.into(),
-				}
-				.to_log(T::EvmTokenAddressMapping::token_to_address(
+					owner.clone(),
+					mint_amount,
+				));
+			}
+			Ordering::Greater => {
+				let burn_amount = total_pieces - amount;
+				<PalletEvm<T>>::deposit_log(
+					ERC20Events::Transfer {
+						from: *owner.as_eth(),
+						to: H160::default(),
+						value: burn_amount.into(),
+					}
+					.to_log(T::EvmTokenAddressMapping::token_to_address(
+						collection.id,
+						token,
+					)),
+				);
+				<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
 					collection.id,
 					token,
-				)),
-			);
-			<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
-				collection.id,
-				token,
-				owner.clone(),
-				burn_amount,
-			));
+					owner.clone(),
+					burn_amount,
+				));
+			}
+			Ordering::Equal => {}
 		}
 
 		Ok(())

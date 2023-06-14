@@ -23,16 +23,16 @@ async function resetInvulnerables() {
     const alice = await privateKey('//Alice');
     const bob = await privateKey('//Bob');
     const invulnerables = await helper.collatorSelection.getInvulnerables();
-    if (!invulnerables.includes(alice.address) || !invulnerables.includes(bob.address) || invulnerables.length != 2) {
+    if(!invulnerables.includes(alice.address) || !invulnerables.includes(bob.address) || invulnerables.length != 2) {
       console.warn('Alice and Bob are not the invulnerables! Reinstating them back. '
         + 'Current invulnerables\' size: ' + invulnerables.length);
 
       let nonce = await helper.chain.getNonce(alice.address);
       // In case there are too many invulnerables already, remove some of them, leaving space for Alice and Bob.
-      if (invulnerables.length + 2 >= helper.collatorSelection.maxCollators()) {
+      if(invulnerables.length + 2 >= helper.collatorSelection.maxCollators()) {
         await Promise.all([
-          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()], true, {nonce: nonce++}),
-          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()], true, {nonce: nonce++}),
+          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()!], true, {nonce: nonce++}),
+          helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerables.pop()!], true, {nonce: nonce++}),
         ]);
       }
 
@@ -44,7 +44,7 @@ async function resetInvulnerables() {
 
       nonce = await helper.chain.getNonce(alice.address);
       await Promise.all(invulnerables.map((invulnerable: any) => {
-        if (invulnerable == alice.address || invulnerable == bob.address) return new Promise<void>(res => res());
+        if(invulnerable == alice.address || invulnerable == bob.address) return new Promise<void>(res => res());
         return helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerable], true, {nonce: nonce++});
       }));
     }
@@ -58,7 +58,7 @@ describe('Integration Test: Collator Selection', () => {
   let licenseBond = 0n;
 
   before(async function() {
-    if (!process.env.RUN_COLLATOR_TESTS) this.skip();
+    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
 
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
@@ -82,7 +82,7 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper, privateKey) => {
         // todo:collator see again if blocks start to be finalized in dev mode
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
-        if (await helper.arrange.isDevNode()) this.skip();
+        if(await helper.arrange.isDevNode()) this.skip();
 
         alice = await privateKey('//Alice');
         bob = await privateKey('//Bob');
@@ -95,7 +95,7 @@ describe('Integration Test: Collator Selection', () => {
           .status.toLowerCase()).to.be.equal('success');
 
         const invulnerables = await helper.collatorSelection.getInvulnerables();
-        if (!invulnerables.includes(alice.address) || !invulnerables.includes(bob.address) || invulnerables.length != 2) {
+        if(!invulnerables.includes(alice.address) || !invulnerables.includes(bob.address) || invulnerables.length != 2) {
           console.warn('Alice and Bob are not the invulnerables! Reinstating them back. '
             + 'Current invulnerables\' size: ' + invulnerables.length);
 
@@ -107,7 +107,7 @@ describe('Integration Test: Collator Selection', () => {
 
           nonce = await helper.chain.getNonce(superuser.address);
           await Promise.all(invulnerables.map((invulnerable: any) => {
-            if (invulnerable == alice.address || invulnerable == bob.address) return new Promise((res) => res);
+            if(invulnerable == alice.address || invulnerable == bob.address) return new Promise((res) => res);
             return helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerable], true, {nonce: nonce++});
           }));
         }
@@ -144,7 +144,7 @@ describe('Integration Test: Collator Selection', () => {
 
     after(async () => {
       await usingPlaygrounds(async (helper) => {
-        if (await helper.arrange.isDevNode()) return;
+        if(await helper.arrange.isDevNode()) return;
 
         let nonce = await helper.chain.getNonce(superuser.address);
         await Promise.all([
@@ -452,10 +452,10 @@ describe('Integration Test: Collator Selection', () => {
   });
 
   after(async function() {
-    if (!process.env.RUN_COLLATOR_TESTS) return;
+    if(!process.env.RUN_COLLATOR_TESTS) return;
 
     await usingPlaygrounds(async (helper) => {
-      if (helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
+      if(helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
 
       await helper.getSudo().collatorSelection.setLicenseBond(superuser, previousLicenseBond);
 

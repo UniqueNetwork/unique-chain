@@ -28,7 +28,7 @@ describe('Ethereum native RPC calls', () => {
     });
   });
 
-  itEth.skip('estimate gas', async ({helper}) => {
+  itEth('estimate gas', async ({helper}) => {
     const BALANCE = 100n;
     const BALANCE_TO_TRANSFER = 90n;
 
@@ -57,6 +57,6 @@ describe('Ethereum native RPC calls', () => {
       maxFeePerGas: '0x14c9338c61d',
     });
 
-    expect(estimateGas).to.be.greaterThan(40000).and.to.be.lessThan(60000);
+    expect(estimateGas).to.be.greaterThan(35000).and.to.be.lessThan(50000);
   });
 });

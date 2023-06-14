@@ -53,7 +53,7 @@ describe('Minting tokens', () => {
       expect(event.address).to.equal(collectionAddress);
       expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
       expect(event.returnValues.to).to.equal(receiver);
-      if (testCase.mode === 'ft')
+      if(testCase.mode === 'ft')
         expect(event.returnValues.value).to.equal('100');
 
       // Check token exist:
@@ -87,7 +87,7 @@ describe('Minting tokens', () => {
       expect(event.address).to.equal(collectionAddress);
       expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
       expect(event.returnValues.to).to.equal(receiver);
-      if (testCase.mode === 'ft')
+      if(testCase.mode === 'ft')
         expect(event.returnValues.value).to.equal('100');
 
       // Check token exist:
@@ -121,7 +121,7 @@ describe('Minting tokens', () => {
       expect(event.address).to.equal(collectionAddress);
       expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
       expect(event.returnValues.to).to.equal(receiver);
-      if (testCase.mode === 'ft')
+      if(testCase.mode === 'ft')
         expect(event.returnValues.value).to.equal('100');
 
       // Check token exist:

@@ -328,7 +328,7 @@ define_struct_for_server_api! {
 macro_rules! pass_method {
 	(
 		$method_name:ident(
-			$($(#[map(|$map_arg:ident| $map:expr)])? $name:ident: $ty:ty),* $(,)?
+			$($(#[map = $map:expr])? $name:ident: $ty:ty),* $(,)?
 		) -> $result:ty $(=> $mapper:expr)?,
 		//$runtime_name:ident $(<$($lt: tt),+>)*
 		$runtime_api_macro:ident
@@ -355,7 +355,7 @@ macro_rules! pass_method {
 			let result = $(if _api_version < $ver {
 				api.$changed_method_name(at, $($changed_name),*).map(|r| r.and_then($fixer))
 			} else)*
-			{ api.$method_name(at, $($((|$map_arg: $ty| $map))? ($name)),*) };
+			{ api.$method_name(at, $($($map)? ($name)),*) };
 
 			Ok(result
 				.map_err(|e| anyhow!("unable to query: {e}"))?
@@ -413,7 +413,7 @@ where
 	pass_method!(collection_properties(
 		collection: CollectionId,
 
-		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		#[map = string_keys_to_bytes_keys]
 		keys: Option<Vec<String>>
 	) -> Vec<Property>, unique_api);
 
@@ -421,14 +421,14 @@ where
 		collection: CollectionId,
 		token_id: TokenId,
 
-		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		#[map = string_keys_to_bytes_keys]
 		keys: Option<Vec<String>>
 	) -> Vec<Property>, unique_api);
 
 	pass_method!(property_permissions(
 		collection: CollectionId,
 
-		#[map(|keys| string_keys_to_bytes_keys(keys))]
+		#[map = string_keys_to_bytes_keys]
 		keys: Option<Vec<String>>
 	) -> Vec<PropertyKeyPermission>, unique_api);
 
@@ -437,7 +437,7 @@ where
 			collection: CollectionId,
 			token_id: TokenId,
 
-			#[map(|keys| string_keys_to_bytes_keys(keys))]
+			#[map = string_keys_to_bytes_keys]
 			keys: Option<Vec<String>>,
 		) -> TokenData<CrossAccountId>, unique_api;
 		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| Ok(value.into())
