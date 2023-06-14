@@ -23,6 +23,12 @@ sp-std = { workspace = true }
 up-data-structs = { workspace = true }
 up-pov-estimate-rpc = { workspace = true }
 
+[dev-dependencies]
+sp-io = { workspace = true }
+fp-evm = { workspace = true }
+pallet-balances = { workspace = true }
+pallet-timestamp = { workspace = true }
+
 [features]
 default = ["std"]
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "up-data-structs/runtime-benchmarks"]
