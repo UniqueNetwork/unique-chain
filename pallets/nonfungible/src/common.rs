@@ -245,7 +245,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				&sender,
 				token_id,
 				properties.into_iter(),
-				false,
+				pallet_common::SetPropertyMode::ExistingToken,
 				nesting_budget,
 			),
 			weight,

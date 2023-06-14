@@ -39,7 +39,7 @@ pub trait Config: UniqueConfig + FungibleConfig + NonfungibleConfig + Refungible
 impl<T> Config for T where T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
 
 // TODO: permission check?
-pub fn withdraw_set_token_property<T: Config>(
+pub fn withdraw_set_existing_token_property<T: Config>(
 	collection: &CollectionHandle<T>,
 	who: &T::CrossAccountId,
 	item_id: &TokenId,
@@ -64,6 +64,17 @@ pub fn withdraw_set_token_property<T: Config>(
 		}
 	}
 
+	withdraw_set_token_property(collection, item_id, data_size)
+}
+
+pub fn withdraw_set_token_property<T: Config>(
+	collection: &CollectionHandle<T>,
+	item_id: &TokenId,
+	data_size: usize,
+) -> Option<()> {
+	if data_size == 0 {
+		return Some(());
+	}
 	if data_size > collection.limits.sponsored_data_size() as usize {
 		return None;
 	}
@@ -173,7 +184,6 @@ pub fn withdraw_create_item<T: Config>(
 			return None;
 		}
 	}
-
 	CreateItemBasket::<T>::insert((collection.id, who.as_sub()), block_number);
 
 	Some(())
@@ -237,7 +247,7 @@ where
 				..
 			} => {
 				let (sponsor, collection) = load::<T>(*collection_id)?;
-				withdraw_set_token_property(
+				withdraw_set_existing_token_property(
 					&collection,
 					&T::CrossAccountId::from_sub(who.clone()),
 					token_id,

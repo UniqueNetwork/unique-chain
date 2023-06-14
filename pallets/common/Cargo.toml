@@ -36,4 +36,5 @@ std = [
 	"up-pov-estimate-rpc/std",
 ]
 stubgen = ["evm-coder/stubgen"]
+tests = []
 try-runtime = ["frame-support/try-runtime"]
