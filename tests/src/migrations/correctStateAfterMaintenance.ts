@@ -26,10 +26,7 @@ export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const filteredBlocks = pendingBlocks.filter((b) => currentBlock.gt(b));
 
     if(filteredBlocks.length != 0) {
-      console.log(
-        'During maintenance mode, %d block(s) were not processed',
-        filteredBlocks.length,
-      );
+      console.log(`During maintenance mode, ${filteredBlocks.length} block(s) were not processed. Number(s): ${filteredBlocks}`);
     } else {
       console.log('Nothing to change');
       return;
