@@ -59,6 +59,7 @@ parameter_types! {
 	pub const MaxSubAccounts: u32 = 100;
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
+	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
 }
 
 impl pallet_identity::Config for Runtime {
@@ -93,4 +94,5 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = pallet_collator_selection::weights::SubstrateWeight<Runtime>;
+	type LicenceBondIdentifier = LicenceBondIdentifier;
 }

@@ -17,7 +17,7 @@
 use super::*;
 
 use frame_benchmarking::{benchmarks, account};
-use frame_support::traits::{Currency, Get};
+use frame_support::traits::{fungible::Balanced, Get, tokens::Precision};
 use up_data_structs::{
 	CreateCollectionData, CollectionMode, CreateItemData, CollectionFlags, CreateNftData,
 	budget::Unlimited,
@@ -32,7 +32,7 @@ benchmarks! {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let caller_cross = T::CrossAccountId::from_sub(caller.clone());
 
-		<T as CommonConfig>::Currency::deposit_creating(&caller, T::CollectionCreationPrice::get());
+		let _ = <T as CommonConfig>::Currency::deposit(&caller, T::CollectionCreationPrice::get(), Precision::Exact).unwrap();
 		T::CollectionDispatch::create(
 			caller_cross.clone(),
 			caller_cross.clone(),

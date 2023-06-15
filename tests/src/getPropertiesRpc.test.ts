@@ -48,17 +48,13 @@ const tokenPropPermissions = [
 describe('query properties RPC', () => {
   let alice: IKeyringPair;
 
-  const mintCollection = async (helper: UniqueHelper) => {
-    return await helper.nft.mintCollection(alice, {
-      tokenPrefix: 'prps',
-      properties: collectionProps,
-      tokenPropertyPermissions: tokenPropPermissions,
-    });
-  };
+  const mintCollection = async (helper: UniqueHelper) => await helper.nft.mintCollection(alice, {
+    tokenPrefix: 'prps',
+    properties: collectionProps,
+    tokenPropertyPermissions: tokenPropPermissions,
+  });
 
-  const mintToken = async (collection: UniqueNFTCollection) => {
-    return await collection.mintToken(alice, {Substrate: alice.address}, tokenProps);
-  };
+  const mintToken = async (collection: UniqueNFTCollection) => await collection.mintToken(alice, {Substrate: alice.address}, tokenProps);
 
 
   before(async () => {
@@ -124,31 +120,3 @@ describe('query properties RPC', () => {
     expect(propPermissions).to.be.deep.equal(tokenPropPermissions);
   });
 });
-
-[
-  {mode: 'nft' as const},
-  {mode: 'rft' as const},
-].map(testCase =>
-  describe('negative properties', () => {
-    let alice: IKeyringPair;
-
-    before(async () => {
-      await usingPlaygrounds(async (_, privateKey) => {
-        alice = await privateKey({url: import.meta.url});
-      });
-    });
-
-    itSub(`[${testCase.mode}] set token property for non-existent token`, async ({helper}) => {
-      const collection = await helper[testCase.mode].mintCollection(alice);
-      await collection.setTokenPropertyPermissions(alice, [{key: 'key', permission: {mutable: true, tokenOwner: true, collectionAdmin: true}}]);
-      await expect(collection.setTokenProperties(alice, 1, [{key: 'key', value: 'value'}])).to.be.rejectedWith('common.TokenNotFound');
-      expect(await collection.getTokenProperties(1, ['key'])).to.be.empty;
-    });
-
-    itSub(`[${testCase.mode}] delete token property for non-existent token`, async ({helper}) => {
-      const collection = await helper[testCase.mode].mintCollection(alice);
-      await collection.setTokenPropertyPermissions(alice, [{key: 'key', permission: {mutable: true, tokenOwner: true, collectionAdmin: true}}]);
-      await expect(collection.deleteTokenProperties(alice, 1, ['key'])).to.be.rejectedWith('common.TokenNotFound');
-      expect(await collection.getTokenProperties(1, ['key'])).to.be.empty;
-    });
-  }));

@@ -64,7 +64,7 @@ impl<Runtime: pallet_evm::Config> Sr25519Precompile<Runtime> {
 
 		// Parse arguments
 		let public: sr25519::Public =
-			sr25519::Public::unchecked_from(input.read::<H256>(gasometer)?).into();
+			sr25519::Public::unchecked_from(input.read::<H256>(gasometer)?);
 		let signature_bytes: Vec<u8> = input.read::<Bytes>(gasometer)?.into();
 		let message: Vec<u8> = input.read::<Bytes>(gasometer)?.into();
 

@@ -37,6 +37,16 @@ where
 		[hash(1), hash(20482)]
 	}
 }
+
+impl<R> Default for UniquePrecompiles<R>
+where
+	R: pallet_evm::Config,
+{
+	fn default() -> Self {
+		Self::new()
+	}
+}
+
 impl<R> PrecompileSet for UniquePrecompiles<R>
 where
 	R: pallet_evm::Config,

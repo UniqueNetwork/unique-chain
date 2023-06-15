@@ -280,7 +280,7 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let dispatch = T::CollectionDispatch::dispatch(collection)?;
 		let dispatch = dispatch.as_dyn();
-		dispatch.burn_item_recursively(from.clone(), token, self_budget, breadth_budget)
+		dispatch.burn_item_recursively(from, token, self_budget, breadth_budget)
 	}
 
 	/// Check if `token` indirectly owned by `user`
@@ -396,7 +396,7 @@ impl<T: Config> Pallet<T> {
 		account: &T::CrossAccountId,
 		action: impl FnOnce(&dyn CommonCollectionOperations<T>, TokenId) -> DispatchResult,
 	) -> DispatchResult {
-		if is_collection(&account.as_eth()) {
+		if is_collection(account.as_eth()) {
 			fail!(<Error<T>>::CantNestTokenUnderCollection);
 		}
 		let Some((collection, token)) = T::CrossTokenAddressMapping::address_to_token(account) else {

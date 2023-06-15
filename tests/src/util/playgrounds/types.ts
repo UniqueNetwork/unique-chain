@@ -63,15 +63,17 @@ export interface IApiListeners {
   decorated?: (...args: any[]) => any;
 }
 
-export interface ICrossAccountId {
-  Substrate?: TSubstrateAccount;
-  Ethereum?: TEthereumAccount;
+export type ICrossAccountId = {
+  Substrate: TSubstrateAccount;
+} | {
+  Ethereum: TEthereumAccount;
 }
 
-export interface ICrossAccountIdLower {
-  substrate?: TSubstrateAccount;
-  ethereum?: TEthereumAccount;
-}
+export type ICrossAccountIdLower = {
+  substrate: TSubstrateAccount;
+} | {
+  ethereum: TEthereumAccount;
+};
 
 export interface IEthCrossAccountId {
   0: TEthereumAccount;
@@ -165,8 +167,7 @@ export interface IChainProperties {
 export interface ISubstrateBalance {
   free: bigint,
   reserved: bigint,
-  miscFrozen: bigint,
-  feeFrozen: bigint
+  frozen: bigint,
 }
 
 export interface IStakingInfo {

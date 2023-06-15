@@ -166,11 +166,7 @@ pub mod pallet {
 
 	#[pallet::config]
 	pub trait Config:
-		frame_system::Config
-		+ pallet_common::Config
-		+ pallet_structure::Config
-		+ pallet_evm::Config
-		+ pallet_balances::Config
+		frame_system::Config + pallet_common::Config + pallet_structure::Config + pallet_evm::Config
 	{
 		type WeightInfo: WeightInfo;
 	}
@@ -589,7 +585,7 @@ impl<T: Config> Pallet<T> {
 	/// A batch operation to add, edit or remove properties for a token.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_being_created`: Indicates that method is called during token initialization.
+	/// - `is_token_create`: Indicates that method is called during token initialization.
 	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
@@ -605,7 +601,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_being_created: bool,
+		is_token_create: bool,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let is_token_owner = || {
@@ -626,9 +622,8 @@ impl<T: Config> Pallet<T> {
 			collection,
 			sender,
 			token_id,
-			|| Self::token_exists(collection, token_id),
 			properties_updates,
-			is_token_being_created,
+			is_token_create,
 			stored_properties,
 			is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
@@ -862,13 +857,7 @@ impl<T: Config> Pallet<T> {
 
 		<PalletStructure<T>>::unnest_if_nested(&token_data.owner, collection.id, token);
 
-		<TokenData<T>>::insert(
-			(collection.id, token),
-			ItemData {
-				owner: to.clone(),
-				..token_data
-			},
-		);
+		<TokenData<T>>::insert((collection.id, token), ItemData { owner: to.clone() });
 
 		if let Some(balance_to) = balance_to {
 			// from != to

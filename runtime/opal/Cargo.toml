@@ -17,6 +17,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [features]
 default = ['opal-runtime', 'std']
+state-version-0 = []
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 opal-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'pallet-test-utils', 'preimage', 'refungible']
 pov-estimate = []
@@ -27,7 +28,6 @@ runtime-benchmarks = [
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
 	'frame-system/runtime-benchmarks',
-	'hex-literal',
 	'pallet-app-promotion/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-collator-selection/runtime-benchmarks',
@@ -73,6 +73,7 @@ std = [
 	"pallet-authorship/std",
 	"pallet-preimage/std",
 	"pallet-session/std",
+	"pallet-state-trie-migration/std",
 	"sp-consensus-aura/std",
 	'app-promotion-rpc/std',
 	'evm-coder/std',
@@ -142,6 +143,7 @@ try-runtime = [
 	"pallet-identity/try-runtime",
 	"pallet-preimage/try-runtime",
 	"pallet-session/try-runtime",
+	"pallet-state-trie-migration/try-runtime",
 	'cumulus-pallet-aura-ext/try-runtime',
 	'cumulus-pallet-dmp-queue/try-runtime',
 	'cumulus-pallet-parachain-system/try-runtime',
@@ -222,9 +224,10 @@ orml-xcm-support = { workspace = true }
 orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
-pallet-balances = { workspace = true }
+pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-preimage = { workspace = true }
 pallet-session = { workspace = true }
+pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
 pallet-transaction-payment = { workspace = true }
@@ -297,7 +300,6 @@ up-sponsorship = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-system-benchmarking = { workspace = true, optional = true }
 frame-try-runtime = { workspace = true, optional = true }
-hex-literal = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 
 ################################################################################
@@ -309,6 +311,7 @@ pallet-test-utils = { workspace = true }
 # Other Dependencies
 
 impl-trait-for-tuples = { workspace = true }
+hex-literal = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

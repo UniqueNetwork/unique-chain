@@ -201,7 +201,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const malfeasant = helper.eth.createAccount();
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Transgressed', 'absolutely anything', 'COR');
-    const malfeasantCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant, true);
+    const malfeasantCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant, true);
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);

@@ -20,6 +20,8 @@
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
 extern crate alloc;
+
+use alloc::string::ToString;
 use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
@@ -356,8 +358,7 @@ where
 				.transpose()
 				.map_err(|e| {
 					Error::Revert(alloc::format!(
-						"Can not convert value \"baseURI\" to string with error \"{}\"",
-						e
+						"Can not convert value \"baseURI\" to string with error \"{e}\""
 					))
 				})?;
 
@@ -675,7 +676,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
 			})
-			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
+			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {e:?}")))?;
 
 		<Pallet<T>>::create_item(
 			self,
@@ -717,7 +718,7 @@ fn get_token_permission<T: Config>(
 		.map(Clone::clone)
 		.ok_or_else(|| {
 			let key = String::from_utf8(key.clone().into_inner()).unwrap_or_default();
-			Error::Revert(alloc::format!("No permission for key {}", key))
+			Error::Revert(alloc::format!("No permission for key {key}"))
 		})?;
 	Ok(a)
 }
@@ -752,14 +753,14 @@ where
 	/// @param tokenId Id for the token.
 	#[solidity(hide)]
 	fn cross_owner_of(&self, token_id: U256) -> Result<eth::CrossAddress> {
-		Self::owner_of_cross(&self, token_id)
+		Self::owner_of_cross(self, token_id)
 	}
 
 	/// Returns the owner (in cross format) of the token.
 	///
 	/// @param tokenId Id for the token.
 	fn owner_of_cross(&self, token_id: U256) -> Result<eth::CrossAddress> {
-		Self::token_owner(&self, token_id.try_into()?)
+		Self::token_owner(self, token_id.try_into()?)
 			.map(|o| eth::CrossAddress::from_sub_cross_account::<T>(&o))
 			.map_err(|_| Error::Revert("token not found".into()))
 	}
@@ -789,7 +790,7 @@ where
 			.collect::<Result<Vec<_>>>()?;
 
 		<Self as CommonCollectionOperations<T>>::token_properties(
-			&self,
+			self,
 			token_id.try_into()?,
 			if keys.is_empty() { None } else { Some(keys) },
 		)
@@ -1021,7 +1022,7 @@ where
 						.try_into()
 						.map_err(|_| "token uri is too long")?,
 				})
-				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {:?}", e)))?;
+				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {e:?}")))?;
 
 			data.push(CreateItemData::<T> {
 				properties,
@@ -1056,7 +1057,7 @@ where
 			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?
 			.try_into()
-			.map_err(|_| Error::Revert(alloc::format!("too many properties")))?;
+			.map_err(|_| Error::Revert("too many properties".to_string()))?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
 

@@ -44,7 +44,7 @@ describe('EVM payable contracts', () => {
   itEth('Evm contract can receive wei from substrate account', async ({helper}) => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const contract = await helper.eth.deployCollectorContract(deployer);
-    const [alice] = await helper.arrange.createAccounts([10n], donor);
+    const [alice] = await helper.arrange.createAccounts([40n], donor);
 
     const weiCount = '10000';
 

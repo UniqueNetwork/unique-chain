@@ -1,6 +1,5 @@
 use crate::{Config, NativeFungibleHandle, Pallet, SelfWeightOf};
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*};
-use frame_support::traits::{Currency};
 use pallet_balances::WeightInfo;
 use pallet_common::{
 	erc::{CommonEvmHandler, CrossAccountId, PrecompileHandle, PrecompileResult},
@@ -32,7 +31,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	fn balance_of(&self, owner: Address) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = T::CrossAccountId::from_eth(owner);
-		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
+		let balance = <Pallet<T>>::balance_of(&owner);
 		Ok(balance.into())
 	}
 
@@ -50,11 +49,10 @@ impl<T: Config> NativeFungibleHandle<T> {
 
 	fn total_supply(&self) -> Result<U256> {
 		self.consume_store_reads(1)?;
-		let total = <T as Config>::Currency::total_issuance();
-		Ok(total.into())
+		Ok(<Pallet<T>>::total_issuance().into())
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer(&mut self, caller: Caller, to: Address, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
@@ -68,7 +66,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer_from(
 		&mut self,
 		caller: Caller,
@@ -98,11 +96,11 @@ where
 	fn balance_of_cross(&self, owner: CrossAddress) -> Result<U256> {
 		self.consume_store_reads(1)?;
 		let owner = owner.into_sub_cross_account::<T>()?;
-		let balance = <T as Config>::Currency::free_balance(owner.as_sub());
+		let balance = <Pallet<T>>::balance_of(&owner);
 		Ok(balance.into())
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer_cross(&mut self, caller: Caller, to: CrossAddress, amount: U256) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
@@ -117,7 +115,7 @@ where
 		Ok(true)
 	}
 
-	#[weight(<SelfWeightOf<T>>::transfer())]
+	#[weight(<SelfWeightOf<T>>::transfer_allow_death())]
 	fn transfer_from_cross(
 		&mut self,
 		caller: Caller,

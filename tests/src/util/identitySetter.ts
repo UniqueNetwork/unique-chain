@@ -35,8 +35,8 @@ export async function getIdentities(helper: ChainHelperBase, noneCasePredicate?:
   const identities: [string, any][] = [];
   for(const [key, v] of await helper.getApi().query.identity.identityOf.entries()) {
     const value = v as any;
-    if (value.isNone) {
-      if (noneCasePredicate) noneCasePredicate(key, value);
+    if(value.isNone) {
+      if(noneCasePredicate) noneCasePredicate(key, value);
       continue;
     }
     identities.push(extractIdentity(key, value));
@@ -46,9 +46,9 @@ export async function getIdentities(helper: ChainHelperBase, noneCasePredicate?:
 
 // whether the existing chain data is more important than the coming
 function isCurrentChainDataPriority(helper: ChainHelperBase, currentChainId: number | undefined, relayChainId: number) {
-  if (!currentChainId) return false;
+  if(!currentChainId) return false;
   // information has come from local chain, and is automatically superior
-  if (currentChainId == helper.chain.getChainProperties().ss58Format) return true;
+  if(currentChainId == helper.chain.getChainProperties().ss58Format) return true;
   // the lower the id, the more important it is (Polkadot has ss58 prefix = 0, Kusama has ss58 prefix = 2)
   return currentChainId < relayChainId;
 }
@@ -64,7 +64,7 @@ export function constructSubInfo(identityAccount: string, subQuery: any, supers:
       deposit,
       subIdentities.map((sub: string): [string, object] | null => {
         const sup = supers.find((sup: any) => sup[0] === sub);
-        if (!sup) {
+        if(!sup) {
           console.error(`Error: Could not find info on super for \nsub-identity account\t${sub} of \nsuper account \t\t${identityAccount}, skipping.`);
           return null;
         }
@@ -85,8 +85,8 @@ export async function getSupers(helper: ChainHelperBase) {
 async function uploadPreimage(helper: ChainHelperBase, preimageMaker: IKeyringPair, preimage: string) {
   try {
     await helper.executeExtrinsic(preimageMaker, 'api.tx.preimage.notePreimage', [preimage]);
-  } catch(e: any) {
-    if (e.message.includes('AlreadyNoted')) {
+  } catch (e: any) {
+    if(e.message.includes('AlreadyNoted')) {
       console.warn('Warning: The same preimage already exists on the chain. Nothing was uploaded.');
     } else {
       console.error(e);
@@ -107,11 +107,11 @@ const forceInsertIdentities = async (): Promise<void> => {
       for(const [key, value] of await getIdentities(helper, (key, _value) => identitiesToRemove.push((key as any).toHuman()[0]))) {
         // if any of the judgements resulted in a good confirmed outcome, keep this identity
         let knownGood = false, reasonable = false;
-        for (const [_id, judgement] of value.judgements) {
-          if (judgement == 'KnownGood') knownGood = true;
-          if (judgement == 'Reasonable') reasonable = true;
+        for(const [_id, judgement] of value.judgements) {
+          if(judgement == 'KnownGood') knownGood = true;
+          if(judgement == 'Reasonable') reasonable = true;
         }
-        if (!(reasonable || knownGood)) continue;
+        if(!(reasonable || knownGood)) continue;
         // replace the registrator id with the relay chain's ss58 format
         value.judgements = [[helper.chain.getChainProperties().ss58Format, knownGood ? 'KnownGood' : 'Reasonable']];
         identitiesOnRelay.push([key, value]);
@@ -124,7 +124,7 @@ const forceInsertIdentities = async (): Promise<void> => {
       for(const [key, value] of await getSubs(helper)) {
         // only get subs of the identities interesting to us
         const identityIndex = sublessIdentities.findIndex((x: any) => x[0] == key);
-        if (identityIndex == -1) continue;
+        if(identityIndex == -1) continue;
         sublessIdentities.splice(identityIndex, 1);
         subsOnRelay.push(constructSubInfo(key, value, supersOfSubs));
       }
@@ -140,8 +140,8 @@ const forceInsertIdentities = async (): Promise<void> => {
   }, relayUrl);
 
   await usingPlaygrounds(async (helper, privateKey) => {
-    if (helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) console.error('pallet-identity is not included in parachain.');
-    if (helper.fetchMissingPalletNames([Pallets.Preimage]).length != 0) console.error('pallet-preimage is not included in parachain.');
+    if(helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) console.error('pallet-identity is not included in parachain.');
+    if(helper.fetchMissingPalletNames([Pallets.Preimage]).length != 0) console.error('pallet-preimage is not included in parachain.');
 
     try {
       const preimageMaker = await privateKey(key);
@@ -151,15 +151,15 @@ const forceInsertIdentities = async (): Promise<void> => {
       const paraAccountsRegistrators: {[name: string]: number} = {};
 
       // cross-reference every account for changes
-      for (const [key, value] of identitiesOnRelay) {
+      for(const [key, value] of identitiesOnRelay) {
         const encodedKey = encodeAddress(key, ss58Format);
 
         // only update if the identity info does not exist or is changed
         const identity = paraIdentities.find(i => i[0] === encodedKey);
-        if (identity) {
+        if(identity) {
           const registratorId = identity[1].judgements[0][0];
           paraAccountsRegistrators[encodedKey] = registratorId;
-          if (isCurrentChainDataPriority(helper, registratorId, value.judgements[0][0])
+          if(isCurrentChainDataPriority(helper, registratorId, value.judgements[0][0])
             || JSON.stringify(value.info) === JSON.stringify(identity[1].info)) {
             continue;
           }
@@ -172,13 +172,13 @@ const forceInsertIdentities = async (): Promise<void> => {
         // identitiesToRemove.push((key as any).toHuman()[0]);
       }
 
-      if (identitiesToRemove.length != 0)
+      if(identitiesToRemove.length != 0)
         await uploadPreimage(
           helper,
           preimageMaker,
           helper.constructApiCall('api.tx.identity.forceRemoveIdentities', [identitiesToRemove]).method.toHex(),
         );
-      if (identitiesToAdd.length != 0)
+      if(identitiesToAdd.length != 0)
         await uploadPreimage(
           helper,
           preimageMaker,
@@ -194,22 +194,22 @@ const forceInsertIdentities = async (): Promise<void> => {
       const supersOfSubs = await getSupers(helper);
       const subsToUpdate: any[] = [];
 
-      for (const [key, value] of subsOnRelay) {
+      for(const [key, value] of subsOnRelay) {
         const encodedKey = encodeAddress(key, ss58Format);
         const sub = paraSubs.find(i => i[0] === encodedKey);
-        if (sub) {
+        if(sub) {
           // only update if the sub-identity info does not exist or is changed
-          if (isCurrentChainDataPriority(helper, paraAccountsRegistrators[encodedKey], relaySS58Prefix)
+          if(isCurrentChainDataPriority(helper, paraAccountsRegistrators[encodedKey], relaySS58Prefix)
             || JSON.stringify(value) === JSON.stringify(constructSubInfo(sub[0], sub[1], supersOfSubs)[1])) {
             continue;
           }
-        } else if (value[1].length == 0)
+        } else if(value[1].length == 0)
           continue;
 
         subsToUpdate.push([key, value]);
       }
 
-      if (subsToUpdate.length != 0)
+      if(subsToUpdate.length != 0)
         await uploadPreimage(
           helper,
           preimageMaker,
@@ -225,5 +225,5 @@ const forceInsertIdentities = async (): Promise<void> => {
   }, paraUrl);
 };
 
-if (process.argv[1] === module.filename)
+if(process.argv[1] === module.filename)
   forceInsertIdentities().catch(() => process.exit(1));

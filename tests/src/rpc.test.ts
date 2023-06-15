@@ -40,7 +40,7 @@ describe('integration test: RPC methods', () => {
     // Set-up a few token owners of all stripes
     const ethAcc = {Ethereum: '0x67fb3503a61b284dc83fa96dceec4192db47dc7c'};
     const facelessCrowd = (await helper.arrange.createAccounts([0n, 0n, 0n, 0n, 0n, 0n, 0n], donor))
-      .map(i => {return {Substrate: i.address};});
+      .map(i => ({Substrate: i.address}));
 
     const collection = await helper.ft.mintCollection(alice, {name: 'RPC-2', tokenPrefix: 'RPC'});
     // mint some maximum (u128) amounts of tokens possible
@@ -49,7 +49,7 @@ describe('integration test: RPC methods', () => {
     await collection.transfer(alice, {Substrate: bob.address}, 1000n);
     await collection.transfer(alice, ethAcc, 900n);
 
-    for (let i = 0; i < facelessCrowd.length; i++) {
+    for(let i = 0; i < facelessCrowd.length; i++) {
       await collection.transfer(alice, facelessCrowd[i], 1n);
     }
     // Set-up over

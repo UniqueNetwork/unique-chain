@@ -100,30 +100,9 @@ substrate-build-script-utils = { workspace = true }
 
 [features]
 default = ["opal-runtime"]
-all-runtimes = [
-	'opal-runtime',
-	'quartz-runtime',
-	'unique-runtime',
-]
-pov-estimate = [
-	'opal-runtime/pov-estimate',
-	'quartz-runtime?/pov-estimate',
-	'uc-rpc/pov-estimate',
-	'unique-rpc/pov-estimate',
-	'unique-runtime?/pov-estimate',
-]
-runtime-benchmarks = [
-	'opal-runtime/runtime-benchmarks',
-	'polkadot-cli/runtime-benchmarks',
-	'polkadot-service/runtime-benchmarks',
-	'quartz-runtime?/runtime-benchmarks',
-	'sc-service/runtime-benchmarks',
-	'unique-runtime?/runtime-benchmarks',
-]
+all-runtimes = ['opal-runtime', 'quartz-runtime', 'unique-runtime']
+pov-estimate = ['opal-runtime/pov-estimate', 'quartz-runtime?/pov-estimate', 'uc-rpc/pov-estimate', 'unique-rpc/pov-estimate', 'unique-runtime?/pov-estimate']
+runtime-benchmarks = ['opal-runtime/runtime-benchmarks', 'polkadot-cli/runtime-benchmarks', 'polkadot-service/runtime-benchmarks', 'quartz-runtime?/runtime-benchmarks', 'sc-service/runtime-benchmarks', 'unique-runtime?/runtime-benchmarks']
 sapphire-runtime = ['quartz-runtime', 'quartz-runtime/become-sapphire']
-try-runtime = [
-	'opal-runtime?/try-runtime',
-	'quartz-runtime?/try-runtime',
-	'try-runtime-cli/try-runtime',
-	'unique-runtime?/try-runtime',
-]
+try-runtime = ['opal-runtime?/try-runtime', 'quartz-runtime?/try-runtime', 'try-runtime-cli/try-runtime', 'unique-runtime?/try-runtime']
+state-version-0 = ['opal-runtime?/state-version-0', 'quartz-runtime?/state-version-0', 'unique-runtime?/state-version-0']

@@ -40,20 +40,20 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
     await helper.connectWeb3(config.substrateUrl);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const privateKey: PrivateKeyFn = async (seed) => {
-      if (typeof seed === 'string') {
+      if(typeof seed === 'string') {
         return helper.util.fromSeed(seed, ss58Format);
       }
-      if (seed.url) {
+      if(seed.url) {
         const {filename} = makeNames(seed.url);
         seed.filename = filename;
-      } else if (seed.filename) {
+      } else if(seed.filename) {
         // Pass
       } else {
         throw new Error('no url nor filename set');
       }
       const actualSeed = getTestSeed(seed.filename);
       let account = helper.util.fromSeed(actualSeed, ss58Format);
-      if (await helper.balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND) {
+      if(await helper.balance.getSubstrate(account.address) < MINIMUM_DONOR_FUND) {
         console.warn(`${path.basename(seed.filename)}: Not enough funds present on the filename account. Using the default one as the donor instead.`);
         account = helper.util.fromSeed('//Alice', ss58Format);
       }
@@ -71,7 +71,7 @@ export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privat
   (opts.only ? it.only :
     opts.skip ? it.skip : it)(name, async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      if (opts.requiredPallets) {
+      if(opts.requiredPallets) {
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
