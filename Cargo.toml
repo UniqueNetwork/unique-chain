@@ -125,7 +125,6 @@ sc-chain-spec = { git = "https://github.com/paritytech/substrate", branch = "pol
 sc-cli = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-client-api = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-consensus = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
-sc-consensus-grandpa = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-consensus-manual-seal = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-executor = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }
 sc-network = { git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.42" }

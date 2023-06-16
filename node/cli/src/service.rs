@@ -20,16 +20,19 @@ use std::sync::Mutex;
 use std::collections::BTreeMap;
 use std::time::Duration;
 use std::pin::Pin;
+use fc_mapping_sync::EthereumBlockNotificationSinks;
+use fc_rpc::EthBlockDataCacheTask;
+use fc_rpc::EthTask;
 use fc_rpc_core::types::FeeHistoryCache;
 use futures::{
 	Stream, StreamExt,
 	stream::select,
 	task::{Context, Poll},
 };
+use sc_rpc::SubscriptionTaskExecutor;
 use sp_keystore::KeystorePtr;
 use tokio::time::Interval;
-
-use unique_rpc::overrides_handle;
+use jsonrpsee::RpcModule;
 
 use serde::{Serialize, Deserialize};
 
@@ -49,7 +52,7 @@ use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
 use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
 
 // Substrate Imports
-use sp_api::BlockT;
+use sp_api::{BlockT, HeaderT, ProvideRuntimeApi, StateBackend};
 use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
 use sc_network::NetworkBlock;
@@ -58,14 +61,23 @@ use sc_service::{BasePath, Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
-use sc_client_api::BlockchainEvents;
+use sc_client_api::{BlockchainEvents, BlockOf, Backend, AuxStore, StorageProvider};
+use sp_blockchain::{HeaderBackend, HeaderMetadata, Error as BlockChainError};
 use sc_consensus::ImportQueue;
+use sp_core::H256;
+use sp_block_builder::BlockBuilder;
 
 use polkadot_service::CollatorPair;
 
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
 use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use fc_rpc::{
+	StorageOverride, OverrideHandle, SchemaV1Override, SchemaV2Override, SchemaV3Override,
+	RuntimeApiStorageOverride,
+};
+use fp_rpc::EthereumRuntimeRPCApi;
+use fp_storage::EthereumStorageSchema;
 
 use up_common::types::opaque::*;
 
@@ -173,7 +185,7 @@ impl Stream for AutosealInterval {
 	}
 }
 
-pub fn open_frontier_backend<Block: BlockT, C: sp_blockchain::HeaderBackend<Block>>(
+pub fn open_frontier_backend<Block: BlockT, C: HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
 ) -> Result<Arc<fc_db::Backend<Block>>, String> {
@@ -219,13 +231,7 @@ pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
-		(
-			Option<Telemetry>,
-			Option<FilterPool>,
-			Arc<fc_db::Backend<Block>>,
-			Option<TelemetryWorkerHandle>,
-			FeeHistoryCache,
-		),
+		OtherPartial,
 	>,
 	sc_service::Error,
 >
@@ -248,17 +254,6 @@ where
 		sc_service::Error,
 	>,
 {
-	let _telemetry = config
-		.telemetry_endpoints
-		.clone()
-		.filter(|x| !x.is_empty())
-		.map(|endpoints| -> Result<_, sc_telemetry::Error> {
-			let worker = TelemetryWorker::new(16)?;
-			let telemetry = worker.handle().new_telemetry(endpoints);
-			Ok((worker, telemetry))
-		})
-		.transpose()?;
-
 	let telemetry = config
 		.telemetry_endpoints
 		.clone()
@@ -299,9 +294,9 @@ where
 		client.clone(),
 	);
 
-	let filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
+	let eth_filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
-	let frontier_backend = open_frontier_backend(client.clone(), config)?;
+	let eth_backend = open_frontier_backend(client.clone(), config)?;
 
 	let import_queue = build_import_queue(
 		client.clone(),
@@ -310,7 +305,6 @@ where
 		telemetry.as_ref().map(|telemetry| telemetry.handle()),
 		&task_manager,
 	)?;
-	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 
 	let params = PartialComponents {
 		backend,
@@ -320,13 +314,12 @@ where
 		task_manager,
 		transaction_pool,
 		select_chain,
-		other: (
+		other: OtherPartial {
 			telemetry,
-			filter_pool,
-			frontier_backend,
+			eth_filter_pool,
+			eth_backend,
 			telemetry_worker_handle,
-			fee_history_cache,
-		),
+		},
 	};
 
 	Ok(params)
@@ -433,8 +426,12 @@ where
 
 	let params =
 		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(&parachain_config, build_import_queue)?;
-	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
-		params.other;
+	let OtherPartial {
+		mut telemetry,
+		telemetry_worker_handle,
+		eth_filter_pool,
+		eth_backend,
+	} = params.other;
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -474,69 +471,72 @@ where
 
 	let select_chain = params.select_chain.clone();
 
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
-		task_manager.spawn_handle(),
-		overrides_handle::<_, _, Runtime>(client.clone()),
-		50,
-		50,
-		prometheus_registry.clone(),
-	));
-
-	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>,
-	> = Default::default();
-	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
-
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		Some("frontier"),
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			overrides_handle::<_, _, Runtime>(client.clone()),
-			frontier_backend.clone(),
-			3,
-			0,
-			SyncStrategy::Parachain,
-			sync_service.clone(),
-			pubsub_notification_sinks.clone(),
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
-
 	let runtime_id = parachain_config.chain_spec.runtime_id();
 
+	// Frontier
+	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
+	let fee_history_limit = 2048;
+
+	let eth_pubsub_notification_sinks: Arc<
+		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<Block>>,
+	> = Default::default();
+
+	let overrides = overrides_handle(client.clone());
+	let eth_block_data_cache = spawn_frontier_tasks(
+		FrontierTaskParams {
+			client: client.clone(),
+			substrate_backend: backend.clone(),
+			eth_filter_pool: eth_filter_pool.clone(),
+			eth_backend: eth_backend.clone(),
+			fee_history_limit,
+			fee_history_cache: fee_history_cache.clone(),
+			task_manager: &task_manager,
+			prometheus_registry: prometheus_registry.clone(),
+			overrides: overrides.clone(),
+			sync_strategy: SyncStrategy::Parachain,
+		},
+		sync_service.clone(),
+		eth_pubsub_notification_sinks.clone(),
+	);
+
+	// Rpc
 	let rpc_builder = Box::new({
 		clone!(
 			client,
 			backend,
-			pubsub_notification_sinks,
+			eth_backend,
+			eth_pubsub_notification_sinks,
+			fee_history_cache,
+			eth_block_data_cache,
+			overrides,
 			transaction_pool,
 			network,
 			sync_service,
-			frontier_backend,
 		);
-		move |deny_unsafe, subscription_task_executor| {
+		move |deny_unsafe, subscription_task_executor: SubscriptionTaskExecutor| {
 			clone!(
 				backend,
-				runtime_id,
+				eth_block_data_cache,
 				client,
-				transaction_pool,
-				filter_pool,
-				network,
-				select_chain,
-				block_data_cache,
+				eth_backend,
+				eth_filter_pool,
+				eth_pubsub_notification_sinks,
 				fee_history_cache,
-				pubsub_notification_sinks,
-				frontier_backend,
+				eth_block_data_cache,
+				network,
+				runtime_id,
+				transaction_pool,
+				select_chain,
+				overrides,
 			);
 
 			#[cfg(not(feature = "pov-estimate"))]
 			let _ = backend;
 
+			let mut rpc_handle = RpcModule::new(());
+
 			let full_deps = unique_rpc::FullDeps {
+				client: client.clone(),
 				runtime_id,
 
 				#[cfg(feature = "pov-estimate")]
@@ -550,32 +550,40 @@ where
 				#[cfg(feature = "pov-estimate")]
 				backend,
 
-				eth_backend: frontier_backend,
 				deny_unsafe,
+				pool: transaction_pool.clone(),
+				select_chain,
+			};
+
+			unique_rpc::create_full::<_, _, _, Runtime, RuntimeApi, _>(&mut rpc_handle, full_deps)?;
+
+			let eth_deps = unique_rpc::EthDeps {
 				client,
 				graph: transaction_pool.pool().clone(),
 				pool: transaction_pool,
-				// TODO: Unhardcode
-				enable_dev_signer: false,
-				filter_pool,
-				network,
-				sync: sync_service.clone(),
-				select_chain,
 				is_authority: validator,
+				network,
+				eth_backend,
 				// TODO: Unhardcode
 				max_past_logs: 10000,
-				block_data_cache,
+				fee_history_limit,
 				fee_history_cache,
+				eth_block_data_cache,
 				// TODO: Unhardcode
-				fee_history_limit: 2048,
-				pubsub_notification_sinks,
+				enable_dev_signer: false,
+				eth_filter_pool,
+				eth_pubsub_notification_sinks,
+				overrides,
+				sync: sync_service.clone(),
 			};
 
-			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-				full_deps,
-				subscription_task_executor,
-			)
-			.map_err(Into::into)
+			unique_rpc::create_eth(
+				&mut rpc_handle,
+				eth_deps,
+				subscription_task_executor.clone(),
+			)?;
+
+			Ok(rpc_handle)
 		}
 	});
 
@@ -870,6 +878,13 @@ where
 	))
 }
 
+pub struct OtherPartial {
+	pub telemetry: Option<Telemetry>,
+	pub telemetry_worker_handle: Option<TelemetryWorkerHandle>,
+	pub eth_filter_pool: Option<FilterPool>,
+	pub eth_backend: Arc<fc_db::Backend<Block>>,
+}
+
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
@@ -903,7 +918,6 @@ where
 {
 	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
 	use fc_consensus::FrontierBlockImport;
-	use sc_client_api::HeaderBackend;
 
 	let sc_service::PartialComponents {
 		client,
@@ -914,25 +928,17 @@ where
 		select_chain: maybe_select_chain,
 		transaction_pool,
 		other:
-			(telemetry, filter_pool, frontier_backend, _telemetry_worker_handle, fee_history_cache),
+			OtherPartial {
+				telemetry,
+				eth_filter_pool,
+				eth_backend,
+				telemetry_worker_handle: _,
+			},
 	} = new_partial::<RuntimeApi, ExecutorDispatch, _>(
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
 	)?;
 	let prometheus_registry = config.prometheus_registry().cloned();
-
-	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
-		task_manager.spawn_handle(),
-		overrides_handle::<_, _, Runtime>(client.clone()),
-		50,
-		50,
-		prometheus_registry.clone(),
-	));
-
-	let pubsub_notification_sinks: fc_mapping_sync::EthereumBlockNotificationSinks<
-		fc_mapping_sync::EthereumBlockNotification<Block>,
-	> = Default::default();
-	let pubsub_notification_sinks = Arc::new(pubsub_notification_sinks);
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
@@ -960,7 +966,7 @@ where
 
 	if collator {
 		let block_import =
-			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+			FrontierBlockImport::new(client.clone(), client.clone(), eth_backend.clone());
 
 		let env = sc_basic_authorship::ProposerFactory::new(
 			task_manager.spawn_handle(),
@@ -1050,56 +1056,75 @@ where
 		);
 	}
 
-	task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		Some("block-authoring"),
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			backend.clone(),
-			overrides_handle::<_, _, Runtime>(client.clone()),
-			frontier_backend.clone(),
-			3,
-			0,
-			SyncStrategy::Normal,
-			sync_service.clone(),
-			pubsub_notification_sinks.clone(),
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
-
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
 	let runtime_id = config.chain_spec.runtime_id();
 
+	// Frontier
+	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
+	let fee_history_limit = 2048;
+
+	let eth_pubsub_notification_sinks: Arc<
+		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<Block>>,
+	> = Default::default();
+
+	let overrides = overrides_handle(client.clone());
+	let eth_block_data_cache = spawn_frontier_tasks(
+		FrontierTaskParams {
+			client: client.clone(),
+			substrate_backend: backend.clone(),
+			eth_filter_pool: eth_filter_pool.clone(),
+			eth_backend: eth_backend.clone(),
+			fee_history_limit,
+			fee_history_cache: fee_history_cache.clone(),
+			task_manager: &task_manager,
+			prometheus_registry,
+			overrides: overrides.clone(),
+			sync_strategy: SyncStrategy::Normal,
+		},
+		sync_service.clone(),
+		eth_pubsub_notification_sinks.clone(),
+	);
+
+	// Rpc
 	let rpc_builder = Box::new({
 		clone!(
-			backend,
 			client,
-			sync_service,
-			frontier_backend,
-			network,
+			backend,
+			eth_backend,
+			eth_pubsub_notification_sinks,
+			fee_history_cache,
+			eth_block_data_cache,
+			overrides,
 			transaction_pool,
-			pubsub_notification_sinks
+			network,
+			sync_service,
 		);
-		move |deny_unsafe, subscription_executor| {
+		move |deny_unsafe, subscription_task_executor: SubscriptionTaskExecutor| {
 			clone!(
 				backend,
-				block_data_cache,
+				eth_block_data_cache,
 				client,
+				eth_backend,
+				eth_filter_pool,
+				eth_pubsub_notification_sinks,
 				fee_history_cache,
-				filter_pool,
+				eth_block_data_cache,
 				network,
-				pubsub_notification_sinks,
+				runtime_id,
+				transaction_pool,
+				select_chain,
+				overrides,
 			);
 
 			#[cfg(not(feature = "pov-estimate"))]
 			let _ = backend;
 
+			let mut rpc_module = RpcModule::new(());
+
 			let full_deps = unique_rpc::FullDeps {
-				runtime_id: runtime_id.clone(),
+				runtime_id,
 
 				#[cfg(feature = "pov-estimate")]
 				exec_params: uc_rpc::pov_estimate::ExecutorParams {
@@ -1111,32 +1136,42 @@ where
 
 				#[cfg(feature = "pov-estimate")]
 				backend,
-				eth_backend: frontier_backend.clone(),
+				// eth_backend,
 				deny_unsafe,
-				client,
+				client: client.clone(),
 				pool: transaction_pool.clone(),
-				graph: transaction_pool.pool().clone(),
-				// TODO: Unhardcode
-				enable_dev_signer: false,
-				filter_pool,
-				network,
-				sync: sync_service.clone(),
-				select_chain: select_chain.clone(),
-				is_authority: collator,
-				// TODO: Unhardcode
-				max_past_logs: 10000,
-				block_data_cache,
-				fee_history_cache,
-				// TODO: Unhardcode
-				fee_history_limit: 2048,
-				pubsub_notification_sinks,
+				select_chain,
 			};
 
-			unique_rpc::create_full::<_, _, _, _, Runtime, RuntimeApi, _>(
-				full_deps,
-				subscription_executor,
-			)
-			.map_err(Into::into)
+			unique_rpc::create_full::<_, _, _, Runtime, RuntimeApi, _>(&mut rpc_module, full_deps)?;
+
+			let eth_deps = unique_rpc::EthDeps {
+				client,
+				graph: transaction_pool.pool().clone(),
+				pool: transaction_pool,
+				is_authority: true,
+				network,
+				eth_backend,
+				// TODO: Unhardcode
+				max_past_logs: 10000,
+				fee_history_limit,
+				fee_history_cache,
+				eth_block_data_cache,
+				// TODO: Unhardcode
+				enable_dev_signer: false,
+				eth_filter_pool,
+				eth_pubsub_notification_sinks,
+				overrides,
+				sync: sync_service.clone(),
+			};
+
+			unique_rpc::create_eth(
+				&mut rpc_module,
+				eth_deps,
+				subscription_task_executor.clone(),
+			)?;
+
+			Ok(rpc_module)
 		}
 	});
 
@@ -1157,4 +1192,131 @@ where
 
 	network_starter.start_network();
 	Ok(task_manager)
+}
+
+fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
+where
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
+	C: Send + Sync + 'static,
+	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
+	BE: Backend<Block> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+{
+	let mut overrides_map = BTreeMap::new();
+	overrides_map.insert(
+		EthereumStorageSchema::V1,
+		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V2,
+		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
+	);
+	overrides_map.insert(
+		EthereumStorageSchema::V3,
+		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
+	);
+
+	Arc::new(OverrideHandle {
+		schemas: overrides_map,
+		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
+	})
+}
+
+pub struct FrontierTaskParams<'a, B: BlockT, C, BE> {
+	pub task_manager: &'a TaskManager,
+	pub client: Arc<C>,
+	pub substrate_backend: Arc<BE>,
+	pub eth_backend: Arc<fc_db::Backend<B>>,
+	pub eth_filter_pool: Option<FilterPool>,
+	pub overrides: Arc<OverrideHandle<B>>,
+	pub fee_history_limit: u64,
+	pub fee_history_cache: FeeHistoryCache,
+	pub sync_strategy: SyncStrategy,
+	pub prometheus_registry: Option<Registry>,
+}
+
+pub fn spawn_frontier_tasks<B, C, BE>(
+	params: FrontierTaskParams<B, C, BE>,
+	sync: Arc<SyncingService<B>>,
+	pubsub_notification_sinks: Arc<
+		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<B>>,
+	>,
+) -> Arc<EthBlockDataCacheTask<B>>
+where
+	C: ProvideRuntimeApi<B> + BlockOf,
+	C: HeaderBackend<B> + HeaderMetadata<B, Error = BlockChainError> + 'static,
+	C: BlockchainEvents<B> + StorageProvider<B, BE>,
+	C: Send + Sync + 'static,
+	C::Api: EthereumRuntimeRPCApi<B>,
+	C::Api: BlockBuilder<B>,
+	B: BlockT<Hash = H256> + Send + Sync + 'static,
+	B::Header: HeaderT<Number = u32>,
+	BE: Backend<B> + 'static,
+	BE::State: StateBackend<BlakeTwo256>,
+{
+	let FrontierTaskParams {
+		task_manager,
+		client,
+		substrate_backend,
+		eth_backend,
+		eth_filter_pool,
+		overrides,
+		fee_history_limit,
+		fee_history_cache,
+		sync_strategy,
+		prometheus_registry,
+	} = params;
+	// Frontier offchain DB task. Essential.
+	// Maps emulated ethereum data to substrate native data.
+	params.task_manager.spawn_essential_handle().spawn(
+		"frontier-mapping-sync-worker",
+		Some("frontier"),
+		MappingSyncWorker::new(
+			client.import_notification_stream(),
+			Duration::new(6, 0),
+			client.clone(),
+			substrate_backend,
+			overrides.clone(),
+			eth_backend,
+			3,
+			0,
+			sync_strategy,
+			sync,
+			pubsub_notification_sinks,
+		)
+		.for_each(|()| futures::future::ready(())),
+	);
+
+	// Frontier `EthFilterApi` maintenance.
+	// Manages the pool of user-created Filters.
+	if let Some(eth_filter_pool) = eth_filter_pool {
+		// Each filter is allowed to stay in the pool for 100 blocks.
+		const FILTER_RETAIN_THRESHOLD: u64 = 100;
+		params.task_manager.spawn_essential_handle().spawn(
+			"frontier-filter-pool",
+			Some("frontier"),
+			EthTask::filter_pool_task(client.clone(), eth_filter_pool, FILTER_RETAIN_THRESHOLD),
+		);
+	}
+
+	// Spawn Frontier FeeHistory cache maintenance task.
+	params.task_manager.spawn_essential_handle().spawn(
+		"frontier-fee-history",
+		Some("frontier"),
+		EthTask::fee_history_task(
+			client,
+			overrides.clone(),
+			fee_history_cache,
+			fee_history_limit,
+		),
+	);
+
+	Arc::new(EthBlockDataCacheTask::new(
+		task_manager.spawn_handle(),
+		overrides,
+		50,
+		50,
+		prometheus_registry,
+	))
 }
