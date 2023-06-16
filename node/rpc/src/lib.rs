@@ -170,7 +170,8 @@ pub struct EthDeps<C, P, CA: ChainApi> {
 	pub eth_block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 	/// EthFilterApi pool.
 	pub eth_filter_pool: Option<FilterPool>,
-	pub eth_pubsub_notification_sinks: Arc<EthereumBlockNotificationSinks<EthereumBlockNotification<Block>>>,
+	pub eth_pubsub_notification_sinks:
+		Arc<EthereumBlockNotificationSinks<EthereumBlockNotification<Block>>>,
 	/// Whether to enable eth dev signer
 	pub enable_dev_signer: bool,
 
@@ -232,7 +233,6 @@ where
 	if enable_dev_signer {
 		signers.push(Box::new(EthDevSigner::new()) as Box<dyn EthSigner>);
 	}
-
 
 	let execute_gas_limit_multiplier = 10;
 	io.merge(
