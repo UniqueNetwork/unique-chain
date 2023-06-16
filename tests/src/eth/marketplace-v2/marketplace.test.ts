@@ -43,6 +43,10 @@ describe('Market V2 Contract', () => {
           fsPath: `${dirname}/../api/UniqueNFT.sol`,
         },
         {
+          solPath: '@unique-nft/solidity-interfaces/contracts/UniqueFungible.sol',
+          fsPath: `${dirname}/../api/UniqueFungible.sol`,
+        },
+        {
           solPath: '@openzeppelin/contracts/utils/introspection/IERC165.sol',
           fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
         },
@@ -125,7 +129,6 @@ describe('Market V2 Contract', () => {
     const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', marketOwner);
 
     const [seller] = await helper.arrange.createAccounts([600n], donor);
-    const sellerMirror = helper.address.substrateToEth(seller.address);
     const sellerCross = helper.ethCrossAccount.fromKeyringPair(seller);
     const result = await collection.methods.mintCross(sellerCross, []).send();
     const tokenId = result.events.Transfer.returnValues.tokenId;
@@ -140,10 +143,9 @@ describe('Market V2 Contract', () => {
     const buyerMirror = helper.address.substrateToEth(buyer.address);
     const buyerCross = helper.ethCrossAccount.fromKeyringPair(buyer);
     await helper.eth.transferBalanceFromSubstrate(donor, buyerMirror, 1n);
-    //TODO: change balance check to helper.balance.getSubstrate when implementation of sendMoney will be fixed in contract
-    const sellerBalance = BigInt(await web3.eth.getBalance(sellerMirror));
+    const sellerBalance = BigInt(await helper.balance.getSubstrate(seller.address));
     await helper.eth.sendEVM(buyer, market.options.address, market.methods.buy(collectionId, tokenId, 1, buyerCross).encodeABI(), PRICE.toString());
-    const sellerBalanceAfterBuy = BigInt(await web3.eth.getBalance(sellerMirror));
+    const sellerBalanceAfterBuy = BigInt(await helper.balance.getSubstrate(seller.address));
     ownerCross = await collection.methods.ownerOfCross(tokenId).call();
     expect(ownerCross.eth).to.be.eq(buyerCross.eth);
     expect(substrateAddressToHex(ownerCross.sub, web3)).to.be.eq(substrateAddressToHex(buyerCross.sub, web3));
