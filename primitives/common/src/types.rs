@@ -48,13 +48,6 @@ pub mod opaque {
 			+ Send
 			+ Sync
 			+ 'static;
-
-		type TransactionConverter: fp_rpc::ConvertTransaction<UncheckedExtrinsic>
-			+ Send
-			+ Sync
-			+ 'static;
-
-		fn get_transaction_converter() -> Self::TransactionConverter;
 	}
 }
 
