@@ -43,15 +43,13 @@ pub mod weights;
 mod pallet {
 	use super::*;
 	use frame_support::{
-		traits::{Get},
-		pallet_prelude::{
-			StorageValue, ValueQuery, DispatchResult, IsType, Member, MaybeSerializeDeserialize,
-		},
+		traits::Get,
+		pallet_prelude::*,
 		log,
 		dispatch::{Codec, fmt::Debug},
 	};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root};
-	use sp_arithmetic::{FixedPointOperand, traits::AtLeast32BitUnsigned};
+	use frame_system::{pallet_prelude::OriginFor, ensure_root, pallet_prelude::*};
+	use sp_arithmetic::{FixedPointOperand, traits::AtLeast32BitUnsigned, Permill};
 	pub use crate::weights::WeightInfo;
 
 	#[pallet::config]
@@ -106,6 +104,47 @@ mod pallet {
 		NewCollatorKickThreshold {
 			length_in_blocks: Option<T::BlockNumber>,
 		},
+	}
+
+	fn update_base_fee<T: Config>() {
+		let base_fee_per_gas: U256 = <MinGasPriceOverride<T>>::get().into();
+		let elasticity: Permill = Permill::zero();
+		// twox_128(BaseFee) ++ twox_128(BaseFeePerGas)
+		sp_io::storage::set(
+			&hex_literal::hex!("c1fef3b7207c11a52df13c12884e77263864ade243c642793ebcfe9e16f454ca"),
+			&base_fee_per_gas.encode(),
+		);
+		// twox_128(BaseFee) ++ twox_128(Elasticity)
+		sp_io::storage::set(
+			&hex_literal::hex!("c1fef3b7207c11a52df13c12884e772609bc3a1e532c9cb85d57feed02cbff8e"),
+			&elasticity.encode(),
+		);
+	}
+
+	/// We update our default weights on every release
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			update_base_fee::<T>();
+			T::DbWeight::get().reads_writes(1, 2)
+		}
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			update_base_fee::<T>();
+		}
 	}
 
 	#[pallet::error]
@@ -178,6 +217,9 @@ mod pallet {
 			} else {
 				<MinGasPriceOverride<T>>::kill();
 			}
+			// This code should not be called in production, but why keep development in the
+			// inconsistent state
+			update_base_fee::<T>();
 			Ok(())
 		}
 
