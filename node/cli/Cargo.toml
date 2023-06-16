@@ -21,7 +21,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 clap = "4.1"
-futures = '0.3.17'
+futures = '0.3.28'
 tokio = { version = "1.24", features = ["time"] }
 serde_json = "1.0"
 
@@ -94,6 +94,9 @@ uc-rpc = { workspace = true }
 unique-rpc = { workspace = true }
 up-pov-estimate-rpc = { workspace = true }
 up-rpc = { workspace = true }
+jsonrpsee.workspace = true
+fp-storage.workspace = true
+sc-rpc.workspace = true
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
