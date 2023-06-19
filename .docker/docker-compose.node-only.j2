@@ -3,7 +3,7 @@ version: "3.5"
 services:
   node-only:
     image: uniquenetwork/ci-node-only-local:{{ NETWORK }}-{{ BUILD_TAG }}
-    container_name: node-only-{{ NETWORK }}
+    container_name: node-only
     expose:
       - 9944
       - 9945
