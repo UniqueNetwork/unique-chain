@@ -51,7 +51,7 @@ jobs:
 
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
-    name: ${{ matrix.network }}
+    name: ${{ matrix.network }}-build
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -140,14 +140,15 @@ jobs:
           docker builder prune -f
           docker system prune -f          
 
+
   node-only-update-tests:
     needs: [prepare-execution-matrix, node-only-update-build]
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci, large]
 
-    timeout-minutes: 600
+    timeout-minutes: 2880
 
-    name: ${{ matrix.network }}-node-only-tests
+    name: ${{ matrix.network }}-tests
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
