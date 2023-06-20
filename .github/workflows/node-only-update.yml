@@ -154,7 +154,7 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-matrix.outputs.matrix)}}
 
     steps:
       - name: Skip if pull request is in Draft
