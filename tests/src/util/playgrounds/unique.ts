@@ -2510,7 +2510,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   /**
    * Get frozen balances
    * @param address substrate address
-   * @returns locked balances with reason via api.query.balances.locks
+   * @returns frozen balances with id via api.query.balances.freezes
    */
   getFrozen(address: TSubstrateAccount) {
     return this.subBalanceGroup.getFrozen(address);
