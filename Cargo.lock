@@ -6129,13 +6129,12 @@ dependencies = [
 
 [[package]]
 name = "pallet-app-promotion"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
  "log",
- "pallet-balances",
  "pallet-common",
  "pallet-configuration",
  "pallet-evm",

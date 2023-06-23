@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
+
+## [0.2.1] - 2023-06-23
+
+### Changed
+
+- Removed types associated with support for `Currency` trait.
+
+### Fixed
+
+- Benchmarks.
+  
 ## [0.2.0] - 2023-05-19
 
 ### Changed
