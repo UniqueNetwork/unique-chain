@@ -168,7 +168,7 @@ jobs:
           output_file: .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
           variables: |
             NETWORK=${{ matrix.network }}
-            BUILD_TAG=quartz-ci-tests-257fd5bc
+            BUILD_TAG=ci-tests-257fd5bc
 
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
