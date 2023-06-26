@@ -186,12 +186,59 @@ jobs:
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
 
+      - name: Check if docker logs consist logs related to Runtime Upgrade testing.
+        if: success()
+        run: |
+          counter=300
+          function check_container_status {
+                docker inspect -f {{.State.Running}} try-runtime
+          }
+          function do_docker_logs {
+                docker logs --details try-runtime 2>&1 | grep -i 'Querying a total'
+          }
+          function is_started {
+                if [ "$(check_container_status)" == "true" ]; then
+                        echo "Container: try-runtime RUNNING";
+                        echo "Check Docker logs"
+                        DOCKER_LOGS=$(do_docker_logs)
+                        if [[ -n ${DOCKER_LOGS} ]];then
+                                echo "TryRuntime_on_runtime_upgrade executed without errors."
+                                return 0
+                        else
+                                echo "Message not found in logs output, repeating..."
+                                return 1
+                        fi
+                else
+                        echo "Container try-runtime not RUNNING"
+                        echo "Halting all future checks"
+                        exit 1
+                fi
+          exit 0
+          }
+          while ! is_started; do
+                echo "Waiting for special message in log files "
+                sleep 30s
+                counter=$(( $counter - 1 ))
+                echo "Counter: $counter"
+                if [ "$counter" -gt "0" ]; then
+                         continue
+                else
+                         echo "Counter reached zero, yet upgrade is not finished"
+                         exit 1
+                fi
+          done
+          echo "Halting script"
+          exit 0
+        shell: bash
+
+
+
+
       - name: Collect Docker Logs
         if: success() || failure()
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './try-runtime-logs.${{ matrix.network }}'
-          tail: '10000'
 
       - name: Show docker logs
         if: success() || failure()
