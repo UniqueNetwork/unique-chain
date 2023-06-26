@@ -9,7 +9,7 @@ homepage = 'https://unique.network'
 license = 'GPLv3'
 name = 'pallet-app-promotion'
 repository = 'https://github.com/UniqueNetwork/unique-chain'
-version = '0.2.0'
+version = '0.2.1'
 
 [package.metadata.docs.rs]
 targets = ['x86_64-unknown-linux-gnu']
@@ -27,7 +27,6 @@ std = [
 	'frame-benchmarking/std',
 	'frame-support/std',
 	'frame-system/std',
-	'pallet-balances/std',
 	'pallet-evm/std',
 	'sp-core/std',
 	'sp-runtime/std',
@@ -48,7 +47,7 @@ scale-info = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
-pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
+
 pallet-evm = { workspace = true }
 sp-core = { workspace = true }
 sp-runtime = { workspace = true }

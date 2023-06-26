@@ -53,16 +53,9 @@ mod benchmarking;
 pub mod types;
 pub mod weights;
 
-use sp_std::{
-	vec::{Vec},
-	vec,
-	iter::Sum,
-	borrow::ToOwned,
-	cell::RefCell,
-};
+use sp_std::{vec::Vec, vec, iter::Sum, borrow::ToOwned, cell::RefCell};
 use sp_core::H160;
 use codec::EncodeLike;
-use pallet_balances::BalanceLock;
 pub use types::*;
 
 use up_data_structs::CollectionId;
@@ -70,7 +63,7 @@ use up_data_structs::CollectionId;
 use frame_support::{
 	dispatch::{DispatchResult},
 	traits::{
-		Get, LockableCurrency,
+		Get,
 		tokens::Balance,
 		fungible::{Inspect, InspectFreeze, Mutate, MutateFreeze},
 	},
@@ -86,8 +79,6 @@ use sp_runtime::{
 	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, AccountIdConversion, Zero},
 	ArithmeticError, DispatchError,
 };
-
-pub const LOCK_IDENTIFIER: [u8; 8] = *b"appstake";
 
 const PENDING_LIMIT_PER_BLOCK: u32 = 3;
 
@@ -108,12 +99,7 @@ pub mod pallet {
 		frame_system::Config + pallet_evm::Config + pallet_configuration::Config
 	{
 		/// Type to interact with the native token
-		type Currency: MutateFreeze<Self::AccountId>
-			+ Mutate<Self::AccountId>
-			+ ExtendedLockableCurrency<
-				Self::AccountId,
-				Balance = <<Self as Config>::Currency as Inspect<Self::AccountId>>::Balance,
-			>;
+		type Currency: MutateFreeze<Self::AccountId> + Mutate<Self::AccountId>;
 
 		/// Type for interacting with collections
 		type CollectionHandler: CollectionHandler<
@@ -705,47 +691,6 @@ pub mod pallet {
 			Ok(())
 		}
 
-		///  Migrates lock state into freeze one
-		///
-		/// # Permissions
-		///
-		/// * Sudo
-		///
-		///   # Arguments
-		///
-		/// * `origin`: Must be `Root`.
-		/// * `stakers`: Accounts to be upgraded.
-		#[pallet::call_index(9)]
-		#[pallet::weight(T::DbWeight::get().reads_writes(2, 2) * stakers.len() as u64)]
-		pub fn upgrade_accounts(
-			origin: OriginFor<T>,
-			stakers: Vec<T::AccountId>,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-
-			stakers
-				.into_iter()
-				.try_for_each(|s| -> Result<_, DispatchError> {
-					if let Some(BalanceLock { amount, .. }) = Self::get_locked_balance(&s) {
-						if Self::get_frozen_balance(&s).is_some() {
-							return Err(Error::<T>::InconsistencyState.into());
-						}
-
-						<<T as Config>::Currency as LockableCurrency<T::AccountId>>::remove_lock(
-							LOCK_IDENTIFIER,
-							&s,
-						);
-
-						Self::set_freeze_with_result(&s, amount)?;
-						Ok(())
-					} else {
-						Ok(())
-					}
-				})?;
-
-			Ok(())
-		}
-
 		/// Called for blocks that, for some reason, have not been unstacked
 		///
 		/// # Permissions
@@ -756,7 +701,7 @@ pub mod pallet {
 		///
 		/// * `origin`: Must be `Root`.
 		/// * `pending_blocks`: Block numbers that will be processed.
-		#[pallet::call_index(10)]
+		#[pallet::call_index(9)]
 		#[pallet::weight(<T as Config>::WeightInfo::on_initialize(PENDING_LIMIT_PER_BLOCK*pending_blocks.len() as u32))]
 		pub fn force_unstake(
 			origin: OriginFor<T>,
@@ -933,17 +878,6 @@ impl<T: Config> Pallet<T> {
 				amount,
 			)
 		}
-	}
-
-	/// Returns the balance locked by the pallet for the staker.
-	///
-	/// - `staker`: staker account.
-	pub fn get_locked_balance(
-		staker: impl EncodeLike<T::AccountId>,
-	) -> Option<BalanceLock<BalanceOf<T>>> {
-		<<T as Config>::Currency as ExtendedLockableCurrency<T::AccountId>>::locks(staker)
-			.into_iter()
-			.find(|l| l.id == LOCK_IDENTIFIER)
 	}
 
 	/// Returns the balance frozen by the pallet for the staker.
