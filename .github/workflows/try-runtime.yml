@@ -191,10 +191,11 @@ jobs:
         uses: jwalton/gh-docker-logs@v2.2.1
         with:
           dest: './try-runtime-logs.${{ matrix.network }}'
+          tail: '10000'
 
       - name: Show docker logs
         if: success() || failure()
-        run: cat './try-runtime-logs.${{ matrix.network }}/*.log'
+        run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'
 
       # - name: Stop running containers
       #   if: always()                   # run this step always
