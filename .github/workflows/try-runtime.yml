@@ -202,7 +202,7 @@ jobs:
                         echo "Container: try-runtime RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
-                        if [[ -n ${DOCKER_LOGS} ]];then
+                        if [[ -n ${DOCKER_LOGS} ]]; then
                                 echo "TryRuntime_on_runtime_upgrade executed without errors."
                                 return 0
                         else
@@ -210,18 +210,21 @@ jobs:
                                 return 1
                         fi
                 else
-                        counter_life=$(( $counter_life + 1 ))
-                        if [ "$counter_life" -lt "3" ]; then
-                                echo "Container try-runtime not RUNNING 2 times"
-                                return 1
-                        else
-                                echo "Container try-runtime not RUNNING 2 times"
-                                exit 1
-                        fi
+                        DOCKER_LOGS=$(do_docker_logs)
+                        while [[ $count -lt 3]]; do
+                              (( count++ ))
+                              if [[ -n ${DOCKER_LOGS} ]]; then
+                                      echo "TryRuntime_on_runtime_upgrade executed without errors"
+                                      return 0
+                              else
+                                      echo "Container try-runtime not RUNNING"
+                                      return 1
+                              fi
+                        done
                 fi
           exit 0
           }
-          
+
           while ! is_started; do
                 echo "Waiting for special message in log files "
                 sleep 30s
