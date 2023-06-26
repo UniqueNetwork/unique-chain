@@ -115,9 +115,9 @@ describe('Market V2 Contract', () => {
     await helper.eth.transferBalanceFromSubstrate(donor, market.options.address, 10n);
 
     // TODO: this should work too, instead of selfSponsoring!
-    // await contractHelpers.methods.setSponsor(market.options.address, marketOwner).send({from: marketOwner})
-    // await contractHelpers.methods.confirmSponsorship(market.options.address);
-    
+    await contractHelpers.methods.setSponsor(market.options.address, marketOwner).send({from: marketOwner});
+    await contractHelpers.methods.confirmSponsorship(market.options.address).send({from: marketOwner});
+
     await contractHelpers.methods.setSponsoringMode(market.options.address, SponsoringMode.Generous).send({from: marketOwner});
     await contractHelpers.methods.setSponsoringRateLimit(market.options.address, 0).send({from: marketOwner});
 
