@@ -193,15 +193,16 @@ jobs:
           dest: './try-runtime-logs.${{ matrix.network }}'
 
       - name: Show docker logs
-        run: cat './try-runtime-logs.${{ matrix.network }}/try-runtime.log'
+        if: success() || failure()
+        run: cat './try-runtime-logs.${{ matrix.network }}/*.log'
 
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+      # - name: Stop running containers
+      #   if: always()                   # run this step always
+      #   run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
 
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker builder prune -f -a
-          docker system prune -f
-          docker image prune -f -a
+      # - name: Remove builder cache
+      #   if: always()                   # run this step always
+      #   run: |
+      #     docker builder prune -f -a
+      #     docker system prune -f
+      #     docker image prune -f -a
