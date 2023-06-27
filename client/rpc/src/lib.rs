@@ -439,7 +439,6 @@ where
 		keys: Option<Vec<String>>,
 		at: Option<<Block as BlockT>::Hash>,
 	) -> Result<TokenData<CrossAccountId>> {
-		self.client.runtime_api();
 		token_data_internal(self.client.clone(), collection, token_id, keys, at)
 	}
 
@@ -513,14 +512,16 @@ where
 {
 	let api = client.runtime_api();
 	let at = at.unwrap_or_else(|| client.info().best_hash);
-	let _api_version = if let Ok(Some(api_version)) =
+	let api_version = if let Ok(Some(api_version)) =
 		api.api_version::<dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>>(at)
 	{
 		api_version
 	} else {
 		return Err(anyhow!("api is not available").into());
 	};
-	let result = if _api_version < 3 {
+	let result = if api_version >= 3 {
+		api.token_data(at, collection, token_id, string_keys_to_bytes_keys(keys))
+	} else {
 		#[allow(deprecated)]
 		api.token_data_before_version_3(at, collection, token_id, string_keys_to_bytes_keys(keys))
 			.map(
@@ -538,8 +539,6 @@ where
 						pieces: 0,
 					}))
 			})
-	} else {
-		api.token_data(at, collection, token_id, string_keys_to_bytes_keys(keys))
 	};
 	Ok(result
 		.map_err(|e| anyhow!("unable to query: {e}"))?
