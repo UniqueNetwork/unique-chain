@@ -152,7 +152,6 @@ describe('Market V2 Contract', () => {
     expect(ownerCross.sub).to.be.eq(sellerCross.sub);
 
     const buyerCross = await helper.ethCrossAccount.createAccountWithBalance(donor, 10n);
-    console.log('before buy');
 
     // Buyer has only 10 UNQ
     const buyerBalance = await helper.balance.getEthereum(buyerCross.eth);
