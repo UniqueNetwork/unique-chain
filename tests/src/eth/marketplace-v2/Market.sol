@@ -87,6 +87,18 @@ contract Market is Ownable, ReentrancyGuard {
         }
     }
 
+    /**
+     * Fallback that allows this contract to receive native token.
+     * We need this for self-sponsoring
+     */
+    fallback() external payable {}
+
+    /**
+     * Receive also allows this contract to receive native token.
+     * We need this for self-sponsoring
+     */
+    receive() external payable {}
+
     function getErc721(uint32 collectionId) private view returns (IERC721) {
         address collectionAddress = collectionHelpers.collectionAddress(
             collectionId
