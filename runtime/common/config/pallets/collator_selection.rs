@@ -23,7 +23,10 @@ use crate::{
 };
 use sp_runtime::Perbill;
 use up_common::constants::{UNIQUE, MILLIUNIQUE};
-
+use pallet_configuration::{
+	CollatorSelectionKickThresholdOverride, CollatorSelectionLicenseBondOverride,
+	CollatorSelectionDesiredCollatorsOverride,
+};
 parameter_types! {
 	pub const SessionOffset: BlockNumber = 0;
 }
@@ -60,6 +63,9 @@ parameter_types! {
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
 	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
+	pub LicenseBond: Balance =  CollatorSelectionLicenseBondOverride::<Runtime>::get();
+	pub DesiredCollators: u32 = CollatorSelectionDesiredCollatorsOverride::<Runtime>::get();
+	pub KickThreshold: BlockNumber = CollatorSelectionKickThresholdOverride::<Runtime>::get();
 }
 
 impl pallet_identity::Config for Runtime {
@@ -84,6 +90,7 @@ parameter_types! {
 
 impl pallet_collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.
 	type UpdateOrigin = EnsureRoot<AccountId>;
 	type TreasuryAccountId = TreasuryAccountId;
@@ -95,4 +102,7 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorRegistration = Session;
 	type WeightInfo = pallet_collator_selection::weights::SubstrateWeight<Runtime>;
 	type LicenceBondIdentifier = LicenceBondIdentifier;
+	type DesiredCollators = DesiredCollators;
+	type LicenseBond = LicenseBond;
+	type KickThreshold = KickThreshold;
 }

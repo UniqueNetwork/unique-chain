@@ -63,7 +63,6 @@ frame_support::construct_runtime!(
 		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
 		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
 		Authorship: pallet_authorship::{Pallet, Storage},
-		Configuration: pallet_configuration::{Pallet, Call, Storage, Event<T>},
 	}
 );
 
@@ -218,21 +217,6 @@ parameter_types! {
 	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
 }
 
-impl pallet_configuration::Config for Test {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type DefaultCollatorSelectionMaxCollators = MaxCollators;
-	type DefaultCollatorSelectionKickThreshold = KickThreshold;
-	type DefaultCollatorSelectionLicenseBond = LicenseBond;
-	// the following constants we don't care about
-	type DefaultWeightToFeeCoefficient = DefaultWeightToFeeCoefficient;
-	type DefaultMinGasPrice = DefaultMinGasPrice;
-	type MaxXcmAllowedLocations = MaxXcmAllowedLocations;
-	type AppPromotionDailyRate = AppPromotionDailyRate;
-	type DayRelayBlocks = DayRelayBlocks;
-	type WeightInfo = pallet_configuration::weights::SubstrateWeight<Self>;
-}
-
 ord_parameter_types! {
 	pub const RootAccount: u64 = 777;
 }
@@ -246,11 +230,7 @@ parameter_types! {
 pub struct IsRegistered;
 impl ValidatorRegistration<u64> for IsRegistered {
 	fn is_registered(id: &u64) -> bool {
-		if *id == 7u64 {
-			false
-		} else {
-			true
-		}
+		*id != 7u64
 	}
 }
 
@@ -265,6 +245,10 @@ impl Config for Test {
 	type ValidatorIdOf = IdentityCollator;
 	type ValidatorRegistration = IsRegistered;
 	type LicenceBondIdentifier = LicenceBondIdentifier;
+	type Currency = Balances;
+	type DesiredCollators = MaxCollators;
+	type LicenseBond = LicenseBond;
+	type KickThreshold = KickThreshold;
 	type WeightInfo = ();
 }
 
@@ -277,7 +261,15 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let ed = <Test as pallet_balances::Config>::ExistentialDeposit::get();
 
-	let balances = vec![(1, 100), (2, 100), (3, 100), (4, 100), (5, 100), (33, ed)];
+	let balances = vec![
+		(1, 100),
+		(2, 100),
+		(3, 100),
+		(4, 100),
+		(5, 100),
+		(11, 100),
+		(33, ed),
+	];
 	let keys = balances
 		.iter()
 		.map(|&(i, _)| {

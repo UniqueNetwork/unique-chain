@@ -30,19 +30,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate as collator_selection;
+use crate::{self as collator_selection, Config};
 use crate::{mock::*, Error};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{fungible, GenesisBuild, OnInitialize},
 };
-use frame_system::RawOrigin;
 use sp_runtime::{traits::BadOrigin, TokenError};
-use pallet_configuration::{
-	CollatorSelectionDesiredCollatorsOverride as DesiredCollators,
-	CollatorSelectionKickThresholdOverride as KickThreshold,
-	CollatorSelectionLicenseBondOverride as LicenseBond,
-};
 use scale_info::prelude::*;
 
 fn get_license_and_onboard(account_id: <Test as frame_system::Config>::AccountId) {
@@ -57,9 +51,6 @@ fn get_license_and_onboard(account_id: <Test as frame_system::Config>::AccountId
 #[test]
 fn basic_setup_works() {
 	new_test_ext().execute_with(|| {
-		assert_eq!(<DesiredCollators<Test>>::get(), 5);
-		assert_eq!(<LicenseBond<Test>>::get(), 10);
-
 		assert!(CollatorSelection::candidates().is_empty());
 		assert_eq!(CollatorSelection::invulnerables(), vec![1, 2]);
 	});
@@ -125,51 +116,6 @@ fn it_should_remove_invulnerables() {
 }
 
 #[test]
-fn set_desired_collators_works() {
-	new_test_ext().execute_with(|| {
-		// given
-		assert_eq!(<DesiredCollators<Test>>::get(), 5);
-
-		// can set
-		assert_ok!(Configuration::set_collator_selection_desired_collators(
-			RawOrigin::Root.into(),
-			Some(7)
-		));
-		assert_eq!(<DesiredCollators<Test>>::get(), 7);
-
-		// rejects bad origin
-		assert_noop!(
-			Configuration::set_collator_selection_desired_collators(
-				RuntimeOrigin::signed(1),
-				Some(8)
-			),
-			BadOrigin
-		);
-	});
-}
-
-#[test]
-fn set_license_bond() {
-	new_test_ext().execute_with(|| {
-		// given
-		assert_eq!(<LicenseBond<Test>>::get(), 10);
-
-		// can set
-		assert_ok!(Configuration::set_collator_selection_license_bond(
-			RawOrigin::Root.into(),
-			Some(7)
-		));
-		assert_eq!(<LicenseBond<Test>>::get(), 7);
-
-		// rejects bad origin.
-		assert_noop!(
-			Configuration::set_collator_selection_license_bond(RuntimeOrigin::signed(1), Some(8)),
-			BadOrigin
-		);
-	});
-}
-
-#[test]
 fn cannot_onboard_candidate_with_no_license() {
 	new_test_ext().execute_with(|| {
 		// can't onboard a candidate who did not get a license.
@@ -187,26 +133,16 @@ fn cannot_onboard_candidate_with_no_license() {
 #[test]
 fn cannot_onboard_candidate_if_too_many() {
 	new_test_ext().execute_with(|| {
-		// reset desired candidates
-		<pallet_configuration::CollatorSelectionDesiredCollatorsOverride<Test>>::put(0);
-
-		// can still get a license.
-		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(4)));
-
-		// can't accept anyone anymore.
-		assert_noop!(
-			CollatorSelection::onboard(RuntimeOrigin::signed(4)),
-			Error::<Test>::TooManyCandidates,
-		);
-
-		// reset desired candidates to invulnerables + 1
-		<pallet_configuration::CollatorSelectionDesiredCollatorsOverride<Test>>::put(3);
-		assert_ok!(CollatorSelection::onboard(RuntimeOrigin::signed(4)));
+		// can accept desired value of collators.
+		for c in 3u64..=(<Test as Config>::DesiredCollators::get()).into() {
+			assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(c)));
+			assert_ok!(CollatorSelection::onboard(RuntimeOrigin::signed(c)));
+		}
 
 		// but no more.
-		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(5)));
+		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(11)));
 		assert_noop!(
-			CollatorSelection::onboard(RuntimeOrigin::signed(5)),
+			CollatorSelection::onboard(RuntimeOrigin::signed(11)),
 			Error::<Test>::TooManyCandidates,
 		);
 	})
@@ -227,8 +163,8 @@ fn cannot_obtain_license_if_keys_not_registered() {
 fn cannot_obtain_license_if_poor() {
 	new_test_ext().execute_with(|| {
 		let ed = <Test as pallet_balances::Config>::ExistentialDeposit::get();
-		assert_eq!(Balances::free_balance(&3), 100);
-		assert_eq!(Balances::free_balance(&33), ed);
+		assert_eq!(Balances::free_balance(3), 100);
+		assert_eq!(Balances::free_balance(33), ed);
 
 		// works
 		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(3)));
@@ -266,21 +202,18 @@ fn cannot_onboard_dupe_candidate() {
 #[test]
 fn becoming_candidate_works() {
 	new_test_ext().execute_with(|| {
-		// given
-		assert_eq!(<DesiredCollators<Test>>::get(), 5);
-		assert_eq!(<LicenseBond<Test>>::get(), 10);
 		assert_eq!(CollatorSelection::candidates(), Vec::new());
 		assert_eq!(CollatorSelection::invulnerables(), vec![1, 2]);
 
 		// take two endowed, non-invulnerables accounts.
-		assert_eq!(Balances::free_balance(&3), 100);
-		assert_eq!(Balances::free_balance(&4), 100);
+		assert_eq!(Balances::free_balance(3), 100);
+		assert_eq!(Balances::free_balance(4), 100);
 
 		get_license_and_onboard(3);
 		get_license_and_onboard(4);
 
-		assert_eq!(Balances::free_balance(&3), 90);
-		assert_eq!(Balances::free_balance(&4), 90);
+		assert_eq!(Balances::free_balance(3), 90);
+		assert_eq!(Balances::free_balance(4), 90);
 
 		assert_eq!(CollatorSelection::candidates().len(), 2);
 	});
@@ -513,7 +446,7 @@ fn kick_mechanism() {
 		assert_eq!(SessionHandlerCollators::get(), vec![1, 2, 3, 4]);
 
 		assert_eq!(CollatorSelection::candidates(), vec![4]);
-		assert_eq!(<KickThreshold<Test>>::get(), 10);
+		// assert_eq!(<KickThreshold<Test>>::get(), 10);
 		assert_eq!(CollatorSelection::last_authored_block(4), 20);
 
 		initialize_to_block(30);
