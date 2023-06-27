@@ -211,9 +211,9 @@ jobs:
                         fi
                 else
                         DOCKER_LOGS=$(do_docker_logs)
-                        while [ $count -lt 3 ] 
+                        while [ $counter_life -lt 3 ] 
                             do
-                              (( count++ ))
+                              (( counter_life++ ))
                               if [[ -n ${DOCKER_LOGS} ]]; then
                                       echo "TryRuntime_on_runtime_upgrade executed without errors"
                                       return 0
