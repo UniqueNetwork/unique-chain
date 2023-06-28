@@ -6,7 +6,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  execution-marix:
+  prepare-execution-marix:
     name: Prepare execution matrix
 
     runs-on: self-hosted-ci
@@ -35,16 +35,16 @@ jobs:
             network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
             network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, replica_from_address {${{ env.SAPPHIRE_REPLICA_FROM }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
 
-  collator-selection:
-    needs: execution-marix
+  collator-selection-build:
+    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}
+    name: ${{ matrix.network }}-build
     strategy:
       matrix:
-        include: ${{fromJson(needs.execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
@@ -60,23 +60,121 @@ jobs:
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
 
+      # Prepare SHA  
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
+      # Build main image for FORKLESS-UPDATE-NODATA
+      - name: Generate ENV related extend Dockerfile file
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-collators.j2
+          output_file: .docker/Dockerfile-collators.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            NETWORK=${{ matrix.network }}
+            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+            BRANCH=${{ github.head_ref }}
+
+      - name: Show build configuration
+        run: cat .docker/Dockerfile-collators.${{ matrix.network }}.yml
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@4
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Build the stack
+        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-collators.${{ matrix.network }}.yml --tag uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Push docker image version
+        run: docker push uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
+
+      - name: Remove builder cache
+        if: always()                   # run this step always
+        run: |
+          docker builder prune -f
+          docker system prune -f
+
+  collator-selection-tests:
+    needs: [prepare-execution-marix, collator-selection-build]
+    # The type of runner that the job will run on
+    runs-on: [self-hosted-ci, large]
+
+    timeout-minutes: 600
+
+    name: ${{ matrix.network }}-tests
+
+    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+    steps:
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Prepare
+        uses: ./.github/actions/prepare
+
+      - name: Set build SHA
+        shell: bash
+        run: |
+          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
+
+      - name: Run find-and-replace to remove slashes from branch name
+        uses: mad9000/actions-find-and-replace-string@4
+        id: branchname
+        with:
+          source: ${{ github.head_ref }}
+          find: '/'
+          replace: '-'
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/docker-compose.tmp-collators.j2
+          template: .docker/docker-compose.collators.j2
           output_file: .docker/docker-compose.collators.${{ matrix.network }}.yml
           variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
             NETWORK=${{ matrix.network }}
-            BRANCH=${{ github.head_ref }}
+            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
 
       - name: Show build configuration
         run: cat .docker/docker-compose.collators.${{ matrix.network }}.yml
 
-      - name: Show launch-config configuration
-        run: cat launch-config.json
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Build the stack
         run: docker-compose -f ".docker/docker-compose.collators.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
@@ -87,14 +185,14 @@ jobs:
         run: |
           counter=160
           function check_container_status {
-                docker inspect -f {{.State.Running}} parachain-collators
+                docker inspect -f {{.State.Running}} collator-selection-${{ matrix.network }}
           }
           function do_docker_logs {
-                docker logs --details parachain-collators  2>&1
+                docker logs --details collator-selection-${{ matrix.network }}  2>&1
           }
           function is_started {
                 if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: collator-${{ matrix.network }}-testnet-local RUNNING";
+                        echo "Container: collator-selection-${{ matrix.network }} RUNNING";
                         echo "Check Docker logs"
                         DOCKER_LOGS=$(do_docker_logs)
                         if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
@@ -105,7 +203,7 @@ jobs:
                                 return 1
                         fi
                 else
-                        echo "Container collator-${{ matrix.network }}-testnet-local NOT RUNNING"
+                        echo "Container collator-selection-${{ matrix.network }} NOT RUNNING"
                         echo "Halting all future checks"
                         exit 1
                 fi
@@ -163,3 +261,4 @@ jobs:
         run: |
           docker builder prune -f -a
           docker system prune -f
+
