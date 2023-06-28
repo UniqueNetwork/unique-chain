@@ -261,15 +261,11 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 
 	let ed = <Test as pallet_balances::Config>::ExistentialDeposit::get();
 
-	let balances = vec![
-		(1, 100),
-		(2, 100),
-		(3, 100),
-		(4, 100),
-		(5, 100),
-		(<Test as Config>::DesiredCollators::get() as u64 + 1, 100),
-		(33, ed),
-	];
+	let balances: Vec<(u64, u64)> = (1..=<Test as Config>::DesiredCollators::get() as u64 + 1)
+		.map(|i| (i, 100))
+		.chain(core::iter::once((33, ed)))
+		.collect();
+
 	let keys = balances
 		.iter()
 		.map(|&(i, _)| {
