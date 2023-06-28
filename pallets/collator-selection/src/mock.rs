@@ -267,7 +267,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		(3, 100),
 		(4, 100),
 		(5, 100),
-		(11, 100),
+		(<Test as Config>::DesiredCollators::get() as u64 + 1, 100),
 		(33, ed),
 	];
 	let keys = balances

@@ -140,9 +140,12 @@ fn cannot_onboard_candidate_if_too_many() {
 		}
 
 		// but no more.
-		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(11)));
+		let undesired_collator = (<Test as Config>::DesiredCollators::get() + 1) as u64;
+		assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(
+			undesired_collator
+		)));
 		assert_noop!(
-			CollatorSelection::onboard(RuntimeOrigin::signed(11)),
+			CollatorSelection::onboard(RuntimeOrigin::signed(undesired_collator)),
 			Error::<Test>::TooManyCandidates,
 		);
 	})
