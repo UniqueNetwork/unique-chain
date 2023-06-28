@@ -77,7 +77,6 @@ sp_api::decl_runtime_apis! {
 			keys: Option<Vec<Vec<u8>>>
 		) -> Result<TokenData<CrossAccountId>>;
 
-		//TODO: check if this is correct. Attribute in TokenData says that it was changed in since version 2
 		#[changed_in(3)]
 		fn token_data(
 			collection: CollectionId,
