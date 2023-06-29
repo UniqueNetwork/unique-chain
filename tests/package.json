@@ -47,6 +47,7 @@
     "testEthNesting": "yarn _test './**/eth/nesting/**/*.*test.ts'",
     "testEthFractionalizer": "yarn _test './**/eth/fractionalizer/**/*.*test.ts'",
     "testEthMarketplace": "yarn _test './**/eth/marketplace/**/*.*test.ts'",
+    "testEthMarket": "yarn _test './**/eth/marketplace-v2/**/*.*test.ts'",
     "testSub": "yarn _test './**/sub/**/*.*test.ts'",
     "testSubNesting": "yarn _test './**/sub/nesting/**/*.*test.ts'",
     "testEvent": "yarn _test ./src/check-event/*.*test.ts",

@@ -561,10 +561,10 @@ describe('EVM token properties negative', () => {
     itEth.ifWithPallets(`[${testCase.mode}] Can't be multiple set/read for non-existent token`, testCase.requiredPallets, async({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
-      const properties = Array(5).fill(0).map((_, i) => { return {key: `key_${i}`, value: Buffer.from(`value_${i}`)}; });
-      const permissions: ITokenPropertyPermission[] = properties.map(p => { return {key: p.key, permission: {tokenOwner: true,
+      const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
+      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {tokenOwner: true,
         collectionAdmin: true,
-        mutable: true}}; });
+        mutable: true}}));
 
       const collection = await helper[testCase.mode].mintCollection(alice, {
         tokenPrefix: 'ethp',
