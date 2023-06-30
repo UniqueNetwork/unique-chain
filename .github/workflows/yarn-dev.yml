@@ -87,6 +87,18 @@ jobs:
         run: |
           echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
 
+      - name: Run benchmark mintFee tests
+        working-directory: tests
+        run: |
+          yarn install
+          npx ts-node --esm ./src/benchmarks/mintFee/index.ts
+
+      - name: Run benchmark opsFee tests
+        working-directory: tests
+        run: |
+          yarn install
+          npx ts-node --esm ./src/benchmarks/opsFee/index.ts
+
       - name: Stop running containers
         if: always()                   # run this step always
         run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down

@@ -6371,7 +6371,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-collator-selection"
-version = "4.0.0"
+version = "5.0.0"
 dependencies = [
  "frame-benchmarking",
  "frame-support",
@@ -6380,7 +6380,6 @@ dependencies = [
  "pallet-aura",
  "pallet-authorship",
  "pallet-balances",
- "pallet-configuration",
  "pallet-session",
  "pallet-timestamp",
  "parity-scale-codec",
@@ -6435,7 +6434,7 @@ dependencies = [
 
 [[package]]
 name = "pallet-configuration"
-version = "0.1.3"
+version = "0.2.0"
 dependencies = [
  "fp-evm",
  "frame-benchmarking",

@@ -19,7 +19,7 @@
 use super::*;
 use frame_benchmarking::benchmarks;
 use frame_system::{EventRecord, RawOrigin};
-use frame_support::{assert_ok, traits::fungible::Inspect};
+use frame_support::assert_ok;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
@@ -30,7 +30,10 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 }
 
 benchmarks! {
-	where_clause { where T: Config }
+	where_clause { where
+		T: Config,
+		T::Balance: From<u32>
+	}
 
 	set_weight_to_fee_coefficient_override {
 		let coeff: u64 = 999;
@@ -60,7 +63,7 @@ benchmarks! {
 		let max: u32 = 999;
 	}: {
 		assert_ok!(
-			<Pallet<T>>::set_collator_selection_desired_collators(RawOrigin::Root.into(), Some(max.clone()))
+			<Pallet<T>>::set_collator_selection_desired_collators(RawOrigin::Root.into(), Some(max))
 		);
 	}
 	verify {
@@ -68,10 +71,10 @@ benchmarks! {
 	}
 
 	set_collator_selection_license_bond {
-		let bond_cost: Option<BalanceOf<T>> = Some(T::Currency::minimum_balance() * 10u32.into());
+		let bond_cost: Option<T::Balance> = Some(1000u32.into());
 	}: {
 		assert_ok!(
-			<Pallet<T>>::set_collator_selection_license_bond(RawOrigin::Root.into(), bond_cost.clone())
+			<Pallet<T>>::set_collator_selection_license_bond(RawOrigin::Root.into(), bond_cost)
 		);
 	}
 	verify {
@@ -82,7 +85,7 @@ benchmarks! {
 		let threshold: Option<T::BlockNumber> = Some(900u32.into());
 	}: {
 		assert_ok!(
-			<Pallet<T>>::set_collator_selection_kick_threshold(RawOrigin::Root.into(), threshold.clone())
+			<Pallet<T>>::set_collator_selection_kick_threshold(RawOrigin::Root.into(), threshold)
 		);
 	}
 	verify {

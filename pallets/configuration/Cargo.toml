@@ -1,7 +1,7 @@
 [package]
 edition = "2021"
 name = "pallet-configuration"
-version = "0.1.3"
+version = "0.2.0"
 
 [dependencies]
 # Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
@@ -22,11 +22,11 @@ xcm = { workspace = true }
 default = ["std"]
 runtime-benchmarks = ["frame-benchmarking"]
 std = [
+	"codec/std",
 	"fp-evm/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
-	"codec/std",
 	"sp-arithmetic/std",
 	"sp-core/std",
 	"sp-std/std",

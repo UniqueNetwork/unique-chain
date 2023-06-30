@@ -90,6 +90,10 @@ mod tests;
 mod benchmarking;
 pub mod weights;
 
+use frame_support::traits::fungible::Inspect;
+
+type BalanceOf<T> =
+	<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -111,11 +115,6 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use pallet_session::SessionManager;
 	use sp_runtime::{Perbill, traits::Convert};
-	use pallet_configuration::{
-		CollatorSelectionDesiredCollatorsOverride as DesiredCollators,
-		CollatorSelectionLicenseBondOverride as LicenseBond,
-		CollatorSelectionKickThresholdOverride as KickThreshold, BalanceOf,
-	};
 	use sp_staking::SessionIndex;
 
 	/// A convertor from collators id. Since this pallet does not have stash/controller, this is
@@ -129,9 +128,12 @@ pub mod pallet {
 
 	/// Configure the pallet by specifying the parameters and types on which it depends.
 	#[pallet::config]
-	pub trait Config: frame_system::Config + pallet_configuration::Config {
+	pub trait Config: frame_system::Config {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		type Currency: Mutate<Self::AccountId>
+			+ MutateHold<Self::AccountId>
+			+ BalancedHold<Self::AccountId>;
 
 		/// Origin that can dictate updating parameters of this pallet.
 		type UpdateOrigin: EnsureOrigin<Self::RuntimeOrigin>;
@@ -163,7 +165,13 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		#[pallet::constant]
-		type LicenceBondIdentifier: Get<<<Self as pallet_configuration::Config>::Currency as InspectHold<Self::AccountId>>::Reason>;
+		type LicenceBondIdentifier: Get<<Self::Currency as InspectHold<Self::AccountId>>::Reason>;
+
+		type DesiredCollators: Get<u32>;
+
+		type LicenseBond: Get<BalanceOf<Self>>;
+
+		type KickThreshold: Get<Self::BlockNumber>;
 	}
 
 	#[pallet::pallet]
@@ -365,7 +373,7 @@ pub mod pallet {
 				Error::<T>::ValidatorNotRegistered
 			);
 
-			let deposit = <LicenseBond<T>>::get();
+			let deposit = T::LicenseBond::get();
 
 			T::Currency::hold(&T::LicenceBondIdentifier::get(), &who, deposit)?;
 			LicenseDepositOf::<T>::insert(who.clone(), deposit);
@@ -396,7 +404,7 @@ pub mod pallet {
 			let length = <Candidates<T>>::decode_len().unwrap_or_default()
 				+ <Invulnerables<T>>::decode_len().unwrap_or_default();
 			ensure!(
-				(length as u32) < <DesiredCollators<T>>::get(),
+				(length as u32) < T::DesiredCollators::get(),
 				Error::<T>::TooManyCandidates
 			);
 			ensure!(
@@ -415,7 +423,7 @@ pub mod pallet {
 						// First authored block is current block plus kick threshold to handle session delay
 						<LastAuthoredBlock<T>>::insert(
 							who.clone(),
-							frame_system::Pallet::<T>::block_number() + <KickThreshold<T>>::get(),
+							frame_system::Pallet::<T>::block_number() + T::KickThreshold::get(),
 						);
 						Ok(candidates.len())
 					}
@@ -574,7 +582,7 @@ pub mod pallet {
 			candidates: BoundedVec<T::AccountId, T::MaxCollators>,
 		) -> BoundedVec<T::AccountId, T::MaxCollators> {
 			let now = frame_system::Pallet::<T>::block_number();
-			let kick_threshold = <KickThreshold<T>>::get();
+			let kick_threshold = T::KickThreshold::get();
 			candidates
 				.into_iter()
 				.filter_map(|c| {
