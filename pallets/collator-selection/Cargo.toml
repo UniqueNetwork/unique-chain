@@ -6,7 +6,7 @@ homepage = "https://unique.network"
 license = "GPLv3"
 name = "pallet-collator-selection"
 repository = "https://github.com/UniqueNetwork/unique-chain"
-version = "4.0.0"
+version = "5.0.0"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
@@ -23,7 +23,6 @@ serde = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-authorship = { workspace = true }
-pallet-configuration = { workspace = true }
 pallet-session = { workspace = true }
 sp-runtime = { workspace = true }
 sp-staking = { workspace = true }
@@ -55,8 +54,6 @@ std = [
 	"frame-system/std",
 	"log/std",
 	"pallet-authorship/std",
-	'pallet-aura/std',
-	'pallet-balances/std',
 	"pallet-session/std",
 	"rand/std",
 	"scale-info/std",
@@ -64,6 +61,8 @@ std = [
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",
+	'pallet-aura/std',
+	'pallet-balances/std',
 ]
 
 try-runtime = ["frame-support/try-runtime"]

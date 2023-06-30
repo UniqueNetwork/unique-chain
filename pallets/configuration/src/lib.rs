@@ -22,6 +22,7 @@ use frame_support::{
 	pallet,
 	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
+	Parameter,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -42,27 +43,33 @@ pub mod weights;
 mod pallet {
 	use super::*;
 	use frame_support::{
-		traits::{fungible, Get},
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType},
+		traits::{Get},
+		pallet_prelude::{
+			StorageValue, ValueQuery, DispatchResult, IsType, Member, MaybeSerializeDeserialize,
+		},
 		log,
+		dispatch::{Codec, fmt::Debug},
 	};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
-
+	use frame_system::{pallet_prelude::OriginFor, ensure_root};
+	use sp_arithmetic::{FixedPointOperand, traits::AtLeast32BitUnsigned};
 	pub use crate::weights::WeightInfo;
-	pub type BalanceOf<T> =
-		<<T as Config>::Currency as fungible::Inspect<<T as SystemConfig>::AccountId>>::Balance;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		type Currency: fungible::Inspect<Self::AccountId>
-			+ fungible::Mutate<Self::AccountId>
-			+ fungible::MutateFreeze<Self::AccountId>
-			+ fungible::InspectHold<Self::AccountId>
-			+ fungible::MutateHold<Self::AccountId>
-			+ fungible::BalancedHold<Self::AccountId>;
+		type Balance: Parameter
+			+ Member
+			+ AtLeast32BitUnsigned
+			+ Codec
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ FixedPointOperand;
 
 		#[pallet::constant]
 		type DefaultWeightToFeeCoefficient: Get<u64>;
@@ -79,7 +86,7 @@ mod pallet {
 		#[pallet::constant]
 		type DefaultCollatorSelectionMaxCollators: Get<u32>;
 		#[pallet::constant]
-		type DefaultCollatorSelectionLicenseBond: Get<BalanceOf<Self>>;
+		type DefaultCollatorSelectionLicenseBond: Get<Self::Balance>;
 		#[pallet::constant]
 		type DefaultCollatorSelectionKickThreshold: Get<Self::BlockNumber>;
 
@@ -94,7 +101,7 @@ mod pallet {
 			desired_collators: Option<u32>,
 		},
 		NewCollatorLicenseBond {
-			bond_cost: Option<BalanceOf<T>>,
+			bond_cost: Option<T::Balance>,
 		},
 		NewCollatorKickThreshold {
 			length_in_blocks: Option<T::BlockNumber>,
@@ -130,7 +137,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type CollatorSelectionLicenseBondOverride<T: Config> = StorageValue<
-		Value = BalanceOf<T>,
+		Value = T::Balance,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultCollatorSelectionLicenseBond,
 	>;
@@ -221,7 +228,7 @@ mod pallet {
 		#[pallet::weight(T::WeightInfo::set_collator_selection_license_bond())]
 		pub fn set_collator_selection_license_bond(
 			origin: OriginFor<T>,
-			amount: Option<BalanceOf<T>>,
+			amount: Option<<T as Config>::Balance>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			if let Some(amount) = amount {
