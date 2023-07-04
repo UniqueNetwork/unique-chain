@@ -71,71 +71,12 @@ const main = async () => {
 
   await usingEthPlaygrounds(async (helper, privateKey) => {
 
-
     const donor = await privateKey('//Alice'); // Seed from account with balance on this network
-    // const ethSigner = await helper.eth.createAccountWithBalance(donor);
-
-    // const contract = await helper.ethContract.deployByCode(
-    //   ethSigner,
-    //   'RMRKNestableMintable',
-    //   CONTRACT_SOURCE,
-    //   CONTRACT_IMPORT,
-    //   5000000,
-    // );
-
-    // const relayer = await helper.ethContract.deployByCode(
-    //   ethSigner,
-    //   'Relayer',
-    //   RELAYER_SOURCE,
-    //   CONTRACT_IMPORT,
-    //   5000000,
-    //   [contract.options.address],
-    // );
-
-    // const relayerAddress = relayer.options.address;
-
-    // const rmrk = contract as any as RMRKNestableMintable;
-    // const createTokenFor = async (receiver: string) => {
-    //   const tokenReceipt = await rmrk.methods.safeMint(receiver).send({from: ethSigner});
-    //   return tokenReceipt.events!['Transfer'].returnValues.tokenId as number;
-    // };
-
-
-    // const nestId = await createTokenFor(ethSigner);
-    // const outerCollectionNestedId = 10;
-    // const contractOwnedNestId = await createTokenFor(relayerAddress);
-    // const nextTokenId = contractOwnedNestId + 1;
-    // console.log(nextTokenId);
-
-
-    // console.log(nestId, outerCollectionNestedId);
-    // console.log(ethSigner);
-    // console.log(contract.options.address);
-    // console.log(relayer.options.address);
-    // const addChildData = rmrk.methods.addChild(nestId, outerCollectionNestedId, []).encodeABI();
-    // console.log((await relayer.methods.relay(addChildData).send({from: ethSigner})).events);
-    // const acceptChild = await rmrk.methods.acceptChild(nestId, 0, relayerAddress, outerCollectionNestedId).send({from: ethSigner});
-    // console.log(acceptChild);
-
-    // const nestMintData = rmrk.methods.nestMint(rmrk.options.address, nextTokenId, contractOwnedNestId).encodeABI();
-    // console.log((await relayer.methods.relay(nestMintData).send({from: ethSigner})).events);
-    // const acceptNestedToken = rmrk.methods.acceptChild(contractOwnedNestId, 0, rmrk.options.address, nextTokenId).encodeABI();
-    // console.log((await relayer.methods.relay(acceptNestedToken).send({from: ethSigner})).events);
-    // // console.log(await rmrk.methods.childrenOf(nestId).call());
-
-    // const unnestData = rmrk.methods.transferChild(contractOwnedNestId, ethSigner, 0, 0, rmrk.options.address, nextTokenId, false, []).encodeABI();
-    // console.log((await relayer.methods.relay(unnestData).send({from: ethSigner})).events);
-
-    // console.log(await rmrk.methods.ownerOf(nextTokenId).call(), ethSigner);
 
     const eth = await measureEth(helper, donor);
     const sub = await measureSub(helper, donor);
     const rmrk = await measureRMRK(helper, donor);
     console.table({susbtrate: sub, eth: eth, rmrk: rmrk});
-
-
-
-
   });
 };
 
@@ -266,7 +207,7 @@ const createNestingCollection = async (
 ): Promise<{ collectionId: number, collectionAddress: string, contract: Contract }> => {
   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-  const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+  const contract =  helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
   await contract.methods.setCollectionNesting(true).send({from: owner});
 
   return {collectionId, collectionAddress, contract};

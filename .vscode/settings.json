@@ -10,6 +10,5 @@
 		"SKIP_WASM_BUILD": "1"
 	},
 	"rust-analyzer.cargo.features": ["runtime-benchmarks", "try-runtime"],
-	"solidity.packageDefaultDependenciesDirectory": "tests/node_modules",
-	""
+	"solidity.packageDefaultDependenciesDirectory": "tests/node_modules"
 }
