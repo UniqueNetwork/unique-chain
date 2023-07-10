@@ -36,7 +36,7 @@ use up_common::types::*;
 
 use ::xcm::latest::NetworkId;
 
-#[path = "../../common/mod.rs"]
+#[path = "common-link/mod.rs"]
 mod runtime_common;
 
 pub mod xcm_barrier;
