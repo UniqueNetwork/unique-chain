@@ -18,6 +18,7 @@ use frame_support::{
 	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError},
 	parameter_types,
 };
+use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain::primitives::Sibling;
 use xcm::latest::{prelude::*, Weight, MultiLocation};

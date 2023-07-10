@@ -23,8 +23,8 @@ opal-runtime = [
 	'collator-selection',
 	'foreign-assets',
 	'governance',
-	'governance',
 	'pallet-test-utils',
+	'preimage',
 	'refungible',
 ]
 pov-estimate = []
