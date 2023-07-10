@@ -37,6 +37,12 @@ If you are building an application that operates NFT tokens, use [this document]
 Building Unique chain requires special versions of Rust and toolchain. We don't use the most recent versions of everything
 so that we can keep the builds stable.
 
+*Windows note: We do not provide support for Windows systems and don't test the Unique chain on them.
+Nonetheless, the Unique chain node might work on Windows. To build it on Windows, you need to enable symlink support in Git:*
+```
+git config --global core.symlinks true
+```
+
 1. Install Rust:
 
 ```bash
