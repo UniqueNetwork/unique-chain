@@ -4495,11 +4495,7 @@ dependencies = [
  "pallet-child-bounties",
  "pallet-collective",
  "pallet-conviction-voting",
-<<<<<<< HEAD
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37)",
-=======
- "pallet-democracy",
->>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
@@ -8818,10 +8814,7 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
-<<<<<<< HEAD
  "pallet-conviction-voting",
-=======
->>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-democracy",
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
@@ -9350,9 +9343,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.66"
+version = "1.0.63"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18fb31db3f9bddb2ea821cde30a9f70117e3f119938b5ee630b7403aa6e2ead9"
+checksum = "7b368fba921b0dce7e60f5e04ec15e565b3303972b42bcfde1d0713b881959eb"
 dependencies = [
  "unicode-ident",
 ]
@@ -9996,11 +9989,7 @@ dependencies = [
  "pallet-bounties",
  "pallet-child-bounties",
  "pallet-collective",
-<<<<<<< HEAD
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37)",
-=======
- "pallet-democracy",
->>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-elections-phragmen",
  "pallet-grandpa",
  "pallet-identity 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43)",
@@ -14909,11 +14898,7 @@ dependencies = [
  "pallet-bags-list",
  "pallet-balances",
  "pallet-collective",
-<<<<<<< HEAD
  "pallet-democracy 4.0.0-dev (git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.37)",
-=======
- "pallet-democracy",
->>>>>>> 6028654b7 (refactor(governance): switch to frame's democracy pallet)
  "pallet-election-provider-multi-phase",
  "pallet-election-provider-support-benchmarking",
  "pallet-elections-phragmen",
