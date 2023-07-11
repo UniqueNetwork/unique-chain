@@ -221,15 +221,13 @@ describe('Market V2 Contract', () => {
       const buyerBalance = await helper.balance.getSubstrate(buyer.address);
       expect(buyerBalance).to.be.eq(600n * ONE_TOKEN);
     }
-    const buyerMirror = helper.address.substrateToEth(buyer.address);
     const buyerCross = helper.ethCrossAccount.fromKeyringPair(buyer);
-    await helper.eth.transferBalanceFromSubstrate(donor, buyerMirror, PRICE, false);
 
     const buyerBalanceBefore = await helper.balance.getSubstrate(buyer.address);
     await helper.eth.sendEVM(buyer, market.options.address, market.methods.buy(collectionId, tokenId, 1, buyerCross).encodeABI(), PRICE.toString());
     const buyerBalanceAfter = await helper.balance.getSubstrate(buyer.address);
     // Buyer balance not changed: transaction is sponsored
-    expect(buyerBalanceBefore).to.be.eq(buyerBalanceAfter);
+    expect(buyerBalanceBefore).to.be.eq(buyerBalanceAfter + PRICE);
 
     const sellerBalanceAfterBuy = BigInt(await helper.balance.getSubstrate(seller.address));
     ownerCross = await collection.methods.ownerOfCross(tokenId).call();
