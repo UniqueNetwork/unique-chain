@@ -36,7 +36,7 @@ describe('Send value to contract', () => {
       'Test',
       `
       // SPDX-License-Identifier: UNLICENSED
-      pragma solidity 0.8.17;
+      pragma solidity 0.8.18;
       
       contract Test {
         function send() public payable {
