@@ -136,12 +136,15 @@
     "@polkadot/util-crypto": "12.2.1",
     "@polkadot/wasm-crypto-asmjs": "^7.2.1",
     "@polkadot/wasm-crypto-wasm": "^7.2.1",
+    "@rmrk-team/evm-contracts": "^1.2.1",
+    "@typechain/web3-v1": "^6.0.3",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
     "find-process": "^1.4.7",
     "lossless-json": "^2.0.9",
-    "solc": "0.8.17",
+    "solc": "0.8.18",
+    "typechain": "^8.2.0",
     "web3": "1.10.0"
   },
   "resolutions": {

@@ -399,8 +399,9 @@ impl<T: Config> Pallet<T> {
 		if is_collection(account.as_eth()) {
 			fail!(<Error<T>>::CantNestTokenUnderCollection);
 		}
-		let Some((collection, token)) = T::CrossTokenAddressMapping::address_to_token(account) else {
-			return Ok(())
+		let Some((collection, token)) = T::CrossTokenAddressMapping::address_to_token(account)
+		else {
+			return Ok(());
 		};
 
 		let dispatch = T::CollectionDispatch::dispatch(collection)?;

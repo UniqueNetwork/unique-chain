@@ -1,16 +1,14 @@
 {
-    "eslint.format.enable": true,
-    "[javascript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "[typescript]": {
-        "editor.defaultFormatter": "dbaeumer.vscode-eslint"
-    },
-    "rust-analyzer.cargo.extraEnv": {
-        "SKIP_WASM_BUILD": "1"
-    },
-    "rust-analyzer.cargo.features": [
-        "runtime-benchmarks",
-        "try-runtime"
-    ]
+	"eslint.format.enable": true,
+	"[javascript]": {
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
+	},
+	"[typescript]": {
+		"editor.defaultFormatter": "dbaeumer.vscode-eslint"
+	},
+	"rust-analyzer.cargo.extraEnv": {
+		"SKIP_WASM_BUILD": "1"
+	},
+	"rust-analyzer.cargo.features": ["runtime-benchmarks", "try-runtime"],
+	"solidity.packageDefaultDependenciesDirectory": "tests/node_modules"
 }
