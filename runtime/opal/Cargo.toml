@@ -52,6 +52,8 @@ runtime-benchmarks = [
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-membership/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
+	'pallet-ranked-collective/runtime-benchmarks',
+	'pallet-referenda/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-scheduler/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
@@ -81,6 +83,8 @@ std = [
 	'pallet-collective/std',
 	'pallet-democracy/std',
 	'pallet-membership/std',
+	'pallet-ranked-collective/std',
+	'pallet-referenda/std',
 	'pallet-scheduler/std',
 	# 'pallet-contracts/std',
 	# 'pallet-contracts-primitives/std',
@@ -250,6 +254,7 @@ pallet-collective = { workspace = true }
 pallet-democracy = { workspace = true }
 pallet-membership = { workspace = true }
 pallet-preimage = { workspace = true }
+pallet-ranked-collective = { workspace = true }
 pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
@@ -307,6 +312,7 @@ pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }
 pallet-maintenance = { workspace = true }
 pallet-nonfungible = { workspace = true }
+pallet-referenda = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }

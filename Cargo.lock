@@ -5968,6 +5968,8 @@ dependencies = [
  "pallet-membership",
  "pallet-nonfungible",
  "pallet-preimage",
+ "pallet-ranked-collective",
+ "pallet-referenda",
  "pallet-refungible",
  "pallet-scheduler",
  "pallet-session",

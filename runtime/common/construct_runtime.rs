@@ -84,6 +84,15 @@ macro_rules! construct_runtime {
                 #[cfg(feature = "governance")]
                 GovScheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 49,
 
+				#[cfg(feature = "governance")]
+                FellowshipCollective: pallet_ranked_collective::{Pallet, Call, Storage, Event<T>} = 97,
+
+				#[cfg(feature = "governance")]
+                FellowshipReferenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 98,
+
+				#[cfg(feature = "governance")]
+                Origins: runtime_common::config::pallets::origins::pallet_custom_origins::{Origin} = 99,
+
 				// XCM helpers.
 				XcmpQueue: cumulus_pallet_xcmp_queue = 50,
 				PolkadotXcm: pallet_xcm = 51,
