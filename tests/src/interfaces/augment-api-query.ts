@@ -10,7 +10,7 @@ import type { Data } from '@polkadot/types';
 import type { BTreeMap, Bytes, Option, U256, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { AnyNumber, ITuple } from '@polkadot/types-codec/types';
 import type { AccountId32, H160, H256 } from '@polkadot/types/interfaces/runtime';
-import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemCodeUpgradeAuthorization, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumLog, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportDispatchPerDispatchClassWeight, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OpalRuntimeRuntimeCommonSessionKeys, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesIdAmount, PalletBalancesReserveData, PalletConfigurationAppPromotionConfiguration, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmContractHelpersSponsoringModeT, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletNonfungibleItemData, PalletPreimageRequestStatus, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletXcmQueryStatus, PalletXcmRemoteLockedFungibleRecord, PalletXcmVersionMigrationStage, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV4AbridgedHostConfiguration, PolkadotPrimitivesV4PersistedValidationData, PolkadotPrimitivesV4UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpRuntimeDigest, SpTrieStorageProof, SpWeightsWeightV2Weight, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsProperties, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsPropertyScope, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, UpDataStructsTokenChild, XcmV3MultiLocation, XcmVersionedAssetId, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
+import type { CumulusPalletDmpQueueConfigData, CumulusPalletDmpQueuePageIndexData, CumulusPalletParachainSystemCodeUpgradeAuthorization, CumulusPalletParachainSystemRelayStateSnapshotMessagingStateSnapshot, CumulusPalletXcmpQueueInboundChannelDetails, CumulusPalletXcmpQueueOutboundChannelDetails, CumulusPalletXcmpQueueQueueConfigData, EthereumBlock, EthereumLog, EthereumReceiptReceiptV3, EthereumTransactionTransactionV2, FpRpcTransactionStatus, FrameSupportDispatchPerDispatchClassWeight, FrameSystemAccountInfo, FrameSystemEventRecord, FrameSystemLastRuntimeUpgradeInfo, FrameSystemPhase, OpalRuntimeRuntimeCommonSessionKeys, OrmlTokensAccountData, OrmlTokensBalanceLock, OrmlTokensReserveData, OrmlVestingVestingSchedule, PalletBalancesAccountData, PalletBalancesBalanceLock, PalletBalancesIdAmount, PalletBalancesReserveData, PalletConfigurationAppPromotionConfiguration, PalletEvmAccountBasicCrossAccountIdRepr, PalletEvmCodeMetadata, PalletEvmContractHelpersSponsoringModeT, PalletForeignAssetsAssetIds, PalletForeignAssetsModuleAssetMetadata, PalletIdentityRegistrarInfo, PalletIdentityRegistration, PalletNonfungibleItemData, PalletPreimageRequestStatus, PalletStateTrieMigrationMigrationLimits, PalletStateTrieMigrationMigrationTask, PalletTransactionPaymentReleases, PalletTreasuryProposal, PalletXcmQueryStatus, PalletXcmRemoteLockedFungibleRecord, PalletXcmVersionMigrationStage, PhantomTypeUpDataStructs, PolkadotCorePrimitivesOutboundHrmpMessage, PolkadotPrimitivesV4AbridgedHostConfiguration, PolkadotPrimitivesV4PersistedValidationData, PolkadotPrimitivesV4UpgradeRestriction, SpConsensusAuraSr25519AppSr25519Public, SpCoreCryptoKeyTypeId, SpRuntimeDigest, SpTrieStorageProof, SpWeightsWeightV2Weight, UpDataStructsCollection, UpDataStructsCollectionStats, UpDataStructsProperties, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsPropertyScope, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, UpDataStructsTokenChild, XcmV3MultiLocation, XcmVersionedAssetId, XcmVersionedMultiLocation } from '@polkadot/types/lookup';
 import type { Observable } from '@polkadot/types/types';
 
 export type __AugmentedQuery<ApiType extends ApiTypes> = AugmentedQuery<ApiType, () => unknown>;
@@ -289,6 +289,7 @@ declare module '@polkadot/api-base/types/storage' {
     };
     evm: {
       accountCodes: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<Bytes>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
+      accountCodesMetadata: AugmentedQuery<ApiType, (arg: H160 | string | Uint8Array) => Observable<Option<PalletEvmCodeMetadata>>, [H160]> & QueryableStorageEntry<ApiType, [H160]>;
       accountStorages: AugmentedQuery<ApiType, (arg1: H160 | string | Uint8Array, arg2: H256 | string | Uint8Array) => Observable<H256>, [H160, H256]> & QueryableStorageEntry<ApiType, [H160, H256]>;
       /**
        * Written on log, reset after transaction
@@ -848,6 +849,31 @@ declare module '@polkadot/api-base/types/storage' {
        * The current set of validators.
        **/
       validators: AugmentedQuery<ApiType, () => Observable<Vec<AccountId32>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Generic query
+       **/
+      [key: string]: QueryableStorageEntry<ApiType>;
+    };
+    stateTrieMigration: {
+      /**
+       * The limits that are imposed on automatic migrations.
+       * 
+       * If set to None, then no automatic migration happens.
+       **/
+      autoLimits: AugmentedQuery<ApiType, () => Observable<Option<PalletStateTrieMigrationMigrationLimits>>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * Migration progress.
+       * 
+       * This stores the snapshot of the last migrated keys. It can be set into motion and move
+       * forward by any of the means provided by this pallet.
+       **/
+      migrationProcess: AugmentedQuery<ApiType, () => Observable<PalletStateTrieMigrationMigrationTask>, []> & QueryableStorageEntry<ApiType, []>;
+      /**
+       * The maximum limits that the signed migration could use.
+       * 
+       * If not set, no signed submission is allowed.
+       **/
+      signedMigrationMaxLimits: AugmentedQuery<ApiType, () => Observable<Option<PalletStateTrieMigrationMigrationLimits>>, []> & QueryableStorageEntry<ApiType, []>;
       /**
        * Generic query
        **/

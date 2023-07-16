@@ -18,7 +18,6 @@ import process from 'process';
 
 const config = {
   substrateUrl: process.env.substrateUrl || 'ws://127.0.0.1:9944',
-  frontierUrl: process.env.frontierUrl || 'http://127.0.0.1:9933',
   relayUrl: process.env.relayUrl || 'ws://127.0.0.1:9844',
   acalaUrl: process.env.acalaUrl || 'ws://127.0.0.1:9946',
   karuraUrl: process.env.acalaUrl || 'ws://127.0.0.1:9946',

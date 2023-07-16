@@ -29,8 +29,12 @@ describe('Market V2 Contract', () => {
   let donor: IKeyringPair;
 
   before(async () => {
-    await usingEthPlaygrounds(async (_helper, privateKey) => {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
+
+      const marketOwner = await helper.eth.createAccountWithBalance(donor, 600n);
+
+      await deployMarket(helper, marketOwner);
     });
   });
 
@@ -100,12 +104,6 @@ describe('Market V2 Contract', () => {
     else if(sub instanceof Uint8Array)
       return web3.utils.padLeft(web3.utils.bytesToHex(Array.from(sub)), 64);
   }
-
-  itEth('Deploy', async ({helper}) => {
-    const marketOwner = await helper.eth.createAccountWithBalance(donor, 600n);
-
-    await deployMarket(helper, marketOwner);
-  });
 
   itEth('Put + Buy [eth]', async ({helper}) => {
     const ONE_TOKEN = helper.balance.getOneTokenNominal();

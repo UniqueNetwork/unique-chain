@@ -54,7 +54,7 @@ use sc_executor::NativeElseWasmExecutor;
 use sc_executor::NativeExecutionDispatch;
 use sc_network::NetworkBlock;
 use sc_network_sync::SyncingService;
-use sc_service::{BasePath, Configuration, PartialComponents, TaskManager};
+use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sp_runtime::traits::BlakeTwo256;
 use substrate_prometheus_endpoint::Registry;
@@ -65,7 +65,7 @@ use polkadot_service::CollatorPair;
 
 // Frontier Imports
 use fc_rpc_core::types::FilterPool;
-use fc_mapping_sync::{MappingSyncWorker, SyncStrategy};
+use fc_mapping_sync::{kv::MappingSyncWorker, SyncStrategy};
 
 use up_common::types::opaque::*;
 
@@ -176,19 +176,13 @@ impl Stream for AutosealInterval {
 pub fn open_frontier_backend<Block: BlockT, C: sp_blockchain::HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<Arc<fc_db::Backend<Block>>, String> {
-	let config_dir = config
-		.base_path
-		.as_ref()
-		.map(|base_path| base_path.config_dir(config.chain_spec.id()))
-		.unwrap_or_else(|| {
-			BasePath::from_project("", "", "unique").config_dir(config.chain_spec.id())
-		});
+) -> Result<Arc<fc_db::kv::Backend<Block>>, String> {
+	let config_dir = config.base_path.config_dir(config.chain_spec.id());
 	let database_dir = config_dir.join("frontier").join("db");
 
-	Ok(Arc::new(fc_db::Backend::<Block>::new(
+	Ok(Arc::new(fc_db::kv::Backend::<Block>::new(
 		client,
-		&fc_db::DatabaseSettings {
+		&fc_db::kv::DatabaseSettings {
 			source: fc_db::DatabaseSource::RocksDb {
 				path: database_dir,
 				cache_size: 0,
@@ -222,7 +216,7 @@ pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 		(
 			Option<Telemetry>,
 			Option<FilterPool>,
-			Arc<fc_db::Backend<Block>>,
+			Arc<fc_db::kv::Backend<Block>>,
 			Option<TelemetryWorkerHandle>,
 			FeeHistoryCache,
 		),
@@ -435,6 +429,7 @@ where
 		new_partial::<RuntimeApi, ExecutorDispatch, BIQ>(&parachain_config, build_import_queue)?;
 	let (mut telemetry, filter_pool, frontier_backend, telemetry_worker_handle, fee_history_cache) =
 		params.other;
+	let net_config = sc_network::config::FullNetworkConfiguration::new(&parachain_config.network);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -462,6 +457,7 @@ where
 	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &parachain_config,
+			net_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
@@ -919,6 +915,7 @@ where
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
 	)?;
+	let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let block_data_cache = Arc::new(fc_rpc::EthBlockDataCacheTask::new(
@@ -937,6 +934,7 @@ where
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
+			net_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
 			spawn_handle: task_manager.spawn_handle(),
@@ -959,8 +957,7 @@ where
 	let select_chain = maybe_select_chain;
 
 	if collator {
-		let block_import =
-			FrontierBlockImport::new(client.clone(), client.clone(), frontier_backend.clone());
+		let block_import = FrontierBlockImport::new(client.clone(), client.clone());
 
 		let env = sc_basic_authorship::ProposerFactory::new(
 			task_manager.spawn_handle(),

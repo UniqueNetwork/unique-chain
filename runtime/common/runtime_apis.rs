@@ -38,11 +38,14 @@ macro_rules! impl_common_runtime_apis {
         use sp_core::{crypto::KeyTypeId, OpaqueMetadata, H256, U256, H160};
         use sp_runtime::{
             Permill,
-            traits::Block as BlockT,
+            traits::{Block as BlockT},
             transaction_validity::{TransactionSource, TransactionValidity},
             ApplyExtrinsicResult, DispatchError,
         };
-        use frame_support::pallet_prelude::Weight;
+        use frame_support::{
+            pallet_prelude::Weight,
+            traits::OnFinalize,
+        };
         use fp_rpc::TransactionStatus;
         use pallet_transaction_payment::{
             FeeDetails, RuntimeDispatchInfo,
@@ -367,6 +370,10 @@ macro_rules! impl_common_runtime_apis {
                         access_list.unwrap_or_default(),
                         is_transactional,
                         validate,
+                        // TODO we probably want to support external cost recording in non-transactional calls
+                        None,
+                        None,
+
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -404,6 +411,10 @@ macro_rules! impl_common_runtime_apis {
                         access_list.unwrap_or_default(),
                         is_transactional,
                         validate,
+                        // TODO we probably want to support external cost recording in non-transactional calls
+                        None,
+                        None,
+
                         config.as_ref().unwrap_or_else(|| <Runtime as pallet_evm::Config>::config()),
                     ).map_err(|err| err.error.into())
                 }
@@ -444,6 +455,21 @@ macro_rules! impl_common_runtime_apis {
                 }
 
                 fn gas_limit_multiplier_support() {}
+
+                fn pending_block(
+                    xts: Vec<<Block as BlockT>::Extrinsic>,
+                ) -> (Option<pallet_ethereum::Block>, Option<Vec<TransactionStatus>>) {
+                    for ext in xts.into_iter() {
+                        let _ = Executive::apply_extrinsic(ext);
+                    }
+
+                    Ethereum::on_finalize(System::block_number() + 1);
+
+                    (
+                        pallet_ethereum::CurrentBlock::<Runtime>::get(),
+                        pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
+                    )
+                }
             }
 
             impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

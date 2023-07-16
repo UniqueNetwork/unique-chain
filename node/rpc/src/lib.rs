@@ -93,7 +93,7 @@ pub struct FullDeps<C, P, SC, CA: ChainApi> {
 	pub backend: Arc<FullBackend>,
 
 	/// Ethereum Backend.
-	pub eth_backend: Arc<fc_db::Backend<Block>>,
+	pub eth_backend: Arc<dyn fc_db::BackendReader<Block> + Send + Sync>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
@@ -181,7 +181,7 @@ where
 {
 	use fc_rpc::{
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
-		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
+		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer, TxPool, TxPoolApiServer
 	};
 	use uc_rpc::{UniqueApiServer, Unique};
 
@@ -240,7 +240,7 @@ where
 		Eth::new(
 			client.clone(),
 			pool.clone(),
-			graph,
+			graph.clone(),
 			Some(<R as RuntimeInstance>::get_transaction_converter()),
 			sync.clone(),
 			signers,
@@ -272,11 +272,13 @@ where
 		.into_rpc(),
 	)?;
 
+	let tx_pool = TxPool::new(client.clone(), graph);
 	if let Some(filter_pool) = filter_pool {
 		io.merge(
 			EthFilter::new(
 				client.clone(),
 				eth_backend,
+				tx_pool.clone(),
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
@@ -309,6 +311,8 @@ where
 		)
 		.into_rpc(),
 	)?;
+
+	io.merge(tx_pool.into_rpc())?;
 
 	Ok(io)
 }
