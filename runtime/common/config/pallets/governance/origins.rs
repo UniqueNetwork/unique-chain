@@ -1,15 +1,11 @@
 //! Custom origins for governance interventions.
 
+use super::*;
 pub use pallet_custom_origins::*;
 
 #[frame_support::pallet]
 pub mod pallet_custom_origins {
-	use up_common::{
-		types::Balance,
-		constants::{UNIQUE, CENTIUNIQUE},
-	};
-	use frame_support::pallet_prelude::*;
-
+	use super::*;
 	#[pallet::config]
 	pub trait Config: frame_system::Config {}
 

@@ -1,8 +1,8 @@
 use crate::{
-	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler,
-	config::pallets::origins::{FellowshipMasters, FellowshipAdmin, FellowshipExperts},
-	FellowshipReferenda,
+	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda,
 };
+
+use origins::{FellowshipMasters, FellowshipAdmin, FellowshipExperts};
 
 use frame_support::traits::{MapSuccess, TryMapSuccess, EitherOf};
 use sp_arithmetic::traits::CheckedSub;
@@ -12,13 +12,6 @@ use sp_runtime::{
 };
 
 use super::*;
-use up_common::constants::{DAYS, UNIQUE};
-
-parameter_types! {
-	pub const AlarmInterval: BlockNumber = 1;
-	pub const SubmissionDeposit: Balance = 0;
-	pub const UndecidingTimeout: BlockNumber = 7 * DAYS;
-}
 
 pub struct TracksInfo;
 impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
@@ -250,8 +243,6 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 		&DATA[..]
 	}
 	fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
-		use super::origins::Origin;
-
 		#[cfg(feature = "runtime-benchmarks")]
 		{
 			// For benchmarks, we enable a root origin.

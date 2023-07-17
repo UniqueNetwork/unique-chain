@@ -55,18 +55,10 @@ pub mod preimage;
 #[cfg(feature = "governance")]
 pub mod governance;
 
-#[cfg(feature = "governance")]
-pub mod fellowship;
-
-#[cfg(feature = "governance")]
-pub mod origins;
-
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
 	pub TreasuryAccountId: AccountId = TreasuryModuleId::get().into_account_truncating();
 }
-
-impl origins::Config for Runtime {}
 
 impl pallet_common::Config for Runtime {
 	type WeightInfo = pallet_common::weights::SubstrateWeight<Self>;

@@ -91,7 +91,7 @@ macro_rules! construct_runtime {
                 FellowshipReferenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 98,
 
 				#[cfg(feature = "governance")]
-                Origins: runtime_common::config::pallets::origins::pallet_custom_origins::{Origin} = 99,
+                Origins: runtime_common::config::pallets::governance::origins::pallet_custom_origins::{Origin} = 99,
 
 				// XCM helpers.
 				XcmpQueue: cumulus_pallet_xcmp_queue = 50,
