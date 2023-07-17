@@ -5,15 +5,15 @@
 /* eslint-disable function-call-argument-newline */
 /* eslint-disable no-prototype-builtins */
 
-import { ApiPromise, WsProvider, Keyring } from '@polkadot/api';
-import { SignerOptions } from '@polkadot/api/types/submittable';
+import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
+import {SignerOptions} from '@polkadot/api/types/submittable';
 import '../../interfaces/augment-api';
-import { AugmentedSubmittables } from '@polkadot/api-base/types/submittable';
-import { ApiInterfaceEvents } from '@polkadot/api/types';
-import { encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a } from '@polkadot/util-crypto';
-import { IKeyringPair } from '@polkadot/types/types';
-import { hexToU8a } from '@polkadot/util/hex';
-import { u8aConcat } from '@polkadot/util/u8a';
+import {AugmentedSubmittables} from '@polkadot/api-base/types/submittable';
+import {ApiInterfaceEvents} from '@polkadot/api/types';
+import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
+import {IKeyringPair} from '@polkadot/types/types';
+import {hexToU8a} from '@polkadot/util/hex';
+import {u8aConcat} from '@polkadot/util/u8a';
 import {
   IApiListeners,
   IBlock,
@@ -45,29 +45,29 @@ import {
   DemocracyStandardAccountVote,
   IEthCrossAccountId,
 } from './types';
-import { RuntimeDispatchInfo } from '@polkadot/types/interfaces';
-import type { Vec } from '@polkadot/types-codec';
-import { FrameSystemEventRecord, PalletBalancesIdAmount } from '@polkadot/types/lookup';
+import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import type {Vec} from '@polkadot/types-codec';
+import {FrameSystemEventRecord, PalletBalancesIdAmount} from '@polkadot/types/lookup';
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
   Ethereum!: TEthereumAccount;
 
   constructor(account: ICrossAccountId) {
-    if ('Substrate' in account) this.Substrate = account.Substrate;
+    if('Substrate' in account) this.Substrate = account.Substrate;
     else this.Ethereum = account.Ethereum;
   }
 
   static fromKeyring(account: IKeyringPair, domain: 'Substrate' | 'Ethereum' = 'Substrate') {
     switch (domain) {
-      case 'Substrate': return new CrossAccountId({ Substrate: account.address });
-      case 'Ethereum': return new CrossAccountId({ Substrate: account.address }).toEthereum();
+      case 'Substrate': return new CrossAccountId({Substrate: account.address});
+      case 'Ethereum': return new CrossAccountId({Substrate: account.address}).toEthereum();
     }
   }
 
   static fromLowerCaseKeys(address: ICrossAccountIdLower): CrossAccountId {
-    if ('substrate' in address) return new CrossAccountId({ Substrate: address.substrate });
-    else return new CrossAccountId({ Ethereum: address.ethereum });
+    if('substrate' in address) return new CrossAccountId({Substrate: address.substrate});
+    else return new CrossAccountId({Ethereum: address.ethereum});
   }
 
   static normalizeSubstrateAddress(address: TSubstrateAccount, ss58Format = 42): TSubstrateAccount {
@@ -75,11 +75,11 @@ export class CrossAccountId {
   }
 
   static withNormalizedSubstrate(address: TSubstrateAccount, ss58Format = 42): CrossAccountId {
-    return new CrossAccountId({ Substrate: CrossAccountId.normalizeSubstrateAddress(address, ss58Format) });
+    return new CrossAccountId({Substrate: CrossAccountId.normalizeSubstrateAddress(address, ss58Format)});
   }
 
   withNormalizedSubstrate(ss58Format = 42): CrossAccountId {
-    if (this.Substrate) return CrossAccountId.withNormalizedSubstrate(this.Substrate, ss58Format);
+    if(this.Substrate) return CrossAccountId.withNormalizedSubstrate(this.Substrate, ss58Format);
     return this;
   }
 
@@ -88,7 +88,7 @@ export class CrossAccountId {
   }
 
   toEthereum(): CrossAccountId {
-    if (this.Substrate) return new CrossAccountId({ Ethereum: CrossAccountId.translateSubToEth(this.Substrate) });
+    if(this.Substrate) return new CrossAccountId({Ethereum: CrossAccountId.translateSubToEth(this.Substrate)});
     return this;
   }
 
@@ -97,30 +97,30 @@ export class CrossAccountId {
   }
 
   toSubstrate(ss58Format?: number): CrossAccountId {
-    if (this.Ethereum) return new CrossAccountId({ Substrate: CrossAccountId.translateEthToSub(this.Ethereum, ss58Format) });
+    if(this.Ethereum) return new CrossAccountId({Substrate: CrossAccountId.translateEthToSub(this.Ethereum, ss58Format)});
     return this;
   }
 
   toLowerCase(): CrossAccountId {
-    if (this.Substrate) this.Substrate = this.Substrate.toLowerCase();
-    if (this.Ethereum) this.Ethereum = this.Ethereum.toLowerCase();
+    if(this.Substrate) this.Substrate = this.Substrate.toLowerCase();
+    if(this.Ethereum) this.Ethereum = this.Ethereum.toLowerCase();
     return this;
   }
 }
 
 const nesting = {
   toChecksumAddress(address: string): string {
-    if (typeof address === 'undefined') return '';
+    if(typeof address === 'undefined') return '';
 
-    if (!/^(0x)?[0-9a-f]{40}$/i.test(address)) throw new Error(`Given address "${address}" is not a valid Ethereum address.`);
+    if(!/^(0x)?[0-9a-f]{40}$/i.test(address)) throw new Error(`Given address "${address}" is not a valid Ethereum address.`);
 
     address = address.toLowerCase().replace(/^0x/i, '');
     const addressHash = keccakAsHex(address).replace(/^0x/i, '');
     const checksumAddress = ['0x'];
 
-    for (let i = 0; i < address.length; i++) {
+    for(let i = 0; i < address.length; i++) {
       // If ith character is 8 to f then make it uppercase
-      if (parseInt(addressHash[i], 16) > 7) {
+      if(parseInt(addressHash[i], 16) > 7) {
         checksumAddress.push(address[i].toUpperCase());
       } else {
         checksumAddress.push(address[i]);
@@ -146,7 +146,7 @@ class UniqueUtil {
   };
 
   static getTokenAccount(token: IToken): CrossAccountId {
-    return new CrossAccountId({ Ethereum: this.getTokenAddress(token) });
+    return new CrossAccountId({Ethereum: this.getTokenAddress(token)});
   }
 
   static getTokenAddress(token: IToken): string {
@@ -171,28 +171,28 @@ class UniqueUtil {
   }
 
   static str2vec(string: string) {
-    if (typeof string !== 'string') return string;
+    if(typeof string !== 'string') return string;
     return Array.from(string).map(x => x.charCodeAt(0));
   }
 
   static fromSeed(seed: string, ss58Format = 42) {
-    const keyring = new Keyring({ type: 'sr25519', ss58Format });
+    const keyring = new Keyring({type: 'sr25519', ss58Format});
     return keyring.addFromUri(seed);
   }
 
   static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
-    if (creationResult.status !== this.transactionStatus.SUCCESS) {
+    if(creationResult.status !== this.transactionStatus.SUCCESS) {
       throw Error('Unable to create collection!');
     }
 
     let collectionId = null;
-    creationResult.result.events.forEach(({ event: { data, method, section } }) => {
-      if ((section === 'common') && (method === 'CollectionCreated')) {
+    creationResult.result.events.forEach(({event: {data, method, section}}) => {
+      if((section === 'common') && (method === 'CollectionCreated')) {
         collectionId = parseInt(data[0].toString(), 10);
       }
     });
 
-    if (collectionId === null) {
+    if(collectionId === null) {
       throw Error('No CollectionCreated event was found!');
     }
 
@@ -203,15 +203,15 @@ class UniqueUtil {
     success: boolean,
     tokens: { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[],
   } {
-    if (creationResult.status !== this.transactionStatus.SUCCESS) {
+    if(creationResult.status !== this.transactionStatus.SUCCESS) {
       throw Error('Unable to create tokens!');
     }
     let success = false;
     const tokens = [] as { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[];
-    creationResult.result.events.forEach(({ event: { data, method, section } }) => {
-      if (method === 'ExtrinsicSuccess') {
+    creationResult.result.events.forEach(({event: {data, method, section}}) => {
+      if(method === 'ExtrinsicSuccess') {
         success = true;
-      } else if ((section === 'common') && (method === 'ItemCreated')) {
+      } else if((section === 'common') && (method === 'ItemCreated')) {
         tokens.push({
           collectionId: parseInt(data[0].toString(), 10),
           tokenId: parseInt(data[1].toString(), 10),
@@ -220,22 +220,22 @@ class UniqueUtil {
         });
       }
     });
-    return { success, tokens };
+    return {success, tokens};
   }
 
   static extractTokensFromBurnResult(burnResult: ITransactionResult): {
     success: boolean,
     tokens: { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[],
   } {
-    if (burnResult.status !== this.transactionStatus.SUCCESS) {
+    if(burnResult.status !== this.transactionStatus.SUCCESS) {
       throw Error('Unable to burn tokens!');
     }
     let success = false;
     const tokens = [] as { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[];
-    burnResult.result.events.forEach(({ event: { data, method, section } }) => {
-      if (method === 'ExtrinsicSuccess') {
+    burnResult.result.events.forEach(({event: {data, method, section}}) => {
+      if(method === 'ExtrinsicSuccess') {
         success = true;
-      } else if ((section === 'common') && (method === 'ItemDestroyed')) {
+      } else if((section === 'common') && (method === 'ItemDestroyed')) {
         tokens.push({
           collectionId: parseInt(data[0].toString(), 10),
           tokenId: parseInt(data[1].toString(), 10),
@@ -244,18 +244,18 @@ class UniqueUtil {
         });
       }
     });
-    return { success, tokens };
+    return {success, tokens};
   }
 
   static findCollectionInEvents(events: { event: IEvent }[], collectionId: number, expectedSection: string, expectedMethod: string): boolean {
     let eventId = null;
-    events.forEach(({ event: { data, method, section } }) => {
-      if ((section === expectedSection) && (method === expectedMethod)) {
+    events.forEach(({event: {data, method, section}}) => {
+      if((section === expectedSection) && (method === expectedMethod)) {
         eventId = parseInt(data[0].toString(), 10);
       }
     });
 
-    if (eventId === null) {
+    if(eventId === null) {
       throw Error(`No ${expectedMethod} event was found!`);
     }
     return eventId === collectionId;
@@ -263,18 +263,18 @@ class UniqueUtil {
 
   static isTokenTransferSuccess(events: { event: IEvent }[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount = 1n) {
     const normalizeAddress = (address: string | ICrossAccountId) => {
-      if (typeof address === 'string') return address;
+      if(typeof address === 'string') return address;
       const obj = {} as any;
       Object.keys(address).forEach(k => {
         obj[k.toLocaleLowerCase()] = (address as any)[k];
       });
-      if (obj.substrate) return CrossAccountId.withNormalizedSubstrate(obj.substrate);
-      if (obj.ethereum) return CrossAccountId.fromLowerCaseKeys(obj).toLowerCase();
+      if(obj.substrate) return CrossAccountId.withNormalizedSubstrate(obj.substrate);
+      if(obj.ethereum) return CrossAccountId.fromLowerCaseKeys(obj).toLowerCase();
       return address;
     };
-    let transfer = { collectionId: null, tokenId: null, from: null, to: null, amount: 1 } as any;
-    events.forEach(({ event: { data, method, section } }) => {
-      if ((section === 'common') && (method === 'Transfer')) {
+    let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1} as any;
+    events.forEach(({event: {data, method, section}}) => {
+      if((section === 'common') && (method === 'Transfer')) {
         const hData = (data as any).toJSON();
         transfer = {
           collectionId: hData[0],
@@ -296,7 +296,7 @@ class UniqueUtil {
     const numberStr = number.toString();
     const dotPos = numberStr.length - decimals;
 
-    if (dotPos <= 0) {
+    if(dotPos <= 0) {
       return '0.' + '0'.repeat(Math.abs(dotPos)) + numberStr;
     } else {
       const intPart = numberStr.substring(0, dotPos);
@@ -308,7 +308,7 @@ class UniqueUtil {
 
 class UniqueEventHelper {
   private static extractIndex(index: any): [number, number] | string {
-    if (index.toRawType() === '[u8;2]') return [index[0], index[1]];
+    if(index.toRawType() === '[u8;2]') return [index[0], index[1]];
     return index.toJSON();
   }
 
@@ -316,8 +316,8 @@ class UniqueEventHelper {
     let obj: any = {};
     let index = 0;
 
-    if (data.entries) {
-      for (const [key, value] of data.entries()) {
+    if(data.entries) {
+      for(const [key, value] of data.entries()) {
         obj[key] = this.extractData(value, subTypes[index]);
         index++;
       }
@@ -331,10 +331,10 @@ class UniqueEventHelper {
   }
 
   private static extractData(data: any, type: any): any {
-    if (!type) return this.toHuman(data);
-    if (['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
-    if (['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
-    if (type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
+    if(!type) return this.toHuman(data);
+    if(['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
+    if(['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
+    if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
     return this.toHuman(data);
   }
 
@@ -342,7 +342,7 @@ class UniqueEventHelper {
     const parsedEvents: IEvent[] = [];
 
     events.forEach((record) => {
-      const { event, phase } = record;
+      const {event, phase} = record;
       const types = event.typeDef;
 
       const eventData: IEvent = {
@@ -399,7 +399,7 @@ export class ChainHelperBase {
 
     this.util = UniqueUtil;
     this.eventHelper = UniqueEventHelper;
-    if (typeof logger == 'undefined') logger = this.util.getDefaultLogger();
+    if(typeof logger == 'undefined') logger = this.util.getDefaultLogger();
     this.logger = logger;
     this.api = null;
     this.forcedNetwork = null;
@@ -425,12 +425,12 @@ export class ChainHelperBase {
   }
 
   getEndpoint(): string {
-    if (this.wsEndpoint === null) throw Error('No connection was established');
+    if(this.wsEndpoint === null) throw Error('No connection was established');
     return this.wsEndpoint;
   }
 
   getApi(): ApiPromise {
-    if (this.api === null) throw Error('API not initialized');
+    if(this.api === null) throw Error('API not initialized');
     return this.api;
   }
 
@@ -440,13 +440,13 @@ export class ChainHelperBase {
       const ievents = this.eventHelper.extractEvents(events);
       ievents.forEach((event) => {
         expectedEvents.forEach((e => {
-          if (event.section === e.section && e.names.includes(event.method)) {
+          if(event.section === e.section && e.names.includes(event.method)) {
             collectedEvents.push(event);
           }
         }));
       });
     });
-    return { unsubscribe: unsubscribe as any, collectedEvents };
+    return {unsubscribe: unsubscribe as any, collectedEvents};
   }
 
   clearChainLog(): void {
@@ -458,19 +458,19 @@ export class ChainHelperBase {
   }
 
   async connect(wsEndpoint: string, listeners?: IApiListeners) {
-    if (this.api !== null) throw Error('Already connected');
-    const { api, network } = await ChainHelperBase.createConnection(wsEndpoint, listeners, this.forcedNetwork);
+    if(this.api !== null) throw Error('Already connected');
+    const {api, network} = await ChainHelperBase.createConnection(wsEndpoint, listeners, this.forcedNetwork);
     this.wsEndpoint = wsEndpoint;
     this.api = api;
     this.network = network;
   }
 
   async disconnect() {
-    for (const child of this.children) {
+    for(const child of this.children) {
       child.clearApi();
     }
 
-    if (this.api === null) return;
+    if(this.api === null) return;
     await this.api.disconnect();
     this.clearApi();
   }
@@ -484,14 +484,14 @@ export class ChainHelperBase {
     const spec = (await api.query.system.lastRuntimeUpgrade()).toJSON() as any;
     const xcmChains = ['rococo', 'westend', 'westmint', 'acala', 'karura', 'moonbeam', 'moonriver'];
 
-    if (xcmChains.indexOf(spec.specName) > -1) return spec.specName;
+    if(xcmChains.indexOf(spec.specName) > -1) return spec.specName;
 
-    if (['quartz', 'unique', 'sapphire'].indexOf(spec.specName) > -1) return spec.specName;
+    if(['quartz', 'unique', 'sapphire'].indexOf(spec.specName) > -1) return spec.specName;
     return 'opal';
   }
 
   static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TNetworks> {
-    const api = new ApiPromise({ provider: new WsProvider(wsEndpoint) });
+    const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
     await api.isReady;
 
     const network = await this.detectNetwork(api);
@@ -505,7 +505,7 @@ export class ChainHelperBase {
     api: ApiPromise;
     network: TNetworks;
   }> {
-    if (typeof network === 'undefined' || network === null) network = 'opal';
+    if(typeof network === 'undefined' || network === null) network = 'opal';
     const supportedRPC = {
       opal: {
         unique: require('@unique-nft/opal-testnet-types/definitions').unique.rpc,
@@ -524,39 +524,39 @@ export class ChainHelperBase {
       karura: {},
       westmint: {},
     };
-    if (!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
+    if(!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
     const rpc = supportedRPC[network];
 
     // TODO: investigate how to replace rpc in runtime
     // api._rpcCore.addUserInterfaces(rpc);
 
-    const api = new ApiPromise({ provider: new WsProvider(wsEndpoint), rpc });
+    const api = new ApiPromise({provider: new WsProvider(wsEndpoint), rpc});
 
     await api.isReadyOrError;
 
-    if (typeof listeners === 'undefined') listeners = {};
-    for (const event of ['connected', 'disconnected', 'error', 'ready', 'decorated']) {
-      if (!listeners.hasOwnProperty(event) || typeof listeners[event as TApiAllowedListeners] === 'undefined') continue;
+    if(typeof listeners === 'undefined') listeners = {};
+    for(const event of ['connected', 'disconnected', 'error', 'ready', 'decorated']) {
+      if(!listeners.hasOwnProperty(event) || typeof listeners[event as TApiAllowedListeners] === 'undefined') continue;
       api.on(event as ApiInterfaceEvents, listeners[event as TApiAllowedListeners] as (...args: any[]) => any);
     }
 
-    return { api, network };
+    return {api, network};
   }
 
   getTransactionStatus(data: { events: { event: IEvent }[], status: any }) {
-    const { events, status } = data;
-    if (status.isReady) {
+    const {events, status} = data;
+    if(status.isReady) {
       return this.transactionStatus.NOT_READY;
     }
-    if (status.isBroadcast) {
+    if(status.isBroadcast) {
       return this.transactionStatus.NOT_READY;
     }
-    if (status.isInBlock || status.isFinalized) {
+    if(status.isInBlock || status.isFinalized) {
       const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
-      if (errors.length > 0) {
+      if(errors.length > 0) {
         return this.transactionStatus.FAIL;
       }
-      if (events.filter(e => e.event.method === 'ExtrinsicSuccess').length > 0) {
+      if(events.filter(e => e.event.method === 'ExtrinsicSuccess').length > 0) {
         return this.transactionStatus.SUCCESS;
       }
     }
@@ -566,7 +566,7 @@ export class ChainHelperBase {
 
   signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
-      if (options !== null) return transaction.signAndSend(sender, options, callback);
+      if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
     // eslint-disable-next-line no-async-promise-executor
@@ -575,23 +575,23 @@ export class ChainHelperBase {
         const unsub = await sign((result: any) => {
           const status = this.getTransactionStatus(result);
 
-          if (status === this.transactionStatus.SUCCESS) {
+          if(status === this.transactionStatus.SUCCESS) {
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({ result, status, blockHash: result.status.asInBlock.toHuman() });
-          } else if (status === this.transactionStatus.FAIL) {
+            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+          } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
-            if (result.hasOwnProperty('dispatchError')) {
+            if(result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
 
-              if (dispatchError) {
-                if (dispatchError.isModule) {
+              if(dispatchError) {
+                if(dispatchError.isModule) {
                   const modErr = dispatchError.asModule;
                   const errorMeta = dispatchError.registry.findMetaError(modErr);
 
                   moduleError = `${errorMeta.section}.${errorMeta.name}`;
-                } else if (dispatchError.isToken) {
+                } else if(dispatchError.isToken) {
                   moduleError = `Token: ${dispatchError.asToken}`;
                 } else {
                   // May be [object Object] in case of unhandled non-unit enum
@@ -604,7 +604,7 @@ export class ChainHelperBase {
 
             this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
             unsub();
-            reject({ status, moduleError, result });
+            reject({status, moduleError, result});
           }
         });
       } catch (e) {
@@ -641,7 +641,7 @@ export class ChainHelperBase {
       nonce: signingInfo.nonce,
     });
 
-    if (len === null) {
+    if(len === null) {
       return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()])) as RuntimeDispatchInfo;
     } else {
       return (await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
@@ -649,11 +649,11 @@ export class ChainHelperBase {
   }
 
   constructApiCall(apiCall: string, params: any[]) {
-    if (!apiCall.startsWith('api.')) throw Error(`Invalid api call: ${apiCall}`);
+    if(!apiCall.startsWith('api.')) throw Error(`Invalid api call: ${apiCall}`);
     let call = this.getApi() as any;
-    for (const part of apiCall.slice(4).split('.')) {
+    for(const part of apiCall.slice(4).split('.')) {
       call = call[part];
-      if (!call) {
+      if(!call) {
         const advice = part.includes('_') ? ' Looks like it needs to be converted to camel case.' : '';
         throw Error(`Function ${part} of api call ${apiCall} not found.${advice}`);
       }
@@ -681,7 +681,7 @@ export class ChainHelperBase {
     expectSuccess = true,
     options: Partial<SignerOptions> | null = null,/*, failureMessage='expected success'*/
   ): Promise<ITransactionResult> {
-    if (this.api === null) throw Error('API not initialized');
+    if(this.api === null) throw Error('API not initialized');
 
     const startTime = (new Date()).getTime();
     let result: ITransactionResult;
@@ -690,11 +690,11 @@ export class ChainHelperBase {
       result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
       events = this.eventHelper.extractEvents(result.result.events);
       const errorEvent = events.find((event) => event.method == 'ExecutedFailed' || event.method == 'CreatedFailed');
-      if (errorEvent)
+      if(errorEvent)
         throw Error(errorEvent.method + ': ' + extrinsic);
     }
     catch (e) {
-      if (!(e as object).hasOwnProperty('status')) throw e;
+      if(!(e as object).hasOwnProperty('status')) throw e;
       result = e as ITransactionResult;
     }
 
@@ -712,44 +712,44 @@ export class ChainHelperBase {
 
     let errorMessage = '';
 
-    if (result.status !== this.transactionStatus.SUCCESS) {
-      if (result.moduleError) {
+    if(result.status !== this.transactionStatus.SUCCESS) {
+      if(result.moduleError) {
         errorMessage = typeof result.moduleError === 'string'
           ? result.moduleError
           : `${Object.keys(result.moduleError)[0]}: ${Object.values(result.moduleError)[0]}`;
         log.moduleError = errorMessage;
       }
-      else if (result.result.dispatchError) log.dispatchError = result.result.dispatchError;
+      else if(result.result.dispatchError) log.dispatchError = result.result.dispatchError;
     }
-    if (events.length > 0) log.events = events;
+    if(events.length > 0) log.events = events;
 
     this.chainLog.push(log);
 
-    if (expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
-      if (result.moduleError) throw Error(`${errorMessage}`);
-      else if (result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
+    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
+      if(result.moduleError) throw Error(`${errorMessage}`);
+      else if(result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
     }
     return result as any;
   }
 
   async callRpc
-    // TODO: make it strongly typed, or use api.query/api.rpc directly
-    // <
-    // K extends 'rpc' | 'query',
-    // E extends string,
-    // V extends (...args: any) => any = ForceFunction<
-    //   Get2<
-    //     K extends 'rpc' ? DecoratedRpc<'promise', RpcInterface> : QueryableStorage<'promise'>,
-    //     E, (...args: any) => Invalid<'not found'>
-    //   >
-    // >,
-    // P = Parameters<V>,
-    // >
-    (rpc: string, params?: any[]): Promise<any> {
+  // TODO: make it strongly typed, or use api.query/api.rpc directly
+  // <
+  // K extends 'rpc' | 'query',
+  // E extends string,
+  // V extends (...args: any) => any = ForceFunction<
+  //   Get2<
+  //     K extends 'rpc' ? DecoratedRpc<'promise', RpcInterface> : QueryableStorage<'promise'>,
+  //     E, (...args: any) => Invalid<'not found'>
+  //   >
+  // >,
+  // P = Parameters<V>,
+  // >
+  (rpc: string, params?: any[]): Promise<any> {
 
-    if (typeof params === 'undefined') params = [] as any;
-    if (this.api === null) throw Error('API not initialized');
-    if (!rpc.startsWith('api.rpc.') && !rpc.startsWith('api.query.')) throw Error(`${rpc} is not RPC call`);
+    if(typeof params === 'undefined') params = [] as any;
+    if(this.api === null) throw Error('API not initialized');
+    if(!rpc.startsWith('api.rpc.') && !rpc.startsWith('api.query.')) throw Error(`${rpc} is not RPC call`);
 
     const startTime = (new Date()).getTime();
     let result;
@@ -775,18 +775,18 @@ export class ChainHelperBase {
 
     this.chainLog.push(log);
 
-    if (error !== null) throw error;
+    if(error !== null) throw error;
 
     return result;
   }
 
   getSignerAddress(signer: IKeyringPair | string): string {
-    if (typeof signer === 'string') return signer;
+    if(typeof signer === 'string') return signer;
     return signer.address;
   }
 
   fetchAllPalletNames(): string[] {
-    if (this.api === null) throw Error('API not initialized');
+    if(this.api === null) throw Error('API not initialized');
     return this.api.runtimeMetadata.asLatest.pallets.map(m => m.name.toString().toLowerCase()).sort();
   }
 
@@ -852,11 +852,11 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       id: collectionId, name: null, description: null, tokensCount: 0, admins: [],
       raw: humanCollection,
     } as any, jsonCollection = collection.toJSON();
-    if (humanCollection === null) return null;
+    if(humanCollection === null) return null;
     collectionData.raw.limits = jsonCollection.limits;
     collectionData.raw.permissions = jsonCollection.permissions;
     collectionData.normalizedOwner = this.helper.address.normalizeSubstrate(collectionData.raw.owner);
-    for (const key of ['name', 'description']) {
+    for(const key of ['name', 'description']) {
       collectionData[key] = this.helper.util.vec2str(humanCollection[key]);
     }
 
@@ -1142,7 +1142,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async enableNesting(signer: TSigner, collectionId: number, permissions: INestingPermissions): Promise<boolean> {
-    return await this.setPermissions(signer, collectionId, { nesting: permissions });
+    return await this.setPermissions(signer, collectionId, {nesting: permissions});
   }
 
   /**
@@ -1154,7 +1154,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async disableNesting(signer: TSigner, collectionId: number): Promise<boolean> {
-    return await this.setPermissions(signer, collectionId, { nesting: { tokenOwner: false, collectionAdmin: false } });
+    return await this.setPermissions(signer, collectionId, {nesting: {tokenOwner: false, collectionAdmin: false}});
   }
 
   /**
@@ -1236,7 +1236,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
 
-    return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, { Substrate: typeof signer === 'string' ? signer : signer.address }, addressObj, amount);
+    return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
   }
 
   /**
@@ -1279,7 +1279,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to burn token for ${label}`,
     );
     const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult);
-    if (burnedTokens.tokens.length > 1) throw Error('Burned multiple tokens');
+    if(burnedTokens.tokens.length > 1) throw Error('Burned multiple tokens');
     return burnedTokens.success;
   }
 
@@ -1427,21 +1427,21 @@ class NFTnRFT extends CollectionGroup {
     normalizedOwner: CrossAccountId;
   } | null> {
     let tokenData;
-    if (typeof blockHashAt === 'undefined') {
+    if(typeof blockHashAt === 'undefined') {
       tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', [collectionId, tokenId]);
     }
     else {
-      if (propertyKeys.length == 0) {
+      if(propertyKeys.length == 0) {
         const collection = (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
-        if (!collection) return null;
+        if(!collection) return null;
         propertyKeys = collection.tokenPropertyPermissions.map((x: ITokenPropertyPermission) => x.key);
       }
       tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', [collectionId, tokenId, propertyKeys, blockHashAt]);
     }
     tokenData = tokenData.toHuman();
-    if (tokenData === null || tokenData.owner === null) return null;
+    if(tokenData === null || tokenData.owner === null) return null;
     const owner = {} as any;
-    for (const key of Object.keys(tokenData.owner)) {
+    for(const key of Object.keys(tokenData.owner)) {
       owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate'
         ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key])
         : tokenData.owner[key];
@@ -1460,7 +1460,7 @@ class NFTnRFT extends CollectionGroup {
    */
   async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId> {
     let owner;
-    if (typeof blockHashAt === 'undefined') {
+    if(typeof blockHashAt === 'undefined') {
       owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId]);
     } else {
       owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId, blockHashAt]);
@@ -1478,13 +1478,13 @@ class NFTnRFT extends CollectionGroup {
    */
   async getTokenTopmostOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId | null> {
     let owner;
-    if (typeof blockHashAt === 'undefined') {
+    if(typeof blockHashAt === 'undefined') {
       owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', [collectionId, tokenId]);
     } else {
       owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', [collectionId, tokenId, blockHashAt]);
     }
 
-    if (owner === null) return null;
+    if(owner === null) return null;
 
     return owner.toHuman();
   }
@@ -1500,7 +1500,7 @@ class NFTnRFT extends CollectionGroup {
   async nestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken): Promise<boolean> {
     const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferToken(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress);
-    if (!result) {
+    if(!result) {
       throw Error('Unable to nest token!');
     }
     return result;
@@ -1518,7 +1518,7 @@ class NFTnRFT extends CollectionGroup {
   async unnestToken(signer: TSigner, tokenObj: IToken, rootTokenObj: IToken, toAddressObj: ICrossAccountId): Promise<boolean> {
     const rootTokenAddress = this.helper.util.getTokenAccount(rootTokenObj);
     const result = await this.transferTokenFrom(signer, tokenObj.collectionId, tokenObj.tokenId, rootTokenAddress, toAddressObj);
-    if (!result) {
+    if(!result) {
       throw Error('Unable to unnest token!');
     }
     return result;
@@ -1620,9 +1620,9 @@ class NFTnRFT extends CollectionGroup {
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions, mode: 'NFT' | 'RFT'): Promise<UniqueBaseCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
-    collectionOptions.mode = (mode === 'NFT') ? { nft: null } : { refungible: null };
-    for (const key of ['name', 'description', 'tokenPrefix']) {
-      if (typeof collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
+    collectionOptions.mode = (mode === 'NFT') ? {nft: null} : {refungible: null};
+    for(const key of ['name', 'description', 'tokenPrefix']) {
+      if(typeof collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
     }
     const creationResult = await this.helper.executeExtrinsic(
       signer,
@@ -1741,13 +1741,13 @@ class NFTGroup extends NFTnRFT {
    */
   async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<IToken[]> {
     let children;
-    if (typeof blockHashAt === 'undefined') {
+    if(typeof blockHashAt === 'undefined') {
       children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId]);
     } else {
       children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId, blockHashAt]);
     }
 
-    return children.toJSON().map((x: any) => ({ collectionId: x.collection, tokenId: x.token }));
+    return children.toJSON().map((x: any) => ({collectionId: x.collection, tokenId: x.token}));
   }
 
   /**
@@ -1775,7 +1775,7 @@ class NFTGroup extends NFTnRFT {
   async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; properties?: IProperty[]; }): Promise<UniqueNFToken> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? { Substrate: data.owner } : data.owner, {
+      'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
         NFT: {
           properties: data.properties,
         },
@@ -1783,8 +1783,8 @@ class NFTGroup extends NFTnRFT {
       true,
     );
     const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
-    if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
-    if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
+    if(createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
+    if(createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
   }
 
@@ -1806,7 +1806,7 @@ class NFTGroup extends NFTnRFT {
   async mintMultipleTokens(signer: TSigner, collectionId: number, tokens: { owner: ICrossAccountId, properties?: IProperty[] }[]): Promise<UniqueNFToken[]> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.unique.createMultipleItemsEx', [collectionId, { NFT: tokens }],
+      'api.tx.unique.createMultipleItemsEx', [collectionId, {NFT: tokens}],
       true,
     );
     const collection = this.getCollectionObject(collectionId);
@@ -1833,8 +1833,8 @@ class NFTGroup extends NFTnRFT {
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { properties?: IProperty[] }[]): Promise<UniqueNFToken[]> {
     const rawTokens = [];
-    for (const token of tokens) {
-      const raw = { NFT: { properties: token.properties } };
+    for(const token of tokens) {
+      const raw = {NFT: {properties: token.properties}};
       rawTokens.push(raw);
     }
     const creationResult = await this.helper.executeExtrinsic(
@@ -1962,7 +1962,7 @@ class RFTGroup extends NFTnRFT {
   async mintToken(signer: TSigner, data: { collectionId: number; owner: ICrossAccountId | string; pieces: bigint; properties?: IProperty[]; }): Promise<UniqueRFToken> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? { Substrate: data.owner } : data.owner, {
+      'api.tx.unique.createItem', [data.collectionId, (typeof data.owner === 'string') ? {Substrate: data.owner} : data.owner, {
         ReFungible: {
           pieces: data.pieces,
           properties: data.properties,
@@ -1971,8 +1971,8 @@ class RFTGroup extends NFTnRFT {
       true,
     );
     const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
-    if (createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
-    if (createdTokens.tokens.length < 1) throw Error('No tokens minted');
+    if(createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
+    if(createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
   }
 
@@ -1980,7 +1980,7 @@ class RFTGroup extends NFTnRFT {
     throw Error('Not implemented');
     const creationResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.unique.createMultipleItemsEx', [collectionId, { RefungibleMultipleOwners: tokens }],
+      'api.tx.unique.createMultipleItemsEx', [collectionId, {RefungibleMultipleOwners: tokens}],
       true, // `Unable to mint RFT tokens for ${label}`,
     );
     const collection = this.getCollectionObject(collectionId);
@@ -1998,8 +1998,8 @@ class RFTGroup extends NFTnRFT {
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { pieces: bigint, properties?: IProperty[] }[]): Promise<UniqueRFToken[]> {
     const rawTokens = [];
-    for (const token of tokens) {
-      const raw = { ReFungible: { pieces: token.pieces, properties: token.properties } };
+    for(const token of tokens) {
+      const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
       rawTokens.push(raw);
     }
     const creationResult = await this.helper.executeExtrinsic(
@@ -2080,7 +2080,7 @@ class RFTGroup extends NFTnRFT {
       'api.tx.unique.repartition', [collectionId, tokenId, amount],
       true,
     );
-    if (currentAmount < amount) return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemCreated');
+    if(currentAmount < amount) return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemCreated');
     return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemDestroyed');
   }
 }
@@ -2112,10 +2112,10 @@ class FTGroup extends CollectionGroup {
    */
   async mintCollection(signer: TSigner, collectionOptions: ICollectionCreationOptions = {}, decimalPoints = 0): Promise<UniqueFTCollection> {
     collectionOptions = JSON.parse(JSON.stringify(collectionOptions)) as ICollectionCreationOptions; // Clone object
-    if (collectionOptions.tokenPropertyPermissions) throw Error('Fungible collections has no tokenPropertyPermissions');
-    collectionOptions.mode = { fungible: decimalPoints };
-    for (const key of ['name', 'description', 'tokenPrefix']) {
-      if (typeof collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
+    if(collectionOptions.tokenPropertyPermissions) throw Error('Fungible collections has no tokenPropertyPermissions');
+    collectionOptions.mode = {fungible: decimalPoints};
+    for(const key of ['name', 'description', 'tokenPrefix']) {
+      if(typeof collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
     }
     const creationResult = await this.helper.executeExtrinsic(
       signer,
@@ -2137,7 +2137,7 @@ class FTGroup extends CollectionGroup {
   async mintTokens(signer: TSigner, collectionId: number, amount: bigint, owner: ICrossAccountId | string): Promise<boolean> {
     const creationResult = await this.helper.executeExtrinsic(
       signer,
-      'api.tx.unique.createItem', [collectionId, (typeof owner === 'string') ? { Substrate: owner } : owner, {
+      'api.tx.unique.createItem', [collectionId, (typeof owner === 'string') ? {Substrate: owner} : owner, {
         Fungible: {
           value: amount,
         },
@@ -2157,8 +2157,8 @@ class FTGroup extends CollectionGroup {
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: { value: bigint }[], owner: ICrossAccountId): Promise<boolean> {
     const rawTokens = [];
-    for (const token of tokens) {
-      const raw = { Fungible: { Value: token.value } };
+    for(const token of tokens) {
+      const raw = {Fungible: {Value: token.value}};
       rawTokens.push(raw);
     }
     const creationResult = await this.helper.executeExtrinsic(
@@ -2310,14 +2310,14 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    */
   async getBlockHashByNumber(blockNumber: number): Promise<string | null> {
     const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])).toJSON();
-    if (blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
+    if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
     return blockHash;
   }
 
   // TODO add docs
   async getBlock(blockHashOrNumber: string | number): Promise<IBlock | null> {
     const blockHash = typeof blockHashOrNumber === 'string' ? blockHashOrNumber : await this.getBlockHashByNumber(blockHashOrNumber);
-    if (!blockHash) return null;
+    if(!blockHash) return null;
     return (await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash])).toHuman().block;
   }
 
@@ -2363,9 +2363,9 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
 
-    let transfer = { from: null, to: null, amount: 0n } as any;
-    result.result.events.forEach(({ event: { data, method, section } }) => {
-      if ((section === 'balances') && (method === 'Transfer')) {
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if((section === 'balances') && (method === 'Transfer')) {
         transfer = {
           from: this.helper.address.normalizeSubstrate(data[0]),
           to: this.helper.address.normalizeSubstrate(data[1]),
@@ -2386,7 +2386,7 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    */
   async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
     const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
-    return { free: accountInfo.free.toBigInt(), frozen: accountInfo.frozen.toBigInt(), reserved: accountInfo.reserved.toBigInt() };
+    return {free: accountInfo.free.toBigInt(), frozen: accountInfo.frozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
   }
 
   /**
@@ -2400,11 +2400,11 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
   async getLocked(address: TSubstrateAccount): Promise<{ id: string, amount: bigint, reason: string }[]> {
     const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
-    return locks.map((lock: any) => ({ id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons }));
+    return locks.map((lock: any) => ({id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}));
   }
   async getFrozen(address: TSubstrateAccount): Promise<{ id: string, amount: bigint }[]> {
     const locks = (await this.helper.api!.query.balances.freezes(address)) as unknown as Array<any>;
-    return locks.map(lock => ({ id: lock.id.toUtf8(), amount: lock.amount.toBigInt() }));
+    return locks.map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()}));
   }
 }
 
@@ -2430,9 +2430,9 @@ class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async transferToEthereum(signer: TSigner, address: TEthereumAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true);
 
-    let transfer = { from: null, to: null, amount: 0n } as any;
-    result.result.events.forEach(({ event: { data, method, section } }) => {
-      if ((section === 'balances') && (method === 'Transfer')) {
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if((section === 'balances') && (method === 'Transfer')) {
         transfer = {
           from: data[0].toString(),
           to: data[1].toString(),
@@ -2545,9 +2545,9 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async forceTransferToSubstrate(signer: TSigner, from: TSubstrateAccount, to: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.forceTransfer', [from, to, amount], true);
 
-    let transfer = { from: null, to: null, amount: 0n } as any;
-    result.result.events.forEach(({ event: { data, method, section } }) => {
-      if ((section === 'balances') && (method === 'Transfer')) {
+    let transfer = {from: null, to: null, amount: 0n} as any;
+    result.result.events.forEach(({event: {data, method, section}}) => {
+      if((section === 'balances') && (method === 'Transfer')) {
         transfer = {
           from: this.helper.address.normalizeSubstrate(data[0]),
           to: this.helper.address.normalizeSubstrate(data[1]),
@@ -2574,7 +2574,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
       .find(e => e.event.section === 'vesting' &&
         e.event.method === 'VestingScheduleAdded' &&
         e.event.data[0].toHuman() === signer.address);
-    if (!event) throw Error('Cannot find transfer in events');
+    if(!event) throw Error('Cannot find transfer in events');
   }
 
   /**
@@ -2602,7 +2602,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
       .find(e => e.event.section === 'vesting' &&
         e.event.method === 'Claimed' &&
         e.event.data[0].toHuman() === signer.address);
-    if (!event) throw Error('Cannot find claim in events');
+    if(!event) throw Error('Cannot find claim in events');
   }
 }
 
@@ -2662,12 +2662,12 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
         ? hexToU8a(key.toString(16))
         : key;
 
-    if (ss58Format < 0 || ss58Format > 16383 || [46, 47].includes(ss58Format)) {
+    if(ss58Format < 0 || ss58Format > 16383 || [46, 47].includes(ss58Format)) {
       throw new Error(`ss58Format is not valid, received ${typeof ss58Format} "${ss58Format}"`);
     }
 
     const allowedDecodedLengths = [1, 2, 4, 8, 32, 33];
-    if (!allowedDecodedLengths.includes(u8a.length)) {
+    if(!allowedDecodedLengths.includes(u8a.length)) {
       throw new Error(`key length is not valid, received ${u8a.length}, valid values are ${allowedDecodedLengths.join(', ')}`);
     }
 
@@ -2692,11 +2692,11 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    * @returns substrate address
    */
   restoreCrossAccountFromBigInt(number: bigint): TSubstrateAccount {
-    if (this.helper.api === null) {
+    if(this.helper.api === null) {
       throw 'Not connected';
     }
     const res = this.helper.api.registry.createType('AccountId', '0x' + number.toString(16).padStart(64, '0')).toJSON();
-    if (res === undefined || res === null) {
+    if(res === undefined || res === null) {
       throw 'Restore address error';
     }
     return res.toString();
@@ -2708,12 +2708,12 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    * @returns substrate cross account id
    */
   convertCrossAccountFromEthCrossAccount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
-    if (ethCrossAccount.sub === '0') {
-      return { Ethereum: ethCrossAccount.eth.toLocaleLowerCase() };
+    if(ethCrossAccount.sub === '0') {
+      return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
     }
 
     const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.sub));
-    return { Substrate: ss58 };
+    return {Substrate: ss58};
   }
 
   paraSiblingSovereignAccount(paraid: number) {
@@ -2737,7 +2737,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns
    */
   async stake(signer: TSigner, amountToStake: bigint, label?: string): Promise<boolean> {
-    if (typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
+    if(typeof label === 'undefined') label = `${signer.address} amount: ${amountToStake}`;
     const _stakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.stake',
       [amountToStake], true,
@@ -2754,7 +2754,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns block hash where unstake happened
    */
   async unstakeAll(signer: TSigner, label?: string): Promise<string> {
-    if (typeof label === 'undefined') label = `${signer.address}`;
+    if(typeof label === 'undefined') label = `${signer.address}`;
     const unstakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.unstakeAll',
       [], true,
@@ -2770,7 +2770,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns block hash where unstake happened
    */
   async unstakePartial(signer: TSigner, amount: bigint, label?: string): Promise<string> {
-    if (typeof label === 'undefined') label = `${signer.address}`;
+    if(typeof label === 'undefined') label = `${signer.address}`;
     const unstakeResult = await this.helper.executeExtrinsic(
       signer, 'api.tx.appPromotion.unstakePartial',
       [amount], true,
@@ -2784,7 +2784,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns {number}
    */
   async getStakesNumber(address: ICrossAccountId): Promise<number> {
-    if ('Ethereum' in address) throw Error('only substrate address');
+    if('Ethereum' in address) throw Error('only substrate address');
     return (await this.helper.callRpc('api.query.appPromotion.stakesPerAccount', [address.Substrate])).toNumber();
   }
 
@@ -2794,7 +2794,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns total staked amount
    */
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
-    if (address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
+    if(address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
     return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
   }
 
@@ -3077,15 +3077,15 @@ class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     let beneficiary;
     let assets;
 
-    if (xcmVersion == 2) {
-      destination = { V1: destinationContent };
-      beneficiary = { V1: beneficiaryContent };
-      assets = { V1: assetsContent };
+    if(xcmVersion == 2) {
+      destination = {V1: destinationContent};
+      beneficiary = {V1: beneficiaryContent};
+      assets = {V1: assetsContent};
 
-    } else if (xcmVersion == 3) {
-      destination = { V2: destinationContent };
-      beneficiary = { V2: beneficiaryContent };
-      assets = { V2: assetsContent };
+    } else if(xcmVersion == 3) {
+      destination = {V2: destinationContent};
+      beneficiary = {V2: beneficiaryContent};
+      assets = {V2: assetsContent};
 
     } else {
       throw Error('Unknown XCM version: ' + xcmVersion);
@@ -3125,7 +3125,7 @@ class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
 class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async accounts(address: string, currencyId: any) {
-    const { free } = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
+    const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
     return BigInt(free);
   }
 }
@@ -3148,7 +3148,7 @@ class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
       await this.helper.callRpc('api.query.assets.account', [assetId, address])
     ).toJSON()! as any;
 
-    if (accountAsset !== null) {
+    if(accountAsset !== null) {
       return BigInt(accountAsset['balance']);
     } else {
       return null;
@@ -3207,7 +3207,7 @@ class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
   }
 
   async referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, { Standard: accountVote }], true);
+    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
   }
 }
 
@@ -3424,12 +3424,12 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
       let schedArgs;
       let scheduleFn;
 
-      if (this.options.scheduledId) {
+      if(this.options.scheduledId) {
         schedArgs = [this.options.scheduledId!, ...mandatorySchedArgs];
 
-        if (this.scheduleFn == 'schedule') {
+        if(this.scheduleFn == 'schedule') {
           scheduleFn = 'scheduleNamed';
-        } else if (this.scheduleFn == 'scheduleAfter') {
+        } else if(this.scheduleFn == 'scheduleAfter') {
           scheduleFn = 'scheduleNamedAfter';
         }
       } else {
@@ -3472,15 +3472,15 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
         options,
       );
 
-      if (result.status === 'Fail') return result;
+      if(result.status === 'Fail') return result;
 
       const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
-      if (data.isErr) {
-        if (data.asErr.isModule) {
+      if(data.isErr) {
+        if(data.asErr.isModule) {
           const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
           const metaError = super.getApi()?.registry.findMetaError(error);
           throw new Error(`${metaError.section}.${metaError.name}`);
-        } else if (data.asErr.isToken) {
+        } else if(data.asErr.isToken) {
           throw new Error(`Token: ${data.asErr.asToken}`);
         }
         // May be [object Object] in case of unhandled non-unit enum
@@ -3678,8 +3678,8 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.isTokenApproved(this.collectionId, tokenId, toAddressObj);
   }
 
-  async mintToken(signer: TSigner, owner: ICrossAccountId = { Substrate: signer.address }, properties?: IProperty[]) {
-    return await this.helper.nft.mintToken(signer, { collectionId: this.collectionId, owner, properties });
+  async mintToken(signer: TSigner, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
+    return await this.helper.nft.mintToken(signer, {collectionId: this.collectionId, owner, properties});
   }
 
   async mintMultipleTokens(signer: TSigner, tokens: { owner: ICrossAccountId, properties?: IProperty[] }[]) {
@@ -3707,11 +3707,11 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
   }
 
   async nestToken(signer: TSigner, tokenId: number, toTokenObj: IToken) {
-    return await this.helper.nft.nestToken(signer, { collectionId: this.collectionId, tokenId }, toTokenObj);
+    return await this.helper.nft.nestToken(signer, {collectionId: this.collectionId, tokenId}, toTokenObj);
   }
 
   async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
-    return await this.helper.nft.unnestToken(signer, { collectionId: this.collectionId, tokenId }, fromTokenObj, toAddressObj);
+    return await this.helper.nft.unnestToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj);
   }
 
   scheduleAt<T extends UniqueHelper>(
@@ -3804,8 +3804,8 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
     return await this.helper.rft.repartitionToken(signer, this.collectionId, tokenId, amount);
   }
 
-  async mintToken(signer: TSigner, pieces = 1n, owner: ICrossAccountId = { Substrate: signer.address }, properties?: IProperty[]) {
-    return await this.helper.rft.mintToken(signer, { collectionId: this.collectionId, owner, pieces, properties });
+  async mintToken(signer: TSigner, pieces = 1n, owner: ICrossAccountId = {Substrate: signer.address}, properties?: IProperty[]) {
+    return await this.helper.rft.mintToken(signer, {collectionId: this.collectionId, owner, pieces, properties});
   }
 
   async mintMultipleTokens(signer: TSigner, tokens: { pieces: bigint, owner: ICrossAccountId, properties?: IProperty[] }[]) {
@@ -3833,11 +3833,11 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
   }
 
   async nestToken(signer: TSigner, tokenId: number, toTokenObj: IToken) {
-    return await this.helper.rft.nestToken(signer, { collectionId: this.collectionId, tokenId }, toTokenObj);
+    return await this.helper.rft.nestToken(signer, {collectionId: this.collectionId, tokenId}, toTokenObj);
   }
 
   async unnestToken(signer: TSigner, tokenId: number, fromTokenObj: IToken, toAddressObj: ICrossAccountId) {
-    return await this.helper.rft.unnestToken(signer, { collectionId: this.collectionId, tokenId }, fromTokenObj, toAddressObj);
+    return await this.helper.rft.unnestToken(signer, {collectionId: this.collectionId, tokenId}, fromTokenObj, toAddressObj);
   }
 
   scheduleAt<T extends UniqueHelper>(
@@ -3879,11 +3879,11 @@ export class UniqueFTCollection extends UniqueBaseCollection {
     return await this.helper.ft.getTop10Owners(this.collectionId);
   }
 
-  async mint(signer: TSigner, amount = 1n, owner: ICrossAccountId = { Substrate: signer.address }) {
+  async mint(signer: TSigner, amount = 1n, owner: ICrossAccountId = {Substrate: signer.address}) {
     return await this.helper.ft.mintTokens(signer, this.collectionId, amount, owner);
   }
 
-  async mintWithOneOwner(signer: TSigner, tokens: { value: bigint }[], owner: ICrossAccountId = { Substrate: signer.address }) {
+  async mintWithOneOwner(signer: TSigner, tokens: { value: bigint }[], owner: ICrossAccountId = {Substrate: signer.address}) {
     return await this.helper.ft.mintMultipleTokensWithOneOwner(signer, this.collectionId, tokens, owner);
   }
 

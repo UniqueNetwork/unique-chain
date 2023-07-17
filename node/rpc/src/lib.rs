@@ -204,7 +204,8 @@ pub struct EthDeps<C, P, CA: ChainApi> {
 	pub eth_block_data_cache: Arc<EthBlockDataCacheTask<Block>>,
 	/// EthFilterApi pool.
 	pub eth_filter_pool: Option<FilterPool>,
-	pub eth_pubsub_notification_sinks: Arc<EthereumBlockNotificationSinks<EthereumBlockNotification<Block>>>,
+	pub eth_pubsub_notification_sinks:
+		Arc<EthereumBlockNotificationSinks<EthereumBlockNotification<Block>>>,
 	/// Whether to enable eth dev signer
 	pub enable_dev_signer: bool,
 
@@ -247,7 +248,8 @@ where
 {
 	use fc_rpc::{
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
-		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer, TxPool, TxPoolApiServer,
+		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer, TxPool,
+		TxPoolApiServer,
 	};
 
 	let EthDeps {
@@ -294,10 +296,7 @@ where
 		.into_rpc(),
 	)?;
 
-	let tx_pool = TxPool::new(
-		client.clone(),
-		graph,
-		);
+	let tx_pool = TxPool::new(client.clone(), graph);
 
 	if let Some(filter_pool) = eth_filter_pool {
 		io.merge(

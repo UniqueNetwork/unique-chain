@@ -1,7 +1,5 @@
 use crate::{
-	runtime_common::{
-		config::ethereum::CrossAccountId,
-	},
+	runtime_common::{config::ethereum::CrossAccountId},
 	Runtime,
 };
 use up_common::types::opaque::RuntimeInstance;
