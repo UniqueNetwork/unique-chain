@@ -1,6 +1,6 @@
 use super::*;
 
-pub type TechnicalCollective = pallet_collective::Instance3;
+pub type TechnicalCollective = pallet_collective::Instance2;
 impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
@@ -14,7 +14,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type MaxProposalWeight = MaxCollectivesProposalWeight;
 }
 
-pub type TechnicalCollectiveMembership = pallet_membership::Instance3;
+pub type TechnicalCollectiveMembership = pallet_membership::Instance2;
 impl pallet_membership::Config<TechnicalCollectiveMembership> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = RootOrHalfCouncil;

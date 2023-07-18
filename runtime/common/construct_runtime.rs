@@ -67,28 +67,24 @@ macro_rules! construct_runtime {
                 Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 43,
 
                 #[cfg(feature = "governance")]
-                Fellowship: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 44,
+                TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 44,
 
                 #[cfg(feature = "governance")]
-                TechnicalCommittee: pallet_collective::<Instance3>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 45,
+                CouncilMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 45,
 
                 #[cfg(feature = "governance")]
-                CouncilMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 46,
+                TechnicalCommitteeMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 46,
 
-                #[cfg(feature = "governance")]
-                FellowshipMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 47,
+				#[cfg(feature = "governance")]
+                Fellowship: pallet_ranked_collective::{Pallet, Call, Storage, Event<T>} = 47,
 
-                #[cfg(feature = "governance")]
-                TechnicalCommitteeMembership: pallet_membership::<Instance3>::{Pallet, Call, Storage, Event<T>, Config<T>} = 48,
+				#[cfg(feature = "governance")]
+                FellowshipReferenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 48,
 
                 #[cfg(feature = "governance")]
                 GovScheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 49,
 
-				#[cfg(feature = "governance")]
-                FellowshipCollective: pallet_ranked_collective::{Pallet, Call, Storage, Event<T>} = 97,
 
-				#[cfg(feature = "governance")]
-                FellowshipReferenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 98,
 
 				#[cfg(feature = "governance")]
                 Origins: runtime_common::config::pallets::governance::origins::pallet_custom_origins::{Origin} = 99,

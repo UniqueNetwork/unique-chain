@@ -183,16 +183,10 @@ macro_rules! testnet_genesis {
 			council: CouncilConfig::default(),
 
 			#[cfg(not(feature = "unique-runtime"))]
-			fellowship: FellowshipConfig::default(),
-
-			#[cfg(not(feature = "unique-runtime"))]
 			technical_committee: TechnicalCommitteeConfig::default(),
 
 			#[cfg(not(feature = "unique-runtime"))]
 			council_membership: CouncilMembershipConfig::default(),
-
-			#[cfg(not(feature = "unique-runtime"))]
-			fellowship_membership: FellowshipMembershipConfig::default(),
 
 			#[cfg(not(feature = "unique-runtime"))]
 			technical_committee_membership: TechnicalCommitteeMembershipConfig::default(),

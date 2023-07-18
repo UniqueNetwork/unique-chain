@@ -16,18 +16,21 @@
 
 use frame_support::{
 	PalletId, parameter_types,
-	traits::{EnsureOrigin, EqualPrivilegeOnly, EitherOfDiverse},
+	traits::{
+		EnsureOrigin, EqualPrivilegeOnly, EitherOfDiverse, EitherOf, MapSuccess, ConstU16,
+		TryMapSuccess,
+	},
 	weights::Weight,
 	pallet_prelude::*,
 };
 use frame_system::EnsureRoot;
 use sp_runtime::{
 	Perbill,
-	traits::{AccountIdConversion, ConstU32},
+	traits::{AccountIdConversion, ConstU32, Replace},
 };
 use crate::{
 	Runtime, RuntimeOrigin, RuntimeEvent, RuntimeCall, OriginCaller, Preimage, Balances, Treasury,
-	GovScheduler, Council, Fellowship, TechnicalCommittee,
+	GovScheduler, Council, TechnicalCommittee,
 };
 pub use up_common::{
 	constants::{UNIQUE, DAYS, HOURS, MINUTES, CENTIUNIQUE},
@@ -42,9 +45,6 @@ pub mod democracy;
 
 pub mod technical_committee;
 pub use technical_committee::*;
-
-pub mod fellowship_old;
-pub use fellowship_old::*;
 
 pub mod fellowship;
 pub use fellowship::*;

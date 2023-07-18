@@ -15,42 +15,6 @@ pub mod pallet_custom_origins {
 	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
 	#[pallet::origin]
 	pub enum Origin {
-		/// Origin for cancelling slashes.
-		StakingAdmin,
-		/// Origin for spending (any amount of) funds.
-		Treasurer,
-		/// Origin for managing the composition of the fellowship.
-		FellowshipAdmin,
-		/// Origin for managing the registrar.
-		GeneralAdmin,
-		/// Origin for starting auctions.
-		AuctionAdmin,
-		/// Origin able to force slot leases.
-		LeaseAdmin,
-		/// Origin able to cancel referenda.
-		ReferendumCanceller,
-		/// Origin able to kill referenda.
-		ReferendumKiller,
-		/// Origin able to spend up to 1 KSM from the treasury at once.
-		SmallTipper,
-		/// Origin able to spend up to 5 KSM from the treasury at once.
-		BigTipper,
-		/// Origin able to spend up to 50 KSM from the treasury at once.
-		SmallSpender,
-		/// Origin able to spend up to 500 KSM from the treasury at once.
-		MediumSpender,
-		/// Origin able to spend up to 5,000 KSM from the treasury at once.
-		BigSpender,
-		/// Origin able to dispatch a whitelisted call.
-		WhitelistedCaller,
-		/// Origin commanded by any members of the Polkadot Fellowship (no Dan grade needed).
-		FellowshipInitiates,
-		/// Origin commanded by Polkadot Fellows (3rd Dan fellows or greater).
-		Fellows,
-		/// Origin commanded by Polkadot Experts (5th Dan fellows or greater).
-		FellowshipExperts,
-		/// Origin commanded by Polkadot Masters (7th Dan fellows of greater).
-		FellowshipMasters,
 		/// Origin commanded by rank 1 of the Polkadot Fellowship and with a success of 1.
 		Fellowship1Dan,
 		/// Origin commanded by rank 2 of the Polkadot Fellowship and with a success of 2.
@@ -69,53 +33,9 @@ pub mod pallet_custom_origins {
 		Fellowship8Dan,
 		/// Origin commanded by rank 9 of the Polkadot Fellowship and with a success of 9.
 		Fellowship9Dan,
+		/// Origin able to send proposal from fellowship collective to democracy pallet.
+		FellowshipProposition,
 	}
-
-	macro_rules! decl_unit_ensures {
-		( $name:ident: $success_type:ty = $success:expr ) => {
-			pub struct $name;
-			impl<O: Into<Result<Origin, O>> + From<Origin>>
-				EnsureOrigin<O> for $name
-			{
-				type Success = $success_type;
-				fn try_origin(o: O) -> Result<Self::Success, O> {
-					o.into().and_then(|o| match o {
-						Origin::$name => Ok($success),
-						r => Err(O::from(r)),
-					})
-				}
-				#[cfg(feature = "runtime-benchmarks")]
-				fn try_successful_origin() -> Result<O, ()> {
-					Ok(O::from(Origin::$name))
-				}
-			}
-		};
-		( $name:ident ) => { decl_unit_ensures! { $name : () = () } };
-		( $name:ident: $success_type:ty = $success:expr, $( $rest:tt )* ) => {
-			decl_unit_ensures! { $name: $success_type = $success }
-			decl_unit_ensures! { $( $rest )* }
-		};
-		( $name:ident, $( $rest:tt )* ) => {
-			decl_unit_ensures! { $name }
-			decl_unit_ensures! { $( $rest )* }
-		};
-		() => {}
-	}
-	decl_unit_ensures!(
-		StakingAdmin,
-		Treasurer,
-		FellowshipAdmin,
-		GeneralAdmin,
-		AuctionAdmin,
-		LeaseAdmin,
-		ReferendumCanceller,
-		ReferendumKiller,
-		WhitelistedCaller,
-		FellowshipInitiates: u16 = 0,
-		Fellows: u16 = 3,
-		FellowshipExperts: u16 = 5,
-		FellowshipMasters: u16 = 7,
-	);
 
 	macro_rules! decl_ensure {
 		(
@@ -147,17 +67,6 @@ pub mod pallet_custom_origins {
 					_result
 				}
 			}
-		}
-	}
-
-	decl_ensure! {
-		pub type Spender: EnsureOrigin<Success = Balance> {
-			SmallTipper = 250 * CENTIUNIQUE,
-			BigTipper = 1 * UNIQUE,
-			SmallSpender = 10 * UNIQUE,
-			MediumSpender = 100 * UNIQUE,
-			BigSpender = 1_000 * UNIQUE,
-			Treasurer = 10_000 * UNIQUE,
 		}
 	}
 
