@@ -25,10 +25,9 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
+
 	use frame_support::{dispatch::*, pallet_prelude::*};
-	use frame_support::{
-		traits::{QueryPreimage, StorePreimage, EnsureOrigin},
-	};
+	use frame_support::traits::{QueryPreimage, StorePreimage, EnsureOrigin};
 	use frame_system::pallet_prelude::*;
 	use sp_core::H256;
 
@@ -39,24 +38,20 @@ pub mod pallet {
 		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// The runtime origin type.
-		type RuntimeOrigin: From<RawOrigin<Self::AccountId>>
-			+ IsType<<Self as frame_system::Config>::RuntimeOrigin>;
-
 		/// The aggregated call type.
 		type RuntimeCall: Parameter
-			+ Dispatchable<
-				RuntimeOrigin = <Self as Config>::RuntimeOrigin,
-				PostInfo = PostDispatchInfo,
-			> + GetDispatchInfo
+			+ Dispatchable<RuntimeOrigin = Self::RuntimeOrigin, PostInfo = PostDispatchInfo>
+			+ GetDispatchInfo
 			+ From<frame_system::Call<Self>>;
 
 		/// The preimage provider with which we look up call hashes to get the call.
 		type Preimages: QueryPreimage + StorePreimage;
 
-		/// The Origin that has the right to enable or disable the maintenance mode
-		/// or to execute the preimage call as root.
+		/// The Origin that has the right to enable or disable the maintenance mode.
 		type ManagerOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
+
+		/// The Origin that has the right to execute preimage.
+		type PreimageOrigin: EnsureOrigin<<Self as frame_system::Config>::RuntimeOrigin>;
 
 		/// Weight information for extrinsics in this pallet.
 		type WeightInfo: WeightInfo;
@@ -118,7 +113,7 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			use codec::Decode;
 
-			T::ManagerOrigin::ensure_origin(origin)?;
+			T::PreimageOrigin::ensure_origin(origin.clone())?;
 
 			let data = T::Preimages::fetch(&hash, None)?;
 			weight_bound.set_proof_size(
@@ -140,7 +135,7 @@ pub mod pallet {
 				DispatchError::Exhausted
 			);
 
-			match call.dispatch(frame_system::RawOrigin::Root.into()) {
+			match call.dispatch(origin) {
 				Ok(_) => Ok(Pays::No.into()),
 				Err(error_and_info) => Err(DispatchErrorWithPostInfo {
 					post_info: Pays::No.into(),

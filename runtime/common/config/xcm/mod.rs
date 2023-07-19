@@ -243,7 +243,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 
 	#[cfg(feature = "governance")]
-	type ControllerOrigin = governance::RootOrAllTechnicalCommittee;
+	type ControllerOrigin = governance::RootOrTechnicalCommitteeMember;
 
 	#[cfg(not(feature = "governance"))]
 	type ControllerOrigin = frame_system::EnsureRoot<AccountId>;
