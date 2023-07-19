@@ -58,7 +58,7 @@ async function proposeAndCollectivelyVote(
   const collective = getCollective(helper, collectiveName);
   const proposalResult = await collective.propose(members[0], proposal, Math.ceil(members.length * approvalRate));
   // if such index is returned, then it must have been executed immediately, no approvals are necessary
-  if (proposalResult.index === -1) return proposalResult;
+  if(proposalResult.index === -1) return proposalResult;
 
   // have all members vote for the proposal
   await collectivelyVote(helper, collectiveName, members, proposalResult, approvalRate);
@@ -99,7 +99,7 @@ describe('Integration test: Governance', () => {
       superuser = await privateKey('//Alice');
       crowd = await helper.arrange.createCrowd(25, 50n, donor);
 
-      for (const key of Object.keys(backups)) {
+      for(const key of Object.keys(backups)) {
         backups[key].members = await getCollective(helper, key as any).getMembers();
         backups[key].prime = await getCollective(helper, key as any).getPrimeMember();
         backups[key].proposals = await getCollective(helper, key as any).getProposals();
@@ -351,7 +351,7 @@ describe('Integration test: Governance', () => {
 
     describe('Positive', () => {
       itSub('Prime council member\'s vote replaces missing votes', async ({helper}) => {
-        if (await helper.council.getPrimeMember() != prime.address) await setPrime(helper, council[0]);
+        if(await helper.council.getPrimeMember() != prime.address) await setPrime(helper, council[0]);
         expect(await helper.council.getPrimeMember()).to.be.equal(prime.address);
 
         // todo
@@ -468,22 +468,20 @@ describe('Integration test: Governance', () => {
 
   after(async function() {
     await usingPlaygrounds(async (helper) => {
-      if (helper.fetchMissingPalletNames([Pallets.Democracy]).length != 0) return;
+      if(helper.fetchMissingPalletNames([Pallets.Democracy]).length != 0) return;
 
       let nonce = 0;
 
-      for (const key of Object.keys(backups)) {
+      for(const key of Object.keys(backups)) {
         nonce = await helper.chain.getNonce(superuser.address);
 
         const proposals = (await getCollective(helper, key as any).getProposals())
           .filter((p: string) => !backups[key].proposals.includes(p));
-        await Promise.all(proposals.map((hash: string) => {
-          return helper.getSudo().executeExtrinsic(superuser, `api.tx.${key}.disapproveProposal`, [hash], true, {nonce: nonce++});
-        }));
+        await Promise.all(proposals.map((hash: string) => helper.getSudo().executeExtrinsic(superuser, `api.tx.${key}.disapproveProposal`, [hash], true, {nonce: nonce++})));
 
         await getMembership(helper.getSudo(), key as any).resetMembers(superuser, backups[key].members);
 
-        if (backups[key].prime) await getMembership(helper.getSudo(), key as any).setPrime(superuser, backups[key].prime);
+        if(backups[key].prime) await getMembership(helper.getSudo(), key as any).setPrime(superuser, backups[key].prime);
         else await getMembership(helper.getSudo(), key as any).clearPrime(superuser);
       }
     });
