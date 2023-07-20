@@ -53,7 +53,7 @@ impl pallet_democracy::Config for Runtime {
 	type FastTrackVotingPeriod = FastTrackVotingPeriod;
 
 	/// A single technical committee member can cancel a proposal which has been passed.
-	type CancellationOrigin = TechnicalCommitteeMember;
+	type CancellationOrigin = RootOrAllTechnicalCommittee;
 
 	/// To cancel a proposal before it has been passed, the technical committee must be unanimous or
 	/// Root must agree.

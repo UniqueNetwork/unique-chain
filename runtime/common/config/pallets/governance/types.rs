@@ -23,10 +23,6 @@ parameter_types! {
 	pub const CouncilMaxProposals: u32 = 100;
 	pub const CouncilMaxMembers: u32 = 100;
 
-	pub FellowshipMotionDuration: BlockNumber = 3 * DAYS;
-	pub const FellowshipMaxProposals: u32 = 100;
-	pub const FellowshipMaxMembers: u32 = 100;
-
 	pub TechnicalMotionDuration: BlockNumber = 3 * DAYS;
 	pub const TechnicalMaxProposals: u32 = 100;
 	pub const TechnicalMaxMembers: u32 = 100;
@@ -36,8 +32,14 @@ parameter_types! {
 
 	pub const MaxScheduledPerBlock: u32 = 50;
 	pub const AlarmInterval: BlockNumber = 1;
-	pub const SubmissionDeposit: Balance = 0;
+	pub const SubmissionDeposit: Balance = 1000 * UNIQUE;
 	pub const UndecidingTimeout: BlockNumber = 7 * DAYS;
+}
+
+macro_rules! gov_conf_param {
+	($param:ident) => {
+		<pallet_configuration::GovConfig<Runtime>>::get().$param
+	};
 }
 
 pub type CouncilMember = pallet_collective::EnsureMember<AccountId, CouncilCollective>;

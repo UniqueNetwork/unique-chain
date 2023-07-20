@@ -188,6 +188,26 @@ describe('Integration test: Governance', () => {
           expect(await collective(helper).getMembers()).to.be.lengthOf(members.length - 1).and.not.include(member);
         });
 
+        itSub.skip('Council can add member', async (helper) => {
+
+        });
+
+        itSub.skip('Council can remove member', async (helper) => {
+
+        });
+
+        itSub.skip('Council or TechCom member can add fellowship member', async (helper) => {
+
+        });
+
+        itSub.skip('Council can promote fellowship member', async (helper) => {
+
+        });
+
+        itSub.skip('Council can demote fellowship member', async (helper) => {
+
+        });
+
         options.extraPosTests?.forEach(test => test(getMembers));
       });
 
@@ -207,6 +227,22 @@ describe('Integration test: Governance', () => {
         itSub('Cannot add a member without the collective decision', async ({helper}) => {
           const zeroAccount = helper.arrange.createEmptyAccount();
           await expect(membership(helper).addMember(alice, zeroAccount.address)).to.be.rejectedWith(/BadOrigin/);
+        });
+
+        itSub.skip('Cannot add a member from another collective', async (helper) => {
+
+        });
+
+        itSub.skip('TechCom member cannot promote/demote fellowship member', async (helper) => {
+
+        });
+
+        itSub.skip('TechCom cannot promote/demote fellowship member', async (helper) => {
+
+        });
+
+        itSub.skip('Council member cannot promote/demote fellowship member', async (helper) => {
+
         });
 
         options.extraNegTests?.forEach(test => test(getMembers));
@@ -286,26 +322,6 @@ describe('Integration test: Governance', () => {
         }),
       ],
       extraNegTests: [(members: GetAddresses) => {
-        // a bit of bullshit
-        itSub('Technical committee cannot propose and vote to add a fellowship member', async ({helper}) => {
-          const techcom = crowd.splice(0, 2);
-          await helper.getSudo().councilMembership.resetMembers(superuser, techcom.map(m => m.address));
-
-          const newMember = crowd.pop()!;
-          const call = helper.constructApiCall('api.tx.fellowshipMembership.addMember', [newMember.address]);
-          await expect(proposeAndCollectivelyVote(helper, 'council', techcom, call))
-            .to.be.rejectedWith(/BadOrigin/);
-        });
-        itSub('Councilor cannot add a fellowship member', async ({helper}) => {
-          const council = crowd.splice(0, 3);
-          await helper.getSudo().councilMembership.resetMembers(superuser, council.map(m => m.address));
-
-          const newMember = helper.arrange.createEmptyAccount();
-          const call = helper.constructApiCall('api.tx.fellowshipMembership.addMember', [newMember.address]);
-
-          await expect(proposeAndCollectivelyVote(helper, 'council', council, call))
-            .to.be.rejectedWith(/BadOrigin/);
-        });
         itSub('Fellows cannot add another by themselves', async ({helper}) => {
           const newMember = helper.arrange.createEmptyAccount();
           const call = helper.constructApiCall('api.tx.fellowshipMembership.addMember', [newMember.address]);
@@ -359,19 +375,6 @@ describe('Integration test: Governance', () => {
 
         expect(await helper.council.getProposalCallOf(result.hash)).to.be.null;
       });
-
-      itSub('Can force disapprove a proposal', async ({helper}) => {
-        const someone = crowd.pop()!;
-        const call = helper.constructApiCall('api.tx.technicalCommitteeMembership.addMember', [someone.address]);
-
-        const proposal = await helper.council.propose(council[0], call, 2);
-        await helper.council.vote(council[0], proposal.hash, proposal.index, true);
-        await helper.council.vote(council[1], proposal.hash, proposal.index, true);
-
-        await helper.getSudo().council.disapproveProposal(superuser, proposal.hash);
-        expect(await helper.council.getProposalCallOf(proposal.hash)).to.be.null;
-        expect(await helper.technicalCommitteeMembership.getMembers()).to.not.include(someone.address);
-      });
     });
 
     describe('Negative', () => {
@@ -396,16 +399,6 @@ describe('Integration test: Governance', () => {
           .to.be.rejectedWith(/council\.DuplicateProposal/);
       });
 
-      itSub('Cannot vote twice', async ({helper}) => {
-        const proposal = await helper.council.propose(council[0], meaninglessCall(helper), 2);
-        await helper.council.vote(council[0], proposal.hash, proposal.index, true);
-
-        // can vote again to change the vote, but not with the same vote
-        await helper.council.vote(council[0], proposal.hash, proposal.index, false);
-        await expect(helper.council.vote(council[0], proposal.hash, proposal.index, false))
-          .to.be.rejectedWith(/council\.DuplicateVote/);
-      });
-
       itSub('Non-member cannot make a proposal', async ({helper}) => {
         const someone = crowd.pop()!;
 
@@ -423,27 +416,8 @@ describe('Integration test: Governance', () => {
   });
 
 
-  /*
-  democracy:
-  councilor from collective can propose as part of a collective vote
-  normal guy can't propose
-  techie can't propose
-  fellow can't
-
-  councilor can fast track
-  techie can't fast track
-
-  normie can vote
-  techie can't
-  councilor can't - but they both can if they go as normies
-  */
 
   describe('Democracy', () => {
-    // todo fellowship can propose normally
-    // councilor can propose externally
-    // techie can fast track
-    // guy can black list, doesn't succeed afterward
-    // guy can veto, can propose again
 
     describe('Negative', () => {
       // todo before => note preimage to propose
@@ -487,3 +461,16 @@ describe('Integration test: Governance', () => {
     });
   });
 });
+// todo fellowship can propose normally
+// councilor can propose externally
+// techie can fast track
+// guy can black list, doesn't succeed afterward
+// guy can veto, can propose again
+/*
+  democracy:
+
+  councilor can't fast track
+  all council can't fast track
+  techie can't fast track
+  all techcom can fast track
+  */

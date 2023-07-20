@@ -28,12 +28,13 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_arithmetic::{
 	per_things::{Perbill, PerThing},
-	traits::{BaseArithmetic, Unsigned},
+	traits::{BaseArithmetic, Unsigned, AtLeast32BitUnsigned},
 };
 use smallvec::smallvec;
 
 pub use pallet::*;
 use sp_core::U256;
+use up_common::constants::{DAYS, HOURS, UNIQUE};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -60,6 +61,7 @@ mod pallet {
 		type Balance: Parameter
 			+ Member
 			+ AtLeast32BitUnsigned
+			+ From<up_common::types::Balance>
 			+ Codec
 			+ Default
 			+ Copy
@@ -166,6 +168,12 @@ mod pallet {
 	#[pallet::storage]
 	pub type AppPromomotionConfigurationOverride<T: Config> =
 		StorageValue<Value = AppPromotionConfiguration<T::BlockNumber>, QueryKind = ValueQuery>;
+
+	#[pallet::storage]
+	pub type GovernanceConfigurationOverride<T: Config> = StorageValue<
+		Value = GovernanceConfiguration<T::BlockNumber, T::Balance>,
+		QueryKind = ValueQuery,
+	>;
 
 	#[pallet::storage]
 	pub type CollatorSelectionDesiredCollatorsOverride<T: Config> = StorageValue<
@@ -299,6 +307,37 @@ mod pallet {
 			});
 			Ok(())
 		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
+		pub fn set_governance_arg(
+			origin: OriginFor<T>,
+			arg: GovernanceArgs<T::Balance, T::BlockNumber>,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			match arg {
+				GovernanceArgs::LaunchPeriod(_) => todo!(),
+				GovernanceArgs::VotingPeriod(_) => todo!(),
+				GovernanceArgs::FastTrackVotingPeriod(_) => todo!(),
+				GovernanceArgs::MinimumDeposit(_) => todo!(),
+				GovernanceArgs::EnactmentPeriod(_) => todo!(),
+				GovernanceArgs::CooloffPeriod(_) => todo!(),
+				GovernanceArgs::InstantAllowed(_) => todo!(),
+				GovernanceArgs::MaxVotes(_) => todo!(),
+				GovernanceArgs::MaxProposals(_) => todo!(),
+				GovernanceArgs::CouncilMotionDuration(_) => todo!(),
+				GovernanceArgs::CouncilMaxProposals(_) => todo!(),
+				GovernanceArgs::CouncilMaxMembers(_) => todo!(),
+				GovernanceArgs::TechnicalMotionDuration(_) => todo!(),
+				GovernanceArgs::TechnicalMaxProposals(_) => todo!(),
+				GovernanceArgs::TechincalMaxMembers(_) => todo!(),
+				GovernanceArgs::MaxScheduledPerBlock(_) => todo!(),
+				GovernanceArgs::AlarmInterval(_) => todo!(),
+				GovernanceArgs::SubmissionDeposit(_) => todo!(),
+				GovernanceArgs::UndecidingTimeout(_) => todo!(),
+			}
+			Ok(())
+		}
 	}
 
 	#[pallet::pallet]
@@ -347,4 +386,81 @@ pub struct AppPromotionConfiguration<BlockNumber> {
 	pub interval_income: Option<Perbill>,
 	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.
 	pub max_stakers_per_calculation: Option<u8>,
+}
+
+#[derive(Encode, Decode, Clone, Debug, TypeInfo, MaxEncodedLen, PartialEq, PartialOrd)]
+pub struct GovernanceConfiguration<BlockNumber, Balance> {
+	pub launch_period: BlockNumber,
+	pub voting_period: BlockNumber,
+	pub fast_track_voting_period: BlockNumber,
+	pub minimum_deposit: Balance,
+	pub enactment_period: BlockNumber,
+	pub cooloof_period: BlockNumber,
+	pub instant_allowed: bool,
+	pub max_votes: u32,
+	pub max_proposals: u32,
+
+	pub council_motion_duration: BlockNumber,
+	pub council_max_proposals: u32,
+	pub council_max_members: u32,
+
+	pub technical_motion_duration: BlockNumber,
+	pub technical_max_proposals: u32,
+	pub technical_max_members: u32,
+
+	pub max_scheduled_per_block: u32,
+	pub alarm_interval: BlockNumber,
+	pub submission_deposit: Balance,
+	pub undecidong_timeout: BlockNumber,
+}
+
+impl<BlockNumber: AtLeast32BitUnsigned, Balance: From<up_common::types::Balance>> Default
+	for GovernanceConfiguration<BlockNumber, Balance>
+{
+	fn default() -> Self {
+		Self {
+			launch_period: (7 * DAYS).into(),
+			voting_period: (7 * DAYS).into(),
+			fast_track_voting_period: (3 * HOURS).into(),
+			minimum_deposit: (100 * UNIQUE).into(),
+			enactment_period: (8 * DAYS).into(),
+			cooloof_period: (7 * DAYS).into(),
+			instant_allowed: true,
+			max_votes: 100,
+			max_proposals: 100,
+			council_motion_duration: (3 * DAYS).into(),
+			council_max_proposals: 100,
+			council_max_members: 100,
+			technical_motion_duration: (3 * DAYS).into(),
+			technical_max_proposals: 100,
+			technical_max_members: 100,
+			max_scheduled_per_block: 50,
+			alarm_interval: 1u32.into(),
+			submission_deposit: (1000 * UNIQUE).into(),
+			undecidong_timeout: (7 * DAYS).into(),
+		}
+	}
+}
+
+#[derive(Encode, Decode, Clone, Debug, TypeInfo, MaxEncodedLen, PartialEq)]
+pub enum GovernanceArgs<Balance, BlockNumber> {
+	LaunchPeriod(BlockNumber),
+	VotingPeriod(BlockNumber),
+	FastTrackVotingPeriod(BlockNumber),
+	MinimumDeposit(Balance),
+	EnactmentPeriod(BlockNumber),
+	CooloffPeriod(BlockNumber),
+	InstantAllowed(bool),
+	MaxVotes(u32),
+	MaxProposals(u32),
+	CouncilMotionDuration(BlockNumber),
+	CouncilMaxProposals(u32),
+	CouncilMaxMembers(u32),
+	TechnicalMotionDuration(BlockNumber),
+	TechnicalMaxProposals(u32),
+	TechincalMaxMembers(u32),
+	MaxScheduledPerBlock(u32),
+	AlarmInterval(BlockNumber),
+	SubmissionDeposit(Balance),
+	UndecidingTimeout(BlockNumber),
 }
