@@ -113,7 +113,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 		static DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 1] = [(
 			1u16,
 			pallet_referenda::TrackInfo {
-				name: "members",
+				name: "democracy-proposals",
 				max_deciding: 10,
 				decision_deposit: 10 * UNIQUE,
 				prepare_period: 30 * MINUTES,
