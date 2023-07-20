@@ -1,10 +1,12 @@
 use super::*;
 use origins::Origin as FellowshipOrigin;
 
+use pallet_ranked_collective::Rank;
 use sp_arithmetic::traits::CheckedSub;
-use sp_runtime::morph_types;
+use sp_runtime::{morph_types, traits::Convert};
 
 pub const FELLOWSHIP_MODULE_ID: PalletId = PalletId(*b"flowship");
+pub const DEMOCRACY_TRACK_ID: u16 = 10;
 
 parameter_types! {
 	pub LaunchPeriod: BlockNumber = 7 * DAYS;
@@ -111,7 +113,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 	type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
 	fn tracks() -> &'static [(Self::Id, pallet_referenda::TrackInfo<Balance, BlockNumber>)] {
 		static DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 1] = [(
-			1u16,
+			DEMOCRACY_TRACK_ID,
 			pallet_referenda::TrackInfo {
 				name: "democracy-proposals",
 				max_deciding: 10,
@@ -153,3 +155,18 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 }
 
 pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
+
+pub struct ClassToRankMapper<T, B, M>(PhantomData<T>, PhantomData<B>, PhantomData<M>);
+pub type ClassOf<T, B = Balance, M = BlockNumber> = <T as pallet_referenda::TracksInfo<B, M>>::Id;
+
+impl<T, B, M> Convert<ClassOf<T, B, M>, Rank> for ClassToRankMapper<T, B, M>
+where
+	T: pallet_referenda::TracksInfo<B, M, Id = u16>,
+{
+	fn convert(track_id: ClassOf<TracksInfo>) -> Rank {
+		match track_id {
+			DEMOCRACY_TRACK_ID => 3,
+			other => sp_runtime::traits::Identity::convert(other),
+		}
+	}
+}
