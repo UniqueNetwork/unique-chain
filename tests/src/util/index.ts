@@ -108,7 +108,7 @@ export enum Pallets {
   Council = 'council',
   //CouncilMembership = 'councilmembership',
   TechnicalCommittee = 'technicalcommittee',
-  Fellowship = 'fellowship',
+  Fellowship = 'fellowshipcollective',
   Preimage = 'preimage',
   Maintenance = 'maintenance',
   TestUtils = 'testutils',
