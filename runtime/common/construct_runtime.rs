@@ -75,7 +75,7 @@ macro_rules! construct_runtime {
                 #[cfg(feature = "governance")]
                 TechnicalCommitteeMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 46,
 
-			    #[cfg(feature = "governance")]
+                #[cfg(feature = "governance")]
                 FellowshipCollective: pallet_ranked_collective::{Pallet, Call, Storage, Event<T>} = 47,
 
 			    #[cfg(feature = "governance")]
