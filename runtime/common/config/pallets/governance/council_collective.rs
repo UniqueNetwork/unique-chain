@@ -44,6 +44,8 @@ pub type HalfCouncil =
 
 pub type ThreeFourthsCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 4>;
 
+pub type AllCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>;
+
 pub type RootOrHalfCouncil = EitherOfDiverse<EnsureRoot<AccountId>, HalfCouncil>;
 
 pub type RootOrThreeFourthsCouncil = EitherOfDiverse<EnsureRoot<AccountId>, ThreeFourthsCouncil>;

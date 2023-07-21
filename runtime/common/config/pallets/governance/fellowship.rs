@@ -74,7 +74,7 @@ where
 
 pub type FellowshipPromoteDemoteOrigin<AccountId> = EitherOf<
 	MapSuccess<EnsureRoot<AccountId>, Replace<ConstU16<65535>>>,
-	MapSuccess<CouncilMember, Replace<ConstU16<9>>>,
+	MapSuccess<AllCouncil, Replace<ConstU16<9>>>,
 >;
 
 pub struct TracksInfo;

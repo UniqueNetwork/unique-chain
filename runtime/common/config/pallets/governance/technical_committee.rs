@@ -44,5 +44,3 @@ pub type AllTechnicalCommittee =
 
 pub type RootOrAllTechnicalCommittee =
 	EitherOfDiverse<EnsureRoot<AccountId>, AllTechnicalCommittee>;
-
-pub type FellowshipCollective = pallet_ranked_collective::Pallet<Runtime>;
