@@ -1,5 +1,11 @@
 use super::*;
 
+parameter_types! {
+	pub TechnicalMotionDuration: BlockNumber = gov_conf_get!(technical_motion_duration);
+	pub TechnicalMaxProposals: u32 = gov_conf_get!(technical_max_proposals);
+	pub TechnicalMaxMembers: u32 = gov_conf_get!(technical_max_members);
+}
+
 pub type TechnicalCollective = pallet_collective::Instance2;
 impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
@@ -27,3 +33,16 @@ impl pallet_membership::Config<TechnicalCollectiveMembership> for Runtime {
 	type MaxMembers = TechnicalMaxMembers;
 	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
 }
+
+pub type TechnicalCommitteeMember = pallet_collective::EnsureMember<AccountId, TechnicalCollective>;
+
+pub type RootOrTechnicalCommitteeMember =
+	EitherOfDiverse<EnsureRoot<AccountId>, TechnicalCommitteeMember>;
+
+pub type AllTechnicalCommittee =
+	pallet_collective::EnsureProportionAtLeast<AccountId, TechnicalCollective, 1, 1>;
+
+pub type RootOrAllTechnicalCommittee =
+	EitherOfDiverse<EnsureRoot<AccountId>, AllTechnicalCommittee>;
+
+pub type FellowshipCollective = pallet_ranked_collective::Pallet<Runtime>;

@@ -17,8 +17,7 @@
 use frame_support::{
 	PalletId, parameter_types,
 	traits::{
-		EnsureOrigin, EqualPrivilegeOnly, EitherOfDiverse, EitherOf, MapSuccess, ConstU16,
-		TryMapSuccess, Polling,
+		EnsureOrigin, EqualPrivilegeOnly, EitherOfDiverse, EitherOf, MapSuccess, ConstU16, Polling,
 	},
 	weights::Weight,
 	pallet_prelude::*,
@@ -26,7 +25,8 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use sp_runtime::{
 	Perbill,
-	traits::{AccountIdConversion, ConstU32, Replace},
+	traits::{AccountIdConversion, ConstU32, Replace, CheckedSub, Convert},
+	morph_types,
 };
 use crate::{
 	Runtime, RuntimeOrigin, RuntimeEvent, RuntimeCall, OriginCaller, Preimage, Balances, Treasury,
@@ -38,10 +38,13 @@ pub use up_common::{
 };
 use pallet_collective::EnsureProportionAtLeast;
 
+use crate::gov_conf_get;
+
 pub mod council_collective;
 pub use council_collective::*;
 
 pub mod democracy;
+pub use democracy::*;
 
 pub mod technical_committee;
 pub use technical_committee::*;
@@ -52,10 +55,26 @@ pub use fellowship::*;
 pub mod origins;
 pub use origins::*;
 
-pub mod types;
-pub use types::*;
-
 pub mod scheduler;
 pub use scheduler::*;
 
 impl origins::Config for Runtime {}
+
+#[macro_export]
+macro_rules! gov_conf_get {
+	($param:ident) => {
+		<pallet_configuration::GovernanceConfigurationOverride<Runtime>>::get().$param
+	};
+}
+
+morph_types! {
+	/// A `TryMorph` implementation to reduce a scalar by a particular amount, checking for
+	/// underflow.
+	pub type CheckedReduceBy<N: TypedGet>: TryMorph = |r: N::Type| -> Result<N::Type, ()> {
+		r.checked_sub(&N::get()).ok_or(())
+	} where N::Type: CheckedSub;
+}
+
+parameter_types! {
+	pub MaxCollectivesProposalWeight: Weight = Perbill::from_percent(80) * <Runtime as frame_system::Config>::BlockWeights::get().max_block;
+}

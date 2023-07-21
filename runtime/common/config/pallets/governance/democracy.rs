@@ -1,5 +1,17 @@
 use super::*;
 
+parameter_types! {
+	pub LaunchPeriod: BlockNumber = gov_conf_get!(launch_period);
+	pub VotingPeriod: BlockNumber = gov_conf_get!(voting_period);
+	pub FastTrackVotingPeriod: BlockNumber = gov_conf_get!(fast_track_voting_period);
+	pub MinimumDeposit: Balance = gov_conf_get!(minimum_deposit);
+	pub EnactmentPeriod: BlockNumber = gov_conf_get!(enactment_period);
+	pub CooloffPeriod: BlockNumber = gov_conf_get!(cooloof_period);
+	pub InstantAllowed: bool = gov_conf_get!(instant_allowed);
+	pub MaxVotes: u32 = gov_conf_get!(max_votes);
+	pub MaxProposals: u32 = gov_conf_get!(max_proposals);
+}
+
 impl pallet_democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
