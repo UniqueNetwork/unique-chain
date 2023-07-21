@@ -4,41 +4,43 @@ use origins::Origin as FellowshipOrigin;
 use pallet_ranked_collective::Rank;
 use sp_arithmetic::traits::CheckedSub;
 use sp_runtime::{morph_types, traits::Convert};
+use crate::gov_conf_get;
 
 pub const FELLOWSHIP_MODULE_ID: PalletId = PalletId(*b"flowship");
 pub const DEMOCRACY_TRACK_ID: u16 = 10;
 
 parameter_types! {
-	pub LaunchPeriod: BlockNumber = 7 * DAYS;
-	pub VotingPeriod: BlockNumber = 7 * DAYS;
-	pub FastTrackVotingPeriod: BlockNumber = 3 * HOURS;
-	pub const MinimumDeposit: Balance = 100 * UNIQUE;
-	pub EnactmentPeriod: BlockNumber = 8 * DAYS;
-	pub CooloffPeriod: BlockNumber = 7 * DAYS;
-	pub const InstantAllowed: bool = true;
-	pub const MaxVotes: u32 = 100;
-	pub const MaxProposals: u32 = 100;
+	pub LaunchPeriod: BlockNumber = gov_conf_get!(launch_period);
+	pub VotingPeriod: BlockNumber = gov_conf_get!(voting_period);
+	pub FastTrackVotingPeriod: BlockNumber = gov_conf_get!(fast_track_voting_period);
+	pub MinimumDeposit: Balance = gov_conf_get!(minimum_deposit);
+	pub EnactmentPeriod: BlockNumber = gov_conf_get!(enactment_period);
+	pub CooloffPeriod: BlockNumber = gov_conf_get!(cooloof_period);
+	pub InstantAllowed: bool = gov_conf_get!(instant_allowed);
+	pub MaxVotes: u32 = gov_conf_get!(max_votes);
+	pub MaxProposals: u32 = gov_conf_get!(max_proposals);
 
-	pub CouncilMotionDuration: BlockNumber = 3 * DAYS;
-	pub const CouncilMaxProposals: u32 = 100;
-	pub const CouncilMaxMembers: u32 = 100;
+	pub CouncilMotionDuration: BlockNumber = gov_conf_get!(council_motion_duration);
+	pub CouncilMaxProposals: u32 = gov_conf_get!(council_max_proposals);
+	pub CouncilMaxMembers: u32 = gov_conf_get!(council_max_members);
 
-	pub TechnicalMotionDuration: BlockNumber = 3 * DAYS;
-	pub const TechnicalMaxProposals: u32 = 100;
-	pub const TechnicalMaxMembers: u32 = 100;
+	pub TechnicalMotionDuration: BlockNumber =gov_conf_get!(technical_motion_duration);
+	pub TechnicalMaxProposals: u32 = gov_conf_get!(technical_max_proposals);
+	pub TechnicalMaxMembers: u32 = gov_conf_get!(technical_max_members);
 
 	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * <Runtime as frame_system::Config>::BlockWeights::get().max_block;
 	pub MaxCollectivesProposalWeight: Weight = Perbill::from_percent(80) * <Runtime as frame_system::Config>::BlockWeights::get().max_block;
 
-	pub const MaxScheduledPerBlock: u32 = 50;
-	pub const AlarmInterval: BlockNumber = 1;
-	pub const SubmissionDeposit: Balance = 1000 * UNIQUE;
-	pub const UndecidingTimeout: BlockNumber = 7 * DAYS;
+	pub MaxScheduledPerBlock: u32 = gov_conf_get!(max_scheduled_per_block);
+	pub AlarmInterval: BlockNumber = gov_conf_get!(alarm_interval);
+	pub SubmissionDeposit: Balance = gov_conf_get!(submission_deposit);
+	pub UndecidingTimeout: BlockNumber = gov_conf_get!(undeciding_timeout);
 }
 
-macro_rules! gov_conf_param {
+#[macro_export]
+macro_rules! gov_conf_get {
 	($param:ident) => {
-		<pallet_configuration::GovConfig<Runtime>>::get().$param
+		<pallet_configuration::GovernanceConfigurationOverride<Runtime>>::get().$param
 	};
 }
 

@@ -315,27 +315,30 @@ mod pallet {
 			arg: GovernanceArgs<T::Balance, T::BlockNumber>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			match arg {
-				GovernanceArgs::LaunchPeriod(_) => todo!(),
-				GovernanceArgs::VotingPeriod(_) => todo!(),
-				GovernanceArgs::FastTrackVotingPeriod(_) => todo!(),
-				GovernanceArgs::MinimumDeposit(_) => todo!(),
-				GovernanceArgs::EnactmentPeriod(_) => todo!(),
-				GovernanceArgs::CooloffPeriod(_) => todo!(),
-				GovernanceArgs::InstantAllowed(_) => todo!(),
-				GovernanceArgs::MaxVotes(_) => todo!(),
-				GovernanceArgs::MaxProposals(_) => todo!(),
-				GovernanceArgs::CouncilMotionDuration(_) => todo!(),
-				GovernanceArgs::CouncilMaxProposals(_) => todo!(),
-				GovernanceArgs::CouncilMaxMembers(_) => todo!(),
-				GovernanceArgs::TechnicalMotionDuration(_) => todo!(),
-				GovernanceArgs::TechnicalMaxProposals(_) => todo!(),
-				GovernanceArgs::TechincalMaxMembers(_) => todo!(),
-				GovernanceArgs::MaxScheduledPerBlock(_) => todo!(),
-				GovernanceArgs::AlarmInterval(_) => todo!(),
-				GovernanceArgs::SubmissionDeposit(_) => todo!(),
-				GovernanceArgs::UndecidingTimeout(_) => todo!(),
-			}
+			<GovernanceConfigurationOverride<T>>::mutate(|c| match arg {
+				GovernanceArgs::LaunchPeriod(value) => c.launch_period = value,
+				GovernanceArgs::VotingPeriod(value) => c.voting_period = value,
+				GovernanceArgs::FastTrackVotingPeriod(value) => c.fast_track_voting_period = value,
+				GovernanceArgs::MinimumDeposit(value) => c.minimum_deposit = value,
+				GovernanceArgs::EnactmentPeriod(value) => c.enactment_period = value,
+				GovernanceArgs::CooloffPeriod(value) => c.cooloof_period = value,
+				GovernanceArgs::InstantAllowed(value) => c.instant_allowed = value,
+				GovernanceArgs::MaxVotes(value) => c.max_votes = value,
+				GovernanceArgs::MaxProposals(value) => c.max_proposals = value,
+				GovernanceArgs::CouncilMotionDuration(value) => c.council_motion_duration = value,
+				GovernanceArgs::CouncilMaxProposals(value) => c.council_max_proposals = value,
+				GovernanceArgs::CouncilMaxMembers(value) => c.council_max_members = value,
+				GovernanceArgs::TechnicalMotionDuration(value) => {
+					c.technical_motion_duration = value
+				}
+				GovernanceArgs::TechnicalMaxProposals(value) => c.technical_max_proposals = value,
+				GovernanceArgs::TechincalMaxMembers(value) => c.technical_max_members = value,
+				GovernanceArgs::MaxScheduledPerBlock(value) => c.max_scheduled_per_block = value,
+				GovernanceArgs::AlarmInterval(value) => c.alarm_interval = value,
+				GovernanceArgs::SubmissionDeposit(value) => c.submission_deposit = value,
+				GovernanceArgs::UndecidingTimeout(value) => c.undeciding_timeout = value,
+			});
+			Self::deposit_event(Event::GovernanceConfigurationChanged(arg));
 			Ok(())
 		}
 	}
@@ -411,7 +414,7 @@ pub struct GovernanceConfiguration<BlockNumber, Balance> {
 	pub max_scheduled_per_block: u32,
 	pub alarm_interval: BlockNumber,
 	pub submission_deposit: Balance,
-	pub undecidong_timeout: BlockNumber,
+	pub undeciding_timeout: BlockNumber,
 }
 
 impl<BlockNumber: AtLeast32BitUnsigned, Balance: From<up_common::types::Balance>> Default
@@ -437,7 +440,7 @@ impl<BlockNumber: AtLeast32BitUnsigned, Balance: From<up_common::types::Balance>
 			max_scheduled_per_block: 50,
 			alarm_interval: 1u32.into(),
 			submission_deposit: (1000 * UNIQUE).into(),
-			undecidong_timeout: (7 * DAYS).into(),
+			undeciding_timeout: (7 * DAYS).into(),
 		}
 	}
 }

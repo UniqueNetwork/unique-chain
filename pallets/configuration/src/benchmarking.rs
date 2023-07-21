@@ -91,4 +91,12 @@ benchmarks! {
 	verify {
 		assert_last_event::<T>(Event::NewCollatorKickThreshold{length_in_blocks: threshold}.into());
 	}
+
+	set_governance_arg {
+		let arg: T::Balance = 100.into();
+	} : _(RawOrigin::Root, GovernanceArgs::SubmissionDeposit(arg))
+	verify {
+		assert_eq!(<GovernanceConfigurationOverride<T>>::get().submission_deposit, arg);
+	}
+
 }
