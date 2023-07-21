@@ -9,7 +9,7 @@ GIT_REPO=git@github.com:UniqueNetwork/unique-types-js.git
 . $DIR/functions.sh
 
 usage() {
-	echo "Usage: [RPC_URL=http://localhost:9944] $0 <--rc|--release> [--force] [--push] [--rpc-url=http://localhost:9933]" 1>&2
+	echo "Usage: [RPC_URL=http://localhost:9944] $0 <--rc|--release> [--force] [--push] [--rpc-url=http://localhost:9944]" 1>&2
 	exit 1
 }
 

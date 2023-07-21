@@ -19,3 +19,5 @@ cumulus-parachain/
 *genesis
 *wasm
 tmp/
+
+*.log

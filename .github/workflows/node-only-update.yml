@@ -174,7 +174,7 @@ jobs:
           yarn polkadot-types
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9933/
+          RPC_URL: http://127.0.0.1:9944/
 
       # - name: Upload Parallel Test Report Before Node upgrade
       #   uses: phoenix-actions/test-reporting@v8
@@ -191,7 +191,7 @@ jobs:
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9933/
+          RPC_URL: http://127.0.0.1:9944/
 
       # - name: Upload Sequential Test Report Before Node upgrade
       #   uses: phoenix-actions/test-reporting@v10
@@ -297,7 +297,7 @@ jobs:
           yarn polkadot-types
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9933/
+          RPC_URL: http://127.0.0.1:9944/
 
       #- name: Test Report Parallel After Node upgrade
       #  uses: phoenix-actions/test-reporting@v10
@@ -314,7 +314,7 @@ jobs:
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9933/
+          RPC_URL: http://127.0.0.1:9944/
 
       #- name: Upload Sequential Test Report After Node upgrade
       #  uses: phoenix-actions/test-reporting@v10

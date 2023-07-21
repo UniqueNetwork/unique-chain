@@ -473,7 +473,7 @@ jobs:
           yarn polkadot-types          
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9933/
+          RPC_URL: http://127.0.0.1:9944/
 
       - name: XCM Test Report
         uses: phoenix-actions/test-reporting@v10
