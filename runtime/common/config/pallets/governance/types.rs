@@ -152,7 +152,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 		}
 
 		match FellowshipOrigin::try_from(id.clone()) {
-			Ok(_) => Ok(1),
+			Ok(_) => Ok(DEMOCRACY_TRACK_ID),
 			_ => Err(()),
 		}
 	}
