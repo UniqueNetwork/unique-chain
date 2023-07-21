@@ -19,7 +19,7 @@ impl pallet_membership::Config<TechnicalCollectiveMembership> for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type AddOrigin = RootOrHalfCouncil;
 	type RemoveOrigin = RootOrHalfCouncil;
-	type SwapOrigin = RootOrHalfCouncil;
+	type SwapOrigin = RootOrAllCouncil;
 	type ResetOrigin = EnsureRoot<AccountId>;
 	type PrimeOrigin = EnsureRoot<AccountId>;
 	type MembershipInitialized = TechnicalCommittee;
