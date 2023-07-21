@@ -309,7 +309,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
+		#[pallet::weight(T::WeightInfo::set_governance_arg())]
 		pub fn set_governance_arg(
 			origin: OriginFor<T>,
 			arg: GovernanceArgs<T::Balance, T::BlockNumber>,
