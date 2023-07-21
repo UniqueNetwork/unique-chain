@@ -1,7 +1,7 @@
 use super::*;
 use origins::Origin as FellowshipOrigin;
 
-use pallet_ranked_collective::Rank;
+use pallet_ranked_collective::{Rank, TallyOf, Config as RankedConfig};
 use sp_arithmetic::traits::CheckedSub;
 use sp_runtime::{morph_types, traits::Convert};
 use crate::gov_conf_get;
@@ -160,15 +160,18 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 
 pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
 
-pub struct ClassToRankMapper<T, B, M>(PhantomData<T>, PhantomData<B>, PhantomData<M>);
-pub type ClassOf<T, B = Balance, M = BlockNumber> = <T as pallet_referenda::TracksInfo<B, M>>::Id;
+pub struct ClassToRankMapper<T, I>(PhantomData<(T, I)>);
 
-impl<T, B, M> Convert<ClassOf<T, B, M>, Rank> for ClassToRankMapper<T, B, M>
+//TODO: Remove the type when it appears in the release.
+pub type ClassOf<T, I = ()> = <<T as RankedConfig<I>>::Polls as Polling<TallyOf<T, I>>>::Class;
+
+impl<T, I> Convert<ClassOf<T, I>, Rank> for ClassToRankMapper<T, I>
 where
-	T: pallet_referenda::TracksInfo<B, M, Id = u16>,
+	T: RankedConfig<I>,
+	ClassOf<T, I>: Into<Rank>,
 {
-	fn convert(track_id: ClassOf<TracksInfo>) -> Rank {
-		match track_id {
+	fn convert(track_id: ClassOf<T, I>) -> Rank {
+		match track_id.into() {
 			DEMOCRACY_TRACK_ID => 3,
 			other => sp_runtime::traits::Identity::convert(other),
 		}

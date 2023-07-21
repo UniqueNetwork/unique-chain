@@ -18,7 +18,7 @@ use frame_support::{
 	PalletId, parameter_types,
 	traits::{
 		EnsureOrigin, EqualPrivilegeOnly, EitherOfDiverse, EitherOf, MapSuccess, ConstU16,
-		TryMapSuccess,
+		TryMapSuccess, Polling,
 	},
 	weights::Weight,
 	pallet_prelude::*,

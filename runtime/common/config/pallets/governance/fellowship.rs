@@ -37,6 +37,6 @@ impl pallet_ranked_collective::Config for Runtime {
 	// - a vote by the rank two above the current rank.
 	type DemoteOrigin = FellowshipPromoteDemoteOrigin<Self>;
 	type Polls = FellowshipReferenda;
-	type MinRankOfClass = ClassToRankMapper<TracksInfo, Balance, Self::BlockNumber>;
+	type MinRankOfClass = ClassToRankMapper<Self, ()>;
 	type VoteWeight = pallet_ranked_collective::Geometric;
 }
