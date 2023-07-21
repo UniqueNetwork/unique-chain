@@ -425,7 +425,7 @@ impl<BlockNumber: AtLeast32BitUnsigned, Balance: From<up_common::types::Balance>
 			launch_period: (7 * DAYS).into(),
 			voting_period: (7 * DAYS).into(),
 			fast_track_voting_period: (3 * HOURS).into(),
-			minimum_deposit: (100 * UNIQUE).into(),
+			minimum_deposit: 0.into(),
 			enactment_period: (8 * DAYS).into(),
 			cooloof_period: (7 * DAYS).into(),
 			instant_allowed: true,
