@@ -402,10 +402,42 @@ where
 		Ok(())
 	}
 
+	#[solidity(rename_selector = "setCollectionNesting")]
+	fn set_nesting(
+		&mut self,
+		caller: Caller,
+		collection_nesting_and_permissions: eth::CollectionNestingAndPermission,
+	) -> Result<()> {
+		self.consume_store_reads_and_writes(1, 1)?;
+
+		let caller = T::CrossAccountId::from_eth(caller);
+
+		let mut permissions = self.collection.permissions.clone();
+		let mut nesting = permissions.nesting().clone();
+
+		let bv = if !collection_nesting_and_permissions.restricted.is_empty() {
+			let mut bv = OwnerRestrictedSet::new();
+			for id in collection_nesting_and_permissions.restricted.iter() {
+				bv.try_insert(u32::try_from(*id)?.into())
+					.map_err(|_| "too many collections")?;
+			}
+			Some(bv)
+		} else {
+			None
+		};
+
+		nesting.token_owner = collection_nesting_and_permissions.token_owner;
+		nesting.collection_admin = collection_nesting_and_permissions.collection_admin;
+		nesting.restricted = bv;
+		permissions.nesting = Some(nesting);
+
+		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
+	}
+
 	/// Toggle accessibility of collection nesting.
 	///
 	/// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
-	#[solidity(rename_selector = "setCollectionNesting")]
+	#[solidity(hide, rename_selector = "setCollectionNesting")]
 	fn set_nesting_bool(&mut self, caller: Caller, enable: bool) -> Result<()> {
 		self.consume_store_reads_and_writes(1, 1)?;
 
@@ -424,8 +456,8 @@ where
 	///
 	/// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
 	/// @param collections Addresses of collections that will be available for nesting.
-	#[solidity(rename_selector = "setCollectionNesting")]
-	fn set_nesting(
+	#[solidity(hide, rename_selector = "setCollectionNesting")]
+	fn set_nesting_collection_ids(
 		&mut self,
 		caller: Caller,
 		enable: bool,
@@ -464,8 +496,23 @@ where
 		<Pallet<T>>::update_permissions(&caller, self, permissions).map_err(dispatch_to_evm::<T>)
 	}
 
+	#[solidity(rename_selector = "collectionNesting")]
+	fn collection_nesting(&self) -> Result<eth::CollectionNestingAndPermission> {
+		let nesting = self.collection.permissions.nesting();
+
+		Ok(eth::CollectionNestingAndPermission::new(
+			nesting.token_owner,
+			nesting.collection_admin,
+			nesting
+				.restricted
+				.clone()
+				.map(|b| b.0.into_inner().iter().map(|id| id.0.into()).collect())
+				.unwrap_or_default(),
+		))
+	}
+
 	/// Returns nesting for a collection
-	#[solidity(rename_selector = "collectionNestingRestrictedCollectionIds")]
+	#[solidity(hide, rename_selector = "collectionNestingRestrictedCollectionIds")]
 	fn collection_nesting_restricted_ids(&self) -> Result<eth::CollectionNesting> {
 		let nesting = self.collection.permissions.nesting();
 
@@ -480,6 +527,7 @@ where
 	}
 
 	/// Returns permissions for a collection
+	#[solidity(hide)]
 	fn collection_nesting_permissions(&self) -> Result<Vec<eth::CollectionNestingPermission>> {
 		let nesting = self.collection.permissions.nesting();
 		Ok(vec![

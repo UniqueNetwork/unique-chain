@@ -234,6 +234,7 @@ mod common {
 			| CollectionOwner
 			| CollectionAdmins
 			| CollectionLimits
+			| CollectionNesting
 			| CollectionNestingRestrictedIds
 			| CollectionNestingPermissions
 			| UniqueCollectionType => None,
@@ -249,6 +250,7 @@ mod common {
 			| RemoveCollectionAdmin { .. }
 			| SetNestingBool { .. }
 			| SetNesting { .. }
+			| SetNestingCollectionIds { .. }
 			| SetCollectionAccess { .. }
 			| SetCollectionMintMode { .. }
 			| SetOwner { .. }

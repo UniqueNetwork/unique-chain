@@ -118,7 +118,7 @@ enum TokenPermissionField {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0x2a14cfd1
+/// @dev the ERC-165 identifier for this interface is 0xee405b4d
 interface Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -253,30 +253,38 @@ interface Collection is Dummy, ERC165 {
 	// ///  or in textual repr: removeCollectionAdmin(address)
 	// function removeCollectionAdmin(address admin) external;
 
-	/// Toggle accessibility of collection nesting.
-	///
-	/// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
-	/// @dev EVM selector for this function is: 0x112d4586,
-	///  or in textual repr: setCollectionNesting(bool)
-	function setCollectionNesting(bool enable) external;
+	/// @dev EVM selector for this function is: 0x5692f434,
+	///  or in textual repr: setCollectionNesting((bool,bool,uint256[]))
+	function setCollectionNesting(CollectionNestingAndPermission memory collectionNestingAndPermissions) external;
 
-	/// Toggle accessibility of collection nesting.
-	///
-	/// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
-	/// @param collections Addresses of collections that will be available for nesting.
-	/// @dev EVM selector for this function is: 0x64872396,
-	///  or in textual repr: setCollectionNesting(bool,address[])
-	function setCollectionNesting(bool enable, address[] memory collections) external;
+	// /// Toggle accessibility of collection nesting.
+	// ///
+	// /// @param enable If "true" degenerates to nesting: 'Owner' else to nesting: 'Disabled'
+	// /// @dev EVM selector for this function is: 0x112d4586,
+	// ///  or in textual repr: setCollectionNesting(bool)
+	// function setCollectionNesting(bool enable) external;
 
-	/// Returns nesting for a collection
-	/// @dev EVM selector for this function is: 0x22d25bfe,
-	///  or in textual repr: collectionNestingRestrictedCollectionIds()
-	function collectionNestingRestrictedCollectionIds() external view returns (CollectionNesting memory);
+	// /// Toggle accessibility of collection nesting.
+	// ///
+	// /// @param enable If "true" degenerates to nesting: {OwnerRestricted: [1, 2, 3]} else to nesting: 'Disabled'
+	// /// @param collections Addresses of collections that will be available for nesting.
+	// /// @dev EVM selector for this function is: 0x64872396,
+	// ///  or in textual repr: setCollectionNesting(bool,address[])
+	// function setCollectionNesting(bool enable, address[] memory collections) external;
 
-	/// Returns permissions for a collection
-	/// @dev EVM selector for this function is: 0x5b2eaf4b,
-	///  or in textual repr: collectionNestingPermissions()
-	function collectionNestingPermissions() external view returns (CollectionNestingPermission[] memory);
+	/// @dev EVM selector for this function is: 0x92c660a8,
+	///  or in textual repr: collectionNesting()
+	function collectionNesting() external view returns (CollectionNestingAndPermission memory);
+
+	// /// Returns nesting for a collection
+	// /// @dev EVM selector for this function is: 0x22d25bfe,
+	// ///  or in textual repr: collectionNestingRestrictedCollectionIds()
+	// function collectionNestingRestrictedCollectionIds() external view returns (CollectionNesting memory);
+
+	// /// Returns permissions for a collection
+	// /// @dev EVM selector for this function is: 0x5b2eaf4b,
+	// ///  or in textual repr: collectionNestingPermissions()
+	// function collectionNestingPermissions() external view returns (CollectionNestingPermission[] memory);
 
 	/// Set the collection access method.
 	/// @param mode Access mode
@@ -414,6 +422,13 @@ enum CollectionPermissionField {
 struct CollectionNesting {
 	bool token_owner;
 	uint256[] ids;
+}
+
+/// Nested collections and permissions
+struct CollectionNestingAndPermission {
+	bool token_owner;
+	bool collection_admin;
+	uint256[] restricted;
 }
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.

@@ -88,5 +88,64 @@
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "collectionNestingPermissions",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "enum CollectionPermissionField",
+            "name": "field",
+            "type": "uint8"
+          },
+          { "internalType": "bool", "name": "value", "type": "bool" }
+        ],
+        "internalType": "struct CollectionNestingPermission[]",
+        "name": "",
+        "type": "tuple[]"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "collectionNestingRestrictedCollectionIds",
+    "outputs": [
+      {
+        "components": [
+          { "internalType": "bool", "name": "token_owner", "type": "bool" },
+          { "internalType": "uint256[]", "name": "ids", "type": "uint256[]" }
+        ],
+        "internalType": "struct CollectionNesting",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
+    "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      { "internalType": "bool", "name": "enable", "type": "bool" },
+      {
+        "internalType": "address[]",
+        "name": "collections",
+        "type": "address[]"
+      }
+    ],
+    "name": "setCollectionNesting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]
