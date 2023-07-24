@@ -59,9 +59,7 @@ where
 
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
-			GovOrigins::FellowshipProposition => {
-				Ok(FELLOWSHIP_MODULE_ID.into_account_truncating())
-			}
+			GovOrigins::FellowshipProposition => Ok(FELLOWSHIP_MODULE_ID.into_account_truncating()),
 			o => Err(O::from(o)),
 		})
 	}
