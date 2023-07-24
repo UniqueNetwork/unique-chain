@@ -50,7 +50,7 @@ import {
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
-import {FrameSystemEventRecord, PalletBalancesIdAmount} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, PalletBalancesIdAmount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote} from '@polkadot/types/lookup';
 import {arrayUnzip} from '@polkadot/util';
 
 export class CrossAccountId {
@@ -3207,6 +3207,32 @@ class CollectiveMembershipGroup extends HelperGroup<UniqueHelper> {
   }
 }
 
+class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
+  /**
+   * Pallet name to make an API call to. Examples: 'FellowshipCollective'
+   */
+  private collective: string;
+
+  constructor(helper: UniqueHelper, collective: string) {
+    super(helper);
+    this.collective = collective;
+  }
+
+  // submit(proposalOrigin: )
+}
+
+class ReferendaGroup extends HelperGroup<UniqueHelper> {
+  /**
+   * Pallet name to make an API call to. Examples: 'FellowshipReferenda'
+   */
+  private referenda: string;
+
+  constructor(helper: UniqueHelper, referenda: string) {
+    super(helper);
+    this.referenda = referenda;
+  }
+}
+
 class DemocracyGroup extends HelperGroup<UniqueHelper> {
   // todo displace proposal into types?
   propose(signer: TSigner, preimage: string, deposit: bigint) {
@@ -3237,7 +3263,7 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vetoExternal', [proposalHash]);
   }
 
-  blacklist(signer: TSigner, proposalHash: string, referendumIndex?: number) {
+  blacklist(signer: TSigner, proposalHash: string, referendumIndex: number) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.blacklist', [proposalHash, referendumIndex]);
   }
 
@@ -3259,14 +3285,13 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.emergencyCancel', [referendumIndex]);
   }
 
-  vote(signer: TSigner, referendumIndex: number, vote: DemocracyStandardAccountVote | DemocracySplitAccount) {
-    // todo wrap vote into standard/split
+  vote(signer: TSigner, referendumIndex: number, vote: PalletDemocracyVoteAccountVote) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, vote]);
   }
 
   removeVote(signer: TSigner, referendumIndex: number, targetAccount?: string) {
     if(targetAccount) {
-      return this.helper.executeExtrinsic(signer, 'api.tx.democracy.removeOtherVote', [referendumIndex, targetAccount]);
+      return this.helper.executeExtrinsic(signer, 'api.tx.democracy.removeOtherVote', [targetAccount, referendumIndex]);
     } else {
       return this.helper.executeExtrinsic(signer, 'api.tx.democracy.removeVote', [referendumIndex]);
     }
@@ -3276,7 +3301,7 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.unlock', [targetAccount]);
   }
 
-  delegate(signer: TSigner, toAccount: string, conviction: null | 1 | 2 | 3 | 4 | 5 | 6, balance: bigint) {
+  delegate(signer: TSigner, toAccount: string, conviction: PalletDemocracyConviction, balance: bigint) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.delegate', [toAccount, conviction, balance]);
   }
 
