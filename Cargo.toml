@@ -46,6 +46,7 @@ pallet-maintenance = { default-features = false, path = "pallets/maintenance" }
 pallet-nonfungible = { default-features = false, path = "pallets/nonfungible" }
 pallet-refungible = { default-features = false, path = "pallets/refungible" }
 pallet-structure = { default-features = false, path = "pallets/structure" }
+pallet-gov-origins = { default-features = false, path = "pallets/gov-origins" }
 pallet-test-utils = { default-features = false, path = "test-pallets/utils" }
 pallet-unique = { path = "pallets/unique", default-features = false }
 pallet-unique-scheduler-v2 = { path = "pallets/scheduler-v2", default-features = false }

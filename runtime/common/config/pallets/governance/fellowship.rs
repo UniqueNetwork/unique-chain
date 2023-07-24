@@ -2,7 +2,7 @@ use crate::{
 	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda,
 };
 use super::*;
-use origins::Origin as FellowshipOrigin;
+use pallet_gov_origins::Origin as GovOrigins;
 use pallet_ranked_collective::{Config as RankedConfig, Rank, TallyOf};
 
 pub const FELLOWSHIP_MODULE_ID: PalletId = PalletId(*b"flowship");
@@ -53,13 +53,13 @@ impl RankedConfig for Runtime {
 pub struct FellowshipProposition;
 impl<O> EnsureOrigin<O> for FellowshipProposition
 where
-	O: Into<Result<FellowshipOrigin, O>> + From<FellowshipOrigin>,
+	O: Into<Result<GovOrigins, O>> + From<GovOrigins>,
 {
 	type Success = AccountId;
 
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
-			FellowshipOrigin::FellowshipProposition => {
+			GovOrigins::FellowshipProposition => {
 				Ok(FELLOWSHIP_MODULE_ID.into_account_truncating())
 			}
 			o => Err(O::from(o)),
@@ -68,7 +68,7 @@ where
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn try_successful_origin() -> Result<O, ()> {
-		Ok(O::from(FellowshipOrigin::FellowshipProposition))
+		Ok(O::from(GovOrigins::FellowshipProposition))
 	}
 }
 
@@ -117,7 +117,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 			}
 		}
 
-		match FellowshipOrigin::try_from(id.clone()) {
+		match GovOrigins::try_from(id.clone()) {
 			Ok(_) => Ok(DEMOCRACY_TRACK_ID),
 			_ => Err(()),
 		}

@@ -52,13 +52,10 @@ pub use technical_committee::*;
 pub mod fellowship;
 pub use fellowship::*;
 
-pub mod origins;
-pub use origins::*;
-
 pub mod scheduler;
 pub use scheduler::*;
 
-impl origins::Config for Runtime {}
+impl pallet_gov_origins::Config for Runtime {}
 
 #[macro_export]
 macro_rules! gov_conf_get {

@@ -5962,6 +5962,7 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
  "pallet-fungible",
+ "pallet-gov-origins",
  "pallet-identity 4.0.0-dev",
  "pallet-inflation",
  "pallet-maintenance",
@@ -6811,6 +6812,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-gov-origins"
+version = "0.2.1"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+]
+
+[[package]]
 name = "pallet-grandpa"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
@@ -7002,6 +7013,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-names"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-std",
+ "up-data-structs",
+]
+
+[[package]]
 name = "pallet-nis"
 version = "4.0.0-dev"
 source = "git+https://github.com/paritytech/substrate?branch=polkadot-v0.9.43#5e49f6e44820affccaf517fd22af564f4b495d40"
@@ -7142,6 +7166,20 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+]
+
+[[package]]
+name = "pallet-properties"
+version = "0.1.0"
+dependencies = [
+ "frame-support",
+ "frame-system",
+ "pallet-evm",
+ "parity-scale-codec",
+ "scale-info",
+ "sp-core",
+ "sp-std",
+ "up-data-structs",
 ]
 
 [[package]]
@@ -9507,12 +9545,15 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
  "pallet-fungible",
+ "pallet-gov-origins",
  "pallet-identity 4.0.0-dev",
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-membership",
  "pallet-nonfungible",
  "pallet-preimage",
+ "pallet-ranked-collective",
+ "pallet-referenda",
  "pallet-refungible",
  "pallet-scheduler",
  "pallet-session",
@@ -14006,12 +14047,15 @@ dependencies = [
  "pallet-evm-transaction-payment",
  "pallet-foreign-assets",
  "pallet-fungible",
+ "pallet-gov-origins",
  "pallet-identity 4.0.0-dev",
  "pallet-inflation",
  "pallet-maintenance",
  "pallet-membership",
  "pallet-nonfungible",
  "pallet-preimage",
+ "pallet-ranked-collective",
+ "pallet-referenda",
  "pallet-refungible",
  "pallet-scheduler",
  "pallet-session",

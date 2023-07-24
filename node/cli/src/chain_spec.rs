@@ -176,21 +176,6 @@ macro_rules! testnet_genesis {
 				key: Some($root_key),
 			},
 
-			#[cfg(not(feature = "unique-runtime"))]
-			democracy: DemocracyConfig::default(),
-
-			#[cfg(not(feature = "unique-runtime"))]
-			council: CouncilConfig::default(),
-
-			#[cfg(not(feature = "unique-runtime"))]
-			technical_committee: TechnicalCommitteeConfig::default(),
-
-			#[cfg(not(feature = "unique-runtime"))]
-			council_membership: CouncilMembershipConfig::default(),
-
-			#[cfg(not(feature = "unique-runtime"))]
-			technical_committee_membership: TechnicalCommitteeMembershipConfig::default(),
-
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
@@ -223,6 +208,7 @@ macro_rules! testnet_genesis {
 			ethereum: EthereumConfig {},
 			polkadot_xcm: Default::default(),
 			transaction_payment: Default::default(),
+			..Default::default()
 		}
 	}};
 }

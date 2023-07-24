@@ -45,6 +45,12 @@ runtime-benchmarks = [
 	'pallet-maintenance/runtime-benchmarks',
 	'pallet-membership/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
+	'pallet-democracy/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
+	'pallet-ranked-collective/runtime-benchmarks',
+	'pallet-membership/runtime-benchmarks',
+	'pallet-referenda/runtime-benchmarks',
+	'pallet-scheduler/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
 	'pallet-scheduler/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
@@ -104,6 +110,13 @@ std = [
 	'pallet-fungible/std',
 	'pallet-inflation/std',
 	'pallet-nonfungible/std',
+	'pallet-democracy/std',
+	'pallet-collective/std',
+	'pallet-ranked-collective/std',
+	'pallet-membership/std',
+	'pallet-referenda/std',
+	'pallet-gov-origins/std',
+	'pallet-scheduler/std',
 	'pallet-refungible/std',
 	'pallet-structure/std',
 	'pallet-sudo/std',
@@ -167,10 +180,8 @@ try-runtime = [
 	'pallet-balances-adapter/try-runtime',
 	'pallet-balances/try-runtime',
 	'pallet-charge-transaction/try-runtime',
-	'pallet-collective/try-runtime',
 	'pallet-common/try-runtime',
 	'pallet-configuration/try-runtime',
-	'pallet-democracy/try-runtime',
 	'pallet-ethereum/try-runtime',
 	'pallet-evm-coder-substrate/try-runtime',
 	'pallet-evm-contract-helpers/try-runtime',
@@ -181,10 +192,15 @@ try-runtime = [
 	'pallet-fungible/try-runtime',
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
-	'pallet-membership/try-runtime',
 	'pallet-nonfungible/try-runtime',
-	'pallet-refungible/try-runtime',
+	'pallet-democracy/try-runtime',
+	'pallet-collective/try-runtime',
+	'pallet-ranked-collective/try-runtime',
+	'pallet-membership/try-runtime',
+	'pallet-referenda/try-runtime',
+	'pallet-gov-origins/try-runtime',
 	'pallet-scheduler/try-runtime',
+	'pallet-refungible/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
 	'pallet-timestamp/try-runtime',
@@ -230,11 +246,7 @@ orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
-pallet-collective = { workspace = true }
-pallet-democracy = { workspace = true }
-pallet-membership = { workspace = true }
 pallet-preimage = { workspace = true }
-pallet-scheduler = { workspace = true }
 pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
@@ -276,6 +288,13 @@ pallet-fungible = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }
 pallet-nonfungible = { workspace = true }
+pallet-democracy = { workspace = true }
+pallet-collective = { workspace = true }
+pallet-ranked-collective = { workspace = true }
+pallet-membership = { workspace = true }
+pallet-referenda = { workspace = true }
+pallet-gov-origins = { workspace = true }
+pallet-scheduler = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }

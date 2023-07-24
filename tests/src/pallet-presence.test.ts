@@ -72,8 +72,8 @@ describe('Pallet presence', () => {
         'council',
         'councilmembership',
         'democracy',
-        'fellowship',
-        'fellowshipmembership',
+        'fellowshipcollective',
+        'fellowshipreferenda',
         'govscheduler',
         'technicalcommittee',
         'technicalcommitteemembership',
@@ -97,6 +97,7 @@ describe('Pallet presence', () => {
           foreignAssets,
           ...collatorSelection,
           ...preimage,
+          ...governance,
         );
       } else if(chain.eq('UNIQUE')) {
         // Insert Unique additional pallets here

@@ -1,0 +1,36 @@
+################################################################################
+# Package
+
+[package]
+authors = ['Unique Network <support@uniquenetwork.io>']
+description = 'Unique App Governance Origins Pallet'
+edition = '2021'
+homepage = 'https://unique.network'
+license = 'GPLv3'
+name = 'pallet-gov-origins'
+repository = 'https://github.com/UniqueNetwork/unique-chain'
+version = '0.2.1'
+
+[package.metadata.docs.rs]
+targets = ['x86_64-unknown-linux-gnu']
+
+[features]
+default = ['std']
+std = [
+	'codec/std',
+	'frame-support/std',
+	'frame-system/std',
+]
+try-runtime = ["frame-support/try-runtime"]
+
+[dependencies]
+################################################################################
+# Substrate Dependencies
+
+# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
+codec = { workspace = true, package = "parity-scale-codec" }
+
+scale-info = { workspace = true }
+
+frame-support = { workspace = true }
+frame-system = { workspace = true }
