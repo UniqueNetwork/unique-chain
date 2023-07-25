@@ -34,6 +34,7 @@ pub mod fellowship_timings {
 			pub const PREPARE_PERIOD: BlockNumber = 3;
 			pub const DECISION_PERIOD: BlockNumber = 35;
 			pub const CONFIRM_PERIOD: BlockNumber = 3;
+			pub const MIN_ENACTMENT_PERIOD: BlockNumber = 1;
 		}
 	}
 }
@@ -113,7 +114,7 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 				prepare_period: fellowship_timings::track::democracy_proposals::PREPARE_PERIOD,
 				decision_period: fellowship_timings::track::democracy_proposals::DECISION_PERIOD,
 				confirm_period: fellowship_timings::track::democracy_proposals::CONFIRM_PERIOD,
-				min_enactment_period: 1 * MINUTES,
+				min_enactment_period: fellowship_timings::track::democracy_proposals::MIN_ENACTMENT_PERIOD,
 				min_approval: pallet_referenda::Curve::LinearDecreasing {
 					length: Perbill::from_percent(100),
 					floor: Perbill::from_percent(50),
