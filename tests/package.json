@@ -43,7 +43,7 @@
     "testParallel": "yarn _testParallel './src/**/*.test.ts'",
     "testSequential": "yarn _test './src/**/*.seqtest.ts'",
     "testStructure": "yarn _test ./**/nesting/*.*test.ts",
-    "testGovernance": "yarn setup && yarn _test ./**/governance/*.*test.ts",
+    "testGovernance": "yarn setup && yarn _test ./**/governance.*test.ts",
     "testEth": "yarn _test './**/eth/**/*.*test.ts'",
     "testEthNesting": "yarn _test './**/eth/nesting/**/*.*test.ts'",
     "testEthFractionalizer": "yarn _test './**/eth/fractionalizer/**/*.*test.ts'",
