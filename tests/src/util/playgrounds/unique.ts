@@ -50,8 +50,9 @@ import {
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
-import {FrameSystemEventRecord, PalletBalancesIdAmount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote} from '@polkadot/types/lookup';
+import {FrameSupportPreimagesBounded, FrameSupportScheduleDispatchTime, FrameSystemEventRecord, PalletBalancesIdAmount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote} from '@polkadot/types/lookup';
 import {arrayUnzip} from '@polkadot/util';
+import {Event} from './unique.dev';
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
@@ -3218,7 +3219,25 @@ class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
     this.collective = collective;
   }
 
-  // submit(proposalOrigin: )
+  addMember(signer: TSigner, newMember: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.addMember`, [newMember]);
+  }
+
+  promote(signer: TSigner, member: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.promoteMember`, [member]);
+  }
+
+  demote(signer: TSigner, member: string) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.demoteMember`, [member]);
+  }
+
+  remove(signer: TSigner, member: string, minRank: number) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.removeMember`, [member, minRank]);
+  }
+
+  vote(signer: TSigner, pollIndex: number, aye: boolean) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [pollIndex, aye]);
+  }
 }
 
 class ReferendaGroup extends HelperGroup<UniqueHelper> {
@@ -3231,6 +3250,36 @@ class ReferendaGroup extends HelperGroup<UniqueHelper> {
     super(helper);
     this.referenda = referenda;
   }
+
+  submit(
+    signer: TSigner,
+    proposalOrigin: string,
+    proposal: any,
+    enactmentMoment: any,
+  ) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.referenda}.submit`, [
+      {Origins: proposalOrigin},
+      proposal,
+      enactmentMoment,
+    ]);
+  }
+
+  placeDecisionDeposit(signer: TSigner, referendumIndex: number) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.referenda}.placeDecisionDeposit`, [referendumIndex]);
+  }
+
+  cancel(signer: TSigner, referendumIndex: number) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.referenda}.cancel`, [referendumIndex]);
+  }
+
+  async referendumInfo(referendumIndex: number) {
+    return (await this.helper.callRpc(`api.query.${this.referenda}.referendumInfoFor`, [referendumIndex])).toJSON();
+  }
+}
+
+export interface IFellowshipGroup {
+  collective: RankedCollectiveGroup;
+  referenda: ReferendaGroup;
 }
 
 class DemocracyGroup extends HelperGroup<UniqueHelper> {
@@ -3307,6 +3356,14 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
 
   undelegate(signer: TSigner) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.undelegate', []);
+  }
+
+  async referendumInfo(referendumIndex: number) {
+    return (await this.helper.callRpc('api.query.democracy.referendumInfoOf', [referendumIndex])).toJSON();
+  }
+
+  async publicProposals() {
+    return (await this.helper.callRpc('api.query.democracy.publicProps', [])).toJSON();
   }
 
   /* setMetadata? */
@@ -3643,8 +3700,7 @@ export class UniqueHelper extends ChainHelperBase {
   councilMembership: CollectiveMembershipGroup;
   technicalCommittee: CollectiveGroup;
   technicalCommitteeMembership: CollectiveMembershipGroup;
-  fellowship: CollectiveGroup;
-  fellowshipMembership: CollectiveMembershipGroup;
+  fellowship: IFellowshipGroup;
   democracy: DemocracyGroup;
   preimage: PreimageGroup;
   foreignAssets: ForeignAssetsGroup;
@@ -3667,8 +3723,10 @@ export class UniqueHelper extends ChainHelperBase {
     this.councilMembership = new CollectiveMembershipGroup(this, 'councilMembership');
     this.technicalCommittee = new CollectiveGroup(this, 'technicalCommittee');
     this.technicalCommitteeMembership = new CollectiveMembershipGroup(this, 'technicalCommitteeMembership');
-    this.fellowship = new CollectiveGroup(this, 'fellowship');
-    this.fellowshipMembership = new CollectiveMembershipGroup(this, 'fellowshipMembership');
+    this.fellowship = {
+      collective: new RankedCollectiveGroup(this, 'fellowshipCollective'),
+      referenda: new ReferendaGroup(this, 'fellowshipReferenda'),
+    };
     this.democracy = new DemocracyGroup(this);
     this.preimage = new PreimageGroup(this);
     this.foreignAssets = new ForeignAssetsGroup(this);
