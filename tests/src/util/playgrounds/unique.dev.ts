@@ -8,7 +8,7 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId, IPovInfo, TSigner} from './types';
+import {ICrossAccountId, IPovInfo, ITransactionResult, TSigner} from './types';
 import {FrameSystemEventRecord, XcmV2TraitsError} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
@@ -64,20 +64,18 @@ export interface IEventHelper {
 
   method(): string;
 
-  bindEventRecord(e: FrameSystemEventRecord): void;
-
-  raw(): FrameSystemEventRecord;
+  wrapEvent(data: any[]): any;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
-function EventHelper(section: string, method: string) {
-  return class implements IEventHelper {
-    eventRecord: FrameSystemEventRecord | null;
+function EventHelper(section: string, method: string, wrapEvent: (data: any[]) => any) {
+  const helperClass = class implements IEventHelper {
+    wrapEvent: (data: any[]) => any;
     _section: string;
     _method: string;
 
     constructor() {
-      this.eventRecord = null;
+      this.wrapEvent = wrapEvent;
       this._section = section;
       this._method = method;
     }
@@ -90,22 +88,35 @@ function EventHelper(section: string, method: string) {
       return this._method;
     }
 
-    bindEventRecord(e: FrameSystemEventRecord) {
-      this.eventRecord = e;
+    filter(txres: ITransactionResult) {
+      return txres.result.events.filter(e => e.event.section === section && e.event.method === method)
+        .map(e => this.wrapEvent(e.event.data));
     }
 
-    raw() {
-      return this.eventRecord!;
+    find(txres: ITransactionResult) {
+      const e = txres.result.events.find(e => e.event.section === section && e.event.method === method);
+      return e ? this.wrapEvent(e.event.data) : null;
     }
 
-    eventJsonData<T = any>(index: number) {
-      return this.raw().event.data[index].toJSON() as T;
-    }
-
-    eventData<T>(index: number) {
-      return this.raw().event.data[index] as T;
+    expect(txres: ITransactionResult) {
+      const e = this.find(txres);
+      if (e) {
+        return e;
+      } else {
+        throw Error(`Expected event ${section}.${method}`);
+      }
     }
   };
+
+  return helperClass;
+}
+
+function eventJsonData<T = any>(data: any[], index: number) {
+  return data[index].toJSON() as T;
+}
+
+function eventData<T>(data: any[], index: number) {
+  return data[index] as T;
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -113,73 +124,59 @@ function EventSection(section: string) {
   return class Section {
     static section = section;
 
-    static Method(name: string) {
-      return EventHelper(Section.section, name);
+    static Method(name: string, wrapEvent: (data: any[]) => any) {
+      const helperClass = EventHelper(Section.section, name, wrapEvent);
+      return new helperClass();
     }
   };
 }
 
 export class Event {
   static Democracy = class extends EventSection('democracy') {
-    static Started = class extends this.Method('Started') {
-      referendumIndex() {
-        return this.eventJsonData<number>(0);
-      }
+    static Proposed = this.Method('Proposed', data => ({
+      proposalIndex: eventJsonData<number>(data, 0),
+    }));
 
-      threshold() {
-        return this.eventJsonData(1);
-      }
-    };
+    static Started = this.Method('Started', data => ({
+        referendumIndex: eventJsonData<number>(data, 0),
+        threshold: eventJsonData(data, 1),
+    }));
 
-    static Voted = class extends this.Method('Voted') {
-      voter() {
-        return this.eventJsonData(0);
-      }
+    static Voted = this.Method('Voted', data => ({
+      voter: eventJsonData(data, 0),
+      referendumIndex: eventJsonData<number>(data, 1),
+      vote: eventJsonData(data, 2),
+    }));
 
-      referendumIndex() {
-        return this.eventJsonData<number>(1);
-      }
+    static Passed = this.Method('Passed', data => ({
+      referendumIndex: eventJsonData<number>(data, 0)
+    }));
+  };
 
-      vote() {
-        return this.eventJsonData(2);
-      }
-    };
-
-    static Passed = class extends this.Method('Passed') {
-      referendumIndex() {
-        return this.eventJsonData<number>(0);
-      }
-    };
+  static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
+    static Submitted = this.Method('Submitted', data => ({
+      referendumIndex: eventJsonData<number>(data, 0),
+      trackId: eventJsonData<number>(data, 1),
+      proposal: eventJsonData(data, 2),
+    }));
   };
 
   static Scheduler = class extends EventSection('scheduler') {
-    static PriorityChanged = class extends this.Method('PriorityChanged') {
-      task() {
-        return this.eventJsonData(0);
-      }
-
-      priority() {
-        return this.eventJsonData(1);
-      }
-    };
+    static PriorityChanged = this.Method('PriorityChanged', data => ({
+      task: eventJsonData(data, 0),
+      priority: eventJsonData(data, 1),
+    }));
   };
 
   static XcmpQueue = class extends EventSection('xcmpQueue') {
-    static XcmpMessageSent = class extends this.Method('XcmpMessageSent') {
-      messageHash() {
-        return this.eventJsonData(0);
-      }
-    };
+    static XcmpMessageSent = this.Method('XcmpMessageSent', data => ({
+      messageHash: eventJsonData(data, 0),
+    }));
 
-    static Fail = class extends this.Method('Fail') {
-      messageHash() {
-        return this.eventJsonData(0);
-      }
-
-      outcome() {
-        return this.eventData<XcmV2TraitsError>(1);
-      }
-    };
+    static Fail = this.Method('Fail', data => ({
+      messageHash: eventJsonData(data, 0),
+      outcome: eventData<XcmV2TraitsError>(data, 1),
+    }));
   };
 }
 
@@ -769,7 +766,7 @@ class MoonbeamFastDemocracyGroup {
     // <<< Fast track proposal through technical committee <<<
 
     const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
-    const referendumIndex = democracyStarted.referendumIndex();
+    const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
     console.log(`\t* Referendum #${referendumIndex} voting.......`);
@@ -781,7 +778,7 @@ class MoonbeamFastDemocracyGroup {
     // <<< Referendum voting <<<
 
     // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex() == referendumIndex);
+    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
 
     await this.helper.wait.newBlocks(1);
 
@@ -931,13 +928,12 @@ class WaitGroup {
 
   event<T extends IEventHelper>(
     maxBlocksToWait: number,
-    eventHelperType: new () => T,
-    filter: (_: T) => boolean = () => true,
-  ) {
+    eventHelper: T,
+    filter: (_: any) => boolean = () => true,
+  ): any {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<T | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
-        const eventHelper = new eventHelperType();
         const blockNumber = header.number.toHuman();
         const blockHash = header.hash;
         const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
@@ -948,21 +944,14 @@ class WaitGroup {
         const apiAt = await this.helper.getApi().at(blockHash);
         const eventRecords = (await apiAt.query.system.events()) as any;
 
-        const neededEvent = eventRecords.toArray().find((r: FrameSystemEventRecord) => {
-          if(
-            r.event.section == eventHelper.section()
-            && r.event.method == eventHelper.method()
-          ) {
-            eventHelper.bindEventRecord(r);
-            return filter(eventHelper);
-          } else {
-            return false;
-          }
-        });
+        const neededEvent = eventRecords.toArray()
+          .filter((r: FrameSystemEventRecord) => r.event.section == eventHelper.section() && r.event.method == eventHelper.method())
+          .map((r: FrameSystemEventRecord) => eventHelper.wrapEvent(r.event.data))
+          .find(filter);
 
         if(neededEvent) {
           unsubscribe();
-          resolve(eventHelper);
+          resolve(neededEvent);
         } else if(maxBlocksToWait > 0) {
           maxBlocksToWait--;
         } else {
@@ -977,12 +966,11 @@ class WaitGroup {
 
   async expectEvent<T extends IEventHelper>(
     maxBlocksToWait: number,
-    eventHelperType: new () => T,
-    filter: (e: T) => boolean = () => true,
+    eventHelper: T,
+    filter: (e: any) => boolean = () => true,
   ) {
-    const e = await this.event(maxBlocksToWait, eventHelperType, filter);
+    const e = await this.event(maxBlocksToWait, eventHelper, filter);
     if(e == null) {
-      const eventHelper = new eventHelperType();
       throw Error(`The event '${eventHelper.section()}.${eventHelper.method()}' is expected`);
     } else {
       return e;
