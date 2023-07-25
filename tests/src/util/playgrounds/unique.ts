@@ -3048,26 +3048,10 @@ class CollectiveGroup extends HelperGroup<UniqueHelper> {
    * @param proposal constructed call to be executed if the proposal is successful
    * @param voteThreshold minimal number of votes for the proposal to be verified and executed
    * @param lengthBound byte length of the encoded call
-   * @returns promise of extrinsic execution and the hash and index of the proposal, obtained from the result
+   * @returns promise of extrinsic execution and its result
    */
-  async propose(signer: TSigner, proposal: any, voteThreshold: number, lengthBound = 10000): Promise<{hash: string, index: number}> {
-    const result = await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [voteThreshold, proposal, lengthBound]);
-    const events = result.result.events.filter(x => x.event.method === 'Proposed');
-    if(events.length != 1) {
-      try {
-        return {
-          hash: this.checkExecutedEvent(result.result.events),
-          index: -1,
-        };
-      } catch (e: any) {
-        if(e.message.includes('Expected one \'Executed\' event'))
-          throw new Error(`Expected one event per proposal, but got ${events.length}`);
-        else
-          throw e;
-      }
-    }
-    const args = events[0].event.data as any;
-    return {hash: args.proposalHash.toHuman(), index: args.proposalIndex.toNumber()};
+  async propose(signer: TSigner, proposal: any, voteThreshold: number, lengthBound = 10000) {
+    return await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [voteThreshold, proposal, lengthBound]);
   }
 
   /**
@@ -3104,11 +3088,11 @@ class CollectiveGroup extends HelperGroup<UniqueHelper> {
    * @param lengthBound byte length of the encoded call
    * @returns promise of extrinsic execution and its result
    */
-  async closeProposal(
+  async close(
     signer: TSigner,
     proposalHash: string,
     proposalIndex: number,
-    weightBound: [number, number] | any = [100_000_000, 10_000],
+    weightBound: [number, number] | any = [1_000_000_000, 20_000],
     lengthBound = 10_000,
   ) {
     const result = await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [
@@ -3223,16 +3207,16 @@ class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.addMember`, [newMember]);
   }
 
+  removeMember(signer: TSigner, member: string, minRank: number) {
+    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.removeMember`, [member, minRank]);
+  }
+
   promote(signer: TSigner, member: string) {
     return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.promoteMember`, [member]);
   }
 
   demote(signer: TSigner, member: string) {
     return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.demoteMember`, [member]);
-  }
-
-  remove(signer: TSigner, member: string, minRank: number) {
-    return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.removeMember`, [member, minRank]);
   }
 
   vote(signer: TSigner, pollIndex: number, aye: boolean) {
@@ -3334,7 +3318,7 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.emergencyCancel', [referendumIndex]);
   }
 
-  vote(signer: TSigner, referendumIndex: number, vote: PalletDemocracyVoteAccountVote) {
+  vote(signer: TSigner, referendumIndex: number, vote: any) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, vote]);
   }
 
@@ -3364,6 +3348,36 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
 
   async publicProposals() {
     return (await this.helper.callRpc('api.query.democracy.publicProps', [])).toJSON();
+  }
+
+  async findPublicProposal(proposalIndex: number) {
+    const proposalInfo = (await this.publicProposals()).find((proposalInfo: any[]) => proposalInfo[0] == proposalIndex);
+
+    return proposalInfo ? proposalInfo[1] : null;
+  }
+
+  async expectPublicProposal(proposalIndex: number) {
+    const proposal = await this.findPublicProposal(proposalIndex);
+
+    if (proposal) {
+      return proposal;
+    } else {
+      throw Error(`Proposal #${proposalIndex} is expected to exist`);
+    }
+  }
+
+  async getExternalProposal() {
+    return (await this.helper.callRpc('api.query.democracy.nextExternal', []));
+  }
+
+  async expectExternalProposal() {
+    const proposal = await this.getExternalProposal();
+
+    if (proposal) {
+      return proposal;
+    } else {
+      throw Error('An external proposal is expected to exist');
+    }
   }
 
   /* setMetadata? */

@@ -115,7 +115,11 @@ function eventJsonData<T = any>(data: any[], index: number) {
   return data[index].toJSON() as T;
 }
 
-function eventData<T>(data: any[], index: number) {
+function eventHumanData(data: any[], index: number) {
+  return data[index].toHuman();
+}
+
+function eventData<T = any>(data: any[], index: number) {
   return data[index] as T;
 }
 
@@ -124,10 +128,24 @@ function EventSection(section: string) {
   return class Section {
     static section = section;
 
-    static Method(name: string, wrapEvent: (data: any[]) => any) {
+    static Method(name: string, wrapEvent: (data: any[]) => any = () => {}) {
       const helperClass = EventHelper(Section.section, name, wrapEvent);
       return new helperClass();
     }
+  };
+}
+
+function schedulerSection(schedulerInstance: string) {
+  return class extends EventSection(schedulerInstance) {
+    static Dispatched = this.Method('Dispatched', data => ({
+      task: eventJsonData(data, 0),
+      id: eventHumanData(data, 1),
+    }));
+
+    static PriorityChanged = this.Method('PriorityChanged', data => ({
+      task: eventJsonData(data, 0),
+      priority: eventJsonData(data, 1),
+    }));
   };
 }
 
@@ -137,9 +155,11 @@ export class Event {
       proposalIndex: eventJsonData<number>(data, 0),
     }));
 
+    static ExternalTabled = this.Method('ExternalTabled');
+
     static Started = this.Method('Started', data => ({
         referendumIndex: eventJsonData<number>(data, 0),
-        threshold: eventJsonData(data, 1),
+        threshold: eventHumanData(data, 1),
     }));
 
     static Voted = this.Method('Voted', data => ({
@@ -153,6 +173,15 @@ export class Event {
     }));
   };
 
+  static Council = class extends EventSection('council') {
+    static Proposed = this.Method('Proposed', data => ({
+      account: eventHumanData(data, 0),
+      proposalIndex: eventJsonData<number>(data, 1),
+      proposalHash: eventHumanData(data, 2),
+      threshold: eventJsonData<number>(data, 3),
+    }));
+  }
+
   static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
     static Submitted = this.Method('Submitted', data => ({
       referendumIndex: eventJsonData<number>(data, 0),
@@ -161,12 +190,8 @@ export class Event {
     }));
   };
 
-  static Scheduler = class extends EventSection('scheduler') {
-    static PriorityChanged = this.Method('PriorityChanged', data => ({
-      task: eventJsonData(data, 0),
-      priority: eventJsonData(data, 1),
-    }));
-  };
+  static Scheduler = schedulerSection('scheduler');
+  static GovScheduler = schedulerSection('govScheduler');
 
   static XcmpQueue = class extends EventSection('xcmpQueue') {
     static XcmpMessageSent = this.Method('XcmpMessageSent', data => ({

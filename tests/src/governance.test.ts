@@ -4,16 +4,21 @@ import { Event } from './util/playgrounds/unique.dev';
 import { UniqueHelper } from './util/playgrounds/unique';
 import { DAYS, MINUTES } from './util/playgrounds/types';
 
+const democracyLaunchPeriod = 35;
+const democracyVotingPeriod = 35;
+const democracyEnactmentPeriod = 40;
 
 describe('Governance: Council tests', () => {
   let superuser: IKeyringPair;
+  let donor: IKeyringPair;
+
   let alex: IKeyringPair;
   let ildar: IKeyringPair;
   let charu: IKeyringPair;
   let filip: IKeyringPair;
   let irina: IKeyringPair;
-  let donor: IKeyringPair;
-  let preImageHash: string;
+
+  const unanimousCouncilThreshold = 5;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -36,8 +41,6 @@ describe('Governance: Council tests', () => {
         expect(members).to.containSubset(expectedMembers.map((x: IKeyringPair) => x.address));
         expect(members.length).to.be.equal(expectedMembers.length);
       }
-      const proposalCall = await helper.constructApiCall('api.tx.balances.forceSetBalance', [donor.address, 20n * 10n ** 25n]);
-      preImageHash = await helper.preimage.notePreimageFromCall(superuser, proposalCall, true);
     });
   });
 
@@ -52,20 +55,61 @@ describe('Governance: Council tests', () => {
         members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
       }
       expect(members).to.be.deep.equal([]);
-      await helper.preimage.unnotePreimage(superuser, preImageHash);
     });
   });
 
-  itSub.skip('3/4 of Council can externally propose SuperMajorityAgainst', async ({helper}) => {
+  itSub('Unanimous Council can externally propose SuperMajorityAgainst', async ({helper}) => {
+    const [forceSetBalanceReceiver] = await helper.arrange.createAccounts([0n], donor);
+    const forceSetBalanceTestValue = 20n * 10n ** 25n
 
-  });
+    const democracyProposal = await helper.constructApiCall('api.tx.balances.forceSetBalance', [
+        forceSetBalanceReceiver.address, forceSetBalanceTestValue
+    ]).method.toHex();
 
-  itSub.skip('1/2 of Council can externally propose SimpleMajority', async ({helper}) => {
+    const councilProposal = await helper.constructApiCall('api.tx.democracy.externalProposeDefault', [{
+        Inline: democracyProposal,
+    }]);
 
-  });
+    const proposeResult = await helper.council.propose(
+        filip,
+        councilProposal,
+        unanimousCouncilThreshold,
+    );
 
-  itSub.skip('1/3 of Council can externally propose SuperMajorityApprove', async ({helper}) => {
+    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
+    const proposalIndex = councilProposedEvent.proposalIndex;
+    const proposalHash = councilProposedEvent.proposalHash;
 
+    await helper.council.vote(alex, proposalHash, proposalIndex, true);
+    await helper.council.vote(ildar, proposalHash, proposalIndex, true);
+    await helper.council.vote(charu, proposalHash, proposalIndex, true);
+    await helper.council.vote(filip, proposalHash, proposalIndex, true);
+    await helper.council.vote(irina, proposalHash, proposalIndex, true);
+
+    await helper.council.close(filip, proposalHash, proposalIndex);
+
+    const democracyStartedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
+    const democracyReferendumIndex = democracyStartedEvent.referendumIndex;
+    const democracyThreshold = democracyStartedEvent.threshold;
+
+    expect(democracyThreshold).to.be.equal('SuperMajorityAgainst');
+
+    await helper.democracy.vote(filip, democracyReferendumIndex, {
+        Standard: {
+            vote: {
+                aye: true,
+                conviction: 1,
+            },
+            balance: 10_000n,
+        }
+    });
+
+    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
+    expect(passedReferendumEvent.referendumIndex).to.be.equal(democracyReferendumIndex);
+
+    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.GovScheduler.Dispatched);
+    const receiverBalance = await helper.balance.getSubstrate(forceSetBalanceReceiver.address);
+    expect(receiverBalance).to.be.equal(forceSetBalanceTestValue);
   });
 
   itSub.skip('Council prime member vote is the default', async ({helper}) => {
@@ -77,14 +121,6 @@ describe('Governance: Council tests', () => {
   });
 
   itSub.skip('Superuser can remove a member', async ({helper}) => {
-
-  });
-
-  itSub.skip('Council can add Council member', async ({helper}) => {
-
-  });
-
-  itSub.skip('Council can remove Council member', async ({helper}) => {
 
   });
 
@@ -108,27 +144,27 @@ describe('Governance: Council tests', () => {
 
   });
 
-  itSub.skip('[Negative] Less than 3/4 of Council cannot externally propose SuperMajorityAgainst', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot add Council member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Less than 1/2 of Council cannot externally propose SimpleMajority', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot remove Council member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Less than 1/3 of Council cannot externally propose SuperMajorityApprove', async ({helper}) => {
+  itSub.skip('[Negative] Less than 100% of Council cannot externally propose SuperMajorityAgainst', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Council member cannot externally propose SuperMajorityAgainst', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot cannot submit regular democracy proposal', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Council member cannot externally propose SimpleMajority', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot externally propose SimpleMajority', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Council member cannot externally propose SuperMajorityApprove', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot externally propose SuperMajorityApprove', async ({helper}) => {
 
   });
 
@@ -304,6 +340,10 @@ describe('Governance: Technical Committee tests', () => {
 
   });
 
+  itSub.skip('[Negative] TechComm cannot submit regular democracy proposal', async () => {
+
+  });
+
   itSub.skip('[Negative] TechComm cannot externally propose SuperMajorityAgainst', async ({helper}) => {
 
   });
@@ -313,6 +353,10 @@ describe('Governance: Technical Committee tests', () => {
   });
 
   itSub.skip('[Negative] TechComm cannot externally propose SuperMajorityApprove', async ({helper}) => {
+
+  });
+
+  itSub.skip('[Negative] TechComm member cannot submit regular democracy proposal', async () => {
 
   });
 
@@ -415,7 +459,7 @@ describe('Governance: Technical Committee tests', () => {
 
 describe('Governance: Fellowship tests', () => {
   const numMembersInRank = 3;
-  const memberBalance = 50_000n;
+  const memberBalance = 5000n;
   const rankLimit = 7;
   const members: IKeyringPair[][] = [];
 
@@ -427,18 +471,15 @@ describe('Governance: Fellowship tests', () => {
   const submissionDeposit = 1000n;
   const decisionDeposit = 10n;
 
-  const democracyLaunchPeriod = 7 * DAYS;
-  const democracyVotingPeriod = 7 * DAYS;
   const democracyTrackId = 10;
   const democracyTrackMinRank = 3;
   const fellowshipPropositionOrigin = 'FellowshipProposition';
 
-  const fellowshipPreparePeriod = 30 * MINUTES;
-  const fellowshipConfirmPeriod = 30 * MINUTES;
+  const fellowshipPreparePeriod = 3;
+  const fellowshipConfirmPeriod = 3;
+  const fellowshipMinEnactPeriod = 1;
 
   const defaultEnactmentMoment = { After: 50 };
-
-  const maxWaitBlocks = 5;
 
   let dummyProposalCount = 0;
   function dummyProposal(helper: UniqueHelper) {
@@ -485,7 +526,17 @@ describe('Governance: Fellowship tests', () => {
       });
   });
 
-  itSub('FellowshipProposal can submit regular Democracy proposals', async ({helper}) => {
+  after(async () => {
+    await usingPlaygrounds(async (helper) => {
+        for (var rank = 0; rank < rankLimit; rank++) {
+            for (var member of members[rank]) {
+                await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
+            }
+        }
+    });
+  });
+
+  itSub('FellowshipProposition can submit regular Democracy proposals', async ({helper}) => {
       const democracyProposal = dummyProposal(helper);
       const fellowshipProposal = {
         Inline: helper.constructApiCall("api.tx.democracy.propose", [democracyProposal, 0]).method.toHex(),
@@ -502,16 +553,15 @@ describe('Governance: Fellowship tests', () => {
       await voteUnanimouslyInFellowship(helper, democracyTrackMinRank, fellowshipReferendumIndex);
       await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
 
-      const democracyProposed = await helper.wait.expectEvent(fellowshipPreparePeriod + fellowshipConfirmPeriod, Event.Democracy.Proposed);
+      const democracyProposed = await helper.wait.expectEvent(
+        fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,
+        Event.Democracy.Proposed
+      );
 
-      const publicProposals: any[] = await helper.democracy.publicProposals();
-      const democracyEnqueuedProposal = publicProposals.find(proposalInfo => {
-        proposalInfo[0] == democracyProposed.proposalIndex
-        && proposalInfo[1].inline == democracyProposal.Inline
-      });
-      expect(democracyEnqueuedProposal, "Fellowship proposal expected to be in the Democracy").to.be.not.null;
+      const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex);
+      expect(democracyEnqueuedProposal.inline, "Fellowship proposal expected to be in the Democracy").to.be.equal(democracyProposal.Inline);
 
-      await helper.wait.newBlocks(donor, democracyVotingPeriod);
+      await helper.wait.newBlocks(democracyVotingPeriod);
   });
 
   itSub('Fellowship (rank-1 or greater) member can submit Fellowship proposals on the Democracy track', async ({helper}) => {
@@ -569,15 +619,19 @@ describe('Governance: Fellowship tests', () => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot externally propose SuperMajorityAgainst', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot externally propose SuperMajorityAgainst', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot externally propose SimpleMajority', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot externally propose SuperMajorityAgainst', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot externally propose SuperMajorityApprove', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot externally propose SimpleMajority', async ({helper}) => {
+
+  });
+
+  itSub.skip('[Negative] FellowshipProposition cannot externally propose SuperMajorityApprove', async ({helper}) => {
 
   });
 
@@ -593,51 +647,51 @@ describe('Governance: Fellowship tests', () => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot add/remove a Council member', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot add/remove a Council member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot set Council prime member', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot set Council prime member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal member cannot set Council prime member', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition member cannot set Council prime member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot add/remove a TechComm member', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot add/remove a TechComm member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot add/remove a Fellowship member', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot add/remove a Fellowship member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot promote/demote a Fellowship member', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot promote/demote a Fellowship member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot fast-track Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot fast-track Democracy proposals', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot cancel approved Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot cancel approved Democracy proposals', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot cancel ongoing Democracy referendums', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot cancel ongoing Democracy referendums', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot cancel queued Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot cancel queued Democracy proposals', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot blacklist Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot blacklist Democracy proposals', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] FellowshipProposal cannot veto Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] FellowshipProposition cannot veto Democracy proposals', async ({helper}) => {
 
   });
 });
