@@ -22,5 +22,5 @@ pub mod sponsoring;
 pub mod substrate;
 pub mod xcm;
 
-#[cfg(feature = "pallet-test-utils")]
+#[cfg(feature = "test-env")]
 pub mod test_pallets;

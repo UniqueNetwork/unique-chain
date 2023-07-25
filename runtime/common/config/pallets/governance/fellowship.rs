@@ -1,5 +1,5 @@
 use crate::{
-	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda,
+	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda, Runtime,
 };
 use super::*;
 use pallet_gov_origins::Origin as GovOrigins;
@@ -9,9 +9,33 @@ pub const FELLOWSHIP_MODULE_ID: PalletId = PalletId(*b"flowship");
 pub const DEMOCRACY_TRACK_ID: u16 = 10;
 
 parameter_types! {
-	pub AlarmInterval: BlockNumber = gov_conf_get!(alarm_interval);
-	pub SubmissionDeposit: Balance = gov_conf_get!(submission_deposit);
-	pub UndecidingTimeout: BlockNumber = gov_conf_get!(undeciding_timeout);
+	pub FellowshipAccountId: <Runtime as frame_system::Config>::AccountId = FELLOWSHIP_MODULE_ID.into_account_truncating();
+	pub AlarmInterval: BlockNumber = 1;
+	pub SubmissionDeposit: Balance = 1000;
+}
+
+#[cfg(not(feature = "test-env"))]
+use crate::governance_timings::fellowship as fellowship_timings;
+
+#[cfg(feature = "test-env")]
+pub mod fellowship_timings {
+	use super::*;
+
+	parameter_types! {
+		pub UndecidingTimeout: BlockNumber = 35;
+	}
+
+	pub mod track {
+        use super::*;
+
+		pub mod democracy_proposals {
+			use super::*;
+
+			pub const PREPARE_PERIOD: BlockNumber = 3;
+			pub const DECISION_PERIOD: BlockNumber = 35;
+			pub const CONFIRM_PERIOD: BlockNumber = 3;
+		}
+	}
 }
 
 impl pallet_referenda::Config for Runtime {
@@ -28,7 +52,7 @@ impl pallet_referenda::Config for Runtime {
 	type Tally = pallet_ranked_collective::TallyOf<Runtime>;
 	type SubmissionDeposit = SubmissionDeposit;
 	type MaxQueued = ConstU32<100>;
-	type UndecidingTimeout = UndecidingTimeout;
+	type UndecidingTimeout = fellowship_timings::UndecidingTimeout;
 	type AlarmInterval = AlarmInterval;
 	type Tracks = TracksInfo;
 	type Preimages = Preimage;
@@ -50,8 +74,8 @@ impl RankedConfig for Runtime {
 	type VoteWeight = pallet_ranked_collective::Geometric;
 }
 
-pub struct FellowshipProposition;
-impl<O> EnsureOrigin<O> for FellowshipProposition
+pub struct EnsureFellowshipProposition;
+impl<O> EnsureOrigin<O> for EnsureFellowshipProposition
 where
 	O: Into<Result<GovOrigins, O>> + From<GovOrigins>,
 {
@@ -59,7 +83,7 @@ where
 
 	fn try_origin(o: O) -> Result<Self::Success, O> {
 		o.into().and_then(|o| match o {
-			GovOrigins::FellowshipProposition => Ok(FELLOWSHIP_MODULE_ID.into_account_truncating()),
+			GovOrigins::FellowshipProposition => Ok(FellowshipAccountId::get()),
 			o => Err(O::from(o)),
 		})
 	}
@@ -83,12 +107,12 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 		static DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 1] = [(
 			DEMOCRACY_TRACK_ID,
 			pallet_referenda::TrackInfo {
-				name: "democracy-proposals",
+				name: "democracy_proposals",
 				max_deciding: 10,
 				decision_deposit: 10 * UNIQUE,
-				prepare_period: 30 * MINUTES,
-				decision_period: 7 * DAYS,
-				confirm_period: 30 * MINUTES,
+				prepare_period: fellowship_timings::track::democracy_proposals::PREPARE_PERIOD,
+				decision_period: fellowship_timings::track::democracy_proposals::DECISION_PERIOD,
+				confirm_period: fellowship_timings::track::democracy_proposals::CONFIRM_PERIOD,
 				min_enactment_period: 1 * MINUTES,
 				min_approval: pallet_referenda::Curve::LinearDecreasing {
 					length: Perbill::from_percent(100),

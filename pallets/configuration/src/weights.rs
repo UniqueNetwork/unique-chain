@@ -39,7 +39,6 @@ pub trait WeightInfo {
 	fn set_collator_selection_desired_collators() -> Weight;
 	fn set_collator_selection_license_bond() -> Weight;
 	fn set_collator_selection_kick_threshold() -> Weight;
-	fn set_governance_arg() -> Weight;
 }
 
 /// Weights for pallet_configuration using the Substrate node and recommended hardware.
@@ -105,17 +104,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(4_816_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	/// Storage: Configuration GovernanceConfigurationOverride (r:1 w:1)
-	/// Proof: Configuration GovernanceConfigurationOverride (max_values: Some(1), max_size: Some(97), added: 592, mode: MaxEncodedLen)
-	fn set_governance_arg() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `142`
-		//  Estimated: `1582`
-		// Minimum execution time: 2_398_000 picoseconds.
-		Weight::from_parts(2_510_000, 1582)
-			.saturating_add(T::DbWeight::get().reads(1_u64))
-			.saturating_add(T::DbWeight::get().writes(1_u64))
-	}
 }
 
 // For backwards compatibility and tests
@@ -178,17 +166,6 @@ impl WeightInfo for () {
 		//  Estimated: `0`
 		// Minimum execution time: 4_664_000 picoseconds.
 		Weight::from_parts(4_816_000, 0)
-			.saturating_add(RocksDbWeight::get().writes(1_u64))
-	}
-	/// Storage: Configuration GovernanceConfigurationOverride (r:1 w:1)
-	/// Proof: Configuration GovernanceConfigurationOverride (max_values: Some(1), max_size: Some(97), added: 592, mode: MaxEncodedLen)
-	fn set_governance_arg() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `142`
-		//  Estimated: `1582`
-		// Minimum execution time: 2_398_000 picoseconds.
-		Weight::from_parts(2_510_000, 1582)
-			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}
 }

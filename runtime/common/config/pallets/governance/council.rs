@@ -1,9 +1,20 @@
 use super::*;
 
 parameter_types! {
-	pub CouncilMotionDuration: BlockNumber = gov_conf_get!(council_motion_duration);
-	pub CouncilMaxProposals: u32 = gov_conf_get!(council_max_proposals);
-	pub CouncilMaxMembers: u32 = gov_conf_get!(council_max_members);
+	pub CouncilMaxProposals: u32 = 100;
+	pub CouncilMaxMembers: u32 = 100;
+}
+
+#[cfg(not(feature = "test-env"))]
+use crate::governance_timings::council as council_timings;
+
+#[cfg(feature = "test-env")]
+pub mod council_timings {
+	use super::*;
+
+	parameter_types! {
+		pub CouncilMotionDuration: BlockNumber = 35;
+	}
 }
 
 pub type CouncilCollective = pallet_collective::Instance1;
@@ -11,7 +22,7 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
-	type MotionDuration = CouncilMotionDuration;
+	type MotionDuration = council_timings::CouncilMotionDuration;
 	type MaxProposals = CouncilMaxProposals;
 	type MaxMembers = CouncilMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;
@@ -46,11 +57,10 @@ pub type ThreeFourthsCouncil = EnsureProportionAtLeast<AccountId, CouncilCollect
 
 pub type AllCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>;
 
+pub type RootOrOneThirdsCouncil = EitherOfDiverse<EnsureRoot<AccountId>, OneThirdsCouncil>;
+
 pub type RootOrHalfCouncil = EitherOfDiverse<EnsureRoot<AccountId>, HalfCouncil>;
 
 pub type RootOrThreeFourthsCouncil = EitherOfDiverse<EnsureRoot<AccountId>, ThreeFourthsCouncil>;
 
-pub type RootOrAllCouncil = EitherOfDiverse<
-	EnsureRoot<AccountId>,
-	EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>,
->;
+pub type RootOrAllCouncil = EitherOfDiverse<EnsureRoot<AccountId>, AllCouncil>;

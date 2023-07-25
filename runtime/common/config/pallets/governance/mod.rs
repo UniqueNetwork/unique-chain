@@ -22,7 +22,7 @@ use frame_support::{
 	weights::Weight,
 	pallet_prelude::*,
 };
-use frame_system::EnsureRoot;
+use frame_system::{EnsureRoot, EnsureNever};
 use sp_runtime::{
 	Perbill,
 	traits::{AccountIdConversion, ConstU32, Replace, CheckedSub, Convert},
@@ -38,10 +38,8 @@ pub use up_common::{
 };
 use pallet_collective::EnsureProportionAtLeast;
 
-use crate::gov_conf_get;
-
-pub mod council_collective;
-pub use council_collective::*;
+pub mod council;
+pub use council::*;
 
 pub mod democracy;
 pub use democracy::*;
@@ -56,13 +54,6 @@ pub mod scheduler;
 pub use scheduler::*;
 
 impl pallet_gov_origins::Config for Runtime {}
-
-#[macro_export]
-macro_rules! gov_conf_get {
-	($param:ident) => {
-		<pallet_configuration::GovernanceConfigurationOverride<Runtime>>::get().$param
-	};
-}
 
 morph_types! {
 	/// A `TryMorph` implementation to reduce a scalar by a particular amount, checking for

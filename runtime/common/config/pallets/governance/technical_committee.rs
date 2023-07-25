@@ -1,9 +1,20 @@
 use super::*;
 
 parameter_types! {
-	pub TechnicalMotionDuration: BlockNumber = gov_conf_get!(technical_motion_duration);
-	pub TechnicalMaxProposals: u32 = gov_conf_get!(technical_max_proposals);
-	pub TechnicalMaxMembers: u32 = gov_conf_get!(technical_max_members);
+	pub TechnicalMaxProposals: u32 = 100;
+	pub TechnicalMaxMembers: u32 = 100;
+}
+
+#[cfg(not(feature = "test-env"))]
+use crate::governance_timings::technical_committee as technical_committee_timings;
+
+#[cfg(feature = "test-env")]
+pub mod technical_committee_timings {
+	use super::*;
+
+	parameter_types! {
+		pub TechnicalMotionDuration: BlockNumber = 35;
+	}
 }
 
 pub type TechnicalCollective = pallet_collective::Instance2;
@@ -11,7 +22,7 @@ impl pallet_collective::Config<TechnicalCollective> for Runtime {
 	type RuntimeOrigin = RuntimeOrigin;
 	type Proposal = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
-	type MotionDuration = TechnicalMotionDuration;
+	type MotionDuration = technical_committee_timings::TechnicalMotionDuration;
 	type MaxProposals = TechnicalMaxProposals;
 	type MaxMembers = TechnicalMaxMembers;
 	type DefaultVote = pallet_collective::PrimeDefaultVote;

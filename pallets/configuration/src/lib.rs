@@ -28,13 +28,12 @@ use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_arithmetic::{
 	per_things::{Perbill, PerThing},
-	traits::{BaseArithmetic, Unsigned, AtLeast32BitUnsigned},
+	traits::{BaseArithmetic, Unsigned},
 };
 use smallvec::smallvec;
 
 pub use pallet::*;
 use sp_core::U256;
-use up_common::constants::{DAYS, HOURS, UNIQUE};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
@@ -170,12 +169,6 @@ mod pallet {
 		StorageValue<Value = AppPromotionConfiguration<T::BlockNumber>, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
-	pub type GovernanceConfigurationOverride<T: Config> = StorageValue<
-		Value = GovernanceConfiguration<T::BlockNumber, T::Balance>,
-		QueryKind = ValueQuery,
-	>;
-
-	#[pallet::storage]
 	pub type CollatorSelectionDesiredCollatorsOverride<T: Config> = StorageValue<
 		Value = u32,
 		QueryKind = ValueQuery,
@@ -307,40 +300,6 @@ mod pallet {
 			});
 			Ok(())
 		}
-
-		#[pallet::call_index(7)]
-		#[pallet::weight(T::WeightInfo::set_governance_arg())]
-		pub fn set_governance_arg(
-			origin: OriginFor<T>,
-			arg: GovernanceArgs<T::Balance, T::BlockNumber>,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-			<GovernanceConfigurationOverride<T>>::mutate(|c| match arg {
-				GovernanceArgs::LaunchPeriod(value) => c.launch_period = value,
-				GovernanceArgs::VotingPeriod(value) => c.voting_period = value,
-				GovernanceArgs::FastTrackVotingPeriod(value) => c.fast_track_voting_period = value,
-				GovernanceArgs::MinimumDeposit(value) => c.minimum_deposit = value,
-				GovernanceArgs::EnactmentPeriod(value) => c.enactment_period = value,
-				GovernanceArgs::CooloffPeriod(value) => c.cooloof_period = value,
-				GovernanceArgs::InstantAllowed(value) => c.instant_allowed = value,
-				GovernanceArgs::MaxVotes(value) => c.max_votes = value,
-				GovernanceArgs::MaxProposals(value) => c.max_proposals = value,
-				GovernanceArgs::CouncilMotionDuration(value) => c.council_motion_duration = value,
-				GovernanceArgs::CouncilMaxProposals(value) => c.council_max_proposals = value,
-				GovernanceArgs::CouncilMaxMembers(value) => c.council_max_members = value,
-				GovernanceArgs::TechnicalMotionDuration(value) => {
-					c.technical_motion_duration = value
-				}
-				GovernanceArgs::TechnicalMaxProposals(value) => c.technical_max_proposals = value,
-				GovernanceArgs::TechincalMaxMembers(value) => c.technical_max_members = value,
-				GovernanceArgs::MaxScheduledPerBlock(value) => c.max_scheduled_per_block = value,
-				GovernanceArgs::AlarmInterval(value) => c.alarm_interval = value,
-				GovernanceArgs::SubmissionDeposit(value) => c.submission_deposit = value,
-				GovernanceArgs::UndecidingTimeout(value) => c.undeciding_timeout = value,
-			});
-			Self::deposit_event(Event::GovernanceConfigurationChanged(arg));
-			Ok(())
-		}
 	}
 
 	#[pallet::pallet]
@@ -389,81 +348,4 @@ pub struct AppPromotionConfiguration<BlockNumber> {
 	pub interval_income: Option<Perbill>,
 	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.
 	pub max_stakers_per_calculation: Option<u8>,
-}
-
-#[derive(Encode, Decode, Clone, Debug, TypeInfo, MaxEncodedLen, PartialEq, PartialOrd)]
-pub struct GovernanceConfiguration<BlockNumber, Balance> {
-	pub launch_period: BlockNumber,
-	pub voting_period: BlockNumber,
-	pub fast_track_voting_period: BlockNumber,
-	pub minimum_deposit: Balance,
-	pub enactment_period: BlockNumber,
-	pub cooloof_period: BlockNumber,
-	pub instant_allowed: bool,
-	pub max_votes: u32,
-	pub max_proposals: u32,
-
-	pub council_motion_duration: BlockNumber,
-	pub council_max_proposals: u32,
-	pub council_max_members: u32,
-
-	pub technical_motion_duration: BlockNumber,
-	pub technical_max_proposals: u32,
-	pub technical_max_members: u32,
-
-	pub max_scheduled_per_block: u32,
-	pub alarm_interval: BlockNumber,
-	pub submission_deposit: Balance,
-	pub undeciding_timeout: BlockNumber,
-}
-
-impl<BlockNumber: AtLeast32BitUnsigned, Balance: From<up_common::types::Balance>> Default
-	for GovernanceConfiguration<BlockNumber, Balance>
-{
-	fn default() -> Self {
-		Self {
-			launch_period: (7 * DAYS).into(),
-			voting_period: (7 * DAYS).into(),
-			fast_track_voting_period: (3 * HOURS).into(),
-			minimum_deposit: 0.into(),
-			enactment_period: (8 * DAYS).into(),
-			cooloof_period: (7 * DAYS).into(),
-			instant_allowed: true,
-			max_votes: 100,
-			max_proposals: 100,
-			council_motion_duration: (3 * DAYS).into(),
-			council_max_proposals: 100,
-			council_max_members: 100,
-			technical_motion_duration: (3 * DAYS).into(),
-			technical_max_proposals: 100,
-			technical_max_members: 100,
-			max_scheduled_per_block: 50,
-			alarm_interval: 1u32.into(),
-			submission_deposit: (1000 * UNIQUE).into(),
-			undeciding_timeout: (7 * DAYS).into(),
-		}
-	}
-}
-
-#[derive(Encode, Decode, Clone, Debug, TypeInfo, MaxEncodedLen, PartialEq)]
-pub enum GovernanceArgs<Balance, BlockNumber> {
-	LaunchPeriod(BlockNumber),
-	VotingPeriod(BlockNumber),
-	FastTrackVotingPeriod(BlockNumber),
-	MinimumDeposit(Balance),
-	EnactmentPeriod(BlockNumber),
-	CooloffPeriod(BlockNumber),
-	InstantAllowed(bool),
-	MaxVotes(u32),
-	MaxProposals(u32),
-	CouncilMotionDuration(BlockNumber),
-	CouncilMaxProposals(u32),
-	CouncilMaxMembers(u32),
-	TechnicalMotionDuration(BlockNumber),
-	TechnicalMaxProposals(u32),
-	TechincalMaxMembers(u32),
-	MaxScheduledPerBlock(u32),
-	AlarmInterval(BlockNumber),
-	SubmissionDeposit(Balance),
-	UndecidingTimeout(BlockNumber),
 }

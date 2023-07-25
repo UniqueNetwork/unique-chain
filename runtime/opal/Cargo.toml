@@ -23,7 +23,7 @@ opal-runtime = [
 	'collator-selection',
 	'foreign-assets',
 	'governance',
-	'pallet-test-utils',
+	'test-env',
 	'preimage',
 	'refungible',
 ]
@@ -226,7 +226,7 @@ app-promotion = []
 collator-selection = []
 foreign-assets = []
 governance = []
-pallet-test-utils = []
+test-env = []
 preimage = []
 refungible = []
 unique-scheduler = []
