@@ -5,6 +5,11 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 export const NON_EXISTENT_COLLECTION_ID = 4_294_967_295;
 
+export const MILLISECS_PER_BLOCK = 12000;
+export const MINUTES = 60_000 / MILLISECS_PER_BLOCK;
+export const HOURS = MINUTES * 60;
+export const DAYS = HOURS * 24;
+
 export interface IEvent {
   section: string;
   method: string;
