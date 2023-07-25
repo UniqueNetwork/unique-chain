@@ -49,7 +49,7 @@ impl pallet_democracy::Config for Runtime {
 
 	type SubmitOrigin = EitherOf<
 		MapSuccess<EnsureRoot<Self::AccountId>, Replace<fellowship::FellowshipAccountId>>,
-		EnsureFellowshipProposition
+		EnsureFellowshipProposition,
 	>;
 
 	/// 1/3 of the council can decide what their next motion is (SuperMajorityApprove).

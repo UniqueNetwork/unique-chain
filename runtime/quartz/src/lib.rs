@@ -38,8 +38,8 @@ use ::xcm::latest::NetworkId;
 
 mod runtime_common;
 
-pub mod xcm_barrier;
 pub mod governance_timings;
+pub mod xcm_barrier;
 
 pub use runtime_common::*;
 

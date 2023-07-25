@@ -5,50 +5,50 @@ pub use up_common::{
 };
 
 pub mod council {
-    use super::*;
+	use super::*;
 
-    parameter_types! {
-        pub CouncilMotionDuration: BlockNumber = 7 * DAYS;
-    }
+	parameter_types! {
+		pub CouncilMotionDuration: BlockNumber = 7 * DAYS;
+	}
 }
 
 pub mod democracy {
-    use super::*;
+	use super::*;
 
-    parameter_types! {
-        pub LaunchPeriod: BlockNumber = 7 * DAYS;
-        pub VotingPeriod: BlockNumber = 7 * DAYS;
-        pub FastTrackVotingPeriod: BlockNumber = 1 * DAYS;
-        pub EnactmentPeriod: BlockNumber = 8 * DAYS;
-        pub CooloffPeriod: BlockNumber = 7 * DAYS;
-    }
+	parameter_types! {
+		pub LaunchPeriod: BlockNumber = 7 * DAYS;
+		pub VotingPeriod: BlockNumber = 7 * DAYS;
+		pub FastTrackVotingPeriod: BlockNumber = 1 * DAYS;
+		pub EnactmentPeriod: BlockNumber = 8 * DAYS;
+		pub CooloffPeriod: BlockNumber = 7 * DAYS;
+	}
 }
 
 pub mod fellowship {
-    use super::*;
+	use super::*;
 
-    parameter_types! {
-        pub UndecidingTimeout: BlockNumber = 7 * DAYS;
-    }
+	parameter_types! {
+		pub UndecidingTimeout: BlockNumber = 7 * DAYS;
+	}
 
-    pub mod track {
-        use super::*;
+	pub mod track {
+		use super::*;
 
 		pub mod democracy_proposals {
-            use super::*;
+			use super::*;
 
-            pub const PREPARE_PERIOD: BlockNumber = 30 * MINUTES;
-            pub const DECISION_PERIOD: BlockNumber = 7 * DAYS;
-            pub const CONFIRM_PERIOD: BlockNumber = 30 * MINUTES;
-            pub const MIN_ENACTMENT_PERIOD: BlockNumber = 1 * MINUTES;
-        }
-    }
+			pub const PREPARE_PERIOD: BlockNumber = 30 * MINUTES;
+			pub const DECISION_PERIOD: BlockNumber = 7 * DAYS;
+			pub const CONFIRM_PERIOD: BlockNumber = 30 * MINUTES;
+			pub const MIN_ENACTMENT_PERIOD: BlockNumber = 1 * MINUTES;
+		}
+	}
 }
 
 pub mod technical_committee {
-    use super::*;
+	use super::*;
 
-    parameter_types! {
-        pub TechnicalMotionDuration: BlockNumber = 3 * DAYS;
-    }
+	parameter_types! {
+		pub TechnicalMotionDuration: BlockNumber = 3 * DAYS;
+	}
 }

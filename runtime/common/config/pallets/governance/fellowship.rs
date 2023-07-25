@@ -1,5 +1,6 @@
 use crate::{
-	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda, Runtime,
+	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda,
+	Runtime,
 };
 use super::*;
 use pallet_gov_origins::Origin as GovOrigins;
@@ -26,7 +27,7 @@ pub mod fellowship_timings {
 	}
 
 	pub mod track {
-        use super::*;
+		use super::*;
 
 		pub mod democracy_proposals {
 			use super::*;
@@ -114,7 +115,8 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 				prepare_period: fellowship_timings::track::democracy_proposals::PREPARE_PERIOD,
 				decision_period: fellowship_timings::track::democracy_proposals::DECISION_PERIOD,
 				confirm_period: fellowship_timings::track::democracy_proposals::CONFIRM_PERIOD,
-				min_enactment_period: fellowship_timings::track::democracy_proposals::MIN_ENACTMENT_PERIOD,
+				min_enactment_period:
+					fellowship_timings::track::democracy_proposals::MIN_ENACTMENT_PERIOD,
 				min_approval: pallet_referenda::Curve::LinearDecreasing {
 					length: Perbill::from_percent(100),
 					floor: Perbill::from_percent(50),
