@@ -100,7 +100,7 @@ function EventHelper(section: string, method: string, wrapEvent: (data: any[]) =
 
     expect(txres: ITransactionResult) {
       const e = this.find(txres);
-      if (e) {
+      if(e) {
         return e;
       } else {
         throw Error(`Expected event ${section}.${method}`);
@@ -158,8 +158,8 @@ export class Event {
     static ExternalTabled = this.Method('ExternalTabled');
 
     static Started = this.Method('Started', data => ({
-        referendumIndex: eventJsonData<number>(data, 0),
-        threshold: eventHumanData(data, 1),
+      referendumIndex: eventJsonData<number>(data, 0),
+      threshold: eventHumanData(data, 1),
     }));
 
     static Voted = this.Method('Voted', data => ({
@@ -169,7 +169,7 @@ export class Event {
     }));
 
     static Passed = this.Method('Passed', data => ({
-      referendumIndex: eventJsonData<number>(data, 0)
+      referendumIndex: eventJsonData<number>(data, 0),
     }));
   };
 
@@ -180,7 +180,7 @@ export class Event {
       proposalHash: eventHumanData(data, 2),
       threshold: eventJsonData<number>(data, 3),
     }));
-  }
+  };
 
   static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
     static Submitted = this.Method('Submitted', data => ({

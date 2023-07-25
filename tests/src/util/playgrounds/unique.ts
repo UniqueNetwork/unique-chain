@@ -3359,7 +3359,7 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
   async expectPublicProposal(proposalIndex: number) {
     const proposal = await this.findPublicProposal(proposalIndex);
 
-    if (proposal) {
+    if(proposal) {
       return proposal;
     } else {
       throw Error(`Proposal #${proposalIndex} is expected to exist`);
@@ -3373,7 +3373,7 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
   async expectExternalProposal() {
     const proposal = await this.getExternalProposal();
 
-    if (proposal) {
+    if(proposal) {
       return proposal;
     } else {
       throw Error('An external proposal is expected to exist');

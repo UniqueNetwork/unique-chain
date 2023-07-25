@@ -1,8 +1,8 @@
-import { IKeyringPair } from '@polkadot/types/types';
+import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip} from './util';
-import { Event } from './util/playgrounds/unique.dev';
-import { UniqueHelper } from './util/playgrounds/unique';
-import { DAYS, MINUTES } from './util/playgrounds/types';
+import {Event} from './util/playgrounds/unique.dev';
+import {UniqueHelper} from './util/playgrounds/unique';
+import {DAYS, MINUTES} from './util/playgrounds/types';
 
 const democracyLaunchPeriod = 35;
 const democracyVotingPeriod = 35;
@@ -60,20 +60,20 @@ describe('Governance: Council tests', () => {
 
   itSub('Unanimous Council can externally propose SuperMajorityAgainst', async ({helper}) => {
     const [forceSetBalanceReceiver] = await helper.arrange.createAccounts([0n], donor);
-    const forceSetBalanceTestValue = 20n * 10n ** 25n
+    const forceSetBalanceTestValue = 20n * 10n ** 25n;
 
     const democracyProposal = await helper.constructApiCall('api.tx.balances.forceSetBalance', [
-        forceSetBalanceReceiver.address, forceSetBalanceTestValue
+      forceSetBalanceReceiver.address, forceSetBalanceTestValue,
     ]).method.toHex();
 
     const councilProposal = await helper.constructApiCall('api.tx.democracy.externalProposeDefault', [{
-        Inline: democracyProposal,
+      Inline: democracyProposal,
     }]);
 
     const proposeResult = await helper.council.propose(
-        filip,
-        councilProposal,
-        unanimousCouncilThreshold,
+      filip,
+      councilProposal,
+      unanimousCouncilThreshold,
     );
 
     const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
@@ -95,13 +95,13 @@ describe('Governance: Council tests', () => {
     expect(democracyThreshold).to.be.equal('SuperMajorityAgainst');
 
     await helper.democracy.vote(filip, democracyReferendumIndex, {
-        Standard: {
-            vote: {
-                aye: true,
-                conviction: 1,
-            },
-            balance: 10_000n,
-        }
+      Standard: {
+        vote: {
+          aye: true,
+          conviction: 1,
+        },
+        balance: 10_000n,
+      },
     });
 
     const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
@@ -479,140 +479,140 @@ describe('Governance: Fellowship tests', () => {
   const fellowshipConfirmPeriod = 3;
   const fellowshipMinEnactPeriod = 1;
 
-  const defaultEnactmentMoment = { After: 50 };
+  const defaultEnactmentMoment = {After: 50};
 
   let dummyProposalCount = 0;
   function dummyProposal(helper: UniqueHelper) {
-      dummyProposalCount++;
-      return {
-        Inline: helper.constructApiCall("api.tx.system.remark", ["dummy proposal" + dummyProposalCount]).method.toHex()
-      };
+    dummyProposalCount++;
+    return {
+      Inline: helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + dummyProposalCount]).method.toHex(),
+    };
   }
 
   async function voteUnanimouslyInFellowship(helper: UniqueHelper, minRank: number, referendumIndex: number) {
-      for (var rank = minRank; rank < rankLimit; rank++) {
-        for (var member of members[rank]) {
-          await helper.fellowship.collective.vote(member, referendumIndex, true);
-        }
+    for(let rank = minRank; rank < rankLimit; rank++) {
+      for(const member of members[rank]) {
+        await helper.fellowship.collective.vote(member, referendumIndex, true);
       }
+    }
   }
 
   before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
-        requirePalletsOrSkip(this, helper, [Pallets.Democracy, Pallets.Fellowship]);
+    await usingPlaygrounds(async (helper, privateKey) => {
+      requirePalletsOrSkip(this, helper, [Pallets.Democracy, Pallets.Fellowship]);
 
-        sudoer = await privateKey('//Alice');
+      sudoer = await privateKey('//Alice');
 
-        donor = await privateKey({url: import.meta.url});
+      donor = await privateKey({url: import.meta.url});
 
-        for (var i = 0; i < rankLimit; i++) {
-          const rankMembers = await helper.arrange.createAccounts(
-              Array(numMembersInRank).fill(memberBalance),
-              donor,
-          )
+      for(let i = 0; i < rankLimit; i++) {
+        const rankMembers = await helper.arrange.createAccounts(
+          Array(numMembersInRank).fill(memberBalance),
+          donor,
+        );
 
-          for (var member of rankMembers) {
-              await helper.getSudo().fellowship.collective.addMember(sudoer, member.address);
+        for(const member of rankMembers) {
+          await helper.getSudo().fellowship.collective.addMember(sudoer, member.address);
 
-              for (var rank = 0; rank < i; rank++) {
-                await helper.getSudo().fellowship.collective.promote(sudoer, member.address);
-              }
+          for(let rank = 0; rank < i; rank++) {
+            await helper.getSudo().fellowship.collective.promote(sudoer, member.address);
           }
-
-          members.push(rankMembers);
         }
 
-        rank1Proposer = members[1][0];
-      });
+        members.push(rankMembers);
+      }
+
+      rank1Proposer = members[1][0];
+    });
   });
 
   after(async () => {
     await usingPlaygrounds(async (helper) => {
-        for (var rank = 0; rank < rankLimit; rank++) {
-            for (var member of members[rank]) {
-                await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
-            }
+      for(let rank = 0; rank < rankLimit; rank++) {
+        for(const member of members[rank]) {
+          await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
         }
+      }
     });
   });
 
   itSub('FellowshipProposition can submit regular Democracy proposals', async ({helper}) => {
-      const democracyProposal = dummyProposal(helper);
-      const fellowshipProposal = {
-        Inline: helper.constructApiCall("api.tx.democracy.propose", [democracyProposal, 0]).method.toHex(),
-      };
+    const democracyProposal = dummyProposal(helper);
+    const fellowshipProposal = {
+      Inline: helper.constructApiCall('api.tx.democracy.propose', [democracyProposal, 0]).method.toHex(),
+    };
 
-      const submitResult = await helper.fellowship.referenda.submit(
-        rank1Proposer,
-        fellowshipPropositionOrigin,
-        fellowshipProposal,
-        { After: 0 },
-      );
+    const submitResult = await helper.fellowship.referenda.submit(
+      rank1Proposer,
+      fellowshipPropositionOrigin,
+      fellowshipProposal,
+      {After: 0},
+    );
 
-      const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-      await voteUnanimouslyInFellowship(helper, democracyTrackMinRank, fellowshipReferendumIndex);
-      await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
+    const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    await voteUnanimouslyInFellowship(helper, democracyTrackMinRank, fellowshipReferendumIndex);
+    await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
 
-      const democracyProposed = await helper.wait.expectEvent(
-        fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,
-        Event.Democracy.Proposed
-      );
+    const democracyProposed = await helper.wait.expectEvent(
+      fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,
+      Event.Democracy.Proposed,
+    );
 
-      const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex);
-      expect(democracyEnqueuedProposal.inline, "Fellowship proposal expected to be in the Democracy").to.be.equal(democracyProposal.Inline);
+    const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex);
+    expect(democracyEnqueuedProposal.inline, 'Fellowship proposal expected to be in the Democracy').to.be.equal(democracyProposal.Inline);
 
-      await helper.wait.newBlocks(democracyVotingPeriod);
+    await helper.wait.newBlocks(democracyVotingPeriod);
   });
 
   itSub('Fellowship (rank-1 or greater) member can submit Fellowship proposals on the Democracy track', async ({helper}) => {
-      for (var rank = 1; rank < rankLimit; rank++) {
-        const rankMembers = members[rank];
-        
-        for (var memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
-          const member = rankMembers[memberIdx];
-          const newDummyProposal = dummyProposal(helper);
+    for(let rank = 1; rank < rankLimit; rank++) {
+      const rankMembers = members[rank];
 
-          const submitResult = await helper.fellowship.referenda.submit(
-              member,
-              fellowshipPropositionOrigin,
-              newDummyProposal,
-              defaultEnactmentMoment,
-          );
+      for(let memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
+        const member = rankMembers[memberIdx];
+        const newDummyProposal = dummyProposal(helper);
 
-          const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-          const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-          expect(referendumInfo.ongoing.track, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
-              .to.be.equal(democracyTrackId);
-        }
+        const submitResult = await helper.fellowship.referenda.submit(
+          member,
+          fellowshipPropositionOrigin,
+          newDummyProposal,
+          defaultEnactmentMoment,
+        );
+
+        const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+        const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
+        expect(referendumInfo.ongoing.track, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
+          .to.be.equal(democracyTrackId);
       }
+    }
   });
 
   itSub('Fellowship (rank-3 or greater) members can vote on the Democracy track', async ({helper}) => {
-      const proposal = dummyProposal(helper);
+    const proposal = dummyProposal(helper);
 
-      const submitResult = await helper.fellowship.referenda.submit(
-        rank1Proposer,
-        fellowshipPropositionOrigin,
-        proposal,
-        defaultEnactmentMoment
-      );
+    const submitResult = await helper.fellowship.referenda.submit(
+      rank1Proposer,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
 
-      const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
-      let expectedAyes = 0;
-      for (var rank = 3; rank < rankLimit; rank++) {
-        const rankMembers = members[rank];
+    let expectedAyes = 0;
+    for(let rank = 3; rank < rankLimit; rank++) {
+      const rankMembers = members[rank];
 
-        for (var memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
-          const member = rankMembers[memberIdx];
-          await helper.fellowship.collective.vote(member, referendumIndex, true);
-          expectedAyes += 1;
+      for(let memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
+        const member = rankMembers[memberIdx];
+        await helper.fellowship.collective.vote(member, referendumIndex, true);
+        expectedAyes += 1;
 
-          const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-          expect(referendumInfo.ongoing.tally.bareAyes, `Vote from ${memberIdx}-th member of rank #${rank} isn't accounted`)
-              .to.be.equal(expectedAyes);
-        }
+        const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
+        expect(referendumInfo.ongoing.tally.bareAyes, `Vote from ${memberIdx}-th member of rank #${rank} isn't accounted`)
+          .to.be.equal(expectedAyes);
       }
+    }
   });
 
   itSub.skip('Fellowship rank vote strength is correct', async ({helper}) => {
@@ -697,9 +697,15 @@ describe('Governance: Fellowship tests', () => {
 });
 
 describe('Governance: Democracy tests', () => {
+  let regularUser: IKeyringPair;
+
   before(async function() {
-    await usingPlaygrounds(async (helper) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Democracy]);
+
+      const donor = await privateKey('//Alice');
+
+      [regularUser] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 
