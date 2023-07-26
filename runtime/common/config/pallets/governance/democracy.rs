@@ -52,17 +52,13 @@ impl pallet_democracy::Config for Runtime {
 		EnsureFellowshipProposition,
 	>;
 
-	/// 1/3 of the council can decide what their next motion is (SuperMajorityApprove).
 	type ExternalOrigin = EnsureNever<Self::AccountId>;
-
-	/// More than 1/2 of council can have the next scheduled referendum be a straight majority-carries vote.
-	/// (SimpleMajority)
 	type ExternalMajorityOrigin = EnsureNever<Self::AccountId>;
 
 	/// Root (for the initial referendums)
-	/// or 3/4 of council can have the next scheduled referendum be a straight default-carries
+	/// or >50% of council can have the next scheduled referendum be a straight default-carries
 	/// (NTB) vote (SuperMajorityAgainst).
-	type ExternalDefaultOrigin = RootOrAllCouncil;
+	type ExternalDefaultOrigin = RootOrMoreThanHalfCouncil;
 
 	/// A unanimous technical committee can have an ExternalMajority/ExternalDefault vote
 	/// be tabled immediately and with a shorter voting/enactment period.

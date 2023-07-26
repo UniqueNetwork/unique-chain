@@ -53,6 +53,9 @@ pub type OneThirdsCouncil =
 pub type HalfCouncil =
 	pallet_collective::EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 2>;
 
+pub type MoreThanHalfCouncil =
+	pallet_collective::EnsureProportionMoreThan<AccountId, CouncilCollective, 1, 2>;
+
 pub type ThreeFourthsCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 3, 4>;
 
 pub type AllCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1>;
@@ -60,6 +63,8 @@ pub type AllCouncil = EnsureProportionAtLeast<AccountId, CouncilCollective, 1, 1
 pub type RootOrOneThirdsCouncil = EitherOfDiverse<EnsureRoot<AccountId>, OneThirdsCouncil>;
 
 pub type RootOrHalfCouncil = EitherOfDiverse<EnsureRoot<AccountId>, HalfCouncil>;
+
+pub type RootOrMoreThanHalfCouncil = EitherOfDiverse<EnsureRoot<AccountId>, MoreThanHalfCouncil>;
 
 pub type RootOrThreeFourthsCouncil = EitherOfDiverse<EnsureRoot<AccountId>, ThreeFourthsCouncil>;
 
