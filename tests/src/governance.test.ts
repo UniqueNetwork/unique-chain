@@ -1,60 +1,93 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip} from './util';
-import {Event} from './util/playgrounds/unique.dev';
+import {DevUniqueHelper, Event} from './util/playgrounds/unique.dev';
 import {UniqueHelper} from './util/playgrounds/unique';
 
 const democracyLaunchPeriod = 35;
 const democracyVotingPeriod = 35;
 const democracyEnactmentPeriod = 40;
+const democracyFastTrackVotingPeriod = 5;
+
+const fellowshipRankLimit = 7;
+
+interface ICounselors {
+  alex: IKeyringPair;
+  ildar: IKeyringPair;
+  charu: IKeyringPair;
+  filip: IKeyringPair;
+  irina: IKeyringPair;
+}
+
+async function initCouncil() {
+  let counselors: IKeyringPair[] = [];
+
+  await usingPlaygrounds(async (helper, privateKey) => {
+    const superuser = await privateKey('//Alice');
+    const donor = await privateKey({url: import.meta.url});
+
+    const [alex, ildar, charu, filip, irina] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n, 10_000n, 10_000n], donor);
+    const sudo = helper.getSudo();
+    {
+      const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+      expect(members).to.be.deep.equal([]);
+    }
+    const expectedMembers = [alex, ildar, charu, filip, irina];
+    for(const member of expectedMembers) {
+      await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.addMember', [member.address]);
+    }
+    await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.setPrime', [alex.address]);
+    {
+      const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+      expect(members).to.containSubset(expectedMembers.map((x: IKeyringPair) => x.address));
+      expect(members.length).to.be.equal(expectedMembers.length);
+    }
+
+    counselors = [alex, ildar, charu, filip, irina];
+  });
+
+  return {
+    alex: counselors[0],
+    ildar: counselors[1],
+    charu: counselors[2],
+    filip: counselors[3],
+    irina: counselors[4],
+  };
+}
+
+async function clearCouncil() {
+  await usingPlaygrounds(async (helper, privateKey) => {
+    const superuser = await privateKey('//Alice');
+
+    let members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+    if(members.length) {
+      const sudo = helper.getSudo();
+      for(const address of members) {
+        await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.removeMember', [address]);
+      }
+      members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+    }
+    expect(members).to.be.deep.equal([]);
+  });
+}
 
 describe('Governance: Council tests', () => {
-  let superuser: IKeyringPair;
   let donor: IKeyringPair;
-
-  let alex: IKeyringPair;
-  let ildar: IKeyringPair;
-  let charu: IKeyringPair;
-  let filip: IKeyringPair;
-  let irina: IKeyringPair;
+  let counselors: ICounselors;
 
   const moreThanHalfCouncilThreshold = 3;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Council]);
-      superuser = await privateKey('//Alice');
+
       donor = await privateKey({url: import.meta.url});
-      [alex, ildar, charu, filip, irina] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n, 10_000n, 10_000n], donor);
-      const sudo = helper.getSudo();
-      {
-        const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
-        expect(members).to.be.deep.equal([]);
-      }
-      const expectedMembers = [alex, ildar, charu, filip, irina];
-      for(const member of expectedMembers) {
-        await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.addMember', [member.address]);
-      }
-      await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.setPrime', [alex.address]);
-      {
-        const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
-        expect(members).to.containSubset(expectedMembers.map((x: IKeyringPair) => x.address));
-        expect(members.length).to.be.equal(expectedMembers.length);
-      }
     });
+
+    counselors = await initCouncil();
   });
 
   after(async () => {
-    await usingPlaygrounds(async (helper) => {
-      let members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
-      if(members.length) {
-        const sudo = helper.getSudo();
-        for(const address of members) {
-          await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.removeMember', [address]);
-        }
-        members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
-      }
-      expect(members).to.be.deep.equal([]);
-    });
+    await clearCouncil();
   });
 
   itSub('>50% of Council can externally propose SuperMajorityAgainst', async ({helper}) => {
@@ -63,14 +96,12 @@ describe('Governance: Council tests', () => {
 
     const democracyProposal = await helper.constructApiCall('api.tx.balances.forceSetBalance', [
       forceSetBalanceReceiver.address, forceSetBalanceTestValue,
-    ]).method.toHex();
+    ]);
 
-    const councilProposal = await helper.constructApiCall('api.tx.democracy.externalProposeDefault', [{
-      Inline: democracyProposal,
-    }]);
+    const councilProposal = await helper.democracy.externalProposeDefaultCall(democracyProposal);
 
-    const proposeResult = await helper.council.propose(
-      filip,
+    const proposeResult = await helper.council.collective.propose(
+      counselors.filip,
       councilProposal,
       moreThanHalfCouncilThreshold,
     );
@@ -79,11 +110,11 @@ describe('Governance: Council tests', () => {
     const proposalIndex = councilProposedEvent.proposalIndex;
     const proposalHash = councilProposedEvent.proposalHash;
 
-    await helper.council.vote(alex, proposalHash, proposalIndex, true);
-    await helper.council.vote(charu, proposalHash, proposalIndex, true);
-    await helper.council.vote(filip, proposalHash, proposalIndex, true);
+    await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
+    await helper.council.collective.vote(counselors.charu, proposalHash, proposalIndex, true);
+    await helper.council.collective.vote(counselors.filip, proposalHash, proposalIndex, true);
 
-    await helper.council.close(filip, proposalHash, proposalIndex);
+    await helper.council.collective.close(counselors.filip, proposalHash, proposalIndex);
 
     const democracyStartedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
     const democracyReferendumIndex = democracyStartedEvent.referendumIndex;
@@ -91,7 +122,7 @@ describe('Governance: Council tests', () => {
 
     expect(democracyThreshold).to.be.equal('SuperMajorityAgainst');
 
-    await helper.democracy.vote(filip, democracyReferendumIndex, {
+    await helper.democracy.vote(counselors.filip, democracyReferendumIndex, {
       Standard: {
         vote: {
           aye: true,
@@ -153,7 +184,7 @@ describe('Governance: Council tests', () => {
 
   });
 
-  itSub.skip('[Negative] Council cannot cannot submit regular democracy proposal', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot submit regular democracy proposal', async ({helper}) => {
 
   });
 
@@ -181,11 +212,11 @@ describe('Governance: Council tests', () => {
 
   });
 
-  itSub.skip('[Negative] Council cannot set Council prime member', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot set/clear Council prime member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Council member cannot set Council prime member', async ({helper}) => {
+  itSub.skip('[Negative] Council member cannot set/clear Council prime member', async ({helper}) => {
 
   });
 
@@ -209,7 +240,7 @@ describe('Governance: Council tests', () => {
 
   });
 
-  itSub.skip('[Negative] Council cannot cancel approved Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] Council cannot cancel Democracy proposals', async ({helper}) => {
 
   });
 
@@ -217,23 +248,15 @@ describe('Governance: Council tests', () => {
 
   });
 
-  itSub.skip('[Negative] Council cannot cancel queued Democracy proposals', async ({helper}) => {
-
-  });
-
   itSub.skip('[Negative] Council cannot cancel Fellowship referendums', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] Council member cannot cancel approved Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] Council member cannot cancel Democracy proposals', async ({helper}) => {
 
   });
 
   itSub.skip('[Negative] Council member cannot cancel ongoing Democracy referendums', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council member cannot cancel queued Democracy proposals', async ({helper}) => {
 
   });
 
@@ -258,11 +281,63 @@ describe('Governance: Council tests', () => {
   });
 });
 
+interface ITechComms {
+  greg: IKeyringPair;
+  andy: IKeyringPair;
+  constantine: IKeyringPair;
+}
+
+async function initTechComm() {
+  let techcomms: IKeyringPair[] = [];
+
+  await usingPlaygrounds(async (helper, privateKey) => {
+    const superuser = await privateKey('//Alice');
+    const  donor = await privateKey({url: import.meta.url});
+    const [greg, andy, constantine] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
+    const sudo = helper.getSudo();
+    {
+      const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+      expect(members).to.be.deep.equal([]);
+    }
+    await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [greg.address]);
+    await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [andy.address]);
+    await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [constantine.address]);
+    await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.setPrime', [greg.address]);
+    {
+      const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+      expect(members).to.containSubset([greg.address, andy.address, constantine.address]);
+      expect(members.length).to.be.equal(3);
+    }
+
+    techcomms = [greg, andy, constantine];
+  });
+
+  return {
+    greg: techcomms[0],
+    andy: techcomms[1],
+    constantine: techcomms[2],
+  };
+}
+
+async function clearTechComm() {
+  await usingPlaygrounds(async (helper, privateKey) => {
+    const superuser = await privateKey('//Alice');
+
+    let members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+    if(members.length) {
+      const sudo = helper.getSudo();
+      for(const address of members) {
+        await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.removeMember', [address]);
+      }
+      members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+    }
+    expect(members).to.be.deep.equal([]);
+  });
+}
+
 describe('Governance: Technical Committee tests', () => {
   let superuser: IKeyringPair;
-  let greg: IKeyringPair;
-  let andy: IKeyringPair;
-  let constantine: IKeyringPair;
+  let techcomms: ITechComms;
   let donor: IKeyringPair;
   let preImageHash: string;
 
@@ -271,21 +346,9 @@ describe('Governance: Technical Committee tests', () => {
       requirePalletsOrSkip(this, helper, [Pallets.TechnicalCommittee]);
       superuser = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
-      [greg, andy, constantine] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
-      const sudo = helper.getSudo();
-      {
-        const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
-        expect(members).to.be.deep.equal([]);
-      }
-      await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [greg.address]);
-      await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [andy.address]);
-      await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [constantine.address]);
-      await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.setPrime', [greg.address]);
-      {
-        const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
-        expect(members).to.containSubset([greg.address, andy.address, constantine.address]);
-        expect(members.length).to.be.equal(3);
-      }
+
+      techcomms = await initTechComm();
+
       const proposalCall = await helper.constructApiCall('api.tx.balances.forceSetBalance', [donor.address, 20n * 10n ** 25n]);
       preImageHash = await helper.preimage.notePreimageFromCall(superuser, proposalCall, true);
     });
@@ -293,15 +356,8 @@ describe('Governance: Technical Committee tests', () => {
 
   after(async () => {
     await usingPlaygrounds(async (helper) => {
-      let members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
-      if(members.length) {
-        const sudo = helper.getSudo();
-        for(const address of members) {
-          await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.removeMember', [address]);
-        }
-        members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
-      }
-      expect(members).to.be.deep.equal([]);
+      await clearTechComm();
+
       await helper.preimage.unnotePreimage(superuser, preImageHash);
     });
   });
@@ -309,15 +365,11 @@ describe('Governance: Technical Committee tests', () => {
   itSub.skip('TechComm can fast-track Democracy proposals', async ({helper}) => {
   });
 
-  itSub.skip('TechComm can cancel approved Democracy proposals', async ({helper}) => {
+  itSub.skip('TechComm can cancel Democracy proposals', async ({helper}) => {
 
   });
 
   itSub.skip('TechComm can cancel ongoing Democracy referendums', async ({helper}) => {
-
-  });
-
-  itSub.skip('TechComm can cancel queued Democracy proposals', async ({helper}) => {
 
   });
 
@@ -385,11 +437,11 @@ describe('Governance: Technical Committee tests', () => {
 
   });
 
-  itSub.skip('[Negative] TechComm cannot set Council prime member', async ({helper}) => {
+  itSub.skip('[Negative] TechComm cannot set/clear Council prime member', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] TechComm member cannot set Council prime member', async ({helper}) => {
+  itSub.skip('[Negative] TechComm member cannot set/clear Council prime member', async ({helper}) => {
 
   });
 
@@ -413,7 +465,7 @@ describe('Governance: Technical Committee tests', () => {
 
   });
 
-  itSub.skip('[Negative] TechComm member cannot cancel approved Democracy proposals', async ({helper}) => {
+  itSub.skip('[Negative] TechComm member cannot cancel Democracy proposals', async ({helper}) => {
 
   });
 
@@ -421,15 +473,11 @@ describe('Governance: Technical Committee tests', () => {
 
   });
 
-  itSub.skip('[Negative] TechComm member cannot cancel queued Democracy proposals', async ({helper}) => {
-
-  });
-
   itSub.skip('[Negative] TechComm member cannot blacklist Democracy proposals', async ({helper}) => {
 
   });
 
-  itSub.skip('[Negative] TechComm member cannot veto Democracy proposals until the cool-off period pass', async ({helper}) => {
+  itSub.skip('[Negative] TechComm member cannot veto external Democracy proposals until the cool-off period pass', async ({helper}) => {
 
   });
 
@@ -454,16 +502,59 @@ describe('Governance: Technical Committee tests', () => {
   });
 });
 
+async function initFellowship() {
+  const numMembersInRank = 3;
+  const memberBalance = 5000n;
+  const members: IKeyringPair[][] = [];
+
+  await usingPlaygrounds(async (helper, privateKey) => {
+    const sudoer = await privateKey('//Alice');
+    const donor = await privateKey({url: import.meta.url});
+
+    for(let i = 0; i < fellowshipRankLimit; i++) {
+      const rankMembers = await helper.arrange.createAccounts(
+        Array(numMembersInRank).fill(memberBalance),
+        donor,
+      );
+
+      for(const member of rankMembers) {
+        await helper.getSudo().fellowship.collective.addMember(sudoer, member.address);
+
+        for(let rank = 0; rank < i; rank++) {
+          await helper.getSudo().fellowship.collective.promote(sudoer, member.address);
+        }
+      }
+
+      members.push(rankMembers);
+    }
+  });
+
+  return members;
+}
+
+async function clearFellowship(members: IKeyringPair[][]) {
+  await usingPlaygrounds(async (helper, privateKey) => {
+    const sudoer = await privateKey('//Alice');
+
+    for(let rank = 0; rank < fellowshipRankLimit; rank++) {
+      for(const member of members[rank]) {
+        await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
+      }
+    }
+  });
+}
+
 describe('Governance: Fellowship tests', () => {
   const numMembersInRank = 3;
   const memberBalance = 5000n;
-  const rankLimit = 7;
-  const members: IKeyringPair[][] = [];
+  let members: IKeyringPair[][];
 
   let rank1Proposer: IKeyringPair;
 
   let sudoer: any;
   let donor: any;
+  let counselors: ICounselors;
+  let techcomms: ITechComms;
 
   const submissionDeposit = 1000n;
   const decisionDeposit = 10n;
@@ -476,67 +567,86 @@ describe('Governance: Fellowship tests', () => {
   const fellowshipConfirmPeriod = 3;
   const fellowshipMinEnactPeriod = 1;
 
-  const defaultEnactmentMoment = {After: 50};
+  const defaultEnactmentMoment = {After: 0};
 
   let dummyProposalCount = 0;
-  function dummyProposal(helper: UniqueHelper) {
+  function dummyProposalCall(helper: UniqueHelper) {
     dummyProposalCount++;
+    return helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + dummyProposalCount]);
+  }
+
+  function dummyProposal(helper: UniqueHelper) {
     return {
-      Inline: helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + dummyProposalCount]).method.toHex(),
+      Inline: dummyProposalCall(helper).method.toHex(),
     };
   }
 
   async function voteUnanimouslyInFellowship(helper: UniqueHelper, minRank: number, referendumIndex: number) {
-    for(let rank = minRank; rank < rankLimit; rank++) {
+    for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
       for(const member of members[rank]) {
         await helper.fellowship.collective.vote(member, referendumIndex, true);
       }
     }
   }
 
+  async function testBadFellowshipProposal(
+    helper: DevUniqueHelper,
+    proposalCall: any,
+  ) {
+    const badProposal = {
+      Inline: proposalCall.method.toHex(),
+    };
+
+    const submitResult = await helper.fellowship.referenda.submit(
+      rank1Proposer,
+      fellowshipPropositionOrigin,
+      badProposal,
+      defaultEnactmentMoment,
+    );
+
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    await voteUnanimouslyInFellowship(helper, democracyTrackMinRank, referendumIndex);
+    await helper.fellowship.referenda.placeDecisionDeposit(donor, referendumIndex);
+
+    const enactmentId = await helper.fellowship.referenda.enactmentEventId(referendumIndex);
+    const dispatchedEvent = await helper.wait.expectEvent(
+      fellowshipPreparePeriod + fellowshipConfirmPeriod + defaultEnactmentMoment.After,
+      Event.GovScheduler.Dispatched,
+      (event: any) => event.id == enactmentId,
+    );
+
+    expect(dispatchedEvent.result.isErr, 'Bad Fellowship must fail')
+      .to.be.true;
+
+    expect(dispatchedEvent.result.asErr.isBadOrigin, 'Bad Fellowship must fail with BadOrigin')
+      .to.be.true;
+  }
+
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Democracy, Pallets.Fellowship]);
+      requirePalletsOrSkip(this, helper, [Pallets.Democracy, Pallets.Fellowship, Pallets.TechnicalCommittee, Pallets.Council]);
 
       sudoer = await privateKey('//Alice');
-
       donor = await privateKey({url: import.meta.url});
-
-      for(let i = 0; i < rankLimit; i++) {
-        const rankMembers = await helper.arrange.createAccounts(
-          Array(numMembersInRank).fill(memberBalance),
-          donor,
-        );
-
-        for(const member of rankMembers) {
-          await helper.getSudo().fellowship.collective.addMember(sudoer, member.address);
-
-          for(let rank = 0; rank < i; rank++) {
-            await helper.getSudo().fellowship.collective.promote(sudoer, member.address);
-          }
-        }
-
-        members.push(rankMembers);
-      }
-
-      rank1Proposer = members[1][0];
     });
+
+    counselors = await initCouncil();
+    techcomms = await initTechComm();
+    members = await initFellowship();
+
+    rank1Proposer = members[1][0];
   });
 
   after(async () => {
-    await usingPlaygrounds(async (helper) => {
-      for(let rank = 0; rank < rankLimit; rank++) {
-        for(const member of members[rank]) {
-          await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
-        }
-      }
-    });
+    await clearFellowship(members);
+    await clearTechComm();
+    await clearCouncil();
   });
 
   itSub('FellowshipProposition can submit regular Democracy proposals', async ({helper}) => {
-    const democracyProposal = dummyProposal(helper);
+    const democracyProposalCall = dummyProposalCall(helper);
     const fellowshipProposal = {
-      Inline: helper.constructApiCall('api.tx.democracy.propose', [democracyProposal, 0]).method.toHex(),
+      Inline: helper.democracy.proposeCall(democracyProposalCall, 0n).method.toHex(),
     };
 
     const submitResult = await helper.fellowship.referenda.submit(
@@ -556,13 +666,14 @@ describe('Governance: Fellowship tests', () => {
     );
 
     const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex);
-    expect(democracyEnqueuedProposal.inline, 'Fellowship proposal expected to be in the Democracy').to.be.equal(democracyProposal.Inline);
+    expect(democracyEnqueuedProposal.inline, 'Fellowship proposal expected to be in the Democracy')
+      .to.be.equal(democracyProposalCall.method.toHex());
 
     await helper.wait.newBlocks(democracyVotingPeriod);
   });
 
   itSub('Fellowship (rank-1 or greater) member can submit Fellowship proposals on the Democracy track', async ({helper}) => {
-    for(let rank = 1; rank < rankLimit; rank++) {
+    for(let rank = 1; rank < fellowshipRankLimit; rank++) {
       const rankMembers = members[rank];
 
       for(let memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
@@ -584,7 +695,7 @@ describe('Governance: Fellowship tests', () => {
     }
   });
 
-  itSub('Fellowship (rank-3 or greater) members can vote on the Democracy track', async ({helper}) => {
+  itSub(`Fellowship (rank-${democracyTrackMinRank} or greater) members can vote on the Democracy track`, async ({helper}) => {
     const proposal = dummyProposal(helper);
 
     const submitResult = await helper.fellowship.referenda.submit(
@@ -597,7 +708,7 @@ describe('Governance: Fellowship tests', () => {
     const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
     let expectedAyes = 0;
-    for(let rank = 3; rank < rankLimit; rank++) {
+    for(let rank = democracyTrackMinRank; rank < fellowshipRankLimit; rank++) {
       const rankMembers = members[rank];
 
       for(let memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
@@ -612,84 +723,185 @@ describe('Governance: Fellowship tests', () => {
     }
   });
 
-  itSub.skip('Fellowship rank vote strength is correct', async ({helper}) => {
+  itSub('Fellowship rank vote strength is correct', async ({helper}) => {
+    const excessRankWeightTable = [
+      1,
+      3,
+      6,
+      10,
+      15,
+      21,
+    ];
 
+    const proposal = dummyProposal(helper);
+
+    const submitResult = await helper.fellowship.referenda.submit(
+      rank1Proposer,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
+
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+
+    for(let rank = democracyTrackMinRank; rank < fellowshipRankLimit; rank++) {
+      const rankMembers = members[rank];
+
+      for(let memberIdx = 0; memberIdx < rankMembers.length; memberIdx++) {
+        const member = rankMembers[memberIdx];
+
+        const referendumInfoBefore = await helper.fellowship.referenda.referendumInfo(referendumIndex);
+        const ayesBefore = referendumInfoBefore.ongoing.tally.ayes;
+
+        await helper.fellowship.collective.vote(member, referendumIndex, true);
+
+        const referendumInfoAfter = await helper.fellowship.referenda.referendumInfo(referendumIndex);
+        const ayesAfter = referendumInfoAfter.ongoing.tally.ayes;
+
+        const expectedVoteWeight = excessRankWeightTable[rank - democracyTrackMinRank];
+        const voteWeight = ayesAfter - ayesBefore;
+
+        expect(voteWeight, `Vote weight of ${memberIdx}-th member of rank #${rank} is invalid`)
+          .to.be.equal(expectedVoteWeight);
+      }
+    }
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot externally propose SuperMajorityAgainst', async ({helper}) => {
-
+  itSub('[Negative] FellowshipProposition cannot externally propose SuperMajorityAgainst', async ({helper}) => {
+    await testBadFellowshipProposal(helper, helper.democracy.externalProposeDefaultCall(dummyProposalCall(helper)));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot externally propose SuperMajorityAgainst', async ({helper}) => {
-
+  itSub('[Negative] FellowshipProposition cannot externally propose SimpleMajority', async ({helper}) => {
+    await testBadFellowshipProposal(helper, helper.democracy.externalProposeMajorityCall(dummyProposalCall(helper)));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot externally propose SimpleMajority', async ({helper}) => {
-
+  itSub('[Negative] FellowshipProposition cannot externally propose SuperMajorityApprove', async ({helper}) => {
+    await testBadFellowshipProposal(helper, helper.democracy.externalProposeCall(dummyProposalCall(helper)));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot externally propose SuperMajorityApprove', async ({helper}) => {
+  itSub('[Negative] Fellowship (rank-0) member cannot submit Fellowship proposals on the Democracy track', async ({helper}) => {
+    const rank0Proposer = members[0][0];
 
+    const proposal = dummyProposal(helper);
+
+    const submitResult = helper.fellowship.referenda.submit(
+      rank0Proposer,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
+
+    await expect(submitResult).to.be.rejectedWith(/BadOrigin/);
   });
 
-  itSub.skip('[Negative] Fellowship (rank-0) member cannot submit Fellowship proposals on the Democracy track', async ({helper}) => {
+  itSub('[Negative] Fellowship (rank-1 or greater) member cannot submit if no deposit can be provided', async ({helper}) => {
+    const poorMember = rank1Proposer;
 
+    const balanceBefore = await helper.balance.getSubstrate(poorMember.address);
+    await helper.getSudo().balance.setBalanceSubstrate(sudoer, poorMember.address, submissionDeposit - 1n);
+
+    const proposal = dummyProposal(helper);
+
+    const submitResult = helper.fellowship.referenda.submit(
+      poorMember,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
+
+    await expect(submitResult).to.be.rejectedWith(/account balance too low/);
+
+    await helper.getSudo().balance.setBalanceSubstrate(sudoer, poorMember.address, balanceBefore);
   });
 
-  itSub.skip('[Negative] Fellowship (rank-1 or greater) member cannot submit if no deposit can be provided', async ({helper}) => {
+  itSub(`[Negative] Fellowship (rank-${democracyTrackMinRank - 1} or less) members cannot vote on the Democracy track`, async ({helper}) => {
+    const proposal = dummyProposal(helper);
 
+    const submitResult = await helper.fellowship.referenda.submit(
+      rank1Proposer,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
+
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+
+    for(let rank = 0; rank < democracyTrackMinRank; rank++) {
+      for(const member of members[rank]) {
+        const voteResult = helper.fellowship.collective.vote(member, referendumIndex, true);
+        await expect(voteResult).to.be.rejectedWith(/RankTooLow/);
+      }
+    }
   });
 
-  itSub.skip('[Negative] Fellowship (rank-2 or less) members cannot vote on the Democracy track', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot add/remove a Council member', async ({helper}) => {
+    const [councilNonMember] = await helper.arrange.createAccounts([10n], donor);
 
+    await testBadFellowshipProposal(helper, helper.council.membership.addMemberCall(councilNonMember.address));
+    await testBadFellowshipProposal(helper, helper.council.membership.removeMemberCall(counselors.ildar.address));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot add/remove a Council member', async ({helper}) => {
-
+  itSub('[Negative] FellowshipProposition cannot set/clear Council prime member', async ({helper}) => {
+    await testBadFellowshipProposal(helper, helper.council.membership.setPrimeCall(counselors.ildar.address));
+    await testBadFellowshipProposal(helper, helper.council.membership.clearPrimeCall());
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot set Council prime member', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot add/remove a TechComm member', async ({helper}) => {
+    const [techCommNonMember] = await helper.arrange.createAccounts([10n], donor);
 
+    await testBadFellowshipProposal(helper, helper.technicalCommittee.membership.addMemberCall(techCommNonMember.address));
+    await testBadFellowshipProposal(helper, helper.technicalCommittee.membership.removeMemberCall(techcomms.constantine.address));
   });
 
-  itSub.skip('[Negative] FellowshipProposition member cannot set Council prime member', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot add/remove a Fellowship member', async ({helper}) => {
+    const [fellowshipNonMember] = await helper.arrange.createAccounts([10n], donor);
 
+    await testBadFellowshipProposal(helper, helper.fellowship.collective.addMemberCall(fellowshipNonMember.address));
+    await testBadFellowshipProposal(helper, helper.fellowship.collective.removeMemberCall(rank1Proposer.address, 1));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot add/remove a TechComm member', async ({helper}) => {
-
+  itSub('[Negative] FellowshipProposition cannot promote/demote a Fellowship member', async ({helper}) => {
+    await testBadFellowshipProposal(helper, helper.fellowship.collective.promoteCall(rank1Proposer.address));
+    await testBadFellowshipProposal(helper, helper.fellowship.collective.demoteCall(rank1Proposer.address));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot add/remove a Fellowship member', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot fast-track Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
 
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await testBadFellowshipProposal(helper, helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot promote/demote a Fellowship member', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot cancel Democracy proposals', async ({helper}) => {
+    const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
+    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
+    await testBadFellowshipProposal(helper, helper.democracy.cancelProposalCall(proposalIndex));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot fast-track Democracy proposals', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot cancel ongoing Democracy referendums', async ({helper}) => {
+    await helper.getSudo().democracy.externalProposeDefault(sudoer, dummyProposalCall(helper));
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
+    const referendumIndex = startedEvent.referendumIndex;
 
+    await testBadFellowshipProposal(helper, helper.democracy.emergencyCancelCall(referendumIndex));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot cancel approved Democracy proposals', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot blacklist Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
 
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await testBadFellowshipProposal(helper, helper.democracy.blacklistCall(preimageHash, null));
   });
 
-  itSub.skip('[Negative] FellowshipProposition cannot cancel ongoing Democracy referendums', async ({helper}) => {
+  itSub('[Negative] FellowshipProposition cannot veto external proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
 
-  });
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
-  itSub.skip('[Negative] FellowshipProposition cannot cancel queued Democracy proposals', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] FellowshipProposition cannot blacklist Democracy proposals', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] FellowshipProposition cannot veto Democracy proposals', async ({helper}) => {
-
+    await testBadFellowshipProposal(helper, helper.democracy.vetoExternalCall(preimageHash));
   });
 });
 
