@@ -2,7 +2,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip} from './util';
 import {Event} from './util/playgrounds/unique.dev';
 import {UniqueHelper} from './util/playgrounds/unique';
-import {DAYS, MINUTES} from './util/playgrounds/types';
 
 const democracyLaunchPeriod = 35;
 const democracyVotingPeriod = 35;
@@ -18,7 +17,7 @@ describe('Governance: Council tests', () => {
   let filip: IKeyringPair;
   let irina: IKeyringPair;
 
-  const unanimousCouncilThreshold = 5;
+  const moreThanHalfCouncilThreshold = 3;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -58,7 +57,7 @@ describe('Governance: Council tests', () => {
     });
   });
 
-  itSub('Unanimous Council can externally propose SuperMajorityAgainst', async ({helper}) => {
+  itSub('>50% of Council can externally propose SuperMajorityAgainst', async ({helper}) => {
     const [forceSetBalanceReceiver] = await helper.arrange.createAccounts([0n], donor);
     const forceSetBalanceTestValue = 20n * 10n ** 25n;
 
@@ -73,7 +72,7 @@ describe('Governance: Council tests', () => {
     const proposeResult = await helper.council.propose(
       filip,
       councilProposal,
-      unanimousCouncilThreshold,
+      moreThanHalfCouncilThreshold,
     );
 
     const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
@@ -81,10 +80,8 @@ describe('Governance: Council tests', () => {
     const proposalHash = councilProposedEvent.proposalHash;
 
     await helper.council.vote(alex, proposalHash, proposalIndex, true);
-    await helper.council.vote(ildar, proposalHash, proposalIndex, true);
     await helper.council.vote(charu, proposalHash, proposalIndex, true);
     await helper.council.vote(filip, proposalHash, proposalIndex, true);
-    await helper.council.vote(irina, proposalHash, proposalIndex, true);
 
     await helper.council.close(filip, proposalHash, proposalIndex);
 
