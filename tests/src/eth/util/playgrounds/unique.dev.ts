@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 import {ArrangeGroup, DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
 
-import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty, CollectionMode, CreateCollectionData, CollectionFlag} from './types';
+import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty, CollectionMode, CreateCollectionData} from './types';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../abi/collectionHelpers.json' assert {type: 'json'};
@@ -183,15 +183,26 @@ class NativeContractGroup extends EthGroupBase {
 class CreateCollectionTransaction {
   signer: string;
   data: CreateCollectionData;
-  flags: number[];
   mergeDeprecated: boolean;
   helper: EthUniqueHelper;
 
-  constructor(helper: EthUniqueHelper, signer: string, data: CreateCollectionData, flags: number[], mergeDeprecated = false) {
+  constructor(helper: EthUniqueHelper, signer: string, data: CreateCollectionData, mergeDeprecated = false) {
     this.helper = helper;
     this.signer = signer;
+
+    let flags = 0;
+    // convert CollectionFlags to number and join them in one number
+    if(!data.flags || typeof data.flags == 'number') {
+      flags = data.flags ?? 0;
+    } else {
+      for(let i = 0; i < data.flags.length; i++){
+        const flag = data.flags[i];
+        flags = flags | flag;
+      }
+    }
+    data.flags = flags;
+
     this.data = data;
-    this.flags = flags;
     this.mergeDeprecated = mergeDeprecated;
   }
 
@@ -204,22 +215,20 @@ class CreateCollectionTransaction {
       case 'ft': collectionMode = CollectionMode.Fungible; break;
     }
 
-    const tx = collectionHelper.methods.createCollection(
-      [
-        this.data.name,
-        this.data.description,
-        this.data.tokenPrefix,
-        collectionMode,
-        this.data.decimals,
-        this.data.properties,
-        this.data.tokenPropertyPermissions,
-        this.data.adminList,
-        this.data.nestingSettings,
-        this.data.limits,
-        this.data.pendingSponsor,
-      ],
-      this.flags,
-    );
+    const tx = collectionHelper.methods.createCollection([
+      this.data.name,
+      this.data.description,
+      this.data.tokenPrefix,
+      collectionMode,
+      this.data.decimals,
+      this.data.properties,
+      this.data.tokenPropertyPermissions,
+      this.data.adminList,
+      this.data.nestingSettings,
+      this.data.limits,
+      this.data.pendingSponsor,
+      this.data.flags,
+    ]);
     return tx;
   }
 
@@ -303,18 +312,18 @@ class EthGroup extends EthGroupBase {
     }
   }
 
-  createCollection(signer: string, data: CreateCollectionData, flags: CollectionFlag[] = [], mergeDeprecated = false): CreateCollectionTransaction {
-    return new CreateCollectionTransaction(this.helper, signer, data, flags, mergeDeprecated);
+  createCollection(signer: string, data: CreateCollectionData, mergeDeprecated = false): CreateCollectionTransaction {
+    return new CreateCollectionTransaction(this.helper, signer, data, mergeDeprecated);
   }
 
   createNFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
-    return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'nft'), []).send();
+    return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'nft')).send();
   }
 
-  async createERC721MetadataCompatibleCollection(signer: string, data: CreateCollectionData, baseUri: string, flags: number[]): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  async createERC721MetadataCompatibleCollection(signer: string, data: CreateCollectionData, baseUri: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress, events} = await this.createCollection(signer, data, flags).send();
+    const {collectionId, collectionAddress, events} = await this.createCollection(signer, data).send();
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 
@@ -324,7 +333,7 @@ class EthGroup extends EthGroupBase {
   async createERC721MetadataCompatibleNFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress, events} = await this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'nft'), []).send();
+    const {collectionId, collectionAddress, events} = await this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'nft')).send();
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 
@@ -332,17 +341,17 @@ class EthGroup extends EthGroupBase {
   }
 
   createRFTCollection(signer: string, name: string, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
-    return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'rft'), []).send();
+    return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'rft')).send();
   }
 
   createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
-    return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'ft'), []).send();
+    return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'ft')).send();
   }
 
   async createERC721MetadataCompatibleRFTCollection(signer: string, name: string, description: string, tokenPrefix: string, baseUri: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(signer);
 
-    const {collectionId, collectionAddress, events} = await this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'rft'), []).send();
+    const {collectionId, collectionAddress, events} = await this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'rft')).send();
 
     await collectionHelper.methods.makeCollectionERC721MetadataCompatible(collectionAddress, baseUri).send();
 

@@ -365,13 +365,14 @@ pub mod pallet {
 			token_prefix: BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>,
 			mode: CollectionMode,
 		) -> DispatchResult {
-			let data: CreateCollectionData<T::AccountId, T::CrossAccountId> = CreateCollectionData {
-				name: collection_name,
-				description: collection_description,
-				token_prefix,
-				mode,
-				..Default::default()
-			};
+			let data: CreateCollectionData<T::AccountId, T::CrossAccountId> =
+				CreateCollectionData {
+					name: collection_name,
+					description: collection_description,
+					token_prefix,
+					mode,
+					..Default::default()
+				};
 			Self::create_collection_ex(origin, data)
 		}
 
@@ -396,8 +397,7 @@ pub mod pallet {
 
 			// =========
 			let sender = T::CrossAccountId::from_sub(sender);
-			let _id =
-				T::CollectionDispatch::create(sender.clone(), sender, data)?;
+			let _id = T::CollectionDispatch::create(sender.clone(), sender, data)?;
 
 			Ok(())
 		}

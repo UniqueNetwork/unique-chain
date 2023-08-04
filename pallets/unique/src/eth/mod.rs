@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 //! Implementation of CollectionHelpers contract.
-//! 
+//!
 use core::marker::PhantomData;
 use ethereum as _;
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*};
@@ -34,8 +34,9 @@ use pallet_evm_coder_substrate::{
 	frontier_contract,
 };
 use up_data_structs::{
-	CollectionDescription, CollectionFlags, CollectionMode, CollectionName, CollectionPermissions, CollectionTokenPrefix,
-	CreateCollectionData, NestingPermissions, OwnerRestrictedSet
+	Bitfields, CollectionDescription, CollectionFlags, CollectionMode, CollectionName,
+	CollectionPermissions, CollectionTokenPrefix, CreateCollectionData, NestingPermissions,
+	OwnerRestrictedSet,
 };
 
 use crate::{weights::WeightInfo, Config, Pallet, SelfWeightOf};
@@ -111,9 +112,8 @@ fn create_collection_internal<T: Config>(
 	let collection_helpers_address =
 		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-	let collection_id =
-		T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
+		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
 }
@@ -140,7 +140,6 @@ where
 	T: Config + pallet_common::Config + pallet_nonfungible::Config + pallet_refungible::Config,
 	T::AccountId: From<[u8; 32]>,
 {
-	
 	/// Create a collection
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -150,7 +149,6 @@ where
 		caller: Caller,
 		value: Value,
 		data: eth::CreateCollectionData,
-		flags: Vec<eth::CollectionFlag>,
 	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
@@ -160,38 +158,60 @@ where
 			eth::CollectionMode::Refungible => CollectionMode::ReFungible,
 		};
 
-		let properties: BoundedVec<_, _> = data.properties
+		let properties: BoundedVec<_, _> = data
+			.properties
 			.into_iter()
 			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?
 			.try_into()
-			.map_err(|err| Error::Revert("test".into()))?;
-		
+			.map_err(|_| "too many properties")?;
+
 		let token_property_permissions =
-			eth::TokenPropertyPermission::into_property_key_permissions(data.token_property_permissions)?
+			eth::TokenPropertyPermission::into_property_key_permissions(
+				data.token_property_permissions,
+			)?
 			.try_into()
-			.map_err(|err| Error::Revert("test".into()))?;
+			.map_err(|_| "too many property permissions")?;
 
 		let limits = if !data.limits.is_empty() {
-			Some(data.limits.into_iter().collect::<Result<up_data_structs::CollectionLimits>>()?)
+			Some(
+				data.limits
+					.into_iter()
+					.collect::<Result<up_data_structs::CollectionLimits>>()?,
+			)
 		} else {
 			None
 		};
 
-		let pending_sponsor = data.pending_sponsor.into_iter().next().map(|value| T::CrossAccountId::from_eth(value).as_sub().clone());
+		if data.pending_sponsor.len() > 1 {
+			return Err(Error::Revert("only one sponsor is allowed".into()));
+		}
+
+		let pending_sponsor = data
+			.pending_sponsor
+			.into_iter()
+			.next()
+			.map(|value| T::CrossAccountId::from_eth(value).as_sub().clone());
 
 		let restricted = if !data.nesting_settings.restricted.is_empty() {
 			let mut bv = OwnerRestrictedSet::new();
-			for id in data.nesting_settings.restricted.iter() {
-				bv.try_insert(u32::try_from(*id)?.into())
-					.map_err(|_| "too many collections")?;
+			for address in data.nesting_settings.restricted.iter() {
+				bv.try_insert(crate::eth::map_eth_to_id(&address).ok_or_else(|| {
+					Error::Revert("Can't convert address into collection id".into())
+				})?)
+				.map_err(|_| "too many collections")?;
 			}
 			Some(bv)
 		} else {
 			None
 		};
-		let admin_list = data.admin_list.into_iter().map(|admin| admin.into_sub_cross_account::<T>()).collect::<Result<Vec<_>>>()?;
-		let flags = flags.into_iter().collect::<Result<CollectionFlags>>()?;
+
+		let admin_list = data
+			.admin_list
+			.into_iter()
+			.map(|admin| admin.into_sub_cross_account::<T>())
+			.collect::<Result<Vec<_>>>()?;
+		let flags = CollectionFlags::from_bytes([data.flags.to_le_bytes()[0]]);
 		let data = CreateCollectionData {
 			name,
 			mode,
@@ -202,9 +222,9 @@ where
 			limits,
 			pending_sponsor,
 			access: None,
-			permissions: Some(CollectionPermissions{
+			permissions: Some(CollectionPermissions {
 				access: None,
-				mint_mode:None,
+				mint_mode: None,
 				nesting: Some(NestingPermissions {
 					token_owner: data.nesting_settings.token_owner,
 					collection_admin: data.nesting_settings.collection_admin,
@@ -220,12 +240,8 @@ where
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-		let collection_id = T::CollectionDispatch::create(
-			caller,
-			collection_helpers_address,
-			data,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
+		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
+			.map_err(dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -258,12 +274,8 @@ where
 		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(
-			caller,
-			collection_helpers_address,
-			data,
-		)
-		.map_err(dispatch_to_evm::<T>)?;
+		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
+			.map_err(dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)

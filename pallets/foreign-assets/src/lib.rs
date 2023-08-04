@@ -42,9 +42,9 @@ use frame_support::{
 	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
-use up_data_structs::{CollectionMode};
-use pallet_fungible::{Pallet as PalletFungible};
-use scale_info::{TypeInfo};
+use up_data_structs::CollectionMode;
+use pallet_fungible::Pallet as PalletFungible;
+use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{One, Zero},
 	ArithmeticError,
@@ -304,12 +304,13 @@ pub mod module {
 				.collect::<Vec<u16>>();
 			description.append(&mut name.clone());
 
-			let data: CreateCollectionData<T::AccountId, T::CrossAccountId> = CreateCollectionData {
-				name: name.try_into().unwrap(),
-				description: description.try_into().unwrap(),
-				mode: CollectionMode::Fungible(md.decimals),
-				..Default::default()
-			};
+			let data: CreateCollectionData<T::AccountId, T::CrossAccountId> =
+				CreateCollectionData {
+					name: name.try_into().unwrap(),
+					description: description.try_into().unwrap(),
+					mode: CollectionMode::Fungible(md.decimals),
+					..Default::default()
+				};
 			let owner = T::CrossAccountId::from_sub(owner);
 			let bounded_collection_id =
 				<PalletFungible<T>>::init_foreign_collection(owner.clone(), owner, data)?;

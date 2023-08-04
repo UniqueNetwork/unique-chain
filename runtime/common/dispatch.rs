@@ -75,9 +75,7 @@ where
 		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		let id = match data.mode {
-			CollectionMode::NFT => {
-				<PalletNonfungible<T>>::init_collection(sender, payer, data)?
-			}
+			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, payer, data)?,
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
 				ensure!(
@@ -88,9 +86,7 @@ where
 			}
 
 			#[cfg(feature = "refungible")]
-			CollectionMode::ReFungible => {
-				<PalletRefungible<T>>::init_collection(sender, payer, data)?
-			}
+			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, payer, data)?,
 
 			#[cfg(not(feature = "refungible"))]
 			CollectionMode::ReFungible => return unsupported!(T),

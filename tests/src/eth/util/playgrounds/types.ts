@@ -1,4 +1,4 @@
-import {TCollectionMode} from '../../../util/playgrounds/types';
+import {CollectionFlag, TCollectionMode} from '../../../util/playgrounds/types';
 
 export interface ContractImports {
   solPath: string;
@@ -75,7 +75,7 @@ export interface TokenPropertyPermission {
 export interface CollectionNestingAndPermission {
   token_owner: boolean,
   collection_admin: boolean,
-  restricted: number[],
+  restricted: string[],
 }
 
 export const CREATE_COLLECTION_DATA_DEFAULTS = {
@@ -86,6 +86,7 @@ export const CREATE_COLLECTION_DATA_DEFAULTS = {
   nestingSettings: {token_owner: false, collection_admin: false, restricted: []},
   limits: [],
   pendingSponsor: [],
+  flags: 0,
 };
 
 export interface Property {
@@ -105,6 +106,7 @@ export class CreateCollectionData {
   nestingSettings?: CollectionNestingAndPermission = {token_owner: false, collection_admin: false, restricted: []};
   limits?: CollectionLimitValue[] = [];
   pendingSponsor?: EthAddress[] = [];
+  flags?: number | CollectionFlag[] = [0];
 
   constructor(
     name: string,
@@ -119,13 +121,4 @@ export class CreateCollectionData {
     this.collectionMode = collectionMode;
     this.decimals = decimals;
   }
-}
-
-export enum CollectionFlag {
-	/// Tokens in foreign collections can be transferred, but not burnt
-	Foreign = 1,
-	/// Supports ERC721Metadata
-	Erc721metadata = 2,
-	/// External collections can't be managed using `unique` api
-	External = 64
 }

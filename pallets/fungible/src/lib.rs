@@ -87,8 +87,8 @@ use frame_support::{
 };
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{
-	AccessMode, CollectionId, TokenId, CreateCollectionData,
-	mapping::TokenAddressMapping, budget::Budget, PropertyKey, Property,
+	AccessMode, CollectionId, TokenId, CreateCollectionData, mapping::TokenAddressMapping,
+	budget::Budget, PropertyKey, Property,
 };
 use pallet_common::{
 	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
@@ -228,15 +228,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		data.flags.foreign = true;
-		let id = <PalletCommon<T>>::init_collection(
-			owner,
-			payer,
-			data,
-		)?;
-		Ok(id)
+		<PalletCommon<T>>::init_foreign_collection(owner, payer, data)
 	}
 
 	/// Destroys a collection.

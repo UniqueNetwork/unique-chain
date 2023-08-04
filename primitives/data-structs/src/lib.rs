@@ -579,7 +579,7 @@ pub struct CreateCollectionData<AccountId, CrossAccountId> {
 	pub properties: CollectionPropertiesVec,
 
 	pub admin_list: Vec<CrossAccountId>,
-	
+
 	pub flags: CollectionFlags,
 }
 

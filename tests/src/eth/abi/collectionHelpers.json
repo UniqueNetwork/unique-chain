@@ -138,9 +138,9 @@
                 "type": "bool"
               },
               {
-                "internalType": "uint256[]",
+                "internalType": "address[]",
                 "name": "restricted",
-                "type": "uint256[]"
+                "type": "address[]"
               }
             ],
             "internalType": "struct CollectionNestingAndPermission",
@@ -164,16 +164,12 @@
             "internalType": "address[]",
             "name": "pending_sponsor",
             "type": "address[]"
-          }
+          },
+          { "internalType": "uint32", "name": "flags", "type": "uint32" }
         ],
         "internalType": "struct CreateCollectionData",
         "name": "data",
         "type": "tuple"
-      },
-      {
-        "internalType": "enum CollectionFlag[]",
-        "name": "flags",
-        "type": "uint8[]"
       }
     ],
     "name": "createCollection",

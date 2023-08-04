@@ -129,7 +129,7 @@ describe('Cannot set invalid collection limits', () => {
     itEth.ifWithPallets(`Non-owner and non-admin cannot set collection limits for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const nonOwner = await helper.eth.createAccountWithBalance(donor);
-      const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'FLO', testCase.case, 18), []).send();
+      const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'FLO', testCase.case, 18)).send();
 
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
       await expect(collectionEvm.methods

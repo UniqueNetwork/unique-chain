@@ -104,11 +104,10 @@ use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CreateCollectionData,
-	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
-	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
-	PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
-	TokenProperties as TokenPropertiesT,
+	AccessMode, budget::Budget, CollectionId, CreateCollectionData, mapping::TokenAddressMapping,
+	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyScope,
+	PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
+	CreateRefungibleExMultipleOwners, TokenOwnerError, TokenProperties as TokenPropertiesT,
 };
 
 pub use pallet::*;

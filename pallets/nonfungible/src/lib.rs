@@ -100,10 +100,10 @@ use frame_support::{
 	dispatch::{PostDispatchInfo, Pays},
 };
 use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData,
-	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey,
-	PropertyValue, PropertyKeyPermission, PropertyScope, TrySetProperty, TokenChild,
-	AuxPropertyValue, PropertiesPermissionMap, TokenProperties as TokenPropertiesT,
+	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
+	mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey, PropertyValue,
+	PropertyKeyPermission, PropertyScope, TrySetProperty, TokenChild, AuxPropertyValue,
+	PropertiesPermissionMap, TokenProperties as TokenPropertiesT,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
