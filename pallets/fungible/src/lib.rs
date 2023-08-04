@@ -87,7 +87,7 @@ use frame_support::{
 };
 use pallet_evm::account::CrossAccountId;
 use up_data_structs::{
-	AccessMode, CollectionId, CollectionFlags, TokenId, CreateCollectionData,
+	AccessMode, CollectionId, TokenId, CreateCollectionData,
 	mapping::TokenAddressMapping, budget::Budget, PropertyKey, Property,
 };
 use pallet_common::{
@@ -219,26 +219,22 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
+		<PalletCommon<T>>::init_collection(owner, payer, data)
 	}
 
 	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
+		mut data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
+		data.flags.foreign = true;
 		let id = <PalletCommon<T>>::init_collection(
 			owner,
 			payer,
 			data,
-			CollectionFlags {
-				foreign: true,
-				..Default::default()
-			},
 		)?;
 		Ok(id)
 	}

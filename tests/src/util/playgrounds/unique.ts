@@ -44,10 +44,12 @@ import {
   MoonbeamAssetInfo,
   DemocracyStandardAccountVote,
   IEthCrossAccountId,
+  CollectionFlag,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
 import {FrameSystemEventRecord, PalletBalancesIdAmount} from '@polkadot/types/lookup';
+import { arrayUnzip } from '@polkadot/util';
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
@@ -1624,6 +1626,18 @@ class NFTnRFT extends CollectionGroup {
     for(const key of ['name', 'description', 'tokenPrefix']) {
       if(typeof collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] === 'string') collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] = this.helper.util.str2vec(collectionOptions[key as 'name' | 'description' | 'tokenPrefix'] as string);
     }
+
+    let flags = 0;
+    // convert CollectionFlags to number and join them in one number
+    if(collectionOptions.flags) {
+      for(let i = 0; i < collectionOptions.flags.length; i++){
+        const flag = collectionOptions.flags[i];
+        flags = flags | flag;
+      }
+    }
+    collectionOptions.flags = [flags];
+    console.log(flags);
+
     const creationResult = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.createCollectionEx', [collectionOptions],

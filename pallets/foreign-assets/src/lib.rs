@@ -304,7 +304,7 @@ pub mod module {
 				.collect::<Vec<u16>>();
 			description.append(&mut name.clone());
 
-			let data: CreateCollectionData<T::AccountId> = CreateCollectionData {
+			let data: CreateCollectionData<T::AccountId, T::CrossAccountId> = CreateCollectionData {
 				name: name.try_into().unwrap(),
 				description: description.try_into().unwrap(),
 				mode: CollectionMode::Fungible(md.decimals),

@@ -16,7 +16,7 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
-use alloc::format;
+use alloc::{format, string::ToString};
 use sp_std::{vec, vec::Vec};
 use evm_coder::{
 	AbiCoder,
@@ -24,7 +24,8 @@ use evm_coder::{
 };
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
-use up_data_structs::CollectionId;
+use up_data_structs::{CollectionId, Bitfields};
+use pallet_evm_coder_substrate::execution::Error;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
 // TODO: Unhardcode prefix
@@ -107,7 +108,7 @@ impl CrossAddress {
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
 	pub fn into_sub_cross_account<T>(
 		&self,
-	) -> pallet_evm_coder_substrate::execution::Result<T::CrossAccountId>
+	) -> Result<T::CrossAccountId, Error>
 	where
 		T: pallet_evm::Config,
 		T::AccountId: From<[u8; 32]>,
@@ -122,6 +123,15 @@ impl CrossAddress {
 			Err("All fields of cross account is non zeroed".into())
 		}
 	}
+}
+
+#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[repr(u8)]
+pub enum CollectionMode {
+	#[default]
+	Fungible,
+	Nonfungible,
+	Refungible,
 }
 
 /// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
@@ -144,7 +154,7 @@ impl Property {
 }
 
 impl TryFrom<up_data_structs::Property> for Property {
-	type Error = pallet_evm_coder_substrate::execution::Error;
+	type Error = Error;
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
 		let key = evm_coder::types::String::from_utf8(from.key.into())
@@ -155,7 +165,7 @@ impl TryFrom<up_data_structs::Property> for Property {
 }
 
 impl TryInto<up_data_structs::Property> for Property {
-	type Error = pallet_evm_coder_substrate::execution::Error;
+	type Error = Error;
 
 	fn try_into(self) -> Result<up_data_structs::Property, Self::Error> {
 		let key = <Vec<u8>>::from(self.key)
@@ -220,17 +230,13 @@ impl CollectionLimit {
 	pub fn has_value(&self) -> bool {
 		self.value.is_some()
 	}
-}
 
-impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
-	type Error = pallet_evm_coder_substrate::execution::Error;
-
-	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
+	pub fn apply_limit(&self, limits: &mut up_data_structs::CollectionLimits) -> Result<(), Error> {
 		let value = self
 			.value
-			.ok_or::<Self::Error>("can't convert `None` value to boolean".into())?;
+			.ok_or::<Error>("can't convert `None` value to boolean".into())?;
 		let value = Some(value.try_into().map_err(|error| {
-			Self::Error::Revert(format!(
+			Error::Revert(format!(
 				"can't convert value to u32 \"{value}\" because: \"{error}\""
 			))
 		})?);
@@ -239,14 +245,13 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 			Some(value) => match value {
 				0 => Ok(Some(false)),
 				1 => Ok(Some(true)),
-				_ => Err(Self::Error::Revert(format!(
+				_ => Err(Error::Revert(format!(
 					"can't convert value to boolean \"{value}\""
 				))),
 			},
 			None => Ok(None),
 		};
-
-		let mut limits = up_data_structs::CollectionLimits::default();
+		
 		match self.field {
 			CollectionLimitField::AccountTokenOwnership => {
 				limits.account_token_ownership_limit = value;
@@ -277,6 +282,93 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 				limits.transfers_enabled = convert_value_to_bool()?;
 			}
 		};
+		Ok(())
+	}
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionLimitValue {
+	field: CollectionLimitField,
+	value: U256,
+}
+
+impl CollectionLimitValue {
+	/// Create [`CollectionLimitValue`] from field and value.
+	pub fn new(field: CollectionLimitField, value: u32) -> Self {
+		Self {
+			field,
+			value: value.into(),
+		}
+	}
+
+	pub fn apply_limit(&self, limits: &mut up_data_structs::CollectionLimits) -> Result<(), Error> {
+		let value = self.value;
+		let value: u32 = value.try_into().map_err(|error| {
+			Error::Revert(format!(
+				"can't convert value to u32 \"{value}\" because: \"{error}\""
+			))
+		})?;
+
+		let convert_value_to_bool = || match value {
+			0 => Ok(Some(false)),
+			1 => Ok(Some(true)),
+			_ => Err(Error::Revert(format!(
+				"can't convert value to boolean \"{value}\""
+			))),
+		};
+		
+		match self.field {
+			CollectionLimitField::AccountTokenOwnership => {
+				limits.account_token_ownership_limit = Some(value);
+			}
+			CollectionLimitField::SponsoredDataSize => {
+				limits.sponsored_data_size = Some(value);
+			}
+			CollectionLimitField::SponsoredDataRateLimit => {
+				limits.sponsored_data_rate_limit =
+					Some(up_data_structs::SponsoringRateLimit::Blocks(value));
+			}
+			CollectionLimitField::TokenLimit => {
+				limits.token_limit = Some(value);
+			}
+			CollectionLimitField::SponsorTransferTimeout => {
+				limits.sponsor_transfer_timeout = Some(value);
+			}
+			CollectionLimitField::SponsorApproveTimeout => {
+				limits.sponsor_approve_timeout = Some(value);
+			}
+			CollectionLimitField::OwnerCanTransfer => {
+				limits.owner_can_transfer = convert_value_to_bool()?;
+			}
+			CollectionLimitField::OwnerCanDestroy => {
+				limits.owner_can_destroy = convert_value_to_bool()?;
+			}
+			CollectionLimitField::TransferEnabled => {
+				limits.transfers_enabled = convert_value_to_bool()?;
+			}
+		};
+		Ok(())
+	}
+}
+
+impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
+	type Error = Error;
+
+	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
+		let mut limits = up_data_structs::CollectionLimits::default();
+		self.apply_limit(&mut limits)?;
+		Ok(limits)
+	}
+}
+
+impl FromIterator<CollectionLimitValue> for Result<up_data_structs::CollectionLimits, Error> {
+
+	fn from_iter<T: IntoIterator<Item = CollectionLimitValue>>(iter: T) -> Result<up_data_structs::CollectionLimits, Error> {
+		let mut limits = up_data_structs::CollectionLimits::default();
+		for value in iter.into_iter() {
+			value.apply_limit(&mut limits)?;
+		}
 		Ok(limits)
 	}
 }
@@ -384,7 +476,7 @@ impl TokenPropertyPermission {
 	/// Convert vector of [`TokenPropertyPermission`] into vector of [`up_data_structs::PropertyKeyPermission`].
 	pub fn into_property_key_permissions(
 		permissions: Vec<TokenPropertyPermission>,
-	) -> pallet_evm_coder_substrate::execution::Result<Vec<up_data_structs::PropertyKeyPermission>>
+	) -> Result<Vec<up_data_structs::PropertyKeyPermission>, Error>
 	{
 		let mut perms = Vec::new();
 
@@ -427,6 +519,21 @@ impl CollectionNestingAndPermission {
 			restricted,
 		}
 	}
+}
+
+#[derive(Debug, Default, AbiCoder)]
+pub struct CreateCollectionData {
+	pub name: String,
+	pub description: String,
+	pub token_prefix: String,
+	pub mode: CollectionMode,
+	pub decimals: u8,
+	pub properties: Vec<Property>,
+	pub token_property_permissions: Vec<TokenPropertyPermission>,
+	pub admin_list: Vec<CrossAddress>,
+	pub nesting_settings: CollectionNestingAndPermission,
+	pub limits: Vec<CollectionLimitValue>,
+	pub pending_sponsor: Vec<Address>,
 }
 
 /// Nested collections.
@@ -483,5 +590,44 @@ impl From<AccessMode> for up_data_structs::AccessMode {
 			AccessMode::Normal => up_data_structs::AccessMode::Normal,
 			AccessMode::AllowList => up_data_structs::AccessMode::AllowList,
 		}
+	}
+}
+
+/// Extra collection flags
+#[derive(AbiCoder, Copy, Clone, Default, Debug, PartialEq)]
+#[repr(u8)]
+pub enum CollectionFlag {
+	#[default]
+	/// No flags set
+	None,
+	/// Tokens in foreign collections can be transferred, but not burnt
+	Foreign,
+	/// Supports ERC721Metadata
+	Erc721metadata,
+	/// Reserved
+	Reserved2,
+	/// Reserved
+	Reserved3,
+	/// Reserved
+	Reserved4,
+	/// Reserved
+	Reserved5,
+	/// Reserved
+	Reserved6,
+	/// External collections can't be managed using `unique` api
+	External
+}
+
+impl FromIterator<CollectionFlag> for Result<up_data_structs::CollectionFlags, Error> {
+	fn from_iter<T: IntoIterator<Item = CollectionFlag>>(iter: T) -> Result<up_data_structs::CollectionFlags, Error> {
+		let mut flags = 0;
+		for flag in iter.into_iter() {
+			if flag == CollectionFlag::Reserved2 || flag == CollectionFlag::Reserved3 || flag == CollectionFlag::Reserved4  || flag == CollectionFlag::Reserved5  || flag == CollectionFlag::Reserved6 {
+				return Err(Error::Revert("Reserved flags shouldn't be used".to_string()));
+			} else {
+				flags += flag as u8;
+			}
+		}
+		Ok(up_data_structs::CollectionFlags::from_bytes([flags]))
 	}
 }

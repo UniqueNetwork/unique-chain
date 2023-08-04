@@ -104,7 +104,7 @@ use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionFlags, CreateCollectionData,
+	AccessMode, budget::Budget, CollectionId, CreateCollectionData,
 	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
 	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
 	PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
@@ -334,10 +334,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
+		<PalletCommon<T>>::init_collection(owner, payer, data)
 	}
 
 	/// Destroy RFT collection

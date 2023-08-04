@@ -100,7 +100,7 @@ use frame_support::{
 	dispatch::{PostDispatchInfo, Pays},
 };
 use up_data_structs::{
-	AccessMode, CollectionId, CollectionFlags, CustomDataLimit, TokenId, CreateCollectionData,
+	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData,
 	CreateNftExData, mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey,
 	PropertyValue, PropertyKeyPermission, PropertyScope, TrySetProperty, TokenChild,
 	AuxPropertyValue, PropertiesPermissionMap, TokenProperties as TokenPropertiesT,
@@ -424,10 +424,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
+		<PalletCommon<T>>::init_collection(owner, payer, data)
 	}
 
 	/// Destroy NFT collection

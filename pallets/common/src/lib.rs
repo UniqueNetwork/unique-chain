@@ -73,7 +73,7 @@ use frame_support::{
 	transactional, fail,
 };
 use up_data_structs::{
-	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, CollectionFlags,
+	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection,
 	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
 	COLLECTION_ADMINS_LIMIT, TokenId, TokenChild, CollectionStats, MAX_TOKEN_OWNERSHIP,
 	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
@@ -1094,8 +1094,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -1139,7 +1138,7 @@ impl<T: Config> Pallet<T> {
 					Self::clamp_permissions(data.mode.clone(), &Default::default(), permissions)
 				})
 				.unwrap_or_else(|| Ok(CollectionPermissions::default()))?,
-			flags,
+			flags: data.flags,
 		};
 
 		let mut collection_properties = CollectionPropertiesT::new();
@@ -1155,6 +1154,21 @@ impl<T: Config> Pallet<T> {
 			.map_err(<Error<T>>::from)?;
 
 		CollectionPropertyPermissions::<T>::insert(id, token_props_permissions);
+
+		let mut admin_amount = 0u32;
+		for admin in data.admin_list.iter() {
+			if !<IsAdmin<T>>::get((id, admin)) {
+				<IsAdmin<T>>::insert((id, admin), true);
+				admin_amount = admin_amount
+					.checked_add(1)
+					.ok_or(<Error<T>>::CollectionAdminCountExceeded)?;
+			}
+		}
+		ensure!(
+			admin_amount <= Self::collection_admins_limit(),
+			<Error<T>>::CollectionAdminCountExceeded,
+		);
+		<AdminAmount<T>>::insert(id, admin_amount);
 
 		// Take a (non-refundable) deposit of collection creation
 		{

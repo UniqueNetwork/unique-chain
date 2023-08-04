@@ -51,6 +51,7 @@ describe('App promotion', () => {
       donor = await privateKey({url: import.meta.url});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
+
       nominal = helper.balance.getOneTokenNominal();
 
       const accountBalances = new Array(200).fill(1000n);
@@ -96,7 +97,6 @@ describe('App promotion', () => {
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
       // it is potentially flaky test. Promotion can credited some tokens. Maybe we need to use closeTo?
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + 100n * nominal); // total tokens amount staked in app-promotion increased
-
 
       await helper.staking.stake(staker, 200n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(300n * nominal);

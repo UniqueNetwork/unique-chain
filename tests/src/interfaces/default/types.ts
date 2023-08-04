@@ -1062,7 +1062,11 @@ export interface PalletAppPromotionCall extends Enum {
   readonly asUnstakePartial: {
     readonly amount: u128;
   } & Struct;
-  readonly type: 'SetAdminAddress' | 'Stake' | 'UnstakeAll' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorContract' | 'StopSponsoringContract' | 'PayoutStakers' | 'UnstakePartial';
+  readonly isForceUnstake: boolean;
+  readonly asForceUnstake: {
+    readonly pendingBlocks: Vec<u32>;
+  } & Struct;
+  readonly type: 'SetAdminAddress' | 'Stake' | 'UnstakeAll' | 'SponsorCollection' | 'StopSponsoringCollection' | 'SponsorContract' | 'StopSponsoringContract' | 'PayoutStakers' | 'UnstakePartial' | 'ForceUnstake';
 }
 
 /** @name PalletAppPromotionError */
@@ -1072,9 +1076,9 @@ export interface PalletAppPromotionError extends Enum {
   readonly isNotSufficientFunds: boolean;
   readonly isPendingForBlockOverflow: boolean;
   readonly isSponsorNotSet: boolean;
-  readonly isIncorrectLockedBalanceOperation: boolean;
   readonly isInsufficientStakedBalance: boolean;
-  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'IncorrectLockedBalanceOperation' | 'InsufficientStakedBalance';
+  readonly isInconsistencyState: boolean;
+  readonly type: 'AdminNotSet' | 'NoPermission' | 'NotSufficientFunds' | 'PendingForBlockOverflow' | 'SponsorNotSet' | 'InsufficientStakedBalance' | 'InconsistencyState';
 }
 
 /** @name PalletAppPromotionEvent */
@@ -2215,6 +2219,104 @@ export interface PalletSessionEvent extends Enum {
   readonly type: 'NewSession';
 }
 
+/** @name PalletStateTrieMigrationCall */
+export interface PalletStateTrieMigrationCall extends Enum {
+  readonly isControlAutoMigration: boolean;
+  readonly asControlAutoMigration: {
+    readonly maybeConfig: Option<PalletStateTrieMigrationMigrationLimits>;
+  } & Struct;
+  readonly isContinueMigrate: boolean;
+  readonly asContinueMigrate: {
+    readonly limits: PalletStateTrieMigrationMigrationLimits;
+    readonly realSizeUpper: u32;
+    readonly witnessTask: PalletStateTrieMigrationMigrationTask;
+  } & Struct;
+  readonly isMigrateCustomTop: boolean;
+  readonly asMigrateCustomTop: {
+    readonly keys_: Vec<Bytes>;
+    readonly witnessSize: u32;
+  } & Struct;
+  readonly isMigrateCustomChild: boolean;
+  readonly asMigrateCustomChild: {
+    readonly root: Bytes;
+    readonly childKeys: Vec<Bytes>;
+    readonly totalSize: u32;
+  } & Struct;
+  readonly isSetSignedMaxLimits: boolean;
+  readonly asSetSignedMaxLimits: {
+    readonly limits: PalletStateTrieMigrationMigrationLimits;
+  } & Struct;
+  readonly isForceSetProgress: boolean;
+  readonly asForceSetProgress: {
+    readonly progressTop: PalletStateTrieMigrationProgress;
+    readonly progressChild: PalletStateTrieMigrationProgress;
+  } & Struct;
+  readonly type: 'ControlAutoMigration' | 'ContinueMigrate' | 'MigrateCustomTop' | 'MigrateCustomChild' | 'SetSignedMaxLimits' | 'ForceSetProgress';
+}
+
+/** @name PalletStateTrieMigrationError */
+export interface PalletStateTrieMigrationError extends Enum {
+  readonly isMaxSignedLimits: boolean;
+  readonly isKeyTooLong: boolean;
+  readonly isNotEnoughFunds: boolean;
+  readonly isBadWitness: boolean;
+  readonly isSignedMigrationNotAllowed: boolean;
+  readonly isBadChildRoot: boolean;
+  readonly type: 'MaxSignedLimits' | 'KeyTooLong' | 'NotEnoughFunds' | 'BadWitness' | 'SignedMigrationNotAllowed' | 'BadChildRoot';
+}
+
+/** @name PalletStateTrieMigrationEvent */
+export interface PalletStateTrieMigrationEvent extends Enum {
+  readonly isMigrated: boolean;
+  readonly asMigrated: {
+    readonly top: u32;
+    readonly child: u32;
+    readonly compute: PalletStateTrieMigrationMigrationCompute;
+  } & Struct;
+  readonly isSlashed: boolean;
+  readonly asSlashed: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isAutoMigrationFinished: boolean;
+  readonly isHalted: boolean;
+  readonly asHalted: {
+    readonly error: PalletStateTrieMigrationError;
+  } & Struct;
+  readonly type: 'Migrated' | 'Slashed' | 'AutoMigrationFinished' | 'Halted';
+}
+
+/** @name PalletStateTrieMigrationMigrationCompute */
+export interface PalletStateTrieMigrationMigrationCompute extends Enum {
+  readonly isSigned: boolean;
+  readonly isAuto: boolean;
+  readonly type: 'Signed' | 'Auto';
+}
+
+/** @name PalletStateTrieMigrationMigrationLimits */
+export interface PalletStateTrieMigrationMigrationLimits extends Struct {
+  readonly size_: u32;
+  readonly item: u32;
+}
+
+/** @name PalletStateTrieMigrationMigrationTask */
+export interface PalletStateTrieMigrationMigrationTask extends Struct {
+  readonly progressTop: PalletStateTrieMigrationProgress;
+  readonly progressChild: PalletStateTrieMigrationProgress;
+  readonly size_: u32;
+  readonly topItems: u32;
+  readonly childItems: u32;
+}
+
+/** @name PalletStateTrieMigrationProgress */
+export interface PalletStateTrieMigrationProgress extends Enum {
+  readonly isToStart: boolean;
+  readonly isLastKey: boolean;
+  readonly asLastKey: Bytes;
+  readonly isComplete: boolean;
+  readonly type: 'ToStart' | 'LastKey' | 'Complete';
+}
+
 /** @name PalletStructureCall */
 export interface PalletStructureCall extends Null {}
 
@@ -3115,6 +3217,8 @@ export interface UpDataStructsCreateCollectionData extends Struct {
   readonly permissions: Option<UpDataStructsCollectionPermissions>;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
+  readonly adminList: Vec<PalletEvmAccountBasicCrossAccountIdRepr>;
+  readonly flags: U8aFixed;
 }
 
 /** @name UpDataStructsCreateFungibleData */

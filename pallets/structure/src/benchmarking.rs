@@ -40,7 +40,6 @@ benchmarks! {
 				mode: CollectionMode::NFT,
 				..Default::default()
 			},
-			CollectionFlags::default(),
 		)?;
 		let dispatch = T::CollectionDispatch::dispatch(CollectionId(1))?;
 		let dispatch = dispatch.as_dyn();

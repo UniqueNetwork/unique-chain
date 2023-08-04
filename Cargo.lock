@@ -2600,8 +2600,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.3.1"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.1#21e61c627f71337d6b8a03899fe8de14bfbf67aa"
+version = "0.3.4"
+source = "git+https://github.com/uniquenetwork/evm-coder?rev=97ed8d947122c60c76d61e43c558151ead8b4bca#97ed8d947122c60c76d61e43c558151ead8b4bca"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2612,8 +2612,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.3.1"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.1#21e61c627f71337d6b8a03899fe8de14bfbf67aa"
+version = "0.3.4"
+source = "git+https://github.com/uniquenetwork/evm-coder?rev=97ed8d947122c60c76d61e43c558151ead8b4bca#97ed8d947122c60c76d61e43c558151ead8b4bca"
 dependencies = [
  "Inflector",
  "hex",
@@ -7434,6 +7434,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-balances-adapter",
  "pallet-common",
  "pallet-evm",
