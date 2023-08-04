@@ -1,7 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
-import {CollectionLimitField} from './util/playgrounds/types';
+import {CollectionLimitField, CreateCollectionData} from './util/playgrounds/types';
 
 
 describe('Can set collection limits', () => {
@@ -20,7 +20,7 @@ describe('Can set collection limits', () => {
   ].map(testCase =>
     itEth.ifWithPallets(`for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const {collectionId, collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'FLO', 18);
+      const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'FLO', testCase.case, 18)).send();
       const limits = {
         accountTokenOwnershipLimit: 1000,
         sponsoredDataSize: 1024,
@@ -96,13 +96,13 @@ describe('Cannot set invalid collection limits', () => {
       };
 
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'ISNI', 18);
+      const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'ISNI', testCase.case, 18)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
 
       // Cannot set non-existing limit
       await expect(collectionEvm.methods
         .setCollectionLimit({field: 9, value: {status: true, value: 1}})
-        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert Value not convertible into enum "CollectionLimitField"');
+        .call()).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert value not convertible into enum "CollectionLimitField"');
 
       // Cannot disable limits
       await expect(collectionEvm.methods
@@ -129,7 +129,7 @@ describe('Cannot set invalid collection limits', () => {
     itEth.ifWithPallets(`Non-owner and non-admin cannot set collection limits for ${testCase.case}`, testCase.requiredPallets || [], async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const nonOwner = await helper.eth.createAccountWithBalance(donor);
-      const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, 'Limits', 'absolutely anything', 'FLO', 18);
+      const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'FLO', testCase.case, 18), []).send();
 
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
       await expect(collectionEvm.methods

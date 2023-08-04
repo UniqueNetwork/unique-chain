@@ -21,10 +21,9 @@ use crate::{Config, CollectionHandle, Pallet};
 use pallet_evm::account::CrossAccountId;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
-	CollectionMode, CollectionFlags, CreateCollectionData, CollectionId, Property, PropertyKey,
-	PropertyValue, CollectionPermissions, NestingPermissions, AccessMode,
-	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_PROPERTIES_PER_ITEM,
+	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
+	CollectionPermissions, NestingPermissions, AccessMode, MAX_COLLECTION_NAME_LENGTH,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
 	traits::{Get, fungible::Balanced, Imbalance, tokens::Precision},
@@ -47,12 +46,7 @@ pub fn create_u16_data<const S: u32>() -> BoundedVec<u16, ConstU32<S>> {
 		.unwrap()
 }
 pub fn create_var_data<const S: u32>(size: u32) -> BoundedVec<u8, ConstU32<S>> {
-	assert!(
-		size <= S,
-		"size ({}) should be less within bound ({})",
-		size,
-		S
-	);
+	assert!(size <= S, "size ({size}) should be less within bound ({S})",);
 	(0..size)
 		.map(|v| (v & 0xff) as u8)
 		.collect::<Vec<_>>()
@@ -81,7 +75,7 @@ pub fn create_collection_raw<T: Config, R>(
 	mode: CollectionMode,
 	handler: impl FnOnce(
 		T::CrossAccountId,
-		CreateCollectionData<T::AccountId>,
+		CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError>,
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {
@@ -124,9 +118,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner: T::CrossAccountId, data| {
-			<Pallet<T>>::init_collection(owner.clone(), owner, data, CollectionFlags::default())
-		},
+		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
 		|h| h,
 	)
 }

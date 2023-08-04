@@ -1,6 +1,6 @@
 import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
 import {readFile} from 'fs/promises';
-import {CollectionLimitField,  TokenPermissionField} from '../../eth/util/playgrounds/types';
+import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '../../eth/util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
 import {UniqueFTCollection, UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
@@ -399,7 +399,7 @@ async function erc721CalculateFeeGas(
     () => collection.setLimits(donor, {accountTokenOwnershipLimit: 1000}),
   )));
 
-  const {collectionAddress} = await helper.eth.createCollection('nft', ethSigner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(ethSigner, new CreateCollectionData('A', 'B', 'C', 'nft')).send();
   const collectionWithEthOwner = await helper.ethNativeContract.collection(collectionAddress, 'nft', ethSigner, true);
 
 
@@ -775,7 +775,7 @@ async function erc20CalculateFeeGas(
     () => collection.setLimits(donor, {accountTokenOwnershipLimit: 1000}),
   )));
 
-  const {collectionAddress} = await helper.eth.createCollection('nft', ethSigner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(ethSigner, new CreateCollectionData('A', 'B', 'C', 'nft')).send();
   const collectionWithEthOwner = await helper.ethNativeContract.collection(collectionAddress, 'nft', ethSigner, true);
 
 

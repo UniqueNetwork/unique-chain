@@ -7,7 +7,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import { UniqueNFT, CrossAddress } from "@unique-nft/solidity-interfaces/contracts/UniqueNFT.sol";
 import { UniqueFungible, CrossAddress as CrossAddressF } from "@unique-nft/solidity-interfaces/contracts/UniqueFungible.sol";
-import "@unique-nft/solidity-interfaces/contracts/CollectionHelpers.sol";
+import { CollectionHelpers } from "@unique-nft/solidity-interfaces/contracts/CollectionHelpers.sol";
 import "./royalty/UniqueRoyaltyHelper.sol";
 
 contract Market is Ownable, ReentrancyGuard {

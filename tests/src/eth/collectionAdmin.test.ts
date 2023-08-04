@@ -19,6 +19,7 @@ import {Pallets} from '../util';
 import {IEthCrossAccountId} from '../util/playgrounds/types';
 import {usingEthPlaygrounds, itEth} from './util';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev';
+import {CreateCollectionData} from './util/playgrounds/types';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
@@ -55,7 +56,7 @@ describe('Add collection admins', () => {
       const adminCrossSub = helper.ethCrossAccount.fromKeyringPair(adminSub);
       const adminCrossEth = helper.ethCrossAccount.fromAddress(adminEth);
 
-      const {collectionAddress, collectionId} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, true);
 
       // Check isOwnerOrAdminCross returns false:

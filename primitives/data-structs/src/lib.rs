@@ -33,10 +33,11 @@ use serde::{Serialize, Deserialize};
 use sp_core::U256;
 use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
-use bondrewd::Bitfields;
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
+
+pub use bondrewd::Bitfields;
 
 mod bondrewd_codec;
 mod bounded;
@@ -160,6 +161,14 @@ impl EncodeLike<CollectionId> for u32 {}
 impl From<u32> for CollectionId {
 	fn from(value: u32) -> Self {
 		Self(value)
+	}
+}
+
+impl Deref for CollectionId {
+	type Target = u32;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }
 
@@ -545,7 +554,7 @@ impl Deref for RawEncoded {
 /// All fields are wrapped in [`Option`], where `None` means chain default.
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
 #[derivative(Debug, Default(bound = ""))]
-pub struct CreateCollectionData<AccountId> {
+pub struct CreateCollectionData<AccountId, CrossAccountId> {
 	/// Collection mode.
 	#[derivative(Default(value = "CollectionMode::NFT"))]
 	pub mode: CollectionMode,
@@ -576,6 +585,10 @@ pub struct CreateCollectionData<AccountId> {
 
 	/// Collection properties.
 	pub properties: CollectionPropertiesVec,
+
+	pub admin_list: Vec<CrossAccountId>,
+
+	pub flags: CollectionFlags,
 }
 
 /// Bounded vector of properties permissions. Max length is [`MAX_PROPERTIES_PER_ITEM`].

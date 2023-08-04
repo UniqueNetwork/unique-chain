@@ -142,6 +142,18 @@ export interface IExtrinsic {
   }
 }
 
+export interface ICollectionFlags {
+  foreign: boolean,
+  erc721metadata: boolean,
+}
+
+export enum CollectionFlag {
+  None = 0,
+  External = 1,
+  Erc721metadata = 64,
+  Foreign = 128,
+}
+
 export interface ICollectionCreationOptions {
   name?: string | number[];
   description?: string | number[];
@@ -156,6 +168,8 @@ export interface ICollectionCreationOptions {
   tokenPropertyPermissions?: ITokenPropertyPermission[];
   limits?: ICollectionLimits;
   pendingSponsor?: TSubstrateAccount;
+  adminList?: ICrossAccountId[];
+  flags?: number[] | CollectionFlag[] ,
 }
 
 export interface IChainProperties {

@@ -17,13 +17,15 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
+import {TCollectionMode} from '../util/playgrounds/types';
+import {CreateCollectionData} from './util/playgrounds/types';
 
 describe('Destroy Collection from EVM', function() {
   let donor: IKeyringPair;
   const testCases = [
-    {case: 'rft' as const, params: ['Limits', 'absolutely anything', 'OLF'], requiredPallets: [Pallets.ReFungible]},
-    {case: 'nft' as const, params: ['Limits', 'absolutely anything', 'OLF'], requiredPallets: [Pallets.NFT]},
-    {case: 'ft' as const, params: ['Limits', 'absolutely anything', 'OLF', 18], requiredPallets: [Pallets.Fungible]},
+    {case: 'rft' as const, params: ['Limits', 'absolutely anything', 'OLF', 'rft'], requiredPallets: [Pallets.ReFungible]},
+    {case: 'nft' as const, params: ['Limits', 'absolutely anything', 'OLF', 'nft'], requiredPallets: [Pallets.NFT]},
+    {case: 'ft' as const, params: ['Limits', 'absolutely anything', 'OLF', 'ft', 18], requiredPallets: [Pallets.Fungible]},
   ];
 
   before(async function() {
@@ -40,8 +42,7 @@ describe('Destroy Collection from EVM', function() {
       const unexistedCollection = helper.ethAddress.fromCollectionId(1000000);
 
       const collectionHelpers = await helper.ethNativeContract.collectionHelpers(signer);
-      const {collectionAddress} = await helper.eth.createCollection(testCase.case, owner, ...testCase.params as [string, string, string, number?]);
-
+      const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData(...testCase.params as [string, string, string, TCollectionMode, number?])).send();
       // cannot burn collec
       await expect(collectionHelpers.methods
         .destroyCollection(collectionAddress)

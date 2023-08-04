@@ -3226,6 +3226,8 @@ export interface UpDataStructsCreateCollectionData extends Struct {
   readonly permissions: Option<UpDataStructsCollectionPermissions>;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
+  readonly adminList: Vec<PalletEvmAccountBasicCrossAccountIdRepr>;
+  readonly flags: U8aFixed;
 }
 
 /** @name UpDataStructsCreateFungibleData */
