@@ -44,7 +44,7 @@ async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, 
     if((options.flags[0] & 64) != 0)
       expect(data?.raw.flags.erc721metadata).to.be.true;
     if((options.flags[0] & 128) != 0)
-      expect(data?.raw.flags.foreign).to.be.true;
+      expect(data?.raw.flags.foreign).to.be.false;
   }
 
   if(options.tokenPropertyPermissions) {

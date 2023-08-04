@@ -228,11 +228,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		data.flags.foreign = true;
-		let id = <PalletCommon<T>>::init_collection(owner, payer, data)?;
-		Ok(id)
+		<PalletCommon<T>>::init_foreign_collection(owner, payer, data)
 	}
 
 	/// Destroys a collection.

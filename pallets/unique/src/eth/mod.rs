@@ -34,8 +34,9 @@ use pallet_evm_coder_substrate::{
 	frontier_contract,
 };
 use up_data_structs::{
-	CollectionDescription, CollectionFlags, CollectionMode, CollectionName, CollectionPermissions,
-	CollectionTokenPrefix, CreateCollectionData, NestingPermissions, OwnerRestrictedSet,
+	Bitfields, CollectionDescription, CollectionFlags, CollectionMode, CollectionName,
+	CollectionPermissions, CollectionTokenPrefix, CreateCollectionData, NestingPermissions,
+	OwnerRestrictedSet,
 };
 
 use crate::{weights::WeightInfo, Config, Pallet, SelfWeightOf};
@@ -148,7 +149,6 @@ where
 		caller: Caller,
 		value: Value,
 		data: eth::CreateCollectionData,
-		flags: Vec<eth::CollectionFlag>,
 	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
@@ -164,14 +164,14 @@ where
 			.map(eth::Property::try_into)
 			.collect::<Result<Vec<_>>>()?
 			.try_into()
-			.map_err(|err| Error::Revert("test".into()))?;
+			.map_err(|_| "too many properties")?;
 
 		let token_property_permissions =
 			eth::TokenPropertyPermission::into_property_key_permissions(
 				data.token_property_permissions,
 			)?
 			.try_into()
-			.map_err(|err| Error::Revert("test".into()))?;
+			.map_err(|_| "too many property permissions")?;
 
 		let limits = if !data.limits.is_empty() {
 			Some(
@@ -183,6 +183,10 @@ where
 			None
 		};
 
+		if data.pending_sponsor.len() > 1 {
+			return Err(Error::Revert("only one sponsor is allowed".into()));
+		}
+
 		let pending_sponsor = data
 			.pending_sponsor
 			.into_iter()
@@ -192,21 +196,22 @@ where
 		let restricted = if !data.nesting_settings.restricted.is_empty() {
 			let mut bv = OwnerRestrictedSet::new();
 			for address in data.nesting_settings.restricted.iter() {
-				let collection_id =
-					pallet_common::eth::map_eth_to_id(address).ok_or("not a collection address")?;
-				bv.try_insert(collection_id.into())
-					.map_err(|_| "too many collections")?;
+				bv.try_insert(crate::eth::map_eth_to_id(&address).ok_or_else(|| {
+					Error::Revert("Can't convert address into collection id".into())
+				})?)
+				.map_err(|_| "too many collections")?;
 			}
 			Some(bv)
 		} else {
 			None
 		};
+
 		let admin_list = data
 			.admin_list
 			.into_iter()
 			.map(|admin| admin.into_sub_cross_account::<T>())
 			.collect::<Result<Vec<_>>>()?;
-		let flags = flags.into_iter().collect::<Result<CollectionFlags>>()?;
+		let flags = CollectionFlags::from_bytes([data.flags.to_le_bytes()[0]]);
 		let data = CreateCollectionData {
 			name,
 			mode,

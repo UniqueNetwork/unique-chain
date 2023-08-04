@@ -426,8 +426,11 @@ struct CollectionNesting {
 
 /// Nested collections and permissions
 struct CollectionNestingAndPermission {
+	/// Owner of token can nest tokens under it.
 	bool token_owner;
+	/// Admin of token collection can nest tokens under token.
 	bool collection_admin;
+	/// If set - only tokens from specified collections can be nested.
 	address[] restricted;
 }
 

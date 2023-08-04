@@ -49,7 +49,7 @@ import {
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
 import {FrameSystemEventRecord, PalletBalancesIdAmount} from '@polkadot/types/lookup';
-import { arrayUnzip } from '@polkadot/util';
+import {arrayUnzip} from '@polkadot/util';
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
@@ -1636,7 +1636,6 @@ class NFTnRFT extends CollectionGroup {
       }
     }
     collectionOptions.flags = [flags];
-    console.log(flags);
 
     const creationResult = await this.helper.executeExtrinsic(
       signer,

@@ -20,16 +20,13 @@ interface CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0xd932d288
+/// @dev the ERC-165 identifier for this interface is 0x5b1c879d
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create a collection
 	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0x3f62c322,
-	///  or in textual repr: createCollection((string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],address[]),uint8[])
-	function createCollection(CreateCollectionData memory data, CollectionFlag[] memory flags)
-		external
-		payable
-		returns (address);
+	/// @dev EVM selector for this function is: 0xbd4c9637,
+	///  or in textual repr: createCollection((string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],address[],uint32))
+	function createCollection(CreateCollectionData memory data) external payable returns (address);
 
 	/// Create an NFT collection
 	/// @param name Name of the collection
@@ -104,40 +101,32 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	function collectionId(address collectionAddress) external view returns (uint32);
 }
 
-/// Extra collection flags
-enum CollectionFlag {
-	/// No flags set
-	None,
-	/// Tokens in foreign collections can be transferred, but not burnt
-	Foreign,
-	/// Supports ERC721Metadata
-	Erc721metadata,
-	/// Reserved
-	Reserved2,
-	/// Reserved
-	Reserved3,
-	/// Reserved
-	Reserved4,
-	/// Reserved
-	Reserved5,
-	/// Reserved
-	Reserved6,
-	/// External collections can't be managed using `unique` api
-	External
-}
-
+/// Collection properties
 struct CreateCollectionData {
+	/// Collection name
 	string name;
+	/// Collection description
 	string description;
+	/// Token prefix
 	string token_prefix;
+	/// Token type (NFT, FT or RFT)
 	CollectionMode mode;
+	/// Fungible token precision
 	uint8 decimals;
+	/// Custom Properties
 	Property[] properties;
+	/// Permissions for token properties
 	TokenPropertyPermission[] token_property_permissions;
+	/// Collection admins
 	CrossAddress[] admin_list;
+	/// Nesting settings
 	CollectionNestingAndPermission nesting_settings;
+	/// Collection limits
 	CollectionLimitValue[] limits;
+	/// Collection sponsor
 	address[] pending_sponsor;
+	/// Extra collection flags
+	uint32 flags;
 }
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
@@ -170,8 +159,11 @@ enum CollectionLimitField {
 
 /// Nested collections and permissions
 struct CollectionNestingAndPermission {
+	/// Owner of token can nest tokens under it.
 	bool token_owner;
+	/// Admin of token collection can nest tokens under token.
 	bool collection_admin;
+	/// If set - only tokens from specified collections can be nested.
 	address[] restricted;
 }
 
@@ -213,8 +205,12 @@ struct Property {
 	bytes value;
 }
 
+/// Type of tokens in collection
 enum CollectionMode {
+	/// Fungible
 	Fungible,
+	/// Nonfungible
 	Nonfungible,
+	/// Refungible
 	Refungible
 }

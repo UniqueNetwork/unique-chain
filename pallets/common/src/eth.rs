@@ -16,7 +16,7 @@
 
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
-use alloc::{format, string::ToString};
+use alloc::format;
 use sp_std::{vec, vec::Vec};
 use evm_coder::{
 	AbiCoder,
@@ -24,7 +24,7 @@ use evm_coder::{
 };
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
-use up_data_structs::{CollectionId, Bitfields};
+use up_data_structs::CollectionId;
 use pallet_evm_coder_substrate::execution::Error;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
@@ -123,12 +123,16 @@ impl CrossAddress {
 	}
 }
 
+/// Type of tokens in collection
 #[derive(AbiCoder, Copy, Clone, Default, Debug)]
 #[repr(u8)]
 pub enum CollectionMode {
 	#[default]
+	/// Fungible
 	Fungible,
+	/// Nonfungible
 	Nonfungible,
+	/// Refungible
 	Refungible,
 }
 
@@ -229,6 +233,7 @@ impl CollectionLimit {
 		self.value.is_some()
 	}
 
+	/// Set corresponding property in CollectionLimits struct
 	pub fn apply_limit(&self, limits: &mut up_data_structs::CollectionLimits) -> Result<(), Error> {
 		let value = self
 			.value
@@ -300,6 +305,7 @@ impl CollectionLimitValue {
 		}
 	}
 
+	/// Set corresponding property in CollectionLimits struct
 	pub fn apply_limit(&self, limits: &mut up_data_structs::CollectionLimits) -> Result<(), Error> {
 		let value = self.value;
 		let value: u32 = value.try_into().map_err(|error| {
@@ -503,8 +509,11 @@ pub struct TokenUri {
 /// Nested collections and permissions
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionNestingAndPermission {
+	/// Owner of token can nest tokens under it.
 	pub token_owner: bool,
+	/// Admin of token collection can nest tokens under token.
 	pub collection_admin: bool,
+	/// If set - only tokens from specified collections can be nested.
 	pub restricted: Vec<Address>,
 }
 
@@ -519,19 +528,33 @@ impl CollectionNestingAndPermission {
 	}
 }
 
+/// Collection properties
 #[derive(Debug, Default, AbiCoder)]
 pub struct CreateCollectionData {
+	/// Collection name
 	pub name: String,
+	/// Collection description
 	pub description: String,
+	/// Token prefix
 	pub token_prefix: String,
+	/// Token type (NFT, FT or RFT)
 	pub mode: CollectionMode,
+	/// Fungible token precision
 	pub decimals: u8,
+	/// Custom Properties
 	pub properties: Vec<Property>,
+	/// Permissions for token properties
 	pub token_property_permissions: Vec<TokenPropertyPermission>,
+	/// Collection admins
 	pub admin_list: Vec<CrossAddress>,
+	/// Nesting settings
 	pub nesting_settings: CollectionNestingAndPermission,
+	/// Collection limits
 	pub limits: Vec<CollectionLimitValue>,
+	/// Collection sponsor
 	pub pending_sponsor: Vec<Address>,
+	/// Extra collection flags
+	pub flags: u32,
 }
 
 /// Nested collections.
@@ -588,53 +611,5 @@ impl From<AccessMode> for up_data_structs::AccessMode {
 			AccessMode::Normal => up_data_structs::AccessMode::Normal,
 			AccessMode::AllowList => up_data_structs::AccessMode::AllowList,
 		}
-	}
-}
-
-/// Extra collection flags
-#[derive(AbiCoder, Copy, Clone, Default, Debug, PartialEq)]
-#[repr(u8)]
-pub enum CollectionFlag {
-	#[default]
-	/// No flags set
-	None,
-	/// Tokens in foreign collections can be transferred, but not burnt
-	Foreign,
-	/// Supports ERC721Metadata
-	Erc721metadata,
-	/// Reserved
-	Reserved2,
-	/// Reserved
-	Reserved3,
-	/// Reserved
-	Reserved4,
-	/// Reserved
-	Reserved5,
-	/// Reserved
-	Reserved6,
-	/// External collections can't be managed using `unique` api
-	External,
-}
-
-impl FromIterator<CollectionFlag> for Result<up_data_structs::CollectionFlags, Error> {
-	fn from_iter<T: IntoIterator<Item = CollectionFlag>>(
-		iter: T,
-	) -> Result<up_data_structs::CollectionFlags, Error> {
-		let mut flags = 0;
-		for flag in iter.into_iter() {
-			if flag == CollectionFlag::Reserved2
-				|| flag == CollectionFlag::Reserved3
-				|| flag == CollectionFlag::Reserved4
-				|| flag == CollectionFlag::Reserved5
-				|| flag == CollectionFlag::Reserved6
-			{
-				return Err(Error::Revert(
-					"Reserved flags shouldn't be used".to_string(),
-				));
-			} else {
-				flags += flag as u8;
-			}
-		}
-		Ok(up_data_structs::CollectionFlags::from_bytes([flags]))
 	}
 }

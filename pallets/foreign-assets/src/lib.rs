@@ -42,9 +42,9 @@ use frame_support::{
 	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
-use up_data_structs::{CollectionMode};
-use pallet_fungible::{Pallet as PalletFungible};
-use scale_info::{TypeInfo};
+use up_data_structs::CollectionMode;
+use pallet_fungible::Pallet as PalletFungible;
+use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{One, Zero},
 	ArithmeticError,
