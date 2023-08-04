@@ -417,9 +417,11 @@ where
 
 		let bv = if !collection_nesting_and_permissions.restricted.is_empty() {
 			let mut bv = OwnerRestrictedSet::new();
-			for id in collection_nesting_and_permissions.restricted.iter() {
-				bv.try_insert(u32::try_from(*id)?.into())
-					.map_err(|_| "too many collections")?;
+			for address in collection_nesting_and_permissions.restricted.iter() {
+				bv.try_insert(crate::eth::map_eth_to_id(&address).ok_or_else(|| {
+					Error::Revert("Can't convert address into collection id".into())
+				})?)
+				.map_err(|_| "too many collections")?;
 			}
 			Some(bv)
 		} else {
@@ -506,7 +508,12 @@ where
 			nesting
 				.restricted
 				.clone()
-				.map(|b| b.0.into_inner().iter().map(|id| id.0.into()).collect())
+				.map(|b| {
+					b.0.into_inner()
+						.iter()
+						.map(|id| crate::eth::collection_id_to_address(id.0.into()))
+						.collect()
+				})
 				.unwrap_or_default(),
 		))
 	}

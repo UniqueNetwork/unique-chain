@@ -284,9 +284,9 @@
             "type": "bool"
           },
           {
-            "internalType": "uint256[]",
+            "internalType": "address[]",
             "name": "restricted",
-            "type": "uint256[]"
+            "type": "address[]"
           }
         ],
         "internalType": "struct CollectionNestingAndPermission",
@@ -685,9 +685,9 @@
             "type": "bool"
           },
           {
-            "internalType": "uint256[]",
+            "internalType": "address[]",
             "name": "restricted",
-            "type": "uint256[]"
+            "type": "address[]"
           }
         ],
         "internalType": "struct CollectionNestingAndPermission",

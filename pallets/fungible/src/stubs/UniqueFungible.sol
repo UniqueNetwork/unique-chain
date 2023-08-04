@@ -18,7 +18,7 @@ contract ERC165 is Dummy {
 }
 
 /// @title A contract that allows you to work with collections.
-/// @dev the ERC-165 identifier for this interface is 0xee405b4d
+/// @dev the ERC-165 identifier for this interface is 0xb34d97e9
 contract Collection is Dummy, ERC165 {
 	// /// Set collection property.
 	// ///
@@ -230,8 +230,8 @@ contract Collection is Dummy, ERC165 {
 	// 	dummy = 0;
 	// }
 
-	/// @dev EVM selector for this function is: 0x5692f434,
-	///  or in textual repr: setCollectionNesting((bool,bool,uint256[]))
+	/// @dev EVM selector for this function is: 0x0b9f3890,
+	///  or in textual repr: setCollectionNesting((bool,bool,address[]))
 	function setCollectionNesting(CollectionNestingAndPermission memory collectionNestingAndPermissions) public {
 		require(false, stub_error);
 		collectionNestingAndPermissions;
@@ -267,7 +267,7 @@ contract Collection is Dummy, ERC165 {
 	function collectionNesting() public view returns (CollectionNestingAndPermission memory) {
 		require(false, stub_error);
 		dummy;
-		return CollectionNestingAndPermission(false, false, new uint256[](0));
+		return CollectionNestingAndPermission(false, false, new address[](0));
 	}
 
 	// /// Returns nesting for a collection
@@ -489,7 +489,7 @@ struct CollectionNesting {
 struct CollectionNestingAndPermission {
 	bool token_owner;
 	bool collection_admin;
-	uint256[] restricted;
+	address[] restricted;
 }
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.

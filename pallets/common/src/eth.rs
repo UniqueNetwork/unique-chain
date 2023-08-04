@@ -415,12 +415,12 @@ pub struct TokenUri {
 pub struct CollectionNestingAndPermission {
 	pub token_owner: bool,
 	pub collection_admin: bool,
-	pub restricted: Vec<U256>,
+	pub restricted: Vec<Address>,
 }
 
 impl CollectionNestingAndPermission {
 	/// Create [`CollectionNesting`].
-	pub fn new(token_owner: bool, collection_admin: bool, restricted: Vec<U256>) -> Self {
+	pub fn new(token_owner: bool, collection_admin: bool, restricted: Vec<Address>) -> Self {
 		Self {
 			token_owner,
 			collection_admin,
