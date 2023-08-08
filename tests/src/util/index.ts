@@ -23,12 +23,16 @@ const getTestHash = (filename: string) => crypto.createHash('md5').update(filena
 
 export const getTestSeed = (filename: string) => `//Alice+${getTestHash(filename)}`;
 
-async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
+async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
+  helperType: new (logger: ILogger) => T,
+  url: string,
+  code: (helper: T, privateKey: (seed: string | { filename?: string, url?: string, ignoreFundsPresence?: boolean }) => Promise<IKeyringPair>) => Promise<R>,
+): Promise<R> {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
   const helper = new helperType(new SilentLogger());
-
+  let result;
   try {
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
@@ -53,15 +57,16 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
       }
       return account;
     };
-    await code(helper, privateKey);
+    result = await code(helper, privateKey);
   }
   finally {
     await helper.disconnect();
     silentConsole.disable();
   }
+  return result as any as R;
 }
 
-export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
+export const usingPlaygrounds = <R = void>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<R>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper, R>(DevUniqueHelper, url, code);
 
 export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 
