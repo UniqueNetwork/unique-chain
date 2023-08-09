@@ -5,6 +5,7 @@ import {UniqueHelper} from './util/playgrounds/unique';
 
 const democracyLaunchPeriod = 35;
 const democracyVotingPeriod = 35;
+const councilMotionDuration = 35;
 const democracyEnactmentPeriod = 40;
 const democracyFastTrackVotingPeriod = 5;
 
@@ -191,8 +192,26 @@ describe('Governance: Council tests', () => {
     expect(receiverBalance).to.be.equal(forceSetBalanceTestValue);
   });
 
-  itSub.skip('Council prime member vote is the default', async ({helper}) => {
+  itSub('Council prime member vote is the default', async ({helper}) => {
+    const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
+    const addMemberProposal = helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address);
+    const proposeResult = await helper.council.collective.propose(
+      counselors.filip,
+      addMemberProposal,
+      moreThanHalfCouncilThreshold,
+    );
 
+    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
+    const proposalIndex = councilProposedEvent.proposalIndex;
+    const proposalHash = councilProposedEvent.proposalHash;
+
+    await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
+
+    await helper.wait.newBlocks(councilMotionDuration);
+    const closeResult = await helper.council.collective.close(counselors.filip, proposalHash, proposalIndex);
+    const closeEvent = Event.Council.Closed.expect(closeResult);
+    const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON() as string[];
+    expect(closeEvent.yes).to.be.equal(members.length);
   });
 
   itSub('Superuser can add a member', async ({helper}) => {

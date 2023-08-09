@@ -181,6 +181,11 @@ export class Event {
       proposalHash: eventHumanData(data, 2),
       threshold: eventJsonData<number>(data, 3),
     }));
+    static Closed = this.Method('Closed', data => ({
+      proposalHash: eventHumanData(data, 0),
+      yes: eventJsonData<number>(data, 1),
+      no: eventJsonData<number>(data, 2),
+    }));
   };
 
   static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
