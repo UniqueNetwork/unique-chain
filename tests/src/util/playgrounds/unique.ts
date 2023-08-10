@@ -3092,7 +3092,7 @@ class CollectiveGroup extends HelperGroup<UniqueHelper> {
     signer: TSigner,
     proposalHash: string,
     proposalIndex: number,
-    weightBound: [number, number] | any = [1_000_000_000, 20_000],
+    weightBound: [number, number] | any = [20_000_000_000, 1000_000],
     lengthBound = 10_000,
   ) {
     const result = await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [
@@ -3286,6 +3286,10 @@ class ReferendaGroup extends HelperGroup<UniqueHelper> {
 
   cancel(signer: TSigner, referendumIndex: number) {
     return this.helper.executeExtrinsic(signer, `api.tx.${this.referenda}.cancel`, [referendumIndex]);
+  }
+
+  cancelCall(referendumIndex: number) {
+    return this.helper.constructApiCall(`api.tx.${this.referenda}.cancel`, [referendumIndex]);
   }
 
   async referendumInfo(referendumIndex: number) {

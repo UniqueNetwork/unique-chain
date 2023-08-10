@@ -74,7 +74,7 @@ async function clearCouncil() {
 describe('Governance: Council tests', () => {
   let donor: IKeyringPair;
   let counselors: ICounselors;
-  let superuser: IKeyringPair;
+  let sudoer: IKeyringPair;
 
   const moreThanHalfCouncilThreshold = 3;
 
@@ -83,7 +83,7 @@ describe('Governance: Council tests', () => {
       requirePalletsOrSkip(this, helper, [Pallets.Council]);
 
       donor = await privateKey({url: import.meta.url});
-      superuser = await privateKey('//Alice');
+      sudoer = await privateKey('//Alice');
     });
   });
 
@@ -118,7 +118,7 @@ describe('Governance: Council tests', () => {
     });
   }
 
-  async function proposalCouncil(proposal: any) {
+  async function proposalFromCouncil(proposal: any) {
     return await usingPlaygrounds(async (helper) => {
       expect((await helper.callRpc('api.query.councilMembership.members')).toJSON().length).to.be.equal(5);
       const proposeResult = await helper.council.collective.propose(
@@ -216,20 +216,20 @@ describe('Governance: Council tests', () => {
 
   itSub('Superuser can add a member', async ({helper}) => {
     const [newMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.fulfilled;
+    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.fulfilled;
 
     const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
     expect(members).to.contains(newMember.address);
   });
 
   itSub('Superuser can remove a member', async ({helper}) => {
-    await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.councilMembership.removeMember', [counselors.alex.address])).to.be.fulfilled;
+    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.removeMember', [counselors.alex.address])).to.be.fulfilled;
 
     const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
     expect(members).to.not.contains(counselors.alex.address);
   });
 
-  itSub('Council can add TechComm member', async ({helper}) => {
+  itSub('50%> Council can add TechComm member', async ({helper}) => {
     const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
     const addMemberProposal = helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address);
 
@@ -284,34 +284,40 @@ describe('Governance: Council tests', () => {
     const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
     const addMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
 
-    await expect(proposalCouncil(addMemberProposal)).to.be.rejected;
+    await expect(proposalFromCouncil(addMemberProposal)).to.be.rejected;
   });
 
   itSub('[Negative] Council cannot remove Council member', async ({helper}) => {
     const removeMemberProposal = helper.council.membership.removeMemberCall(counselors.alex.address);
 
-    await expect(proposalCouncil(removeMemberProposal)).to.be.rejected;
+    await expect(proposalFromCouncil(removeMemberProposal)).to.be.rejected;
   });
 
-  itSub.skip('[Negative] Council cannot submit regular democracy proposal', async ({helper}) => {
+  itSub('[Negative] Council cannot submit regular democracy proposal', async ({helper}) => {
+    const councilProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 
+    await expect(proposalFromCouncil(councilProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
   });
 
-  itSub.skip('[Negative] Council cannot externally propose SimpleMajority', async ({helper}) => {
+  itSub('[Negative] Council cannot externally propose SimpleMajority', async ({helper}) => {
+    const councilProposal = await helper.democracy.externalProposeMajorityCall(dummyProposalCall(helper));
 
+    await expect(proposalFromCouncil(councilProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
   });
 
-  itSub.skip('[Negative] Council cannot externally propose SuperMajorityApprove', async ({helper}) => {
+  itSub('[Negative] Council cannot externally propose SuperMajorityApprove', async ({helper}) => {
+    const councilProposal = await helper.democracy.externalProposeCall(dummyProposalCall(helper));
 
+    await expect(proposalFromCouncil(councilProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
   });
 
   itSub('[Negative] Cannot add a duplicate Council member', async ({helper}) => {
     const [newMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.fulfilled;
+    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.fulfilled;
 
     const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
     expect(members).to.contains(newMember.address);
-    await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.rejected;
+    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.rejected;
   });
 
   itSub('[Negative] Cannot add a duplicate TechComm member', async ({helper}) => {
@@ -338,12 +344,18 @@ describe('Governance: Council tests', () => {
     await expect(helper.council.membership.removeMember(counselors.alex, counselors.charu.address)).to.be.rejectedWith('BadOrigin');
   });
 
-  itSub.skip('[Negative] Council cannot set/clear Council prime member', async ({helper}) => {
+  itSub('[Negative] Council cannot set/clear Council prime member', async ({helper}) => {
+    const proposalForSet = await helper.council.membership.setPrimeCall(counselors.charu.address);
+    const proposalForClear = await helper.council.membership.clearPrimeCall();
+
+    await expect(proposalFromCouncil(proposalForSet)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromCouncil(proposalForClear)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
 
   });
 
-  itSub.skip('[Negative] Council member cannot set/clear Council prime member', async ({helper}) => {
-
+  itSub('[Negative] Council member cannot set/clear Council prime member', async ({helper}) => {
+    await expect(helper.council.membership.setPrime(counselors.alex, counselors.charu.address)).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.membership.clearPrime(counselors.alex)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council member cannot add/remove a TechComm member', async ({helper}) => {
@@ -360,52 +372,140 @@ describe('Governance: Council tests', () => {
     await expect(helper.fellowship.collective.demote(counselors.alex, memberWithRankOne.address)).to.be.rejectedWith('BadOrigin');
   });
 
-  itSub.skip('[Negative] Council cannot fast-track Democracy proposals', async ({helper}) => {
+  itSub('[Negative] Council cannot fast-track Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(proposalFromCouncil(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
+      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+  });
+
+  itSub('[Negative] Council member cannot fast-track Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(helper.democracy.fastTrack(counselors.alex, preimageHash, democracyFastTrackVotingPeriod, 0))
+      .to.be.rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] Council cannot cancel Democracy proposals', async ({helper}) => {
+    const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
+    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
+
+    await expect(proposalFromCouncil(helper.democracy.cancelProposalCall(proposalIndex)))
+      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+  });
+
+  itSub('[Negative] Council member cannot cancel Democracy proposals', async ({helper}) => {
+
+    const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
+    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
+
+    await expect(helper.democracy.cancelProposal(counselors.alex, proposalIndex))
+      .to.be.rejectedWith('Misc: BadOrigin');
+  });
+
+  itSub('[Negative] Council cannot cancel ongoing Democracy referendums', async ({helper}) => {
+    await helper.getSudo().democracy.externalProposeDefault(sudoer, dummyProposalCall(helper));
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
+    const referendumIndex = startedEvent.referendumIndex;
+
+    await expect(proposalFromCouncil(helper.democracy.emergencyCancelCall(referendumIndex)))
+      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+  });
+
+  itSub('[Negative] Council member cannot cancel ongoing Democracy referendums', async ({helper}) => {
+    await helper.getSudo().democracy.externalProposeDefault(sudoer, dummyProposalCall(helper));
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
+    const referendumIndex = startedEvent.referendumIndex;
+
+    await expect(helper.democracy.emergencyCancel(counselors.alex, referendumIndex))
+      .to.be.rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] Council cannot cancel Fellowship referendums', async ({helper}) => {
+    const fellowship = await initFellowship();
+    const fellowshipProposer = fellowship[5][0];
+    const proposal = dummyProposal(helper);
+
+    const submitResult = await helper.fellowship.referenda.submit(
+      fellowshipProposer,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
+
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+
+    await expect(proposalFromCouncil(helper.fellowship.referenda.cancelCall(referendumIndex)))
+      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+  });
+
+  itSub('[Negative] Council member cannot cancel Fellowship referendums', async ({helper}) => {
+    const fellowship = await initFellowship();
+    const fellowshipProposer = fellowship[5][0];
+    const proposal = dummyProposal(helper);
+
+    const submitResult = await helper.fellowship.referenda.submit(
+      fellowshipProposer,
+      fellowshipPropositionOrigin,
+      proposal,
+      defaultEnactmentMoment,
+    );
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    await expect(helper.fellowship.referenda.cancel(counselors.alex, referendumIndex))
+      .to.be.rejectedWith('Misc: BadOrigin');
+  });
+
+  itSub('[Negative] Council referendum cannot be closed until the voting threshold is met', async ({helper}) => {
+    const councilSize = (await helper.callRpc('api.query.councilMembership.members')).toJSON().length as any as number;
+    expect(councilSize).is.greaterThan(1);
+    const proposeResult = await helper.council.collective.propose(
+      counselors.filip,
+      dummyProposalCall(helper),
+      councilSize,
+    );
+
+    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
+    const proposalIndex = councilProposedEvent.proposalIndex;
+    const proposalHash = councilProposedEvent.proposalHash;
+
+
+    await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
+
+
+    await expect(helper.council.collective.close(counselors.filip, proposalHash, proposalIndex)).to.be.rejectedWith('TooEarly');
 
   });
 
-  itSub.skip('[Negative] Council member cannot fast-track Democracy proposals', async ({helper}) => {
-
+  itSub('[Negative] Council member cannot propose an existing Council proposal', async ({helper}) => {
+    const repeatedProposal = dummyProposalCall(helper);
+    await expect(helper.council.collective.propose(counselors.filip, repeatedProposal, moreThanHalfCouncilThreshold))
+      .to.be.fulfilled;
+    await expect(helper.council.collective.propose(counselors.filip, repeatedProposal, moreThanHalfCouncilThreshold))
+      .to.be.rejectedWith('DuplicateProposal');
+    await expect(helper.council.collective.propose(counselors.alex, repeatedProposal, moreThanHalfCouncilThreshold))
+      .to.be.rejectedWith('DuplicateProposal');
   });
 
-  itSub.skip('[Negative] Council cannot cancel Democracy proposals', async ({helper}) => {
-
+  itSub('[Negative] Council non-member cannot propose', async ({helper}) => {
+    const [illegalProposer] = await helper.arrange.createAccounts([10n], donor);
+    await expect(helper.council.collective.propose(illegalProposer, dummyProposalCall(helper), moreThanHalfCouncilThreshold)).to.be.rejectedWith('NotMember');
   });
 
-  itSub.skip('[Negative] Council cannot cancel ongoing Democracy referendums', async ({helper}) => {
+  itSub('[Negative] Council non-member cannot vote', async ({helper}) => {
+    const [illegalVoter] = await helper.arrange.createAccounts([1n], donor);
+    const proposeResult = await helper.council.collective.propose(
+      counselors.filip,
+      dummyProposalCall(helper),
+      moreThanHalfCouncilThreshold,
+    );
 
-  });
+    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
+    const proposalIndex = councilProposedEvent.proposalIndex;
+    const proposalHash = councilProposedEvent.proposalHash;
 
-  itSub.skip('[Negative] Council cannot cancel Fellowship referendums', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council member cannot cancel Democracy proposals', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council member cannot cancel ongoing Democracy referendums', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council member cannot cancel Fellowship referendums', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council referendum cannot be closed until the voting threshold is met', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council member cannot propose an existing Council proposal', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council non-member cannot propose', async ({helper}) => {
-
-  });
-
-  itSub.skip('[Negative] Council non-member cannot vote', async ({helper}) => {
-
+    await expect(helper.council.collective.vote(illegalVoter, proposalHash, proposalIndex, true)).to.be.rejectedWith('NotMember');
   });
 });
 
@@ -684,6 +784,20 @@ async function clearFellowshipRankAgnostic(members: IKeyringPair[][]) {
   });
 }
 
+
+function dummyProposalCall(helper: UniqueHelper) {
+  return helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + new Date()]);
+}
+
+function dummyProposal(helper: UniqueHelper) {
+  return {
+    Inline: dummyProposalCall(helper).method.toHex(),
+  };
+}
+
+const fellowshipPropositionOrigin = 'FellowshipProposition';
+const defaultEnactmentMoment = {After: 0};
+
 describe('Governance: Fellowship tests', () => {
   const numMembersInRank = 3;
   const memberBalance = 5000n;
@@ -701,25 +815,13 @@ describe('Governance: Fellowship tests', () => {
 
   const democracyTrackId = 10;
   const democracyTrackMinRank = 3;
-  const fellowshipPropositionOrigin = 'FellowshipProposition';
 
   const fellowshipPreparePeriod = 3;
   const fellowshipConfirmPeriod = 3;
   const fellowshipMinEnactPeriod = 1;
 
-  const defaultEnactmentMoment = {After: 0};
 
-  let dummyProposalCount = 0;
-  function dummyProposalCall(helper: UniqueHelper) {
-    dummyProposalCount++;
-    return helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + dummyProposalCount]);
-  }
 
-  function dummyProposal(helper: UniqueHelper) {
-    return {
-      Inline: dummyProposalCall(helper).method.toHex(),
-    };
-  }
 
   async function voteUnanimouslyInFellowship(helper: UniqueHelper, minRank: number, referendumIndex: number) {
     for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
