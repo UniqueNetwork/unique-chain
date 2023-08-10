@@ -88,8 +88,8 @@ export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper
 
 export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
 
-export const MINIMUM_DONOR_FUND = 100_000n;
-export const DONOR_FUNDING = 2_000_000n;
+export const MINIMUM_DONOR_FUND = 4_000_000n;
+export const DONOR_FUNDING = 4_000_000n;
 
 // App-promotion periods:
 export const LOCKING_PERIOD = 12n; // 12 blocks of relay
