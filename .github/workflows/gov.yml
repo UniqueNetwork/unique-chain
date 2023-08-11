@@ -23,7 +23,6 @@ jobs:
           - network: "opal"
           - network: "sapphire"
           - network: "quartz"
-          - network: "unique"
 
     steps:
 
