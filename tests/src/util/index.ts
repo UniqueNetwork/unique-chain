@@ -177,6 +177,14 @@ export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts
 
 describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
 
+export function describeGov(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
+  (process.env.RUN_GOV_TESTS && !opts.skip
+    ? describe
+    : describe.skip)(title, fn);
+}
+
+describeGov.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
+
 export function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');
   if(i < 0b11_1111) {

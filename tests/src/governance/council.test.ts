@@ -1,11 +1,10 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip} from '../util';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
-import {UniqueHelper} from '../util/playgrounds/unique';
 import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowshipRankAgnostic, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util';
 
-describe('Governance: Council tests', () => {
+describeGov('Governance: Council tests', () => {
   let donor: IKeyringPair;
   let counselors: ICounselors;
   let sudoer: IKeyringPair;

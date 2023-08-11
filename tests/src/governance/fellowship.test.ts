@@ -1,12 +1,10 @@
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip} from '../util';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 import {UniqueHelper} from '../util/playgrounds/unique';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm} from './util';
+import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm} from './util';
 
-describe('Governance: Fellowship tests', () => {
-  const numMembersInRank = 3;
-  const memberBalance = 5000n;
+describeGov('Governance: Fellowship tests', () => {
   let members: IKeyringPair[][];
 
   let rank1Proposer: IKeyringPair;
@@ -17,7 +15,6 @@ describe('Governance: Fellowship tests', () => {
   let techcomms: ITechComms;
 
   const submissionDeposit = 1000n;
-  const decisionDeposit = 10n;
 
   const democracyTrackId = 10;
   const democracyTrackMinRank = 3;
@@ -25,9 +22,6 @@ describe('Governance: Fellowship tests', () => {
   const fellowshipPreparePeriod = 3;
   const fellowshipConfirmPeriod = 3;
   const fellowshipMinEnactPeriod = 1;
-
-
-
 
   async function voteUnanimouslyInFellowship(helper: UniqueHelper, minRank: number, referendumIndex: number) {
     for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
