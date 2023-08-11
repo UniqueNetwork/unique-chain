@@ -214,6 +214,16 @@ describe('Governance: Council tests', () => {
     await clearFellowshipRankAgnostic(fellowship);
   });
 
+  itSub('Council can blacklist Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await expect(proposalFromCouncil(helper.democracy.blacklistCall(preimageHash, null))).to.be.fulfilled;
+  });
+
+  itSub('Sudo can blacklist Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await expect(helper.getSudo().democracy.blacklist(sudoer, preimageHash)).to.be.fulfilled;
+  });
+
   itSub('[Negative] Council cannot add Council member', async ({helper}) => {
     const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
     const addMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);

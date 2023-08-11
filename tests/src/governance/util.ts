@@ -20,6 +20,11 @@ export interface ICounselors {
   filip: IKeyringPair;
   irina: IKeyringPair;
 }
+export interface ITechComms {
+    greg: IKeyringPair;
+    andy: IKeyringPair;
+    constantine: IKeyringPair;
+}
 
 export async function initCouncil() {
   let counselors: IKeyringPair[] = [];
@@ -73,11 +78,7 @@ export async function clearCouncil() {
   });
 }
 
-export interface ITechComms {
-    greg: IKeyringPair;
-    andy: IKeyringPair;
-    constantine: IKeyringPair;
-  }
+
 
 export async function initTechComm() {
   let techcomms: IKeyringPair[] = [];

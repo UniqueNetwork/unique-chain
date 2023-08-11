@@ -188,6 +188,20 @@ export class Event {
     }));
   };
 
+  static TechnicalCommittee = class extends EventSection('technicalCommittee') {
+    static Proposed = this.Method('Proposed', data => ({
+      account: eventHumanData(data, 0),
+      proposalIndex: eventJsonData<number>(data, 1),
+      proposalHash: eventHumanData(data, 2),
+      threshold: eventJsonData<number>(data, 3),
+    }));
+    static Closed = this.Method('Closed', data => ({
+      proposalHash: eventHumanData(data, 0),
+      yes: eventJsonData<number>(data, 1),
+      no: eventJsonData<number>(data, 2),
+    }));
+  };
+
   static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
     static Submitted = this.Method('Submitted', data => ({
       referendumIndex: eventJsonData<number>(data, 0),

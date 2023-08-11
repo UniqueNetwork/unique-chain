@@ -3369,11 +3369,11 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
     return this.helper.constructApiCall('api.tx.democracy.vetoExternal', [proposalHash]);
   }
 
-  blacklist(signer: TSigner, proposalHash: string, referendumIndex: number) {
+  blacklist(signer: TSigner, proposalHash: string, referendumIndex: number | null = null) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.blacklist', [proposalHash, referendumIndex]);
   }
 
-  blacklistCall(proposalHash: string, referendumIndex: number | null) {
+  blacklistCall(proposalHash: string, referendumIndex: number | null = null) {
     return this.helper.constructApiCall('api.tx.democracy.blacklist', [proposalHash, referendumIndex]);
   }
 
