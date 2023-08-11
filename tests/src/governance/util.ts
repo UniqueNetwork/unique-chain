@@ -1,6 +1,5 @@
 import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {usingPlaygrounds, expect} from '../util';
 import {UniqueHelper} from '../util/playgrounds/unique';
 
 export const democracyLaunchPeriod = 35;
@@ -11,7 +10,14 @@ export const democracyFastTrackVotingPeriod = 5;
 
 export const fellowshipRankLimit = 7;
 export const fellowshipPropositionOrigin = 'FellowshipProposition';
+export const fellowshipPreparePeriod = 3;
+export const fellowshipConfirmPeriod = 3;
+export const fellowshipMinEnactPeriod = 1;
+
 export const defaultEnactmentMoment = {After: 0};
+
+export const democracyTrackId = 10;
+export const democracyTrackMinRank = 3;
 
 export interface ICounselors {
   alex: IKeyringPair;
@@ -182,6 +188,13 @@ export async function clearFellowshipRankAgnostic(members: IKeyringPair[][]) {
   });
 }
 
+export async function voteUnanimouslyInFellowship(helper: UniqueHelper, fellows: IKeyringPair[][], minRank: number, referendumIndex: number) {
+  for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
+    for(const member of fellows[rank]) {
+      await helper.fellowship.collective.vote(member, referendumIndex, true);
+    }
+  }
+}
 
 export function dummyProposalCall(helper: UniqueHelper) {
   return helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + new Date()]);

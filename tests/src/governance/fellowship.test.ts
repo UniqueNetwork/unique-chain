@@ -2,7 +2,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 import {UniqueHelper} from '../util/playgrounds/unique';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm} from './util';
+import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId} from './util';
 
 describeGov('Governance: Fellowship tests', () => {
   let members: IKeyringPair[][];
@@ -15,21 +15,6 @@ describeGov('Governance: Fellowship tests', () => {
   let techcomms: ITechComms;
 
   const submissionDeposit = 1000n;
-
-  const democracyTrackId = 10;
-  const democracyTrackMinRank = 3;
-
-  const fellowshipPreparePeriod = 3;
-  const fellowshipConfirmPeriod = 3;
-  const fellowshipMinEnactPeriod = 1;
-
-  async function voteUnanimouslyInFellowship(helper: UniqueHelper, minRank: number, referendumIndex: number) {
-    for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
-      for(const member of members[rank]) {
-        await helper.fellowship.collective.vote(member, referendumIndex, true);
-      }
-    }
-  }
 
   async function testBadFellowshipProposal(
     helper: DevUniqueHelper,
@@ -47,7 +32,7 @@ describeGov('Governance: Fellowship tests', () => {
     );
 
     const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-    await voteUnanimouslyInFellowship(helper, democracyTrackMinRank, referendumIndex);
+    await voteUnanimouslyInFellowship(helper, members, democracyTrackMinRank, referendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, referendumIndex);
 
     const enactmentId = await helper.fellowship.referenda.enactmentEventId(referendumIndex);
@@ -95,11 +80,11 @@ describeGov('Governance: Fellowship tests', () => {
       rank1Proposer,
       fellowshipPropositionOrigin,
       fellowshipProposal,
-      {After: 0},
+      defaultEnactmentMoment,
     );
 
     const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-    await voteUnanimouslyInFellowship(helper, democracyTrackMinRank, fellowshipReferendumIndex);
+    await voteUnanimouslyInFellowship(helper, members, democracyTrackMinRank, fellowshipReferendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
 
     const democracyProposed = await helper.wait.expectEvent(
