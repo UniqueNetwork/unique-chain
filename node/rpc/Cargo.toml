@@ -14,7 +14,6 @@ jsonrpsee = { workspace = true }
 # pallet-contracts-rpc = { git = 'https://github.com/paritytech/substrate', branch = 'master' }
 pallet-transaction-payment-rpc = { workspace = true }
 sc-client-api = { workspace = true }
-sc-consensus-grandpa = { workspace = true }
 sc-network = { workspace = true }
 sc-network-sync = { workspace = true }
 sc-rpc = { workspace = true }
@@ -41,6 +40,7 @@ up-common = { workspace = true }
 up-data-structs = { workspace = true }
 up-pov-estimate-rpc = { workspace = true, default-features = true }
 up-rpc = { workspace = true }
+pallet-ethereum.workspace = true
 
 [features]
 default = []

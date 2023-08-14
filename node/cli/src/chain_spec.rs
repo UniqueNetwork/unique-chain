@@ -168,6 +168,7 @@ macro_rules! testnet_genesis {
 					.collect(),
 			},
 			common: Default::default(),
+			configuration: Default::default(),
 			nonfungible: Default::default(),
 			treasury: Default::default(),
 			tokens: TokensConfig { balances: vec![] },
@@ -228,6 +229,7 @@ macro_rules! testnet_genesis {
 					.to_vec(),
 			},
 			common: Default::default(),
+			configuration: Default::default(),
 			nonfungible: Default::default(),
 			balances: BalancesConfig {
 				balances: $endowed_accounts

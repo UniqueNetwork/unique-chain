@@ -1,0 +1,16 @@
+version: "3.5"
+
+services:
+  node-only:
+    image: uniquenetwork/ci-node-only-local:{{ NETWORK }}-{{ BUILD_TAG }}
+    container_name: node-only
+    expose:
+      - 9944
+      - 9945
+      - 9933
+      - 9844
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9945:9945
+      - 127.0.0.1:9933:9933
+      - 127.0.0.1:9844:9844

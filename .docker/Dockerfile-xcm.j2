@@ -63,7 +63,6 @@ COPY --from=uniquenetwork/builder-astar:{{ ASTAR_BUILD_BRANCH }} /unique_paracha
 COPY --from=uniquenetwork/builder-chainql:{{ CHAINQL }} /chainql/target/release/chainql /chainql/target/release/
 
 EXPOSE 9844
-EXPOSE 9933
 EXPOSE 9944
 EXPOSE 9946
 EXPOSE 9947

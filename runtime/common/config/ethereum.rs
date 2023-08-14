@@ -20,6 +20,9 @@ use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
+// Assuming PoV size per read is 96 bytes: 16 for twox128(Evm), 16 for twox128(Storage), 32 for storage key, and 32 for storage value
+const EVM_SLOAD_PROOF_SIZE: u64 = 96;
+
 // ~~Assuming slowest ethereum opcode is SSTORE, with gas price of 20000 as our worst case~~
 // ~~(contract, which only writes a lot of data),~~
 // ~~approximating on top of our real store write weight~~
@@ -31,7 +34,10 @@ parameter_types! {
 	pub const GasPerSecond: u64 = ReadsPerSecond::get() * 2100;
 	pub const WeightTimePerGas: u64 = WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
 
-	pub const WeightPerGas: Weight = Weight::from_parts(WeightTimePerGas::get(), 0);
+	pub const BytesReadPerSecond: u64 = ReadsPerSecond::get() * EVM_SLOAD_PROOF_SIZE;
+	pub const ProofSizePerGas: u64 = 0; //WEIGHT_REF_TIME_PER_SECOND / GasPerSecond::get();
+
+	pub const WeightPerGas: Weight = Weight::from_parts(WeightTimePerGas::get(), ProofSizePerGas::get());
 }
 
 /// Limiting EVM execution to 50% of block for substrate users and management tasks
@@ -86,6 +92,7 @@ impl pallet_evm::Config for Runtime {
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type Timestamp = crate::Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
+	type GasLimitPovSizeRatio = ProofSizePerGas;
 }
 
 impl pallet_evm_migration::Config for Runtime {

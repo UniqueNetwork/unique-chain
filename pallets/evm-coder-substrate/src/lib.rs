@@ -41,7 +41,6 @@ use sp_core::{Get, H160};
 // #[cfg(feature = "runtime-benchmarks")]
 // pub mod benchmarking;
 pub mod execution;
-pub use evm_coder::*;
 
 #[doc(hidden)]
 pub use spez::spez;
@@ -52,14 +51,13 @@ use evm_coder::{
 };
 
 pub use pallet::*;
+pub use evm_coder::{ResultWithPostInfoOf, Contract, abi, solidity_interface, ToLog, types};
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 
-	use frame_system::ensure_signed;
 	pub use frame_support::dispatch::DispatchResult;
-	use frame_system::pallet_prelude::*;
 
 	/// DispatchError is opaque, but we need to somehow extract correct error in case of OutOfGas failure
 	/// So we have this pallet, which defines OutOfGas error, and knews its own id to check if DispatchError
@@ -77,16 +75,6 @@ pub mod pallet {
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
-
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		#[pallet::call_index(0)]
-		#[pallet::weight(0)]
-		pub fn empty_call(origin: OriginFor<T>) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
-			Ok(())
-		}
-	}
 }
 
 // From instabul hardfork configuration: https://github.com/rust-blockchain/evm/blob/fd4fd6acc0ca3208d6770fdb3ba407c94cdf97c6/runtime/src/lib.rs#L284

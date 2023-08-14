@@ -8,8 +8,7 @@ chain = "{{ RELAY_CHAIN_TYPE }}-local"
 
   [[relaychain.nodes]]
   name = "relay-alice"
-  ws_port = 9844
-  rpc_port = 9843
+  rpc_port = 9844
   p2p_port = 30444
 
   [[relaychain.node_groups]]
@@ -22,8 +21,7 @@ id = 1000
   [[parachains.collators]]
   name = "alice"
   command = "/unique-chain/current/release/unique-collator"
-  ws_port = 9944
-  rpc_port = 9933
+  rpc_port = 9944
   p2p_port = 31200
   args = [
     "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",
@@ -33,8 +31,7 @@ id = 1000
   [[parachains.collators]]
   name = "bob"
   command = "/unique-chain/current/release/unique-collator"
-  ws_port = 9945
-  rpc_port = 9934
+  rpc_port = 9945
   p2p_port = 31201
   args = [
     "-lxcm=trace,parity_ws::handler=debug,jsonrpsee_core=trace,jsonrpsee-core=trace,jsonrpsee_ws_server=debug",

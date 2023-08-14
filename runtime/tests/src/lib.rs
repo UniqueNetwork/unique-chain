@@ -209,7 +209,7 @@ impl Default for TestCrossAccountId {
 
 parameter_types! {
 	pub BlockGasLimit: U256 = 0u32.into();
-	pub WeightPerGas: Weight = Weight::from_ref_time(20);
+	pub WeightPerGas: Weight = Weight::from_parts(20, 0);
 	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
 }
 
@@ -244,6 +244,7 @@ impl pallet_evm::Config for Test {
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type TransactionValidityHack = ();
 	type Timestamp = Timestamp;
+	type GasLimitPovSizeRatio = ConstU64<0>;
 }
 impl pallet_evm_coder_substrate::Config for Test {}
 

@@ -32,7 +32,6 @@ pub const MAX_FEE_LIMITED_METHODS: u32 = 5;
 #[frame_support::pallet]
 pub mod pallet {
 	pub use super::*;
-	use crate::eth::ContractHelpersEvents;
 	use frame_support::{pallet_prelude::*, sp_runtime::DispatchResult};
 	use frame_system::{pallet_prelude::OriginFor, ensure_root};
 	use sp_core::{H160, U256};

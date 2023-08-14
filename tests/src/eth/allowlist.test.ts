@@ -30,7 +30,7 @@ describe('EVM contract allowlist', () => {
   itEth('Contract allowlist can be toggled', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
-    const helpers = await helper.ethNativeContract.contractHelpers(owner);
+    const helpers = helper.ethNativeContract.contractHelpers(owner);
 
     // Any user is allowed by default
     expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
