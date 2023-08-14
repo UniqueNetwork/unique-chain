@@ -32,13 +32,10 @@ export interface ITechComms {
     constantine: IKeyringPair;
 }
 
-export async function initCouncil() {
+export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) {
   let counselors: IKeyringPair[] = [];
 
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey('//Alice');
-    const donor = await privateKey('//Alice');
-
+  await usingPlaygrounds(async (helper) => {
     const [alex, ildar, charu, filip, irina] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
@@ -68,10 +65,8 @@ export async function initCouncil() {
   };
 }
 
-export async function clearCouncil() {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey('//Alice');
-
+export async function clearCouncil(superuser: IKeyringPair) {
+  await usingPlaygrounds(async (helper) => {
     let members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
     if(members.length) {
       const sudo = helper.getSudo();
@@ -85,13 +80,10 @@ export async function clearCouncil() {
 }
 
 
-
-export async function initTechComm() {
+export async function initTechComm(donor: IKeyringPair, superuser: IKeyringPair) {
   let techcomms: IKeyringPair[] = [];
 
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey('//Alice');
-    const  donor = await privateKey('//Alice');
+  await usingPlaygrounds(async (helper) => {
     const [greg, andy, constantine] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
@@ -118,10 +110,8 @@ export async function initTechComm() {
   };
 }
 
-export async function clearTechComm() {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey('//Alice');
-
+export async function clearTechComm(superuser: IKeyringPair) {
+  await usingPlaygrounds(async (helper) => {
     let members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
     if(members.length) {
       const sudo = helper.getSudo();
@@ -134,14 +124,12 @@ export async function clearTechComm() {
   });
 }
 
-export async function initFellowship() {
+export async function initFellowship(donor: IKeyringPair, sudoer: IKeyringPair) {
   const numMembersInRank = 3;
   const memberBalance = 5000n;
   const members: IKeyringPair[][] = [];
 
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const sudoer = await privateKey('//Alice');
-    const donor = await privateKey('//Alice');
+  await usingPlaygrounds(async (helper) => {
 
     for(let i = 0; i < fellowshipRankLimit; i++) {
       const rankMembers = await helper.arrange.createAccounts(
@@ -164,10 +152,8 @@ export async function initFellowship() {
   return members;
 }
 
-export async function clearFellowship(members: IKeyringPair[][]) {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const sudoer = await privateKey('//Alice');
-
+export async function clearFellowship(sudoer: IKeyringPair, members: IKeyringPair[][]) {
+  await usingPlaygrounds(async (helper) => {
     for(let rank = 0; rank < fellowshipRankLimit; rank++) {
       for(const member of members[rank]) {
         await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
@@ -176,10 +162,8 @@ export async function clearFellowship(members: IKeyringPair[][]) {
   });
 }
 
-export async function clearFellowshipRankAgnostic(members: IKeyringPair[][]) {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const sudoer = await privateKey('//Alice');
-
+export async function clearFellowshipRankAgnostic(sudoer: IKeyringPair, members: IKeyringPair[][]) {
+  await usingPlaygrounds(async (helper) => {
     for(let rank = 0; rank < fellowshipRankLimit; rank++) {
       for(const member of members[rank]) {
         await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, fellowshipRankLimit);

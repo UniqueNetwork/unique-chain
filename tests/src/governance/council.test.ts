@@ -21,12 +21,12 @@ describeGov('Governance: Council tests', () => {
   });
 
   beforeEach(async () => {
-    counselors = await initCouncil();
+    counselors = await initCouncil(donor, sudoer);
   });
 
   afterEach(async () => {
-    await clearCouncil();
-    await clearTechComm();
+    await clearCouncil(sudoer);
+    await clearTechComm(sudoer);
   });
 
   async function proposalFromMoreThanHalfCouncil(proposal: any) {
@@ -173,7 +173,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('Council can remove TechComm member', async ({helper}) => {
-    const techComm = await initTechComm();
+    const techComm = await initTechComm(donor, sudoer);
     const removeMemberPrpoposal = helper.technicalCommittee.membership.removeMemberCall(techComm.andy.address);
     await proposalFromMoreThanHalfCouncil(removeMemberPrpoposal);
 
@@ -192,7 +192,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('>50% Council can promote Fellowship member', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const memberWithZeroRank = fellowship[0][0];
 
     const proposal = helper.fellowship.collective.promoteCall(memberWithZeroRank.address);
@@ -200,11 +200,11 @@ describeGov('Governance: Council tests', () => {
     const record = (await helper.callRpc('api.query.fellowshipCollective.members', [memberWithZeroRank.address])).toJSON();
     expect(record).to.be.deep.equal({rank: 1});
 
-    await clearFellowshipRankAgnostic(fellowship);
+    await clearFellowshipRankAgnostic(sudoer, fellowship);
   });
 
   itSub('>50% Council can demote Fellowship member', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const memberWithRankOne = fellowship[1][0];
 
     const proposal = helper.fellowship.collective.demoteCall(memberWithRankOne.address);
@@ -213,7 +213,7 @@ describeGov('Governance: Council tests', () => {
     const record = (await helper.callRpc('api.query.fellowshipCollective.members', [memberWithRankOne.address])).toJSON();
     expect(record).to.be.deep.equal({rank: 0});
 
-    await clearFellowshipRankAgnostic(fellowship);
+    await clearFellowshipRankAgnostic(sudoer, fellowship);
   });
 
   itSub('Council can blacklist Democracy proposals', async ({helper}) => {
@@ -329,7 +329,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council member cannot promote/demote a Fellowship member', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const memberWithRankOne = fellowship[1][0];
 
     await expect(helper.council.collective.execute(
@@ -340,7 +340,7 @@ describeGov('Governance: Council tests', () => {
       counselors.alex,
       helper.fellowship.collective.demoteCall(memberWithRankOne.address),
     )).to.be.rejectedWith('BadOrigin');
-    await clearFellowshipRankAgnostic(fellowship);
+    await clearFellowshipRankAgnostic(sudoer, fellowship);
   });
 
   itSub('[Negative] Council cannot fast-track Democracy proposals', async ({helper}) => {
@@ -401,7 +401,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council cannot cancel Fellowship referendums', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const fellowshipProposer = fellowship[5][0];
     const proposal = dummyProposal(helper);
 
@@ -419,7 +419,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council member cannot cancel Fellowship referendums', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const fellowshipProposer = fellowship[5][0];
     const proposal = dummyProposal(helper);
 

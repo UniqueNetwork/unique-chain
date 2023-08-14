@@ -57,17 +57,17 @@ describeGov('Governance: Fellowship tests', () => {
       donor = await privateKey({url: import.meta.url});
     });
 
-    counselors = await initCouncil();
-    techcomms = await initTechComm();
-    members = await initFellowship();
+    counselors = await initCouncil(donor, sudoer);
+    techcomms = await initTechComm(donor, sudoer);
+    members = await initFellowship(donor, sudoer);
 
     rank1Proposer = members[1][0];
   });
 
   after(async () => {
-    await clearFellowship(members);
-    await clearTechComm();
-    await clearCouncil();
+    await clearFellowship(sudoer, members);
+    await clearTechComm(sudoer);
+    await clearCouncil(sudoer);
   });
 
   itSub('FellowshipProposition can submit regular Democracy proposals', async ({helper}) => {

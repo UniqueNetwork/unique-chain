@@ -6,19 +6,21 @@ import {Event} from '../util/playgrounds/unique.dev';
 describeGov('Governance: Democracy tests', () => {
   let regularUser: IKeyringPair;
   let donor: IKeyringPair;
+  let sudoer: IKeyringPair;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Democracy]);
 
-      donor = await privateKey('//Alice');
+      donor = await privateKey({url: import.meta.url});
+      sudoer = await privateKey('//Alice');
 
       [regularUser] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 
   itSub('Regular user can vote', async ({helper}) => {
-    const fellows = await initFellowship();
+    const fellows = await initFellowship(donor, sudoer);
     const rank1Proposer = fellows[1][0];
 
     const democracyProposalCall = dummyProposalCall(helper);
@@ -62,7 +64,7 @@ describeGov('Governance: Democracy tests', () => {
 
     expect(BigInt(tally.ayes)).to.be.equal(ayeBalance);
 
-    await clearFellowship(fellows);
+    await clearFellowship(sudoer, fellows);
   });
 
   itSub('[Negative] Regular user cannot submit a regular proposal', async ({helper}) => {

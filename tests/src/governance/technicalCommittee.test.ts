@@ -19,7 +19,7 @@ describeGov('Governance: Technical Committee tests', () => {
       sudoer = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
 
-      techcomms = await initTechComm();
+      techcomms = await initTechComm(donor, sudoer);
 
       const proposalCall = await helper.constructApiCall('api.tx.balances.forceSetBalance', [donor.address, 20n * 10n ** 25n]);
       preImageHash = await helper.preimage.notePreimageFromCall(sudoer, proposalCall, true);
@@ -28,7 +28,7 @@ describeGov('Governance: Technical Committee tests', () => {
 
   after(async () => {
     await usingPlaygrounds(async (helper) => {
-      await clearTechComm();
+      await clearTechComm(sudoer);
 
       await helper.preimage.unnotePreimage(sudoer, preImageHash);
     });
@@ -93,7 +93,7 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
   itSub('TechComm can cancel Fellowship referendums', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const fellowshipProposer = fellowship[5][0];
     const proposal = dummyProposal(helper);
 
@@ -116,7 +116,7 @@ describeGov('Governance: Technical Committee tests', () => {
     )).to.be.fulfilled;
     const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
     expect(fellowshipMembers).to.contains(newFellowshipMember.address);
-    await clearFellowship(fellowship);
+    await clearFellowship(sudoer, fellowship);
 
   });
 
@@ -211,17 +211,17 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
   itSub('[Negative] TechComm cannot set/clear Council prime member', async ({helper}) => {
-    const counselors = await initCouncil();
+    const counselors = await initCouncil(donor, sudoer);
     const proposalForSet = await helper.council.membership.setPrimeCall(counselors.charu.address);
     const proposalForClear = await helper.council.membership.clearPrimeCall();
 
     await expect(proposalFromCommittee(proposalForSet)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
     await expect(proposalFromCommittee(proposalForClear)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await clearCouncil();
+    await clearCouncil(sudoer);
   });
 
   itSub('[Negative] TechComm member cannot set/clear Council prime member', async ({helper}) => {
-    const counselors = await initCouncil();
+    const counselors = await initCouncil(donor, sudoer);
     const proposalForSet = await helper.council.membership.setPrimeCall(counselors.charu.address);
     const proposalForClear = await helper.council.membership.clearPrimeCall();
 
@@ -233,7 +233,7 @@ describeGov('Governance: Technical Committee tests', () => {
       techcomms.andy,
       proposalForClear,
     )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await clearCouncil();
+    await clearCouncil(sudoer);
   });
 
   itSub('[Negative] TechComm cannot add/remove a TechComm member', async ({helper}) => {
@@ -261,20 +261,20 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
   itSub('[Negative] TechComm cannot remove a Fellowship member', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
 
     await expect(proposalFromCommittee(helper.fellowship.collective.removeMemberCall(fellowship[5][0].address, 5))).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await clearFellowship(fellowship);
+    await clearFellowship(sudoer, fellowship);
   });
 
   itSub('[Negative] TechComm member cannot remove a Fellowship member', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
 
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.fellowship.collective.removeMemberCall(fellowship[5][0].address, 5),
     )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await clearFellowship(fellowship);
+    await clearFellowship(sudoer, fellowship);
   });
 
   itSub('[Negative] TechComm member cannot fast-track Democracy proposals', async ({helper}) => {
@@ -324,7 +324,7 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
   itSub('[Negative] TechComm member cannot cancel Fellowship referendums', async ({helper}) => {
-    const fellowship = await initFellowship();
+    const fellowship = await initFellowship(donor, sudoer);
     const fellowshipProposer = fellowship[5][0];
     const proposal = dummyProposal(helper);
 
