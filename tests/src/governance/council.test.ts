@@ -51,7 +51,7 @@ describeGov('Governance: Council tests', () => {
     });
   }
 
-  async function proposalFromCouncil(proposal: any) {
+  async function proposalFromAllCouncil(proposal: any) {
     return await usingPlaygrounds(async (helper) => {
       expect((await helper.callRpc('api.query.councilMembership.members')).toJSON().length).to.be.equal(5);
       const proposeResult = await helper.council.collective.propose(
@@ -183,7 +183,10 @@ describeGov('Governance: Council tests', () => {
 
   itSub.skip('Council member can add Fellowship member', async ({helper}) => {
     const [newFellowshipMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.fellowship.collective.addMember(counselors.alex, newFellowshipMember.address)).to.be.fulfilled;
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
+    )).to.be.fulfilled;
     const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
     expect(fellowshipMembers).to.contains(newFellowshipMember.address);
   });
@@ -215,7 +218,7 @@ describeGov('Governance: Council tests', () => {
 
   itSub('Council can blacklist Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
-    await expect(proposalFromCouncil(helper.democracy.blacklistCall(preimageHash, null))).to.be.fulfilled;
+    await expect(proposalFromAllCouncil(helper.democracy.blacklistCall(preimageHash, null))).to.be.fulfilled;
   });
 
   itSub('Sudo can blacklist Democracy proposals', async ({helper}) => {
@@ -227,31 +230,31 @@ describeGov('Governance: Council tests', () => {
     const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
     const addMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
 
-    await expect(proposalFromCouncil(addMemberProposal)).to.be.rejected;
+    await expect(proposalFromAllCouncil(addMemberProposal)).to.be.rejected;
   });
 
   itSub('[Negative] Council cannot remove Council member', async ({helper}) => {
     const removeMemberProposal = helper.council.membership.removeMemberCall(counselors.alex.address);
 
-    await expect(proposalFromCouncil(removeMemberProposal)).to.be.rejected;
+    await expect(proposalFromAllCouncil(removeMemberProposal)).to.be.rejected;
   });
 
   itSub('[Negative] Council cannot submit regular democracy proposal', async ({helper}) => {
     const councilProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 
-    await expect(proposalFromCouncil(councilProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(councilProposal)).to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Council cannot externally propose SimpleMajority', async ({helper}) => {
     const councilProposal = await helper.democracy.externalProposeMajorityCall(dummyProposalCall(helper));
 
-    await expect(proposalFromCouncil(councilProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(councilProposal)).to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Council cannot externally propose SuperMajorityApprove', async ({helper}) => {
     const councilProposal = await helper.democracy.externalProposeCall(dummyProposalCall(helper));
 
-    await expect(proposalFromCouncil(councilProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(councilProposal)).to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Cannot add a duplicate Council member', async ({helper}) => {
@@ -283,60 +286,87 @@ describeGov('Governance: Council tests', () => {
 
   itSub('[Negative] Council member cannot add/remove a Council member', async ({helper}) => {
     const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.council.membership.addMember(counselors.alex, newCouncilMember.address)).to.be.rejectedWith('BadOrigin');
-    await expect(helper.council.membership.removeMember(counselors.alex, counselors.charu.address)).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.council.membership.addMemberCall(newCouncilMember.address),
+    )).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.council.membership.removeMemberCall(counselors.charu.address),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council cannot set/clear Council prime member', async ({helper}) => {
     const proposalForSet = await helper.council.membership.setPrimeCall(counselors.charu.address);
     const proposalForClear = await helper.council.membership.clearPrimeCall();
 
-    await expect(proposalFromCouncil(proposalForSet)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await expect(proposalFromCouncil(proposalForClear)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(proposalForSet)).to.be.rejectedWith(/BadOrigin/);
+    await expect(proposalFromAllCouncil(proposalForClear)).to.be.rejectedWith(/BadOrigin/);
 
   });
 
   itSub('[Negative] Council member cannot set/clear Council prime member', async ({helper}) => {
-    await expect(helper.council.membership.setPrime(counselors.alex, counselors.charu.address)).to.be.rejectedWith('BadOrigin');
-    await expect(helper.council.membership.clearPrime(counselors.alex)).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.council.membership.setPrimeCall(counselors.charu.address),
+    )).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.council.membership.clearPrimeCall(),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council member cannot add/remove a TechComm member', async ({helper}) => {
     const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.technicalCommittee.membership.addMember(counselors.alex, newTechCommMember.address)).to.be.rejectedWith('BadOrigin');
-    await expect(helper.technicalCommittee.membership.removeMember(counselors.alex, counselors.charu.address)).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address),
+    )).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.technicalCommittee.membership.removeMemberCall(counselors.charu.address),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council member cannot promote/demote a Fellowship member', async ({helper}) => {
     const fellowship = await initFellowship();
     const memberWithRankOne = fellowship[1][0];
 
-    await expect(helper.fellowship.collective.promote(counselors.alex, memberWithRankOne.address)).to.be.rejectedWith('BadOrigin');
-    await expect(helper.fellowship.collective.demote(counselors.alex, memberWithRankOne.address)).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.fellowship.collective.promoteCall(memberWithRankOne.address),
+    )).to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.fellowship.collective.demoteCall(memberWithRankOne.address),
+    )).to.be.rejectedWith('BadOrigin');
+    await clearFellowshipRankAgnostic(fellowship);
   });
 
   itSub('[Negative] Council cannot fast-track Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
-    await expect(proposalFromCouncil(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
-      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
+      .to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Council member cannot fast-track Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
-    await expect(helper.democracy.fastTrack(counselors.alex, preimageHash, democracyFastTrackVotingPeriod, 0))
-      .to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council cannot cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
     const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
-    await expect(proposalFromCouncil(helper.democracy.cancelProposalCall(proposalIndex)))
-      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(helper.democracy.cancelProposalCall(proposalIndex)))
+      .to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Council member cannot cancel Democracy proposals', async ({helper}) => {
@@ -344,8 +374,10 @@ describeGov('Governance: Council tests', () => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
     const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
-    await expect(helper.democracy.cancelProposal(counselors.alex, proposalIndex))
-      .to.be.rejectedWith('Misc: BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.democracy.cancelProposalCall(proposalIndex),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council cannot cancel ongoing Democracy referendums', async ({helper}) => {
@@ -353,8 +385,8 @@ describeGov('Governance: Council tests', () => {
     const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
     const referendumIndex = startedEvent.referendumIndex;
 
-    await expect(proposalFromCouncil(helper.democracy.emergencyCancelCall(referendumIndex)))
-      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(helper.democracy.emergencyCancelCall(referendumIndex)))
+      .to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Council member cannot cancel ongoing Democracy referendums', async ({helper}) => {
@@ -362,8 +394,10 @@ describeGov('Governance: Council tests', () => {
     const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
     const referendumIndex = startedEvent.referendumIndex;
 
-    await expect(helper.democracy.emergencyCancel(counselors.alex, referendumIndex))
-      .to.be.rejectedWith('BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.democracy.emergencyCancelCall(referendumIndex),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council cannot cancel Fellowship referendums', async ({helper}) => {
@@ -380,8 +414,8 @@ describeGov('Governance: Council tests', () => {
 
     const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
-    await expect(proposalFromCouncil(helper.fellowship.referenda.cancelCall(referendumIndex)))
-      .to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCouncil(helper.fellowship.referenda.cancelCall(referendumIndex)))
+      .to.be.rejectedWith(/BadOrigin/);
   });
 
   itSub('[Negative] Council member cannot cancel Fellowship referendums', async ({helper}) => {
@@ -396,8 +430,10 @@ describeGov('Governance: Council tests', () => {
       defaultEnactmentMoment,
     );
     const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-    await expect(helper.fellowship.referenda.cancel(counselors.alex, referendumIndex))
-      .to.be.rejectedWith('Misc: BadOrigin');
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.fellowship.referenda.cancelCall(referendumIndex),
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] Council referendum cannot be closed until the voting threshold is met', async ({helper}) => {
