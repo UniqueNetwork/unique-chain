@@ -165,7 +165,11 @@
             "name": "pending_sponsor",
             "type": "address[]"
           },
-          { "internalType": "uint32", "name": "flags", "type": "uint32" }
+          {
+            "internalType": "CollectionFlags",
+            "name": "flags",
+            "type": "uint8"
+          }
         ],
         "internalType": "struct CreateCollectionData",
         "name": "data",

@@ -34,9 +34,8 @@ use pallet_evm_coder_substrate::{
 	frontier_contract,
 };
 use up_data_structs::{
-	Bitfields, CollectionDescription, CollectionFlags, CollectionMode, CollectionName,
-	CollectionPermissions, CollectionTokenPrefix, CreateCollectionData, NestingPermissions,
-	OwnerRestrictedSet,
+	CollectionDescription, CollectionMode, CollectionName, CollectionPermissions,
+	CollectionTokenPrefix, CreateCollectionData, NestingPermissions, OwnerRestrictedSet,
 };
 
 use crate::{weights::WeightInfo, Config, Pallet, SelfWeightOf};
@@ -196,7 +195,7 @@ where
 		let restricted = if !data.nesting_settings.restricted.is_empty() {
 			let mut bv = OwnerRestrictedSet::new();
 			for address in data.nesting_settings.restricted.iter() {
-				bv.try_insert(crate::eth::map_eth_to_id(&address).ok_or_else(|| {
+				bv.try_insert(crate::eth::map_eth_to_id(address).ok_or_else(|| {
 					Error::Revert("Can't convert address into collection id".into())
 				})?)
 				.map_err(|_| "too many collections")?;
@@ -211,7 +210,7 @@ where
 			.into_iter()
 			.map(|admin| admin.into_sub_cross_account::<T>())
 			.collect::<Result<Vec<_>>>()?;
-		let flags = CollectionFlags::from_bytes([data.flags.to_le_bytes()[0]]);
+		let flags = data.flags.into();
 		let data = CreateCollectionData {
 			name,
 			mode,

@@ -2600,8 +2600,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.3.4"
-source = "git+https://github.com/uniquenetwork/evm-coder?rev=97ed8d947122c60c76d61e43c558151ead8b4bca#97ed8d947122c60c76d61e43c558151ead8b4bca"
+version = "0.3.5"
+source = "git+https://github.com/uniquenetwork/evm-coder?rev=cf42fdda0aed50db01fbcb2398d6515bb6f59e26#cf42fdda0aed50db01fbcb2398d6515bb6f59e26"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2612,8 +2612,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.3.4"
-source = "git+https://github.com/uniquenetwork/evm-coder?rev=97ed8d947122c60c76d61e43c558151ead8b4bca#97ed8d947122c60c76d61e43c558151ead8b4bca"
+version = "0.3.5"
+source = "git+https://github.com/uniquenetwork/evm-coder?rev=cf42fdda0aed50db01fbcb2398d6515bb6f59e26#cf42fdda0aed50db01fbcb2398d6515bb6f59e26"
 dependencies = [
  "Inflector",
  "hex",
@@ -6416,6 +6416,7 @@ dependencies = [
 name = "pallet-common"
 version = "0.1.14"
 dependencies = [
+ "bondrewd",
  "ethereum",
  "evm-coder",
  "frame-benchmarking",

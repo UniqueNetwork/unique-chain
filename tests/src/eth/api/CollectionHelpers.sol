@@ -20,12 +20,12 @@ interface CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x5b1c879d
+/// @dev the ERC-165 identifier for this interface is 0xf6061f38
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create a collection
 	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0xbd4c9637,
-	///  or in textual repr: createCollection((string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],address[],uint32))
+	/// @dev EVM selector for this function is: 0x10560e92,
+	///  or in textual repr: createCollection((string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],address[],uint8))
 	function createCollection(CreateCollectionData memory data) external payable returns (address);
 
 	/// Create an NFT collection
@@ -126,7 +126,25 @@ struct CreateCollectionData {
 	/// Collection sponsor
 	address[] pending_sponsor;
 	/// Extra collection flags
-	uint32 flags;
+	CollectionFlags flags;
+}
+
+/// Cross account struct
+type CollectionFlags is uint8;
+
+library CollectionFlagsLib {
+	/// Tokens in foreign collections can be transferred, but not burnt
+	CollectionFlags constant foreignField = CollectionFlags.wrap(128);
+	/// Supports ERC721Metadata
+	CollectionFlags constant erc721metadataField = CollectionFlags.wrap(64);
+	/// External collections can't be managed using `unique` api
+	CollectionFlags constant externalField = CollectionFlags.wrap(1);
+
+	/// Reserved bits
+	function reservedField(uint8 value) public pure returns (CollectionFlags) {
+		require(value < 1 << 5, "out of bound value");
+		return CollectionFlags.wrap(value << 1);
+	}
 }
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
