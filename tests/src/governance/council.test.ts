@@ -162,7 +162,7 @@ describeGov('Governance: Council tests', () => {
     expect(members).to.not.contains(counselors.alex.address);
   });
 
-  itSub('50%> Council can add TechComm member', async ({helper}) => {
+  itSub('>50% Council can add TechComm member', async ({helper}) => {
     const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
     const addMemberProposal = helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address);
 
