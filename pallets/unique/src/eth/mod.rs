@@ -152,7 +152,9 @@ where
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
 		if data.mode != eth::CollectionMode::Fungible && data.decimals != 0 {
-			return Err(Error::Revert("Decimals are only supported for NFT and RFT collections".into()));
+			return Err(Error::Revert(
+				"Decimals are only supported for NFT and RFT collections".into(),
+			));
 		}
 		let mode = match data.mode {
 			eth::CollectionMode::Fungible => CollectionMode::Fungible(data.decimals),
@@ -185,26 +187,21 @@ where
 			None
 		};
 
-		if data.pending_sponsor.len() > 1 {
-			return Err(Error::Revert("only one sponsor is allowed".into()));
-		}
-
-		let pending_sponsor = data
-			.pending_sponsor
-			.into_iter()
-			.next()
-			.map(|value| T::CrossAccountId::from_eth(value).as_sub().clone());
+		let pending_sponsor = data.pending_sponsor.into_option_sub_cross_account::<T>()?;
 
 		let restricted = if !data.nesting_settings.restricted.is_empty() {
-			Some(data
-				.nesting_settings
-				.restricted
-				.iter()
-				.map(map_eth_to_id)
-				.collect::<Option<BTreeSet<_>>>()
-				.ok_or_else(|| Error::Revert("Can't convert address into collection id".into()))?
-				.try_into()
-				.map_err(|_| "too many collections")?)
+			Some(
+				data.nesting_settings
+					.restricted
+					.iter()
+					.map(map_eth_to_id)
+					.collect::<Option<BTreeSet<_>>>()
+					.ok_or_else(|| {
+						Error::Revert("Can't convert address into collection id".into())
+					})?
+					.try_into()
+					.map_err(|_| "too many collections")?,
+			)
 		} else {
 			None
 		};
@@ -214,6 +211,7 @@ where
 			.into_iter()
 			.map(|admin| admin.into_sub_cross_account::<T>())
 			.collect::<Result<Vec<_>>>()?;
+
 		let flags = data.flags.into();
 		let data = CreateCollectionData {
 			name,

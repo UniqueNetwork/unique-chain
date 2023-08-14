@@ -170,7 +170,7 @@ export interface ICollectionCreationOptions {
   properties?: IProperty[];
   tokenPropertyPermissions?: ITokenPropertyPermission[];
   limits?: ICollectionLimits;
-  pendingSponsor?: TSubstrateAccount;
+  pendingSponsor?: ICrossAccountId;
   adminList?: ICrossAccountId[];
   flags?: number[] | CollectionFlag[] ,
 }

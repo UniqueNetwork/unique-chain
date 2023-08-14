@@ -78,6 +78,11 @@ export interface CollectionNestingAndPermission {
   restricted: string[],
 }
 
+export const emptyAddress: [string, string] = [
+  '0x0000000000000000000000000000000000000000',
+  '0',
+];
+
 export const CREATE_COLLECTION_DATA_DEFAULTS = {
   decimals: 0,
   properties: [],
@@ -85,7 +90,7 @@ export const CREATE_COLLECTION_DATA_DEFAULTS = {
   adminList: [],
   nestingSettings: {token_owner: false, collection_admin: false, restricted: []},
   limits: [],
-  pendingSponsor: [],
+  pendingSponsor: emptyAddress,
   flags: 0,
 };
 
@@ -105,7 +110,7 @@ export class CreateCollectionData {
   adminList?: CrossAddress[] = [];
   nestingSettings?: CollectionNestingAndPermission = {token_owner: false, collection_admin: false, restricted: []};
   limits?: CollectionLimitValue[] = [];
-  pendingSponsor?: EthAddress[] = [];
+  pendingSponsor?: [string, string] = emptyAddress;
   flags?: number | CollectionFlag[] = [0];
 
   constructor(

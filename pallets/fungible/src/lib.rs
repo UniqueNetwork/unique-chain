@@ -219,7 +219,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_collection(owner, payer, data)
 	}
@@ -228,7 +228,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		<PalletCommon<T>>::init_foreign_collection(owner, payer, data)
 	}

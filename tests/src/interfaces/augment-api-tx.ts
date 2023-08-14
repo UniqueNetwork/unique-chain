@@ -1499,7 +1499,7 @@ declare module '@polkadot/api-base/types/submittable' {
        * 
        * * `data`: Explicit data of a collection used for its creation.
        **/
-      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; pendingSponsor?: any; limits?: any; permissions?: any; tokenPropertyPermissions?: any; properties?: any; adminList?: any; flags?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
+      createCollectionEx: AugmentedSubmittable<(data: UpDataStructsCreateCollectionData | { mode?: any; access?: any; name?: any; description?: any; tokenPrefix?: any; limits?: any; permissions?: any; tokenPropertyPermissions?: any; properties?: any; adminList?: any; pendingSponsor?: any; flags?: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [UpDataStructsCreateCollectionData]>;
       /**
        * Mint an item within a collection.
        * 

@@ -3221,12 +3221,12 @@ export interface UpDataStructsCreateCollectionData extends Struct {
   readonly name: Vec<u16>;
   readonly description: Vec<u16>;
   readonly tokenPrefix: Bytes;
-  readonly pendingSponsor: Option<AccountId32>;
   readonly limits: Option<UpDataStructsCollectionLimits>;
   readonly permissions: Option<UpDataStructsCollectionPermissions>;
   readonly tokenPropertyPermissions: Vec<UpDataStructsPropertyKeyPermission>;
   readonly properties: Vec<UpDataStructsProperty>;
   readonly adminList: Vec<PalletEvmAccountBasicCrossAccountIdRepr>;
+  readonly pendingSponsor: Option<PalletEvmAccountBasicCrossAccountIdRepr>;
   readonly flags: U8aFixed;
 }
 

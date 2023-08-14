@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
-import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
+import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from './util/playgrounds/types';
 import {CollectionFlag, IEthCrossAccountId, TCollectionMode} from '../util/playgrounds/types';
 
 const DECIMALS = 18;
@@ -27,7 +27,6 @@ const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [
   [],
   [],
   [false, false, []],
-  [],
   [],
   [0],
 ];
@@ -120,6 +119,7 @@ describe('Create collection from EVM', () => {
 
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -136,6 +136,7 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A';
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -152,6 +153,7 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -169,6 +171,7 @@ describe('Create collection from EVM', () => {
       const expects = [0n, 1n, 30n].map(async value => {
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             'Peasantry',
             'absolutely anything',
             'TWIW',
@@ -243,6 +246,7 @@ describe('Create collection from EVM', () => {
 
       await collectionHelpers.methods
         .createCollection([
+          emptyAddress,
           'A',
           'A',
           'A',
@@ -389,6 +393,7 @@ describe('Create collection from EVM', () => {
 
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -405,6 +410,7 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A';
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -421,6 +427,7 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
         await expect(collectionHelper.methods
           .createCollection([
+            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -437,6 +444,7 @@ describe('Create collection from EVM', () => {
       const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
       await expect(collectionHelper.methods
         .createCollection([
+          emptyAddress,
           'Peasantry',
           'absolutely anything',
           'TWIW',
@@ -452,6 +460,7 @@ describe('Create collection from EVM', () => {
     itEth('Сan remove collection sponsor', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const sponsor = await helper.eth.createAccountWithBalance(donor);
+      const sponsorCross = helper.ethCrossAccount.fromAddr(sponsor);
 
       const {collectionAddress} = await helper.eth.createCollection(
         owner,
@@ -461,7 +470,7 @@ describe('Create collection from EVM', () => {
           description: '1',
           tokenPrefix: '1',
           collectionMode: 'nft',
-          pendingSponsor: [sponsor],
+          pendingSponsor: sponsorCross,
         },
       ).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
@@ -482,6 +491,7 @@ describe('Create collection from EVM', () => {
     itEth('Can sponsor from evm address via access list', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const sponsorEth = await helper.eth.createAccountWithBalance(donor);
+      const sponsorCross = helper.ethCrossAccount.fromAddr(sponsorEth);
 
       const {collectionId, collectionAddress} = await helper.eth.createERC721MetadataCompatibleCollection(
         owner,
@@ -491,7 +501,7 @@ describe('Create collection from EVM', () => {
           description: '1',
           tokenPrefix: '1',
           collectionMode: 'nft',
-          pendingSponsor: [sponsorEth],
+          pendingSponsor: sponsorCross,
           limits: [{field: CollectionLimitField.SponsoredDataRateLimit, value: 30n}],
           tokenPropertyPermissions: [{key: 'key', permissions: [{code: TokenPermissionField.TokenOwner, value: true}]}],
         },
@@ -571,6 +581,7 @@ describe('Create collection from EVM', () => {
     itEth('Check that transaction via EVM spend money from sponsor address', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const sponsor = await helper.eth.createAccountWithBalance(donor);
+      const sponsorCross = helper.ethCrossAccount.fromAddr(sponsor);
       const user = helper.eth.createAccount();
       const userCross = helper.ethCrossAccount.fromAddress(user);
 
@@ -582,7 +593,7 @@ describe('Create collection from EVM', () => {
           description: '1',
           tokenPrefix: '1',
           collectionMode: 'nft',
-          pendingSponsor: [sponsor],
+          pendingSponsor: sponsorCross,
           adminList: [userCross],
         },
         '',
@@ -629,6 +640,7 @@ describe('Create collection from EVM', () => {
     itEth('Can reassign collection sponsor', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const sponsorEth = await helper.eth.createAccountWithBalance(donor);
+      const sponsorCrossEth = helper.ethCrossAccount.fromAddr(sponsorEth);
       const [sponsorSub] = await helper.arrange.createAccounts([100n], donor);
       const sponsorCrossSub = helper.ethCrossAccount.fromKeyringPair(sponsorSub);
 
@@ -640,7 +652,7 @@ describe('Create collection from EVM', () => {
           description: '1',
           tokenPrefix: '1',
           collectionMode: 'nft',
-          pendingSponsor: [sponsorEth],
+          pendingSponsor: sponsorCrossEth,
         },
         '',
       );
@@ -665,6 +677,7 @@ describe('Create collection from EVM', () => {
       itEth(`[${testCase}] Check that transfer via EVM spend money from sponsor address`, async ({helper}) => {
         const owner = await helper.eth.createAccountWithBalance(donor);
         const sponsor = await helper.eth.createAccountWithBalance(donor);
+        const sponsorCross = helper.ethCrossAccount.fromAddr(sponsor);
         const user = await helper.eth.createAccountWithBalance(donor);
         const userCross = helper.ethCrossAccount.fromAddress(user);
 
@@ -676,7 +689,7 @@ describe('Create collection from EVM', () => {
             description: '1',
             tokenPrefix: '1',
             collectionMode: 'rft',
-            pendingSponsor: [sponsor],
+            pendingSponsor: sponsorCross,
             adminList: [userCross],
           },
           '',
@@ -715,24 +728,6 @@ describe('Create collection from EVM', () => {
         const userBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(user));
         expect(userBalanceAfter).to.be.eq(userBalanceBefore);
       }));
-
-    itEth('(!negative test!) can\'t set more than one sponsor', async ({helper}) => {
-      const owner = await helper.eth.createAccountWithBalance(donor);
-      const sponsor1 = await helper.eth.createAccountWithBalance(donor);
-      const sponsor2 = await helper.eth.createAccountWithBalance(donor);
-
-      await expect(helper.eth.createCollection(
-        owner,
-        {
-          ...CREATE_COLLECTION_DATA_DEFAULTS,
-          name: 'Sponsor collection',
-          description: '1',
-          tokenPrefix: '1',
-          collectionMode: 'nft',
-          pendingSponsor: [sponsor1, sponsor2],
-        },
-      ).call()).to.be.rejectedWith('only one sponsor is allowed');
-    });
   });
 
   describe('Collection admins', () => {

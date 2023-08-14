@@ -75,7 +75,7 @@ pub fn create_collection_raw<T: Config, R>(
 	mode: CollectionMode,
 	handler: impl FnOnce(
 		T::CrossAccountId,
-		CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError>,
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {

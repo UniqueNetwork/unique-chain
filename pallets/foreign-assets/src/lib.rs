@@ -304,13 +304,12 @@ pub mod module {
 				.collect::<Vec<u16>>();
 			description.append(&mut name.clone());
 
-			let data: CreateCollectionData<T::AccountId, T::CrossAccountId> =
-				CreateCollectionData {
-					name: name.try_into().unwrap(),
-					description: description.try_into().unwrap(),
-					mode: CollectionMode::Fungible(md.decimals),
-					..Default::default()
-				};
+			let data: CreateCollectionData<T::CrossAccountId> = CreateCollectionData {
+				name: name.try_into().unwrap(),
+				description: description.try_into().unwrap(),
+				mode: CollectionMode::Fungible(md.decimals),
+				..Default::default()
+			};
 			let owner = T::CrossAccountId::from_sub(owner);
 			let bounded_collection_id =
 				<PalletFungible<T>>::init_foreign_collection(owner.clone(), owner, data)?;

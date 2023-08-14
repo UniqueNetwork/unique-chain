@@ -1094,7 +1094,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		mut data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		Self::remove_unsupported_create_collection_flags(&mut data.flags);
 		Self::init_collection_internal(owner, payer, data)
@@ -1104,7 +1104,7 @@ impl<T: Config> Pallet<T> {
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		mut data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		data.flags.foreign = true;
 		let id = Self::init_collection_internal(owner, payer, data)?;
@@ -1114,7 +1114,7 @@ impl<T: Config> Pallet<T> {
 	fn init_collection_internal(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
@@ -1146,7 +1146,7 @@ impl<T: Config> Pallet<T> {
 			token_prefix: data.token_prefix,
 			sponsorship: data
 				.pending_sponsor
-				.map(SponsorshipState::Unconfirmed)
+				.map(|sponsor| SponsorshipState::Unconfirmed(sponsor.as_sub().clone()))
 				.unwrap_or_default(),
 			limits: data
 				.limits

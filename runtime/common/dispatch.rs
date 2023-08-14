@@ -72,7 +72,7 @@ where
 	fn create(
 		sender: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId, T::CrossAccountId>,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		let id = match data.mode {
 			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, payer, data)?,

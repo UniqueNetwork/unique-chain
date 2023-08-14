@@ -77,6 +77,15 @@
     "inputs": [
       {
         "components": [
+          {
+            "components": [
+              { "internalType": "address", "name": "eth", "type": "address" },
+              { "internalType": "uint256", "name": "sub", "type": "uint256" }
+            ],
+            "internalType": "struct CrossAddress",
+            "name": "pending_sponsor",
+            "type": "tuple"
+          },
           { "internalType": "string", "name": "name", "type": "string" },
           { "internalType": "string", "name": "description", "type": "string" },
           {
@@ -159,11 +168,6 @@
             "internalType": "struct CollectionLimitValue[]",
             "name": "limits",
             "type": "tuple[]"
-          },
-          {
-            "internalType": "address[]",
-            "name": "pending_sponsor",
-            "type": "address[]"
           },
           {
             "internalType": "CollectionFlags",

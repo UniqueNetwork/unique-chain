@@ -25,12 +25,12 @@ contract CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0xf6061f38
+/// @dev the ERC-165 identifier for this interface is 0x4135fff1
 contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create a collection
 	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0x10560e92,
-	///  or in textual repr: createCollection((string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],address[],uint8))
+	/// @dev EVM selector for this function is: 0xa765ee5b,
+	///  or in textual repr: createCollection(((address,uint256),string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],uint8))
 	function createCollection(CreateCollectionData memory data) public payable returns (address) {
 		require(false, stub_error);
 		data;
@@ -170,6 +170,8 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 
 /// Collection properties
 struct CreateCollectionData {
+	/// Collection sponsor
+	CrossAddress pending_sponsor;
 	/// Collection name
 	string name;
 	/// Collection description
@@ -190,8 +192,6 @@ struct CreateCollectionData {
 	CollectionNestingAndPermission nesting_settings;
 	/// Collection limits
 	CollectionLimitValue[] limits;
-	/// Collection sponsor
-	address[] pending_sponsor;
 	/// Extra collection flags
 	CollectionFlags flags;
 }

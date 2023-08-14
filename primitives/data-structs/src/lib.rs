@@ -555,7 +555,7 @@ impl Deref for RawEncoded {
 /// All fields are wrapped in [`Option`], where `None` means chain default.
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
 #[derivative(Debug, Default(bound = ""))]
-pub struct CreateCollectionData<AccountId, CrossAccountId> {
+pub struct CreateCollectionData<CrossAccountId> {
 	/// Collection mode.
 	#[derivative(Default(value = "CollectionMode::NFT"))]
 	pub mode: CollectionMode,
@@ -572,9 +572,6 @@ pub struct CreateCollectionData<AccountId, CrossAccountId> {
 	/// Token prefix.
 	pub token_prefix: CollectionTokenPrefix,
 
-	/// Pending collection sponsor.
-	pub pending_sponsor: Option<AccountId>,
-
 	/// Collection limits.
 	pub limits: Option<CollectionLimits>,
 
@@ -588,6 +585,9 @@ pub struct CreateCollectionData<AccountId, CrossAccountId> {
 	pub properties: CollectionPropertiesVec,
 
 	pub admin_list: Vec<CrossAccountId>,
+
+	/// Pending collection sponsor.
+	pub pending_sponsor: Option<CrossAccountId>,
 
 	pub flags: CollectionFlags,
 }

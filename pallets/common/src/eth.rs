@@ -105,6 +105,24 @@ impl CrossAddress {
 			sub: Default::default(),
 		}
 	}
+
+	/// Converts [`CrossAddress`] to `Option<CrossAccountId>`.
+	pub fn into_option_sub_cross_account<T>(&self) -> Result<Option<T::CrossAccountId>, Error>
+	where
+		T: pallet_evm::Config,
+		T::AccountId: From<[u8; 32]>,
+	{
+		if self.eth == Default::default() && self.sub == Default::default() {
+			Ok(None)
+		} else if self.eth == Default::default() {
+			Ok(Some(convert_uint256_to_cross_account::<T>(self.sub)))
+		} else if self.sub == Default::default() {
+			Ok(Some(T::CrossAccountId::from_eth(self.eth)))
+		} else {
+			Err(format!("All fields of cross account is non zeroed {:?}", self).into())
+		}
+	}
+
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
 	pub fn into_sub_cross_account<T>(&self) -> Result<T::CrossAccountId, Error>
 	where
@@ -560,6 +578,8 @@ impl CollectionNestingAndPermission {
 /// Collection properties
 #[derive(Debug, Default, AbiCoder)]
 pub struct CreateCollectionData {
+	/// Collection sponsor
+	pub pending_sponsor: CrossAddress,
 	/// Collection name
 	pub name: String,
 	/// Collection description
@@ -580,8 +600,6 @@ pub struct CreateCollectionData {
 	pub nesting_settings: CollectionNestingAndPermission,
 	/// Collection limits
 	pub limits: Vec<CollectionLimitValue>,
-	/// Collection sponsor
-	pub pending_sponsor: Vec<Address>,
 	/// Extra collection flags
 	pub flags: CollectionFlags,
 }
