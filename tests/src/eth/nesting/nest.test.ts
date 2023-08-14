@@ -55,16 +55,16 @@ describe('EVM nesting tests group', () => {
 
     itEth('NFT: collectionNesting()', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const {collectionId: unnestedCollsectionId, collectionAddress: unnestedCollectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
+      const {collectionAddress: unnestedCollectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
       const unnestedContract = await helper.ethNativeContract.collection(unnestedCollectionAddress, 'nft', owner);
       expect(await unnestedContract.methods.collectionNesting().call({from: owner})).to.be.like([false, false, []]);
 
       const {contract} = await createNestingCollection(helper, owner);
       expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([true, false, []]);
-      await contract.methods.setCollectionNesting([true, false, [unnestedCollsectionId.toString()]]).send({from: owner});
-      expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([true, false, [unnestedCollsectionId.toString()]]);
-      await contract.methods.setCollectionNesting([false, true, [unnestedCollsectionId.toString()]]).send({from: owner});
-      expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([false, true, [unnestedCollsectionId.toString()]]);
+      await contract.methods.setCollectionNesting([true, false, [unnestedCollectionAddress]]).send({from: owner});
+      expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([true, false, [unnestedCollectionAddress]]);
+      await contract.methods.setCollectionNesting([false, true, [unnestedCollectionAddress]]).send({from: owner});
+      expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([false, true, [unnestedCollectionAddress]]);
       await contract.methods.setCollectionNesting([false, false, []]).send({from: owner});
       expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([false, false, []]);
     });
@@ -89,8 +89,8 @@ describe('EVM nesting tests group', () => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       const {collectionId: collectionIdA, contract: contractA} = await createNestingCollection(helper, owner);
-      const {collectionId: collectionIdB, contract: contractB} = await createNestingCollection(helper, owner);
-      await contractA.methods.setCollectionNesting([true, false, [collectionIdA.toString(), collectionIdB.toString()]]).send({from: owner});
+      const {contract: contractB} = await createNestingCollection(helper, owner);
+      await contractA.methods.setCollectionNesting([true, false, [contractA.options.address, contractB.options.address]]).send({from: owner});
 
       // Create a token to nest into
       const mintingtargetNftTokenIdResult = await contractA.methods.mint(owner).send({from: owner});
@@ -164,7 +164,7 @@ describe('EVM nesting tests group', () => {
       const {collectionId: collectionIdA, contract: contractA} = await createNestingCollection(helper, owner);
       const {collectionId: collectionIdB, contract: contractB} = await createNestingCollection(helper, owner);
 
-      await contractA.methods.setCollectionNesting([true, false, [collectionIdA, collectionIdB]]).send({from: owner});
+      await contractA.methods.setCollectionNesting([true, false, [contractA.options.address, contractB.options.address]]).send({from: owner});
 
       // Create a token in one collection
       const mintingTokenIdAResult = await contractA.methods.mint(owner).send({from: owner});
@@ -187,7 +187,7 @@ describe('EVM nesting tests group', () => {
       const {collectionId: collectionIdA, contract: contractA} = await createNestingCollection(helper, owner);
       const {contract: contractB} = await createNestingCollection(helper, owner);
 
-      await contractA.methods.setCollectionNesting([true, false, [collectionIdA]]).send({from: owner});
+      await contractA.methods.setCollectionNesting([true, false, [contractA.options.address]]).send({from: owner});
 
       // Create a token in one collection
       const mintingTokenIdAResult = await contractA.methods.mint(owner).send({from: owner});
