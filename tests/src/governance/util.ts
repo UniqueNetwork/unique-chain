@@ -181,7 +181,7 @@ export async function voteUnanimouslyInFellowship(helper: UniqueHelper, fellows:
 }
 
 export function dummyProposalCall(helper: UniqueHelper) {
-  return helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + new Date()]);
+  return helper.constructApiCall('api.tx.system.remark', ['dummy proposal' + (new Date()).getTime()]);
 }
 
 export function dummyProposal(helper: UniqueHelper) {
