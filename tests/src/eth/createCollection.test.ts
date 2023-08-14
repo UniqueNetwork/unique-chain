@@ -247,7 +247,7 @@ describe('Create collection from EVM', () => {
           'A',
           'A',
           CollectionMode.Nonfungible,
-          DECIMALS,
+          0,
           ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
         ])
         .send({value: Number(2n * helper.balance.getOneTokenNominal())});
@@ -441,7 +441,7 @@ describe('Create collection from EVM', () => {
           'absolutely anything',
           'TWIW',
           CollectionMode.Refungible,
-          DECIMALS,
+          0,
           ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
         ])
         .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');

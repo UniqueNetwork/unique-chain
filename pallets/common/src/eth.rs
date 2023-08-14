@@ -153,13 +153,13 @@ impl From<CollectionFlags> for up_data_structs::CollectionFlags {
 }
 
 /// Type of tokens in collection
-#[derive(AbiCoder, Copy, Clone, Default, Debug)]
+#[derive(AbiCoder, Copy, Clone, Default, Debug, PartialEq)]
 #[repr(u8)]
 pub enum CollectionMode {
-	#[default]
 	/// Fungible
 	Fungible,
 	/// Nonfungible
+	#[default]
 	Nonfungible,
 	/// Refungible
 	Refungible,

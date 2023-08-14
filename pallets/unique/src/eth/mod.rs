@@ -35,12 +35,12 @@ use pallet_evm_coder_substrate::{
 };
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionPermissions,
-	CollectionTokenPrefix, CreateCollectionData, NestingPermissions, OwnerRestrictedSet,
+	CollectionTokenPrefix, CreateCollectionData, NestingPermissions,
 };
 
 use crate::{weights::WeightInfo, Config, Pallet, SelfWeightOf};
 
-use alloc::format;
+use alloc::{format, collections::BTreeSet};
 use sp_std::vec::Vec;
 
 frontier_contract! {
@@ -151,6 +151,9 @@ where
 	) -> Result<Address> {
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
+		if data.mode != eth::CollectionMode::Fungible && data.decimals != 0 {
+			return Err(Error::Revert("Decimals are only supported for NFT and RFT collections".into()));
+		}
 		let mode = match data.mode {
 			eth::CollectionMode::Fungible => CollectionMode::Fungible(data.decimals),
 			eth::CollectionMode::Nonfungible => CollectionMode::NFT,
@@ -193,14 +196,15 @@ where
 			.map(|value| T::CrossAccountId::from_eth(value).as_sub().clone());
 
 		let restricted = if !data.nesting_settings.restricted.is_empty() {
-			let mut bv = OwnerRestrictedSet::new();
-			for address in data.nesting_settings.restricted.iter() {
-				bv.try_insert(crate::eth::map_eth_to_id(address).ok_or_else(|| {
-					Error::Revert("Can't convert address into collection id".into())
-				})?)
-				.map_err(|_| "too many collections")?;
-			}
-			Some(bv)
+			Some(data
+				.nesting_settings
+				.restricted
+				.iter()
+				.map(map_eth_to_id)
+				.collect::<Option<BTreeSet<_>>>()
+				.ok_or_else(|| Error::Revert("Can't convert address into collection id".into()))?
+				.try_into()
+				.map_err(|_| "too many collections")?)
 		} else {
 			None
 		};

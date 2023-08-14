@@ -32,6 +32,7 @@ use serde::{Serialize, Deserialize};
 
 use sp_core::U256;
 use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
+use sp_std::collections::btree_set::BTreeSet;
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
@@ -843,6 +844,14 @@ impl core::ops::Deref for OwnerRestrictedSet {
 impl core::ops::DerefMut for OwnerRestrictedSet {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.0
+	}
+}
+
+impl TryFrom<BTreeSet<CollectionId>> for OwnerRestrictedSet {
+	type Error = ();
+
+	fn try_from(value: BTreeSet<CollectionId>) -> Result<Self, Self::Error> {
+		Ok(Self(value.try_into()?))
 	}
 }
 

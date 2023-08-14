@@ -79,7 +79,7 @@ export interface CollectionNestingAndPermission {
 }
 
 export const CREATE_COLLECTION_DATA_DEFAULTS = {
-  decimals: 18,
+  decimals: 0,
   properties: [],
   tokenPropertyPermissions: [],
   adminList: [],
@@ -99,7 +99,7 @@ export class CreateCollectionData {
   description: string;
   tokenPrefix: string;
   collectionMode: TCollectionMode;
-  decimals? = 18;
+  decimals? = 0;
   properties?: Property[] = [];
   tokenPropertyPermissions?: TokenPropertyPermission[] = [];
   adminList?: CrossAddress[] = [];
@@ -119,6 +119,9 @@ export class CreateCollectionData {
     this.description = description;
     this.tokenPrefix = tokenPrefix;
     this.collectionMode = collectionMode;
-    this.decimals = decimals;
+    if(collectionMode == 'ft')
+      this.decimals = decimals;
+    else
+      this.decimals = 0;
   }
 }
