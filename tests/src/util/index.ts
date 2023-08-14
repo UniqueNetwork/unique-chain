@@ -183,7 +183,7 @@ export function describeGov(title: string, fn: (this: Mocha.Suite) => void, opts
     : describe.skip)(title, fn);
 }
 
-describeGov.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
+describeGov.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeGov(name, fn, {skip: true});
 
 export function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');
