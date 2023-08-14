@@ -2646,8 +2646,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.3.5"
-source = "git+https://github.com/uniquenetwork/evm-coder?rev=cf42fdda0aed50db01fbcb2398d6515bb6f59e26#cf42fdda0aed50db01fbcb2398d6515bb6f59e26"
+version = "0.3.6"
+source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.6#be59ae41a5d2ec9389bae22d54f81122b6ba55a4"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2658,8 +2658,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.3.5"
-source = "git+https://github.com/uniquenetwork/evm-coder?rev=cf42fdda0aed50db01fbcb2398d6515bb6f59e26#cf42fdda0aed50db01fbcb2398d6515bb6f59e26"
+version = "0.3.6"
+source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.6#be59ae41a5d2ec9389bae22d54f81122b6ba55a4"
 dependencies = [
  "Inflector",
  "hex",
