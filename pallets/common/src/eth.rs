@@ -410,6 +410,25 @@ pub struct TokenUri {
 	pub uri: String,
 }
 
+/// Nested collections and permissions
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionNestingAndPermission {
+	pub token_owner: bool,
+	pub collection_admin: bool,
+	pub restricted: Vec<U256>,
+}
+
+impl CollectionNestingAndPermission {
+	/// Create [`CollectionNesting`].
+	pub fn new(token_owner: bool, collection_admin: bool, restricted: Vec<U256>) -> Self {
+		Self {
+			token_owner,
+			collection_admin,
+			restricted,
+		}
+	}
+}
+
 /// Nested collections.
 #[derive(Debug, Default, AbiCoder)]
 pub struct CollectionNesting {
