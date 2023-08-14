@@ -418,7 +418,7 @@ where
 		let bv = if !collection_nesting_and_permissions.restricted.is_empty() {
 			let mut bv = OwnerRestrictedSet::new();
 			for address in collection_nesting_and_permissions.restricted.iter() {
-				bv.try_insert(crate::eth::map_eth_to_id(&address).ok_or_else(|| {
+				bv.try_insert(crate::eth::map_eth_to_id(address).ok_or_else(|| {
 					Error::Revert("Can't convert address into collection id".into())
 				})?)
 				.map_err(|_| "too many collections")?;

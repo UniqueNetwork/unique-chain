@@ -25,6 +25,7 @@ use core::{
 	fmt,
 	ops::Deref,
 };
+use bondrewd::BitfieldEnum;
 use frame_support::storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet};
 
 #[cfg(feature = "serde")]
