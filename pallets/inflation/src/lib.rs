@@ -163,7 +163,10 @@ pub mod pallet {
 		///
 		/// * inflation_start_relay_block: The relay chain block at which inflation should start
 		#[pallet::call_index(0)]
-		#[pallet::weight(0)]
+		// Constant weights are deprecated,
+		// but in this case writing benchmark is not feasible, `start_inflation` call
+		// might be even moved to GenesisConfig
+		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn start_inflation(
 			origin: OriginFor<T>,
 			inflation_start_relay_block: T::BlockNumber,

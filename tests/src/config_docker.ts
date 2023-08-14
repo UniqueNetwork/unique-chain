@@ -18,7 +18,6 @@ import process from 'process';
 
 const config = {
   substrateUrl: process.env.substrateUrl || 'ws://blockchain_nodes:9944',
-  frontierUrl: process.env.frontierUrl || 'http://blockchain_nodes:9933',
 };
 
 export default config;

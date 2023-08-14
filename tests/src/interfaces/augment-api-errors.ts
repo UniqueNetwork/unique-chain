@@ -17,9 +17,9 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AdminNotSet: AugmentedError<ApiType>;
       /**
-       * Errors caused by incorrect actions with a locked balance.
+       * Errors caused by incorrect state of a staker in context of the pallet.
        **/
-      IncorrectLockedBalanceOperation: AugmentedError<ApiType>;
+      InconsistencyState: AugmentedError<ApiType>;
       /**
        * Errors caused by insufficient staked balance.
        **/
@@ -675,7 +675,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       Filtered: AugmentedError<ApiType>;
       /**
-       * The unlock operation cannot succeed because there are still users of the lock.
+       * The unlock operation cannot succeed because there are still consumers of the lock.
        **/
       InUse: AugmentedError<ApiType>;
       /**
@@ -802,6 +802,42 @@ declare module '@polkadot/api-base/types/errors' {
        * No keys are associated with this account.
        **/
       NoKeys: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    stateTrieMigration: {
+      /**
+       * Bad child root provided.
+       **/
+      BadChildRoot: AugmentedError<ApiType>;
+      /**
+       * Bad witness data provided.
+       **/
+      BadWitness: AugmentedError<ApiType>;
+      /**
+       * A key was longer than the configured maximum.
+       * 
+       * This means that the migration halted at the current [`Progress`] and
+       * can be resumed with a larger [`crate::Config::MaxKeyLen`] value.
+       * Retrying with the same [`crate::Config::MaxKeyLen`] value will not work.
+       * The value should only be increased to avoid a storage migration for the currently
+       * stored [`crate::Progress::LastKey`].
+       **/
+      KeyTooLong: AugmentedError<ApiType>;
+      /**
+       * Max signed limits not respected.
+       **/
+      MaxSignedLimits: AugmentedError<ApiType>;
+      /**
+       * submitter does not have enough funds.
+       **/
+      NotEnoughFunds: AugmentedError<ApiType>;
+      /**
+       * Signed migration is not allowed because the maximum limit is not set yet.
+       **/
+      SignedMigrationNotAllowed: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

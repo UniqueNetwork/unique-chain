@@ -6,7 +6,7 @@
 import '@polkadot/api-base/types/consts';
 
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Option, U8aFixed, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { Codec } from '@polkadot/types-codec/types';
 import type { H160, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
 import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, SpWeightsWeightV2Weight, UpDataStructsCollectionLimits, XcmV3MultiLocation } from '@polkadot/types/lookup';
@@ -16,6 +16,10 @@ export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>
 declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
     appPromotion: {
+      /**
+       * Freeze identifier used by the pallet
+       **/
+      freezeIdentifier: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Rate of return for interval in blocks defined in `RecalculationInterval`.
        **/
@@ -70,6 +74,13 @@ declare module '@polkadot/api-base/types/consts' {
        * The maximum number of named reserves that can exist on an account.
        **/
       maxReserves: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    collatorSelection: {
+      licenceBondIdentifier: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -156,6 +167,36 @@ declare module '@polkadot/api-base/types/consts' {
        * Number of blocks that pass between treasury balance updates due to inflation
        **/
       inflationBlockInterval: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    stateTrieMigration: {
+      /**
+       * Maximal number of bytes that a key can have.
+       * 
+       * FRAME itself does not limit the key length.
+       * The concrete value must therefore depend on your storage usage.
+       * A [`frame_support::storage::StorageNMap`] for example can have an arbitrary number of
+       * keys which are then hashed and concatenated, resulting in arbitrarily long keys.
+       * 
+       * Use the *state migration RPC* to retrieve the length of the longest key in your
+       * storage: <https://github.com/paritytech/substrate/issues/11642>
+       * 
+       * The migration will halt with a `Halted` event if this value is too small.
+       * Since there is no real penalty from over-estimating, it is advised to use a large
+       * value. The default is 512 byte.
+       * 
+       * Some key lengths for reference:
+       * - [`frame_support::storage::StorageValue`]: 32 byte
+       * - [`frame_support::storage::StorageMap`]: 64 byte
+       * - [`frame_support::storage::StorageDoubleMap`]: 96 byte
+       * 
+       * For more info see
+       * <https://www.shawntabrizi.com/substrate/querying-substrate-storage-via-rpc/>
+       **/
+      maxKeyLen: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

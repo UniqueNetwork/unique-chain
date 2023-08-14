@@ -2403,7 +2403,7 @@ class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return locks.map((lock: any) => ({id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}));
   }
   async getFrozen(address: TSubstrateAccount): Promise<{ id: string, amount: bigint }[]> {
-    const locks = await this.helper.api!.query.balances.freezes(address);
+    const locks = (await this.helper.api!.query.balances.freezes(address)) as unknown as Array<any>;
     return locks.map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()}));
   }
 }
