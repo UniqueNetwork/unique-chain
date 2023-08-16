@@ -39,8 +39,10 @@ export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) 
     const [alex, ildar, charu, filip, irina] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
-      const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
-      expect(members).to.be.deep.equal([]);
+      const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON() as [];
+      if(members.length != 0) {
+        await clearCouncil(superuser);
+      }
     }
     const expectedMembers = [alex, ildar, charu, filip, irina];
     for(const member of expectedMembers) {
@@ -55,7 +57,6 @@ export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) 
 
     counselors = [alex, ildar, charu, filip, irina];
   });
-
   return {
     alex: counselors[0],
     ildar: counselors[1],
