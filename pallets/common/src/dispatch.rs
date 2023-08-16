@@ -9,7 +9,7 @@ use frame_support::{
 	traits::Get,
 };
 use sp_runtime::DispatchError;
-use up_data_structs::{CollectionId, CreateCollectionData, CollectionFlags};
+use up_data_structs::{CollectionId, CreateCollectionData};
 
 use crate::{pallet::Config, CommonCollectionOperations};
 
@@ -76,8 +76,7 @@ pub trait CollectionDispatch<T: Config> {
 	fn create(
 		sender: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError>;
 
 	/// Delete the collection.

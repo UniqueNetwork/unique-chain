@@ -2646,8 +2646,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.3.1"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.1#21e61c627f71337d6b8a03899fe8de14bfbf67aa"
+version = "0.3.6"
+source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.6#be59ae41a5d2ec9389bae22d54f81122b6ba55a4"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2658,8 +2658,8 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.3.1"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.1#21e61c627f71337d6b8a03899fe8de14bfbf67aa"
+version = "0.3.6"
+source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.6#be59ae41a5d2ec9389bae22d54f81122b6ba55a4"
 dependencies = [
  "Inflector",
  "hex",
@@ -6489,6 +6489,7 @@ dependencies = [
 name = "pallet-common"
 version = "0.1.14"
 dependencies = [
+ "bondrewd",
  "ethereum",
  "evm-coder",
  "frame-benchmarking",
@@ -7530,6 +7531,7 @@ dependencies = [
  "frame-benchmarking",
  "frame-support",
  "frame-system",
+ "log",
  "pallet-balances-adapter",
  "pallet-common",
  "pallet-evm",
@@ -14097,6 +14099,7 @@ version = "0.2.2"
 dependencies = [
  "bondrewd",
  "derivative",
+ "evm-coder",
  "frame-support",
  "pallet-evm",
  "parity-scale-codec",
