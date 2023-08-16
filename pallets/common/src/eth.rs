@@ -145,11 +145,11 @@ impl CrossAddress {
 #[derive(AbiCoder, Copy, Clone, Default, Debug, PartialEq)]
 #[repr(u8)]
 pub enum CollectionMode {
-	/// Fungible
-	Fungible,
 	/// Nonfungible
 	#[default]
 	Nonfungible,
+	/// Fungible
+	Fungible,
 	/// Refungible
 	Refungible,
 }
