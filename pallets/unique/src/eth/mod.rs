@@ -152,9 +152,7 @@ where
 		let (caller, name, description, token_prefix) =
 			convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
 		if data.mode != eth::CollectionMode::Fungible && data.decimals != 0 {
-			return Err(Error::Revert(
-				"Decimals are only supported for NFT and RFT collections".into(),
-			));
+			return Err("decimals are only supported for NFT and RFT collections".into());
 		}
 		let mode = match data.mode {
 			eth::CollectionMode::Fungible => CollectionMode::Fungible(data.decimals),
@@ -196,9 +194,7 @@ where
 					.iter()
 					.map(map_eth_to_id)
 					.collect::<Option<BTreeSet<_>>>()
-					.ok_or_else(|| {
-						Error::Revert("Can't convert address into collection id".into())
-					})?
+					.ok_or_else(|| "can't convert address into collection id")?
 					.try_into()
 					.map_err(|_| "too many collections")?,
 			)
@@ -212,7 +208,11 @@ where
 			.map(|admin| admin.into_sub_cross_account::<T>())
 			.collect::<Result<Vec<_>>>()?;
 
-		let flags = data.flags.into();
+		let flags = data.flags;
+		if !flags.is_allowed_for_user() {
+			return Err("internal flags were used".into());
+		}
+
 		let data = CreateCollectionData {
 			name,
 			mode,

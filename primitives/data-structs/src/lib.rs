@@ -37,8 +37,8 @@ use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
-
-pub use bondrewd::Bitfields;
+use evm_coder::AbiCoderFlags;
+use bondrewd::Bitfields;
 
 mod bondrewd_codec;
 mod bounded;
@@ -360,7 +360,7 @@ pub type CollectionName = BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>;
 pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>;
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
-#[derive(Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[bondrewd(enforce_bytes = 1)]
 pub struct CollectionFlags {
 	/// Tokens in foreign collections can be transferred, but not burnt
@@ -372,11 +372,17 @@ pub struct CollectionFlags {
 	/// External collections can't be managed using `unique` api
 	#[bondrewd(bits = "7..8")]
 	pub external: bool,
-
-	#[bondrewd(reserve, bits = "2..7")]
+	/// Reserved flags
+	#[bondrewd(bits = "2..7")]
 	pub reserved: u8,
 }
 bondrewd_codec!(CollectionFlags);
+
+impl CollectionFlags {
+	pub fn is_allowed_for_user(self) -> bool {
+		!self.foreign && !self.external && self.reserved == 0
+	}
+}
 
 /// Base structure for represent collection.
 ///

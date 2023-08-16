@@ -19,12 +19,12 @@
 use alloc::format;
 use sp_std::{vec, vec::Vec};
 use evm_coder::{
-	AbiCoder, AbiCoderFlags,
+	AbiCoder,
 	types::{Address, String},
 };
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
-use up_data_structs::{CollectionId, Bitfields};
+use up_data_structs::{CollectionId, CollectionFlags};
 use pallet_evm_coder_substrate::execution::Error;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
@@ -137,35 +137,6 @@ impl CrossAddress {
 			Ok(T::CrossAccountId::from_eth(self.eth))
 		} else {
 			Err("All fields of cross account is non zeroed".into())
-		}
-	}
-}
-
-/// Cross account struct
-#[derive(AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
-#[bondrewd(enforce_bytes = 1)]
-pub struct CollectionFlags {
-	/// Tokens in foreign collections can be transferred, but not burnt
-	#[bondrewd(reserve, bits = "0..1")]
-	pub foreign: bool,
-	/// Supports ERC721Metadata
-	#[bondrewd(bits = "1..2")]
-	pub erc721metadata: bool,
-	/// External collections can't be managed using `unique` api
-	#[bondrewd(reserve, bits = "7..8")]
-	pub external: bool,
-	/// Reserved bits
-	#[bondrewd(reserve, bits = "2..7")]
-	pub reserved: u8,
-}
-
-impl From<CollectionFlags> for up_data_structs::CollectionFlags {
-	fn from(value: CollectionFlags) -> Self {
-		Self {
-			foreign: value.foreign,
-			erc721metadata: value.erc721metadata,
-			external: value.external,
-			reserved: value.reserved,
 		}
 	}
 }
