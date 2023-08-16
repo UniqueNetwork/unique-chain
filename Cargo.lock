@@ -14099,6 +14099,7 @@ version = "0.2.2"
 dependencies = [
  "bondrewd",
  "derivative",
+ "evm-coder",
  "frame-support",
  "pallet-evm",
  "parity-scale-codec",

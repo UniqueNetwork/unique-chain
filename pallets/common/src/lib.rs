@@ -73,16 +73,15 @@ use frame_support::{
 	transactional, fail,
 };
 use up_data_structs::{
-	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, CollectionFlags, RpcCollection,
-	RpcCollectionFlags, CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH,
-	COLLECTION_ADMINS_LIMIT, TokenId, TokenChild, CollectionStats, MAX_TOKEN_OWNERSHIP,
-	CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, CUSTOM_DATA_LIMIT, CollectionLimits,
-	CreateCollectionData, SponsorshipState, CreateItemExData, SponsoringRateLimit, budget::Budget,
-	PhantomType, Property, CollectionProperties as CollectionPropertiesT, TokenProperties,
-	PropertiesPermissionMap, PropertyKey, PropertyValue, PropertyPermission, PropertiesError,
-	TokenOwnerError, PropertyKeyPermission, TokenData, TrySetProperty, PropertyScope,
-	CollectionPermissions,
+	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, RpcCollectionFlags,
+	CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, TokenId,
+	TokenChild, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
+	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState, CreateItemExData,
+	SponsoringRateLimit, budget::Budget, PhantomType, Property,
+	CollectionProperties as CollectionPropertiesT, TokenProperties, PropertiesPermissionMap,
+	PropertyKey, PropertyValue, PropertyPermission, PropertiesError, TokenOwnerError,
+	PropertyKeyPermission, TokenData, TrySetProperty, PropertyScope, CollectionPermissions,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -1094,9 +1093,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::CrossAccountId>,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		Self::remove_unsupported_create_collection_flags(&mut data.flags);
+		ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
 		Self::init_collection_internal(owner, payer, data)
 	}
 
@@ -1220,12 +1219,6 @@ impl<T: Config> Pallet<T> {
 		);
 		<CollectionById<T>>::insert(id, collection);
 		Ok(id)
-	}
-
-	fn remove_unsupported_create_collection_flags(flags: &mut CollectionFlags) {
-		flags.foreign = false;
-		flags.external = false;
-		flags.reserved = 0;
 	}
 
 	/// Destroy collection.
