@@ -19,7 +19,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
 import {IEvent, TCollectionMode} from '../util/playgrounds/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
-import {CollectionLimitField, TokenPermissionField, NormalizedEvent} from './util/playgrounds/types';
+import {CollectionLimitField, TokenPermissionField, NormalizedEvent, CreateCollectionData} from './util/playgrounds/types';
 
 let donor: IKeyringPair;
 
@@ -39,7 +39,8 @@ function clearEvents(ethEvents: NormalizedEvent[] | null, subEvents: IEvent[]) {
 async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionCreated', 'CollectionDestroyed']}]);
-  const {collectionAddress, events: ethEvents} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress, events: ethEvents} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
+
   await helper.wait.newBlocks(1);
   {
     expect(ethEvents).to.containSubset([
@@ -72,7 +73,7 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
 
 async function testCollectionPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
 
@@ -113,7 +114,7 @@ async function testCollectionPropertySetAndDeleted(helper: EthUniqueHelper, mode
 
 async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any = [];
@@ -144,7 +145,7 @@ async function testPropertyPermissionSet(helper: EthUniqueHelper, mode: TCollect
 async function testAllowListAddressAddedAndRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const user = helper.ethCrossAccount.createAccount();
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any[] = [];
@@ -186,7 +187,7 @@ async function testAllowListAddressAddedAndRemoved(helper: EthUniqueHelper, mode
 async function testCollectionAdminAddedAndRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const user = helper.ethCrossAccount.createAccount();
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any = [];
@@ -226,7 +227,7 @@ async function testCollectionAdminAddedAndRemoved(helper: EthUniqueHelper, mode:
 
 async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any = [];
@@ -253,7 +254,7 @@ async function testCollectionLimitSet(helper: EthUniqueHelper, mode: TCollection
 async function testCollectionOwnerChanged(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const newOwner = helper.ethCrossAccount.createAccount();
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any = [];
@@ -279,7 +280,7 @@ async function testCollectionOwnerChanged(helper: EthUniqueHelper, mode: TCollec
 
 async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any = [];
@@ -320,7 +321,7 @@ async function testCollectionPermissionSet(helper: EthUniqueHelper, mode: TColle
 async function testCollectionSponsorSetAndConfirmedAndThenRemoved(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
   const sponsor = await helper.ethCrossAccount.createAccountWithBalance(donor);
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
   const ethEvents: any = [];
@@ -374,7 +375,7 @@ async function testCollectionSponsorSetAndConfirmedAndThenRemoved(helper: EthUni
 
 async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCollectionMode) {
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const {collectionAddress} = await helper.eth.createCollection(mode, owner, 'A', 'B', 'C');
+  const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   const collection = await helper.ethNativeContract.collection(collectionAddress, mode, owner);
   const result = await collection.methods.mint(owner).send({from: owner});
   const tokenId = result.events.Transfer.returnValues.tokenId;

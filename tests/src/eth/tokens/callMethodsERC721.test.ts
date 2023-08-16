@@ -17,6 +17,7 @@
 import {Pallets} from '../../util';
 import {expect, itEth, usingEthPlaygrounds} from '../util';
 import {IKeyringPair} from '@polkadot/types/types';
+import {CreateCollectionData} from '../util/playgrounds/types';
 
 
 describe('ERC-721 call methods', () => {
@@ -37,7 +38,7 @@ describe('ERC-721 call methods', () => {
       const [callerSub] = await helper.arrange.createAccounts([100n], donor);
       const [name, description, tokenPrefix] = ['Name', 'Description', 'Symbol'];
 
-      const {collection: collectionEth} = await helper.eth.createCollection(testCase.mode, callerEth, name, description, tokenPrefix);
+      const {collection: collectionEth} = await helper.eth.createCollection(callerEth, new CreateCollectionData(name, description, tokenPrefix, testCase.mode)).send();
       await collectionEth.methods.mint(callerEth).send({from: callerEth});
       const {collectionId} = await helper[testCase.mode].mintCollection(callerSub, {name, description, tokenPrefix});
       const collectionSub = await helper.ethNativeContract.collectionById(collectionId, testCase.mode, callerEth);
@@ -60,7 +61,7 @@ describe('ERC-721 call methods', () => {
     itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: totalSupply`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
-      const {collection} = await helper.eth.createCollection(testCase.mode, caller, 'TotalSupply', '6', '6');
+      const {collection} = await helper.eth.createCollection(caller, new CreateCollectionData('TotalSupply', '6', '6', testCase.mode)).send();
       await collection.methods.mint(caller).send({from: caller});
 
       const totalSupply = await collection.methods.totalSupply().call();
@@ -75,7 +76,7 @@ describe('ERC-721 call methods', () => {
     itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: balanceOf`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
-      const {collection} = await helper.eth.createCollection(testCase.mode, caller, 'BalanceOf', 'Descroption', 'Prefix');
+      const {collection} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
       await collection.methods.mint(caller).send({from: caller});
       await collection.methods.mint(caller).send({from: caller});
       await collection.methods.mint(caller).send({from: caller});
@@ -91,7 +92,7 @@ describe('ERC-721 call methods', () => {
   ].map(testCase => {
     itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: ownerOf`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
-      const {collection} = await helper.eth.createCollection(testCase.mode, caller, 'OwnerOf', '6', '6');
+      const {collection} = await helper.eth.createCollection(caller, new CreateCollectionData('OwnerOf', '6', '6', testCase.mode)).send();
 
       const result = await collection.methods.mint(caller).send();
       const tokenId = result.events.Transfer.returnValues.tokenId;
@@ -108,7 +109,7 @@ describe('ERC-721 call methods', () => {
     itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: ownerOf after burn`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
-      const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'OwnerOf-AfterBurn', '6', '6');
+      const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('OwnerOf-AfterBurn', '6', '6', testCase.mode)).send();
 
       const result = await collection.methods.mint(caller).send();
       const tokenId = result.events.Transfer.returnValues.tokenId;

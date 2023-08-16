@@ -32,11 +32,13 @@ use serde::{Serialize, Deserialize};
 
 use sp_core::U256;
 use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
+use sp_std::collections::btree_set::BTreeSet;
 use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
-use bondrewd::Bitfields;
 use frame_support::{BoundedVec, traits::ConstU32};
 use derivative::Derivative;
 use scale_info::TypeInfo;
+use evm_coder::AbiCoderFlags;
+use bondrewd::Bitfields;
 
 mod bondrewd_codec;
 mod bounded;
@@ -160,6 +162,14 @@ impl EncodeLike<CollectionId> for u32 {}
 impl From<u32> for CollectionId {
 	fn from(value: u32) -> Self {
 		Self(value)
+	}
+}
+
+impl Deref for CollectionId {
+	type Target = u32;
+
+	fn deref(&self) -> &Self::Target {
+		&self.0
 	}
 }
 
@@ -350,7 +360,7 @@ pub type CollectionName = BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>;
 pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>;
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
-#[derive(Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[bondrewd(enforce_bytes = 1)]
 pub struct CollectionFlags {
 	/// Tokens in foreign collections can be transferred, but not burnt
@@ -362,11 +372,17 @@ pub struct CollectionFlags {
 	/// External collections can't be managed using `unique` api
 	#[bondrewd(bits = "7..8")]
 	pub external: bool,
-
-	#[bondrewd(reserve, bits = "2..7")]
+	/// Reserved flags
+	#[bondrewd(bits = "2..7")]
 	pub reserved: u8,
 }
 bondrewd_codec!(CollectionFlags);
+
+impl CollectionFlags {
+	pub fn is_allowed_for_user(self) -> bool {
+		!self.foreign && !self.external && self.reserved == 0
+	}
+}
 
 /// Base structure for represent collection.
 ///
@@ -545,7 +561,7 @@ impl Deref for RawEncoded {
 /// All fields are wrapped in [`Option`], where `None` means chain default.
 #[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
 #[derivative(Debug, Default(bound = ""))]
-pub struct CreateCollectionData<AccountId> {
+pub struct CreateCollectionData<CrossAccountId> {
 	/// Collection mode.
 	#[derivative(Default(value = "CollectionMode::NFT"))]
 	pub mode: CollectionMode,
@@ -562,9 +578,6 @@ pub struct CreateCollectionData<AccountId> {
 	/// Token prefix.
 	pub token_prefix: CollectionTokenPrefix,
 
-	/// Pending collection sponsor.
-	pub pending_sponsor: Option<AccountId>,
-
 	/// Collection limits.
 	pub limits: Option<CollectionLimits>,
 
@@ -576,6 +589,13 @@ pub struct CreateCollectionData<AccountId> {
 
 	/// Collection properties.
 	pub properties: CollectionPropertiesVec,
+
+	pub admin_list: Vec<CrossAccountId>,
+
+	/// Pending collection sponsor.
+	pub pending_sponsor: Option<CrossAccountId>,
+
+	pub flags: CollectionFlags,
 }
 
 /// Bounded vector of properties permissions. Max length is [`MAX_PROPERTIES_PER_ITEM`].
@@ -830,6 +850,14 @@ impl core::ops::Deref for OwnerRestrictedSet {
 impl core::ops::DerefMut for OwnerRestrictedSet {
 	fn deref_mut(&mut self) -> &mut Self::Target {
 		&mut self.0
+	}
+}
+
+impl TryFrom<BTreeSet<CollectionId>> for OwnerRestrictedSet {
+	type Error = ();
+
+	fn try_from(value: BTreeSet<CollectionId>) -> Result<Self, Self::Error> {
+		Ok(Self(value.try_into()?))
 	}
 }
 

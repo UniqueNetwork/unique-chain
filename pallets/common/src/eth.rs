@@ -24,7 +24,8 @@ use evm_coder::{
 };
 pub use pallet_evm::{Config, account::CrossAccountId};
 use sp_core::{H160, U256};
-use up_data_structs::CollectionId;
+use up_data_structs::{CollectionId, CollectionFlags};
+use pallet_evm_coder_substrate::execution::Error;
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
 // TODO: Unhardcode prefix
@@ -104,10 +105,26 @@ impl CrossAddress {
 			sub: Default::default(),
 		}
 	}
+
+	/// Converts [`CrossAddress`] to `Option<CrossAccountId>`.
+	pub fn into_option_sub_cross_account<T>(&self) -> Result<Option<T::CrossAccountId>, Error>
+	where
+		T: pallet_evm::Config,
+		T::AccountId: From<[u8; 32]>,
+	{
+		if self.eth == Default::default() && self.sub == Default::default() {
+			Ok(None)
+		} else if self.eth == Default::default() {
+			Ok(Some(convert_uint256_to_cross_account::<T>(self.sub)))
+		} else if self.sub == Default::default() {
+			Ok(Some(T::CrossAccountId::from_eth(self.eth)))
+		} else {
+			Err(format!("All fields of cross account is non zeroed {:?}", self).into())
+		}
+	}
+
 	/// Converts [`CrossAddress`] to `CrossAccountId`.
-	pub fn into_sub_cross_account<T>(
-		&self,
-	) -> pallet_evm_coder_substrate::execution::Result<T::CrossAccountId>
+	pub fn into_sub_cross_account<T>(&self) -> Result<T::CrossAccountId, Error>
 	where
 		T: pallet_evm::Config,
 		T::AccountId: From<[u8; 32]>,
@@ -122,6 +139,19 @@ impl CrossAddress {
 			Err("All fields of cross account is non zeroed".into())
 		}
 	}
+}
+
+/// Type of tokens in collection
+#[derive(AbiCoder, Copy, Clone, Default, Debug, PartialEq)]
+#[repr(u8)]
+pub enum CollectionMode {
+	/// Nonfungible
+	#[default]
+	Nonfungible,
+	/// Fungible
+	Fungible,
+	/// Refungible
+	Refungible,
 }
 
 /// Ethereum representation of collection [`PropertyKey`](up_data_structs::PropertyKey) and [`PropertyValue`](up_data_structs::PropertyValue).
@@ -144,7 +174,7 @@ impl Property {
 }
 
 impl TryFrom<up_data_structs::Property> for Property {
-	type Error = pallet_evm_coder_substrate::execution::Error;
+	type Error = Error;
 
 	fn try_from(from: up_data_structs::Property) -> Result<Self, Self::Error> {
 		let key = evm_coder::types::String::from_utf8(from.key.into())
@@ -155,7 +185,7 @@ impl TryFrom<up_data_structs::Property> for Property {
 }
 
 impl TryInto<up_data_structs::Property> for Property {
-	type Error = pallet_evm_coder_substrate::execution::Error;
+	type Error = Error;
 
 	fn try_into(self) -> Result<up_data_structs::Property, Self::Error> {
 		let key = <Vec<u8>>::from(self.key)
@@ -220,17 +250,14 @@ impl CollectionLimit {
 	pub fn has_value(&self) -> bool {
 		self.value.is_some()
 	}
-}
 
-impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
-	type Error = pallet_evm_coder_substrate::execution::Error;
-
-	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
+	/// Set corresponding property in CollectionLimits struct
+	pub fn apply_limit(&self, limits: &mut up_data_structs::CollectionLimits) -> Result<(), Error> {
 		let value = self
 			.value
-			.ok_or::<Self::Error>("can't convert `None` value to boolean".into())?;
+			.ok_or::<Error>("can't convert `None` value to boolean".into())?;
 		let value = Some(value.try_into().map_err(|error| {
-			Self::Error::Revert(format!(
+			Error::Revert(format!(
 				"can't convert value to u32 \"{value}\" because: \"{error}\""
 			))
 		})?);
@@ -239,14 +266,13 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 			Some(value) => match value {
 				0 => Ok(Some(false)),
 				1 => Ok(Some(true)),
-				_ => Err(Self::Error::Revert(format!(
+				_ => Err(Error::Revert(format!(
 					"can't convert value to boolean \"{value}\""
 				))),
 			},
 			None => Ok(None),
 		};
 
-		let mut limits = up_data_structs::CollectionLimits::default();
 		match self.field {
 			CollectionLimitField::AccountTokenOwnership => {
 				limits.account_token_ownership_limit = value;
@@ -277,6 +303,95 @@ impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
 				limits.transfers_enabled = convert_value_to_bool()?;
 			}
 		};
+		Ok(())
+	}
+}
+
+/// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionLimitValue {
+	field: CollectionLimitField,
+	value: U256,
+}
+
+impl CollectionLimitValue {
+	/// Create [`CollectionLimitValue`] from field and value.
+	pub fn new(field: CollectionLimitField, value: u32) -> Self {
+		Self {
+			field,
+			value: value.into(),
+		}
+	}
+
+	/// Set corresponding property in CollectionLimits struct
+	pub fn apply_limit(&self, limits: &mut up_data_structs::CollectionLimits) -> Result<(), Error> {
+		let value = self.value;
+		let value: u32 = value.try_into().map_err(|error| {
+			Error::Revert(format!(
+				"can't convert value to u32 \"{value}\" because: \"{error}\""
+			))
+		})?;
+
+		let convert_value_to_bool = || match value {
+			0 => Ok(Some(false)),
+			1 => Ok(Some(true)),
+			_ => Err(Error::Revert(format!(
+				"can't convert value to boolean \"{value}\""
+			))),
+		};
+
+		match self.field {
+			CollectionLimitField::AccountTokenOwnership => {
+				limits.account_token_ownership_limit = Some(value);
+			}
+			CollectionLimitField::SponsoredDataSize => {
+				limits.sponsored_data_size = Some(value);
+			}
+			CollectionLimitField::SponsoredDataRateLimit => {
+				limits.sponsored_data_rate_limit =
+					Some(up_data_structs::SponsoringRateLimit::Blocks(value));
+			}
+			CollectionLimitField::TokenLimit => {
+				limits.token_limit = Some(value);
+			}
+			CollectionLimitField::SponsorTransferTimeout => {
+				limits.sponsor_transfer_timeout = Some(value);
+			}
+			CollectionLimitField::SponsorApproveTimeout => {
+				limits.sponsor_approve_timeout = Some(value);
+			}
+			CollectionLimitField::OwnerCanTransfer => {
+				limits.owner_can_transfer = convert_value_to_bool()?;
+			}
+			CollectionLimitField::OwnerCanDestroy => {
+				limits.owner_can_destroy = convert_value_to_bool()?;
+			}
+			CollectionLimitField::TransferEnabled => {
+				limits.transfers_enabled = convert_value_to_bool()?;
+			}
+		};
+		Ok(())
+	}
+}
+
+impl TryInto<up_data_structs::CollectionLimits> for CollectionLimit {
+	type Error = Error;
+
+	fn try_into(self) -> Result<up_data_structs::CollectionLimits, Self::Error> {
+		let mut limits = up_data_structs::CollectionLimits::default();
+		self.apply_limit(&mut limits)?;
+		Ok(limits)
+	}
+}
+
+impl FromIterator<CollectionLimitValue> for Result<up_data_structs::CollectionLimits, Error> {
+	fn from_iter<T: IntoIterator<Item = CollectionLimitValue>>(
+		iter: T,
+	) -> Result<up_data_structs::CollectionLimits, Error> {
+		let mut limits = up_data_structs::CollectionLimits::default();
+		for value in iter.into_iter() {
+			value.apply_limit(&mut limits)?;
+		}
 		Ok(limits)
 	}
 }
@@ -384,8 +499,7 @@ impl TokenPropertyPermission {
 	/// Convert vector of [`TokenPropertyPermission`] into vector of [`up_data_structs::PropertyKeyPermission`].
 	pub fn into_property_key_permissions(
 		permissions: Vec<TokenPropertyPermission>,
-	) -> pallet_evm_coder_substrate::execution::Result<Vec<up_data_structs::PropertyKeyPermission>>
-	{
+	) -> Result<Vec<up_data_structs::PropertyKeyPermission>, Error> {
 		let mut perms = Vec::new();
 
 		for TokenPropertyPermission { key, permissions } in permissions {
@@ -408,6 +522,57 @@ pub struct TokenUri {
 
 	/// Uri of new token.
 	pub uri: String,
+}
+
+/// Nested collections and permissions
+#[derive(Debug, Default, AbiCoder)]
+pub struct CollectionNestingAndPermission {
+	/// Owner of token can nest tokens under it.
+	pub token_owner: bool,
+	/// Admin of token collection can nest tokens under token.
+	pub collection_admin: bool,
+	/// If set - only tokens from specified collections can be nested.
+	pub restricted: Vec<Address>,
+}
+
+impl CollectionNestingAndPermission {
+	/// Create [`CollectionNesting`].
+	pub fn new(token_owner: bool, collection_admin: bool, restricted: Vec<Address>) -> Self {
+		Self {
+			token_owner,
+			collection_admin,
+			restricted,
+		}
+	}
+}
+
+/// Collection properties
+#[derive(Debug, Default, AbiCoder)]
+pub struct CreateCollectionData {
+	/// Collection sponsor
+	pub pending_sponsor: CrossAddress,
+	/// Collection name
+	pub name: String,
+	/// Collection description
+	pub description: String,
+	/// Token prefix
+	pub token_prefix: String,
+	/// Token type (NFT, FT or RFT)
+	pub mode: CollectionMode,
+	/// Fungible token precision
+	pub decimals: u8,
+	/// Custom Properties
+	pub properties: Vec<Property>,
+	/// Permissions for token properties
+	pub token_property_permissions: Vec<TokenPropertyPermission>,
+	/// Collection admins
+	pub admin_list: Vec<CrossAddress>,
+	/// Nesting settings
+	pub nesting_settings: CollectionNestingAndPermission,
+	/// Collection limits
+	pub limits: Vec<CollectionLimitValue>,
+	/// Extra collection flags
+	pub flags: CollectionFlags,
 }
 
 /// Nested collections.

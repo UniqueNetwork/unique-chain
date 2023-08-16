@@ -17,6 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../../util';
 import {expect, itEth, usingEthPlaygrounds} from '../util';
+import {CreateCollectionData} from '../util/playgrounds/types';
 
 
 describe('Minting tokens', () => {
@@ -78,7 +79,7 @@ describe('Minting tokens', () => {
       const receiver = helper.eth.createAccount();
       const mintingParams = testCase.mode === 'ft' ? [receiver, 100] : [receiver];
 
-      const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(testCase.mode, owner, 'Name', 'Desc', 'Prefix');
+      const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Name', 'Desc', 'Prefix', testCase.mode)).send();
 
       const result = await collection.methods.mint(...mintingParams).send({from: owner});
 
@@ -112,7 +113,7 @@ describe('Minting tokens', () => {
       const receiver = helper.eth.createAccount();
       const mintingParams = testCase.mode === 'ft' ? [receiver, 100] : [receiver];
 
-      const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(testCase.mode, owner, 'Name', 'Desc', 'Prefix');
+      const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Name', 'Desc', 'Prefix', testCase.mode)).send();
 
       const result = await collection.methods.mint(...mintingParams).send({from: owner});
 
