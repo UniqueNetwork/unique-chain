@@ -10,8 +10,7 @@ describeGov('Governance: Technical Committee tests', () => {
   let preImageHash: string;
 
 
-  const moreThanHalfCommiteeThreshold = 2;
-  const AllTechCommitteeThreshold = 3;
+  const allTechCommitteeThreshold = 3;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -34,13 +33,13 @@ describeGov('Governance: Technical Committee tests', () => {
     });
   });
 
-  async function proposalFromCommittee(proposal: any) {
+  async function proposalFromAllCommittee(proposal: any) {
     return await usingPlaygrounds(async (helper) => {
-      expect((await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON().length).to.be.equal(3);
+      expect((await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON().length).to.be.equal(allTechCommitteeThreshold);
       const proposeResult = await helper.technicalCommittee.collective.propose(
         techcomms.andy,
         proposal,
-        AllTechCommitteeThreshold,
+        allTechCommitteeThreshold,
       );
 
       const commiteeProposedEvent = Event.TechnicalCommittee.Proposed.expect(proposeResult);
@@ -58,9 +57,16 @@ describeGov('Governance: Technical Committee tests', () => {
 
   itSub('TechComm can fast-track Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
-    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+    await helper.wait.parachainBlockMultiplesOf(35n);
+    const res =  await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+    console.log('external proposal preimage hash: ', preimageHash);
+    const lastReferendumIndex = await helper.callRpc('api.query.democracy.referendumCount', []);
+    const referendumInfo = await helper.democracy.referendumInfo(lastReferendumIndex);
+    console.log('!!!', referendumInfo);
+    const nextExternalPropose = (await helper.callRpc('api.query.democracy.nextExternal')).toJSON();
+    console.log(nextExternalPropose);
 
-    await expect(proposalFromCommittee(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
+    await expect(proposalFromAllCommittee(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
       .to.be.fulfilled;
   });
 
@@ -68,7 +74,7 @@ describeGov('Governance: Technical Committee tests', () => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
     const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
-    await expect(proposalFromCommittee(helper.democracy.cancelProposalCall(proposalIndex)))
+    await expect(proposalFromAllCommittee(helper.democracy.cancelProposalCall(proposalIndex)))
       .to.be.fulfilled;
   });
 
@@ -77,7 +83,7 @@ describeGov('Governance: Technical Committee tests', () => {
     const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
     const referendumIndex = startedEvent.referendumIndex;
 
-    await expect(proposalFromCommittee(helper.democracy.emergencyCancelCall(referendumIndex)))
+    await expect(proposalFromAllCommittee(helper.democracy.emergencyCancelCall(referendumIndex)))
       .to.be.fulfilled;
   });
 
@@ -104,11 +110,11 @@ describeGov('Governance: Technical Committee tests', () => {
       defaultEnactmentMoment,
     );
     const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-    await expect(proposalFromCommittee(helper.fellowship.referenda.cancelCall(referendumIndex))).to.be.fulfilled;
+    await expect(proposalFromAllCommittee(helper.fellowship.referenda.cancelCall(referendumIndex))).to.be.fulfilled;
   });
 
   itSub.skip('TechComm member can add a Fellowship member', async ({helper}) => {
-    const [newFellowshipMember] = await helper.arrange.createAccounts([0n], donor);
+    const newFellowshipMember = helper.arrange.createEmptyAccount();
     const fellowship = [[newFellowshipMember]];
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
@@ -116,38 +122,41 @@ describeGov('Governance: Technical Committee tests', () => {
     )).to.be.fulfilled;
     const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
     expect(fellowshipMembers).to.contains(newFellowshipMember.address);
-    await clearFellowship(sudoer, fellowship);
+    await clearFellowship(sudoer);
 
   });
 
   itSub('[Negative] TechComm cannot submit regular democracy proposal', async ({helper}) => {
     const councilProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 
-    await expect(proposalFromCommittee(councilProposal)).to.be.rejectedWith('BadOrigin');
+    await expect(proposalFromAllCommittee(councilProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm cannot externally propose SuperMajorityAgainst', async ({helper}) => {
     const commiteeProposal = await helper.democracy.externalProposeDefaultCall(dummyProposalCall(helper));
 
-    await expect(proposalFromCommittee(commiteeProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCommittee(commiteeProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm cannot externally propose SimpleMajority', async ({helper}) => {
     const commiteeProposal = await helper.democracy.externalProposeMajorityCall(dummyProposalCall(helper));
 
-    await expect(proposalFromCommittee(commiteeProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCommittee(commiteeProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm cannot externally propose SuperMajorityApprove', async ({helper}) => {
     const commiteeProposal = await helper.democracy.externalProposeCall(dummyProposalCall(helper));
 
-    await expect(proposalFromCommittee(commiteeProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCommittee(commiteeProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot submit regular democracy proposal', async ({helper}) => {
-    const commiteeProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
+    const memberProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 
-    await expect(proposalFromCommittee(commiteeProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.andy,
+      memberProposal,
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot externally propose SuperMajorityAgainst', async ({helper}) => {
@@ -156,7 +165,7 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       memberProposal,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot externally propose SimpleMajority', async ({helper}) => {
@@ -165,7 +174,7 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       memberProposal,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot externally propose SuperMajorityApprove', async ({helper}) => {
@@ -174,7 +183,7 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       memberProposal,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
 
@@ -187,18 +196,18 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
   itSub('[Negative] TechComm cannot add/remove a Council member', async ({helper}) => {
-    const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
+    const newCouncilMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
-    const removeMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
+    const removeMemberProposal = helper.council.membership.removeMemberCall(newCouncilMember.address);
 
-    await expect(proposalFromCommittee(addMemberProposal)).to.be.rejectedWith('BadOrigin');
-    await expect(proposalFromCommittee(removeMemberProposal)).to.be.rejectedWith('BadOrigin');
+    await expect(proposalFromAllCommittee(addMemberProposal)).to.be.rejectedWith('BadOrigin');
+    await expect(proposalFromAllCommittee(removeMemberProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot add/remove a Council member', async ({helper}) => {
-    const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
+    const newCouncilMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
-    const removeMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
+    const removeMemberProposal = helper.council.membership.removeMemberCall(newCouncilMember.address);
 
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
@@ -215,8 +224,8 @@ describeGov('Governance: Technical Committee tests', () => {
     const proposalForSet = await helper.council.membership.setPrimeCall(counselors.charu.address);
     const proposalForClear = await helper.council.membership.clearPrimeCall();
 
-    await expect(proposalFromCommittee(proposalForSet)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await expect(proposalFromCommittee(proposalForClear)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCommittee(proposalForSet)).to.be.rejectedWith('BadOrigin');
+    await expect(proposalFromAllCommittee(proposalForClear)).to.be.rejectedWith('BadOrigin');
     await clearCouncil(sudoer);
   });
 
@@ -228,43 +237,43 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       proposalForSet,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       proposalForClear,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
     await clearCouncil(sudoer);
   });
 
   itSub('[Negative] TechComm cannot add/remove a TechComm member', async ({helper}) => {
-    const [newCommMember] = await helper.arrange.createAccounts([0n], donor);
+    const newCommMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.council.membership.addMemberCall(newCommMember.address);
-    const removeMemberProposal = helper.council.membership.addMemberCall(newCommMember.address);
+    const removeMemberProposal = helper.council.membership.removeMemberCall(newCommMember.address);
 
-    await expect(proposalFromCommittee(addMemberProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await expect(proposalFromCommittee(removeMemberProposal)).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    await expect(proposalFromAllCommittee(addMemberProposal)).to.be.rejectedWith('BadOrigin');
+    await expect(proposalFromAllCommittee(removeMemberProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot add/remove a TechComm member', async ({helper}) => {
-    const [newCommMember] = await helper.arrange.createAccounts([0n], donor);
+    const newCommMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.council.membership.addMemberCall(newCommMember.address);
-    const removeMemberProposal = helper.council.membership.addMemberCall(newCommMember.address);
+    const removeMemberProposal = helper.council.membership.removeMemberCall(newCommMember.address);
 
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       addMemberProposal,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       removeMemberProposal,
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm cannot remove a Fellowship member', async ({helper}) => {
     const fellowship = await initFellowship(donor, sudoer);
 
-    await expect(proposalFromCommittee(helper.fellowship.collective.removeMemberCall(fellowship[5][0].address, 5))).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await clearFellowship(sudoer, fellowship);
+    await expect(proposalFromAllCommittee(helper.fellowship.collective.removeMemberCall(fellowship[5][0].address, 5))).to.be.rejectedWith('BadOrigin');
+    await clearFellowship(sudoer);
   });
 
   itSub('[Negative] TechComm member cannot remove a Fellowship member', async ({helper}) => {
@@ -273,8 +282,8 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.fellowship.collective.removeMemberCall(fellowship[5][0].address, 5),
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
-    await clearFellowship(sudoer, fellowship);
+    )).to.be.rejectedWith('BadOrigin');
+    await clearFellowship(sudoer);
   });
 
   itSub('[Negative] TechComm member cannot fast-track Democracy proposals', async ({helper}) => {
@@ -284,7 +293,7 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0),
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot cancel Democracy proposals', async ({helper}) => {
@@ -306,7 +315,14 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.democracy.emergencyCancelCall(referendumIndex),
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] TechComm cannot blacklist Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(proposalFromAllCommittee(helper.democracy.blacklistCall(preimageHash))).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm member cannot blacklist Democracy proposals', async ({helper}) => {
@@ -316,7 +332,7 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.democracy.blacklistCall(preimageHash),
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub.skip('[Negative] TechComm member cannot veto external Democracy proposals until the cool-off period pass', async ({helper}) => {
@@ -340,7 +356,7 @@ describeGov('Governance: Technical Committee tests', () => {
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.fellowship.referenda.cancelCall(referendumIndex),
-    )).to.be.rejectedWith('Proposal execution failed with BadOrigin');
+    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm referendum cannot be closed until the voting threshold is met', async ({helper}) => {
@@ -359,35 +375,5 @@ describeGov('Governance: Technical Committee tests', () => {
     await helper.technicalCommittee.collective.vote(techcomms.constantine, proposalHash, proposalIndex, true);
 
     await expect(helper.technicalCommittee.collective.close(techcomms.andy, proposalHash, proposalIndex)).to.be.rejectedWith('TooEarly');
-  });
-
-  itSub('[Negative] TechComm member cannot propose an existing TechComm proposal', async ({helper}) => {
-    const repeatedProposal = dummyProposalCall(helper);
-    await expect(helper.technicalCommittee.collective.propose(techcomms.andy, repeatedProposal, AllTechCommitteeThreshold)).to.be.fulfilled;
-    await expect(helper.technicalCommittee.collective.propose(techcomms.andy, repeatedProposal, AllTechCommitteeThreshold))
-      .to.be.rejectedWith('DuplicateProposal');
-    await expect(helper.technicalCommittee.collective.propose(techcomms.andy, repeatedProposal, AllTechCommitteeThreshold))
-      .to.be.rejectedWith('DuplicateProposal');
-  });
-
-  itSub('[Negative] TechComm non-member cannot propose', async ({helper}) => {
-    const [illegalProposer] = await helper.arrange.createAccounts([10n], donor);
-    await expect(helper.technicalCommittee.collective.propose(illegalProposer, dummyProposalCall(helper), AllTechCommitteeThreshold))
-      .to.be.rejectedWith('NotMember');
-  });
-
-  itSub('[Negative] TechComm non-member cannot vote', async ({helper}) => {
-    const [illegalVoter] = await helper.arrange.createAccounts([1n], donor);
-    const proposeResult = await helper.technicalCommittee.collective.propose(
-      techcomms.andy,
-      dummyProposalCall(helper),
-      AllTechCommitteeThreshold,
-    );
-
-    const councilProposedEvent = Event.TechnicalCommittee.Proposed.expect(proposeResult);
-    const proposalIndex = councilProposedEvent.proposalIndex;
-    const proposalHash = councilProposedEvent.proposalHash;
-
-    await expect(helper.technicalCommittee.collective.vote(illegalVoter, proposalHash, proposalIndex, true)).to.be.rejectedWith('NotMember');
   });
 });

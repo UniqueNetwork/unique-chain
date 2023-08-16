@@ -65,7 +65,7 @@ describeGov('Governance: Fellowship tests', () => {
   });
 
   after(async () => {
-    await clearFellowship(sudoer, members);
+    await clearFellowship(sudoer);
     await clearTechComm(sudoer);
     await clearCouncil(sudoer);
   });

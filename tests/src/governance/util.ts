@@ -152,22 +152,12 @@ export async function initFellowship(donor: IKeyringPair, sudoer: IKeyringPair) 
   return members;
 }
 
-export async function clearFellowship(sudoer: IKeyringPair, members: IKeyringPair[][]) {
+export async function clearFellowship(sudoer: IKeyringPair) {
   await usingPlaygrounds(async (helper) => {
-    for(let rank = 0; rank < fellowshipRankLimit; rank++) {
-      for(const member of members[rank]) {
-        await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, rank);
-      }
-    }
-  });
-}
-
-export async function clearFellowshipRankAgnostic(sudoer: IKeyringPair, members: IKeyringPair[][]) {
-  await usingPlaygrounds(async (helper) => {
-    for(let rank = 0; rank < fellowshipRankLimit; rank++) {
-      for(const member of members[rank]) {
-        await helper.getSudo().fellowship.collective.removeMember(sudoer, member.address, fellowshipRankLimit);
-      }
+    const fellowship = (await helper.getApi().query.fellowshipCollective.members.keys())
+      .map((key) => key.args[0].toString());
+    for(const  member of fellowship) {
+      await helper.getSudo().fellowship.collective.removeMember(sudoer, member, fellowshipRankLimit);
     }
   });
 }

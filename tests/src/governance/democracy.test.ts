@@ -64,7 +64,7 @@ describeGov('Governance: Democracy tests', () => {
 
     expect(BigInt(tally.ayes)).to.be.equal(ayeBalance);
 
-    await clearFellowship(sudoer, fellows);
+    await clearFellowship(sudoer);
   });
 
   itSub('[Negative] Regular user cannot submit a regular proposal', async ({helper}) => {

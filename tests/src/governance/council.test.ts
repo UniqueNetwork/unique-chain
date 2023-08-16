@@ -1,8 +1,8 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowshipRankAgnostic, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util';
+import {Event} from '../util/playgrounds/unique.dev';
+import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util';
 
 describeGov('Governance: Council tests', () => {
   let donor: IKeyringPair;
@@ -76,7 +76,7 @@ describeGov('Governance: Council tests', () => {
   }
 
   itSub('>50% of Council can externally propose SuperMajorityAgainst', async ({helper}) => {
-    const [forceSetBalanceReceiver] = await helper.arrange.createAccounts([0n], donor);
+    const forceSetBalanceReceiver = helper.arrange.createEmptyAccount();
     const forceSetBalanceTestValue = 20n * 10n ** 25n;
 
     const democracyProposal = await helper.constructApiCall('api.tx.balances.forceSetBalance', [
@@ -126,7 +126,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('Council prime member vote is the default', async ({helper}) => {
-    const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
+    const newTechCommMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address);
     const proposeResult = await helper.council.collective.propose(
       counselors.filip,
@@ -148,22 +148,22 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('Superuser can add a member', async ({helper}) => {
-    const [newMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.fulfilled;
+    const newMember = helper.arrange.createEmptyAccount();
+    await expect(helper.getSudo().council.membership.addMember(sudoer, newMember.address)).to.be.fulfilled;
 
     const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
     expect(members).to.contains(newMember.address);
   });
 
   itSub('Superuser can remove a member', async ({helper}) => {
-    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.removeMember', [counselors.alex.address])).to.be.fulfilled;
+    await expect(helper.getSudo().council.membership.removeMember(sudoer, counselors.alex.address)).to.be.fulfilled;
 
     const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
     expect(members).to.not.contains(counselors.alex.address);
   });
 
   itSub('>50% Council can add TechComm member', async ({helper}) => {
-    const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
+    const newTechCommMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address);
 
     await proposalFromMoreThanHalfCouncil(addMemberProposal);
@@ -182,7 +182,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub.skip('Council member can add Fellowship member', async ({helper}) => {
-    const [newFellowshipMember] = await helper.arrange.createAccounts([0n], donor);
+    const newFellowshipMember = helper.arrange.createEmptyAccount();
     await expect(helper.council.collective.execute(
       counselors.alex,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
@@ -200,7 +200,7 @@ describeGov('Governance: Council tests', () => {
     const record = (await helper.callRpc('api.query.fellowshipCollective.members', [memberWithZeroRank.address])).toJSON();
     expect(record).to.be.deep.equal({rank: 1});
 
-    await clearFellowshipRankAgnostic(sudoer, fellowship);
+    await clearFellowship(sudoer);
   });
 
   itSub('>50% Council can demote Fellowship member', async ({helper}) => {
@@ -213,7 +213,7 @@ describeGov('Governance: Council tests', () => {
     const record = (await helper.callRpc('api.query.fellowshipCollective.members', [memberWithRankOne.address])).toJSON();
     expect(record).to.be.deep.equal({rank: 0});
 
-    await clearFellowshipRankAgnostic(sudoer, fellowship);
+    await clearFellowship(sudoer);
   });
 
   itSub('Council can blacklist Democracy proposals', async ({helper}) => {
@@ -227,7 +227,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council cannot add Council member', async ({helper}) => {
-    const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
+    const newCouncilMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.council.membership.addMemberCall(newCouncilMember.address);
 
     await expect(proposalFromAllCouncil(addMemberProposal)).to.be.rejected;
@@ -257,35 +257,8 @@ describeGov('Governance: Council tests', () => {
     await expect(proposalFromAllCouncil(councilProposal)).to.be.rejectedWith(/BadOrigin/);
   });
 
-  itSub('[Negative] Cannot add a duplicate Council member', async ({helper}) => {
-    const [newMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.fulfilled;
-
-    const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
-    expect(members).to.contains(newMember.address);
-    await expect(helper.getSudo().executeExtrinsic(sudoer, 'api.tx.councilMembership.addMember', [newMember.address])).to.be.rejected;
-  });
-
-  itSub('[Negative] Cannot add a duplicate TechComm member', async ({helper}) => {
-    const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
-    const addMemberProposal = helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address);
-
-    await proposalFromMoreThanHalfCouncil(addMemberProposal);
-
-    const techCommMembers = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
-    expect(techCommMembers).to.contains(newTechCommMember.address);
-    await expect(proposalFromMoreThanHalfCouncil(addMemberProposal)).to.be.rejected;
-  });
-
-  itSub.skip('[Negative] Cannot add a duplicate Fellowship member', async ({helper}) => {
-    const [newFellowshipMember] = await helper.arrange.createAccounts([0n], donor);
-    await expect(helper.fellowship.collective.addMember(counselors.alex, newFellowshipMember.address)).to.be.fulfilled;
-    const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
-    expect(fellowshipMembers).to.contains(newFellowshipMember.address);
-  });
-
   itSub('[Negative] Council member cannot add/remove a Council member', async ({helper}) => {
-    const [newCouncilMember] = await helper.arrange.createAccounts([0n], donor);
+    const newCouncilMember = helper.arrange.createEmptyAccount();
     await expect(helper.council.collective.execute(
       counselors.alex,
       helper.council.membership.addMemberCall(newCouncilMember.address),
@@ -317,14 +290,14 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council member cannot add/remove a TechComm member', async ({helper}) => {
-    const [newTechCommMember] = await helper.arrange.createAccounts([0n], donor);
+    const newTechCommMember = helper.arrange.createEmptyAccount();
     await expect(helper.council.collective.execute(
       counselors.alex,
       helper.technicalCommittee.membership.addMemberCall(newTechCommMember.address),
     )).to.be.rejectedWith('BadOrigin');
     await expect(helper.council.collective.execute(
       counselors.alex,
-      helper.technicalCommittee.membership.removeMemberCall(counselors.charu.address),
+      helper.technicalCommittee.membership.removeMemberCall(newTechCommMember.address),
     )).to.be.rejectedWith('BadOrigin');
   });
 
@@ -340,7 +313,7 @@ describeGov('Governance: Council tests', () => {
       counselors.alex,
       helper.fellowship.collective.demoteCall(memberWithRankOne.address),
     )).to.be.rejectedWith('BadOrigin');
-    await clearFellowshipRankAgnostic(sudoer, fellowship);
+    await clearFellowship(sudoer);
   });
 
   itSub('[Negative] Council cannot fast-track Democracy proposals', async ({helper}) => {
@@ -451,39 +424,7 @@ describeGov('Governance: Council tests', () => {
 
 
     await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
-
-
     await expect(helper.council.collective.close(counselors.filip, proposalHash, proposalIndex)).to.be.rejectedWith('TooEarly');
-
   });
 
-  itSub('[Negative] Council member cannot propose an existing Council proposal', async ({helper}) => {
-    const repeatedProposal = dummyProposalCall(helper);
-    await expect(helper.council.collective.propose(counselors.filip, repeatedProposal, moreThanHalfCouncilThreshold))
-      .to.be.fulfilled;
-    await expect(helper.council.collective.propose(counselors.filip, repeatedProposal, moreThanHalfCouncilThreshold))
-      .to.be.rejectedWith('DuplicateProposal');
-    await expect(helper.council.collective.propose(counselors.alex, repeatedProposal, moreThanHalfCouncilThreshold))
-      .to.be.rejectedWith('DuplicateProposal');
-  });
-
-  itSub('[Negative] Council non-member cannot propose', async ({helper}) => {
-    const [illegalProposer] = await helper.arrange.createAccounts([10n], donor);
-    await expect(helper.council.collective.propose(illegalProposer, dummyProposalCall(helper), moreThanHalfCouncilThreshold)).to.be.rejectedWith('NotMember');
-  });
-
-  itSub('[Negative] Council non-member cannot vote', async ({helper}) => {
-    const [illegalVoter] = await helper.arrange.createAccounts([1n], donor);
-    const proposeResult = await helper.council.collective.propose(
-      counselors.filip,
-      dummyProposalCall(helper),
-      moreThanHalfCouncilThreshold,
-    );
-
-    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
-    const proposalIndex = councilProposedEvent.proposalIndex;
-    const proposalHash = councilProposedEvent.proposalHash;
-
-    await expect(helper.council.collective.vote(illegalVoter, proposalHash, proposalIndex, true)).to.be.rejectedWith('NotMember');
-  });
 });

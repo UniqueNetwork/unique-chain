@@ -971,6 +971,15 @@ class WaitGroup {
     return promise;
   }
 
+  async parachainBlockMultiplesOf(val: bigint) {
+    const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
+      if(data.number.toBigInt() % val == 0n) {
+        console.log(data.number.toBigInt());
+        unsubscribe();
+      }
+    });
+  }
+
   event<T extends IEventHelper>(
     maxBlocksToWait: number,
     eventHelper: T,
