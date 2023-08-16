@@ -139,6 +139,7 @@ where
 	T: Config + pallet_common::Config + pallet_nonfungible::Config + pallet_refungible::Config,
 	T::AccountId: From<[u8; 32]>,
 {
+/*
 	/// Create a collection
 	/// @return address Address of the newly created collection
 	#[weight(<SelfWeightOf<T>>::create_collection())]
@@ -247,6 +248,7 @@ where
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
 	}
+*/
 
 	/// Create an NFT collection
 	/// @param name Name of the collection
