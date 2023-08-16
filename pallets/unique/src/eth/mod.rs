@@ -194,7 +194,7 @@ where
 					.iter()
 					.map(map_eth_to_id)
 					.collect::<Option<BTreeSet<_>>>()
-					.ok_or_else(|| "can't convert address into collection id")?
+					.ok_or("can't convert address into collection id")?
 					.try_into()
 					.map_err(|_| "too many collections")?,
 			)
