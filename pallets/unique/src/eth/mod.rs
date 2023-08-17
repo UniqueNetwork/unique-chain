@@ -139,116 +139,116 @@ where
 	T: Config + pallet_common::Config + pallet_nonfungible::Config + pallet_refungible::Config,
 	T::AccountId: From<[u8; 32]>,
 {
-/*
-	/// Create a collection
-	/// @return address Address of the newly created collection
-	#[weight(<SelfWeightOf<T>>::create_collection())]
-	#[solidity(rename_selector = "createCollection")]
-	fn create_collection(
-		&mut self,
-		caller: Caller,
-		value: Value,
-		data: eth::CreateCollectionData,
-	) -> Result<Address> {
-		let (caller, name, description, token_prefix) =
-			convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
-		if data.mode != eth::CollectionMode::Fungible && data.decimals != 0 {
-			return Err("decimals are only supported for NFT and RFT collections".into());
-		}
-		let mode = match data.mode {
-			eth::CollectionMode::Fungible => CollectionMode::Fungible(data.decimals),
-			eth::CollectionMode::Nonfungible => CollectionMode::NFT,
-			eth::CollectionMode::Refungible => CollectionMode::ReFungible,
-		};
+	/*
+		/// Create a collection
+		/// @return address Address of the newly created collection
+		#[weight(<SelfWeightOf<T>>::create_collection())]
+		#[solidity(rename_selector = "createCollection")]
+		fn create_collection(
+			&mut self,
+			caller: Caller,
+			value: Value,
+			data: eth::CreateCollectionData,
+		) -> Result<Address> {
+			let (caller, name, description, token_prefix) =
+				convert_data::<T>(caller, data.name, data.description, data.token_prefix)?;
+			if data.mode != eth::CollectionMode::Fungible && data.decimals != 0 {
+				return Err("decimals are only supported for NFT and RFT collections".into());
+			}
+			let mode = match data.mode {
+				eth::CollectionMode::Fungible => CollectionMode::Fungible(data.decimals),
+				eth::CollectionMode::Nonfungible => CollectionMode::NFT,
+				eth::CollectionMode::Refungible => CollectionMode::ReFungible,
+			};
 
-		let properties: BoundedVec<_, _> = data
-			.properties
-			.into_iter()
-			.map(eth::Property::try_into)
-			.collect::<Result<Vec<_>>>()?
-			.try_into()
-			.map_err(|_| "too many properties")?;
+			let properties: BoundedVec<_, _> = data
+				.properties
+				.into_iter()
+				.map(eth::Property::try_into)
+				.collect::<Result<Vec<_>>>()?
+				.try_into()
+				.map_err(|_| "too many properties")?;
 
-		let token_property_permissions =
-			eth::TokenPropertyPermission::into_property_key_permissions(
-				data.token_property_permissions,
-			)?
-			.try_into()
-			.map_err(|_| "too many property permissions")?;
+			let token_property_permissions =
+				eth::TokenPropertyPermission::into_property_key_permissions(
+					data.token_property_permissions,
+				)?
+				.try_into()
+				.map_err(|_| "too many property permissions")?;
 
-		let limits = if !data.limits.is_empty() {
-			Some(
-				data.limits
-					.into_iter()
-					.collect::<Result<up_data_structs::CollectionLimits>>()?,
-			)
-		} else {
-			None
-		};
+			let limits = if !data.limits.is_empty() {
+				Some(
+					data.limits
+						.into_iter()
+						.collect::<Result<up_data_structs::CollectionLimits>>()?,
+				)
+			} else {
+				None
+			};
 
-		let pending_sponsor = data.pending_sponsor.into_option_sub_cross_account::<T>()?;
+			let pending_sponsor = data.pending_sponsor.into_option_sub_cross_account::<T>()?;
 
-		let restricted = if !data.nesting_settings.restricted.is_empty() {
-			Some(
-				data.nesting_settings
-					.restricted
-					.iter()
-					.map(map_eth_to_id)
-					.collect::<Option<BTreeSet<_>>>()
-					.ok_or("can't convert address into collection id")?
-					.try_into()
-					.map_err(|_| "too many collections")?,
-			)
-		} else {
-			None
-		};
+			let restricted = if !data.nesting_settings.restricted.is_empty() {
+				Some(
+					data.nesting_settings
+						.restricted
+						.iter()
+						.map(map_eth_to_id)
+						.collect::<Option<BTreeSet<_>>>()
+						.ok_or("can't convert address into collection id")?
+						.try_into()
+						.map_err(|_| "too many collections")?,
+				)
+			} else {
+				None
+			};
 
-		let admin_list = data
-			.admin_list
-			.into_iter()
-			.map(|admin| admin.into_sub_cross_account::<T>())
-			.collect::<Result<Vec<_>>>()?;
+			let admin_list = data
+				.admin_list
+				.into_iter()
+				.map(|admin| admin.into_sub_cross_account::<T>())
+				.collect::<Result<Vec<_>>>()?;
 
-		let flags = data.flags;
-		if !flags.is_allowed_for_user() {
-			return Err("internal flags were used".into());
-		}
+			let flags = data.flags;
+			if !flags.is_allowed_for_user() {
+				return Err("internal flags were used".into());
+			}
 
-		let data = CreateCollectionData {
-			name,
-			mode,
-			description,
-			token_prefix,
-			properties,
-			token_property_permissions,
-			limits,
-			pending_sponsor,
-			access: None,
-			permissions: Some(CollectionPermissions {
+			let data = CreateCollectionData {
+				name,
+				mode,
+				description,
+				token_prefix,
+				properties,
+				token_property_permissions,
+				limits,
+				pending_sponsor,
 				access: None,
-				mint_mode: None,
-				nesting: Some(NestingPermissions {
-					token_owner: data.nesting_settings.token_owner,
-					collection_admin: data.nesting_settings.collection_admin,
-					restricted,
-					#[cfg(feature = "runtime-benchmarks")]
-					permissive: true,
+				permissions: Some(CollectionPermissions {
+					access: None,
+					mint_mode: None,
+					nesting: Some(NestingPermissions {
+						token_owner: data.nesting_settings.token_owner,
+						collection_admin: data.nesting_settings.collection_admin,
+						restricted,
+						#[cfg(feature = "runtime-benchmarks")]
+						permissive: true,
+					}),
 				}),
-			}),
-			admin_list,
-			flags,
-		};
-		check_sent_amount_equals_collection_creation_price::<T>(value)?;
-		let collection_helpers_address =
-			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
+				admin_list,
+				flags,
+			};
+			check_sent_amount_equals_collection_creation_price::<T>(value)?;
+			let collection_helpers_address =
+				T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(dispatch_to_evm::<T>)?;
+			let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
+				.map_err(dispatch_to_evm::<T>)?;
 
-		let address = pallet_common::eth::collection_id_to_address(collection_id);
-		Ok(address)
-	}
-*/
+			let address = pallet_common::eth::collection_id_to_address(collection_id);
+			Ok(address)
+		}
+	*/
 
 	/// Create an NFT collection
 	/// @param name Name of the collection
