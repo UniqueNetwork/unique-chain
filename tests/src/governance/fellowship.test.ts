@@ -23,7 +23,8 @@ describeGov('Governance: Fellowship tests', () => {
     const badProposal = {
       Inline: proposalCall.method.toHex(),
     };
-
+    // Remove
+    helper.logger = helper.util.getDefaultLogger();
     const submitResult = await helper.fellowship.referenda.submit(
       rank1Proposer,
       fellowshipPropositionOrigin,

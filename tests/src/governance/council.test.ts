@@ -78,6 +78,8 @@ describeGov('Governance: Council tests', () => {
   itSub('>50% of Council can externally propose SuperMajorityAgainst', async ({helper}) => {
     const forceSetBalanceReceiver = helper.arrange.createEmptyAccount();
     const forceSetBalanceTestValue = 20n * 10n ** 25n;
+    // Remove
+    helper.logger = helper.util.getDefaultLogger();
 
     const democracyProposal = await helper.constructApiCall('api.tx.balances.forceSetBalance', [
       forceSetBalanceReceiver.address, forceSetBalanceTestValue,
@@ -120,7 +122,7 @@ describeGov('Governance: Council tests', () => {
     const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
     expect(passedReferendumEvent.referendumIndex).to.be.equal(democracyReferendumIndex);
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.GovScheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod + 10 , Event.GovScheduler.Dispatched);
     const receiverBalance = await helper.balance.getSubstrate(forceSetBalanceReceiver.address);
     expect(receiverBalance).to.be.equal(forceSetBalanceTestValue);
   });

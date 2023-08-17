@@ -752,47 +752,6 @@ export interface FrameSystemPhase extends Enum {
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
 }
 
-/** @name OpalRuntimeOriginCaller */
-export interface OpalRuntimeOriginCaller extends Enum {
-  readonly isSystem: boolean;
-  readonly asSystem: FrameSupportDispatchRawOrigin;
-  readonly isVoid: boolean;
-  readonly asVoid: SpCoreVoid;
-  readonly isCouncil: boolean;
-  readonly asCouncil: PalletCollectiveRawOrigin;
-  readonly isTechnicalCommittee: boolean;
-  readonly asTechnicalCommittee: PalletCollectiveRawOrigin;
-  readonly isPolkadotXcm: boolean;
-  readonly asPolkadotXcm: PalletXcmOrigin;
-  readonly isCumulusXcm: boolean;
-  readonly asCumulusXcm: CumulusPalletXcmOrigin;
-  readonly isOrigins: boolean;
-  readonly asOrigins: OpalRuntimeRuntimeCommonConfigPalletsGovernanceOriginsPalletCustomOriginsOrigin;
-  readonly isEthereum: boolean;
-  readonly asEthereum: PalletEthereumRawOrigin;
-  readonly type: 'System' | 'Void' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'Origins' | 'Ethereum';
-}
-
-/** @name OpalRuntimeRuntime */
-export interface OpalRuntimeRuntime extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonConfigPalletsGovernanceOriginsPalletCustomOriginsOrigin */
-export interface OpalRuntimeRuntimeCommonConfigPalletsGovernanceOriginsPalletCustomOriginsOrigin extends Enum {
-  readonly isFellowshipProposition: boolean;
-  readonly type: 'FellowshipProposition';
-}
-
-/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
-export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
-export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonSessionKeys */
-export interface OpalRuntimeRuntimeCommonSessionKeys extends Struct {
-  readonly aura: SpConsensusAuraSr25519AppSr25519Public;
-}
-
 /** @name OrmlTokensAccountData */
 export interface OrmlTokensAccountData extends Struct {
   readonly free: u128;
@@ -1694,11 +1653,7 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetCollatorSelectionKickThreshold: {
     readonly threshold: Option<u32>;
   } & Struct;
-  readonly isSetGovernanceArg: boolean;
-  readonly asSetGovernanceArg: {
-    readonly arg: PalletConfigurationGovernanceArgs;
-  } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold' | 'SetGovernanceArg';
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold';
 }
 
 /** @name PalletConfigurationError */
@@ -1721,75 +1676,7 @@ export interface PalletConfigurationEvent extends Enum {
   readonly asNewCollatorKickThreshold: {
     readonly lengthInBlocks: Option<u32>;
   } & Struct;
-  readonly isGovernanceConfigurationChanged: boolean;
-  readonly asGovernanceConfigurationChanged: PalletConfigurationGovernanceArgs;
-  readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold' | 'GovernanceConfigurationChanged';
-}
-
-/** @name PalletConfigurationGovernanceArgs */
-export interface PalletConfigurationGovernanceArgs extends Enum {
-  readonly isLaunchPeriod: boolean;
-  readonly asLaunchPeriod: u32;
-  readonly isVotingPeriod: boolean;
-  readonly asVotingPeriod: u32;
-  readonly isFastTrackVotingPeriod: boolean;
-  readonly asFastTrackVotingPeriod: u32;
-  readonly isMinimumDeposit: boolean;
-  readonly asMinimumDeposit: u128;
-  readonly isEnactmentPeriod: boolean;
-  readonly asEnactmentPeriod: u32;
-  readonly isCooloffPeriod: boolean;
-  readonly asCooloffPeriod: u32;
-  readonly isInstantAllowed: boolean;
-  readonly asInstantAllowed: bool;
-  readonly isMaxVotes: boolean;
-  readonly asMaxVotes: u32;
-  readonly isMaxProposals: boolean;
-  readonly asMaxProposals: u32;
-  readonly isCouncilMotionDuration: boolean;
-  readonly asCouncilMotionDuration: u32;
-  readonly isCouncilMaxProposals: boolean;
-  readonly asCouncilMaxProposals: u32;
-  readonly isCouncilMaxMembers: boolean;
-  readonly asCouncilMaxMembers: u32;
-  readonly isTechnicalMotionDuration: boolean;
-  readonly asTechnicalMotionDuration: u32;
-  readonly isTechnicalMaxProposals: boolean;
-  readonly asTechnicalMaxProposals: u32;
-  readonly isTechincalMaxMembers: boolean;
-  readonly asTechincalMaxMembers: u32;
-  readonly isMaxScheduledPerBlock: boolean;
-  readonly asMaxScheduledPerBlock: u32;
-  readonly isAlarmInterval: boolean;
-  readonly asAlarmInterval: u32;
-  readonly isSubmissionDeposit: boolean;
-  readonly asSubmissionDeposit: u128;
-  readonly isUndecidingTimeout: boolean;
-  readonly asUndecidingTimeout: u32;
-  readonly type: 'LaunchPeriod' | 'VotingPeriod' | 'FastTrackVotingPeriod' | 'MinimumDeposit' | 'EnactmentPeriod' | 'CooloffPeriod' | 'InstantAllowed' | 'MaxVotes' | 'MaxProposals' | 'CouncilMotionDuration' | 'CouncilMaxProposals' | 'CouncilMaxMembers' | 'TechnicalMotionDuration' | 'TechnicalMaxProposals' | 'TechincalMaxMembers' | 'MaxScheduledPerBlock' | 'AlarmInterval' | 'SubmissionDeposit' | 'UndecidingTimeout';
-}
-
-/** @name PalletConfigurationGovernanceConfiguration */
-export interface PalletConfigurationGovernanceConfiguration extends Struct {
-  readonly launchPeriod: u32;
-  readonly votingPeriod: u32;
-  readonly fastTrackVotingPeriod: u32;
-  readonly minimumDeposit: u128;
-  readonly enactmentPeriod: u32;
-  readonly cooloofPeriod: u32;
-  readonly instantAllowed: bool;
-  readonly maxVotes: u32;
-  readonly maxProposals: u32;
-  readonly councilMotionDuration: u32;
-  readonly councilMaxProposals: u32;
-  readonly councilMaxMembers: u32;
-  readonly technicalMotionDuration: u32;
-  readonly technicalMaxProposals: u32;
-  readonly technicalMaxMembers: u32;
-  readonly maxScheduledPerBlock: u32;
-  readonly alarmInterval: u32;
-  readonly submissionDeposit: u128;
-  readonly undecidingTimeout: u32;
+  readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold';
 }
 
 /** @name PalletDemocracyCall */
@@ -2403,6 +2290,12 @@ export interface PalletFungibleError extends Enum {
   readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed' | 'SettingAllowanceForAllNotAllowed' | 'FungibleTokensAreAlwaysValid';
 }
 
+/** @name PalletGovOriginsOrigin */
+export interface PalletGovOriginsOrigin extends Enum {
+  readonly isFellowshipProposition: boolean;
+  readonly type: 'FellowshipProposition';
+}
+
 /** @name PalletIdentityBitFlags */
 export interface PalletIdentityBitFlags extends Struct {
   readonly _bitLength: 64;
@@ -2896,7 +2789,7 @@ export interface PalletRankedCollectiveVoteRecord extends Enum {
 export interface PalletReferendaCall extends Enum {
   readonly isSubmit: boolean;
   readonly asSubmit: {
-    readonly proposalOrigin: OpalRuntimeOriginCaller;
+    readonly proposalOrigin: QuartzRuntimeOriginCaller;
     readonly proposal: FrameSupportPreimagesBounded;
     readonly enactmentMoment: FrameSupportScheduleDispatchTime;
   } & Struct;
@@ -3098,7 +2991,7 @@ export interface PalletReferendaReferendumInfo extends Enum {
 /** @name PalletReferendaReferendumStatus */
 export interface PalletReferendaReferendumStatus extends Struct {
   readonly track: u16;
-  readonly origin: OpalRuntimeOriginCaller;
+  readonly origin: QuartzRuntimeOriginCaller;
   readonly proposal: FrameSupportPreimagesBounded;
   readonly enactment: FrameSupportScheduleDispatchTime;
   readonly submitted: u32;
@@ -3229,14 +3122,14 @@ export interface PalletSchedulerScheduled extends Struct {
   readonly priority: u8;
   readonly call: FrameSupportPreimagesBounded;
   readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-  readonly origin: OpalRuntimeOriginCaller;
+  readonly origin: QuartzRuntimeOriginCaller;
 }
 
 /** @name PalletSessionCall */
 export interface PalletSessionCall extends Enum {
   readonly isSetKeys: boolean;
   readonly asSetKeys: {
-    readonly keys_: OpalRuntimeRuntimeCommonSessionKeys;
+    readonly keys_: QuartzRuntimeRuntimeCommonSessionKeys;
     readonly proof: Bytes;
   } & Struct;
   readonly isPurgeKeys: boolean;
@@ -4030,6 +3923,41 @@ export interface PolkadotPrimitivesV4PersistedValidationData extends Struct {
 export interface PolkadotPrimitivesV4UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
+}
+
+/** @name QuartzRuntimeOriginCaller */
+export interface QuartzRuntimeOriginCaller extends Enum {
+  readonly isSystem: boolean;
+  readonly asSystem: FrameSupportDispatchRawOrigin;
+  readonly isVoid: boolean;
+  readonly asVoid: SpCoreVoid;
+  readonly isCouncil: boolean;
+  readonly asCouncil: PalletCollectiveRawOrigin;
+  readonly isTechnicalCommittee: boolean;
+  readonly asTechnicalCommittee: PalletCollectiveRawOrigin;
+  readonly isPolkadotXcm: boolean;
+  readonly asPolkadotXcm: PalletXcmOrigin;
+  readonly isCumulusXcm: boolean;
+  readonly asCumulusXcm: CumulusPalletXcmOrigin;
+  readonly isOrigins: boolean;
+  readonly asOrigins: PalletGovOriginsOrigin;
+  readonly isEthereum: boolean;
+  readonly asEthereum: PalletEthereumRawOrigin;
+  readonly type: 'System' | 'Void' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'Origins' | 'Ethereum';
+}
+
+/** @name QuartzRuntimeRuntime */
+export interface QuartzRuntimeRuntime extends Null {}
+
+/** @name QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls */
+export interface QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
+
+/** @name QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance */
+export interface QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
+
+/** @name QuartzRuntimeRuntimeCommonSessionKeys */
+export interface QuartzRuntimeRuntimeCommonSessionKeys extends Struct {
+  readonly aura: SpConsensusAuraSr25519AppSr25519Public;
 }
 
 /** @name SpArithmeticArithmeticError */

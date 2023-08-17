@@ -88,8 +88,10 @@ export async function initTechComm(donor: IKeyringPair, superuser: IKeyringPair)
     const [greg, andy, constantine] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
-      const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
-      expect(members).to.be.deep.equal([]);
+      const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON() as [];
+      if(members.length != 0) {
+        await clearTechComm(superuser);
+      }
     }
     await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [greg.address]);
     await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [andy.address]);
@@ -131,7 +133,11 @@ export async function initFellowship(donor: IKeyringPair, sudoer: IKeyringPair) 
   const members: IKeyringPair[][] = [];
 
   await usingPlaygrounds(async (helper) => {
+    const currentFellows = await helper.getApi().query.fellowshipCollective.members.keys();
 
+    if(currentFellows.length != 0) {
+      await clearFellowship(sudoer);
+    }
     for(let i = 0; i < fellowshipRankLimit; i++) {
       const rankMembers = await helper.arrange.createAccounts(
         Array(numMembersInRank).fill(memberBalance),
@@ -154,15 +160,26 @@ export async function initFellowship(donor: IKeyringPair, sudoer: IKeyringPair) 
 }
 
 export async function clearFellowship(sudoer: IKeyringPair) {
+  // await clearFellowshipReferenda(sudoer);
+
   await usingPlaygrounds(async (helper) => {
     const fellowship = (await helper.getApi().query.fellowshipCollective.members.keys())
       .map((key) => key.args[0].toString());
+    console.log(fellowship);
     for(const  member of fellowship) {
       await helper.getSudo().fellowship.collective.removeMember(sudoer, member, fellowshipRankLimit);
     }
   });
 }
 
+export async function clearFellowshipReferenda(sudoer: IKeyringPair) {
+  await usingPlaygrounds(async (helper) => {
+    const proposalsCount = (await helper.getApi().query.fellowshipReferenda.referendumCount());
+    for(let i = 0; i < proposalsCount.toNumber(); i++) {
+      await helper.getSudo().fellowship.referenda.cancel(sudoer, i);
+    }
+  });
+}
 export async function voteUnanimouslyInFellowship(helper: UniqueHelper, fellows: IKeyringPair[][], minRank: number, referendumIndex: number) {
   for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
     for(const member of fellows[rank]) {

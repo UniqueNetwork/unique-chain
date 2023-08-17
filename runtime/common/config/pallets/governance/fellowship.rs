@@ -1,7 +1,4 @@
-use crate::{
-	Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler as Scheduler, FellowshipReferenda,
-	Runtime,
-};
+use crate::{Preimage, Treasury, RuntimeCall, RuntimeEvent, GovScheduler, FellowshipReferenda, Runtime};
 use super::*;
 use pallet_gov_origins::Origin as GovOrigins;
 use pallet_ranked_collective::{Config as RankedConfig, Rank, TallyOf};
@@ -44,11 +41,11 @@ impl pallet_referenda::Config for Runtime {
 	type WeightInfo = pallet_referenda::weights::SubstrateWeight<Self>;
 	type RuntimeCall = RuntimeCall;
 	type RuntimeEvent = RuntimeEvent;
-	type Scheduler = Scheduler;
+	type Scheduler = GovScheduler;
 	type Currency = Balances;
 	type SubmitOrigin = pallet_ranked_collective::EnsureMember<Runtime, (), 1>;
-	type CancelOrigin = AllTechnicalCommittee;
-	type KillOrigin = AllTechnicalCommittee;
+	type CancelOrigin = RootOrAllTechnicalCommittee;
+	type KillOrigin = RootOrAllTechnicalCommittee;
 	type Slash = Treasury;
 	type Votes = pallet_ranked_collective::Votes;
 	type Tally = pallet_ranked_collective::TallyOf<Runtime>;
