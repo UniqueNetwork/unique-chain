@@ -216,25 +216,15 @@ impl<T: Config> Deref for FungibleHandle<T> {
 /// Pallet implementation for fungible assets
 impl<T: Config> Pallet<T> {
 	/// Initializes the collection. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_collection(
+	pub fn create_collection_internal(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data)
-	}
-
-	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_foreign_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_foreign_collection(owner, payer, data)
+		<PalletCommon<T>>::create_collection_internal(owner, data)
 	}
 
 	/// Destroys a collection.
-	pub fn destroy_collection(
+	pub fn destroy_collection_internal(
 		collection: FungibleHandle<T>,
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
@@ -246,7 +236,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		PalletCommon::destroy_collection(collection.0, sender)?;
+		PalletCommon::destroy_collection_internal(collection.0, sender)?;
 
 		<TotalSupply<T>>::remove(id);
 		let _ = <Balance<T>>::clear_prefix((id,), u32::MAX, None);

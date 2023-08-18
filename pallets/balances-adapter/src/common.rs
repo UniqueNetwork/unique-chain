@@ -1,11 +1,22 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
 use crate::{Config, NativeFungibleHandle, Pallet};
-use frame_support::{fail, weights::Weight};
+use frame_support::{
+	fail, ensure,
+	weights::Weight,
+	dispatch::{PostDispatchInfo, Pays},
+	traits::{
+		fungible::Mutate,
+		tokens::{Precision, Fortitude},
+	},
+};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo};
+use pallet_common::{
+	CommonCollectionOperations, CommonWeightInfo, erc::CrossAccountId,
+	NATIVE_FUNGIBLE_COLLECTION_ID,
+};
 use up_data_structs::TokenId;
-
+use sp_core::Get;
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 
 // All implementations with `Weight::default` used in methods that return error `UnsupportedOperation`.
@@ -90,12 +101,39 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 	fn create_item(
 		&self,
-		_sender: <T>::CrossAccountId,
-		_to: <T>::CrossAccountId,
-		_data: up_data_structs::CreateItemData,
+		sender: <T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemData,
 		_nesting_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		ensure!(
+			sender == self.owner(),
+			pallet_common::Error::<T>::NoPermission,
+		);
+
+		match &data {
+			up_data_structs::CreateItemData::Fungible(fungible_data) => {
+				let amount = fungible_data.value;
+
+				ensure!(amount != 0, <pallet_common::Error<T>>::UnsupportedOperation);
+
+				T::Mutate::mint_into(
+					to.as_sub(),
+					fungible_data
+						.value
+						.try_into()
+						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+				)?;
+
+				Ok(PostDispatchInfo {
+					actual_weight: None,
+					pays_fee: Pays::Yes,
+				})
+			}
+			_ => {
+				fail!(pallet_fungible::Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken)
+			}
+		}
 	}
 
 	fn create_multiple_items(
@@ -226,13 +264,35 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 
 	fn burn_from(
 		&self,
-		_sender: <T>::CrossAccountId,
-		_from: <T>::CrossAccountId,
-		_token: TokenId,
-		_amount: u128,
+		sender: <T>::CrossAccountId,
+		from: <T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
 		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		ensure!(
+			sender == self.owner(),
+			pallet_common::Error::<T>::NoPermission,
+		);
+
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
+		T::Mutate::burn_from(
+			from.as_sub(),
+			amount
+				.try_into()
+				.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+			Precision::Exact,
+			Fortitude::Polite,
+		)?;
+
+		Ok(PostDispatchInfo {
+			actual_weight: None,
+			pays_fee: Pays::Yes,
+		})
 	}
 
 	fn check_nesting(
@@ -355,5 +415,17 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_token: TokenId,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
 		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+	}
+
+	fn collection_id(&self) -> up_data_structs::CollectionId {
+		NATIVE_FUNGIBLE_COLLECTION_ID
+	}
+
+	fn owner(&self) -> <T>::CrossAccountId {
+		T::CrossAccountId::from_sub(T::TreasuryAccountId::get())
+	}
+
+	fn flags(&self) -> up_data_structs::CollectionFlags {
+		Default::default()
 	}
 }

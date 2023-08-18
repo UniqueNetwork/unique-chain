@@ -16,7 +16,7 @@
 
 use frame_support::{
 	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError},
-	parameter_types,
+	parameter_types, PalletId,
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
@@ -29,36 +29,26 @@ use xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
 use xcm_executor::{XcmExecutor, traits::ShouldExecute};
+use orml_traits::location::AbsoluteReserveProvider;
+use orml_xcm_support::MultiNativeAsset;
 use sp_std::marker::PhantomData;
+use pallet_foreign_assets::FreeForAll;
 use crate::{
-	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo, ParachainSystem, PolkadotXcm,
-	XcmpQueue, xcm_barrier::Barrier, RelayNetwork, AllPalletsWithSystem, Balances,
+	ForeignAssets, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo,
+	ParachainSystem, PolkadotXcm, XcmpQueue, xcm_barrier::Barrier, RelayNetwork,
+	AllPalletsWithSystem, Balances,
 };
 
 use up_common::types::AccountId;
 
-#[cfg(feature = "foreign-assets")]
-pub mod foreignassets;
-
-#[cfg(not(feature = "foreign-assets"))]
-pub mod nativeassets;
-
-#[cfg(feature = "foreign-assets")]
-pub use foreignassets as xcm_assets;
-
-#[cfg(not(feature = "foreign-assets"))]
-pub use nativeassets as xcm_assets;
-
-use xcm_assets::{AssetTransactor, IsReserve, Trader};
-
 parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::parent();
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
 	pub UniversalLocation: InteriorMultiLocation = (
 		GlobalConsensus(crate::RelayNetwork::get()),
 		Parachain(ParachainInfo::get().into()),
 	).into();
 	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+	pub ForeignAssetPalletId: PalletId = PalletId(*b"frgnasts");
 
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000, 1000); // ?
@@ -167,14 +157,14 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = AssetTransactor;
+	type AssetTransactor = ForeignAssets;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
-	type IsReserve = IsReserve;
+	type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 	type IsTeleporter = (); // Teleportation is disabled
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = Weigher;
-	type Trader = Trader<T>;
+	type Trader = FreeForAll;
 	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type PalletInstancesInfo = AllPalletsWithSystem;
@@ -237,7 +227,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = PolkadotXcm;
-	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
 	type ControllerOrigin = EnsureRoot<AccountId>;
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = ();
@@ -246,5 +236,14 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
-	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
+	type ExecuteOverweightOrigin = EnsureRoot<AccountId>;
+}
+
+impl pallet_foreign_assets::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type PalletId = ForeignAssetPalletId;
+	type ForceRegisterOrigin = EnsureRoot<AccountId>;
+	type SelfLocation = SelfLocation;
+	type LocationToAccountId = LocationToAccountId;
+	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
 }

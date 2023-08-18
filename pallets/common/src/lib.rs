@@ -66,8 +66,7 @@ use frame_support::{
 	ensure,
 	traits::{
 		Get,
-		fungible::{Balanced, Debt, Inspect},
-		tokens::{Imbalance, Precision, Preservation},
+		fungible::{Balanced, Inspect},
 	},
 	dispatch::Pays,
 	transactional, fail,
@@ -82,12 +81,13 @@ use up_data_structs::{
 	CollectionProperties as CollectionPropertiesT, TokenProperties, PropertiesPermissionMap,
 	PropertyKey, PropertyValue, PropertyPermission, PropertiesError, TokenOwnerError,
 	PropertyKeyPermission, TokenData, TrySetProperty, PropertyScope, CollectionPermissions,
+	CollectionFlags,
 };
 use up_pov_estimate_rpc::PovInfo;
 
 pub use pallet::*;
 use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, traits::Zero};
+use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -192,7 +192,7 @@ impl<T: Config> CollectionHandle<T> {
 		sender: &T::CrossAccountId,
 		sponsor: T::AccountId,
 	) -> DispatchResult {
-		self.check_is_internal()?;
+		self.check_is_not_foreign()?;
 		self.check_is_owner_or_admin(sender)?;
 
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor.clone());
@@ -217,7 +217,7 @@ impl<T: Config> CollectionHandle<T> {
 	///
 	/// * `sponsor`: ID of the account of the sponsor-to-be.
 	pub fn force_set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
-		self.check_is_internal()?;
+		self.check_is_not_foreign()?;
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sponsor.clone());
 
@@ -238,7 +238,7 @@ impl<T: Config> CollectionHandle<T> {
 	/// In order for the sponsorship to become active, the user set as the sponsor must confirm their participation.
 	/// Before confirming sponsorship, the user must be specified as the sponsor of the collection via [`Self::set_sponsor`].
 	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> DispatchResult {
-		self.check_is_internal()?;
+		self.check_is_not_foreign()?;
 		ensure!(
 			self.collection.sponsorship.pending_sponsor() == Some(sender),
 			Error::<T>::ConfirmSponsorshipFail
@@ -259,7 +259,7 @@ impl<T: Config> CollectionHandle<T> {
 
 	/// Remove collection sponsor.
 	pub fn remove_sponsor(&mut self, sender: &T::CrossAccountId) -> DispatchResult {
-		self.check_is_internal()?;
+		self.check_is_not_foreign()?;
 		self.check_is_owner_or_admin(sender)?;
 
 		self.collection.sponsorship = SponsorshipState::Disabled;
@@ -279,7 +279,7 @@ impl<T: Config> CollectionHandle<T> {
 	/// Differs from `remove_sponsor` in that
 	/// it doesn't require consent from the `owner` of the collection.
 	pub fn force_remove_sponsor(&mut self) -> DispatchResult {
-		self.check_is_internal()?;
+		self.check_is_not_foreign()?;
 
 		self.collection.sponsorship = SponsorshipState::Disabled;
 
@@ -293,21 +293,9 @@ impl<T: Config> CollectionHandle<T> {
 		self.save()
 	}
 
-	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
-	/// Now check only the `external` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
-	pub fn check_is_internal(&self) -> DispatchResult {
-		if self.flags.external {
-			return Err(<Error<T>>::CollectionIsExternal)?;
-		}
-
-		Ok(())
-	}
-
-	/// Checks that the collection was created with, and must be operated upon through an **assimilated API**.
-	/// Now check only the `external` flag and if it's **false**, then return [`Error::CollectionIsInternal`] error.
-	pub fn check_is_external(&self) -> DispatchResult {
-		if !self.flags.external {
-			return Err(<Error<T>>::CollectionIsInternal)?;
+	pub fn check_is_not_foreign(&self) -> DispatchResult {
+		if !self.flags.foreign {
+			return Err(<Error<T>>::InvalidOperationWithForeignCollection)?;
 		}
 
 		Ok(())
@@ -375,7 +363,7 @@ impl<T: Config> CollectionHandle<T> {
 		caller: T::CrossAccountId,
 		new_owner: T::CrossAccountId,
 	) -> DispatchResult {
-		self.check_is_internal()?;
+		self.check_is_not_foreign()?;
 		self.check_is_owner(&caller)?;
 		self.collection.owner = new_owner.as_sub().clone();
 
@@ -764,11 +752,8 @@ pub mod pallet {
 		/// Empty property keys are forbidden
 		EmptyPropertyKey,
 
-		/// Tried to access an external collection with an internal API
-		CollectionIsExternal,
-
-		/// Tried to access an internal collection with an external API
-		CollectionIsInternal,
+		/// Invalid operation with a foreign collection
+		InvalidOperationWithForeignCollection,
 
 		/// This address is not set as sponsor, use setCollectionSponsor first.
 		ConfirmSponsorshipFail,
@@ -1045,7 +1030,7 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
-			read_only: flags.external,
+			read_only: false,
 
 			flags: RpcCollectionFlags {
 				foreign: flags.foreign,
@@ -1085,34 +1070,8 @@ macro_rules! limit_default_clone {
 }
 
 impl<T: Config> Pallet<T> {
-	/// Create new collection.
-	///
-	/// * `owner` - The owner of the collection.
-	/// * `data` - Description of the created collection.
-	/// * `flags` - Extra flags to store.
-	pub fn init_collection(
+	pub fn create_collection_internal(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
-		Self::init_collection_internal(owner, payer, data)
-	}
-
-	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_foreign_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		data.flags.foreign = true;
-		let id = Self::init_collection_internal(owner, payer, data)?;
-		Ok(id)
-	}
-
-	fn init_collection_internal(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		{
@@ -1189,21 +1148,6 @@ impl<T: Config> Pallet<T> {
 		);
 		<AdminAmount<T>>::insert(id, admin_amount);
 
-		// Take a (non-refundable) deposit of collection creation
-		{
-			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
-			imbalance.subsume(<T as Config>::Currency::deposit(
-				&T::TreasuryAccountId::get(),
-				T::CollectionCreationPrice::get(),
-				Precision::Exact,
-			)?);
-			let credit =
-				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
-					.map_err(|_| Error::<T>::NotSufficientFounds)?;
-
-			debug_assert!(credit.peek().is_zero())
-		}
-
 		<CreatedCollectionCount<T>>::put(created_count);
 		<Pallet<T>>::deposit_event(Event::CollectionCreated(
 			id,
@@ -1225,7 +1169,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// * `collection` - Collection handler.
 	/// * `sender` - The owner or administrator of the collection.
-	pub fn destroy_collection(
+	pub fn destroy_collection_internal(
 		collection: CollectionHandle<T>,
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
@@ -1770,7 +1714,7 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_internal()?;
+		collection.check_is_not_foreign()?;
 		collection.check_is_owner(sender)?;
 
 		let is_admin = <IsAdmin<T>>::get((collection.id, user));
@@ -1827,7 +1771,7 @@ impl<T: Config> Pallet<T> {
 		collection: &mut CollectionHandle<T>,
 		new_limit: CollectionLimits,
 	) -> DispatchResult {
-		collection.check_is_internal()?;
+		collection.check_is_not_foreign()?;
 		collection.check_is_owner_or_admin(user)?;
 
 		collection.limits =
@@ -1896,7 +1840,7 @@ impl<T: Config> Pallet<T> {
 		collection: &mut CollectionHandle<T>,
 		new_permission: CollectionPermissions,
 	) -> DispatchResult {
-		collection.check_is_internal()?;
+		collection.check_is_not_foreign()?;
 		collection.check_is_owner_or_admin(user)?;
 		collection.permissions = Self::clamp_permissions(
 			collection.mode.clone(),
@@ -2372,6 +2316,16 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Repairs a possibly broken item.
 	fn repair_item(&self, token: TokenId) -> DispatchResultWithPostInfo;
+
+	fn collection_id(&self) -> CollectionId;
+
+	fn owner(&self) -> T::CrossAccountId;
+
+	fn property(&self, key: &PropertyKey) -> Option<PropertyValue> {
+		<Pallet<T>>::get_collection_property(self.collection_id(), key)
+	}
+
+	fn flags(&self) -> CollectionFlags;
 }
 
 /// Extension for RFT collection.

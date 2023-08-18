@@ -69,6 +69,9 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 	MAX_POV_SIZE as u64,
 );
 
+/// A maximum number of levels of depth in the token nesting tree.
+pub const NESTING_BUDGET: u32 = 5;
+
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE / 2;
 }

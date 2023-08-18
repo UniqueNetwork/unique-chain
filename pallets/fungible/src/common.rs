@@ -28,6 +28,7 @@ use pallet_structure::Error as StructureError;
 use sp_runtime::ArithmeticError;
 use sp_std::{vec::Vec, vec};
 use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
+use pallet_evm::account::CrossAccountId;
 
 use crate::{
 	Allowance, TotalSupply, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
@@ -477,5 +478,17 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	/// Repairs a possibly broken item.
 	fn repair_item(&self, _token: TokenId) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::FungibleTokensAreAlwaysValid)
+	}
+
+	fn collection_id(&self) -> CollectionId {
+		self.id
+	}
+
+	fn owner(&self) -> T::CrossAccountId {
+		T::CrossAccountId::from_sub(self.owner.clone())
+	}
+
+	fn flags(&self) -> up_data_structs::CollectionFlags {
+		self.flags
 	}
 }

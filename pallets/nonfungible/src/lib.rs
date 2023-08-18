@@ -69,7 +69,7 @@
 //!
 //! ### Dispatchable Functions
 //!
-//! - `init_collection` - Create NFT collection. NFT collection can be configured to allow or deny access for
+//! - `create_collection_internal` - Create NFT collection. NFT collection can be configured to allow or deny access for
 //!   some accounts.
 //! - `destroy_collection` - Destroy exising NFT collection. There should be no tokens in the collection.
 //! - `burn` - Burn NFT token owned by account.
@@ -416,24 +416,18 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	/// Create NFT collection
-	///
-	/// `init_collection` will take non-refundable deposit for collection creation.
-	///
-	/// - `data`: Contains settings for collection limits and permissions.
-	pub fn init_collection(
+	pub fn create_collection_internal(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data)
+		<PalletCommon<T>>::create_collection_internal(owner, data)
 	}
 
 	/// Destroy NFT collection
 	///
 	/// `destroy_collection` will throw error if collection contains any tokens.
 	/// Only owner can destroy collection.
-	pub fn destroy_collection(
+	pub fn destroy_collection_internal(
 		collection: NonfungibleHandle<T>,
 		sender: &T::CrossAccountId,
 	) -> DispatchResult {
@@ -445,7 +439,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		PalletCommon::destroy_collection(collection.0, sender)?;
+		PalletCommon::destroy_collection_internal(collection.0, sender)?;
 
 		let _ = <TokenData<T>>::clear_prefix((id,), u32::MAX, None);
 		let _ = <TokenChildren<T>>::clear_prefix((id,), u32::MAX, None);

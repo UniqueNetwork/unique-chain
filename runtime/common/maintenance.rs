@@ -75,7 +75,6 @@ impl SignedExtension for CheckMaintenance {
 					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
 				}
 
-				#[cfg(feature = "foreign-assets")]
 				RuntimeCall::ForeignAssets(_) => {
 					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
 				}

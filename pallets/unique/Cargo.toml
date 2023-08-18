@@ -60,3 +60,4 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 up-data-structs = { workspace = true }
+up-common = { workspace = true }

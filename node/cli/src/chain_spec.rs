@@ -171,7 +171,6 @@ macro_rules! testnet_genesis {
 			configuration: Default::default(),
 			nonfungible: Default::default(),
 			treasury: Default::default(),
-			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},

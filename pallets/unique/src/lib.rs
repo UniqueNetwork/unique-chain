@@ -76,6 +76,8 @@ extern crate alloc;
 pub use pallet::*;
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
+use up_common::constants::NESTING_BUDGET;
+
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -104,9 +106,6 @@ pub mod pallet {
 		dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
 	};
 	use weights::WeightInfo;
-
-	/// A maximum number of levels of depth in the token nesting tree.
-	pub const NESTING_BUDGET: u32 = 5;
 
 	/// Errors for the common Unique transactions.
 	#[pallet::error]
@@ -417,8 +416,7 @@ pub mod pallet {
 			collection_id: CollectionId,
 		) -> DispatchResult {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-
-			Self::destroy_collection_internal(sender, collection_id)
+			T::CollectionDispatch::destroy(sender, collection_id)
 		}
 
 		/// Add an address to allow list.
@@ -445,7 +443,7 @@ pub mod pallet {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
+			collection.check_is_not_foreign()?;
 
 			<PalletCommon<T>>::toggle_allowlist(&collection, &sender, &address, true)?;
 
@@ -476,7 +474,7 @@ pub mod pallet {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			collection.check_is_internal()?;
+			collection.check_is_not_foreign()?;
 
 			<PalletCommon<T>>::toggle_allowlist(&collection, &sender, &address, false)?;
 
@@ -924,7 +922,7 @@ pub mod pallet {
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
-			target_collection.check_is_internal()?;
+			target_collection.check_is_not_foreign()?;
 			target_collection.check_is_owner(&sender)?;
 
 			// =========
@@ -1329,15 +1327,7 @@ pub mod pallet {
 		}
 
 		#[inline(always)]
-		pub(crate) fn destroy_collection_internal(
-			sender: T::CrossAccountId,
-			collection_id: CollectionId,
-		) -> DispatchResult {
-			T::CollectionDispatch::destroy(sender, collection_id)?;
-
-			// TODO: basket cleanup should be moved elsewhere
-			// Maybe runtime dispatch.rs should perform it?
-
+		pub fn destroy_collection_internal(collection_id: CollectionId) -> DispatchResult {
 			let _ = <NftTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
 			let _ = <FungibleTransferBasket<T>>::clear_prefix(collection_id, u32::MAX, None);
 			let _ = <ReFungibleTransferBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);

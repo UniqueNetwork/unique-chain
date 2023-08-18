@@ -369,20 +369,11 @@ pub struct CollectionFlags {
 	/// Supports ERC721Metadata
 	#[bondrewd(bits = "1..2")]
 	pub erc721metadata: bool,
-	/// External collections can't be managed using `unique` api
-	#[bondrewd(bits = "7..8")]
-	pub external: bool,
 	/// Reserved flags
-	#[bondrewd(bits = "2..7")]
+	#[bondrewd(bits = "2..8")]
 	pub reserved: u8,
 }
 bondrewd_codec!(CollectionFlags);
-
-impl CollectionFlags {
-	pub fn is_allowed_for_user(self) -> bool {
-		!self.foreign && !self.external && self.reserved == 0
-	}
-}
 
 /// Base structure for represent collection.
 ///
@@ -661,12 +652,12 @@ pub struct CollectionLimits {
 	/// * Limit - [`MAX_SPONSOR_TIMEOUT`].
 	pub sponsor_approve_timeout: Option<u32>,
 
-	/// Whether the collection owner of the collection can send tokens (which belong to other users).
+	/// Whether the collection owner of the collection can send or burn tokens (which belong to other users).
 	///
 	/// * Default - **false**.
 	pub owner_can_transfer: Option<bool>,
 
-	/// Can the collection owner burn other people's tokens.
+	/// Can the collection owner destroy the collection.
 	///
 	/// * Default - **true**.
 	pub owner_can_destroy: Option<bool>,

@@ -51,7 +51,7 @@ macro_rules! construct_runtime {
 				Vesting: orml_vesting = 37,
 
 				XTokens: orml_xtokens = 38,
-				Tokens: orml_tokens = 39,
+				// [REMOVED] Tokens: orml_tokens = 39,
 				// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 				#[cfg(feature = "collator-selection")]
@@ -93,7 +93,6 @@ macro_rules! construct_runtime {
 				#[cfg(feature = "app-promotion")]
 				AppPromotion: pallet_app_promotion = 73,
 
-				#[cfg(feature = "foreign-assets")]
 				ForeignAssets: pallet_foreign_assets = 80,
 
 				// Frontier

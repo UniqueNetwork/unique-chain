@@ -27,6 +27,7 @@ use pallet_common::{
 };
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
+use pallet_evm::account::CrossAccountId;
 
 use crate::{
 	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
@@ -559,5 +560,17 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			<Pallet<T>>::repair_item(self, token),
 			<CommonWeights<T>>::force_repair_item(),
 		)
+	}
+
+	fn collection_id(&self) -> CollectionId {
+		self.id
+	}
+
+	fn owner(&self) -> T::CrossAccountId {
+		T::CrossAccountId::from_sub(self.owner.clone())
+	}
+
+	fn flags(&self) -> up_data_structs::CollectionFlags {
+		self.flags
 	}
 }

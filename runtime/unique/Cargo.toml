@@ -180,11 +180,10 @@ try-runtime = [
 	'pallet-xcm/try-runtime',
 	'parachain-info/try-runtime',
 ]
-unique-runtime = ['app-promotion', 'foreign-assets', 'refungible']
+unique-runtime = ['app-promotion', 'refungible']
 
 app-promotion = []
 collator-selection = []
-foreign-assets = []
 preimage = []
 refungible = []
 scheduler = []

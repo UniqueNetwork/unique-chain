@@ -61,7 +61,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::ReFungible,
-		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
+		|owner: T::CrossAccountId, data| <Pallet<T>>::create_collection_internal(owner, data),
 		RefungibleHandle::cast,
 	)
 }

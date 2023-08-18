@@ -3,7 +3,6 @@
 extern crate alloc;
 use core::ops::Deref;
 
-use frame_support::sp_runtime::DispatchResult;
 use pallet_evm_coder_substrate::{WithRecorder, SubstrateRecorder};
 pub use pallet::*;
 
@@ -23,11 +22,6 @@ impl<T: Config> NativeFungibleHandle<T> {
 	/// Creates a handle
 	pub fn new_with_gas_limit(gas_limit: u64) -> NativeFungibleHandle<T> {
 		Self(SubstrateRecorder::new(gas_limit))
-	}
-
-	/// Check if the collection is internal
-	pub fn check_is_internal(&self) -> DispatchResult {
-		Ok(())
 	}
 }
 
@@ -79,6 +73,7 @@ pub mod pallet {
 		frame_system::Config
 		+ pallet_evm_coder_substrate::Config
 		+ pallet_common::Config
+		+ pallet_fungible::Config
 		+ pallet_structure::Config
 	{
 		/// Inspect from `pallet_balances`

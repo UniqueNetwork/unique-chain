@@ -21,7 +21,7 @@ default = ['quartz-runtime', 'std']
 state-version-0 = []
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
-quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'preimage', 'refungible']
+quartz-runtime = ['app-promotion', 'collator-selection', 'preimage', 'refungible']
 runtime-benchmarks = [
 	"pallet-preimage/runtime-benchmarks",
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
@@ -185,7 +185,6 @@ try-runtime = [
 
 app-promotion = []
 collator-selection = []
-foreign-assets = []
 preimage = []
 refungible = []
 scheduler = []

@@ -28,8 +28,9 @@ use pallet_common::{
 	weights::WeightInfo as _,
 };
 use pallet_structure::Error as StructureError;
-use sp_runtime::{DispatchError};
+use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
+use pallet_evm::account::CrossAccountId;
 
 use crate::{
 	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
@@ -561,6 +562,18 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			<Pallet<T>>::repair_item(self, token),
 			<CommonWeights<T>>::force_repair_item(),
 		)
+	}
+
+	fn collection_id(&self) -> CollectionId {
+		self.id
+	}
+
+	fn owner(&self) -> T::CrossAccountId {
+		T::CrossAccountId::from_sub(self.owner.clone())
+	}
+
+	fn flags(&self) -> up_data_structs::CollectionFlags {
+		self.flags
 	}
 }
 

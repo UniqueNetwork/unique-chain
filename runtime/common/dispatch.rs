@@ -30,6 +30,7 @@ use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
 use pallet_refungible::{
 	Pallet as PalletRefungible, RefungibleHandle, erc_token::RefungibleTokenHandle,
 };
+use pallet_unique::Pallet as PalletUnique;
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, MAX_DECIMAL_POINTS, mapping::TokenAddressMapping,
 	CollectionId,
@@ -60,33 +61,25 @@ where
 		+ pallet_refungible::Config
 		+ pallet_balances_adapter::Config,
 {
-	fn check_is_internal(&self) -> DispatchResult {
-		match self {
-			Self::Fungible(h) => h.check_is_internal(),
-			Self::Nonfungible(h) => h.check_is_internal(),
-			Self::Refungible(h) => h.check_is_internal(),
-			Self::NativeFungible(h) => h.check_is_internal(),
-		}
-	}
-
-	fn create(
+	fn create_internal(
 		sender: T::CrossAccountId,
-		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		let id = match data.mode {
-			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, payer, data)?,
+			CollectionMode::NFT => {
+				<PalletNonfungible<T>>::create_collection_internal(sender, data)?
+			}
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
 				ensure!(
 					decimal_points <= MAX_DECIMAL_POINTS,
 					pallet_unique::Error::<T>::CollectionDecimalPointLimitExceeded
 				);
-				<PalletFungible<T>>::init_collection(sender, payer, data)?
+				<PalletFungible<T>>::create_collection_internal(sender, data)?
 			}
 
 			#[cfg(feature = "refungible")]
-			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, payer, data)?,
+			CollectionMode::ReFungible => <PalletRefungible<T>>::create_collection_internal(sender, data)?,
 
 			#[cfg(not(feature = "refungible"))]
 			CollectionMode::ReFungible => return unsupported!(T),
@@ -102,16 +95,22 @@ where
 		let collection = <CollectionHandle<T>>::try_get(collection_id)?;
 
 		match collection.mode {
-			CollectionMode::ReFungible => {
-				PalletRefungible::destroy_collection(RefungibleHandle::cast(collection), &sender)?
-			}
-			CollectionMode::Fungible(_) => {
-				PalletFungible::destroy_collection(FungibleHandle::cast(collection), &sender)?
-			}
-			CollectionMode::NFT => {
-				PalletNonfungible::destroy_collection(NonfungibleHandle::cast(collection), &sender)?
-			}
+			CollectionMode::ReFungible => PalletRefungible::destroy_collection_internal(
+				RefungibleHandle::cast(collection),
+				&sender,
+			)?,
+			CollectionMode::Fungible(_) => PalletFungible::destroy_collection_internal(
+				FungibleHandle::cast(collection),
+				&sender,
+			)?,
+			CollectionMode::NFT => PalletNonfungible::destroy_collection_internal(
+				NonfungibleHandle::cast(collection),
+				&sender,
+			)?,
 		}
+
+		<PalletUnique<T>>::destroy_collection_internal(collection_id)?;
+
 		Ok(())
 	}
 
