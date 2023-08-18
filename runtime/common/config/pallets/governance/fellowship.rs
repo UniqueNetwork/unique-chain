@@ -161,7 +161,7 @@ where
 	fn convert(track_id: ClassOf<T, I>) -> Rank {
 		match track_id.into() {
 			DEMOCRACY_TRACK_ID => 3,
-			other => sp_runtime::traits::Identity::convert(other),
+			other => other,
 		}
 	}
 }
