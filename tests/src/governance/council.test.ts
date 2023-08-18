@@ -2,7 +2,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {Event} from '../util/playgrounds/unique.dev';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util';
+import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin, hardResetFellowshipReferenda, hardResetGovScheduler, hardResetDemocracy} from './util';
 
 describeGov('Governance: Council tests', () => {
   let donor: IKeyringPair;
@@ -122,7 +122,7 @@ describeGov('Governance: Council tests', () => {
     const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
     expect(passedReferendumEvent.referendumIndex).to.be.equal(democracyReferendumIndex);
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod + 10 , Event.GovScheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.GovScheduler.Dispatched);
     const receiverBalance = await helper.balance.getSubstrate(forceSetBalanceReceiver.address);
     expect(receiverBalance).to.be.equal(forceSetBalanceTestValue);
   });

@@ -1,7 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {Event} from '../util/playgrounds/unique.dev';
-import {initCouncil, democracyLaunchPeriod, democracyFastTrackVotingPeriod, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm} from './util';
+import {initCouncil, democracyLaunchPeriod, democracyFastTrackVotingPeriod, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util';
 
 describeGov('Governance: Technical Committee tests', () => {
   let sudoer: IKeyringPair;
@@ -30,6 +30,9 @@ describeGov('Governance: Technical Committee tests', () => {
       await clearTechComm(sudoer);
 
       await helper.preimage.unnotePreimage(sudoer, preImageHash);
+      await hardResetFellowshipReferenda(sudoer);
+      await hardResetDemocracy(sudoer);
+      await hardResetGovScheduler(sudoer);
     });
   });
 
@@ -50,21 +53,26 @@ describeGov('Governance: Technical Committee tests', () => {
       await helper.technicalCommittee.collective.vote(techcomms.andy, proposalHash, proposalIndex, true);
       await helper.technicalCommittee.collective.vote(techcomms.constantine, proposalHash, proposalIndex, true);
       await helper.technicalCommittee.collective.vote(techcomms.greg, proposalHash, proposalIndex, true);
-
+      console.log(`BN before close call ${await helper.chain.getLatestBlockNumber()}`);
+      const nextExternalPropose = (await helper.callRpc('api.query.democracy.nextExternal')).toJSON();
+      console.log(nextExternalPropose);
       return await helper.technicalCommittee.collective.close(techcomms.andy, proposalHash, proposalIndex);
     });
   }
 
   itSub('TechComm can fast-track Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
-    await helper.wait.parachainBlockMultiplesOf(35n);
-    const res =  await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
     console.log('external proposal preimage hash: ', preimageHash);
+    await helper.wait.parachainBlockMultiplesOf(35n);
+    console.log(' ** after waiter ** ');
+
+    const res =  await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
     const lastReferendumIndex = await helper.callRpc('api.query.democracy.referendumCount', []);
     const referendumInfo = await helper.democracy.referendumInfo(lastReferendumIndex);
     console.log('!!!', referendumInfo);
     const nextExternalPropose = (await helper.callRpc('api.query.democracy.nextExternal')).toJSON();
     console.log(nextExternalPropose);
+    console.log(`\n BN: ${await helper.chain.getLatestBlockNumber()} `);
 
     await expect(proposalFromAllCommittee(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
       .to.be.fulfilled;

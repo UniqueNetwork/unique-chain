@@ -2,7 +2,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {xxhashAsHex} from '@polkadot/util-crypto';
 import {usingPlaygrounds, expect} from '../util';
 import {UniqueHelper} from '../util/playgrounds/unique';
-import {resolve} from 'path';
 
 export const democracyLaunchPeriod = 35;
 export const democracyVotingPeriod = 35;

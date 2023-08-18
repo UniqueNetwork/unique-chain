@@ -971,13 +971,18 @@ class WaitGroup {
     return promise;
   }
 
-  async parachainBlockMultiplesOf(val: bigint) {
-    const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
-      if(data.number.toBigInt() % val == 0n) {
-        console.log(data.number.toBigInt());
-        unsubscribe();
-      }
+  parachainBlockMultiplesOf(val: bigint) {
+    // eslint-disable-next-line no-async-promise-executor
+    const promise = new Promise<void>(async resolve => {
+      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
+        if(data.number.toBigInt() % val == 0n) {
+          console.log(`from waiter: ${data.number.toBigInt()}`);
+          unsubscribe();
+          resolve();
+        }
+      });
     });
+    return promise;
   }
 
   event<T extends IEventHelper>(

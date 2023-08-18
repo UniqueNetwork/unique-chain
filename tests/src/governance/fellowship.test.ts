@@ -1,8 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
-import {UniqueHelper} from '../util/playgrounds/unique';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId} from './util';
+import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util';
 
 describeGov('Governance: Fellowship tests', () => {
   let members: IKeyringPair[][];
@@ -69,6 +68,9 @@ describeGov('Governance: Fellowship tests', () => {
     await clearFellowship(sudoer);
     await clearTechComm(sudoer);
     await clearCouncil(sudoer);
+    await hardResetFellowshipReferenda(sudoer);
+    await hardResetDemocracy(sudoer);
+    await hardResetGovScheduler(sudoer);
   });
 
   itSub('FellowshipProposition can submit regular Democracy proposals', async ({helper}) => {
