@@ -50,8 +50,6 @@ jobs:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
-    name: ${{ matrix.network }}
-
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     steps:
