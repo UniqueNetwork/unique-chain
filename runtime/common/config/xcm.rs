@@ -24,19 +24,22 @@ use polkadot_parachain::primitives::Sibling;
 use xcm::latest::{prelude::*, Weight, MultiLocation};
 use xcm::v3::Instruction;
 use xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
+	AccountId32Aliases, AccountKey20Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
 };
 use xcm_executor::{XcmExecutor, traits::ShouldExecute};
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
-use sp_std::marker::PhantomData;
+use sp_std::{marker::PhantomData, borrow::Borrow};
 use pallet_foreign_assets::FreeForAll;
+use sp_core::H160;
+use pallet_evm::account::CrossAccountId;
 use crate::{
 	ForeignAssets, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo,
 	ParachainSystem, PolkadotXcm, XcmpQueue, xcm_barrier::Barrier, RelayNetwork,
 	AllPalletsWithSystem, Balances,
+	runtime_common::config::ethereum::CrossAccountId as ConfigCrossAccountId,
 };
 
 use up_common::types::AccountId;
@@ -66,6 +69,34 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
+
+pub struct LocationToCrossAccountId;
+impl xcm_executor::traits::Convert<MultiLocation, ConfigCrossAccountId>
+	for LocationToCrossAccountId
+{
+	fn convert_ref(location: impl Borrow<MultiLocation>) -> Result<ConfigCrossAccountId, ()> {
+		let location = location.borrow();
+
+		LocationToAccountId::convert_ref(location)
+			.map(|sub| ConfigCrossAccountId::from_sub(sub))
+			.or_else(|_| {
+				Ok(ConfigCrossAccountId::from_eth(AccountKey20Aliases::<
+					RelayNetwork,
+					H160,
+				>::convert_ref(location)?))
+			})
+	}
+
+	fn reverse_ref(account: impl Borrow<ConfigCrossAccountId>) -> Result<MultiLocation, ()> {
+		let account = account.borrow();
+
+		if account.is_canonical_substrate() {
+			LocationToAccountId::reverse_ref(account.as_sub())
+		} else {
+			AccountKey20Aliases::<RelayNetwork, H160>::reverse_ref(&(*account.as_eth()).into())
+		}
+	}
+}
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = (SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>,);
@@ -244,6 +275,6 @@ impl pallet_foreign_assets::Config for Runtime {
 	type PalletId = ForeignAssetPalletId;
 	type ForceRegisterOrigin = EnsureRoot<AccountId>;
 	type SelfLocation = SelfLocation;
-	type LocationToAccountId = LocationToAccountId;
+	type LocationToAccountId = LocationToCrossAccountId;
 	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
 }

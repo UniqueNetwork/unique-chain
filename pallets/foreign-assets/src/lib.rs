@@ -51,9 +51,7 @@ use sp_runtime::traits::AccountIdConversion;
 use sp_std::{vec::Vec, vec};
 use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
 
-use xcm::{
-	latest::{prelude::*, AssetId},
-};
+use xcm::latest::{prelude::*, AssetId};
 use xcm_executor::{
 	traits::{WeightTrader, TransactAsset, Error as XcmExecutorError, Convert},
 	Assets,
@@ -90,7 +88,7 @@ pub mod module {
 
 		type SelfLocation: Get<MultiLocation>;
 
-		type LocationToAccountId: xcm_executor::traits::Convert<MultiLocation, Self::AccountId>;
+		type LocationToAccountId: xcm_executor::traits::Convert<MultiLocation, Self::CrossAccountId>;
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -276,7 +274,7 @@ impl<T: Config> Pallet<T> {
 		let owner = collection.owner();
 
 		collection
-			.create_item(owner, to, create_data, &Value::new(0))
+			.create_item(owner, to, create_data, &Value::new(NESTING_BUDGET))
 			.map(|_| ())
 			.map_err(|e| e.error)
 	}
@@ -341,7 +339,6 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 		let to = T::LocationToAccountId::convert_ref(to)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
-		let to = T::CrossAccountId::from_sub(to);
 
 		match what.fun {
 			Fungibility::Fungible(amount) => Self::do_create_item(
@@ -412,7 +409,6 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 		let from = T::LocationToAccountId::convert_ref(from)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
-		let from = T::CrossAccountId::from_sub(from);
 
 		match what.fun {
 			Fungibility::Fungible(amount) => {
@@ -459,11 +455,9 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 		let from = T::LocationToAccountId::convert_ref(from)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
-		let from = T::CrossAccountId::from_sub(from);
 
 		let to = T::LocationToAccountId::convert_ref(to)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
-		let to = T::CrossAccountId::from_sub(to);
 
 		Self::do_transfer_item(collection, from, to, token, amount)
 			.map_err(|_| XcmError::FailedToTransactAsset("item transfer failed"))?;
