@@ -7,25 +7,54 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  
+
+  prepare-execution-marix:
+
+    name: Prepare execution matrix
+
+    runs-on: self-hosted-ci
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }}  #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v4
+        id: create_matrix
+        with:
+          # TODO: Remove state-version-0 after mainnet upgrade
+          matrix: |
+            network {quartz}, wasm_name {quartz}
+            network {opal}, wasm_name {opal}
+            network {sapphire}, wasm_name {quartz}
+
   dev_build_int_tests:
+
+    needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,medium]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+    name: ${{ matrix.network }}
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
-    strategy:
-      matrix:
-        include:
-          - network: "opal"
-          - network: "sapphire"
-          - network: "quartz"
-
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -45,6 +74,7 @@ jobs:
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
+            WASM_NAME=${{ matrix.wasm_name }}
     
 
       - name: Show build configuration
