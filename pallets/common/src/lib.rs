@@ -192,7 +192,8 @@ impl<T: Config> CollectionHandle<T> {
 		sender: &T::CrossAccountId,
 		sponsor: T::AccountId,
 	) -> DispatchResult {
-		self.check_is_not_foreign()?;
+		self.check_is_internal()?;
+
 		self.check_is_owner_or_admin(sender)?;
 
 		self.collection.sponsorship = SponsorshipState::Unconfirmed(sponsor.clone());
@@ -217,7 +218,7 @@ impl<T: Config> CollectionHandle<T> {
 	///
 	/// * `sponsor`: ID of the account of the sponsor-to-be.
 	pub fn force_set_sponsor(&mut self, sponsor: T::AccountId) -> DispatchResult {
-		self.check_is_not_foreign()?;
+		self.check_is_internal()?;
 
 		self.collection.sponsorship = SponsorshipState::Confirmed(sponsor.clone());
 
@@ -238,7 +239,7 @@ impl<T: Config> CollectionHandle<T> {
 	/// In order for the sponsorship to become active, the user set as the sponsor must confirm their participation.
 	/// Before confirming sponsorship, the user must be specified as the sponsor of the collection via [`Self::set_sponsor`].
 	pub fn confirm_sponsorship(&mut self, sender: &T::AccountId) -> DispatchResult {
-		self.check_is_not_foreign()?;
+		self.check_is_internal()?;
 		ensure!(
 			self.collection.sponsorship.pending_sponsor() == Some(sender),
 			Error::<T>::ConfirmSponsorshipFail
@@ -259,7 +260,7 @@ impl<T: Config> CollectionHandle<T> {
 
 	/// Remove collection sponsor.
 	pub fn remove_sponsor(&mut self, sender: &T::CrossAccountId) -> DispatchResult {
-		self.check_is_not_foreign()?;
+		self.check_is_internal()?;
 		self.check_is_owner_or_admin(sender)?;
 
 		self.collection.sponsorship = SponsorshipState::Disabled;
@@ -279,7 +280,7 @@ impl<T: Config> CollectionHandle<T> {
 	/// Differs from `remove_sponsor` in that
 	/// it doesn't require consent from the `owner` of the collection.
 	pub fn force_remove_sponsor(&mut self) -> DispatchResult {
-		self.check_is_not_foreign()?;
+		self.check_is_internal()?;
 
 		self.collection.sponsorship = SponsorshipState::Disabled;
 
@@ -293,6 +294,17 @@ impl<T: Config> CollectionHandle<T> {
 		self.save()
 	}
 
+	/// Checks that the collection was created with, and must be operated upon through **Unique API**.
+	/// Now check only the `external` flag and if it's **true**, then return [`Error::CollectionIsExternal`] error.
+	pub fn check_is_internal(&self) -> DispatchResult {
+		if self.flags.external {
+			return Err(<Error<T>>::CollectionIsExternal)?;
+		}
+
+		Ok(())
+	}
+
+	/// Checks that the collection is not a foreign assets collection.
 	pub fn check_is_not_foreign(&self) -> DispatchResult {
 		if !self.flags.foreign {
 			return Err(<Error<T>>::InvalidOperationWithForeignCollection)?;
@@ -363,7 +375,9 @@ impl<T: Config> CollectionHandle<T> {
 		caller: T::CrossAccountId,
 		new_owner: T::CrossAccountId,
 	) -> DispatchResult {
+		self.check_is_internal()?;
 		self.check_is_not_foreign()?;
+
 		self.check_is_owner(&caller)?;
 		self.collection.owner = new_owner.as_sub().clone();
 
@@ -755,6 +769,12 @@ pub mod pallet {
 		/// Invalid operation with a foreign collection
 		InvalidOperationWithForeignCollection,
 
+		/// Tried to access an external collection with an internal API
+		CollectionIsExternal,
+
+		/// Tried to access an internal collection with an external API
+		CollectionIsInternal,
+
 		/// This address is not set as sponsor, use setCollectionSponsor first.
 		ConfirmSponsorshipFail,
 
@@ -1030,7 +1050,7 @@ impl<T: Config> Pallet<T> {
 			permissions,
 			token_property_permissions,
 			properties,
-			read_only: false,
+			read_only: flags.external,
 
 			flags: RpcCollectionFlags {
 				foreign: flags.foreign,
@@ -1516,6 +1536,7 @@ impl<T: Config> Pallet<T> {
 		scope: PropertyScope,
 		property_permission: PropertyKeyPermission,
 	) -> DispatchResult {
+		collection.check_is_not_foreign()?;
 		collection.check_is_owner_or_admin(sender)?;
 
 		let all_permissions = CollectionPropertyPermissions::<T>::get(collection.id);
@@ -1714,7 +1735,8 @@ impl<T: Config> Pallet<T> {
 		user: &T::CrossAccountId,
 		admin: bool,
 	) -> DispatchResult {
-		collection.check_is_not_foreign()?;
+		collection.check_is_internal()?;
+
 		collection.check_is_owner(sender)?;
 
 		let is_admin = <IsAdmin<T>>::get((collection.id, user));
@@ -1771,7 +1793,9 @@ impl<T: Config> Pallet<T> {
 		collection: &mut CollectionHandle<T>,
 		new_limit: CollectionLimits,
 	) -> DispatchResult {
+		collection.check_is_internal()?;
 		collection.check_is_not_foreign()?;
+
 		collection.check_is_owner_or_admin(user)?;
 
 		collection.limits =
@@ -1840,7 +1864,9 @@ impl<T: Config> Pallet<T> {
 		collection: &mut CollectionHandle<T>,
 		new_permission: CollectionPermissions,
 	) -> DispatchResult {
+		collection.check_is_internal()?;
 		collection.check_is_not_foreign()?;
+
 		collection.check_is_owner_or_admin(user)?;
 		collection.permissions = Self::clamp_permissions(
 			collection.mode.clone(),

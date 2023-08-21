@@ -47,7 +47,7 @@ fn collection_flags_have_same_encoding_as_bool() {
 	assert_eq!(
 		true.encode(),
 		CollectionFlags {
-			foreign: true,
+			external: true,
 			..Default::default()
 		}
 		.encode()
@@ -55,7 +55,7 @@ fn collection_flags_have_same_encoding_as_bool() {
 	assert_eq!(
 		false.encode(),
 		CollectionFlags {
-			foreign: false,
+			external: false,
 			..Default::default()
 		}
 		.encode()

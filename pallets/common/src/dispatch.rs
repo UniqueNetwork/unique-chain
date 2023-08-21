@@ -39,8 +39,12 @@ pub fn dispatch_tx<
 	collection: CollectionId,
 	call: C,
 ) -> DispatchResultWithPostInfo {
-	let dispatched =
-		T::CollectionDispatch::dispatch(collection).map_err(|error| DispatchErrorWithPostInfo {
+	let dispatched = T::CollectionDispatch::dispatch(collection)
+		.and_then(|dispatched| {
+			dispatched.check_is_internal()?;
+			Ok(dispatched)
+		})
+		.map_err(|error| DispatchErrorWithPostInfo {
 			post_info: PostDispatchInfo {
 				actual_weight: Some(dispatch_weight::<T>()),
 				pays_fee: Pays::Yes,
@@ -67,6 +71,9 @@ pub fn dispatch_tx<
 
 /// Interface for working with different collections through the dispatcher.
 pub trait CollectionDispatch<T: Config> {
+	/// Check if the collection is internal.
+	fn check_is_internal(&self) -> DispatchResult;
+
 	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	/// The method should be used when a regular user creates a collection.
 	///

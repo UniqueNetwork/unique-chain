@@ -369,8 +369,11 @@ pub struct CollectionFlags {
 	/// Supports ERC721Metadata
 	#[bondrewd(bits = "1..2")]
 	pub erc721metadata: bool,
-	/// Reserved flags
-	#[bondrewd(bits = "2..8")]
+	/// External collections can't be managed using `unique` api
+	#[bondrewd(bits = "7..8")]
+	pub external: bool,
+
+	#[bondrewd(reserve, bits = "2..7")]
 	pub reserved: u8,
 }
 bondrewd_codec!(CollectionFlags);

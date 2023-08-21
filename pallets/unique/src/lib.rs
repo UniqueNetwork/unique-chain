@@ -443,6 +443,7 @@ pub mod pallet {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 			collection.check_is_not_foreign()?;
 
 			<PalletCommon<T>>::toggle_allowlist(&collection, &sender, &address, true)?;
@@ -474,6 +475,7 @@ pub mod pallet {
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			collection.check_is_internal()?;
 			collection.check_is_not_foreign()?;
 
 			<PalletCommon<T>>::toggle_allowlist(&collection, &sender, &address, false)?;
@@ -922,6 +924,7 @@ pub mod pallet {
 			}
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let mut target_collection = <CollectionHandle<T>>::try_get(collection_id)?;
+			target_collection.check_is_internal()?;
 			target_collection.check_is_not_foreign()?;
 			target_collection.check_is_owner(&sender)?;
 

@@ -61,6 +61,15 @@ where
 		+ pallet_refungible::Config
 		+ pallet_balances_adapter::Config,
 {
+	fn check_is_internal(&self) -> DispatchResult {
+		match self {
+			Self::Fungible(h) => h.check_is_internal(),
+			Self::Nonfungible(h) => h.check_is_internal(),
+			Self::Refungible(h) => h.check_is_internal(),
+			Self::NativeFungible(h) => h.check_is_internal(),
+		}
+	}
+
 	fn create_internal(
 		sender: T::CrossAccountId,
 		data: CreateCollectionData<T::CrossAccountId>,
