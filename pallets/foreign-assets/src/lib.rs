@@ -43,10 +43,10 @@ use up_common::constants::NESTING_BUDGET;
 use up_data_structs::{
 	CollectionMode, CreateItemData, CreateFungibleData, budget::Value, CreateNftData, Property,
 	CollectionFlags, PropertyKeyPermission, PropertyKey, PropertyPermission, CollectionName,
-	CollectionDescription, CollectionLimits,
+	CollectionDescription,
 };
 use pallet_common::{dispatch::CollectionDispatch, NATIVE_FUNGIBLE_COLLECTION_ID};
-use pallet_common::CommonCollectionOperations;
+use pallet_common::{CommonCollectionOperations, XcmExtensions};
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{vec::Vec, vec};
 use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
@@ -112,14 +112,14 @@ pub mod module {
 
 	/// The corresponding collections of reserve locations
 	#[pallet::storage]
-	#[pallet::getter(fn reserve_location_to_collection)]
-	pub type ReserveLocationToCollection<T: Config> =
+	#[pallet::getter(fn foreign_reserve_location_to_collection)]
+	pub type ForeignReserveLocationToCollection<T: Config> =
 		StorageMap<_, Twox64Concat, xcm::v3::MultiLocation, CollectionId, OptionQuery>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
-	#[pallet::getter(fn reserve_asset_instance_to_token_id)]
-	pub type ReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
+	#[pallet::getter(fn foreign_reserve_asset_instance_to_token_id)]
+	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox64Concat,
 		Key1 = CollectionId,
 		Hasher2 = Twox64Concat,
@@ -159,7 +159,7 @@ impl<T: Config> Pallet<T> {
 		mode: CollectionMode,
 	) -> DispatchResult {
 		ensure!(
-			<ReserveLocationToCollection<T>>::get(reserve_location).is_none(),
+			<ForeignReserveLocationToCollection<T>>::get(reserve_location).is_none(),
 			<Error<T>>::ForeignAssetAlreadyRegistered,
 		);
 
@@ -170,7 +170,7 @@ impl<T: Config> Pallet<T> {
 		let collection_id =
 			Self::do_create_foreign_collection(reserve_location, owner, name, mode)?;
 
-		<ReserveLocationToCollection<T>>::insert(reserve_location, collection_id);
+		<ForeignReserveLocationToCollection<T>>::insert(reserve_location, collection_id);
 
 		Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 			asset_id: collection_id,
@@ -200,11 +200,6 @@ impl<T: Config> Pallet<T> {
 				name,
 				description,
 				mode,
-				limits: Some(CollectionLimits {
-					owner_can_transfer: Some(true),
-					..Default::default()
-				}),
-
 				properties: vec![Property {
 					key: Self::reserve_location_property_key(),
 					value: reserve_location_encoded
@@ -253,59 +248,154 @@ impl<T: Config> Pallet<T> {
 			return Err(XcmExecutorError::AssetNotHandled.into());
 		};
 
-		let collection_id = if asset_reserve_location == Here.into()
-			|| asset_reserve_location == T::SelfLocation::get()
-		{
-			NATIVE_FUNGIBLE_COLLECTION_ID
+		let self_location = T::SelfLocation::get();
+
+		let native_collection_id = if asset_reserve_location == Here.into() {
+			Some(NATIVE_FUNGIBLE_COLLECTION_ID)
+		} else if asset_reserve_location == self_location {
+			Some(NATIVE_FUNGIBLE_COLLECTION_ID)
+		} else if asset_reserve_location.parents == self_location.parents {
+			match asset_reserve_location
+				.interior
+				.match_and_split(&self_location.interior)
+			{
+				Some(GeneralIndex(collection_id)) => Some(CollectionId(
+					(*collection_id)
+						.try_into()
+						.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?,
+				)),
+				_ => None,
+			}
 		} else {
-			Self::reserve_location_to_collection(asset_reserve_location)
-				.ok_or(XcmExecutorError::AssetIdConversionFailed)?
+			None
 		};
+
+		let collection_id = native_collection_id
+			.or_else(|| Self::foreign_reserve_location_to_collection(asset_reserve_location))
+			.ok_or(XcmExecutorError::AssetIdConversionFailed)?;
 
 		Ok(collection_id)
 	}
 
+	fn native_asset_instance(instance: AssetInstance) -> Result<TokenId, XcmError> {
+		match instance {
+			AssetInstance::Index(token_id) => Ok(TokenId(
+				token_id.try_into().map_err(|_| XcmError::AssetNotFound)?,
+			)),
+			_ => Err(XcmError::AssetNotFound),
+		}
+	}
+
+	fn deposit_asset_instance(
+		collection_id: CollectionId,
+		xcm_ext: &dyn XcmExtensions<T>,
+		instance: AssetInstance,
+		sender: Option<T::CrossAccountId>,
+		to: T::CrossAccountId,
+	) -> XcmResult {
+		let token = if xcm_ext.is_foreign() {
+			match Self::foreign_reserve_asset_instance_to_token_id(collection_id, instance) {
+				Some(token) => token,
+				None => {
+					return Self::create_foreign_asset_instance(
+						collection_id,
+						xcm_ext,
+						instance,
+						to,
+					)
+				}
+			}
+		} else {
+			Self::native_asset_instance(instance)?
+		};
+
+		let from = Self::pallet_account();
+
+		Self::transactional_transfer_from(xcm_ext, sender, from, to, token, 1)
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))
+	}
+
+	fn create_foreign_asset_instance(
+		collection_id: CollectionId,
+		xcm_ext: &dyn XcmExtensions<T>,
+		instance: AssetInstance,
+		to: T::CrossAccountId,
+	) -> XcmResult {
+		let instance_encoded = instance.encode();
+
+		let derivative_token_id = Self::transactional_create_item(
+			xcm_ext,
+			to,
+			CreateItemData::NFT(CreateNftData {
+				properties: vec![Property {
+				key: Self::reserve_asset_instance_property_key(),
+				value: instance_encoded
+					.try_into()
+					.expect("asset instance length <= 32 bytes which is less than value length limit; qed"),
+			}]
+				.try_into()
+				.expect("just one property can always be stored; qed"),
+			}),
+		)
+		.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))?;
+
+		<ForeignReserveAssetInstanceToTokenId<T>>::insert(
+			collection_id,
+			instance,
+			derivative_token_id,
+		);
+
+		Ok(())
+	}
+
+	fn transfer_asset_instance(
+		collection_id: CollectionId,
+		xcm_ext: &dyn XcmExtensions<T>,
+		instance: AssetInstance,
+		sender: Option<T::CrossAccountId>,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+	) -> XcmResult {
+		let token = if xcm_ext.is_foreign() {
+			Self::foreign_reserve_asset_instance_to_token_id(collection_id, instance)
+				.ok_or(XcmError::AssetNotFound)?
+		} else {
+			Self::native_asset_instance(instance)?
+		};
+
+		Self::transactional_transfer_from(xcm_ext, sender, from, to, token, 1)
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item transaction failed"))
+	}
+
 	#[transactional]
-	fn do_create_item(
-		collection: &dyn CommonCollectionOperations<T>,
+	fn transactional_create_item(
+		xcm_ext: &dyn XcmExtensions<T>,
 		to: T::CrossAccountId,
 		create_data: CreateItemData,
-	) -> DispatchResult {
-		let owner = collection.owner();
-
-		collection
-			.create_item(owner, to, create_data, &Value::new(NESTING_BUDGET))
-			.map(|_| ())
-			.map_err(|e| e.error)
+	) -> Result<TokenId, DispatchError> {
+		xcm_ext.create_item(to, create_data)
 	}
 
 	#[transactional]
-	fn do_burn_from(
-		collection: &dyn CommonCollectionOperations<T>,
+	fn transactional_burn_item(
+		xcm_ext: &dyn XcmExtensions<T>,
 		from: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		let owner = collection.owner();
-
-		collection
-			.burn_from(owner, from, token, amount, &Value::new(0))
-			.map(|_| ())
-			.map_err(|e| e.error)
+		xcm_ext.burn_item(from, token, amount)
 	}
 
 	#[transactional]
-	fn do_transfer_item(
-		collection: &dyn CommonCollectionOperations<T>,
+	fn transactional_transfer_from(
+		xcm_ext: &dyn XcmExtensions<T>,
+		sender: Option<T::CrossAccountId>,
 		from: T::CrossAccountId,
 		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult {
-		collection
-			.transfer(from, to, token, amount, &Value::new(NESTING_BUDGET))
-			.map(|_| ())
-			.map_err(|e| e.error)
+		xcm_ext.transfer_from(sender, from, to, token, amount, &Value::new(NESTING_BUDGET))
 	}
 }
 
@@ -330,68 +420,34 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
-	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, _context: &XcmContext) -> XcmResult {
+	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, context: &XcmContext) -> XcmResult {
 		let collection_id = Self::multiasset_to_collection(what)?;
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
 
 		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
 
 		let to = T::LocationToAccountId::convert_ref(to)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
 
 		match what.fun {
-			Fungibility::Fungible(amount) => Self::do_create_item(
-				collection,
+			Fungibility::Fungible(amount) => Self::transactional_create_item(
+				xcm_ext,
 				to,
 				CreateItemData::Fungible(CreateFungibleData { value: amount }),
 			)
+			.map(|_| ())
 			.map_err(|_| XcmError::FailedToTransactAsset("fungible item deposit failed")),
 
 			Fungibility::NonFungible(instance) => {
-				match <ReserveAssetInstanceToTokenId<T>>::get(collection_id, instance) {
-					Some(token) => {
-						let owner = collection
-							.token_owner(token)
-							.map_err(|_| XcmError::AssetNotFound)?;
+				let sender = context
+					.origin
+					.map(|origin| T::LocationToAccountId::convert_ref(origin))
+					.transpose()
+					.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
 
-						Self::do_transfer_item(collection, owner, to, token, 1).map_err(|_| {
-							XcmError::FailedToTransactAsset("non-fungible item deposit failed")
-						})?;
-
-						Ok(())
-					}
-					None => {
-						let instance_encoded = instance.encode();
-
-						Self::do_create_item(
-							collection,
-							to,
-							CreateItemData::NFT(CreateNftData {
-								properties: vec![Property {
-								key: Self::reserve_asset_instance_property_key(),
-								value: instance_encoded
-									.try_into()
-									.expect("asset instance length <= 32 bytes which is less than value length limit; qed"),
-							}]
-								.try_into()
-								.expect("just one property can always be stored; qed"),
-							}),
-						)
-						.map_err(|_| {
-							XcmError::FailedToTransactAsset("non-fungible item deposit failed")
-						})?;
-
-						let derivative_token_id = collection.last_token_id();
-						<ReserveAssetInstanceToTokenId<T>>::insert(
-							collection_id,
-							instance,
-							derivative_token_id,
-						);
-
-						Ok(())
-					}
-				}
+				Self::deposit_asset_instance(collection_id, xcm_ext, instance, sender, to)
 			}
 		}
 	}
@@ -406,25 +462,21 @@ impl<T: Config> TransactAsset for Pallet<T> {
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
 
 		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
 
 		let from = T::LocationToAccountId::convert_ref(from)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
 
 		match what.fun {
 			Fungibility::Fungible(amount) => {
-				Self::do_burn_from(collection, from, TokenId(0), amount)
+				Self::transactional_burn_item(xcm_ext, from, TokenId::default(), amount)
 					.map_err(|_| XcmError::FailedToTransactAsset("fungible item withdraw failed"))?
 			}
 
 			Fungibility::NonFungible(instance) => {
-				let token = <ReserveAssetInstanceToTokenId<T>>::get(collection_id, instance)
-					.ok_or(XcmError::AssetNotFound)?;
-
 				let to = Self::pallet_account();
 
-				Self::do_transfer_item(collection, from, to, token, 1).map_err(|_| {
-					XcmError::FailedToTransactAsset("non-fungible item withdraw failed")
-				})?;
+				Self::transfer_asset_instance(collection_id, xcm_ext, instance, None, from, to)?;
 			}
 		}
 
@@ -439,19 +491,10 @@ impl<T: Config> TransactAsset for Pallet<T> {
 	) -> Result<xcm_executor::Assets, XcmError> {
 		let collection_id = Self::multiasset_to_collection(what)?;
 
-		let (token, amount) = match what.fun {
-			Fungibility::Fungible(amount) => (TokenId(0), amount),
-
-			Fungibility::NonFungible(instance) => (
-				<ReserveAssetInstanceToTokenId<T>>::get(collection_id, instance)
-					.ok_or(XcmError::AssetNotFound)?,
-				1,
-			),
-		};
-
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
 		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
 
 		let from = T::LocationToAccountId::convert_ref(from)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
@@ -459,8 +502,26 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let to = T::LocationToAccountId::convert_ref(to)
 			.map_err(|()| XcmExecutorError::AccountIdConversionFailed)?;
 
-		Self::do_transfer_item(collection, from, to, token, amount)
-			.map_err(|_| XcmError::FailedToTransactAsset("item transfer failed"))?;
+		match what.fun {
+			Fungibility::Fungible(amount) => Self::transactional_transfer_from(
+				xcm_ext,
+				Some(from.clone()),
+				from,
+				to,
+				TokenId::default(),
+				amount,
+			)
+			.map_err(|_| XcmError::FailedToTransactAsset("fungible item transfer failed"))?,
+
+			Fungibility::NonFungible(instance) => Self::transfer_asset_instance(
+				collection_id,
+				xcm_ext,
+				instance,
+				Some(from.clone()),
+				from,
+				to,
+			)?,
+		}
 
 		Ok(what.clone().into())
 	}
@@ -476,13 +537,16 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
 		} else {
 			let dispatch = T::CollectionDispatch::dispatch(collection_id).ok()?;
 			let collection = dispatch.as_dyn();
+			let xcm_ext = collection.xcm_extensions()?;
 
-			if collection.flags().foreign {
+			if xcm_ext.is_foreign() {
 				let encoded_location =
 					collection.property(&<Pallet<T>>::reserve_location_property_key())?;
 				MultiLocation::decode(&mut &encoded_location[..]).ok()
 			} else {
-				None
+				T::SelfLocation::get()
+					.pushed_with_interior(GeneralIndex(collection_id.0.into()))
+					.ok()
 			}
 		}
 	}

@@ -279,6 +279,8 @@ impl<T: Config> Pallet<T> {
 		owner: &T::CrossAccountId,
 		amount: u128,
 	) -> DispatchResult {
+		collection.check_is_not_foreign()?;
+
 		let total_supply = <TotalSupply<T>>::get(collection.id)
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
@@ -286,9 +288,6 @@ impl<T: Config> Pallet<T> {
 		let balance = <Balance<T>>::get((collection.id, owner))
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
-
-		// Foreign collection check
-		ensure!(!collection.flags.foreign, <CommonError<T>>::NoPermission);
 
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
@@ -375,6 +374,19 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let nester = from;
+
+		Self::transfer_internal(collection, Some(nester), from, to, amount, nesting_budget)
+	}
+
+	fn transfer_internal(
+		collection: &FungibleHandle<T>,
+		nester: Option<&T::CrossAccountId>,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed,
@@ -407,7 +419,7 @@ impl<T: Config> Pallet<T> {
 			// from != to && amount != 0
 
 			<PalletStructure<T>>::nest_if_sent_to_token(
-				from.clone(),
+				nester,
 				to,
 				collection.id,
 				TokenId::default(),
@@ -446,11 +458,33 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Minting tokens for multiple IDs.
-	/// It is a utility function used in [`create_multiple_items`][`Pallet::create_multiple_items`]
-	/// and [`create_multiple_items_foreign`][`Pallet::create_multiple_items_foreign`]
-	pub fn create_multiple_items_common(
+	/// See [`create_item`][`Pallet::create_item`] for more details.
+	pub fn create_multiple_items(
 		collection: &FungibleHandle<T>,
 		sender: &T::CrossAccountId,
+		data: BTreeMap<T::CrossAccountId, u128>,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		collection.check_is_not_foreign()?;
+
+		if !collection.is_owner_or_admin(sender) {
+			ensure!(
+				collection.permissions.mint_mode(),
+				<CommonError<T>>::PublicMintingNotAllowed
+			);
+			collection.check_allowlist(sender)?;
+
+			for (owner, _) in data.iter() {
+				collection.check_allowlist(owner)?;
+			}
+		}
+
+		Self::create_multiple_items_internal(collection, Some(sender), data, nesting_budget)
+	}
+
+	pub fn create_multiple_items_internal(
+		collection: &FungibleHandle<T>,
+		sender: Option<&T::CrossAccountId>,
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
@@ -464,7 +498,7 @@ impl<T: Config> Pallet<T> {
 
 		for (to, _) in data.iter() {
 			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
+				sender,
 				to,
 				collection.id,
 				TokenId::default(),
@@ -509,43 +543,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(())
-	}
-
-	/// Minting tokens for multiple IDs.
-	/// See [`create_item`][`Pallet::create_item`] for more details.
-	pub fn create_multiple_items(
-		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		data: BTreeMap<T::CrossAccountId, u128>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
-		// Foreign collection check
-		ensure!(!collection.flags.foreign, <CommonError<T>>::NoPermission);
-
-		if !collection.is_owner_or_admin(sender) {
-			ensure!(
-				collection.permissions.mint_mode(),
-				<CommonError<T>>::PublicMintingNotAllowed
-			);
-			collection.check_allowlist(sender)?;
-
-			for (owner, _) in data.iter() {
-				collection.check_allowlist(owner)?;
-			}
-		}
-
-		Self::create_multiple_items_common(collection, sender, data, nesting_budget)
-	}
-
-	/// Minting tokens for multiple IDs.
-	/// See [`create_item_foreign`][`Pallet::create_item_foreign`] for more details.
-	pub fn create_multiple_items_foreign(
-		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		data: BTreeMap<T::CrossAccountId, u128>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
-		Self::create_multiple_items_common(collection, sender, data, nesting_budget)
 	}
 
 	fn set_allowance_unchecked(
@@ -721,7 +718,8 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		let mut result = Self::transfer(collection, from, to, amount, nesting_budget);
+		let mut result =
+			Self::transfer_internal(collection, Some(spender), from, to, amount, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result?;
 
@@ -772,24 +770,6 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(
-			collection,
-			sender,
-			[(data.0, data.1)].into_iter().collect(),
-			nesting_budget,
-		)
-	}
-
-	/// Creates fungible token.
-	///
-	/// - `data`: Contains user who will become the owners of the tokens and amount
-	///   of tokens he will receive.
-	pub fn create_item_foreign(
-		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		data: CreateItemData<T>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
-		Self::create_multiple_items_foreign(
 			collection,
 			sender,
 			[(data.0, data.1)].into_iter().collect(),

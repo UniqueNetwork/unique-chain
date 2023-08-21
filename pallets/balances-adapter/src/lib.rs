@@ -167,7 +167,6 @@ pub mod pallet {
 			from: &T::CrossAccountId,
 			to: &T::CrossAccountId,
 			amount: u128,
-			_nesting_budget: &dyn Budget,
 		) -> DispatchResultWithPostInfo {
 			<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
@@ -207,7 +206,7 @@ pub mod pallet {
 			if allowance < amount {
 				return Err(<CommonError<T>>::ApprovedValueTooLow.into());
 			}
-			Self::transfer(collection, from, to, amount, nesting_budget)
+			Self::transfer(collection, from, to, amount)
 		}
 	}
 }

@@ -2234,13 +2234,13 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Check permission to nest token.
 	///
-	/// * `sender` - The user who initiated the check.
+	/// * `sender` - The user who initiated the check if known.
 	/// * `from` - The token that is checked for embedding.
 	/// * `under` - Token under which to check.
 	/// * `budget` - The maximum budget that can be spent on the check.
 	fn check_nesting(
 		&self,
-		sender: T::CrossAccountId,
+		sender: Option<&T::CrossAccountId>,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		budget: &dyn Budget,
@@ -2345,13 +2345,11 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	fn collection_id(&self) -> CollectionId;
 
-	fn owner(&self) -> T::CrossAccountId;
-
 	fn property(&self, key: &PropertyKey) -> Option<PropertyValue> {
 		<Pallet<T>>::get_collection_property(self.collection_id(), key)
 	}
 
-	fn flags(&self) -> CollectionFlags;
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>>;
 }
 
 /// Extension for RFT collection.
@@ -2372,6 +2370,31 @@ where
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
+}
+
+pub trait XcmExtensions<T>
+where
+	T: Config,
+{
+	fn is_foreign(&self) -> bool;
+
+	fn create_item(
+		&self,
+		to: T::CrossAccountId,
+		data: CreateItemData,
+	) -> Result<TokenId, DispatchError>;
+
+	fn transfer_from(
+		&self,
+		nester: Option<T::CrossAccountId>,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult;
+
+	fn burn_item(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult;
 }
 
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].

@@ -101,39 +101,12 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 	fn create_item(
 		&self,
-		sender: <T>::CrossAccountId,
-		to: <T>::CrossAccountId,
-		data: up_data_structs::CreateItemData,
+		_sender: <T>::CrossAccountId,
+		_to: <T>::CrossAccountId,
+		_data: up_data_structs::CreateItemData,
 		_nesting_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		ensure!(
-			sender == self.owner(),
-			pallet_common::Error::<T>::NoPermission,
-		);
-
-		match &data {
-			up_data_structs::CreateItemData::Fungible(fungible_data) => {
-				let amount = fungible_data.value;
-
-				ensure!(amount != 0, <pallet_common::Error<T>>::UnsupportedOperation);
-
-				T::Mutate::mint_into(
-					to.as_sub(),
-					fungible_data
-						.value
-						.try_into()
-						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
-				)?;
-
-				Ok(PostDispatchInfo {
-					actual_weight: None,
-					pays_fee: Pays::Yes,
-				})
-			}
-			_ => {
-				fail!(pallet_fungible::Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken)
-			}
-		}
+		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 	}
 
 	fn create_multiple_items(
@@ -222,11 +195,16 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		&self,
 		sender: <T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		_token: TokenId,
+		token: TokenId,
 		amount: u128,
-		budget: &dyn up_data_structs::budget::Budget,
+		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		<Pallet<T>>::transfer(self, &sender, &to, amount, budget)
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer(self, &sender, &to, amount)
 	}
 
 	fn approve(
@@ -255,10 +233,15 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		sender: <T>::CrossAccountId,
 		from: <T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		_token: TokenId,
+		token: TokenId,
 		amount: u128,
 		budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
 		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, budget)
 	}
 
@@ -270,34 +253,12 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		amount: u128,
 		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		ensure!(
-			sender == self.owner(),
-			pallet_common::Error::<T>::NoPermission,
-		);
-
-		ensure!(
-			token == TokenId::default(),
-			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
-		);
-
-		T::Mutate::burn_from(
-			from.as_sub(),
-			amount
-				.try_into()
-				.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
-			Precision::Exact,
-			Fortitude::Polite,
-		)?;
-
-		Ok(PostDispatchInfo {
-			actual_weight: None,
-			pays_fee: Pays::Yes,
-		})
+		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 	}
 
 	fn check_nesting(
 		&self,
-		_sender: <T>::CrossAccountId,
+		_sender: Option<&<T>::CrossAccountId>,
 		_from: (up_data_structs::CollectionId, TokenId),
 		_under: TokenId,
 		_budget: &dyn up_data_structs::budget::Budget,
@@ -421,11 +382,80 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		NATIVE_FUNGIBLE_COLLECTION_ID
 	}
 
-	fn owner(&self) -> <T>::CrossAccountId {
-		T::CrossAccountId::from_sub(T::TreasuryAccountId::get())
+	fn xcm_extensions(&self) -> Option<&dyn pallet_common::XcmExtensions<T>> {
+		Some(self)
+	}
+}
+
+impl<T: Config> pallet_common::XcmExtensions<T> for NativeFungibleHandle<T> {
+	fn is_foreign(&self) -> bool {
+		false
 	}
 
-	fn flags(&self) -> up_data_structs::CollectionFlags {
-		Default::default()
+	fn create_item(
+		&self,
+		to: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemData,
+	) -> Result<TokenId, sp_runtime::DispatchError> {
+		match &data {
+			up_data_structs::CreateItemData::Fungible(fungible_data) => {
+				let amount = fungible_data.value;
+
+				T::Mutate::mint_into(
+					to.as_sub(),
+					fungible_data
+						.value
+						.try_into()
+						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+				)?;
+
+				Ok(TokenId::default())
+			}
+			_ => {
+				fail!(pallet_fungible::Error::<T>::NotFungibleDataUsedToMintFungibleCollectionToken)
+			}
+		}
+	}
+
+	fn transfer_from(
+		&self,
+		_nester: Option<<T>::CrossAccountId>,
+		from: <T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		_nesting_budget: &dyn up_data_structs::budget::Budget,
+	) -> sp_runtime::DispatchResult {
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer(self, &from, &to, amount)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
+	}
+
+	fn burn_item(
+		&self,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
+		T::Mutate::burn_from(
+			from.as_sub(),
+			amount
+				.try_into()
+				.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+			Precision::Exact,
+			Fortitude::Polite,
+		)?;
+
+		Ok(())
 	}
 }

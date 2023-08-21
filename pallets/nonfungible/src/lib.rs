@@ -466,6 +466,8 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token: TokenId,
 	) -> DispatchResult {
+		collection.check_is_not_foreign()?;
+
 		let token_data =
 			<TokenData<T>>::get((collection.id, token)).ok_or(<CommonError<T>>::TokenNotFound)?;
 		ensure!(&token_data.owner == sender, <CommonError<T>>::NoPermission);
@@ -820,6 +822,19 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let nester = from;
+
+		Self::transfer_internal(collection, Some(nester), from, to, token, nesting_budget)
+	}
+
+	pub fn transfer_internal(
+		collection: &NonfungibleHandle<T>,
+		nester: Option<&T::CrossAccountId>,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
@@ -856,7 +871,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
+			nester,
 			to,
 			collection.id,
 			token,
@@ -920,6 +935,8 @@ impl<T: Config> Pallet<T> {
 		data: Vec<CreateItemData<T>>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
+		collection.check_is_not_foreign()?;
+
 		if !collection.is_owner_or_admin(sender) {
 			ensure!(
 				collection.permissions.mint_mode(),
@@ -932,6 +949,15 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
+		Self::create_multiple_items_internal(collection, Some(sender), data, nesting_budget)
+	}
+
+	pub fn create_multiple_items_internal(
+		collection: &NonfungibleHandle<T>,
+		sender: Option<&T::CrossAccountId>,
+		data: Vec<CreateItemData<T>>,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
 		for data in data.iter() {
 			<PalletCommon<T>>::ensure_correct_receiver(&data.owner)?;
 		}
@@ -962,7 +988,7 @@ impl<T: Config> Pallet<T> {
 			let token = TokenId(first_token + i as u32 + 1);
 
 			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
+				sender,
 				&data.owner,
 				collection.id,
 				token,
@@ -972,6 +998,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		let collection_owner = T::CrossAccountId::from_sub(collection.owner.clone());
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {
 				let token = first_token + i as u32 + 1;
@@ -990,13 +1017,21 @@ impl<T: Config> Pallet<T> {
 					TokenId(token),
 				);
 
+				let Some(property_setter) =
+					sender.or_else(|| collection.flags.foreign.then_some(&collection_owner))
+				else {
+					return TransactionOutcome::Rollback(
+						Err(<CommonError<T>>::NoPermission.into()),
+					);
+				};
+
 				if let Err(e) = Self::set_token_properties(
 					collection,
-					sender,
+					property_setter,
 					TokenId(token),
 					data.properties.clone().into_iter(),
 					SetPropertyMode::NewToken {
-						mint_target_is_sender: sender.conv_eq(&data.owner),
+						mint_target_is_sender: property_setter.conv_eq(&data.owner),
 					},
 					nesting_budget,
 				) {
@@ -1253,7 +1288,8 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		let mut result = Self::transfer(collection, from, to, token, nesting_budget);
+		let mut result =
+			Self::transfer_internal(collection, Some(spender), from, to, token, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result
 	}
@@ -1282,7 +1318,7 @@ impl<T: Config> Pallet<T> {
 	///
 	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
-		sender: T::CrossAccountId,
+		sender: Option<&T::CrossAccountId>,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
@@ -1293,6 +1329,10 @@ impl<T: Config> Pallet<T> {
 		let permissive = false;
 		#[cfg(feature = "runtime-benchmarks")]
 		let permissive = nesting.permissive;
+
+		let Some(sender) = sender else {
+			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
+		};
 
 		if permissive {
 			ensure!(

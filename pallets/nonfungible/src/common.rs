@@ -18,11 +18,12 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use up_data_structs::{
-	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue, TokenOwnerError,
+	TokenId, CreateItemExData, CollectionId,
+	budget::{Budget, Value},
+	Property, PropertyKey, PropertyKeyPermission, PropertyValue, TokenOwnerError,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, XcmExtensions, with_weight,
 	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
 };
 use sp_runtime::DispatchError;
@@ -416,7 +417,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn check_nesting(
 		&self,
-		sender: T::CrossAccountId,
+		sender: Option<&T::CrossAccountId>,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
@@ -566,11 +567,57 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		self.id
 	}
 
-	fn owner(&self) -> T::CrossAccountId {
-		T::CrossAccountId::from_sub(self.owner.clone())
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		self.flags.foreign.then_some(self)
+	}
+}
+
+impl<T: Config> XcmExtensions<T> for NonfungibleHandle<T> {
+	fn is_foreign(&self) -> bool {
+		self.flags.foreign
 	}
 
-	fn flags(&self) -> up_data_structs::CollectionFlags {
-		self.flags
+	fn create_item(
+		&self,
+		to: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemData,
+	) -> Result<TokenId, sp_runtime::DispatchError> {
+		let sender = None;
+
+		<Pallet<T>>::create_multiple_items_internal(
+			self,
+			sender,
+			vec![map_create_data::<T>(data, &to)?],
+			&Value::new(0),
+		)?;
+
+		Ok(self.last_token_id())
+	}
+
+	fn transfer_from(
+		&self,
+		nester: Option<<T>::CrossAccountId>,
+		from: <T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> sp_runtime::DispatchResult {
+		ensure!(amount == 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		<Pallet<T>>::transfer_internal(self, nester.as_ref(), &from, &to, token, nesting_budget)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
+	}
+
+	fn burn_item(
+		&self,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		ensure!(amount == 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		<Pallet<T>>::burn(self, &from, token)
 	}
 }

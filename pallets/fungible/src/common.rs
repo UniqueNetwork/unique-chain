@@ -18,10 +18,12 @@ use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
 use up_data_structs::{
-	TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData, TokenOwnerError,
+	TokenId, CollectionId, CreateItemExData,
+	budget::{Budget, Value},
+	CreateItemData, TokenOwnerError,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, XcmExtensions, with_weight,
 	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_structure::Error as StructureError;
@@ -367,7 +369,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn check_nesting(
 		&self,
-		_sender: <T>::CrossAccountId,
+		_sender: Option<&<T>::CrossAccountId>,
 		_from: (CollectionId, TokenId),
 		_under: TokenId,
 		_nesting_budget: &dyn Budget,
@@ -484,11 +486,65 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		self.id
 	}
 
-	fn owner(&self) -> T::CrossAccountId {
-		T::CrossAccountId::from_sub(self.owner.clone())
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		Some(self)
+	}
+}
+
+impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
+	fn is_foreign(&self) -> bool {
+		self.flags.foreign
 	}
 
-	fn flags(&self) -> up_data_structs::CollectionFlags {
-		self.flags
+	fn create_item(
+		&self,
+		to: <T>::CrossAccountId,
+		data: CreateItemData,
+	) -> Result<TokenId, sp_runtime::DispatchError> {
+		match &data {
+			up_data_structs::CreateItemData::Fungible(fungible_data) => {
+				let sender = None;
+
+				<Pallet<T>>::create_multiple_items_internal(
+					self,
+					sender,
+					[(to, fungible_data.value)].into_iter().collect(),
+					&Value::new(0),
+				)?
+			}
+			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
+		}
+
+		Ok(TokenId::default())
+	}
+
+	fn transfer_from(
+		&self,
+		nester: Option<<T>::CrossAccountId>,
+		from: <T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> sp_runtime::DispatchResult {
+		ensure!(
+			token == TokenId::default(),
+			<Error<T>>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer_internal(self, nester.as_ref(), &from, &to, amount, nesting_budget)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
+	}
+
+	fn burn_item(
+		&self,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		<Self as CommonCollectionOperations<T>>::burn_item(&self, from, token, amount)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
 	}
 }

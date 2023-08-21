@@ -60,7 +60,7 @@ use sp_std::collections::btree_set::BTreeSet;
 use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
 use frame_support::fail;
 pub use pallet::*;
-use pallet_common::{dispatch::CollectionDispatch};
+use pallet_common::dispatch::CollectionDispatch;
 use up_data_structs::{
 	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
 };
@@ -318,7 +318,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// - `nesting_budget`: Limit for searching parents in depth.
 	pub fn check_nesting(
-		from: T::CrossAccountId,
+		from: Option<&T::CrossAccountId>,
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,
@@ -335,7 +335,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// - `nesting_budget`: Limit for searching parents in depth.
 	pub fn nest_if_sent_to_token(
-		from: T::CrossAccountId,
+		from: Option<&T::CrossAccountId>,
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,

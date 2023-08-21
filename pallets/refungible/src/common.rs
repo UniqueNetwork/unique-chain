@@ -24,7 +24,7 @@ use up_data_structs::{
 	CreateRefungibleExSingleOwner, TokenOwnerError,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, XcmExtensions, with_weight,
 	weights::WeightInfo as _,
 };
 use pallet_structure::Error as StructureError;
@@ -444,7 +444,7 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 
 	fn check_nesting(
 		&self,
-		_sender: <T>::CrossAccountId,
+		_sender: Option<&<T>::CrossAccountId>,
 		_from: (CollectionId, TokenId),
 		_under: TokenId,
 		_nesting_budget: &dyn Budget,
@@ -568,12 +568,8 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		self.id
 	}
 
-	fn owner(&self) -> T::CrossAccountId {
-		T::CrossAccountId::from_sub(self.owner.clone())
-	}
-
-	fn flags(&self) -> up_data_structs::CollectionFlags {
-		self.flags
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		None
 	}
 }
 

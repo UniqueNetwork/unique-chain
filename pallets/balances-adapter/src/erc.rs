@@ -57,11 +57,8 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder()
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
+		<Pallet<T>>::transfer(self, &caller, &to, amount)
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
@@ -105,11 +102,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder()
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
+		<Pallet<T>>::transfer(self, &caller, &to, amount)
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 
 		Ok(true)
