@@ -53,26 +53,16 @@ describeGov('Governance: Technical Committee tests', () => {
       await helper.technicalCommittee.collective.vote(techcomms.andy, proposalHash, proposalIndex, true);
       await helper.technicalCommittee.collective.vote(techcomms.constantine, proposalHash, proposalIndex, true);
       await helper.technicalCommittee.collective.vote(techcomms.greg, proposalHash, proposalIndex, true);
-      console.log(`BN before close call ${await helper.chain.getLatestBlockNumber()}`);
-      const nextExternalPropose = (await helper.callRpc('api.query.democracy.nextExternal')).toJSON();
-      console.log(nextExternalPropose);
+
       return await helper.technicalCommittee.collective.close(techcomms.andy, proposalHash, proposalIndex);
     });
   }
 
   itSub('TechComm can fast-track Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
-    console.log('external proposal preimage hash: ', preimageHash);
     await helper.wait.parachainBlockMultiplesOf(35n);
-    console.log(' ** after waiter ** ');
 
-    const res =  await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
-    const lastReferendumIndex = await helper.callRpc('api.query.democracy.referendumCount', []);
-    const referendumInfo = await helper.democracy.referendumInfo(lastReferendumIndex);
-    console.log('!!!', referendumInfo);
-    const nextExternalPropose = (await helper.callRpc('api.query.democracy.nextExternal')).toJSON();
-    console.log(nextExternalPropose);
-    console.log(`\n BN: ${await helper.chain.getLatestBlockNumber()} `);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
     await expect(proposalFromAllCommittee(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
       .to.be.fulfilled;
@@ -123,7 +113,6 @@ describeGov('Governance: Technical Committee tests', () => {
 
   itSub.skip('TechComm member can add a Fellowship member', async ({helper}) => {
     const newFellowshipMember = helper.arrange.createEmptyAccount();
-    const fellowship = [[newFellowshipMember]];
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
@@ -131,7 +120,6 @@ describeGov('Governance: Technical Committee tests', () => {
     const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
     expect(fellowshipMembers).to.contains(newFellowshipMember.address);
     await clearFellowship(sudoer);
-
   });
 
   itSub('[Negative] TechComm cannot submit regular democracy proposal', async ({helper}) => {

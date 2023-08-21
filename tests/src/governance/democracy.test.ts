@@ -38,8 +38,6 @@ describeGov('Governance: Democracy tests', () => {
     const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
     await voteUnanimouslyInFellowship(helper, fellows, democracyTrackMinRank, fellowshipReferendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
-    // Remove
-    helper.logger = helper.util.getDefaultLogger();
 
     await helper.wait.expectEvent(
       fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,

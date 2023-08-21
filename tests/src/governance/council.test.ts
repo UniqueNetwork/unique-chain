@@ -78,8 +78,6 @@ describeGov('Governance: Council tests', () => {
   itSub('>50% of Council can externally propose SuperMajorityAgainst', async ({helper}) => {
     const forceSetBalanceReceiver = helper.arrange.createEmptyAccount();
     const forceSetBalanceTestValue = 20n * 10n ** 25n;
-    // Remove
-    helper.logger = helper.util.getDefaultLogger();
 
     const democracyProposal = await helper.constructApiCall('api.tx.balances.forceSetBalance', [
       forceSetBalanceReceiver.address, forceSetBalanceTestValue,
@@ -216,6 +214,22 @@ describeGov('Governance: Council tests', () => {
     expect(record).to.be.deep.equal({rank: 0});
 
     await clearFellowship(sudoer);
+  });
+
+  itSub('>50% Council can add\remove Fellowship member', async ({helper}) => {
+    try {
+      const newMember = helper.arrange.createEmptyAccount();
+
+      const proposalAdd = helper.fellowship.collective.addMemberCall(newMember.address);
+      const proposalRemove = helper.fellowship.collective.removeMemberCall(newMember.address, 7);
+      await expect(proposalFromMoreThanHalfCouncil(proposalAdd)).to.be.fulfilled;
+      expect(await helper.fellowship.collective.getMembers()).to.be.deep.contain(newMember.address);
+      await expect(proposalFromMoreThanHalfCouncil(proposalRemove)).to.be.fulfilled;
+      expect(await helper.fellowship.collective.getMembers()).to.be.not.deep.contain(newMember.address);
+    }
+    finally {
+      await clearFellowship(sudoer);
+    }
   });
 
   itSub('Council can blacklist Democracy proposals', async ({helper}) => {

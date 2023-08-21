@@ -39,7 +39,7 @@ pub mod fellowship {
 
 			pub const PREPARE_PERIOD: BlockNumber = 30 * MINUTES;
 			pub const DECISION_PERIOD: BlockNumber = 7 * DAYS;
-			pub const CONFIRM_PERIOD: BlockNumber = 30 * MINUTES;
+			pub const CONFIRM_PERIOD: BlockNumber = 2 * DAYS;
 			pub const MIN_ENACTMENT_PERIOD: BlockNumber = 1 * MINUTES;
 		}
 	}

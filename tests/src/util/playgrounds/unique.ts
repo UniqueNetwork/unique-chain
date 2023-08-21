@@ -3254,6 +3254,11 @@ class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
   vote(signer: TSigner, pollIndex: number, aye: boolean) {
     return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [pollIndex, aye]);
   }
+
+  async getMembers() {
+    return (await this.helper.getApi().query.fellowshipCollective.members.keys())
+      .map((key) => key.args[0].toString());
+  }
 }
 
 class ReferendaGroup extends HelperGroup<UniqueHelper> {

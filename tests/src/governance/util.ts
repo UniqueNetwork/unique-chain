@@ -164,12 +164,10 @@ export async function clearFellowship(sudoer: IKeyringPair) {
   await usingPlaygrounds(async (helper) => {
     const fellowship = (await helper.getApi().query.fellowshipCollective.members.keys())
       .map((key) => key.args[0].toString());
-    console.log(fellowship);
     for(const  member of fellowship) {
       await helper.getSudo().fellowship.collective.removeMember(sudoer, member, fellowshipRankLimit);
     }
   });
-  // await clearFellowshipReferenda(sudoer);
 }
 
 export async function clearFellowshipReferenda(sudoer: IKeyringPair) {
@@ -184,13 +182,8 @@ export async function clearFellowshipReferenda(sudoer: IKeyringPair) {
 export async function hardResetFellowshipReferenda(sudoer: IKeyringPair) {
   await usingPlaygrounds(async (helper) => {
     const api = helper.getApi();
-    // console.log(api.runtimeMetadata.asLatest.pallets.toJSON());
     const prefix = twox128('FellowshipReferenda');
-    // console.log(prefix);
-    // const resOld = await helper.getSudo().getApi().tx.system.killPrefix(prefix, 100).signAndSend(sudoer);
-    // console.log(resOld.toJSON());
     await helper.signTransaction(sudoer, api.tx.sudo.sudo(api.tx.system.killPrefix(prefix, 100)));
-    // console.log(res);
   });
 }
 
@@ -199,7 +192,6 @@ export async function hardResetDemocracy(sudoer: IKeyringPair) {
     const api = helper.getApi();
     const prefix = twox128('Democracy');
     await helper.signTransaction(sudoer, api.tx.sudo.sudo(api.tx.system.killPrefix(prefix, 100)));
-    // console.log(res);
   });
 }
 
@@ -208,7 +200,6 @@ export async function hardResetGovScheduler(sudoer: IKeyringPair) {
     const api = helper.getApi();
     const prefix = twox128('GovScheduler');
     await helper.signTransaction(sudoer, api.tx.sudo.sudo(api.tx.system.killPrefix(prefix, 500)));
-    // console.log(res);
   });
 }
 

@@ -1,7 +1,12 @@
+use up_common::constants::{MAXIMUM_BLOCK_WEIGHT, NORMAL_DISPATCH_RATIO};
+
 use super::*;
 
 parameter_types! {
-	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) * <Runtime as frame_system::Config>::BlockWeights::get().max_block;
+	pub MaximumSchedulerWeight: Weight = Perbill::from_percent(80) *
+		<Runtime as frame_system::Config>::BlockWeights::get()
+		.per_class.get(frame_support::pallet_prelude::DispatchClass::Normal).max_total
+		.unwrap_or(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
 	pub MaxScheduledPerBlock: u32 = 50;
 }
 
