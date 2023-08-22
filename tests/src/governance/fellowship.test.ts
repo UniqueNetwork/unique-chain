@@ -36,7 +36,7 @@ describeGov('Governance: Fellowship tests', () => {
     const enactmentId = await helper.fellowship.referenda.enactmentEventId(referendumIndex);
     const dispatchedEvent = await helper.wait.expectEvent(
       fellowshipPreparePeriod + fellowshipConfirmPeriod + defaultEnactmentMoment.After,
-      Event.GovScheduler.Dispatched,
+      Event.Scheduler.Dispatched,
       (event: any) => event.id == enactmentId,
     );
 

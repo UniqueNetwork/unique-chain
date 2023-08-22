@@ -30,7 +30,7 @@ use sp_runtime::{
 };
 use crate::{
 	Runtime, RuntimeOrigin, RuntimeEvent, RuntimeCall, OriginCaller, Preimage, Balances, Treasury,
-	GovScheduler, Council, TechnicalCommittee,
+	Scheduler, Council, TechnicalCommittee,
 };
 pub use up_common::{
 	constants::{UNIQUE, DAYS, HOURS, MINUTES, CENTIUNIQUE},

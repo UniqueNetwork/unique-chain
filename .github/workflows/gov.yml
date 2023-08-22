@@ -7,9 +7,7 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   prepare-execution-marix:
-
     name: Prepare execution matrix
 
     runs-on: self-hosted-ci
@@ -23,7 +21,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3.1.0
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -32,17 +30,15 @@ jobs:
         uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
-          # TODO: Remove state-version-0 after mainnet upgrade
           matrix: |
             network {quartz}, wasm_name {quartz}
             network {opal}, wasm_name {opal}
             network {sapphire}, wasm_name {quartz}
 
   dev_build_int_tests:
-
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,medium]
+    runs-on: [self-hosted-ci, medium]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
@@ -50,7 +46,7 @@ jobs:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     steps:
       - name: Clean Workspace
@@ -59,7 +55,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3.1.0
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -73,7 +69,6 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
-    
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
@@ -100,10 +95,10 @@ jobs:
       - name: Test Report
         uses: phoenix-actions/test-reporting@v10
         id: test-report
-        if: success() || failure()    # run this step even if previous step failed
+        if: success() || failure() # run this step even if previous step failed
         with:
-          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          name: int test results - ${{ matrix.network }} # Name of the check run which will be created
+          path: tests/mochawesome-report/test-*.json # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
@@ -112,11 +107,11 @@ jobs:
           echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
 
       - name: Stop running containers
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: |
           docker builder prune -f -a
           docker system prune -f

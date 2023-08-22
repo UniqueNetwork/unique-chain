@@ -27,7 +27,7 @@ impl pallet_democracy::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type Slash = Treasury;
-	type Scheduler = GovScheduler;
+	type Scheduler = Scheduler;
 	type PalletsOrigin = OriginCaller;
 	type Preimages = Preimage;
 	type WeightInfo = pallet_democracy::weights::SubstrateWeight<Runtime>;

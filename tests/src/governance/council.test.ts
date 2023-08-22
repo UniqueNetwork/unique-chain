@@ -120,7 +120,7 @@ describeGov('Governance: Council tests', () => {
     const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
     expect(passedReferendumEvent.referendumIndex).to.be.equal(democracyReferendumIndex);
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.GovScheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.Scheduler.Dispatched);
     const receiverBalance = await helper.balance.getSubstrate(forceSetBalanceReceiver.address);
     expect(receiverBalance).to.be.equal(forceSetBalanceTestValue);
   });

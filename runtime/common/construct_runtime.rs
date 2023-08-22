@@ -58,7 +58,7 @@ macro_rules! construct_runtime {
 				Identity: pallet_identity = 40,
 
 				#[cfg(feature = "preimage")]
-				Preimage: pallet_preimage::{Pallet, Call, Storage, Event<T>} = 41,
+				Preimage: pallet_preimage = 41,
 
 				#[cfg(feature = "governance")]
 				Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 42,
@@ -82,7 +82,7 @@ macro_rules! construct_runtime {
 				FellowshipReferenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 48,
 
 				#[cfg(feature = "governance")]
-				GovScheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 49,
+				Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 49,
 
 				#[cfg(feature = "governance")]
 				Origins: pallet_gov_origins::{Origin} = 99,
@@ -98,7 +98,7 @@ macro_rules! construct_runtime {
 				Unique: pallet_unique::{Pallet, Call, Storage} = 61,
 
 				// #[cfg(feature = "scheduler")]
-				// Scheduler: pallet_unique_scheduler_v2 = 62,
+				// UniqueScheduler: pallet_unique_scheduler_v2 = 62,
 
 				Configuration: pallet_configuration = 63,
 

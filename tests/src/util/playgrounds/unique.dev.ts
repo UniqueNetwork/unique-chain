@@ -210,8 +210,8 @@ export class Event {
     }));
   };
 
+  static UniqueScheduler = schedulerSection('uniqueScheduler');
   static Scheduler = schedulerSection('scheduler');
-  static GovScheduler = schedulerSection('govScheduler');
 
   static XcmpQueue = class extends EventSection('xcmpQueue') {
     static XcmpMessageSent = this.Method('XcmpMessageSent', data => ({
