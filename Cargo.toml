@@ -27,7 +27,9 @@ opt-level = 3
 [workspace.dependencies]
 # Unique
 app-promotion-rpc = { path = "primitives/app_promotion_rpc", default-features = false }
-evm-coder = { git = "https://github.com/uniquenetwork/evm-coder", tag = "v0.3.6", default-features = false, features = ['bondrewd'] }
+evm-coder = { git = "https://github.com/uniquenetwork/evm-coder", tag = "v0.3.6", default-features = false, features = [
+	'bondrewd',
+] }
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
 pallet-balances-adapter = { default-features = false, path = "pallets/balances-adapter" }
 pallet-charge-transaction = { package = "pallet-template-transaction-payment", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v0.9.43" }
@@ -123,6 +125,7 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "
 pallet-treasury = { default-features = false, git = "https://github.com/paritytech/substrate", branch = "polkadot-v0.9.43" }
 pallet-xcm = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
 parachain-info = { default-features = false, git = "https://github.com/paritytech/cumulus", branch = "polkadot-v0.9.43" }
+parity-scale-codec = { version = "3.2.2", features = ["derive"], default-features = false }
 polkadot-cli = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43" }
 polkadot-parachain = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43", default-features = false }
 polkadot-primitives = { git = "https://github.com/paritytech/polkadot", branch = "release-v0.9.43" }

@@ -105,6 +105,7 @@ export enum Pallets {
   Fungible = 'fungible',
   NFT = 'nonfungible',
   Scheduler = 'scheduler',
+  UniqueScheduler = 'uniqueScheduler',
   AppPromotion = 'apppromotion',
   CollatorSelection = 'collatorselection',
   Session = 'session',

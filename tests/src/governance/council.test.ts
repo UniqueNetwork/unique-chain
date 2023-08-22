@@ -2,7 +2,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {Event} from '../util/playgrounds/unique.dev';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin, hardResetFellowshipReferenda, hardResetGovScheduler, hardResetDemocracy} from './util';
+import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util';
 
 describeGov('Governance: Council tests', () => {
   let donor: IKeyringPair;
@@ -221,7 +221,7 @@ describeGov('Governance: Council tests', () => {
       const newMember = helper.arrange.createEmptyAccount();
 
       const proposalAdd = helper.fellowship.collective.addMemberCall(newMember.address);
-      const proposalRemove = helper.fellowship.collective.removeMemberCall(newMember.address, 7);
+      const proposalRemove = helper.fellowship.collective.removeMemberCall(newMember.address, fellowshipRankLimit);
       await expect(proposalFromMoreThanHalfCouncil(proposalAdd)).to.be.fulfilled;
       expect(await helper.fellowship.collective.getMembers()).to.be.deep.contain(newMember.address);
       await expect(proposalFromMoreThanHalfCouncil(proposalRemove)).to.be.fulfilled;

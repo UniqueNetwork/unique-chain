@@ -61,31 +61,31 @@ macro_rules! construct_runtime {
 				Preimage: pallet_preimage = 41,
 
 				#[cfg(feature = "governance")]
-				Democracy: pallet_democracy::{Pallet, Call, Storage, Config<T>, Event<T>} = 42,
+				Democracy: pallet_democracy = 42,
 
 				#[cfg(feature = "governance")]
-				Council: pallet_collective::<Instance1>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 43,
+				Council: pallet_collective::<Instance1> = 43,
 
 				#[cfg(feature = "governance")]
-				TechnicalCommittee: pallet_collective::<Instance2>::{Pallet, Call, Storage, Origin<T>, Event<T>, Config<T>} = 44,
+				TechnicalCommittee: pallet_collective::<Instance2> = 44,
 
 				#[cfg(feature = "governance")]
-				CouncilMembership: pallet_membership::<Instance1>::{Pallet, Call, Storage, Event<T>, Config<T>} = 45,
+				CouncilMembership: pallet_membership::<Instance1> = 45,
 
 				#[cfg(feature = "governance")]
-				TechnicalCommitteeMembership: pallet_membership::<Instance2>::{Pallet, Call, Storage, Event<T>, Config<T>} = 46,
+				TechnicalCommitteeMembership: pallet_membership::<Instance2> = 46,
 
 				#[cfg(feature = "governance")]
-				FellowshipCollective: pallet_ranked_collective::{Pallet, Call, Storage, Event<T>} = 47,
+				FellowshipCollective: pallet_ranked_collective = 47,
 
 				#[cfg(feature = "governance")]
-				FellowshipReferenda: pallet_referenda::{Pallet, Call, Storage, Event<T>} = 48,
+				FellowshipReferenda: pallet_referenda = 48,
 
 				#[cfg(feature = "governance")]
-				Scheduler: pallet_scheduler::{Pallet, Call, Storage, Event<T>} = 49,
+				Scheduler: pallet_scheduler = 49,
 
 				#[cfg(feature = "governance")]
-				Origins: pallet_gov_origins::{Origin} = 99,
+				Origins: pallet_gov_origins = 99,
 
 				// XCM helpers.
 				XcmpQueue: cumulus_pallet_xcmp_queue = 50,

@@ -173,7 +173,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
     });
 
-    itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.Scheduler], async (scheduleKind, {helper}) => {
+    itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.UniqueScheduler], async (scheduleKind, {helper}) => {
       const collection = await helper.nft.mintCollection(bob);
 
       const nftBeforeMM = await collection.mintToken(bob);
