@@ -74,6 +74,7 @@ describe('Pallet presence', () => {
         'democracy',
         'fellowshipcollective',
         'fellowshipreferenda',
+        'origins',
         'scheduler',
         'technicalcommittee',
         'technicalcommitteemembership',
