@@ -37,7 +37,7 @@ use up_data_structs::{
 };
 use sp_arithmetic::Perbill;
 
-#[cfg(feature = "scheduler")]
+#[cfg(feature = "unique-scheduler")]
 pub mod scheduler;
 
 #[cfg(feature = "foreign-assets")]
@@ -51,6 +51,9 @@ pub mod collator_selection;
 
 #[cfg(feature = "preimage")]
 pub mod preimage;
+
+#[cfg(feature = "governance")]
+pub mod governance;
 
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
@@ -143,8 +146,17 @@ impl pallet_configuration::Config for Runtime {
 
 impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type RuntimeOrigin = RuntimeOrigin;
+
 	type RuntimeCall = RuntimeCall;
+
+	#[cfg(feature = "governance")]
+	type ManagerOrigin = governance::RootOrTechnicalCommitteeMember;
+
+	#[cfg(not(feature = "governance"))]
+	type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
+
+	type PreimageOrigin = frame_system::EnsureRoot<AccountId>;
+
 	#[cfg(feature = "preimage")]
 	type Preimages = crate::Preimage;
 	#[cfg(not(feature = "preimage"))]
