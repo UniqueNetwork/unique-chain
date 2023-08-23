@@ -1,4 +1,4 @@
-// Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
+// Copyright 2019-2023 Unique Network (Gibraltar) Ltd.
 // This file is part of Unique Network.
 
 // Unique Network is free software: you can redistribute it and/or modify
@@ -14,13 +14,25 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-pub mod ethereum;
-pub mod orml;
-pub mod pallets;
-pub mod parachain;
-pub mod sponsoring;
-pub mod substrate;
-pub mod xcm;
+#![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(feature = "test-env")]
-pub mod test_pallets;
+use frame_support::pallet_prelude::*;
+
+pub use pallet::*;
+
+#[frame_support::pallet]
+pub mod pallet {
+	use super::*;
+	#[pallet::config]
+	pub trait Config: frame_system::Config {}
+
+	#[pallet::pallet]
+	pub struct Pallet<T>(_);
+
+	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
+	#[pallet::origin]
+	pub enum Origin {
+		/// Origin able to send proposal from fellowship collective to democracy pallet.
+		FellowshipProposition,
+	}
+}

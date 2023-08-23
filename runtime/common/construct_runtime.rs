@@ -60,6 +60,33 @@ macro_rules! construct_runtime {
 				#[cfg(feature = "preimage")]
 				Preimage: pallet_preimage = 41,
 
+				#[cfg(feature = "governance")]
+				Democracy: pallet_democracy = 42,
+
+				#[cfg(feature = "governance")]
+				Council: pallet_collective::<Instance1> = 43,
+
+				#[cfg(feature = "governance")]
+				TechnicalCommittee: pallet_collective::<Instance2> = 44,
+
+				#[cfg(feature = "governance")]
+				CouncilMembership: pallet_membership::<Instance1> = 45,
+
+				#[cfg(feature = "governance")]
+				TechnicalCommitteeMembership: pallet_membership::<Instance2> = 46,
+
+				#[cfg(feature = "governance")]
+				FellowshipCollective: pallet_ranked_collective = 47,
+
+				#[cfg(feature = "governance")]
+				FellowshipReferenda: pallet_referenda = 48,
+
+				#[cfg(feature = "governance")]
+				Scheduler: pallet_scheduler = 49,
+
+				#[cfg(feature = "governance")]
+				Origins: pallet_gov_origins = 99,
+
 				// XCM helpers.
 				XcmpQueue: cumulus_pallet_xcmp_queue = 50,
 				PolkadotXcm: pallet_xcm = 51,
@@ -71,7 +98,7 @@ macro_rules! construct_runtime {
 				Unique: pallet_unique::{Pallet, Call, Storage} = 61,
 
 				// #[cfg(feature = "scheduler")]
-				// Scheduler: pallet_unique_scheduler_v2 = 62,
+				// UniqueScheduler: pallet_unique_scheduler_v2 = 62,
 
 				Configuration: pallet_configuration = 63,
 
@@ -109,7 +136,7 @@ macro_rules! construct_runtime {
 
 				BalancesAdapter: pallet_balances_adapter = 155,
 
-				#[cfg(feature = "pallet-test-utils")]
+				#[cfg(feature = "test-env")]
 				TestUtils: pallet_test_utils = 255,
 			}
 		}

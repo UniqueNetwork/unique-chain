@@ -26,7 +26,7 @@ describe('Scheduling token and balance transfers', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+      requirePalletsOrSkip(this, helper, [Pallets.UniqueScheduler]);
 
       superuser = await privateKey('//Alice');
       const donor = await privateKey({url: import.meta.url});
@@ -411,7 +411,7 @@ describe('Scheduling token and balance transfers', () => {
     const priority = 112;
     await helper.getSudo().scheduler.changePriority(superuser, scheduledId, priority);
 
-    const priorityChanged = await helper.wait.expectEvent(waitForBlocks, Event.Scheduler.PriorityChanged);
+    const priorityChanged = await helper.wait.expectEvent(waitForBlocks, Event.UniqueScheduler.PriorityChanged);
 
     const [blockNumber, index] = priorityChanged.task();
     expect(blockNumber).to.be.equal(executionBlock);
@@ -567,7 +567,7 @@ describe('Negative Test: Scheduling', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Scheduler]);
+      requirePalletsOrSkip(this, helper, [Pallets.UniqueScheduler]);
 
       const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
@@ -662,7 +662,7 @@ describe('Negative Test: Scheduling', () => {
     await expect(helper.scheduler.changePriority(alice, scheduledId, priority))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.expectEvent(waitForBlocks, Event.Scheduler.PriorityChanged);
+    await helper.wait.expectEvent(waitForBlocks, Event.UniqueScheduler.PriorityChanged);
   });
 });
 

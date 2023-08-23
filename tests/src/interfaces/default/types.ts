@@ -2,8 +2,9 @@
 /* eslint-disable */
 
 import type { Data } from '@polkadot/types';
-import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { BTreeMap, BTreeSet, Bytes, Compact, Enum, Null, Option, Result, Struct, Text, U256, U8aFixed, Vec, bool, i64, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
 import type { ITuple } from '@polkadot/types-codec/types';
+import type { Vote } from '@polkadot/types/interfaces/elections';
 import type { AccountId32, Call, H160, H256, MultiAddress, Perbill } from '@polkadot/types/interfaces/runtime';
 import type { Event } from '@polkadot/types/interfaces/system';
 
@@ -173,6 +174,14 @@ export interface CumulusPalletXcmEvent extends Enum {
   readonly isExecutedDownward: boolean;
   readonly asExecutedDownward: ITuple<[U8aFixed, XcmV3TraitsOutcome]>;
   readonly type: 'InvalidFormat' | 'UnsupportedVersion' | 'ExecutedDownward';
+}
+
+/** @name CumulusPalletXcmOrigin */
+export interface CumulusPalletXcmOrigin extends Enum {
+  readonly isRelay: boolean;
+  readonly isSiblingParachain: boolean;
+  readonly asSiblingParachain: u32;
+  readonly type: 'Relay' | 'SiblingParachain';
 }
 
 /** @name CumulusPalletXcmpQueueCall */
@@ -556,8 +565,42 @@ export interface FrameSupportDispatchPerDispatchClassWeightsPerClass extends Str
   readonly mandatory: FrameSystemLimitsWeightsPerClass;
 }
 
+/** @name FrameSupportDispatchRawOrigin */
+export interface FrameSupportDispatchRawOrigin extends Enum {
+  readonly isRoot: boolean;
+  readonly isSigned: boolean;
+  readonly asSigned: AccountId32;
+  readonly isNone: boolean;
+  readonly type: 'Root' | 'Signed' | 'None';
+}
+
 /** @name FrameSupportPalletId */
 export interface FrameSupportPalletId extends U8aFixed {}
+
+/** @name FrameSupportPreimagesBounded */
+export interface FrameSupportPreimagesBounded extends Enum {
+  readonly isLegacy: boolean;
+  readonly asLegacy: {
+    readonly hash_: H256;
+  } & Struct;
+  readonly isInline: boolean;
+  readonly asInline: Bytes;
+  readonly isLookup: boolean;
+  readonly asLookup: {
+    readonly hash_: H256;
+    readonly len: u32;
+  } & Struct;
+  readonly type: 'Legacy' | 'Inline' | 'Lookup';
+}
+
+/** @name FrameSupportScheduleDispatchTime */
+export interface FrameSupportScheduleDispatchTime extends Enum {
+  readonly isAt: boolean;
+  readonly asAt: u32;
+  readonly isAfter: boolean;
+  readonly asAfter: u32;
+  readonly type: 'At' | 'After';
+}
 
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
@@ -707,20 +750,6 @@ export interface FrameSystemPhase extends Enum {
   readonly isFinalization: boolean;
   readonly isInitialization: boolean;
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
-}
-
-/** @name OpalRuntimeRuntime */
-export interface OpalRuntimeRuntime extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
-export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
-export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
-
-/** @name OpalRuntimeRuntimeCommonSessionKeys */
-export interface OpalRuntimeRuntimeCommonSessionKeys extends Struct {
-  readonly aura: SpConsensusAuraSr25519AppSr25519Public;
 }
 
 /** @name OrmlTokensAccountData */
@@ -1382,6 +1411,123 @@ export interface PalletCollatorSelectionEvent extends Enum {
   readonly type: 'InvulnerableAdded' | 'InvulnerableRemoved' | 'LicenseObtained' | 'LicenseReleased' | 'CandidateAdded' | 'CandidateRemoved';
 }
 
+/** @name PalletCollectiveCall */
+export interface PalletCollectiveCall extends Enum {
+  readonly isSetMembers: boolean;
+  readonly asSetMembers: {
+    readonly newMembers: Vec<AccountId32>;
+    readonly prime: Option<AccountId32>;
+    readonly oldCount: u32;
+  } & Struct;
+  readonly isExecute: boolean;
+  readonly asExecute: {
+    readonly proposal: Call;
+    readonly lengthBound: Compact<u32>;
+  } & Struct;
+  readonly isPropose: boolean;
+  readonly asPropose: {
+    readonly threshold: Compact<u32>;
+    readonly proposal: Call;
+    readonly lengthBound: Compact<u32>;
+  } & Struct;
+  readonly isVote: boolean;
+  readonly asVote: {
+    readonly proposal: H256;
+    readonly index: Compact<u32>;
+    readonly approve: bool;
+  } & Struct;
+  readonly isDisapproveProposal: boolean;
+  readonly asDisapproveProposal: {
+    readonly proposalHash: H256;
+  } & Struct;
+  readonly isClose: boolean;
+  readonly asClose: {
+    readonly proposalHash: H256;
+    readonly index: Compact<u32>;
+    readonly proposalWeightBound: SpWeightsWeightV2Weight;
+    readonly lengthBound: Compact<u32>;
+  } & Struct;
+  readonly type: 'SetMembers' | 'Execute' | 'Propose' | 'Vote' | 'DisapproveProposal' | 'Close';
+}
+
+/** @name PalletCollectiveError */
+export interface PalletCollectiveError extends Enum {
+  readonly isNotMember: boolean;
+  readonly isDuplicateProposal: boolean;
+  readonly isProposalMissing: boolean;
+  readonly isWrongIndex: boolean;
+  readonly isDuplicateVote: boolean;
+  readonly isAlreadyInitialized: boolean;
+  readonly isTooEarly: boolean;
+  readonly isTooManyProposals: boolean;
+  readonly isWrongProposalWeight: boolean;
+  readonly isWrongProposalLength: boolean;
+  readonly type: 'NotMember' | 'DuplicateProposal' | 'ProposalMissing' | 'WrongIndex' | 'DuplicateVote' | 'AlreadyInitialized' | 'TooEarly' | 'TooManyProposals' | 'WrongProposalWeight' | 'WrongProposalLength';
+}
+
+/** @name PalletCollectiveEvent */
+export interface PalletCollectiveEvent extends Enum {
+  readonly isProposed: boolean;
+  readonly asProposed: {
+    readonly account: AccountId32;
+    readonly proposalIndex: u32;
+    readonly proposalHash: H256;
+    readonly threshold: u32;
+  } & Struct;
+  readonly isVoted: boolean;
+  readonly asVoted: {
+    readonly account: AccountId32;
+    readonly proposalHash: H256;
+    readonly voted: bool;
+    readonly yes: u32;
+    readonly no: u32;
+  } & Struct;
+  readonly isApproved: boolean;
+  readonly asApproved: {
+    readonly proposalHash: H256;
+  } & Struct;
+  readonly isDisapproved: boolean;
+  readonly asDisapproved: {
+    readonly proposalHash: H256;
+  } & Struct;
+  readonly isExecuted: boolean;
+  readonly asExecuted: {
+    readonly proposalHash: H256;
+    readonly result: Result<Null, SpRuntimeDispatchError>;
+  } & Struct;
+  readonly isMemberExecuted: boolean;
+  readonly asMemberExecuted: {
+    readonly proposalHash: H256;
+    readonly result: Result<Null, SpRuntimeDispatchError>;
+  } & Struct;
+  readonly isClosed: boolean;
+  readonly asClosed: {
+    readonly proposalHash: H256;
+    readonly yes: u32;
+    readonly no: u32;
+  } & Struct;
+  readonly type: 'Proposed' | 'Voted' | 'Approved' | 'Disapproved' | 'Executed' | 'MemberExecuted' | 'Closed';
+}
+
+/** @name PalletCollectiveRawOrigin */
+export interface PalletCollectiveRawOrigin extends Enum {
+  readonly isMembers: boolean;
+  readonly asMembers: ITuple<[u32, u32]>;
+  readonly isMember: boolean;
+  readonly asMember: AccountId32;
+  readonly isPhantom: boolean;
+  readonly type: 'Members' | 'Member' | 'Phantom';
+}
+
+/** @name PalletCollectiveVotes */
+export interface PalletCollectiveVotes extends Struct {
+  readonly index: u32;
+  readonly threshold: u32;
+  readonly ayes: Vec<AccountId32>;
+  readonly nays: Vec<AccountId32>;
+  readonly end: u32;
+}
+
 /** @name PalletCommonError */
 export interface PalletCommonError extends Enum {
   readonly isCollectionNotFound: boolean;
@@ -1533,6 +1679,303 @@ export interface PalletConfigurationEvent extends Enum {
   readonly type: 'NewDesiredCollators' | 'NewCollatorLicenseBond' | 'NewCollatorKickThreshold';
 }
 
+/** @name PalletDemocracyCall */
+export interface PalletDemocracyCall extends Enum {
+  readonly isPropose: boolean;
+  readonly asPropose: {
+    readonly proposal: FrameSupportPreimagesBounded;
+    readonly value: Compact<u128>;
+  } & Struct;
+  readonly isSecond: boolean;
+  readonly asSecond: {
+    readonly proposal: Compact<u32>;
+  } & Struct;
+  readonly isVote: boolean;
+  readonly asVote: {
+    readonly refIndex: Compact<u32>;
+    readonly vote: PalletDemocracyVoteAccountVote;
+  } & Struct;
+  readonly isEmergencyCancel: boolean;
+  readonly asEmergencyCancel: {
+    readonly refIndex: u32;
+  } & Struct;
+  readonly isExternalPropose: boolean;
+  readonly asExternalPropose: {
+    readonly proposal: FrameSupportPreimagesBounded;
+  } & Struct;
+  readonly isExternalProposeMajority: boolean;
+  readonly asExternalProposeMajority: {
+    readonly proposal: FrameSupportPreimagesBounded;
+  } & Struct;
+  readonly isExternalProposeDefault: boolean;
+  readonly asExternalProposeDefault: {
+    readonly proposal: FrameSupportPreimagesBounded;
+  } & Struct;
+  readonly isFastTrack: boolean;
+  readonly asFastTrack: {
+    readonly proposalHash: H256;
+    readonly votingPeriod: u32;
+    readonly delay: u32;
+  } & Struct;
+  readonly isVetoExternal: boolean;
+  readonly asVetoExternal: {
+    readonly proposalHash: H256;
+  } & Struct;
+  readonly isCancelReferendum: boolean;
+  readonly asCancelReferendum: {
+    readonly refIndex: Compact<u32>;
+  } & Struct;
+  readonly isDelegate: boolean;
+  readonly asDelegate: {
+    readonly to: MultiAddress;
+    readonly conviction: PalletDemocracyConviction;
+    readonly balance: u128;
+  } & Struct;
+  readonly isUndelegate: boolean;
+  readonly isClearPublicProposals: boolean;
+  readonly isUnlock: boolean;
+  readonly asUnlock: {
+    readonly target: MultiAddress;
+  } & Struct;
+  readonly isRemoveVote: boolean;
+  readonly asRemoveVote: {
+    readonly index: u32;
+  } & Struct;
+  readonly isRemoveOtherVote: boolean;
+  readonly asRemoveOtherVote: {
+    readonly target: MultiAddress;
+    readonly index: u32;
+  } & Struct;
+  readonly isBlacklist: boolean;
+  readonly asBlacklist: {
+    readonly proposalHash: H256;
+    readonly maybeRefIndex: Option<u32>;
+  } & Struct;
+  readonly isCancelProposal: boolean;
+  readonly asCancelProposal: {
+    readonly propIndex: Compact<u32>;
+  } & Struct;
+  readonly isSetMetadata: boolean;
+  readonly asSetMetadata: {
+    readonly owner: PalletDemocracyMetadataOwner;
+    readonly maybeHash: Option<H256>;
+  } & Struct;
+  readonly type: 'Propose' | 'Second' | 'Vote' | 'EmergencyCancel' | 'ExternalPropose' | 'ExternalProposeMajority' | 'ExternalProposeDefault' | 'FastTrack' | 'VetoExternal' | 'CancelReferendum' | 'Delegate' | 'Undelegate' | 'ClearPublicProposals' | 'Unlock' | 'RemoveVote' | 'RemoveOtherVote' | 'Blacklist' | 'CancelProposal' | 'SetMetadata';
+}
+
+/** @name PalletDemocracyConviction */
+export interface PalletDemocracyConviction extends Enum {
+  readonly isNone: boolean;
+  readonly isLocked1x: boolean;
+  readonly isLocked2x: boolean;
+  readonly isLocked3x: boolean;
+  readonly isLocked4x: boolean;
+  readonly isLocked5x: boolean;
+  readonly isLocked6x: boolean;
+  readonly type: 'None' | 'Locked1x' | 'Locked2x' | 'Locked3x' | 'Locked4x' | 'Locked5x' | 'Locked6x';
+}
+
+/** @name PalletDemocracyDelegations */
+export interface PalletDemocracyDelegations extends Struct {
+  readonly votes: u128;
+  readonly capital: u128;
+}
+
+/** @name PalletDemocracyError */
+export interface PalletDemocracyError extends Enum {
+  readonly isValueLow: boolean;
+  readonly isProposalMissing: boolean;
+  readonly isAlreadyCanceled: boolean;
+  readonly isDuplicateProposal: boolean;
+  readonly isProposalBlacklisted: boolean;
+  readonly isNotSimpleMajority: boolean;
+  readonly isInvalidHash: boolean;
+  readonly isNoProposal: boolean;
+  readonly isAlreadyVetoed: boolean;
+  readonly isReferendumInvalid: boolean;
+  readonly isNoneWaiting: boolean;
+  readonly isNotVoter: boolean;
+  readonly isNoPermission: boolean;
+  readonly isAlreadyDelegating: boolean;
+  readonly isInsufficientFunds: boolean;
+  readonly isNotDelegating: boolean;
+  readonly isVotesExist: boolean;
+  readonly isInstantNotAllowed: boolean;
+  readonly isNonsense: boolean;
+  readonly isWrongUpperBound: boolean;
+  readonly isMaxVotesReached: boolean;
+  readonly isTooMany: boolean;
+  readonly isVotingPeriodLow: boolean;
+  readonly isPreimageNotExist: boolean;
+  readonly type: 'ValueLow' | 'ProposalMissing' | 'AlreadyCanceled' | 'DuplicateProposal' | 'ProposalBlacklisted' | 'NotSimpleMajority' | 'InvalidHash' | 'NoProposal' | 'AlreadyVetoed' | 'ReferendumInvalid' | 'NoneWaiting' | 'NotVoter' | 'NoPermission' | 'AlreadyDelegating' | 'InsufficientFunds' | 'NotDelegating' | 'VotesExist' | 'InstantNotAllowed' | 'Nonsense' | 'WrongUpperBound' | 'MaxVotesReached' | 'TooMany' | 'VotingPeriodLow' | 'PreimageNotExist';
+}
+
+/** @name PalletDemocracyEvent */
+export interface PalletDemocracyEvent extends Enum {
+  readonly isProposed: boolean;
+  readonly asProposed: {
+    readonly proposalIndex: u32;
+    readonly deposit: u128;
+  } & Struct;
+  readonly isTabled: boolean;
+  readonly asTabled: {
+    readonly proposalIndex: u32;
+    readonly deposit: u128;
+  } & Struct;
+  readonly isExternalTabled: boolean;
+  readonly isStarted: boolean;
+  readonly asStarted: {
+    readonly refIndex: u32;
+    readonly threshold: PalletDemocracyVoteThreshold;
+  } & Struct;
+  readonly isPassed: boolean;
+  readonly asPassed: {
+    readonly refIndex: u32;
+  } & Struct;
+  readonly isNotPassed: boolean;
+  readonly asNotPassed: {
+    readonly refIndex: u32;
+  } & Struct;
+  readonly isCancelled: boolean;
+  readonly asCancelled: {
+    readonly refIndex: u32;
+  } & Struct;
+  readonly isDelegated: boolean;
+  readonly asDelegated: {
+    readonly who: AccountId32;
+    readonly target: AccountId32;
+  } & Struct;
+  readonly isUndelegated: boolean;
+  readonly asUndelegated: {
+    readonly account: AccountId32;
+  } & Struct;
+  readonly isVetoed: boolean;
+  readonly asVetoed: {
+    readonly who: AccountId32;
+    readonly proposalHash: H256;
+    readonly until: u32;
+  } & Struct;
+  readonly isBlacklisted: boolean;
+  readonly asBlacklisted: {
+    readonly proposalHash: H256;
+  } & Struct;
+  readonly isVoted: boolean;
+  readonly asVoted: {
+    readonly voter: AccountId32;
+    readonly refIndex: u32;
+    readonly vote: PalletDemocracyVoteAccountVote;
+  } & Struct;
+  readonly isSeconded: boolean;
+  readonly asSeconded: {
+    readonly seconder: AccountId32;
+    readonly propIndex: u32;
+  } & Struct;
+  readonly isProposalCanceled: boolean;
+  readonly asProposalCanceled: {
+    readonly propIndex: u32;
+  } & Struct;
+  readonly isMetadataSet: boolean;
+  readonly asMetadataSet: {
+    readonly owner: PalletDemocracyMetadataOwner;
+    readonly hash_: H256;
+  } & Struct;
+  readonly isMetadataCleared: boolean;
+  readonly asMetadataCleared: {
+    readonly owner: PalletDemocracyMetadataOwner;
+    readonly hash_: H256;
+  } & Struct;
+  readonly isMetadataTransferred: boolean;
+  readonly asMetadataTransferred: {
+    readonly prevOwner: PalletDemocracyMetadataOwner;
+    readonly owner: PalletDemocracyMetadataOwner;
+    readonly hash_: H256;
+  } & Struct;
+  readonly type: 'Proposed' | 'Tabled' | 'ExternalTabled' | 'Started' | 'Passed' | 'NotPassed' | 'Cancelled' | 'Delegated' | 'Undelegated' | 'Vetoed' | 'Blacklisted' | 'Voted' | 'Seconded' | 'ProposalCanceled' | 'MetadataSet' | 'MetadataCleared' | 'MetadataTransferred';
+}
+
+/** @name PalletDemocracyMetadataOwner */
+export interface PalletDemocracyMetadataOwner extends Enum {
+  readonly isExternal: boolean;
+  readonly isProposal: boolean;
+  readonly asProposal: u32;
+  readonly isReferendum: boolean;
+  readonly asReferendum: u32;
+  readonly type: 'External' | 'Proposal' | 'Referendum';
+}
+
+/** @name PalletDemocracyReferendumInfo */
+export interface PalletDemocracyReferendumInfo extends Enum {
+  readonly isOngoing: boolean;
+  readonly asOngoing: PalletDemocracyReferendumStatus;
+  readonly isFinished: boolean;
+  readonly asFinished: {
+    readonly approved: bool;
+    readonly end: u32;
+  } & Struct;
+  readonly type: 'Ongoing' | 'Finished';
+}
+
+/** @name PalletDemocracyReferendumStatus */
+export interface PalletDemocracyReferendumStatus extends Struct {
+  readonly end: u32;
+  readonly proposal: FrameSupportPreimagesBounded;
+  readonly threshold: PalletDemocracyVoteThreshold;
+  readonly delay: u32;
+  readonly tally: PalletDemocracyTally;
+}
+
+/** @name PalletDemocracyTally */
+export interface PalletDemocracyTally extends Struct {
+  readonly ayes: u128;
+  readonly nays: u128;
+  readonly turnout: u128;
+}
+
+/** @name PalletDemocracyVoteAccountVote */
+export interface PalletDemocracyVoteAccountVote extends Enum {
+  readonly isStandard: boolean;
+  readonly asStandard: {
+    readonly vote: Vote;
+    readonly balance: u128;
+  } & Struct;
+  readonly isSplit: boolean;
+  readonly asSplit: {
+    readonly aye: u128;
+    readonly nay: u128;
+  } & Struct;
+  readonly type: 'Standard' | 'Split';
+}
+
+/** @name PalletDemocracyVotePriorLock */
+export interface PalletDemocracyVotePriorLock extends ITuple<[u32, u128]> {}
+
+/** @name PalletDemocracyVoteThreshold */
+export interface PalletDemocracyVoteThreshold extends Enum {
+  readonly isSuperMajorityApprove: boolean;
+  readonly isSuperMajorityAgainst: boolean;
+  readonly isSimpleMajority: boolean;
+  readonly type: 'SuperMajorityApprove' | 'SuperMajorityAgainst' | 'SimpleMajority';
+}
+
+/** @name PalletDemocracyVoteVoting */
+export interface PalletDemocracyVoteVoting extends Enum {
+  readonly isDirect: boolean;
+  readonly asDirect: {
+    readonly votes: Vec<ITuple<[u32, PalletDemocracyVoteAccountVote]>>;
+    readonly delegations: PalletDemocracyDelegations;
+    readonly prior: PalletDemocracyVotePriorLock;
+  } & Struct;
+  readonly isDelegating: boolean;
+  readonly asDelegating: {
+    readonly balance: u128;
+    readonly target: AccountId32;
+    readonly conviction: PalletDemocracyConviction;
+    readonly delegations: PalletDemocracyDelegations;
+    readonly prior: PalletDemocracyVotePriorLock;
+  } & Struct;
+  readonly type: 'Direct' | 'Delegating';
+}
+
 /** @name PalletEthereumCall */
 export interface PalletEthereumCall extends Enum {
   readonly isTransact: boolean;
@@ -1564,6 +2007,13 @@ export interface PalletEthereumEvent extends Enum {
 
 /** @name PalletEthereumFakeTransactionFinalizer */
 export interface PalletEthereumFakeTransactionFinalizer extends Null {}
+
+/** @name PalletEthereumRawOrigin */
+export interface PalletEthereumRawOrigin extends Enum {
+  readonly isEthereumTransaction: boolean;
+  readonly asEthereumTransaction: H160;
+  readonly type: 'EthereumTransaction';
+}
 
 /** @name PalletEvmAccountBasicCrossAccountIdRepr */
 export interface PalletEvmAccountBasicCrossAccountIdRepr extends Enum {
@@ -1840,6 +2290,12 @@ export interface PalletFungibleError extends Enum {
   readonly type: 'NotFungibleDataUsedToMintFungibleCollectionToken' | 'FungibleItemsHaveNoId' | 'FungibleItemsDontHaveData' | 'FungibleDisallowsNesting' | 'SettingPropertiesNotAllowed' | 'SettingAllowanceForAllNotAllowed' | 'FungibleTokensAreAlwaysValid';
 }
 
+/** @name PalletGovOriginsOrigin */
+export interface PalletGovOriginsOrigin extends Enum {
+  readonly isFellowshipProposition: boolean;
+  readonly type: 'FellowshipProposition';
+}
+
 /** @name PalletIdentityBitFlags */
 export interface PalletIdentityBitFlags extends Struct {
   readonly _bitLength: 64;
@@ -2108,6 +2564,56 @@ export interface PalletMaintenanceEvent extends Enum {
   readonly type: 'MaintenanceEnabled' | 'MaintenanceDisabled';
 }
 
+/** @name PalletMembershipCall */
+export interface PalletMembershipCall extends Enum {
+  readonly isAddMember: boolean;
+  readonly asAddMember: {
+    readonly who: MultiAddress;
+  } & Struct;
+  readonly isRemoveMember: boolean;
+  readonly asRemoveMember: {
+    readonly who: MultiAddress;
+  } & Struct;
+  readonly isSwapMember: boolean;
+  readonly asSwapMember: {
+    readonly remove: MultiAddress;
+    readonly add: MultiAddress;
+  } & Struct;
+  readonly isResetMembers: boolean;
+  readonly asResetMembers: {
+    readonly members: Vec<AccountId32>;
+  } & Struct;
+  readonly isChangeKey: boolean;
+  readonly asChangeKey: {
+    readonly new_: MultiAddress;
+  } & Struct;
+  readonly isSetPrime: boolean;
+  readonly asSetPrime: {
+    readonly who: MultiAddress;
+  } & Struct;
+  readonly isClearPrime: boolean;
+  readonly type: 'AddMember' | 'RemoveMember' | 'SwapMember' | 'ResetMembers' | 'ChangeKey' | 'SetPrime' | 'ClearPrime';
+}
+
+/** @name PalletMembershipError */
+export interface PalletMembershipError extends Enum {
+  readonly isAlreadyMember: boolean;
+  readonly isNotMember: boolean;
+  readonly isTooManyMembers: boolean;
+  readonly type: 'AlreadyMember' | 'NotMember' | 'TooManyMembers';
+}
+
+/** @name PalletMembershipEvent */
+export interface PalletMembershipEvent extends Enum {
+  readonly isMemberAdded: boolean;
+  readonly isMemberRemoved: boolean;
+  readonly isMembersSwapped: boolean;
+  readonly isMembersReset: boolean;
+  readonly isKeyChanged: boolean;
+  readonly isDummy: boolean;
+  readonly type: 'MemberAdded' | 'MemberRemoved' | 'MembersSwapped' | 'MembersReset' | 'KeyChanged' | 'Dummy';
+}
+
 /** @name PalletNonfungibleError */
 export interface PalletNonfungibleError extends Enum {
   readonly isNotNonfungibleDataUsedToMintFungibleCollectionToken: boolean;
@@ -2186,6 +2692,330 @@ export interface PalletPreimageRequestStatus extends Enum {
   readonly type: 'Unrequested' | 'Requested';
 }
 
+/** @name PalletRankedCollectiveCall */
+export interface PalletRankedCollectiveCall extends Enum {
+  readonly isAddMember: boolean;
+  readonly asAddMember: {
+    readonly who: MultiAddress;
+  } & Struct;
+  readonly isPromoteMember: boolean;
+  readonly asPromoteMember: {
+    readonly who: MultiAddress;
+  } & Struct;
+  readonly isDemoteMember: boolean;
+  readonly asDemoteMember: {
+    readonly who: MultiAddress;
+  } & Struct;
+  readonly isRemoveMember: boolean;
+  readonly asRemoveMember: {
+    readonly who: MultiAddress;
+    readonly minRank: u16;
+  } & Struct;
+  readonly isVote: boolean;
+  readonly asVote: {
+    readonly poll: u32;
+    readonly aye: bool;
+  } & Struct;
+  readonly isCleanupPoll: boolean;
+  readonly asCleanupPoll: {
+    readonly pollIndex: u32;
+    readonly max: u32;
+  } & Struct;
+  readonly type: 'AddMember' | 'PromoteMember' | 'DemoteMember' | 'RemoveMember' | 'Vote' | 'CleanupPoll';
+}
+
+/** @name PalletRankedCollectiveError */
+export interface PalletRankedCollectiveError extends Enum {
+  readonly isAlreadyMember: boolean;
+  readonly isNotMember: boolean;
+  readonly isNotPolling: boolean;
+  readonly isOngoing: boolean;
+  readonly isNoneRemaining: boolean;
+  readonly isCorruption: boolean;
+  readonly isRankTooLow: boolean;
+  readonly isInvalidWitness: boolean;
+  readonly isNoPermission: boolean;
+  readonly type: 'AlreadyMember' | 'NotMember' | 'NotPolling' | 'Ongoing' | 'NoneRemaining' | 'Corruption' | 'RankTooLow' | 'InvalidWitness' | 'NoPermission';
+}
+
+/** @name PalletRankedCollectiveEvent */
+export interface PalletRankedCollectiveEvent extends Enum {
+  readonly isMemberAdded: boolean;
+  readonly asMemberAdded: {
+    readonly who: AccountId32;
+  } & Struct;
+  readonly isRankChanged: boolean;
+  readonly asRankChanged: {
+    readonly who: AccountId32;
+    readonly rank: u16;
+  } & Struct;
+  readonly isMemberRemoved: boolean;
+  readonly asMemberRemoved: {
+    readonly who: AccountId32;
+    readonly rank: u16;
+  } & Struct;
+  readonly isVoted: boolean;
+  readonly asVoted: {
+    readonly who: AccountId32;
+    readonly poll: u32;
+    readonly vote: PalletRankedCollectiveVoteRecord;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly type: 'MemberAdded' | 'RankChanged' | 'MemberRemoved' | 'Voted';
+}
+
+/** @name PalletRankedCollectiveMemberRecord */
+export interface PalletRankedCollectiveMemberRecord extends Struct {
+  readonly rank: u16;
+}
+
+/** @name PalletRankedCollectiveTally */
+export interface PalletRankedCollectiveTally extends Struct {
+  readonly bareAyes: u32;
+  readonly ayes: u32;
+  readonly nays: u32;
+}
+
+/** @name PalletRankedCollectiveVoteRecord */
+export interface PalletRankedCollectiveVoteRecord extends Enum {
+  readonly isAye: boolean;
+  readonly asAye: u32;
+  readonly isNay: boolean;
+  readonly asNay: u32;
+  readonly type: 'Aye' | 'Nay';
+}
+
+/** @name PalletReferendaCall */
+export interface PalletReferendaCall extends Enum {
+  readonly isSubmit: boolean;
+  readonly asSubmit: {
+    readonly proposalOrigin: QuartzRuntimeOriginCaller;
+    readonly proposal: FrameSupportPreimagesBounded;
+    readonly enactmentMoment: FrameSupportScheduleDispatchTime;
+  } & Struct;
+  readonly isPlaceDecisionDeposit: boolean;
+  readonly asPlaceDecisionDeposit: {
+    readonly index: u32;
+  } & Struct;
+  readonly isRefundDecisionDeposit: boolean;
+  readonly asRefundDecisionDeposit: {
+    readonly index: u32;
+  } & Struct;
+  readonly isCancel: boolean;
+  readonly asCancel: {
+    readonly index: u32;
+  } & Struct;
+  readonly isKill: boolean;
+  readonly asKill: {
+    readonly index: u32;
+  } & Struct;
+  readonly isNudgeReferendum: boolean;
+  readonly asNudgeReferendum: {
+    readonly index: u32;
+  } & Struct;
+  readonly isOneFewerDeciding: boolean;
+  readonly asOneFewerDeciding: {
+    readonly track: u16;
+  } & Struct;
+  readonly isRefundSubmissionDeposit: boolean;
+  readonly asRefundSubmissionDeposit: {
+    readonly index: u32;
+  } & Struct;
+  readonly isSetMetadata: boolean;
+  readonly asSetMetadata: {
+    readonly index: u32;
+    readonly maybeHash: Option<H256>;
+  } & Struct;
+  readonly type: 'Submit' | 'PlaceDecisionDeposit' | 'RefundDecisionDeposit' | 'Cancel' | 'Kill' | 'NudgeReferendum' | 'OneFewerDeciding' | 'RefundSubmissionDeposit' | 'SetMetadata';
+}
+
+/** @name PalletReferendaCurve */
+export interface PalletReferendaCurve extends Enum {
+  readonly isLinearDecreasing: boolean;
+  readonly asLinearDecreasing: {
+    readonly length: Perbill;
+    readonly floor: Perbill;
+    readonly ceil: Perbill;
+  } & Struct;
+  readonly isSteppedDecreasing: boolean;
+  readonly asSteppedDecreasing: {
+    readonly begin: Perbill;
+    readonly end: Perbill;
+    readonly step: Perbill;
+    readonly period: Perbill;
+  } & Struct;
+  readonly isReciprocal: boolean;
+  readonly asReciprocal: {
+    readonly factor: i64;
+    readonly xOffset: i64;
+    readonly yOffset: i64;
+  } & Struct;
+  readonly type: 'LinearDecreasing' | 'SteppedDecreasing' | 'Reciprocal';
+}
+
+/** @name PalletReferendaDecidingStatus */
+export interface PalletReferendaDecidingStatus extends Struct {
+  readonly since: u32;
+  readonly confirming: Option<u32>;
+}
+
+/** @name PalletReferendaDeposit */
+export interface PalletReferendaDeposit extends Struct {
+  readonly who: AccountId32;
+  readonly amount: u128;
+}
+
+/** @name PalletReferendaError */
+export interface PalletReferendaError extends Enum {
+  readonly isNotOngoing: boolean;
+  readonly isHasDeposit: boolean;
+  readonly isBadTrack: boolean;
+  readonly isFull: boolean;
+  readonly isQueueEmpty: boolean;
+  readonly isBadReferendum: boolean;
+  readonly isNothingToDo: boolean;
+  readonly isNoTrack: boolean;
+  readonly isUnfinished: boolean;
+  readonly isNoPermission: boolean;
+  readonly isNoDeposit: boolean;
+  readonly isBadStatus: boolean;
+  readonly isPreimageNotExist: boolean;
+  readonly type: 'NotOngoing' | 'HasDeposit' | 'BadTrack' | 'Full' | 'QueueEmpty' | 'BadReferendum' | 'NothingToDo' | 'NoTrack' | 'Unfinished' | 'NoPermission' | 'NoDeposit' | 'BadStatus' | 'PreimageNotExist';
+}
+
+/** @name PalletReferendaEvent */
+export interface PalletReferendaEvent extends Enum {
+  readonly isSubmitted: boolean;
+  readonly asSubmitted: {
+    readonly index: u32;
+    readonly track: u16;
+    readonly proposal: FrameSupportPreimagesBounded;
+  } & Struct;
+  readonly isDecisionDepositPlaced: boolean;
+  readonly asDecisionDepositPlaced: {
+    readonly index: u32;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isDecisionDepositRefunded: boolean;
+  readonly asDecisionDepositRefunded: {
+    readonly index: u32;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isDepositSlashed: boolean;
+  readonly asDepositSlashed: {
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isDecisionStarted: boolean;
+  readonly asDecisionStarted: {
+    readonly index: u32;
+    readonly track: u16;
+    readonly proposal: FrameSupportPreimagesBounded;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly isConfirmStarted: boolean;
+  readonly asConfirmStarted: {
+    readonly index: u32;
+  } & Struct;
+  readonly isConfirmAborted: boolean;
+  readonly asConfirmAborted: {
+    readonly index: u32;
+  } & Struct;
+  readonly isConfirmed: boolean;
+  readonly asConfirmed: {
+    readonly index: u32;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly isApproved: boolean;
+  readonly asApproved: {
+    readonly index: u32;
+  } & Struct;
+  readonly isRejected: boolean;
+  readonly asRejected: {
+    readonly index: u32;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly isTimedOut: boolean;
+  readonly asTimedOut: {
+    readonly index: u32;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly isCancelled: boolean;
+  readonly asCancelled: {
+    readonly index: u32;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly isKilled: boolean;
+  readonly asKilled: {
+    readonly index: u32;
+    readonly tally: PalletRankedCollectiveTally;
+  } & Struct;
+  readonly isSubmissionDepositRefunded: boolean;
+  readonly asSubmissionDepositRefunded: {
+    readonly index: u32;
+    readonly who: AccountId32;
+    readonly amount: u128;
+  } & Struct;
+  readonly isMetadataSet: boolean;
+  readonly asMetadataSet: {
+    readonly index: u32;
+    readonly hash_: H256;
+  } & Struct;
+  readonly isMetadataCleared: boolean;
+  readonly asMetadataCleared: {
+    readonly index: u32;
+    readonly hash_: H256;
+  } & Struct;
+  readonly type: 'Submitted' | 'DecisionDepositPlaced' | 'DecisionDepositRefunded' | 'DepositSlashed' | 'DecisionStarted' | 'ConfirmStarted' | 'ConfirmAborted' | 'Confirmed' | 'Approved' | 'Rejected' | 'TimedOut' | 'Cancelled' | 'Killed' | 'SubmissionDepositRefunded' | 'MetadataSet' | 'MetadataCleared';
+}
+
+/** @name PalletReferendaReferendumInfo */
+export interface PalletReferendaReferendumInfo extends Enum {
+  readonly isOngoing: boolean;
+  readonly asOngoing: PalletReferendaReferendumStatus;
+  readonly isApproved: boolean;
+  readonly asApproved: ITuple<[u32, Option<PalletReferendaDeposit>, Option<PalletReferendaDeposit>]>;
+  readonly isRejected: boolean;
+  readonly asRejected: ITuple<[u32, Option<PalletReferendaDeposit>, Option<PalletReferendaDeposit>]>;
+  readonly isCancelled: boolean;
+  readonly asCancelled: ITuple<[u32, Option<PalletReferendaDeposit>, Option<PalletReferendaDeposit>]>;
+  readonly isTimedOut: boolean;
+  readonly asTimedOut: ITuple<[u32, Option<PalletReferendaDeposit>, Option<PalletReferendaDeposit>]>;
+  readonly isKilled: boolean;
+  readonly asKilled: u32;
+  readonly type: 'Ongoing' | 'Approved' | 'Rejected' | 'Cancelled' | 'TimedOut' | 'Killed';
+}
+
+/** @name PalletReferendaReferendumStatus */
+export interface PalletReferendaReferendumStatus extends Struct {
+  readonly track: u16;
+  readonly origin: QuartzRuntimeOriginCaller;
+  readonly proposal: FrameSupportPreimagesBounded;
+  readonly enactment: FrameSupportScheduleDispatchTime;
+  readonly submitted: u32;
+  readonly submissionDeposit: PalletReferendaDeposit;
+  readonly decisionDeposit: Option<PalletReferendaDeposit>;
+  readonly deciding: Option<PalletReferendaDecidingStatus>;
+  readonly tally: PalletRankedCollectiveTally;
+  readonly inQueue: bool;
+  readonly alarm: Option<ITuple<[u32, ITuple<[u32, u32]>]>>;
+}
+
+/** @name PalletReferendaTrackInfo */
+export interface PalletReferendaTrackInfo extends Struct {
+  readonly name: Text;
+  readonly maxDeciding: u32;
+  readonly decisionDeposit: u128;
+  readonly preparePeriod: u32;
+  readonly decisionPeriod: u32;
+  readonly confirmPeriod: u32;
+  readonly minEnactmentPeriod: u32;
+  readonly minApproval: PalletReferendaCurve;
+  readonly minSupport: PalletReferendaCurve;
+}
+
 /** @name PalletRefungibleError */
 export interface PalletRefungibleError extends Enum {
   readonly isNotRefungibleDataUsedToMintFungibleCollectionToken: boolean;
@@ -2196,11 +3026,110 @@ export interface PalletRefungibleError extends Enum {
   readonly type: 'NotRefungibleDataUsedToMintFungibleCollectionToken' | 'WrongRefungiblePieces' | 'RepartitionWhileNotOwningAllPieces' | 'RefungibleDisallowsNesting' | 'SettingPropertiesNotAllowed';
 }
 
+/** @name PalletSchedulerCall */
+export interface PalletSchedulerCall extends Enum {
+  readonly isSchedule: boolean;
+  readonly asSchedule: {
+    readonly when: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: Call;
+  } & Struct;
+  readonly isCancel: boolean;
+  readonly asCancel: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isScheduleNamed: boolean;
+  readonly asScheduleNamed: {
+    readonly id: U8aFixed;
+    readonly when: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: Call;
+  } & Struct;
+  readonly isCancelNamed: boolean;
+  readonly asCancelNamed: {
+    readonly id: U8aFixed;
+  } & Struct;
+  readonly isScheduleAfter: boolean;
+  readonly asScheduleAfter: {
+    readonly after: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: Call;
+  } & Struct;
+  readonly isScheduleNamedAfter: boolean;
+  readonly asScheduleNamedAfter: {
+    readonly id: U8aFixed;
+    readonly after: u32;
+    readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+    readonly priority: u8;
+    readonly call: Call;
+  } & Struct;
+  readonly type: 'Schedule' | 'Cancel' | 'ScheduleNamed' | 'CancelNamed' | 'ScheduleAfter' | 'ScheduleNamedAfter';
+}
+
+/** @name PalletSchedulerError */
+export interface PalletSchedulerError extends Enum {
+  readonly isFailedToSchedule: boolean;
+  readonly isNotFound: boolean;
+  readonly isTargetBlockNumberInPast: boolean;
+  readonly isRescheduleNoChange: boolean;
+  readonly isNamed: boolean;
+  readonly type: 'FailedToSchedule' | 'NotFound' | 'TargetBlockNumberInPast' | 'RescheduleNoChange' | 'Named';
+}
+
+/** @name PalletSchedulerEvent */
+export interface PalletSchedulerEvent extends Enum {
+  readonly isScheduled: boolean;
+  readonly asScheduled: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isCanceled: boolean;
+  readonly asCanceled: {
+    readonly when: u32;
+    readonly index: u32;
+  } & Struct;
+  readonly isDispatched: boolean;
+  readonly asDispatched: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+    readonly result: Result<Null, SpRuntimeDispatchError>;
+  } & Struct;
+  readonly isCallUnavailable: boolean;
+  readonly asCallUnavailable: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+  } & Struct;
+  readonly isPeriodicFailed: boolean;
+  readonly asPeriodicFailed: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+  } & Struct;
+  readonly isPermanentlyOverweight: boolean;
+  readonly asPermanentlyOverweight: {
+    readonly task: ITuple<[u32, u32]>;
+    readonly id: Option<U8aFixed>;
+  } & Struct;
+  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'CallUnavailable' | 'PeriodicFailed' | 'PermanentlyOverweight';
+}
+
+/** @name PalletSchedulerScheduled */
+export interface PalletSchedulerScheduled extends Struct {
+  readonly maybeId: Option<U8aFixed>;
+  readonly priority: u8;
+  readonly call: FrameSupportPreimagesBounded;
+  readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
+  readonly origin: QuartzRuntimeOriginCaller;
+}
+
 /** @name PalletSessionCall */
 export interface PalletSessionCall extends Enum {
   readonly isSetKeys: boolean;
   readonly asSetKeys: {
-    readonly keys_: OpalRuntimeRuntimeCommonSessionKeys;
+    readonly keys_: QuartzRuntimeRuntimeCommonSessionKeys;
     readonly proof: Bytes;
   } & Struct;
   readonly isPurgeKeys: boolean;
@@ -2878,6 +3807,15 @@ export interface PalletXcmEvent extends Enum {
   readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail' | 'InvalidQuerierVersion' | 'InvalidQuerier' | 'VersionNotifyStarted' | 'VersionNotifyRequested' | 'VersionNotifyUnrequested' | 'FeesPaid' | 'AssetsClaimed';
 }
 
+/** @name PalletXcmOrigin */
+export interface PalletXcmOrigin extends Enum {
+  readonly isXcm: boolean;
+  readonly asXcm: XcmV3MultiLocation;
+  readonly isResponse: boolean;
+  readonly asResponse: XcmV3MultiLocation;
+  readonly type: 'Xcm' | 'Response';
+}
+
 /** @name PalletXcmQueryStatus */
 export interface PalletXcmQueryStatus extends Enum {
   readonly isPending: boolean;
@@ -2987,6 +3925,41 @@ export interface PolkadotPrimitivesV4UpgradeRestriction extends Enum {
   readonly type: 'Present';
 }
 
+/** @name QuartzRuntimeOriginCaller */
+export interface QuartzRuntimeOriginCaller extends Enum {
+  readonly isSystem: boolean;
+  readonly asSystem: FrameSupportDispatchRawOrigin;
+  readonly isVoid: boolean;
+  readonly asVoid: SpCoreVoid;
+  readonly isCouncil: boolean;
+  readonly asCouncil: PalletCollectiveRawOrigin;
+  readonly isTechnicalCommittee: boolean;
+  readonly asTechnicalCommittee: PalletCollectiveRawOrigin;
+  readonly isPolkadotXcm: boolean;
+  readonly asPolkadotXcm: PalletXcmOrigin;
+  readonly isCumulusXcm: boolean;
+  readonly asCumulusXcm: CumulusPalletXcmOrigin;
+  readonly isOrigins: boolean;
+  readonly asOrigins: PalletGovOriginsOrigin;
+  readonly isEthereum: boolean;
+  readonly asEthereum: PalletEthereumRawOrigin;
+  readonly type: 'System' | 'Void' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'Origins' | 'Ethereum';
+}
+
+/** @name QuartzRuntimeRuntime */
+export interface QuartzRuntimeRuntime extends Null {}
+
+/** @name QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls */
+export interface QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
+
+/** @name QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance */
+export interface QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
+
+/** @name QuartzRuntimeRuntimeCommonSessionKeys */
+export interface QuartzRuntimeRuntimeCommonSessionKeys extends Struct {
+  readonly aura: SpConsensusAuraSr25519AppSr25519Public;
+}
+
 /** @name SpArithmeticArithmeticError */
 export interface SpArithmeticArithmeticError extends Enum {
   readonly isUnderflow: boolean;
@@ -3012,6 +3985,9 @@ export interface SpCoreSr25519Public extends U8aFixed {}
 
 /** @name SpCoreSr25519Signature */
 export interface SpCoreSr25519Signature extends U8aFixed {}
+
+/** @name SpCoreVoid */
+export interface SpCoreVoid extends Null {}
 
 /** @name SpRuntimeDigest */
 export interface SpRuntimeDigest extends Struct {

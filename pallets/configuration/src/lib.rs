@@ -60,6 +60,7 @@ mod pallet {
 		type Balance: Parameter
 			+ Member
 			+ AtLeast32BitUnsigned
+			+ From<up_common::types::Balance>
 			+ Codec
 			+ Default
 			+ Copy

@@ -1,0 +1,24 @@
+version: "3.5"
+
+services:
+  node-dev:
+    build:
+      args:
+        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
+        - "NETWORK={{ NETWORK }}"
+        - "WASM_NAME={{ WASM_NAME }}"
+      context: ../
+      dockerfile: .docker/Dockerfile-chain-dev
+    image: node-dev
+    container_name: node-dev
+    expose:
+      - 9944
+      - 9933
+    ports:
+      - 127.0.0.1:9944:9944
+      - 127.0.0.1:9933:9933
+    logging:
+      options:
+        max-size: "1m"
+        max-file: "3"
+    command: cargo run --release --features={{ NETWORK }}-runtime,{{ WASM_NAME }}-runtime/test-env -- --dev -linfo --rpc-cors=all --unsafe-rpc-external

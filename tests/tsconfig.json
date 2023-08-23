@@ -1,33 +1,22 @@
 {
-  "compilerOptions": {
-    "target": "ES2020",
-    "moduleResolution": "node",
-    "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "module": "ESNext",
-    "sourceMap": true,
-    "outDir": "dist",
-    "strict": true,
-    "paths": {
-      "@polkadot/types/lookup": [
-        "./src/interfaces/types-lookup.ts"
-      ],
-      "@unique-nft/types/*": [
-        "./src/interfaces/*"
-      ]
-    }
-  },
-  "include": [
-    "./src/**/*",
-    "./src/interfaces/*.ts"
-  ],
-  "exclude": [
-    "./src/.outdated"
-  ],
-  "lib": [
-    "es2017"
-  ],
-  "ts-node": {
-    "experimentalSpecifierResolution": "node"
-  }
+	"compilerOptions": {
+		"target": "ES2020",
+		"moduleResolution": "node",
+		"esModuleInterop": true,
+		"resolveJsonModule": true,
+		"module": "ESNext",
+		"sourceMap": true,
+		"outDir": "dist",
+		"strict": true,
+		"paths": {
+			"@polkadot/types/lookup": ["./src/interfaces/types-lookup.ts"],
+			"@unique-nft/types/*": ["./src/interfaces/*"]
+		}
+	},
+	"include": ["./src/**/*", "./src/interfaces/*.ts"],
+	"exclude": ["./src/.outdated"],
+	"lib": ["es2017"],
+	"ts-node": {
+		"experimentalSpecifierResolution": "node"
+	}
 }

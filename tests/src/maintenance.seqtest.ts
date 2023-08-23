@@ -173,7 +173,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
     });
 
-    itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.Scheduler], async (scheduleKind, {helper}) => {
+    itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.UniqueScheduler], async (scheduleKind, {helper}) => {
       const collection = await helper.nft.mintCollection(bob);
 
       const nftBeforeMM = await collection.mintToken(bob);
@@ -284,13 +284,6 @@ describe('Integration Test: Maintenance Functionality', () => {
   describe('Preimage Execution', () => {
     const preimageHashes: string[] = [];
 
-    async function notePreimage(helper: UniqueHelper, preimage: any): Promise<string> {
-      const result = await helper.preimage.notePreimage(bob, preimage);
-      const events = result.result.events.filter(x => x.event.method === 'Noted' && x.event.section === 'preimage');
-      const preimageHash = events[0].event.data[0].toHuman();
-      return preimageHash;
-    }
-
     before(async function() {
       await usingPlaygrounds(async (helper) => {
         requirePalletsOrSkip(this, helper, [Pallets.Preimage, Pallets.Maintenance]);
@@ -309,7 +302,7 @@ describe('Integration Test: Maintenance Functionality', () => {
           },
         ]);
         const preimage = helper.constructApiCall('api.tx.identity.forceInsertIdentities', [randomIdentities]).method.toHex();
-        preimageHashes.push(await notePreimage(helper, preimage));
+        preimageHashes.push(await helper.preimage.notePreimage(bob, preimage, true));
       });
     });
 
@@ -332,7 +325,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [
         {Id: zeroAccount.address}, {Id: superuser.address}, 1000n,
       ]).method.toHex();
-      const preimageHash = await notePreimage(helper, preimage);
+      const preimageHash = await helper.preimage.notePreimage(bob, preimage, true);
       preimageHashes.push(preimageHash);
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [

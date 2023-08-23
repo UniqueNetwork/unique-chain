@@ -175,6 +175,7 @@ macro_rules! testnet_genesis {
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},
+
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
@@ -207,6 +208,7 @@ macro_rules! testnet_genesis {
 			ethereum: EthereumConfig {},
 			polkadot_xcm: Default::default(),
 			transaction_payment: Default::default(),
+			..Default::default()
 		}
 	}};
 }
