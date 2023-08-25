@@ -1,0 +1,127 @@
+local
+m = import 'baedeker-library/mixin/spec.libsonnet',
+;
+
+local relay = {
+	name: 'relay',
+	bin: 'bin/polkadot',
+	validatorIdAssignment: 'staking',
+	spec: {Genesis:{
+		chain: 'westend-local',
+		modify:: m.genericRelay($, hrmp = std.join([], [
+			[[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+			for [a, b] in [
+				['unique', 'acala'],
+				['unique', 'moonbeam'],
+				['unique', 'statemint'],
+				['unique', 'astar'],
+			]
+		])),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'relay',
+		},
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
+	},
+};
+
+local unique = {
+	name: 'unique',
+	bin: 'bin/unique',
+	paraId: 1001,
+	spec: {Genesis:{
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+local acala = {
+	name: 'acala',
+	bin: 'bin/acala',
+	paraId: 1002,
+	spec: {Genesis:{
+		chain: 'acala-dev',
+		modify:: bdk.mixer([
+			m.genericPara($),
+			function(prev) prev {id+: '-local'},
+		]),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+			legacyRpc: true,
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+local moonbeam = {
+	name: 'moonbeam',
+	bin: 'bin/moonbeam',
+	signatureSchema: 'Ethereum',
+	paraId: 1003,
+	spec: {Genesis:{
+		chain: 'moonbeam-local',
+		specFilePrefix: 'moonbeam-local-',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para-nimbus',
+			legacyRpc: true,
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+local statemint = {
+	name: 'statemint',
+	bin: 'bin/cumulus',
+	paraId: 1004,
+	spec: {Genesis:{
+		chain: 'statemint-local',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+local astar = {
+	name: 'astar',
+	bin: 'bin/astar',
+	paraId: 1005,
+	spec: {Genesis:{
+		chain: 'astar-dev',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+			legacyRpc: true,
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+relay + {
+	parachains: {
+		[para.name]: para,
+		for para in [unique, acala, moonbeam, statemint, astar]
+	},
+}
