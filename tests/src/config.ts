@@ -17,17 +17,17 @@
 import process from 'process';
 
 const config = {
-  substrateUrl: process.env.substrateUrl || 'ws://127.0.0.1:9944',
-  relayUrl: process.env.relayUrl || 'ws://127.0.0.1:9844',
-  acalaUrl: process.env.acalaUrl || 'ws://127.0.0.1:9946',
-  karuraUrl: process.env.acalaUrl || 'ws://127.0.0.1:9946',
-  moonbeamUrl: process.env.moonbeamUrl || 'ws://127.0.0.1:9947',
-  moonriverUrl: process.env.moonbeamUrl || 'ws://127.0.0.1:9947',
-  astarUrl: process.env.astarUrl || 'ws://127.0.0.1:9949',
-  shidenUrl: process.env.shidenUrl || 'ws://127.0.0.1:9949',
-  westmintUrl: process.env.westmintUrl || 'ws://127.0.0.1:9948',
-  statemineUrl: process.env.statemineUrl || 'ws://127.0.0.1:9948',
-  statemintUrl: process.env.statemintUrl || 'ws://127.0.0.1:9948',
+  substrateUrl: process.env.SUBSTRATE_URL || 'ws://127.0.0.1:9944',
+  relayUrl: process.env.RELAY_URL || 'ws://127.0.0.1:9844',
+  acalaUrl: process.env.ACALA_URL || 'ws://127.0.0.1:9946',
+  karuraUrl: process.env.ACALA_URL || 'ws://127.0.0.1:9946',
+  moonbeamUrl: process.env.MOONBEAM_URL || 'ws://127.0.0.1:9947',
+  moonriverUrl: process.env.MOONBEAM_URL || 'ws://127.0.0.1:9947',
+  astarUrl: process.env.ASTAR_URL || 'ws://127.0.0.1:9949',
+  shidenUrl: process.env.SHIDEN_URL || 'ws://127.0.0.1:9949',
+  westmintUrl: process.env.WESTMINT_URL || 'ws://127.0.0.1:9948',
+  statemineUrl: process.env.STATEMINE_URL || 'ws://127.0.0.1:9948',
+  statemintUrl: process.env.STATEMINT_URL || 'ws://127.0.0.1:9948',
 };
 
 export default config;
