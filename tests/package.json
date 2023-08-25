@@ -13,8 +13,6 @@
     "@types/node": "^20.4.2",
     "@typescript-eslint/eslint-plugin": "^6.0.0",
     "@typescript-eslint/parser": "^6.0.0",
-    "@zombienet/orchestrator": "https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/orchestrator?2476ea76a368f1b1e94038dbfec29c27f114288e",
-    "@zombienet/utils": "https://gitpkg.now.sh/UniqueNetwork/zombienet/javascript/packages/utils?2476ea76a368f1b1e94038dbfec29c27f114288e",
     "chai": "^4.3.6",
     "chai-subset": "^1.6.0",
     "eslint": "^8.45.0",
@@ -43,7 +41,6 @@
     "testParallel": "yarn _testParallel './src/**/*.test.ts'",
     "testSequential": "yarn _test './src/**/*.seqtest.ts'",
     "testStructure": "yarn _test ./**/nesting/*.*test.ts",
-    "testGovernance": "RUN_GOV_TESTS=1 yarn _test ./**/governance/*.*test.ts",
     "testEth": "yarn _test './**/eth/**/*.*test.ts'",
     "testEthNesting": "yarn _test './**/eth/nesting/**/*.*test.ts'",
     "testEthFractionalizer": "yarn _test './**/eth/fractionalizer/**/*.*test.ts'",
@@ -108,8 +105,6 @@
     "testRPC": "yarn _test ./**/rpc.test.ts",
     "testPromotion": "yarn _test ./**/appPromotion/*test.ts",
     "testApiConsts": "yarn _test ./**/apiConsts.test.ts",
-    "testCouncil": "yarn _test ./**/council.*test.ts",
-    "testDemocracy": "yarn _test ./**/democracy.*test.ts",
     "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/collator-selection/**.*test.ts --timeout 49999999",
     "testCollatorSelection": "RUN_COLLATOR_TESTS=1 yarn _test ./**/collatorSelection.*test.ts --timeout 49999999",
     "testIdentity": "RUN_COLLATOR_TESTS=1 yarn _test ./**/identity.*test.ts --timeout 49999999",
@@ -122,7 +117,7 @@
     "benchMintingFee": "ts-node src/benchmarks/mintFee/benchmark.ts",
     "load": "yarn _test './**/*.load.ts'",
     "loadTransfer": "ts-node src/transfer.nload.ts",
-    "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' http://localhost:9944 > src/interfaces/metadata.json",
+    "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' $RPC_URL > src/interfaces/metadata.json",
     "polkadot-types-from-defs": "ts-node --esm ./node_modules/.bin/polkadot-types-from-defs --endpoint src/interfaces/metadata.json --input src/interfaces/ --package .",
     "polkadot-types-from-chain": "ts-node --esm ./node_modules/.bin/polkadot-types-from-chain --endpoint src/interfaces/metadata.json --output src/interfaces/ --package .",
     "polkadot-types": "echo \"export default {}\" > src/interfaces/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain",
@@ -153,5 +148,6 @@
   "resolutions": {
     "decode-uri-component": "^0.2.1"
   },
-  "type": "module"
+  "type": "module",
+  "packageManager": "yarn@3.6.1"
 }
