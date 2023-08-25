@@ -72,6 +72,7 @@ function fixupUnique(version: string): string {
         case '90': return 'v4.49.0';
         case '96': return 'v5.4.0';
         case '100': return 'v5.10.0';
+        case '104': return 'v5.15.0';
         default: throw new Error('unknown shiden branch for runtime ' + r);
       }
     }).then(v => env = setVar(env, 'SHIDEN_BUILD_BRANCH', v)),
