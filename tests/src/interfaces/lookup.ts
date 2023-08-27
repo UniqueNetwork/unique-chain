@@ -61,7 +61,7 @@ export default {
     }
   },
   /**
-   * Lookup19: frame_system::EventRecord<quartz_runtime::RuntimeEvent, primitive_types::H256>
+   * Lookup19: frame_system::EventRecord<opal_runtime::RuntimeEvent, primitive_types::H256>
    **/
   FrameSystemEventRecord: {
     phase: 'FrameSystemPhase',
@@ -1081,7 +1081,7 @@ export default {
     }
   },
   /**
-   * Lookup86: frame_support::traits::preimages::Bounded<quartz_runtime::RuntimeCall>
+   * Lookup86: frame_support::traits::preimages::Bounded<opal_runtime::RuntimeCall>
    **/
   FrameSupportPreimagesBounded: {
     _enum: {
@@ -1297,16 +1297,16 @@ export default {
         _alias: {
           keys_: 'keys',
         },
-        keys_: 'QuartzRuntimeRuntimeCommonSessionKeys',
+        keys_: 'OpalRuntimeRuntimeCommonSessionKeys',
         proof: 'Bytes',
       },
       purge_keys: 'Null'
     }
   },
   /**
-   * Lookup115: quartz_runtime::runtime_common::SessionKeys
+   * Lookup115: opal_runtime::runtime_common::SessionKeys
    **/
-  QuartzRuntimeRuntimeCommonSessionKeys: {
+  OpalRuntimeRuntimeCommonSessionKeys: {
     aura: 'SpConsensusAuraSr25519AppSr25519Public'
   },
   /**
@@ -2030,7 +2030,7 @@ export default {
   PalletReferendaCall: {
     _enum: {
       submit: {
-        proposalOrigin: 'QuartzRuntimeOriginCaller',
+        proposalOrigin: 'OpalRuntimeOriginCaller',
         proposal: 'FrameSupportPreimagesBounded',
         enactmentMoment: 'FrameSupportScheduleDispatchTime',
       },
@@ -2062,9 +2062,9 @@ export default {
     }
   },
   /**
-   * Lookup209: quartz_runtime::OriginCaller
+   * Lookup209: opal_runtime::OriginCaller
    **/
-  QuartzRuntimeOriginCaller: {
+  OpalRuntimeOriginCaller: {
     _enum: {
       system: 'FrameSupportDispatchRawOrigin',
       __Unused1: 'Null',
@@ -4177,7 +4177,7 @@ export default {
     _enum: ['TooBig', 'AlreadyNoted', 'NotAuthorized', 'NotNoted', 'Requested', 'NotRequested']
   },
   /**
-   * Lookup481: pallet_democracy::types::ReferendumInfo<BlockNumber, frame_support::traits::preimages::Bounded<quartz_runtime::RuntimeCall>, Balance>
+   * Lookup481: pallet_democracy::types::ReferendumInfo<BlockNumber, frame_support::traits::preimages::Bounded<opal_runtime::RuntimeCall>, Balance>
    **/
   PalletDemocracyReferendumInfo: {
     _enum: {
@@ -4189,7 +4189,7 @@ export default {
     }
   },
   /**
-   * Lookup482: pallet_democracy::types::ReferendumStatus<BlockNumber, frame_support::traits::preimages::Bounded<quartz_runtime::RuntimeCall>, Balance>
+   * Lookup482: pallet_democracy::types::ReferendumStatus<BlockNumber, frame_support::traits::preimages::Bounded<opal_runtime::RuntimeCall>, Balance>
    **/
   PalletDemocracyReferendumStatus: {
     end: 'u32',
@@ -4277,7 +4277,7 @@ export default {
     _enum: ['AlreadyMember', 'NotMember', 'NotPolling', 'Ongoing', 'NoneRemaining', 'Corruption', 'RankTooLow', 'InvalidWitness', 'NoPermission']
   },
   /**
-   * Lookup508: pallet_referenda::types::ReferendumInfo<TrackId, quartz_runtime::OriginCaller, Moment, frame_support::traits::preimages::Bounded<quartz_runtime::RuntimeCall>, Balance, pallet_ranked_collective::Tally<T, I, M>, sp_core::crypto::AccountId32, ScheduleAddress>
+   * Lookup508: pallet_referenda::types::ReferendumInfo<TrackId, opal_runtime::OriginCaller, Moment, frame_support::traits::preimages::Bounded<opal_runtime::RuntimeCall>, Balance, pallet_ranked_collective::Tally<T, I, M>, sp_core::crypto::AccountId32, ScheduleAddress>
    **/
   PalletReferendaReferendumInfo: {
     _enum: {
@@ -4290,11 +4290,11 @@ export default {
     }
   },
   /**
-   * Lookup509: pallet_referenda::types::ReferendumStatus<TrackId, quartz_runtime::OriginCaller, Moment, frame_support::traits::preimages::Bounded<quartz_runtime::RuntimeCall>, Balance, pallet_ranked_collective::Tally<T, I, M>, sp_core::crypto::AccountId32, ScheduleAddress>
+   * Lookup509: pallet_referenda::types::ReferendumStatus<TrackId, opal_runtime::OriginCaller, Moment, frame_support::traits::preimages::Bounded<opal_runtime::RuntimeCall>, Balance, pallet_ranked_collective::Tally<T, I, M>, sp_core::crypto::AccountId32, ScheduleAddress>
    **/
   PalletReferendaReferendumStatus: {
     track: 'u16',
-    origin: 'QuartzRuntimeOriginCaller',
+    origin: 'OpalRuntimeOriginCaller',
     proposal: 'FrameSupportPreimagesBounded',
     enactment: 'FrameSupportScheduleDispatchTime',
     submitted: 'u32',
@@ -4363,14 +4363,14 @@ export default {
     _enum: ['NotOngoing', 'HasDeposit', 'BadTrack', 'Full', 'QueueEmpty', 'BadReferendum', 'NothingToDo', 'NoTrack', 'Unfinished', 'NoPermission', 'NoDeposit', 'BadStatus', 'PreimageNotExist']
   },
   /**
-   * Lookup526: pallet_scheduler::Scheduled<Name, frame_support::traits::preimages::Bounded<quartz_runtime::RuntimeCall>, BlockNumber, quartz_runtime::OriginCaller, sp_core::crypto::AccountId32>
+   * Lookup526: pallet_scheduler::Scheduled<Name, frame_support::traits::preimages::Bounded<opal_runtime::RuntimeCall>, BlockNumber, opal_runtime::OriginCaller, sp_core::crypto::AccountId32>
    **/
   PalletSchedulerScheduled: {
     maybeId: 'Option<[u8;32]>',
     priority: 'u8',
     call: 'FrameSupportPreimagesBounded',
     maybePeriodic: 'Option<(u32,u32)>',
-    origin: 'QuartzRuntimeOriginCaller'
+    origin: 'OpalRuntimeOriginCaller'
   },
   /**
    * Lookup528: pallet_scheduler::pallet::Error<T>
@@ -4912,23 +4912,23 @@ export default {
    **/
   FrameSystemExtensionsCheckWeight: 'Null',
   /**
-   * Lookup674: quartz_runtime::runtime_common::maintenance::CheckMaintenance
+   * Lookup674: opal_runtime::runtime_common::maintenance::CheckMaintenance
    **/
-  QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
+  OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance: 'Null',
   /**
-   * Lookup675: quartz_runtime::runtime_common::identity::DisableIdentityCalls
+   * Lookup675: opal_runtime::runtime_common::identity::DisableIdentityCalls
    **/
-  QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls: 'Null',
+  OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls: 'Null',
   /**
-   * Lookup676: pallet_template_transaction_payment::ChargeTransactionPayment<quartz_runtime::Runtime>
+   * Lookup676: pallet_template_transaction_payment::ChargeTransactionPayment<opal_runtime::Runtime>
    **/
   PalletTemplateTransactionPaymentChargeTransactionPayment: 'Compact<u128>',
   /**
-   * Lookup677: quartz_runtime::Runtime
+   * Lookup677: opal_runtime::Runtime
    **/
-  QuartzRuntimeRuntime: 'Null',
+  OpalRuntimeRuntime: 'Null',
   /**
-   * Lookup678: pallet_ethereum::FakeTransactionFinalizer<quartz_runtime::Runtime>
+   * Lookup678: pallet_ethereum::FakeTransactionFinalizer<opal_runtime::Runtime>
    **/
   PalletEthereumFakeTransactionFinalizer: 'Null'
 };
