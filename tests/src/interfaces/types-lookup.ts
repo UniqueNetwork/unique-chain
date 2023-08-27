@@ -1390,15 +1390,15 @@ declare module '@polkadot/types/lookup' {
   interface PalletSessionCall extends Enum {
     readonly isSetKeys: boolean;
     readonly asSetKeys: {
-      readonly keys_: QuartzRuntimeRuntimeCommonSessionKeys;
+      readonly keys_: OpalRuntimeRuntimeCommonSessionKeys;
       readonly proof: Bytes;
     } & Struct;
     readonly isPurgeKeys: boolean;
     readonly type: 'SetKeys' | 'PurgeKeys';
   }
 
-  /** @name QuartzRuntimeRuntimeCommonSessionKeys (115) */
-  interface QuartzRuntimeRuntimeCommonSessionKeys extends Struct {
+  /** @name OpalRuntimeRuntimeCommonSessionKeys (115) */
+  interface OpalRuntimeRuntimeCommonSessionKeys extends Struct {
     readonly aura: SpConsensusAuraSr25519AppSr25519Public;
   }
 
@@ -2177,7 +2177,7 @@ declare module '@polkadot/types/lookup' {
   interface PalletReferendaCall extends Enum {
     readonly isSubmit: boolean;
     readonly asSubmit: {
-      readonly proposalOrigin: QuartzRuntimeOriginCaller;
+      readonly proposalOrigin: OpalRuntimeOriginCaller;
       readonly proposal: FrameSupportPreimagesBounded;
       readonly enactmentMoment: FrameSupportScheduleDispatchTime;
     } & Struct;
@@ -2217,8 +2217,8 @@ declare module '@polkadot/types/lookup' {
     readonly type: 'Submit' | 'PlaceDecisionDeposit' | 'RefundDecisionDeposit' | 'Cancel' | 'Kill' | 'NudgeReferendum' | 'OneFewerDeciding' | 'RefundSubmissionDeposit' | 'SetMetadata';
   }
 
-  /** @name QuartzRuntimeOriginCaller (209) */
-  interface QuartzRuntimeOriginCaller extends Enum {
+  /** @name OpalRuntimeOriginCaller (209) */
+  interface OpalRuntimeOriginCaller extends Enum {
     readonly isSystem: boolean;
     readonly asSystem: FrameSupportDispatchRawOrigin;
     readonly isVoid: boolean;
@@ -4616,7 +4616,7 @@ declare module '@polkadot/types/lookup' {
   /** @name PalletReferendaReferendumStatus (509) */
   interface PalletReferendaReferendumStatus extends Struct {
     readonly track: u16;
-    readonly origin: QuartzRuntimeOriginCaller;
+    readonly origin: OpalRuntimeOriginCaller;
     readonly proposal: FrameSupportPreimagesBounded;
     readonly enactment: FrameSupportScheduleDispatchTime;
     readonly submitted: u32;
@@ -4701,7 +4701,7 @@ declare module '@polkadot/types/lookup' {
     readonly priority: u8;
     readonly call: FrameSupportPreimagesBounded;
     readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-    readonly origin: QuartzRuntimeOriginCaller;
+    readonly origin: OpalRuntimeOriginCaller;
   }
 
   /** @name PalletSchedulerError (528) */
@@ -5312,17 +5312,17 @@ declare module '@polkadot/types/lookup' {
   /** @name FrameSystemExtensionsCheckWeight (673) */
   type FrameSystemExtensionsCheckWeight = Null;
 
-  /** @name QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance (674) */
-  type QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
+  /** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance (674) */
+  type OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance = Null;
 
-  /** @name QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls (675) */
-  type QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls = Null;
+  /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls (675) */
+  type OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls = Null;
 
   /** @name PalletTemplateTransactionPaymentChargeTransactionPayment (676) */
   interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
 
-  /** @name QuartzRuntimeRuntime (677) */
-  type QuartzRuntimeRuntime = Null;
+  /** @name OpalRuntimeRuntime (677) */
+  type OpalRuntimeRuntime = Null;
 
   /** @name PalletEthereumFakeTransactionFinalizer (678) */
   type PalletEthereumFakeTransactionFinalizer = Null;
