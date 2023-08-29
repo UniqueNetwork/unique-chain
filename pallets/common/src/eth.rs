@@ -549,8 +549,6 @@ impl CollectionNestingAndPermission {
 /// Collection properties
 #[derive(Debug, Default, AbiCoder)]
 pub struct CreateCollectionData {
-	/// Collection sponsor
-	pub pending_sponsor: CrossAddress,
 	/// Collection name
 	pub name: String,
 	/// Collection description
@@ -571,6 +569,8 @@ pub struct CreateCollectionData {
 	pub nesting_settings: CollectionNestingAndPermission,
 	/// Collection limits
 	pub limits: Vec<CollectionLimitValue>,
+	/// Collection sponsor
+	pub pending_sponsor: CrossAddress,
 	/// Extra collection flags
 	pub flags: CollectionFlags,
 }

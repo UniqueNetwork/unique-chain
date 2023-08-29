@@ -17,7 +17,7 @@
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
 use core::{convert::TryInto, marker::PhantomData};
-use evm_coder::{Call, abi::AbiReader};
+use evm_coder::{Call};
 use pallet_common::{CollectionHandle, eth::map_eth_to_id};
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_transaction_payment::CallContext;
@@ -66,11 +66,11 @@ where
 		if let Some(collection_id) = map_eth_to_id(&call_context.contract_address) {
 			let collection = <CollectionHandle<T>>::new(collection_id)?;
 			let sponsor = collection.sponsorship.sponsor()?.clone();
-			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
+			// let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
 			Some(T::CrossAccountId::from_sub(match &collection.mode {
 				CollectionMode::NFT => {
 					let collection = NonfungibleHandle::cast(collection);
-					let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
+					let call = <UniqueNFTCall<T>>::parse_full(&call_context.input).ok()??;
 					match call {
 						UniqueNFTCall::TokenProperties(call) => match call {
 							TokenPropertiesCall::SetProperty {
@@ -161,11 +161,11 @@ where
 					}
 				}
 				CollectionMode::ReFungible => {
-					let call = <UniqueRefungibleCall<T>>::parse(method_id, &mut reader).ok()??;
+					let call = <UniqueRefungibleCall<T>>::parse_full(&call_context.input).ok()??;
 					refungible::call_sponsor(call, collection, who).map(|()| sponsor)
 				}
 				CollectionMode::Fungible(_) => {
-					let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader).ok()??;
+					let call = <UniqueFungibleCall<T>>::parse_full(&call_context.input).ok()??;
 					match call {
 						UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
 							withdraw_transfer::<T>(&collection, who, &TokenId::default())
@@ -196,8 +196,7 @@ where
 			// Token existance isn't checked at this point and should be checked in `withdraw` method.
 			let token = RefungibleTokenHandle(rft_collection, token_id);
 
-			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
-			let call = <UniqueRefungibleTokenCall<T>>::parse(method_id, &mut reader).ok()??;
+			let call = <UniqueRefungibleTokenCall<T>>::parse_full(&call_context.input).ok()??;
 			Some(T::CrossAccountId::from_sub(
 				refungible::token_call_sponsor(call, token, who).map(|()| sponsor)?,
 			))

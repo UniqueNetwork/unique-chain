@@ -31,6 +31,7 @@ pub mod pallet {
 
 	#[derive(PartialEq, Eq, Clone, MaxEncodedLen, Encode, Decode, TypeInfo, RuntimeDebug)]
 	#[pallet::origin]
+	#[non_exhaustive]
 	pub enum Origin {
 		/// Origin able to send proposal from fellowship collective to democracy pallet.
 		FellowshipProposition,

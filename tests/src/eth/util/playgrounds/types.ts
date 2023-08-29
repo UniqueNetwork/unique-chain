@@ -59,8 +59,8 @@ export interface CollectionLimitValue {
 }
 
 export enum CollectionMode {
-	Fungible,
 	Nonfungible,
+	Fungible,
 	Refungible,
 }
 

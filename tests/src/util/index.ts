@@ -15,6 +15,7 @@ import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoon
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
+chai.config.truncateThreshold = 0;
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
 export const expect = chai.expect;

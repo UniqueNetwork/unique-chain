@@ -26,7 +26,7 @@ use execution::PreDispatch;
 use frame_support::dispatch::Weight;
 
 use core::marker::PhantomData;
-use sp_std::cell::RefCell;
+use sp_std::{cell::RefCell, vec::Vec};
 
 use codec::Decode;
 use frame_support::pallet_prelude::DispatchError;
@@ -46,8 +46,8 @@ pub mod execution;
 pub use spez::spez;
 
 use evm_coder::{
-	abi::{AbiReader, AbiWrite, AbiWriter},
 	types::{Msg, Value},
+	AbiEncode,
 };
 
 pub use pallet::*;
@@ -168,7 +168,7 @@ impl<T: Config> SubstrateRecorder<T> {
 	pub fn evm_to_precompile_output(
 		self,
 		handle: &mut impl PrecompileHandle,
-		result: execution::Result<Option<AbiWriter>>,
+		result: execution::Result<Option<Vec<u8>>>,
 	) -> Option<PrecompileResult> {
 		use execution::Error;
 		// We ignore error here, as it should not occur, as we have our own bookkeeping of gas
@@ -176,18 +176,13 @@ impl<T: Config> SubstrateRecorder<T> {
 		Some(match result {
 			Ok(Some(v)) => Ok(PrecompileOutput {
 				exit_status: ExitSucceed::Returned,
-				output: v.finish(),
+				output: v,
 			}),
 			Ok(None) => return None,
-			Err(Error::Revert(e)) => {
-				let mut writer = AbiWriter::new_call(evm_coder::fn_selector!(Error(string)));
-				(&e as &str).abi_write(&mut writer);
-
-				Err(PrecompileFailure::Revert {
-					exit_status: ExitRevert::Reverted,
-					output: writer.finish(),
-				})
-			}
+			Err(Error::Revert(e)) => Err(PrecompileFailure::Revert {
+				exit_status: ExitRevert::Reverted,
+				output: (&e as &str,).abi_encode_call(evm_coder::fn_selector!(Error(string))),
+			}),
 			Err(Error::Fatal(f)) => Err(PrecompileFailure::Fatal { exit_status: f }),
 			Err(Error::Error(e)) => Err(e.into()),
 		})
@@ -266,7 +261,7 @@ where
 	C: evm_coder::Call + PreDispatch,
 	E: evm_coder::Callable<C> + WithRecorder<T>,
 	H: PrecompileHandle,
-	execution::ResultWithPostInfo<AbiWriter>: From<ResultWithPostInfoOf<E, AbiWriter>>,
+	execution::ResultWithPostInfo<Vec<u8>>: From<ResultWithPostInfoOf<E, Vec<u8>>>,
 {
 	let result = call_internal(
 		handle.context().caller,
@@ -282,18 +277,16 @@ fn call_internal<T, C, E>(
 	e: &mut E,
 	value: Value,
 	input: &[u8],
-) -> execution::Result<Option<AbiWriter>>
+) -> execution::Result<Option<Vec<u8>>>
 where
 	T: Config,
 	C: evm_coder::Call + PreDispatch,
 	E: Contract + evm_coder::Callable<C> + WithRecorder<T>,
-	execution::ResultWithPostInfo<AbiWriter>: From<ResultWithPostInfoOf<E, AbiWriter>>,
+	execution::ResultWithPostInfo<Vec<u8>>: From<ResultWithPostInfoOf<E, Vec<u8>>>,
 {
-	let (selector, mut reader) = AbiReader::new_call(input)?;
-	let call = C::parse(selector, &mut reader)?;
+	let call = C::parse_full(input)?;
 	if call.is_none() {
-		let selector = u32::from_be_bytes(selector);
-		return Err(format!("unrecognized selector: 0x{selector:0<8x}").into());
+		return Err("unrecognized selector".into());
 	}
 	let call = call.unwrap();
 

@@ -35,7 +35,8 @@ std = [
 	"sp-std/std",
 	"up-data-structs/std",
 	"up-pov-estimate-rpc/std",
+	"evm-coder/std",
 ]
-stubgen = ["evm-coder/stubgen"]
+stubgen = ["evm-coder/stubgen", "up-data-structs/stubgen"]
 tests = []
 try-runtime = ["frame-support/try-runtime"]
