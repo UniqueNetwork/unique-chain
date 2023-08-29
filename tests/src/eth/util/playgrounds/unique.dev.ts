@@ -216,7 +216,6 @@ class CreateCollectionTransaction {
     }
 
     const tx = collectionHelper.methods.createCollection([
-      this.data.pendingSponsor,
       this.data.name,
       this.data.description,
       this.data.tokenPrefix,
@@ -227,6 +226,7 @@ class CreateCollectionTransaction {
       this.data.adminList,
       this.data.nestingSettings,
       this.data.limits,
+      this.data.pendingSponsor,
       this.data.flags,
     ]);
     return tx;

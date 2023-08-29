@@ -39,3 +39,4 @@ std = [
 	"sp-runtime/std",
 	"sp-std/std",
 ]
+stubgen = ["evm-coder/stubgen"]

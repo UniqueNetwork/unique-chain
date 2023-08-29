@@ -2653,8 +2653,9 @@ dependencies = [
 
 [[package]]
 name = "evm-coder"
-version = "0.3.6"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.6#be59ae41a5d2ec9389bae22d54f81122b6ba55a4"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b88ae5a449e7e9dfef59c0dd2df396bc56d81a6f4e297490c0c64aa73f7f7ad4"
 dependencies = [
  "ethereum",
  "evm-coder-procedural",
@@ -2665,8 +2666,9 @@ dependencies = [
 
 [[package]]
 name = "evm-coder-procedural"
-version = "0.3.6"
-source = "git+https://github.com/uniquenetwork/evm-coder?tag=v0.3.6#be59ae41a5d2ec9389bae22d54f81122b6ba55a4"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6223c1063c1f53380b4b9aaf2e4d82eba4808c661c61265619b804b09b7a6b1a"
 dependencies = [
  "Inflector",
  "hex",
