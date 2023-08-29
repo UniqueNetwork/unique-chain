@@ -207,7 +207,7 @@ class CreateCollectionTransaction {
   }
 
   private async createTransaction() {
-    const collectionHelper = await this.helper.ethNativeContract.collectionHelpers(this.signer);
+    const collectionHelper = this.helper.ethNativeContract.collectionHelpers(this.signer);
     let collectionMode;
     switch (this.data.collectionMode) {
       case 'nft': collectionMode = CollectionMode.Nonfungible; break;

@@ -97,7 +97,7 @@ describe('Cannot set invalid collection limits', () => {
 
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'ISNI', testCase.case, 18)).send();
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
 
       // Cannot set non-existing limit
       await expect(collectionEvm.methods

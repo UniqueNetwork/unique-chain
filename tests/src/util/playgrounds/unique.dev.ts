@@ -41,7 +41,9 @@ export class SilentConsole {
       for(const arg of args) {
         if(typeof arg !== 'string')
           continue;
-        if(arg.includes('1000:: Normal connection closure') || arg.includes('Not decorating unknown runtime apis:') || arg.includes('RPC methods not decorated:') || arg === 'Normal connection closure')
+        const skippedWarnings = ['1000:: Normal connection closure', 'Not decorating unknown runtime apis:', 'RPC methods not decorated:', 'Not decorating runtime apis'];
+        const needToSkip = skippedWarnings.reduce((a,  b) => a || arg.includes(b), false);
+        if(needToSkip || arg === 'Normal connection closure')
           return;
       }
       printer(...args);

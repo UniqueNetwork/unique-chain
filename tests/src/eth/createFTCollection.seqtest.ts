@@ -59,7 +59,7 @@ describe('Create FT collection from EVM', () => {
 
     const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
     const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
     expect(await collectionHelpers.methods
       .isCollectionExist(expectedCollectionAddress)
