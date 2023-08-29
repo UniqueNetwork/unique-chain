@@ -27,7 +27,7 @@ opt-level = 3
 [workspace.dependencies]
 # Unique
 app-promotion-rpc = { path = "primitives/app_promotion_rpc", default-features = false }
-evm-coder = { git = "https://github.com/uniquenetwork/evm-coder", tag = "v0.3.6", default-features = false, features = [
+evm-coder = { version = "0.4.2", default-features = false, features = [
 	'bondrewd',
 ] }
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
