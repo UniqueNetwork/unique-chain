@@ -23,12 +23,13 @@ import {CollectionFlag, IEthCrossAccountId, TCollectionMode} from '../util/playg
 
 const DECIMALS = 18;
 const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [
-  [],
-  [],
-  [],
-  [false, false, []],
-  [],
-  [0],
+  [],  // properties
+  [],  // tokenPropertyPermissions
+  [],  // adminList
+  [false, false, []],  // nestingSettings
+  [],  // limits
+  emptyAddress,  // pendingSponsor
+  [0],  // flags
 ];
 
 type ElementOf<A> = A extends readonly (infer T)[] ? T : never;
@@ -64,7 +65,7 @@ describe('Create collection from EVM', () => {
     itEth('Collection address exist', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
-      const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
       expect(await collectionHelpers
         .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
@@ -76,7 +77,7 @@ describe('Create collection from EVM', () => {
         .to.be.true;
 
       // check collectionOwner:
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
       const collectionOwner = await collectionEvm.methods.collectionOwner().call();
       expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
     });
@@ -84,7 +85,7 @@ describe('Create collection from EVM', () => {
     itEth('destroyCollection', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Exister', 'absolutely anything', 'WIWT', 'ft', DECIMALS)).send();
-      const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
       const result = await collectionHelper.methods
         .destroyCollection(collectionAddress)
@@ -110,7 +111,7 @@ describe('Create collection from EVM', () => {
 
     itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
       {
         const MAX_NAME_LENGTH = 64;
         const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
@@ -119,7 +120,6 @@ describe('Create collection from EVM', () => {
 
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -136,7 +136,6 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A';
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -153,7 +152,6 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -167,11 +165,10 @@ describe('Create collection from EVM', () => {
 
     itEth('(!negative test!) cannot create collection if value !== 2', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
       const expects = [0n, 1n, 30n].map(async value => {
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             'Peasantry',
             'absolutely anything',
             'TWIW',
@@ -238,7 +235,7 @@ describe('Create collection from EVM', () => {
 
       const expectedCollectionId = +(await helper.callRpc('api.rpc.unique.collectionStats')).created + 1;
       const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
-      const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
       expect(await collectionHelpers.methods
         .isCollectionExist(expectedCollectionAddress)
@@ -246,7 +243,6 @@ describe('Create collection from EVM', () => {
 
       await collectionHelpers.methods
         .createCollection([
-          emptyAddress,
           'A',
           'A',
           'A',
@@ -331,7 +327,7 @@ describe('Create collection from EVM', () => {
       const ss58Format = helper.chain.getChainProperties().ss58Format;
       const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('Sponsor', 'absolutely anything', 'ENVY', 'rft')).send();
 
-      const collection = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+      const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
       await collection.methods.setCollectionSponsorCross(sponsorCross).send();
 
@@ -340,7 +336,7 @@ describe('Create collection from EVM', () => {
 
       await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
-      const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
+      const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
       await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
       data = (await helper.rft.getData(collectionId))!;
@@ -350,7 +346,7 @@ describe('Create collection from EVM', () => {
     itEth('Collection address exist', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
-      const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
       expect(await collectionHelpers
         .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
@@ -362,7 +358,7 @@ describe('Create collection from EVM', () => {
         .to.be.true;
 
       // check collectionOwner:
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
       const collectionOwner = await collectionEvm.methods.collectionOwner().call();
       expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
     });
@@ -370,7 +366,7 @@ describe('Create collection from EVM', () => {
     itEth('destroyCollection', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Limits', 'absolutely anything', 'OLF', 'rft')).send();
-      const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
       await expect(collectionHelper.methods
         .destroyCollection(collectionAddress)
@@ -384,7 +380,7 @@ describe('Create collection from EVM', () => {
 
     itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
       {
         const MAX_NAME_LENGTH = 64;
         const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
@@ -393,7 +389,6 @@ describe('Create collection from EVM', () => {
 
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -410,7 +405,6 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A';
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -427,7 +421,6 @@ describe('Create collection from EVM', () => {
         const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
         await expect(collectionHelper.methods
           .createCollection([
-            emptyAddress,
             collectionName,
             description,
             tokenPrefix,
@@ -441,10 +434,9 @@ describe('Create collection from EVM', () => {
 
     itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+      const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
       await expect(collectionHelper.methods
         .createCollection([
-          emptyAddress,
           'Peasantry',
           'absolutely anything',
           'TWIW',
@@ -473,7 +465,7 @@ describe('Create collection from EVM', () => {
           pendingSponsor: sponsorCross,
         },
       ).send();
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call({from: owner})).to.be.true;
 
@@ -657,7 +649,7 @@ describe('Create collection from EVM', () => {
         '',
       );
       const collectionSub = helper.nft.getCollectionObject(collectionId);
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       // Set and confirm sponsor:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
@@ -695,7 +687,7 @@ describe('Create collection from EVM', () => {
           '',
         );
         const receiver = await helper.eth.createAccountWithBalance(donor);
-        const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
+        const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
         await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
 
@@ -764,7 +756,7 @@ describe('Create collection from EVM', () => {
             adminList: [adminCrossSub, adminCrossEth],
           },
         ).send();
-        const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, true);
+        const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, true);
 
         // 1. Expect api.rpc.unique.adminlist returns admins:
         const adminListRpc = await helper.collection.getAdmins(collectionId);
@@ -801,7 +793,7 @@ describe('Create collection from EVM', () => {
         },
         'uri',
       );
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
       // admin (sub and eth) can mint token:
       await collectionEvm.methods.mint(owner).send({from: adminEth});
@@ -852,7 +844,7 @@ describe('Create collection from EVM', () => {
         },
       ).send();
 
-      const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+      const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       {
         const adminList = await helper.collection.getAdmins(collectionId);
@@ -1062,7 +1054,7 @@ describe('Create collection from EVM', () => {
           },
         ).send();
 
-        const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
+        const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
 
         await collectionEvm.methods.deleteCollectionProperties(['testKey1', 'testKey2']).send({from: caller});
 
@@ -1162,7 +1154,7 @@ describe('Create collection from EVM', () => {
               ],
             },
           ).send();
-          const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+          const collection = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
           expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
             key: 'testKey',
@@ -1287,7 +1279,7 @@ describe('Create collection from EVM', () => {
           },
         ).send();
 
-        const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
+        const collection = helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
         const tokenId = (await collection.methods.mintCross(receiver, [{key: 'testKey', value: Buffer.from('testValue')}, {key: 'testKey_1', value: Buffer.from('testValue_1')}]).send()).events.Transfer.returnValues.tokenId;
         expect(await collection.methods.properties(tokenId, ['testKey', 'testKey_1']).call()).to.has.length(2);
 
@@ -1311,7 +1303,7 @@ describe('Create collection from EVM', () => {
         },
       ).send();
 
-      const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+      const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       // Create a token to be nested to
       const mintingTargetNFTTokenIdResult = await contract.methods.mint(owner).send({from: owner});
@@ -1342,7 +1334,7 @@ describe('Create collection from EVM', () => {
         new CreateCollectionData('A', 'B', 'C', 'nft'),
       ).send();
 
-      const unnestedContract = await helper.ethNativeContract.collection(unnestedCollectionAddress, 'nft', owner);
+      const unnestedContract = helper.ethNativeContract.collection(unnestedCollectionAddress, 'nft', owner);
       expect(await unnestedContract.methods.collectionNesting().call({from: owner})).to.be.like([false, false, []]);
 
       const {collectionAddress} = await helper.eth.createCollection(
@@ -1357,7 +1349,7 @@ describe('Create collection from EVM', () => {
         },
       ).send();
 
-      const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+      const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
       expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([true, false, [unnestedCollectionAddress.toString()]]);
       await contract.methods.setCollectionNesting([false, false, []]).send({from: owner});
       expect(await contract.methods.collectionNesting().call({from: owner})).to.be.like([false, false, []]);
@@ -1378,7 +1370,7 @@ describe('Create collection from EVM', () => {
         },
       ).send();
 
-      const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+      const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       // Create a token to nest into
       const mintingTargetTokenIdResult = await contract.methods.mint(owner).send({from: owner});
@@ -1419,17 +1411,15 @@ describe('Create collection from EVM', () => {
       }
     });
 
-    itEth('NFT: foreign flag number is ignored', async ({helper}) => {
+    itEth('NFT: can\'t set foreign flag number', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       {
-        const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: 128}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: false});
+        await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: 128}).call({from: owner})).to.be.rejectedWith(/internal flags were used/);
       }
 
       {
-        const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: 192}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: true});
+        await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: 192}).call({from: owner})).to.be.rejectedWith(/internal flags were used/);
       }
     });
 
@@ -1446,13 +1436,11 @@ describe('Create collection from EVM', () => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       {
-        const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Foreign]}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: false});
+        await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Foreign]}).call({from: owner})).to.be.rejectedWith(/internal flags were used/);
       }
 
       {
-        const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Erc721metadata | CollectionFlag.Foreign]}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: true});
+        await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Erc721metadata | CollectionFlag.Foreign]}).call({from: owner})).to.be.rejectedWith(/internal flags were used/);
       }
     });
   });

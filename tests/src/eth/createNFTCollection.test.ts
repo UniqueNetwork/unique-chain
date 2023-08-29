@@ -39,7 +39,7 @@ describe('Create NFT collection from EVM', () => {
     const baseUri = 'BaseURI';
 
     const {collectionId, collectionAddress, events} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, name, description, prefix, baseUri);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     expect(events).to.be.deep.equal([
       {
@@ -82,7 +82,7 @@ describe('Create NFT collection from EVM', () => {
     const ss58Format = helper.chain.getChainProperties().ss58Format;
     const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
 
-    const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
+    const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
     await collection.methods.setCollectionSponsor(sponsor).send();
 
     let data = (await helper.nft.getData(collectionId))!;
@@ -90,7 +90,7 @@ describe('Create NFT collection from EVM', () => {
 
     await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
-    const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
+    const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
     data = (await helper.nft.getData(collectionId))!;
@@ -104,7 +104,7 @@ describe('Create NFT collection from EVM', () => {
     const description = 'absolutely anything';
     const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', description, 'ROC');
 
-    const collection = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
     await collection.methods.setCollectionSponsorCross(sponsorCross).send();
 
@@ -125,7 +125,7 @@ describe('Create NFT collection from EVM', () => {
   itEth('Collection address exist', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
-    const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
     expect(await collectionHelpers
       .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
@@ -137,7 +137,7 @@ describe('Create NFT collection from EVM', () => {
       .to.be.true;
 
     // check collectionOwner:
-    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
+    const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
     const collectionOwner = await collectionEvm.methods.collectionOwner().call();
     expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
   });
@@ -156,7 +156,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     {
       const MAX_NAME_LENGTH = 64;
       const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
@@ -190,7 +190,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
 
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     await expect(collectionHelper.methods
       .createNFTCollection('Peasantry', 'absolutely anything', 'CVE')
       .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
@@ -209,7 +209,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
         .setCollectionSponsor(sponsor)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
 
-      const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
+      const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
         .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
@@ -225,7 +225,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const malfeasant = helper.eth.createAccount();
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'Transgressed', 'absolutely anything', 'COR');
-    const malfeasantCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant);
+    const malfeasantCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', malfeasant);
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
@@ -234,7 +234,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
         .setCollectionSponsorCross(sponsorCross)
         .call()).to.be.rejectedWith(EXPECTED_ERROR);
 
-      const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
+      const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
       await expect(sponsorCollection.methods
         .confirmCollectionSponsorship()
         .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
@@ -249,7 +249,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
   itEth('destroyCollection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
-    const collectionHelper = await helper.ethNativeContract.collectionHelpers(owner);
+    const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
 
     const result = await collectionHelper.methods
