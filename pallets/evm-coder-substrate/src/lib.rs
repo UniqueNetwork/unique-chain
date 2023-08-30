@@ -286,7 +286,14 @@ where
 {
 	let call = C::parse_full(input)?;
 	if call.is_none() {
-		return Err("unrecognized selector".into());
+		let selector = if input.len() >= 4 {
+			let mut selector = [0; 4];
+			selector.copy_from_slice(&input[..4]);
+			u32::from_be_bytes(selector)
+		} else {
+			0
+		};
+		return Err(format!("unrecognized selector: 0x{selector:0>8x}").into());
 	}
 	let call = call.unwrap();
 
