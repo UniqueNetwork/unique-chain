@@ -336,7 +336,7 @@ mod tests {
 		ERC165Call(ERC165Call, PhantomData<fn() -> T>),
 		OtherCall(ERC165Call),
 
-		#[weight(Weight::from_ref_time(a + b))]
+		#[weight(Weight::from_parts(a + b, 0))]
 		Example {
 			a: u64,
 			b: u64,

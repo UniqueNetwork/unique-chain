@@ -51,8 +51,8 @@ fn create_max_item<T: Config>(
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
 	let data: CreateItemData<T> = create_max_item_data::<T>(users);
-	<Pallet<T>>::create_item(&collection, sender, data, &Unlimited)?;
-	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
+	<Pallet<T>>::create_item(collection, sender, data, &Unlimited)?;
+	Ok(TokenId(<TokensMinted<T>>::get(collection.id)))
 }
 
 fn create_collection<T: Config>(
@@ -104,7 +104,7 @@ benchmarks! {
 		let data = vec![create_max_item_data::<T>((0..b).map(|u| {
 			bench_init!(to: cross_sub(u););
 			(to, 200)
-		}))].try_into().unwrap();
+		}))];
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	// Other user left, token data is kept
