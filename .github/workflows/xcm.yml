@@ -277,10 +277,15 @@ jobs:
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built
 
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
       - name: Start network
         uses: UniqueNetwork/baedeker-action@built
         id: bdk
         with:
+          jpath: |
+            .baedeker/vendor
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
@@ -302,21 +307,12 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
+          # Wanted by both wait_for_first_block and yarn polkadot-types
+          export RPC_URL="${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           yarn polkadot-types
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
-        env:
-          RPC_URL: http://${{ steps.bdk.outputs.balancer }}/relay-${{ matrix.network }}/
-          SUBSTRATE_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-${{ matrix.network }}/
-          RELAY_URL: ws://${{ steps.bdk.outputs.balancer }}/relay/
-          ACALA_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-acala/
-          MOONBEAM_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-moonbeam/
-          ASTAR_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-astar/
-          SHIDEN_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-shiden/
-          WESTMINT_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-westmint/
-          STATEMINE_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-statemine/
-          STATEMINT_URL: ws://${{ steps.bdk.outputs.balancer }}/relay-statemint/
 
       - name: XCM Test Report
         uses: phoenix-actions/test-reporting@v10

@@ -19,11 +19,11 @@ import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 
-const QUARTZ_CHAIN = 2095;
-const STATEMINE_CHAIN = 1000;
-const KARURA_CHAIN = 2000;
-const MOONRIVER_CHAIN = 2023;
-const SHIDEN_CHAIN = 2007;
+const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
+const STATEMINE_CHAIN = +(process.env.RELAY_STATEMINE_ID || 1000);
+const KARURA_CHAIN = +(process.env.RELAY_KARURA_ID || 2000);
+const MOONRIVER_CHAIN = +(process.env.RELAY_MOONRIVER_ID || 2023);
+const SHIDEN_CHAIN = +(process.env.RELAY_SHIDEN_ID || 2007);
 
 const STATEMINE_PALLET_INSTANCE = 50;
 
