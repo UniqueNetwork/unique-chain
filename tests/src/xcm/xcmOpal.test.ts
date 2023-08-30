@@ -18,8 +18,8 @@ import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util';
 
-const STATEMINE_CHAIN = 1000;
-const UNIQUE_CHAIN = 2095;
+const STATEMINE_CHAIN = +(process.env.RELAY_WESTMINT_ID || 1000);
+const UNIQUE_CHAIN = +(process.env.RELAY_OPAL_ID || 2095);
 
 const relayUrl = config.relayUrl;
 const westmintUrl = config.westmintUrl;
