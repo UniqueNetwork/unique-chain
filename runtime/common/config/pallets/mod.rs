@@ -24,8 +24,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RUNTIME_NAME, TOKEN_SYMBOL, DECIMALS,
-	Balances,
+	Runtime, RuntimeEvent, RuntimeCall, RUNTIME_NAME, TOKEN_SYMBOL, DECIMALS, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{

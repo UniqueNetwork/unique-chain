@@ -2420,7 +2420,8 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 	}
 }
 
-#[cfg(feature = "tests")]
+#[cfg(any(feature = "tests", test))]
+#[allow(missing_docs)]
 pub mod tests {
 	use crate::{DispatchResult, DispatchError, LazyValue, Config};
 
@@ -2456,7 +2457,7 @@ pub mod tests {
 	}
 
 	#[rustfmt::skip]
-	pub const table: [TestCase; 16] = [
+	pub const TABLE: [TestCase; 16] = [
 		//                    ┌╴collection_admin
 		//                    │  ┌╴is_collection_admin
 		//                    │  │   ┌╴token_owner

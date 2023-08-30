@@ -35,6 +35,7 @@
 //! Identity pallet benchmarking.
 
 #![cfg(feature = "runtime-benchmarks")]
+#![allow(clippy::no_effect)]
 
 use super::*;
 

@@ -528,7 +528,7 @@ where
 				|r: sc_service::Result<
 					up_data_structs::TokenDataVersion1<CrossAccountId>,
 					sp_runtime::DispatchError,
-				>| r.and_then(|value| Ok(value.into())),
+				>| r.map(|value| value.into()),
 			)
 			.or_else(|_| {
 				Ok(api

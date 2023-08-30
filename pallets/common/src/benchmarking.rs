@@ -63,7 +63,7 @@ pub fn property_key(id: usize) -> PropertyKey {
 	}
 	let bytes = id.to_string();
 	let len = data.len();
-	data[len - bytes.len()..].copy_from_slice(&bytes.as_bytes());
+	data[len - bytes.len()..].copy_from_slice(bytes.as_bytes());
 	data
 }
 pub fn property_value() -> PropertyValue {
@@ -80,7 +80,7 @@ pub fn create_collection_raw<T: Config, R>(
 	cast: impl FnOnce(CollectionHandle<T>) -> R,
 ) -> Result<R, DispatchError> {
 	let imbalance = <T as Config>::Currency::deposit(
-		&owner.as_sub(),
+		owner.as_sub(),
 		T::CollectionCreationPrice::get(),
 		Precision::Exact,
 	)?;

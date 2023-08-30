@@ -161,7 +161,8 @@ where
 					}
 				}
 				CollectionMode::ReFungible => {
-					let call = <UniqueRefungibleCall<T>>::parse_full(&call_context.input).ok()??;
+					let call =
+						<UniqueRefungibleCall<T>>::parse_full(&call_context.input).ok()??;
 					refungible::call_sponsor(call, collection, who).map(|()| sponsor)
 				}
 				CollectionMode::Fungible(_) => {

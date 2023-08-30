@@ -16,7 +16,6 @@
 
 use sp_runtime::{BuildStorage, Storage};
 use sp_core::{Public, Pair};
-use sp_std::vec;
 use up_common::types::AuraId;
 use crate::{Runtime, GenesisConfig, ParachainInfoConfig, RuntimeEvent, System};
 
@@ -76,7 +75,7 @@ fn make_basic_storage() -> Storage {
 		AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 	}
 
-	let accounts = vec!["Alice", "Bob"];
+	let accounts = ["Alice", "Bob"];
 	let keys = accounts
 		.iter()
 		.map(|&acc| {
@@ -104,7 +103,7 @@ fn make_basic_storage() -> Storage {
 		..GenesisConfig::default()
 	};
 
-	cfg.build_storage().unwrap().into()
+	cfg.build_storage().unwrap()
 }
 
 #[cfg(not(feature = "collator-selection"))]
