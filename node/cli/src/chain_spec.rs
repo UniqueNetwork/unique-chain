@@ -297,7 +297,7 @@ pub fn development_config() -> DefaultChainSpec {
 				default_runtime,
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
+				[
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_from_seed::<AuraId>("Alice"),
@@ -371,7 +371,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 				default_runtime,
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
+				[
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_from_seed::<AuraId>("Alice"),
