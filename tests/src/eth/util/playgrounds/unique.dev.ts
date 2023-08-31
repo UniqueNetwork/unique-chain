@@ -206,6 +206,7 @@ class CreateCollectionTransaction {
     this.mergeDeprecated = mergeDeprecated;
   }
 
+  // eslint-disable-next-line require-await
   private async createTransaction() {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(this.signer);
     let collectionMode;
