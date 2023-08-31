@@ -34,7 +34,12 @@ RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/cargo-home/git \
     --mount=type=cache,target=/unique_parachain/parachain/target \
     cd parachain && \
-    CARGO_INCREMENTAL=0 cargo build --release --locked && \
+    CARGO_INCREMENTAL=0 cargo build --release --locked 
+
+    mv ./target/release/parachain-polkadex-node /unique_parachain/Polkadex/polkadex
+
+RUN cd parachain && \
+    mkdir /unique_parachain/Polkadex && \
     mv ./target/release/parachain-polkadex-node /unique_parachain/Polkadex/polkadex
 
 # ===== BIN ======
