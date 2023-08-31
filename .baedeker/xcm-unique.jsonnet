@@ -94,7 +94,7 @@ local statemint = {
 	nodes: {
 		[name]: {
 			bin: $.bin,
-			wantedKeys: 'para',
+			wantedKeys: 'para-ed',
 		},
 		for name in ['alice', 'bob']
 	},
