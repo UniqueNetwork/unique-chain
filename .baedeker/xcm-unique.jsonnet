@@ -122,7 +122,7 @@ local polkadex = {
 	bin: 'bin/polkadex',
 	paraId: 1005,
 	spec: {Genesis:{
-		chain: 'polkadex-parachain',
+		chain: 'mainnet',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
