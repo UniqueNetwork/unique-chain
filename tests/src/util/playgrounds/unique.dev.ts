@@ -9,7 +9,7 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, IPovInfo, ITransactionResult, TSigner} from './types';
-import {FrameSystemEventRecord, XcmV2TraitsError, PalletSchedulerEvent} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, XcmV2TraitsError} from '@polkadot/types/lookup';
 import {VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
