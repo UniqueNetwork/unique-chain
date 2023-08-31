@@ -43,12 +43,12 @@ fn create_max_item<T: Config>(
 	owner: T::CrossAccountId,
 ) -> Result<TokenId, DispatchError> {
 	<Pallet<T>>::create_item(
-		&collection,
+		collection,
 		sender,
 		create_max_item_data::<T>(owner),
 		&Unlimited,
 	)?;
-	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
+	Ok(TokenId(<TokensMinted<T>>::get(collection.id)))
 }
 
 fn create_collection<T: Config>(

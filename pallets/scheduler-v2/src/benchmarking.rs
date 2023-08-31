@@ -83,11 +83,11 @@ fn u32_to_name(i: u32) -> TaskName {
 ///
 /// # Arguments
 /// * `periodic` - makes the task periodic.
-/// 	Sets the task's period and repetition count to `100`.
+///     Sets the task's period and repetition count to `100`.
 /// * `named` - gives a name to the task: `u32_to_name(0)`.
 /// * `signed` - determines the origin of the task.
-/// 	If true, it will have the Signed origin. Otherwise it will have the Root origin.
-/// 	See [`make_origin`] for details.
+///     If true, it will have the Signed origin. Otherwise it will have the Root origin.
+///     See [`make_origin`] for details.
 /// * maybe_lookup_len - sets optional lookup length. It is used to benchmark task fetching from the `Preimages` store.
 /// * priority - the task's priority.
 fn make_task<T: Config>(
@@ -155,12 +155,10 @@ fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 		}
 		if maybe_lookup_len.is_some() {
 			len += 1;
+		} else if len > 0 {
+			len -= 1;
 		} else {
-			if len > 0 {
-				len -= 1;
-			} else {
-				break c;
-			}
+			break c;
 		}
 	}
 }

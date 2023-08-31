@@ -53,7 +53,7 @@ benchmarks! {
 		let data = (0..b).map(|i| {
 			bench_init!(to: cross_sub(i););
 			(to, 200)
-		}).collect::<BTreeMap<_, _>>().try_into().unwrap();
+		}).collect::<BTreeMap<_, _>>();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	burn_item {

@@ -19,8 +19,7 @@ use super::*;
 use frame_benchmarking::{benchmarks, account};
 use frame_support::traits::{fungible::Balanced, Get, tokens::Precision};
 use up_data_structs::{
-	CreateCollectionData, CollectionMode, CreateItemData, CollectionFlags, CreateNftData,
-	budget::Unlimited,
+	CreateCollectionData, CollectionMode, CreateItemData, CreateNftData, budget::Unlimited,
 };
 use pallet_common::Config as CommonConfig;
 use pallet_evm::account::CrossAccountId;

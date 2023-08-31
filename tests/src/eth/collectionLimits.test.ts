@@ -106,7 +106,7 @@ describe('Cannot set invalid collection limits', () => {
 
       // Cannot disable limits
       await expect(collectionEvm.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 200}})
+        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 0}})
         .call()).to.be.rejectedWith('user can\'t disable limits');
 
       await expect(collectionEvm.methods

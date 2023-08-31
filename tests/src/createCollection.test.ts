@@ -106,15 +106,17 @@ describe('integration test: ext. createCollection():', () => {
       flags: [CollectionFlag.Erc721metadata],
     }, 'nft');
 
-    await mintCollectionHelper(helper, alice, {
+    // User can not set Foreign flag itself
+
+    await expect(mintCollectionHelper(helper, alice, {
       name: 'name', description: 'descr', tokenPrefix: 'COL',
       flags: [CollectionFlag.Foreign],
-    }, 'nft');
+    }, 'nft')).to.be.rejectedWith(/common.NoPermission/);
 
-    await mintCollectionHelper(helper, alice, {
+    await expect(mintCollectionHelper(helper, alice, {
       name: 'name', description: 'descr', tokenPrefix: 'COL',
       flags: [CollectionFlag.Erc721metadata, CollectionFlag.Foreign],
-    }, 'nft');
+    }, 'nft')).to.be.rejectedWith(/common.NoPermission/);
   });
 
   itSub('Create new collection with extra fields', async ({helper}) => {

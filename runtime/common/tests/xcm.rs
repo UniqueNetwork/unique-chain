@@ -26,7 +26,7 @@ use frame_support::{pallet_prelude::Weight};
 const ALICE: AccountId = AccountId::new([0u8; 32]);
 const BOB: AccountId = AccountId::new([1u8; 32]);
 
-const INITIAL_BALANCE: u128 = 1000000000000000000_0000; // 1000 UNQ
+const INITIAL_BALANCE: u128 = 10_000_000_000_000_000_000_000; // 10_000 UNQ
 
 #[test]
 pub fn xcm_transact_is_forbidden() {

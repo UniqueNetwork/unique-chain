@@ -99,7 +99,7 @@ fn create_test_collection_for_owner(
 	.try_into()
 	.unwrap();
 
-	let data: CreateCollectionData<u64> = CreateCollectionData {
+	let data = CreateCollectionData {
 		name: col_name1.try_into().unwrap(),
 		description: col_desc1.try_into().unwrap(),
 		token_prefix: token_prefix1.try_into().unwrap(),
@@ -204,14 +204,13 @@ fn check_not_sufficient_founds() {
 		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<<Test as frame_system::Config>::AccountId> =
-			CreateCollectionData {
-				name: name.try_into().unwrap(),
-				description: description.try_into().unwrap(),
-				token_prefix: token_prefix.try_into().unwrap(),
-				mode: CollectionMode::NFT,
-				..Default::default()
-			};
+		let data = CreateCollectionData {
+			name: name.try_into().unwrap(),
+			description: description.try_into().unwrap(),
+			token_prefix: token_prefix.try_into().unwrap(),
+			mode: CollectionMode::NFT,
+			..Default::default()
+		};
 
 		let result = Unique::create_collection_ex(RuntimeOrigin::signed(acc), data);
 		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
@@ -225,7 +224,7 @@ fn create_fungible_collection_fails_with_large_decimal_numbers() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<u64> = CreateCollectionData {
+		let data = CreateCollectionData {
 			name: col_name1.try_into().unwrap(),
 			description: col_desc1.try_into().unwrap(),
 			token_prefix: token_prefix1.try_into().unwrap(),
@@ -2364,7 +2363,7 @@ fn total_number_collections_bound_neg() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<u64> = CreateCollectionData {
+		let data = CreateCollectionData {
 			name: col_name1.try_into().unwrap(),
 			description: col_desc1.try_into().unwrap(),
 			token_prefix: token_prefix1.try_into().unwrap(),
@@ -2618,9 +2617,7 @@ fn collection_sponsoring() {
 
 mod check_token_permissions {
 	use super::*;
-	use frame_support::once_cell::sync::Lazy;
 	use pallet_common::LazyValue;
-	use sp_runtime::DispatchError;
 
 	fn test<FTE: FnOnce() -> bool>(
 		i: usize,
@@ -2662,7 +2659,7 @@ mod check_token_permissions {
 	fn no_permission_only() {
 		new_test_ext().execute_with(|| {
 			let mut check_token_existence = LazyValue::new(|| true);
-			for (i, row) in pallet_common::tests::table.iter().enumerate() {
+			for (i, row) in pallet_common::tests::TABLE.iter().enumerate() {
 				test(i, row, &mut check_token_existence);
 			}
 		});
@@ -2671,7 +2668,7 @@ mod check_token_permissions {
 	#[test]
 	fn no_permission_and_token_not_found() {
 		new_test_ext().execute_with(|| {
-			for (i, row) in pallet_common::tests::table.iter().enumerate() {
+			for (i, row) in pallet_common::tests::TABLE.iter().enumerate() {
 				// This is inside the loop to keep track of whether the lambda was called
 				let mut check_token_existence = LazyValue::new(|| false);
 				test(i, row, &mut check_token_existence);
