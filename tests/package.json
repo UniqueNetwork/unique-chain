@@ -117,7 +117,7 @@
     "benchMintingFee": "ts-node src/benchmarks/mintFee/benchmark.ts",
     "load": "yarn _test './**/*.load.ts'",
     "loadTransfer": "ts-node src/transfer.nload.ts",
-    "polkadot-types-fetch-metadata": "curl -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' $RPC_URL > src/interfaces/metadata.json",
+    "polkadot-types-fetch-metadata": "curl -L -H 'Content-Type: application/json' -d '{\"id\":\"1\", \"jsonrpc\":\"2.0\", \"method\": \"state_getMetadata\", \"params\":[]}' $RPC_URL > src/interfaces/metadata.json",
     "polkadot-types-from-defs": "ts-node --esm ./node_modules/.bin/polkadot-types-from-defs --endpoint src/interfaces/metadata.json --input src/interfaces/ --package .",
     "polkadot-types-from-chain": "ts-node --esm ./node_modules/.bin/polkadot-types-from-chain --endpoint src/interfaces/metadata.json --output src/interfaces/ --package .",
     "polkadot-types": "echo \"export default {}\" > src/interfaces/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain",
