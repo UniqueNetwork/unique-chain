@@ -1,0 +1,40 @@
+# ===== Rust builder =====
+FROM ubuntu:22.04 as rust-builder
+LABEL maintainer="Unique.Network"
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+RUN rustup toolchain uninstall $(rustup toolchain list) && \
+    rustup toolchain install nightly-2022-11-15 && \
+    rustup default nightly-2022-11-15 && \
+    rustup target list --installed && \
+    rustup show
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2022-11-15
+
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
+
+# ===== BUILD CHAINQL =====
+FROM rust-builder as builder-chainql-bin
+
+RUN mkdir chainql
+WORKDIR /chainql
+
+RUN git clone -b {{ CHAINQL }} --depth 1 https://github.com/UniqueNetwork/chainql.git . && \
+    cargo build --release
+
+# ===== RUN ======
+
+FROM ubuntu:22.04 as builder-chainql
+
+COPY --from=builder-chainql-bin /chainql/target/release/chainql /chainql/target/release/chainql

@@ -15,6 +15,7 @@ local relay = {
 				['unique', 'moonbeam'],
 				['unique', 'statemint'],
 				['unique', 'astar'],
+				['unique', 'polkadex'],
 			]
 		])),
 	}},
@@ -23,7 +24,7 @@ local relay = {
 			bin: $.bin,
 			wantedKeys: 'relay',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory']
 	},
 };
 
@@ -116,9 +117,26 @@ local astar = {
 	},
 };
 
+local polkadex = {
+	name: 'polkadex',
+	bin: 'bin/polkadex',
+	paraId: 1006,
+	spec: {Genesis:{
+		chain: 'mainnet',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar]
+		for para in [unique, acala, moonbeam, statemint, astar, polkadex]
 	},
 }
