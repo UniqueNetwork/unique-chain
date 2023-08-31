@@ -18,4 +18,10 @@ while ! is_started; do
 	echo "Waiting for first block..."
 	sleep 12
 done
+echo "Chain is running, but lets wait for another block after a minute, to avoid startup flakiness."
+sleep 120
+while ! is_started; do
+	echo "Waiting for second block..."
+	sleep 12
+done
 echo "Chain is running!"
