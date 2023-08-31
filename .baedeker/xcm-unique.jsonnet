@@ -120,7 +120,7 @@ local astar = {
 local polkadex = {
 	name: 'polkadex',
 	bin: 'bin/polkadex',
-	paraId: 1005,
+	paraId: 1006,
 	spec: {Genesis:{
 		chain: 'mainnet',
 		modify:: m.genericPara($),
