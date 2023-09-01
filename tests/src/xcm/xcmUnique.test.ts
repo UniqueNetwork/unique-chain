@@ -19,11 +19,11 @@ import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 
-const UNIQUE_CHAIN = 2037;
-const STATEMINT_CHAIN = 1000;
-const ACALA_CHAIN = 2000;
-const MOONBEAM_CHAIN = 2004;
-const ASTAR_CHAIN = 2006;
+const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
+const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
+const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
+const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
+const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
 
 const STATEMINT_PALLET_INSTANCE = 50;
 

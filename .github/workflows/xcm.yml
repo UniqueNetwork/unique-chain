@@ -3,7 +3,7 @@ name: xcm-testnet-build
 # Controls when the action will run.
 on:
   workflow_call:
-  
+
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
@@ -40,12 +40,12 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testXcmQuartz}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmUnique}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmOpal}, runtime_features {opal-runtime}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmQuartz}, runtime_features {quartz-runtime}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmUnique}, runtime_features {unique-runtime}
 
   xcm-build:
-    
+
     needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [XL]
@@ -73,7 +73,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
-      # Prepare SHA  
+      # Prepare SHA
       - name: Prepare SHA
         uses: ./.github/actions/prepare
 
@@ -113,7 +113,7 @@ jobs:
                 docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
             else
                 echo "Repository has not needed POLKADOT version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-polkadot.${{ matrix.relay_branch }}.yml --tag uniquenetwork/builder-polkadot:${{ matrix.relay_branch }} .
+                cd .docker/ && docker build --file ./Dockerfile-polkadot.${{ matrix.relay_branch }}.yml --tag uniquenetwork/builder-polkadot:${{ matrix.relay_branch }} .
                 echo "Push needed POLKADOT version to the repository";
                 docker push uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
             fi
@@ -146,7 +146,7 @@ jobs:
                 docker pull uniquenetwork/builder-acala:${{ matrix.acala_version }}
             else
                 echo "Repository has not needed ACALA version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-acala.${{ matrix.acala_version }}.yml --tag uniquenetwork/builder-acala:${{ matrix.acala_version }} .
+                cd .docker/ && docker build --file ./Dockerfile-acala.${{ matrix.acala_version }}.yml --tag uniquenetwork/builder-acala:${{ matrix.acala_version }} .
                 echo "Push needed ACALA version to the repository";
                 docker push uniquenetwork/builder-acala:${{ matrix.acala_version }}
             fi
@@ -179,7 +179,7 @@ jobs:
                 docker pull uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
             else
                 echo "Repository has not needed MOONBEAM version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-moonbeam.${{ matrix.moonbeam_version }}.yml --tag uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }} .
+                cd .docker/ && docker build --file ./Dockerfile-moonbeam.${{ matrix.moonbeam_version }}.yml --tag uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }} .
                 echo "Push needed MOONBEAM version to the repository";
                 docker push uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
             fi
@@ -196,7 +196,7 @@ jobs:
             CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
 
       - name: Check if the dockerhub repository contains the needed CUMULUS version
-        run: |                 
+        run: |
           # aquire token
             TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
             export TOKEN=$TOKEN
@@ -212,7 +212,7 @@ jobs:
                 docker pull uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
             else
                 echo "Repository has not needed CUMULUS version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-cumulus.${{ matrix.cumulus_version }}.yml --tag uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }} .
+                cd .docker/ && docker build --file ./Dockerfile-cumulus.${{ matrix.cumulus_version }}.yml --tag uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }} .
                 echo "Push needed CUMULUS version to the repository";
                 docker push uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
             fi
@@ -245,80 +245,45 @@ jobs:
                 docker pull uniquenetwork/builder-astar:${{ matrix.astar_version }}
             else
                 echo "Repository has not needed ASTAR version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-astar.${{ matrix.astar_version }}.yml --tag uniquenetwork/builder-astar:${{ matrix.astar_version }} .
+                cd .docker/ && docker build --file ./Dockerfile-astar.${{ matrix.astar_version }}.yml --tag uniquenetwork/builder-astar:${{ matrix.astar_version }} .
                 echo "Push needed ASTAR version to the repository";
                 docker push uniquenetwork/builder-astar:${{ matrix.astar_version }}
             fi
         shell: bash
 
-
-      # Check CHAINQL version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for CHAINQL
+      # Check POLKADEX version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for POLKADEX
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/Dockerfile-chainql.j2
-          output_file: .docker/Dockerfile-chainql.${{ env.CHAINQL }}.yml
+          template: .docker/Dockerfile-polkadex.j2
+          output_file: .docker/Dockerfile-polkadex.${{ matrix.polkadex_version }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            CHAINQL=${{ env.CHAINQL }}
+            POLKADEX_BUILD_BRANCH=${{ matrix.polkadex_version }}
 
-      - name: Check if the dockerhub repository contains the needed CHAINQL version
+      - name: Check if the dockerhub repository contains the needed POLKADEX version
         run: |
           # aquire token
             TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
             export TOKEN=$TOKEN
 
           # Get TAGS from DOCKERHUB repository
-            CHAINQL_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-chainql/tags/?page_size=100 | jq -r '."results"[]["name"]')
+            POLKADEX_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadex/tags/?page_size=100 | jq -r '."results"[]["name"]')
           # Show TAGS
-            echo "CHAINQL TAGS:"
-            echo $CHAINQL_TAGS
-          # Check correct version CHAINQL and build it if it doesn't exist in CHAINQL TAGS
-            if [[ ${CHAINQL_TAGS[*]} =~ (^|[[:space:]])"${{ env.CHAINQL }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed CHAINQL version";
-                docker pull uniquenetwork/builder-chainql:${{ env.CHAINQL }}
+            echo "POLKADEX TAGS:"
+            echo $POLKADEX_TAGS
+          # Check correct version POLKADEX and build it if it doesn't exist in POLKADEX TAGS
+            if [[ ${POLKADEX_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.polkadex_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed POLKADEX version";
+                docker pull uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}
             else
-                echo "Repository has not needed CHAINQL version, so build it";
-                cd .docker/ && docker build --no-cache --file ./Dockerfile-chainql.${{ env.CHAINQL }}.yml --tag uniquenetwork/builder-chainql:${{ env.CHAINQL }} .
-                echo "Push needed CHAINQL version to the repository";
-                docker push uniquenetwork/builder-chainql:${{ env.CHAINQL }}
+                echo "Repository has not needed POLKADEX version, so build it";
+                cd .docker/ && docker build --file ./Dockerfile-polkadex.${{ matrix.polkadex_version }}.yml --tag uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }} .
+                echo "Push needed POLKADEX version to the repository";
+                docker push uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}
             fi
         shell: bash
 
-      # - name: Pull chainql docker image
-      #   run: docker pull uniquenetwork/builder-chainql:${{ env.CHAINQL }}
-
-      - name: Generate ENV related extend launch-config file
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.j2
-          output_file: .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
-          variables: |
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}           
-
-      - name: Show launch-config-xcm-${{ matrix.network }} configuration
-        run: cat .docker/xcm-config/launch-config-xcm-${{ matrix.network }}.json
-
-      # Build main image for XCM   
-      - name: Generate ENV related extend Dockerfile file
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-xcm.j2
-          output_file: .docker/Dockerfile-xcm.${{ matrix.network }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            NETWORK=${{ matrix.network }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}           
-            BRANCH=${{ github.head_ref }}
-            ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
-            ASTAR_BUILD_BRANCH=${{ matrix.astar_version }}
-            MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
-            CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
-            CHAINQL=${{ env.CHAINQL }}
-
-      - name: Show build Dockerfile
-        run: cat .docker/Dockerfile-xcm.${{ matrix.network }}.yml
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
@@ -328,176 +293,76 @@ jobs:
           find: '/'
           replace: '-'
 
-      - name: Set build SHA
-        shell: bash
+      - name: Build unique-chain
         run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
-
-      - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-xcm.${{ matrix.network }}.yml --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA .
+          docker build --file .docker/Dockerfile-unique \
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
+            --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
+            .
 
       - name: Push docker image version
-        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
-
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker builder prune -f
-          docker system prune -f
-
-  xcm-tests:
-    needs: [prepare-execution-marix, xcm-build]
-    # The type of runner that the job will run on
-    runs-on: [XL]
-
-    timeout-minutes: 600
-
-    name: ${{ matrix.network }}-tests
-
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
-    strategy:
-      matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-
-    steps:
-      - name: Skip if pull request is in Draft
-        if: github.event.pull_request.draft == true
-        run: exit 1
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Prepare
-        uses: ./.github/actions/prepare
-
-      - name: Set build SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
-
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v2
-
-      - name: Generate ENV related extend file for docker-compose
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/docker-compose.xcm.j2
-          output_file: .docker/docker-compose.xcm.${{ matrix.network }}.yml
-          variables: |
-            NETWORK=${{ matrix.network }}
-            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
-
-      - name: Show build configuration
-        run: cat .docker/docker-compose.xcm.${{ matrix.network }}.yml
+        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
 
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
+      - name: Install baedeker
+        uses: UniqueNetwork/baedeker-action/setup@built
+
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
+      - name: Start network
+        uses: UniqueNetwork/baedeker-action@built
+        id: bdk
         with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          jpath: |
+            .baedeker/vendor
+          inputs: |
+            .baedeker/xcm-${{ matrix.network }}.jsonnet
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/cumulus':{dockerImage:'uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'uniquenetwork/builder-astar:${{ matrix.astar_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}'}})
 
-      - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.xcm.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+      - name: Upload network config
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.network }}-network-config
+          path: ${{ steps.bdk.outputs.composeProject }}
+          retention-days: 2
 
-      #  🚀 POLKADOT LAUNCH COMPLETE 🚀
-      - name: Check if docker logs consist messages related to testing of xcm tests 
-        if: success()
-        run: |
-          counter=160
-          function check_container_status {
-                docker inspect -f {{.State.Running}} xcm-${{ matrix.network }}-local
-          }
-          function do_docker_logs {
-                docker logs --details xcm-${{ matrix.network }}-local 2>&1
-          }
-          function is_started {
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: xcm-${{ matrix.network }}-local RUNNING";
-                        echo "Check Docker logs"
-                        DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
-                                echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
-                                return 0
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
-                else
-                        echo "Container xcm-${{ matrix.network }}-local NOT RUNNING"
-                        echo "Halting all future checks"
-                        exit 1
-                fi
-          echo "something goes wrong"
-          exit 1
-          }
-          while ! is_started; do
-                echo "Waiting for special message in log files "
-                sleep 30s
-                counter=$(( $counter - 1 ))
-                echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
-                         continue
-                else
-                         break
-                fi
-          done
-          echo "Halting script"
-          exit 0
-        shell: bash
-
-      - name: Run XCM tests 
+      - name: Run XCM tests
         working-directory: tests
         run: |
           yarn install
           yarn add mochawesome
+          # Wanted by both wait_for_first_block
+          export RPC_URL="${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          yarn polkadot-types          
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
-        env:
-          RPC_URL: http://127.0.0.1:9944/
 
       - name: XCM Test Report
         uses: phoenix-actions/test-reporting@v10
         id: test-report
-        if: success() || failure()    # run this step even if previous step failed
+        if: success() || failure()
         with:
-          name: XCM Tests ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          name: XCM Tests ${{ matrix.network }}
+          path: tests/mochawesome-report/test-*.json
           reporter: mochawesome-json
           fail-on-error: 'false'
-
-      - name: Show container logs
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.xcm.${{ matrix.network }}.yml" logs
-
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.xcm.${{ matrix.network }}.yml" down
 
       - name: Clean Workspace
         if: always()
         uses: AutoModality/action-clean@v1.1.0
 
       - name: Remove builder cache
-        if: always()                   # run this step always
+        if: always()
         run: |
           docker system prune -a -f

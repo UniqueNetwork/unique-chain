@@ -268,7 +268,6 @@ jobs:
           yarn add mochawesome
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          yarn polkadot-types
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9944/
@@ -291,7 +290,6 @@ jobs:
           yarn add mochawesome
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          yarn polkadot-types
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9944/

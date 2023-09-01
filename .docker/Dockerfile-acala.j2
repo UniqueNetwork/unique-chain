@@ -14,12 +14,11 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
-RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+RUN rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }} && \
     rustup default {{ RUST_TOOLCHAIN }} && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -29,13 +28,19 @@ FROM rust-builder as builder-acala-bin
 
 WORKDIR /unique_parachain
 
-RUN git clone -b {{ ACALA_BUILD_BRANCH }} --depth 1 https://github.com/AcalaNetwork/Acala.git && \
+RUN git clone -b {{ ACALA_BUILD_BRANCH }} --depth 1 https://github.com/AcalaNetwork/Acala.git
+
+RUN --mount=type=cache,target=/cargo-home/registry \
+    --mount=type=cache,target=/cargo-home/git \
+    --mount=type=cache,target=/unique_parachain/Acala/target \
     cd Acala && \
     make init && \
-    make build-release
+    make build-release && \
+    mv ./target/production/acala /unique_parachain/Acala/
 
 # ===== BIN ======
 
 FROM ubuntu:22.04 as builder-acala
 
-COPY --from=builder-acala-bin /unique_parachain/Acala/target/production/acala /unique_parachain/acala/target/production/acala
+COPY --from=builder-acala-bin /unique_parachain/Acala/acala /bin/acala
+ENTRYPOINT ["/bin/acala"]

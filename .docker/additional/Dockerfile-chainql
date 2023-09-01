@@ -15,11 +15,11 @@ RUN apt-get update && \
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
-    rustup default {{ RUST_TOOLCHAIN }} && \
+    rustup toolchain install nightly-2022-11-15 && \
+    rustup default nightly-2022-11-15 && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
+RUN rustup target add wasm32-unknown-unknown --toolchain nightly-2022-11-15
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
