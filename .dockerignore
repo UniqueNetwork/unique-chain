@@ -1,8 +1,12 @@
 .git/
 .github/
+.docker/
+.baedeker/
 doc/
 target/
 chain-data*/
 smart_contract/
 Dockerfile-parachain
 docker-compose-tests-parachain.yml
+*.log
+/*.json

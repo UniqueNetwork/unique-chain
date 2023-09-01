@@ -14,12 +14,11 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
-RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+RUN rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }} && \
     rustup default {{ RUST_TOOLCHAIN }} && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -29,12 +28,18 @@ FROM rust-builder as builder-cumulus-bin
 
 WORKDIR /unique_parachain
 
-RUN git clone -b {{ CUMULUS_BUILD_BRANCH }} --depth 1 https://github.com/paritytech/cumulus.git && \
+RUN git clone -b {{ CUMULUS_BUILD_BRANCH }} --depth 1 https://github.com/paritytech/cumulus.git
+
+RUN --mount=type=cache,target=/cargo-home/registry \
+    --mount=type=cache,target=/cargo-home/git \
+    --mount=type=cache,target=/unique_parachain/cumulus/target \
     cd cumulus && \
-    cargo build --release
+    CARGO_INCREMENTAL=0 cargo build --release --locked && \
+    mv ./target/release/polkadot-parachain /unique_parachain/cumulus/cumulus
 
 # ===== BIN ======
 
 FROM ubuntu:22.04 as builder-cumulus
 
-COPY --from=builder-cumulus-bin /unique_parachain/cumulus/target/release/polkadot-parachain /unique_parachain/cumulus/target/release/polkadot-parachain
+COPY --from=builder-cumulus-bin /unique_parachain/cumulus/cumulus /bin/cumulus
+ENTRYPOINT ["/bin/cumulus"]

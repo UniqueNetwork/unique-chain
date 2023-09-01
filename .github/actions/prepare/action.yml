@@ -14,3 +14,7 @@ runs:
       shell: bash  
       run: |  
         echo "LAST_COMMIT_SHA=${GITHUB_SHA}" >> ${GITHUB_ENV}
+    - name: Set build SHA
+      shell: bash
+      run: |
+        echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV

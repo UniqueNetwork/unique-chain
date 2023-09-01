@@ -5,7 +5,7 @@ name: develop
 # Triger: PR at 'develop' branch with following types of events.
 on:
   pull_request:
-    branches: [ 'develop' ]
+    branches: [ 'develop', 'ci/baedeker' ]
     types: [ opened, reopened, synchronize, ready_for_review, converted_to_draft ]
   workflow_dispatch:   
     

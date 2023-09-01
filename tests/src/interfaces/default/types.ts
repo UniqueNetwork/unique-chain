@@ -752,6 +752,41 @@ export interface FrameSystemPhase extends Enum {
   readonly type: 'ApplyExtrinsic' | 'Finalization' | 'Initialization';
 }
 
+/** @name OpalRuntimeOriginCaller */
+export interface OpalRuntimeOriginCaller extends Enum {
+  readonly isSystem: boolean;
+  readonly asSystem: FrameSupportDispatchRawOrigin;
+  readonly isVoid: boolean;
+  readonly asVoid: SpCoreVoid;
+  readonly isCouncil: boolean;
+  readonly asCouncil: PalletCollectiveRawOrigin;
+  readonly isTechnicalCommittee: boolean;
+  readonly asTechnicalCommittee: PalletCollectiveRawOrigin;
+  readonly isPolkadotXcm: boolean;
+  readonly asPolkadotXcm: PalletXcmOrigin;
+  readonly isCumulusXcm: boolean;
+  readonly asCumulusXcm: CumulusPalletXcmOrigin;
+  readonly isOrigins: boolean;
+  readonly asOrigins: PalletGovOriginsOrigin;
+  readonly isEthereum: boolean;
+  readonly asEthereum: PalletEthereumRawOrigin;
+  readonly type: 'System' | 'Void' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'Origins' | 'Ethereum';
+}
+
+/** @name OpalRuntimeRuntime */
+export interface OpalRuntimeRuntime extends Null {}
+
+/** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
+export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
+
+/** @name OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance */
+export interface OpalRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
+
+/** @name OpalRuntimeRuntimeCommonSessionKeys */
+export interface OpalRuntimeRuntimeCommonSessionKeys extends Struct {
+  readonly aura: SpConsensusAuraSr25519AppSr25519Public;
+}
+
 /** @name OrmlTokensAccountData */
 export interface OrmlTokensAccountData extends Struct {
   readonly free: u128;
@@ -2789,7 +2824,7 @@ export interface PalletRankedCollectiveVoteRecord extends Enum {
 export interface PalletReferendaCall extends Enum {
   readonly isSubmit: boolean;
   readonly asSubmit: {
-    readonly proposalOrigin: QuartzRuntimeOriginCaller;
+    readonly proposalOrigin: OpalRuntimeOriginCaller;
     readonly proposal: FrameSupportPreimagesBounded;
     readonly enactmentMoment: FrameSupportScheduleDispatchTime;
   } & Struct;
@@ -2991,7 +3026,7 @@ export interface PalletReferendaReferendumInfo extends Enum {
 /** @name PalletReferendaReferendumStatus */
 export interface PalletReferendaReferendumStatus extends Struct {
   readonly track: u16;
-  readonly origin: QuartzRuntimeOriginCaller;
+  readonly origin: OpalRuntimeOriginCaller;
   readonly proposal: FrameSupportPreimagesBounded;
   readonly enactment: FrameSupportScheduleDispatchTime;
   readonly submitted: u32;
@@ -3122,14 +3157,14 @@ export interface PalletSchedulerScheduled extends Struct {
   readonly priority: u8;
   readonly call: FrameSupportPreimagesBounded;
   readonly maybePeriodic: Option<ITuple<[u32, u32]>>;
-  readonly origin: QuartzRuntimeOriginCaller;
+  readonly origin: OpalRuntimeOriginCaller;
 }
 
 /** @name PalletSessionCall */
 export interface PalletSessionCall extends Enum {
   readonly isSetKeys: boolean;
   readonly asSetKeys: {
-    readonly keys_: QuartzRuntimeRuntimeCommonSessionKeys;
+    readonly keys_: OpalRuntimeRuntimeCommonSessionKeys;
     readonly proof: Bytes;
   } & Struct;
   readonly isPurgeKeys: boolean;
@@ -3923,41 +3958,6 @@ export interface PolkadotPrimitivesV4PersistedValidationData extends Struct {
 export interface PolkadotPrimitivesV4UpgradeRestriction extends Enum {
   readonly isPresent: boolean;
   readonly type: 'Present';
-}
-
-/** @name QuartzRuntimeOriginCaller */
-export interface QuartzRuntimeOriginCaller extends Enum {
-  readonly isSystem: boolean;
-  readonly asSystem: FrameSupportDispatchRawOrigin;
-  readonly isVoid: boolean;
-  readonly asVoid: SpCoreVoid;
-  readonly isCouncil: boolean;
-  readonly asCouncil: PalletCollectiveRawOrigin;
-  readonly isTechnicalCommittee: boolean;
-  readonly asTechnicalCommittee: PalletCollectiveRawOrigin;
-  readonly isPolkadotXcm: boolean;
-  readonly asPolkadotXcm: PalletXcmOrigin;
-  readonly isCumulusXcm: boolean;
-  readonly asCumulusXcm: CumulusPalletXcmOrigin;
-  readonly isOrigins: boolean;
-  readonly asOrigins: PalletGovOriginsOrigin;
-  readonly isEthereum: boolean;
-  readonly asEthereum: PalletEthereumRawOrigin;
-  readonly type: 'System' | 'Void' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'Origins' | 'Ethereum';
-}
-
-/** @name QuartzRuntimeRuntime */
-export interface QuartzRuntimeRuntime extends Null {}
-
-/** @name QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls */
-export interface QuartzRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
-
-/** @name QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance */
-export interface QuartzRuntimeRuntimeCommonMaintenanceCheckMaintenance extends Null {}
-
-/** @name QuartzRuntimeRuntimeCommonSessionKeys */
-export interface QuartzRuntimeRuntimeCommonSessionKeys extends Struct {
-  readonly aura: SpConsensusAuraSr25519AppSr25519Public;
 }
 
 /** @name SpArithmeticArithmeticError */
