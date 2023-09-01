@@ -307,11 +307,10 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          # Wanted by both wait_for_first_block and yarn polkadot-types
+          # Wanted by both wait_for_first_block
           export RPC_URL="${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          yarn polkadot-types
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
 
       - name: XCM Test Report

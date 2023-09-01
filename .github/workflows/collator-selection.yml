@@ -237,7 +237,6 @@ jobs:
           yarn add mochawesome
           node scripts/readyness.js
           echo "Ready to start tests"
-          yarn polkadot-types
           NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9944/
