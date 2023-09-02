@@ -50,7 +50,7 @@ pub use foreignassets as xcm_assets;
 pub use nativeassets as xcm_assets;
 
 #[cfg(feature = "governance")]
-use crate::runtime_common::config::pallets::governance;
+use crate::runtime_common::config::governance;
 
 use xcm_assets::{AssetTransactor, IsReserve, Trader};
 

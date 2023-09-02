@@ -22,7 +22,7 @@ use crate::{
 };
 
 #[cfg(feature = "governance")]
-use crate::config::pallets::governance;
+use crate::config::governance;
 
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
@@ -85,10 +85,10 @@ impl pallet_identity::Config for Runtime {
 	type SubAccountDeposit = SubAccountDeposit;
 
 	#[cfg(feature = "governance")]
-	type RegistrarOrigin = governance::RootOrAllTechnicalCommittee;
+	type RegistrarOrigin = governance::RootOrTechnicalCommitteeMember;
 
 	#[cfg(feature = "governance")]
-	type ForceOrigin = governance::RootOrAllTechnicalCommittee;
+	type ForceOrigin = governance::RootOrTechnicalCommitteeMember;
 
 	#[cfg(not(feature = "governance"))]
 	type RegistrarOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
