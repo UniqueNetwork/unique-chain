@@ -72,7 +72,8 @@ impl pallet_democracy::Config for Runtime {
 	/// Minimum voting period allowed for a fast-track referendum.
 	type FastTrackVotingPeriod = democracy_timings::FastTrackVotingPeriod;
 
-	/// A single technical committee member can cancel a proposal which has been passed.
+	/// To cancel a proposal which has been passed, the technical committee must be unanimous or
+	/// Root must agree.
 	type CancellationOrigin = RootOrAllTechnicalCommittee;
 
 	/// To cancel a proposal before it has been passed, the technical committee must be unanimous or

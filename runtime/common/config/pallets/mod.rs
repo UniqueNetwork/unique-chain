@@ -36,6 +36,9 @@ use up_data_structs::{
 };
 use sp_arithmetic::Perbill;
 
+#[cfg(feature = "governance")]
+use crate::runtime_common::config::governance;
+
 #[cfg(feature = "unique-scheduler")]
 pub mod scheduler;
 
@@ -50,9 +53,6 @@ pub mod collator_selection;
 
 #[cfg(feature = "preimage")]
 pub mod preimage;
-
-#[cfg(feature = "governance")]
-pub mod governance;
 
 parameter_types! {
 	pub const CollectionCreationPrice: Balance = 2 * UNIQUE;
