@@ -312,7 +312,7 @@ jobs:
           jpath: |
             .baedeker/vendor
           tla-str: |
-            relay_spec=rococo
+            relay_spec=westend-local
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})

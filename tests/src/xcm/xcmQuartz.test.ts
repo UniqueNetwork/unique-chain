@@ -481,7 +481,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -591,7 +591,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   itSub('Should connect to Karura and send QTZ back', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -653,7 +653,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const quartzMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: QUARTZ_CHAIN},
@@ -716,7 +716,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const quartzMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -797,7 +797,6 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   let quartzParachainMultilocation: any;
   let quartzAccountMultilocation: any;
   let quartzCombinedMultilocation: any;
-  let quartzCombinedMultilocationKarura: any; // TODO remove it when Karura goes V2
 
   let messageSent: any;
 
@@ -842,15 +841,6 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
         },
       };
 
-      quartzCombinedMultilocationKarura = {
-        V1: {
-          parents: 1,
-          interior: {
-            X2: [quartzParachainJunction, quartzAccountJunction],
-          },
-        },
-      };
-
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
@@ -871,7 +861,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       const id = {
         Token: 'KAR',
       };
-      const destination = quartzCombinedMultilocationKarura;
+      const destination = quartzCombinedMultilocation;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
