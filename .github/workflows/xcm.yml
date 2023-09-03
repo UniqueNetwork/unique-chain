@@ -284,25 +284,16 @@ jobs:
             fi
         shell: bash
 
-
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
       - name: Build unique-chain
         run: |
           docker build --file .docker/Dockerfile-unique \
             --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
-            --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
+            --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }} \
             .
 
       - name: Push docker image version
-        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
+        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
 
       - uses: actions/setup-node@v3.5.1
         with:
@@ -320,10 +311,12 @@ jobs:
         with:
           jpath: |
             .baedeker/vendor
+          tla-str: |
+            relay_spec=rococo
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/cumulus':{dockerImage:'uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}'}})

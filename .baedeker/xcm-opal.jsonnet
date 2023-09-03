@@ -2,12 +2,14 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
+function(relay_spec)
+
 local relay = {
 	name: 'relay',
 	bin: 'bin/polkadot',
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
-		chain: 'westend-local',
+		chain: relay_spec,
 		modify:: m.genericRelay($, hrmp = [
 			[$.parachains.opal.paraId, $.parachains.westmint.paraId, 8, 512],
 			[$.parachains.westmint.paraId, $.parachains.opal.paraId, 8, 512],
