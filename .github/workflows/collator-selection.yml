@@ -86,6 +86,9 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
+      - name: pull needed images
+        run: |
+          docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
 
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
