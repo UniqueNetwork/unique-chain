@@ -5,10 +5,10 @@ parameter_types! {
 	pub CouncilMaxMembers: u32 = 100;
 }
 
-#[cfg(not(feature = "test-env"))]
+#[cfg(not(feature = "gov-test-timings"))]
 use crate::governance_timings::council as council_timings;
 
-#[cfg(feature = "test-env")]
+#[cfg(feature = "gov-test-timings")]
 pub mod council_timings {
 	use super::*;
 

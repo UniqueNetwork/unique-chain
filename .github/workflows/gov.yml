@@ -1,4 +1,4 @@
-# Governance tests in --dev mode with test-env feature enabled to reduce gov timings
+# Governance tests in --dev mode with gov-test-timings feature enabled to reduce gov timings
 name: governance tests
 
 # Triger: only call from main workflow(re-usable workflows)
