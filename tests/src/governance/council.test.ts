@@ -117,6 +117,16 @@ describeGov('Governance: Council tests', () => {
       },
     });
 
+    await helper.democracy.vote(counselors.charu, democracyReferendumIndex, {
+      Standard: {
+        vote: {
+          aye: false,
+          conviction: 1,
+        },
+        balance: 50_000n,
+      },
+    });
+
     const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
     expect(passedReferendumEvent.referendumIndex).to.be.equal(democracyReferendumIndex);
 
