@@ -12,10 +12,10 @@ parameter_types! {
 	pub SubmissionDeposit: Balance = 1000;
 }
 
-#[cfg(not(feature = "test-env"))]
+#[cfg(not(feature = "gov-test-timings"))]
 use crate::governance_timings::fellowship as fellowship_timings;
 
-#[cfg(feature = "test-env")]
+#[cfg(feature = "gov-test-timings")]
 pub mod fellowship_timings {
 	use super::*;
 

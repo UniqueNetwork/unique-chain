@@ -23,7 +23,7 @@ opal-runtime = [
 	'collator-selection',
 	'foreign-assets',
 	'governance',
-	'test-env',
+	'pallet-test-utils',
 	'preimage',
 	'refungible',
 ]
@@ -156,7 +156,7 @@ std = [
 	"pallet-foreign-assets/std",
 
 	'pallet-maintenance/std',
-	'pallet-test-utils/std',
+	'pallet-test-utils?/std',
 ]
 try-runtime = [
 	"pallet-authorship/try-runtime",
@@ -212,7 +212,7 @@ try-runtime = [
 	'pallet-scheduler/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
-	'pallet-test-utils/try-runtime',
+	'pallet-test-utils?/try-runtime',
 	'pallet-timestamp/try-runtime',
 	'pallet-transaction-payment/try-runtime',
 	'pallet-treasury/try-runtime',
@@ -226,7 +226,7 @@ app-promotion = []
 collator-selection = []
 foreign-assets = []
 governance = []
-test-env = []
+gov-test-timings = []
 preimage = []
 refungible = []
 unique-scheduler = []
@@ -345,7 +345,7 @@ serde = { workspace = true, optional = true }
 ################################################################################
 # Test dependencies
 
-pallet-test-utils = { workspace = true }
+pallet-test-utils = { workspace = true, optional = true }
 
 ################################################################################
 # Other Dependencies
