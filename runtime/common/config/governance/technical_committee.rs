@@ -5,10 +5,10 @@ parameter_types! {
 	pub TechnicalMaxMembers: u32 = 100;
 }
 
-#[cfg(not(feature = "test-env"))]
+#[cfg(not(feature = "gov-test-timings"))]
 use crate::governance_timings::technical_committee as technical_committee_timings;
 
-#[cfg(feature = "test-env")]
+#[cfg(feature = "gov-test-timings")]
 pub mod technical_committee_timings {
 	use super::*;
 

@@ -7,10 +7,10 @@ parameter_types! {
 	pub MaxProposals: u32 = 100;
 }
 
-#[cfg(not(feature = "test-env"))]
+#[cfg(not(feature = "gov-test-timings"))]
 use crate::governance_timings::democracy as democracy_timings;
 
-#[cfg(feature = "test-env")]
+#[cfg(feature = "gov-test-timings")]
 pub mod democracy_timings {
 	use super::*;
 

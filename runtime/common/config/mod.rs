@@ -25,5 +25,5 @@ pub mod xcm;
 #[cfg(feature = "governance")]
 pub mod governance;
 
-#[cfg(feature = "test-env")]
+#[cfg(feature = "pallet-test-utils")]
 pub mod test_pallets;

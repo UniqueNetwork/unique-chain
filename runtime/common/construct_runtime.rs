@@ -136,7 +136,7 @@ macro_rules! construct_runtime {
 
 				BalancesAdapter: pallet_balances_adapter = 155,
 
-				#[cfg(feature = "test-env")]
+				#[cfg(feature = "pallet-test-utils")]
 				TestUtils: pallet_test_utils = 255,
 			}
 		}

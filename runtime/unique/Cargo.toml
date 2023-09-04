@@ -221,7 +221,7 @@ governance = []
 preimage = []
 refungible = []
 unique-scheduler = []
-test-env = []
+gov-test-timings = []
 
 ################################################################################
 # local dependencies
