@@ -143,7 +143,7 @@ jobs:
           yarn install
           yarn add mochawesome
           # Wanted by both wait_for_first_block
-          export RPC_URL="${RELAY_SAPPHIRE_HTTP_URL:-${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
+          export RPC_URL="${RELAY_SAPPHIRE_HTTP_URL:-${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}}"
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
