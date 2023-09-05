@@ -1,0 +1,59 @@
+name: Build or pull container
+description: ''
+inputs:
+  container:
+    description: Which name to fetch/push
+    required: true
+  tag:
+    description: Which tag to fetch/push
+    required: true
+  context:
+    description: Container context
+    required: true
+    default: "."
+  dockerfile:
+    description: Path to dockerfile (relative to context)
+    required: true
+  args:
+    description: Docker build extra args
+    default: ''
+  dockerhub_username:
+    description: Secret
+  dockerhub_token:
+    description: Secret
+outputs:
+  name:
+    description: Full container name
+    value: ${{ steps.ensure.outputs.name }}
+runs:
+  using: "composite"
+  steps:
+    - name: Ensure have ${{ inputs.container }}:${{ inputs.tag }}
+      id: ensure
+      run: |
+        echo "Wanted container: ${{ inputs.container }}:${{ inputs.tag }}"
+
+        TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ inputs.dockerhub_username }}'", "password": "'${{ inputs.dockerhub_token }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+
+        # Get TAGS from DOCKERHUB
+        TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/${{ inputs.container }}/tags/?page_size=100 | jq -r '."results"[]["name"]' || echo "")
+
+        echo "Available tags:"
+        echo "$TAGS"
+
+        # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
+        if [[ ${TAGS[*]} =~ (^|[[:space:]])"${{ inputs.tag }}"($|[[:space:]]) ]]; then
+          echo "Repository has needed version, pulling";
+          docker pull ${{ inputs.container }}:${{ inputs.tag }}
+        else
+          echo "Repository had no needed version, so build it";
+          cd "${{ inputs.context }}" && docker build --file "${{ inputs.dockerfile }}" \
+            $BUILD_ARGS --tag ${{ inputs.container }}:${{ inputs.tag }} \
+            .
+          echo "Push built version to the repository";
+          docker push ${{ inputs.container }}:${{ inputs.tag }} || true
+        fi
+        echo "name=${{ inputs.container }}:${{ inputs.tag }}" >> $GITHUB_OUTPUT
+      env:
+        BUILD_ARGS: ${{ inputs.args }}
+      shell: bash

@@ -5,7 +5,7 @@ name: develop
 # Triger: PR at 'develop' branch with following types of events.
 on:
   pull_request:
-    branches: [ 'develop', 'ci/baedeker' ]
+    branches: [ 'develop' ]
     types: [ opened, reopened, synchronize, ready_for_review, converted_to_draft ]
   workflow_dispatch:   
     
@@ -62,9 +62,9 @@ jobs:
     uses: ./.github/workflows/node-only-update.yml
     secrets: inherit
 
-  gov:
+  governance:
     if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-gov')) }}       # Conditional check for draft & labels per job.
-    uses: ./.github/workflows/gov.yml
+    uses: ./.github/workflows/governance.yml
     secrets: inherit # pass all secrets from initial workflow to nested
 
   codestyle:
