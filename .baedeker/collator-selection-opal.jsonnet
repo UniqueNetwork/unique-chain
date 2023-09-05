@@ -7,14 +7,14 @@ local relay = {
 	bin: 'bin/polkadot',
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
-		chain: 'westend-local',
+		chain: 'rococo-local',
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
 		},
-		for name in ['alice', 'bob']
+		for name in ['alice', 'bob', 'charlie']
 	},
 };
 
