@@ -37,11 +37,10 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
-            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
-
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, runtime_features {opal-runtime}
+            network {sapphire}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, runtime_features {sapphire-runtime}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, runtime_features {quartz-runtime}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, runtime_features {unique-runtime}
 
   node-only-update-build:
 
@@ -80,292 +79,136 @@ jobs:
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
 
-      # Build main image for NODE-ONLY-UPDATE
-      - name: Generate ENV related extend Dockerfile file
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Generate ENV related extend Dockerfile file for POLKADOT
         uses: cuchi/jinja2-action@v1.2.0
         with:
-          template: .docker/Dockerfile-parachain-node-only.j2
-          output_file: .docker/Dockerfile-parachain-node-only.${{ matrix.network }}.yml
+          template: .docker/Dockerfile-polkadot.j2
+          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            NETWORK=${{ matrix.network }}
-            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-            WASM_NAME=${{ matrix.wasm_name }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-
-      - name: Show build configuration
-        run: cat .docker/Dockerfile-parachain-node-only.${{ matrix.network }}.yml
-
-      - name: Generate launch-config.json
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Prepare polkadot
+        uses: ./.github/actions/buildContainer
+        id: polkadot
         with:
-          template: .docker/forkless-config/launch-config-forkless-nodata.j2
-          output_file: .docker/forkless-config/launch-config-node-only.json
-          variables: |
-            WASM_NAME=${{ matrix.wasm_name }}
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
+          container: uniquenetwork/builder-polkadot
+          tag: ${{ matrix.relay_branch }}
+          context: .docker
+          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Show launch-config-forkless configuration
-        run: cat .docker/forkless-config/launch-config-node-only.json
-
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
+      - name: Prepare mainnet
+        uses: ./.github/actions/buildContainer
+        id: mainnet
         with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
+          container: uniquenetwork/ci-node-only-${{ matrix.network }}
+          tag: ${{ matrix.mainnet_branch }}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Set build SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
-
-      - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-parachain-node-only.${{ matrix.network }}.yml --tag uniquenetwork/ci-node-only-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
+      - name: Prepare latest
+        uses: ./.github/actions/buildContainer
+        id: latest
         with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      - name: Push docker image version
-        run: docker push uniquenetwork/ci-node-only-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
-
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker builder prune -f
-          docker system prune -f          
-
-
-  node-only-update-tests:
-    needs: [prepare-execution-matrix, node-only-update-build]
-    # The type of runner that the job will run on
-    runs-on: [self-hosted-ci, large]
-
-    timeout-minutes: 2880
-
-    name: ${{ matrix.network }}-tests
-
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
-    strategy:
-      matrix:
-        include: ${{fromJson(needs.prepare-execution-matrix.outputs.matrix)}}
-
-    steps:
-      - name: Skip if pull request is in Draft
-        if: github.event.pull_request.draft == true
-        run: exit 1
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Prepare
-        uses: ./.github/actions/prepare
-
-      - name: Set build SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
-
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v2
-
-      - name: Generate ENV related extend file for docker-compose
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/docker-compose.node-only.j2
-          output_file: .docker/docker-compose.node-only.${{ matrix.network }}.yml
-          variables: |
-            NETWORK=${{ matrix.network }}
-            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
-
-      - name: Show build configuration
-        run: cat .docker/docker-compose.node-only.${{ matrix.network }}.yml
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
-        with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.node-only.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
-
-      #  🚀 POLKADOT LAUNCH COMPLETE 🚀
-      - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
-        if: success()
-        run: |
-          counter=160
-          function check_container_status {
-                docker inspect -f {{.State.Running}} node-only
-          }
-          function do_docker_logs {
-                docker logs --details node-only  2>&1
-          }
-          function is_started {
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: node-only RUNNING";
-                        echo "Check Docker logs"
-                        DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"POLKADOT LAUNCH COMPLETE"* ]];then
-                                echo "🚀 POLKADOT LAUNCH COMPLETE 🚀"
-                                return 0
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
-                else
-                        echo "Container node-only NOT RUNNING"
-                        echo "Halting all future checks"
-                        exit 1
-                fi
-          echo "something goes wrong"
-          exit 1
-          }
-          while ! is_started; do
-                echo "Waiting for special message in log files "
-                sleep 30s
-                counter=$(( $counter - 1 ))
-                echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
-                         continue
-                else
-                         break
-                fi
-          done
-          echo "Halting script"
-          exit 0
-        shell: bash
+          container: uniquenetwork/ci-node-only-${{ matrix.network }}
+          tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          context: .
+          dockerfile: .docker/Dockerfile-unique
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Checkout at '${{ matrix.mainnet_branch }}' branch
         uses: actions/checkout@master
         with:
-          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
+          ref: ${{ github.head_ref }}
+          # ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
           path: ${{ matrix.mainnet_branch }}
 
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: 16
 
+      - name: Install baedeker
+        uses: UniqueNetwork/baedeker-action/setup@built
+
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
+      - name: Start network
+        uses: UniqueNetwork/baedeker-action@built
+        id: bdk
+        with:
+          jpath: |
+            .baedeker/vendor
+          tla-str: |
+            relay_spec=westend-local
+          inputs: |
+            .baedeker/node-only.jsonnet
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin = {legacyRpc: true})
+
       - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
         if: success() || failure()
         run: |
-          yarn install
+          yarn
           yarn add mochawesome
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944/
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests before Node Parachain upgrade
         if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944/
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Send SIGUSR1 to polkadot-launch process
+      - name: "Reconcile: only one old node"
         if: success() || failure()
-        run: |
-          #Get PID of polkadot-launch
-          ContainerID=$(docker ps -aqf "name=node-only")
-          PID=$(docker exec node-only pidof 'polkadot-launch')
-          sleep 30s
-          echo -e "\n"
-          echo -e "Restart polkadot-launch process: $PID\n"
-          docker exec node-only kill -SIGUSR1 ${PID}
-          echo "SIGUSR1 sent to Polkadot-launch PID: $PID"
-          sleep 60s
-          echo -e "Show logs of node-only container.\n"
-          docker logs ${ContainerID}
+        uses: UniqueNetwork/baedeker-action/reconcile@built
+        with:
+          baedeker: ${{ steps.bdk.baedeker }}
+          # Chain should always be built with the mainnet spec, this we first set binary for all nodes expect one, then set mainnet binary for the last node, and then force chainspec to be still generated from mainnet
+          inputs: |
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, leave = 1, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin = {legacyRpc: true}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
-      - name: Get chain logs in case of docker image crashed after Polkadot Launch restart
-        if: failure()                   # run this step only at failure
-        run: |
-          docker exec node-only tail -n 1000 /polkadot-launch/9944.log
-          docker exec node-only tail -n 1000 /polkadot-launch/9945.log
-          docker exec node-only tail -n 1000 /polkadot-launch/alice.log
-
-      - name: copy chain log files from container to the host
+      - name: Ensure network is alive
         if: success() || failure()    # run this step even if previous step failed
         run: |
-          mkdir -p /tmp/node-only-update
-          docker cp node-only:/polkadot-launch/9944.log /tmp/node-only-update/
-          docker cp node-only:/polkadot-launch/9945.log /tmp/node-only-update/
-          docker cp node-only:/polkadot-launch/alice.log /tmp/node-only-update/
+          ./tests/scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Upload chain log files
+      - name: "Reconcile: all nodes are updated"
         if: success() || failure()
-        uses: actions/upload-artifact@v3
+        uses: UniqueNetwork/baedeker-action/reconcile@built
         with:
-          name: node-only-update-chain-logs
-          path: /tmp/node-only-update/
-          if-no-files-found: warn
-
-      - name: Check if docker logs consist messages related to testing of Node Parachain Upgrade.
-        if: success()
-        run: |
-          counter=160
-          function check_container_status {
-                docker inspect -f {{.State.Running}} node-only
-          }
-          function do_docker_logs {
-                docker logs --details node-only  2>&1
-          }
-          function is_started {
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: node-only RUNNING";
-                        echo "Check Docker logs"
-                        DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"All parachain collators restarted with the new binaries."* ]];then
-                                echo "🌗 All parachain collators restarted with the new binaries."
-                                return 0
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
-                else
-                        echo "Container node-only NOT RUNNING"
-                        echo "Halting all future checks"
-                        exit 1
-                fi
-          echo "something goes wrong"
-          exit 1
-          }
-          while ! is_started; do
-                echo "Waiting for special message in log files "
-                sleep 30s
-                counter=$(( $counter - 1 ))
-                echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
-                         continue
-                else
-                         break
-                fi
-          done
-          echo "Halting script"
-          exit 0
-        shell: bash
+          baedeker: ${{ steps.bdk.baedeker }}
+          # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
+          inputs: |
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Run Parallel tests after Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
@@ -377,27 +220,16 @@ jobs:
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944/
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests after Node Parachain upgrade
         if: success() || failure()
         working-directory: ${{ matrix.mainnet_branch }}/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944/
-
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.node-only.${{ matrix.network }}.yml" down
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |
-          docker builder prune -f -a
           docker system prune -f
-          docker image prune -f -a
-
-      - name: Remove repo at the end
-        if: always()                   # run this step always
-        run: |
-          ls -ls ./
