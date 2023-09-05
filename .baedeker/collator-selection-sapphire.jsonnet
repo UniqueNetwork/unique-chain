@@ -8,6 +8,7 @@ local relay = {
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: 'rococo-local',
+		modify:: m.genericRelay($),
 	}},
 	nodes: {
 		[name]: {
