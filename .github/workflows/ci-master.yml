@@ -52,6 +52,10 @@ jobs:
     uses: ./.github/workflows/node-only-update.yml
     secrets: inherit
 
+  governance:
+    uses: ./.github/workflows/governance.yml
+    secrets: inherit
+
   codestyle:
     uses: ./.github/workflows/codestyle.yml
     secrets: inherit
