@@ -86,10 +86,6 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: pull needed images
-        run: |
-          docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
         id: branchname
@@ -98,16 +94,55 @@ jobs:
           find: '/'
           replace: '-'
 
-      - name: Build unique-chain
-        run: |
-          docker build --file .docker/Dockerfile-unique \
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
-            --tag uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
-            .
+      - name: Generate ENV related extend Dockerfile file for POLKADOT
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-polkadot.j2
+          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+            
+      - name: Prepare polkadot
+        uses: ./.github/actions/buildContainer
+        id: polkadot
+        with:
+          container: uniquenetwork/builder-polkadot
+          tag: ${{ matrix.relay_branch }}
+          context: .docker
+          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      # - name: pull needed images
+      #   run: |
+      #     docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
+
+      # - name: Build unique-chain
+      #   run: |
+      #     docker build --file .docker/Dockerfile-unique \
+      #       --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
+      #       --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
+      #       --tag uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
+      #       .
 
       - name: Push docker image version
         run: docker push uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
+
+      - name: Prepare latest
+        uses: ./.github/actions/buildContainer
+        id: latest
+        with:
+          container: uniquenetwork/ci-collator-selection-local
+          tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          context: .
+          dockerfile: .docker/Dockerfile-unique
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
 
       - uses: actions/setup-node@v3.5.1
         with:
@@ -125,10 +160,14 @@ jobs:
         with:
           jpath: |
             .baedeker/vendor
+          tla-str: |
+            relay_spec=westend-local            
           inputs: |
-            .baedeker/collator-selection-${{ matrix.network }}.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}'}})
+            .baedeker/collator-selection.jsonnet
+            # snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
+            # snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, extra_node_mixin = {legacyRpc: true})
 
       - name: Upload network config
         uses: actions/upload-artifact@v3
@@ -143,10 +182,12 @@ jobs:
           yarn install
           yarn add mochawesome
           # Wanted by both wait_for_first_block
-          export RPC_URL="${RELAY_SAPPHIRE_HTTP_URL:-${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}}"
+          # export RPC_URL="${RELAY_SAPPHIRE_HTTP_URL:-${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}}"
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
 
       - name: Test Report
         uses: phoenix-actions/test-reporting@v10
