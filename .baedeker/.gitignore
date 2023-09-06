@@ -1,0 +1,4 @@
+/.bdk-env
+/rewrites.jsonnet
+/vendor
+/baedeker-library
