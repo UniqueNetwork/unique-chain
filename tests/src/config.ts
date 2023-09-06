@@ -18,7 +18,7 @@ import process from 'process';
 
 const config = {
   relayUrl: process.env.RELAY_URL || 'ws://127.0.0.1:9844',
-  substrateUrl: process.env.RELAY_OPAL_URL || process.env.RELAY_QUARTZ_URL || process.env.RELAY_UNIQUE_URL || 'ws://127.0.0.1:9944',
+  substrateUrl: process.env.RELAY_OPAL_URL || process.env.RELAY_QUARTZ_URL || process.env.RELAY_UNIQUE_URL || process.env.RELAY_SAPPHIRE_URL || 'ws://127.0.0.1:9944',
   acalaUrl: process.env.RELAY_ACALA_URL || 'ws://127.0.0.1:9946',
   karuraUrl: process.env.RELAY_KARURA_URL || 'ws://127.0.0.1:9946',
   moonbeamUrl: process.env.RELAY_MOONBEAM_URL || 'ws://127.0.0.1:9947',
