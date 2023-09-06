@@ -18,7 +18,6 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {itEth} from './eth/util';
-import {UniqueHelper} from './util/playgrounds/unique';
 import {main as correctState} from './migrations/correctStateAfterMaintenance';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
