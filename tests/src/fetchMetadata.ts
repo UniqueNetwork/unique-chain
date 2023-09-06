@@ -1,16 +1,16 @@
-import { writeFile } from "fs/promises";
-import { join } from "path";
-import { exit } from "process";
-import { fileURLToPath } from "url";
+import {writeFile} from 'fs/promises';
+import {join} from 'path';
+import {exit} from 'process';
+import {fileURLToPath} from 'url';
 
 const url = process.env.RPC_URL;
-if (!url) throw new Error('RPC_URL is not set');
+if(!url) throw new Error('RPC_URL is not set');
 
 const srcDir = fileURLToPath(new URL('.', import.meta.url));
 
-for (let i = 0; i < 10; i++) {
+for(let i = 0; i < 10; i++) {
   try {
-    console.log(`Trying to fetch metadata, retry ${i + 1}/${10}`)
+    console.log(`Trying to fetch metadata, retry ${i + 1}/${10}`);
     const response = await fetch(url, {
       method: 'POST',
       headers: {

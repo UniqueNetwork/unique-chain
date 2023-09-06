@@ -44,15 +44,11 @@ import {
   MoonbeamAssetInfo,
   DemocracyStandardAccountVote,
   IEthCrossAccountId,
-  CollectionFlag,
   IPhasicEvent,
-  DemocracySplitAccount,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import type {Vec} from '@polkadot/types-codec';
-import {FrameSupportPreimagesBounded, FrameSupportScheduleDispatchTime, FrameSystemEventRecord, PalletBalancesIdAmount, PalletDemocracyConviction, PalletDemocracyVoteAccountVote} from '@polkadot/types/lookup';
-import {arrayUnzip} from '@polkadot/util';
-import {Event} from './unique.dev';
+import {FrameSystemEventRecord, PalletDemocracyConviction} from '@polkadot/types/lookup';
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
