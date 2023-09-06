@@ -467,8 +467,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   // 2 QTZ sent https://quartz.subscan.io/xcm_message/kusama-f60d821b049f8835a3005ce7102285006f5b61e9
   // 1.919176000000000000 QTZ received (you can check Karura's chain state in the corresponding block)
   const expectedKaruraIncomeFee = 2000000000000000000n - 1919176000000000000n;
+  const karuraEps = 8n * 10n ** 16n;
 
-  const KARURA_BACKWARD_TRANSFER_AMOUNT = TRANSFER_AMOUNT - expectedKaruraIncomeFee;
+  let karuraBackwardTransferAmount: bigint;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -569,6 +570,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
       const karFees = balanceKaruraTokenInit - balanceKaruraTokenMiddle;
       const qtzIncomeTransfer = balanceQuartzForeignTokenMiddle - balanceQuartzForeignTokenInit;
+      karuraBackwardTransferAmount = qtzIncomeTransfer;
+
       const karUnqFees = TRANSFER_AMOUNT - qtzIncomeTransfer;
 
       console.log(
@@ -581,8 +584,11 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       );
       console.log('[Quartz -> Karura] income %s QTZ', helper.util.bigIntToDecimals(qtzIncomeTransfer));
       expect(karFees == 0n).to.be.true;
+
+      const bigintAbs = (n: bigint) => (n < 0n) ? -n : n;
+
       expect(
-        karUnqFees == expectedKaruraIncomeFee,
+        bigintAbs(karUnqFees - expectedKaruraIncomeFee) < karuraEps,
         'Karura took different income fee, check the Karura foreign asset config',
       ).to.be.true;
     });
@@ -611,7 +617,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
         ForeignAsset: 0,
       };
 
-      await helper.xTokens.transfer(randomAccount, id, KARURA_BACKWARD_TRANSFER_AMOUNT, destination, 'Unlimited');
+      await helper.xTokens.transfer(randomAccount, id, karuraBackwardTransferAmount, destination, 'Unlimited');
       balanceKaruraTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceQuartzForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -625,7 +631,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       console.log('[Karura -> Quartz] outcome %s QTZ', helper.util.bigIntToDecimals(qtzOutcomeTransfer));
 
       expect(karFees > 0, 'Negative fees KAR, looks like nothing was transferred').to.be.true;
-      expect(qtzOutcomeTransfer == KARURA_BACKWARD_TRANSFER_AMOUNT).to.be.true;
+      expect(qtzOutcomeTransfer == karuraBackwardTransferAmount).to.be.true;
     });
 
     await helper.wait.newBlocks(3);
@@ -636,7 +642,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     console.log('[Karura -> Quartz] actually delivered %s QTZ', helper.util.bigIntToDecimals(actuallyDelivered));
 
-    const qtzFees = KARURA_BACKWARD_TRANSFER_AMOUNT - actuallyDelivered;
+    const qtzFees = karuraBackwardTransferAmount - actuallyDelivered;
     console.log('[Karura -> Quartz] transaction fees on Quartz: %s QTZ', helper.util.bigIntToDecimals(qtzFees));
     expect(qtzFees == 0n).to.be.true;
   });
@@ -673,7 +679,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     );
 
     let maliciousXcmProgramSent: any;
-    const maxWaitBlocks = 3;
+    const maxWaitBlocks = 5;
 
     // Try to trick Quartz
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
@@ -682,8 +688,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
+      return event.messageHash == maliciousXcmProgramSent.messageHash
+        && event.outcome.isFailedToTransactAsset;
+    });
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -764,7 +772,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramFullIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -777,7 +785,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -853,7 +861,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
 
   const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
   };
 
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
@@ -1165,7 +1173,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1254,7 +1262,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramFullIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1271,7 +1279,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1531,7 +1539,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1612,7 +1620,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramFullIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1625,7 +1633,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);

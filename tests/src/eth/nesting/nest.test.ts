@@ -162,7 +162,7 @@ describe('EVM nesting tests group', () => {
       const malignant = await helper.eth.createAccountWithBalance(donor);
 
       const {collectionId: collectionIdA, contract: contractA} = await createNestingCollection(helper, owner);
-      const {collectionId: collectionIdB, contract: contractB} = await createNestingCollection(helper, owner);
+      const {contract: contractB} = await createNestingCollection(helper, owner);
 
       await contractA.methods.setCollectionNesting([true, false, [contractA.options.address, contractB.options.address]]).send({from: owner});
 

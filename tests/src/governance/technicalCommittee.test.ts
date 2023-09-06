@@ -36,8 +36,8 @@ describeGov('Governance: Technical Committee tests', () => {
     });
   });
 
-  async function proposalFromAllCommittee(proposal: any) {
-    return await usingPlaygrounds(async (helper) => {
+  function proposalFromAllCommittee(proposal: any) {
+    return usingPlaygrounds(async (helper) => {
       expect((await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON().length).to.be.equal(allTechCommitteeThreshold);
       const proposeResult = await helper.technicalCommittee.collective.propose(
         techcomms.andy,
@@ -54,7 +54,13 @@ describeGov('Governance: Technical Committee tests', () => {
       await helper.technicalCommittee.collective.vote(techcomms.constantine, proposalHash, proposalIndex, true);
       await helper.technicalCommittee.collective.vote(techcomms.greg, proposalHash, proposalIndex, true);
 
-      return await helper.technicalCommittee.collective.close(techcomms.andy, proposalHash, proposalIndex);
+      const closeResult = await helper.technicalCommittee.collective.close(techcomms.andy, proposalHash, proposalIndex);
+      Event.TechnicalCommittee.Closed.expect(closeResult);
+      Event.TechnicalCommittee.Approved.expect(closeResult);
+      const {result} = Event.TechnicalCommittee.Executed.expect(closeResult);
+      expect(result).to.eq('Ok');
+
+      return closeResult;
     });
   }
 
@@ -64,16 +70,16 @@ describeGov('Governance: Technical Committee tests', () => {
 
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
-    await expect(proposalFromAllCommittee(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
-      .to.be.fulfilled;
+    const fastTrackProposal = await proposalFromAllCommittee(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0));
+    Event.Democracy.Started.expect(fastTrackProposal);
   });
 
   itSub('TechComm can cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
     const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
-    await expect(proposalFromAllCommittee(helper.democracy.cancelProposalCall(proposalIndex)))
-      .to.be.fulfilled;
+    const cancelProposal = await proposalFromAllCommittee(helper.democracy.cancelProposalCall(proposalIndex));
+    Event.Democracy.ProposalCanceled.expect(cancelProposal);
   });
 
   itSub('TechComm can cancel ongoing Democracy referendums', async ({helper}) => {
@@ -81,19 +87,19 @@ describeGov('Governance: Technical Committee tests', () => {
     const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
     const referendumIndex = startedEvent.referendumIndex;
 
-    await expect(proposalFromAllCommittee(helper.democracy.emergencyCancelCall(referendumIndex)))
-      .to.be.fulfilled;
+    const emergencyCancelProposal = await proposalFromAllCommittee(helper.democracy.emergencyCancelCall(referendumIndex));
+    Event.Democracy.Cancelled.expect(emergencyCancelProposal);
   });
-
 
   itSub('TechComm member can veto Democracy proposals', async ({helper}) => {
     const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
-    await expect(helper.technicalCommittee.collective.execute(
+    const vetoExternalCall = await helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.democracy.vetoExternalCall(preimageHash),
-    )).to.be.fulfilled;
+    );
+    Event.Democracy.Vetoed.expect(vetoExternalCall);
   });
 
   itSub('TechComm can cancel Fellowship referendums', async ({helper}) => {
@@ -108,7 +114,8 @@ describeGov('Governance: Technical Committee tests', () => {
       defaultEnactmentMoment,
     );
     const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
-    await expect(proposalFromAllCommittee(helper.fellowship.referenda.cancelCall(referendumIndex))).to.be.fulfilled;
+    const cancelProposal = await proposalFromAllCommittee(helper.fellowship.referenda.cancelCall(referendumIndex));
+    Event.FellowshipReferenda.Cancelled.expect(cancelProposal);
   });
 
   itSub.skip('TechComm member can add a Fellowship member', async ({helper}) => {

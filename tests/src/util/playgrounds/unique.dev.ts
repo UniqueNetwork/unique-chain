@@ -174,6 +174,20 @@ export class Event {
     static Passed = this.Method('Passed', data => ({
       referendumIndex: eventJsonData<number>(data, 0),
     }));
+
+    static ProposalCanceled = this.Method('ProposalCanceled', data => ({
+      propIndex: eventJsonData<number>(data, 0),
+    }));
+
+    static Cancelled = this.Method('Cancelled', data => ({
+      propIndex: eventJsonData<number>(data, 0),
+    }));
+
+    static Vetoed = this.Method('Vetoed', data => ({
+      who: eventHumanData(data, 0),
+      proposalHash: eventHumanData(data, 1),
+      until: eventJsonData<number>(data, 1),
+    }));
   };
 
   static Council = class extends EventSection('council') {
@@ -187,6 +201,9 @@ export class Event {
       proposalHash: eventHumanData(data, 0),
       yes: eventJsonData<number>(data, 1),
       no: eventJsonData<number>(data, 2),
+    }));
+    static Executed = this.Method('Executed', data => ({
+      proposalHash: eventHumanData(data, 0),
     }));
   };
 
@@ -202,6 +219,13 @@ export class Event {
       yes: eventJsonData<number>(data, 1),
       no: eventJsonData<number>(data, 2),
     }));
+    static Approved = this.Method('Approved', data => ({
+      proposalHash: eventHumanData(data, 0),
+    }));
+    static Executed = this.Method('Executed', data => ({
+      proposalHash: eventHumanData(data, 0),
+      result: eventHumanData(data, 1),
+    }));
   };
 
   static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
@@ -209,6 +233,11 @@ export class Event {
       referendumIndex: eventJsonData<number>(data, 0),
       trackId: eventJsonData<number>(data, 1),
       proposal: eventJsonData(data, 2),
+    }));
+
+    static Cancelled = this.Method('Cancelled', data => ({
+      index: eventJsonData<number>(data, 0),
+      tally: eventJsonData(data, 1),
     }));
   };
 

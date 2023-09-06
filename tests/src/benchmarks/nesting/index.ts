@@ -1,17 +1,11 @@
 import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
 import {readFile} from 'fs/promises';
-import {
-  ICrossAccountId,
-} from '../../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
-import {UniqueNFTCollection} from '../../util/playgrounds/unique';
 import {Contract} from 'web3-eth-contract';
-import {createObjectCsvWriter} from 'csv-writer';
-import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common';
+import {convertToTokens} from '../utils/common';
 import {makeNames} from '../../util';
 import {ContractImports} from '../../eth/util/playgrounds/types';
 import {RMRKNestableMintable} from './ABIGEN';
-import {rm} from 'fs';
 
 const {dirname} = makeNames(import.meta.url);
 

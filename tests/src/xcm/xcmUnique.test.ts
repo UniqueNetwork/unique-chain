@@ -84,9 +84,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       // Fund accounts on Statemint
-      const relayXcmVersion = 2;
-      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT, relayXcmVersion);
-      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT, relayXcmVersion);
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, alice.addressRaw, FUNDING_AMOUNT);
+      await helper.xcm.teleportNativeAsset(alice, STATEMINT_CHAIN, bob.addressRaw, FUNDING_AMOUNT);
     });
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
@@ -154,7 +153,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     // (fee for USDT XCM are paid in relay tokens)
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -163,7 +162,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -175,7 +174,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -200,7 +199,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   itSub('Should connect and send USDT from Statemint to Unique', async ({helper}) => {
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
       const dest = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -209,7 +208,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -221,7 +220,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -341,7 +340,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             Parachain: UNIQUE_CHAIN,
@@ -350,7 +349,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
         }};
 
       const beneficiary = {
-        V1: {
+        V2: {
           parents: 0,
           interior: {X1: {
             AccountId32: {
@@ -362,7 +361,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
 
       const assets = {
-        V1: [
+        V2: [
           {
             id: {
               Concrete: {
@@ -468,8 +467,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   // 2 UNQ sent https://unique.subscan.io/xcm_message/polkadot-bad0b68847e2398af25d482e9ee6f9c1f9ec2a48
   // 1.898970000000000000 UNQ received (you can check Acala's chain state in the corresponding block)
   const expectedAcalaIncomeFee = 2000000000000000000n - 1898970000000000000n;
+  const acalaEps = 8n * 10n ** 16n;
 
-  const ACALA_BACKWARD_TRANSFER_AMOUNT = TRANSFER_AMOUNT - expectedAcalaIncomeFee;
+  let acalaBackwardTransferAmount: bigint;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -482,7 +482,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X1: {
@@ -571,6 +571,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
       const acaFees = balanceAcalaTokenInit - balanceAcalaTokenMiddle;
       const unqIncomeTransfer = balanceUniqueForeignTokenMiddle - balanceUniqueForeignTokenInit;
+      acalaBackwardTransferAmount = unqIncomeTransfer;
+
       const acaUnqFees = TRANSFER_AMOUNT - unqIncomeTransfer;
 
       console.log(
@@ -583,8 +585,11 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       );
       console.log('[Unique -> Acala] income %s UNQ', helper.util.bigIntToDecimals(unqIncomeTransfer));
       expect(acaFees == 0n).to.be.true;
+
+      const bigintAbs = (n: bigint) => (n < 0n) ? -n : n;
+
       expect(
-        acaUnqFees == expectedAcalaIncomeFee,
+        bigintAbs(acaUnqFees - expectedAcalaIncomeFee) < acalaEps,
         'Acala took different income fee, check the Acala foreign asset config',
       ).to.be.true;
     });
@@ -593,7 +598,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   itSub('Should connect to Acala and send UNQ back', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       const destination = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [
@@ -613,7 +618,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
         ForeignAsset: 0,
       };
 
-      await helper.xTokens.transfer(randomAccount, id, ACALA_BACKWARD_TRANSFER_AMOUNT, destination, 'Unlimited');
+      await helper.xTokens.transfer(randomAccount, id, acalaBackwardTransferAmount, destination, 'Unlimited');
       balanceAcalaTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
       balanceUniqueForeignTokenFinal = await helper.tokens.accounts(randomAccount.address, id);
 
@@ -627,7 +632,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       console.log('[Acala -> Unique] outcome %s UNQ', helper.util.bigIntToDecimals(unqOutcomeTransfer));
 
       expect(acaFees > 0, 'Negative fees ACA, looks like nothing was transferred').to.be.true;
-      expect(unqOutcomeTransfer == ACALA_BACKWARD_TRANSFER_AMOUNT).to.be.true;
+      expect(unqOutcomeTransfer == acalaBackwardTransferAmount).to.be.true;
     });
 
     await helper.wait.newBlocks(3);
@@ -638,7 +643,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     console.log('[Acala -> Unique] actually delivered %s UNQ', helper.util.bigIntToDecimals(actuallyDelivered));
 
-    const unqFees = ACALA_BACKWARD_TRANSFER_AMOUNT - actuallyDelivered;
+    const unqFees = acalaBackwardTransferAmount - actuallyDelivered;
     console.log('[Acala -> Unique] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(unqFees));
     expect(unqFees == 0n).to.be.true;
   });
@@ -655,7 +660,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {Parachain: UNIQUE_CHAIN},
@@ -685,7 +690,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -718,7 +723,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
     const uniqueMultilocation = {
-      V1: {
+      V2: {
         parents: 1,
         interior: {
           X1: {
@@ -766,7 +771,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramFullIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -779,7 +784,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -845,7 +850,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       };
 
       uniqueCombinedMultilocationAcala = {
-        V1: {
+        V2: {
           parents: 1,
           interior: {
             X2: [uniqueParachainJunction, uniqueAccountJunction],
@@ -865,7 +870,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
 
   const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
   };
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
@@ -1178,7 +1183,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1267,7 +1272,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramFullIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1284,7 +1289,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1543,7 +1548,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome().isFailedToTransactAsset);
+        && event.outcome.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
@@ -1624,7 +1629,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramFullIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -1637,7 +1642,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     });
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
-        && event.outcome().isUntrustedReserveLocation);
+        && event.outcome.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);

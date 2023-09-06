@@ -83,7 +83,7 @@ local moonbeam = {
 			wantedKeys: 'para-nimbus',
 			legacyRpc: true,
 		},
-		for name in ['alice', 'bob']
+		for name in ['alith', 'baltathar']
 	},
 };
 
