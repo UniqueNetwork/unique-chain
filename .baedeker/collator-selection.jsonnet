@@ -38,6 +38,6 @@ local unique = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [opal]
+		for para in [unique]
 	},
 }

@@ -126,8 +126,9 @@ jobs:
       #       --tag uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
       #       .
 
-      - name: Push docker image version
-        run: docker push uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
+      # - name: Push docker image version
+      #   run: docker push uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
+
 
       - name: Prepare latest
         uses: ./.github/actions/buildContainer
@@ -142,7 +143,6 @@ jobs:
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
 
       - uses: actions/setup-node@v3.5.1
         with:
