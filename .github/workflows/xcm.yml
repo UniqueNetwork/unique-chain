@@ -297,7 +297,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 16
+          node-version: 18
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built

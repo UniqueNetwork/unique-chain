@@ -192,7 +192,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 16
+          node-version: 18
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
