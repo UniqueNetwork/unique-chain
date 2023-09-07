@@ -13129,6 +13129,7 @@ name = "tests"
 version = "0.1.1"
 dependencies = [
  "evm-coder",
+ "fp-evm",
  "frame-support",
  "frame-system",
  "pallet-balances",

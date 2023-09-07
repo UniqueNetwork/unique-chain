@@ -242,9 +242,9 @@ impl pallet_evm::Config for Test {
 	type OnChargeTransaction = ();
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type TransactionValidityHack = ();
 	type Timestamp = Timestamp;
 	type GasLimitPovSizeRatio = ConstU64<0>;
+	type OnCheckEvmTransaction<E: From<fp_evm::InvalidEvmTransactionError>> = ();
 }
 impl pallet_evm_coder_substrate::Config for Test {}
 

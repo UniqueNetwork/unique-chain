@@ -688,10 +688,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => {
-      return event.messageHash == maliciousXcmProgramSent.messageHash
-        && event.outcome.isFailedToTransactAsset;
-    });
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash
+        && event.outcome.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);

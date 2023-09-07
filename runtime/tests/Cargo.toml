@@ -16,6 +16,8 @@ sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
+fp-evm = { workspace = true }
+
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-xcm = { workspace = true }
