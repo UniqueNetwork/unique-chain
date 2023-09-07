@@ -1,0 +1,27 @@
+name: Extract files from docker image
+description: ''
+inputs:
+  image:
+    description: Image to extract
+    required: true
+  directory:
+    description: Directory to extract from image
+    required: true
+outputs:
+  dir:
+    description: Extracted directory
+    value: ${{ steps.mktemp.outputs.dir }}
+runs:
+  using: composite
+  steps:
+    - name: Create temporary directory
+      id: mktemp
+      run: |
+        dir=$(mktemp -d -p $RUNNER_TEMP)
+        echo "dir=$dir" >> $GITHUB_OUTPUT
+      shell: bash
+    - name: Extract directory from image
+      run: |
+        docker run --entrypoint tar "${{ inputs.image }}" \
+          -C ${{ inputs.directory }} -c . | tar -xC ${{ steps.mktemp.outputs.dir }}
+      shell: bash
