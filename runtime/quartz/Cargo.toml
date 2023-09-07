@@ -60,7 +60,6 @@ runtime-benchmarks = [
 	'sp-runtime/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
 ]
-state-version-0 = []
 std = [
 	'codec/std',
 	'cumulus-pallet-aura-ext/std',
