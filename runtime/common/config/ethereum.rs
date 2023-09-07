@@ -87,12 +87,14 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
-	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
+	type OnChargeTransaction =
+		pallet_evm_transaction_payment::WrappedEVMCurrencyAdapter<Balances, DealWithFees>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type Timestamp = crate::Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type GasLimitPovSizeRatio = ProofSizePerGas;
+	type OnCheckEvmTransaction<E: From<fp_evm::InvalidEvmTransactionError>> =
+		pallet_evm_transaction_payment::TransactionValidity<Self, E>;
 }
 
 impl pallet_evm_migration::Config for Runtime {

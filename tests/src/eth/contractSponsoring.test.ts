@@ -482,7 +482,7 @@ describe('Sponsoring Fee Limit', () => {
   before(async () => {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([100n], donor);
+      [alice] = await helper.arrange.createAccounts([1000n], donor);
     });
   });
 

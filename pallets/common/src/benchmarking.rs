@@ -46,10 +46,7 @@ pub fn create_u16_data<const S: u32>() -> BoundedVec<u16, ConstU32<S>> {
 		.unwrap()
 }
 pub fn create_var_data<const S: u32>(size: u32) -> BoundedVec<u8, ConstU32<S>> {
-	assert!(
-		size <= S,
-		"size ({size}) should be less within bound ({S})"
-	);
+	assert!(size <= S, "size ({size}) should be less within bound ({S})");
 	(0..size)
 		.map(|v| (v & 0xff) as u8)
 		.collect::<Vec<_>>()
