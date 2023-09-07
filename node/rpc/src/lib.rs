@@ -162,7 +162,7 @@ where
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
 
-	io.merge(AppPromotion::new(client.clone()).into_rpc())?;
+	io.merge(AppPromotion::new(client).into_rpc())?;
 
 	#[cfg(feature = "pov-estimate")]
 	io.merge(

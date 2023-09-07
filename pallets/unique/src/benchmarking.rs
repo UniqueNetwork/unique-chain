@@ -70,7 +70,7 @@ benchmarks! {
 		let mode: CollectionMode = CollectionMode::NFT;
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let _ = <T as CommonConfig>::Currency::deposit(&caller, T::CollectionCreationPrice::get(), Precision::Exact).unwrap();
-	}: _(RawOrigin::Signed(caller.clone()), col_name.clone(), col_desc.clone(), token_prefix.clone(), mode)
+	}: _(RawOrigin::Signed(caller.clone()), col_name, col_desc, token_prefix, mode)
 	verify {
 		assert_eq!(<pallet_common::CollectionById<T>>::get(CollectionId(1)).unwrap().owner, caller);
 	}
@@ -155,6 +155,6 @@ benchmarks! {
 
 	force_repair_collection {
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let collection = create_nft_collection::<T>(caller.clone())?;
+		let collection = create_nft_collection::<T>(caller)?;
 	}: _(RawOrigin::Root, collection)
 }

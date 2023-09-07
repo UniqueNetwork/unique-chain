@@ -199,7 +199,7 @@ benchmarks! {
 	set_subs_new {
 		let caller: T::AccountId = whitelisted_caller();
 		// Create a new subs vec with s sub accounts
-		let s in 0 .. T::MaxSubAccounts::get() => ();
+		let s in 0 .. T::MaxSubAccounts::get();
 		let subs = create_sub_accounts::<T>(&caller, s)?;
 		ensure!(SubsOf::<T>::get(&caller).1.len() == 0, "Caller already has subs");
 	}: set_subs(RawOrigin::Signed(caller.clone()), subs)
