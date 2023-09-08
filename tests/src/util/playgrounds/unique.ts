@@ -732,6 +732,24 @@ export class ChainHelperBase {
     }
     return result as any;
   }
+  executeExtrinsicUncheckedWeight<
+      E extends string,
+      V extends (
+         ...args: any) => any = ForceFunction<
+            Get2<
+               AugmentedSubmittables<'promise'>,
+               E, (...args: any) => Invalid<'not found'>
+            >
+         >
+   >(
+    sender: TSigner,
+    extrinsic: `api.tx.${E}`,
+    params: Parameters<V>,
+    expectSuccess = true,
+    options: Partial<SignerOptions> | null = null,/*, failureMessage='expected success'*/
+  ): Promise<ITransactionResult> {
+    throw new Error('executeExtrinsicUncheckedWeight only supported in sudo');
+  }
 
   async callRpc
   // TODO: make it strongly typed, or use api.query/api.rpc directly
@@ -4036,6 +4054,38 @@ function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
         sender,
         'api.tx.sudo.sudo',
         [call],
+        expectSuccess,
+        options,
+      );
+
+      if(result.status === 'Fail') return result;
+
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if(data.isErr) {
+        if(data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else if(data.asErr.isToken) {
+          throw new Error(`Token: ${data.asErr.asToken}`);
+        }
+        // May be [object Object] in case of unhandled non-unit enum
+        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+      }
+      return result;
+    }
+    async executeExtrinsicUncheckedWeight(
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+      options: Partial<SignerOptions> | null = null,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+      const result = await super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudoUncheckedWeight',
+        [call, {refTime: 0, proofSize: 0}],
         expectSuccess,
         options,
       );

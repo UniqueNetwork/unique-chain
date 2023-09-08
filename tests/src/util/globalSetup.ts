@@ -115,5 +115,5 @@ const fundFilenamesWithRetries = (retriesLeft: number): Promise<boolean> => {
 globalSetup().catch(e => {
   console.error('Setup error');
   console.error(e);
-  process.exit(1)
+  process.exit(1);
 });

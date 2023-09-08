@@ -281,7 +281,7 @@ pub fn development_config() -> DefaultChainSpec {
 		// Name
 		format!(
 			"{}{}",
-			default_runtime::RUNTIME_NAME.to_uppercase(),
+			default_runtime::VERSION.spec_name.to_uppercase(),
 			if cfg!(feature = "unique-runtime") {
 				""
 			} else {
@@ -290,7 +290,7 @@ pub fn development_config() -> DefaultChainSpec {
 		)
 		.as_str(),
 		// ID
-		format!("{}_dev", default_runtime::RUNTIME_NAME).as_str(),
+		format!("{}_dev", default_runtime::VERSION.spec_name).as_str(),
 		ChainType::Local,
 		move || {
 			testnet_genesis!(
@@ -355,7 +355,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		// Name
 		format!(
 			"{}{}",
-			default_runtime::RUNTIME_NAME.to_uppercase(),
+			default_runtime::VERSION.impl_name.to_uppercase(),
 			if cfg!(feature = "unique-runtime") {
 				""
 			} else {
@@ -364,7 +364,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		)
 		.as_str(),
 		// ID
-		format!("{}_local", default_runtime::RUNTIME_NAME).as_str(),
+		format!("{}_local", default_runtime::VERSION.spec_name).as_str(),
 		ChainType::Local,
 		move || {
 			testnet_genesis!(

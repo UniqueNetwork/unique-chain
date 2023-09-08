@@ -58,7 +58,6 @@ runtime-benchmarks = [
 	'up-data-structs/runtime-benchmarks',
 	'xcm-builder/runtime-benchmarks',
 ]
-state-version-0 = []
 std = [
 	'codec/std',
 	'cumulus-pallet-aura-ext/std',
@@ -222,6 +221,7 @@ preimage = []
 refungible = []
 unique-scheduler = []
 gov-test-timings = []
+session-test-timings = []
 
 ################################################################################
 # local dependencies

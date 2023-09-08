@@ -24,7 +24,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RUNTIME_NAME, TOKEN_SYMBOL, DECIMALS, Balances,
+	Runtime, RuntimeEvent, RuntimeCall, VERSION, TOKEN_SYMBOL, DECIMALS, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{
@@ -90,7 +90,7 @@ impl pallet_nonfungible::Config for Runtime {
 
 parameter_types! {
 	pub const Decimals: u8 = DECIMALS;
-	pub Name: String = RUNTIME_NAME.to_string();
+	pub Name: String = String::from_utf8_lossy(VERSION.impl_name.as_ref()).to_string();
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 impl pallet_balances_adapter::Config for Runtime {
@@ -125,8 +125,18 @@ parameter_types! {
 	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
 	pub const MaxCollators: u32 = MAX_COLLATORS;
 	pub const LicenseBond: Balance = GENESIS_LICENSE_BOND;
-	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
+
 	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
+}
+
+#[cfg(not(feature = "session-test-timings"))]
+parameter_types! {
+	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
+}
+
+#[cfg(feature = "session-test-timings")]
+parameter_types! {
+	pub const SessionPeriod: BlockNumber = 5 * MINUTES;
 }
 
 impl pallet_configuration::Config for Runtime {
