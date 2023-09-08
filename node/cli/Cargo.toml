@@ -103,6 +103,8 @@ substrate-build-script-utils = { workspace = true }
 
 [features]
 default = ["opal-runtime"]
+session-test-timing = ['opal-runtime/session-test-timing', 'quartz-runtime?/session-test-timing', 'unique-runtime?/session-test-timing']
+gov-test-timings = ['opal-runtime/gov-test-timings', 'quartz-runtime?/gov-test-timings', 'unique-runtime?/gov-test-timings']
 all-runtimes = ['opal-runtime', 'quartz-runtime', 'unique-runtime']
 pov-estimate = ['opal-runtime/pov-estimate', 'quartz-runtime?/pov-estimate', 'uc-rpc/pov-estimate', 'unique-rpc/pov-estimate', 'unique-runtime?/pov-estimate']
 runtime-benchmarks = ['opal-runtime/runtime-benchmarks', 'polkadot-cli/runtime-benchmarks', 'polkadot-service/runtime-benchmarks', 'quartz-runtime?/runtime-benchmarks', 'sc-service/runtime-benchmarks', 'unique-runtime?/runtime-benchmarks']
