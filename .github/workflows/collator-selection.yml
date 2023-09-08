@@ -40,9 +40,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {sapphire}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, wasm_name {opal}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, wasm_name {quartz}
+            network {sapphire}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, wasm_name {quartz}
 
   collator-selection:
 
@@ -139,7 +139,7 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }},${{ matrix.wasm_name }}/session-test-timing
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }},${{ matrix.wasm_name }}-runtime/session-test-timing
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
