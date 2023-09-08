@@ -129,12 +129,12 @@ parameter_types! {
 	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
 }
 
-#[cfg(not(feature = "session-test-timing"))]
+#[cfg(not(feature = "session-test-timings"))]
 parameter_types! {
 	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
 }
 
-#[cfg(feature = "session-test-timing")]
+#[cfg(feature = "session-test-timings")]
 parameter_types! {
 	pub const SessionPeriod: BlockNumber = 3 * MINUTES;
 }

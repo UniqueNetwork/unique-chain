@@ -139,7 +139,7 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }},session-test-timing
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }},session-test-timings
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
