@@ -179,7 +179,7 @@ jobs:
 
       - name: Run Sequential tests after forkless upgrade
         if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
