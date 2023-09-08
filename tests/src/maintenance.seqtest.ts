@@ -415,4 +415,10 @@ describe('Integration Test: Maintenance Functionality', () => {
       });
     });
   });
+
+  after(async () => {
+    await usingPlaygrounds(async(helper) => {
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
+    });
+  });
 });
