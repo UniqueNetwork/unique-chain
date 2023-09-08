@@ -162,9 +162,10 @@ jobs:
             .baedeker/vendor
           tla-str: |
             relay_spec=westend-local            
+          input-modules: |
+            .baedeker/node-stash-discover.jsonnet
           inputs: |
             .baedeker/collator-selection.jsonnet
-            .baedeker/node-stash-discover.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
