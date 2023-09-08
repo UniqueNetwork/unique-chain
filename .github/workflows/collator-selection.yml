@@ -161,9 +161,7 @@ jobs:
           jpath: |
             .baedeker/vendor
           tla-str: |
-            relay_spec=westend-local            
-          input-modules: |
-            .baedeker/node-stash-discover.jsonnet
+            relay_spec=westend-local
           inputs: |
             .baedeker/collator-selection.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
