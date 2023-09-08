@@ -136,7 +136,7 @@ parameter_types! {
 
 #[cfg(feature = "session-test-timings")]
 parameter_types! {
-	pub const SessionPeriod: BlockNumber = 3 * MINUTES;
+	pub const SessionPeriod: BlockNumber = 5 * MINUTES;
 }
 
 impl pallet_configuration::Config for Runtime {
