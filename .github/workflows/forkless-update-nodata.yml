@@ -8,9 +8,10 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  prepare-execution-marix:
 
-    name: Prepare execution matrix
+  prepare-execution-matrix:
+
+    name: execution matrix
 
     runs-on: self-hosted-ci
     outputs:
@@ -34,14 +35,14 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {quartz}, wasm_name {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {unique}, wasm_name {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
-            network {opal}, wasm_name {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {sapphire}, wasm_name {quartz}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
-
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, runtime_features {opal-runtime}, wasm_name {opal}
+            network {sapphire}, mainnet_branch {${{ env.SAPPHIRE_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}, runtime_features {sapphire-runtime}, wasm_name {quartz}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, runtime_features {quartz-runtime}, wasm_name {quartz}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, runtime_features {unique-runtime}, wasm_name {unique}
 
   forkless-nodata-build:
-    needs: prepare-execution-marix
+
+    needs: prepare-execution-matrix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
 
@@ -53,9 +54,10 @@ jobs:
 
     strategy:
       matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+        include: ${{fromJson(needs.prepare-execution-matrix.outputs.matrix)}}
 
     steps:
+
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -63,254 +65,126 @@ jobs:
       - uses: actions/checkout@v3.1.0
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v2
 
       # Prepare SHA  
       - name: Prepare SHA
         uses: ./.github/actions/prepare
 
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
-        with:
-          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      # Build main image for FORKLESS-UPDATE-NODATA
-      - name: Generate ENV related extend Dockerfile file
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-parachain-upgrade.j2
-          output_file: .docker/Dockerfile-parachain-upgrade.${{ matrix.network }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            NETWORK=${{ matrix.network }}
-            MAINNET_BRANCH=${{ matrix.mainnet_branch }}
-            WASM_NAME=${{ matrix.wasm_name }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            POLKADOT_LAUNCH_BRANCH=${{ env.POLKADOT_LAUNCH_BRANCH }}
-
-      - name: Show build Dockerfile
-        run: cat .docker/Dockerfile-parachain-upgrade.${{ matrix.network }}.yml
-
-      - name: Generate launch-config-forkless-nodata.json
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/forkless-config/launch-config-forkless-nodata.j2
-          output_file: .docker/forkless-config/launch-config-forkless-nodata.json
-          variables: |
-            WASM_NAME=${{ matrix.wasm_name }}
-            RELAY_CHAIN_TYPE=${{ env.RELAY_CHAIN_TYPE }}
-
-      - name: Show launch-config-forkless configuration
-        run: cat .docker/forkless-config/launch-config-forkless-nodata.json
-
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
-      - name: Set build SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
-
-      - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-parachain-upgrade.${{ matrix.network }}.yml --tag uniquenetwork/ci-forkless-nodata-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
-
-      - name: Push docker image version
-        run: docker push uniquenetwork/ci-forkless-nodata-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
-
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker builder prune -f
-          docker system prune -f
-
-
-  forkless-nodata-tests:
-    needs: [prepare-execution-marix, forkless-nodata-build]
-    # The type of runner that the job will run on
-    runs-on: [self-hosted-ci, large]
-
-    timeout-minutes: 600
-
-    name: ${{ matrix.network }}-nodata-tests
-
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
-
-    strategy:
-      matrix:
-        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
-
-    steps:
-      - name: Skip if pull request is in Draft
-        if: github.event.pull_request.draft == true
-        run: exit 1
-
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
-        with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
-
-      - name: Prepare
-        uses: ./.github/actions/prepare
-
-      - name: Set build SHA
-        shell: bash
-        run: |
-          echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
-
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
 
-      - name: Generate ENV related extend file for docker-compose
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/docker-compose.forkless-nodata.j2
-          output_file: .docker/docker-compose.forkless-nodata.${{ matrix.network }}.yml
-          variables: |
-            NETWORK=${{ matrix.network }}
-            BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
-
-      - name: Show build configuration
-        run: cat .docker/docker-compose.forkless-nodata.${{ matrix.network }}.yml
-
       - name: Log in to Docker Hub
         uses: docker/login-action@v2.1.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.forkless-nodata.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+      - name: Generate ENV related extend Dockerfile file for POLKADOT
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-polkadot.j2
+          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+            
+      - name: Prepare polkadot
+        uses: ./.github/actions/buildContainer
+        id: polkadot
+        with:
+          container: uniquenetwork/builder-polkadot
+          tag: ${{ matrix.relay_branch }}
+          context: .docker
+          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Prepare mainnet
+        uses: ./.github/actions/buildContainer
+        id: mainnet
+        with:
+          container: uniquenetwork/ci-nodata-${{ matrix.network }}
+          tag: ${{ matrix.mainnet_branch }}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Prepare latest
+        uses: ./.github/actions/buildContainer
+        id: latest
+        with:
+          container: uniquenetwork/ci-nodata-${{ matrix.network }}
+          tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          context: .
+          dockerfile: .docker/Dockerfile-unique
+          args: |
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Extract wasms
+        uses: ./.github/actions/extractDocker
+        id: wasms
+        with:
+          image: ${{ steps.latest.outputs.name }}
+          directory: /wasm
 
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: 18
 
-      - name: Check if docker logs consist logs related to Runtime Upgrade testing.
-        if: success()
-        run: |
-          counter=160
-          function check_container_status {
-                docker inspect -f {{.State.Running}} forkless-nodata
-          }
-          function do_docker_logs {
-                docker logs --details forkless-nodata  2>&1
-          }
-          function is_started {
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: forkless-nodata RUNNING";
-                        echo "Check Docker logs"
-                        DOCKER_LOGS=$(do_docker_logs)
-                        if [[ ${DOCKER_LOGS} = *"🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"* ]];then
-                                echo "🛸 PARACHAINS' RUNTIME UPGRADE TESTING COMPLETE 🛸"
-                                return 0
-                        elif [[ ${DOCKER_LOGS} = *"🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧"* ]];then
-                                echo "🚧 PARACHAINS' RUNTIME UPGRADE TESTING FAILED 🚧"
-                                return 1
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
-                else
-                        echo "Container forkless-nodata not RUNNING"
-                        echo "Halting all future checks"
-                        exit 1
-                fi
-          exit 0
-          }
-          while ! is_started; do
-                echo "Waiting for special message in log files "
-                sleep 30s
-                counter=$(( $counter - 1 ))
-                echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
-                         continue
-                else
-                         break
-                fi
-          done
-          echo "Halting script"
-          exit 0
-        shell: bash
+      - name: Install baedeker
+        uses: UniqueNetwork/baedeker-action/setup@built
 
-      - name: Collect Docker Logs
-        if: success() || failure()
-        uses: jwalton/gh-docker-logs@v2.2.1
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
+      - name: Start network
+        uses: UniqueNetwork/baedeker-action@built
+        id: bdk
         with:
-          dest: './forkless-parachain-upgrade-nodata-logs.${{ matrix.network }}'
+          jpath: |
+            .baedeker/vendor
+          tla-str: |
+            relay_spec=rococo-local
+          inputs: |
+            .baedeker/node-only.jsonnet
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin = {legacyRpc: true})
 
-      - name: Show docker logs
-        if: success() || failure()
-        run: cat './forkless-parachain-upgrade-nodata-logs.${{ matrix.network }}/forkless-nodata.log'
-
-      - name: Run Parallel tests
+      - name: "Reconcile: runtime is upgraded"
         working-directory: tests
         run: |
-          yarn install
-          yarn add mochawesome
+          yarn
+          ./scripts/wait_for_first_block.sh
+          echo "Executing upgrade"
+          yarn ts-node --esm src/util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Parallel tests after forkless upgrade
+        working-directory: tests
+        run: |
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944/
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Test Report Parallel
-        uses: phoenix-actions/test-reporting@v10
-        id: test-report-parallel
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Report Parallel tests results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-parallel-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-
-      - name: Run Sequential tests
-        working-directory: tests
+      - name: Run Sequential tests after forkless upgrade
         if: success() || failure()
-        run: |
-          yarn install
-          yarn add mochawesome
-          ./scripts/wait_for_first_block.sh
-          echo "Ready to start tests"
-          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        working-directory: ${{ matrix.mainnet_branch }}/tests
+        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
-          RPC_URL: http://127.0.0.1:9944/
-
-      - name: Test Report Sequential
-        uses: phoenix-actions/test-reporting@v10
-        id: test-report-sequential
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: Report Sequential tests results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-sequential-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.forkless-nodata.${{ matrix.network }}.yml" down
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |
-          docker builder prune -f -a
           docker system prune -f
-          docker image prune -f -a
