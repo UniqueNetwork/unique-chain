@@ -221,6 +221,7 @@ preimage = []
 refungible = []
 unique-scheduler = []
 gov-test-timings = []
+session-test-timings = []
 
 ################################################################################
 # local dependencies

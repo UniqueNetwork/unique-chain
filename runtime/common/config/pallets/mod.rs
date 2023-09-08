@@ -125,8 +125,18 @@ parameter_types! {
 	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
 	pub const MaxCollators: u32 = MAX_COLLATORS;
 	pub const LicenseBond: Balance = GENESIS_LICENSE_BOND;
-	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
+
 	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
+}
+
+#[cfg(not(feature = "session-test-timings"))]
+parameter_types! {
+	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
+}
+
+#[cfg(feature = "session-test-timings")]
+parameter_types! {
+	pub const SessionPeriod: BlockNumber = 5 * MINUTES;
 }
 
 impl pallet_configuration::Config for Runtime {

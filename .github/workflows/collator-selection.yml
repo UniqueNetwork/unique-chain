@@ -139,7 +139,7 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }},session-test-timings
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
@@ -161,7 +161,7 @@ jobs:
           jpath: |
             .baedeker/vendor
           tla-str: |
-            relay_spec=westend-local            
+            relay_spec=westend-local
           inputs: |
             .baedeker/collator-selection.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
