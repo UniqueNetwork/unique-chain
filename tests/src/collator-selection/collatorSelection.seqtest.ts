@@ -33,10 +33,10 @@ async function nodeAddress(name: string) {
 
 async function getInitialInvulnerables() {
   return await Promise.all([
-    nodeAddress('Alice'),
-    nodeAddress('Bob'),
-    nodeAddress('Charlie'),
-    nodeAddress('Dave'),
+    nodeAddress('alpha'),
+    nodeAddress('beta'),
+    nodeAddress('gamma'),
+    nodeAddress('delta'),
   ]);
 }
 
@@ -84,11 +84,11 @@ describe('Integration Test: Collator Selection', () => {
 
   describe('Dynamic shuffling of collators', () => {
     // These two are the default invulnerables, and should return to be invulnerables after this suite.
-    let aliceNode: string;
-    let bobNode: string;
+    let alphaNode: string;
+    let betaNode: string;
 
-    let charlieNode: string;
-    let daveNode: string;
+    let gammaNode: string;
+    let deltaNode: string;
 
     before(async function() {
       await usingPlaygrounds(async (helper, privateKey) => {
@@ -96,11 +96,11 @@ describe('Integration Test: Collator Selection', () => {
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
         if(await helper.arrange.isDevNode()) this.skip();
 
-        [aliceNode, bobNode, charlieNode, daveNode] = await getInitialInvulnerables();
+        [alphaNode, betaNode, gammaNode, deltaNode] = await getInitialInvulnerables();
 
         const invulnerables = await helper.collatorSelection.getInvulnerables();
         expect(invulnerables.length, 'Invalid initial invulnerables number').to.be.equal(4);
-        expect(invulnerables, 'Invalid initial invulnerables').containSubset([aliceNode, bobNode, charlieNode, daveNode]);
+        expect(invulnerables, 'Invalid initial invulnerables').containSubset([alphaNode, betaNode, gammaNode, deltaNode]);
       });
     });
 
@@ -109,23 +109,23 @@ describe('Integration Test: Collator Selection', () => {
 
       nonce = await helper.chain.getNonce(superuser.address);
       await expect(Promise.all([
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [aliceNode], true, {nonce: nonce++}),
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [bobNode], true, {nonce: nonce++}),
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [alphaNode], true, {nonce: nonce++}),
+        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [betaNode], true, {nonce: nonce++}),
       ])).to.be.fulfilled;
 
       const newInvulnerables = await helper.collatorSelection.getInvulnerables();
-      expect(newInvulnerables).to.contain(charlieNode).and.contain(daveNode).and.be.length(2);
+      expect(newInvulnerables).to.contain(gammaNode).and.contain(deltaNode).and.be.length(2);
 
       await helper.wait.newSessions(2);
 
       const newValidators = await helper.callRpc('api.query.session.validators');
-      expect(newValidators).to.contain(charlieNode).and.contain(daveNode).and.be.length(2);
+      expect(newValidators).to.contain(gammaNode).and.contain(deltaNode).and.be.length(2);
 
       const lastBlockNumber = await helper.chain.getLatestBlockNumber();
       await helper.wait.newBlocks(1);
-      const lastCharlieBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [charlieNode])).toNumber();
-      const lastDaveBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [daveNode])).toNumber();
-      expect(lastCharlieBlock >= lastBlockNumber || lastDaveBlock >= lastBlockNumber).to.be.true;
+      const lastGammaBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [gammaNode])).toNumber();
+      const lastDeltaBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [deltaNode])).toNumber();
+      expect(lastGammaBlock >= lastBlockNumber || lastDeltaBlock >= lastBlockNumber).to.be.true;
     });
 
     after(async () => {

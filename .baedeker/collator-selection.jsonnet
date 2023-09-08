@@ -31,7 +31,7 @@ local unique = {
 			bin: $.bin,
 			wantedKeys: 'para',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave']
+		for name in ['alpha', 'beta', 'gamma', 'delta']
 	},
 };
 
