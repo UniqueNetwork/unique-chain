@@ -43,7 +43,7 @@ benchmarks! {
 		let dispatch = T::CollectionDispatch::dispatch(CollectionId(1))?;
 		let dispatch = dispatch.as_dyn();
 
-		dispatch.create_item(caller_cross.clone(), caller_cross.clone(), CreateItemData::NFT(CreateNftData::default()), &Unlimited)?;
+		dispatch.create_item(caller_cross.clone(), caller_cross, CreateItemData::NFT(CreateNftData::default()), &Unlimited)?;
 	}: {
 		let parent = <Pallet<T>>::find_parent(CollectionId(1), TokenId(1))?;
 		assert!(matches!(parent, Parent::User(_)))
