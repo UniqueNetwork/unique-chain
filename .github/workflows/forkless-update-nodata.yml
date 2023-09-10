@@ -156,7 +156,10 @@ jobs:
           inputs: |
             .baedeker/node-only.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin = {legacyRpc: true})
+            # nodata build uses old runtime, but new chain, thus we use mainnet image for spec generation, and then latest image for nodes.
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, for_nodes = false)
+            # nodata build uses old runtime, but new chain, thus we use mainnet image for spec generation, and then latest image for nodes.
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: "Reconcile: runtime is upgraded"
         working-directory: tests
