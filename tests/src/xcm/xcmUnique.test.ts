@@ -56,7 +56,15 @@ const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
 const SAFE_XCM_VERSION = 2;
-
+const maxWaitBlocks = 6;
+const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
+  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
+        && event.outcome.isFailedToTransactAsset);
+};
+const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
+  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
+         && event.outcome.isUntrustedReserveLocation);
+};
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -894,6 +902,16 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     expect(unqFees > 0n, 'Negative fees UNQ, looks like nothing was transferred').to.be.true;
 
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      /*
+        Since only the parachain part of the Polkadex
+        infrastructure is launched (without their
+        solochain validators), processing incoming
+        assets will lead to an error.
+        This error indicates that the Polkadex chain
+        received a message from the Unique network,
+        since the hash is being checked to ensure
+        it matches what was sent.
+      */
       await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
     });
   });
@@ -914,8 +932,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
       randomAccount.addressRaw,
       {
         Concrete: {
-          parents: 0,
-          interior: 'Here',
+          parents: 1,
+          interior: {
+            X1: {Parachain: UNIQUE_CHAIN},
+          },
         },
       },
       TRANSFER_AMOUNT,
@@ -974,10 +994,80 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash);
+    await expectFailedToTransact(helper, maliciousXcmProgramSent);
 
     const targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(targetAccountBalance).to.be.equal(0n);
+  });
+
+  itSub('Should not accept reserve transfer of UNQ from Acala', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
+    const targetAccount = helper.arrange.createEmptyAccount();
+
+    const uniqueMultilocation = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: UNIQUE_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      testAmount,
+    );
+
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Unique using full UNQ identification
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramFullIdSent);
+
+    let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+
+    // Try to trick Unique using shortened UNQ identification
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramHereIdSent);
+
+    accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
   });
 });
 
@@ -1058,10 +1148,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     });
   });
 
-  const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
-  };
+
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
