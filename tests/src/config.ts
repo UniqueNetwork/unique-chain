@@ -28,6 +28,7 @@ const config = {
   westmintUrl: process.env.RELAY_WESTMINT_URL || 'ws://127.0.0.1:9948',
   statemineUrl: process.env.RELAY_STATEMINE_URL || 'ws://127.0.0.1:9948',
   statemintUrl: process.env.RELAY_STATEMINT_URL || 'ws://127.0.0.1:9948',
+  polkadexUrl: process.env.RELAY_POLKADEX_URL || 'ws://127.0.0.1:9950',
 };
 
 export default config;

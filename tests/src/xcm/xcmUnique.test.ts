@@ -16,14 +16,16 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds} from '../util';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {nToBigInt} from '@polkadot/util';
 
 const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
 const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
 const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
 const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
+const POLKADEX_CHAIN = +(process.env.RELAY_POLKADEX_ID || 2040);
 
 const STATEMINT_PALLET_INSTANCE = 50;
 
@@ -32,6 +34,7 @@ const statemintUrl = config.statemintUrl;
 const acalaUrl = config.acalaUrl;
 const moonbeamUrl = config.moonbeamUrl;
 const astarUrl = config.astarUrl;
+const polkadexUrl = config.polkadexUrl;
 
 const RELAY_DECIMALS = 12;
 const STATEMINT_DECIMALS = 12;
@@ -791,6 +794,193 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   });
 });
 
+describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+  let unqFees: bigint;
+  let balanceUniqueTokenInit: bigint;
+  let balanceUniqueTokenMiddle: bigint;
+  let balanceUniqueTokenFinal: bigint;
+  const maxWaitBlocks = 6;
+
+  const uniqueAssetId = {
+    Concrete: {
+      parents: 1,
+      interior: {
+        X1: {
+          Parachain: UNIQUE_CHAIN,
+        },
+      },
+    },
+  };
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', [])).toJSON() as [])
+        .map(nToBigInt).length != 0;
+
+      if(!isWhitelisted) {
+        await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
+      }
+
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+    });
+
+    await usingPlaygrounds(async (helper) => {
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10n * TRANSFER_AMOUNT);
+      balanceUniqueTokenInit = await helper.balance.getSubstrate(randomAccount.address);
+    });
+  });
+
+  itSub('Should connect and send UNQ to Polkadex', async ({helper}) => {
+
+    const destination = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: POLKADEX_CHAIN,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V2: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V2: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: TRANSFER_AMOUNT,
+          },
+        },
+      ],
+    };
+
+    const feeAssetItem = 0;
+
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+    const messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
+
+    unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
+    console.log('[Unique -> Polkadex] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(unqFees));
+    expect(unqFees > 0n, 'Negative fees UNQ, looks like nothing was transferred').to.be.true;
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
+    });
+  });
+
+
+  itSub('Should connect to Polkadex and send UNQ back', async ({helper}) => {
+
+    const uniqueMultilocation = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: UNIQUE_CHAIN},
+        },
+      },
+    };
+
+    const xcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      randomAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      TRANSFER_AMOUNT,
+    );
+
+    let xcmProgramSent: any;
+
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, xcmProgram);
+
+      xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == xcmProgramSent.messageHash);
+
+    balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
+
+    expect(balanceUniqueTokenFinal).to.be.equal(balanceUniqueTokenInit - unqFees);
+  });
+
+  itSub('Polkadex can send only up to its balance', async ({helper}) => {
+    const polkadexBalance = 10000n * (10n ** UNQ_DECIMALS);
+    const polkadexSovereignAccount = helper.address.paraSiblingSovereignAccount(POLKADEX_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, polkadexSovereignAccount, polkadexBalance);
+    const moreThanPolkadexHas = 2n * polkadexBalance;
+
+    const targetAccount = helper.arrange.createEmptyAccount();
+
+    const uniqueMultilocation = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {Parachain: UNIQUE_CHAIN},
+        },
+      },
+    };
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanPolkadexHas,
+    );
+
+    let maliciousXcmProgramSent: any;
+
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramSent.messageHash);
+
+    const targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+  });
+});
+
 // These tests are relevant only when
 // the the corresponding foreign assets are not registered
 describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
@@ -925,6 +1115,31 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         feeAssetItem,
       ]);
 
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectFailedToTransact(helper, messageSent);
+  });
+
+  itSub('Unique rejects PDX tokens from Polkadex', async ({helper}) => {
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      helper.arrange.createEmptyAccount().addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: POLKADEX_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueParachainMultilocation, maliciousXcmProgramFullId);
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 

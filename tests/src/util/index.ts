@@ -11,7 +11,7 @@ import {Context} from 'mocha';
 import config from '../config';
 import {ChainHelperBase} from './playgrounds/unique';
 import {ILogger} from './playgrounds/types';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper} from './playgrounds/unique.dev';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper} from './playgrounds/unique.dev';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -88,6 +88,8 @@ export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbea
 export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
 
 export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
+
+export const usingPolkadexPlaygrounds = (url: string, code: (helper: DevPolkadexHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevPolkadexHelper>(DevPolkadexHelper, url, code);
 
 export const MINIMUM_DONOR_FUND = 4_000_000n;
 export const DONOR_FUNDING = 4_000_000n;
