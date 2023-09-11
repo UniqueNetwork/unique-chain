@@ -166,4 +166,4 @@ check:
 
 .PHONY: clippy
 clippy:
-	SKIP_WASM_BUILD=1 cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests
+	cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests

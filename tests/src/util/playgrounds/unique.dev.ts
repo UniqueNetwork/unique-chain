@@ -278,6 +278,7 @@ export class DevUniqueHelper extends UniqueHelper {
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
+    if(!wsEndpoint) throw new Error('wsEndpoint was not set');
     const wsProvider = new WsProvider(wsEndpoint);
     this.api = new ApiPromise({
       provider: wsProvider,

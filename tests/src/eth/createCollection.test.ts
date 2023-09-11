@@ -217,7 +217,8 @@ describe('Create collection from EVM', () => {
       const collection = helper.nft.getCollectionObject(collectionId);
       const data = (await collection.getData())!;
 
-      expect(collectionCountAfter - collectionCountBefore).to.be.eq(1);
+      // Parallel test safety
+      expect(collectionCountAfter - collectionCountBefore).to.be.gte(1);
       expect(collectionId).to.be.eq(collectionCountAfter);
       expect(data.name).to.be.eq(name);
       expect(data.description).to.be.eq(description);
