@@ -137,7 +137,7 @@ jobs:
           jpath: |
             .baedeker/vendor
           tla-str: |
-            relay_spec=rococo-local
+            relay_spec=${{ env.RELAY_CHAIN_TYPE }}
             forked_spec=${{ matrix.network }}
             fork_source=${{ matrix.fork_source }}
           inputs: |
