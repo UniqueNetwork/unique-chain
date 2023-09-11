@@ -3,7 +3,7 @@
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper} from './unique';
+import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper, PolkadexHelper} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
@@ -249,6 +249,10 @@ export class Event {
       messageHash: eventJsonData(data, 0),
     }));
 
+    static Success = this.Method('Success', data => ({
+      messageHash: eventJsonData(data, 0),
+    }));
+
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
       outcome: eventData<XcmV2TraitsError>(data, 1),
@@ -400,6 +404,16 @@ export class DevAcalaHelper extends AcalaHelper {
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAcalaHelper;
+
+    super(logger, options);
+    this.wait = new WaitGroup(this);
+  }
+}
+
+export class DevPolkadexHelper extends PolkadexHelper {
+  wait: WaitGroup;
+  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? PolkadexHelper;
 
     super(logger, options);
     this.wait = new WaitGroup(this);

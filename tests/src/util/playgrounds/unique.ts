@@ -3694,6 +3694,12 @@ class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 }
 
+class PolkadexXcmHelperGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async whitelistToken(signer: TSigner, assetId: any) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xcmHelper.whitelistToken', [assetId], true);
+  }
+}
+
 class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async accounts(address: string, currencyId: any) {
     const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
@@ -3971,6 +3977,30 @@ export class AcalaHelper extends XcmChainHelper {
   }
 
   getSudo<T extends AcalaHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
+}
+
+export class PolkadexHelper extends XcmChainHelper {
+  assets: AssetsGroup<PolkadexHelper>;
+  balance: SubstrateBalanceGroup<PolkadexHelper>;
+  xTokens: XTokensGroup<PolkadexHelper>;
+  xcm: XcmGroup<PolkadexHelper>;
+  xcmHelper: PolkadexXcmHelperGroup<PolkadexHelper>;
+
+  constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
+    super(logger, options.helperBase ?? PolkadexHelper);
+
+    this.assets = new AssetsGroup(this);
+    this.balance = new SubstrateBalanceGroup(this);
+    this.xTokens = new XTokensGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.xcmHelper = new PolkadexXcmHelperGroup(this);
+  }
+
+  getSudo<T extends PolkadexHelper>() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const SudoHelperType = SudoHelper(this.helperBase);
     return this.clone(SudoHelperType) as T;

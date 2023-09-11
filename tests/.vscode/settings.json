@@ -1,6 +1,10 @@
 {
-	"mocha.enabled": true,
-	"mochaExplorer.files": "**/*.test.ts",
+	"mochaExplorer.env": {
+		"RUN_GOV_TESTS": "1",
+		"RUN_XCM_TESTS": "1"
+	},
+	"mochaExplorer.files": "src/**/*.test.ts",
+	"mochaExplorer.envPath": ".mocha.env",
 	"mochaExplorer.require": "ts-node/register",
 	"eslint.format.enable": true,
 	"[javascript]": {
