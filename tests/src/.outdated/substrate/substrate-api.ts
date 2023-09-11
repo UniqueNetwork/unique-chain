@@ -71,6 +71,7 @@ function defaultApiOptions(): ApiOptions {
 
 export async function getApiConnection(settings: ApiOptions | undefined = undefined): Promise<ApiPromise> {
   settings = settings || defaultApiOptions();
+  if(!settings.provider) throw new Error('provider was not set');
   const api = new ApiPromise(settings);
 
   if (api) {

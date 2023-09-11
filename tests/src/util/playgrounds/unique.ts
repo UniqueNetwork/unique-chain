@@ -492,6 +492,7 @@ export class ChainHelperBase {
   }
 
   static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TNetworks> {
+    if(!wsEndpoint) throw new Error('wsEndpoint was not set');
     const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
     await api.isReady;
 
@@ -507,6 +508,7 @@ export class ChainHelperBase {
     network: TNetworks;
   }> {
     if(typeof network === 'undefined' || network === null) network = 'opal';
+    if(!wsEndpoint) throw new Error('wsEndpoint was not set');
     const supportedRPC = {
       opal: {
         unique: require('@unique-nft/opal-testnet-types/definitions').unique.rpc,
