@@ -3255,8 +3255,8 @@ class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
     return this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.promoteMember`, [member]);
   }
 
-  promoteCall(newMember: string) {
-    return this.helper.constructApiCall(`api.tx.${this.collective}.promoteMember`, [newMember]);
+  promoteCall(member: string) {
+    return this.helper.constructApiCall(`api.tx.${this.collective}.promoteMember`, [member]);
   }
 
   demote(signer: TSigner, member: string) {
@@ -3274,6 +3274,10 @@ class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
   async getMembers() {
     return (await this.helper.getApi().query.fellowshipCollective.members.keys())
       .map((key) => key.args[0].toString());
+  }
+
+  async getMemberRank(member: string) {
+    return (await this.helper.callRpc('api.query.fellowshipCollective.members', [member])).toJSON().rank;
   }
 }
 
