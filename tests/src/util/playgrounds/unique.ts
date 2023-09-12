@@ -3381,6 +3381,10 @@ class DemocracyGroup extends HelperGroup<UniqueHelper> {
     return this.helper.constructApiCall('api.tx.democracy.externalProposeDefault', [{Inline: proposalCall.method.toHex()}]);
   }
 
+  externalProposeDefaultWithPreimageCall(preimage: string) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeDefault', [{Legacy: preimage}]);
+  }
+
   // ... and blacklist external proposal hash.
   vetoExternal(signer: TSigner, proposalHash: string) {
     return this.helper.executeExtrinsic(signer, 'api.tx.democracy.vetoExternal', [proposalHash]);
@@ -3727,6 +3731,20 @@ class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 }
 
+class UtilityGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async batch(signer: TSigner, txs: any[]) {
+    return await this.helper.executeExtrinsic(signer, 'api.tx.utility.batch', [txs]);
+  }
+
+  async batchAll(signer: TSigner, txs: any[]) {
+    return await this.helper.executeExtrinsic(signer, 'api.tx.utility.batchAll', [txs]);
+  }
+
+  batchAllCall(txs: any[]) {
+    return this.helper.constructApiCall('api.tx.utility.batchAll', [txs]);
+  }
+}
+
 class AcalaAssetRegistryGroup extends HelperGroup<AcalaHelper> {
   async registerForeignAsset(signer: TSigner, destination: any, metadata: AcalaAssetMetadata) {
     await this.helper.executeExtrinsic(signer, 'api.tx.assetRegistry.registerForeignAsset', [destination, metadata], true);
@@ -3829,6 +3847,7 @@ export class UniqueHelper extends ChainHelperBase {
   xcm: XcmGroup<UniqueHelper>;
   xTokens: XTokensGroup<UniqueHelper>;
   tokens: TokensGroup<UniqueHelper>;
+  utility: UtilityGroup<UniqueHelper>;
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
     super(logger, options.helperBase ?? UniqueHelper);
@@ -3859,6 +3878,7 @@ export class UniqueHelper extends ChainHelperBase {
     this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.xTokens = new XTokensGroup(this);
     this.tokens = new TokensGroup(this);
+    this.utility = new UtilityGroup(this);
   }
 
   getSudo<T extends UniqueHelper>() {
