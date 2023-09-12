@@ -1006,7 +1006,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     expect(targetAccountBalance).to.be.equal(0n);
   });
 
-  itSub('Should not accept reserve transfer of UNQ from Acala', async ({helper}) => {
+  itSub('Should not accept reserve transfer of UNQ from Polkadex', async ({helper}) => {
     const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
     const targetAccount = helper.arrange.createEmptyAccount();
 
