@@ -255,6 +255,7 @@ pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
+pallet-utility = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
