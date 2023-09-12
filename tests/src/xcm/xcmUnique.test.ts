@@ -832,12 +832,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     });
 
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
-      const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', [])).toJSON() as [])
+      const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', []))
+        .toJSON() as [])
         .map(nToBigInt).length != 0;
       /*
       Check whether the Unique token has been added
       to the whitelist, since an error will occur
-      if it is added again.
+      if it is added again. Needed for debugging
+      when this test is run multiple times.
       */
       if(!isWhitelisted) {
         await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
