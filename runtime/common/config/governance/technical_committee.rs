@@ -38,7 +38,7 @@ impl pallet_membership::Config<TechnicalCollectiveMembership> for Runtime {
 	type RemoveOrigin = RootOrMoreThanHalfCouncil;
 	type SwapOrigin = RootOrMoreThanHalfCouncil;
 	type ResetOrigin = EnsureRoot<AccountId>;
-	type PrimeOrigin = EnsureRoot<AccountId>;
+	type PrimeOrigin = RootOrMoreThanHalfCouncil;
 	type MembershipInitialized = TechnicalCommittee;
 	type MembershipChanged = TechnicalCommittee;
 	type MaxMembers = TechnicalMaxMembers;
