@@ -52,6 +52,7 @@ runtime-benchmarks = [
 	'pallet-scheduler/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
+	'pallet-utility/runtime-benchmarks',
 	'pallet-unique/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
@@ -118,6 +119,7 @@ std = [
 	'pallet-structure/std',
 	'pallet-sudo/std',
 	'pallet-timestamp/std',
+	'pallet-utility/std',
 	'pallet-transaction-payment-rpc-runtime-api/std',
 	'pallet-transaction-payment/std',
 	'pallet-treasury/std',
@@ -205,6 +207,7 @@ try-runtime = [
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
 	'pallet-timestamp/try-runtime',
+	'pallet-utility/try-runtime',
 	'pallet-transaction-payment/try-runtime',
 	'pallet-treasury/try-runtime',
 	'pallet-unique/try-runtime',
@@ -255,6 +258,7 @@ pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
+pallet-utility = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
