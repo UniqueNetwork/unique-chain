@@ -27,6 +27,7 @@ const requiredPallets = [
   'statetriemigration',
   'structure',
   'system',
+  'utility',
   'vesting',
   'parachainsystem',
   'parachaininfo',
