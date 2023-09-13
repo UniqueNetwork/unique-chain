@@ -41,7 +41,7 @@ describeGov('Governance: Initialization', () => {
 
         yaroslav,
         daniel,
-    ] = await helper.arrange.createAccounts(new Array(counselorsNum + techCommsNum + coreDevsNum).fill(10_000n), donor);
+      ] = await helper.arrange.createAccounts(new Array(counselorsNum + techCommsNum + coreDevsNum).fill(10_000n), donor);
 
       counselors = {
         alex,
@@ -65,12 +65,10 @@ describeGov('Governance: Initialization', () => {
   });
 
   itSub('Initialize Governance', async ({helper}) => {
-    const promoteFellow = (fellow: string, promotionsNum: number) => {
-        return new Array(promotionsNum).fill(helper.fellowship.collective.promoteCall(fellow));
-    };
+    const promoteFellow = (fellow: string, promotionsNum: number) => new Array(promotionsNum).fill(helper.fellowship.collective.promoteCall(fellow));
 
     const expectFellowRank = async (fellow: string, expectedRank: number) => {
-        expect(await helper.fellowship.collective.getMemberRank(fellow)).to.be.equal(expectedRank);
+      expect(await helper.fellowship.collective.getMemberRank(fellow)).to.be.equal(expectedRank);
     };
 
     console.log('\t- Setup the Prime of the Council via sudo');
