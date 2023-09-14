@@ -72,9 +72,6 @@ function sudoCall(helper: UniqueHelper, counselors: any) {
         helper.utility.batchAllCall([
             helper.council.membership.addMemberCall(counselors.prime.address),
             helper.council.membership.setPrimeCall(counselors.prime.address),
-        
-            helper.fellowship.collective.addMemberCall(counselors.prime.address),
-            ...promoteFellow(helper, counselors.prime, 7),
         ])
     ]);
 }
@@ -162,6 +159,9 @@ function initStuff(helper: UniqueHelper, govAccounts: any) {
             ...govAccounts.techcomms.rest,
         ]),
         ...addMemberCalls(helper, 'fellowshipCollective', govAccounts.fellowCoreDevs),
+
+        ...addMemberCalls(helper, 'fellowshipCollective', [govAccounts.counselors.prime]),
+        ...promoteFellow(helper, govAccounts.counselors.prime, 7),
 
         ...promoteFellows(helper, govAccounts.counselors.rest, 6),
         ...promoteFellows(helper, [govAccounts.techcomms.prime, ...govAccounts.techcomms.rest], 6),
