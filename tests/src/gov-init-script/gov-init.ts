@@ -29,20 +29,20 @@ async function govInit(url: string) {
 
         printCall(
             url,
-            "[Step 3] Tech Comm disables the maintenance",
-            disableMaintenance(helper),
-        );
-
-        printCall(
-            url,
-            "[Step 4] Register the Tech Comm Prime as Registrar",
+            "[Step 3] Register the Tech Comm Prime as Registrar",
             setupTechCommPrimeAsRegistrar(helper, govAccounts.techcomms.prime.address),
         )
 
         printCall(
             url,
-            "[Step 5] Tech Comm inserts identities",
+            "[Step 4] Tech Comm inserts identities",
             insertIdentities(helper, govAccounts),
+        );
+
+        printCall(
+            url,
+            "[Step 5] Tech Comm disables the maintenance",
+            disableMaintenance(helper),
         );
 
         printCall(
