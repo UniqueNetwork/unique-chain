@@ -1,9 +1,9 @@
-
 import {ApiPromise, WsProvider} from '@polkadot/api';
-import {AssetsGroup, ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, TokensGroup, UniqueHelper, XTokensGroup, XcmGroup} from './unique';
-import {ILogger,  TSigner} from './types';
-import {SudoHelper} from './unique.dev';
-import {AcalaAssetMetadata, DemocracyStandardAccountVote, MoonbeamAssetInfo} from './types.xcm';
+import {IKeyringPair} from '@polkadot/types/types';
+import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from './unique';
+import {ILogger, TSigner, TSubstrateAccount} from './types';
+import {AcalaAssetMetadata, DemocracyStandardAccountVote, IForeignAssetMetadata, MoonbeamAssetInfo} from './types.xcm';
+
 
 export class XcmChainHelper extends ChainHelperBase {
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -102,6 +102,169 @@ class PolkadexXcmHelperGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, 'api.tx.xcmHelper.whitelistToken', [assetId], true);
   }
 }
+
+export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
+  async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.registerForeignAsset',
+      [ownerAddress, location, metadata],
+      true,
+    );
+  }
+
+  async update(signer: TSigner, foreignAssetId: number, location: any, metadata: IForeignAssetMetadata) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.updateForeignAsset',
+      [foreignAssetId, location, metadata],
+      true,
+    );
+  }
+}
+
+export class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  palletName: string;
+
+  constructor(helper: T, palletName: string) {
+    super(helper);
+
+    this.palletName = palletName;
+  }
+
+  async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+  }
+
+  async setSafeXcmVersion(signer: TSigner, version: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.forceDefaultXcmVersion`, [version], true);
+  }
+
+  async teleportAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
+  }
+
+  async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint, xcmVersion = 3) {
+    const destinationContent = {
+      parents: 0,
+      interior: {
+        X1: {
+          Parachain: destinationParaId,
+        },
+      },
+    };
+
+    const beneficiaryContent = {
+      parents: 0,
+      interior: {
+        X1: {
+          AccountId32: {
+            network: 'Any',
+            id: targetAccount,
+          },
+        },
+      },
+    };
+
+    const assetsContent = [
+      {
+        id: {
+          Concrete: {
+            parents: 0,
+            interior: 'Here',
+          },
+        },
+        fun: {
+          Fungible: amount,
+        },
+      },
+    ];
+
+    let destination;
+    let beneficiary;
+    let assets;
+
+    if(xcmVersion == 2) {
+      destination = {V1: destinationContent};
+      beneficiary = {V1: beneficiaryContent};
+      assets = {V1: assetsContent};
+
+    } else if(xcmVersion == 3) {
+      destination = {V2: destinationContent};
+      beneficiary = {V2: beneficiaryContent};
+      assets = {V2: assetsContent};
+
+    } else {
+      throw Error('Unknown XCM version: ' + xcmVersion);
+    }
+
+    const feeAssetItem = 0;
+
+    await this.teleportAssets(signer, destination, beneficiary, assets, feeAssetItem);
+  }
+
+  async send(signer: IKeyringPair, destination: any, message: any) {
+    await this.helper.executeExtrinsic(
+      signer,
+      `api.tx.${this.palletName}.send`,
+      [
+        destination,
+        message,
+      ],
+      true,
+    );
+  }
+}
+
+export class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async transfer(signer: TSigner, currencyId: any, amount: bigint, destination: any, destWeight: any) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transfer', [currencyId, amount, destination, destWeight], true);
+  }
+
+  async transferMultiasset(signer: TSigner, asset: any, destination: any, destWeight: any) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
+  }
+
+  async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: any) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
+  }
+}
+
+
+
+export class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async accounts(address: string, currencyId: any) {
+    const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
+    return BigInt(free);
+  }
+}
+
+export class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  async create(signer: TSigner, assetId: number, admin: string, minimalBalance: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
+  }
+
+  async setMetadata(signer: TSigner, assetId: number, name: string, symbol: string, decimals: number) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
+  }
+
+  async mint(signer: TSigner, assetId: number, beneficiary: string, amount: bigint) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
+  }
+
+  async account(assetId: string | number, address: string) {
+    const accountAsset = (
+      await this.helper.callRpc('api.query.assets.account', [assetId, address])
+    ).toJSON()! as any;
+
+    if(accountAsset !== null) {
+      return BigInt(accountAsset['balance']);
+    } else {
+      return null;
+    }
+  }
+}
+
 export class RelayHelper extends XcmChainHelper {
   balance: SubstrateBalanceGroup<RelayHelper>;
   xcm: XcmGroup<RelayHelper>;

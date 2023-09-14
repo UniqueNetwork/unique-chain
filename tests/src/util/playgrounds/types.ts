@@ -216,13 +216,6 @@ export interface ISchedulerOptions {
   },
 }
 
-export interface IForeignAssetMetadata {
-  name?: number | Uint8Array,
-  symbol?: string,
-  decimals?: number,
-  minimalBalance?: bigint,
-}
-
 export interface DemocracySplitAccount {
   aye: bigint,
   nay: bigint,

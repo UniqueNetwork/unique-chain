@@ -27,3 +27,10 @@ export interface DemocracyStandardAccountVote {
     conviction: number,
   },
 }
+
+export interface IForeignAssetMetadata {
+  name?: number | Uint8Array,
+  symbol?: string,
+  decimals?: number,
+  minimalBalance?: bigint,
+}
