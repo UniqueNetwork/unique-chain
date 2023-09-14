@@ -1,0 +1,74 @@
+{
+    "counselors": {
+        "prime": {
+            "address": "",
+            "identity": {
+                "display": "Alexander Mitrovic"
+            }
+        },
+        "rest": [
+            {
+                "address": "",
+                "identity": {
+                    "display": "Ildar Shakirov"
+                }
+            },
+            {
+                "address": "",
+                "identity": {
+                    "display": "Filip Filipovic"
+                }
+            },
+            {
+                "address": "",
+                "identity": {
+                    "display": "Charu Sethi"
+                }
+            },
+            {
+                "address": "",
+                "identity": {
+                    "display": "Irina Karagyaur"
+                }
+            }
+        ] 
+    },
+
+    "techcomms": {
+        "prime": {
+            "address": "",
+            "identity": {
+                "display": "Greg Zaitsev"
+            }
+        },
+        "rest": [
+            {
+                "address": "",
+                "identity": {
+                    "display": "Andrey Kuznetsov"
+                }
+            },
+            {
+                "address": "",
+                "identity": {
+                    "display": "Konstantine Astakhov"
+                }
+            }
+        ]
+    },
+
+    "fellowCoreDevs": [
+        {
+            "address": "",
+            "identity": {
+                "display": "Yaroslav Bolyukin"
+            }
+        },
+        {
+            "address": "",
+            "identity": {
+                "display": "Daniel Shiposha"
+            }
+        }
+    ]
+}

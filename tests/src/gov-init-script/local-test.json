@@ -1,0 +1,74 @@
+{
+    "counselors": {
+        "prime": {
+            "address": "5FHneW46xGXgs5mUiveU4sbTyGBzmstUspZC92UhjJM694ty",
+            "identity": {
+                "display": "Alexander Mitrovic"
+            }
+        },
+        "rest": [
+            {
+                "address": "5GrntSMRE69cb6HvZgs8YHcviFkr8UrvFNqRj65Ar3EasfGU",
+                "identity": {
+                    "display": "Ildar Shakirov"
+                }
+            },
+            {
+                "address": "5FyF1hEEynf4Lyam4kaGf6epHxoiFKg7rex7RShBdaNo68r5",
+                "identity": {
+                    "display": "Filip Filipovic"
+                }
+            },
+            {
+                "address": "5FBm9ryz1Xpm4oup47fPj6ZS7bC1QgrVKBXSogQpkQwxX1Cf",
+                "identity": {
+                    "display": "Charu Sethi"
+                }
+            },
+            {
+                "address": "5ELHMPhjVRgFZiKXu3qL4i5N45rLzjfdqHpVW5L1AWPeMyHB",
+                "identity": {
+                    "display": "Irina Karagyaur"
+                }
+            }
+        ] 
+    },
+
+    "techcomms": {
+        "prime": {
+            "address": "5FLSigC9HGRKVhB9FiEo4Y3koPsNmBmLJbpXg2mp1hXcS59Y",
+            "identity": {
+                "display": "Greg Zaitsev"
+            }
+        },
+        "rest": [
+            {
+                "address": "5GNmCJJ7pN6WYzPG3Q6stXUxNXUi71S8PHQTRKTtd2qVhmqW",
+                "identity": {
+                    "display": "Andrey Kuznetsov"
+                }
+            },
+            {
+                "address": "5Hb8dFPdewUr2L9Y8TSFaFeSeJcK7Qm5jfGQnNQpcsuwz3ju",
+                "identity": {
+                    "display": "Konstantin Astakhov"
+                }
+            }
+        ]
+    },
+
+    "fellowCoreDevs": [
+        {
+            "address": "5CtKTb6PWP996TyRxLEnitkYqbYQc3aVrBzEyu72FMshpLhC",
+            "identity": {
+                "display": "Yaroslav Bolyukin"
+            }
+        },
+        {
+            "address": "5C5fdMESVG6L4skQS22iu7zwkVoqRpHQNjQcbXP3bpq4GxA8",
+            "identity": {
+                "display": "Daniel Shiposha"
+            }
+        }
+    ]
+}
