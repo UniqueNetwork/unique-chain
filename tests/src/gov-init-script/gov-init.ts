@@ -48,7 +48,7 @@ async function govInit(url: string) {
         printCall(
             url,
             "[Step 6] Council Prime initiates a referendum to add the stuff",
-            initStuff(helper, network, govAccounts),
+            initStuff(helper, govAccounts),
         );
     }, url);
 }
@@ -152,7 +152,7 @@ function insertIdentities(helper: UniqueHelper, govAccounts: any) {
     ]);
 }
 
-function initStuff(helper: UniqueHelper, network: string, govAccounts: any) {
+function initStuff(helper: UniqueHelper, govAccounts: any) {
     const referendumProposal = helper.utility.batchAllCall([
         ...addMemberCalls(helper, 'councilMembership', govAccounts.counselors.rest),
 
