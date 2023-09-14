@@ -609,7 +609,7 @@ export class DevAstarHelper extends AstarHelper {
     this.wait = new WaitGroup(this);
   }
 
-  getSudo<T extends UniqueHelper>() {
+  getSudo<T extends AstarHelper>() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const SudoHelperType = SudoHelper(this.helperBase);
     return this.clone(SudoHelperType) as T;
@@ -636,7 +636,7 @@ export class DevAcalaHelper extends AcalaHelper {
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
-  getSudo<T extends UniqueHelper>() {
+  getSudo<T extends AcalaHelper>() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const SudoHelperType = SudoHelper(this.helperBase);
     return this.clone(SudoHelperType) as T;
