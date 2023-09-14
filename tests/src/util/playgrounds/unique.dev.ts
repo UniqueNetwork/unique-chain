@@ -616,16 +616,7 @@ export class DevAstarHelper extends AstarHelper {
   }
 }
 
-export class DevShidenHelper extends AstarHelper {
-  wait: WaitGroup;
-
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
-    options.helperBase = options.helperBase ?? DevShidenHelper;
-
-    super(logger, options);
-    this.wait = new WaitGroup(this);
-  }
-}
+export class DevShidenHelper extends DevAstarHelper { }
 
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
