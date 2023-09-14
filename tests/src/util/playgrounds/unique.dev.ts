@@ -3,16 +3,17 @@
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper, PolkadexHelper} from './unique';
+import {UniqueHelper, ChainHelperBase, ChainHelperBaseConstructor} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, IPovInfo, ITransactionResult, TSigner} from './types';
 import {FrameSystemEventRecord, XcmV2TraitsError} from '@polkadot/types/lookup';
-import {VoidFn} from '@polkadot/api/types';
+import {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper} from './unique.xcm';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -260,6 +261,80 @@ export class Event {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
+  return class extends Base {
+    constructor(...args: any[]) {
+      super(...args);
+    }
+
+    async executeExtrinsic(
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+      options: Partial<SignerOptions> | null = null,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+      const result = await super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudo',
+        [call],
+        expectSuccess,
+        options,
+      );
+
+      if(result.status === 'Fail') return result;
+
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if(data.isErr) {
+        if(data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else if(data.asErr.isToken) {
+          throw new Error(`Token: ${data.asErr.asToken}`);
+        }
+        // May be [object Object] in case of unhandled non-unit enum
+        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+      }
+      return result;
+    }
+    async executeExtrinsicUncheckedWeight(
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+      options: Partial<SignerOptions> | null = null,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+      const result = await super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudoUncheckedWeight',
+        [call, {refTime: 0, proofSize: 0}],
+        expectSuccess,
+        options,
+      );
+
+      if(result.status === 'Fail') return result;
+
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if(data.isErr) {
+        if(data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else if(data.asErr.isToken) {
+          throw new Error(`Token: ${data.asErr.asToken}`);
+        }
+        // May be [object Object] in case of unhandled non-unit enum
+        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+      }
+      return result;
+    }
+  };
+}
+
 export class DevUniqueHelper extends UniqueHelper {
   /**
    * Arrange methods for tests
@@ -326,6 +401,11 @@ export class DevUniqueHelper extends UniqueHelper {
     this.network = await UniqueHelper.detectNetwork(this.api);
     this.wsEndpoint = wsEndpoint;
   }
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
 }
 
 export class DevRelayHelper extends RelayHelper {
@@ -386,6 +466,12 @@ export class DevAstarHelper extends AstarHelper {
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
+
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
 }
 
 export class DevShidenHelper extends AstarHelper {
@@ -408,6 +494,11 @@ export class DevAcalaHelper extends AcalaHelper {
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
+  getSudo<T extends UniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
 }
 
 export class DevPolkadexHelper extends PolkadexHelper {
@@ -417,6 +508,12 @@ export class DevPolkadexHelper extends PolkadexHelper {
 
     super(logger, options);
     this.wait = new WaitGroup(this);
+  }
+
+  getSudo<T extends PolkadexHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
   }
 }
 
