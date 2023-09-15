@@ -50,6 +50,12 @@ async function govInit(url: string) {
             "[Step 6] Council Prime initiates a referendum to add the stuff",
             initStuff(helper, govAccounts),
         );
+
+        printCall(
+            url,
+            "Misc: sponsor gov accounts",
+            sponsorGovAccounts(helper, govAccounts),
+        );
     }, url);
 }
 
@@ -185,6 +191,19 @@ function initStuff(helper: UniqueHelper, govAccounts: any) {
             councilProposal,
             councilProposal.encodedLength,
         ])
+    ]);
+}
+
+function sponsorGovAccounts(helper: UniqueHelper, govAccounts: any) {
+    const transferCalls = (group: any[], balance: bigint = 1000n * (10n ** 18n)) => {
+        return group.map(account => helper.constructApiCall('api.tx.balances.transfer', [account.address, balance]));
+    };
+
+    return helper.utility.batchAllCall([
+        ...transferCalls([govAccounts.counselors.prime], 10_000n * (10n ** 18n)),
+        ...transferCalls(govAccounts.counselors.rest),
+        ...transferCalls([govAccounts.techcomms.prime, ...govAccounts.techcomms.rest]),
+        ...transferCalls(govAccounts.fellowCoreDevs),
     ]);
 }
 
