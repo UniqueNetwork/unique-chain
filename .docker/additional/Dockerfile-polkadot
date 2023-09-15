@@ -2,7 +2,7 @@
 FROM ubuntu:22.04 as rust-builder
 LABEL maintainer="Unique.Network"
 
-ARG RUST_TOOLCHAIN=nightly-2022-10-09
+ARG RUST_TOOLCHAIN=nightly-2023-05-22
 
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"

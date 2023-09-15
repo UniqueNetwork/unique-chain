@@ -8,7 +8,7 @@ git clone https://github.com/paritytech/polkadot.git && cd polkadot
 git checkout release-v0.9.27
 ```
 
-2. Build with nightly-2022-05-11
+2. Build with nightly-2023-05-22
 ```bash
 cargo build --release
 ```
