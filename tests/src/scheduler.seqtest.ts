@@ -47,9 +47,8 @@ describe('Scheduling token and balance transfers', () => {
     const token = await collection.mintToken(alice);
     const scheduledId = scheduleKind == 'named' ? helper.arrange.makeScheduledId() : undefined;
     const blocksBeforeExecution = 4;
-
-    await token.scheduleAfter(blocksBeforeExecution, {scheduledId})
-      .transfer(alice, {Substrate: bob.address});
+    await helper.scheduler.scheduleAfter(blocksBeforeExecution, {scheduledId})
+      .nft.transferToken(alice, collection.collectionId, token.tokenId, {Substrate: bob.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + blocksBeforeExecution + 1;
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
@@ -103,8 +102,8 @@ describe('Scheduling token and balance transfers', () => {
 
     expect(await token.getOwner()).to.be.deep.equal({Substrate: alice.address});
 
-    await token.scheduleAfter(waitForBlocks, {scheduledId})
-      .transfer(alice, {Substrate: bob.address});
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId})
+      .nft.transferToken(alice, collection.collectionId, token.tokenId, {Substrate: bob.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await helper.scheduler.cancelScheduled(alice, scheduledId);
@@ -363,8 +362,8 @@ describe('Scheduling token and balance transfers', () => {
     const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(waitForBlocks, {scheduledId})
-      .transfer(bob, {Substrate: alice.address});
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId})
+      .nft.transferToken(bob, collection.collectionId, token.tokenId, {Substrate: alice.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await helper.getSudo().scheduler.cancelScheduled(superuser, scheduledId);
@@ -404,8 +403,8 @@ describe('Scheduling token and balance transfers', () => {
     const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 6;
 
-    await token.scheduleAfter(waitForBlocks, {scheduledId})
-      .transfer(bob, {Substrate: alice.address});
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId})
+      .nft.transferToken(bob, collection.collectionId, token.tokenId, {Substrate: alice.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const priority = 112;
@@ -583,8 +582,8 @@ describe('Negative Test: Scheduling', () => {
     const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(waitForBlocks, {scheduledId})
-      .transfer(alice, {Substrate: bob.address});
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId})
+      .nft.transferToken(alice, collection.collectionId, token.tokenId, {Substrate: bob.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     const scheduled = helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId});
@@ -614,8 +613,8 @@ describe('Negative Test: Scheduling', () => {
     const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(waitForBlocks, {scheduledId})
-      .transfer(alice, {Substrate: bob.address});
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId})
+      .nft.transferToken(alice, collection.collectionId, token.tokenId, {Substrate: bob.address});
     const executionBlock = await helper.chain.getLatestBlockNumber() + waitForBlocks + 1;
 
     await expect(helper.scheduler.cancelScheduled(bob, scheduledId))
@@ -655,8 +654,8 @@ describe('Negative Test: Scheduling', () => {
     const scheduledId = helper.arrange.makeScheduledId();
     const waitForBlocks = 4;
 
-    await token.scheduleAfter(waitForBlocks, {scheduledId})
-      .transfer(bob, {Substrate: alice.address});
+    await helper.scheduler.scheduleAfter(waitForBlocks, {scheduledId})
+      .nft.transferToken(bob, collection.collectionId, token.tokenId, {Substrate: alice.address});
 
     const priority = 112;
     await expect(helper.scheduler.changePriority(alice, scheduledId, priority))

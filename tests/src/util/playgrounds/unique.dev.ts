@@ -3,16 +3,18 @@
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, MoonbeamHelper, ChainHelperBase, AcalaHelper, RelayHelper, WestmintHelper, AstarHelper, PolkadexHelper} from './unique';
+import {UniqueHelper, ChainHelperBase, ChainHelperBaseConstructor, HelperGroup, UniqueHelperConstructor} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId, IPovInfo, ITransactionResult, TSigner} from './types';
+import {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types';
 import {FrameSystemEventRecord, XcmV2TraitsError} from '@polkadot/types/lookup';
-import {VoidFn} from '@polkadot/api/types';
+import {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup} from './unique.xcm';
+import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, ICollectiveGroup, IFellowshipGroup, RankedCollectiveGroup, ReferendaGroup} from './unique.governance';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -260,6 +262,192 @@ export class Event {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/naming-convention
+export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
+  return class extends Base {
+    constructor(...args: any[]) {
+      super(...args);
+    }
+
+    async executeExtrinsic(
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+      options: Partial<SignerOptions> | null = null,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+      const result = await super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudo',
+        [call],
+        expectSuccess,
+        options,
+      );
+
+      if(result.status === 'Fail') return result;
+
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if(data.isErr) {
+        if(data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else if(data.asErr.isToken) {
+          throw new Error(`Token: ${data.asErr.asToken}`);
+        }
+        // May be [object Object] in case of unhandled non-unit enum
+        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+      }
+      return result;
+    }
+    async executeExtrinsicUncheckedWeight(
+      sender: IKeyringPair,
+      extrinsic: string,
+      params: any[],
+      expectSuccess?: boolean,
+      options: Partial<SignerOptions> | null = null,
+    ): Promise<ITransactionResult> {
+      const call = this.constructApiCall(extrinsic, params);
+      const result = await super.executeExtrinsic(
+        sender,
+        'api.tx.sudo.sudoUncheckedWeight',
+        [call, {refTime: 0, proofSize: 0}],
+        expectSuccess,
+        options,
+      );
+
+      if(result.status === 'Fail') return result;
+
+      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
+      if(data.isErr) {
+        if(data.asErr.isModule) {
+          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+          const metaError = super.getApi()?.registry.findMetaError(error);
+          throw new Error(`${metaError.section}.${metaError.name}`);
+        } else if(data.asErr.isToken) {
+          throw new Error(`Token: ${data.asErr.asToken}`);
+        }
+        // May be [object Object] in case of unhandled non-unit enum
+        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+      }
+      return result;
+    }
+  };
+}
+
+class SchedulerGroup extends HelperGroup<UniqueHelper> {
+  constructor(helper: UniqueHelper) {
+    super(helper);
+  }
+
+  cancelScheduled(signer: TSigner, scheduledId: string) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.scheduler.cancelNamed',
+      [scheduledId],
+      true,
+    );
+  }
+
+  changePriority(signer: TSigner, scheduledId: string, priority: number) {
+    return this.helper.executeExtrinsic(
+      signer,
+      'api.tx.scheduler.changeNamedPriority',
+      [scheduledId, priority],
+      true,
+    );
+  }
+
+  scheduleAt<T extends DevUniqueHelper>(
+    executionBlockNumber: number,
+    options: ISchedulerOptions = {},
+  ) {
+    return this.schedule<T>('schedule', executionBlockNumber, options);
+  }
+
+  scheduleAfter<T extends DevUniqueHelper>(
+    blocksBeforeExecution: number,
+    options: ISchedulerOptions = {},
+  ) {
+    return this.schedule<T>('scheduleAfter', blocksBeforeExecution, options);
+  }
+
+  schedule<T extends UniqueHelper>(
+    scheduleFn: 'schedule' | 'scheduleAfter',
+    blocksNum: number,
+    options: ISchedulerOptions = {},
+  ) {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const ScheduledHelperType = ScheduledUniqueHelper(this.helper.helperBase);
+    return this.helper.clone(ScheduledHelperType, {
+      scheduleFn,
+      blocksNum,
+      options,
+    }) as T;
+  }
+}
+
+class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
+  //todo:collator documentation
+  addInvulnerable(signer: TSigner, address: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.addInvulnerable', [address]);
+  }
+
+  removeInvulnerable(signer: TSigner, address: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.removeInvulnerable', [address]);
+  }
+
+  async getInvulnerables(): Promise<string[]> {
+    return (await this.helper.callRpc('api.query.collatorSelection.invulnerables')).map((x: any) => x.toHuman());
+  }
+
+  /** and also total max invulnerables */
+  maxCollators(): number {
+    return (this.helper.getApi().consts.configuration.defaultCollatorSelectionMaxCollators.toJSON() as number);
+  }
+
+  async getDesiredCollators(): Promise<number> {
+    return (await this.helper.callRpc('api.query.configuration.collatorSelectionDesiredCollatorsOverride')).toNumber();
+  }
+
+  setLicenseBond(signer: TSigner, amount: bigint) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.configuration.setCollatorSelectionLicenseBond', [amount]);
+  }
+
+  async getLicenseBond(): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.configuration.collatorSelectionLicenseBondOverride')).toBigInt();
+  }
+
+  obtainLicense(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.getLicense', []);
+  }
+
+  releaseLicense(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.releaseLicense', []);
+  }
+
+  forceReleaseLicense(signer: TSigner, released: string) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.forceReleaseLicense', [released]);
+  }
+
+  async hasLicense(address: string): Promise<bigint> {
+    return (await this.helper.callRpc('api.query.collatorSelection.licenseDepositOf', [address])).toBigInt();
+  }
+
+  onboard(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.onboard', []);
+  }
+
+  offboard(signer: TSigner) {
+    return this.helper.executeExtrinsic(signer, 'api.tx.collatorSelection.offboard', []);
+  }
+
+  async getCandidates(): Promise<string[]> {
+    return (await this.helper.callRpc('api.query.collatorSelection.candidates')).map((x: any) => x.toHuman());
+  }
+}
+
 export class DevUniqueHelper extends UniqueHelper {
   /**
    * Arrange methods for tests
@@ -269,6 +457,16 @@ export class DevUniqueHelper extends UniqueHelper {
   admin: AdminGroup;
   session: SessionGroup;
   testUtils: TestUtilGroup;
+  foreignAssets: ForeignAssetsGroup;
+  xcm: XcmGroup<UniqueHelper>;
+  xTokens: XTokensGroup<UniqueHelper>;
+  tokens: TokensGroup<UniqueHelper>;
+  scheduler: SchedulerGroup;
+  collatorSelection: CollatorSelectionGroup;
+  council: ICollectiveGroup;
+  technicalCommittee: ICollectiveGroup;
+  fellowship: IFellowshipGroup;
+  democracy: DemocracyGroup;
 
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
@@ -279,6 +477,25 @@ export class DevUniqueHelper extends UniqueHelper {
     this.admin = new AdminGroup(this);
     this.testUtils = new TestUtilGroup(this);
     this.session = new SessionGroup(this);
+    this.foreignAssets = new ForeignAssetsGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.xTokens = new XTokensGroup(this);
+    this.tokens = new TokensGroup(this);
+    this.scheduler = new SchedulerGroup(this);
+    this.collatorSelection = new CollatorSelectionGroup(this);
+    this.council = {
+      collective: new CollectiveGroup(this, 'council'),
+      membership: new CollectiveMembershipGroup(this, 'councilMembership'),
+    };
+    this.technicalCommittee = {
+      collective: new CollectiveGroup(this, 'technicalCommittee'),
+      membership: new CollectiveMembershipGroup(this, 'technicalCommitteeMembership'),
+    };
+    this.fellowship = {
+      collective: new RankedCollectiveGroup(this, 'fellowshipCollective'),
+      referenda: new ReferendaGroup(this, 'fellowshipReferenda'),
+    };
+    this.democracy = new DemocracyGroup(this);
   }
 
   async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
@@ -325,6 +542,11 @@ export class DevUniqueHelper extends UniqueHelper {
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
     this.wsEndpoint = wsEndpoint;
+  }
+  getSudo<T extends DevUniqueHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
   }
 }
 
@@ -386,18 +608,15 @@ export class DevAstarHelper extends AstarHelper {
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
-}
 
-export class DevShidenHelper extends AstarHelper {
-  wait: WaitGroup;
-
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
-    options.helperBase = options.helperBase ?? DevShidenHelper;
-
-    super(logger, options);
-    this.wait = new WaitGroup(this);
+  getSudo<T extends AstarHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
   }
 }
+
+export class DevShidenHelper extends DevAstarHelper { }
 
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
@@ -408,6 +627,11 @@ export class DevAcalaHelper extends AcalaHelper {
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
+  getSudo<T extends AcalaHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
+  }
 }
 
 export class DevPolkadexHelper extends PolkadexHelper {
@@ -417,6 +641,12 @@ export class DevPolkadexHelper extends PolkadexHelper {
 
     super(logger, options);
     this.wait = new WaitGroup(this);
+  }
+
+  getSudo<T extends PolkadexHelper>() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as T;
   }
 }
 
@@ -1210,4 +1440,64 @@ class AdminGroup {
       payout: e.event.data[2].toBigInt(),
     }));
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/naming-convention
+function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
+  return class extends Base {
+    scheduleFn: 'schedule' | 'scheduleAfter';
+    blocksNum: number;
+    options: ISchedulerOptions;
+
+    constructor(...args: any[]) {
+      const logger = args[0] as ILogger;
+      const options = args[1] as {
+        scheduleFn: 'schedule' | 'scheduleAfter',
+        blocksNum: number,
+        options: ISchedulerOptions
+      };
+
+      super(logger);
+
+      this.scheduleFn = options.scheduleFn;
+      this.blocksNum = options.blocksNum;
+      this.options = options.options;
+    }
+
+    executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
+      const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
+
+      const mandatorySchedArgs = [
+        this.blocksNum,
+        this.options.periodic ? [this.options.periodic.period, this.options.periodic.repetitions] : null,
+        this.options.priority ?? null,
+        scheduledTx,
+      ];
+
+      let schedArgs;
+      let scheduleFn;
+
+      if(this.options.scheduledId) {
+        schedArgs = [this.options.scheduledId!, ...mandatorySchedArgs];
+
+        if(this.scheduleFn == 'schedule') {
+          scheduleFn = 'scheduleNamed';
+        } else if(this.scheduleFn == 'scheduleAfter') {
+          scheduleFn = 'scheduleNamedAfter';
+        }
+      } else {
+        schedArgs = mandatorySchedArgs;
+        scheduleFn = this.scheduleFn;
+      }
+
+      const extrinsic = 'api.tx.scheduler.' + scheduleFn;
+
+      return super.executeExtrinsic(
+        sender,
+        extrinsic as any,
+        schedArgs,
+        expectSuccess,
+      );
+    }
+  };
 }
