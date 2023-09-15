@@ -1,32 +1,32 @@
 {
     "counselors": {
         "prime": {
-            "address": "",
+            "address": "5HirAP6re22CeSQUbpPr9BTm3kBhCZRmPkgXLtXRzCjh6Xbg",
             "identity": {
                 "display": "Alexander Mitrovic"
             }
         },
         "rest": [
             {
-                "address": "",
+                "address": "5HmCV6jyaSSkJsEsBqj5WN7c24WzYb1Xtjy4ypYPm2H5Xayt",
                 "identity": {
                     "display": "Ildar Shakirov"
                 }
             },
             {
-                "address": "",
+                "address": "5D2KEPFbLBRERLpiJmzXPEcUzcDj3oGH7UdnvLBj6WTZJdYS",
                 "identity": {
                     "display": "Filip Filipovic"
                 }
             },
             {
-                "address": "",
+                "address": "5HeGSsHnQriu5HYaa24CuBgzHbEDQRWTWPovpvy2xaQm5Kbo",
                 "identity": {
                     "display": "Charu Sethi"
                 }
             },
             {
-                "address": "",
+                "address": "5HHGdYpWFmVJbCdqCN4tZYmVrS5Gs5EuRQF2WDVZtdvoNHsF",
                 "identity": {
                     "display": "Irina Karagyaur"
                 }
@@ -36,20 +36,20 @@
 
     "techcomms": {
         "prime": {
-            "address": "",
+            "address": "5DyQM6JgC1U8w3LCYLSxvHFY54hfaZoJKCyCy8UmKjnGbh8q",
             "identity": {
                 "display": "Greg Zaitsev"
             }
         },
         "rest": [
             {
-                "address": "",
+                "address": "5EqNwTqpHTa8RzjHGvycy9XcsyutJkfDGb8NoVNfBRVibZgs",
                 "identity": {
                     "display": "Andrey Kuznetsov"
                 }
             },
             {
-                "address": "",
+                "address": "5F6dtqGLmiT9ZQ7ohLKbtEuHwrseQsj853LjQufGfQZrqwHD",
                 "identity": {
                     "display": "Konstantin Astakhov"
                 }
@@ -59,13 +59,13 @@
 
     "fellowCoreDevs": [
         {
-            "address": "",
+            "address": "5CDWkaYPv3g5C3vAikhhRyyfedDrifvdLBTojxCfQEEKwFbf",
             "identity": {
                 "display": "Yaroslav Bolyukin"
             }
         },
         {
-            "address": "",
+            "address": "5DjwjNZb3KwYd47PRmbnJAzt3mNPSQXXvnWSVRgaMJRMhQPb",
             "identity": {
                 "display": "Daniel Shiposha"
             }
