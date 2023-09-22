@@ -43,3 +43,6 @@ scale-info = { workspace = true }
 evm-coder = { workspace = true }
 up-sponsorship = { workspace = true }
 xcm = { workspace = true }
+
+[dev-dependencies]
+pallet-common = { workspace = true, features = ["tests"] }

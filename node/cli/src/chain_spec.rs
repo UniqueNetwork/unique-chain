@@ -168,12 +168,14 @@ macro_rules! testnet_genesis {
 					.collect(),
 			},
 			common: Default::default(),
+			configuration: Default::default(),
 			nonfungible: Default::default(),
 			treasury: Default::default(),
 			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},
+
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
@@ -206,6 +208,7 @@ macro_rules! testnet_genesis {
 			ethereum: EthereumConfig {},
 			polkadot_xcm: Default::default(),
 			transaction_payment: Default::default(),
+			..Default::default()
 		}
 	}};
 }
@@ -228,6 +231,7 @@ macro_rules! testnet_genesis {
 					.to_vec(),
 			},
 			common: Default::default(),
+			configuration: Default::default(),
 			nonfungible: Default::default(),
 			balances: BalancesConfig {
 				balances: $endowed_accounts
@@ -277,7 +281,7 @@ pub fn development_config() -> DefaultChainSpec {
 		// Name
 		format!(
 			"{}{}",
-			default_runtime::RUNTIME_NAME.to_uppercase(),
+			default_runtime::VERSION.spec_name.to_uppercase(),
 			if cfg!(feature = "unique-runtime") {
 				""
 			} else {
@@ -286,14 +290,14 @@ pub fn development_config() -> DefaultChainSpec {
 		)
 		.as_str(),
 		// ID
-		format!("{}_dev", default_runtime::RUNTIME_NAME).as_str(),
+		format!("{}_dev", default_runtime::VERSION.spec_name).as_str(),
 		ChainType::Local,
 		move || {
 			testnet_genesis!(
 				default_runtime,
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
+				[
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_from_seed::<AuraId>("Alice"),
@@ -351,7 +355,7 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		// Name
 		format!(
 			"{}{}",
-			default_runtime::RUNTIME_NAME.to_uppercase(),
+			default_runtime::VERSION.impl_name.to_uppercase(),
 			if cfg!(feature = "unique-runtime") {
 				""
 			} else {
@@ -360,14 +364,14 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 		)
 		.as_str(),
 		// ID
-		format!("{}_local", default_runtime::RUNTIME_NAME).as_str(),
+		format!("{}_local", default_runtime::VERSION.spec_name).as_str(),
 		ChainType::Local,
 		move || {
 			testnet_genesis!(
 				default_runtime,
 				// Sudo account
 				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				vec![
+				[
 					(
 						get_account_id_from_seed::<sr25519::Public>("Alice"),
 						get_from_seed::<AuraId>("Alice"),

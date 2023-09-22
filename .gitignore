@@ -14,8 +14,12 @@ einstein_key_file
 /.cargo/
 /.vscode/
 
+.envrc-dev
+
 tests/.vscode
 cumulus-parachain/
 *genesis
 *wasm
 tmp/
+
+*.log

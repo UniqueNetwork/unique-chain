@@ -448,6 +448,29 @@ describe('Integration Test: Token Properties', () => {
       expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(smallerProp);
       expect(consumedSpace).to.be.equal(sizeOfProperty(biggerProp) - expectedConsumedSpaceDiff);
     }));
+
+  itSub('Set sponsored properties', async({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {tokenPropertyPermissions: [{key: 'k', permission: {tokenOwner: true}}]});
+
+    await collection.setSponsor(alice, alice.address);
+    await collection.confirmSponsorship(alice);
+    await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
+    await collection.addToAllowList(alice, {Substrate: bob.address});
+    await collection.setLimits(alice, {sponsoredDataRateLimit: {blocks: 30}});
+
+    const token = await collection.mintToken(alice, {Substrate: bob.address});
+
+    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
+
+    await token.setProperties(bob, [{key: 'k', value: 'val'}]);
+
+    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+    const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
+
+    expect(bobBalanceAfter).to.be.equal(bobBalanceBefore);
+    expect(aliceBalanceBefore > aliceBalanceAfter).to.be.true;
+  });
 });
 
 describe('Negative Integration Test: Token Properties', () => {
@@ -474,6 +497,27 @@ describe('Negative Integration Test: Token Properties', () => {
       ];
     });
   });
+
+  [
+    {mode: 'nft' as const, requiredPallets: [Pallets.NFT]},
+    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+  ].map(testCase =>
+    itSub.ifWithPallets(`Forbids adding/deleting properties of a token if token doesn't exist (${testCase.mode.toLocaleUpperCase})`, testCase.requiredPallets, async({helper}) => {
+      const collection = await helper[testCase.mode].mintCollection(alice, {
+        tokenPropertyPermissions: constitution.slice(0, 1).map(({permission}) => ({key: '1', permission})),
+      });
+      const nonExistentToken = collection.getTokenObject(1);
+
+      await expect(
+        nonExistentToken.setProperties(alice, [{key: '1', value: 'Serotonin increase'}]),
+        'on expecting failure whilst adding a property by alice',
+      ).to.be.rejectedWith(/common\.TokenNotFound/);
+
+      await expect(
+        nonExistentToken.deleteProperties(alice, ['1']),
+        'on expecting failure whilst deleting a property by alice',
+      ).to.be.rejectedWith(/common\.TokenNotFound/);
+    }));
 
   async function mintCollectionWithAllPermissionsAndToken(helper: UniqueHelper, mode: 'NFT' | 'RFT'): Promise<[UniqueNFToken | UniqueRFToken, bigint]> {
     const collection = await (mode == 'NFT' ? helper.nft : helper.rft).mintCollection(alice, {

@@ -1,7 +1,5 @@
-use codec::EncodeLike;
-use frame_support::{traits::LockableCurrency, WeakBoundedVec, Parameter, dispatch::DispatchResult};
+use frame_support::{dispatch::DispatchResult};
 
-use pallet_balances::{BalanceLock, Config as BalancesConfig, Pallet as PalletBalances};
 use pallet_common::CollectionHandle;
 
 use sp_runtime::{DispatchError, Perbill};
@@ -14,25 +12,6 @@ use sp_core::Get;
 const MAX_NUMBER_PAYOUTS: u8 = 100;
 pub(crate) const DEFAULT_NUMBER_PAYOUTS: u8 = 20;
 
-/// This trait was defined because `LockableCurrency`
-/// has no way to know the state of the lock for an account.
-pub trait ExtendedLockableCurrency<AccountId: Parameter>: LockableCurrency<AccountId> {
-	/// Returns lock balance for an account. Allows to determine the cause of the lock.
-	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
-	where
-		KArg: EncodeLike<AccountId>;
-}
-
-impl<T: BalancesConfig<I>, I: 'static> ExtendedLockableCurrency<T::AccountId>
-	for PalletBalances<T, I>
-{
-	fn locks<KArg>(who: KArg) -> WeakBoundedVec<BalanceLock<Self::Balance>, Self::MaxLocks>
-	where
-		KArg: EncodeLike<T::AccountId>,
-	{
-		Self::locks(who)
-	}
-}
 /// Trait for interacting with collections.
 pub trait CollectionHandler {
 	type CollectionId;

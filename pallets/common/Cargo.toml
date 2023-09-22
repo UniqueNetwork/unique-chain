@@ -10,6 +10,7 @@ codec = { workspace = true, package = "parity-scale-codec" }
 
 scale-info = { workspace = true }
 
+bondrewd = { version = "0.1.14", features = ["derive"], default-features = false }
 ethereum = { workspace = true }
 evm-coder = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
@@ -34,6 +35,8 @@ std = [
 	"sp-std/std",
 	"up-data-structs/std",
 	"up-pov-estimate-rpc/std",
+	"evm-coder/std",
 ]
-stubgen = ["evm-coder/stubgen"]
+stubgen = ["evm-coder/stubgen", "up-data-structs/stubgen"]
+tests = []
 try-runtime = ["frame-support/try-runtime"]

@@ -51,6 +51,7 @@ describe('App promotion', () => {
       donor = await privateKey({url: import.meta.url});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');
+
       nominal = helper.balance.getOneTokenNominal();
 
       const accountBalances = new Array(200).fill(1000n);
@@ -96,7 +97,6 @@ describe('App promotion', () => {
       expect(await helper.balance.getSubstrate(staker.address) / nominal).to.be.equal(999n);
       // it is potentially flaky test. Promotion can credited some tokens. Maybe we need to use closeTo?
       expect(await helper.staking.getTotalStaked()).to.be.equal(totalStakedBefore + 100n * nominal); // total tokens amount staked in app-promotion increased
-
 
       await helper.staking.stake(staker, 200n * nominal);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.be.equal(300n * nominal);
@@ -497,13 +497,13 @@ describe('App promotion', () => {
       expect((await collectionWithoutSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
 
       // Can set sponsoring for collection with unconfirmed sponsor
-      const collectionWithUnconfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Unconfirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: oldSponsor.address});
+      const collectionWithUnconfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Unconfirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: {Substrate: oldSponsor.address}});
       expect((await collectionWithUnconfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Unconfirmed: oldSponsor.address});
       await expect(helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collectionWithUnconfirmedSponsor.collectionId))).to.be.fulfilled;
       expect((await collectionWithUnconfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
 
       // Can set sponsoring for collection with confirmed sponsor
-      const collectionWithConfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Confirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: oldSponsor.address});
+      const collectionWithConfirmedSponsor = await helper.nft.mintCollection(collectionOwner, {name: 'Confirmed', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: {Substrate: oldSponsor.address}});
       await collectionWithConfirmedSponsor.confirmSponsorship(oldSponsor);
       await expect(helper.signTransaction(palletAdmin, api.tx.appPromotion.sponsorCollection(collectionWithConfirmedSponsor.collectionId))).to.be.fulfilled;
       expect((await collectionWithConfirmedSponsor.getData())?.raw.sponsorship).to.be.deep.equal({Confirmed: palletAddress});
@@ -584,7 +584,7 @@ describe('App promotion', () => {
     itSub('should not affect collection which is not sponsored by pallete', async ({helper}) => {
       const api = helper.getApi();
       const [collectionOwner] = await getAccounts(1);
-      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: collectionOwner.address});
+      const collection = await helper.nft.mintCollection(collectionOwner, {name: 'New', description: 'New Collection', tokenPrefix: 'Promotion', pendingSponsor: {Substrate: collectionOwner.address}});
       await collection.confirmSponsorship(collectionOwner);
 
       await expect(helper.signTransaction(palletAdmin, api.tx.appPromotion.stopSponsoringCollection(collection.collectionId))).to.be.rejected;

@@ -17,6 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '../util';
 import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from './util';
+import {CreateCollectionData} from './util/playgrounds/types';
 
 describe('EVM contract allowlist', () => {
   let donor: IKeyringPair;
@@ -30,7 +31,7 @@ describe('EVM contract allowlist', () => {
   itEth('Contract allowlist can be toggled', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
-    const helpers = await helper.ethNativeContract.contractHelpers(owner);
+    const helpers = helper.ethNativeContract.contractHelpers(owner);
 
     // Any user is allowed by default
     expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
@@ -104,7 +105,7 @@ describe('EVM collection allowlist', () => {
       const userEth = await helper.eth.createAccountWithBalance(donor);
       const mintParams = testCase.mode === 'ft' ? [userEth, 100] : [userEth];
 
-      const {collectionAddress, collectionId} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
       const userCrossSub = helper.ethCrossAccount.fromKeyringPair(userSub);
       const userCrossEth = helper.ethCrossAccount.fromAddress(userEth);
@@ -178,7 +179,7 @@ describe('EVM collection allowlist', () => {
       const userEth = helper.eth.createAccount();
       const userCrossEth = helper.ethCrossAccount.fromAddress(userEth);
 
-      const {collectionAddress, collectionId} = await helper.eth.createCollection(testCase.mode, owner, 'A', 'B', 'C');
+      const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, !testCase.cross);
 
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;

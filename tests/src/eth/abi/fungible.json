@@ -280,35 +280,23 @@
   },
   {
     "inputs": [],
-    "name": "collectionNestingPermissions",
-    "outputs": [
-      {
-        "components": [
-          {
-            "internalType": "enum CollectionPermissionField",
-            "name": "field",
-            "type": "uint8"
-          },
-          { "internalType": "bool", "name": "value", "type": "bool" }
-        ],
-        "internalType": "struct CollectionNestingPermission[]",
-        "name": "",
-        "type": "tuple[]"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "collectionNestingRestrictedCollectionIds",
+    "name": "collectionNesting",
     "outputs": [
       {
         "components": [
           { "internalType": "bool", "name": "token_owner", "type": "bool" },
-          { "internalType": "uint256[]", "name": "ids", "type": "uint256[]" }
+          {
+            "internalType": "bool",
+            "name": "collection_admin",
+            "type": "bool"
+          },
+          {
+            "internalType": "address[]",
+            "name": "restricted",
+            "type": "address[]"
+          }
         ],
-        "internalType": "struct CollectionNesting",
+        "internalType": "struct CollectionNestingAndPermission",
         "name": "",
         "type": "tuple"
       }
@@ -576,19 +564,24 @@
     "type": "function"
   },
   {
-    "inputs": [{ "internalType": "bool", "name": "enable", "type": "bool" }],
-    "name": "setCollectionNesting",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
-      { "internalType": "bool", "name": "enable", "type": "bool" },
       {
-        "internalType": "address[]",
-        "name": "collections",
-        "type": "address[]"
+        "components": [
+          { "internalType": "bool", "name": "token_owner", "type": "bool" },
+          {
+            "internalType": "bool",
+            "name": "collection_admin",
+            "type": "bool"
+          },
+          {
+            "internalType": "address[]",
+            "name": "restricted",
+            "type": "address[]"
+          }
+        ],
+        "internalType": "struct CollectionNestingAndPermission",
+        "name": "collectionNestingAndPermissions",
+        "type": "tuple"
       }
     ],
     "name": "setCollectionNesting",

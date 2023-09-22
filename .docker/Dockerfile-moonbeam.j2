@@ -14,12 +14,11 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
-RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+RUN rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }} && \
     rustup default {{ RUST_TOOLCHAIN }} && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -30,12 +29,18 @@ FROM rust-builder as builder-moonbeam-bin
 
 WORKDIR /unique_parachain
 
-RUN git clone -b {{ MOONBEAM_BUILD_BRANCH }} --depth 1 https://github.com/PureStake/moonbeam.git && \
+RUN git clone -b {{ MOONBEAM_BUILD_BRANCH }} --depth 1 https://github.com/PureStake/moonbeam.git
+
+RUN --mount=type=cache,target=/cargo-home/registry \
+    --mount=type=cache,target=/cargo-home/git \
+    --mount=type=cache,target=/unique_parachain/moonbeam/target \
     cd moonbeam && \
-    cargo build --release
+    CARGO_INCREMENTAL=0 cargo build --release --locked && \
+    mv ./target/release/moonbeam /unique_parachain/moonbeam/
 
 # ===== BIN ======
 
 FROM ubuntu:22.04 as builder-moonbeam
 
-COPY --from=builder-moonbeam-bin /unique_parachain/moonbeam/target/release/moonbeam /unique_parachain/moonbeam/target/release/moonbeam
+COPY --from=builder-moonbeam-bin /unique_parachain/moonbeam/moonbeam /bin/moonbeam
+ENTRYPOINT ["/bin/moonbeam"]

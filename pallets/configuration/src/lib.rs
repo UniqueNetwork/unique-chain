@@ -22,6 +22,7 @@ use frame_support::{
 	pallet,
 	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
+	Parameter,
 };
 use codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
@@ -42,27 +43,32 @@ pub mod weights;
 mod pallet {
 	use super::*;
 	use frame_support::{
-		traits::{fungible, Get},
-		pallet_prelude::{StorageValue, ValueQuery, DispatchResult, IsType},
+		traits::Get,
+		pallet_prelude::*,
 		log,
+		dispatch::{Codec, fmt::Debug},
 	};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root, Config as SystemConfig};
-
+	use frame_system::{pallet_prelude::OriginFor, ensure_root, pallet_prelude::*};
+	use sp_arithmetic::{FixedPointOperand, traits::AtLeast32BitUnsigned, Permill};
 	pub use crate::weights::WeightInfo;
-	pub type BalanceOf<T> =
-		<<T as Config>::Currency as fungible::Inspect<<T as SystemConfig>::AccountId>>::Balance;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		type Currency: fungible::Inspect<Self::AccountId>
-			+ fungible::Mutate<Self::AccountId>
-			+ fungible::MutateFreeze<Self::AccountId>
-			+ fungible::InspectHold<Self::AccountId>
-			+ fungible::MutateHold<Self::AccountId>
-			+ fungible::BalancedHold<Self::AccountId>;
+		type Balance: Parameter
+			+ Member
+			+ AtLeast32BitUnsigned
+			+ From<up_common::types::Balance>
+			+ Codec
+			+ Default
+			+ Copy
+			+ MaybeSerializeDeserialize
+			+ Debug
+			+ MaxEncodedLen
+			+ TypeInfo
+			+ FixedPointOperand;
 
 		#[pallet::constant]
 		type DefaultWeightToFeeCoefficient: Get<u64>;
@@ -79,7 +85,7 @@ mod pallet {
 		#[pallet::constant]
 		type DefaultCollatorSelectionMaxCollators: Get<u32>;
 		#[pallet::constant]
-		type DefaultCollatorSelectionLicenseBond: Get<BalanceOf<Self>>;
+		type DefaultCollatorSelectionLicenseBond: Get<Self::Balance>;
 		#[pallet::constant]
 		type DefaultCollatorSelectionKickThreshold: Get<Self::BlockNumber>;
 
@@ -94,11 +100,52 @@ mod pallet {
 			desired_collators: Option<u32>,
 		},
 		NewCollatorLicenseBond {
-			bond_cost: Option<BalanceOf<T>>,
+			bond_cost: Option<T::Balance>,
 		},
 		NewCollatorKickThreshold {
 			length_in_blocks: Option<T::BlockNumber>,
 		},
+	}
+
+	fn update_base_fee<T: Config>() {
+		let base_fee_per_gas: U256 = <MinGasPriceOverride<T>>::get().into();
+		let elasticity: Permill = Permill::zero();
+		// twox_128(BaseFee) ++ twox_128(BaseFeePerGas)
+		sp_io::storage::set(
+			&hex_literal::hex!("c1fef3b7207c11a52df13c12884e77263864ade243c642793ebcfe9e16f454ca"),
+			&base_fee_per_gas.encode(),
+		);
+		// twox_128(BaseFee) ++ twox_128(Elasticity)
+		sp_io::storage::set(
+			&hex_literal::hex!("c1fef3b7207c11a52df13c12884e772609bc3a1e532c9cb85d57feed02cbff8e"),
+			&elasticity.encode(),
+		);
+	}
+
+	/// We update our default weights on every release
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			update_base_fee::<T>();
+			T::DbWeight::get().reads_writes(1, 2)
+		}
+	}
+
+	#[pallet::genesis_config]
+	pub struct GenesisConfig<T>(PhantomData<T>);
+
+	#[cfg(feature = "std")]
+	impl<T: Config> Default for GenesisConfig<T> {
+		fn default() -> Self {
+			Self(Default::default())
+		}
+	}
+
+	#[pallet::genesis_build]
+	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+		fn build(&self) {
+			update_base_fee::<T>();
+		}
 	}
 
 	#[pallet::error]
@@ -130,7 +177,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type CollatorSelectionLicenseBondOverride<T: Config> = StorageValue<
-		Value = BalanceOf<T>,
+		Value = T::Balance,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultCollatorSelectionLicenseBond,
 	>;
@@ -171,6 +218,9 @@ mod pallet {
 			} else {
 				<MinGasPriceOverride<T>>::kill();
 			}
+			// This code should not be called in production, but why keep development in the
+			// inconsistent state
+			update_base_fee::<T>();
 			Ok(())
 		}
 
@@ -221,7 +271,7 @@ mod pallet {
 		#[pallet::weight(T::WeightInfo::set_collator_selection_license_bond())]
 		pub fn set_collator_selection_license_bond(
 			origin: OriginFor<T>,
-			amount: Option<BalanceOf<T>>,
+			amount: Option<<T as Config>::Balance>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			if let Some(amount) = amount {

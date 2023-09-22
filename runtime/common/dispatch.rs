@@ -25,14 +25,14 @@ use pallet_common::{
 };
 pub use pallet_common::dispatch::CollectionDispatch;
 use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
-use pallet_balances_adapter::{NativeFungibleHandle};
+use pallet_balances_adapter::NativeFungibleHandle;
 use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
 use pallet_refungible::{
 	Pallet as PalletRefungible, RefungibleHandle, erc_token::RefungibleTokenHandle,
 };
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, MAX_DECIMAL_POINTS, mapping::TokenAddressMapping,
-	CollectionId, CollectionFlags,
+	CollectionId,
 };
 
 #[cfg(not(feature = "refungible"))]
@@ -72,26 +72,21 @@ where
 	fn create(
 		sender: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		let id = match data.mode {
-			CollectionMode::NFT => {
-				<PalletNonfungible<T>>::init_collection(sender, payer, data, flags)?
-			}
+			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, payer, data)?,
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
 				ensure!(
 					decimal_points <= MAX_DECIMAL_POINTS,
 					pallet_unique::Error::<T>::CollectionDecimalPointLimitExceeded
 				);
-				<PalletFungible<T>>::init_collection(sender, payer, data, flags)?
+				<PalletFungible<T>>::init_collection(sender, payer, data)?
 			}
 
 			#[cfg(feature = "refungible")]
-			CollectionMode::ReFungible => {
-				<PalletRefungible<T>>::init_collection(sender, payer, data, flags)?
-			}
+			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, payer, data)?,
 
 			#[cfg(not(feature = "refungible"))]
 			CollectionMode::ReFungible => return unsupported!(T),

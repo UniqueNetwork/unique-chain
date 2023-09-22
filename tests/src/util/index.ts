@@ -15,6 +15,7 @@ import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoon
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
+chai.config.truncateThreshold = 0;
 chai.use(chaiAsPromised);
 chai.use(chaiSubset);
 export const expect = chai.expect;
@@ -23,12 +24,16 @@ const getTestHash = (filename: string) => crypto.createHash('md5').update(filena
 
 export const getTestSeed = (filename: string) => `//Alice+${getTestHash(filename)}`;
 
-async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: new(logger: ILogger) => T, url: string, code: (helper: T, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>) {
+async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
+  helperType: new (logger: ILogger) => T,
+  url: string,
+  code: (helper: T, privateKey: (seed: string | { filename?: string, url?: string, ignoreFundsPresence?: boolean }) => Promise<IKeyringPair>) => Promise<R>,
+): Promise<R> {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
   const helper = new helperType(new SilentLogger());
-
+  let result;
   try {
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
@@ -53,15 +58,16 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase>(helperType: ne
       }
       return account;
     };
-    await code(helper, privateKey);
+    result = await code(helper, privateKey);
   }
   finally {
     await helper.disconnect();
     silentConsole.disable();
   }
+  return result as any as R;
 }
 
-export const usingPlaygrounds = (code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<void>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper>(DevUniqueHelper, url, code);
+export const usingPlaygrounds = <R = void>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<R>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper, R>(DevUniqueHelper, url, code);
 
 export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 
@@ -83,8 +89,8 @@ export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper
 
 export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
 
-export const MINIMUM_DONOR_FUND = 100_000n;
-export const DONOR_FUNDING = 2_000_000n;
+export const MINIMUM_DONOR_FUND = 4_000_000n;
+export const DONOR_FUNDING = 4_000_000n;
 
 // App-promotion periods:
 export const LOCKING_PERIOD = 12n; // 12 blocks of relay
@@ -100,10 +106,16 @@ export enum Pallets {
   Fungible = 'fungible',
   NFT = 'nonfungible',
   Scheduler = 'scheduler',
+  UniqueScheduler = 'uniqueScheduler',
   AppPromotion = 'apppromotion',
   CollatorSelection = 'collatorselection',
   Session = 'session',
   Identity = 'identity',
+  Democracy = 'democracy',
+  Council = 'council',
+  //CouncilMembership = 'councilmembership',
+  TechnicalCommittee = 'technicalcommittee',
+  Fellowship = 'fellowshipcollective',
   Preimage = 'preimage',
   Maintenance = 'maintenance',
   TestUtils = 'testutils',
@@ -166,6 +178,14 @@ export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts
 }
 
 describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
+
+export function describeGov(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
+  (process.env.RUN_GOV_TESTS && !opts.skip
+    ? describe
+    : describe.skip)(title, fn);
+}
+
+describeGov.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeGov(name, fn, {skip: true});
 
 export function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');

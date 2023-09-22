@@ -5,6 +5,11 @@ import {IKeyringPair} from '@polkadot/types/types';
 
 export const NON_EXISTENT_COLLECTION_ID = 4_294_967_295;
 
+export const MILLISECS_PER_BLOCK = 12000;
+export const MINUTES = 60_000 / MILLISECS_PER_BLOCK;
+export const HOURS = MINUTES * 60;
+export const DAYS = HOURS * 24;
+
 export interface IEvent {
   section: string;
   method: string;
@@ -13,14 +18,16 @@ export interface IEvent {
   phase: {applyExtrinsic: number} | 'Initialization',
 }
 
+export interface IPhasicEvent {
+  phase: any, // {ApplyExtrinsic: number} | 'Initialization',
+  event: IEvent;
+}
+
 export interface ITransactionResult {
   status: 'Fail' | 'Success';
   result: {
       dispatchError: any,
-      events: {
-        phase: any, // {ApplyExtrinsic: number} | 'Initialization',
-        event: IEvent;
-      }[];
+      events: IPhasicEvent[];
   },
   blockHash: string,
   moduleError?: string | object;
@@ -142,6 +149,21 @@ export interface IExtrinsic {
   }
 }
 
+export interface ICollectionFlags {
+  foreign: boolean,
+  erc721metadata: boolean,
+}
+
+export enum CollectionFlag {
+  None = 0,
+  /// External collections can't be managed using `unique` api
+  External = 1,
+  /// Supports ERC721Metadata
+  Erc721metadata = 64,
+  /// Tokens in foreign collections can be transferred, but not burnt
+  Foreign = 128,
+}
+
 export interface ICollectionCreationOptions {
   name?: string | number[];
   description?: string | number[];
@@ -155,7 +177,9 @@ export interface ICollectionCreationOptions {
   properties?: IProperty[];
   tokenPropertyPermissions?: ITokenPropertyPermission[];
   limits?: ICollectionLimits;
-  pendingSponsor?: TSubstrateAccount;
+  pendingSponsor?: ICrossAccountId;
+  adminList?: ICrossAccountId[];
+  flags?: number[] | CollectionFlag[] ,
 }
 
 export interface IChainProperties {
@@ -227,6 +251,11 @@ export interface DemocracyStandardAccountVote {
     aye: boolean,
     conviction: number,
   },
+}
+
+export interface DemocracySplitAccount {
+  aye: bigint,
+  nay: bigint,
 }
 
 export type TSubstrateAccount = string;

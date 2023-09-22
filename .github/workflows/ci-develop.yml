@@ -17,51 +17,56 @@ concurrency:
 jobs:
 
   yarn-dev:
-    if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
     uses: ./.github/workflows/yarn-dev.yml
     secrets: inherit    
 
   unit-test:
-    if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
     uses: ./.github/workflows/unit-test.yml
     secrets: inherit    
 
   canary:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-canary')) }}    # Conditional check for draft & labels per job.
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-canary')
     uses: ./.github/workflows/canary.yml
-    secrets: inherit # pass all secrets from initial workflow to nested
+    secrets: inherit
 
   xcm:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-xcm')) }}       # Conditional check for draft & labels per job.
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xcm')
     uses: ./.github/workflows/xcm.yml
-    secrets: inherit # pass all secrets from initial workflow to nested
+    secrets: inherit
     
   collator-selection:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-collator-selection')) }}  # Conditional check for draft & labels per job.
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-collator-selection')
     uses: ./.github/workflows/collator-selection.yml
     secrets: inherit    
     
   forkless-update-data:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.  
+    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-forkless') || contains(github.event.pull_request.labels.*.name, 'CI-forkless-update-data'))
     uses: ./.github/workflows/forkless-update-data.yml
-    secrets: inherit # pass all secrets from initial workflow to nested    
+    secrets: inherit
 
   forkless-update-no-data:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.
+    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-forkless') || contains(github.event.pull_request.labels.*.name, 'CI-forkless-update-no-data'))
     uses: ./.github/workflows/forkless-update-nodata.yml
-    secrets: inherit # pass all secrets from initial workflow to nested    
+    secrets: inherit
 
   try-runtime:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-forkless')) }}  # Conditional check for draft & labels per job.  
+    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-forkless') || contains(github.event.pull_request.labels.*.name, 'CI-try-runtime'))
     uses: ./.github/workflows/try-runtime.yml
-    secrets: inherit # pass all secrets from initial workflow to nested    
+    secrets: inherit
 
   node-only-update:
-    if: ${{ (github.event.pull_request.draft == false && contains( github.event.pull_request.labels.*.name, 'CI-node-only-update')) }}  # Conditional check for draft & labels per job.
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-node-only-update')
     uses: ./.github/workflows/node-only-update.yml
     secrets: inherit
 
+  governance:
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-gov')
+    uses: ./.github/workflows/governance.yml
+    secrets: inherit
+
   codestyle:
-    if: github.event.pull_request.draft == false                                                                             # Conditional check for draft per job.
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
     uses: ./.github/workflows/codestyle.yml
     secrets: inherit

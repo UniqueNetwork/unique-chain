@@ -18,7 +18,7 @@
 
 use super::*;
 use crate::Pallet as PromototionPallet;
-
+use frame_support::traits::fungible::Unbalanced;
 use sp_runtime::traits::Bounded;
 
 use frame_benchmarking::{benchmarks, account};
@@ -63,9 +63,9 @@ benchmarks! {
 
 		(0..b).try_for_each(|index| {
 			let staker = account::<T::AccountId>("staker", index, SEED);
-			<T as Config>::Currency::set_balance(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+			<T as Config>::Currency::write_balance(&staker,  Into::<BalanceOf<T>>::into(10_000u128) * T::Nominal::get())?;
 			PromototionPallet::<T>::stake(RawOrigin::Signed(staker.clone()).into(), Into::<BalanceOf<T>>::into(100u128) * T::Nominal::get())?;
-			PromototionPallet::<T>::unstake_all(RawOrigin::Signed(staker.clone()).into())?;
+			PromototionPallet::<T>::unstake_all(RawOrigin::Signed(staker).into())?;
 			Result::<(), sp_runtime::DispatchError>::Ok(())
 		})?;
 		let block_number = <frame_system::Pallet<T>>::current_block_number() + T::PendingInterval::get();
@@ -82,13 +82,14 @@ benchmarks! {
 		let pallet_admin = account::<T::AccountId>("admin", 1, SEED);
 		let share = Perbill::from_rational(1u32, 20);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		<T as Config>::Currency::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		<T as Config>::Currency::set_balance(&<T as pallet::Config>::TreasuryAccountId::get(),  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		<T as Config>::Currency::write_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value())?;
+		<T as Config>::Currency::write_balance(&<T as pallet::Config>::TreasuryAccountId::get(),  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value())?;
 
 		let stakers: Vec<T::AccountId> = (0..b).map(|index| account("staker", index, SEED)).collect();
-		stakers.iter().for_each(|staker| {
-			<T as Config>::Currency::set_balance(&staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		});
+		stakers.iter().try_for_each(|staker| {
+			<T as Config>::Currency::write_balance(staker,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value())?;
+			Result::<(), sp_runtime::DispatchError>::Ok(())
+		})?;
 		(1..11).try_for_each(|i| {
 			<frame_system::Pallet<T>>::set_block_number(i.into());
 			T::RelayBlockNumberProvider::set_block_number((2*i).into());
@@ -102,7 +103,7 @@ benchmarks! {
 			Result::<(), sp_runtime::DispatchError>::Ok(())
 		})?;
 
-		let stakes = Staked::<T>::iter_prefix((&stakers[0],)).into_iter().collect::<Vec<_>>();
+		let stakes = Staked::<T>::iter_prefix((&stakers[0],)).collect::<Vec<_>>();
 		assert_eq!(stakes.len(), 10);
 
 		<frame_system::Pallet<T>>::set_block_number(15_000.into());
@@ -112,13 +113,13 @@ benchmarks! {
 	stake {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 10);
-		let _ = <T as Config>::Currency::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 	} : _(RawOrigin::Signed(caller.clone()), share * <T as Config>::Currency::total_balance(&caller))
 
 	unstake_all {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
-		let _ = <T as Config>::Currency::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		(1..11).map(|i| {
 			// used to change block number
 			<frame_system::Pallet<T>>::set_block_number(i.into());
@@ -133,7 +134,7 @@ benchmarks! {
 	unstake_partial {
 		let caller = account::<T::AccountId>("caller", 0, SEED);
 		let share = Perbill::from_rational(1u32, 20);
-		let _ = <T as Config>::Currency::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		(1..11).map(|i| {
 			// used to change block number
 			<frame_system::Pallet<T>>::set_block_number(i.into());
@@ -148,19 +149,19 @@ benchmarks! {
 	sponsor_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		let _ = <T as Config>::Currency::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let _ = <T as Config>::Currency::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let collection = create_nft_collection::<T>(caller.clone())?;
+		let _ = <T as Config>::Currency::write_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let collection = create_nft_collection::<T>(caller)?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), collection)
 
 	stop_sponsoring_collection {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
-		let _ = <T as Config>::Currency::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let _ = <T as Config>::Currency::set_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
-		let collection = create_nft_collection::<T>(caller.clone())?;
+		let _ = <T as Config>::Currency::write_balance(&caller,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let collection = create_nft_collection::<T>(caller)?;
 		PromototionPallet::<T>::sponsor_collection(RawOrigin::Signed(pallet_admin.clone()).into(), collection)?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), collection)
 
@@ -168,9 +169,9 @@ benchmarks! {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 
-		let _ = <T as Config>::Currency::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let address = H160::from_low_u64_be(SEED as u64);
-		let data: Vec<u8> = (0..20 as u8).collect();
+		let data: Vec<u8> = (0..20).collect();
 		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
 		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
 	} : _(RawOrigin::Signed(pallet_admin.clone()), address)
@@ -179,9 +180,9 @@ benchmarks! {
 		let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
 		PromototionPallet::<T>::set_admin_address(RawOrigin::Root.into(), T::CrossAccountId::from_sub(pallet_admin.clone()))?;
 
-		let _ = <T as Config>::Currency::set_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
+		let _ = <T as Config>::Currency::write_balance(&pallet_admin,  Perbill::from_rational(1u32, 2) * BalanceOf::<T>::max_value());
 		let address = H160::from_low_u64_be(SEED as u64);
-		let data: Vec<u8> = (0..20 as u8).collect();
+		let data: Vec<u8> = (0..20).collect();
 		<EvmMigrationPallet<T>>::begin(RawOrigin::Root.into(), address)?;
 		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
 		PromototionPallet::<T>::sponsor_contract(RawOrigin::Signed(pallet_admin.clone()).into(), address)?;

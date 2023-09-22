@@ -33,6 +33,7 @@
 // limitations under the License.
 
 //! # Scheduler test environment.
+#![allow(deprecated)]
 
 use super::*;
 
@@ -228,6 +229,10 @@ impl<O: Into<Result<RawOrigin<u64>, O>> + From<RawOrigin<u64>>> EnsureOrigin<O>
 			RawOrigin::Signed(1) => Ok(ScheduledEnsureOriginSuccess::Signed(1)),
 			r => Err(O::from(r)),
 		})
+	}
+	#[cfg(feature = "runtime-benchmarks")]
+	fn try_successful_origin() -> Result<O, ()> {
+		Ok(O::from(RawOrigin::Root))
 	}
 }
 

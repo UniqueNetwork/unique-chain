@@ -51,8 +51,8 @@ fn create_max_item<T: Config>(
 	users: impl IntoIterator<Item = (T::CrossAccountId, u128)>,
 ) -> Result<TokenId, DispatchError> {
 	let data: CreateItemData<T> = create_max_item_data::<T>(users);
-	<Pallet<T>>::create_item(&collection, sender, data, &Unlimited)?;
-	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
+	<Pallet<T>>::create_item(collection, sender, data, &Unlimited)?;
+	Ok(TokenId(<TokensMinted<T>>::get(collection.id)))
 }
 
 fn create_collection<T: Config>(
@@ -61,9 +61,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::ReFungible,
-		|owner: T::CrossAccountId, data| {
-			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
-		},
+		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
 		RefungibleHandle::cast,
 	)
 }
@@ -106,7 +104,7 @@ benchmarks! {
 		let data = vec![create_max_item_data::<T>((0..b).map(|u| {
 			bench_init!(to: cross_sub(u););
 			(to, 200)
-		}))].try_into().unwrap();
+		}))];
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	// Other user left, token data is kept
@@ -257,7 +255,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?}
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?}
 
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -279,7 +277,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?;
 		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
 	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete.into_iter(), &Unlimited)?}
 
@@ -296,7 +294,7 @@ benchmarks! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner); owner: cross_sub;
 		};
-		let item = create_max_item(&collection, &sender, [(owner.clone(), 100)])?;
+		let item = create_max_item(&collection, &sender, [(owner, 100)])?;
 	}: {<Pallet<T>>::token_owner(collection.id, item).unwrap()}
 
 	set_allowance_for_all {

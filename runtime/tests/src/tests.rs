@@ -99,7 +99,7 @@ fn create_test_collection_for_owner(
 	.try_into()
 	.unwrap();
 
-	let data: CreateCollectionData<u64> = CreateCollectionData {
+	let data = CreateCollectionData {
 		name: col_name1.try_into().unwrap(),
 		description: col_desc1.try_into().unwrap(),
 		token_prefix: token_prefix1.try_into().unwrap(),
@@ -204,14 +204,13 @@ fn check_not_sufficient_founds() {
 		let description: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<<Test as frame_system::Config>::AccountId> =
-			CreateCollectionData {
-				name: name.try_into().unwrap(),
-				description: description.try_into().unwrap(),
-				token_prefix: token_prefix.try_into().unwrap(),
-				mode: CollectionMode::NFT,
-				..Default::default()
-			};
+		let data = CreateCollectionData {
+			name: name.try_into().unwrap(),
+			description: description.try_into().unwrap(),
+			token_prefix: token_prefix.try_into().unwrap(),
+			mode: CollectionMode::NFT,
+			..Default::default()
+		};
 
 		let result = Unique::create_collection_ex(RuntimeOrigin::signed(acc), data);
 		assert_err!(result, <CommonError<Test>>::NotSufficientFounds);
@@ -225,7 +224,7 @@ fn create_fungible_collection_fails_with_large_decimal_numbers() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<u64> = CreateCollectionData {
+		let data = CreateCollectionData {
 			name: col_name1.try_into().unwrap(),
 			description: col_desc1.try_into().unwrap(),
 			token_prefix: token_prefix1.try_into().unwrap(),
@@ -1737,6 +1736,11 @@ fn allow_list_test_1() {
 		let collection_id = create_test_collection(&CollectionMode::NFT, CollectionId(1));
 
 		let origin1 = RuntimeOrigin::signed(1);
+		assert_ok!(Unique::add_collection_admin(
+			origin1.clone(),
+			collection_id,
+			account(1)
+		));
 
 		let data = default_nft_data();
 		create_test_item(collection_id, &data.into());
@@ -2359,7 +2363,7 @@ fn total_number_collections_bound_neg() {
 		let col_desc1: Vec<u16> = "TestDescription1\0".encode_utf16().collect::<Vec<u16>>();
 		let token_prefix1: Vec<u8> = b"token_prefix1\0".to_vec();
 
-		let data: CreateCollectionData<u64> = CreateCollectionData {
+		let data = CreateCollectionData {
 			name: col_name1.try_into().unwrap(),
 			description: col_desc1.try_into().unwrap(),
 			token_prefix: token_prefix1.try_into().unwrap(),
@@ -2609,4 +2613,66 @@ fn collection_sponsoring() {
 			default_nft_data().into()
 		));
 	});
+}
+
+mod check_token_permissions {
+	use super::*;
+	use pallet_common::LazyValue;
+
+	fn test<FTE: FnOnce() -> bool>(
+		i: usize,
+		test_case: &pallet_common::tests::TestCase,
+		check_token_existence: &mut LazyValue<bool, FTE>,
+	) {
+		let collection_admin = test_case.collection_admin;
+		let mut is_collection_admin = LazyValue::new(|| test_case.is_collection_admin);
+		let token_owner = test_case.token_owner;
+		let mut is_token_owner = LazyValue::new(|| Ok(test_case.is_token_owner));
+		let is_no_permission = test_case.no_permission;
+
+		let result = pallet_common::tests::check_token_permissions::<Test, _, _, FTE>(
+			collection_admin,
+			token_owner,
+			&mut is_collection_admin,
+			&mut is_token_owner,
+			check_token_existence,
+		);
+
+		if is_no_permission {
+			assert!(
+				result.is_err(),
+				"{i}: {test_case:?}, token_exist: {}",
+				check_token_existence.value()
+			);
+			assert_err!(result, pallet_common::Error::<Test>::NoPermission,);
+		} else if check_token_existence.has_value() && !check_token_existence.value() {
+			assert!(
+				result.is_err(),
+				"{i}: {test_case:?}, token_exist: {}",
+				check_token_existence.value()
+			);
+			assert_err!(result, pallet_common::Error::<Test>::TokenNotFound,);
+		}
+	}
+
+	#[test]
+	fn no_permission_only() {
+		new_test_ext().execute_with(|| {
+			let mut check_token_existence = LazyValue::new(|| true);
+			for (i, row) in pallet_common::tests::TABLE.iter().enumerate() {
+				test(i, row, &mut check_token_existence);
+			}
+		});
+	}
+
+	#[test]
+	fn no_permission_and_token_not_found() {
+		new_test_ext().execute_with(|| {
+			for (i, row) in pallet_common::tests::TABLE.iter().enumerate() {
+				// This is inside the loop to keep track of whether the lambda was called
+				let mut check_token_existence = LazyValue::new(|| false);
+				test(i, row, &mut check_token_existence);
+			}
+		});
+	}
 }

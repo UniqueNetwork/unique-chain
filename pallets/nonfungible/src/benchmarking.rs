@@ -43,12 +43,12 @@ fn create_max_item<T: Config>(
 	owner: T::CrossAccountId,
 ) -> Result<TokenId, DispatchError> {
 	<Pallet<T>>::create_item(
-		&collection,
+		collection,
 		sender,
 		create_max_item_data::<T>(owner),
 		&Unlimited,
 	)?;
-	Ok(TokenId(<TokensMinted<T>>::get(&collection.id)))
+	Ok(TokenId(<TokensMinted<T>>::get(collection.id)))
 }
 
 fn create_collection<T: Config>(
@@ -57,9 +57,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner: T::CrossAccountId, data| {
-			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
-		},
+		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
 		NonfungibleHandle::cast,
 	)
 }
@@ -200,7 +198,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?}
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?}
 
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -222,7 +220,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), false, &Unlimited)?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?;
 		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
 	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete.into_iter(), &Unlimited)?}
 

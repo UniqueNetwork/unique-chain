@@ -33,6 +33,7 @@
 // limitations under the License.
 
 //! # Scheduler tests.
+#![allow(deprecated)]
 
 use super::*;
 use crate::mock::{

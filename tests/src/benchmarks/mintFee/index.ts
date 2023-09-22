@@ -360,7 +360,7 @@ async function benchMintWithProperties(
           susbstrateReceiver.addressRaw,
           PROPERTIES.slice(0, setup.propertiesNumber),
         )
-        .send({from: ethSigner, gas: 25_000_000});
+        .send({from: ethSigner});
     },
   );
 

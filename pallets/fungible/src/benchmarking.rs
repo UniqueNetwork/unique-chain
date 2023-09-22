@@ -31,9 +31,7 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::Fungible(0),
-		|owner: T::CrossAccountId, data| {
-			<Pallet<T>>::init_collection(owner.clone(), owner, data, Default::default())
-		},
+		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
 		FungibleHandle::cast,
 	)
 }
@@ -55,7 +53,7 @@ benchmarks! {
 		let data = (0..b).map(|i| {
 			bench_init!(to: cross_sub(i););
 			(to, 200)
-		}).collect::<BTreeMap<_, _>>().try_into().unwrap();
+		}).collect::<BTreeMap<_, _>>();
 	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
 
 	burn_item {

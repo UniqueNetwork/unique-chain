@@ -14,12 +14,11 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
-RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+RUN rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }} && \
     rustup default {{ RUST_TOOLCHAIN }} && \
     rustup target list --installed && \
     rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -29,12 +28,18 @@ FROM rust-builder as builder-polkadot-bin
 
 WORKDIR /unique_parachain
 
-RUN git clone -b {{ POLKADOT_BUILD_BRANCH }} --depth 1 https://github.com/paritytech/polkadot.git && \
+RUN git clone -b {{ POLKADOT_BUILD_BRANCH }} --depth 1 https://github.com/paritytech/polkadot.git
+
+RUN --mount=type=cache,target=/cargo-home/registry \
+    --mount=type=cache,target=/cargo-home/git \
+    --mount=type=cache,target=/unique_parachain/polkadot/target \
     cd polkadot && \
-    cargo build --release
+    CARGO_INCREMENTAL=0 cargo build --release --locked && \
+    mv ./target/release/polkadot /unique_parachain/polkadot/
 
 # ===== BIN ======
 
 FROM ubuntu:22.04 as builder-polkadot
 
-COPY --from=builder-polkadot-bin /unique_parachain/polkadot/target/release/polkadot /unique_parachain/polkadot/target/release/polkadot
+COPY --from=builder-polkadot-bin /unique_parachain/polkadot/polkadot /bin/polkadot
+ENTRYPOINT ["/bin/polkadot"]

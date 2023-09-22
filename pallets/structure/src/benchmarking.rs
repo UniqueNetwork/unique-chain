@@ -19,8 +19,7 @@ use super::*;
 use frame_benchmarking::{benchmarks, account};
 use frame_support::traits::{fungible::Balanced, Get, tokens::Precision};
 use up_data_structs::{
-	CreateCollectionData, CollectionMode, CreateItemData, CollectionFlags, CreateNftData,
-	budget::Unlimited,
+	CreateCollectionData, CollectionMode, CreateItemData, CreateNftData, budget::Unlimited,
 };
 use pallet_common::Config as CommonConfig;
 use pallet_evm::account::CrossAccountId;
@@ -40,12 +39,11 @@ benchmarks! {
 				mode: CollectionMode::NFT,
 				..Default::default()
 			},
-			CollectionFlags::default(),
 		)?;
 		let dispatch = T::CollectionDispatch::dispatch(CollectionId(1))?;
 		let dispatch = dispatch.as_dyn();
 
-		dispatch.create_item(caller_cross.clone(), caller_cross.clone(), CreateItemData::NFT(CreateNftData::default()), &Unlimited)?;
+		dispatch.create_item(caller_cross.clone(), caller_cross, CreateItemData::NFT(CreateNftData::default()), &Unlimited)?;
 	}: {
 		let parent = <Pallet<T>>::find_parent(CollectionId(1), TokenId(1))?;
 		assert!(matches!(parent, Parent::User(_)))

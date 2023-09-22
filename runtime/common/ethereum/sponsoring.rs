@@ -17,12 +17,12 @@
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
 use core::{convert::TryInto, marker::PhantomData};
-use evm_coder::{Call, abi::AbiReader};
+use evm_coder::{Call};
 use pallet_common::{CollectionHandle, eth::map_eth_to_id};
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_transaction_payment::CallContext;
 use pallet_nonfungible::{
-	Config as NonfungibleConfig,
+	Config as NonfungibleConfig, Pallet as NonfungiblePallet, NonfungibleHandle,
 	erc::{
 		UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721UniqueMintableCall, ERC721Call,
 		TokenPropertiesCall,
@@ -56,6 +56,8 @@ pub type EvmSponsorshipHandler = (
 pub struct UniqueEthSponsorshipHandler<T: UniqueConfig>(PhantomData<*const T>);
 impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 	SponsorshipHandler<T::CrossAccountId, CallContext> for UniqueEthSponsorshipHandler<T>
+where
+	T::AccountId: From<[u8; 32]>,
 {
 	fn get_sponsor(
 		who: &T::CrossAccountId,
@@ -64,32 +66,74 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 		if let Some(collection_id) = map_eth_to_id(&call_context.contract_address) {
 			let collection = <CollectionHandle<T>>::new(collection_id)?;
 			let sponsor = collection.sponsorship.sponsor()?.clone();
-			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
+			// let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
 			Some(T::CrossAccountId::from_sub(match &collection.mode {
 				CollectionMode::NFT => {
-					let call = <UniqueNFTCall<T>>::parse(method_id, &mut reader).ok()??;
+					let collection = NonfungibleHandle::cast(collection);
+					let call = <UniqueNFTCall<T>>::parse_full(&call_context.input).ok()??;
 					match call {
-						UniqueNFTCall::TokenProperties(TokenPropertiesCall::SetProperty {
-							token_id,
-							key,
-							value,
-							..
-						}) => {
-							let token_id: TokenId = token_id.try_into().ok()?;
-							withdraw_set_token_property::<T>(
-								&collection,
-								who,
-								&token_id,
-								key.len() + value.len(),
-							)
-							.map(|()| sponsor)
-						}
-						UniqueNFTCall::ERC721UniqueExtensions(
-							ERC721UniqueExtensionsCall::Transfer { token_id, .. },
-						) => {
-							let token_id: TokenId = token_id.try_into().ok()?;
-							withdraw_transfer::<T>(&collection, who, &token_id).map(|()| sponsor)
-						}
+						UniqueNFTCall::TokenProperties(call) => match call {
+							TokenPropertiesCall::SetProperty {
+								token_id,
+								key,
+								value,
+								..
+							} => {
+								let token_id: TokenId = token_id.try_into().ok()?;
+								withdraw_set_existing_token_property::<T>(
+									&collection,
+									who,
+									&token_id,
+									key.len() + value.len(),
+								)
+								.map(|()| sponsor)
+							}
+							TokenPropertiesCall::SetProperties {
+								token_id,
+								properties,
+								..
+							} => {
+								let token_id: TokenId = token_id.try_into().ok()?;
+								let data_size = properties
+									.into_iter()
+									.map(|p| p.key().len() + p.value().len())
+									.sum();
+
+								withdraw_set_existing_token_property::<T>(
+									&collection,
+									who,
+									&token_id,
+									data_size,
+								)
+								.map(|()| sponsor)
+							}
+							_ => None,
+						},
+						UniqueNFTCall::ERC721UniqueExtensions(call) => match call {
+							ERC721UniqueExtensionsCall::Transfer { token_id, .. } => {
+								let token_id: TokenId = token_id.try_into().ok()?;
+								withdraw_transfer::<T>(&collection, who, &token_id)
+									.map(|()| sponsor)
+							}
+							ERC721UniqueExtensionsCall::MintCross { properties, .. } => {
+								withdraw_create_item::<T>(
+									&collection,
+									who,
+									&CreateItemData::NFT(CreateNftData::default()),
+								)?;
+
+								let token_id =
+									<NonfungiblePallet<T>>::next_token_id(&collection).ok()?;
+								let data_size: usize = properties
+									.into_iter()
+									.map(|p| p.key().len() + p.value().len())
+									.sum();
+
+								withdraw_set_token_property::<T>(&collection, &token_id, data_size)
+									.map(|()| sponsor)
+							}
+							_ => None,
+						},
 						UniqueNFTCall::ERC721UniqueMintable(
 							ERC721UniqueMintableCall::Mint { .. }
 							| ERC721UniqueMintableCall::MintCheckId { .. }
@@ -117,11 +161,12 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 					}
 				}
 				CollectionMode::ReFungible => {
-					let call = <UniqueRefungibleCall<T>>::parse(method_id, &mut reader).ok()??;
+					let call =
+						<UniqueRefungibleCall<T>>::parse_full(&call_context.input).ok()??;
 					refungible::call_sponsor(call, collection, who).map(|()| sponsor)
 				}
 				CollectionMode::Fungible(_) => {
-					let call = <UniqueFungibleCall<T>>::parse(method_id, &mut reader).ok()??;
+					let call = <UniqueFungibleCall<T>>::parse_full(&call_context.input).ok()??;
 					match call {
 						UniqueFungibleCall::ERC20(ERC20Call::Transfer { .. }) => {
 							withdraw_transfer::<T>(&collection, who, &TokenId::default())
@@ -152,8 +197,7 @@ impl<T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig>
 			// Token existance isn't checked at this point and should be checked in `withdraw` method.
 			let token = RefungibleTokenHandle(rft_collection, token_id);
 
-			let (method_id, mut reader) = AbiReader::new_call(&call_context.input).ok()?;
-			let call = <UniqueRefungibleTokenCall<T>>::parse(method_id, &mut reader).ok()??;
+			let call = <UniqueRefungibleTokenCall<T>>::parse_full(&call_context.input).ok()??;
 			Some(T::CrossAccountId::from_sub(
 				refungible::token_call_sponsor(call, token, who).map(|()| sponsor)?,
 			))
@@ -190,6 +234,7 @@ mod common {
 			| CollectionOwner
 			| CollectionAdmins
 			| CollectionLimits
+			| CollectionNesting
 			| CollectionNestingRestrictedIds
 			| CollectionNestingPermissions
 			| UniqueCollectionType => None,
@@ -205,6 +250,7 @@ mod common {
 			| RemoveCollectionAdmin { .. }
 			| SetNestingBool { .. }
 			| SetNesting { .. }
+			| SetNestingCollectionIds { .. }
 			| SetCollectionAccess { .. }
 			| SetCollectionMintMode { .. }
 			| SetOwner { .. }

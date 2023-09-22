@@ -103,7 +103,7 @@ jobs:
      
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 16.17
+          node-version: 18
 
       - name: Setup TypeScript
         working-directory: qa-tests
@@ -125,7 +125,7 @@ jobs:
 #          ./scripts/wait_for_first_block.sh
 #          echo "Ready to start tests"
 #        env:
-#          RPC_URL: http://127.0.0.1:9933/
+#          RPC_URL: http://127.0.0.1:9944/
 
       - name: Wait for chain up and running
         run: |

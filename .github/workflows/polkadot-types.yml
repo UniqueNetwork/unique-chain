@@ -68,7 +68,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 16
+          node-version: 18
 
       # - name: Install jq
       #   run: sudo apt install jq -y
@@ -82,7 +82,7 @@ jobs:
           git config --global user.email github-actions@usetech.com          
           /bin/bash ./scripts/generate_types_package.sh --release ${{ matrix.usage }} --push
         env:
-          RPC_URL: http://127.0.0.1:9933/
+          RPC_URL: http://127.0.0.1:9944/
 
       - name: Stop running containers
         if: always()                   # run this step always

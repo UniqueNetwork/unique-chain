@@ -97,18 +97,17 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
 	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon,
+	Event as CommonEvent, Pallet as PalletCommon, SetPropertyMode,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CollectionFlags, CreateCollectionData,
-	mapping::TokenAddressMapping, MAX_REFUNGIBLE_PIECES, Property, PropertyKey,
-	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TrySetProperty,
-	PropertiesPermissionMap, CreateRefungibleExMultipleOwners, TokenOwnerError,
-	TokenProperties as TokenPropertiesT,
+	AccessMode, budget::Budget, CollectionId, CreateCollectionData, mapping::TokenAddressMapping,
+	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyScope,
+	PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
+	CreateRefungibleExMultipleOwners, TokenOwnerError, TokenProperties as TokenPropertiesT,
 };
 
 pub use pallet::*;
@@ -334,10 +333,9 @@ impl<T: Config> Pallet<T> {
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::AccountId>,
-		flags: CollectionFlags,
+		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data, flags)
+		<PalletCommon<T>>::init_collection(owner, payer, data)
 	}
 
 	/// Destroy RFT collection
@@ -521,8 +519,6 @@ impl<T: Config> Pallet<T> {
 	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
-	/// - `is_token_create`: Indicates that method is called during token initialization.
-	///   Allows to bypass ownership check.
 	///
 	/// All affected properties should have `mutable` permission
 	/// to be **deleted** or to be **set more than once**,
@@ -537,27 +533,38 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		is_token_create: bool,
+		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_token_owner = || -> Result<bool, DispatchError> {
-			let balance = collection.balance(sender.clone(), token_id);
-			let total_pieces: u128 =
-				Self::total_pieces(collection.id, token_id).unwrap_or(u128::MAX);
-			if balance != total_pieces {
-				return Ok(false);
-			}
+		let mut is_token_owner =
+			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
+				if let SetPropertyMode::NewToken {
+					mint_target_is_sender,
+				} = mode
+				{
+					return Ok(mint_target_is_sender);
+				}
 
-			let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
-				sender.clone(),
-				collection.id,
-				token_id,
-				None,
-				nesting_budget,
-			)?;
+				let balance = collection.balance(sender.clone(), token_id);
+				let total_pieces: u128 =
+					Self::total_pieces(collection.id, token_id).unwrap_or(u128::MAX);
+				if balance != total_pieces {
+					return Ok(false);
+				}
 
-			Ok(is_bundle_owner)
-		};
+				let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
+					sender.clone(),
+					collection.id,
+					token_id,
+					None,
+					nesting_budget,
+				)?;
+
+				Ok(is_bundle_owner)
+			});
+
+		let mut is_token_exist =
+			pallet_common::LazyValue::new(|| Self::token_exists(collection, token_id));
 
 		let stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
 
@@ -565,10 +572,10 @@ impl<T: Config> Pallet<T> {
 			collection,
 			sender,
 			token_id,
+			&mut is_token_exist,
 			properties_updates,
-			is_token_create,
 			stored_properties,
-			is_token_owner,
+			&mut is_token_owner,
 			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
 			erc::ERC721TokenEvent::TokenChanged {
 				token_id: token_id.into(),
@@ -577,12 +584,25 @@ impl<T: Config> Pallet<T> {
 		)
 	}
 
+	pub fn next_token_id(collection: &RefungibleHandle<T>) -> Result<TokenId, DispatchError> {
+		let next_token_id = <TokensMinted<T>>::get(collection.id)
+			.checked_add(1)
+			.ok_or(<CommonError<T>>::CollectionTokenLimitExceeded)?;
+
+		ensure!(
+			collection.limits.token_limit() >= next_token_id,
+			<CommonError<T>>::CollectionTokenLimitExceeded
+		);
+
+		Ok(TokenId(next_token_id))
+	}
+
 	pub fn set_token_properties(
 		collection: &RefungibleHandle<T>,
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		is_token_create: bool,
+		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -590,7 +610,7 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			is_token_create,
+			mode,
 			nesting_budget,
 		)
 	}
@@ -602,14 +622,12 @@ impl<T: Config> Pallet<T> {
 		property: Property,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_token_create = false;
-
 		Self::set_token_properties(
 			collection,
 			sender,
 			token_id,
 			[property].into_iter(),
-			is_token_create,
+			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -621,14 +639,12 @@ impl<T: Config> Pallet<T> {
 		property_keys: impl Iterator<Item = PropertyKey>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let is_token_create = false;
-
 		Self::modify_token_properties(
 			collection,
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			is_token_create,
+			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -914,10 +930,14 @@ impl<T: Config> Pallet<T> {
 				let token_id = first_token_id + i as u32 + 1;
 				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
 
+				let mut mint_target_is_sender = true;
 				for (user, amount) in data.users.iter() {
 					if *amount == 0 {
 						continue;
 					}
+
+					mint_target_is_sender = mint_target_is_sender && sender.conv_eq(user);
+
 					<Balance<T>>::insert((collection.id, token_id, &user), amount);
 					<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
 					<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
@@ -932,7 +952,9 @@ impl<T: Config> Pallet<T> {
 					sender,
 					TokenId(token_id),
 					data.properties.clone().into_iter(),
-					true,
+					SetPropertyMode::NewToken {
+						mint_target_is_sender,
+					},
 					nesting_budget,
 				) {
 					return TransactionOutcome::Rollback(Err(e));

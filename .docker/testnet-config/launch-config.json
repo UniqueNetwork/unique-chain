@@ -5,8 +5,7 @@
         "nodes": [
             {
                 "name": "alice",
-                "wsPort": 9844,
-                "rpcPort": 9843,
+                "rpcPort": 9844,
                 "port": 30444,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
@@ -18,8 +17,7 @@
             },
             {
                 "name": "bob",
-                "wsPort": 9855,
-                "rpcPort": 9854,
+                "rpcPort": 9855,
                 "port": 30555,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
@@ -31,8 +29,7 @@
             },
             {
                 "name": "charlie",
-                "wsPort": 9866,
-                "rpcPort": 9865,
+                "rpcPort": 9866,
                 "port": 30666,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
@@ -44,8 +41,7 @@
             },
             {
                 "name": "dave",
-                "wsPort": 9877,
-                "rpcPort": 9876,
+                "rpcPort": 9877,
                 "port": 30777,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
@@ -57,8 +53,7 @@
             },
             {
                 "name": "eve",
-                "wsPort": 9888,
-                "rpcPort": 9887,
+                "rpcPort": 9888,
                 "port": 30888,
                 "flags": [
                     "-lparachain::candidate_validation=debug",
@@ -90,8 +85,7 @@
             "nodes": [
                 {
                     "port": 31200,
-                    "wsPort": 9944,
-                    "rpcPort": 9933,
+                    "rpcPort": 9944,
                     "name": "alice",
                     "flags": [
                         "--rpc-cors=all",
@@ -102,8 +96,7 @@
                 },
                 {
                     "port": 31201,
-                    "wsPort": 9945,
-                    "rpcPort": 9934,
+                    "rpcPort": 9945,
                     "name": "bob",
                     "flags": [
                         "--rpc-cors=all",
@@ -114,8 +107,7 @@
                 },
                 {
                     "port": 31202,
-                    "wsPort": 9946,
-                    "rpcPort": 9935,
+                    "rpcPort": 9946,
                     "name": "charlie",
                     "flags": [
                         "--rpc-cors=all",
@@ -126,8 +118,7 @@
                 },
                 {
                     "port": 31203,
-                    "wsPort": 9947,
-                    "rpcPort": 9936,
+                    "rpcPort": 9947,
                     "name": "dave",
                     "flags": [
                         "--rpc-cors=all",
@@ -138,8 +129,7 @@
                 },
                 {
                     "port": 31204,
-                    "wsPort": 9948,
-                    "rpcPort": 9937,
+                    "rpcPort": 9948,
                     "name": "eve",
                     "flags": [
                         "--rpc-cors=all",

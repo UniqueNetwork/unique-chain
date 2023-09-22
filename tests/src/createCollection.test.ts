@@ -16,7 +16,7 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, Pallets} from './util';
-import {ICollectionCreationOptions, IProperty} from './util/playgrounds/types';
+import {CollectionFlag, ICollectionCreationOptions, IProperty} from './util/playgrounds/types';
 import {UniqueHelper} from './util/playgrounds/unique';
 
 async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
@@ -36,6 +36,16 @@ async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, 
   if(options.properties) {
     expect(data?.raw.properties).to.be.deep.equal(options.properties);
   }
+  if(options.adminList) {
+    expect(data?.admins).to.be.deep.equal(options.adminList);
+  }
+
+  if(options.flags) {
+    if((options.flags[0] & 64) != 0)
+      expect(data?.raw.flags.erc721metadata).to.be.true;
+    if((options.flags[0] & 128) != 0)
+      expect(data?.raw.flags.foreign).to.be.false;
+  }
 
   if(options.tokenPropertyPermissions) {
     expect(data?.raw.tokenPropertyPermissions).to.be.deep.equal(options.tokenPropertyPermissions);
@@ -46,11 +56,12 @@ async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, 
 
 describe('integration test: ext. createCollection():', () => {
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([100n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
     });
   });
   itSub('Create new NFT collection', async ({helper}) => {
@@ -80,6 +91,32 @@ describe('integration test: ext. createCollection():', () => {
       properties: [{key: 'key1', value: 'val1'}],
       tokenPropertyPermissions: [{key: 'key1', permission: {tokenOwner: true, mutable: false, collectionAdmin: true}}],
     }, 'nft');
+  });
+
+  itSub('create new collection with admin', async ({helper}) => {
+    await mintCollectionHelper(helper, alice, {
+      name: 'name', description: 'descr', tokenPrefix: 'COL',
+      adminList: [{Substrate: bob.address}],
+    }, 'nft');
+  });
+
+  itSub('create new collection with flags', async ({helper}) => {
+    await mintCollectionHelper(helper, alice, {
+      name: 'name', description: 'descr', tokenPrefix: 'COL',
+      flags: [CollectionFlag.Erc721metadata],
+    }, 'nft');
+
+    // User can not set Foreign flag itself
+
+    await expect(mintCollectionHelper(helper, alice, {
+      name: 'name', description: 'descr', tokenPrefix: 'COL',
+      flags: [CollectionFlag.Foreign],
+    }, 'nft')).to.be.rejectedWith(/common.NoPermission/);
+
+    await expect(mintCollectionHelper(helper, alice, {
+      name: 'name', description: 'descr', tokenPrefix: 'COL',
+      flags: [CollectionFlag.Erc721metadata, CollectionFlag.Foreign],
+    }, 'nft')).to.be.rejectedWith(/common.NoPermission/);
   });
 
   itSub('Create new collection with extra fields', async ({helper}) => {

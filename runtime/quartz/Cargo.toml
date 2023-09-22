@@ -18,10 +18,9 @@ targets = ['x86_64-unknown-linux-gnu']
 [features]
 become-sapphire = []
 default = ['quartz-runtime', 'std']
-state-version-0 = []
 limit-testing = ['pallet-unique/limit-testing', 'up-data-structs/limit-testing']
 pov-estimate = []
-quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'preimage', 'refungible']
+quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'governance', 'preimage', 'refungible']
 runtime-benchmarks = [
 	"pallet-preimage/runtime-benchmarks",
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
@@ -32,8 +31,10 @@ runtime-benchmarks = [
 	'pallet-app-promotion/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-collator-selection/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
 	'pallet-common/runtime-benchmarks',
 	'pallet-configuration/runtime-benchmarks',
+	'pallet-democracy/runtime-benchmarks',
 	'pallet-ethereum/runtime-benchmarks',
 	'pallet-evm-coder-substrate/runtime-benchmarks',
 	'pallet-evm-migration/runtime-benchmarks',
@@ -42,10 +43,19 @@ runtime-benchmarks = [
 	'pallet-identity/runtime-benchmarks',
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
+	'pallet-membership/runtime-benchmarks',
 	'pallet-nonfungible/runtime-benchmarks',
+	'pallet-democracy/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
+	'pallet-ranked-collective/runtime-benchmarks',
+	'pallet-membership/runtime-benchmarks',
+	'pallet-referenda/runtime-benchmarks',
+	'pallet-scheduler/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
+	'pallet-scheduler/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
+	'pallet-utility/runtime-benchmarks',
 	'pallet-unique/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
@@ -65,8 +75,12 @@ std = [
 	'frame-system/std',
 	'frame-try-runtime/std',
 	'pallet-aura/std',
-	'pallet-balances/std',
 	'pallet-balances-adapter/std',
+	'pallet-balances/std',
+	'pallet-collective/std',
+	'pallet-democracy/std',
+	'pallet-membership/std',
+	'pallet-scheduler/std',
 	# 'pallet-contracts/std',
 	# 'pallet-contracts-primitives/std',
 	# 'pallet-contracts-rpc-runtime-api/std',
@@ -96,10 +110,18 @@ std = [
 	'pallet-fungible/std',
 	'pallet-inflation/std',
 	'pallet-nonfungible/std',
+	'pallet-democracy/std',
+	'pallet-collective/std',
+	'pallet-ranked-collective/std',
+	'pallet-membership/std',
+	'pallet-referenda/std',
+	'pallet-gov-origins/std',
+	'pallet-scheduler/std',
 	'pallet-refungible/std',
 	'pallet-structure/std',
 	'pallet-sudo/std',
 	'pallet-timestamp/std',
+	'pallet-utility/std',
 	'pallet-transaction-payment-rpc-runtime-api/std',
 	'pallet-transaction-payment/std',
 	'pallet-treasury/std',
@@ -156,8 +178,8 @@ try-runtime = [
 	'orml-xtokens/try-runtime',
 	'pallet-app-promotion/try-runtime',
 	'pallet-aura/try-runtime',
-	'pallet-balances/try-runtime',
 	'pallet-balances-adapter/try-runtime',
+	'pallet-balances/try-runtime',
 	'pallet-charge-transaction/try-runtime',
 	'pallet-common/try-runtime',
 	'pallet-configuration/try-runtime',
@@ -172,10 +194,18 @@ try-runtime = [
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
 	'pallet-nonfungible/try-runtime',
+	'pallet-democracy/try-runtime',
+	'pallet-collective/try-runtime',
+	'pallet-ranked-collective/try-runtime',
+	'pallet-membership/try-runtime',
+	'pallet-referenda/try-runtime',
+	'pallet-gov-origins/try-runtime',
+	'pallet-scheduler/try-runtime',
 	'pallet-refungible/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
 	'pallet-timestamp/try-runtime',
+	'pallet-utility/try-runtime',
 	'pallet-transaction-payment/try-runtime',
 	'pallet-treasury/try-runtime',
 	'pallet-unique/try-runtime',
@@ -186,9 +216,12 @@ try-runtime = [
 app-promotion = []
 collator-selection = []
 foreign-assets = []
+governance = []
 preimage = []
 refungible = []
-scheduler = []
+unique-scheduler = []
+gov-test-timings = []
+session-test-timings = []
 
 ################################################################################
 # local dependencies
@@ -222,6 +255,7 @@ pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
+pallet-utility = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
@@ -259,6 +293,13 @@ pallet-fungible = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }
 pallet-nonfungible = { workspace = true }
+pallet-democracy = { workspace = true }
+pallet-collective = { workspace = true }
+pallet-ranked-collective = { workspace = true }
+pallet-membership = { workspace = true }
+pallet-referenda = { workspace = true }
+pallet-gov-origins = { workspace = true }
+pallet-scheduler = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }
@@ -303,8 +344,8 @@ pallet-test-utils = { workspace = true }
 ################################################################################
 # Other Dependencies
 
-impl-trait-for-tuples = { workspace = true }
 hex-literal = { workspace = true }
+impl-trait-for-tuples = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { workspace = true }

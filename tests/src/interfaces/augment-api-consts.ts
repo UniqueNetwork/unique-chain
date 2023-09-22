@@ -6,16 +6,20 @@
 import '@polkadot/api-base/types/consts';
 
 import type { ApiTypes, AugmentedConst } from '@polkadot/api-base/types';
-import type { Option, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
-import type { Codec } from '@polkadot/types-codec/types';
+import type { Option, U8aFixed, Vec, bool, u128, u16, u32, u64, u8 } from '@polkadot/types-codec';
+import type { Codec, ITuple } from '@polkadot/types-codec/types';
 import type { H160, Perbill, Permill } from '@polkadot/types/interfaces/runtime';
-import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, SpWeightsWeightV2Weight, UpDataStructsCollectionLimits, XcmV3MultiLocation } from '@polkadot/types/lookup';
+import type { FrameSupportPalletId, FrameSystemLimitsBlockLength, FrameSystemLimitsBlockWeights, PalletReferendaTrackInfo, SpVersionRuntimeVersion, SpWeightsRuntimeDbWeight, SpWeightsWeightV2Weight, UpDataStructsCollectionLimits, XcmV3MultiLocation } from '@polkadot/types/lookup';
 
 export type __AugmentedConst<ApiType extends ApiTypes> = AugmentedConst<ApiType>;
 
 declare module '@polkadot/api-base/types/consts' {
   interface AugmentedConsts<ApiType extends ApiTypes> {
     appPromotion: {
+      /**
+       * Freeze identifier used by the pallet
+       **/
+      freezeIdentifier: U8aFixed & AugmentedConst<ApiType>;
       /**
        * Rate of return for interval in blocks defined in `RecalculationInterval`.
        **/
@@ -75,6 +79,13 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    collatorSelection: {
+      licenceBondIdentifier: U8aFixed & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     common: {
       /**
        * Maximum admins per collection.
@@ -107,11 +118,116 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    council: {
+      /**
+       * The maximum weight of a dispatch call that can be proposed and executed.
+       **/
+      maxProposalWeight: SpWeightsWeightV2Weight & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    democracy: {
+      /**
+       * Period in blocks where an external proposal may not be re-submitted after being vetoed.
+       **/
+      cooloffPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * The period between a proposal being approved and enacted.
+       * 
+       * It should generally be a little more than the unstake period to ensure that
+       * voting stakers have an opportunity to remove themselves from the system in the case
+       * where they are on the losing side of a vote.
+       **/
+      enactmentPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Minimum voting period allowed for a fast-track referendum.
+       **/
+      fastTrackVotingPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Indicator for whether an emergency origin is even allowed to happen. Some chains may
+       * want to set this permanently to `false`, others may want to condition it on things such
+       * as an upgrade having happened recently.
+       **/
+      instantAllowed: bool & AugmentedConst<ApiType>;
+      /**
+       * How often (in blocks) new public referenda are launched.
+       **/
+      launchPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of items which can be blacklisted.
+       **/
+      maxBlacklisted: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of deposits a public proposal may have at any time.
+       **/
+      maxDeposits: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of public proposals that can exist at any time.
+       **/
+      maxProposals: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of votes for an account.
+       * 
+       * Also used to compute weight, an overly big value can
+       * lead to extrinsic with very big weight: see `delegate` for instance.
+       **/
+      maxVotes: u32 & AugmentedConst<ApiType>;
+      /**
+       * The minimum amount to be used as a deposit for a public referendum proposal.
+       **/
+      minimumDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * The minimum period of vote locking.
+       * 
+       * It should be no shorter than enactment period to ensure that in the case of an approval,
+       * those successful voters are locked into the consequences that their votes entail.
+       **/
+      voteLockingPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * How often (in blocks) to check for new votes.
+       **/
+      votingPeriod: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     evmContractHelpers: {
       /**
        * Address, under which magic contract will be available
        **/
       contractAddress: H160 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    fellowshipReferenda: {
+      /**
+       * Quantization level for the referendum wakeup scheduler. A higher number will result in
+       * fewer storage reads/writes needed for smaller voters, but also result in delays to the
+       * automatic referendum status changes. Explicit servicing instructions are unaffected.
+       **/
+      alarmInterval: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum size of the referendum queue for a single track.
+       **/
+      maxQueued: u32 & AugmentedConst<ApiType>;
+      /**
+       * The minimum amount to be used as a deposit for a public referendum proposal.
+       **/
+      submissionDeposit: u128 & AugmentedConst<ApiType>;
+      /**
+       * Information concerning the different referendum tracks.
+       **/
+      tracks: Vec<ITuple<[u16, PalletReferendaTrackInfo]>> & AugmentedConst<ApiType>;
+      /**
+       * The number of blocks after submission that a referendum must begin being decided by.
+       * Once this passes, then anyone may cancel the referendum.
+       **/
+      undecidingTimeout: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/
@@ -161,6 +277,54 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    scheduler: {
+      /**
+       * The maximum weight that may be scheduled per block for any dispatchables.
+       **/
+      maximumWeight: SpWeightsWeightV2Weight & AugmentedConst<ApiType>;
+      /**
+       * The maximum number of scheduled calls in the queue for a single block.
+       * 
+       * NOTE:
+       * + Dependent pallets' benchmarks might require a higher limit for the setting. Set a
+       * higher limit under `runtime-benchmarks` feature.
+       **/
+      maxScheduledPerBlock: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    stateTrieMigration: {
+      /**
+       * Maximal number of bytes that a key can have.
+       * 
+       * FRAME itself does not limit the key length.
+       * The concrete value must therefore depend on your storage usage.
+       * A [`frame_support::storage::StorageNMap`] for example can have an arbitrary number of
+       * keys which are then hashed and concatenated, resulting in arbitrarily long keys.
+       * 
+       * Use the *state migration RPC* to retrieve the length of the longest key in your
+       * storage: <https://github.com/paritytech/substrate/issues/11642>
+       * 
+       * The migration will halt with a `Halted` event if this value is too small.
+       * Since there is no real penalty from over-estimating, it is advised to use a large
+       * value. The default is 512 byte.
+       * 
+       * Some key lengths for reference:
+       * - [`frame_support::storage::StorageValue`]: 32 byte
+       * - [`frame_support::storage::StorageMap`]: 64 byte
+       * - [`frame_support::storage::StorageDoubleMap`]: 96 byte
+       * 
+       * For more info see
+       * <https://www.shawntabrizi.com/substrate/querying-substrate-storage-via-rpc/>
+       **/
+      maxKeyLen: u32 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     system: {
       /**
        * Maximum number of block number to block hash mappings to keep (oldest pruned first).
@@ -190,6 +354,16 @@ declare module '@polkadot/api-base/types/consts' {
        * Get the chain's current version.
        **/
       version: SpVersionRuntimeVersion & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    technicalCommittee: {
+      /**
+       * The maximum weight of a dispatch call that can be proposed and executed.
+       **/
+      maxProposalWeight: SpWeightsWeightV2Weight & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

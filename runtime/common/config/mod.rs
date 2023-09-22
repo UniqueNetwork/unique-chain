@@ -22,5 +22,8 @@ pub mod sponsoring;
 pub mod substrate;
 pub mod xcm;
 
+#[cfg(feature = "governance")]
+pub mod governance;
+
 #[cfg(feature = "pallet-test-utils")]
 pub mod test_pallets;

@@ -15,15 +15,24 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{parameter_types, PalletId};
-use frame_system::EnsureRoot;
 use crate::{
-	AccountId, Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
+	Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
 	CollatorSelection, Treasury,
 	config::pallets::{MaxCollators, SessionPeriod, TreasuryAccountId},
 };
+
+#[cfg(feature = "governance")]
+use crate::config::governance;
+
+#[cfg(not(feature = "governance"))]
+use frame_system::EnsureRoot;
+
 use sp_runtime::Perbill;
 use up_common::constants::{UNIQUE, MILLIUNIQUE};
-
+use pallet_configuration::{
+	CollatorSelectionKickThresholdOverride, CollatorSelectionLicenseBondOverride,
+	CollatorSelectionDesiredCollatorsOverride,
+};
 parameter_types! {
 	pub const SessionOffset: BlockNumber = 0;
 }
@@ -60,6 +69,9 @@ parameter_types! {
 	pub const MaxAdditionalFields: u32 = 100;
 	pub const MaxRegistrars: u32 = 20;
 	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
+	pub LicenseBond: Balance =  CollatorSelectionLicenseBondOverride::<Runtime>::get();
+	pub DesiredCollators: u32 = CollatorSelectionDesiredCollatorsOverride::<Runtime>::get();
+	pub KickThreshold: BlockNumber = CollatorSelectionKickThresholdOverride::<Runtime>::get();
 }
 
 impl pallet_identity::Config for Runtime {
@@ -71,8 +83,19 @@ impl pallet_identity::Config for Runtime {
 	type MaxRegistrars = MaxRegistrars;
 	type MaxSubAccounts = MaxSubAccounts;
 	type SubAccountDeposit = SubAccountDeposit;
+
+	#[cfg(feature = "governance")]
+	type RegistrarOrigin = governance::RootOrTechnicalCommitteeMember;
+
+	#[cfg(feature = "governance")]
+	type ForceOrigin = governance::RootOrTechnicalCommitteeMember;
+
+	#[cfg(not(feature = "governance"))]
 	type RegistrarOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+
+	#[cfg(not(feature = "governance"))]
 	type ForceOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+
 	type Slashed = Treasury;
 	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
@@ -84,8 +107,19 @@ parameter_types! {
 
 impl pallet_collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.
-	type UpdateOrigin = EnsureRoot<AccountId>;
+
+	// We allow root or the unanimous technical committee
+	// to execute privileged collator selection operations.
+	#[cfg(feature = "governance")]
+	type UpdateOrigin = governance::RootOrAllTechnicalCommittee;
+
+	// If there is no governance,
+	// we allow root only to execute privileged collator selection operations.
+	#[cfg(not(feature = "governance"))]
+	type UpdateOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
+
 	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
 	type MaxCollators = MaxCollators;
@@ -95,4 +129,7 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorRegistration = Session;
 	type WeightInfo = pallet_collator_selection::weights::SubstrateWeight<Runtime>;
 	type LicenceBondIdentifier = LicenceBondIdentifier;
+	type DesiredCollators = DesiredCollators;
+	type LicenseBond = LicenseBond;
+	type KickThreshold = KickThreshold;
 }

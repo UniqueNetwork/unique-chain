@@ -19,7 +19,7 @@
 extern crate alloc;
 use core::marker::PhantomData;
 use evm_coder::{
-	abi::{AbiWriter, AbiType},
+	abi::{AbiType, AbiEncode},
 	generate_stubgen, solidity_interface,
 	types::*,
 	ToLog,
@@ -370,11 +370,8 @@ where
 		{
 			return Some(Err(PrecompileFailure::Revert {
 				exit_status: ExitRevert::Reverted,
-				output: {
-					let mut writer = AbiWriter::new_call(evm_coder::fn_selector!(Error(string)));
-					writer.string("Target contract is allowlisted");
-					writer.finish()
-				},
+				output: ("target contract is allowlisted",)
+					.abi_encode_call(evm_coder::fn_selector!(Error(string))),
 			}));
 		}
 

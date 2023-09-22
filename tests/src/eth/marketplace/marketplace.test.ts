@@ -60,7 +60,7 @@ describe('Matcher contract usage', () => {
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
-    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: alice.address});
+    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: {Substrate: alice.address}});
     await collection.confirmSponsorship(alice);
     await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
     const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
@@ -114,7 +114,7 @@ describe('Matcher contract usage', () => {
     await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
     await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
 
-    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: alice.address});
+    const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: {Substrate: alice.address}});
     await collection.confirmSponsorship(alice);
     await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
     const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');

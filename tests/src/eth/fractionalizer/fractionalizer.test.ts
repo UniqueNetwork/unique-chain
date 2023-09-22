@@ -249,7 +249,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   itEth('call setRFTCollection with NFT collection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
-    const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
 
     const fractionalizer = await deployContract(helper, owner);
     const fractionalizerAddressCross = helper.ethCrossAccount.fromAddress(fractionalizer.options.address);
@@ -284,7 +284,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
-    const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const mintResult = await nftContract.methods.mint(owner).send({from: owner});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
@@ -299,7 +299,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const nftOwner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
-    const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const mintResult = await nftContract.methods.mint(owner).send({from: owner});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
     await nftContract.methods.transfer(nftOwner, 1).send({from: owner});
@@ -316,7 +316,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');
-    const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
+    const nftContract = helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
     const mintResult = await nftContract.methods.mint(owner).send({from: owner});
     const nftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
@@ -360,7 +360,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
 
     const {contract: fractionalizer} = await initContract(helper, owner);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
-    const refungibleContract = await helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
+    const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
     const mintResult = await refungibleContract.methods.mint(owner).send({from: owner});
     const rftTokenId = mintResult.events.Transfer.returnValues.tokenId;
 
@@ -371,7 +371,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
   itEth('call rft2nft for RFT token that was not minted by fractionalizer contract', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const rftCollection = await helper.eth.createRFTCollection(owner, 'rft', 'RFT collection', 'RFT');
-    const refungibleContract = await helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
+    const refungibleContract = helper.ethNativeContract.collection(rftCollection.collectionAddress, 'rft', owner);
 
     const fractionalizer = await deployContract(helper, owner);
 
@@ -394,7 +394,7 @@ describe('Negative Integration Tests for fractionalizer', () => {
     const {rftTokenAddress} = await mintRFTToken(helper, owner, fractionalizer, 100n);
 
     const {tokenId} = helper.ethAddress.extractTokenId(rftTokenAddress);
-    const refungibleTokenContract = await helper.ethNativeContract.rftToken(rftTokenAddress, owner);
+    const refungibleTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
     await refungibleTokenContract.methods.transfer(receiver, 50).send({from: owner});
     await refungibleTokenContract.methods.approve(fractionalizer.options.address, 50).send({from: receiver});
     await expect(fractionalizer.methods.rft2nft(rftCollectionAddress, tokenId).call({from: receiver}))

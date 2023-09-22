@@ -432,16 +432,15 @@ where
 		keys: Option<Vec<String>>
 	) -> Vec<PropertyKeyPermission>, unique_api);
 
-	pass_method!(
-		token_data(
-			collection: CollectionId,
-			token_id: TokenId,
-
-			#[map = string_keys_to_bytes_keys]
-			keys: Option<Vec<String>>,
-		) -> TokenData<CrossAccountId>, unique_api;
-		changed_in 3, token_data_before_version_3(collection, token_id, string_keys_to_bytes_keys(keys)) => |value| Ok(value.into())
-	);
+	fn token_data(
+		&self,
+		collection: CollectionId,
+		token_id: TokenId,
+		keys: Option<Vec<String>>,
+		at: Option<<Block as BlockT>::Hash>,
+	) -> Result<TokenData<CrossAccountId>> {
+		token_data_internal(self.client.clone(), collection, token_id, keys, at)
+	}
 
 	pass_method!(adminlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
 	pass_method!(allowlist(collection: CollectionId) -> Vec<CrossAccountId>, unique_api);
@@ -495,6 +494,55 @@ where
 		.into_iter()
 		.map(|(b, a)| (b, a.to_string()))
 		.collect::<Vec<_>>(), app_promotion_api);
+}
+
+fn token_data_internal<Block, Client, AccountId, CrossAccountId>(
+	client: Arc<Client>,
+	collection: CollectionId,
+	token_id: TokenId,
+	keys: Option<Vec<String>>,
+	at: Option<<Block as BlockT>::Hash>,
+) -> Result<TokenData<CrossAccountId>>
+where
+	AccountId: Decode,
+	Block: BlockT,
+	Client: ProvideRuntimeApi<Block> + HeaderBackend<Block>,
+	Client::Api: UniqueRuntimeApi<Block, CrossAccountId, AccountId>,
+	CrossAccountId: pallet_evm::account::CrossAccountId<AccountId>,
+{
+	let api = client.runtime_api();
+	let at = at.unwrap_or_else(|| client.info().best_hash);
+	let api_version = if let Ok(Some(api_version)) =
+		api.api_version::<dyn UniqueRuntimeApi<Block, CrossAccountId, AccountId>>(at)
+	{
+		api_version
+	} else {
+		return Err(anyhow!("api is not available").into());
+	};
+	let result = if api_version >= 3 {
+		api.token_data(at, collection, token_id, string_keys_to_bytes_keys(keys))
+	} else {
+		#[allow(deprecated)]
+		api.token_data_before_version_3(at, collection, token_id, string_keys_to_bytes_keys(keys))
+			.map(
+				|r: sc_service::Result<
+					up_data_structs::TokenDataVersion1<CrossAccountId>,
+					sp_runtime::DispatchError,
+				>| r.map(|value| value.into()),
+			)
+			.or_else(|_| {
+				Ok(api
+					.token_owner(at, collection, token_id)?
+					.map(|owner| TokenData {
+						properties: Vec::new(),
+						owner,
+						pieces: 0,
+					}))
+			})
+	};
+	Ok(result
+		.map_err(|e| anyhow!("unable to query: {e}"))?
+		.map_err(|e| anyhow!("runtime error: {e:?}"))?)
 }
 
 fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {

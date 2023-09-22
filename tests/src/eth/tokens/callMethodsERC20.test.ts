@@ -17,6 +17,7 @@
 import {Pallets, requirePalletsOrSkip} from '../../util';
 import {expect, itEth, usingEthPlaygrounds} from '../util';
 import {IKeyringPair} from '@polkadot/types/types';
+import {CreateCollectionData} from '../util/playgrounds/types';
 
 [
   {mode: 'ft' as const, requiredPallets: []},
@@ -36,7 +37,7 @@ import {IKeyringPair} from '@polkadot/types/types';
       const caller = await helper.eth.createAccountWithBalance(donor);
       const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
 
-      const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'TotalSupply', '6', '6');
+      const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('TotalSupply', '6', '6', testCase.mode)).send();
       if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
 
       // Use collection contract for FT or token contract for RFT:
@@ -57,7 +58,7 @@ import {IKeyringPair} from '@polkadot/types/types';
       const caller = await helper.eth.createAccountWithBalance(donor);
       const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
 
-      const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'BalanceOf', 'Descroption', 'Prefix');
+      const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
       if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
 
       // Use collection contract for FT or token contract for RFT:
@@ -76,7 +77,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 
     itEth('decimals', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
-      const {collection, collectionId} = await helper.eth.createCollection(testCase.mode, caller, 'BalanceOf', 'Descroption', 'Prefix');
+      const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
       if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
 
       // Use collection contract for FT or token contract for RFT:

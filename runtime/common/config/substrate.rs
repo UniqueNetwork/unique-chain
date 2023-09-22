@@ -35,8 +35,8 @@ use frame_system::{
 };
 use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
 use crate::{
-	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, PalletInfo,
-	System, Balances, SS58Prefix, Version,
+	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, OriginCaller,
+	PalletInfo, System, Balances, SS58Prefix, Version,
 };
 use up_common::{types::*, constants::*};
 use sp_std::vec;
@@ -236,6 +236,7 @@ impl pallet_treasury::Config for Runtime {
 impl pallet_sudo::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type RuntimeCall = RuntimeCall;
+	type WeightInfo = pallet_sudo::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {
@@ -246,4 +247,11 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
+}
+
+impl pallet_utility::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type RuntimeCall = RuntimeCall;
+	type PalletsOrigin = OriginCaller;
+	type WeightInfo = pallet_utility::weights::SubstrateWeight<Self>;
 }

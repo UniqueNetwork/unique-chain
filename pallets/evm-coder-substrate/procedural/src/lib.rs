@@ -52,7 +52,7 @@ pub fn derive_predispatch(item: proc_macro::TokenStream) -> proc_macro::TokenStr
 		let (impl_generics, ty_generics, _where_clause) = input.generics.split_for_impl();
 		let ident = &input.ident;
 		let Data::Enum(data) = &input.data else {
-			return Err(Error::new_spanned(input, "PreDispatch input is enum"))
+			return Err(Error::new_spanned(input, "PreDispatch input is enum"));
 		};
 
 		let matching = data

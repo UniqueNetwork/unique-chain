@@ -24,8 +24,7 @@ use crate::{
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
 	},
-	Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, RUNTIME_NAME, TOKEN_SYMBOL, DECIMALS,
-	Balances,
+	Runtime, RuntimeEvent, RuntimeCall, VERSION, TOKEN_SYMBOL, DECIMALS, Balances,
 };
 use frame_support::traits::{ConstU32, ConstU64, Currency};
 use up_common::{
@@ -37,7 +36,10 @@ use up_data_structs::{
 };
 use sp_arithmetic::Perbill;
 
-#[cfg(feature = "scheduler")]
+#[cfg(feature = "governance")]
+use crate::runtime_common::config::governance;
+
+#[cfg(feature = "unique-scheduler")]
 pub mod scheduler;
 
 #[cfg(feature = "foreign-assets")]
@@ -88,7 +90,7 @@ impl pallet_nonfungible::Config for Runtime {
 
 parameter_types! {
 	pub const Decimals: u8 = DECIMALS;
-	pub Name: String = RUNTIME_NAME.to_string();
+	pub Name: String = String::from_utf8_lossy(VERSION.impl_name.as_ref()).to_string();
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 impl pallet_balances_adapter::Config for Runtime {
@@ -123,13 +125,23 @@ parameter_types! {
 	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
 	pub const MaxCollators: u32 = MAX_COLLATORS;
 	pub const LicenseBond: Balance = GENESIS_LICENSE_BOND;
-	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
+
 	pub const DayRelayBlocks: BlockNumber = RELAY_DAYS;
+}
+
+#[cfg(not(feature = "session-test-timings"))]
+parameter_types! {
+	pub const SessionPeriod: BlockNumber = SESSION_LENGTH;
+}
+
+#[cfg(feature = "session-test-timings")]
+parameter_types! {
+	pub const SessionPeriod: BlockNumber = 5 * MINUTES;
 }
 
 impl pallet_configuration::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
+	type Balance = Balance;
 	type DefaultWeightToFeeCoefficient = ConstU64<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
 	type DefaultCollatorSelectionMaxCollators = MaxCollators;
@@ -143,8 +155,17 @@ impl pallet_configuration::Config for Runtime {
 
 impl pallet_maintenance::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type RuntimeOrigin = RuntimeOrigin;
+
 	type RuntimeCall = RuntimeCall;
+
+	#[cfg(feature = "governance")]
+	type ManagerOrigin = governance::RootOrTechnicalCommitteeMember;
+
+	#[cfg(not(feature = "governance"))]
+	type ManagerOrigin = frame_system::EnsureRoot<AccountId>;
+
+	type PreimageOrigin = frame_system::EnsureRoot<AccountId>;
+
 	#[cfg(feature = "preimage")]
 	type Preimages = crate::Preimage;
 	#[cfg(not(feature = "preimage"))]

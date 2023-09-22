@@ -49,6 +49,9 @@ pub use foreignassets as xcm_assets;
 #[cfg(not(feature = "foreign-assets"))]
 pub use nativeassets as xcm_assets;
 
+#[cfg(feature = "governance")]
+use crate::runtime_common::config::governance;
+
 use xcm_assets::{AssetTransactor, IsReserve, Trader};
 
 parameter_types! {
@@ -220,6 +223,8 @@ impl pallet_xcm::Config for Runtime {
 	type MaxLockers = ConstU32<8>;
 	type WeightInfo = crate::weights::xcm::SubstrateWeight<Runtime>;
 	type AdminOrigin = EnsureRoot<AccountId>;
+	type MaxRemoteLockConsumers = ConstU32<0>;
+	type RemoteLockConsumerIdentifier = ();
 	#[cfg(feature = "runtime-benchmarks")]
 	type ReachableDest = ReachableDest;
 }
@@ -236,7 +241,13 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = PolkadotXcm;
 	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
-	type ControllerOrigin = EnsureRoot<AccountId>;
+
+	#[cfg(feature = "governance")]
+	type ControllerOrigin = governance::RootOrTechnicalCommitteeMember;
+
+	#[cfg(not(feature = "governance"))]
+	type ControllerOrigin = frame_system::EnsureRoot<AccountId>;
+
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
 	type PriceForSiblingDelivery = ();
 }

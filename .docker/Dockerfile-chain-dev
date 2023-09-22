@@ -24,4 +24,4 @@ WORKDIR /dev_chain
 RUN cargo build --release
 RUN echo "$NETWORK"
 
-CMD cargo run --release --features=${NETWORK}-runtime -- --dev -linfo --unsafe-ws-external --rpc-cors=all --unsafe-rpc-external
+CMD cargo run --release --features=${NETWORK}-runtime -- --dev -linfo --rpc-cors=all --unsafe-rpc-external
