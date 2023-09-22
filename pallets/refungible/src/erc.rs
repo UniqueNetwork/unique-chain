@@ -1041,7 +1041,11 @@ where
 
 	/// @notice Function to mint a token.
 	/// @param tokenProperties Properties of minted token
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_properties.len() as u32) + <SelfWeightOf<T>>::set_token_properties(token_properties.len() as u32))]
+	#[weight(if token_properties.len() == 1 {
+		<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(token_properties.iter().next().unwrap().owners.len() as u32)
+	} else {
+		<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(token_properties.len() as u32)
+	} + <SelfWeightOf<T>>::set_token_properties(token_properties.len() as u32))]
 	fn mint_bulk_cross(
 		&mut self,
 		caller: Caller,
@@ -1051,9 +1055,17 @@ where
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+		let has_multiple_tokens = token_properties.len() > 1;
 
 		let mut create_rft_data = Vec::with_capacity(token_properties.len());
 		for MintTokenData { owners, properties } in token_properties {
+			let has_multiple_owners = owners.len() > 1;
+			if has_multiple_tokens & has_multiple_owners {
+				return Err(
+					"creation of multiple tokens supported only if they have single owner each"
+						.into(),
+				);
+			}
 			let users: BoundedBTreeMap<_, _, _> = owners
 				.into_iter()
 				.map(|data| Ok((data.owner.into_sub_cross_account::<T>()?, data.pieces)))
