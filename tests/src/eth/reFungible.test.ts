@@ -131,6 +131,8 @@ describe('Refungible: Plain calls', () => {
     const callerCross = helper.ethCrossAccount.fromAddress(caller);
     const receiver = helper.eth.createAccount();
     const receiverCross = helper.ethCrossAccount.fromAddress(receiver);
+    const receiver2 = helper.eth.createAccount();
+    const receiver2Cross = helper.ethCrossAccount.fromAddress(receiver2);
 
     const permissions = [
       {code: TokenPermissionField.Mutable, value: true},
@@ -157,26 +159,41 @@ describe('Refungible: Plain calls', () => {
       },
     ).send();
 
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
     {
       const nextTokenId = await contract.methods.nextTokenId().call();
       expect(nextTokenId).to.be.equal('1');
       const result = await contract.methods.mintBulkCross([
         {
-          owner: receiverCross,
+          owners: [{
+            owner: receiverCross,
+            pieces: 1,
+          }],
           properties: [
             {key: 'key_0_0', value: Buffer.from('value_0_0')},
           ],
         },
         {
-          owner: receiverCross,
+          owners: [{
+            owner: receiverCross,
+            pieces: 2,
+          }],
           properties: [
             {key: 'key_1_0', value: Buffer.from('value_1_0')},
             {key: 'key_1_1', value: Buffer.from('value_1_1')},
           ],
         },
         {
-          owner: receiverCross,
+          owners: [
+            {
+              owner: receiverCross,
+              pieces: 1,
+            },
+            {
+              owner: receiver2Cross,
+              pieces: 2,
+            },
+          ],
           properties: [
             {key: 'key_2_0', value: Buffer.from('value_2_0')},
             {key: 'key_2_1', value: Buffer.from('value_2_1')},
@@ -190,7 +207,11 @@ describe('Refungible: Plain calls', () => {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
         expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-        expect(event.returnValues.to).to.equal(receiver);
+        if(i == 0 || i == 1)
+          expect(event.returnValues.to).to.equal(receiver);
+        else
+          expect(event.returnValues.to).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
+
         expect(event.returnValues.tokenId).to.equal(`${+nextTokenId + i}`);
       }
 

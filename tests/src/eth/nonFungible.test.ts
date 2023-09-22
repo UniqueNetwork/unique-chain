@@ -216,7 +216,7 @@ describe('NFT: Plain calls', () => {
         name: 'A',
         description: 'B',
         tokenPrefix: 'C',
-        collectionMode: 'rft',
+        collectionMode: 'nft',
         adminList: [callerCross],
         tokenPropertyPermissions: [
           {key: 'key_0_0', permissions},

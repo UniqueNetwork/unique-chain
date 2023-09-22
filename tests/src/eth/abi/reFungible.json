@@ -453,12 +453,28 @@
         "components": [
           {
             "components": [
-              { "internalType": "address", "name": "eth", "type": "address" },
-              { "internalType": "uint256", "name": "sub", "type": "uint256" }
+              {
+                "components": [
+                  {
+                    "internalType": "address",
+                    "name": "eth",
+                    "type": "address"
+                  },
+                  {
+                    "internalType": "uint256",
+                    "name": "sub",
+                    "type": "uint256"
+                  }
+                ],
+                "internalType": "struct CrossAddress",
+                "name": "owner",
+                "type": "tuple"
+              },
+              { "internalType": "uint128", "name": "pieces", "type": "uint128" }
             ],
-            "internalType": "struct CrossAddress",
-            "name": "owner",
-            "type": "tuple"
+            "internalType": "struct OwnerPieces[]",
+            "name": "owners",
+            "type": "tuple[]"
           },
           {
             "components": [

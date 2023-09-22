@@ -1055,8 +1055,11 @@ struct TokenUri {
 	string uri;
 }
 
+/// Token minting parameters
 struct MintTokenData {
+	/// Minted token owner
 	CrossAddress owner;
+	/// Minted token properties
 	Property[] properties;
 }
 

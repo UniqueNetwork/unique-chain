@@ -26,7 +26,7 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
+use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::BoundedVec;
 use up_data_structs::{
 	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,
@@ -62,6 +62,15 @@ pub enum ERC721TokenEvent {
 		#[indexed]
 		token_id: U256,
 	},
+}
+
+/// Token minting parameters
+#[derive(AbiCoder, Default, Debug)]
+pub struct MintTokenData {
+	/// Minted token owner
+	pub owner: eth::CrossAddress,
+	/// Minted token properties
+	pub properties: Vec<eth::Property>,
 }
 
 frontier_contract! {
@@ -984,14 +993,14 @@ where
 	/// @notice Function to mint a token.
 	/// @param data Array of pairs of token owner and token's properties for minted token
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(data.len() as u32) + <SelfWeightOf<T>>::set_token_properties(data.len() as u32))]
-	fn mint_bulk_cross(&mut self, caller: Caller, data: Vec<eth::MintTokenData>) -> Result<bool> {
+	fn mint_bulk_cross(&mut self, caller: Caller, data: Vec<MintTokenData>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let budget = self
 			.recorder
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut create_nft_data = Vec::with_capacity(data.len());
-		for eth::MintTokenData { owner, properties } in data {
+		for MintTokenData { owner, properties } in data {
 			let owner = owner.into_sub_cross_account::<T>()?;
 			create_nft_data.push(CreateItemData::<T> {
 				properties: properties

@@ -26,7 +26,7 @@ use core::{
 	char::{REPLACEMENT_CHARACTER, decode_utf16},
 	convert::TryInto,
 };
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
+use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
@@ -69,6 +69,24 @@ pub enum ERC721TokenEvent {
 		#[indexed]
 		token_id: U256,
 	},
+}
+
+/// Token minting parameters
+#[derive(AbiCoder, Default, Debug)]
+pub struct OwnerPieces {
+	/// Minted token owner
+	pub owner: eth::CrossAddress,
+	/// Number of token pieces
+	pub pieces: u128,
+}
+
+/// Token minting parameters
+#[derive(AbiCoder, Default, Debug)]
+pub struct MintTokenData {
+	/// Minted token owner and number of pieces
+	pub owners: Vec<OwnerPieces>,
+	/// Minted token properties
+	pub properties: Vec<eth::Property>,
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
@@ -1027,7 +1045,7 @@ where
 	fn mint_bulk_cross(
 		&mut self,
 		caller: Caller,
-		token_properties: Vec<eth::MintTokenData>,
+		token_properties: Vec<MintTokenData>,
 	) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let budget = self
@@ -1035,11 +1053,11 @@ where
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut create_rft_data = Vec::with_capacity(token_properties.len());
-		for eth::MintTokenData { owner, properties } in token_properties {
-			let owner = owner.into_sub_cross_account::<T>()?;
-			let users: BoundedBTreeMap<_, _, _> = [(owner, 1)]
+		for MintTokenData { owners, properties } in token_properties {
+			let users: BoundedBTreeMap<_, _, _> = owners
 				.into_iter()
-				.collect::<BTreeMap<_, _>>()
+				.map(|data| Ok((data.owner.into_sub_cross_account::<T>()?, data.pieces)))
+				.collect::<Result<BTreeMap<_, _>>>()?
 				.try_into()
 				.map_err(|_| "too many users")?;
 			create_rft_data.push(CreateItemData::<T> {
