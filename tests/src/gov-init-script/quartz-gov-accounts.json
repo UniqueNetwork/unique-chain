@@ -1,7 +1,7 @@
 {
     "counselors": {
         "prime": {
-            "address": "",
+            "address": "yGEYSX5MawYfvE7ypWPCy1PgFGHLuP6vLqDp756NyxjVcy94M",
             "identity": {
                 "display": "Alexander Mitrovic"
             }
@@ -26,7 +26,7 @@
                 }
             },
             {
-                "address": "",
+                "address": "12ry7wPEGeBSceWTZXgMTpqLDuP4Kd6rLJYUx3qVwF1gbSNs",
                 "identity": {
                     "display": "Irina Karagyaur"
                 }
@@ -36,7 +36,7 @@
 
     "techcomms": {
         "prime": {
-            "address": "",
+            "address": "5Dd1tmzuAvgwhHPqotqZGr1Ec5tWS8DSKegLEpQXi8pdJoSj",
             "identity": {
                 "display": "Greg Zaitsev"
             }
@@ -49,7 +49,7 @@
                 }
             },
             {
-                "address": "",
+                "address": "5H3eDLwMiAqyQjnngWdx6EXGLgbJVtNWfDqaKmHN28sbEAqw",
                 "identity": {
                     "display": "Konstantin Astakhov"
                 }
