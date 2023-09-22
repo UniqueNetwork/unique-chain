@@ -18,7 +18,7 @@ import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
-import { CREATE_COLLECTION_DATA_DEFAULTS, CollectionMode, CreateCollectionData, TokenPermissionField } from './util/playgrounds/types';
+import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionMode, CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
 
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;

@@ -119,7 +119,7 @@ impl CrossAddress {
 		} else if self.sub == Default::default() {
 			Ok(Some(T::CrossAccountId::from_eth(self.eth)))
 		} else {
-			Err(format!("All fields of cross account is non zeroed {:?}", self).into())
+			Err(format!("All fields of cross account is non zeroed {self:?}").into())
 		}
 	}
 

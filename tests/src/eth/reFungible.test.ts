@@ -18,7 +18,7 @@ import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
-import { CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField } from './util/playgrounds/types';
+import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from './util/playgrounds/types';
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
