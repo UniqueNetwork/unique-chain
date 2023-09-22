@@ -167,3 +167,13 @@ check:
 .PHONY: clippy
 clippy:
 	cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests
+
+.PHONY: git-hooks
+git-hooks:
+	cp .githooks/pre-commit .git/hooks/pre-commit
+
+.PHONY: init
+init:
+	make git-hooks
+	cd tests
+	yarn install

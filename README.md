@@ -159,6 +159,11 @@ pushd tests && yarn fix ; popd
 cd tests && yarn eslint --ext .ts,.js src/
 ```
 
+### Enable checking of code style on commits
+```bash
+make git-hooks
+```
+
 
 ## Karura token transfer
 
