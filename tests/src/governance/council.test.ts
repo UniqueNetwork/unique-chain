@@ -1,7 +1,6 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {Event} from '../util/playgrounds/unique.dev';
 import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util';
 
 describeGov('Governance: Council tests', () => {
@@ -38,9 +37,11 @@ describeGov('Governance: Council tests', () => {
         moreThanHalfCouncilThreshold,
       );
 
-      const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
-      const proposalIndex = councilProposedEvent.proposalIndex;
-      const proposalHash = councilProposedEvent.proposalHash;
+      const councilProposedEvent = proposeResult.result.events.find(helper.api!.events.council.Proposed.is);
+      if(!councilProposedEvent)
+        throw Error('Expected event council.Proposed');
+      const proposalIndex = councilProposedEvent.data.proposalIndex.toNumber();
+      const proposalHash = councilProposedEvent.data.proposalHash.toHex();
 
 
       await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
@@ -60,9 +61,11 @@ describeGov('Governance: Council tests', () => {
         moreThanHalfCouncilThreshold,
       );
 
-      const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
-      const proposalIndex = councilProposedEvent.proposalIndex;
-      const proposalHash = councilProposedEvent.proposalHash;
+      const councilProposedEvent = proposeResult.result.events.find(helper.api!.events.council.Proposed.is);
+      if(!councilProposedEvent)
+        throw Error('Expected event council.Proposed');
+      const proposalIndex = councilProposedEvent.data.proposalIndex.toNumber();
+      const proposalHash = councilProposedEvent.data.proposalHash.toHex();
 
 
       await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
@@ -91,9 +94,11 @@ describeGov('Governance: Council tests', () => {
       moreThanHalfCouncilThreshold,
     );
 
-    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
-    const proposalIndex = councilProposedEvent.proposalIndex;
-    const proposalHash = councilProposedEvent.proposalHash;
+    const councilProposedEvent = proposeResult.result.events.find(helper.api!.events.council.Proposed.is);
+    if(!councilProposedEvent)
+      throw Error('Expected event council.Proposed');
+    const proposalIndex = councilProposedEvent.data.proposalIndex.toNumber();
+    const proposalHash = councilProposedEvent.data.proposalHash.toHex();
 
     await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
     await helper.council.collective.vote(counselors.charu, proposalHash, proposalIndex, true);
@@ -101,8 +106,8 @@ describeGov('Governance: Council tests', () => {
 
     await helper.council.collective.close(counselors.filip, proposalHash, proposalIndex);
 
-    const democracyStartedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
-    const democracyReferendumIndex = democracyStartedEvent.referendumIndex;
+    const democracyStartedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.api!.events.democracy.Started);
+    const democracyReferendumIndex = democracyStartedEvent.refIndex.toNumber();
     const democracyThreshold = democracyStartedEvent.threshold;
 
     expect(democracyThreshold).to.be.equal('SuperMajorityAgainst');
@@ -127,10 +132,10 @@ describeGov('Governance: Council tests', () => {
       },
     });
 
-    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
-    expect(passedReferendumEvent.referendumIndex).to.be.equal(democracyReferendumIndex);
+    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, helper.api!.events.democracy.Passed);
+    expect(passedReferendumEvent.refIndex.toNumber()).to.be.equal(democracyReferendumIndex);
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.Scheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod, helper.api!.events.scheduler.Dispatched);
     const receiverBalance = await helper.balance.getSubstrate(forceSetBalanceReceiver.address);
     expect(receiverBalance).to.be.equal(forceSetBalanceTestValue);
   });
@@ -144,17 +149,21 @@ describeGov('Governance: Council tests', () => {
       moreThanHalfCouncilThreshold,
     );
 
-    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
-    const proposalIndex = councilProposedEvent.proposalIndex;
-    const proposalHash = councilProposedEvent.proposalHash;
+    const councilProposedEvent = proposeResult.result.events.find(helper.api!.events.council.Proposed.is);
+    if(!councilProposedEvent)
+      throw Error('Expected event council.Proposed');
+    const proposalIndex = councilProposedEvent.data.proposalIndex.toNumber();
+    const proposalHash = councilProposedEvent.data.proposalHash.toHex();
 
     await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
 
     await helper.wait.newBlocks(councilMotionDuration);
     const closeResult = await helper.council.collective.close(counselors.filip, proposalHash, proposalIndex);
-    const closeEvent = Event.Council.Closed.expect(closeResult);
+    const closeEvent = closeResult.result.events.find(helper.api!.events.council.Closed.is);
+    if(!closeEvent)
+      throw Error('Expected event council.Closed');
     const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON() as string[];
-    expect(closeEvent.yes).to.be.equal(members.length);
+    expect(closeEvent.data.yes.toNumber()).to.be.equal(members.length);
   });
 
   itSub('Superuser can add a member', async ({helper}) => {
@@ -243,12 +252,12 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('Council can blacklist Democracy proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
     await expect(proposalFromAllCouncil(helper.democracy.blacklistCall(preimageHash, null))).to.be.fulfilled;
   });
 
   itSub('Sudo can blacklist Democracy proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
     await expect(helper.getSudo().democracy.blacklist(sudoer, preimageHash)).to.be.fulfilled;
   });
 
@@ -343,7 +352,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council cannot fast-track Democracy proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
     await expect(proposalFromAllCouncil(helper.democracy.fastTrackCall(preimageHash, democracyFastTrackVotingPeriod, 0)))
@@ -351,7 +360,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council member cannot fast-track Democracy proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
     await expect(helper.council.collective.execute(
@@ -362,7 +371,10 @@ describeGov('Governance: Council tests', () => {
 
   itSub('[Negative] Council cannot cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
-    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
+    const proposedEvent = proposeResult.result.events.find(helper.api!.events.democracy.Proposed.is);
+    if(!proposedEvent)
+      throw Error('Expected event democracy.Proposed');
+    const proposalIndex = proposedEvent.data.proposalIndex.toNumber();
 
     await expect(proposalFromAllCouncil(helper.democracy.cancelProposalCall(proposalIndex)))
       .to.be.rejectedWith(/BadOrigin/);
@@ -371,7 +383,10 @@ describeGov('Governance: Council tests', () => {
   itSub('[Negative] Council member cannot cancel Democracy proposals', async ({helper}) => {
 
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
-    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
+    const proposedEvent = proposeResult.result.events.find(helper.api!.events.democracy.Proposed.is);
+    if(!proposedEvent)
+      throw Error('Expected event democracy.Proposed');
+    const proposalIndex = proposedEvent.data.proposalIndex.toNumber();
 
     await expect(helper.council.collective.execute(
       counselors.alex,
@@ -381,8 +396,8 @@ describeGov('Governance: Council tests', () => {
 
   itSub('[Negative] Council cannot cancel ongoing Democracy referendums', async ({helper}) => {
     await helper.getSudo().democracy.externalProposeDefault(sudoer, dummyProposalCall(helper));
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
-    const referendumIndex = startedEvent.referendumIndex;
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.api!.events.democracy.Started);
+    const referendumIndex = startedEvent.refIndex.toNumber();
 
     await expect(proposalFromAllCouncil(helper.democracy.emergencyCancelCall(referendumIndex)))
       .to.be.rejectedWith(/BadOrigin/);
@@ -390,8 +405,8 @@ describeGov('Governance: Council tests', () => {
 
   itSub('[Negative] Council member cannot cancel ongoing Democracy referendums', async ({helper}) => {
     await helper.getSudo().democracy.externalProposeDefault(sudoer, dummyProposalCall(helper));
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
-    const referendumIndex = startedEvent.referendumIndex;
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.api!.events.democracy.Started);
+    const referendumIndex = startedEvent.refIndex.toNumber();
 
     await expect(helper.council.collective.execute(
       counselors.alex,
@@ -411,7 +426,10 @@ describeGov('Governance: Council tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.api!.events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const referendumIndex = submittedEvent.data.index.toNumber();
 
     await expect(proposalFromAllCouncil(helper.fellowship.referenda.cancelCall(referendumIndex)))
       .to.be.rejectedWith(/BadOrigin/);
@@ -428,7 +446,12 @@ describeGov('Governance: Council tests', () => {
       proposal,
       defaultEnactmentMoment,
     );
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+
+    const submittedEvent = submitResult.result.events.find(helper.api!.events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const referendumIndex = submittedEvent.data.index.toNumber();
+
     await expect(helper.council.collective.execute(
       counselors.alex,
       helper.fellowship.referenda.cancelCall(referendumIndex),
@@ -444,10 +467,11 @@ describeGov('Governance: Council tests', () => {
       councilSize,
     );
 
-    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
-    const proposalIndex = councilProposedEvent.proposalIndex;
-    const proposalHash = councilProposedEvent.proposalHash;
-
+    const councilProposedEvent = proposeResult.result.events.find(helper.api!.events.council.Proposed.is);
+    if(!councilProposedEvent)
+      throw Error('Expected event council.Proposed');
+    const proposalIndex = councilProposedEvent.data.proposalIndex.toNumber();
+    const proposalHash = councilProposedEvent.data.proposalHash.toHex();
 
     await helper.council.collective.vote(counselors.alex, proposalHash, proposalIndex, true);
     await expect(helper.council.collective.close(counselors.filip, proposalHash, proposalIndex)).to.be.rejectedWith('TooEarly');

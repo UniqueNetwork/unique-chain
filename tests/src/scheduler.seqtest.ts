@@ -16,7 +16,7 @@
 
 import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
-import {DevUniqueHelper, Event} from './util/playgrounds/unique.dev';
+import {DevUniqueHelper} from './util/playgrounds/unique.dev';
 
 describe('Scheduling token and balance transfers', () => {
   let superuser: IKeyringPair;
@@ -410,13 +410,13 @@ describe('Scheduling token and balance transfers', () => {
     const priority = 112;
     await helper.getSudo().scheduler.changePriority(superuser, scheduledId, priority);
 
-    const priorityChanged = await helper.wait.expectEvent(waitForBlocks, Event.UniqueScheduler.PriorityChanged);
+    const priorityChanged = await helper.wait.expectEvent(waitForBlocks, helper.api!.events.uniqueScheduler.PriorityChanged) as any;
 
-    const [blockNumber, index] = priorityChanged.task();
-    expect(blockNumber).to.be.equal(executionBlock);
-    expect(index).to.be.equal(0);
+    const [blockNumber, index] = priorityChanged.task;
+    expect(blockNumber.toNumber()).to.be.equal(executionBlock);
+    expect(index.toNumber()).to.be.equal(0);
 
-    expect(priorityChanged.priority().toString()).to.be.equal(priority.toString());
+    expect(priorityChanged.priority.toNumber()).to.be.equal(priority);
   });
 
   itSub('Prioritized operations execute in valid order', async ({helper}) => {
@@ -661,7 +661,7 @@ describe('Negative Test: Scheduling', () => {
     await expect(helper.scheduler.changePriority(alice, scheduledId, priority))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.expectEvent(waitForBlocks, Event.UniqueScheduler.PriorityChanged);
+    await helper.wait.expectEvent(waitForBlocks, helper.api!.events.uniqueScheduler.PriorityChanged);
   });
 });
 

@@ -69,7 +69,7 @@ describe('integration test: ext. ():', () => {
     {
       const createData = {fungible: {value: 100}};
       const events = await helper.executeExtrinsic(alice, 'api.tx.unique.createItem', [collectionId, to, createData as any]);
-      const result = helper.util.extractTokensFromCreationResult(events);
+      const result = helper.util.extractTokensFromCreationResult(helper.api!, events);
       expect(result.tokens[0].amount).to.be.equal(100n);
       expect(result.tokens[0].collectionId).to.be.equal(collectionId);
       expect(result.tokens[0].owner).to.be.deep.equal(to);
@@ -77,7 +77,7 @@ describe('integration test: ext. ():', () => {
     {
       const createData = {fungible: {value: 50}};
       const events = await helper.executeExtrinsic(alice, 'api.tx.unique.createItem', [collectionId, to, createData as any]);
-      const result = helper.util.extractTokensFromCreationResult(events);
+      const result = helper.util.extractTokensFromCreationResult(helper.api!, events);
       expect(result.tokens[0].amount).to.be.equal(50n);
       expect(result.tokens[0].collectionId).to.be.equal(collectionId);
       expect(result.tokens[0].owner).to.be.deep.equal(to);

@@ -1,5 +1,5 @@
 import {EthUniqueHelper} from '../../eth/util';
-import {ITokenPropertyPermission, TCollectionMode} from '../../util/playgrounds/types';
+import {ICreateTokenPropertyPermission, TCollectionMode} from '../../util/playgrounds/types';
 import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
 import {IKeyringPair} from '@polkadot/types/types';
 
@@ -17,7 +17,7 @@ export const SUBS_PROPERTIES = Array(40)
     value: `value_${i}`,
   }));
 
-export const PERMISSIONS: ITokenPropertyPermission[] = PROPERTIES.map((p) => ({
+export const PERMISSIONS: ICreateTokenPropertyPermission[] = PROPERTIES.map((p) => ({
   key: p.key,
   permission: {
     tokenOwner: true,
@@ -36,7 +36,7 @@ export async function createCollectionForBenchmarks(
   privateKey: (seed: string) => Promise<IKeyringPair>,
   ethSigner: string,
   proxyContract: string | null,
-  permissions: ITokenPropertyPermission[],
+  permissions: ICreateTokenPropertyPermission[],
 ) {
   const donor = await privateKey('//Alice');
 

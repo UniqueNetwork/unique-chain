@@ -38,7 +38,7 @@ describe('Refungible nesting', () => {
       const collectionRFT = await helper.rft.mintCollection(alice);
       const targetToken = await collectionNFT.mintToken(alice, {Substrate: charlie.address});
 
-      await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionRFT.collectionId] : null}});
+      await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionRFT.collectionId] : undefined}});
       await collectionNFT.addToAllowList(alice, {Substrate: charlie.address});
       await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 
@@ -125,7 +125,7 @@ describe('Refungible nesting negative tests', () => {
       const collectionRFT = await helper.rft.mintCollection(alice);
       const targetToken = await collectionNFT.mintToken(alice);
 
-      await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionRFT.collectionId] : null}});
+      await collectionNFT.setPermissions(alice, {access: 'AllowList', mintMode: true, nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionRFT.collectionId] : undefined}});
       await collectionNFT.addToAllowList(alice, {Substrate: bob.address});
       await collectionNFT.addToAllowList(alice, targetToken.nestingAccount());
 

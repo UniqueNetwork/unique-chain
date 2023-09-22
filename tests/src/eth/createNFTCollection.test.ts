@@ -58,12 +58,12 @@ describe('Create NFT collection from EVM', () => {
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.eq('NFT');
+    expect(data.raw.mode).to.be.eq('Nft');
 
     expect(await contract.methods.description().call()).to.deep.equal(description);
 
     const options = await collection.getOptions();
-    expect(options.tokenPropertyPermissions).to.be.deep.equal([
+    expect(options?.tokenPropertyPermissions).to.be.deep.equal([
       {
         key: 'URI',
         permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
@@ -86,7 +86,7 @@ describe('Create NFT collection from EVM', () => {
     await collection.methods.setCollectionSponsor(sponsor).send();
 
     let data = (await helper.nft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Unconfirmed: evmToAddress(sponsor, Number(ss58Format))});
 
     await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -94,7 +94,7 @@ describe('Create NFT collection from EVM', () => {
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
     data = (await helper.nft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Confirmed: evmToAddress(sponsor, Number(ss58Format))});
   });
 
   itEth('[cross] Set sponsorship & get description', async ({helper}) => {
@@ -109,7 +109,7 @@ describe('Create NFT collection from EVM', () => {
     await collection.methods.setCollectionSponsorCross(sponsorCross).send();
 
     let data = (await helper.nft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Unconfirmed: evmToAddress(sponsor, Number(ss58Format))});
 
     await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -117,7 +117,7 @@ describe('Create NFT collection from EVM', () => {
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
     data = (await helper.nft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Confirmed: evmToAddress(sponsor, Number(ss58Format))});
 
     expect(await sponsorCollection.methods.description().call()).to.deep.equal(description);
   });

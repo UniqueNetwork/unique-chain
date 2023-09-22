@@ -14,27 +14,31 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import {IKeyringPair, Codec} from '@polkadot/types/types';
+import {AccountId32} from '@polkadot/types/interfaces';
+import {GenericAccountId} from '@polkadot/types/generic';
 import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '../util';
 import {UniqueHelper} from '../util/playgrounds/unique';
+import {Assertion} from 'chai';
 
-async function getIdentities(helper: UniqueHelper) {
-  const identities: [string, any][] = [];
-  for(const [key, value] of await helper.getApi().query.identity.identityOf.entries())
-    identities.push([(key as any).toHuman(), (value as any).unwrap()]);
+async function getIdentityAccounts(helper: UniqueHelper) {
+  const identities: AccountId32[] = [];
+  for(const [key] of await helper.getApi().query.identity.identityOf.entries()) {
+    identities.push(key.args[0]);
+  }
   return identities;
 }
 
-async function getIdentityAccounts(helper: UniqueHelper) {
-  return (await getIdentities(helper)).flatMap(([key, _value]) => key);
-}
-
 async function getSubIdentityAccounts(helper: UniqueHelper, address: string) {
-  return ((await helper.getApi().query.identity.subsOf(address)).toHuman() as any)[1];
+  return (await helper.getApi().query.identity.subsOf(address))[1];
 }
 
-async function getSubIdentityName(helper: UniqueHelper, address: string) {
-  return ((await helper.getApi().query.identity.superOf(address)).toHuman() as any);
+async function getSuperIdentityName(helper: UniqueHelper, address: string | AccountId32) {
+  return await helper.getApi().query.identity.superOf(address);
+}
+
+function instanceOfCodec(obj: any): obj is Codec {
+  return typeof obj == 'object' && 'registry' in obj;
 }
 
 describe('Integration Test: Identities Manipulation', () => {
@@ -42,6 +46,30 @@ describe('Integration Test: Identities Manipulation', () => {
 
   before(async function() {
     if(!process.env.RUN_COLLATOR_TESTS) this.skip();
+    function equal(this: any, _super: any) {
+      return function (this: any, obj2: any, args: any) {
+        const obj = this._obj;
+        // first we assert we are actually working with a model
+        if(!instanceOfCodec(obj)) {
+          _super.call(this, obj2, args);
+          return;
+        }
+
+        this.assert(
+          obj.eq(obj2),
+          'expected #{act} to equal #{exp}',
+          'expected #{act} to not equal #{exp}',
+          // eslint-disable-next-line no-restricted-syntax
+          obj2?.toHuman ? obj2.toHuman() : JSON.stringify(obj2),
+          // eslint-disable-next-line no-restricted-syntax
+          obj.toHuman(),
+        );
+      };
+    }
+
+    Assertion.overwriteMethod('eq', equal);
+    Assertion.overwriteMethod('equal', equal);
+    Assertion.overwriteMethod('equals', equal);
 
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Identity]);
@@ -84,8 +112,8 @@ describe('Integration Test: Identities Manipulation', () => {
 
       // oldIdentitiesCount + 9 because one identity is overwritten, not inserted on top
       expect((await getIdentityAccounts(helper)).length).to.be.equal(oldIdentitiesCount + 9);
-      expect((await helper.callRpc('api.query.identity.identityOf', [singleIdentity[0]])).toHuman().info.display)
-        .to.be.deep.equal({Raw: 'something special'});
+      expect((await helper.callRpc('api.query.identity.identityOf', [singleIdentity[0]])).unwrap().info.display)
+        .to.be.equal({Raw: 'something special'});
     });
 
     itSub('Removes identities', async ({helper}) => {
@@ -95,10 +123,11 @@ describe('Integration Test: Identities Manipulation', () => {
       const oldIdentities = await getIdentityAccounts(helper);
 
       // delete a couple, check that they are no longer there
-      const scapegoats = [crowd.pop()!.address, crowd.pop()!.address];
+      const registry = helper.api!.registry;
+      const scapegoats: AccountId32[] = [new GenericAccountId(registry, crowd.pop()!.address), new GenericAccountId(registry, crowd.pop()!.address)];
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [scapegoats]);
       const newIdentities = await getIdentityAccounts(helper);
-      expect(newIdentities.concat(scapegoats)).to.be.have.members(oldIdentities);
+      expect(newIdentities.concat(scapegoats)).to.have.deep.members(oldIdentities);
     });
   });
 
@@ -126,17 +155,18 @@ describe('Integration Test: Identities Manipulation', () => {
       ]);
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo] as any);
 
+      const registry = helper.api!.registry;
       for(let i = 0; i < supers.length; i++) {
         // check deposit
-        expect(((await helper.getApi().query.identity.subsOf(supers[i].address)).toJSON() as any)[0]).to.be.equal(1000001 + i);
+        expect((await helper.getApi().query.identity.subsOf(supers[i].address))[0].toNumber()).to.be.equal(1000001 + i);
 
         const subsAccounts = await getSubIdentityAccounts(helper, supers[i].address);
         // check sub-identities as account ids
-        expect(subsAccounts).to.include.members(subs[i].map(x => x.address));
+        expect(subsAccounts).to.include.members(subs[i].map(x => new GenericAccountId(registry, x.address)));
 
         for(let j = 0; j < subsAccounts.length; j++) {
           // check sub-identities' names
-          expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `accounter #${j}`});
+          expect((await getSuperIdentityName(helper, subsAccounts[j])).unwrap()[1]).to.be.eq({Raw: `accounter #${j}`});
         }
       }
     });
@@ -179,22 +209,23 @@ describe('Integration Test: Identities Manipulation', () => {
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2] as any);
 
       // make sure everything else is the same
+      const registry = helper.api!.registry;
       for(let i = 0; i < supers.length - 1; i++) {
         // check deposit
-        expect(((await helper.getApi().query.identity.subsOf(supers[i].address)).toJSON() as any)[0]).to.be.equal(1000001 + i);
+        expect((await helper.getApi().query.identity.subsOf(supers[i].address))[0].toNumber()).to.be.eq(1000001 + i);
 
         const subsAccounts = await getSubIdentityAccounts(helper, supers[i].address);
         // check sub-identities as account ids
-        expect(subsAccounts).to.include.members(subs[i].map(x => x.address));
+        expect(subsAccounts).to.include.members(subs[i].map(x => new GenericAccountId(registry, x.address)));
 
-        for(let j = 0; j < subsAccounts; j++) {
+        for(let j = 0; j < subsAccounts.length; j++) {
           // check sub-identities' names
-          expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `accounter #${j}`});
+          expect((await getSuperIdentityName(helper, subsAccounts[j])).unwrap()[1]).to.be.eq({Raw: `accounter #${j}`});
         }
       }
 
       // check deposit
-      expect(((await helper.getApi().query.identity.subsOf(supers[2].address)).toJSON() as any)[0]).to.be.equal(999999);
+      expect((await helper.getApi().query.identity.subsOf(supers[2].address))[0].toNumber()).to.be.equal(999999);
 
       const subsAccounts = await getSubIdentityAccounts(helper, supers[2].address);
       // check sub-identities as account ids
@@ -202,7 +233,7 @@ describe('Integration Test: Identities Manipulation', () => {
 
       for(let j = 0; j < subsAccounts.length; j++) {
         // check sub-identities' names
-        expect((await getSubIdentityName(helper, subsAccounts[j]))[1]).to.be.deep.equal({Raw: `discounter #${j}`});
+        expect((await getSuperIdentityName(helper, subsAccounts[j])).unwrap()[1]).to.be.eq({Raw: `discounter #${j}`});
       }
     });
 
@@ -231,11 +262,11 @@ describe('Integration Test: Identities Manipulation', () => {
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2] as any);
 
       // check deposit
-      expect((await helper.getApi().query.identity.subsOf(sup.address)).toHuman()).to.be.deep.equal(['0', []]);
+      expect(await helper.getApi().query.identity.subsOf(sup.address)).to.be.eq([0, []]);
 
       for(let j = 0; j < crowd.length; j++) {
         // check sub-identities' names
-        expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
+        expect(await getSuperIdentityName(helper, crowd[j].address)).to.be.eq(null);
       }
     });
 
@@ -262,11 +293,11 @@ describe('Integration Test: Identities Manipulation', () => {
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [[sup.address]]);
 
       // check that sub-identities are deleted
-      expect((await helper.getApi().query.identity.subsOf(sup.address)).toHuman()).to.be.deep.equal(['0', []]);
+      expect(await helper.getApi().query.identity.subsOf(sup.address)).to.be.eq([0, []]);
 
       for(let j = 0; j < crowd.length; j++) {
         // check sub-identities' names
-        expect((await getSubIdentityName(helper, crowd[j].address))).to.be.null;
+        expect(await getSuperIdentityName(helper, crowd[j].address)).to.be.eq(null);
       }
     });
   });
@@ -277,7 +308,7 @@ describe('Integration Test: Identities Manipulation', () => {
     await usingPlaygrounds(async helper => {
       if(helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
 
-      const identitiesToRemove: string[] = await getIdentityAccounts(helper);
+      const identitiesToRemove: AccountId32[] = await getIdentityAccounts(helper);
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [identitiesToRemove]);
     });
   });

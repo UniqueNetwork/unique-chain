@@ -1,6 +1,5 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {Event} from '../util/playgrounds/unique.dev';
 import {ICounselors, democracyLaunchPeriod, democracyVotingPeriod, ITechComms, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util';
 
 describeGov('Governance: Initialization', () => {
@@ -110,7 +109,6 @@ describeGov('Governance: Initialization', () => {
     expect(techCommPrime).to.be.equal(techcomms.greg.address);
 
     console.log('\t- The Council Prime initiates a referendum to add counselors');
-    const returnPreimageHash = true;
     const preimageHash = await helper.preimage.notePreimageFromCall(counselors.alex, helper.utility.batchAllCall([
       helper.council.membership.addMemberCall(counselors.ildar.address),
       helper.council.membership.addMemberCall(counselors.charu.address),
@@ -136,7 +134,7 @@ describeGov('Governance: Initialization', () => {
       ...promoteFellow(techcomms.constantine.address, expectedFellowRank),
       ...promoteFellow(coreDevs.yaroslav.address, expectedFellowRank),
       ...promoteFellow(coreDevs.daniel.address, expectedFellowRank),
-    ]), returnPreimageHash);
+    ]));
 
     await helper.council.collective.propose(
       counselors.alex,
@@ -145,9 +143,9 @@ describeGov('Governance: Initialization', () => {
     );
 
     console.log('\t- The referendum is being decided');
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.api!.events.democracy.Started);
 
-    await helper.democracy.vote(counselors.filip, startedEvent.referendumIndex, {
+    await helper.democracy.vote(counselors.filip, startedEvent.refIndex.toNumber(), {
       Standard: {
         vote: {
           aye: true,
@@ -157,10 +155,10 @@ describeGov('Governance: Initialization', () => {
       },
     });
 
-    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
-    expect(passedReferendumEvent.referendumIndex).to.be.equal(startedEvent.referendumIndex);
+    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, helper.api!.events.democracy.Passed);
+    expect(passedReferendumEvent.refIndex.toNumber()).to.be.equal(startedEvent.refIndex.toNumber());
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.Scheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod, helper.api!.events.scheduler.Dispatched);
 
     councilMembers = await helper.council.membership.getMembers();
     const expectedCounselors = [

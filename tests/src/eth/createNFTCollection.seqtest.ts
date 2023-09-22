@@ -59,11 +59,11 @@ describe('Create NFT collection from EVM', () => {
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.eq('NFT');
+    expect(data.raw.mode).to.be.eq('Nft');
 
     const options = await collection.getOptions();
 
-    expect(options.tokenPropertyPermissions).to.be.empty;
+    expect(options?.tokenPropertyPermissions).to.be.empty;
   });
 
   // this test will occasionally fail when in async environment.

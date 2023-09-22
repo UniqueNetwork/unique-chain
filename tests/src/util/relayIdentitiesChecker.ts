@@ -9,20 +9,24 @@
 import {encodeAddress} from '@polkadot/keyring';
 import {usingPlaygrounds} from './index';
 import {getIdentities, getSubs, getSupers, constructSubInfo} from './identitySetter';
+import {fileURLToPath} from 'url';
+import {PalletIdentityRegistration} from '../interfaces';
+import {u128, Data} from '@polkadot/types';
+import {AccountId32} from '@polkadot/types/interfaces';
 
 const relay1Url = process.argv[2] ?? 'ws://localhost:9844';
 const relay2Url = process.argv[3] ?? 'ws://localhost:9844';
 
-async function pullIdentities(relayUrl: string): Promise<[any[], any[]]> {
-  const identities: any[] = [];
-  const subs: any[] = [];
+async function pullIdentities(relayUrl: string): Promise<[[AccountId32, PalletIdentityRegistration][], [string, [u128, [string, Data][]]][]]> {
+  const identities: [AccountId32, PalletIdentityRegistration][] = [];
+  const subs: [string, [u128, [string, Data][]]][] = [];
 
   await usingPlaygrounds(async helper => {
     try {
       // iterate over every identity
       for(const [key, value] of await getIdentities(helper)) {
         // if any of the judgements resulted in a good confirmed outcome, keep this identity
-        if(value.toHuman().judgements.filter((x: any) => x[1] == 'Reasonable' || x[1] == 'KnownGood').length == 0) continue;
+        if(value.judgements.map((x) => x[1].value).filter((v) => v.eq('Reasonable') || v.eq('KnownGood')).length == 0) continue;
         identities.push([key, value]);
       }
 
@@ -31,7 +35,7 @@ async function pullIdentities(relayUrl: string): Promise<[any[], any[]]> {
       // iterate over every sub-identity
       for(const [key, value] of await getSubs(helper)) {
         // only get subs of the identities interesting to us
-        if(identities.find((x: any) => x[0] == key) == -1) continue;
+        if(!identities.find((x) => x[0].eq(key))) continue;
         subs.push(constructSubInfo(key, value, supersOfSubs));
       }
     } catch (error) {
@@ -54,7 +58,7 @@ const checkRelayIdentities = async (): Promise<void> => {
 
   try {
     const matchingAddresses: string[] = [];
-    const inequalIdentities: {[name: string]: [any, any]} = {};
+    const inequalIdentities: {[name: string]: [PalletIdentityRegistration, PalletIdentityRegistration]} = {};
 
     for(const [key1, value1] of identitiesOnRelay1) {
       const address = encodeAddress(key1);
@@ -79,7 +83,7 @@ const checkRelayIdentities = async (): Promise<void> => {
     console.log(`Sub-identities with conflicting information:\t${Object.entries(inequalIdentities).length}`);
     console.log();
 
-    const inequalSubIdentities = [];
+    const inequalSubIdentities: [[u128, [string, Data][]], [u128, [string, Data][]]][] = [];
     let matchesFound = 0;
     for(const address of matchingAddresses) {
       const sub1 = subIdentitiesOnRelay1.find(([key1, _value1]) => address === encodeAddress(key1));
@@ -110,5 +114,5 @@ const checkRelayIdentities = async (): Promise<void> => {
   }
 };
 
-if(process.argv[1] === module.filename)
+if(process.argv[1] === fileURLToPath(import.meta.url))
   checkRelayIdentities().catch(() => process.exit(1));

@@ -53,12 +53,12 @@ describe('setCollectionLimits positive', () => {
     // get collection limits defined previously
     const collectionInfo = await collection.getEffectiveLimits();
 
-    expect(collectionInfo.accountTokenOwnershipLimit).to.be.equal(accountTokenOwnershipLimit);
-    expect(collectionInfo.sponsoredDataSize).to.be.equal(sponsoredDataSize);
-    expect(collectionInfo.tokenLimit).to.be.equal(tokenLimit);
-    expect(collectionInfo.sponsorTransferTimeout).to.be.equal(sponsorTransferTimeout);
-    expect(collectionInfo.ownerCanTransfer).to.be.true;
-    expect(collectionInfo.ownerCanDestroy).to.be.true;
+    expect(collectionInfo?.accountTokenOwnershipLimit).to.be.equal(accountTokenOwnershipLimit);
+    expect(collectionInfo?.sponsoredDataSize).to.be.equal(sponsoredDataSize);
+    expect(collectionInfo?.tokenLimit).to.be.equal(tokenLimit);
+    expect(collectionInfo?.sponsorTransferTimeout).to.be.equal(sponsorTransferTimeout);
+    expect(collectionInfo?.ownerCanTransfer).to.be.true;
+    expect(collectionInfo?.ownerCanDestroy).to.be.true;
   });
 
   itSub('Set the same token limit twice', async ({helper}) => {
@@ -77,11 +77,11 @@ describe('setCollectionLimits positive', () => {
 
     const collectionInfo1 = await collection.getEffectiveLimits();
 
-    expect(collectionInfo1.tokenLimit).to.be.equal(tokenLimit);
+    expect(collectionInfo1?.tokenLimit).to.be.equal(tokenLimit);
 
     await collection.setLimits(alice, collectionLimits);
     const collectionInfo2 = await collection.getEffectiveLimits();
-    expect(collectionInfo2.tokenLimit).to.be.equal(tokenLimit);
+    expect(collectionInfo2?.tokenLimit).to.be.equal(tokenLimit);
   });
 
   itSub('execute setCollectionLimits from admin collection', async ({helper}) => {

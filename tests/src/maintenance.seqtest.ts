@@ -19,6 +19,7 @@ import {ApiPromise} from '@polkadot/api';
 import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
 import {itEth} from './eth/util';
 import {main as correctState} from './migrations/correctStateAfterMaintenance';
+import {ITransactionResult} from './util/playgrounds/types';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
   return (await api.query.maintenance.enabled()).toJSON() as boolean;
@@ -304,17 +305,17 @@ describe('Integration Test: Maintenance Functionality', () => {
           },
         ]);
         const preimage = helper.constructApiCall('api.tx.identity.forceInsertIdentities', [randomIdentities]).method.toHex();
-        preimageHashes.push(await helper.preimage.notePreimage(bob, preimage, true));
+        preimageHashes.push(await helper.preimage.notePreimageHash(bob, preimage));
       });
     });
 
     itSub('Successfully executes call in a preimage', async ({helper}) => {
       const result = await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
         preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.fulfilled;
+      ])).to.be.fulfilled as ITransactionResult;
 
       // preimage is executed, and an appropriate event is present
-      const events = result.result.events.filter((x: any) => x.event.method === 'IdentitiesInserted' && x.event.section === 'identity');
+      const events = result.result.events.filter(helper.api!.events.identity.IdentitiesInserted.is);
       expect(events.length).to.be.equal(1);
 
       // the preimage goes back to being unrequested
@@ -327,7 +328,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [
         {Id: zeroAccount.address}, {Id: superuser.address}, 1000n,
       ]).method.toHex();
-      const preimageHash = await helper.preimage.notePreimage(bob, preimage, true);
+      const preimageHash = await helper.preimage.notePreimageHash(bob, preimage);
       preimageHashes.push(preimageHash);
 
       await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [

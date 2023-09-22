@@ -1,7 +1,8 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {IKeyringPair} from '@polkadot/types/types';
+import {IEventLike, IKeyringPair} from '@polkadot/types/types';
+import {CrossAccountId} from './unique';
 
 export const NON_EXISTENT_COLLECTION_ID = 4_294_967_295;
 
@@ -14,20 +15,16 @@ export interface IEvent {
   section: string;
   method: string;
   index: [number, number] | string;
-  data: any[];
-  phase: {applyExtrinsic: number} | 'Initialization',
+  data: any;
 }
 
-export interface IPhasicEvent {
-  phase: any, // {ApplyExtrinsic: number} | 'Initialization',
-  event: IEvent;
-}
+export type TransactionStatus = 'Success' | 'Fail' | 'NotReady';
 
 export interface ITransactionResult {
-  status: 'Fail' | 'Success';
+  status: TransactionStatus;
   result: {
-      dispatchError: any,
-      events: IPhasicEvent[];
+    dispatchError: any,
+    events: IEventLike[];
   },
   blockHash: string,
   moduleError?: string | object;
@@ -54,12 +51,12 @@ export interface IUniqueHelperLog {
   executedAt: number;
   executionTime: number;
   type: 'extrinsic' | 'rpc';
-  status: 'Fail' | 'Success';
+  status: TransactionStatus;
   call: string;
   params: any[];
   moduleError?: string;
   dispatchError?: any;
-  events?: any;
+  events?: IEventLike[];
 }
 
 export interface IApiListeners {
@@ -92,7 +89,7 @@ export interface IEthCrossAccountId {
 export interface ICollectionLimits {
   accountTokenOwnershipLimit?: number | null;
   sponsoredDataSize?: number | null;
-  sponsoredDataRateLimit?: {blocks: number} | {sponsoringDisabled: null} | null;
+  sponsoredDataRateLimit?: {Blocks: number} | 'SponsoringDisabled' | null;
   tokenLimit?: number | null;
   sponsorTransferTimeout?: number | null;
   sponsorApproveTimeout?: number | null;
@@ -101,10 +98,16 @@ export interface ICollectionLimits {
   transfersEnabled?: boolean | null;
 }
 
-export interface INestingPermissions {
+export interface ICreateNestingPermissions {
   tokenOwner?: boolean;
   collectionAdmin?: boolean;
-  restricted?: number[] | null;
+  restricted?: number[];
+}
+
+export interface INestingPermissions {
+  tokenOwner: boolean;
+  collectionAdmin: boolean;
+  restricted?: number[];
 }
 
 export interface ICollectionPermissions {
@@ -113,12 +116,27 @@ export interface ICollectionPermissions {
   nesting?: INestingPermissions;
 }
 
+export interface ICreateCollectionPermissions {
+  access?: 'Normal' | 'AllowList';
+  mintMode?: boolean;
+  nesting?: ICreateNestingPermissions;
+}
+
 export interface IProperty {
   key: string;
   value?: string;
 }
 
 export interface ITokenPropertyPermission {
+  key: string;
+  permission: {
+    mutable: boolean;
+    tokenOwner: boolean;
+    collectionAdmin: boolean;
+  }
+}
+
+export interface ICreateTokenPropertyPermission {
   key: string;
   permission: {
     mutable?: boolean;
@@ -130,6 +148,12 @@ export interface ITokenPropertyPermission {
 export interface IToken {
   collectionId: number;
   tokenId: number;
+}
+
+export interface ITokenData {
+  properties: IProperty[];
+  owner: CrossAccountId;
+  normalizedOwner: CrossAccountId;
 }
 
 export interface IBlock {
@@ -164,6 +188,22 @@ export enum CollectionFlag {
   Foreign = 128,
 }
 
+export interface ICollection {
+  limits: ICollectionLimits,
+  permissions: ICollectionPermissions,
+  tokenPrefix: string,
+  properties: IProperty[],
+  tokenPropertyPermissions: ITokenPropertyPermission[],
+  flags: {
+    foreign: boolean,
+    erc721metadata: boolean,
+  },
+  mode: 'Nft' | {'Fungible': number} | 'ReFungible',
+  readOnly: boolean,
+  sponsorship: {Confirmed: string} | {Unconfirmed: string} | 'Disabled',
+  owner: string,
+}
+
 export interface ICollectionCreationOptions {
   name?: string | number[];
   description?: string | number[];
@@ -173,9 +213,9 @@ export interface ICollectionCreationOptions {
     refungible?: null;
     fungible?: number;
   }
-  permissions?: ICollectionPermissions;
+  permissions?: ICreateCollectionPermissions;
   properties?: IProperty[];
-  tokenPropertyPermissions?: ITokenPropertyPermission[];
+  tokenPropertyPermissions?: ICreateTokenPropertyPermission[];
   limits?: ICollectionLimits;
   pendingSponsor?: ICrossAccountId;
   adminList?: ICrossAccountId[];

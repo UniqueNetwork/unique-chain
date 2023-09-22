@@ -223,11 +223,11 @@ describe('Create collection from EVM', () => {
       expect(data.name).to.be.eq(name);
       expect(data.description).to.be.eq(description);
       expect(data.raw.tokenPrefix).to.be.eq(prefix);
-      expect(data.raw.mode).to.be.eq('NFT');
+      expect(data.raw.mode).to.be.eq('Nft');
 
       const options = await collection.getOptions();
 
-      expect(options.tokenPropertyPermissions).to.be.empty;
+      expect(options?.tokenPropertyPermissions).to.be.empty;
     });
 
     // this test will occasionally fail when in async environment.
@@ -285,7 +285,7 @@ describe('Create collection from EVM', () => {
 
       const options = await collection.getOptions();
 
-      expect(options.tokenPropertyPermissions).to.be.empty;
+      expect(options?.tokenPropertyPermissions).to.be.empty;
     });
 
     itEth('Create collection with properties & get description', async ({helper}) => {
@@ -310,7 +310,7 @@ describe('Create collection from EVM', () => {
       expect(await contract.methods.description().call()).to.deep.equal(description);
 
       const options = await collection.getOptions();
-      expect(options.tokenPropertyPermissions).to.be.deep.equal([
+      expect(options?.tokenPropertyPermissions).to.be.deep.equal([
         {
           key: 'URI',
           permission: {mutable: true, collectionAdmin: true, tokenOwner: false},
@@ -333,7 +333,7 @@ describe('Create collection from EVM', () => {
       await collection.methods.setCollectionSponsorCross(sponsorCross).send();
 
       let data = (await helper.rft.getData(collectionId))!;
-      expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+      expect(data.raw.sponsorship).to.be.deep.equal({Unconfirmed: evmToAddress(sponsor, Number(ss58Format))});
 
       await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -341,7 +341,7 @@ describe('Create collection from EVM', () => {
       await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
       data = (await helper.rft.getData(collectionId))!;
-      expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+      expect(data.raw.sponsorship).to.be.deep.equal({Confirmed: evmToAddress(sponsor, Number(ss58Format))});
     });
 
     itEth('Collection address exist', async ({helper}) => {
@@ -505,14 +505,14 @@ describe('Create collection from EVM', () => {
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
-      expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      expect(sponsorship).to.be.deep.eq({Unconfirmed: helper.address.ethToSubstrate(sponsorEth, true)});
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       // Sponsor can confirm sponsorship:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
       sponsorship = (await collectionSub.getData())!.raw.sponsorship;
-      expect(sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      expect(sponsorship).to.be.deep.eq({Confirmed: helper.address.ethToSubstrate(sponsorEth, true)});
 
       // Create user with no balance:
       const user = helper.ethCrossAccount.createAccount();
@@ -596,12 +596,12 @@ describe('Create collection from EVM', () => {
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
       // Set collection sponsor:
       let collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      expect(collectionData.raw.sponsorship).to.be.deep.eq({Unconfirmed: helper.address.ethToSubstrate(sponsor, true)});
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      expect(collectionData.raw.sponsorship).to.be.deep.eq({Confirmed: helper.address.ethToSubstrate(sponsor, true)});
 
       const ownerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
@@ -911,7 +911,7 @@ describe('Create collection from EVM', () => {
           const expectedLimits = {
             accountTokenOwnershipLimit: 1000,
             sponsoredDataSize: 1024,
-            sponsoredDataRateLimit: {blocks: 30},
+            sponsoredDataRateLimit: {Blocks: 30},
             tokenLimit: 1000000,
             sponsorTransferTimeout: 6,
             sponsorApproveTimeout: 6,
@@ -1024,7 +1024,7 @@ describe('Create collection from EVM', () => {
         const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
 
         const raw = (await helper[testCase.mode].getData(collectionId))?.raw;
-        expect(raw.properties).to.deep.equal(testCase.expectedProps);
+        expect(raw?.properties).to.deep.equal(testCase.expectedProps);
 
         // collectionProperties returns properties:
         expect(await collectionEvm.methods.collectionProperties([]).call()).to.be.like(testCase.expectedProps.map(prop => helper.ethProperty.property(prop.key, prop.value)));
@@ -1061,8 +1061,8 @@ describe('Create collection from EVM', () => {
 
         const raw = (await helper[testCase.mode].getData(collectionId))?.raw;
 
-        expect(raw.properties.length).to.equal(1);
-        expect(raw.properties).to.deep.equal([{key: 'testKey3', value: 'testValue3'}]);
+        expect(raw?.properties.length).to.equal(1);
+        expect(raw?.properties).to.deep.equal([{key: 'testKey3', value: 'testValue3'}]);
       }));
 
     itEth('(!negative test!) Cannot set invalid properties', async({helper}) => {

@@ -60,8 +60,8 @@ describe('integration test: Refungible functionality:', () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 200n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemCreated');
-    expect(event).to.deep.include({
+    const event = chainEvents?.find(helper.api!.events.common.ItemCreated.is);
+    expect(event?.eq({
       section: 'common',
       method: 'ItemCreated',
       index: [66, 2],
@@ -69,9 +69,9 @@ describe('integration test: Refungible functionality:', () => {
         collection.collectionId,
         token.tokenId,
         {substrate: alice.address},
-        100n,
+        100,
       ],
-    });
+    })).to.be.true;
   });
 
   itSub('Repartition with decreased amount', async ({helper}) => {
@@ -79,8 +79,8 @@ describe('integration test: Refungible functionality:', () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 50n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    const event = chainEvents.find((event: any) => event.section === 'common' && event.method === 'ItemDestroyed');
-    expect(event).to.deep.include({
+    const event = chainEvents?.find(helper.api!.events.common.ItemDestroyed.is);
+    expect(event?.eq({
       section: 'common',
       method: 'ItemDestroyed',
       index: [66, 3],
@@ -88,9 +88,9 @@ describe('integration test: Refungible functionality:', () => {
         collection.collectionId,
         token.tokenId,
         {substrate: alice.address},
-        50n,
+        50,
       ],
-    });
+    })).to.be.true;
   });
 });
 

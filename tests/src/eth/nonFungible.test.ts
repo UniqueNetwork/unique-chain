@@ -17,7 +17,7 @@
 import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {ICreateTokenPropertyPermission} from '../util/playgrounds/types';
 import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionMode, CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
 
 describe('Check ERC721 token URI for NFT', () => {
@@ -104,7 +104,7 @@ describe('NFT: Plain calls', () => {
 
       // const receiverCross = helper.ethCrossAccount.fromKeyringPair(bob);
       const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
-      const permissions: ITokenPropertyPermission[] = properties
+      const permissions: ICreateTokenPropertyPermission[] = properties
         .map(p => ({
           key: p.key, permission: {
             tokenOwner: false,

@@ -40,7 +40,7 @@ describe('Nesting by collection admin', () => {
       await collectionB.addAdmin(alice, {Substrate: bob.address});
       // Collection has permission for collectionAdmin to nest:
       await collectionA.setPermissions(alice, {nesting:
-        {collectionAdmin: true, restricted: testCase.restricted ? [collectionA.collectionId, collectionB.collectionId] : null},
+        {collectionAdmin: true, restricted: testCase.restricted ? [collectionA.collectionId, collectionB.collectionId] : undefined},
       });
       // Token for nesting in from collectionA:
       const targetTokenA = await collectionA.mintToken(alice, {Substrate: charlie.address});

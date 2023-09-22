@@ -46,7 +46,7 @@ describe('Create FT collection from EVM', () => {
     await collection.methods.setCollectionSponsor(sponsor).send();
 
     let data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Unconfirmed: evmToAddress(sponsor, Number(ss58Format))});
 
     await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -54,7 +54,7 @@ describe('Create FT collection from EVM', () => {
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
     data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Confirmed: evmToAddress(sponsor, Number(ss58Format))});
   });
 
   itEth('[cross] Set sponsorship', async ({helper}) => {
@@ -69,7 +69,7 @@ describe('Create FT collection from EVM', () => {
     await collection.methods.setCollectionSponsorCross(sponsorCross).send();
 
     let data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Unconfirmed: evmToAddress(sponsor, Number(ss58Format))});
 
     await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -77,7 +77,7 @@ describe('Create FT collection from EVM', () => {
     await sponsorCollection.methods.confirmCollectionSponsorship().send();
 
     data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship).to.be.deep.equal({Confirmed: evmToAddress(sponsor, Number(ss58Format))});
     expect(await collection.methods.description().call()).to.deep.equal(description);
   });
 

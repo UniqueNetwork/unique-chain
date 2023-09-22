@@ -11,35 +11,24 @@ import {encodeAddress} from '@polkadot/keyring';
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, Pallets} from './index';
 import {ChainHelperBase} from './playgrounds/unique';
+import {u128, Vec, Data} from '@polkadot/types';
+import {AccountId32} from '@polkadot/types/interfaces';
+import {ITuple} from '@polkadot/types-codec/types/interfaces';
+import {PalletIdentityIdentityInfo, PalletIdentityRegistration} from '../interfaces';
+import {fileURLToPath} from 'url';
 
 const relayUrl = process.argv[2] ?? 'ws://localhost:9844';
 const paraUrl = process.argv[3] ?? 'ws://localhost:9944';
 const key = process.argv.length > 4 ? process.argv.slice(4).join(' ') : '//Alice';
 
-export function extractAccountId(key: any): string {
-  return (key as any).toHuman()[0];
-}
-
-export function extractIdentityInfo(value: any): object {
-  const heart = (value as any).unwrap();
-  const identity = heart.toJSON();
-  identity.judgements = heart.judgements.toHuman();
-  return identity;
-}
-
-export function extractIdentity(key: any, value: any): [string, any] {
-  return [extractAccountId(key), extractIdentityInfo(value)];
-}
-
-export async function getIdentities(helper: ChainHelperBase, noneCasePredicate?: (key: any, value: any) => void) {
-  const identities: [string, any][] = [];
-  for(const [key, v] of await helper.getApi().query.identity.identityOf.entries()) {
-    const value = v as any;
+export async function getIdentities(helper: ChainHelperBase, noneCasePredicate?: (key: AccountId32) => void) {
+  const identities: [AccountId32, PalletIdentityRegistration][] = [];
+  for(const [key, value] of await helper.getApi().query.identity.identityOf.entries()) {
     if(value.isNone) {
-      if(noneCasePredicate) noneCasePredicate(key, value);
+      if(noneCasePredicate) noneCasePredicate(key.args[0]);
       continue;
     }
-    identities.push(extractIdentity(key, value));
+    identities.push([key.args[0], value.unwrap()]);
   }
   return identities;
 }
@@ -53,33 +42,37 @@ function isCurrentChainDataPriority(helper: ChainHelperBase, currentChainId: num
   return currentChainId < relayChainId;
 }
 
+function isNotNull<T> (arg: T): arg is Exclude<T, null> {
+  return arg !== null;
+}
+
 // construct an object with all data necessary for insertion from storage query results
-export function constructSubInfo(identityAccount: string, subQuery: any, supers: any[], ss58?: number): [string, any] {
-  const deposit = subQuery.toJSON()[0];
-  const subIdentities = subQuery.toHuman()[1];
-  subIdentities.map((sub: string) => supers.find((sup: any) => sup[0] === sub));
+export function constructSubInfo(identityAccount: AccountId32, subQuery: [u128, AccountId32[]], supers: [AccountId32, [AccountId32, Data]][], ss58?: number): [string, [u128, [string, Data][]]] {
+  const deposit = subQuery[0];
+  const subIdentities = subQuery[1].map((sub): [string, Data] | null => {
+    const sup = supers.find((sup) => sup[0] === sub);
+    if(!sup) {
+      // eslint-disable-next-line no-restricted-syntax
+      console.error(`Error: Could not find info on super for \nsub-identity account\t${sub} of \nsuper account \t\t${identityAccount.toHuman()}, skipping.`);
+      return null;
+    }
+    return [encodeAddress(sub, ss58), sup[1][1]];
+  }).filter(isNotNull);
 
   return [
     encodeAddress(identityAccount, ss58), [
       deposit,
-      subIdentities.map((sub: string): [string, object] | null => {
-        const sup = supers.find((sup: any) => sup[0] === sub);
-        if(!sup) {
-          console.error(`Error: Could not find info on super for \nsub-identity account\t${sub} of \nsuper account \t\t${identityAccount}, skipping.`);
-          return null;
-        }
-        return [encodeAddress(sub, ss58), sup[1].toJSON()[1]];
-      }).filter((x: any) => x),
+      subIdentities,
     ],
   ];
 }
 
-export async function getSubs(helper: ChainHelperBase) {
-  return (await helper.getApi().query.identity.subsOf.entries()).map(([key, value]) => [extractAccountId(key), value as any]);
+export async function getSubs(helper: ChainHelperBase): Promise<[AccountId32, ITuple<[u128, Vec<AccountId32>]>][]> {
+  return (await helper.getApi().query.identity.subsOf.entries()).map(([key, value]) => [key.args[0], value]);
 }
 
-export async function getSupers(helper: ChainHelperBase) {
-  return (await helper.getApi().query.identity.superOf.entries()).map(([key, value]) => [extractAccountId(key), value as any]);
+export async function getSupers(helper: ChainHelperBase): Promise<[AccountId32, ITuple<[AccountId32, Data]>][]> {
+  return (await helper.getApi().query.identity.superOf.entries()).map(([key, value]) => [key.args[0], value.unwrap()]);
 }
 
 async function uploadPreimage(helper: ChainHelperBase, preimageMaker: IKeyringPair, preimage: string) {
@@ -97,24 +90,26 @@ async function uploadPreimage(helper: ChainHelperBase, preimageMaker: IKeyringPa
 // The utility for pulling identity and sub-identity data
 const forceInsertIdentities = async (): Promise<void> => {
   let relaySS58Prefix = 0;
-  const identitiesOnRelay: any[] = [];
+  type Judgements = [number, string][];
+  type Identity = { info: PalletIdentityIdentityInfo, judgements: Judgements};
+  const identitiesOnRelay: [AccountId32, Identity][] = [];
   const subsOnRelay: any[] = [];
-  const identitiesToRemove: string[] = [];
+  const identitiesToRemove: AccountId32[] = [];
   await usingPlaygrounds(async helper => {
     try {
       relaySS58Prefix = helper.chain.getChainProperties().ss58Format;
       // iterate over every identity
-      for(const [key, value] of await getIdentities(helper, (key, _value) => identitiesToRemove.push((key as any).toHuman()[0]))) {
+      for(const [key, value] of await getIdentities(helper, (key) => identitiesToRemove.push(key))) {
         // if any of the judgements resulted in a good confirmed outcome, keep this identity
         let knownGood = false, reasonable = false;
         for(const [_id, judgement] of value.judgements) {
-          if(judgement == 'KnownGood') knownGood = true;
-          if(judgement == 'Reasonable') reasonable = true;
+          if(judgement.eq('KnownGood')) knownGood = true;
+          if(judgement.eq('Reasonable')) reasonable = true;
         }
         if(!(reasonable || knownGood)) continue;
         // replace the registrator id with the relay chain's ss58 format
-        value.judgements = [[helper.chain.getChainProperties().ss58Format, knownGood ? 'KnownGood' : 'Reasonable']];
-        identitiesOnRelay.push([key, value]);
+        const identity: Identity = {info: value.info, judgements: [[helper.chain.getChainProperties().ss58Format, knownGood ? 'KnownGood' : 'Reasonable']]};
+        identitiesOnRelay.push([key, identity]);
       }
 
       const sublessIdentities = [...identitiesOnRelay];
@@ -155,9 +150,9 @@ const forceInsertIdentities = async (): Promise<void> => {
         const encodedKey = encodeAddress(key, ss58Format);
 
         // only update if the identity info does not exist or is changed
-        const identity = paraIdentities.find(i => i[0] === encodedKey);
+        const identity = paraIdentities.find(i => i[0].eq(encodedKey));
         if(identity) {
-          const registratorId = identity[1].judgements[0][0];
+          const registratorId = identity[1].judgements[0][0].toNumber();
           paraAccountsRegistrators[encodedKey] = registratorId;
           if(isCurrentChainDataPriority(helper, registratorId, value.judgements[0][0])
             || JSON.stringify(value.info) === JSON.stringify(identity[1].info)) {
@@ -196,7 +191,7 @@ const forceInsertIdentities = async (): Promise<void> => {
 
       for(const [key, value] of subsOnRelay) {
         const encodedKey = encodeAddress(key, ss58Format);
-        const sub = paraSubs.find(i => i[0] === encodedKey);
+        const sub = paraSubs.find(i => i[0].eq(encodedKey));
         if(sub) {
           // only update if the sub-identity info does not exist or is changed
           if(isCurrentChainDataPriority(helper, paraAccountsRegistrators[encodedKey], relaySS58Prefix)
@@ -225,5 +220,5 @@ const forceInsertIdentities = async (): Promise<void> => {
   }, paraUrl);
 };
 
-if(process.argv[1] === module.filename)
+if(process.argv[1] === fileURLToPath(import.meta.url))
   forceInsertIdentities().catch(() => process.exit(1));

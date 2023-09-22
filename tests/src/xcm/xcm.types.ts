@@ -3,6 +3,7 @@ import {hexToString} from '@polkadot/util';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 import config from '../config';
+import { XcmV3TraitsOutcome } from '@unique-nft/opal-testnet-types';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
@@ -60,23 +61,23 @@ export const uniqueAssetId = {
   Concrete: uniqueMultilocation,
 };
 
-export const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
+export const expectFailedToTransact = async (helper: DevUniqueHelper, messageHash: string | undefined) => {
+  await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == messageHash
+        && event.error.isFailedToTransactAsset);
 };
 export const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-         && event.outcome.isUntrustedReserveLocation);
+  await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
+         && event.error.isUntrustedReserveLocation);
 };
 
 export const expectDownwardXcmNoPermission = async (helper: DevUniqueHelper) => {
   // The correct messageHash for downward messages can't be reliably obtained
-  await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward, event => event.outcome.asIncomplete[1].isNoPermission);
+  await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.dmpQueue.ExecutedDownward, event => event.outcome.asIncomplete[1].isNoPermission);
 };
 
 export const expectDownwardXcmComplete = async (helper: DevUniqueHelper) => {
   // The correct messageHash for downward messages can't be reliably obtained
-  await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward, event => event.outcome.isComplete);
+  await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.dmpQueue.ExecutedDownward, event => event.outcome.isComplete);
 };
 
 export const NETWORKS = {
@@ -259,7 +260,7 @@ export class XcmTestHelper {
       const feeAssetItem = 0;
 
       await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
-      const messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+      const messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
       this._balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
       this._unqFees = this._balanceUniqueTokenInit - this._balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
@@ -278,9 +279,9 @@ export class XcmTestHelper {
         it matches what was sent.
       */
         if(networkName == 'polkadex') {
-          await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
+          await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
         } else {
-          await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == messageSent.messageHash);
+          await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Success, event => event.messageHash == messageSent.messageHash);
         }
       });
 
@@ -316,17 +317,17 @@ export class XcmTestHelper {
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
           await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), xcmProgram);
-          xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
           const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), xcmProgram]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
-          xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
 
-      await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == xcmProgramSent.messageHash);
+      await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Success, event => event.messageHash == xcmProgramSent.messageHash);
 
       this._balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccountOnUnq.address);
 
@@ -368,13 +369,13 @@ export class XcmTestHelper {
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
           await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgram);
-          maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
           const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgram]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
-          maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
 
@@ -427,7 +428,7 @@ export class XcmTestHelper {
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
           await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
-          maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
         // Moonbeam case
         else if('fastDemocracy' in helper) {
@@ -436,7 +437,7 @@ export class XcmTestHelper {
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
 
-          maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
 
@@ -450,7 +451,7 @@ export class XcmTestHelper {
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
           await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId);
-          maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
         else if('fastDemocracy' in helper) {
           const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId]);
@@ -458,7 +459,7 @@ export class XcmTestHelper {
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
 
-          maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
 
@@ -492,14 +493,14 @@ export class XcmTestHelper {
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
           await helper.getSudo().xcm.send(sudoerOnTargetChain, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
-          messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
           const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`${networkName} sending native tokens to the Unique via fast democracy`, batchCall);
 
-          messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+          messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
       await expectFailedToTransact(helper, messageSent);

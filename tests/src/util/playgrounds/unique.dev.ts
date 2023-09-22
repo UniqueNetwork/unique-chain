@@ -6,10 +6,13 @@ import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypt
 import {UniqueHelper, ChainHelperBase, ChainHelperBaseConstructor, HelperGroup, UniqueHelperConstructor} from './unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '../../interfaces/definitions';
-import {IKeyringPair} from '@polkadot/types/types';
+import {IEvent, IEventLike, IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
+import {SignedBlock} from '@polkadot/types/interfaces/runtime';
+import {IsEvent} from '@polkadot/types/metadata/decorate/types';
+import {AnyTuple} from '@polkadot/types-codec/types';
 import {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types';
-import {FrameSystemEventRecord, XcmV2TraitsError, XcmV3TraitsOutcome} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, XcmV3TraitsOutcome} from '@polkadot/types/lookup';
 import {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
@@ -71,201 +74,18 @@ export interface IEventHelper {
   wrapEvent(data: any[]): any;
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-function EventHelper(section: string, method: string, wrapEvent: (data: any[]) => any) {
-  const helperClass = class implements IEventHelper {
-    wrapEvent: (data: any[]) => any;
-    _section: string;
-    _method: string;
-
-    constructor() {
-      this.wrapEvent = wrapEvent;
-      this._section = section;
-      this._method = method;
-    }
-
-    section(): string {
-      return this._section;
-    }
-
-    method(): string {
-      return this._method;
-    }
-
-    filter(txres: ITransactionResult) {
-      return txres.result.events.filter(e => e.event.section === section && e.event.method === method)
-        .map(e => this.wrapEvent(e.event.data));
-    }
-
-    find(txres: ITransactionResult) {
-      const e = txres.result.events.find(e => e.event.section === section && e.event.method === method);
-      return e ? this.wrapEvent(e.event.data) : null;
-    }
-
-    expect(txres: ITransactionResult) {
-      const e = this.find(txres);
-      if(e) {
-        return e;
-      } else {
-        throw Error(`Expected event ${section}.${method}`);
-      }
-    }
-  };
-
-  return helperClass;
-}
-
-function eventJsonData<T = any>(data: any[], index: number) {
-  return data[index].toJSON() as T;
-}
-
-function eventHumanData(data: any[], index: number) {
-  return data[index].toHuman();
-}
-
-function eventData<T = any>(data: any[], index: number) {
-  return data[index] as T;
-}
-
-// eslint-disable-next-line @typescript-eslint/naming-convention
-function EventSection(section: string) {
-  return class Section {
-    static section = section;
-
-    static Method(name: string, wrapEvent: (data: any[]) => any = () => {}) {
-      const helperClass = EventHelper(Section.section, name, wrapEvent);
-      return new helperClass();
-    }
-  };
-}
-
-function schedulerSection(schedulerInstance: string) {
-  return class extends EventSection(schedulerInstance) {
-    static Dispatched = this.Method('Dispatched', data => ({
-      task: eventJsonData(data, 0),
-      id: eventHumanData(data, 1),
-      result: data[2],
-    }));
-
-    static PriorityChanged = this.Method('PriorityChanged', data => ({
-      task: eventJsonData(data, 0),
-      priority: eventJsonData(data, 1),
-    }));
-  };
-}
-
 export class Event {
-  static Democracy = class extends EventSection('democracy') {
-    static Proposed = this.Method('Proposed', data => ({
-      proposalIndex: eventJsonData<number>(data, 0),
-    }));
-
-    static ExternalTabled = this.Method('ExternalTabled');
-
-    static Started = this.Method('Started', data => ({
-      referendumIndex: eventJsonData<number>(data, 0),
-      threshold: eventHumanData(data, 1),
-    }));
-
-    static Voted = this.Method('Voted', data => ({
-      voter: eventJsonData(data, 0),
-      referendumIndex: eventJsonData<number>(data, 1),
-      vote: eventJsonData(data, 2),
-    }));
-
-    static Passed = this.Method('Passed', data => ({
-      referendumIndex: eventJsonData<number>(data, 0),
-    }));
-
-    static ProposalCanceled = this.Method('ProposalCanceled', data => ({
-      propIndex: eventJsonData<number>(data, 0),
-    }));
-
-    static Cancelled = this.Method('Cancelled', data => ({
-      propIndex: eventJsonData<number>(data, 0),
-    }));
-
-    static Vetoed = this.Method('Vetoed', data => ({
-      who: eventHumanData(data, 0),
-      proposalHash: eventHumanData(data, 1),
-      until: eventJsonData<number>(data, 1),
-    }));
-  };
-
-  static Council = class extends EventSection('council') {
-    static Proposed = this.Method('Proposed', data => ({
-      account: eventHumanData(data, 0),
-      proposalIndex: eventJsonData<number>(data, 1),
-      proposalHash: eventHumanData(data, 2),
-      threshold: eventJsonData<number>(data, 3),
-    }));
-    static Closed = this.Method('Closed', data => ({
-      proposalHash: eventHumanData(data, 0),
-      yes: eventJsonData<number>(data, 1),
-      no: eventJsonData<number>(data, 2),
-    }));
-    static Executed = this.Method('Executed', data => ({
-      proposalHash: eventHumanData(data, 0),
-    }));
-  };
-
-  static TechnicalCommittee = class extends EventSection('technicalCommittee') {
-    static Proposed = this.Method('Proposed', data => ({
-      account: eventHumanData(data, 0),
-      proposalIndex: eventJsonData<number>(data, 1),
-      proposalHash: eventHumanData(data, 2),
-      threshold: eventJsonData<number>(data, 3),
-    }));
-    static Closed = this.Method('Closed', data => ({
-      proposalHash: eventHumanData(data, 0),
-      yes: eventJsonData<number>(data, 1),
-      no: eventJsonData<number>(data, 2),
-    }));
-    static Approved = this.Method('Approved', data => ({
-      proposalHash: eventHumanData(data, 0),
-    }));
-    static Executed = this.Method('Executed', data => ({
-      proposalHash: eventHumanData(data, 0),
-      result: eventHumanData(data, 1),
-    }));
-  };
-
-  static FellowshipReferenda = class extends EventSection('fellowshipReferenda') {
-    static Submitted = this.Method('Submitted', data => ({
-      referendumIndex: eventJsonData<number>(data, 0),
-      trackId: eventJsonData<number>(data, 1),
-      proposal: eventJsonData(data, 2),
-    }));
-
-    static Cancelled = this.Method('Cancelled', data => ({
-      index: eventJsonData<number>(data, 0),
-      tally: eventJsonData(data, 1),
-    }));
-  };
-
-  static UniqueScheduler = schedulerSection('uniqueScheduler');
-  static Scheduler = schedulerSection('scheduler');
-
-  static XcmpQueue = class extends EventSection('xcmpQueue') {
-    static XcmpMessageSent = this.Method('XcmpMessageSent', data => ({
-      messageHash: eventJsonData(data, 0),
-    }));
-
-    static Success = this.Method('Success', data => ({
-      messageHash: eventJsonData(data, 0),
-    }));
-
-    static Fail = this.Method('Fail', data => ({
-      messageHash: eventJsonData(data, 0),
-      outcome: eventData<XcmV2TraitsError>(data, 1),
-    }));
-  };
-
-  static DmpQueue = class extends EventSection('dmpQueue') {
-    static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<XcmV3TraitsOutcome>(data, 1),
-    }));
-  };
+  static expect<T extends AnyTuple, N>(
+    result: ITransactionResult,
+    event: IsEvent<T, N>,
+  ) {
+    const e = result.result.events.find(event.is);
+    if(e == null) {
+      throw Error(`The event '${event.meta.name}' is expected`);
+    } else {
+      return e;
+    }
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention
@@ -292,17 +112,20 @@ export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       );
 
       if(result.status === 'Fail') return result;
+      if(this.api === null) throw Error('API not initialized');
 
-      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
-      if(data.isErr) {
-        if(data.asErr.isModule) {
-          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+      const data = result.result.events.find(this.api.events.sudo.Sudid.is)?.data.sudoResult;
+      if(data?.isErr) {
+        const event = result.result.events[1];
+        if(data.asErr.isModule && this.api.events.sudo.Sudid.is(event)) {
+          const error = event.data.sudoResult.asErr.asModule;
           const metaError = super.getApi()?.registry.findMetaError(error);
           throw new Error(`${metaError.section}.${metaError.name}`);
         } else if(data.asErr.isToken) {
           throw new Error(`Token: ${data.asErr.asToken}`);
         }
         // May be [object Object] in case of unhandled non-unit enum
+        // eslint-disable-next-line no-restricted-syntax
         throw new Error(`Misc: ${data.asErr.toHuman()}`);
       }
       return result;
@@ -324,17 +147,20 @@ export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       );
 
       if(result.status === 'Fail') return result;
+      if(this.api === null) throw Error('API not initialized');
 
-      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
-      if(data.isErr) {
-        if(data.asErr.isModule) {
-          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+      const data = result.result.events.find(this.api.events.sudo.Sudid.is)?.data.sudoResult;
+      if(data?.isErr) {
+        const event = result.result.events[1];
+        if(data.asErr.isModule && this.api.events.sudo.Sudid.is(event)) {
+          const error = event.data.sudoResult.asErr.asModule;
           const metaError = super.getApi()?.registry.findMetaError(error);
           throw new Error(`${metaError.section}.${metaError.name}`);
         } else if(data.asErr.isToken) {
           throw new Error(`Token: ${data.asErr.asToken}`);
         }
         // May be [object Object] in case of unhandled non-unit enum
+        // eslint-disable-next-line no-restricted-syntax
         throw new Error(`Misc: ${data.asErr.toHuman()}`);
       }
       return result;
@@ -405,7 +231,7 @@ class CollatorSelectionGroup extends HelperGroup<UniqueHelper> {
   }
 
   async getInvulnerables(): Promise<string[]> {
-    return (await this.helper.callRpc('api.query.collatorSelection.invulnerables')).map((x: any) => x.toHuman());
+    return await this.helper.callRpc('api.query.collatorSelection.invulnerables');
   }
 
   /** and also total max invulnerables */
@@ -791,14 +617,14 @@ export class ArrangeGroup {
       await this.helper.wait.newBlocks(1);
       blockNumber = (await this.helper.callRpc('api.query.system.number')).toJSON();
     }
-    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
-    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
-    const findCreationDate = (block: any) => {
-      const humanBlock = block.toHuman();
+    const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]) as SignedBlock;
+    const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]) as SignedBlock;
+    const findCreationDate = (block: SignedBlock) => {
+      const humanBlock = block;
       let date;
-      humanBlock.block.extrinsics.forEach((ext: any) => {
+      humanBlock.block.extrinsics.forEach((ext) => {
         if(ext.method.section === 'timestamp') {
-          date = Number(ext.method.args.now.replaceAll(',', ''));
+          date = Number(ext.method.args[0].toString());
         }
       });
       return date;
@@ -1123,8 +949,8 @@ class MoonbeamFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
-    const referendumIndex = democracyStarted.referendumIndex;
+    const democracyStarted = await this.helper.wait.expectEvent(3, this.helper.getApi().events.democracy.Started);
+    const referendumIndex = democracyStarted.refIndex.toNumber();
 
     // >>> Referendum voting >>>
     console.log(`\t* Referendum #${referendumIndex} voting.......`);
@@ -1136,7 +962,7 @@ class MoonbeamFastDemocracyGroup {
     // <<< Referendum voting <<<
 
     // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+    await this.helper.wait.expectEvent(3, this.helper.getApi().events.democracy.Passed, event => event.refIndex.toNumber() == referendumIndex);
 
     await this.helper.wait.newBlocks(1);
 
@@ -1298,27 +1124,29 @@ class WaitGroup {
     return promise;
   }
 
-  event<T extends IEventHelper>(
+  event<T extends AnyTuple, N>(
     maxBlocksToWait: number,
-    eventHelper: T,
-    filter: (_: any) => boolean = () => true,
-  ): any {
+    event: IsEvent<T, N>,
+    filter: (_: IEvent<T, N>['data']) => boolean = () => true,
+  ): Promise<IEvent<T, N>['data'] | null> {
     // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<T | null>(async (resolve) => {
+    return new Promise(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
-        const blockNumber = header.number.toHuman();
+        const blockNumber = header.number;
         const blockHash = header.hash;
-        const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
+        const eventIdStr = event.meta.name;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
 
-        this.helper.logger.log(`[Block #${blockNumber}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
+        // eslint-disable-next-line no-restricted-syntax
+        this.helper.logger.log(`[Block #${blockNumber.toHuman()}] Waiting for event \`${eventIdStr}\` (${waitLimitStr})`);
 
         const apiAt = await this.helper.getApi().at(blockHash);
         const eventRecords = (await apiAt.query.system.events()) as any;
 
-        const neededEvent = eventRecords.toArray()
-          .filter((r: FrameSystemEventRecord) => r.event.section == eventHelper.section() && r.event.method == eventHelper.method())
-          .map((r: FrameSystemEventRecord) => eventHelper.wrapEvent(r.event.data))
+        const neededEvent = (eventRecords.toArray() as FrameSystemEventRecord[])
+          .map(r => r.event as IEventLike)
+          .filter(event.is)
+          .map(e => e.data)
           .find(filter);
 
         if(neededEvent) {
@@ -1334,17 +1162,16 @@ class WaitGroup {
         }
       });
     });
-    return promise;
   }
 
-  async expectEvent<T extends IEventHelper>(
+  async expectEvent<T extends AnyTuple, N>(
     maxBlocksToWait: number,
-    eventHelper: T,
-    filter: (e: any) => boolean = () => true,
+    event: IsEvent<T, N>,
+    filter: (e: IEvent<T, N>['data']) => boolean = () => true,
   ) {
-    const e = await this.event(maxBlocksToWait, eventHelper, filter);
+    const e = await this.event(maxBlocksToWait, event, filter);
     if(e == null) {
-      throw Error(`The event '${eventHelper.section()}.${eventHelper.method()}' is expected`);
+      throw Error(`The event '${event.meta.name}' is expected`);
     } else {
       return e;
     }
@@ -1472,10 +1299,11 @@ class AdminGroup {
 
   async payoutStakers(signer: IKeyringPair, stakersToPayout: number):  Promise<{staker: string, stake: bigint, payout: bigint}[]> {
     const payoutResult = await this.helper.executeExtrinsic(signer, 'api.tx.appPromotion.payoutStakers', [stakersToPayout], true);
-    return payoutResult.result.events.filter(e => e.event.method === 'StakingRecalculation').map(e => ({
-      staker: e.event.data[0].toString(),
-      stake: e.event.data[1].toBigInt(),
-      payout: e.event.data[2].toBigInt(),
+    if(this.helper.api === null) throw Error('API not initialized');
+    return payoutResult.result.events.filter(this.helper.api.events.appPromotion.StakingRecalculation.is).map(e => ({
+      staker: e.data[0].toString(),
+      stake: e.data[1].toBigInt(),
+      payout: e.data[2].toBigInt(),
     }));
   }
 }

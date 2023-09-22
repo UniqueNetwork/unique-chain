@@ -51,14 +51,17 @@ describe('integration test: API UNIQUE consts', () => {
   });
 
   itSub('DEFAULT_NFT_COLLECTION_LIMITS', () => {
+    // eslint-disable-next-line no-restricted-syntax
     expect(api.consts.unique.nftDefaultCollectionLimits.toHuman()).to.deep.equal(DEFAULT_COLLETCTION_LIMIT);
   });
 
   itSub('DEFAULT_RFT_COLLECTION_LIMITS', () => {
+    // eslint-disable-next-line no-restricted-syntax
     expect(api.consts.unique.rftDefaultCollectionLimits.toHuman()).to.deep.equal(DEFAULT_COLLETCTION_LIMIT);
   });
 
   itSub('DEFAULT_FT_COLLECTION_LIMITS', () => {
+    // eslint-disable-next-line no-restricted-syntax
     expect(api.consts.unique.ftDefaultCollectionLimits.toHuman()).to.deep.equal(DEFAULT_COLLETCTION_LIMIT);
   });
 

@@ -456,7 +456,7 @@ describe('Integration Test: Token Properties', () => {
     await collection.confirmSponsorship(alice);
     await collection.setPermissions(alice, {access: 'AllowList', mintMode: true});
     await collection.addToAllowList(alice, {Substrate: bob.address});
-    await collection.setLimits(alice, {sponsoredDataRateLimit: {blocks: 30}});
+    await collection.setLimits(alice, {sponsoredDataRateLimit: {Blocks: 30}});
 
     const token = await collection.mintToken(alice, {Substrate: bob.address});
 

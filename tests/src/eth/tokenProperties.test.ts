@@ -17,7 +17,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {itEth, usingEthPlaygrounds, expect} from './util';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {ICreateTokenPropertyPermission} from '../util/playgrounds/types';
 import {Pallets} from '../util';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
 import {CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
@@ -242,7 +242,7 @@ describe('EVM token properties', () => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
-      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {tokenOwner: true,
+      const permissions: ICreateTokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {tokenOwner: true,
         collectionAdmin: true,
         mutable: true}}));
 
@@ -562,7 +562,7 @@ describe('EVM token properties negative', () => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
-      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {tokenOwner: true,
+      const permissions: ICreateTokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {tokenOwner: true,
         collectionAdmin: true,
         mutable: true}}));
 

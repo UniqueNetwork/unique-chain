@@ -1,15 +1,20 @@
 import {blake2AsHex} from '@polkadot/util-crypto';
 import {PalletDemocracyConviction} from '@polkadot/types/lookup';
-import {IPhasicEvent, TSigner} from './types';
+import {IEventLike} from '@polkadot/types/types';
+import {TSigner} from './types';
 import {HelperGroup, UniqueHelper} from './unique';
+import {IsEvent} from '@polkadot/types/metadata/decorate/types';
+import {AugmentedEvents} from '@polkadot/api-base/types/events';
+
+type DataType<T> = T extends IsEvent<infer _R, infer N> ? N : never;
 
 export class CollectiveGroup extends HelperGroup<UniqueHelper> {
   /**
    * Pallet name to make an API call to. Examples: 'council', 'technicalCommittee'
    */
-  private collective: string;
+  private collective: 'council' | 'technicalCommittee';
 
-  constructor(helper: UniqueHelper, collective: string) {
+  constructor(helper: UniqueHelper, collective: 'council' | 'technicalCommittee') {
     super(helper);
     this.collective = collective;
   }
@@ -19,18 +24,25 @@ export class CollectiveGroup extends HelperGroup<UniqueHelper> {
    * @param events events of the proposal execution
    * @returns proposal hash
    */
-  private checkExecutedEvent(events: IPhasicEvent[]): string {
-    const executionEvents = events.filter(x =>
-      x.event.section === this.collective && (x.event.method === 'Executed' || x.event.method === 'MemberExecuted'));
+  private checkExecutedEvent(events: IEventLike[]): string {
+    let executionEventsData: DataType<AugmentedEvents<'promise'>['council']['Executed']>[] = [];
+    if(this.collective == 'council')
+      executionEventsData = events.filter(this.helper.getApi().events.council.Executed.is).concat(events.filter(this.helper.getApi().events.council.MemberExecuted.is)).map(e => e.data);
+    else
+      executionEventsData = events.filter(this.helper.getApi().events.technicalCommittee.Executed.is).concat(events.filter(this.helper.getApi().events.technicalCommittee.MemberExecuted.is)).map(e => e.data);
 
-    if(executionEvents.length != 1) {
-      if(events.filter(x => x.event.section === this.collective && x.event.method === 'Disapproved').length > 0)
+    // const executionEvents = events.filter(x =>
+    //   x.event.section === this.collective && (x.event.method === 'Executed' || x.event.method === 'MemberExecuted'));
+
+    if(executionEventsData.length != 1) {
+      if(events.filter(this.helper.getApi().events.council.Disapproved.is).length > 0)
+      //if(events.filter(x => x.event.section === this.collective && x.event.method === 'Disapproved').length > 0)
         throw new Error(`Disapproved by ${this.collective}`);
       else
         throw new Error(`Expected one 'Executed' or 'MemberExecuted' event for ${this.collective}`);
     }
 
-    const result = (executionEvents[0].event.data as any).result;
+    const result = executionEventsData[0].result;
 
     if(result.isErr) {
       if(result.asErr.isModule) {
@@ -38,11 +50,12 @@ export class CollectiveGroup extends HelperGroup<UniqueHelper> {
         const metaError = this.helper.getApi()?.registry.findMetaError(error);
         throw new Error(`Proposal execution failed with ${metaError.section}.${metaError.name}`);
       } else {
+        // eslint-disable-next-line no-restricted-syntax
         throw new Error('Proposal execution failed with ' + result.asErr.toHuman());
       }
     }
 
-    return (executionEvents[0].event.data as any).proposalHash;
+    return executionEventsData[0].proposalHash.toHex();
   }
 
   /**

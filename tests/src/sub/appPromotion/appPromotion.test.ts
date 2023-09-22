@@ -18,7 +18,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {
   itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD, UNLOCKING_PERIOD,
 } from '../../util';
-import {DevUniqueHelper} from '../../util/playgrounds/unique.dev';
+import {DevUniqueHelper, Event} from '../../util/playgrounds/unique.dev';
 import {itEth, expect, SponsoringMode} from '../../eth/util';
 
 let donor: IKeyringPair;
@@ -926,11 +926,11 @@ describe('App promotion', () => {
         const [staker] = await getAccounts(1);
         await helper.staking.stake(staker, 100n * nominal);
         await helper.staking.stake(staker, 200n * nominal);
-        const {result} = await helper.executeExtrinsic(staker, `api.tx.appPromotion.${testCase.method}`, unstakeParams);
+        const result = await helper.executeExtrinsic(staker, `api.tx.appPromotion.${testCase.method}`, unstakeParams);
 
-        const event = result.events.find(e => e.event.section === 'appPromotion' && e.event.method === 'Unstake');
-        const unstakerEvents = event?.event.data[0].toString();
-        const unstakedEvents = BigInt(event?.event.data[1].toString());
+        const event = Event.expect(result, helper.api!.events.appPromotion.Unstake);
+        const unstakerEvents = event.data[0].toString();
+        const unstakedEvents = event.data[1].toBigInt();
         expect(unstakerEvents).to.eq(staker.address);
         expect(unstakedEvents).to.eq(testCase.method === 'unstakeAll' ? 300n * nominal : 100n * nominal - 1n);
       });
@@ -938,11 +938,11 @@ describe('App promotion', () => {
 
     itSub('stake', async ({helper}) => {
       const [staker] = await getAccounts(1);
-      const {result} = await helper.executeExtrinsic(staker, 'api.tx.appPromotion.stake', [100n * nominal]);
+      const result = await helper.executeExtrinsic(staker, 'api.tx.appPromotion.stake', [100n * nominal]);
 
-      const event = result.events.find(e => e.event.section === 'appPromotion' && e.event.method === 'Stake');
-      const stakerEvents = event?.event.data[0].toString();
-      const stakedEvents = BigInt(event?.event.data[1].toString());
+      const event = Event.expect(result, helper.api!.events.appPromotion.Stake);
+      const stakerEvents = event.data[0].toString();
+      const stakedEvents = event.data[1].toBigInt();
       expect(stakerEvents).to.eq(staker.address);
       expect(stakedEvents).to.eq(100n * nominal);
     });

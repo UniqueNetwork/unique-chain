@@ -68,7 +68,7 @@ describe('Negative Test: Unnesting', () => {
       const targetToken = await collectionNFT.mintToken(alice, {Substrate: bob.address});
 
       await collectionNFT.setPermissions(alice, {nesting: {
-        collectionAdmin: true, tokenOwner: true, restricted: testCase.restrictedMode ? [collectionFT.collectionId] : null,
+        collectionAdmin: true, tokenOwner: true, restricted: testCase.restrictedMode ? [collectionFT.collectionId] : undefined,
       }});
 
       // Nest some tokens as Alice into Bob's token

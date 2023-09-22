@@ -60,6 +60,10 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
     };
     result = await code(helper, privateKey);
   }
+  catch (e) {
+    console.log(e);
+    throw e;
+  }
   finally {
     await helper.disconnect();
     silentConsole.disable();
