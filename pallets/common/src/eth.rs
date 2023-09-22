@@ -631,3 +631,12 @@ impl From<AccessMode> for up_data_structs::AccessMode {
 		}
 	}
 }
+
+/// Token minting parameters
+#[derive(AbiCoder, Default, Debug)]
+pub struct MintTokenData {
+	/// Minted token owner
+	pub owner: CrossAddress,
+	/// Minted token properties
+	pub properties: Vec<Property>,
+}

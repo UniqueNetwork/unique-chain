@@ -20,12 +20,12 @@ interface CollectionHelpersEvents {
 }
 
 /// @title Contract, which allows users to operate with collections
-/// @dev the ERC-165 identifier for this interface is 0x4135fff1
+/// @dev the ERC-165 identifier for this interface is 0x94e5af0d
 interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// Create a collection
 	/// @return address Address of the newly created collection
-	/// @dev EVM selector for this function is: 0xa765ee5b,
-	///  or in textual repr: createCollection(((address,uint256),string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],uint8))
+	/// @dev EVM selector for this function is: 0x72b5bea7,
+	///  or in textual repr: createCollection((string,string,string,uint8,uint8,(string,bytes)[],(string,(uint8,bool)[])[],(address,uint256)[],(bool,bool,address[]),(uint8,uint256)[],(address,uint256),uint8))
 	function createCollection(CreateCollectionData memory data) external payable returns (address);
 
 	/// Create an NFT collection
@@ -103,8 +103,6 @@ interface CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 
 /// Collection properties
 struct CreateCollectionData {
-	/// Collection sponsor
-	CrossAddress pending_sponsor;
 	/// Collection name
 	string name;
 	/// Collection description
@@ -125,11 +123,12 @@ struct CreateCollectionData {
 	CollectionNestingAndPermission nesting_settings;
 	/// Collection limits
 	CollectionLimitValue[] limits;
+	/// Collection sponsor
+	CrossAddress pending_sponsor;
 	/// Extra collection flags
 	CollectionFlags flags;
 }
 
-/// Cross account struct
 type CollectionFlags is uint8;
 
 library CollectionFlagsLib {
@@ -140,11 +139,17 @@ library CollectionFlagsLib {
 	/// External collections can't be managed using `unique` api
 	CollectionFlags constant externalField = CollectionFlags.wrap(1);
 
-	/// Reserved bits
+	/// Reserved flags
 	function reservedField(uint8 value) public pure returns (CollectionFlags) {
 		require(value < 1 << 5, "out of bound value");
 		return CollectionFlags.wrap(value << 1);
 	}
+}
+
+/// Cross account struct
+struct CrossAddress {
+	address eth;
+	uint256 sub;
 }
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) field representation for EVM.
@@ -185,12 +190,6 @@ struct CollectionNestingAndPermission {
 	address[] restricted;
 }
 
-/// Cross account struct
-struct CrossAddress {
-	address eth;
-	uint256 sub;
-}
-
 /// Ethereum representation of Token Property Permissions.
 struct TokenPropertyPermission {
 	/// Token property key.
@@ -225,10 +224,10 @@ struct Property {
 
 /// Type of tokens in collection
 enum CollectionMode {
-	/// Fungible
-	Fungible,
 	/// Nonfungible
 	Nonfungible,
+	/// Fungible
+	Fungible,
 	/// Refungible
 	Refungible
 }

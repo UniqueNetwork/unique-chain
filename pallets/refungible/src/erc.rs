@@ -1021,6 +1021,43 @@ where
 		Ok(true)
 	}
 
+	/// @notice Function to mint a token.
+	/// @param tokenProperties Properties of minted token
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(token_properties.len() as u32) + <SelfWeightOf<T>>::set_token_properties(token_properties.len() as u32))]
+	fn mint_bulk_cross(
+		&mut self,
+		caller: Caller,
+		token_properties: Vec<eth::MintTokenData>,
+	) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let mut create_rft_data = Vec::with_capacity(token_properties.len());
+		for eth::MintTokenData { owner, properties } in token_properties {
+			let owner = owner.into_sub_cross_account::<T>()?;
+			let users: BoundedBTreeMap<_, _, _> = [(owner, 1)]
+				.into_iter()
+				.collect::<BTreeMap<_, _>>()
+				.try_into()
+				.map_err(|_| "too many users")?;
+			create_rft_data.push(CreateItemData::<T> {
+				properties: properties
+					.into_iter()
+					.map(|property| property.try_into())
+					.collect::<Result<Vec<_>>>()?
+					.try_into()
+					.map_err(|_| "too many properties")?,
+				users,
+			});
+		}
+
+		<Pallet<T>>::create_multiple_items(self, &caller, create_rft_data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
 	/// @notice Function to mint multiple tokens with the given tokenUris.
 	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
 	///  numbers and first number should be obtained with `nextTokenId` method

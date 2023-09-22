@@ -242,6 +242,7 @@ mod erc721 {
 			BurnFrom { .. }
 			| BurnFromCross { .. }
 			| MintBulk { .. }
+			| MintBulkCross { .. }
 			| MintBulkWithTokenUri { .. } => None,
 
 			MintCross { .. } => withdraw_create_item::<T>(

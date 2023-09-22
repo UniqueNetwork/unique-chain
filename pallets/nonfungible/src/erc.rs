@@ -981,13 +981,41 @@ where
 		Ok(true)
 	}
 
+	/// @notice Function to mint a token.
+	/// @param data Array of pairs of token owner and token's properties for minted token
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(data.len() as u32) + <SelfWeightOf<T>>::set_token_properties(data.len() as u32))]
+	fn mint_bulk_cross(&mut self, caller: Caller, data: Vec<eth::MintTokenData>) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let mut create_nft_data = Vec::with_capacity(data.len());
+		for eth::MintTokenData { owner, properties } in data {
+			let owner = owner.into_sub_cross_account::<T>()?;
+			create_nft_data.push(CreateItemData::<T> {
+				properties: properties
+					.into_iter()
+					.map(|property| property.try_into())
+					.collect::<Result<Vec<_>>>()?
+					.try_into()
+					.map_err(|_| "too many properties")?,
+				owner,
+			});
+		}
+
+		<Pallet<T>>::create_multiple_items(self, &caller, create_nft_data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
 	/// @notice Function to mint multiple tokens with the given tokenUris.
 	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32)  + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32) + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
 		caller: Caller,
