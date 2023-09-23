@@ -129,7 +129,7 @@ Optional, full setup with Acala and Statemint
 
 ## Run Integration Tests
 
-1. Install all needed dependecies
+1. Install all needed dependencies
 ```
 cd tests
 yarn install
