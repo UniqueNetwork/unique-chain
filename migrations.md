@@ -21,7 +21,7 @@
 * Removed the previous migration of:
     * if the storage version is below 1, all collections from storage **CollectionById** of struct **Collection** version 1 to version 2, consisting of:
         * displacing _offchain_schema, variable_on_chain_schema, const_on_chain_schema, schema_version_ into _properties_
-        * displacing _acccess, mint_mode_ into _permissions.access, permissions.mint_mode_
+        * displacing _access, mint_mode_ into _permissions.access, permissions.mint_mode_
         * adding _external_collection_ flag
 * Added unconditional bump of the storage version to 1
 * Replaced returned weight `0` with `Weight::zero()`
@@ -48,4 +48,4 @@
 ### **pallet-unique:**
 
 * Removed the previous migration of:
-    * unconditional cleaning of all storage of **VariableMetaDataBasket** (cache for sponosoring setting deprecated variable metadata)
+    * unconditional cleaning of all storage of **VariableMetaDataBasket** (cache for sponsoring setting deprecated variable metadata)
