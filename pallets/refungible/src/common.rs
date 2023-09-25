@@ -47,7 +47,7 @@ macro_rules! max_weight_of {
 
 fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> Weight {
 	if properties.len() > 0 {
-		<CommonWeights<T>>::set_token_properties(properties.len() as u32)
+		<SelfWeightOf<T>>::reset_token_properties(properties.len() as u32)
 	} else {
 		Weight::zero()
 	}

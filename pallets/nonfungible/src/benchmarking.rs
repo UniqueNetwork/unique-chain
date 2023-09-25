@@ -200,6 +200,28 @@ benchmarks! {
 		let item = create_max_item(&collection, &owner, owner.clone())?;
 	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?}
 
+	reset_token_properties {
+		let b in 0..MAX_PROPERTIES_PER_ITEM;
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			owner: cross_from_sub;
+		};
+		let perms = (0..b).map(|k| PropertyKeyPermission {
+			key: property_key(k as usize),
+			permission: PropertyPermission {
+				mutable: false,
+				collection_admin: true,
+				token_owner: true,
+			},
+		}).collect::<Vec<_>>();
+		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
+		let props = (0..b).map(|k| Property {
+			key: property_key(k as usize),
+			value: property_value(),
+		}).collect::<Vec<_>>();
+		let item = create_max_item(&collection, &owner, owner.clone())?;
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::NewToken { mint_target_is_sender: true }, &Unlimited)?}
+
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
 		bench_init!{

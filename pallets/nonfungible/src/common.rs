@@ -42,7 +42,9 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 					+ t.iter()
 						.filter_map(|t| {
 							if t.properties.len() > 0 {
-								Some(Self::set_token_properties(t.properties.len() as u32))
+								Some(<SelfWeightOf<T>>::reset_token_properties(
+									t.properties.len() as u32,
+								))
 							} else {
 								None
 							}
@@ -58,9 +60,9 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 			+ data
 				.iter()
 				.filter_map(|t| match t {
-					up_data_structs::CreateItemData::NFT(n) if n.properties.len() > 0 => {
-						Some(Self::set_token_properties(n.properties.len() as u32))
-					}
+					up_data_structs::CreateItemData::NFT(n) if n.properties.len() > 0 => Some(
+						<SelfWeightOf<T>>::reset_token_properties(n.properties.len() as u32),
+					),
 					_ => None,
 				})
 				.fold(Weight::zero(), |a, b| a.saturating_add(b))
