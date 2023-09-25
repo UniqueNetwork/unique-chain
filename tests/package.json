@@ -114,6 +114,7 @@
     "testIdentity": "RUN_COLLATOR_TESTS=1 yarn _test ./**/identity.*test.ts --timeout 49999999",
     "testLowLevelXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/lowLevelXcmUnique.test.ts",
     "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmUnique.test.ts",
+    "testFullXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*xcmUnique.test.ts",
     "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmQuartz.test.ts",
     "testXcmOpal": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmOpal.test.ts",
     "testXcmTransferAcala": "yarn _test ./**/xcm/xcmTransferAcala.test.ts acalaId=2000 uniqueId=5000",
