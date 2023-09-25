@@ -1293,7 +1293,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       const unitsPerSecond = 1n;
       const numAssetsWeightHint = 0;
 
-      if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON) {
+      if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON()) {
         console.log('Unique asset is already registered on MoonBeam');
       } else {
         const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
