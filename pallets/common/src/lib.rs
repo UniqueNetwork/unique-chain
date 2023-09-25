@@ -1391,9 +1391,8 @@ impl<T: Config> Pallet<T> {
 
 		if changed {
 			<PalletEvm<T>>::deposit_log(log);
+			set_token_properties(stored_properties);
 		}
-
-		set_token_properties(stored_properties);
 
 		Ok(())
 	}
