@@ -620,10 +620,22 @@ impl<T: Config> Pallet<T> {
 			Ok(is_owned)
 		});
 
-		let mut is_token_exist =
-			pallet_common::LazyValue::new(|| Self::token_exists(collection, token_id));
+		let is_new_token = matches!(mode, SetPropertyMode::NewToken { .. });
 
-		let stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
+		let mut is_token_exist = pallet_common::LazyValue::new(|| {
+			if is_new_token {
+				debug_assert!(Self::token_exists(collection, token_id));
+				true
+			} else {
+				Self::token_exists(collection, token_id)
+			}
+		});
+
+		let stored_properties = if is_new_token {
+			TokenPropertiesT::new()
+		} else {
+			<TokenProperties<T>>::get((collection.id, token_id))
+		};
 
 		<PalletCommon<T>>::modify_token_properties(
 			collection,
