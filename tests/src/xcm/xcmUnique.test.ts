@@ -530,6 +530,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
         console.log('UNQ token already registered on Acala assetRegistry pallet');
       }
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+      balanceAcalaTokenInit = await helper.balance.getSubstrate(randomAccount.address);
+      balanceUniqueForeignTokenInit = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
     });
 
     await usingPlaygrounds(async (helper) => {
@@ -1362,7 +1364,6 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-
       balanceGlmrTokenMiddle = await helper.balance.getEthereum(randomAccountMoonbeam.address);
 
       const glmrFees = balanceGlmrTokenInit - balanceGlmrTokenMiddle;
