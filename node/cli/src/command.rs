@@ -425,7 +425,7 @@ pub fn run() -> Result<()> {
 				.map(|cfg| &cfg.registry);
 			let task_manager =
 				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-					.map_err(|e| format!("Error: {:?}", e))?;
+					.map_err(|e| format!("Error: {e:?}"))?;
 			let info_provider = Some(timestamp_with_aura_info(12000));
 
 			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {

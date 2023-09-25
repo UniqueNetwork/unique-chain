@@ -136,8 +136,10 @@ fn make_call<T: Config>(maybe_lookup_len: Option<u32>) -> ScheduledCall<T> {
 	let bound = EncodedCall::bound() as u32;
 	let mut len = match maybe_lookup_len {
 		Some(len) => {
-			len.min(<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get() - 2)
-				.max(bound) - 3
+			len.clamp(
+				bound,
+				<T::Preimages as PreimageRecipient<T::Hash>>::MaxSize::get() - 2,
+			) - 3
 		}
 		None => bound.saturating_sub(4),
 	};

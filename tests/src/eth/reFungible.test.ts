@@ -18,6 +18,7 @@ import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from './util/playgrounds/types';
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
@@ -123,6 +124,169 @@ describe('Refungible: Plain calls', () => {
       expect(await contract.methods.tokenURI(+nextTokenId + 1).call()).to.be.equal('Test URI 1');
       expect(await contract.methods.tokenURI(+nextTokenId + 2).call()).to.be.equal('Test URI 2');
     }
+  });
+
+  itEth('Can perform mintBulkCross() with multiple tokens', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const callerCross = helper.ethCrossAccount.fromAddress(caller);
+    const receiver = helper.eth.createAccount();
+    const receiverCross = helper.ethCrossAccount.fromAddress(receiver);
+
+    const permissions = [
+      {code: TokenPermissionField.Mutable, value: true},
+      {code: TokenPermissionField.TokenOwner, value: true},
+      {code: TokenPermissionField.CollectionAdmin, value: true},
+    ];
+    const {collectionAddress} = await helper.eth.createCollection(
+      caller,
+      {
+        ...CREATE_COLLECTION_DATA_DEFAULTS,
+        name: 'A',
+        description: 'B',
+        tokenPrefix: 'C',
+        collectionMode: 'rft',
+        adminList: [callerCross],
+        tokenPropertyPermissions: [
+          {key: 'key_0_0', permissions},
+          {key: 'key_1_0', permissions},
+          {key: 'key_1_1', permissions},
+          {key: 'key_2_0', permissions},
+          {key: 'key_2_1', permissions},
+          {key: 'key_2_2', permissions},
+        ],
+      },
+    ).send();
+
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    const result = await contract.methods.mintBulkCross([
+      {
+        owners: [{
+          owner: receiverCross,
+          pieces: 1,
+        }],
+        properties: [
+          {key: 'key_0_0', value: Buffer.from('value_0_0')},
+        ],
+      },
+      {
+        owners: [{
+          owner: receiverCross,
+          pieces: 2,
+        }],
+        properties: [
+          {key: 'key_1_0', value: Buffer.from('value_1_0')},
+          {key: 'key_1_1', value: Buffer.from('value_1_1')},
+        ],
+      },
+      {
+        owners: [{
+          owner: receiverCross,
+          pieces: 1,
+        }],
+        properties: [
+          {key: 'key_2_0', value: Buffer.from('value_2_0')},
+          {key: 'key_2_1', value: Buffer.from('value_2_1')},
+          {key: 'key_2_2', value: Buffer.from('value_2_2')},
+        ],
+      },
+    ]).send({from: caller});
+    const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
+    const bulkSize = 3;
+    for(let i = 0; i < bulkSize; i++) {
+      const event = events[i];
+      expect(event.address).to.equal(collectionAddress);
+      expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.returnValues.tokenId).to.equal(`${+nextTokenId + i}`);
+    }
+
+    const properties = [
+      await contract.methods.properties(+nextTokenId, []).call(),
+      await contract.methods.properties(+nextTokenId + 1, []).call(),
+      await contract.methods.properties(+nextTokenId + 2, []).call(),
+    ];
+    expect(properties).to.be.deep.equal([
+      [
+        ['key_0_0', helper.getWeb3().utils.toHex('value_0_0')],
+      ],
+      [
+        ['key_1_0', helper.getWeb3().utils.toHex('value_1_0')],
+        ['key_1_1', helper.getWeb3().utils.toHex('value_1_1')],
+      ],
+      [
+        ['key_2_0', helper.getWeb3().utils.toHex('value_2_0')],
+        ['key_2_1', helper.getWeb3().utils.toHex('value_2_1')],
+        ['key_2_2', helper.getWeb3().utils.toHex('value_2_2')],
+      ],
+    ]);
+  });
+
+  itEth('Can perform mintBulkCross() with multiple owners', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const callerCross = helper.ethCrossAccount.fromAddress(caller);
+    const receiver = helper.eth.createAccount();
+    const receiverCross = helper.ethCrossAccount.fromAddress(receiver);
+    const receiver2 = helper.eth.createAccount();
+    const receiver2Cross = helper.ethCrossAccount.fromAddress(receiver2);
+
+    const permissions = [
+      {code: TokenPermissionField.Mutable, value: true},
+      {code: TokenPermissionField.TokenOwner, value: true},
+      {code: TokenPermissionField.CollectionAdmin, value: true},
+    ];
+    const {collectionAddress} = await helper.eth.createCollection(
+      caller,
+      {
+        ...CREATE_COLLECTION_DATA_DEFAULTS,
+        name: 'A',
+        description: 'B',
+        tokenPrefix: 'C',
+        collectionMode: 'rft',
+        adminList: [callerCross],
+        tokenPropertyPermissions: [
+          {key: 'key_2_0', permissions},
+          {key: 'key_2_1', permissions},
+          {key: 'key_2_2', permissions},
+        ],
+      },
+    ).send();
+
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    const result = await contract.methods.mintBulkCross([{
+      owners: [
+        {
+          owner: receiverCross,
+          pieces: 1,
+        },
+        {
+          owner: receiver2Cross,
+          pieces: 2,
+        },
+      ],
+      properties: [
+        {key: 'key_2_0', value: Buffer.from('value_2_0')},
+        {key: 'key_2_1', value: Buffer.from('value_2_1')},
+        {key: 'key_2_2', value: Buffer.from('value_2_2')},
+      ],
+    }]).send({from: caller});
+    const event = result.events.Transfer;
+    expect(event.address).to.equal(collectionAddress);
+    expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+    expect(event.returnValues.to).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
+    expect(event.returnValues.tokenId).to.equal(`${+nextTokenId}`);
+
+    const properties = [
+      await contract.methods.properties(+nextTokenId, []).call(),
+    ];
+    expect(properties).to.be.deep.equal([[
+      ['key_2_0', helper.getWeb3().utils.toHex('value_2_0')],
+      ['key_2_1', helper.getWeb3().utils.toHex('value_2_1')],
+      ['key_2_2', helper.getWeb3().utils.toHex('value_2_2')],
+    ]]);
   });
 
   itEth('Can perform setApprovalForAll()', async ({helper}) => {
@@ -785,5 +949,71 @@ describe('Negative tests', () => {
     await contract.methods.setApprovalForAll(spender, false).send({from: owner});
 
     await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+  });
+
+  itEth('[negative] Can perform mintBulkCross() with multiple owners and multiple tokens', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const callerCross = helper.ethCrossAccount.fromAddress(caller);
+    const receiver = helper.eth.createAccount();
+    const receiverCross = helper.ethCrossAccount.fromAddress(receiver);
+    const receiver2 = helper.eth.createAccount();
+    const receiver2Cross = helper.ethCrossAccount.fromAddress(receiver2);
+
+    const permissions = [
+      {code: TokenPermissionField.Mutable, value: true},
+      {code: TokenPermissionField.TokenOwner, value: true},
+      {code: TokenPermissionField.CollectionAdmin, value: true},
+    ];
+    const {collectionAddress} = await helper.eth.createCollection(
+      caller,
+      {
+        ...CREATE_COLLECTION_DATA_DEFAULTS,
+        name: 'A',
+        description: 'B',
+        tokenPrefix: 'C',
+        collectionMode: 'rft',
+        adminList: [callerCross],
+        tokenPropertyPermissions: [
+          {key: 'key_0_0', permissions},
+          {key: 'key_2_0', permissions},
+          {key: 'key_2_1', permissions},
+          {key: 'key_2_2', permissions},
+        ],
+      },
+    ).send();
+
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const nextTokenId = await contract.methods.nextTokenId().call();
+    expect(nextTokenId).to.be.equal('1');
+    const createData = [
+      {
+        owners: [{
+          owner: receiverCross,
+          pieces: 1,
+        }],
+        properties: [
+          {key: 'key_0_0', value: Buffer.from('value_0_0')},
+        ],
+      },
+      {
+        owners: [
+          {
+            owner: receiverCross,
+            pieces: 1,
+          },
+          {
+            owner: receiver2Cross,
+            pieces: 2,
+          },
+        ],
+        properties: [
+          {key: 'key_2_0', value: Buffer.from('value_2_0')},
+          {key: 'key_2_1', value: Buffer.from('value_2_1')},
+          {key: 'key_2_2', value: Buffer.from('value_2_2')},
+        ],
+      },
+    ];
+
+    await expect(contract.methods.mintBulkCross(createData).call({from: caller})).to.be.rejectedWith('creation of multiple tokens supported only if they have single owner each');
   });
 });
