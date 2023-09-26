@@ -17,25 +17,11 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {Event} from '../util/playgrounds/unique.dev';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
+import {ASTAR_DECIMALS, NETWORKS, SAFE_XCM_VERSION, UNIQUE_CHAIN, UNQ_DECIMALS, acalaUrl, astarUrl, expectFailedToTransact, expectUntrustedReserveLocationFail, getDevPlayground, mapToChainId, mapToChainUrl, maxWaitBlocks, moonbeamUrl, polkadexUrl, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
 
-const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
-const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
-const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
-const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
-const POLKADEX_CHAIN = +(process.env.RELAY_POLKADEX_ID || 2040);
-
-
-
-const acalaUrl = config.acalaUrl;
-const moonbeamUrl = config.moonbeamUrl;
-const astarUrl = config.astarUrl;
-const polkadexUrl = config.polkadexUrl;
-
-const ASTAR_DECIMALS = 18n;
-const UNQ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000_000_000_000_000_000_000n;
 const SENDER_BUDGET = 2n * TRANSFER_AMOUNT;
@@ -43,70 +29,10 @@ const SENDBACK_AMOUNT = TRANSFER_AMOUNT / 2n;
 const STAYED_ON_TARGET_CHAIN = TRANSFER_AMOUNT - SENDBACK_AMOUNT;
 const TARGET_CHAIN_TOKEN_TRANSFER_AMOUNT = 100_000_000_000n;
 
-const SAFE_XCM_VERSION = 2;
-const maxWaitBlocks = 6;
-
-const uniqueMultilocation = {
-  V2: {
-    parents: 1,
-    interior: {
-      X1: {
-        Parachain: UNIQUE_CHAIN,
-      },
-    },
-  },
-};
-
 let balanceUniqueTokenInit: bigint;
 let balanceUniqueTokenMiddle: bigint;
 let balanceUniqueTokenFinal: bigint;
 let unqFees: bigint;
-
-const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
-};
-const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-         && event.outcome.isUntrustedReserveLocation);
-};
-
-const NETWORKS = {
-  acala: usingAcalaPlaygrounds,
-  astar: usingAstarPlaygrounds,
-  polkadex: usingPolkadexPlaygrounds,
-  moonbeam: usingMoonbeamPlaygrounds,
-} as const;
-
-function mapToChainId(networkName: keyof typeof NETWORKS) {
-  switch (networkName) {
-    case 'acala':
-      return ACALA_CHAIN;
-    case 'astar':
-      return ASTAR_CHAIN;
-    case 'moonbeam':
-      return MOONBEAM_CHAIN;
-    case 'polkadex':
-      return POLKADEX_CHAIN;
-  }
-}
-
-function mapToChainUrl(networkName: keyof typeof NETWORKS): string {
-  switch (networkName) {
-    case 'acala':
-      return acalaUrl;
-    case 'astar':
-      return astarUrl;
-    case 'moonbeam':
-      return moonbeamUrl;
-    case 'polkadex':
-      return polkadexUrl;
-  }
-}
-
-function getDevPlayground<T extends keyof typeof NETWORKS>(name: T) {
-  return NETWORKS[name];
-}
 
 
 async function genericSendUnqTo(
@@ -227,13 +153,13 @@ async function genericSendUnqBack(
 
     await targetPlayground(networkUrl, async (helper) => {
       if('getSudo' in helper) {
-        await helper.getSudo().xcm.send(sudoer, uniqueMultilocation, xcmProgram);
+        await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, xcmProgram);
         xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       } else if('fastDemocracy' in helper) {
-        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, xcmProgram]);
+        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, xcmProgram]);
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-        await helper.fastDemocracy.executeProposal('sending MoonBeam -> Unique via XCM program', batchCall);
+        await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
         xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
     });
@@ -279,13 +205,13 @@ async function genericSendOnlyOwnedBalance(
 
     await targetPlayground(networkUrl, async (helper) => {
       if('getSudo' in helper) {
-        await helper.getSudo().xcm.send(sudoer, uniqueMultilocation, maliciousXcmProgram);
+        await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, maliciousXcmProgram);
         maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       } else if('fastDemocracy' in helper) {
-        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgram]);
+        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgram]);
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-        await helper.fastDemocracy.executeProposal('sending MoonBeam -> Unique via XCM program', batchCall);
+        await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
         maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
     });
@@ -338,16 +264,15 @@ async function genericReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS,
     // Try to trick Unique using full UNQ identification
     await targetPlayground(networkUrl, async (helper) => {
       if('getSudo' in helper) {
-        await helper.getSudo().xcm.send(sudoer, uniqueMultilocation, maliciousXcmProgramFullId);
+        await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
         maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
       // Moonbeam case
       else if('fastDemocracy' in helper) {
-        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramFullId]);
-
+        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-        await helper.fastDemocracy.executeProposal('try to act like a reserve location for UNQ using path asset identification', batchCall);
+        await helper.fastDemocracy.executeProposal(`${netwokrName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
 
         maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
@@ -362,15 +287,14 @@ async function genericReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS,
     // Try to trick Unique using shortened UNQ identification
     await targetPlayground(networkUrl, async (helper) => {
       if('getSudo' in helper) {
-        await helper.getSudo().xcm.send(sudoer, uniqueMultilocation, maliciousXcmProgramHereId);
+        await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, maliciousXcmProgramHereId);
         maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
       else if('fastDemocracy' in helper) {
-        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramHereId]);
-
+        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramHereId]);
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-        await helper.fastDemocracy.executeProposal('try to act like a reserve location for UNQ using "here" asset identification', batchCall);
+        await helper.fastDemocracy.executeProposal(`${netwokrName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
 
         maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
@@ -405,19 +329,17 @@ async function genericRejectNativeToknsFrom(netwokrName: keyof typeof NETWORKS, 
     );
     await targetPlayground(networkUrl, async (helper) => {
       if('getSudo' in helper) {
-        await helper.getSudo().xcm.send(sudoerOnTargetChain, uniqueMultilocation, maliciousXcmProgramFullId);
+        await helper.getSudo().xcm.send(sudoerOnTargetChain, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
         messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       } else if('fastDemocracy' in helper) {
-        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramFullId]);
-
+        const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-        await helper.fastDemocracy.executeProposal('sending native tokens to the Unique via fast democracy', batchCall);
+        await helper.fastDemocracy.executeProposal(`${netwokrName} sending native tokens to the Unique via fast democracy`, batchCall);
 
         messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
     });
-
     await expectFailedToTransact(helper, messageSent);
   });
 }
@@ -493,17 +415,6 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
-  const uniqueAssetId = {
-    Concrete: {
-      parents: 1,
-      interior: {
-        X1: {
-          Parachain: UNIQUE_CHAIN,
-        },
-      },
-    },
-  };
-
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
@@ -523,7 +434,9 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
       if it is added again. Needed for debugging
       when this test is run multiple times.
       */
-      if(!isWhitelisted) {
+      if(isWhitelisted) {
+        console.log('UNQ token is already whitelisted on Polkadex');
+      } else {
         await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
       }
 
@@ -639,7 +552,7 @@ describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
       const numAssetsWeightHint = 0;
 
       if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON()) {
-        console.log('Unique asset already registered');
+        console.log('Unique asset already registered on Moonbeam');
       } else {
         const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
           location: uniqueAssetLocation,
@@ -750,6 +663,8 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
 
         console.log('3. Set UNQ payment for XCM execution on Astar');
         await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+      } else {
+        console.log('UNQ is already registered on Astar');
       }
       console.log('4. Transfer 1 ASTR to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);

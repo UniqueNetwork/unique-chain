@@ -17,15 +17,10 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {Event} from '../util/playgrounds/unique.dev';
 import {hexToString, nToBigInt} from '@polkadot/util';
+import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
 
-const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
-const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
-const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
-const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
-const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
-const POLKADEX_CHAIN = +(process.env.RELAY_POLKADEX_ID || 2040);
 
 const STATEMINT_PALLET_INSTANCE = 50;
 
@@ -55,28 +50,6 @@ const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
-const SAFE_XCM_VERSION = 2;
-const maxWaitBlocks = 6;
-
-const uniqueMultilocation = {
-  V2: {
-    parents: 1,
-    interior: {
-      X1: {
-        Parachain: UNIQUE_CHAIN,
-      },
-    },
-  },
-};
-
-const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
-};
-const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-         && event.outcome.isUntrustedReserveLocation);
-};
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -704,7 +677,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     // Try to trick Unique
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -729,7 +702,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     );
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, validXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
@@ -820,17 +793,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
   let balanceUniqueTokenFinal: bigint;
   const maxWaitBlocks = 6;
 
-  const uniqueAssetId = {
-    Concrete: {
-      parents: 1,
-      interior: {
-        X1: {
-          Parachain: UNIQUE_CHAIN,
-        },
-      },
-    },
-  };
-
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
@@ -850,7 +812,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
       if it is added again. Needed for debugging
       when this test is run multiple times.
       */
-      if(!isWhitelisted) {
+      if(isWhitelisted) {
+        console.log('UNQ token is already whitelisted on Polkadex');
+      } else {
         await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
       }
 
@@ -951,7 +915,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
 
 
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, xcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, xcmProgram);
 
       xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -986,7 +950,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
 
 
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -1465,7 +1429,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     // Try to trick Unique
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgram]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgram]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1494,7 +1458,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     );
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, validXcmProgram]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, validXcmProgram]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1543,7 +1507,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     // Try to trick Unique using full UNQ identification
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramFullId]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1560,7 +1524,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     // Try to trick Unique using shortened UNQ identification
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramHereId]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramHereId]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1641,6 +1605,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
         console.log('3. Set UNQ payment for XCM execution on Astar');
         await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+      } else {
+        console.log('UNQ is already registered on Astar');
       }
       console.log('4. Transfer 1 ASTR to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);
@@ -1815,7 +1781,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // Try to trick Unique
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -1840,7 +1806,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     );
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, validXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
@@ -1885,7 +1851,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // Try to trick Unique using full UNQ identification
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
 
       maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -1898,7 +1864,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // Try to trick Unique using shortened UNQ identification
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgramHereId);
 
       maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
