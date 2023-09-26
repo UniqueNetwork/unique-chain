@@ -632,6 +632,10 @@ impl<T: Config> Pallet<T> {
 		});
 
 		let stored_properties = if is_new_token {
+			debug_assert!(!<TokenProperties<T>>::contains_key((
+				collection.id,
+				token_id
+			)));
 			TokenPropertiesT::new()
 		} else {
 			<TokenProperties<T>>::get((collection.id, token_id))
