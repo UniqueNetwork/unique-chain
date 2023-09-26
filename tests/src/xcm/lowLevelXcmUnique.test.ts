@@ -653,16 +653,15 @@ describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
         console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
 
         await helper.fastDemocracy.executeProposal('register UNQ foreign asset', encodedProposal);
-
-        // >>> Acquire Unique AssetId Info on Moonbeam >>>
-        console.log('Acquire Unique AssetId Info on Moonbeam.......');
-
-        assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
-
-        console.log('UNQ asset ID is %s', assetId);
-        console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
       }
+
       // >>> Acquire Unique AssetId Info on Moonbeam >>>
+      console.log('Acquire Unique AssetId Info on Moonbeam.......');
+
+      assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
+
+      console.log('UNQ asset ID is %s', assetId);
+      console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
 
       // >>> Sponsoring random Account >>>
       console.log('Sponsoring random Account.......');
