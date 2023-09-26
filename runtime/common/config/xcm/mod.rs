@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError},
+	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError, Contains},
 	parameter_types,
 };
 use frame_system::EnsureRoot;
@@ -162,6 +162,52 @@ where
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
+pub struct XcmCallFilter;
+impl XcmCallFilter {
+	fn allow_gov_and_sys_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::System(..)
+			| RuntimeCall::Identity(..)
+			| RuntimeCall::Preimage(..)
+			| RuntimeCall::Democracy(..)
+			| RuntimeCall::Council(..)
+			| RuntimeCall::TechnicalCommittee(..)
+			| RuntimeCall::CouncilMembership(..)
+			| RuntimeCall::TechnicalCommitteeMembership(..)
+			| RuntimeCall::FellowshipCollective(..)
+			| RuntimeCall::FellowshipReferenda(..) => true,
+			_ => false,
+		}
+	}
+
+	fn allow_utility_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) => {
+				calls.iter().all(|call| Self::allow_gov_and_sys_call(call))
+			}
+			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) => {
+				calls.iter().all(|call| Self::allow_gov_and_sys_call(call))
+			}
+			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) => {
+				Self::allow_gov_and_sys_call(call)
+			}
+			RuntimeCall::Utility(pallet_utility::Call::dispatch_as { call, .. }) => {
+				Self::allow_gov_and_sys_call(call)
+			}
+			RuntimeCall::Utility(pallet_utility::Call::force_batch { calls, .. }) => {
+				calls.iter().all(|call| Self::allow_gov_and_sys_call(call))
+			}
+			_ => false,
+		}
+	}
+}
+
+impl Contains<RuntimeCall> for XcmCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		Self::allow_gov_and_sys_call(call) || Self::allow_utility_call(call)
+	}
+}
+
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
 impl<T> xcm_executor::Config for XcmExecutorConfig<T>
 where
@@ -191,9 +237,7 @@ where
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
-
-	// Deny all XCM Transacts.
-	type SafeCallFilter = Nothing;
+	type SafeCallFilter = XcmCallFilter;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
