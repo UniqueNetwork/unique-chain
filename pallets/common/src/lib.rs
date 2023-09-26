@@ -1342,11 +1342,12 @@ impl<T: Config> Pallet<T> {
 		FTE: FnOnce() -> bool,
 	{
 		let mut is_collection_admin = LazyValue::new(|| collection.is_owner_or_admin(sender));
-		let permissions = Self::property_permissions(collection.id);
+		let mut permissions = LazyValue::new(|| Self::property_permissions(collection.id));
 
 		let mut changed = false;
 		for (key, value) in properties_updates {
 			let permission = permissions
+				.value()
 				.get(&key)
 				.cloned()
 				.unwrap_or_else(PropertyPermission::none);
