@@ -291,7 +291,7 @@ async function genericReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS,
   });
 }
 
-async function genericRejectNativeToknsFrom(networkName: keyof typeof NETWORKS, sudoerOnTargetChain: IKeyringPair) {
+async function genericRejectNativeTokensFrom(networkName: keyof typeof NETWORKS, sudoerOnTargetChain: IKeyringPair) {
   const networkUrl = mapToChainUrl(networkName);
   const targetPlayground = getDevPlayground(networkName);
   let messageSent: any;
@@ -466,19 +466,19 @@ describeXCM('[XCMLL] Integration test: Unique rejects non-native tokens', () => 
   });
 
   itSub('Unique rejects ACA tokens from Acala', async () => {
-    await genericRejectNativeToknsFrom('acala', alice);
+    await genericRejectNativeTokensFrom('acala', alice);
   });
 
   itSub('Unique rejects GLMR tokens from Moonbeam', async () => {
-    await genericRejectNativeToknsFrom('moonbeam', alice);
+    await genericRejectNativeTokensFrom('moonbeam', alice);
   });
 
   itSub('Unique rejects ASTR tokens from Astar', async () => {
-    await genericRejectNativeToknsFrom('astar', alice);
+    await genericRejectNativeTokensFrom('astar', alice);
   });
 
   itSub('Unique rejects PDX tokens from Polkadex', async () => {
-    await genericRejectNativeToknsFrom('polkadex', alice);
+    await genericRejectNativeTokensFrom('polkadex', alice);
   });
 });
 
