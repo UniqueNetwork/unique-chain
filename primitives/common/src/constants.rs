@@ -52,10 +52,10 @@ pub const MAX_COLLATORS: u32 = 10;
 pub const SESSION_LENGTH: BlockNumber = HOURS;
 
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/76_902_456_736_428_438/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_300_265_101_007_172/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_908_931_253_022/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_920_221_209_483/*</mingasprice>*/;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.
