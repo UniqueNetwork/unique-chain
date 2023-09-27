@@ -728,16 +728,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -900,14 +891,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
 
     const xcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
       randomAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {Parachain: UNIQUE_CHAIN},
-          },
-        },
-      },
+      uniqueAssetId,
       TRANSFER_AMOUNT,
     );
 
@@ -978,16 +962,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
 
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -1477,16 +1452,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 0,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -1821,16 +1787,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
