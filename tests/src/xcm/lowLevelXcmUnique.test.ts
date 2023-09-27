@@ -137,14 +137,7 @@ async function genericSendUnqBack(
 
     const xcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
       randomAccountOnUnq.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {Parachain: UNIQUE_CHAIN},
-          },
-        },
-      },
+      uniqueAssetId,
       SENDBACK_AMOUNT,
     );
 
@@ -233,16 +226,7 @@ async function genericReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS,
 
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -307,9 +291,9 @@ async function genericReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS,
   });
 }
 
-async function genericRejectNativeToknsFrom(netwokrName: keyof typeof NETWORKS, sudoerOnTargetChain: IKeyringPair) {
-  const networkUrl = mapToChainUrl(netwokrName);
-  const targetPlayground = getDevPlayground(netwokrName);
+async function genericRejectNativeToknsFrom(networkName: keyof typeof NETWORKS, sudoerOnTargetChain: IKeyringPair) {
+  const networkUrl = mapToChainUrl(networkName);
+  const targetPlayground = getDevPlayground(networkName);
   let messageSent: any;
 
   await usingPlaygrounds(async (helper) => {
@@ -320,7 +304,7 @@ async function genericRejectNativeToknsFrom(netwokrName: keyof typeof NETWORKS, 
           parents: 1,
           interior: {
             X1: {
-              Parachain: mapToChainId(netwokrName),
+              Parachain: mapToChainId(networkName),
             },
           },
         },
@@ -335,7 +319,7 @@ async function genericRejectNativeToknsFrom(netwokrName: keyof typeof NETWORKS, 
         const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-        await helper.fastDemocracy.executeProposal(`${netwokrName} sending native tokens to the Unique via fast democracy`, batchCall);
+        await helper.fastDemocracy.executeProposal(`${networkName} sending native tokens to the Unique via fast democracy`, batchCall);
 
         messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
       }
