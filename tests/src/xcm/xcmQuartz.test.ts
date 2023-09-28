@@ -18,6 +18,8 @@ import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {hexToString} from '@polkadot/util';
+import {blake2AsHex} from '@polkadot/util-crypto';
 
 const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
 const STATEMINE_CHAIN = +(process.env.RELAY_STATEMINE_ID || 1000);
@@ -1635,5 +1637,189 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
+  });
+});
+
+const quartzMultilocationFromRelay = {
+  V3: {
+    parents: 0,
+    interior: {
+      X1: {Parachain: QUARTZ_CHAIN},
+    },
+  },
+};
+
+describe.only('The relay can do some root ops', () => {
+  let sudoer: IKeyringPair;
+  let randomAccount: IKeyringPair;
+
+  const maxWaitBlocks = 3;
+
+  const relayForceKV = (helper: DevUniqueHelper) => {
+    const random = Math.random();
+    const key = `relay-forced-key (instance: ${random})`;
+    const val = `relay-forced-value (instance: ${random})`;
+    const call = helper.constructApiCall('api.tx.system.setStorage', [[[key, val]]]).method.toHex();
+
+    return {
+      call,
+      key,
+      val,
+    };
+  };
+
+  const testForcedValue = async (kv: { key: string, val: string }, helper: DevUniqueHelper) => {
+    const forcedValue = await helper.callRpc('api.rpc.state.getStorage', [kv.key]);
+    expect(hexToString(forcedValue.toHex())).to.be.equal(kv.val);
+  };
+
+  const generalBatchForceKV = async (batchVariant: string, helper: DevUniqueHelper) => {
+    const kv0 = relayForceKV(helper);
+    const kv1 = relayForceKV(helper);
+
+    const batchCall = helper.constructApiCall(`api.tx.utility.${batchVariant}`, [[kv0.call, kv1.call]]).method.toHex();
+    const xcmTransact = helper.arrange.makeTransactProgram({
+      weightMultiplier: 2,
+      call: batchCall,
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(sudoer, 'api.tx.xcmPallet.send', [
+        quartzMultilocationFromRelay,
+        xcmTransact,
+      ]);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward);
+
+    await testForcedValue(kv0, helper);
+    await testForcedValue(kv1, helper);
+  };
+
+  const setRandomAccountBalanceCall = (helper: DevUniqueHelper) => helper.constructApiCall('api.tx.balances.forceSetBalance', [randomAccount.address, 10_000n]).method.toHex();
+
+  const expectDownwardXcmNoPermission = async (helper: DevUniqueHelper) => {
+    const executedDownward = await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward);
+    expect(executedDownward.outcome.asIncomplete[1].isNoPermission).to.be.true;
+  };
+
+  const generalBatchForceBalance = async (batchVariant: string, helper: DevUniqueHelper) => {
+    const forceSetBalanceCall = setRandomAccountBalanceCall(helper);
+    const batchCall = helper.constructApiCall(`api.tx.utility.${batchVariant}`, [[forceSetBalanceCall]]).method.toHex();
+
+    const xcmTransact = helper.arrange.makeTransactProgram({
+      weightMultiplier: 1,
+      call: batchCall,
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(sudoer, 'api.tx.xcmPallet.send', [
+        quartzMultilocationFromRelay,
+        xcmTransact,
+      ]);
+    });
+
+    await expectDownwardXcmNoPermission(helper);
+    expect(await helper.balance.getSubstrate(randomAccount.address)).to.be.equal(0n);
+  };
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      sudoer = await privateKey('//Alice');
+      randomAccount = helper.arrange.createEmptyAccount();
+    });
+  });
+
+  // To make sure that events are still consistent
+  afterEach(async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.wait.newBlocks(maxWaitBlocks);
+    });
+  });
+
+  itSub('The relay can set storage', async ({helper}) => {
+    const kv = relayForceKV(helper);
+    const xcmTransact = helper.arrange.makeTransactProgram({
+      weightMultiplier: 1,
+      call: kv.call,
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(sudoer, 'api.tx.xcmPallet.send', [
+        quartzMultilocationFromRelay,
+        xcmTransact,
+      ]);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward);
+
+    await testForcedValue(kv, helper);
+  });
+
+  itSub('The relay can batch set storage', async ({helper}) => {
+    await generalBatchForceKV('batch', helper);
+  });
+
+  itSub('The relay can batchAll set storage', async ({helper}) => {
+    await generalBatchForceKV('batchAll', helper);
+  });
+
+  itSub('The relay can forceBatch set storage', async ({helper}) => {
+    await generalBatchForceKV('forceBatch', helper);
+  });
+
+  itSub('[negative] The relay cannot set balance', async ({helper}) => {
+    const call = setRandomAccountBalanceCall(helper);
+    const xcmTransact = helper.arrange.makeTransactProgram({
+      weightMultiplier: 1,
+      call,
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(sudoer, 'api.tx.xcmPallet.send', [
+        quartzMultilocationFromRelay,
+        xcmTransact,
+      ]);
+    });
+
+    await expectDownwardXcmNoPermission(helper);
+    expect(await helper.balance.getSubstrate(randomAccount.address)).to.be.equal(0n);
+  });
+
+  itSub('[negative] The relay cannot set balance via batch', async ({helper}) => {
+    await generalBatchForceBalance('batch', helper);
+  });
+
+  itSub('[negative] The relay cannot set balance via batchAll', async ({helper}) => {
+    await generalBatchForceBalance('batchAll', helper);
+  });
+
+  itSub('[negative] The relay cannot set balance via forceBatch', async ({helper}) => {
+    await generalBatchForceBalance('forceBatch', helper);
+  });
+
+  itSub('[negative] The relay cannot set balance via dispatchAs', async ({helper}) => {
+    const forceSetBalanceCall = setRandomAccountBalanceCall(helper);
+    const dispatchAsCall = helper.constructApiCall('api.tx.utility.dispatchAs', [
+      {
+        system: 'Root',
+      },
+      forceSetBalanceCall,
+    ]).method.toHex();
+
+    const xcmTransact = helper.arrange.makeTransactProgram({
+      weightMultiplier: 1,
+      call: dispatchAsCall,
+    });
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(sudoer, 'api.tx.xcmPallet.send', [
+        quartzMultilocationFromRelay,
+        xcmTransact,
+      ]);
+    });
+
+    await expectDownwardXcmNoPermission(helper);
+    expect(await helper.balance.getSubstrate(randomAccount.address)).to.be.equal(0n);
   });
 });
