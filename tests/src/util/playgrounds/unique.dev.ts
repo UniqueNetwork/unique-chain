@@ -458,9 +458,9 @@ export class DevUniqueHelper extends UniqueHelper {
   session: SessionGroup;
   testUtils: TestUtilGroup;
   foreignAssets: ForeignAssetsGroup;
-  xcm: XcmGroup<UniqueHelper>;
-  xTokens: XTokensGroup<UniqueHelper>;
-  tokens: TokensGroup<UniqueHelper>;
+  xcm: XcmGroup<DevUniqueHelper>;
+  xTokens: XTokensGroup<DevUniqueHelper>;
+  tokens: TokensGroup<DevUniqueHelper>;
   scheduler: SchedulerGroup;
   collatorSelection: CollatorSelectionGroup;
   council: ICollectiveGroup;
@@ -627,10 +627,10 @@ export class DevAcalaHelper extends AcalaHelper {
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
-  getSudo<T extends AcalaHelper>() {
+  getSudo() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const SudoHelperType = SudoHelper(this.helperBase);
-    return this.clone(SudoHelperType) as T;
+    return this.clone(SudoHelperType) as DevAcalaHelper;
   }
 }
 
@@ -643,10 +643,10 @@ export class DevPolkadexHelper extends PolkadexHelper {
     this.wait = new WaitGroup(this);
   }
 
-  getSudo<T extends PolkadexHelper>() {
+  getSudo() {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const SudoHelperType = SudoHelper(this.helperBase);
-    return this.clone(SudoHelperType) as T;
+    return this.clone(SudoHelperType) as DevPolkadexHelper;
   }
 }
 
@@ -1290,7 +1290,8 @@ class WaitGroup {
         } else if(maxBlocksToWait > 0) {
           maxBlocksToWait--;
         } else {
-          this.helper.logger.log(`Eligible event \`${eventIdStr}\` is NOT found`);
+          this.helper.logger.log(`Eligible event \`${eventIdStr}\` is NOT found.
+          The wait lasted until block ${blockNumber} inclusive`);
           unsubscribe();
           resolve(null);
         }
