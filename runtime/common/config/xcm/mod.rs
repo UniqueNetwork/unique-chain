@@ -166,8 +166,10 @@ pub struct XcmCallFilter;
 impl XcmCallFilter {
 	fn allow_gov_and_sys_call(call: &RuntimeCall) -> bool {
 		match call {
-			RuntimeCall::System(..)
-			| RuntimeCall::Identity(..)
+			RuntimeCall::System(..) => true,
+
+			#[cfg(feature = "governance")]
+			RuntimeCall::Identity(..)
 			| RuntimeCall::Preimage(..)
 			| RuntimeCall::Democracy(..)
 			| RuntimeCall::Council(..)
