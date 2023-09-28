@@ -9,7 +9,7 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types';
-import {FrameSystemEventRecord, XcmV2TraitsError} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, XcmV2TraitsError, XcmV3TraitsOutcome} from '@polkadot/types/lookup';
 import {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
@@ -258,6 +258,12 @@ export class Event {
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
       outcome: eventData<XcmV2TraitsError>(data, 1),
+    }));
+  };
+
+  static DmpQueue = class extends EventSection('dmpQueue') {
+    static ExecutedDownward = this.Method('ExecutedDownward', data => ({
+      outcome: eventData<XcmV3TraitsOutcome>(data, 1),
     }));
   };
 }
@@ -558,6 +564,12 @@ export class DevRelayHelper extends RelayHelper {
 
     super(logger, options);
     this.wait = new WaitGroup(this);
+  }
+
+  getSudo() {
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    const SudoHelperType = SudoHelper(this.helperBase);
+    return this.clone(SudoHelperType) as DevRelayHelper;
   }
 }
 
@@ -962,6 +974,31 @@ export class ArrangeGroup {
                   },
                 },
               },
+            },
+          },
+        },
+      ],
+    };
+  }
+
+  makeTransactProgram(info: {weightMultiplier: number, call: string}) {
+    return {
+      V3: [
+        {
+          UnpaidExecution: {
+            weightLimit: 'Unlimited',
+            checkOrigin: null,
+          },
+        },
+        {
+          Transact: {
+            originKind: 'Superuser',
+            requireWeightAtMost: {
+              refTime: info.weightMultiplier * 200000000,
+              proofSize: info.weightMultiplier * 3000,
+            },
+            call: {
+              encoded: info.call,
             },
           },
         },
