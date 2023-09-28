@@ -14,7 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::traits::Everything;
-use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit};
+use frame_support::{match_types, traits::Everything};
+use xcm::latest::{Junctions::*, MultiLocation};
+use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit, AllowExplicitUnpaidExecutionFrom};
 
-pub type Barrier = (TakeWeightCredit, AllowTopLevelPaidExecutionFrom<Everything>);
+match_types! {
+	pub type ParentOnly: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here }
+	};
+}
+
+pub type Barrier = (
+	TakeWeightCredit,
+	AllowExplicitUnpaidExecutionFrom<ParentOnly>,
+	AllowTopLevelPaidExecutionFrom<Everything>,
+);
