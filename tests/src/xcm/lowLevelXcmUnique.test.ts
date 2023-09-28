@@ -20,7 +20,7 @@ import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usi
 import {Event} from '../util/playgrounds/unique.dev';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
-import {ASTAR_DECIMALS, NETWORKS, SAFE_XCM_VERSION, UNIQUE_CHAIN, UNQ_DECIMALS, acalaUrl, astarUrl, expectFailedToTransact, expectUntrustedReserveLocationFail, getDevPlayground, mapToChainId, mapToChainUrl, maxWaitBlocks, moonbeamUrl, polkadexUrl, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
+import {ASTAR_DECIMALS, NETWORKS, SAFE_XCM_VERSION, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl, expectFailedToTransact, expectUntrustedReserveLocationFail, getDevPlayground, mapToChainId, mapToChainUrl, maxWaitBlocks, moonbeamUrl, polkadexUrl, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
 
 
 const TRANSFER_AMOUNT = 2000000_000_000_000_000_000_000n;
@@ -34,6 +34,7 @@ let balanceUniqueTokenMiddle: bigint;
 let balanceUniqueTokenFinal: bigint;
 let unqFees: bigint;
 
+const testHelper = new XcmTestHelper('unique');
 
 async function genericSendUnqTo(
   networkName: keyof typeof NETWORKS,
@@ -434,20 +435,20 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
   });
 
   itSub('Should connect and send UNQ to Polkadex', async () => {
-    await genericSendUnqTo('polkadex', randomAccount);
+    await testHelper.sendUnqTo('polkadex', randomAccount);
   });
 
 
   itSub('Should connect to Polkadex and send UNQ back', async () => {
-    await genericSendUnqBack('polkadex', alice, randomAccount);
+    await testHelper.sendUnqBack('polkadex', alice, randomAccount);
   });
 
   itSub('Polkadex can send only up to its balance', async () => {
-    await genericSendOnlyOwnedBalance('polkadex', alice);
+    await testHelper.sendOnlyOwnedBalance('polkadex', alice);
   });
 
   itSub('Should not accept reserve transfer of UNQ from Polkadex', async () => {
-    await genericReserveTransferUNQfrom('polkadex', alice);
+    await testHelper.reserveTransferUNQfrom('polkadex', alice);
   });
 });
 
@@ -574,19 +575,19 @@ describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
   });
 
   itSub('Should connect and send UNQ to Moonbeam', async () => {
-    await genericSendUnqTo('moonbeam', randomAccountUnique, randomAccountMoonbeam);
+    await testHelper.sendUnqTo('moonbeam', randomAccountUnique, randomAccountMoonbeam);
   });
 
   itSub('Should connect to Moonbeam and send UNQ back', async () => {
-    await genericSendUnqBack('moonbeam', alice, randomAccountUnique);
+    await testHelper.sendUnqBack('moonbeam', alice, randomAccountUnique);
   });
 
   itSub('Moonbeam can send only up to its balance', async () => {
-    await genericSendOnlyOwnedBalance('moonbeam', alice);
+    await testHelper.sendOnlyOwnedBalance('moonbeam', alice);
   });
 
   itSub('Should not accept reserve transfer of UNQ from Moonbeam', async () => {
-    await genericReserveTransferUNQfrom('moonbeam', alice);
+    await testHelper.reserveTransferUNQfrom('moonbeam', alice);
   });
 });
 

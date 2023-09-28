@@ -15,29 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types';
 
-const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
-const STATEMINE_CHAIN = +(process.env.RELAY_STATEMINE_ID || 1000);
-const KARURA_CHAIN = +(process.env.RELAY_KARURA_ID || 2000);
-const MOONRIVER_CHAIN = +(process.env.RELAY_MOONRIVER_ID || 2023);
-const SHIDEN_CHAIN = +(process.env.RELAY_SHIDEN_ID || 2007);
+
 
 const STATEMINE_PALLET_INSTANCE = 50;
-
-const relayUrl = config.relayUrl;
-const statemineUrl = config.statemineUrl;
-const karuraUrl = config.karuraUrl;
-const moonriverUrl = config.moonriverUrl;
-const shidenUrl = config.shidenUrl;
-
-const RELAY_DECIMALS = 12;
-const STATEMINE_DECIMALS = 12;
-const KARURA_DECIMALS = 12;
-const SHIDEN_DECIMALS = 18n;
-const QTZ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
