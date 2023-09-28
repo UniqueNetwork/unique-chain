@@ -1,7 +1,9 @@
 import {IKeyringPair} from '@polkadot/types/types';
-import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingShidenPlaygrounds} from '../util';
+import {hexToString} from '@polkadot/util';
+import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 import config from '../config';
+import {blake2AsHex} from '@polkadot/util-crypto';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
@@ -66,6 +68,16 @@ export const expectFailedToTransact = async (helper: DevUniqueHelper, messageSen
 export const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
   await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
          && event.outcome.isUntrustedReserveLocation);
+};
+
+export const expectDownwardXcmNoPermission = async (helper: DevUniqueHelper) => {
+  // The correct messageHash for downward messages can't be reliably obtained
+  await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward, event => event.outcome.asIncomplete[1].isNoPermission);
+};
+
+export const expectDownwardXcmComplete = async (helper: DevUniqueHelper) => {
+  // The correct messageHash for downward messages can't be reliably obtained
+  await helper.wait.expectEvent(maxWaitBlocks, Event.DmpQueue.ExecutedDownward, event => event.outcome.isComplete);
 };
 
 export const NETWORKS = {
@@ -159,6 +171,17 @@ export class XcmTestHelper {
       default:
         return false;
     }
+  }
+
+  uniqueChainMultilocationForRelay() {
+    return {
+      V3: {
+        parents: 0,
+        interior: {
+          X1: {Parachain: this._getNativeId()},
+        },
+      },
+    };
   }
 
   async sendUnqTo(
@@ -470,4 +493,116 @@ export class XcmTestHelper {
     });
   }
 
+  private async _relayXcmTransactSetStorage(variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch') {
+    // eslint-disable-next-line require-await
+    return await usingPlaygrounds(async (helper) => {
+      const relayForceKV = () => {
+        const random = Math.random();
+        const key = `relay-forced-key (instance: ${random})`;
+        const val = `relay-forced-value (instance: ${random})`;
+        const call = helper.constructApiCall('api.tx.system.setStorage', [[[key, val]]]).method.toHex();
+
+        return {
+          call,
+          key,
+          val,
+        };
+      };
+
+      if(variant == 'plain') {
+        const kv = relayForceKV();
+        return {
+          program: helper.arrange.makeTransactProgram({
+            weightMultiplier: 1,
+            call: kv.call,
+          }),
+          kvs: [kv],
+        };
+      } else {
+        const kv0 = relayForceKV();
+        const kv1 = relayForceKV();
+
+        const batchCall = helper.constructApiCall(`api.tx.utility.${variant}`, [[kv0.call, kv1.call]]).method.toHex();
+        return {
+          program: helper.arrange.makeTransactProgram({
+            weightMultiplier: 2,
+            call: batchCall,
+          }),
+          kvs: [kv0, kv1],
+        };
+      }
+    });
+  }
+
+  async relayIsPermittedToSetStorage(relaySudoer: IKeyringPair, variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch') {
+    const {program, kvs} = await this._relayXcmTransactSetStorage(variant);
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(relaySudoer, 'api.tx.xcmPallet.send', [
+        this.uniqueChainMultilocationForRelay(),
+        program,
+      ]);
+    });
+
+    await usingPlaygrounds(async (helper) => {
+      await expectDownwardXcmComplete(helper);
+
+      for(const kv of kvs) {
+        const forcedValue = await helper.callRpc('api.rpc.state.getStorage', [kv.key]);
+        expect(hexToString(forcedValue.toHex())).to.be.equal(kv.val);
+      }
+    });
+  }
+
+  private async _relayXcmTransactSetBalance(variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch' | 'dispatchAs') {
+    // eslint-disable-next-line require-await
+    return await usingPlaygrounds(async (helper) => {
+      const emptyAccount = helper.arrange.createEmptyAccount().address;
+
+      const forceSetBalanceCall = helper.constructApiCall('api.tx.balances.forceSetBalance', [emptyAccount, 10_000n]).method.toHex();
+
+      let call;
+
+      if(variant == 'plain') {
+        call = forceSetBalanceCall;
+
+      } else if(variant == 'dispatchAs') {
+        call = helper.constructApiCall('api.tx.utility.dispatchAs', [
+          {
+            system: 'Root',
+          },
+          forceSetBalanceCall,
+        ]).method.toHex();
+      } else {
+        call = helper.constructApiCall(`api.tx.utility.${variant}`, [[forceSetBalanceCall]]).method.toHex();
+      }
+
+      return {
+        program: helper.arrange.makeTransactProgram({
+          weightMultiplier: 1,
+          call,
+        }),
+        emptyAccount,
+      };
+    });
+  }
+
+  async relayIsNotPermittedToSetBalance(
+    relaySudoer: IKeyringPair,
+    variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch' | 'dispatchAs',
+  ) {
+    const {program, emptyAccount} = await this._relayXcmTransactSetBalance(variant);
+
+    await usingRelayPlaygrounds(relayUrl, async (helper) => {
+      await helper.getSudo().executeExtrinsic(relaySudoer, 'api.tx.xcmPallet.send', [
+        this.uniqueChainMultilocationForRelay(),
+        program,
+      ]);
+    });
+
+    await usingPlaygrounds(async (helper) => {
+      await expectDownwardXcmNoPermission(helper);
+      expect(await helper.balance.getSubstrate(emptyAccount)).to.be.equal(0n);
+    });
+  }
 }

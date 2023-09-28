@@ -16,11 +16,11 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, requirePalletsOrSkip, Pallets} from '../util';
 import {Event} from '../util/playgrounds/unique.dev';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
-import {ASTAR_DECIMALS, NETWORKS, SAFE_XCM_VERSION, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl, expectFailedToTransact, expectUntrustedReserveLocationFail, getDevPlayground, mapToChainId, mapToChainUrl, maxWaitBlocks, moonbeamUrl, polkadexUrl, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
+import {ASTAR_DECIMALS, NETWORKS, SAFE_XCM_VERSION, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl, expectFailedToTransact, expectUntrustedReserveLocationFail, getDevPlayground, mapToChainId, mapToChainUrl, maxWaitBlocks, moonbeamUrl, polkadexUrl, relayUrl, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
 
 
 const TRANSFER_AMOUNT = 2000000_000_000_000_000_000_000n;
@@ -670,5 +670,69 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
 
   itSub('Should not accept reserve transfer of UNQ from Astar', async () => {
     await genericReserveTransferUNQfrom('astar', alice);
+  });
+});
+
+describeXCM('[XCMLL] Integration test: The relay can do some root ops', () => {
+  let sudoer: IKeyringPair;
+
+  before(async function () {
+    await usingRelayPlaygrounds(relayUrl, async (_, privateKey) => {
+      sudoer = await privateKey('//Alice');
+    });
+  });
+
+  // At the moment there is no reliable way
+  // to establish the correspondence between the `ExecutedDownward` event
+  // and the relay's sent message due to `SetTopic` instruction
+  // containing an unpredictable topic silently added by the relay on the router level.
+  // This changes the message hash on arrival to our chain.
+  //
+  // See:
+  // * The relay's router: https://github.com/paritytech/polkadot-sdk/blob/f60318f68687e601c47de5ad5ca88e2c3f8139a7/polkadot/runtime/westend/src/xcm_config.rs#L83
+  // * The `WithUniqueTopic` helper: https://github.com/paritytech/polkadot-sdk/blob/945ebbbcf66646be13d5b1d1bc26c8b0d3296d9e/polkadot/xcm/xcm-builder/src/routing.rs#L36
+  //
+  // Because of this, we insert time gaps between tests so
+  // different `ExecutedDownward` events won't interfere with each other.
+  afterEach(async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.wait.newBlocks(3);
+    });
+  });
+
+  itSub('The relay can set storage', async () => {
+    await testHelper.relayIsPermittedToSetStorage(sudoer, 'plain');
+  });
+
+  itSub('The relay can batch set storage', async () => {
+    await testHelper.relayIsPermittedToSetStorage(sudoer, 'batch');
+  });
+
+  itSub('The relay can batchAll set storage', async () => {
+    await testHelper.relayIsPermittedToSetStorage(sudoer, 'batchAll');
+  });
+
+  itSub('The relay can forceBatch set storage', async () => {
+    await testHelper.relayIsPermittedToSetStorage(sudoer, 'forceBatch');
+  });
+
+  itSub('[negative] The relay cannot set balance', async () => {
+    await testHelper.relayIsNotPermittedToSetBalance(sudoer, 'plain');
+  });
+
+  itSub('[negative] The relay cannot set balance via batch', async () => {
+    await testHelper.relayIsNotPermittedToSetBalance(sudoer, 'batch');
+  });
+
+  itSub('[negative] The relay cannot set balance via batchAll', async () => {
+    await testHelper.relayIsNotPermittedToSetBalance(sudoer, 'batchAll');
+  });
+
+  itSub('[negative] The relay cannot set balance via forceBatch', async () => {
+    await testHelper.relayIsNotPermittedToSetBalance(sudoer, 'forceBatch');
+  });
+
+  itSub('[negative] The relay cannot set balance via dispatchAs', async () => {
+    await testHelper.relayIsNotPermittedToSetBalance(sudoer, 'dispatchAs');
   });
 });
