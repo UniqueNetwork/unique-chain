@@ -3,7 +3,6 @@ import {hexToString} from '@polkadot/util';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
 import config from '../config';
-import {blake2AsHex} from '@polkadot/util-crypto';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
@@ -136,10 +135,10 @@ export function getDevPlayground(name: NetworkNames) {
 }
 
 export const TRANSFER_AMOUNT = 2000000_000_000_000_000_000_000n;
-const SENDER_BUDGET = 2n * TRANSFER_AMOUNT;
-const SENDBACK_AMOUNT = TRANSFER_AMOUNT / 2n;
-const STAYED_ON_TARGET_CHAIN = TRANSFER_AMOUNT - SENDBACK_AMOUNT;
-const TARGET_CHAIN_TOKEN_TRANSFER_AMOUNT = 100_000_000_000n;
+export const SENDER_BUDGET = 2n * TRANSFER_AMOUNT;
+export const SENDBACK_AMOUNT = TRANSFER_AMOUNT / 2n;
+export const STAYED_ON_TARGET_CHAIN = TRANSFER_AMOUNT - SENDBACK_AMOUNT;
+export const TARGET_CHAIN_TOKEN_TRANSFER_AMOUNT = 100_000_000_000n;
 
 export class XcmTestHelper {
   private _balanceUniqueTokenInit: bigint = 0n;
@@ -163,6 +162,7 @@ export class XcmTestHelper {
         return UNIQUE_CHAIN;
     }
   }
+
   private _isAddress20FormatFor(network: NetworkNames) {
     switch (network) {
       case 'moonbeam':
@@ -171,6 +171,19 @@ export class XcmTestHelper {
       default:
         return false;
     }
+  }
+
+  private _runtimeVersionedMultilocation() {
+    return {
+      V3: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: this._getNativeId(),
+          },
+        },
+      },
+    };
   }
 
   uniqueChainMultilocationForRelay() {
@@ -250,8 +263,8 @@ export class XcmTestHelper {
       this._balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
       this._unqFees = this._balanceUniqueTokenInit - this._balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
-      console.log('[Unique -> %s] transaction fees on Unique: %s UNQ', networkName, helper.util.bigIntToDecimals(this._unqFees));
-      expect(this._unqFees > 0n, 'Negative fees UNQ, looks like nothing was transferred').to.be.true;
+      console.log('[%s -> %s] transaction fees: %s', this._nativeRuntime, networkName, helper.util.bigIntToDecimals(this._unqFees));
+      expect(this._unqFees > 0n, 'Negative fees, looks like nothing was transferred').to.be.true;
 
       await targetPlayground(networkUrl, async (helper) => {
       /*
@@ -302,10 +315,10 @@ export class XcmTestHelper {
 
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, xcmProgram);
+          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), xcmProgram);
           xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, xcmProgram]);
+          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), xcmProgram]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
@@ -354,10 +367,10 @@ export class XcmTestHelper {
 
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, maliciousXcmProgram);
+          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgram);
           maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgram]);
+          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgram]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
@@ -413,12 +426,12 @@ export class XcmTestHelper {
       // Try to trick Unique using full UNQ identification
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
+          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
           maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         }
         // Moonbeam case
         else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
+          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`${netwokrName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
@@ -436,11 +449,11 @@ export class XcmTestHelper {
       // Try to trick Unique using shortened UNQ identification
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, uniqueVersionedMultilocation, maliciousXcmProgramHereId);
+          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId);
           maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         }
         else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramHereId]);
+          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`${netwokrName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
@@ -478,10 +491,10 @@ export class XcmTestHelper {
       );
       await targetPlayground(networkUrl, async (helper) => {
         if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoerOnTargetChain, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
+          await helper.getSudo().xcm.send(sudoerOnTargetChain, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
           messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
+          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
           await helper.fastDemocracy.executeProposal(`${networkName} sending native tokens to the Unique via fast democracy`, batchCall);
