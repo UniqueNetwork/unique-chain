@@ -185,10 +185,10 @@ impl XcmCallFilter {
 	fn allow_utility_call(call: &RuntimeCall) -> bool {
 		match call {
 			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) => {
-				calls.iter().all(|call| Self::allow_gov_and_sys_call(call))
+				calls.iter().all(Self::allow_gov_and_sys_call)
 			}
 			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) => {
-				calls.iter().all(|call| Self::allow_gov_and_sys_call(call))
+				calls.iter().all(Self::allow_gov_and_sys_call)
 			}
 			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) => {
 				Self::allow_gov_and_sys_call(call)
@@ -197,7 +197,7 @@ impl XcmCallFilter {
 				Self::allow_gov_and_sys_call(call)
 			}
 			RuntimeCall::Utility(pallet_utility::Call::force_batch { calls, .. }) => {
-				calls.iter().all(|call| Self::allow_gov_and_sys_call(call))
+				calls.iter().all(Self::allow_gov_and_sys_call)
 			}
 			_ => false,
 		}
