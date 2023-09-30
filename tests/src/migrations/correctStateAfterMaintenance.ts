@@ -2,7 +2,7 @@ import {usingPlaygrounds} from '../util';
 
 
 
-const WS_ENDPOINT = 'ws://localhost:9944';
+const WS_ENDPOINT = 'ws://127.0.0.1:9944';
 const DONOR_SEED = '//Alice';
 
 export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
