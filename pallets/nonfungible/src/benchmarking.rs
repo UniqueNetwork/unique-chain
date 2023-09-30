@@ -20,7 +20,9 @@ use crate::{Pallet, Config, NonfungibleHandle};
 use frame_benchmarking::{benchmarks, account};
 use pallet_common::{
 	bench_init,
-	benchmarking::{create_collection_raw, property_key, property_value},
+	benchmarking::{
+		create_collection_raw, property_key, property_value, load_is_admin_and_property_permissions,
+	},
 	CommonCollectionOperations,
 };
 use sp_std::prelude::*;
@@ -198,14 +200,15 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?}
+	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), &Unlimited)?}
 
-	reset_token_properties {
+	init_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
 		bench_init!{
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
+
 		let perms = (0..b).map(|k| PropertyKeyPermission {
 			key: property_key(k as usize),
 			permission: PropertyPermission {
@@ -220,7 +223,25 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::NewToken { mint_target_is_sender: true }, &Unlimited)?}
+
+		let (is_collection_admin, property_permissions) = load_is_admin_and_property_permissions(&collection, &owner);
+	}: {
+		let mut property_writer = pallet_common::collection_info_loaded_property_writer(
+			&collection,
+			is_collection_admin,
+			property_permissions,
+		);
+
+		property_writer.write_token_properties(
+			true,
+			item,
+			props.into_iter(),
+			crate::erc::ERC721TokenEvent::TokenChanged {
+				token_id: item.into(),
+			}
+			.to_log(T::ContractAddress::get()),
+		)?
+	}
 
 	delete_token_properties {
 		let b in 0..MAX_PROPERTIES_PER_ITEM;
@@ -242,7 +263,7 @@ benchmarks! {
 			value: property_value(),
 		}).collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?;
+		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), &Unlimited)?;
 		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
 	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete.into_iter(), &Unlimited)?}
 

@@ -25,7 +25,7 @@ use pallet_common::{
 	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_structure::Error as StructureError;
-use sp_runtime::ArithmeticError;
+use sp_runtime::{ArithmeticError, DispatchError};
 use sp_std::{vec::Vec, vec};
 use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
 
@@ -364,6 +364,20 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
+	fn get_token_properties_map(&self, _token_id: TokenId) -> up_data_structs::TokenProperties {
+		// No token properties are defined on fungibles
+		up_data_structs::TokenProperties::new()
+	}
+
+	fn set_token_properties_map(&self, _token_id: TokenId, _map: up_data_structs::TokenProperties) {
+		// No token properties are defined on fungibles
+	}
+
+	fn properties_exist(&self, _token: TokenId) -> bool {
+		// No token properties are defined on fungibles
+		false
+	}
+
 	fn check_nesting(
 		&self,
 		_sender: <T>::CrossAccountId,
@@ -400,6 +414,15 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn token_owner(&self, _token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
 		Err(TokenOwnerError::MultipleOwners)
+	}
+
+	fn check_token_indirect_owner(
+		&self,
+		_token: TokenId,
+		_maybe_owner: &T::CrossAccountId,
+		_nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		Ok(false)
 	}
 
 	/// Returns 10 tokens owners in no particular order.

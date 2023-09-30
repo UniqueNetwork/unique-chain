@@ -172,6 +172,20 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 	}
 
+	fn get_token_properties_map(&self, _token_id: TokenId) -> up_data_structs::TokenProperties {
+		// No token properties are defined on fungibles
+		up_data_structs::TokenProperties::new()
+	}
+
+	fn set_token_properties_map(&self, _token_id: TokenId, _map: up_data_structs::TokenProperties) {
+		// No token properties are defined on fungibles
+	}
+
+	fn properties_exist(&self, _token: TokenId) -> bool {
+		// No token properties are defined on fungibles
+		false
+	}
+
 	fn set_token_property_permissions(
 		&self,
 		_sender: &<T>::CrossAccountId,
@@ -275,6 +289,15 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_token: TokenId,
 	) -> Result<<T>::CrossAccountId, up_data_structs::TokenOwnerError> {
 		Err(up_data_structs::TokenOwnerError::MultipleOwners)
+	}
+
+	fn check_token_indirect_owner(
+		&self,
+		_token: TokenId,
+		_maybe_owner: &<T>::CrossAccountId,
+		_nesting_budget: &dyn up_data_structs::budget::Budget,
+	) -> Result<bool, frame_support::sp_runtime::DispatchError> {
+		Ok(false)
 	}
 
 	fn token_owners(&self, _token: TokenId) -> Vec<<T>::CrossAccountId> {

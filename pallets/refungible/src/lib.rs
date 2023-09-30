@@ -96,8 +96,8 @@ use frame_support::{ensure, storage::with_transaction, transactional};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_common::{
-	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon, SetPropertyMode,
+	Error as CommonError, eth::collection_id_to_address, Event as CommonEvent,
+	Pallet as PalletCommon,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
@@ -533,66 +533,16 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut is_token_owner =
-			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
-				if let SetPropertyMode::NewToken {
-					mint_target_is_sender,
-				} = mode
-				{
-					return Ok(mint_target_is_sender);
-				}
+		let mut property_writer =
+			pallet_common::property_writer_for_existing_token(collection, sender);
 
-				let balance = collection.balance(sender.clone(), token_id);
-				let total_pieces: u128 =
-					Self::total_pieces(collection.id, token_id).unwrap_or(u128::MAX);
-				if balance != total_pieces {
-					return Ok(false);
-				}
-
-				let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
-					sender.clone(),
-					collection.id,
-					token_id,
-					None,
-					nesting_budget,
-				)?;
-
-				Ok(is_bundle_owner)
-			});
-
-		let is_new_token = matches!(mode, SetPropertyMode::NewToken { .. });
-
-		let mut is_token_exist = pallet_common::LazyValue::new(|| {
-			if is_new_token {
-				debug_assert!(Self::token_exists(collection, token_id));
-				true
-			} else {
-				Self::token_exists(collection, token_id)
-			}
-		});
-
-		let stored_properties = if is_new_token {
-			debug_assert!(!<TokenProperties<T>>::contains_key((
-				collection.id,
-				token_id
-			)));
-			TokenPropertiesT::new()
-		} else {
-			<TokenProperties<T>>::get((collection.id, token_id))
-		};
-
-		<PalletCommon<T>>::modify_token_properties(
-			collection,
+		property_writer.write_token_properties(
 			sender,
 			token_id,
-			&mut is_token_exist,
 			properties_updates,
-			stored_properties,
-			&mut is_token_owner,
-			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+			nesting_budget,
 			erc::ERC721TokenEvent::TokenChanged {
 				token_id: token_id.into(),
 			}
@@ -618,7 +568,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -626,7 +575,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			mode,
 			nesting_budget,
 		)
 	}
@@ -643,7 +591,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -660,7 +607,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -941,10 +887,14 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		let mut property_writer = pallet_common::property_writer_for_new_token(collection, sender);
+
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {
 				let token_id = first_token_id + i as u32 + 1;
 				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
+
+				let token = TokenId(token_id);
 
 				let mut mint_target_is_sender = true;
 				for (user, amount) in data.users.iter() {
@@ -955,23 +905,22 @@ impl<T: Config> Pallet<T> {
 					mint_target_is_sender = mint_target_is_sender && sender.conv_eq(user);
 
 					<Balance<T>>::insert((collection.id, token_id, &user), amount);
-					<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
+					<Owned<T>>::insert((collection.id, &user, token), true);
 					<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
 						user,
 						collection.id,
-						TokenId(token_id),
+						token,
 					);
 				}
 
-				if let Err(e) = Self::set_token_properties(
-					collection,
-					sender,
-					TokenId(token_id),
+				if let Err(e) = property_writer.write_token_properties(
+					mint_target_is_sender,
+					token,
 					data.properties.clone().into_iter(),
-					SetPropertyMode::NewToken {
-						mint_target_is_sender,
-					},
-					nesting_budget,
+					erc::ERC721TokenEvent::TokenChanged {
+						token_id: token.into(),
+					}
+					.to_log(T::ContractAddress::get()),
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}

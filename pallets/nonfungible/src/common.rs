@@ -23,49 +23,40 @@ use up_data_structs::{
 };
 use pallet_common::{
 	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf, init_token_properties_delta,
 };
+use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
 use sp_std::{vec::Vec, vec};
 
 use crate::{
 	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
+	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted, TokenProperties,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match data {
-			CreateItemExData::NFT(t) => {
-				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
-					+ t.iter()
-						.filter_map(|t| {
-							if t.properties.len() > 0 {
-								Some(<SelfWeightOf<T>>::reset_token_properties(
-									t.properties.len() as u32,
-								))
-							} else {
-								None
-							}
-						})
-						.fold(Weight::zero(), |a, b| a.saturating_add(b))
-			}
+			CreateItemExData::NFT(t) => <SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
+				.saturating_add(init_token_properties_delta::<T, _>(
+					t.iter().map(|t| t.properties.len() as u32),
+					<SelfWeightOf<T>>::init_token_properties,
+				)),
 			_ => Weight::zero(),
 		}
 	}
 
 	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
-			+ data
-				.iter()
-				.filter_map(|t| match t {
-					up_data_structs::CreateItemData::NFT(n) if n.properties.len() > 0 => Some(
-						<SelfWeightOf<T>>::reset_token_properties(n.properties.len() as u32),
-					),
-					_ => None,
-				})
-				.fold(Weight::zero(), |a, b| a.saturating_add(b))
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
+			init_token_properties_delta::<T, _>(
+				data.iter().map(|t| match t {
+					up_data_structs::CreateItemData::NFT(n) => n.properties.len() as u32,
+					_ => 0,
+				}),
+				<SelfWeightOf<T>>::init_token_properties,
+			),
+		)
 	}
 
 	fn burn_item() -> Weight {
@@ -247,7 +238,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				&sender,
 				token_id,
 				properties.into_iter(),
-				pallet_common::SetPropertyMode::ExistingToken,
 				nesting_budget,
 			),
 			weight,
@@ -275,6 +265,14 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		)
 	}
 
+	fn get_token_properties_map(&self, token_id: TokenId) -> up_data_structs::TokenProperties {
+		<TokenProperties<T>>::get((self.id, token_id))
+	}
+
+	fn set_token_properties_map(&self, token_id: TokenId, map: up_data_structs::TokenProperties) {
+		<TokenProperties<T>>::set((self.id, token_id), map)
+	}
+
 	fn set_token_property_permissions(
 		&self,
 		sender: &T::CrossAccountId,
@@ -287,6 +285,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			<Pallet<T>>::set_token_property_permissions(self, sender, property_permissions),
 			weight,
 		)
+	}
+
+	fn properties_exist(&self, token: TokenId) -> bool {
+		<TokenProperties<T>>::contains_key((self.id, token))
 	}
 
 	fn burn_item(
@@ -457,6 +459,21 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		<TokenData<T>>::get((self.id, token))
 			.map(|t| t.owner)
 			.ok_or(TokenOwnerError::NotFound)
+	}
+
+	fn check_token_indirect_owner(
+		&self,
+		token: TokenId,
+		maybe_owner: &T::CrossAccountId,
+		nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		<PalletStructure<T>>::check_indirectly_owned(
+			maybe_owner.clone(),
+			self.id,
+			token,
+			None,
+			nesting_budget,
+		)
 	}
 
 	/// Returns token owners.

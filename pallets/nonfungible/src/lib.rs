@@ -109,7 +109,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
 	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
 	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info, SetPropertyMode,
+	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
 };
 use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -598,58 +598,16 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut is_token_owner = pallet_common::LazyValue::new(|| {
-			if let SetPropertyMode::NewToken {
-				mint_target_is_sender,
-			} = mode
-			{
-				return Ok(mint_target_is_sender);
-			}
+		let mut property_writer =
+			pallet_common::property_writer_for_existing_token(collection, sender);
 
-			let is_owned = <PalletStructure<T>>::check_indirectly_owned(
-				sender.clone(),
-				collection.id,
-				token_id,
-				None,
-				nesting_budget,
-			)?;
-
-			Ok(is_owned)
-		});
-
-		let is_new_token = matches!(mode, SetPropertyMode::NewToken { .. });
-
-		let mut is_token_exist = pallet_common::LazyValue::new(|| {
-			if is_new_token {
-				debug_assert!(Self::token_exists(collection, token_id));
-				true
-			} else {
-				Self::token_exists(collection, token_id)
-			}
-		});
-
-		let stored_properties = if is_new_token {
-			debug_assert!(!<TokenProperties<T>>::contains_key((
-				collection.id,
-				token_id
-			)));
-			TokenPropertiesT::new()
-		} else {
-			<TokenProperties<T>>::get((collection.id, token_id))
-		};
-
-		<PalletCommon<T>>::modify_token_properties(
-			collection,
+		property_writer.write_token_properties(
 			sender,
 			token_id,
-			&mut is_token_exist,
 			properties_updates,
-			stored_properties,
-			&mut is_token_owner,
-			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+			nesting_budget,
 			erc::ERC721TokenEvent::TokenChanged {
 				token_id: token_id.into(),
 			}
@@ -680,7 +638,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -688,7 +645,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			mode,
 			nesting_budget,
 		)
 	}
@@ -710,7 +666,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -732,7 +687,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -994,6 +948,8 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		let mut property_writer = pallet_common::property_writer_for_new_token(collection, sender);
+
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {
 				let token = first_token + i as u32 + 1;
@@ -1006,21 +962,22 @@ impl<T: Config> Pallet<T> {
 					},
 				);
 
+				let token = TokenId(token);
+
 				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
 					&data.owner,
 					collection.id,
-					TokenId(token),
+					token,
 				);
 
-				if let Err(e) = Self::set_token_properties(
-					collection,
-					sender,
-					TokenId(token),
+				if let Err(e) = property_writer.write_token_properties(
+					sender.conv_eq(&data.owner),
+					token,
 					data.properties.clone().into_iter(),
-					SetPropertyMode::NewToken {
-						mint_target_is_sender: sender.conv_eq(&data.owner),
-					},
-					nesting_budget,
+					erc::ERC721TokenEvent::TokenChanged {
+						token_id: token.into(),
+					}
+					.to_log(T::ContractAddress::get()),
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}

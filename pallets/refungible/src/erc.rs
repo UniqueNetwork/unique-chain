@@ -214,7 +214,6 @@ impl<T: Config> RefungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			properties.into_iter(),
-			pallet_common::SetPropertyMode::ExistingToken,
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)

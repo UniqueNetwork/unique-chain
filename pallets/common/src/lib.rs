@@ -56,6 +56,7 @@ extern crate alloc;
 use core::{
 	ops::{Deref, DerefMut},
 	slice::from_ref,
+	marker::PhantomData,
 };
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_std::vec::Vec;
@@ -97,6 +98,9 @@ pub mod eth;
 pub mod helpers;
 #[allow(missing_docs)]
 pub mod weights;
+
+use weights::WeightInfo;
+
 /// Weight info.
 pub type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
@@ -865,18 +869,6 @@ pub mod pallet {
 	>;
 }
 
-/// Represents the change mode for the token property.
-pub enum SetPropertyMode {
-	/// The token already exists.
-	ExistingToken,
-
-	/// New token.
-	NewToken {
-		/// The creator of the token is the recipient.
-		mint_target_is_sender: bool,
-	},
-}
-
 /// Value representation with delayed initialization time.
 pub struct LazyValue<T, F: FnOnce() -> T> {
 	value: Option<T>,
@@ -892,18 +884,32 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 		}
 	}
 
-	/// Get the value. If it call furst time the value will be initialized.
+	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value(&mut self) -> &T {
-		if self.value.is_none() {
-			self.value = Some(self.f.take().unwrap()())
-		}
-
+		self.compute_value_if_not_already();
 		self.value.as_ref().unwrap()
 	}
 
-	/// Is value initialized.
+	/// Get the value. If it is called the first time, the value will be initialized.
+	pub fn value_mut(&mut self) -> &mut T {
+		self.compute_value_if_not_already();
+		self.value.as_mut().unwrap()
+	}
+
+	fn into_inner(mut self) -> T {
+		self.compute_value_if_not_already();
+		self.value.unwrap()
+	}
+
+	/// Is value initialized?
 	pub fn has_value(&self) -> bool {
 		self.value.is_some()
+	}
+
+	fn compute_value_if_not_already(&mut self) {
+		if self.value.is_none() {
+			self.value = Some(self.f.take().unwrap()())
+		}
 	}
 }
 
@@ -926,10 +932,19 @@ where
 		fail!(<Error<T>>::NoPermission);
 	}
 
-	let token_certainly_exist = is_token_owner.has_value() && (*is_token_owner.value())?;
-	if !token_certainly_exist && !is_token_exist.value() {
-		fail!(<Error<T>>::TokenNotFound);
+	let token_exist_due_to_owner_check_success =
+		is_token_owner.has_value() && (*is_token_owner.value())?;
+
+	// If the token owner check has occurred and succeeded,
+	// we know the token exists (otherwise, the owner check must fail).
+	if !token_exist_due_to_owner_check_success {
+		// If the token owner check didn't occur,
+		// we must check the token's existence ourselves.
+		if !is_token_exist.value() {
+			fail!(<Error<T>>::TokenNotFound);
+		}
 	}
+
 	Ok(())
 }
 
@@ -1308,92 +1323,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		<CollectionProperties<T>>::set(collection.id, stored_properties);
-
-		Ok(())
-	}
-
-	/// A batch operation to add, edit or remove properties for a token.
-	/// It sets or removes a token's properties according to
-	/// `properties_updates` contents:
-	/// * sets a property under the <key> with the value provided `(<key>, Some(<value>))`
-	/// * removes a property under the <key> if the value is `None` `(<key>, None)`.
-	///
-	/// All affected properties should have `mutable` permission
-	/// to be **deleted** or to be **set more than once**,
-	/// and the sender should have permission to edit those properties.
-	///
-	/// This function fires an event for each property change.
-	/// In case of an error, all the changes (including the events) will be reverted
-	/// since the function is transactional.
-	#[allow(clippy::too_many_arguments)]
-	pub fn modify_token_properties<FTO, FTE>(
-		collection: &CollectionHandle<T>,
-		sender: &T::CrossAccountId,
-		token_id: TokenId,
-		is_token_exist: &mut LazyValue<bool, FTE>,
-		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mut stored_properties: TokenProperties,
-		is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
-		set_token_properties: impl FnOnce(TokenProperties),
-		log: evm_coder::ethereum::Log,
-	) -> DispatchResult
-	where
-		FTO: FnOnce() -> Result<bool, DispatchError>,
-		FTE: FnOnce() -> bool,
-	{
-		let mut is_collection_admin = LazyValue::new(|| collection.is_owner_or_admin(sender));
-		let mut permissions = LazyValue::new(|| Self::property_permissions(collection.id));
-
-		let mut changed = false;
-		for (key, value) in properties_updates {
-			let permission = permissions
-				.value()
-				.get(&key)
-				.cloned()
-				.unwrap_or_else(PropertyPermission::none);
-
-			let property_exists = stored_properties.get(&key).is_some();
-
-			match permission {
-				PropertyPermission { mutable: false, .. } if property_exists => {
-					return Err(<Error<T>>::NoPermission.into());
-				}
-
-				PropertyPermission {
-					collection_admin,
-					token_owner,
-					..
-				} => check_token_permissions::<T, _, FTO, FTE>(
-					collection_admin,
-					token_owner,
-					&mut is_collection_admin,
-					is_token_owner,
-					is_token_exist,
-				)?,
-			}
-
-			match value {
-				Some(value) => {
-					stored_properties
-						.try_set(key.clone(), value)
-						.map_err(<Error<T>>::from)?;
-
-					Self::deposit_event(Event::TokenPropertySet(collection.id, token_id, key));
-				}
-				None => {
-					stored_properties.remove(&key).map_err(<Error<T>>::from)?;
-
-					Self::deposit_event(Event::TokenPropertyDeleted(collection.id, token_id, key));
-				}
-			}
-
-			changed = true;
-		}
-
-		if changed {
-			<PalletEvm<T>>::deposit_log(log);
-			set_token_properties(stored_properties);
-		}
 
 		Ok(())
 	}
@@ -2166,6 +2095,22 @@ pub trait CommonCollectionOperations<T: Config> {
 		budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 
+	/// Get token properties raw map.
+	///
+	/// * `token_id` - The token which properties are needed.
+	fn get_token_properties_map(&self, token_id: TokenId) -> TokenProperties;
+
+	/// Set token properties raw map.
+	///
+	/// * `token_id` - The token for which the properties are being set.
+	/// * `map` - The raw map containing the token's properties.
+	fn set_token_properties_map(&self, token_id: TokenId, map: TokenProperties);
+
+	/// Whether the given token has properties.
+	///
+	/// * `token_id` - The token in question.
+	fn properties_exist(&self, token: TokenId) -> bool;
+
 	/// Set token property permissions.
 	///
 	/// * `sender` - Must be either the owner of the token or its admin.
@@ -2309,6 +2254,18 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// * `token` - The token for which you need to find out the owner.
 	fn token_owner(&self, token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError>;
 
+	/// Checks if the `maybe_owner` is the indirect owner of the `token`.
+	///
+	/// * `token` - Id token to check.
+	/// * `maybe_owner` - The account to check.
+	/// * `nesting_budget` - A budget that can be spent on nesting tokens.
+	fn check_token_indirect_owner(
+		&self,
+		token: TokenId,
+		maybe_owner: &T::CrossAccountId,
+		nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError>;
+
 	/// Returns 10 tokens owners in no particular order.
 	///
 	/// * `token` - The token for which you need to find out the owners.
@@ -2418,6 +2375,348 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 			PropertiesError::EmptyPropertyKey => Self::EmptyPropertyKey,
 		}
 	}
+}
+
+/// A marker structure that enables the writer implementation
+/// to provide the interface to write properties to **newly created** tokens.
+pub struct NewTokenPropertyWriter;
+
+/// A marker structure that enables the writer implementation
+/// to provide the interface to write properties to **already existing** tokens.
+pub struct ExistingTokenPropertyWriter;
+
+/// The type-safe interface for writing properties (setting or deleting) to tokens.
+/// It has two distinct implementations for newly created tokens and existing ones.
+///
+/// This type utilizes the lazy evaluation to avoid repeating the computation
+/// of several performance-heavy or PoV-heavy tasks,
+/// such as checking the indirect ownership or reading the token property permissions.
+pub struct PropertyWriter<
+	'a,
+	T,
+	Handle,
+	WriterVariant,
+	FIsAdmin,
+	FPropertyPermissions,
+	FCheckTokenExist,
+	FGetProperties,
+> where
+	T: Config,
+	FIsAdmin: FnOnce() -> bool,
+	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
+{
+	collection: &'a Handle,
+	is_collection_admin: LazyValue<bool, FIsAdmin>,
+	property_permissions: LazyValue<PropertiesPermissionMap, FPropertyPermissions>,
+	check_token_exist: FCheckTokenExist,
+	get_properties: FGetProperties,
+	_phantom: PhantomData<(T, WriterVariant)>,
+}
+
+impl<'a, T, Handle, FIsAdmin, FPropertyPermissions, FCheckTokenExist, FGetProperties>
+	PropertyWriter<
+		'a,
+		T,
+		Handle,
+		NewTokenPropertyWriter,
+		FIsAdmin,
+		FPropertyPermissions,
+		FCheckTokenExist,
+		FGetProperties,
+	> where
+	T: Config,
+	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
+	FIsAdmin: FnOnce() -> bool,
+	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
+	FCheckTokenExist: Copy + FnOnce(TokenId) -> bool,
+	FGetProperties: Copy + FnOnce(TokenId) -> TokenProperties,
+{
+	/// A function to write properties to a **newly created** token.
+	pub fn write_token_properties(
+		&mut self,
+		mint_target_is_sender: bool,
+		token_id: TokenId,
+		properties_updates: impl Iterator<Item = Property>,
+		log: evm_coder::ethereum::Log,
+	) -> DispatchResult {
+		self.internal_write_token_properties(
+			token_id,
+			properties_updates.map(|p| (p.key, Some(p.value))),
+			|_| Ok(mint_target_is_sender),
+			log,
+		)
+	}
+}
+
+impl<'a, T, Handle, FIsAdmin, FPropertyPermissions, FCheckTokenExist, FGetProperties>
+	PropertyWriter<
+		'a,
+		T,
+		Handle,
+		ExistingTokenPropertyWriter,
+		FIsAdmin,
+		FPropertyPermissions,
+		FCheckTokenExist,
+		FGetProperties,
+	> where
+	T: Config,
+	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
+	FIsAdmin: FnOnce() -> bool,
+	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
+	FCheckTokenExist: Copy + FnOnce(TokenId) -> bool,
+	FGetProperties: Copy + FnOnce(TokenId) -> TokenProperties,
+{
+	/// A function to write properties to an **already existing** token.
+	pub fn write_token_properties(
+		&mut self,
+		sender: &T::CrossAccountId,
+		token_id: TokenId,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		nesting_budget: &dyn Budget,
+		log: evm_coder::ethereum::Log,
+	) -> DispatchResult {
+		self.internal_write_token_properties(
+			token_id,
+			properties_updates,
+			|collection| collection.check_token_indirect_owner(token_id, sender, nesting_budget),
+			log,
+		)
+	}
+}
+
+impl<
+		'a,
+		T,
+		Handle,
+		WriterVariant,
+		FIsAdmin,
+		FPropertyPermissions,
+		FCheckTokenExist,
+		FGetProperties,
+	>
+	PropertyWriter<
+		'a,
+		T,
+		Handle,
+		WriterVariant,
+		FIsAdmin,
+		FPropertyPermissions,
+		FCheckTokenExist,
+		FGetProperties,
+	> where
+	T: Config,
+	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
+	FIsAdmin: FnOnce() -> bool,
+	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
+	FCheckTokenExist: Copy + FnOnce(TokenId) -> bool,
+	FGetProperties: Copy + FnOnce(TokenId) -> TokenProperties,
+{
+	fn internal_write_token_properties<FCheckTokenOwner>(
+		&mut self,
+		token_id: TokenId,
+		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
+		check_token_owner: FCheckTokenOwner,
+		log: evm_coder::ethereum::Log,
+	) -> DispatchResult
+	where
+		FCheckTokenOwner: FnOnce(&Handle) -> Result<bool, DispatchError>,
+	{
+		let get_properties = self.get_properties;
+		let mut stored_properties = LazyValue::new(move || get_properties(token_id));
+
+		let mut is_token_owner = LazyValue::new(|| check_token_owner(self.collection));
+
+		let check_token_exist = self.check_token_exist;
+		let mut is_token_exist = LazyValue::new(move || check_token_exist(token_id));
+
+		for (key, value) in properties_updates {
+			let permission = self
+				.property_permissions
+				.value()
+				.get(&key)
+				.cloned()
+				.unwrap_or_else(PropertyPermission::none);
+
+			match permission {
+				PropertyPermission { mutable: false, .. }
+					if stored_properties.value().get(&key).is_some() =>
+				{
+					return Err(<Error<T>>::NoPermission.into());
+				}
+
+				PropertyPermission {
+					collection_admin,
+					token_owner,
+					..
+				} => check_token_permissions::<T, _, _, _>(
+					collection_admin,
+					token_owner,
+					&mut self.is_collection_admin,
+					&mut is_token_owner,
+					&mut is_token_exist,
+				)?,
+			}
+
+			match value {
+				Some(value) => {
+					stored_properties
+						.value_mut()
+						.try_set(key.clone(), value)
+						.map_err(<Error<T>>::from)?;
+
+					<Pallet<T>>::deposit_event(Event::TokenPropertySet(
+						self.collection.id,
+						token_id,
+						key,
+					));
+				}
+				None => {
+					stored_properties
+						.value_mut()
+						.remove(&key)
+						.map_err(<Error<T>>::from)?;
+
+					<Pallet<T>>::deposit_event(Event::TokenPropertyDeleted(
+						self.collection.id,
+						token_id,
+						key,
+					));
+				}
+			}
+		}
+
+		let properties_changed = stored_properties.has_value();
+		if properties_changed {
+			<PalletEvm<T>>::deposit_log(log);
+
+			self.collection
+				.set_token_properties_map(token_id, stored_properties.into_inner());
+		}
+
+		Ok(())
+	}
+}
+
+/// Create a [`PropertyWriter`] for newly created tokens.
+pub fn property_writer_for_new_token<'a, T, Handle>(
+	collection: &'a Handle,
+	sender: &'a T::CrossAccountId,
+) -> PropertyWriter<
+	'a,
+	T,
+	Handle,
+	NewTokenPropertyWriter,
+	impl FnOnce() -> bool + 'a,
+	impl FnOnce() -> PropertiesPermissionMap + 'a,
+	impl Copy + FnOnce(TokenId) -> bool + 'a,
+	impl Copy + FnOnce(TokenId) -> TokenProperties + 'a,
+>
+where
+	T: Config,
+	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
+{
+	PropertyWriter {
+		collection,
+		is_collection_admin: LazyValue::new(|| collection.is_owner_or_admin(sender)),
+		property_permissions: LazyValue::new(|| <Pallet<T>>::property_permissions(collection.id)),
+		check_token_exist: |token_id| {
+			debug_assert!(collection.token_exists(token_id));
+			true
+		},
+		get_properties: |token_id| {
+			debug_assert!(!collection.properties_exist(token_id));
+			TokenProperties::new()
+		},
+		_phantom: PhantomData,
+	}
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+/// Create a `PropertyWriter` with preloaded `is_collection_admin` and `property_permissions.
+/// Also:
+/// * it will return `true` for the token ownership check.
+/// * it will return empty stored properties without reading them from the storage.
+pub fn collection_info_loaded_property_writer<T, Handle>(
+	collection: &Handle,
+	is_collection_admin: bool,
+	property_permissions: PropertiesPermissionMap,
+) -> PropertyWriter<
+	T,
+	Handle,
+	NewTokenPropertyWriter,
+	impl FnOnce() -> bool,
+	impl FnOnce() -> PropertiesPermissionMap,
+	impl Copy + FnOnce(TokenId) -> bool,
+	impl Copy + FnOnce(TokenId) -> TokenProperties,
+>
+where
+	T: Config,
+	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
+{
+	PropertyWriter {
+		collection,
+		is_collection_admin: LazyValue::new(move || is_collection_admin),
+		property_permissions: LazyValue::new(move || property_permissions),
+		check_token_exist: |_token_id| true,
+		get_properties: |_token_id| TokenProperties::new(),
+		_phantom: PhantomData,
+	}
+}
+
+/// Create a [`PropertyWriter`] for already existing tokens.
+pub fn property_writer_for_existing_token<'a, T, Handle>(
+	collection: &'a Handle,
+	sender: &'a T::CrossAccountId,
+) -> PropertyWriter<
+	'a,
+	T,
+	Handle,
+	ExistingTokenPropertyWriter,
+	impl FnOnce() -> bool + 'a,
+	impl FnOnce() -> PropertiesPermissionMap + 'a,
+	impl Copy + FnOnce(TokenId) -> bool + 'a,
+	impl Copy + FnOnce(TokenId) -> TokenProperties + 'a,
+>
+where
+	T: Config,
+	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
+{
+	PropertyWriter {
+		collection,
+		is_collection_admin: LazyValue::new(|| collection.is_owner_or_admin(sender)),
+		property_permissions: LazyValue::new(|| <Pallet<T>>::property_permissions(collection.id)),
+		check_token_exist: |token_id| collection.token_exists(token_id),
+		get_properties: |token_id| collection.get_token_properties_map(token_id),
+		_phantom: PhantomData,
+	}
+}
+
+/// Computes the weight delta for newly created tokens with properties.
+/// * `properties_nums` - The properties num of each created token.
+/// * `init_token_properties` - The function to obtain the weight from a token's properties num.
+pub fn init_token_properties_delta<T: Config, I: Fn(u32) -> Weight>(
+	properties_nums: impl Iterator<Item = u32>,
+	init_token_properties: I,
+) -> Weight {
+	let mut delta = properties_nums
+		.filter_map(|properties_num| {
+			if properties_num > 0 {
+				Some(init_token_properties(properties_num))
+			} else {
+				None
+			}
+		})
+		.fold(Weight::zero(), |a, b| a.saturating_add(b));
+
+	// If at least once the `init_token_properties` was called,
+	// it means at least one newly created token has properties.
+	// Becuase of that, some common collection data also was loaded and we need to add this weight.
+	// However, these common data was loaded only once which is guaranteed by the `PropertyWriter`.
+	if !delta.is_zero() {
+		delta = delta.saturating_add(<SelfWeightOf<T>>::init_token_properties_common())
+	}
+
+	delta
 }
 
 #[cfg(any(feature = "tests", test))]
