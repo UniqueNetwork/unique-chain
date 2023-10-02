@@ -273,7 +273,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(|_| "key too long")?;
 
 		let props =
-			<TokenProperties<T>>::get((self.id, token_id)).ok_or("Token properties not found")?;
+			<TokenProperties<T>>::get((self.id, token_id)).ok_or("token properties not found")?;
 		let prop = props.get(&key).ok_or("key not found")?;
 
 		Ok(prop.to_vec().into())
@@ -367,7 +367,7 @@ where
 				.transpose()
 				.map_err(|e| {
 					Error::Revert(alloc::format!(
-						"Can not convert value \"baseURI\" to string with error \"{e}\""
+						"can not convert value \"baseURI\" to string with error \"{e}\""
 					))
 				})?;
 
@@ -658,7 +658,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
-			return Err("Operation is not allowed".into());
+			return Err("operation is not allowed".into());
 		}
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -685,7 +685,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
 			})
-			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {e:?}")))?;
+			.map_err(|e| Error::Revert(alloc::format!("can't add property: {e:?}")))?;
 
 		<Pallet<T>>::create_item(
 			self,
@@ -708,12 +708,12 @@ fn get_token_property<T: Config>(
 ) -> Result<String> {
 	collection.consume_store_reads(1)?;
 	let properties = <TokenProperties<T>>::try_get((collection.id, token_id))
-		.map_err(|_| Error::Revert("Token properties not found".into()))?;
+		.map_err(|_| Error::Revert("token properties not found".into()))?;
 	if let Some(property) = properties.get(key) {
 		return Ok(String::from_utf8_lossy(property).into());
 	}
 
-	Err("Property tokenURI not found".into())
+	Err("property tokenURI not found".into())
 }
 
 fn get_token_permission<T: Config>(
@@ -721,13 +721,13 @@ fn get_token_permission<T: Config>(
 	key: &PropertyKey,
 ) -> Result<PropertyPermission> {
 	let token_property_permissions = CollectionPropertyPermissions::<T>::try_get(collection_id)
-		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
+		.map_err(|_| Error::Revert("no permissions for collection".into()))?;
 	let a = token_property_permissions
 		.get(key)
 		.map(Clone::clone)
 		.ok_or_else(|| {
 			let key = String::from_utf8(key.clone().into_inner()).unwrap_or_default();
-			Error::Revert(alloc::format!("No permission for key {key}"))
+			Error::Revert(alloc::format!("no permission for key {key}"))
 		})?;
 	Ok(a)
 }
@@ -1058,7 +1058,7 @@ where
 						.try_into()
 						.map_err(|_| "token uri is too long")?,
 				})
-				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {e:?}")))?;
+				.map_err(|e| Error::Revert(alloc::format!("can't add property: {e:?}")))?;
 
 			data.push(CreateItemData::<T> {
 				properties,

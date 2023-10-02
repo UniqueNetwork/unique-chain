@@ -25,7 +25,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn approve(&mut self, _caller: Caller, _spender: Address, _amount: U256) -> Result<bool> {
-		Err("Approve not supported".into())
+		Err("approve not supported".into())
 	}
 
 	fn balance_of(&self, owner: Address) -> Result<U256> {
