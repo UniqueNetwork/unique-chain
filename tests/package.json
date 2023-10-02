@@ -117,6 +117,8 @@
     "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmUnique.test.ts",
     "testFullXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Unique.test.ts",
     "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmQuartz.test.ts",
+    "testLowLevelXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/lowLevelXcmQuartz.test.ts",
+    "testFullXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Quartz.test.ts",
     "testXcmOpal": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmOpal.test.ts",
     "testXcmTransferAcala": "yarn _test ./**/xcm/xcmTransferAcala.test.ts acalaId=2000 uniqueId=5000",
     "testXcmTransferStatemine": "yarn _test ./**/xcm/xcmTransferStatemine.test.ts statemineId=1000 uniqueId=5000",
