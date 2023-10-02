@@ -27,14 +27,11 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 
+use ::staging_xcm::latest::NetworkId;
 use frame_support::parameter_types;
-
-use sp_version::RuntimeVersion;
 use sp_runtime::create_runtime_str;
-
+use sp_version::RuntimeVersion;
 use up_common::types::*;
-
-use ::xcm::latest::NetworkId;
 
 mod runtime_common;
 

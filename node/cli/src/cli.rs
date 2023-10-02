@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::chain_spec;
 use std::path::PathBuf;
+
 use clap::Parser;
+
+use crate::chain_spec;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]

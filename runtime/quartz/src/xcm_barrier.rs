@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{match_types, traits::Everything};
-use xcm::latest::{Junctions::*, MultiLocation};
-use xcm_builder::{
+use staging_xcm::latest::{Junctions::*, MultiLocation};
+use staging_xcm_builder::{
 	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,
 	AllowTopLevelPaidExecutionFrom, AllowExplicitUnpaidExecutionFrom,
 };

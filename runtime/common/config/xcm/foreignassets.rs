@@ -14,23 +14,22 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{traits::Get, parameter_types};
-use sp_runtime::traits::Convert;
-use xcm::latest::{prelude::*, MultiAsset, MultiLocation};
-use xcm_builder::{FungiblesAdapter, NoChecking, ConvertedConcreteId};
-use xcm_executor::traits::{TransactAsset, Convert as ConvertXcm, JustTry};
-use pallet_foreign_assets::{
-	AssetIds, AssetIdMapping, XcmForeignAssetIdMapping, NativeCurrency, FreeForAll, TryAsForeign,
-	ForeignAssetId, CurrencyId,
-};
-use sp_std::{borrow::Borrow, marker::PhantomData};
+use frame_support::{parameter_types, traits::Get};
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
-use crate::{Runtime, Balances, ParachainInfo, PolkadotXcm, ForeignAssets};
+use pallet_foreign_assets::{
+	AssetId, AssetIdMapping, CurrencyId, ForeignAssetId, FreeForAll, NativeCurrency, TryAsForeign,
+	XcmForeignAssetIdMapping,
+};
+use sp_runtime::traits::{Convert, MaybeEquivalence};
+use sp_std::marker::PhantomData;
+use staging_xcm::latest::{prelude::*, MultiAsset, MultiLocation};
+use staging_xcm_builder::{ConvertedConcreteId, FungiblesAdapter, NoChecking};
+use staging_xcm_executor::traits::{JustTry, TransactAsset};
+use up_common::types::{AccountId, Balance};
 
 use super::{LocationToAccountId, RelayLocation};
-
-use up_common::types::{AccountId, Balance};
+use crate::{Balances, ForeignAssets, ParachainInfo, PolkadotXcm, Runtime};
 
 parameter_types! {
 	pub CheckingAccount: AccountId = PolkadotXcm::check_account();

@@ -23,34 +23,35 @@ extern crate alloc;
 
 use alloc::string::ToString;
 use core::{
-	char::{REPLACEMENT_CHARACTER, decode_utf16},
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
 	convert::TryInto,
 };
-use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, AbiCoder, ToLog};
 use frame_support::{BoundedBTreeMap, BoundedVec};
 use pallet_common::{
+	erc::{static_property::key, CollectionCall, CommonEvmHandler},
+	eth::{self, TokenUri},
 	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
 	Error as CommonError,
-	erc::{CommonEvmHandler, CollectionCall, static_property::key},
-	eth::{self, TokenUri},
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
-	execution::{PreDispatch, Result, Error},
+	execution::{Error, PreDispatch, Result},
 	frontier_contract,
 };
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::{H160, U256, Get};
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec, vec};
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
+use sp_core::{Get, H160, U256};
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
-	CollectionId, CollectionPropertiesVec, mapping::TokenAddressMapping, Property, PropertyKey,
+	mapping::TokenAddressMapping, CollectionId, CollectionPropertiesVec, Property, PropertyKey,
 	PropertyKeyPermission, PropertyPermission, TokenId, TokenOwnerError,
 };
 
 use crate::{
-	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, TokenProperties,
-	TokensMinted, TotalSupply, SelfWeightOf, weights::WeightInfo,
+	weights::WeightInfo, AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle,
+	SelfWeightOf, TokenProperties, TokensMinted, TotalSupply,
 };
 
 frontier_contract! {

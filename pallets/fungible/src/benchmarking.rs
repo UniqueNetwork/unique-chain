@@ -14,14 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use super::*;
-use crate::{Pallet, Config, FungibleHandle};
-
+use frame_benchmarking::{account, benchmarks};
+use pallet_common::{bench_init, benchmarking::create_collection_raw};
 use sp_std::prelude::*;
-use pallet_common::benchmarking::create_collection_raw;
-use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{CollectionMode, MAX_ITEMS_PER_BATCH, budget::Unlimited};
-use pallet_common::bench_init;
+use up_data_structs::{budget::Unlimited, CollectionMode, MAX_ITEMS_PER_BATCH};
+
+use super::*;
+use crate::{Config, FungibleHandle, Pallet};
 
 const SEED: u32 = 1;
 

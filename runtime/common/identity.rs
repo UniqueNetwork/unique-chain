@@ -14,18 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-use codec::{Encode, Decode};
-use up_common::types::AccountId;
-use crate::RuntimeCall;
-
-use sp_runtime::{
-	traits::{DispatchInfoOf, SignedExtension},
-	transaction_validity::{TransactionValidity, ValidTransaction, TransactionValidityError},
-};
-
 #[cfg(feature = "collator-selection")]
 use sp_runtime::transaction_validity::InvalidTransaction;
+use sp_runtime::{
+	traits::{DispatchInfoOf, SignedExtension},
+	transaction_validity::{TransactionValidity, TransactionValidityError, ValidTransaction},
+};
+use up_common::types::AccountId;
+
+use crate::RuntimeCall;
 
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
 pub struct DisableIdentityCalls;

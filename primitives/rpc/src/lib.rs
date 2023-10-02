@@ -18,14 +18,13 @@
 
 extern crate alloc;
 
-use up_data_structs::{
-	CollectionId, TokenId, RawEncoded, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData, TokenChild, TokenDataVersion1,
-};
-
-use sp_std::vec::Vec;
-use codec::Decode;
+use parity_scale_codec::Decode;
 use sp_runtime::DispatchError;
+use sp_std::vec::Vec;
+use up_data_structs::{
+	CollectionId, CollectionLimits, CollectionStats, Property, PropertyKeyPermission,
+	RpcCollection, TokenChild, TokenData, TokenId,
+};
 
 type Result<T> = core::result::Result<T, DispatchError>;
 

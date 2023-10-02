@@ -16,12 +16,12 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use sp_std::vec::Vec;
-use codec::Decode;
+use parity_scale_codec::Decode;
 use sp_runtime::{
-	DispatchError,
 	traits::{AtLeast32BitUnsigned, Member},
+	DispatchError,
 };
+use sp_std::vec::Vec;
 
 type Result<T> = core::result::Result<T, DispatchError>;
 

@@ -16,21 +16,22 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
+use frame_benchmarking::{account, benchmarks};
+use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
+use frame_system::RawOrigin;
+use pallet_common::{
+	benchmarking::{create_data, create_u16_data},
+	erc::CrossAccountId,
+	Config as CommonConfig,
+};
+use sp_runtime::DispatchError;
+use up_data_structs::{
+	CollectionId, CollectionLimits, CollectionMode, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+};
+
 use super::*;
 use crate::Pallet;
-use frame_system::RawOrigin;
-use frame_support::traits::{fungible::Balanced, Get, tokens::Precision};
-use frame_benchmarking::{benchmarks, account};
-use sp_runtime::DispatchError;
-use pallet_common::{
-	Config as CommonConfig,
-	benchmarking::{create_data, create_u16_data},
-};
-use up_data_structs::{
-	CollectionId, CollectionMode, MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, CollectionLimits,
-};
-use pallet_common::erc::CrossAccountId;
 
 const SEED: u32 = 1;
 

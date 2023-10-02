@@ -15,29 +15,30 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use alloc::string::{String, ToString};
-use frame_support::parameter_types;
-use sp_runtime::traits::AccountIdConversion;
-use crate::{
-	runtime_common::{
-		dispatch::CollectionDispatchT,
-		config::{substrate::TreasuryModuleId, ethereum::EvmCollectionHelpersAddress},
-		weights::CommonWeights,
-		RelayChainBlockNumberProvider,
-	},
-	Runtime, RuntimeEvent, RuntimeCall, VERSION, TOKEN_SYMBOL, DECIMALS, Balances,
-};
-use frame_support::traits::{ConstU32, ConstU64, Currency};
-use up_common::{
-	types::{AccountId, Balance, BlockNumber},
-	constants::*,
-};
-use up_data_structs::{
-	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+
+use frame_support::{
+	parameter_types,
+	traits::{ConstU32, ConstU64, Currency},
 };
 use sp_arithmetic::Perbill;
+use sp_runtime::traits::AccountIdConversion;
+use up_common::{
+	constants::*,
+	types::{AccountId, Balance, BlockNumber},
+};
+use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
+use crate::{
+	runtime_common::{
+		config::{ethereum::EvmCollectionHelpersAddress, substrate::TreasuryModuleId},
+		dispatch::CollectionDispatchT,
+		weights::CommonWeights,
+		RelayChainBlockNumberProvider,
+	},
+	Balances, Runtime, RuntimeCall, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
+};
 
 #[cfg(feature = "unique-scheduler")]
 pub mod scheduler;

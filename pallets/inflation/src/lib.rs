@@ -37,17 +37,14 @@ mod benchmarking;
 #[cfg(test)]
 mod tests;
 
-use frame_support::{
-	dispatch::{DispatchResult},
-	traits::{
-		fungible::{Balanced, Inspect, Mutate},
-		Get,
-		tokens::Precision,
-	},
+use frame_support::traits::{
+	fungible::{Balanced, Inspect, Mutate},
+	tokens::Precision,
+	Get,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
-use sp_runtime::{Perbill, traits::BlockNumberProvider};
-
+use sp_runtime::{traits::BlockNumberProvider, Perbill};
 use sp_std::convert::TryInto;
 
 type BalanceOf<T> =
@@ -61,9 +58,10 @@ pub const END_INFLATION_PERCENT: u32 = 4;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+
+	use super::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {

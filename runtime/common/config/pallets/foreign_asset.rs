@@ -1,5 +1,6 @@
-use crate::{Runtime, RuntimeEvent, Balances};
 use up_common::types::AccountId;
+
+use crate::{Balances, Runtime, RuntimeEvent};
 
 impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;

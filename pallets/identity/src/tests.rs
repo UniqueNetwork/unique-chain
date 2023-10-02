@@ -34,21 +34,22 @@
 
 // Tests for Identity Pallet
 
-use super::*;
-use crate as pallet_identity;
-
-use codec::{Decode, Encode};
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
 	traits::{ConstU32, ConstU64, EitherOfDiverse},
 	BoundedVec,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
+use parity_scale_codec::{Decode, Encode};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
 	traits::{BadOrigin, BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
+
+use super::*;
+use crate as pallet_identity;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

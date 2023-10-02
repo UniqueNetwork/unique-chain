@@ -26,15 +26,13 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{
-		pallet_prelude::{*, DispatchResult},
-		traits::IsType,
-	};
-	use frame_system::pallet_prelude::{*, OriginFor};
+	use frame_support::{pallet_prelude::*, traits::IsType};
+	use frame_system::pallet_prelude::*;
+	use pallet_evm::{Pallet as PalletEvm, PrecompileHandle};
 	use sp_core::{H160, H256};
 	use sp_std::vec::Vec;
+
 	use super::weights::WeightInfo;
-	use pallet_evm::{PrecompileHandle, Pallet as PalletEvm};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config + pallet_evm::Config {

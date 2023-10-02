@@ -19,11 +19,12 @@
 #![crate_type = "proc-macro"]
 extern crate proc_macro;
 
+use std::convert::TryInto;
+
 use proc_macro::TokenStream;
 use proc_macro2::Literal;
 use quote::{quote, quote_spanned};
 use sha3::{Digest, Keccak256};
-use std::convert::TryInto;
 use syn::{parse_macro_input, spanned::Spanned, Expr, ExprLit, Ident, ItemEnum, Lit};
 
 /// This macro allows to associate to each variant of an enumeration a discriminant (of type u32

@@ -16,23 +16,25 @@
 
 #![allow(missing_docs)]
 
-use sp_std::vec::Vec;
-use crate::{Config, CollectionHandle, Pallet};
-use pallet_evm::account::CrossAccountId;
-use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{
-	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
-	CollectionPermissions, NestingPermissions, AccessMode, PropertiesPermissionMap,
-	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-	MAX_PROPERTIES_PER_ITEM,
-};
+use core::convert::TryInto;
+
+use frame_benchmarking::{account, benchmarks};
 use frame_support::{
-	traits::{Get, fungible::Balanced, Imbalance, tokens::Precision},
 	pallet_prelude::ConstU32,
+	traits::{fungible::Balanced, tokens::Precision, Get, Imbalance},
 	BoundedVec,
 };
-use core::convert::TryInto;
-use sp_runtime::{DispatchError, traits::Zero};
+use pallet_evm::account::CrossAccountId;
+use sp_runtime::{traits::Zero, DispatchError};
+use sp_std::vec::Vec;
+use up_data_structs::{
+	AccessMode, CollectionId, CollectionMode, CollectionPermissions, CreateCollectionData,
+	NestingPermissions, PropertiesPermissionMap, Property, PropertyKey, PropertyValue,
+	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM,
+	MAX_TOKEN_PREFIX_LENGTH,
+};
+
+use crate::{CollectionHandle, Config, Pallet};
 
 const SEED: u32 = 1;
 

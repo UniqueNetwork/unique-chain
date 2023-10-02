@@ -16,7 +16,7 @@
 
 use frame_support::{match_types, traits::Everything};
 use xcm::latest::{Junctions::*, MultiLocation};
-use xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit, AllowExplicitUnpaidExecutionFrom};
+use staging_xcm_builder::{AllowTopLevelPaidExecutionFrom, TakeWeightCredit, AllowExplicitUnpaidExecutionFrom};
 
 match_types! {
 	pub type ParentOnly: impl Contains<MultiLocation> = {

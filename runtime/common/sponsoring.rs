@@ -15,25 +15,25 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use up_sponsorship::SponsorshipHandler;
-use frame_support::{
-	traits::{IsSubType},
-};
-use up_data_structs::{
-	CollectionId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, TokenId, CollectionMode, CreateItemData,
-};
-use sp_runtime::traits::Saturating;
-use pallet_common::{CollectionHandle};
+
+use frame_support::traits::IsSubType;
+use frame_system::pallet_prelude::*;
+use pallet_common::CollectionHandle;
 use pallet_evm::account::CrossAccountId;
-use pallet_unique::{
-	Call as UniqueCall, Config as UniqueConfig, FungibleApproveBasket, RefungibleApproveBasket,
-	NftApproveBasket, CreateItemBasket, ReFungibleTransferBasket, FungibleTransferBasket,
-	NftTransferBasket, TokenPropertyBasket,
-};
 use pallet_fungible::Config as FungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;
 use pallet_refungible::Config as RefungibleConfig;
+use pallet_unique::{
+	Call as UniqueCall, Config as UniqueConfig, CreateItemBasket, FungibleApproveBasket,
+	FungibleTransferBasket, NftApproveBasket, NftTransferBasket, ReFungibleTransferBasket,
+	RefungibleApproveBasket, TokenPropertyBasket,
+};
+use sp_runtime::traits::Saturating;
+use up_data_structs::{
+	CollectionId, CollectionMode, CreateItemData, TokenId, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+};
+use up_sponsorship::SponsorshipHandler;
 
 pub trait Config: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}
 impl<T> Config for T where T: UniqueConfig + FungibleConfig + NonfungibleConfig + RefungibleConfig {}

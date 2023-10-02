@@ -17,12 +17,14 @@
 //! This module contins implementations for support bounded structures ([`BoundedVec`], [`BoundedBTreeMap`], [`BoundedBTreeSet`]) in [`serde`].
 
 use core::fmt;
-use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
-use sp_std::vec::Vec;
 
 use frame_support::{
-	BoundedVec,
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+	BoundedVec,
+};
+use sp_std::{
+	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+	vec::Vec,
 };
 
 /// [`serde`] implementations for [`BoundedVec`].

@@ -1,13 +1,12 @@
-use frame_support::{dispatch::DispatchResult};
-
+use frame_support::dispatch::DispatchResult;
+use frame_system::pallet_prelude::*;
 use pallet_common::CollectionHandle;
-
-use sp_runtime::{DispatchError, Perbill};
-use up_data_structs::{CollectionId};
-use sp_std::borrow::ToOwned;
-use pallet_evm_contract_helpers::{Pallet as EvmHelpersPallet, Config as EvmHelpersConfig};
-use pallet_configuration::{AppPromomotionConfigurationOverride};
+use pallet_configuration::AppPromomotionConfigurationOverride;
+use pallet_evm_contract_helpers::{Config as EvmHelpersConfig, Pallet as EvmHelpersPallet};
 use sp_core::Get;
+use sp_runtime::{DispatchError, Perbill};
+use sp_std::borrow::ToOwned;
+use up_data_structs::CollectionId;
 
 const MAX_NUMBER_PAYOUTS: u8 = 100;
 pub(crate) const DEFAULT_NUMBER_PAYOUTS: u8 = 20;

@@ -32,19 +32,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::*;
-use codec::{Decode, Encode, MaxEncodedLen};
 use enumflags2::{bitflags, BitFlags};
 use frame_support::{
 	traits::{ConstU32, Get},
 	BoundedVec, CloneNoBound, PartialEqNoBound, RuntimeDebugNoBound,
 };
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::{
 	build::{Fields, Variants},
 	meta_type, Path, Type, TypeInfo, TypeParameter,
 };
 use sp_runtime::{traits::Zero, RuntimeDebug};
 use sp_std::{fmt::Debug, iter::once, ops::Add, prelude::*};
+
+use super::*;
 
 /// Either underlying data blob if it is at most 32 bytes, or a hash of it. If the data is greater
 /// than 32-bytes then it will be truncated when encoding.

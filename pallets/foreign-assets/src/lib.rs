@@ -39,29 +39,26 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{fungible, fungibles, Currency, EnsureOrigin},
-	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
-use up_data_structs::CollectionMode;
+use pallet_common::erc::CrossAccountId;
 use pallet_fungible::Pallet as PalletFungible;
 use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
 use sp_runtime::{
 	traits::{One, Zero},
 	ArithmeticError,
 };
 use sp_std::{boxed::Box, vec::Vec};
-use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
-
+use staging_xcm::{latest::MultiLocation, VersionedMultiLocation};
 // NOTE: MultiLocation is used in storages, we will need to do migration if upgrade the
 // MultiLocation to the XCM v3.
-use xcm::opaque::latest::{prelude::XcmError, Weight};
-use xcm::{latest::MultiLocation, VersionedMultiLocation};
-use xcm_executor::{traits::WeightTrader, Assets};
-
-use pallet_common::erc::CrossAccountId;
-
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
+use staging_xcm::{
+	opaque::latest::{prelude::XcmError, Weight},
+	v3::XcmContext,
+};
+use staging_xcm_executor::{traits::WeightTrader, Assets};
+use up_data_structs::{CollectionId, CollectionMode, CreateCollectionData, TokenId};
 
 // TODO: Move to primitives
 // Id of native currency.

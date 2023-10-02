@@ -16,15 +16,14 @@
 
 #![allow(missing_docs)]
 
-use super::{Config, Pallet, Call};
-use frame_benchmarking::{benchmarks, account};
-use frame_system::RawOrigin;
-use crate::AssetMetadata;
-use xcm::opaque::latest::Junction::Parachain;
-use xcm::VersionedMultiLocation;
-use xcm::v3::Junctions::X1;
+use frame_benchmarking::{account, benchmarks};
 use frame_support::traits::Currency;
-use sp_std::{vec::Vec, boxed::Box};
+use frame_system::RawOrigin;
+use sp_std::{boxed::Box, vec::Vec};
+use staging_xcm::{opaque::latest::Junction::Parachain, v3::Junctions::X1, VersionedMultiLocation};
+
+use super::{Call, Config, Pallet};
+use crate::AssetMetadata;
 
 fn bounded<T: TryFrom<Vec<u8>>>(slice: &[u8]) -> T {
 	T::try_from(slice.to_vec())

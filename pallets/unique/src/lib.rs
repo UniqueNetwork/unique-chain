@@ -73,9 +73,9 @@
 
 extern crate alloc;
 
-pub use pallet::*;
 use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
+pub use pallet::*;
 pub mod eth;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -84,26 +84,26 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-
-	use frame_support::{dispatch::DispatchResult, ensure, fail, BoundedVec, storage::Key};
-	use scale_info::TypeInfo;
-	use frame_system::{ensure_signed, ensure_root};
-	use sp_std::{vec, vec::Vec};
-	use up_data_structs::{
-		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-		MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH,
-		MAX_COLLECTION_PROPERTIES_SIZE, COLLECTION_ADMINS_LIMIT, MAX_TOKEN_PROPERTIES_SIZE,
-		CreateItemData, CollectionLimits, CollectionPermissions, CollectionId, CollectionMode,
-		TokenId, CreateCollectionData, CreateItemExData, budget, Property, PropertyKey,
-		PropertyKeyPermission,
+	use frame_support::{dispatch::DispatchResult, ensure, fail, storage::Key, BoundedVec};
+	use frame_system::{ensure_root, ensure_signed};
+	use pallet_common::{
+		dispatch::{dispatch_tx, CollectionDispatch},
+		CollectionHandle, CommonWeightInfo, Pallet as PalletCommon, RefungibleExtensionsWeightInfo,
 	};
 	use pallet_evm::account::CrossAccountId;
-	use pallet_common::{
-		CollectionHandle, Pallet as PalletCommon, CommonWeightInfo, dispatch::dispatch_tx,
-		dispatch::CollectionDispatch, RefungibleExtensionsWeightInfo,
+	use scale_info::TypeInfo;
+	use sp_std::{vec, vec::Vec};
+	use up_data_structs::{
+		budget, CollectionId, CollectionLimits, CollectionMode, CollectionPermissions,
+		CreateCollectionData, CreateItemData, CreateItemExData, Property, PropertyKey,
+		PropertyKeyPermission, TokenId, COLLECTION_ADMINS_LIMIT, MAX_COLLECTION_DESCRIPTION_LENGTH,
+		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_PROPERTIES_SIZE, MAX_PROPERTIES_PER_ITEM,
+		MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+		MAX_TOKEN_PROPERTIES_SIZE,
 	};
 	use weights::WeightInfo;
+
+	use super::*;
 
 	/// A maximum number of levels of depth in the token nesting tree.
 	pub const NESTING_BUDGET: u32 = 5;

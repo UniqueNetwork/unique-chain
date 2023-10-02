@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use super::*;
-use crate::{Pallet as Maintenance, Config};
-
-use codec::Encode;
 use frame_benchmarking::benchmarks;
-use frame_system::RawOrigin;
 use frame_support::{ensure, pallet_prelude::Weight, traits::StorePreimage};
+use frame_system::RawOrigin;
+use parity_scale_codec::Encode;
+
+use super::*;
+use crate::{Config, Pallet as Maintenance};
 
 benchmarks! {
 	enable {

@@ -96,26 +96,27 @@ type BalanceOf<T> =
 	<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-	pub use crate::weights::WeightInfo;
 	use core::ops::Div;
+
 	use frame_support::{
 		dispatch::{DispatchClass, DispatchResultWithPostInfo},
-		inherent::Vec,
 		pallet_prelude::*,
 		sp_runtime::traits::{AccountIdConversion, CheckedSub, Saturating, Zero},
 		traits::{
-			EnsureOrigin,
-			fungible::{Balanced, BalancedHold, Inspect, InspectHold, Mutate, MutateHold},
-			ValidatorRegistration,
+			fungible::{Balanced, BalancedHold, Inspect, Mutate, MutateHold},
 			tokens::{Precision, Preservation},
+			EnsureOrigin, ValidatorRegistration,
 		},
 		BoundedVec, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_session::SessionManager;
-	use sp_runtime::{Perbill, traits::Convert};
+	use sp_runtime::{traits::Convert, Perbill};
 	use sp_staking::SessionIndex;
+	use sp_std::vec::Vec;
+
+	use super::*;
+	pub use crate::weights::WeightInfo;
 
 	/// A convertor from collators id. Since this pallet does not have stash/controller, this is
 	/// just identity.

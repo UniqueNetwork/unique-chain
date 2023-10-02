@@ -16,10 +16,11 @@
 
 //! Benchmarking setup for pallet-configuration
 
-use super::*;
 use frame_benchmarking::benchmarks;
-use frame_system::{EventRecord, RawOrigin};
 use frame_support::assert_ok;
+use frame_system::{EventRecord, RawOrigin};
+
+use super::*;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();

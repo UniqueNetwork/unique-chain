@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use sp_runtime::{BuildStorage, Storage};
-use sp_core::{Public, Pair};
-use up_common::types::AuraId;
-use crate::{Runtime, GenesisConfig, ParachainInfoConfig, RuntimeEvent, System};
-
+use sp_core::{Pair, Public};
 pub use sp_runtime::AccountId32 as AccountId;
+use sp_runtime::{BuildStorage, Storage};
+use up_common::types::AuraId;
+
+use crate::{BuildGenesisConfig, ParachainInfoConfig, Runtime, RuntimeEvent, System};
 pub type Balance = u128;
 
 pub mod xcm;
@@ -62,9 +62,10 @@ fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities
 
 #[cfg(feature = "collator-selection")]
 fn make_basic_storage() -> Storage {
-	use sp_core::{sr25519};
+	use sp_core::sr25519;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
-	use crate::{AccountId, Signature, SessionKeys, CollatorSelectionConfig, SessionConfig};
+
+	use crate::{AccountId, CollatorSelectionConfig, SessionConfig, SessionKeys, Signature};
 
 	type AccountPublic = <Signature as Verify>::Signer;
 

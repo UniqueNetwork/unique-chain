@@ -16,32 +16,31 @@
 
 //! Implementation of CollectionHelpers contract.
 //!
+use alloc::{collections::BTreeSet, format};
 use core::marker::PhantomData;
+
 use ethereum as _;
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*};
-use frame_support::{BoundedVec, traits::Get};
+use frame_support::{traits::Get, BoundedVec};
 use pallet_common::{
-	CollectionById,
 	dispatch::CollectionDispatch,
-	erc::{CollectionHelpersEvents, static_property::key},
-	eth::{self, map_eth_to_id, collection_id_to_address},
-	Pallet as PalletCommon, CollectionHandle,
+	erc::{static_property::key, CollectionHelpersEvents},
+	eth::{self, collection_id_to_address, map_eth_to_id},
+	CollectionById, CollectionHandle, Pallet as PalletCommon,
 };
 use pallet_evm::{account::CrossAccountId, OnMethodCall, PrecompileHandle, PrecompileResult};
 use pallet_evm_coder_substrate::{
-	dispatch_to_evm, SubstrateRecorder, WithRecorder,
-	execution::{PreDispatch, Result, Error},
-	frontier_contract,
+	dispatch_to_evm,
+	execution::{Error, PreDispatch, Result},
+	frontier_contract, SubstrateRecorder, WithRecorder,
 };
+use sp_std::vec::Vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionPermissions,
 	CollectionTokenPrefix, CreateCollectionData, NestingPermissions,
 };
 
 use crate::{weights::WeightInfo, Config, Pallet, SelfWeightOf};
-
-use alloc::{format, collections::BTreeSet};
-use sp_std::vec::Vec;
 
 frontier_contract! {
 	macro_rules! EvmCollectionHelpers_result {...}

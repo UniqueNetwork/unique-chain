@@ -30,8 +30,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::*;
-use crate as collator_selection;
 use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{FindAuthor, GenesisBuild, ValidatorRegistration},
@@ -45,6 +43,9 @@ use sp_runtime::{
 	traits::{BlakeTwo256, IdentityLookup, OpaqueKeys},
 	Perbill, RuntimeAppPublic,
 };
+
+use super::*;
+use crate as collator_selection;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

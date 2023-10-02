@@ -53,32 +53,32 @@ mod benchmarking;
 pub mod types;
 pub mod weights;
 
-use sp_std::{vec::Vec, vec, iter::Sum, borrow::ToOwned, cell::RefCell};
-use sp_core::H160;
-use codec::EncodeLike;
-pub use types::*;
-
-use up_data_structs::CollectionId;
-
 use frame_support::{
-	dispatch::{DispatchResult},
+	dispatch::DispatchResult,
+	ensure,
+	pallet_prelude::*,
+	storage::Key,
 	traits::{
-		Get,
-		tokens::Balance,
 		fungible::{Inspect, InspectFreeze, Mutate, MutateFreeze},
+		tokens::Balance,
+		Get,
 	},
-	ensure, BoundedVec,
+	weights::Weight,
+	Blake2_128Concat, BoundedVec, PalletId, Twox64Concat,
 };
-
-use weights::WeightInfo;
-
+use frame_system::pallet_prelude::*;
 pub use pallet::*;
 use pallet_evm::account::CrossAccountId;
+use parity_scale_codec::EncodeLike;
+use sp_core::H160;
 use sp_runtime::{
-	Perbill,
-	traits::{BlockNumberProvider, CheckedAdd, CheckedSub, AccountIdConversion, Zero},
-	ArithmeticError, DispatchError,
+	traits::{AccountIdConversion, BlockNumberProvider, CheckedAdd, CheckedSub, Zero},
+	ArithmeticError, DispatchError, Perbill,
 };
+use sp_std::{borrow::ToOwned, cell::RefCell, iter::Sum, vec, vec::Vec};
+pub use types::*;
+use up_data_structs::CollectionId;
+use weights::WeightInfo;
 
 const PENDING_LIMIT_PER_BLOCK: u32 = 3;
 
@@ -87,12 +87,8 @@ type BalanceOf<T> =
 
 #[frame_support::pallet]
 pub mod pallet {
+
 	use super::*;
-	use frame_support::{
-		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, PalletId, weights::Weight,
-	};
-	use frame_system::pallet_prelude::*;
-	use sp_runtime::DispatchError;
 
 	#[pallet::config]
 	pub trait Config:

@@ -16,24 +16,25 @@
 
 use core::marker::PhantomData;
 
-use sp_std::collections::btree_map::BTreeMap;
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{
-	CollectionId, TokenId, CreateItemExData, budget::Budget, Property, PropertyKey, PropertyValue,
-	PropertyKeyPermission, CreateRefungibleExMultipleOwners, CreateRefungibleExSingleOwner,
-	TokenOwnerError,
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo, ensure, fail, traits::Get, weights::Weight,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, init_token_properties_delta,
+	init_token_properties_delta, weights::WeightInfo as _, with_weight, CommonCollectionOperations,
+	CommonWeightInfo, RefungibleExtensions,
 };
-use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
-use sp_runtime::{DispatchError};
-use sp_std::{vec::Vec, vec};
+use pallet_structure::{Error as StructureError, Pallet as PalletStructure};
+use sp_runtime::DispatchError;
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemExData, CreateRefungibleExMultipleOwners,
+	CreateRefungibleExSingleOwner, Property, PropertyKey, PropertyKeyPermission, PropertyValue,
+	TokenId, TokenOwnerError,
+};
 
 use crate::{
-	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
-	SelfWeightOf, weights::WeightInfo, TokensMinted, TotalSupply, CreateItemData, TokenProperties,
+	weights::WeightInfo, AccountBalance, Allowance, Balance, Config, CreateItemData, Error, Owned,
+	Pallet, RefungibleHandle, SelfWeightOf, TokenProperties, TokensMinted, TotalSupply,
 };
 
 macro_rules! max_weight_of {

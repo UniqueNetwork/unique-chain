@@ -18,12 +18,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![warn(missing_docs)]
 
-use codec::{Decode, Encode, MaxEncodedLen};
-use evm_coder::AbiCoder;
-pub use pallet::*;
 pub use eth::*;
-use scale_info::TypeInfo;
+use evm_coder::AbiCoder;
 use frame_support::storage::bounded_btree_map::BoundedBTreeMap;
+pub use pallet::*;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 pub mod eth;
 
 /// Maximum number of methods per contract that could have fee limit
@@ -31,14 +31,15 @@ pub const MAX_FEE_LIMITED_METHODS: u32 = 5;
 
 #[frame_support::pallet]
 pub mod pallet {
-	pub use super::*;
+	use evm_coder::ToLog;
 	use frame_support::{pallet_prelude::*, sp_runtime::DispatchResult};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root};
+	use frame_system::{ensure_root, pallet_prelude::*};
+	use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 	use sp_core::{H160, U256};
 	use sp_std::vec::Vec;
-	use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 	use up_data_structs::SponsorshipState;
-	use evm_coder::ToLog;
+
+	pub use super::*;
 
 	#[pallet::config]
 	pub trait Config:

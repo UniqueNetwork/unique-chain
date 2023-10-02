@@ -1,2 +1,3 @@
+group_imports = "stdexternalcrate"
 hard_tabs = true
-reorder_imports = false
+imports_granularity = "crate"

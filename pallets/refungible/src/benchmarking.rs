@@ -14,12 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use super::*;
-use crate::{Pallet, Config, RefungibleHandle};
+use core::{convert::TryInto, iter::IntoIterator};
 
-use core::convert::TryInto;
-use core::iter::IntoIterator;
-use frame_benchmarking::{benchmarks, account};
+use frame_benchmarking::{account, benchmarks};
 use pallet_common::{
 	bench_init,
 	benchmarking::{
@@ -28,9 +25,12 @@ use pallet_common::{
 };
 use sp_std::prelude::*;
 use up_data_structs::{
-	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited,
-	PropertyPermission,
+	budget::Unlimited, CollectionMode, PropertyPermission, MAX_ITEMS_PER_BATCH,
+	MAX_PROPERTIES_PER_ITEM,
 };
+
+use super::*;
+use crate::{Config, Pallet, RefungibleHandle};
 
 const SEED: u32 = 1;
 

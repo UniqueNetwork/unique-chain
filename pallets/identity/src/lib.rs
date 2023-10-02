@@ -95,21 +95,18 @@ mod tests;
 mod types;
 pub mod weights;
 
-use frame_support::{
-	traits::{BalanceStatus, Currency, OnUnbalanced, ReservableCurrency},
-};
+use frame_support::traits::{BalanceStatus, Currency, OnUnbalanced, ReservableCurrency};
+pub use pallet::*;
 use sp_runtime::{
-	BoundedVec,
 	traits::{AppendZerosInput, Hash, Saturating, StaticLookup, Zero},
+	BoundedVec,
 };
 use sp_std::prelude::*;
-pub use weights::WeightInfo;
-
-pub use pallet::*;
 pub use types::{
 	Data, IdentityField, IdentityFields, IdentityInfo, Judgement, RegistrarIndex, RegistrarInfo,
 	Registration,
 };
+pub use weights::WeightInfo;
 
 pub type BalanceOf<T> =
 	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
@@ -132,9 +129,10 @@ type SubAccountsByAccountId<T> = (
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+
+	use super::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {

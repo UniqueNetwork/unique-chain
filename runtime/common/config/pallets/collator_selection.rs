@@ -15,23 +15,21 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{parameter_types, PalletId};
-use crate::{
-	Balance, Balances, BlockNumber, Runtime, RuntimeEvent, Aura, Session, SessionKeys,
-	CollatorSelection, Treasury,
-	config::pallets::{MaxCollators, SessionPeriod, TreasuryAccountId},
+#[cfg(not(feature = "governance"))]
+use frame_system::EnsureRoot;
+use pallet_configuration::{
+	CollatorSelectionDesiredCollatorsOverride, CollatorSelectionKickThresholdOverride,
+	CollatorSelectionLicenseBondOverride,
 };
+use sp_runtime::Perbill;
+use up_common::constants::{MILLIUNIQUE, UNIQUE};
 
 #[cfg(feature = "governance")]
 use crate::config::governance;
-
-#[cfg(not(feature = "governance"))]
-use frame_system::EnsureRoot;
-
-use sp_runtime::Perbill;
-use up_common::constants::{UNIQUE, MILLIUNIQUE};
-use pallet_configuration::{
-	CollatorSelectionKickThresholdOverride, CollatorSelectionLicenseBondOverride,
-	CollatorSelectionDesiredCollatorsOverride,
+use crate::{
+	config::pallets::{MaxCollators, SessionPeriod, TreasuryAccountId},
+	Aura, Balance, Balances, BlockNumber, CollatorSelection, Runtime, RuntimeEvent,
+	RuntimeHoldReason, Session, SessionKeys, Treasury,
 };
 parameter_types! {
 	pub const SessionOffset: BlockNumber = 0;

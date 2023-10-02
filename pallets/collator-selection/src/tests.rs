@@ -30,14 +30,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{self as collator_selection, Config};
-use crate::{mock::*, Error};
 use frame_support::{
 	assert_noop, assert_ok,
 	traits::{fungible, GenesisBuild, OnInitialize},
 };
-use sp_runtime::{traits::BadOrigin, TokenError};
 use scale_info::prelude::*;
+use sp_runtime::{traits::BadOrigin, TokenError};
+
+use crate::{self as collator_selection, mock::*, Config, Error};
 
 fn get_license_and_onboard(account_id: <Test as frame_system::Config>::AccountId) {
 	assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(

@@ -16,14 +16,12 @@
 
 #![cfg(test)]
 #![allow(clippy::from_over_into)]
-use crate as pallet_inflation;
-
 use frame_support::{
 	assert_ok, parameter_types,
 	traits::{
 		fungible::{Balanced, Inspect},
-		OnInitialize, Everything, ConstU32,
 		tokens::Precision,
+		ConstU32, Everything, OnInitialize,
 	},
 	weights::Weight,
 };
@@ -31,8 +29,10 @@ use frame_system::RawOrigin;
 use sp_core::H256;
 use sp_runtime::{
 	traits::{BlakeTwo256, BlockNumberProvider, IdentityLookup},
-	testing::Header,
+	BuildStorage,
 };
+
+use crate as pallet_inflation;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
 type Block = frame_system::mocking::MockBlock<Test>;

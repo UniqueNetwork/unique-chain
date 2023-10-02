@@ -25,20 +25,21 @@ use core::{
 	fmt,
 	ops::Deref,
 };
-use frame_support::storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet};
 
-#[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
-
-use sp_core::U256;
-use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
-use sp_std::collections::btree_set::BTreeSet;
-use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
-use frame_support::{BoundedVec, traits::ConstU32};
-use derivative::Derivative;
-use scale_info::TypeInfo;
-use evm_coder::AbiCoderFlags;
 use bondrewd::Bitfields;
+use derivative::Derivative;
+use evm_coder::AbiCoderFlags;
+use frame_support::{
+	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+	traits::ConstU32,
+	BoundedVec,
+};
+use parity_scale_codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
+use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
+use sp_core::U256;
+use sp_runtime::{sp_std::prelude::Vec, ArithmeticError};
+use sp_std::collections::btree_set::BTreeSet;
 
 mod bondrewd_codec;
 mod bounded;

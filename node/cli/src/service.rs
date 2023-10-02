@@ -15,73 +15,72 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // std
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::collections::BTreeMap;
-use std::time::Duration;
-use std::pin::Pin;
-use fc_mapping_sync::EthereumBlockNotificationSinks;
-use fc_rpc::EthBlockDataCacheTask;
-use fc_rpc::EthTask;
-use fc_rpc_core::types::FeeHistoryCache;
-use futures::{
-	Stream, StreamExt,
-	stream::select,
-	task::{Context, Poll},
+use std::{
+	collections::BTreeMap,
+	marker::PhantomData,
+	pin::Pin,
+	sync::{Arc, Mutex},
+	time::Duration,
 };
-use sc_rpc::SubscriptionTaskExecutor;
-use sp_keystore::KeystorePtr;
-use tokio::time::Interval;
-use jsonrpsee::RpcModule;
 
-use serde::{Serialize, Deserialize};
-
-// Cumulus Imports
-use cumulus_client_consensus_aura::{AuraConsensus, BuildAuraConsensusParams, SlotProportion};
-use cumulus_client_consensus_common::{
-	ParachainConsensus, ParachainBlockImport as TParachainBlockImport,
-};
-use cumulus_client_service::{
-	prepare_node_config, start_collator, start_full_node, StartCollatorParams, StartFullNodeParams,
-};
 use cumulus_client_cli::CollatorOptions;
-use cumulus_client_network::BlockAnnounceValidator;
-use cumulus_primitives_core::ParaId;
-use cumulus_relay_chain_inprocess_interface::build_inprocess_relay_chain;
-use cumulus_relay_chain_interface::{RelayChainInterface, RelayChainResult};
-use cumulus_relay_chain_minimal_node::build_minimal_relay_chain_node;
-
-// Substrate Imports
-use sp_api::{BlockT, HeaderT, ProvideRuntimeApi, StateBackend};
-use sc_executor::NativeElseWasmExecutor;
-use sc_executor::NativeExecutionDispatch;
-use sc_network::NetworkBlock;
-use sc_network_sync::SyncingService;
-use sc_service::{Configuration, PartialComponents, TaskManager};
-use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use sp_runtime::traits::BlakeTwo256;
-use substrate_prometheus_endpoint::Registry;
-use sc_client_api::{BlockchainEvents, BlockOf, Backend, AuxStore, StorageProvider};
-use sp_blockchain::{HeaderBackend, HeaderMetadata, Error as BlockChainError};
-use sc_consensus::ImportQueue;
-use sp_core::H256;
-use sp_block_builder::BlockBuilder;
-
-use polkadot_service::CollatorPair;
-
-// Frontier Imports
-use fc_rpc_core::types::FilterPool;
-use fc_mapping_sync::{kv::MappingSyncWorker, SyncStrategy};
-use fc_rpc::{
-	StorageOverride, OverrideHandle, SchemaV1Override, SchemaV2Override, SchemaV3Override,
-	RuntimeApiStorageOverride,
+use cumulus_client_collator::service::CollatorService;
+#[cfg(not(feature = "lookahead"))]
+use cumulus_client_consensus_aura::collators::basic::{
+	run as run_aura, Params as BuildAuraConsensusParams,
 };
+#[cfg(feature = "lookahead")]
+use cumulus_client_consensus_aura::collators::lookahead::{
+	run as run_aura, Params as BuildAuraConsensusParams,
+};
+use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
+use cumulus_client_consensus_proposer::Proposer;
+use cumulus_client_network::RequireSecondedInBlockAnnounce;
+use cumulus_client_service::{
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, DARecoveryProfile,
+	StartRelayChainTasksParams,
+};
+use cumulus_primitives_core::ParaId;
+use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
+use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
+use fc_rpc::{
+	frontier_backend_client::SystemAccountId32StorageOverride, EthBlockDataCacheTask, EthConfig,
+	EthTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
+	SchemaV3Override, StorageOverride,
+};
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::EthereumRuntimeRPCApi;
 use fp_storage::EthereumStorageSchema;
+use futures::{
+	stream::select,
+	task::{Context, Poll},
+	Stream, StreamExt,
+};
+use jsonrpsee::RpcModule;
+use polkadot_service::CollatorPair;
+use sc_client_api::{AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider};
+use sc_consensus::ImportQueue;
+use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
+use sc_network::NetworkBlock;
+use sc_network_sync::SyncingService;
+use sc_rpc::SubscriptionTaskExecutor;
+use sc_service::{Configuration, PartialComponents, TaskManager};
+use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
+use serde::{Deserialize, Serialize};
+use sp_api::{ProvideRuntimeApi, StateBackend};
+use sp_block_builder::BlockBuilder;
+use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
+use sp_keystore::KeystorePtr;
+use sp_runtime::traits::BlakeTwo256;
+use substrate_prometheus_endpoint::Registry;
+use tokio::time::Interval;
+use up_common::types::{opaque::*, Nonce};
 
-use up_common::types::opaque::*;
-
-use crate::chain_spec::RuntimeIdentification;
+use crate::{
+	chain_spec::RuntimeIdentification,
+	rpc::{create_eth, create_full, EthDeps, FullDeps},
+};
 
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]

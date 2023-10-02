@@ -33,26 +33,23 @@ pub mod weights;
 #[cfg(test)]
 pub mod tests;
 
-use sp_core::H160;
 use frame_support::{
-	traits::{Currency, OnUnbalanced, Imbalance},
+	traits::{Currency, Imbalance, OnUnbalanced},
 	weights::Weight,
 };
 use sp_runtime::{
-	generic,
+	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
-	impl_opaque_keys,
 };
 use sp_std::vec::Vec;
-
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
+use up_common::types::{AccountId, BlockNumber};
 
 use crate::{
-	Runtime, RuntimeCall, Balances, Treasury, Aura, Signature, AllPalletsWithSystem,
-	InherentDataExt,
+	AllPalletsWithSystem, Aura, Balances, InherentDataExt, Runtime, RuntimeCall, Signature,
+	Treasury,
 };
-use up_common::types::{AccountId, BlockNumber};
 
 #[macro_export]
 macro_rules! unsupported {
@@ -175,7 +172,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 	}
 }
 
-#[derive(codec::Encode, codec::Decode)]
+#[derive(parity_scale_codec::Encode, parity_scale_codec::Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {
 	/// Transfer tokens to the given account from the Parachain account.
 	TransferToken(XAccountId, XBalance),
@@ -186,9 +183,10 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 	fn on_runtime_upgrade() -> Weight {
 		#[cfg(feature = "collator-selection")]
 		{
-			use frame_support::{BoundedVec, storage::migration};
-			use sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic};
+			use frame_support::{storage::migration, BoundedVec};
 			use pallet_session::SessionManager;
+			use sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic};
+
 			use crate::config::pallets::MaxCollators;
 
 			let mut weight = <Runtime as frame_system::Config>::DbWeight::get().reads(1);

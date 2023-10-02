@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use sp_runtime::Perbill;
+use cumulus_primitives_core::relay_chain::MAX_POV_SIZE;
 use frame_support::{
 	parameter_types,
-	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
-use cumulus_primitives_core::relay_chain::MAX_POV_SIZE;
-use crate::types::{BlockNumber, Balance};
+use sp_runtime::Perbill;
+
+use crate::types::{Balance, BlockNumber};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MILLISECS_PER_RELAY_BLOCK: u64 = 6000;

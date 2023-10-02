@@ -15,31 +15,32 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Everything, ConstU32, NeverEnsureOrigin},
+	dispatch::DispatchClass,
+	ord_parameter_types, parameter_types,
+	traits::{ConstBool, ConstU32, Everything, NeverEnsureOrigin},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
 	},
-	dispatch::DispatchClass,
-	parameter_types, ord_parameter_types, PalletId,
+	PalletId,
 };
-use sp_runtime::{
-	generic,
-	traits::{BlakeTwo256, AccountIdLookup},
-	Perbill, Permill, Percent,
-};
-use sp_arithmetic::traits::One;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureSignedBy,
 };
-use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
-use crate::{
-	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, OriginCaller,
-	PalletInfo, System, Balances, SS58Prefix, Version,
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
+use sp_arithmetic::traits::One;
+use sp_runtime::{
+	traits::{AccountIdLookup, BlakeTwo256},
+	Perbill, Percent, Permill,
 };
-use up_common::{types::*, constants::*};
 use sp_std::vec;
+use up_common::{constants::*, types::*};
+
+use crate::{
+	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
+	RuntimeEvent, RuntimeHoldReason, RuntimeOrigin, SS58Prefix, System, Version,
+};
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;

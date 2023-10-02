@@ -3,9 +3,9 @@
 //! The module contains helpers.
 //!
 use frame_support::{
+	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
 	pallet_prelude::DispatchResultWithPostInfo,
 	weights::Weight,
-	dispatch::{DispatchErrorWithPostInfo, PostDispatchInfo},
 };
 
 /// Add weight for a `DispatchResultWithPostInfo`

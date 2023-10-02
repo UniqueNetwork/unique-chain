@@ -16,17 +16,16 @@
 
 //! Implementations for fungibles trait.
 
-use super::*;
-use frame_system::Config as SystemConfig;
-
 use frame_support::traits::tokens::{
-	DepositConsequence, WithdrawConsequence, Preservation, Fortitude, Provenance, Precision,
+	DepositConsequence, Fortitude, Precision, Preservation, Provenance, WithdrawConsequence,
 };
-use pallet_common::CollectionHandle;
+use frame_system::Config as SystemConfig;
+use pallet_common::{CollectionHandle, CommonCollectionOperations};
 use pallet_fungible::FungibleHandle;
-use pallet_common::CommonCollectionOperations;
-use up_data_structs::budget::Value;
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
+use up_data_structs::budget::Value;
+
+use super::*;
 
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 where

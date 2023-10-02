@@ -14,36 +14,35 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
-use sc_service::ChainType;
-use sp_core::{sr25519, Pair, Public};
-use sp_runtime::traits::{IdentifyAccount, Verify};
 use std::collections::BTreeMap;
-
-use serde::{Deserialize, Serialize};
-use serde_json::map::Map;
-
-use up_common::types::opaque::*;
-
-#[cfg(feature = "unique-runtime")]
-pub use unique_runtime as default_runtime;
-
-#[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
-pub use quartz_runtime as default_runtime;
 
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 pub use opal_runtime as default_runtime;
+#[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
+pub use quartz_runtime as default_runtime;
+use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
+use sc_service::ChainType;
+use serde::{Deserialize, Serialize};
+use serde_json::map::Map;
+use sp_core::{sr25519, Pair, Public};
+use sp_runtime::traits::{IdentifyAccount, Verify};
+#[cfg(feature = "unique-runtime")]
+pub use unique_runtime as default_runtime;
+use up_common::types::opaque::*;
 
 /// The `ChainSpec` parameterized for the unique runtime.
 #[cfg(feature = "unique-runtime")]
-pub type UniqueChainSpec = sc_service::GenericChainSpec<unique_runtime::GenesisConfig, Extensions>;
+pub type UniqueChainSpec =
+	sc_service::GenericChainSpec<unique_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// The `ChainSpec` parameterized for the quartz runtime.
 #[cfg(feature = "quartz-runtime")]
-pub type QuartzChainSpec = sc_service::GenericChainSpec<quartz_runtime::GenesisConfig, Extensions>;
+pub type QuartzChainSpec =
+	sc_service::GenericChainSpec<quartz_runtime::RuntimeGenesisConfig, Extensions>;
 
 /// The `ChainSpec` parameterized for the opal runtime.
-pub type OpalChainSpec = sc_service::GenericChainSpec<opal_runtime::GenesisConfig, Extensions>;
+pub type OpalChainSpec =
+	sc_service::GenericChainSpec<opal_runtime::RuntimeGenesisConfig, Extensions>;
 
 #[cfg(feature = "unique-runtime")]
 pub type DefaultChainSpec = UniqueChainSpec;

@@ -16,11 +16,11 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
+use frame_benchmarking::benchmarks;
+use frame_support::traits::OnInitialize;
+
 use super::*;
 use crate::Pallet as Inflation;
-
-use frame_benchmarking::{benchmarks};
-use frame_support::traits::OnInitialize;
 
 benchmarks! {
 

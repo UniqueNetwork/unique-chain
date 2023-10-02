@@ -16,27 +16,26 @@
 
 #![allow(clippy::from_over_into)]
 
-use sp_core::{H160, H256, U256};
 use frame_support::{
-	parameter_types,
-	traits::{Everything, ConstU32, ConstU64, fungible::Inspect},
-	weights::IdentityFee,
 	pallet_prelude::Weight,
+	parameter_types,
+	traits::{fungible::Inspect, ConstU32, ConstU64, Everything},
+	weights::IdentityFee,
 };
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-	testing::Header,
+use frame_system as system;
+use pallet_ethereum::PostLogContent;
+use pallet_evm::{
+	account::CrossAccountId, AddressMapping, BackwardsAddressMapping, EnsureAddressNever,
+	SubstrateBlockHashMapping,
 };
 use pallet_transaction_payment::CurrencyAdapter;
-use frame_system as system;
-use pallet_evm::{
-	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
-	BackwardsAddressMapping,
-};
-use pallet_ethereum::PostLogContent;
-use codec::{Encode, Decode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-
+use sp_core::{H160, H256, U256};
+use sp_runtime::{
+	testing::Header,
+	traits::{BlakeTwo256, IdentityLookup},
+};
 use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
 #[path = "../../common/dispatch.rs"]

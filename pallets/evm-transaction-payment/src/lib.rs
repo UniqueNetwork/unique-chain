@@ -19,19 +19,26 @@
 #![deny(missing_docs)]
 
 use core::marker::PhantomData;
-use fp_evm::WithdrawReason;
-use frame_support::traits::IsSubType;
+
+use fp_evm::{CheckEvmTransaction, FeeCalculator, TransactionValidationError, WithdrawReason};
+use frame_support::{
+	storage::with_transaction,
+	traits::{Currency, Imbalance, IsSubType, OnUnbalanced},
+};
 pub use pallet::*;
-use pallet_evm::{account::CrossAccountId, EnsureAddressOrigin};
+use pallet_evm::{
+	account::CrossAccountId, EnsureAddressOrigin, NegativeImbalanceOf, OnChargeEVMTransaction,
+	OnCheckEvmTransaction,
+};
 use sp_core::{H160, U256};
-use sp_runtime::{TransactionOutcome, DispatchError};
+use sp_runtime::{traits::UniqueSaturatedInto, DispatchError, TransactionOutcome};
 use up_sponsorship::SponsorshipHandler;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-
 	use sp_std::vec::Vec;
+
+	use super::*;
 
 	/// Contains call data
 	pub struct CallContext {

@@ -16,7 +16,7 @@
 
 use sp_runtime::{
 	generic,
-	traits::{Verify, IdentifyAccount},
+	traits::{IdentifyAccount, Verify},
 	MultiSignature,
 };
 
@@ -27,7 +27,7 @@ use sp_runtime::{
 pub mod opaque {
 	pub use sp_runtime::{generic, traits::BlakeTwo256, OpaqueExtrinsic as UncheckedExtrinsic};
 
-	pub use super::{BlockNumber, Signature, AccountId, Balance, Index, Hash, AuraId};
+	pub use super::{AccountId, AuraId, Balance, BlockNumber, Hash, Signature};
 
 	#[derive(Debug, Clone)]
 	pub enum RuntimeId {

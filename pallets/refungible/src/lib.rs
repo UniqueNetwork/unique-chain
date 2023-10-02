@@ -87,30 +87,29 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use crate::erc_token::ERC20Events;
-use crate::erc::ERC721Events;
+use core::{cmp::Ordering, ops::Deref};
 
-use core::{ops::Deref, cmp::Ordering};
 use evm_coder::ToLog;
 use frame_support::{ensure, storage::with_transaction, transactional};
-use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
-use pallet_evm_coder_substrate::WithRecorder;
+pub use pallet::*;
 use pallet_common::{
-	Error as CommonError, eth::collection_id_to_address, Event as CommonEvent,
+	eth::collection_id_to_address, Error as CommonError, Event as CommonEvent,
 	Pallet as PalletCommon,
 };
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
+use pallet_evm_coder_substrate::WithRecorder;
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CreateCollectionData, mapping::TokenAddressMapping,
-	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyScope,
-	PropertyValue, TokenId, PropertiesPermissionMap, CreateRefungibleExMultipleOwners,
-	TokenOwnerError, TokenProperties as TokenPropertiesT,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CreateCollectionData,
+	CreateRefungibleExMultipleOwners, PropertiesPermissionMap, Property, PropertyKey,
+	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TokenOwnerError,
+	TokenProperties as TokenPropertiesT, TrySetProperty, MAX_REFUNGIBLE_PIECES,
 };
 
-pub use pallet::*;
+use crate::{erc::ERC721Events, erc_token::ERC20Events};
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
@@ -124,13 +123,13 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::{
-		Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key,
-		traits::StorageVersion,
+		pallet_prelude::*, storage::Key, traits::StorageVersion, Blake2_128, Blake2_128Concat,
+		Twox64Concat,
 	};
 	use up_data_structs::{CollectionId, TokenId};
-	use super::weights::WeightInfo;
+
+	use super::{weights::WeightInfo, *};
 
 	#[pallet::error]
 	pub enum Error<T> {

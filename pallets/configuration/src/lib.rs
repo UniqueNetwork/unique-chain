@@ -20,19 +20,17 @@ use core::marker::PhantomData;
 
 use frame_support::{
 	pallet,
-	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
-	Parameter,
+	weights::{Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 };
-use codec::{Decode, Encode, MaxEncodedLen};
+pub use pallet::*;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use smallvec::smallvec;
 use sp_arithmetic::{
-	per_things::{Perbill, PerThing},
+	per_things::{PerThing, Perbill},
 	traits::{BaseArithmetic, Unsigned},
 };
-use smallvec::smallvec;
-
-pub use pallet::*;
 use sp_core::U256;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -41,15 +39,14 @@ pub mod weights;
 
 #[pallet]
 mod pallet {
+	use core::fmt::Debug;
+
+	use frame_support::{pallet_prelude::*, traits::Get};
+	use frame_system::{ensure_root, pallet_prelude::*};
+	use parity_scale_codec::Codec;
+	use sp_arithmetic::{traits::AtLeast32BitUnsigned, FixedPointOperand, Permill};
+
 	use super::*;
-	use frame_support::{
-		traits::Get,
-		pallet_prelude::*,
-		log,
-		dispatch::{Codec, fmt::Debug},
-	};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root, pallet_prelude::*};
-	use sp_arithmetic::{FixedPointOperand, traits::AtLeast32BitUnsigned, Permill};
 	pub use crate::weights::WeightInfo;
 
 	#[pallet::config]

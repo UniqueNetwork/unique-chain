@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use super::*;
-
-use frame_benchmarking::{benchmarks, account};
-use frame_support::traits::{fungible::Balanced, Get, tokens::Precision};
-use up_data_structs::{
-	CreateCollectionData, CollectionMode, CreateItemData, CreateNftData, budget::Unlimited,
-};
+use frame_benchmarking::{account, benchmarks};
+use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
 use pallet_common::Config as CommonConfig;
 use pallet_evm::account::CrossAccountId;
+use up_data_structs::{
+	budget::Unlimited, CollectionMode, CreateCollectionData, CreateItemData, CreateNftData,
+};
+
+use super::*;
 
 const SEED: u32 = 1;
 

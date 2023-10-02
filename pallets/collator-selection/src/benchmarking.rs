@@ -32,18 +32,13 @@
 
 //! Benchmarking setup for pallet-collator-selection
 
-use super::*;
-
-#[allow(unused)]
-use crate::{Pallet as CollatorSelection, BalanceOf};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
-	codec::Decode,
+	parity_scale_codec::Decode,
 	traits::{
-		EnsureOrigin,
 		fungible::{Inspect, Mutate},
-		Get,
+		EnsureOrigin, Get,
 	},
 };
 use frame_system::{EventRecord, RawOrigin};
