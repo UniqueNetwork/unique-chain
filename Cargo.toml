@@ -24,6 +24,10 @@ inherits = "release"
 lto = true
 opt-level = 3
 
+[profile.integration-tests]
+inherits = "release"
+debug-assertions = true
+
 [workspace.dependencies]
 # Unique
 app-promotion-rpc = { path = "primitives/app_promotion_rpc", default-features = false }

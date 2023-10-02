@@ -240,19 +240,19 @@ export class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 }
 
 export class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
-  async create(signer: TSigner, assetId: number, admin: string, minimalBalance: bigint) {
+  async create(signer: TSigner, assetId: number | bigint, admin: string, minimalBalance: bigint) {
     await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
   }
 
-  async setMetadata(signer: TSigner, assetId: number, name: string, symbol: string, decimals: number) {
+  async setMetadata(signer: TSigner, assetId: number | bigint, name: string, symbol: string, decimals: number) {
     await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
   }
 
-  async mint(signer: TSigner, assetId: number, beneficiary: string, amount: bigint) {
+  async mint(signer: TSigner, assetId: number | bigint, beneficiary: string, amount: bigint) {
     await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
   }
 
-  async account(assetId: string | number, address: string) {
+  async account(assetId: string | number | bigint, address: string) {
     const accountAsset = (
       await this.helper.callRpc('api.query.assets.account', [assetId, address])
     ).toJSON()! as any;
