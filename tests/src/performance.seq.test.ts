@@ -142,11 +142,6 @@ const tryMintExplicit = async (helper: UniqueHelper, signer: IKeyringPair, token
   return tokensCount;
 };
 
-
-function sizeOfByteProperty(prop: IProperty) {
-  return sizeOfEncodedBytes(prop.key) + sizeOfEncodedBytes(prop.value!);
-}
-
 function sizeOfProperty(prop: IProperty) {
   return sizeOfEncodedStr(prop.key) + sizeOfEncodedStr(prop.value!);
 }
@@ -168,8 +163,4 @@ const UTF8_ENCODER = new TextEncoder();
 function sizeOfEncodedStr(v: string) {
   const encoded = UTF8_ENCODER.encode(v);
   return sizeOfInt(encoded.length) + encoded.length;
-}
-
-function sizeOfEncodedBytes(bytes: Uint8Array | string) {
-  return sizeOfInt(bytes.length) + bytes.length;
 }
