@@ -886,6 +886,7 @@ pub struct OtherPartial {
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
 	autoseal_interval: Duration,
+	disable_autoseal_on_tx: bool,
 ) -> sc_service::error::Result<TaskManager>
 where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
@@ -980,6 +981,7 @@ where
 				.pool()
 				.validated_pool()
 				.import_notification_stream()
+				.filter(move |_| futures::future::ready(!disable_autoseal_on_tx))
 				.map(|_| EngineCommand::SealNewBlock {
 					create_empty: true,
 					finalize: false, // todo:collator finalize true

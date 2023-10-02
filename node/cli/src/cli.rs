@@ -84,6 +84,10 @@ pub struct Cli {
 	#[structopt(default_value = "500", long)]
 	pub idle_autoseal_interval: u64,
 
+	/// Disable auto-sealing blocks on new transactions in the `--dev` mode.
+	#[structopt(long)]
+	pub disable_autoseal_on_tx: bool,
+
 	/// Disable automatic hardware benchmarks.
 	///
 	/// By default these benchmarks are automatically ran at startup and measure

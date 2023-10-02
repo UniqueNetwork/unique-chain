@@ -488,7 +488,7 @@ pub fn run() -> Result<()> {
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, autoseal_interval).map_err(Into::into)
+						start_dev_node(config, autoseal_interval, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
 
