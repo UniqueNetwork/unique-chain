@@ -155,7 +155,7 @@ export class XcmTestHelper {
     switch (this._nativeRuntime) {
       case 'opal':
         // To-Do
-        return 10;
+        return 1001;
       case 'quartz':
         return QUARTZ_CHAIN;
       case 'unique':
