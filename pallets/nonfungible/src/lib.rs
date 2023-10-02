@@ -102,8 +102,8 @@ use frame_support::{
 use up_data_structs::{
 	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
 	mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey, PropertyValue,
-	PropertyKeyPermission, PropertyScope, TrySetProperty, TokenChild, AuxPropertyValue,
-	PropertiesPermissionMap, TokenProperties as TokenPropertiesT,
+	PropertyKeyPermission, PropertyScope, TokenChild, AuxPropertyValue, PropertiesPermissionMap,
+	TokenProperties as TokenPropertiesT,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_common::{
@@ -201,7 +201,7 @@ pub mod pallet {
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = TokenPropertiesT,
-		QueryKind = ValueQuery,
+		QueryKind = OptionQuery,
 	>;
 
 	/// Custom data of a token that is serialized to bytes,
@@ -340,38 +340,6 @@ impl<T: Config> Pallet<T> {
 	/// - `token`: Token ID.
 	pub fn token_exists(collection: &NonfungibleHandle<T>, token: TokenId) -> bool {
 		<TokenData<T>>::contains_key((collection.id, token))
-	}
-
-	/// Set the token property with the scope.
-	///
-	/// - `property`: Contains key-value pair.
-	pub fn set_scoped_token_property(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		property: Property,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |properties| {
-			properties.try_scoped_set(scope, property.key, property.value)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
-	}
-
-	/// Batch operation to set multiple properties with the same scope.
-	pub fn set_scoped_token_properties(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		properties: impl Iterator<Item = Property>,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |stored_properties| {
-			stored_properties.try_scoped_set_from_iter(scope, properties)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
 	}
 
 	/// Add or edit auxiliary data for the property.
@@ -1394,7 +1362,9 @@ impl<T: Config> Pallet<T> {
 
 	pub fn repair_item(collection: &NonfungibleHandle<T>, token: TokenId) -> DispatchResult {
 		<TokenProperties<T>>::mutate((collection.id, token), |properties| {
-			properties.recompute_consumed_space();
+			if let Some(properties) = properties {
+				properties.recompute_consumed_space();
+			}
 		});
 
 		Ok(())

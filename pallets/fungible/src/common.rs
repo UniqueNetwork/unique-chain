@@ -364,18 +364,16 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
-	fn get_token_properties_map(&self, _token_id: TokenId) -> up_data_structs::TokenProperties {
+	fn get_token_properties_raw(
+		&self,
+		_token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
 		// No token properties are defined on fungibles
-		up_data_structs::TokenProperties::new()
+		None
 	}
 
-	fn set_token_properties_map(&self, _token_id: TokenId, _map: up_data_structs::TokenProperties) {
+	fn set_token_properties_raw(&self, _token_id: TokenId, _map: up_data_structs::TokenProperties) {
 		// No token properties are defined on fungibles
-	}
-
-	fn properties_exist(&self, _token: TokenId) -> bool {
-		// No token properties are defined on fungibles
-		false
 	}
 
 	fn check_nesting(

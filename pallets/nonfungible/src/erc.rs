@@ -272,7 +272,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			.try_into()
 			.map_err(|_| "key too long")?;
 
-		let props = <TokenProperties<T>>::get((self.id, token_id));
+		let props =
+			<TokenProperties<T>>::get((self.id, token_id)).ok_or("Token properties not found")?;
 		let prop = props.get(&key).ok_or("key not found")?;
 
 		Ok(prop.to_vec().into())

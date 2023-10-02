@@ -106,8 +106,8 @@ use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
 use up_data_structs::{
 	AccessMode, budget::Budget, CollectionId, CreateCollectionData, mapping::TokenAddressMapping,
 	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyScope,
-	PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
-	CreateRefungibleExMultipleOwners, TokenOwnerError, TokenProperties as TokenPropertiesT,
+	PropertyValue, TokenId, PropertiesPermissionMap, CreateRefungibleExMultipleOwners,
+	TokenOwnerError, TokenProperties as TokenPropertiesT,
 };
 
 pub use pallet::*;
@@ -175,7 +175,7 @@ pub mod pallet {
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = TokenPropertiesT,
-		QueryKind = ValueQuery,
+		QueryKind = OptionQuery,
 	>;
 
 	/// Total amount of pieces for token
@@ -292,34 +292,6 @@ impl<T: Config> Pallet<T> {
 	/// - `token`: Token ID.
 	pub fn token_exists(collection: &RefungibleHandle<T>, token: TokenId) -> bool {
 		<TotalSupply<T>>::contains_key((collection.id, token))
-	}
-
-	pub fn set_scoped_token_property(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		property: Property,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |properties| {
-			properties.try_scoped_set(scope, property.key, property.value)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
-	}
-
-	pub fn set_scoped_token_properties(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		properties: impl Iterator<Item = Property>,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |stored_properties| {
-			stored_properties.try_scoped_set_from_iter(scope, properties)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
 	}
 }
 
@@ -1426,7 +1398,9 @@ impl<T: Config> Pallet<T> {
 
 	pub fn repair_item(collection: &RefungibleHandle<T>, token: TokenId) -> DispatchResult {
 		<TokenProperties<T>>::mutate((collection.id, token), |properties| {
-			properties.recompute_consumed_space();
+			if let Some(properties) = properties {
+				properties.recompute_consumed_space();
+			}
 		});
 
 		Ok(())

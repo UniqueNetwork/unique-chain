@@ -435,16 +435,15 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		)
 	}
 
-	fn get_token_properties_map(&self, token_id: TokenId) -> up_data_structs::TokenProperties {
+	fn get_token_properties_raw(
+		&self,
+		token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
 		<TokenProperties<T>>::get((self.id, token_id))
 	}
 
-	fn set_token_properties_map(&self, token_id: TokenId, map: up_data_structs::TokenProperties) {
-		<TokenProperties<T>>::set((self.id, token_id), map)
-	}
-
-	fn properties_exist(&self, token: TokenId) -> bool {
-		<TokenProperties<T>>::contains_key((self.id, token))
+	fn set_token_properties_raw(&self, token_id: TokenId, map: up_data_structs::TokenProperties) {
+		<TokenProperties<T>>::insert((self.id, token_id), map)
 	}
 
 	fn check_nesting(
@@ -514,13 +513,15 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
-		<Pallet<T>>::token_properties((self.id, token_id))
+		<Pallet<T>>::token_properties((self.id, token_id))?
 			.get(key)
 			.cloned()
 	}
 
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
-		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+		let Some(properties) = <Pallet<T>>::token_properties((self.id, token_id)) else {
+			return vec![];
+		};
 
 		keys.map(|keys| {
 			keys.into_iter()

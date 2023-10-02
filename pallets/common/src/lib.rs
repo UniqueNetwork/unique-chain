@@ -2098,18 +2098,13 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// Get token properties raw map.
 	///
 	/// * `token_id` - The token which properties are needed.
-	fn get_token_properties_map(&self, token_id: TokenId) -> TokenProperties;
+	fn get_token_properties_raw(&self, token_id: TokenId) -> Option<TokenProperties>;
 
 	/// Set token properties raw map.
 	///
 	/// * `token_id` - The token for which the properties are being set.
 	/// * `map` - The raw map containing the token's properties.
-	fn set_token_properties_map(&self, token_id: TokenId, map: TokenProperties);
-
-	/// Whether the given token has properties.
-	///
-	/// * `token_id` - The token in question.
-	fn properties_exist(&self, token: TokenId) -> bool;
+	fn set_token_properties_raw(&self, token_id: TokenId, map: TokenProperties);
 
 	/// Set token property permissions.
 	///
@@ -2590,7 +2585,7 @@ impl<
 			<PalletEvm<T>>::deposit_log(log);
 
 			self.collection
-				.set_token_properties_map(token_id, stored_properties.into_inner());
+				.set_token_properties_raw(token_id, stored_properties.into_inner());
 		}
 
 		Ok(())
@@ -2624,7 +2619,7 @@ where
 			true
 		},
 		get_properties: |token_id| {
-			debug_assert!(!collection.properties_exist(token_id));
+			debug_assert!(collection.get_token_properties_raw(token_id).is_none());
 			TokenProperties::new()
 		},
 		_phantom: PhantomData,
@@ -2686,7 +2681,11 @@ where
 		is_collection_admin: LazyValue::new(|| collection.is_owner_or_admin(sender)),
 		property_permissions: LazyValue::new(|| <Pallet<T>>::property_permissions(collection.id)),
 		check_token_exist: |token_id| collection.token_exists(token_id),
-		get_properties: |token_id| collection.get_token_properties_map(token_id),
+		get_properties: |token_id| {
+			collection
+				.get_token_properties_raw(token_id)
+				.unwrap_or_default()
+		},
 		_phantom: PhantomData,
 	}
 }
