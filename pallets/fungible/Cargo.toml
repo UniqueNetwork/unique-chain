@@ -5,9 +5,7 @@ name = "pallet-fungible"
 version = "0.1.11"
 
 [dependencies]
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
-
+parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
 evm-coder = { workspace = true }

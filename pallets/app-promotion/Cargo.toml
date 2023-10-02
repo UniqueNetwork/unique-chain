@@ -23,11 +23,11 @@ runtime-benchmarks = [
 	# 'pallet-unique/runtime-benchmarks',
 ]
 std = [
-	'codec/std',
 	'frame-benchmarking/std',
 	'frame-support/std',
 	'frame-system/std',
 	'pallet-evm/std',
+	'parity-scale-codec/std',
 	'sp-core/std',
 	'sp-runtime/std',
 	'sp-std/std',
@@ -39,9 +39,7 @@ try-runtime = ["frame-support/try-runtime"]
 ################################################################################
 # Substrate Dependencies
 
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
-
+parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
 frame-benchmarking = { workspace = true, optional = true }
@@ -68,4 +66,4 @@ up-data-structs = { workspace = true }
 ################################################################################
 # Other
 
-log = { version = "0.4.16", default-features = false }
+log = { version = "0.4.20", default-features = false }

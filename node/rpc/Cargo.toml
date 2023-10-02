@@ -27,20 +27,20 @@ sp-runtime = { workspace = true }
 substrate-frame-rpc-system = { workspace = true }
 
 fc-db = { workspace = true }
+fc-mapping-sync = { workspace = true }
 fc-rpc = { workspace = true }
 fc-rpc-core = { workspace = true }
-fc-mapping-sync = { workspace = true }
 fp-rpc = { workspace = true }
 fp-storage = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
+pallet-ethereum.workspace = true
 serde = { workspace = true }
 uc-rpc = { workspace = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
 up-pov-estimate-rpc = { workspace = true, default-features = true }
 up-rpc = { workspace = true }
-pallet-ethereum.workspace = true
 
 [features]
 default = []

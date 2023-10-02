@@ -4,7 +4,7 @@ name = "struct-versioning"
 version = "0.1.0"
 
 [dependencies]
-quote = "1.0.15"
+quote = "1.0.33"
 syn = { version = "1.0", features = ["full"] }
 
 [lib]
