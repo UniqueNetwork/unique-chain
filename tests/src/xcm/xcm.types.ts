@@ -385,9 +385,9 @@ export class XcmTestHelper {
     });
   }
 
-  async rejectReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS, sudoer: IKeyringPair) {
-    const networkUrl = mapToChainUrl(netwokrName);
-    const targetPlayground = getDevPlayground(netwokrName);
+  async rejectReserveTransferUNQfrom(networkName: keyof typeof NETWORKS, sudoer: IKeyringPair) {
+    const networkUrl = mapToChainUrl(networkName);
+    const targetPlayground = getDevPlayground(networkName);
 
     await usingPlaygrounds(async (helper) => {
       const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
@@ -434,7 +434,7 @@ export class XcmTestHelper {
           const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${netwokrName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
+          await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
 
           maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         }
@@ -456,7 +456,7 @@ export class XcmTestHelper {
           const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId]);
           // Needed to bypass the call filter.
           const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${netwokrName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
+          await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
 
           maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         }
