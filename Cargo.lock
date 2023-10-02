@@ -6442,7 +6442,7 @@ checksum = "dd8b5dd2ae5ed71462c540258bedcb51965123ad7e7ccf4b9a8cafaa4a63576d"
 
 [[package]]
 name = "opal-runtime"
-version = "0.9.43"
+version = "1.1.0"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -10050,7 +10050,7 @@ dependencies = [
 
 [[package]]
 name = "quartz-runtime"
-version = "0.9.43"
+version = "1.1.0"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -14719,7 +14719,7 @@ checksum = "f962df74c8c05a667b5ee8bcf162993134c104e96440b663c8daa176dc772d8c"
 
 [[package]]
 name = "unique-node"
-version = "0.9.43"
+version = "1.1.0"
 dependencies = [
  "app-promotion-rpc",
  "clap",
@@ -14802,7 +14802,7 @@ dependencies = [
 
 [[package]]
 name = "unique-runtime"
-version = "0.9.43"
+version = "1.1.0"
 dependencies = [
  "app-promotion-rpc",
  "cumulus-pallet-aura-ext",
@@ -14949,7 +14949,7 @@ checksum = "a156c684c91ea7d62626509bce3cb4e1d9ed5c4d978f7b4352658f96a4c26b4a"
 
 [[package]]
 name = "up-common"
-version = "0.9.43"
+version = "1.1.0"
 dependencies = [
  "cumulus-primitives-core",
  "fp-rpc",
