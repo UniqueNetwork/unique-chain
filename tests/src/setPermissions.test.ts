@@ -60,7 +60,7 @@ describe('Integration Test: Set Permissions', () => {
     expect((await collection.getData())?.raw.permissions).to.be.deep.equal({
       access: 'Normal',
       mintMode: false,
-      nesting: {collectionAdmin: false, tokenOwner: false, restricted: undefined},
+      nesting: {collectionAdmin: false, tokenOwner: false, restricted: null},
     });
   });
 

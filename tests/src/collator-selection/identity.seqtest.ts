@@ -112,7 +112,7 @@ describe('Integration Test: Identities Manipulation', () => {
 
       // oldIdentitiesCount + 9 because one identity is overwritten, not inserted on top
       expect((await getIdentityAccounts(helper)).length).to.be.equal(oldIdentitiesCount + 9);
-      expect((await helper.callRpc('api.query.identity.identityOf', [singleIdentity[0]])).unwrap().info.display)
+      expect((await helper.callQuery('api.query.identity.identityOf', [singleIdentity[0]]))?.info.display)
         .to.be.equal({Raw: 'something special'});
     });
 

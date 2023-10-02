@@ -30,7 +30,7 @@ describeGov('Governance: Council tests', () => {
 
   async function proposalFromMoreThanHalfCouncil(proposal: any) {
     return await usingPlaygrounds(async (helper) => {
-      expect((await helper.callRpc('api.query.councilMembership.members')).toJSON().length).to.be.equal(5);
+      expect((await helper.callQuery('api.query.councilMembership.members')).length).to.be.equal(5);
       const proposeResult = await helper.council.collective.propose(
         counselors.filip,
         proposal,
@@ -54,7 +54,7 @@ describeGov('Governance: Council tests', () => {
 
   async function proposalFromAllCouncil(proposal: any) {
     return await usingPlaygrounds(async (helper) => {
-      expect((await helper.callRpc('api.query.councilMembership.members')).toJSON().length).to.be.equal(5);
+      expect((await helper.callQuery('api.query.councilMembership.members')).length).to.be.equal(5);
       const proposeResult = await helper.council.collective.propose(
         counselors.filip,
         proposal,
@@ -162,7 +162,7 @@ describeGov('Governance: Council tests', () => {
     const closeEvent = closeResult.result.events.find(helper.api!.events.council.Closed.is);
     if(!closeEvent)
       throw Error('Expected event council.Closed');
-    const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON() as string[];
+    const members = await helper.callQuery('api.query.councilMembership.members');
     expect(closeEvent.data.yes.toNumber()).to.be.equal(members.length);
   });
 
@@ -170,14 +170,14 @@ describeGov('Governance: Council tests', () => {
     const newMember = helper.arrange.createEmptyAccount();
     await expect(helper.getSudo().council.membership.addMember(sudoer, newMember.address)).to.be.fulfilled;
 
-    const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+    const members = await helper.callQuery('api.query.councilMembership.members');
     expect(members).to.contains(newMember.address);
   });
 
   itSub('Superuser can remove a member', async ({helper}) => {
     await expect(helper.getSudo().council.membership.removeMember(sudoer, counselors.alex.address)).to.be.fulfilled;
 
-    const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+    const members = await helper.callQuery('api.query.councilMembership.members');
     expect(members).to.not.contains(counselors.alex.address);
   });
 
@@ -187,7 +187,7 @@ describeGov('Governance: Council tests', () => {
 
     await proposalFromMoreThanHalfCouncil(addMemberProposal);
 
-    const techCommMembers = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+    const techCommMembers = await helper.callQuery('api.query.technicalCommitteeMembership.members');
     expect(techCommMembers).to.contains(newTechCommMember.address);
   });
 
@@ -196,7 +196,7 @@ describeGov('Governance: Council tests', () => {
     const removeMemberPrpoposal = helper.technicalCommittee.membership.removeMemberCall(techComm.andy.address);
     await proposalFromMoreThanHalfCouncil(removeMemberPrpoposal);
 
-    const techCommMembers = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+    const techCommMembers = await helper.callQuery('api.query.technicalCommitteeMembership.members');
     expect(techCommMembers).to.not.contains(techComm.andy.address);
   });
 
@@ -206,7 +206,7 @@ describeGov('Governance: Council tests', () => {
       counselors.alex,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
     )).to.be.fulfilled;
-    const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
+    const fellowshipMembers = await helper.callQuery('api.query.fellowshipCollective.members');
     expect(fellowshipMembers).to.contains(newFellowshipMember.address);
   });
 
@@ -216,7 +216,7 @@ describeGov('Governance: Council tests', () => {
 
     const proposal = helper.fellowship.collective.promoteCall(memberWithZeroRank.address);
     await proposalFromMoreThanHalfCouncil(proposal);
-    const record = (await helper.callRpc('api.query.fellowshipCollective.members', [memberWithZeroRank.address])).toJSON();
+    const record = await helper.callQuery('api.query.fellowshipCollective.members', [memberWithZeroRank.address]);
     expect(record).to.be.deep.equal({rank: 1});
 
     await clearFellowship(sudoer);
@@ -229,7 +229,7 @@ describeGov('Governance: Council tests', () => {
     const proposal = helper.fellowship.collective.demoteCall(memberWithRankOne.address);
     await proposalFromMoreThanHalfCouncil(proposal);
 
-    const record = (await helper.callRpc('api.query.fellowshipCollective.members', [memberWithRankOne.address])).toJSON();
+    const record = await helper.callQuery('api.query.fellowshipCollective.members', [memberWithRankOne.address]);
     expect(record).to.be.deep.equal({rank: 0});
 
     await clearFellowship(sudoer);
@@ -459,7 +459,7 @@ describeGov('Governance: Council tests', () => {
   });
 
   itSub('[Negative] Council referendum cannot be closed until the voting threshold is met', async ({helper}) => {
-    const councilSize = (await helper.callRpc('api.query.councilMembership.members')).toJSON().length as any as number;
+    const councilSize = (await helper.callQuery('api.query.councilMembership.members')).length as any as number;
     expect(councilSize).is.greaterThan(1);
     const proposeResult = await helper.council.collective.propose(
       counselors.filip,

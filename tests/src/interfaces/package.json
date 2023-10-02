@@ -1,0 +1,15 @@
+{
+  "name": "@unique-nft/opal-testnet-types",
+  "version": "1.0.0",
+  "description": "",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "SEE LICENSE IN ../../../LICENSE",
+  "dependencies": {
+    "@polkadot/api": "10.9.1"
+  },
+  "type": "module"
+}

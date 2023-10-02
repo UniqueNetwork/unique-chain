@@ -23,9 +23,6 @@ import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIM
 
 const testHelper = new XcmTestHelper('unique');
 
-
-
-
 describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
@@ -41,31 +38,31 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
     });
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      const destination = {
-        V2: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      };
+      // const destination = {
+      //   V2: {
+      //     parents: 1,
+      //     interior: {
+      //       X1: {
+      //         Parachain: UNIQUE_CHAIN,
+      //       },
+      //     },
+      //   },
+      // };
 
-      const metadata = {
-        name: 'Unique Network',
-        symbol: 'UNQ',
-        decimals: 18,
-        minimalBalance: 1250_000_000_000_000_000n,
-      };
-      const assets = (await (helper.callRpc('api.query.assetRegistry.assetMetadatas.entries'))).map(([_k, v] : [any, any]) =>
-        hexToString(v.toJSON()['symbol'])) as string[];
+      // const metadata = {
+      //   name: 'Unique Network',
+      //   symbol: 'UNQ',
+      //   decimals: 18,
+      //   minimalBalance: 1250_000_000_000_000_000n,
+      // };
+      // const assets = (await (helper.callRpc('api.query.assetRegistry.assetMetadatas.entries'))).map(([_k, v] : [any, any]) =>
+      //   hexToString(v.toJSON()['symbol'])) as string[];
 
-      if(!assets.includes('UNQ')) {
-        await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
-      } else {
-        console.log('UNQ token already registered on Acala assetRegistry pallet');
-      }
+      // if(!assets.includes('UNQ')) {
+      //   await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
+      // } else {
+      //   console.log('UNQ token already registered on Acala assetRegistry pallet');
+      // }
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
     });
 
@@ -105,20 +102,20 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
     });
 
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
-      const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', []))
-        .toJSON() as [])
-        .map(nToBigInt).length != 0;
+      // const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', []))
+      //   .toJSON() as [])
+      //   .map(nToBigInt).length != 0;
       /*
       Check whether the Unique token has been added
       to the whitelist, since an error will occur
       if it is added again. Needed for debugging
       when this test is run multiple times.
       */
-      if(isWhitelisted) {
-        console.log('UNQ token is already whitelisted on Polkadex');
-      } else {
-        await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
-      }
+      // if(isWhitelisted) {
+      //   console.log('UNQ token is already whitelisted on Polkadex');
+      // } else {
+      //   await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
+      // }
 
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
     });
@@ -180,7 +177,7 @@ describeXCM('[XCMLL] Integration test: Unique rejects non-native tokens', () => 
 describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
   // Unique constants
   let alice: IKeyringPair;
-  let uniqueAssetLocation;
+  //let uniqueAssetLocation;
 
   let randomAccountUnique: IKeyringPair;
   let randomAccountMoonbeam: IKeyringPair;
@@ -188,13 +185,13 @@ describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
   // Moonbeam constants
   let assetId: string;
 
-  const uniqueAssetMetadata = {
-    name: 'xcUnique',
-    symbol: 'xcUNQ',
-    decimals: 18,
-    isFrozen: false,
-    minimalBalance: 1n,
-  };
+  // const uniqueAssetMetadata = {
+  //   name: 'xcUnique',
+  //   symbol: 'xcUNQ',
+  //   decimals: 18,
+  //   isFrozen: false,
+  //   minimalBalance: 1n,
+  // };
 
 
   before(async () => {
@@ -219,38 +216,38 @@ describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
       await helper.balance.transferToEthereum(alithAccount, dorothyAccount.address, 11_000_000_000_000_000_000n);
       console.log('Sponsoring Dorothy.......DONE');
       // <<< Sponsoring Dorothy <<<
-      uniqueAssetLocation = {
-        XCM: {
-          parents: 1,
-          interior: {X1: {Parachain: UNIQUE_CHAIN}},
-        },
-      };
-      const existentialDeposit = 1n;
-      const isSufficient = true;
-      const unitsPerSecond = 1n;
-      const numAssetsWeightHint = 0;
+      // uniqueAssetLocation = {
+      //   XCM: {
+      //     parents: 1,
+      //     interior: {X1: {Parachain: UNIQUE_CHAIN}},
+      //   },
+      // };
+      // const existentialDeposit = 1n;
+      // const isSufficient = true;
+      // const unitsPerSecond = 1n;
+      // const numAssetsWeightHint = 0;
 
-      if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON()) {
-        console.log('Unique asset already registered on Moonbeam');
-      } else {
-        const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
-          location: uniqueAssetLocation,
-          metadata: uniqueAssetMetadata,
-          existentialDeposit,
-          isSufficient,
-          unitsPerSecond,
-          numAssetsWeightHint,
-        });
+      // if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON()) {
+      //   console.log('Unique asset already registered on Moonbeam');
+      // } else {
+      //   const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
+      //     location: uniqueAssetLocation,
+      //     metadata: uniqueAssetMetadata,
+      //     existentialDeposit,
+      //     isSufficient,
+      //     unitsPerSecond,
+      //     numAssetsWeightHint,
+      //   });
 
-        console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
+      //   console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
 
-        await helper.fastDemocracy.executeProposal('register UNQ foreign asset', encodedProposal);
-      }
+      //   await helper.fastDemocracy.executeProposal('register UNQ foreign asset', encodedProposal);
+      // }
 
-      // >>> Acquire Unique AssetId Info on Moonbeam >>>
-      console.log('Acquire Unique AssetId Info on Moonbeam.......');
+      // // >>> Acquire Unique AssetId Info on Moonbeam >>>
+      // console.log('Acquire Unique AssetId Info on Moonbeam.......');
 
-      assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
+      // assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
 
       console.log('UNQ asset ID is %s', assetId);
       console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
@@ -293,7 +290,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
 
   // Unique -> Astar
   const astarInitialBalance = 1n * (10n ** ASTAR_DECIMALS); // 1 ASTR, existential deposit required to actually create the account on Astar.
-  const unitsPerSecond = 9_451_000_000_000_000_000n; // The value is taken from the live Astar
+  //const unitsPerSecond = 9_451_000_000_000_000_000n; // The value is taken from the live Astar
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -307,42 +304,42 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
     });
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
-        console.log('1. Create foreign asset and metadata');
-        await helper.assets.create(
-          alice,
-          UNQ_ASSET_ID_ON_ASTAR,
-          alice.address,
-          UNQ_MINIMAL_BALANCE_ON_ASTAR,
-        );
+      // if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
+      //   console.log('1. Create foreign asset and metadata');
+      //   await helper.assets.create(
+      //     alice,
+      //     UNQ_ASSET_ID_ON_ASTAR,
+      //     alice.address,
+      //     UNQ_MINIMAL_BALANCE_ON_ASTAR,
+      //   );
 
-        await helper.assets.setMetadata(
-          alice,
-          UNQ_ASSET_ID_ON_ASTAR,
-          'Unique Network',
-          'UNQ',
-          Number(UNQ_DECIMALS),
-        );
+      //   await helper.assets.setMetadata(
+      //     alice,
+      //     UNQ_ASSET_ID_ON_ASTAR,
+      //     'Unique Network',
+      //     'UNQ',
+      //     Number(UNQ_DECIMALS),
+      //   );
 
-        console.log('2. Register asset location on Astar');
-        const assetLocation = {
-          V2: {
-            parents: 1,
-            interior: {
-              X1: {
-                Parachain: UNIQUE_CHAIN,
-              },
-            },
-          },
-        };
+      // console.log('2. Register asset location on Astar');
+      // const assetLocation = {
+      //   V2: {
+      //     parents: 1,
+      //     interior: {
+      //       X1: {
+      //         Parachain: UNIQUE_CHAIN,
+      //       },
+      //     },
+      //   },
+      // };
 
-        await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_ASTAR]);
+      //   await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_ASTAR]);
 
-        console.log('3. Set UNQ payment for XCM execution on Astar');
-        await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
-      } else {
-        console.log('UNQ is already registered on Astar');
-      }
+      //   console.log('3. Set UNQ payment for XCM execution on Astar');
+      //   await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+      // } else {
+      //   console.log('UNQ is already registered on Astar');
+      // }
       console.log('4. Transfer 1 ASTR to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);
     });

@@ -7,7 +7,7 @@
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
 import {SignerOptions, SubmittableExtrinsic} from '@polkadot/api/types/submittable';
-import {Option, u16, u32, Vec} from '@polkadot/types-codec';
+import {u32, Vec} from '@polkadot/types-codec';
 import '../../interfaces/augment-api';
 import {AugmentedSubmittables} from '@polkadot/api-base/types/submittable';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
@@ -17,8 +17,6 @@ import {hexToU8a} from '@polkadot/util/hex';
 import {u8aConcat} from '@polkadot/util/u8a';
 import {
   IApiListeners,
-  IBlock,
-  IExtrinsic,
   IChainProperties,
   ICollectionCreationOptions,
   ICollectionLimits,
@@ -40,15 +38,16 @@ import {
   TSubstrateAccount,
   TNetworks,
   IEthCrossAccountId,
-  ICollection,
-  ITokenPropertyPermission,
   ITokenData,
   TransactionStatus,
 } from './types';
-import {Block, SignedBlock, RuntimeDispatchInfo} from '@polkadot/types/interfaces';
-import {GenericExtrinsic} from '@polkadot/types/extrinsic';
-import {FrameSystemEventRecord} from '@polkadot/types/lookup';
-import {UpDataStructsRpcCollection, UpDataStructsCollectionLimits, UpDataStructsProperty, UpDataStructsNestingPermissions, PalletEvmAccountBasicCrossAccountIdRepr, OrmlVestingVestingSchedule, PalletBalancesBalanceLock, PalletBalancesReasons, UpDataStructsPropertyKeyPermission, UpDataStructsTokenData} from '@unique-nft/types/types';
+import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import {FrameSystemEventRecord, PalletEvmAccountBasicCrossAccountIdRepr} from '@polkadot/types/lookup';
+import {RpcInterface} from '@polkadot/rpc-core/types';
+import {Queries, UniqueQueryResult, UniqueRpcResult, convert} from './converter';
+
+type RpcResult<Section extends keyof RpcInterface, Method extends keyof RpcInterface[Section]> = Method extends string ? `api.rpc.${Section}.${Method}` : never;
+type QueryResult<Section extends keyof Queries, Method extends keyof Queries[Section]> = Method extends string ? `api.query.${Section}.${Method}` : never;
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
@@ -161,8 +160,8 @@ class UniqueUtil {
     };
   }
 
-  static vec2str(arr: u16[]) {
-    return arr.map(x => String.fromCharCode(x.toNumber())).join('');
+  static vec2str(arr: number[]) {
+    return arr.map(x => String.fromCharCode(x)).join('');
   }
 
   static str2vec(string: string) {
@@ -498,7 +497,7 @@ export class ChainHelperBase {
             //resolve({result, status, blockHash: result.status.asInBlock.toString()});
             resolve(convertTransactionResult(result));
           } else if(status === 'Fail') {
-            let moduleError = null;
+            let moduleError: string | null = null;
 
             if(result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
@@ -561,9 +560,9 @@ export class ChainHelperBase {
     });
 
     if(len === null) {
-      return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()])) as RuntimeDispatchInfo;
+      return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()]));
     } else {
-      return (await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
+      return convert((await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo);
     }
   }
 
@@ -651,24 +650,17 @@ export class ChainHelperBase {
     return result;
   }
 
-  async callRpc
-  // TODO: make it strongly typed, or use api.query/api.rpc directly
-  // <
-  // K extends 'rpc' | 'query',
-  // E extends string,
-  // V extends (...args: any) => any = ForceFunction<
-  //   Get2<
-  //     K extends 'rpc' ? DecoratedRpc<'promise', RpcInterface> : QueryableStorage<'promise'>,
-  //     E, (...args: any) => Invalid<'not found'>
-  //   >
-  // >,
-  // P = Parameters<V>,
-  // >
-  (rpc: string, params?: any[]): Promise<any> {
+  async callRpc<S extends keyof RpcInterface, M extends keyof RpcInterface[S]>(rpc: RpcResult<S, M>, params?: any[]): Promise<UniqueRpcResult<RpcInterface[S][M]>> {
+    return convert(await this.call(rpc, params)) as UniqueRpcResult<RpcInterface[S][M]>;
+  }
 
+  async callQuery<S extends keyof Queries, M extends keyof Queries[S]>(rpc: QueryResult<S, M>, params?: any[]): Promise<UniqueQueryResult<Queries[S][M]>> {
+    return convert(await this.call(rpc, params)) as UniqueQueryResult<Queries[S][M]>;
+  }
+
+  private async call(rpc: string, params?: any[]): Promise<any> {
     if(typeof params === 'undefined') params = [] as any;
     if(this.api === null) throw Error('API not initialized');
-    if(!rpc.startsWith('api.rpc.') && !rpc.startsWith('api.query.')) throw Error(`${rpc} is not RPC call`);
 
     const startTime = (new Date()).getTime();
     let result;
@@ -736,7 +728,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
  * @returns number of blocks or null if sponsorship hasn't been set
  */
   async getTokenNextSponsored(collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<number | null> {
-    return (await this.helper.callRpc('api.rpc.unique.nextSponsored', [collectionId, addressObj, tokenId])).toJSON();
+    return (await this.helper.callRpc('api.rpc.unique.nextSponsored', [collectionId, addressObj, tokenId]));
   }
 
   /**
@@ -745,7 +737,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns number of created collections
    */
   async getTotalCount(): Promise<number> {
-    return (await this.helper.callRpc('api.rpc.unique.collectionStats')).created.toNumber();
+    return (await this.helper.callRpc('api.rpc.unique.collectionStats')).created;
   }
 
   /**
@@ -757,20 +749,11 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example await getData(2)
    * @returns collection information object
    */
-  async getData(collectionId: number): Promise<{
-    id: number;
-    name: string;
-    description: string;
-    tokensCount: number;
-    admins: CrossAccountId[];
-    normalizedOwner: TSubstrateAccount;
-    raw: ICollection;
-  } | null> {
-    const result = await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]) as Option<UpDataStructsRpcCollection>;
-    const collection = result.unwrapOr(null);
+  async getData(collectionId: number) {
+    const collection = await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]);
     if(collection === null) return null;
-    const tokensCount = (['RFT', 'NFT'].includes(collection.mode.type))
-      ? await this.helper[collection.mode.type.toLocaleLowerCase() as 'nft' | 'rft'].getLastTokenId(collectionId)
+    const tokensCount = collection.mode == 'Nft' || collection.mode == 'ReFungible'
+      ? await this.helper[collection.mode == 'Nft' ? 'nft' : 'rft'].getLastTokenId(collectionId)
       : 0;
     return {
       id: collectionId,
@@ -779,7 +762,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       tokensCount,
       admins: await this.getAdmins(collectionId),
       normalizedOwner: this.helper.address.normalizeSubstrate(collection.owner.toString()),
-      raw: convertCollection(collection),
+      raw: collection,
     };
   }
 
@@ -792,10 +775,10 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns array of administrators
    */
   async getAdmins(collectionId: number, normalize = false): Promise<CrossAccountId[]> {
-    const admins = (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])) as Vec<PalletEvmAccountBasicCrossAccountIdRepr>;
+    const admins = await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     return normalize
-      ? admins.map((address) => CrossAccountId.withNormalizedSubstrate(convertCrossAccountId(address).Substrate))
-      : admins.map((address) => convertCrossAccountId(address));
+      ? admins.map((address) => CrossAccountId.withNormalizedSubstrate(new CrossAccountId(address).Substrate))
+      : admins.map((address) => new CrossAccountId(address));
   }
 
   /**
@@ -806,10 +789,10 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns array of allow-listed addresses
    */
   async getAllowList(collectionId: number, normalize = false): Promise<CrossAccountId[]> {
-    const allowListed = (await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId])) as Vec<PalletEvmAccountBasicCrossAccountIdRepr>;
+    const allowListed = await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId]);
     return normalize
-      ? allowListed.map((address) => CrossAccountId.withNormalizedSubstrate(convertCrossAccountId(address).Substrate))
-      : allowListed.map((address) => convertCrossAccountId(address));
+      ? allowListed.map((address) => CrossAccountId.withNormalizedSubstrate(new CrossAccountId(address).Substrate))
+      : allowListed.map((address) => new CrossAccountId(address));
   }
 
   /**
@@ -819,9 +802,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example await getEffectiveLimits(2)
    * @returns object of collection limits
    */
-  async getEffectiveLimits(collectionId: number): Promise<ICollectionLimits | null> {
-    const limits =  ((await this.helper.callRpc('api.rpc.unique.effectiveCollectionLimits', [collectionId])) as Option<UpDataStructsCollectionLimits>).unwrapOr(null);
-    return limits != null ? convertCollectionLimits(limits) : null;
+  async getEffectiveLimits(collectionId: number) {
+    return await this.helper.callRpc('api.rpc.unique.effectiveCollectionLimits', [collectionId]);
   }
 
   /**
@@ -998,7 +980,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns is user in allow list
    */
   async allowed(collectionId: number, user: ICrossAccountId): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user])).toJSON();
+    return await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user]);
   }
 
   /**
@@ -1111,12 +1093,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example getProperties(1219, ['location', 'date', 'time', 'isParadise']);
    * @returns array of key-value pairs
    */
-  async getProperties(collectionId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
-    const properties = (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])) as Vec<UpDataStructsProperty>;
-    return properties.map(p => ({
-      key: p.key.toUtf8(),
-      value: p.value.toUtf8(),
-    }));
+  async getProperties(collectionId: number, propertyKeys?: string[] | null) {
+    return await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys]);
   }
 
   async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
@@ -1127,8 +1105,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
   }
 
   async getCollectionOptions(collectionId: number) {
-    const collection = ((await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])) as Option<UpDataStructsRpcCollection>).unwrapOr(null);
-    return collection != null ? convertCollection(collection) : undefined;
+    return await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]);
   }
 
   /**
@@ -1306,7 +1283,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns number of approved to transfer pieces
    */
   async getTokenApprovedPieces(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId, fromAccountObj: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.allowance', [collectionId, fromAccountObj, toAccountObj, tokenId])).toBigInt();
+    return await this.helper.callRpc('api.rpc.unique.allowance', [collectionId, fromAccountObj, toAccountObj, tokenId]);
   }
 
   /**
@@ -1317,7 +1294,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns id of the last created token
    */
   async getLastTokenId(collectionId: number): Promise<number> {
-    return (await this.helper.callRpc('api.rpc.unique.lastTokenId', [collectionId])).toNumber();
+    return await this.helper.callRpc('api.rpc.unique.lastTokenId', [collectionId]);
   }
 
   /**
@@ -1329,7 +1306,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns true if the token exists, otherwise false
    */
   async doesTokenExist(collectionId: number, tokenId: number): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId])).toJSON();
+    return await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId]);
   }
 }
 
@@ -1343,7 +1320,7 @@ class NFTnRFT extends CollectionGroup {
    * @returns array of token ids owned by account
    */
   async getTokensByAddress(collectionId: number, addressObj: ICrossAccountId): Promise<number[]> {
-    return (await this.helper.callRpc('api.rpc.unique.accountTokens', [collectionId, addressObj])).toJSON();
+    return await this.helper.callRpc('api.rpc.unique.accountTokens', [collectionId, addressObj]);
   }
 
   /**
@@ -1362,18 +1339,18 @@ class NFTnRFT extends CollectionGroup {
       args = [collectionId, tokenId];
     } else {
       if(propertyKeys.length == 0) {
-        const collection = ((await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])) as Option<UpDataStructsRpcCollection>).unwrapOr(null);
+        const collection = await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]);
         if(!collection) return null;
-        propertyKeys = collection.tokenPropertyPermissions.map(x => x.key.toUtf8());
+        propertyKeys = collection.tokenPropertyPermissions.map(x => x.key);
       }
       args = [collectionId, tokenId, propertyKeys, blockHashAt];
     }
-    const tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', args) as UpDataStructsTokenData;
-    const owner = tokenData.owner.unwrapOr(null);
+    const tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', args);
+    const owner = tokenData.owner;
     if(owner === null) return null;
-    const crossOwner = convertCrossAccountId(owner);
+    const crossOwner = new CrossAccountId(owner);
     return {
-      properties: tokenData.properties.map(convertProperty),
+      properties: tokenData.properties,
       owner: crossOwner,
       normalizedOwner: crossOwner.withNormalizedSubstrate(),
     };
@@ -1387,14 +1364,17 @@ class NFTnRFT extends CollectionGroup {
    * @example getTokenOwner(10, 5);
    * @returns Address in CrossAccountId format, e.g. {Substrate: "5DnSF6RRjwteE3BrCj..."}
    */
-  async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId> {
-    let owner;
+  async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId | null> {
+    let args;
     if(typeof blockHashAt === 'undefined') {
-      owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId]);
+      args = [collectionId, tokenId];
     } else {
-      owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId, blockHashAt]);
+      args = [collectionId, tokenId, blockHashAt];
     }
-    return CrossAccountId.fromLowerCaseKeys(owner.toJSON());
+    const owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', args);
+    if(!owner)
+      return null;
+    return new CrossAccountId(owner);
   }
 
   /**
@@ -1412,10 +1392,10 @@ class NFTnRFT extends CollectionGroup {
     } else {
       args = [collectionId, tokenId, blockHashAt];
     }
-    const owner = (await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', args) as Option<PalletEvmAccountBasicCrossAccountIdRepr>).unwrapOr(null);
+    const owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', args);
     if(owner === null) return null;
 
-    return convertCrossAccountId(owner);
+    return new CrossAccountId(owner);
   }
 
   /**
@@ -1483,9 +1463,8 @@ class NFTnRFT extends CollectionGroup {
    * @example getPropertyPermissions(1219, ['location', 'date', 'time', 'isParadise']);
    * @returns array of key-permission pairs
    */
-  async getPropertyPermissions(collectionId: number, propertyKeys: string[] | null = null): Promise<ITokenPropertyPermission[]> {
-    const permissions =  await this.helper.callRpc('api.rpc.unique.propertyPermissions', [collectionId, ...(propertyKeys === null ? [] : [propertyKeys])]) as Vec<UpDataStructsPropertyKeyPermission>;
-    return permissions.map(convertTokenPropertyPermissions);
+  async getPropertyPermissions(collectionId: number, propertyKeys: string[] | null = null) {
+    return await this.helper.callRpc('api.rpc.unique.propertyPermissions', [collectionId, ...(propertyKeys === null ? [] : [propertyKeys])]);
   }
 
   /**
@@ -1519,8 +1498,7 @@ class NFTnRFT extends CollectionGroup {
    * @returns array of key-value pairs
    */
   async getTokenProperties(collectionId: number, tokenId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
-    const properties = await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, propertyKeys]) as Vec<UpDataStructsProperty>;
-    return properties.map(convertProperty);
+    return await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, propertyKeys]);
   }
 
   /**
@@ -1592,8 +1570,8 @@ class NFTnRFT extends CollectionGroup {
    * @param operator operator addrees
    * @returns true if operator is enabled
    */
-  async allowanceForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.allowanceForAll', [collectionId, owner, operator])).toJSON();
+  async allowanceForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean | null> {
+    return await this.helper.callRpc('api.rpc.unique.allowanceForAll', [collectionId, owner, operator]);
   }
 
   /** Sets or unsets the approval of a given operator.
@@ -1645,7 +1623,10 @@ class NFTGroup extends NFTnRFT {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async isTokenApproved(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId): Promise<boolean> {
-    return (await this.getTokenApprovedPieces(collectionId, tokenId, toAccountObj, await this.getTokenOwner(collectionId, tokenId))) === 1n;
+    const owner = await this.getTokenOwner(collectionId, tokenId);
+    if(!owner)
+      throw Error('Token owner not found');
+    return (await this.getTokenApprovedPieces(collectionId, tokenId, toAccountObj, owner)) === 1n;
   }
 
   /**
@@ -1686,15 +1667,14 @@ class NFTGroup extends NFTnRFT {
    * @example getTokenChildren(10, 5);
    * @returns tokens whose depth of nesting is <= 5
    */
-  async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<IToken[]> {
-    let children;
+  async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string) {
+    let args;
     if(typeof blockHashAt === 'undefined') {
-      children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId]);
+      args = [collectionId, tokenId];
     } else {
-      children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId, blockHashAt]);
+      args = [collectionId, tokenId, blockHashAt];
     }
-
-    return children.toJSON().map((x: any) => ({collectionId: x.collection, tokenId: x.token}));
+    return await this.helper.callRpc('api.rpc.unique.tokenChildren', args);
   }
 
   /**
@@ -1779,7 +1759,7 @@ class NFTGroup extends NFTnRFT {
    * @returns array of newly created tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { properties?: IProperty[] }[]): Promise<UniqueNFToken[]> {
-    const rawTokens = [];
+    const rawTokens: any[] = [];
     for(const token of tokens) {
       const raw = {NFT: {properties: token.properties}};
       rawTokens.push(raw);
@@ -1839,7 +1819,7 @@ class RFTGroup extends NFTnRFT {
    * @returns array of top 10 owners
    */
   async getTokenTop10Owners(collectionId: number, tokenId: number): Promise<CrossAccountId[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).toJSON().map(CrossAccountId.fromLowerCaseKeys);
+    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).map(owner => new CrossAccountId(owner));
   }
 
   /**
@@ -1851,7 +1831,7 @@ class RFTGroup extends NFTnRFT {
    * @returns number of pieces ownerd by address
    */
   async getTokenBalance(collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, tokenId])).toBigInt();
+    return await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, tokenId]);
   }
 
   /**
@@ -1944,7 +1924,7 @@ class RFTGroup extends NFTnRFT {
    * @returns array of newly created RFT tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { pieces: bigint, properties?: IProperty[] }[]): Promise<UniqueRFToken[]> {
-    const rawTokens = [];
+    const rawTokens: any[] = [];
     for(const token of tokens) {
       const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
       rawTokens.push(raw);
@@ -2007,8 +1987,8 @@ class RFTGroup extends NFTnRFT {
    * @example getTokenTotalPieces(10, 5);
    * @returns number of pieces
    */
-  async getTokenTotalPieces(collectionId: number, tokenId: number): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, tokenId])).unwrap().toBigInt();
+  async getTokenTotalPieces(collectionId: number, tokenId: number): Promise<bigint | null> {
+    return await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, tokenId]);
   }
 
   /**
@@ -2027,6 +2007,8 @@ class RFTGroup extends NFTnRFT {
       'api.tx.unique.repartition', [collectionId, tokenId, amount],
       true,
     );
+    if(!currentAmount)
+      throw Error("Token doens't exist");
     if(currentAmount < amount) {
       const event = repartitionResult.result.events.find(this.helper.api!.events.common.ItemCreated.is);
       return this.helper.util.checkEvent(event, collectionId);
@@ -2110,7 +2092,7 @@ class FTGroup extends CollectionGroup {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: { value: bigint }[], owner: ICrossAccountId): Promise<boolean> {
-    const rawTokens = [];
+    const rawTokens: any[] = [];
     for(const token of tokens) {
       const raw = {Fungible: {Value: token.value}};
       rawTokens.push(raw);
@@ -2132,7 +2114,7 @@ class FTGroup extends CollectionGroup {
    * @returns array of ```ICrossAccountId```
    */
   async getTop10Owners(collectionId: number): Promise<CrossAccountId[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).toJSON().map(CrossAccountId.fromLowerCaseKeys);
+    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).map(owner => new CrossAccountId(owner));
   }
 
   /**
@@ -2143,7 +2125,7 @@ class FTGroup extends CollectionGroup {
    * @returns amount of fungible tokens owned by address
    */
   async getBalance(collectionId: number, addressObj: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, 0])).toBigInt();
+    return await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, 0]);
   }
 
   /**
@@ -2203,8 +2185,8 @@ class FTGroup extends CollectionGroup {
    * @param collectionId
    * @returns
    */
-  async getTotalPieces(collectionId: number): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, 0])).unwrap().toBigInt();
+  async getTotalPieces(collectionId: number): Promise<bigint | null> {
+    return await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, 0]);
   }
 
   /**
@@ -2255,7 +2237,7 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    * @returns the number of the last block
    */
   async getLatestBlockNumber(): Promise<number> {
-    return (await this.helper.callRpc('api.rpc.chain.getHeader')).number.toNumber();
+    return (await this.helper.callRpc('api.rpc.chain.getHeader')).number;
   }
 
   /**
@@ -2265,26 +2247,25 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    * @returns hash of a block
    */
   async getBlockHashByNumber(blockNumber: number): Promise<string | null> {
-    const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])).toJSON();
+    const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber]));
     if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
     return blockHash;
   }
 
   // TODO add docs
-  async getBlock(blockHashOrNumber: string | number): Promise<IBlock | null> {
+  async getBlock(blockHashOrNumber: string | number) {
     const blockHash = typeof blockHashOrNumber === 'string' ? blockHashOrNumber : await this.getBlockHashByNumber(blockHashOrNumber);
     if(!blockHash) return null;
-    const signedBlock = await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash]) as SignedBlock;
-    return convertBlock(signedBlock.block);
+    const signedBlock = await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash]);
+    return signedBlock.block;
   }
 
   /**
    * Get latest relay block
    * @returns {number} relay block
    */
-  async getRelayBlockNumber(): Promise<bigint> {
-    const blockNumber = (await this.helper.callRpc('api.query.parachainSystem.validationData')).toJSON().relayParentNumber;
-    return BigInt(blockNumber);
+  async getRelayBlockNumber(): Promise<number | null> {
+    return (await this.helper.callQuery('api.query.parachainSystem.validationData'))?.relayParentNumber ?? null;
   }
 
   /**
@@ -2294,7 +2275,7 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    * @returns number, account's nonce
    */
   async getNonce(address: TSubstrateAccount): Promise<number> {
-    return (await this.helper.callRpc('api.query.system.account', [address])).nonce.toNumber();
+    return (await this.helper.callQuery('api.query.system.account', [address])).nonce;
   }
 }
 
@@ -2306,7 +2287,7 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
  * @returns amount of tokens on address
  */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
+    return (await this.helper.callQuery('api.query.system.account', [address])).data.free;
   }
 
   /**
@@ -2337,9 +2318,8 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
    * @param address substrate address
    * @returns
    */
-  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
-    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
-    return {free: accountInfo.free.toBigInt(), frozen: accountInfo.frozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
+  async getSubstrateFull(address: TSubstrateAccount) {
+    return (await this.helper.callQuery('api.query.system.account', [address])).data;
   }
 
   /**
@@ -2347,18 +2327,16 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
    * @returns
    */
   async getTotalIssuance(): Promise<bigint> {
-    const total = (await this.helper.callRpc('api.query.balances.totalIssuance', []));
-    return total.toBigInt();
+    return await this.helper.callQuery('api.query.balances.totalIssuance', []);
   }
 
-  async getLocked(address: TSubstrateAccount): Promise<{ id: string, amount: bigint, reason: 'Fee' | 'Misc' | 'All' }[]> {
-    const locks = (await this.helper.callRpc('api.query.balances.locks', [address])) as Vec<PalletBalancesBalanceLock>;
-    return locks.map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt(), reason: convertLockReason(lock.reasons)}));
+  async getLocked(address: TSubstrateAccount) {
+    return await this.helper.callQuery('api.query.balances.locks', [address]);
   }
 
-  async getFrozen(address: TSubstrateAccount): Promise<{ id: string, amount: bigint }[]> {
-    const locks = (await this.helper.api!.query.balances.freezes(address)) as unknown as Array<any>;
-    return locks.map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()}));
+  async getFrozen(address: TSubstrateAccount) {
+    const locks = await this.helper.callQuery('api.query.balances.freezes', [address]);
+    return locks;
   }
 }
 
@@ -2370,7 +2348,7 @@ export class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup
    * @returns amount of tokens on address
    */
   async getEthereum(address: TEthereumAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
+    return await this.helper.callRpc('api.rpc.eth.getBalance', [address]);
   }
 
   /**
@@ -2514,7 +2492,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param schedule Schedule params
    * @example vestedTransfer(signer, recepient.address, 20000, 100, 10, 50 * nominal); // total amount of vested tokens will be 100 * 50 = 5000
    */
-  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: { start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint }): Promise<void> {
+  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: { start: number, period: number, periodCount: number, perPeriod: bigint }): Promise<void> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, schedule]);
     const event = result.result.events
       .filter(this.helper.api!.events.vesting.VestingScheduleAdded.is)
@@ -2527,14 +2505,8 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param address Substrate address of recipient
    * @returns
    */
-  async getVestingSchedules(address: TSubstrateAccount): Promise<{ start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint }[]> {
-    const schedules = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])) as Vec<OrmlVestingVestingSchedule>;
-    return schedules.map(schedule => ({
-      start: schedule.start.toBigInt(),
-      period: schedule.period.toBigInt(),
-      periodCount: schedule.periodCount.toBigInt(),
-      perPeriod: schedule.perPeriod.toBigInt(),
-    }));
+  async getVestingSchedules(address: TSubstrateAccount) {
+    return await this.helper.callQuery('api.query.vesting.vestingSchedules', [address]);
   }
 
   /**
@@ -2730,7 +2702,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    */
   async getStakesNumber(address: ICrossAccountId): Promise<number> {
     if('Ethereum' in address) throw Error('only substrate address');
-    return (await this.helper.callRpc('api.query.appPromotion.stakesPerAccount', [address.Substrate])).toNumber();
+    return await this.helper.callQuery('api.query.appPromotion.stakesPerAccount', [address.Substrate]);
   }
 
   /**
@@ -2739,8 +2711,10 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns total staked amount
    */
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
-    if(address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
-    return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
+    let args: any[] | undefined;
+    if(address)
+      args = [address];
+    return await this.helper.callRpc('api.rpc.appPromotion.totalStaked', args);
   }
 
   /**
@@ -2748,11 +2722,11 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @param address substrate or ethereum address
    * @returns array of stakes. `block` – the number of the block in which the stake was made. `amount` - the number of tokens staked in the block
    */
-  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+  async getTotalStakedPerBlock(address: ICrossAccountId) {
     const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
-    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => ({
-      block: block.toBigInt(),
-      amount: amount.toBigInt(),
+    return rawTotalStakerdPerBlock.map(([block, amount]) => ({
+      block: block,
+      amount: amount,
     }));
   }
 
@@ -2762,7 +2736,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns total pending unstake amount
    */
   async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
+    return await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address]);
   }
 
   /**
@@ -2773,8 +2747,8 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
     const rawUnstakedPerBlock = await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address]);
     const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => ({
-      block: block.toBigInt(),
-      amount: amount.toBigInt(),
+      block: block,
+      amount: amount,
     }));
     return result;
   }
@@ -2783,7 +2757,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
 
 class PreimageGroup extends HelperGroup<UniqueHelper> {
   async getPreimageInfo(h256: string) {
-    return (await this.helper.callRpc('api.query.preimage.statusFor', [h256])).toJSON();
+    return await this.helper.callQuery('api.query.preimage.statusFor', [h256]);
   }
 
   /**
@@ -3421,108 +3395,8 @@ export class UniqueRFToken extends UniqueBaseToken {
   }
 }
 
-function convertCollectionLimits(limits: UpDataStructsCollectionLimits): ICollectionLimits {
-  const sponsoredDataRateLimit = limits.sponsoredDataRateLimit.unwrapOr(null);
-  const sponsoredDataRateLimitNew: 'SponsoringDisabled' | {Blocks: number} | null = sponsoredDataRateLimit == null ? null
-    : sponsoredDataRateLimit.isSponsoringDisabled ? 'SponsoringDisabled'
-      : {Blocks: sponsoredDataRateLimit.asBlocks.toNumber()};
-  return {
-    accountTokenOwnershipLimit: limits.accountTokenOwnershipLimit.unwrapOr(null)?.toNumber() ?? null,
-    sponsoredDataSize: limits.sponsoredDataSize.unwrapOr(null)?.toNumber() ?? null,
-    sponsoredDataRateLimit: sponsoredDataRateLimitNew,
-    tokenLimit: limits.tokenLimit.unwrapOr(null)?.toNumber() ?? null,
-    sponsorTransferTimeout: limits.sponsorTransferTimeout.unwrapOr(null)?.toNumber() ?? null,
-    sponsorApproveTimeout: limits.sponsorApproveTimeout.unwrapOr(null)?.toNumber() ?? null,
-    ownerCanTransfer: limits.ownerCanTransfer.unwrapOr(null)?.toPrimitive() ?? null,
-    ownerCanDestroy: limits.ownerCanDestroy.unwrapOr(null)?.toPrimitive() ?? null,
-    transfersEnabled: limits.transfersEnabled.unwrapOr(null)?.toPrimitive() ?? null,
-  };
-}
-
 function convertCrossAccountId(crossAccount: PalletEvmAccountBasicCrossAccountIdRepr) : CrossAccountId {
   return new CrossAccountId(crossAccount.isEthereum ? {Ethereum: crossAccount.asEthereum.toString()} : {Substrate: crossAccount.asSubstrate.toString()});
-}
-
-function convertRestricted(nesting: UpDataStructsNestingPermissions): number[] | undefined {
-  const restricted = nesting.restricted.unwrapOr(null);
-  return restricted != null ? Array.from(restricted).map((r) => r.toNumber()) : undefined;
-}
-
-function convertCollection(collection: UpDataStructsRpcCollection): ICollection {
-  const sponsorship: {Confirmed: string} | {Unconfirmed: string} | 'Disabled' = collection.sponsorship.isConfirmed ? {Confirmed: collection.sponsorship.asConfirmed.toString()}
-    : collection.sponsorship.isDisabled ? 'Disabled'
-      : {Unconfirmed: collection.sponsorship.asUnconfirmed.toString()};
-  const nesting = collection.permissions.nesting.unwrapOr(null);
-  const nestingNew: INestingPermissions | undefined = nesting != null ?
-    {
-      tokenOwner: nesting.tokenOwner.toPrimitive(),
-      collectionAdmin: nesting.collectionAdmin.toPrimitive(),
-      restricted: convertRestricted(nesting),
-    } : undefined;
-  const mode: 'Nft' | {'Fungible': number} | 'ReFungible' = collection.mode.isFungible ? {'Fungible': collection.mode.asFungible.toNumber()}
-    : collection.mode.isNft ? 'Nft'
-      : 'ReFungible';
-  return {
-    limits: convertCollectionLimits(collection.limits),
-    permissions: {
-      access:  collection.permissions.access.unwrapOr(null)?.type,
-      mintMode: collection.permissions.mintMode.unwrapOr(null)?.toPrimitive(),
-      nesting: nestingNew,
-    },
-    properties: collection.properties.map(convertProperty),
-    tokenPropertyPermissions: collection.tokenPropertyPermissions.map(convertTokenPropertyPermissions),
-    tokenPrefix: collection.tokenPrefix.toUtf8(),
-    flags: {
-      foreign: collection.flags.foreign.toPrimitive(),
-      erc721metadata: collection.flags.erc721metadata.toPrimitive(),
-    },
-    mode,
-    readOnly: collection.readOnly.toPrimitive(),
-    sponsorship,
-    owner: collection.owner.toString(),
-  };
-}
-
-function convertLockReason(reason: PalletBalancesReasons): 'Fee' | 'Misc' | 'All' {
-  return reason.isFee ? 'Fee'
-    : reason.isMisc ? 'Misc'
-      : 'All';
-}
-
-function convertBlock(block: Block): IBlock {
-  return {
-    extrinsics: block.extrinsics.map(convertExtrinsic),
-    header: {
-      parentHash: block.header.parentHash.toString(),
-      number: block.header.number.toNumber(),
-    },
-  };
-}
-
-function convertExtrinsic(extrinsic: GenericExtrinsic): IExtrinsic {
-  return {
-    isSigned: extrinsic.isSigned,
-    method: {
-      method: extrinsic.method.method,
-      section: extrinsic.method.section,
-      args: extrinsic.method.args,
-    },
-  };
-}
-
-function convertProperty(property: UpDataStructsProperty): IProperty {
-  return {key: property.key.toUtf8(), value: property.value.toUtf8()};
-}
-
-function convertTokenPropertyPermissions(permission: UpDataStructsPropertyKeyPermission): ITokenPropertyPermission {
-  return {
-    key: permission.key.toUtf8(),
-    permission: {
-      mutable: permission.permission.mutable.toPrimitive(),
-      collectionAdmin: permission.permission.collectionAdmin.toPrimitive(),
-      tokenOwner: permission.permission.tokenOwner.toPrimitive(),
-    },
-  };
 }
 
 function getTransactionStatus(data: ISubmittableResult): TransactionStatus {

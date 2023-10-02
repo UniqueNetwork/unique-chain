@@ -149,7 +149,7 @@ describe('App promotion', () => {
       const [staker] = await getAccounts(1);
 
       // staker has tokens locked with vesting id:
-      await helper.balance.vestedTransfer(donor, staker.address, {start: 0n, period: 1n, periodCount: 1n, perPeriod: 200n * nominal});
+      await helper.balance.vestedTransfer(donor, staker.address, {start: 0, period: 1, periodCount: 1, perPeriod: 200n * nominal});
       expect(await helper.balance.getSubstrateFull(staker.address))
         .to.deep.contain({free: 1200n * nominal, frozen: 200n * nominal, reserved: 0n});
 
@@ -611,10 +611,10 @@ describe('App promotion', () => {
       await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address]);
 
       expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
-        confirmed: {
-          substrate: palletAddress,
+      expect(await helper.callQuery('api.query.evmContractHelpers.owner', [flipper.options.address])).to.be.equal(contractOwner);
+      expect(await helper.callQuery('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).to.deep.equal({
+        Confirmed: {
+          Substrate: palletAddress,
         },
       });
     });
@@ -627,9 +627,9 @@ describe('App promotion', () => {
       await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.fulfilled;
 
       // Contract is self sponsored
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.be.deep.equal({
-        confirmed: {
-          ethereum: flipper.options.address.toLowerCase(),
+      expect(await helper.callQuery('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).to.be.deep.equal({
+        Confirmed: {
+          Ethereum: flipper.options.address.toLowerCase(),
         },
       });
 
@@ -638,10 +638,10 @@ describe('App promotion', () => {
 
       // new sponsor is pallet address
       expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
-        confirmed: {
-          substrate: palletAddress,
+      expect(await helper.callQuery('api.query.evmContractHelpers.owner', [flipper.options.address])).to.be.equal(contractOwner);
+      expect(await helper.callQuery('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).to.deep.equal({
+        Confirmed: {
+          Substrate: palletAddress,
         },
       });
     });
@@ -658,10 +658,10 @@ describe('App promotion', () => {
       await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
 
       expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
-        confirmed: {
-          ethereum: flipper.options.address.toLowerCase(),
+      expect(await helper.callQuery('api.query.evmContractHelpers.owner', [flipper.options.address])).to.be.equal(contractOwner);
+      expect(await helper.callQuery('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).to.deep.equal({
+        Confirmed: {
+          Ethereum: flipper.options.address.toLowerCase(),
         },
       });
     });
@@ -678,9 +678,9 @@ describe('App promotion', () => {
       await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true)).to.be.rejectedWith('appPromotion.NoPermission');
 
       // contract still self-sponsored
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
-        confirmed: {
-          ethereum: flipper.options.address.toLowerCase(),
+      expect(await helper.callQuery('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).to.deep.equal({
+        Confirmed: {
+          Ethereum: flipper.options.address.toLowerCase(),
         },
       });
     });
@@ -732,10 +732,8 @@ describe('App promotion', () => {
       await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address], true);
 
       expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.false;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
-        disabled: null,
-      });
+      expect(await helper.callQuery('api.query.evmContractHelpers.owner', [flipper.options.address])).to.be.equal(contractOwner);
+      expect(await helper.callQuery('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).to.deep.equal('Disabled');
 
       await flipper.methods.flip().send({from: caller});
       expect(await flipper.methods.getValue().call()).to.be.true;
@@ -980,29 +978,29 @@ async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
   throw Error(`Cannot find payout for ${account}`);
 }
 
-function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
+function calculateIncome(base: bigint, iter = 0, calcPeriod: number = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
   const ACCURACY = 1_000_000_000n;
   // 5n / 10_000n = 0.05% p/day
-  const income = base + base * (ACCURACY * (calcPeriod * 5n) / (10_000n * DAY)) / ACCURACY ;
+  const income = base + base * (ACCURACY * (BigInt(calcPeriod) * 5n) / (10_000n * DAY)) / ACCURACY ;
 
   if(iter > 1) {
     return calculateIncome(income, iter - 1, calcPeriod);
   } else return income;
 }
 
-function rewardAvailableInBlock(stakedInBlock: bigint) {
-  if(stakedInBlock % LOCKING_PERIOD === 0n) return stakedInBlock + LOCKING_PERIOD;
-  return (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2n);
+function rewardAvailableInBlock(stakedInBlock: number) {
+  if(stakedInBlock % LOCKING_PERIOD === 0) return stakedInBlock + LOCKING_PERIOD;
+  return (stakedInBlock - stakedInBlock % LOCKING_PERIOD) + (LOCKING_PERIOD * 2);
 }
 
 // Wait while promotion period less than specified block, to avoid boundary cases
 // 0 if this should be the beginning of the period.
-async function waitPromotionPeriodDoesntEnd(helper: DevUniqueHelper, waitBlockLessThan = LOCKING_PERIOD / 3n) {
-  const relayBlockNumber = (await helper.callRpc('api.query.parachainSystem.validationData', [])).value.relayParentNumber.toNumber(); // await helper.chain.getLatestBlockNumber();
-  const currentPeriodBlock = BigInt(relayBlockNumber) % LOCKING_PERIOD;
+async function waitPromotionPeriodDoesntEnd(helper: DevUniqueHelper, waitBlockLessThan = LOCKING_PERIOD / 3) {
+  const relayBlockNumber = (await helper.callQuery('api.query.parachainSystem.validationData', []))!.relayParentNumber; // await helper.chain.getLatestBlockNumber();
+  const currentPeriodBlock = relayBlockNumber % LOCKING_PERIOD;
 
   if(currentPeriodBlock > waitBlockLessThan) {
-    await helper.wait.forRelayBlockNumber(BigInt(relayBlockNumber) + LOCKING_PERIOD - currentPeriodBlock);
+    await helper.wait.forRelayBlockNumber(relayBlockNumber + LOCKING_PERIOD - currentPeriodBlock);
   }
 }

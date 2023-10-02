@@ -60,11 +60,11 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     await skipInflationBlock(api);
     await helper.wait.newBlocks(1);
 
-    const totalBefore = (await helper.callRpc('api.query.balances.totalIssuance', [])).toBigInt();
+    const totalBefore = await helper.callQuery('api.query.balances.totalIssuance', []);
 
     await helper.balance.transferToSubstrate(alice, bob.address, 1n);
 
-    const totalAfter = (await helper.callRpc('api.query.balances.totalIssuance', [])).toBigInt();
+    const totalAfter = await helper.callQuery('api.query.balances.totalIssuance', []);
 
     expect(totalAfter).to.be.equal(totalBefore);
   });

@@ -38,7 +38,7 @@ describeGov('Governance: Technical Committee tests', () => {
 
   function proposalFromAllCommittee(proposal: any) {
     return usingPlaygrounds(async (helper) => {
-      expect((await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON().length).to.be.equal(allTechCommitteeThreshold);
+      expect((await helper.callQuery('api.query.technicalCommitteeMembership.members')).length).to.be.equal(allTechCommitteeThreshold);
       const proposeResult = await helper.technicalCommittee.collective.propose(
         techcomms.andy,
         proposal,
@@ -124,7 +124,7 @@ describeGov('Governance: Technical Committee tests', () => {
       techcomms.andy,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
     )).to.be.fulfilled;
-    const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
+    const fellowshipMembers = await helper.callQuery('api.query.fellowshipCollective.members');
     expect(fellowshipMembers).to.contains(newFellowshipMember.address);
     await clearFellowship(sudoer);
   });
@@ -363,7 +363,7 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
   itSub('[Negative] TechComm referendum cannot be closed until the voting threshold is met', async ({helper}) => {
-    const committeeSize = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON().length as any as number;
+    const committeeSize = (await helper.callQuery('api.query.technicalCommitteeMembership.members')).length as any as number;
     expect(committeeSize).is.greaterThan(1);
     const proposeResult = await helper.technicalCommittee.collective.propose(
       techcomms.andy,

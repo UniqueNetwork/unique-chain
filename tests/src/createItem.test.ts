@@ -22,7 +22,7 @@ import {UniqueHelper} from './util/playgrounds/unique';
 async function mintTokenHelper(helper: UniqueHelper, collection: any, signer: IKeyringPair, owner: ICrossAccountId, type: 'nft' | 'fungible' | 'refungible'='nft', properties?: IProperty[]) {
   let token;
   const itemCountBefore = await helper.collection.getLastTokenId(collection.collectionId);
-  const itemBalanceBefore = (await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0])).toBigInt();
+  const itemBalanceBefore = await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0]);
   if(type === 'nft') {
     token = await collection.mintToken(signer, owner, properties);
   } else if(type === 'fungible') {
@@ -32,7 +32,7 @@ async function mintTokenHelper(helper: UniqueHelper, collection: any, signer: IK
   }
 
   const itemCountAfter = await helper.collection.getLastTokenId(collection.collectionId);
-  const itemBalanceAfter = (await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0])).toBigInt();
+  const itemBalanceAfter = await helper.callRpc('api.rpc.unique.balance', [collection.collectionId, owner, 0]);
 
   if(type === 'fungible') {
     expect(itemBalanceAfter - itemBalanceBefore).to.be.equal(10n);
@@ -148,12 +148,12 @@ describe('integration test: ext. ():', () => {
     const token = await mintTokenHelper(helper, collection, alice, {Substrate: bob.address});
     {
       const totalPieces = await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, token.tokenId]);
-      expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
+      expect(totalPieces).to.be.equal(amount);
     }
     await token.transfer(bob, {Substrate: alice.address});
     {
       const totalPieces = await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, token.tokenId]);
-      expect(totalPieces?.unwrap().toBigInt()).to.be.equal(amount);
+      expect(totalPieces).to.be.equal(amount);
     }
   });
 
@@ -252,21 +252,21 @@ describe('Negative integration test: ext. createItem():', () => {
   itSub('Check total pieces for invalid Fungible token', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'}, 0);
     const invalidTokenId = 1_000_000;
-    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))?.isNone).to.be.true;
-    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces.toBigInt()).to.be.equal(0n);
+    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))).to.be.null;
+    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces).to.be.equal(0n);
   });
 
   itSub('Check total pieces for invalid NFT token', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const invalidTokenId = 1_000_000;
-    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))?.isNone).to.be.true;
-    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces.toBigInt()).to.be.equal(0n);
+    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))).to.be.null;
+    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces).to.be.equal(0n);
   });
 
   itSub.ifWithPallets('Check total pieces for invalid Refungible token', [Pallets.ReFungible], async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL'});
     const invalidTokenId = 1_000_000;
-    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))?.isNone).to.be.true;
-    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces.toBigInt()).to.be.equal(0n);
+    expect((await helper.callRpc('api.rpc.unique.totalPieces', [collection.collectionId, invalidTokenId]))).to.be.null;
+    expect((await helper.callRpc('api.rpc.unique.tokenData', [collection.collectionId, invalidTokenId]))?.pieces).to.be.equal(0n);
   });
 });

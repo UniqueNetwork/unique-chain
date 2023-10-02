@@ -32,7 +32,7 @@ describe('RPC eth_getCode', () => {
     {address: CONTRACT_HELPER},
   ].map(testCase => {
     itEth(`returns value for native contract: ${testCase.address}`, async ({helper}) => {
-      const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [testCase.address])).toJSON();
+      const contractCodeSub = await helper.callRpc('api.rpc.eth.getCode', [testCase.address]);
       const contractCodeEth = (await helper.getWeb3().eth.getCode(testCase.address));
 
       expect(contractCodeSub).to.has.length.greaterThan(4);
@@ -44,7 +44,7 @@ describe('RPC eth_getCode', () => {
     const signer = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(signer);
 
-    const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [flipper.options.address])).toJSON();
+    const contractCodeSub = await helper.callRpc('api.rpc.eth.getCode', [flipper.options.address]);
     const contractCodeEth = (await helper.getWeb3().eth.getCode(flipper.options.address));
 
     expect(contractCodeSub).to.has.length.greaterThan(4);

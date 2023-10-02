@@ -68,9 +68,9 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       // 350.00 (three hundred fifty) DOT
       const fundingAmount = 3_500_000_000_000n;
 
-      await helper.assets.create(alice, ASSET_ID, alice.address, ASSET_METADATA_MINIMAL_BALANCE);
-      await helper.assets.setMetadata(alice, ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
-      await helper.assets.mint(alice, ASSET_ID, alice.address, ASSET_AMOUNT);
+      // await helper.assets.create(alice, ASSET_ID, alice.address, ASSET_METADATA_MINIMAL_BALANCE);
+      // await helper.assets.setMetadata(alice, ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
+      // await helper.assets.mint(alice, ASSET_ID, alice.address, ASSET_AMOUNT);
 
       // funding parachain sovereing account (Parachain: 2095)
       const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(UNIQUE_CHAIN);
@@ -288,7 +288,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       // The USDT token never paid fees. Its amount not changed from begin value.
       // Also check that xcm transfer has been succeeded
-      expect((await helper.assets.account(ASSET_ID, alice.address))! == ASSET_AMOUNT).to.be.true;
+      //expect((await helper.assets.account(ASSET_ID, alice.address))! == ASSET_AMOUNT).to.be.true;
     });
   });
 

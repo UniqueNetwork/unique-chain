@@ -102,7 +102,7 @@ describeGov('Governance: Fellowship tests', () => {
     );
 
     const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex.toNumber());
-    expect(democracyEnqueuedProposal.inline, 'Fellowship proposal expected to be in the Democracy')
+    expect('Inline' in democracyEnqueuedProposal ? democracyEnqueuedProposal.Inline : null, 'Fellowship proposal expected to be in the Democracy')
       .to.be.equal(democracyProposalCall.method.toHex());
 
     await helper.wait.newBlocks(democracyVotingPeriod);
@@ -128,7 +128,7 @@ describeGov('Governance: Fellowship tests', () => {
         const referendumIndex = submittedEvent.data.index.toNumber();
 
         const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        expect(referendumInfo.ongoing.track, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
+        expect('Ongoing' in referendumInfo! ? referendumInfo.Ongoing.track : null, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
           .to.be.equal(democracyTrackId);
       }
     }
@@ -159,7 +159,7 @@ describeGov('Governance: Fellowship tests', () => {
         expectedAyes += 1;
 
         const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        expect(referendumInfo.ongoing.tally.bareAyes, `Vote from ${memberIdx}-th member of rank #${rank} isn't accounted`)
+        expect('Ongoing' in referendumInfo! ? referendumInfo.Ongoing.tally.bareAyes : null, `Vote from ${memberIdx}-th member of rank #${rank} isn't accounted`)
           .to.be.equal(expectedAyes);
       }
     }
@@ -196,15 +196,15 @@ describeGov('Governance: Fellowship tests', () => {
         const member = rankMembers[memberIdx];
 
         const referendumInfoBefore = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        const ayesBefore = referendumInfoBefore.ongoing.tally.ayes;
+        const ayesBefore = 'Ongoing' in referendumInfoBefore! ? referendumInfoBefore.Ongoing.tally.ayes : null;
 
         await helper.fellowship.collective.vote(member, referendumIndex, true);
 
         const referendumInfoAfter = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        const ayesAfter = referendumInfoAfter.ongoing.tally.ayes;
+        const ayesAfter = 'Ongoing' in referendumInfoAfter! ? referendumInfoAfter.Ongoing.tally.ayes : null;
 
         const expectedVoteWeight = excessRankWeightTable[rank - democracyTrackMinRank];
-        const voteWeight = ayesAfter - ayesBefore;
+        const voteWeight = ayesAfter! - ayesBefore!;
 
         expect(voteWeight, `Vote weight of ${memberIdx}-th member of rank #${rank} is invalid`)
           .to.be.equal(expectedVoteWeight);

@@ -118,13 +118,13 @@ describe('Integration Test: Collator Selection', () => {
 
       await helper.wait.newSessions(2);
 
-      const newValidators = await helper.callRpc('api.query.session.validators');
+      const newValidators = await helper.callQuery('api.query.session.validators');
       expect(newValidators).to.contain(gammaNode).and.contain(deltaNode).and.be.length(2);
 
       const lastBlockNumber = await helper.chain.getLatestBlockNumber();
       await helper.wait.newBlocks(1);
-      const lastGammaBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [gammaNode])).toNumber();
-      const lastDeltaBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [deltaNode])).toNumber();
+      const lastGammaBlock = await helper.callQuery('api.query.collatorSelection.lastAuthoredBlock', [gammaNode]);
+      const lastDeltaBlock = await helper.callQuery('api.query.collatorSelection.lastAuthoredBlock', [deltaNode]);
       expect(lastGammaBlock >= lastBlockNumber || lastDeltaBlock >= lastBlockNumber).to.be.true;
     });
 

@@ -16,8 +16,9 @@
 
 import {Metadata} from '@polkadot/types';
 import {itSub, usingPlaygrounds, expect} from './util';
+import {Converted} from './util/playgrounds/converter';
 
-let metadata: Metadata;
+let metadata: Converted<Metadata>;
 
 describe('TxVersion is present', () => {
   before(async () => {

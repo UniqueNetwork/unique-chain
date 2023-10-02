@@ -32,12 +32,12 @@ describe('Vesting', () => {
     // arrange
     const [sender, recepient] = await helper.arrange.createAccounts([1000n, 1n], donor);
     const currentRelayBlock = await helper.chain.getRelayBlockNumber();
-    const SCHEDULE_1_PERIOD = 6n; // 6 blocks one period
-    const SCHEDULE_1_START = currentRelayBlock + 6n; // Block when 1 schedule starts
-    const SCHEDULE_2_PERIOD = 12n; // 12 blocks one period
-    const SCHEDULE_2_START = currentRelayBlock + 12n; // Block when 2 schedule starts
-    const schedule1 = {start: SCHEDULE_1_START, period: SCHEDULE_1_PERIOD, periodCount: 2n, perPeriod: 50n * nominal};
-    const schedule2 = {start: SCHEDULE_2_START, period: SCHEDULE_2_PERIOD, periodCount: 2n, perPeriod: 100n * nominal};
+    const SCHEDULE_1_PERIOD = 6; // 6 blocks one period
+    const SCHEDULE_1_START = currentRelayBlock! + 6; // Block when 1 schedule starts
+    const SCHEDULE_2_PERIOD = 12; // 12 blocks one period
+    const SCHEDULE_2_START = currentRelayBlock! + 12; // Block when 2 schedule starts
+    const schedule1 = {start: SCHEDULE_1_START, period: SCHEDULE_1_PERIOD, periodCount: 2, perPeriod: 50n * nominal};
+    const schedule2 = {start: SCHEDULE_2_START, period: SCHEDULE_2_PERIOD, periodCount: 2, perPeriod: 100n * nominal};
 
     // act
     await helper.balance.vestedTransfer(sender, recepient.address, schedule1);
@@ -87,7 +87,7 @@ describe('Vesting', () => {
     expect(schedule[0]).to.deep.eq(schedule2);
 
     // Wait 2 schedule ends:
-    await helper.wait.forRelayBlockNumber(SCHEDULE_2_START + SCHEDULE_2_PERIOD * 2n);
+    await helper.wait.forRelayBlockNumber(SCHEDULE_2_START + SCHEDULE_2_PERIOD * 2);
     await helper.balance.claim(recepient);
 
     // check recepient balance after second claim (100 tokens claimed, 0 left):
@@ -105,9 +105,9 @@ describe('Vesting', () => {
 
   itSub('cannot send more tokens than have', async ({helper}) => {
     const [sender, receiver] = await helper.arrange.createAccounts([1000n, 1n], donor);
-    const schedule = {start: 0n, period: 1n, periodCount: 1n, perPeriod: 100n * nominal};
-    const manyPeriodsSchedule = {start: 0n, period: 1n, periodCount: 100n, perPeriod: 10n * nominal};
-    const oneBigSumSchedule = {start: 0n, period: 1n, periodCount: 1n, perPeriod: 5000n * nominal};
+    const schedule = {start: 0, period: 1, periodCount: 1, perPeriod: 100n * nominal};
+    const manyPeriodsSchedule = {start: 0, period: 1, periodCount: 100, perPeriod: 10n * nominal};
+    const oneBigSumSchedule = {start: 0, period: 1, periodCount: 1, perPeriod: 5000n * nominal};
 
     // Sender cannot send vestedTransfer to self or other
     await expect(helper.balance.vestedTransfer(sender, sender.address, manyPeriodsSchedule)).to.be.rejectedWith(/^vesting.InsufficientBalanceToLock$/);
@@ -134,9 +134,9 @@ describe('Vesting', () => {
 
   itSub('cannot send vestedTransfer with incorrect parameters', async ({helper}) => {
     const [sender, receiver] = await helper.arrange.createAccounts([1000n, 1n], donor);
-    const incorrectperiodSchedule = {start: 0n, period: 0n, periodCount: 10n, perPeriod: 10n * nominal};
-    const incorrectPeriodCountSchedule = {start: 0n, period: 1n, periodCount: 0n, perPeriod: 10n * nominal};
-    const incorrectPerPeriodSchedule = {start: 0n, period: 1n, periodCount: 1n, perPeriod: 0n * nominal};
+    const incorrectperiodSchedule = {start: 0, period: 0, periodCount: 10, perPeriod: 10n * nominal};
+    const incorrectPeriodCountSchedule = {start: 0, period: 1, periodCount: 0, perPeriod: 10n * nominal};
+    const incorrectPerPeriodSchedule = {start: 0, period: 1, periodCount: 1, perPeriod: 0n * nominal};
 
     await expect(helper.balance.vestedTransfer(sender, sender.address, incorrectperiodSchedule)).to.be.rejectedWith(/vesting.ZeroVestingPeriod/);
     await expect(helper.balance.vestedTransfer(sender, receiver.address, incorrectPeriodCountSchedule)).to.be.rejectedWith(/vesting.ZeroVestingPeriod/);

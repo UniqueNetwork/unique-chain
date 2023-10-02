@@ -319,7 +319,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(events.length).to.be.equal(1);
 
       // the preimage goes back to being unrequested
-      expect(await helper.preimage.getPreimageInfo(preimageHashes[0])).to.have.property('unrequested');
+      expect(await helper.preimage.getPreimageInfo(preimageHashes[0])).to.have.property('Unrequested');
     });
 
     itSub('Does not allow execution of a preimage that would fail', async ({helper}) => {

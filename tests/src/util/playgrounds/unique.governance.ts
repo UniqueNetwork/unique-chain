@@ -1,12 +1,19 @@
 import {blake2AsHex} from '@polkadot/util-crypto';
 import {PalletDemocracyConviction} from '@polkadot/types/lookup';
-import {IEventLike} from '@polkadot/types/types';
+import {IEventLike, Observable} from '@polkadot/types/types';
 import {TSigner} from './types';
 import {HelperGroup, UniqueHelper} from './unique';
 import {IsEvent} from '@polkadot/types/metadata/decorate/types';
 import {AugmentedEvents} from '@polkadot/api-base/types/events';
+import {AugmentedQuery, AugmentedQueries, ApiTypes} from '@polkadot/api/types';
+
 
 type DataType<T> = T extends IsEvent<infer _R, infer N> ? N : never;
+
+type QueryResult<T> = T extends AugmentedQuery<ApiTypes, (arg: any[]) => Observable<infer R>, any> ? R : boolean;
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type M = QueryResult<AugmentedQueries<'promise'>['council']['members']>;
 
 export class CollectiveGroup extends HelperGroup<UniqueHelper> {
   /**
@@ -62,21 +69,33 @@ export class CollectiveGroup extends HelperGroup<UniqueHelper> {
    * Returns an array of members' addresses.
    */
   async getMembers() {
-    return (await this.helper.callRpc(`api.query.${this.collective}.members`, [])).toHuman();
+    // const _p: PromiseResult<() => boolean>;
+    // const _t: AugmentedQueries<'promise'>['council']['members'];
+    // const _e: QueryResult<AugmentedQueries<'promise'>['council']['members']>;
+    if(this.collective == 'council')
+      return await this.helper.callQuery('api.query.council.members', []);
+    else if(this.collective == 'technicalCommittee')
+      return await this.helper.callQuery('api.query.technicalCommittee.members', []);
   }
 
   /**
    * Returns the optional address of the prime member of the collective.
    */
   async getPrimeMember() {
-    return (await this.helper.callRpc(`api.query.${this.collective}.prime`, [])).toHuman();
+    if(this.collective == 'council')
+      return await this.helper.callQuery('api.query.council.prime', []);
+    else if(this.collective == 'technicalCommittee')
+      return await this.helper.callQuery('api.query.technicalCommittee.prime', []);
   }
 
   /**
    * Returns an array of proposal hashes that are currently active for this collective.
    */
   async getProposals() {
-    return (await this.helper.callRpc(`api.query.${this.collective}.proposals`, [])).toHuman();
+    if(this.collective == 'council')
+      return await this.helper.callQuery('api.query.council.proposals', []);
+    else if(this.collective == 'technicalCommittee')
+      return await this.helper.callQuery('api.query.technicalCommittee.proposals', []);
   }
 
   /**
@@ -85,14 +104,20 @@ export class CollectiveGroup extends HelperGroup<UniqueHelper> {
    * @returns the optional call that the proposal hash stands for.
    */
   async getProposalCallOf(hash: string) {
-    return (await this.helper.callRpc(`api.query.${this.collective}.proposalOf`, [hash])).toHuman();
+    if(this.collective == 'council')
+      return await this.helper.callQuery('api.query.council.proposalOf', [hash]);
+    else if(this.collective == 'technicalCommittee')
+      return await this.helper.callQuery('api.query.technicalCommittee.proposalOf', [hash]);
   }
 
   /**
    * Returns the total number of proposals so far.
    */
   async getTotalProposalsCount() {
-    return (await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, [])).toNumber();
+    if(this.collective == 'council')
+      return await this.helper.callQuery('api.query.council.proposalCount', []);
+    else if(this.collective == 'technicalCommittee')
+      return await this.helper.callQuery('api.query.technicalCommittee.proposalCount', []);
   }
 
   /**
@@ -173,9 +198,9 @@ export class CollectiveMembershipGroup extends HelperGroup<UniqueHelper> {
   /**
    * Pallet name to make an API call to. Examples: 'councilMembership', 'technicalCommitteeMembership'
    */
-  private membership: string;
+  private membership: 'councilMembership' | 'technicalCommitteeMembership';
 
-  constructor(helper: UniqueHelper, membership: string) {
+  constructor(helper: UniqueHelper, membership: 'councilMembership' | 'technicalCommitteeMembership') {
     super(helper);
     this.membership = membership;
   }
@@ -185,14 +210,20 @@ export class CollectiveMembershipGroup extends HelperGroup<UniqueHelper> {
    * Note that it does not recognize the original pallet's members set with `setMembers()`.
    */
   async getMembers() {
-    return (await this.helper.callRpc(`api.query.${this.membership}.members`, [])).toHuman();
+    if(this.membership == 'councilMembership')
+      return await this.helper.callQuery('api.query.councilMembership.members', []);
+    else if(this.membership == 'technicalCommitteeMembership')
+      return await this.helper.callQuery('api.query.technicalCommitteeMembership.members', []);
   }
 
   /**
    * Returns the optional address of the prime member of the collective.
    */
   async getPrimeMember() {
-    return (await this.helper.callRpc(`api.query.${this.membership}.prime`, [])).toHuman();
+    if(this.membership == 'councilMembership')
+      return await this.helper.callQuery('api.query.councilMembership.prime', []);
+    else if(this.membership == 'technicalCommitteeMembership')
+      return await this.helper.callQuery('api.query.technicalCommitteeMembership.prime', []);
   }
 
   /**
@@ -314,7 +345,7 @@ export class RankedCollectiveGroup extends HelperGroup<UniqueHelper> {
   }
 
   async getMemberRank(member: string) {
-    return (await this.helper.callRpc('api.query.fellowshipCollective.members', [member])).toJSON().rank;
+    return (await this.helper.callQuery('api.query.fellowshipCollective.members', [member]))?.rank ?? null;
   }
 }
 
@@ -322,9 +353,9 @@ export class ReferendaGroup extends HelperGroup<UniqueHelper> {
   /**
    * Pallet name to make an API call to. Examples: 'FellowshipReferenda'
    */
-  private referenda: string;
+  private referenda: 'fellowshipReferenda';
 
-  constructor(helper: UniqueHelper, referenda: string) {
+  constructor(helper: UniqueHelper, referenda: 'fellowshipReferenda') {
     super(helper);
     this.referenda = referenda;
   }
@@ -355,7 +386,8 @@ export class ReferendaGroup extends HelperGroup<UniqueHelper> {
   }
 
   async referendumInfo(referendumIndex: number) {
-    return (await this.helper.callRpc(`api.query.${this.referenda}.referendumInfoFor`, [referendumIndex])).toJSON();
+    if(this.referenda == 'fellowshipReferenda')
+      return await this.helper.callQuery('api.query.fellowshipReferenda.referendumInfoFor', [referendumIndex]);
   }
 
   async enactmentEventId(referendumIndex: number) {
@@ -498,11 +530,11 @@ export class DemocracyGroup extends HelperGroup<UniqueHelper> {
   }
 
   async referendumInfo(referendumIndex: number) {
-    return (await this.helper.callRpc('api.query.democracy.referendumInfoOf', [referendumIndex])).toJSON();
+    return (await this.helper.callQuery('api.query.democracy.referendumInfoOf', [referendumIndex]));
   }
 
   async publicProposals() {
-    return (await this.helper.callRpc('api.query.democracy.publicProps', [])).toJSON();
+    return (await this.helper.callQuery('api.query.democracy.publicProps', []));
   }
 
   async findPublicProposal(proposalIndex: number) {
@@ -522,7 +554,7 @@ export class DemocracyGroup extends HelperGroup<UniqueHelper> {
   }
 
   async getExternalProposal() {
-    return (await this.helper.callRpc('api.query.democracy.nextExternal', []));
+    return (await this.helper.callQuery('api.query.democracy.nextExternal', []));
   }
 
   async expectExternalProposal() {

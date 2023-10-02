@@ -40,10 +40,6 @@ class MoonbeamAssetManagerGroup extends HelperGroup<MoonbeamHelper> {
     const encodedProposal = batchCall?.method.toHex() || '';
     return encodedProposal;
   }
-
-  async assetTypeId(location: any) {
-    return await this.helper.callRpc('api.query.assetManager.assetTypeId', [location]);
-  }
 }
 
 class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
@@ -68,32 +64,6 @@ class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
 
   async referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
     await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
-  }
-}
-
-class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
-  collective: string;
-
-  constructor(helper: MoonbeamHelper, collective: string) {
-    super(helper);
-
-    this.collective = collective;
-  }
-
-  async propose(signer: TSigner, threshold: number, proposalHash: string, lengthBound: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [threshold, proposalHash, lengthBound], true);
-  }
-
-  async vote(signer: TSigner, proposalHash: string, proposalIndex: number, approve: boolean) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
-  }
-
-  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
-  }
-
-  async proposalCount() {
-    return Number(await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, []));
   }
 }
 
@@ -234,34 +204,7 @@ export class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
 export class TokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async accounts(address: string, currencyId: any) {
-    const {free} = (await this.helper.callRpc('api.query.tokens.accounts', [address, currencyId])).toJSON() as any;
-    return BigInt(free);
-  }
-}
-
-export class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
-  async create(signer: TSigner, assetId: number | bigint, admin: string, minimalBalance: bigint) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
-  }
-
-  async setMetadata(signer: TSigner, assetId: number | bigint, name: string, symbol: string, decimals: number) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
-  }
-
-  async mint(signer: TSigner, assetId: number | bigint, beneficiary: string, amount: bigint) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
-  }
-
-  async account(assetId: string | number | bigint, address: string) {
-    const accountAsset = (
-      await this.helper.callRpc('api.query.assets.account', [assetId, address])
-    ).toJSON()! as any;
-
-    if(accountAsset !== null) {
-      return BigInt(accountAsset['balance']);
-    } else {
-      return null;
-    }
+    return (await this.helper.callQuery('api.query.tokens.accounts', [address, currencyId])).free;
   }
 }
 
@@ -280,7 +223,6 @@ export class RelayHelper extends XcmChainHelper {
 export class WestmintHelper extends XcmChainHelper {
   balance: SubstrateBalanceGroup<WestmintHelper>;
   xcm: XcmGroup<WestmintHelper>;
-  assets: AssetsGroup<WestmintHelper>;
   xTokens: XTokensGroup<WestmintHelper>;
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
@@ -288,7 +230,6 @@ export class WestmintHelper extends XcmChainHelper {
 
     this.balance = new SubstrateBalanceGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
-    this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
   }
 }
@@ -296,39 +237,27 @@ export class WestmintHelper extends XcmChainHelper {
 export class MoonbeamHelper extends XcmChainHelper {
   balance: EthereumBalanceGroup<MoonbeamHelper>;
   assetManager: MoonbeamAssetManagerGroup;
-  assets: AssetsGroup<MoonbeamHelper>;
   xTokens: XTokensGroup<MoonbeamHelper>;
   democracy: MoonbeamDemocracyGroup;
-  collective: {
-    council: MoonbeamCollectiveGroup,
-    techCommittee: MoonbeamCollectiveGroup,
-  };
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
     super(logger, options.helperBase ?? MoonbeamHelper);
 
     this.balance = new EthereumBalanceGroup(this);
     this.assetManager = new MoonbeamAssetManagerGroup(this);
-    this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
     this.democracy = new MoonbeamDemocracyGroup(this, options);
-    this.collective = {
-      council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
-      techCommittee: new MoonbeamCollectiveGroup(this, 'techCommitteeCollective'),
-    };
   }
 }
 
 export class AstarHelper extends XcmChainHelper {
   balance: SubstrateBalanceGroup<AstarHelper>;
-  assets: AssetsGroup<AstarHelper>;
   xcm: XcmGroup<AstarHelper>;
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
     super(logger, options.helperBase ?? AstarHelper);
 
     this.balance = new SubstrateBalanceGroup(this);
-    this.assets = new AssetsGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
   }
 }
@@ -352,7 +281,6 @@ export class AcalaHelper extends XcmChainHelper {
 }
 
 export class PolkadexHelper extends XcmChainHelper {
-  assets: AssetsGroup<PolkadexHelper>;
   balance: SubstrateBalanceGroup<PolkadexHelper>;
   xTokens: XTokensGroup<PolkadexHelper>;
   xcm: XcmGroup<PolkadexHelper>;
@@ -361,7 +289,6 @@ export class PolkadexHelper extends XcmChainHelper {
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
     super(logger, options.helperBase ?? PolkadexHelper);
 
-    this.assets = new AssetsGroup(this);
     this.balance = new SubstrateBalanceGroup(this);
     this.xTokens = new XTokensGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');

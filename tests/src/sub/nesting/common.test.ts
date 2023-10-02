@@ -86,7 +86,7 @@ describe('Common nesting tests', () => {
       await collectionForNesting.mint(bob, 100n);
       await collectionForNesting.transfer(bob, targetTokenBob.nestingAccount(), 50n);
       expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(150n);
-      expect(await targetTokenBob.getChildren()).to.be.deep.equal([{collectionId: collectionForNesting.collectionId, tokenId: 0}]);
+      expect(await targetTokenBob.getChildren()).to.be.deep.equal([{collection: collectionForNesting.collectionId, token: 0}]);
     });
   });
 

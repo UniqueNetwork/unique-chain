@@ -40,7 +40,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
 
     await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
     const newTokenOwner = await helper.nft.getTokenOwner(collectionId, tokenId);
-    expect(newTokenOwner.Substrate).to.be.equal(charlie.address);
+    expect(newTokenOwner?.Substrate).to.be.equal(charlie.address);
   });
 
   itSub('admin burns other user\'s token', async ({helper}) => {

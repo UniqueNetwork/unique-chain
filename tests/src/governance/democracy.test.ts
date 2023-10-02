@@ -63,9 +63,9 @@ describeGov('Governance: Democracy tests', () => {
     });
 
     const referendumInfo = await helper.democracy.referendumInfo(referendumIndex);
-    const tally = referendumInfo.ongoing.tally;
+    const tally = 'Ongoing' in referendumInfo! ? referendumInfo.Ongoing.tally : null;
 
-    expect(BigInt(tally.ayes)).to.be.equal(ayeBalance);
+    expect(BigInt(tally!.ayes)).to.be.equal(ayeBalance);
 
     await clearFellowship(sudoer);
   });

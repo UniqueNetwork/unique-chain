@@ -41,7 +41,7 @@ export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) 
     const [alex, ildar, charu, filip, irina] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
-      const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON() as [];
+      const members = await helper.callQuery('api.query.councilMembership.members');
       if(members.length != 0) {
         await clearCouncil(superuser);
       }
@@ -52,7 +52,7 @@ export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) 
     }
     await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.setPrime', [alex.address]);
     {
-      const members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+      const members = await helper.callQuery('api.query.councilMembership.members');
       expect(members).to.containSubset(expectedMembers.map((x: IKeyringPair) => x.address));
       expect(members.length).to.be.equal(expectedMembers.length);
     }
@@ -70,13 +70,13 @@ export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) 
 
 export async function clearCouncil(superuser: IKeyringPair) {
   await usingPlaygrounds(async (helper) => {
-    let members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+    let members = await helper.callQuery('api.query.councilMembership.members');
     if(members.length) {
       const sudo = helper.getSudo();
       for(const address of members) {
         await sudo.executeExtrinsic(superuser, 'api.tx.councilMembership.removeMember', [address]);
       }
-      members = (await helper.callRpc('api.query.councilMembership.members')).toJSON();
+      members = await helper.callQuery('api.query.councilMembership.members');
     }
     expect(members).to.be.deep.equal([]);
   });
@@ -90,7 +90,7 @@ export async function initTechComm(donor: IKeyringPair, superuser: IKeyringPair)
     const [greg, andy, constantine] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
-      const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON() as [];
+      const members = await helper.callQuery('api.query.technicalCommitteeMembership.members');
       if(members.length != 0) {
         await clearTechComm(superuser);
       }
@@ -100,7 +100,7 @@ export async function initTechComm(donor: IKeyringPair, superuser: IKeyringPair)
     await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.addMember', [constantine.address]);
     await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.setPrime', [greg.address]);
     {
-      const members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+      const members = await helper.callQuery('api.query.technicalCommitteeMembership.members');
       expect(members).to.containSubset([greg.address, andy.address, constantine.address]);
       expect(members.length).to.be.equal(3);
     }
@@ -117,13 +117,13 @@ export async function initTechComm(donor: IKeyringPair, superuser: IKeyringPair)
 
 export async function clearTechComm(superuser: IKeyringPair) {
   await usingPlaygrounds(async (helper) => {
-    let members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+    let members = await helper.callQuery('api.query.technicalCommitteeMembership.members');
     if(members.length) {
       const sudo = helper.getSudo();
       for(const address of members) {
         await sudo.executeExtrinsic(superuser, 'api.tx.technicalCommitteeMembership.removeMember', [address]);
       }
-      members = (await helper.callRpc('api.query.technicalCommitteeMembership.members')).toJSON();
+      members = await helper.callQuery('api.query.technicalCommitteeMembership.members');
     }
     expect(members).to.be.deep.equal([]);
   });

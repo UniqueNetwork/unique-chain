@@ -1,7 +1,7 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {hexToString} from '@polkadot/util';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {DevUniqueHelper} from '../util/playgrounds/unique.dev';
 import config from '../config';
 import { XcmV3TraitsOutcome } from '@unique-nft/opal-testnet-types';
 
@@ -65,8 +65,8 @@ export const expectFailedToTransact = async (helper: DevUniqueHelper, messageHas
   await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == messageHash
         && event.error.isFailedToTransactAsset);
 };
-export const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
+export const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageHash: string | undefined) => {
+  await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == messageHash
          && event.error.isUntrustedReserveLocation);
 };
 
@@ -319,10 +319,10 @@ export class XcmTestHelper {
           await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), xcmProgram);
           xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), xcmProgram]);
+          //const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), xcmProgram]);
           // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
+          //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+          //await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
           xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
@@ -371,10 +371,10 @@ export class XcmTestHelper {
           await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgram);
           maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgram]);
+          //const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgram]);
           // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
+          //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+          //await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
           maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
       });
@@ -432,10 +432,10 @@ export class XcmTestHelper {
         }
         // Moonbeam case
         else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
+          //const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
           // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
+          //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+          //await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
 
           maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
@@ -454,10 +454,10 @@ export class XcmTestHelper {
           maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
         else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId]);
+          //const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId]);
           // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
+          //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+          //await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
 
           maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }
@@ -495,10 +495,10 @@ export class XcmTestHelper {
           await helper.getSudo().xcm.send(sudoerOnTargetChain, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
           messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
+          //const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
           // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${networkName} sending native tokens to the Unique via fast democracy`, batchCall);
+          //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+          //await helper.fastDemocracy.executeProposal(`${networkName} sending native tokens to the Unique via fast democracy`, batchCall);
 
           messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
         }

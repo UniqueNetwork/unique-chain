@@ -18,8 +18,8 @@ describeGov('Governance: Initialization', () => {
 
       const councilMembers = await helper.council.membership.getMembers();
       const techcommMembers = await helper.technicalCommittee.membership.getMembers();
-      expect(councilMembers.length == 0, 'The Council must be empty before the Gov Init');
-      expect(techcommMembers.length == 0, 'The Technical Commettee must be empty before the Gov Init');
+      expect(councilMembers?.length == 0, 'The Council must be empty before the Gov Init');
+      expect(techcommMembers?.length == 0, 'The Technical Commettee must be empty before the Gov Init');
 
       donor = await privateKey({url: import.meta.url});
       sudoer = await privateKey('//Alice');
@@ -104,7 +104,7 @@ describeGov('Governance: Initialization', () => {
     const techCommMembers = await helper.technicalCommittee.membership.getMembers();
     const techCommPrime = await helper.technicalCommittee.membership.getPrimeMember();
     const expectedTechComms = [techcomms.greg.address, techcomms.andy.address, techcomms.constantine.address];
-    expect(techCommMembers.length).to.be.equal(expectedTechComms.length);
+    expect(techCommMembers?.length).to.be.equal(expectedTechComms.length);
     expect(techCommMembers).to.containSubset(expectedTechComms);
     expect(techCommPrime).to.be.equal(techcomms.greg.address);
 
@@ -168,7 +168,7 @@ describeGov('Governance: Initialization', () => {
       counselors.filip.address,
       counselors.irina.address,
     ];
-    expect(councilMembers.length).to.be.equal(expectedCounselors.length);
+    expect(councilMembers?.length).to.be.equal(expectedCounselors.length);
     expect(councilMembers).to.containSubset(expectedCounselors);
 
     await expectFellowRank(counselors.ildar.address, expectedFellowRank);

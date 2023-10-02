@@ -5,7 +5,7 @@ import {AccountId32, Address, Balance, Call, ConsensusEngineId, H160, H256, H512
 import {ExtrinsicV4, EcdsaSignature, Ed25519Signature, FunctionMetadataLatest, Sr25519Signature} from '@polkadot/types/interfaces';
 import {Observable} from '@polkadot/types/types';
 import {GenericExtrinsic, GenericExtrinsicEra, GenericImmortalEra} from '@polkadot/types';
-import {FrameSystemAccountInfo, PolkadotPrimitivesV4PersistedValidationData, PalletBalancesBalanceLock, OrmlVestingVestingSchedule, PalletPreimageRequestStatus, OrmlTokensAccountData, PalletRankedCollectiveMemberRecord, PalletReferendaReferendumInfo, FrameSupportPreimagesBounded, PalletDemocracyReferendumInfo, PalletDemocracyVoteThreshold, PalletIdentityRegistration, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, PalletBalancesIdAmount} from '@unique-nft/opal-testnet-types/types';
+import {FrameSystemAccountInfo, PolkadotPrimitivesV4PersistedValidationData, PalletBalancesBalanceLock, PalletForeignAssetsModuleAssetMetadata, OrmlVestingVestingSchedule, PalletPreimageRequestStatus, OrmlTokensAccountData, PalletRankedCollectiveMemberRecord, PalletReferendaReferendumInfo, FrameSupportPreimagesBounded, PalletDemocracyReferendumInfo, PalletDemocracyVoteThreshold, PalletIdentityRegistration, UpDataStructsPropertiesMapPropertyPermission, UpDataStructsSponsorshipStateBasicCrossAccountIdRepr, PalletBalancesIdAmount} from '@unique-nft/opal-testnet-types/types';
 
 export type UniqueRpcResult<T> = T extends AugmentedRpc<(...args: any) => Observable<infer R>> ? Converted<R> : never;
 export type UniqueQueryResult<T> = Converted<T>;
@@ -45,6 +45,7 @@ export type Converted<T> = T extends Vec<infer R> ? Converted<R>[]
   : T extends CallBase<any> ? ConvertedCall<T>
   : T extends Balance ? bigint
   : T extends GenericImmortalEra ? string
+  : T extends Codec ? string
   : never;
 
 type ConvertedTuple<R> = R extends [infer H, ...infer T] ? T extends [] ? [Converted<H>] : [Converted<H>, ...ConvertedTuple<T>] : never;
@@ -465,6 +466,9 @@ function convertRaw(value: Raw): Converted<Raw> {
 export interface Queries {
   appPromotion: {
     stakesPerAccount: u8,
+  },
+  assetRegistry: {
+    assetMetadatas: Option<PalletForeignAssetsModuleAssetMetadata>,
   },
   balances: {
     totalIssuance: u128,

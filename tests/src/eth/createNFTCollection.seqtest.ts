@@ -59,7 +59,7 @@ describe('Create NFT collection from EVM', () => {
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.eq('Nft');
+    expect(data.raw.mode).to.be.eq('NFT');
 
     const options = await collection.getOptions();
 
