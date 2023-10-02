@@ -87,7 +87,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
   });
 
   itSub('Should not accept reserve transfer of UNQ from Acala', async () => {
-    await testHelper.reserveTransferUNQfrom('acala', alice);
+    await testHelper.rejectReserveTransferUNQfrom('acala', alice);
   });
 });
 
@@ -142,7 +142,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
   });
 
   itSub('Should not accept reserve transfer of UNQ from Polkadex', async () => {
-    await testHelper.reserveTransferUNQfrom('polkadex', alice);
+    await testHelper.rejectReserveTransferUNQfrom('polkadex', alice);
   });
 });
 
@@ -280,7 +280,7 @@ describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
   });
 
   itSub('Should not accept reserve transfer of UNQ from Moonbeam', async () => {
-    await testHelper.reserveTransferUNQfrom('moonbeam', alice);
+    await testHelper.rejectReserveTransferUNQfrom('moonbeam', alice);
   });
 });
 
@@ -361,7 +361,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
   });
 
   itSub('Should not accept reserve transfer of UNQ from Astar', async () => {
-    await testHelper.reserveTransferUNQfrom('astar', alice);
+    await testHelper.rejectReserveTransferUNQfrom('astar', alice);
   });
 });
 

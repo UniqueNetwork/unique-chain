@@ -214,7 +214,7 @@ describeXCM('[XCMLL] Integration test: Exchanging QTZ with Moonriver', () => {
   });
 
   itSub('Should not accept reserve transfer of QTZ from Moonriver', async () => {
-    await testHelper.reserveTransferUNQfrom('moonriver', alice);
+    await testHelper.rejectReserveTransferUNQfrom('moonriver', alice);
   });
 });
 
@@ -295,7 +295,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Shiden', () => {
   });
 
   itSub('Should not accept reserve transfer of QTZ from Shiden', async () => {
-    await testHelper.reserveTransferUNQfrom('shiden', alice);
+    await testHelper.rejectReserveTransferUNQfrom('shiden', alice);
   });
 });
 

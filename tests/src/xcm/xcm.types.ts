@@ -385,7 +385,7 @@ export class XcmTestHelper {
     });
   }
 
-  async reserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS, sudoer: IKeyringPair) {
+  async rejectReserveTransferUNQfrom(netwokrName: keyof typeof NETWORKS, sudoer: IKeyringPair) {
     const networkUrl = mapToChainUrl(netwokrName);
     const targetPlayground = getDevPlayground(netwokrName);
 
