@@ -314,7 +314,7 @@ describeXCM('[XCMLL] Integration test: The relay can do some root ops', () => {
   // At the moment there is no reliable way
   // to establish the correspondence between the `ExecutedDownward` event
   // and the relay's sent message due to `SetTopic` instruction
-  // containing an unpredictable topic silently added by the relay on the router level.
+  // containing an unpredictable topic silently added by the relay's messages on the router level.
   // This changes the message hash on arrival to our chain.
   //
   // See:
