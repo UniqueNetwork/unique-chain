@@ -981,7 +981,7 @@ export class ArrangeGroup {
     };
   }
 
-  makeTransactProgram(info: {weightMultiplier: number, call: string}) {
+  makeUnpaidSudoTransactProgram(info: {weightMultiplier: number, call: string}) {
     return {
       V3: [
         {
