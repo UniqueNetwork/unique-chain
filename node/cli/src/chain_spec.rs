@@ -153,11 +153,12 @@ macro_rules! testnet_genesis {
 	) => {{
 		use $runtime::*;
 
-		GenesisConfig {
+		RuntimeGenesisConfig {
 			system: SystemConfig {
 				code: WASM_BINARY
 					.expect("WASM binary was not build, please build it!")
 					.to_vec(),
+				..Default::default()
 			},
 			balances: BalancesConfig {
 				balances: $endowed_accounts
@@ -167,10 +168,6 @@ macro_rules! testnet_genesis {
 					.map(|k| (k, 1 << 100))
 					.collect(),
 			},
-			common: Default::default(),
-			configuration: Default::default(),
-			nonfungible: Default::default(),
-			treasury: Default::default(),
 			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
@@ -179,8 +176,8 @@ macro_rules! testnet_genesis {
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
+				..Default::default()
 			},
-			parachain_system: Default::default(),
 			collator_selection: CollatorSelectionConfig {
 				invulnerables: $initial_invulnerables
 					.iter()
@@ -200,14 +197,10 @@ macro_rules! testnet_genesis {
 					})
 					.collect(),
 			},
-			aura: Default::default(),
-			aura_ext: Default::default(),
 			evm: EVMConfig {
 				accounts: BTreeMap::new(),
+				..Default::default()
 			},
-			ethereum: EthereumConfig {},
-			polkadot_xcm: Default::default(),
-			transaction_payment: Default::default(),
 			..Default::default()
 		}
 	}};
@@ -224,15 +217,13 @@ macro_rules! testnet_genesis {
 	) => {{
 		use $runtime::*;
 
-		GenesisConfig {
+		RuntimeGenesisConfig {
 			system: SystemConfig {
 				code: WASM_BINARY
 					.expect("WASM binary was not build, please build it!")
 					.to_vec(),
+				..Default::default()
 			},
-			common: Default::default(),
-			configuration: Default::default(),
-			nonfungible: Default::default(),
 			balances: BalancesConfig {
 				balances: $endowed_accounts
 					.iter()
@@ -241,7 +232,6 @@ macro_rules! testnet_genesis {
 					.map(|k| (k, 1 << 100))
 					.collect(),
 			},
-			treasury: Default::default(),
 			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
@@ -249,21 +239,19 @@ macro_rules! testnet_genesis {
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
+				Default::default()
 			},
-			parachain_system: Default::default(),
 			aura: AuraConfig {
 				authorities: $initial_invulnerables
 					.into_iter()
 					.map(|(_, aura)| aura)
 					.collect(),
 			},
-			aura_ext: Default::default(),
 			evm: EVMConfig {
 				accounts: BTreeMap::new(),
+				..Default::default()
 			},
-			ethereum: EthereumConfig {},
-			polkadot_xcm: Default::default(),
-			transaction_payment: Default::default(),
+			..Default::default()
 		}
 	}};
 }

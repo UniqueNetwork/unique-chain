@@ -174,7 +174,7 @@ pub mod pallet {
 	pub type CreateItemBasket<T: Config> = StorageMap<
 		Hasher = Blake2_128Concat,
 		Key = (CollectionId, T::AccountId),
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 	/// Collection id (controlled?2), token id (controlled?2)
@@ -185,7 +185,7 @@ pub mod pallet {
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
 		Key2 = TokenId,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 	/// Collection id (controlled?2), owning user (real)
@@ -196,7 +196,7 @@ pub mod pallet {
 		Key1 = CollectionId,
 		Hasher2 = Twox64Concat,
 		Key2 = T::AccountId,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 	/// Collection id (controlled?2), token id (controlled?2)
@@ -208,7 +208,7 @@ pub mod pallet {
 			Key<Blake2_128Concat, TokenId>,
 			Key<Twox64Concat, T::AccountId>,
 		),
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 	//#endregion
@@ -221,7 +221,7 @@ pub mod pallet {
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
 		Key2 = TokenId,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 
@@ -233,7 +233,7 @@ pub mod pallet {
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
 		Key2 = TokenId,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 	/// Last sponsoring of fungible tokens approval in a collection
@@ -244,7 +244,7 @@ pub mod pallet {
 		Key1 = CollectionId,
 		Hasher2 = Twox64Concat,
 		Key2 = T::AccountId,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 	/// Last sponsoring of RFT approval in a collection
@@ -256,7 +256,7 @@ pub mod pallet {
 			Key<Blake2_128Concat, TokenId>,
 			Key<Twox64Concat, T::AccountId>,
 		),
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 

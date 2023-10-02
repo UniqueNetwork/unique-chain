@@ -51,18 +51,14 @@ type Block = frame_system::mocking::MockBlock<Test>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Aura: pallet_aura::{Pallet, Storage, Config<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Storage},
+	pub enum Test {
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		Session: pallet_session,
+		Aura: pallet_aura,
+		Balances: pallet_balances,
+		CollatorSelection: collator_selection,
+		Authorship: pallet_authorship,
 	}
 );
 
@@ -78,13 +74,11 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -115,7 +109,6 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
-	type HoldIdentifier = [u8; 16];
 	type FreezeIdentifier = [u8; 16];
 	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;

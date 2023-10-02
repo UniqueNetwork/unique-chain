@@ -106,7 +106,12 @@ impl<
 		Self(Weight::from_parts(0, 0), Zero::zero(), PhantomData)
 	}
 
-	fn buy_weight(&mut self, _weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(
+		&mut self,
+		_weight: Weight,
+		payment: Assets,
+		_xcm: &XcmContext,
+	) -> Result<Assets, XcmError> {
 		Ok(payment)
 	}
 }

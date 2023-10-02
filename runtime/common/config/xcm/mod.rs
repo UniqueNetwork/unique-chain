@@ -153,10 +153,10 @@ where
 		origin: &MultiLocation,
 		message: &mut [Instruction<Call>],
 		max_weight: Weight,
-		weight_credit: &mut Weight,
+		properties: &mut Properties,
 	) -> Result<(), ProcessMessageError> {
 		Deny::try_pass(origin, message)?;
-		Allow::should_execute(origin, message, max_weight, weight_credit)
+		Allow::should_execute(origin, message, max_weight, properties)
 	}
 }
 
@@ -211,7 +211,7 @@ impl Contains<RuntimeCall> for XcmCallFilter {
 }
 
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
-impl<T> xcm_executor::Config for XcmExecutorConfig<T>
+impl<T> staging_xcm_executor::Config for XcmExecutorConfig<T>
 where
 	T: pallet_configuration::Config,
 {
@@ -240,6 +240,7 @@ where
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = XcmCallFilter;
+	type Aliasers = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

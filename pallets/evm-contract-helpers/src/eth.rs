@@ -422,7 +422,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 		{
 			return None;
 		}
-		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+		let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 
 		if let Some(last_tx_block) = <SponsorBasket<T>>::get(contract_address, who.as_eth()) {
 			let limit = <SponsoringRateLimit<T>>::get(contract_address);

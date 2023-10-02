@@ -53,7 +53,7 @@ pub mod pallet {
 
 		/// In case of enabled sponsoring, but no sponsoring rate limit set,
 		/// this value will be used implicitly
-		type DefaultSponsoringRateLimit: Get<Self::BlockNumber>;
+		type DefaultSponsoringRateLimit: Get<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::error]
@@ -115,7 +115,7 @@ pub mod pallet {
 	pub(super) type SponsoringRateLimit<T: Config> = StorageMap<
 		Hasher = Twox128,
 		Key = H160,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultSponsoringRateLimit,
 	>;
@@ -139,7 +139,7 @@ pub mod pallet {
 		Key1 = H160,
 		Hasher2 = Twox128,
 		Key2 = H160,
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = OptionQuery,
 	>;
 
@@ -393,7 +393,7 @@ pub mod pallet {
 		}
 
 		/// Set duration between two sponsored contract calls
-		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: T::BlockNumber) {
+		pub fn set_sponsoring_rate_limit(contract: H160, rate_limit: BlockNumberFor<T>) {
 			<SponsoringRateLimit<T>>::insert(contract, rate_limit);
 		}
 

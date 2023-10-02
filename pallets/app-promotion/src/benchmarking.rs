@@ -32,7 +32,7 @@ const SEED: u32 = 0;
 fn set_admin<T>() -> Result<T::AccountId, sp_runtime::DispatchError>
 where
 	T: Config + pallet_unique::Config + pallet_evm_migration::Config,
-	T::BlockNumber: From<u32> + Into<u32>,
+	BlockNumberFor<T>: From<u32> + Into<u32>,
 	BalanceOf<T>: Sum + From<u128>,
 {
 	let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -53,7 +53,7 @@ where
 benchmarks! {
 	where_clause{
 		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
-		T::BlockNumber: From<u32> + Into<u32>,
+		BlockNumberFor<T>: From<u32> + Into<u32>,
 		BalanceOf<T>: Sum + From<u128>
 	}
 

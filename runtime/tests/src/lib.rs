@@ -57,23 +57,19 @@ mod tests;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
+	pub enum Test {
 		System: frame_system,
 		Timestamp: pallet_timestamp,
-		Unique: pallet_unique::{Pallet, Call, Storage},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Common: pallet_common::{Pallet, Storage, Event<T>},
-		Fungible: pallet_fungible::{Pallet, Storage},
-		Refungible: pallet_refungible::{Pallet, Storage},
-		Nonfungible: pallet_nonfungible::{Pallet, Storage},
-		Structure: pallet_structure::{Pallet, Storage, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin},
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
+		Unique: pallet_unique,
+		Balances: pallet_balances,
+		Common: pallet_common,
+		Fungible: pallet_fungible,
+		Refungible: pallet_refungible,
+		Nonfungible: pallet_nonfungible,
+		Structure: pallet_structure,
+		TransactionPayment: pallet_transaction_payment,
+		Ethereum: pallet_ethereum,
+		EVM: pallet_evm,
 	}
 );
 
@@ -90,13 +86,11 @@ impl system::Config for Test {
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -127,7 +121,6 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = MaxLocks;
 	type FreezeIdentifier = [u8; 8];
 	type MaxHolds = MaxLocks;
-	type HoldIdentifier = [u8; 8];
 }
 
 parameter_types! {
@@ -242,7 +235,6 @@ impl pallet_evm::Config for Test {
 	type OnChargeTransaction = ();
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type TransactionValidityHack = ();
 	type Timestamp = Timestamp;
 	type GasLimitPovSizeRatio = ConstU64<0>;
 }

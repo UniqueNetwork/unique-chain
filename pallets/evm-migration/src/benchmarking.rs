@@ -23,7 +23,7 @@ use sp_core::{H160, H256};
 use sp_std::{vec::Vec, vec};
 
 benchmarks! {
-	where_clause { where <T as Config>::RuntimeEvent: codec::Encode }
+	where_clause { where <T as Config>::RuntimeEvent: parity_scale_codec::Encode }
 
 	begin {
 	}: _(RawOrigin::Root, H160::default())
@@ -59,7 +59,7 @@ benchmarks! {
 
 	insert_events {
 		let b in 0..200;
-		use codec::Encode;
+		use parity_scale_codec::Encode;
 		let logs = (0..b).map(|_| <T as Config>::RuntimeEvent::from(crate::Event::<T>::TestEvent).encode()).collect::<Vec<_>>();
 	}: _(RawOrigin::Root, logs)
 }

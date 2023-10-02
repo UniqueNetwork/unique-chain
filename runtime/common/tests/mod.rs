@@ -51,8 +51,8 @@ fn last_events(n: usize) -> Vec<RuntimeEvent> {
 fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
 	let mut storage = make_basic_storage();
 
-	pallet_balances::GenesisConfig::<Runtime> { balances }
-		.assimilate_storage(&mut storage)
+	pallet_balances::BuildGenesisConfig::<Runtime> { balances }
+		.build_storage(&mut storage)
 		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(storage);
@@ -94,13 +94,14 @@ fn make_basic_storage() -> Storage {
 		.map(|acc| get_account_id_from_seed::<sr25519::Public>(acc))
 		.collect::<Vec<_>>();
 
-	let cfg = GenesisConfig {
+	let cfg = BuildGenesisConfig {
 		collator_selection: CollatorSelectionConfig { invulnerables },
 		session: SessionConfig { keys },
 		parachain_info: ParachainInfoConfig {
 			parachain_id: PARA_ID.into(),
+			..Default::default()
 		},
-		..GenesisConfig::default()
+		..Default::default()
 	};
 
 	cfg.build_storage().unwrap()
@@ -110,7 +111,7 @@ fn make_basic_storage() -> Storage {
 fn make_basic_storage() -> Storage {
 	use crate::AuraConfig;
 
-	let cfg = GenesisConfig {
+	let cfg = BuildGenesisConfig {
 		aura: AuraConfig {
 			authorities: vec![
 				get_from_seed::<AuraId>("Alice"),
@@ -119,8 +120,9 @@ fn make_basic_storage() -> Storage {
 		},
 		parachain_info: ParachainInfoConfig {
 			parachain_id: PARA_ID.into(),
+			..Default::default()
 		},
-		..GenesisConfig::default()
+		..Default::default()
 	};
 
 	cfg.build_storage().unwrap().into()

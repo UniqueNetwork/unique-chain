@@ -79,7 +79,7 @@ pub fn withdraw_set_token_property<T: Config>(
 		return None;
 	}
 
-	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+	let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 	let limit = collection.limits.sponsored_data_rate_limit()?;
 
 	if let Some(last_tx_block) = TokenPropertyBasket::<T>::get(collection.id, item_id) {
@@ -123,7 +123,7 @@ pub fn withdraw_transfer<T: Config>(
 	}
 
 	// sponsor timeout
-	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+	let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 	let limit = collection
 		.limits
 		.sponsor_transfer_timeout(match collection.mode {
@@ -169,7 +169,7 @@ pub fn withdraw_create_item<T: Config>(
 	properties: &CreateItemData,
 ) -> Option<()> {
 	// sponsor timeout
-	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+	let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 	let limit = collection
 		.limits
 		.sponsor_transfer_timeout(match properties {
@@ -195,7 +195,7 @@ pub fn withdraw_approve<T: Config>(
 	item_id: &TokenId,
 ) -> Option<()> {
 	// sponsor timeout
-	let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+	let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 	let limit = collection.limits.sponsor_approve_timeout();
 
 	let last_tx_block = match collection.mode {
@@ -307,7 +307,7 @@ where
 pub trait SponsorshipPredict<T: Config> {
 	fn predict(collection: CollectionId, account: T::CrossAccountId, token: TokenId) -> Option<u64>
 	where
-		u64: From<<T as frame_system::Config>::BlockNumber>;
+		u64: From<BlockNumberFor<T>>;
 }
 
 pub struct UniqueSponsorshipPredict<T>(PhantomData<T>);
@@ -315,13 +315,13 @@ pub struct UniqueSponsorshipPredict<T>(PhantomData<T>);
 impl<T: Config> SponsorshipPredict<T> for UniqueSponsorshipPredict<T> {
 	fn predict(collection_id: CollectionId, who: T::CrossAccountId, token: TokenId) -> Option<u64>
 	where
-		u64: From<<T as frame_system::Config>::BlockNumber>,
+		u64: From<BlockNumberFor<T>>,
 	{
 		let collection = <CollectionHandle<T>>::try_get(collection_id).ok()?;
 		let _ = collection.sponsorship.sponsor()?;
 
 		// sponsor timeout
-		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+		let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 		let limit = collection
 			.limits
 			.sponsor_transfer_timeout(match collection.mode {

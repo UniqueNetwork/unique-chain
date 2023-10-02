@@ -57,21 +57,16 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = MaxLocks;
 	type MaxReserves = ();
 	type ReserveIdentifier = ();
-	type HoldIdentifier = ();
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
 }
 
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		Balances: pallet_balances::{Pallet, Call, Storage},
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Inflation: pallet_inflation::{Pallet, Call, Storage},
+	pub enum Test {
+		Balances: pallet_balances,
+		System: frame_system,
+		Inflation: pallet_inflation,
 	}
 );
 
@@ -89,13 +84,11 @@ impl frame_system::Config for Test {
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = ();
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -112,11 +105,11 @@ impl frame_system::Config for Test {
 parameter_types! {
 	pub TreasuryAccountId: u64 = 1234;
 	pub const InflationBlockInterval: u32 = 100; // every time per how many blocks inflation is applied
-	pub static MockBlockNumberProvider: u64 = 0;
+	pub static MockBlockNumberProvider: u32 = 0;
 }
 
 impl BlockNumberProvider for MockBlockNumberProvider {
-	type BlockNumber = u64;
+	type BlockNumber = u32;
 
 	fn current_block_number() -> Self::BlockNumber {
 		Self::get()
@@ -131,8 +124,8 @@ impl pallet_inflation::Config for Test {
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
+	<frame_system::GenesisConfig<Test>>::default()
+		.build_storage()
 		.unwrap()
 		.into()
 }

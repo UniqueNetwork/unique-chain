@@ -125,11 +125,11 @@ pub mod pallet {
 
 		/// In relay blocks.
 		#[pallet::constant]
-		type RecalculationInterval: Get<Self::BlockNumber>;
+		type RecalculationInterval: Get<BlockNumberFor<Self>>;
 
 		/// In parachain blocks.
 		#[pallet::constant]
-		type PendingInterval: Get<Self::BlockNumber>;
+		type PendingInterval: Get<BlockNumberFor<Self>>;
 
 		/// Rate of return for interval in blocks defined in `RecalculationInterval`.
 		#[pallet::constant]
@@ -146,7 +146,7 @@ pub mod pallet {
 		type WeightInfo: WeightInfo;
 
 		// The relay block number provider
-		type RelayBlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
+		type RelayBlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
 
 		/// Events compatible with [`frame_system::Config::Event`].
 		type RuntimeEvent: IsType<<Self as frame_system::Config>::RuntimeEvent> + From<Event<Self>>;
@@ -230,9 +230,9 @@ pub mod pallet {
 	pub type Staked<T: Config> = StorageNMap<
 		Key = (
 			Key<Blake2_128Concat, T::AccountId>,
-			Key<Twox64Concat, T::BlockNumber>,
+			Key<Twox64Concat, BlockNumberFor<T>>,
 		),
-		Value = (BalanceOf<T>, T::BlockNumber),
+		Value = (BalanceOf<T>, BlockNumberFor<T>),
 		QueryKind = ValueQuery,
 	>;
 
@@ -252,7 +252,7 @@ pub mod pallet {
 	pub type PendingUnstake<T: Config> = StorageMap<
 		_,
 		Twox64Concat,
-		T::BlockNumber,
+		BlockNumberFor<T>,
 		BoundedVec<(T::AccountId, BalanceOf<T>), ConstU32<PENDING_LIMIT_PER_BLOCK>>,
 		ValueQuery,
 	>;
@@ -262,16 +262,16 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn get_next_calculated_record)]
 	pub type PreviousCalculatedRecord<T: Config> =
-		StorageValue<Value = (T::AccountId, T::BlockNumber), QueryKind = OptionQuery>;
+		StorageValue<Value = (T::AccountId, BlockNumberFor<T>), QueryKind = OptionQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		/// Block overflow is impossible due to the fact that the unstake algorithm in on_initialize
 		/// implies the execution of a strictly limited number of relatively lightweight operations.
 		/// A separate benchmark has been implemented to scale the weight depending on the number of pendings.
-		fn on_initialize(current_block_number: T::BlockNumber) -> Weight
+		fn on_initialize(current_block_number: BlockNumberFor<T>) -> Weight
 		where
-			<T as frame_system::Config>::BlockNumber: From<u32>,
+			BlockNumberFor<T>: From<u32>,
 		{
 			if T::IsMaintenanceModeEnabled::get() {
 				return T::DbWeight::get().reads_writes(1, 0);
@@ -302,7 +302,7 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T>
 	where
-		T::BlockNumber: From<u32> + Into<u32>,
+		BlockNumberFor<T>: From<u32> + Into<u32>,
 		<<T as Config>::Currency as Inspect<T::AccountId>>::Balance: Sum + From<u128>,
 	{
 		/// Sets an address as the the admin.
@@ -369,7 +369,7 @@ pub mod pallet {
 
 			// Calculation of the number of recalculation periods,
 			// after how much the first interest calculation should be performed for the stake
-			let recalculate_after_interval: T::BlockNumber =
+			let recalculate_after_interval: BlockNumberFor<T> =
 				if block_number % config.recalculation_interval == 0u32.into() {
 					1u32.into()
 				} else {
@@ -705,7 +705,7 @@ pub mod pallet {
 		#[pallet::weight(<T as Config>::WeightInfo::on_initialize(PENDING_LIMIT_PER_BLOCK*pending_blocks.len() as u32))]
 		pub fn force_unstake(
 			origin: OriginFor<T>,
-			pending_blocks: Vec<T::BlockNumber>,
+			pending_blocks: Vec<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 
@@ -917,7 +917,7 @@ impl<T: Config> Pallet<T> {
 	/// - `staker`: staker account.
 	pub fn total_staked_by_id_per_block(
 		staker: impl EncodeLike<T::AccountId>,
-	) -> Option<Vec<(T::BlockNumber, BalanceOf<T>)>> {
+	) -> Option<Vec<(BlockNumberFor<T>, BalanceOf<T>)>> {
 		let mut staked = Staked::<T>::iter_prefix((staker,))
 			.map(|(block, (amount, _))| (block, amount))
 			.collect::<Vec<_>>();
@@ -944,14 +944,14 @@ impl<T: Config> Pallet<T> {
 	/// - `staker`: staker account.
 	pub fn cross_id_total_staked_per_block(
 		staker: T::CrossAccountId,
-	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
+	) -> Vec<(BlockNumberFor<T>, BalanceOf<T>)> {
 		Self::total_staked_by_id_per_block(staker.as_sub()).unwrap_or_default()
 	}
 
 	fn recalculate_and_insert_stake(
 		staker: &T::AccountId,
-		staked_block: T::BlockNumber,
-		next_recalc_block: T::BlockNumber,
+		staked_block: BlockNumberFor<T>,
+		next_recalc_block: BlockNumberFor<T>,
 		base: BalanceOf<T>,
 		iters: u32,
 		income_acc: &mut BalanceOf<T>,
@@ -979,9 +979,9 @@ impl<T: Config> Pallet<T> {
 	/// Get relay block number rounded down to multiples of config.recalculation_interval.
 	/// We need it to reward stakers in integer parts of recalculation_interval
 	fn get_current_recalc_block(
-		current_relay_block: T::BlockNumber,
+		current_relay_block: BlockNumberFor<T>,
 		config: &PalletConfiguration<T>,
-	) -> T::BlockNumber {
+	) -> BlockNumberFor<T> {
 		(current_relay_block / config.recalculation_interval) * config.recalculation_interval
 	}
 
@@ -1028,7 +1028,7 @@ where
 	/// - `staker`: staker account.
 	pub fn cross_id_pending_unstake_per_block(
 		staker: T::CrossAccountId,
-	) -> Vec<(T::BlockNumber, BalanceOf<T>)> {
+	) -> Vec<(BlockNumberFor<T>, BalanceOf<T>)> {
 		let mut unsorted_res = vec![];
 		PendingUnstake::<T>::iter().for_each(|(block, pendings)| {
 			pendings.into_iter().for_each(|(id, amount)| {

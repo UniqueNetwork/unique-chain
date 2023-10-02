@@ -114,9 +114,9 @@ impl<T: EvmHelpersConfig> ContractHandler for EvmHelpersPallet<T> {
 }
 pub(crate) struct PalletConfiguration<T: crate::Config> {
 	/// In relay blocks.
-	pub recalculation_interval: T::BlockNumber,
+	pub recalculation_interval: BlockNumberFor<T>,
 	/// In parachain blocks.
-	pub pending_interval: T::BlockNumber,
+	pub pending_interval: BlockNumberFor<T>,
 	/// Value for `RecalculationInterval` based on 0.05% per 24h.
 	pub interval_income: Perbill,
 	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.

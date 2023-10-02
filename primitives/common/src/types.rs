@@ -37,10 +37,8 @@ pub mod opaque {
 		Unknown(sp_std::vec::Vec<u8>),
 	}
 
-	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
-	/// Opaque block type.
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 	pub trait RuntimeInstance {
@@ -71,7 +69,7 @@ pub type AccountIndex = u32;
 pub type Balance = u128;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+pub type Nonce = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;

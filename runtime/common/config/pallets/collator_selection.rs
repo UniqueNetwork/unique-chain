@@ -107,6 +107,7 @@ parameter_types! {
 
 impl pallet_collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.
 
@@ -128,7 +129,6 @@ impl pallet_collator_selection::Config for Runtime {
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = pallet_collator_selection::weights::SubstrateWeight<Runtime>;
-	type LicenceBondIdentifier = LicenceBondIdentifier;
 	type DesiredCollators = DesiredCollators;
 	type LicenseBond = LicenseBond;
 	type KickThreshold = KickThreshold;
