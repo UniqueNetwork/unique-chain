@@ -17,8 +17,8 @@
 use frame_support::{match_types, traits::Everything};
 use staging_xcm::latest::{Junctions::*, MultiLocation};
 use staging_xcm_builder::{
-	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom, AllowExplicitUnpaidExecutionFrom,
+	AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, TakeWeightCredit,
 };
 
 use crate::PolkadotXcm;

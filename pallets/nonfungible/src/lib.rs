@@ -103,9 +103,9 @@ use frame_support::{
 };
 pub use pallet::*;
 use pallet_common::{
-	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
+	eth::collection_id_to_address, helpers::add_weight_to_post_info,
+	weights::WeightInfo as CommonWeightInfo, CollectionHandle, Error as CommonError,
+	Event as CommonEvent, Pallet as PalletCommon, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
@@ -116,9 +116,9 @@ use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey, PropertyValue,
-	PropertyKeyPermission, PropertyScope, TokenChild, AuxPropertyValue, PropertiesPermissionMap,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
+	CreateCollectionData, CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property,
+	PropertyKey, PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
 	TokenProperties as TokenPropertiesT,
 };
 use weights::WeightInfo;

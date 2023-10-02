@@ -26,8 +26,8 @@ lto = true
 opt-level = 3
 
 [profile.integration-tests]
-inherits = "release"
 debug-assertions = true
+inherits = "release"
 
 [workspace.dependencies]
 # Unique

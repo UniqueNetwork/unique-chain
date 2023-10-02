@@ -824,8 +824,8 @@ where
 {
 	use fc_consensus::FrontierBlockImport;
 	use sc_consensus_manual_seal::{
-		run_manual_seal, run_delayed_finalize, EngineCommand, ManualSealParams,
-		DelayedFinalizeParams,
+		run_delayed_finalize, run_manual_seal, DelayedFinalizeParams, EngineCommand,
+		ManualSealParams,
 	};
 
 	let sc_service::PartialComponents {

@@ -35,15 +35,15 @@
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
-	parity_scale_codec::Decode,
 	traits::{
 		fungible::{Inspect, Mutate},
 		EnsureOrigin, Get,
 	},
 };
-use frame_system::{EventRecord, RawOrigin};
+use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
 use pallet_authorship::EventHandler;
 use pallet_session::{self as session, SessionManager};
+use parity_scale_codec::Decode;
 use sp_std::prelude::*;
 
 use super::*;
@@ -338,7 +338,7 @@ benchmarks! {
 		register_candidates::<T>(c);
 
 		let new_block: BlockNumberFor<T>= 1800u32.into();
-		let zero_block: T::BlockNumber = 0u32.into();
+		let zero_block: BlockNumberFor<T> = 0u32.into();
 		let candidates = <Candidates<T>>::get();
 
 		let non_removals = c.saturating_sub(r);

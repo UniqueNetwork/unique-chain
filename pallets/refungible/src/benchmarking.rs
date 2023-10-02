@@ -20,7 +20,7 @@ use frame_benchmarking::{account, benchmarks};
 use pallet_common::{
 	bench_init,
 	benchmarking::{
-		create_collection_raw, property_key, property_value, load_is_admin_and_property_permissions,
+		create_collection_raw, load_is_admin_and_property_permissions, property_key, property_value,
 	},
 };
 use sp_std::prelude::*;

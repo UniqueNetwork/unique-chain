@@ -54,9 +54,9 @@
 extern crate alloc;
 
 use core::{
+	marker::PhantomData,
 	ops::{Deref, DerefMut},
 	slice::from_ref,
-	marker::PhantomData,
 };
 
 use evm_coder::ToLog;

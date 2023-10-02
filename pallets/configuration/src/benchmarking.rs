@@ -18,7 +18,7 @@
 
 use frame_benchmarking::benchmarks;
 use frame_support::assert_ok;
-use frame_system::{EventRecord, RawOrigin};
+use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
 
 use super::*;
 

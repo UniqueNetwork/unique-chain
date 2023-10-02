@@ -106,7 +106,7 @@ use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CreateCollectionData,
 	CreateRefungibleExMultipleOwners, PropertiesPermissionMap, Property, PropertyKey,
 	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TokenOwnerError,
-	TokenProperties as TokenPropertiesT, TrySetProperty, MAX_REFUNGIBLE_PIECES,
+	TokenProperties as TokenPropertiesT, MAX_REFUNGIBLE_PIECES,
 };
 
 use crate::{erc::ERC721Events, erc_token::ERC20Events};
