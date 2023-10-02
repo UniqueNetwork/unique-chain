@@ -29,7 +29,6 @@ pub mod pallet {
 	};
 	use frame_system::pallet_prelude::*;
 	use sp_std::vec::Vec;
-	// use pallet_unique_scheduler_v2::{TaskName, Pallet as SchedulerPallet};
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config /*+ pallet_unique_scheduler_v2::Config*/ {

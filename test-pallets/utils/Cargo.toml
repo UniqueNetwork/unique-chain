@@ -12,8 +12,6 @@ codec = { workspace = true, package = "parity-scale-codec" }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 scale-info = { workspace = true }
-# pallet-unique-scheduler = { path = '../../pallets/scheduler', default-features = false }
-pallet-unique-scheduler-v2 = { workspace = true }
 sp-std = { workspace = true }
 
 [features]
@@ -22,7 +20,6 @@ std = [
 	"codec/std",
 	"frame-support/std",
 	"frame-system/std",
-	"pallet-unique-scheduler-v2/std",
 	"scale-info/std",
 	"sp-std/std",
 ]

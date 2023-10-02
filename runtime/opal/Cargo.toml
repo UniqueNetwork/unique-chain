@@ -329,7 +329,6 @@ pallet-scheduler = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }
-pallet-unique-scheduler-v2 = { workspace = true }
 precompile-utils-macro = { workspace = true }
 scale-info = { workspace = true }
 up-common = { workspace = true }
