@@ -525,7 +525,7 @@ export class XcmTestHelper {
       if(variant == 'plain') {
         const kv = relayForceKV();
         return {
-          program: helper.arrange.makeTransactProgram({
+          program: helper.arrange.makeUnpaidTransactProgram({
             weightMultiplier: 1,
             call: kv.call,
           }),
@@ -537,7 +537,7 @@ export class XcmTestHelper {
 
         const batchCall = helper.constructApiCall(`api.tx.utility.${variant}`, [[kv0.call, kv1.call]]).method.toHex();
         return {
-          program: helper.arrange.makeTransactProgram({
+          program: helper.arrange.makeUnpaidTransactProgram({
             weightMultiplier: 2,
             call: batchCall,
           }),
@@ -591,7 +591,7 @@ export class XcmTestHelper {
       }
 
       return {
-        program: helper.arrange.makeTransactProgram({
+        program: helper.arrange.makeUnpaidTransactProgram({
           weightMultiplier: 1,
           call,
         }),
