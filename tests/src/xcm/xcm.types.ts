@@ -186,7 +186,7 @@ export class XcmTestHelper {
     };
   }
 
-  uniqueChainMultilocationForRelay() {
+  private _uniqueChainMultilocationForRelay() {
     return {
       V3: {
         parents: 0,
@@ -552,7 +552,7 @@ export class XcmTestHelper {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       await helper.getSudo().executeExtrinsic(relaySudoer, 'api.tx.xcmPallet.send', [
-        this.uniqueChainMultilocationForRelay(),
+        this._uniqueChainMultilocationForRelay(),
         program,
       ]);
     });
@@ -608,7 +608,7 @@ export class XcmTestHelper {
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       await helper.getSudo().executeExtrinsic(relaySudoer, 'api.tx.xcmPallet.send', [
-        this.uniqueChainMultilocationForRelay(),
+        this._uniqueChainMultilocationForRelay(),
         program,
       ]);
     });
