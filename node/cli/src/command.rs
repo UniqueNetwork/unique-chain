@@ -62,7 +62,6 @@ use sc_cli::{
 use sc_service::config::{BasePath, PrometheusConfig};
 use sp_core::hexdisplay::HexDisplay;
 use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{time::Duration};
 
 use up_common::types::opaque::{Block, RuntimeId};
 
@@ -481,14 +480,12 @@ pub fn run() -> Result<()> {
 				if is_dev_service {
 					info!("Running Dev service");
 
-					let autoseal_interval = Duration::from_millis(cli.idle_autoseal_interval);
-
 					let mut config = config;
 
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, autoseal_interval, cli.disable_autoseal_on_tx).map_err(Into::into)
+						start_dev_node(config, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
 

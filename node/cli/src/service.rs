@@ -169,9 +169,9 @@ pub struct AutosealInterval {
 }
 
 impl AutosealInterval {
-	pub fn new(config: &Configuration, interval: Duration) -> Self {
+	pub fn new(config: &Configuration, interval: u64) -> Self {
 		let _tokio_runtime = config.tokio_handle.enter();
-		let interval = tokio::time::interval(interval);
+		let interval = tokio::time::interval(Duration::from_millis(interval));
 
 		Self { interval }
 	}
@@ -885,7 +885,8 @@ pub struct OtherPartial {
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
-	autoseal_interval: Duration,
+	autoseal_interval: u64,
+	autoseal_finalize_delay: Option<u64>,
 	disable_autoseal_on_tx: bool,
 ) -> sc_service::error::Result<TaskManager>
 where
@@ -913,7 +914,10 @@ where
 		+ sp_consensus_aura::AuraApi<Block, AuraId>,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
-	use sc_consensus_manual_seal::{run_manual_seal, EngineCommand, ManualSealParams};
+	use sc_consensus_manual_seal::{
+		run_manual_seal, run_delayed_finalize, EngineCommand, ManualSealParams,
+		DelayedFinalizeParams,
+	};
 	use fc_consensus::FrontierBlockImport;
 
 	let sc_service::PartialComponents {
@@ -984,18 +988,19 @@ where
 				.filter(move |_| futures::future::ready(!disable_autoseal_on_tx))
 				.map(|_| EngineCommand::SealNewBlock {
 					create_empty: true,
-					finalize: false, // todo:collator finalize true
+					finalize: false,
 					parent_hash: None,
 					sender: None,
 				}),
 		);
 
 		let autoseal_interval = Box::pin(AutosealInterval::new(&config, autoseal_interval));
+
 		let idle_commands_stream: Box<
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
 		> = Box::new(autoseal_interval.map(|_| EngineCommand::SealNewBlock {
 			create_empty: true,
-			finalize: false, // todo:collator finalize true
+			finalize: false,
 			parent_hash: None,
 			sender: None,
 		}));
@@ -1004,6 +1009,20 @@ where
 
 		let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 		let client_set_aside_for_cidp = client.clone();
+
+		if let Some(delay_sec) = autoseal_finalize_delay {
+			let spawn_handle = task_manager.spawn_handle();
+
+			task_manager.spawn_essential_handle().spawn_blocking(
+				"finalization_task",
+				Some("block-authoring"),
+				run_delayed_finalize(DelayedFinalizeParams {
+					client: client.clone(),
+					delay_sec,
+					spawn_handle,
+				}),
+			);
+		}
 
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"authorship_task",
