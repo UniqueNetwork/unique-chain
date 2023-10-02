@@ -288,12 +288,12 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
-  const UNQ_ASSET_ID_ON_ASTAR = 1;
-  const UNQ_MINIMAL_BALANCE_ON_ASTAR = 1n;
+  const UNQ_ASSET_ID_ON_ASTAR = 18_446_744_073_709_551_631n; // The value is taken from the live Astar
+  const UNQ_MINIMAL_BALANCE_ON_ASTAR = 1n; // The value is taken from the live Astar
 
   // Unique -> Astar
   const astarInitialBalance = 1n * (10n ** ASTAR_DECIMALS); // 1 ASTR, existential deposit required to actually create the account on Astar.
-  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
+  const unitsPerSecond = 9_451_000_000_000_000_000n; // The value is taken from the live Astar
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -309,7 +309,6 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
-        // TODO update metadata with values from production
         await helper.assets.create(
           alice,
           UNQ_ASSET_ID_ON_ASTAR,
@@ -320,8 +319,8 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
         await helper.assets.setMetadata(
           alice,
           UNQ_ASSET_ID_ON_ASTAR,
-          'Cross chain UNQ',
-          'xcUNQ',
+          'Unique Network',
+          'UNQ',
           Number(UNQ_DECIMALS),
         );
 

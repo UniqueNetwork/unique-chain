@@ -222,14 +222,12 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Shiden', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
-  const QTZ_ASSET_ID_ON_SHIDEN = 1;
-  const QTZ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
+  const QTZ_ASSET_ID_ON_SHIDEN = 18_446_744_073_709_551_633n; // The value is taken from the live Shiden
+  const QTZ_MINIMAL_BALANCE_ON_SHIDEN = 1n; // The value is taken from the live Shiden
 
   // Quartz -> Shiden
   const shidenInitialBalance = 1n * (10n ** SHIDEN_DECIMALS); // 1 SHD, existential deposit required to actually create the account on Shiden
-  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
-
-
+  const unitsPerSecond = 500_451_000_000_000_000_000n; // The value is taken from the live Shiden
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -245,7 +243,6 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Shiden', () => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [QTZ_ASSET_ID_ON_SHIDEN])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
-        // TODO update metadata with values from production
         await helper.assets.create(
           alice,
           QTZ_ASSET_ID_ON_SHIDEN,
@@ -256,8 +253,8 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Shiden', () => {
         await helper.assets.setMetadata(
           alice,
           QTZ_ASSET_ID_ON_SHIDEN,
-          'Cross chain QTZ',
-          'xcQTZ',
+          'Quartz',
+          'QTZ',
           Number(QTZ_DECIMALS),
         );
 
