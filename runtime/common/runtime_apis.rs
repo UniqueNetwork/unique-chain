@@ -692,7 +692,7 @@ macro_rules! impl_common_runtime_apis {
                     {
                         use codec::Decode;
 
-                        let uxt_decode = <<Block as BlockT>::Extrinsic as Decode>::decode(&mut &uxt)
+                        let uxt_decode = <<Block as BlockT>::Extrinsic as Decode>::decode(&mut &*uxt)
                             .map_err(|_| DispatchError::Other("failed to decode the extrinsic"));
 
                         let uxt = match uxt_decode {
