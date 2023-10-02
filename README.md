@@ -84,13 +84,6 @@ cargo build --features=unique-runtime --release
 
 Note: checkout this project and all related projects (see below) in the sibling folders (both under the same folder)
 
-### Polkadot launch utility
-
-```
-git clone https://github.com/UniqueNetwork/polkadot-launch.git
-git checkout unique-network
-```
-
 ### Build relay
 
 ```
@@ -118,14 +111,7 @@ make build-release
 
 ## Running as Parachain locally
 
-```
-./launch-testnet.sh
-```
-
-Optional, full setup with Acala and Statemint
-```
-./launch-testnet-full.sh
-```
+TODO
 
 ## Run Integration Tests
 
