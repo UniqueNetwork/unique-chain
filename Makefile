@@ -90,7 +90,7 @@ evm_stubs: UniqueFungible UniqueNFT UniqueRefungible UniqueRefungibleToken Contr
 
 .PHONY: _bench
 _bench:
-	cargo run --release --features runtime-benchmarks,$(RUNTIME) -- \
+	cargo run --profile production --features runtime-benchmarks,$(RUNTIME) -- \
 	benchmark pallet --pallet pallet-$(if $(PALLET),$(PALLET),$(error Must set PALLET)) \
 	--wasm-execution compiled --extrinsic '*' \
 	$(if $(TEMPLATE),$(TEMPLATE),--template=.maintain/frame-weight-template.hbs) --steps=50 --repeat=80 --heap-pages=4096 \

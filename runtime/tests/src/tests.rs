@@ -168,6 +168,7 @@ fn get_collection_properties(collection_id: CollectionId) -> Vec<Property> {
 
 fn get_token_properties(collection_id: CollectionId, token_id: TokenId) -> Vec<Property> {
 	<pallet_nonfungible::Pallet<Test>>::token_properties((collection_id, token_id))
+		.unwrap_or_default()
 		.into_iter()
 		.map(|(key, value)| Property { key, value })
 		.collect()

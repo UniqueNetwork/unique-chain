@@ -22,8 +22,9 @@ use pallet_evm::account::CrossAccountId;
 use frame_benchmarking::{benchmarks, account};
 use up_data_structs::{
 	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
-	CollectionPermissions, NestingPermissions, AccessMode, MAX_COLLECTION_NAME_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
+	CollectionPermissions, NestingPermissions, AccessMode, PropertiesPermissionMap,
+	MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
+	MAX_PROPERTIES_PER_ITEM,
 };
 use frame_support::{
 	traits::{Get, fungible::Balanced, Imbalance, tokens::Precision},
@@ -123,6 +124,16 @@ fn create_collection<T: Config>(
 	)
 }
 
+pub fn load_is_admin_and_property_permissions<T: Config>(
+	collection: &CollectionHandle<T>,
+	sender: &T::CrossAccountId,
+) -> (bool, PropertiesPermissionMap) {
+	(
+		collection.is_owner_or_admin(sender),
+		<Pallet<T>>::property_permissions(collection.id),
+	)
+}
+
 /// Helper macros, which handles all benchmarking preparation in semi-declarative way
 ///
 /// `name` is a substrate account
@@ -215,4 +226,12 @@ benchmarks! {
 		assert_eq!(collection_handle.permissions.access(), AccessMode::AllowList);
 
 	}: {collection_handle.check_allowlist(&sender)?;}
+
+	init_token_properties_common {
+		bench_init!{
+			owner: sub; collection: collection(owner);
+			sender: sub;
+			sender: cross_from_sub(sender);
+		};
+	}: {load_is_admin_and_property_permissions(&collection, &sender);}
 }
