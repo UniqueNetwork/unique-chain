@@ -888,18 +888,18 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 
 	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value(&mut self) -> &T {
-		self.compute_value_if_not_already();
+		self.force_value();
 		self.value.as_ref().unwrap()
 	}
 
 	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value_mut(&mut self) -> &mut T {
-		self.compute_value_if_not_already();
+		self.force_value();
 		self.value.as_mut().unwrap()
 	}
 
 	fn into_inner(mut self) -> T {
-		self.compute_value_if_not_already();
+		self.force_value();
 		self.value.unwrap()
 	}
 
@@ -908,7 +908,7 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 		self.value.is_some()
 	}
 
-	fn compute_value_if_not_already(&mut self) {
+	fn force_value(&mut self) {
 		if self.value.is_none() {
 			self.value = Some(self.f.take().unwrap()())
 		}
