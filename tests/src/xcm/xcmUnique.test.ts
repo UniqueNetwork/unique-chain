@@ -1518,11 +1518,11 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   const astarInitialBalance = 1n * (10n ** ASTAR_DECIMALS); // 1 ASTR, existential deposit required to actually create the account on Astar.
   const unitsPerSecond = 9_451_000_000_000_000_000n; // The value is taken from the live Astar
   const unqToAstarTransferred = 10n * (10n ** UNQ_DECIMALS); // 10 UNQ
-  const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Astar takes a commision in foreign tokens
+  const unqToAstarArrived = 9_962_196_000_000_000_000n; // 9.962 ... UNQ, Astar takes a commision in foreign tokens
 
   // Astar -> Unique
   const unqFromAstarTransfered = 5n * (10n ** UNQ_DECIMALS); // 5 UNQ
-  const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
+  const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.962_219_600_000_000_000n UNQ
 
   let balanceAfterUniqueToAstarXCM: bigint;
 
@@ -1539,7 +1539,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
-        await helper.assets.create(
+        await helper.getSudo().assets.forceCreate(
           alice,
           UNQ_ASSET_ID_ON_ASTAR,
           alice.address,
