@@ -497,15 +497,13 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 			return Ok(false);
 		}
 
-		let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
+		<PalletStructure<T>>::check_indirectly_owned(
 			maybe_owner.clone(),
 			self.id,
 			token,
 			None,
 			nesting_budget,
-		)?;
-
-		Ok(is_bundle_owner)
+		)
 	}
 
 	/// Returns 10 token in no particular order.
