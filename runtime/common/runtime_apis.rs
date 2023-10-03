@@ -60,7 +60,6 @@ macro_rules! impl_common_runtime_apis {
 			config::ethereum::CrossAccountId,
 		};
 		use up_data_structs::*;
-		use crate::Block;
 
 		impl_runtime_apis! {
 			$($($custom_apis)+)?
