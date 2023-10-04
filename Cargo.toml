@@ -1,6 +1,5 @@
 [workspace]
 default-members = ['client/*', 'node/*', 'runtime/opal']
-exclude = ['pallets/scheduler-v2']
 members = [
 	'client/*',
 	'crates/*',
@@ -54,7 +53,6 @@ pallet-refungible = { default-features = false, path = "pallets/refungible" }
 pallet-structure = { default-features = false, path = "pallets/structure" }
 pallet-test-utils = { default-features = false, path = "test-pallets/utils" }
 pallet-unique = { path = "pallets/unique", default-features = false }
-# pallet-unique-scheduler-v2 = { path = "pallets/scheduler-v2", default-features = false }
 precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }
 struct-versioning = { path = "crates/struct-versioning" }
 uc-rpc = { path = "client/rpc" }

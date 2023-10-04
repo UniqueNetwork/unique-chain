@@ -67,9 +67,6 @@ impl SignedExtension for CheckMaintenance {
 				| RuntimeCall::Structure(_)
 				| RuntimeCall::Unique(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
-				#[cfg(feature = "unique-scheduler")]
-				RuntimeCall::Scheduler(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
-
 				#[cfg(feature = "app-promotion")]
 				RuntimeCall::AppPromotion(_) => {
 					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))

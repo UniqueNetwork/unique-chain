@@ -229,7 +229,6 @@ governance = []
 preimage = []
 refungible = []
 session-test-timings = []
-unique-scheduler = []
 
 ################################################################################
 # local dependencies

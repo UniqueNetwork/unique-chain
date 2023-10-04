@@ -548,9 +548,6 @@ macro_rules! impl_common_runtime_apis {
 					#[cfg(feature = "refungible")]
 					list_benchmark!(list, extra, pallet_refungible, Refungible);
 
-					#[cfg(feature = "unique-scheduler")]
-					list_benchmark!(list, extra, pallet_unique_scheduler_v2, Scheduler);
-
 					#[cfg(feature = "collator-selection")]
 					list_benchmark!(list, extra, pallet_collator_selection, CollatorSelection);
 
@@ -613,9 +610,6 @@ macro_rules! impl_common_runtime_apis {
 
 					#[cfg(feature = "refungible")]
 					add_benchmark!(params, batches, pallet_refungible, Refungible);
-
-					#[cfg(feature = "unique-scheduler")]
-					add_benchmark!(params, batches, pallet_unique_scheduler_v2, Scheduler);
 
 					#[cfg(feature = "collator-selection")]
 					add_benchmark!(params, batches, pallet_collator_selection, CollatorSelection);

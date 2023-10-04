@@ -128,10 +128,6 @@ bench-nonfungible:
 bench-structure:
 	make _bench PALLET=structure
 
-.PHONY: bench-scheduler
-bench-scheduler:
-	make _bench PALLET=unique-scheduler-v2 PALLET_DIR=scheduler-v2
-
 .PHONY: bench-foreign-assets
 bench-foreign-assets:
 	make _bench PALLET=foreign-assets
@@ -157,7 +153,6 @@ bench-xcm:
 	make _bench PALLET=xcm OUTPUT=./runtime/common/weights/xcm.rs TEMPLATE="--template=.maintain/external-weight-template.hbs"
 
 .PHONY: bench
-# Disabled: bench-scheduler
 bench: bench-app-promotion bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm bench-collator-selection bench-identity
 
 .PHONY: check

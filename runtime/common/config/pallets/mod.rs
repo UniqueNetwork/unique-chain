@@ -40,9 +40,6 @@ use crate::{
 	Balances, Runtime, RuntimeCall, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
 };
 
-#[cfg(feature = "unique-scheduler")]
-pub mod scheduler;
-
 #[cfg(feature = "foreign-assets")]
 pub mod foreign_asset;
 

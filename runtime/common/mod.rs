@@ -23,9 +23,6 @@ pub mod instance;
 pub mod maintenance;
 pub mod runtime_apis;
 
-#[cfg(feature = "unique-scheduler")]
-pub mod scheduler;
-
 pub mod sponsoring;
 #[allow(missing_docs)]
 pub mod weights;
