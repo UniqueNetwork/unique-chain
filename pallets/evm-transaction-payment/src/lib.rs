@@ -199,12 +199,12 @@ impl<T: Config> OnCheckEvmTransaction<T> for TransactionValidity<T> {
 			.saturating_mul(v.transaction.gas_limit);
 		if let Some(sponsor) = sponsor.as_ref() {
 			if who.balance < v.transaction.value || sponsor.balance < fee {
-				return Err(TransactionValidationError::BalanceTooLow.into());
+				return Err(TransactionValidationError::BalanceTooLow);
 			}
 		} else {
 			let total_payment = v.transaction.value.saturating_add(fee);
 			if who.balance < total_payment {
-				return Err(TransactionValidationError::BalanceTooLow.into());
+				return Err(TransactionValidationError::BalanceTooLow);
 			}
 		}
 
