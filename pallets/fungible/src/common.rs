@@ -16,14 +16,11 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{
-	dispatch::DispatchResultWithPostInfo, ensure, fail, traits::Get, weights::Weight,
-};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use pallet_common::{
 	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
 	RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
-use pallet_structure::Error as StructureError;
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
@@ -60,16 +57,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(amount: u32) -> Weight {
-		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
-	}
-
 	fn set_token_properties(_amount: u32) -> Weight {
-		// Error
-		Weight::zero()
-	}
-
-	fn delete_token_properties(_amount: u32) -> Weight {
 		// Error
 		Weight::zero()
 	}
@@ -80,7 +68,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer_raw() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
+		<SelfWeightOf<T>>::transfer_raw()
+			.saturating_add(<PalletCommonWeightOf<T>>::check_accesslist().saturating_mul(2))
 	}
 
 	fn approve() -> Weight {
@@ -93,26 +82,12 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn transfer_from() -> Weight {
 		Self::transfer()
-			+ <SelfWeightOf<T>>::check_allowed_raw()
-			+ <SelfWeightOf<T>>::set_allowance_unchecked_raw()
+			.saturating_add(<SelfWeightOf<T>>::check_allowed_raw())
+			.saturating_add(<SelfWeightOf<T>>::set_allowance_unchecked_raw())
 	}
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
-	}
-
-	fn burn_recursively_self_raw() -> Weight {
-		// Read to get total balance
-		Self::burn_item() + T::DbWeight::get().reads(1)
-	}
-
-	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
-		// Fungible tokens can't have children
-		Weight::zero()
-	}
-
-	fn token_owner() -> Weight {
-		Weight::zero()
 	}
 
 	fn set_allowance_for_all() -> Weight {
@@ -200,26 +175,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, amount),
 			<CommonWeights<T>>::burn_item(),
-		)
-	}
-
-	fn burn_item_recursively(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		_breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		// Should not happen?
-		ensure!(
-			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
-		);
-		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
-
-		with_weight(
-			<Pallet<T>>::burn(self, &sender, <Balance<T>>::get((self.id, &sender))),
-			<CommonWeights<T>>::burn_recursively_self_raw(),
 		)
 	}
 

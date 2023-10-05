@@ -84,7 +84,7 @@ pub struct GasCallsBudget<'r, T: Config> {
 }
 impl<T: Config> budget::Budget for GasCallsBudget<'_, T> {
 	fn consume_custom(&self, calls: u32) -> bool {
-		let (gas, overflown) = (calls as u64).overflowing_add(self.gas_per_call);
+		let (gas, overflown) = (calls as u64).overflowing_mul(self.gas_per_call);
 		if overflown {
 			return false;
 		}

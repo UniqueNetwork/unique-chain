@@ -19,10 +19,7 @@ use core::{convert::TryInto, iter::IntoIterator};
 use frame_benchmarking::v2::*;
 use pallet_common::{
 	bench_init,
-	benchmarking::{
-		create_collection_raw, /*load_is_admin_and_property_permissions,*/ property_key,
-		property_value,
-	},
+	benchmarking::{create_collection_raw, property_key, property_value},
 };
 use sp_std::prelude::*;
 use up_data_structs::{
@@ -423,6 +420,81 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	// set_token_properties {
+	// 	let b in 0..MAX_PROPERTIES_PER_ITEM;
+	// 	bench_init!{
+	// 		owner: sub; collection: collection(owner);
+	// 		owner: cross_from_sub;
+	// 	};
+	// 	let perms = (0..b).map(|k| PropertyKeyPermission {
+	// 		key: property_key(k as usize),
+	// 		permission: PropertyPermission {
+	// 			mutable: false,
+	// 			collection_admin: true,
+	// 			token_owner: true,
+	// 		},
+	// 	}).collect::<Vec<_>>();
+	// 	<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
+	// 	let props = (0..b).map(|k| Property {
+	// 		key: property_key(k as usize),
+	// 		value: property_value(),
+	// 	}).collect::<Vec<_>>();
+	// 	let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
+	// }: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), &Unlimited)?}
+
+	// load_token_properties {
+	// 	bench_init!{
+	// 		owner: sub; collection: collection(owner);
+	// 		owner: cross_from_sub;
+	// 	};
+
+	// 	let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
+	// }: {
+	// 	pallet_common::BenchmarkPropertyWriter::<T>::load_token_properties(
+	// 		&collection,
+	// 		item,
+	// 	)
+	// }
+
+	// write_token_properties {
+	// 	let b in 0..MAX_PROPERTIES_PER_ITEM;
+	// 	bench_init!{
+	// 		owner: sub; collection: collection(owner);
+	// 		owner: cross_from_sub;
+	// 	};
+
+	// 	let perms = (0..b).map(|k| PropertyKeyPermission {
+	// 		key: property_key(k as usize),
+	// 		permission: PropertyPermission {
+	// 			mutable: false,
+	// 			collection_admin: true,
+	// 			token_owner: true,
+	// 		},
+	// 	}).collect::<Vec<_>>();
+	// 	<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
+	// 	let props = (0..b).map(|k| Property {
+	// 		key: property_key(k as usize),
+	// 		value: property_value(),
+	// 	}).collect::<Vec<_>>();
+	// 	let item = create_max_item(&collection, &owner, [(owner.clone(), 200)])?;
+
+	// 	let lazy_collection_info = pallet_common::BenchmarkPropertyWriter::<T>::load_collection_info(
+	// 		&collection,
+	// 		&owner,
+	// 	);
+	// }: {
+	// 	let mut property_writer = pallet_common::BenchmarkPropertyWriter::new(&collection, lazy_collection_info);
+
+	// 	property_writer.write_token_properties(
+	// 		item,
+	// 		props.into_iter(),
+	// 		crate::erc::ERC721TokenEvent::TokenChanged {
+	// 			token_id: item.into(),
+	// 		}
+	// 		.to_log(T::ContractAddress::get()),
+	// 	)?
+	// }
 
 	#[benchmark]
 	fn set_token_property_permissions(

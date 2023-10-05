@@ -37,14 +37,13 @@ use pallet_evm_coder_substrate::{
 	execution::{PreDispatch, Result},
 	frontier_contract, WithRecorder,
 };
-use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
 use sp_core::U256;
 use sp_std::vec::Vec;
 use up_data_structs::TokenId;
 
 use crate::{
-	common::CommonWeights, weights::WeightInfo, Allowance, Balance, Config, Pallet,
-	RefungibleHandle, SelfWeightOf, TotalSupply,
+	common::CommonWeights, erc::nesting_budget, weights::WeightInfo, Allowance, Balance, Config,
+	Pallet, RefungibleHandle, SelfWeightOf, TotalSupply,
 };
 
 /// Refungible token handle contains information about token's collection and id
@@ -140,12 +139,16 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(
+			self,
+			&caller,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -165,12 +168,17 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -231,12 +239,16 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(
+			self,
+			&caller,
+			&from,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -254,12 +266,16 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(
+			self,
+			&caller,
+			&from,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -315,12 +331,16 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(
+			self,
+			&caller,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -340,12 +360,17 @@ where
 		let from = from.into_sub_cross_account::<T>()?;
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }

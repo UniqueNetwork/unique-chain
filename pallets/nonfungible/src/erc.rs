@@ -38,14 +38,14 @@ use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{Error, PreDispatch, Result},
-	frontier_contract,
+	frontier_contract, SubstrateRecorder,
 };
 use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
 use sp_core::{Get, U256};
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
-	CollectionId, CollectionPropertiesVec, Property, PropertyKey, PropertyKeyPermission,
-	PropertyPermission, TokenId,
+	budget::Budget, CollectionId, CollectionPropertiesVec, Property, PropertyKey,
+	PropertyKeyPermission, PropertyPermission, TokenId,
 };
 
 use crate::{
@@ -76,6 +76,10 @@ pub struct MintTokenData {
 frontier_contract! {
 	macro_rules! NonfungibleHandle_result {...}
 	impl<T: Config> Contract for NonfungibleHandle<T> {...}
+}
+
+fn nesting_budget<T: Config>(recorder: &SubstrateRecorder<T>) -> impl Budget + '_ {
+	recorder.weight_calls_budget(<StructureWeight<T>>::find_parent())
 }
 
 /// @title A contract that allows to set and delete token properties and change token property permissions.
@@ -146,7 +150,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param key Property key.
 	/// @param value Property value.
 	#[solidity(hide)]
-	#[weight(<SelfWeightOf<T>>::set_token_properties(1))]
+	#[weight(<CommonWeights<T>>::set_token_properties(1))]
 	fn set_property(
 		&mut self,
 		caller: Caller,
@@ -161,16 +165,12 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map_err(|_| "key too long")?;
 		let value = value.0.try_into().map_err(|_| "value too long")?;
 
-		let nesting_budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-
 		<Pallet<T>>::set_token_property(
 			self,
 			&caller,
 			TokenId(token_id),
 			Property { key, value },
-			&nesting_budget,
+			&nesting_budget(&self.recorder),
 		)
 		.map_err(dispatch_to_evm::<T>)
 	}
@@ -179,7 +179,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
 	/// @param properties settable properties
-	#[weight(<SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
+	#[weight(<CommonWeights<T>>::set_token_properties(properties.len() as u32))]
 	fn set_properties(
 		&mut self,
 		caller: Caller,
@@ -188,10 +188,6 @@ impl<T: Config> NonfungibleHandle<T> {
 	) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
-
-		let nesting_budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let properties = properties
 			.into_iter()
@@ -203,7 +199,7 @@ impl<T: Config> NonfungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			properties.into_iter(),
-			&nesting_budget,
+			&nesting_budget(&self.recorder),
 		)
 		.map_err(dispatch_to_evm::<T>)
 	}
@@ -213,7 +209,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId ID of the token.
 	/// @param key Property key.
 	#[solidity(hide)]
-	#[weight(<SelfWeightOf<T>>::delete_token_properties(1))]
+	#[weight(<CommonWeights<T>>::delete_token_properties(1))]
 	fn delete_property(&mut self, token_id: U256, caller: Caller, key: String) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let token_id: u32 = token_id.try_into().map_err(|_| "token id overflow")?;
@@ -221,19 +217,21 @@ impl<T: Config> NonfungibleHandle<T> {
 			.try_into()
 			.map_err(|_| "key too long")?;
 
-		let nesting_budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-
-		<Pallet<T>>::delete_token_property(self, &caller, TokenId(token_id), key, &nesting_budget)
-			.map_err(dispatch_to_evm::<T>)
+		<Pallet<T>>::delete_token_property(
+			self,
+			&caller,
+			TokenId(token_id),
+			key,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)
 	}
 
 	/// @notice Delete token properties value.
 	/// @dev Throws error if `msg.sender` has no permission to edit the property.
 	/// @param tokenId ID of the token.
 	/// @param keys Properties key.
-	#[weight(<SelfWeightOf<T>>::delete_token_properties(keys.len() as u32))]
+	#[weight(<CommonWeights<T>>::delete_token_properties(keys.len() as u32))]
 	fn delete_properties(
 		&mut self,
 		token_id: U256,
@@ -247,16 +245,12 @@ impl<T: Config> NonfungibleHandle<T> {
 			.map(|k| Ok(<Vec<u8>>::from(k).try_into().map_err(|_| "key too long")?))
 			.collect::<Result<Vec<_>>>()?;
 
-		let nesting_budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-
 		<Pallet<T>>::delete_token_properties(
 			self,
 			&caller,
 			TokenId(token_id),
 			keys.into_iter(),
-			&nesting_budget,
+			&nesting_budget(&self.recorder),
 		)
 		.map_err(dispatch_to_evm::<T>)
 	}
@@ -481,12 +475,16 @@ impl<T: Config> NonfungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, token, &budget)
-			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			token,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -594,9 +592,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		if <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -613,7 +608,7 @@ impl<T: Config> NonfungibleHandle<T> {
 				properties: BoundedVec::default(),
 				owner: to,
 			},
-			&budget,
+			&nesting_budget(&self.recorder),
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 
@@ -664,9 +659,6 @@ impl<T: Config> NonfungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token_id: u32 = token_id.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		if <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
@@ -694,7 +686,7 @@ impl<T: Config> NonfungibleHandle<T> {
 				properties,
 				owner: to,
 			},
-			&budget,
+			&nesting_budget(&self.recorder),
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
@@ -840,11 +832,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let token = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token, &budget)
+		<Pallet<T>>::transfer(self, &caller, &to, token, &nesting_budget(&self.recorder))
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
@@ -864,11 +853,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, token, &budget)
+		<Pallet<T>>::transfer(self, &caller, &to, token, &nesting_budget(&self.recorder))
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
@@ -891,11 +877,16 @@ where
 		let from = from.into_sub_cross_account::<T>()?;
 		let to = to.into_sub_cross_account::<T>()?;
 		let token_id = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		Pallet::<T>::transfer_from(self, &caller, &from, &to, token_id, &budget)
-			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+
+		Pallet::<T>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			token_id,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(())
 	}
 
@@ -911,11 +902,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let token = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, token, &budget)
+		<Pallet<T>>::burn_from(self, &caller, &from, token, &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -936,11 +924,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
 		let token = token_id.try_into()?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, token, &budget)
+		<Pallet<T>>::burn_from(self, &caller, &from, token, &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(())
 	}
@@ -966,9 +951,6 @@ where
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let total_tokens = token_ids.len();
 		for id in token_ids.into_iter() {
@@ -985,7 +967,7 @@ where
 			})
 			.collect();
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
+		<Pallet<T>>::create_multiple_items(self, &caller, data, &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -995,9 +977,6 @@ where
 	#[weight(<SelfWeightOf<T>>::create_multiple_items(data.len() as u32) + <SelfWeightOf<T>>::set_token_properties(data.len() as u32))]
 	fn mint_bulk_cross(&mut self, caller: Caller, data: Vec<MintTokenData>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut create_nft_data = Vec::with_capacity(data.len());
 		for MintTokenData { owner, properties } in data {
@@ -1013,8 +992,13 @@ where
 			});
 		}
 
-		<Pallet<T>>::create_multiple_items(self, &caller, create_nft_data, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::create_multiple_items(
+			self,
+			&caller,
+			create_nft_data,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -1037,9 +1021,6 @@ where
 		let mut expected_index = <TokensMinted<T>>::get(self.id)
 			.checked_add(1)
 			.ok_or("item id overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
 		let mut data = Vec::with_capacity(tokens.len());
 		for TokenUri { id, uri } in tokens {
@@ -1066,7 +1047,7 @@ where
 			});
 		}
 
-		<Pallet<T>>::create_multiple_items(self, &caller, data, &budget)
+		<Pallet<T>>::create_multiple_items(self, &caller, data, &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -1097,10 +1078,6 @@ where
 
 		let caller = T::CrossAccountId::from_eth(caller);
 
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-
 		<Pallet<T>>::create_item(
 			self,
 			&caller,
@@ -1108,7 +1085,7 @@ where
 				properties,
 				owner: to,
 			},
-			&budget,
+			&nesting_budget(&self.recorder),
 		)
 		.map_err(dispatch_to_evm::<T>)?;
 

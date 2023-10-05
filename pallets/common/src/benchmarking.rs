@@ -34,7 +34,7 @@ use up_data_structs::{
 	MAX_TOKEN_PREFIX_LENGTH,
 };
 
-use crate::{CollectionHandle, Config, Pallet};
+use crate::{BenchmarkPropertyWriter, CollectionHandle, Config, Pallet};
 
 const SEED: u32 = 1;
 
@@ -123,16 +123,6 @@ fn create_collection<T: Config>(
 		CollectionMode::NFT,
 		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
 		|h| h,
-	)
-}
-
-pub fn load_is_admin_and_property_permissions<T: Config>(
-	collection: &CollectionHandle<T>,
-	sender: &T::CrossAccountId,
-) -> (bool, PropertiesPermissionMap) {
-	(
-		collection.is_owner_or_admin(sender),
-		<Pallet<T>>::property_permissions(collection.id),
 	)
 }
 
@@ -272,7 +262,7 @@ mod benchmarks {
 
 		#[block]
 		{
-			load_is_admin_and_property_permissions(&collection, &sender);
+			<BenchmarkPropertyWriter<T>>::load_collection_info(&&collection, &sender);
 		}
 
 		Ok(())

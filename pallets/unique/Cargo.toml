@@ -31,7 +31,9 @@ std = [
 	'parity-scale-codec/std',
 	'sp-runtime/std',
 	'sp-std/std',
+	'up-common/std',
 	'up-data-structs/std',
+	'pallet-structure/std',
 ]
 stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
 try-runtime = ["frame-support/try-runtime"]
@@ -53,9 +55,11 @@ pallet-evm = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-nonfungible = { workspace = true }
 pallet-refungible = { workspace = true }
+pallet-structure = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+up-common = { workspace = true }
 up-data-structs = { workspace = true }

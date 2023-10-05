@@ -16,14 +16,12 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{
-	dispatch::DispatchResultWithPostInfo, ensure, fail, traits::Get, weights::Weight,
-};
+use frame_support::{dispatch::DispatchResultWithPostInfo, fail, weights::Weight};
 use pallet_common::{
-	init_token_properties_delta, weights::WeightInfo as _, with_weight, CommonCollectionOperations,
-	CommonWeightInfo, RefungibleExtensions,
+	weights::WeightInfo as _, with_weight, write_token_properties_total_weight,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions,
 };
-use pallet_structure::{Error as StructureError, Pallet as PalletStructure};
+use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
@@ -50,14 +48,14 @@ pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
 		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
-			init_token_properties_delta::<T, _>(
+			write_token_properties_total_weight::<T, _>(
 				data.iter().map(|data| match data {
 					up_data_structs::CreateItemData::ReFungible(rft_data) => {
 						rft_data.properties.len() as u32
 					}
 					_ => 0,
 				}),
-				<SelfWeightOf<T>>::init_token_properties,
+				<SelfWeightOf<T>>::write_token_properties,
 			),
 		)
 	}
@@ -66,16 +64,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		match call {
 			CreateItemExData::RefungibleMultipleOwners(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(i.users.len() as u32)
-					.saturating_add(init_token_properties_delta::<T, _>(
+					.saturating_add(write_token_properties_total_weight::<T, _>(
 						[i.properties.len() as u32].into_iter(),
-						<SelfWeightOf<T>>::init_token_properties,
+						<SelfWeightOf<T>>::write_token_properties,
 					))
 			}
 			CreateItemExData::RefungibleMultipleItems(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(i.len() as u32)
-					.saturating_add(init_token_properties_delta::<T, _>(
+					.saturating_add(write_token_properties_total_weight::<T, _>(
 						i.iter().map(|d| d.properties.len() as u32),
-						<SelfWeightOf<T>>::init_token_properties,
+						<SelfWeightOf<T>>::write_token_properties,
 					))
 			}
 			_ => Weight::zero(),
@@ -90,16 +88,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(amount: u32) -> Weight {
-		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
-	}
-
 	fn set_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_token_properties(amount)
-	}
-
-	fn delete_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_token_properties(amount)
+		write_token_properties_total_weight::<T, _>([amount].into_iter(), |amount| {
+			<SelfWeightOf<T>>::load_token_properties()
+				+ <SelfWeightOf<T>>::write_token_properties(amount)
+		})
 	}
 
 	fn set_token_property_permissions(amount: u32) -> Weight {
@@ -134,19 +127,6 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
-	}
-
-	fn burn_recursively_self_raw() -> Weight {
-		// Read to get total balance
-		Self::burn_item() + T::DbWeight::get().reads(1)
-	}
-	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
-		// Refungible token can't have children
-		Weight::zero()
-	}
-
-	fn token_owner() -> Weight {
-		<SelfWeightOf<T>>::token_owner()
 	}
 
 	fn set_allowance_for_all() -> Weight {
@@ -262,25 +242,6 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, token, amount),
 			<CommonWeights<T>>::burn_item(),
-		)
-	}
-
-	fn burn_item_recursively(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		_breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
-		with_weight(
-			<Pallet<T>>::burn(
-				self,
-				&sender,
-				token,
-				<Balance<T>>::get((self.id, token, &sender)),
-			),
-			<CommonWeights<T>>::burn_recursively_self_raw(),
 		)
 	}
 
