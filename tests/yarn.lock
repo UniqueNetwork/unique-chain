@@ -623,7 +623,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/types-codec@npm:10.9.1":
+"@polkadot/types-codec@npm:10.9.1, @polkadot/types-codec@npm:^10.9.1":
   version: 10.9.1
   resolution: "@polkadot/types-codec@npm:10.9.1"
   dependencies:
@@ -669,7 +669,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@polkadot/types@npm:10.9.1":
+"@polkadot/types@npm:10.9.1, @polkadot/types@npm:^10.9.1":
   version: 10.9.1
   resolution: "@polkadot/types@npm:10.9.1"
   dependencies:
@@ -6258,6 +6258,8 @@ __metadata:
     "@polkadot/api": 10.9.1
     "@polkadot/rpc-core": ^10.9.1
     "@polkadot/typegen": 10.9.1
+    "@polkadot/types": ^10.9.1
+    "@polkadot/types-codec": ^10.9.1
     "@polkadot/util": 12.5.1
     "@polkadot/util-crypto": 12.5.1
     "@polkadot/wasm-crypto-asmjs": ^7.2.1

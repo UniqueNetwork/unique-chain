@@ -34,7 +34,7 @@ describeGov('Governance: Democracy tests', () => {
       {After: 0},
     );
 
-    const submittedEvent = submitResult.result.events.find(helper.api!.events.fellowshipReferenda.Submitted.is);
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
     if(!submittedEvent)
       throw Error('Expected event council.Proposed');
     const fellowshipReferendumIndex = submittedEvent.data.index.toNumber();
@@ -44,10 +44,10 @@ describeGov('Governance: Democracy tests', () => {
 
     await helper.wait.expectEvent(
       fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,
-      helper.api!.events.democracy.Proposed,
+      helper.getApi().events.democracy.Proposed,
     );
 
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.api!.events.democracy.Started);
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.getApi().events.democracy.Started);
     const referendumIndex = startedEvent.refIndex.toNumber();
 
     const ayeBalance = 10_000n;

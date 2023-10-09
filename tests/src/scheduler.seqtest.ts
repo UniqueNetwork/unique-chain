@@ -410,7 +410,7 @@ describe('Scheduling token and balance transfers', () => {
     const priority = 112;
     await helper.getSudo().scheduler.changePriority(superuser, scheduledId, priority);
 
-    const priorityChanged = await helper.wait.expectEvent(waitForBlocks, helper.api!.events.uniqueScheduler.PriorityChanged) as any;
+    const priorityChanged = await helper.wait.expectEvent(waitForBlocks, helper.getApi().events.uniqueScheduler.PriorityChanged) as any;
 
     const [blockNumber, index] = priorityChanged.task;
     expect(blockNumber.toNumber()).to.be.equal(executionBlock);
@@ -661,7 +661,7 @@ describe('Negative Test: Scheduling', () => {
     await expect(helper.scheduler.changePriority(alice, scheduledId, priority))
       .to.be.rejectedWith(/BadOrigin/);
 
-    await helper.wait.expectEvent(waitForBlocks, helper.api!.events.uniqueScheduler.PriorityChanged);
+    await helper.wait.expectEvent(waitForBlocks, helper.getApi().events.uniqueScheduler.PriorityChanged);
   });
 });
 

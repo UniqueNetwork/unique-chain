@@ -678,10 +678,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
         && event.error.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -750,10 +750,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
 
-      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
         && event.error.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -763,10 +763,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
 
-      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
         && event.error.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -862,7 +862,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     const feeAssetItem = 0;
 
     await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
-    const messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
+    const messageSent = await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent);
     balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
 
     unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
@@ -880,7 +880,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
         since the hash is being checked to ensure
         it matches what was sent.
       */
-      await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
+      await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
     });
   });
 
@@ -899,10 +899,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, xcmProgram);
 
-      xcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      xcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Success, event => event.messageHash.unwrapOr(null)?.toUtf8() == xcmProgramSent);
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Success, event => event.messageHash.unwrapOr(null)?.toUtf8() == xcmProgramSent);
 
     balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
 
@@ -934,7 +934,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, maliciousXcmProgramSent);
@@ -983,7 +983,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
 
-      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent);
     });
 
     await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramFullIdSent);
@@ -995,7 +995,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
 
-      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent);
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent);
     });
 
     await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramHereIdSent);
@@ -1092,7 +1092,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const destination = uniqueCombinedMultilocationAcala;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -1104,7 +1104,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       const destination = uniqueCombinedMultilocation;
       await helper.xTokens.transfer(alith, id, testAmount, destination, 'Unlimited');
 
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -1136,7 +1136,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         feeAssetItem,
       ]);
 
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -1161,7 +1161,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
 
     await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueParachainMultilocation, maliciousXcmProgramFullId);
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -1408,10 +1408,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       //await helper.fastDemocracy.executeProposal('try to spend more UNQ than Moonbeam has', batchCall);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
         && event.error.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1478,10 +1478,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       //await helper.fastDemocracy.executeProposal('try to act like a reserve location for UNQ using path asset identification', batchCall);
 
-      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
         && event.error.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1495,10 +1495,10 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       //await helper.fastDemocracy.executeProposal('try to act like a reserve location for UNQ using "here" asset identification', batchCall);
 
-      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
         && event.error.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1563,8 +1563,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
             },
           },
         },
-      },
-      //};
+      };
 
       //await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_ASTAR]);
 
@@ -1748,10 +1747,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
         && event.error.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1809,10 +1808,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
 
-      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
         && event.error.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1822,10 +1821,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgramHereId);
 
-      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
         && event.error.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);

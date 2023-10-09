@@ -143,7 +143,7 @@ describeGov('Governance: Initialization', () => {
     );
 
     console.log('\t- The referendum is being decided');
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.api!.events.democracy.Started);
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.getApi().events.democracy.Started);
 
     await helper.democracy.vote(counselors.filip, startedEvent.refIndex.toNumber(), {
       Standard: {
@@ -155,10 +155,10 @@ describeGov('Governance: Initialization', () => {
       },
     });
 
-    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, helper.api!.events.democracy.Passed);
+    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, helper.getApi().events.democracy.Passed);
     expect(passedReferendumEvent.refIndex.toNumber()).to.be.equal(startedEvent.refIndex.toNumber());
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod, helper.api!.events.scheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod, helper.getApi().events.scheduler.Dispatched);
 
     councilMembers = await helper.council.membership.getMembers();
     const expectedCounselors = [

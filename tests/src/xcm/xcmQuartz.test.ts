@@ -677,10 +677,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks,  helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
+    await helper.wait.expectEvent(maxWaitBlocks,  helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
         && event.error.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -758,10 +758,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramFullId);
 
-      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
         && event.error.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -771,10 +771,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramHereId);
 
-      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
         && event.error.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -850,7 +850,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
   });
 
   const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: string | undefined) => {
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == messageSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == messageSent
         && event.error.isFailedToTransactAsset);
   };
 
@@ -862,7 +862,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       const destination = quartzCombinedMultilocation;
       await helper.xTokens.transfer(alice, id, testAmount, destination, 'Unlimited');
 
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -874,7 +874,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       const destination = quartzCombinedMultilocation;
       await helper.xTokens.transfer(alith, id, testAmount, destination, 'Unlimited');
 
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -906,7 +906,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
         feeAssetItem,
       ]);
 
-      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      messageSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
     await expectFailedToTransact(helper, messageSent);
@@ -1162,10 +1162,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       //const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       //await helper.fastDemocracy.executeProposal('try to spend more QTZ than Moonriver has', batchCall);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
         && event.error.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1252,10 +1252,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       // const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       //await helper.fastDemocracy.executeProposal('try to act like a reserve location for QTZ using path asset identification', batchCall);
 
-      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
         && event.error.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1269,10 +1269,10 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       // const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
       //await helper.fastDemocracy.executeProposal('try to act like a reserve location for QTZ using "here" asset identification', batchCall);
 
-      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
         && event.error.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1531,10 +1531,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgram);
 
-      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramSent
         && event.error.isFailedToTransactAsset);
 
     targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1612,10 +1612,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramFullId);
 
-      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramFullIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramFullIdSent
         && event.error.isUntrustedReserveLocation);
 
     let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
@@ -1625,10 +1625,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       await helper.getSudo().xcm.send(alice, quartzMultilocation, maliciousXcmProgramHereId);
 
-      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
+      maliciousXcmProgramHereIdSent = (await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.XcmpMessageSent)).messageHash.unwrapOr(null)?.toUtf8();
     });
 
-    await helper.wait.expectEvent(maxWaitBlocks, helper.api!.events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
+    await helper.wait.expectEvent(maxWaitBlocks, helper.getApi().events.xcmpQueue.Fail, event => event.messageHash.unwrapOr(null)?.toUtf8() == maliciousXcmProgramHereIdSent
         && event.error.isUntrustedReserveLocation);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);

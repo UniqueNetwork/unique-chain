@@ -926,7 +926,7 @@ describe('App promotion', () => {
         await helper.staking.stake(staker, 200n * nominal);
         const result = await helper.executeExtrinsic(staker, `api.tx.appPromotion.${testCase.method}`, unstakeParams);
 
-        const event = Event.expect(result, helper.api!.events.appPromotion.Unstake);
+        const event = Event.expect(result, helper.getApi().events.appPromotion.Unstake);
         const unstakerEvents = event.data[0].toString();
         const unstakedEvents = event.data[1].toBigInt();
         expect(unstakerEvents).to.eq(staker.address);
@@ -938,7 +938,7 @@ describe('App promotion', () => {
       const [staker] = await getAccounts(1);
       const result = await helper.executeExtrinsic(staker, 'api.tx.appPromotion.stake', [100n * nominal]);
 
-      const event = Event.expect(result, helper.api!.events.appPromotion.Stake);
+      const event = Event.expect(result, helper.getApi().events.appPromotion.Stake);
       const stakerEvents = event.data[0].toString();
       const stakedEvents = event.data[1].toBigInt();
       expect(stakerEvents).to.eq(staker.address);

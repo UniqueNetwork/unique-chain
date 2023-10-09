@@ -821,7 +821,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionDestroyed.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionDestroyed.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -841,7 +841,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionSponsorSet.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionSponsorSet.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -860,7 +860,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.SponsorshipConfirmed.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.SponsorshipConfirmed.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -879,7 +879,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionSponsorRemoved.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionSponsorRemoved.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -907,7 +907,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionLimitSet.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionLimitSet.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -927,7 +927,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionOwnerChanged.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionOwnerChanged.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -947,7 +947,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionAdminAdded.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionAdminAdded.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -967,7 +967,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionAdminRemoved.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionAdminRemoved.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -997,7 +997,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.AllowListAddressAdded.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.AllowListAddressAdded.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1016,7 +1016,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.AllowListAddressRemoved.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.AllowListAddressRemoved.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1036,7 +1036,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionPermissionSet.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionPermissionSet.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1081,7 +1081,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionPropertySet.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionPropertySet.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1124,7 +1124,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.CollectionPropertyDeleted.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionPropertyDeleted.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1146,7 +1146,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
 
-    return this.helper.util.isTokenTransferSuccess(this.helper.api!, result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
+    return this.helper.util.isTokenTransferSuccess(this.helper.getApi(), result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
   }
 
   /**
@@ -1168,7 +1168,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       'api.tx.unique.transferFrom', [fromAddressObj, toAddressObj, collectionId, tokenId, amount],
       true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
-    return this.helper.util.isTokenTransferSuccess(this.helper.api!, result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
+    return this.helper.util.isTokenTransferSuccess(this.helper.getApi(), result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
   /**
@@ -1188,7 +1188,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       'api.tx.unique.burnItem', [collectionId, tokenId, amount],
       true, // `Unable to burn token for ${label}`,
     );
-    const burnedTokens = this.helper.util.extractTokensFromBurnResult(this.helper.api!, burnResult);
+    const burnedTokens = this.helper.util.extractTokensFromBurnResult(this.helper.getApi(), burnResult);
     if(burnedTokens.tokens.length > 1) throw Error('Burned multiple tokens');
     return burnedTokens.success;
   }
@@ -1210,7 +1210,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       'api.tx.unique.burnFrom', [collectionId, fromAddressObj, tokenId, amount],
       true, // `Unable to burn token from for ${label}`,
     );
-    const burnedTokens = this.helper.util.extractTokensFromBurnResult(this.helper.api!, burnResult);
+    const burnedTokens = this.helper.util.extractTokensFromBurnResult(this.helper.getApi(), burnResult);
     return burnedTokens.success && burnedTokens.tokens.length > 0;
   }
 
@@ -1231,7 +1231,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to approve token for ${label}`,
     );
 
-    const event = approveResult.result.events.find(this.helper.api!.events.common.Approved.is);
+    const event = approveResult.result.events.find(this.helper.getApi().events.common.Approved.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1253,7 +1253,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to approve token for ${label}`,
     );
 
-    const event = approveResult.result.events.find(this.helper.api!.events.common.Approved.is);
+    const event = approveResult.result.events.find(this.helper.getApi().events.common.Approved.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1451,7 +1451,7 @@ class NFTnRFT extends CollectionGroup {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.PropertyPermissionSet.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.PropertyPermissionSet.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1484,7 +1484,7 @@ class NFTnRFT extends CollectionGroup {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.TokenPropertySet.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.TokenPropertySet.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1517,7 +1517,7 @@ class NFTnRFT extends CollectionGroup {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.TokenPropertyDeleted.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.TokenPropertyDeleted.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -1552,7 +1552,7 @@ class NFTnRFT extends CollectionGroup {
       'api.tx.unique.createCollectionEx', [collectionOptions],
       true, // errorLabel,
     );
-    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(this.helper.api!, creationResult));
+    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(this.helper.getApi(), creationResult));
   }
 
   getCollectionObject(_collectionId: number): any {
@@ -1587,7 +1587,7 @@ class NFTnRFT extends CollectionGroup {
       true,
     );
 
-    const event = result.result.events.find(this.helper.api!.events.common.ApprovedForAll.is);
+    const event = result.result.events.find(this.helper.getApi().events.common.ApprovedForAll.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 }
@@ -1709,7 +1709,7 @@ class NFTGroup extends NFTnRFT {
       }],
       true,
     );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(this.helper.api!, creationResult);
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult);
     if(createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
     if(createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
@@ -1737,7 +1737,7 @@ class NFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(this.helper.api!, creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1770,7 +1770,7 @@ class NFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(this.helper.api!, creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1897,7 +1897,7 @@ class RFTGroup extends NFTnRFT {
       }],
       true,
     );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(this.helper.api!, creationResult);
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult);
     if(createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
     if(createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
@@ -1911,7 +1911,7 @@ class RFTGroup extends NFTnRFT {
       true, // `Unable to mint RFT tokens for ${label}`,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(this.helper.api!, creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1935,7 +1935,7 @@ class RFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(this.helper.api!, creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -2010,11 +2010,11 @@ class RFTGroup extends NFTnRFT {
     if(!currentAmount)
       throw Error("Token doens't exist");
     if(currentAmount < amount) {
-      const event = repartitionResult.result.events.find(this.helper.api!.events.common.ItemCreated.is);
+      const event = repartitionResult.result.events.find(this.helper.getApi().events.common.ItemCreated.is);
       return this.helper.util.checkEvent(event, collectionId);
     }
 
-    const event = repartitionResult.result.events.find(this.helper.api!.events.common.ItemDestroyed.is);
+    const event = repartitionResult.result.events.find(this.helper.getApi().events.common.ItemDestroyed.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 }
@@ -2056,7 +2056,7 @@ class FTGroup extends CollectionGroup {
       'api.tx.unique.createCollectionEx', [collectionOptions],
       true,
     );
-    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(this.helper.api!, creationResult));
+    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(this.helper.getApi(), creationResult));
   }
 
   /**
@@ -2079,7 +2079,7 @@ class FTGroup extends CollectionGroup {
       true, // `Unable to mint fungible tokens for ${label}`,
     );
 
-    const event = creationResult.result.events.find(this.helper.api!.events.common.ItemCreated.is);
+    const event = creationResult.result.events.find(this.helper.getApi().events.common.ItemCreated.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -2103,7 +2103,7 @@ class FTGroup extends CollectionGroup {
       true,
     );
 
-    const event = creationResult.result.events.find(this.helper.api!.events.common.ItemCreated.is);
+    const event = creationResult.result.events.find(this.helper.getApi().events.common.ItemCreated.is);
     return this.helper.util.checkEvent(event, collectionId);
   }
 
@@ -2301,7 +2301,7 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
 
-    const event = result.result.events.filter(this.helper.api!.events.balances.Transfer.is).at(-1)!;
+    const event = result.result.events.filter(this.helper.getApi().events.balances.Transfer.is).at(-1)!;
     const transfer = {
       from: this.helper.address.normalizeSubstrate(event.data[0].toString()),
       to: this.helper.address.normalizeSubstrate(event.data[1].toString()),
@@ -2362,7 +2362,7 @@ export class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup
   async transferToEthereum(signer: TSigner, address: TEthereumAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true);
 
-    const event = result.result.events.filter(this.helper.api!.events.balances.Transfer.is).at(-1)!;
+    const event = result.result.events.filter(this.helper.getApi().events.balances.Transfer.is).at(-1)!;
     const transfer = {
       from: event.data[0].toString(),
       to: event.data[1].toString(),
@@ -2473,7 +2473,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async forceTransferToSubstrate(signer: TSigner, from: TSubstrateAccount, to: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.forceTransfer', [from, to, amount], true);
 
-    const event = result.result.events.filter(this.helper.api!.events.balances.Transfer.is).at(-1)!;
+    const event = result.result.events.filter(this.helper.getApi().events.balances.Transfer.is).at(-1)!;
     const transfer = {
       from: this.helper.address.normalizeSubstrate(event.data[0].toString()),
       to: this.helper.address.normalizeSubstrate(event.data[1].toString()),
@@ -2495,7 +2495,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: { start: number, period: number, periodCount: number, perPeriod: bigint }): Promise<void> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, schedule]);
     const event = result.result.events
-      .filter(this.helper.api!.events.vesting.VestingScheduleAdded.is)
+      .filter(this.helper.getApi().events.vesting.VestingScheduleAdded.is)
       .find(event => this.helper.address.normalizeSubstrate(event.data[0].toString()) === signer.address);
     if(!event) throw Error('Cannot find transfer in events');
   }
@@ -2516,7 +2516,7 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async claim(signer: TSigner) {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.claim', []);
     const event = result.result.events
-      .filter(this.helper.api!.events.vesting.Claimed.is)
+      .filter(this.helper.getApi().events.vesting.Claimed.is)
       .find(event => this.helper.address.normalizeSubstrate(event.data[0].toString()) === signer.address);
     if(!event) throw Error('Cannot find claim in events');
   }
@@ -2797,7 +2797,7 @@ class PreimageGroup extends HelperGroup<UniqueHelper> {
    */
   async notePreimageHash(signer: TSigner, bytes: string | Uint8Array) {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
-    const event = result.result.events.find(this.helper.api!.events.preimage.Noted.is);
+    const event = result.result.events.find(this.helper.getApi().events.preimage.Noted.is);
     if(!event)
       throw new Error('"Noted" event not found');
     return event?.data.hash_.toHex();
@@ -3020,9 +3020,7 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
 
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
-
-    return (props! as any).consumedSpace;
+    return (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).consumedSpace.toNumber();
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
@@ -3125,9 +3123,7 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
-
-    return (props! as any).consumedSpace;
+    return (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).consumedSpace.toNumber();
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount = 1n) {

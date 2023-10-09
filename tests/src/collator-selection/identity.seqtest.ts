@@ -123,7 +123,7 @@ describe('Integration Test: Identities Manipulation', () => {
       const oldIdentities = await getIdentityAccounts(helper);
 
       // delete a couple, check that they are no longer there
-      const registry = helper.api!.registry;
+      const registry = helper.getApi().registry;
       const scapegoats: AccountId32[] = [new GenericAccountId(registry, crowd.pop()!.address), new GenericAccountId(registry, crowd.pop()!.address)];
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceRemoveIdentities', [scapegoats]);
       const newIdentities = await getIdentityAccounts(helper);
@@ -155,7 +155,7 @@ describe('Integration Test: Identities Manipulation', () => {
       ]);
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo] as any);
 
-      const registry = helper.api!.registry;
+      const registry = helper.getApi().registry;
       for(let i = 0; i < supers.length; i++) {
         // check deposit
         expect((await helper.getApi().query.identity.subsOf(supers[i].address))[0].toNumber()).to.be.equal(1000001 + i);
@@ -209,7 +209,7 @@ describe('Integration Test: Identities Manipulation', () => {
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.identity.forceSetSubs', [subsInfo2] as any);
 
       // make sure everything else is the same
-      const registry = helper.api!.registry;
+      const registry = helper.getApi().registry;
       for(let i = 0; i < supers.length - 1; i++) {
         // check deposit
         expect((await helper.getApi().query.identity.subsOf(supers[i].address))[0].toNumber()).to.be.eq(1000001 + i);

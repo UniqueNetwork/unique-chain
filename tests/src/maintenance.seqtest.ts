@@ -315,7 +315,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       ])).to.be.fulfilled as ITransactionResult;
 
       // preimage is executed, and an appropriate event is present
-      const events = result.result.events.filter(helper.api!.events.identity.IdentitiesInserted.is);
+      const events = result.result.events.filter(helper.getApi().events.identity.IdentitiesInserted.is);
       expect(events.length).to.be.equal(1);
 
       // the preimage goes back to being unrequested

@@ -60,7 +60,7 @@ describe('integration test: Refungible functionality:', () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 200n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    const event = chainEvents?.find(helper.api!.events.common.ItemCreated.is);
+    const event = chainEvents?.find(helper.getApi().events.common.ItemCreated.is);
     expect(event?.eq({
       section: 'common',
       method: 'ItemCreated',
@@ -79,7 +79,7 @@ describe('integration test: Refungible functionality:', () => {
     const token = await collection.mintToken(alice, 100n);
     await token.repartition(alice, 50n);
     const chainEvents = helper.chainLog.slice(-1)[0].events;
-    const event = chainEvents?.find(helper.api!.events.common.ItemDestroyed.is);
+    const event = chainEvents?.find(helper.getApi().events.common.ItemDestroyed.is);
     expect(event?.eq({
       section: 'common',
       method: 'ItemDestroyed',
