@@ -20,7 +20,7 @@ else
     exit 1
 fi
 
-STAGED_TEST_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep ".ts$\|.js$")
+STAGED_TEST_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep "\.ts$\|\.js$")
 
 if [[ "$STAGED_TEST_FILES" = "" ]]; then
   echo -e "${GREEN}eslint succeded${NC}"
