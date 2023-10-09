@@ -19,14 +19,7 @@
 use pallet_common::CollectionHandle;
 use pallet_evm::account::CrossAccountId;
 use pallet_fungible::Config as FungibleConfig;
-use pallet_refungible::Config as RefungibleConfig;
 use pallet_nonfungible::Config as NonfungibleConfig;
-use pallet_unique::Config as UniqueConfig;
-use up_data_structs::{CreateItemData, CreateNftData, TokenId};
-
-use super::common;
-use crate::runtime_common::sponsoring::*;
-
 use pallet_refungible::{
 	erc::{
 		ERC721BurnableCall, ERC721Call, ERC721EnumerableCall, ERC721MetadataCall,
@@ -37,7 +30,13 @@ use pallet_refungible::{
 		ERC1633Call, ERC20Call, ERC20UniqueExtensionsCall, RefungibleTokenHandle,
 		UniqueRefungibleTokenCall,
 	},
+	Config as RefungibleConfig,
 };
+use pallet_unique::Config as UniqueConfig;
+use up_data_structs::{CreateItemData, CreateNftData, TokenId};
+
+use super::common;
+use crate::runtime_common::sponsoring::*;
 
 pub fn call_sponsor<T>(
 	call: UniqueRefungibleCall<T>,

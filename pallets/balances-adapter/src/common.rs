@@ -1,10 +1,12 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
-use crate::{Config, NativeFungibleHandle, Pallet};
+
 use frame_support::{fail, weights::Weight};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo};
 use up_data_structs::TokenId;
+
+use crate::{Config, NativeFungibleHandle, Pallet};
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 

@@ -17,21 +17,21 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use up_data_structs::{
-	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue, TokenOwnerError,
-};
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf, init_token_properties_delta,
+	init_token_properties_delta, weights::WeightInfo as _, with_weight, CommonCollectionOperations,
+	CommonWeightInfo, RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
-use sp_std::{vec::Vec, vec};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemExData, Property, PropertyKey, PropertyKeyPermission,
+	PropertyValue, TokenId, TokenOwnerError,
+};
 
 use crate::{
-	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted, TokenProperties,
+	weights::WeightInfo, AccountBalance, Allowance, Config, CreateItemData, Error,
+	NonfungibleHandle, Owned, Pallet, SelfWeightOf, TokenData, TokenProperties, TokensMinted,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);

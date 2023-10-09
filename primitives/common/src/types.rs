@@ -16,7 +16,7 @@
 
 use sp_runtime::{
 	generic,
-	traits::{Verify, IdentifyAccount},
+	traits::{IdentifyAccount, Verify},
 	MultiSignature,
 };
 
@@ -27,7 +27,7 @@ use sp_runtime::{
 pub mod opaque {
 	pub use sp_runtime::{generic, traits::BlakeTwo256, OpaqueExtrinsic as UncheckedExtrinsic};
 
-	pub use super::{BlockNumber, Signature, AccountId, Balance, Index, Hash, AuraId};
+	pub use super::{AccountId, AuraId, Balance, BlockNumber, Hash, Signature};
 
 	#[derive(Debug, Clone)]
 	pub enum RuntimeId {
@@ -37,10 +37,8 @@ pub mod opaque {
 		Unknown(sp_std::vec::Vec<u8>),
 	}
 
-	/// Opaque block header type.
 	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 
-	/// Opaque block type.
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 
 	pub trait RuntimeInstance {
@@ -71,7 +69,7 @@ pub type AccountIndex = u32;
 pub type Balance = u128;
 
 /// Index of a transaction in the chain.
-pub type Index = u32;
+pub type Nonce = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;

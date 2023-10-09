@@ -244,6 +244,10 @@ export class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, 'api.tx.assets.create', [assetId, admin, minimalBalance], true);
   }
 
+  async forceCreate(signer: TSigner, assetId: number | bigint, admin: string, minimalBalance: bigint, isSufficient = true) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assets.forceCreate', [assetId, admin, isSufficient, minimalBalance], true);
+  }
+
   async setMetadata(signer: TSigner, assetId: number | bigint, name: string, symbol: string, decimals: number) {
     await this.helper.executeExtrinsic(signer, 'api.tx.assets.setMetadata', [assetId, name, symbol, decimals], true);
   }

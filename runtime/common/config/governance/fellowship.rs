@@ -1,7 +1,10 @@
-use crate::{Preimage, Treasury, RuntimeCall, RuntimeEvent, Scheduler, FellowshipReferenda, Runtime};
-use super::*;
 use pallet_gov_origins::Origin as GovOrigins;
 use pallet_ranked_collective::{Config as RankedConfig, Rank, TallyOf};
+
+use super::*;
+use crate::{
+	FellowshipReferenda, Preimage, Runtime, RuntimeCall, RuntimeEvent, Scheduler, Treasury,
+};
 
 pub const FELLOWSHIP_MODULE_ID: PalletId = PalletId(*b"flowship");
 pub const DEMOCRACY_TRACK_ID: u16 = 10;

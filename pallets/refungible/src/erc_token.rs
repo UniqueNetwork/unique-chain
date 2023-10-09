@@ -20,11 +20,12 @@
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
 use core::{
-	char::{REPLACEMENT_CHARACTER, decode_utf16},
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
 	convert::TryInto,
 	ops::Deref,
 };
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, ToLog};
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult},
 	eth::{collection_id_to_address, CrossAddress},
@@ -32,17 +33,18 @@ use pallet_common::{
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
-	call, dispatch_to_evm, WithRecorder, frontier_contract,
-	execution::{Result, PreDispatch},
+	call, dispatch_to_evm,
+	execution::{PreDispatch, Result},
+	frontier_contract, WithRecorder,
 };
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_std::vec::Vec;
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
 use sp_core::U256;
+use sp_std::vec::Vec;
 use up_data_structs::TokenId;
 
 use crate::{
-	Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply, common::CommonWeights,
-	SelfWeightOf, weights::WeightInfo,
+	common::CommonWeights, weights::WeightInfo, Allowance, Balance, Config, Pallet,
+	RefungibleHandle, SelfWeightOf, TotalSupply,
 };
 
 /// Refungible token handle contains information about token's collection and id

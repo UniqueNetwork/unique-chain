@@ -9,7 +9,7 @@ version = "0.1.0"
 proc-macro = true
 
 [dependencies]
-num_enum = { version = "0.5.3", default-features = false }
+num_enum = { version = "0.7.0", default-features = false }
 proc-macro2 = "1.0"
 quote = "1.0"
 sha3 = "0.8"

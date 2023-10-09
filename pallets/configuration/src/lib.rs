@@ -20,19 +20,17 @@ use core::marker::PhantomData;
 
 use frame_support::{
 	pallet,
-	weights::{WeightToFeePolynomial, WeightToFeeCoefficients, WeightToFeeCoefficient, Weight},
 	traits::Get,
-	Parameter,
+	weights::{Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 };
-use codec::{Decode, Encode, MaxEncodedLen};
+pub use pallet::*;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
+use smallvec::smallvec;
 use sp_arithmetic::{
-	per_things::{Perbill, PerThing},
+	per_things::{PerThing, Perbill},
 	traits::{BaseArithmetic, Unsigned},
 };
-use smallvec::smallvec;
-
-pub use pallet::*;
 use sp_core::U256;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -41,15 +39,14 @@ pub mod weights;
 
 #[pallet]
 mod pallet {
+	use core::fmt::Debug;
+
+	use frame_support::{pallet_prelude::*, traits::Get};
+	use frame_system::{ensure_root, pallet_prelude::*};
+	use parity_scale_codec::Codec;
+	use sp_arithmetic::{traits::AtLeast32BitUnsigned, FixedPointOperand, Permill};
+
 	use super::*;
-	use frame_support::{
-		traits::Get,
-		pallet_prelude::*,
-		log,
-		dispatch::{Codec, fmt::Debug},
-	};
-	use frame_system::{pallet_prelude::OriginFor, ensure_root, pallet_prelude::*};
-	use sp_arithmetic::{FixedPointOperand, traits::AtLeast32BitUnsigned, Permill};
 	pub use crate::weights::WeightInfo;
 
 	#[pallet::config]
@@ -80,14 +77,14 @@ mod pallet {
 		#[pallet::constant]
 		type AppPromotionDailyRate: Get<Perbill>;
 		#[pallet::constant]
-		type DayRelayBlocks: Get<Self::BlockNumber>;
+		type DayRelayBlocks: Get<BlockNumberFor<Self>>;
 
 		#[pallet::constant]
 		type DefaultCollatorSelectionMaxCollators: Get<u32>;
 		#[pallet::constant]
 		type DefaultCollatorSelectionLicenseBond: Get<Self::Balance>;
 		#[pallet::constant]
-		type DefaultCollatorSelectionKickThreshold: Get<Self::BlockNumber>;
+		type DefaultCollatorSelectionKickThreshold: Get<BlockNumberFor<Self>>;
 
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
@@ -103,7 +100,7 @@ mod pallet {
 			bond_cost: Option<T::Balance>,
 		},
 		NewCollatorKickThreshold {
-			length_in_blocks: Option<T::BlockNumber>,
+			length_in_blocks: Option<BlockNumberFor<T>>,
 		},
 	}
 
@@ -134,7 +131,6 @@ mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T>(PhantomData<T>);
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self(Default::default())
@@ -142,7 +138,7 @@ mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			update_base_fee::<T>();
 		}
@@ -166,7 +162,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type AppPromomotionConfigurationOverride<T: Config> =
-		StorageValue<Value = AppPromotionConfiguration<T::BlockNumber>, QueryKind = ValueQuery>;
+		StorageValue<Value = AppPromotionConfiguration<BlockNumberFor<T>>, QueryKind = ValueQuery>;
 
 	#[pallet::storage]
 	pub type CollatorSelectionDesiredCollatorsOverride<T: Config> = StorageValue<
@@ -184,7 +180,7 @@ mod pallet {
 
 	#[pallet::storage]
 	pub type CollatorSelectionKickThresholdOverride<T: Config> = StorageValue<
-		Value = T::BlockNumber,
+		Value = BlockNumberFor<T>,
 		QueryKind = ValueQuery,
 		OnEmpty = T::DefaultCollatorSelectionKickThreshold,
 	>;
@@ -228,7 +224,7 @@ mod pallet {
 		#[pallet::weight(T::WeightInfo::set_app_promotion_configuration_override())]
 		pub fn set_app_promotion_configuration_override(
 			origin: OriginFor<T>,
-			mut configuration: AppPromotionConfiguration<T::BlockNumber>,
+			mut configuration: AppPromotionConfiguration<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			if configuration.interval_income.is_some() {
@@ -287,7 +283,7 @@ mod pallet {
 		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
 		pub fn set_collator_selection_kick_threshold(
 			origin: OriginFor<T>,
-			threshold: Option<T::BlockNumber>,
+			threshold: Option<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
 			if let Some(threshold) = threshold {

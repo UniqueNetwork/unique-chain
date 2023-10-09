@@ -17,22 +17,24 @@
 //! This module contins implementations for support bounded structures ([`BoundedVec`], [`BoundedBTreeMap`], [`BoundedBTreeSet`]) in [`serde`].
 
 use core::fmt;
-use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
-use sp_std::vec::Vec;
 
 use frame_support::{
-	BoundedVec,
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+	BoundedVec,
+};
+use sp_std::{
+	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
+	vec::Vec,
 };
 
 /// [`serde`] implementations for [`BoundedVec`].
-#[cfg(feature = "serde1")]
 pub mod vec_serde {
 	use core::convert::TryFrom;
-	use frame_support::{BoundedVec, traits::Get};
+
+	use frame_support::{traits::Get, BoundedVec};
 	use serde::{
-		ser::{self, Serialize},
 		de::{self, Deserialize, Error},
+		ser::{self, Serialize},
 	};
 	use sp_std::vec::Vec;
 
@@ -66,17 +68,17 @@ where
 	(v as &Vec<V>).fmt(f)
 }
 
-#[cfg(feature = "serde1")]
 #[allow(dead_code)]
 /// [`serde`] implementations for [`BoundedBTreeMap`].
 pub mod map_serde {
 	use core::convert::TryFrom;
-	use sp_std::collections::btree_map::BTreeMap;
-	use frame_support::{traits::Get, storage::bounded_btree_map::BoundedBTreeMap};
+
+	use frame_support::{storage::bounded_btree_map::BoundedBTreeMap, traits::Get};
 	use serde::{
-		ser::{self, Serialize},
 		de::{self, Deserialize, Error},
+		ser::{self, Serialize},
 	};
+	use sp_std::collections::btree_map::BTreeMap;
 	pub fn serialize<D, K, V, S>(
 		value: &BoundedBTreeMap<K, V, S>,
 		serializer: D,
@@ -117,17 +119,17 @@ where
 	(v as &BTreeMap<K, V>).fmt(f)
 }
 
-#[cfg(feature = "serde1")]
 #[allow(dead_code)]
 /// [`serde`] implementations for [`BoundedBTreeSet`].
 pub mod set_serde {
 	use core::convert::TryFrom;
-	use sp_std::collections::btree_set::BTreeSet;
-	use frame_support::{traits::Get, storage::bounded_btree_set::BoundedBTreeSet};
+
+	use frame_support::{storage::bounded_btree_set::BoundedBTreeSet, traits::Get};
 	use serde::{
-		ser::{self, Serialize},
 		de::{self, Deserialize, Error},
+		ser::{self, Serialize},
 	};
+	use sp_std::collections::btree_set::BTreeSet;
 	pub fn serialize<D, K, S>(
 		value: &BoundedBTreeSet<K, S>,
 		serializer: D,

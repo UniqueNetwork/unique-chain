@@ -23,9 +23,6 @@ pub mod instance;
 pub mod maintenance;
 pub mod runtime_apis;
 
-#[cfg(feature = "unique-scheduler")]
-pub mod scheduler;
-
 pub mod sponsoring;
 #[allow(missing_docs)]
 pub mod weights;
@@ -33,26 +30,23 @@ pub mod weights;
 #[cfg(test)]
 pub mod tests;
 
-use sp_core::H160;
 use frame_support::{
-	traits::{Currency, OnUnbalanced, Imbalance},
+	traits::{Currency, Imbalance, OnUnbalanced},
 	weights::Weight,
 };
 use sp_runtime::{
-	generic,
+	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
-	impl_opaque_keys,
 };
 use sp_std::vec::Vec;
-
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
+use up_common::types::{AccountId, BlockNumber};
 
 use crate::{
-	Runtime, RuntimeCall, Balances, Treasury, Aura, Signature, AllPalletsWithSystem,
-	InherentDataExt,
+	AllPalletsWithSystem, Aura, Balances, InherentDataExt, Runtime, RuntimeCall, Signature,
+	Treasury,
 };
-use up_common::types::{AccountId, BlockNumber};
 
 #[macro_export]
 macro_rules! unsupported {
@@ -63,12 +57,15 @@ macro_rules! unsupported {
 
 /// The address format for describing accounts.
 pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
-/// Block header type as expected by this runtime.
-pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
-/// Block type as expected by this runtime.
-pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// A Block signed with a Justification
 pub type SignedBlock = generic::SignedBlock<Block>;
+/// Frontier wrapped extrinsic
+pub type UncheckedExtrinsic =
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+/// Header type.
+pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+/// Block type.
+pub type Block = generic::Block<Header, UncheckedExtrinsic>;
 /// BlockId type as expected by this runtime.
 pub type BlockId = generic::BlockId<Block>;
 
@@ -102,14 +99,6 @@ pub type SignedExtra = (
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
-
-/// Unchecked extrinsic type as expected by this runtime.
-pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
-
-/// Extrinsic type that has already been checked.
-pub type CheckedExtrinsic =
-	fp_self_contained::CheckedExtrinsic<AccountId, RuntimeCall, SignedExtra, H160>;
 
 /// Executive: handles dispatch to the various modules.
 pub type Executive = frame_executive::Executive<
@@ -180,7 +169,7 @@ impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 	}
 }
 
-#[derive(codec::Encode, codec::Decode)]
+#[derive(parity_scale_codec::Encode, parity_scale_codec::Decode)]
 pub enum XCMPMessage<XAccountId, XBalance> {
 	/// Transfer tokens to the given account from the Parachain account.
 	TransferToken(XAccountId, XBalance),
@@ -191,9 +180,10 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 	fn on_runtime_upgrade() -> Weight {
 		#[cfg(feature = "collator-selection")]
 		{
-			use frame_support::{BoundedVec, storage::migration};
-			use sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic};
+			use frame_support::{storage::migration, BoundedVec};
 			use pallet_session::SessionManager;
+			use sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic};
+
 			use crate::config::pallets::MaxCollators;
 
 			let mut weight = <Runtime as frame_system::Config>::DbWeight::get().reads(1);

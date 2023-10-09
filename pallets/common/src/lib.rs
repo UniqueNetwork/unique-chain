@@ -54,41 +54,41 @@
 extern crate alloc;
 
 use core::{
+	marker::PhantomData,
 	ops::{Deref, DerefMut},
 	slice::from_ref,
-	marker::PhantomData,
 };
-use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use sp_std::vec::Vec;
-use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
+
 use evm_coder::ToLog;
 use frame_support::{
-	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Weight, PostDispatchInfo},
-	ensure,
+	dispatch::{DispatchErrorWithPostInfo, DispatchResultWithPostInfo, Pays, PostDispatchInfo},
+	ensure, fail,
 	traits::{
-		Get,
 		fungible::{Balanced, Debt, Inspect},
 		tokens::{Imbalance, Precision, Preservation},
+		Get,
 	},
-	dispatch::Pays,
-	transactional, fail,
+	transactional,
 };
+pub use pallet::*;
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use sp_core::H160;
+use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, DispatchResult};
+use sp_std::vec::Vec;
+use sp_weights::Weight;
 use up_data_structs::{
-	AccessMode, COLLECTION_NUMBER_LIMIT, Collection, RpcCollection, RpcCollectionFlags,
-	CollectionId, CreateItemData, MAX_TOKEN_PREFIX_LENGTH, COLLECTION_ADMINS_LIMIT, TokenId,
-	TokenChild, CollectionStats, MAX_TOKEN_OWNERSHIP, CollectionMode, NFT_SPONSOR_TRANSFER_TIMEOUT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
-	CUSTOM_DATA_LIMIT, CollectionLimits, CreateCollectionData, SponsorshipState, CreateItemExData,
-	SponsoringRateLimit, budget::Budget, PhantomType, Property,
-	CollectionProperties as CollectionPropertiesT, TokenProperties, PropertiesPermissionMap,
-	PropertyKey, PropertyValue, PropertyPermission, PropertiesError, TokenOwnerError,
-	PropertyKeyPermission, TokenData, TrySetProperty, PropertyScope, CollectionPermissions,
+	budget::Budget, AccessMode, Collection, CollectionId, CollectionLimits, CollectionMode,
+	CollectionPermissions, CollectionProperties as CollectionPropertiesT, CollectionStats,
+	CreateCollectionData, CreateItemData, CreateItemExData, PhantomType, PropertiesError,
+	PropertiesPermissionMap, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
+	PropertyScope, PropertyValue, RpcCollection, RpcCollectionFlags, SponsoringRateLimit,
+	SponsorshipState, TokenChild, TokenData, TokenId, TokenOwnerError, TokenProperties,
+	TrySetProperty, COLLECTION_ADMINS_LIMIT, COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT,
+	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP,
+	MAX_TOKEN_PREFIX_LENGTH, NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 };
 use up_pov_estimate_rpc::PovInfo;
-
-pub use pallet::*;
-use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, traits::Zero};
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -401,12 +401,15 @@ impl<T: Config> CollectionHandle<T> {
 #[frame_support::pallet]
 pub mod pallet {
 
-	use super::*;
 	use dispatch::CollectionDispatch;
-	use frame_support::{Blake2_128Concat, pallet_prelude::*, storage::Key, traits::StorageVersion};
-	use up_data_structs::{TokenId, mapping::TokenAddressMapping};
+	use frame_support::{
+		pallet_prelude::*, storage::Key, traits::StorageVersion, Blake2_128Concat,
+	};
 	use scale_info::TypeInfo;
+	use up_data_structs::{mapping::TokenAddressMapping, TokenId};
 	use weights::WeightInfo;
+
+	use super::*;
 
 	#[pallet::config]
 	pub trait Config:
@@ -463,7 +466,6 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T>(PhantomData<T>);
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self(Default::default())
@@ -471,7 +473,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			StorageVersion::new(1).put::<Pallet<T>>();
 		}
@@ -886,18 +888,18 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 
 	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value(&mut self) -> &T {
-		self.compute_value_if_not_already();
+		self.force_value();
 		self.value.as_ref().unwrap()
 	}
 
 	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value_mut(&mut self) -> &mut T {
-		self.compute_value_if_not_already();
+		self.force_value();
 		self.value.as_mut().unwrap()
 	}
 
 	fn into_inner(mut self) -> T {
-		self.compute_value_if_not_already();
+		self.force_value();
 		self.value.unwrap()
 	}
 
@@ -906,7 +908,7 @@ impl<T, F: FnOnce() -> T> LazyValue<T, F> {
 		self.value.is_some()
 	}
 
-	fn compute_value_if_not_already(&mut self) {
+	fn force_value(&mut self) {
 		if self.value.is_none() {
 			self.value = Some(self.f.take().unwrap()())
 		}
@@ -2721,7 +2723,7 @@ pub fn init_token_properties_delta<T: Config, I: Fn(u32) -> Weight>(
 #[cfg(any(feature = "tests", test))]
 #[allow(missing_docs)]
 pub mod tests {
-	use crate::{DispatchResult, DispatchError, LazyValue, Config};
+	use crate::{Config, DispatchError, DispatchResult, LazyValue};
 
 	const fn to_bool(u: u8) -> bool {
 		u != 0

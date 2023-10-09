@@ -39,29 +39,26 @@ use frame_support::{
 	ensure,
 	pallet_prelude::*,
 	traits::{fungible, fungibles, Currency, EnsureOrigin},
-	RuntimeDebug,
 };
 use frame_system::pallet_prelude::*;
-use up_data_structs::CollectionMode;
+use pallet_common::erc::CrossAccountId;
 use pallet_fungible::Pallet as PalletFungible;
 use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
 use sp_runtime::{
 	traits::{One, Zero},
 	ArithmeticError,
 };
 use sp_std::{boxed::Box, vec::Vec};
-use up_data_structs::{CollectionId, TokenId, CreateCollectionData};
-
+use staging_xcm::{latest::MultiLocation, VersionedMultiLocation};
 // NOTE: MultiLocation is used in storages, we will need to do migration if upgrade the
 // MultiLocation to the XCM v3.
-use xcm::opaque::latest::{prelude::XcmError, Weight};
-use xcm::{latest::MultiLocation, VersionedMultiLocation};
-use xcm_executor::{traits::WeightTrader, Assets};
-
-use pallet_common::erc::CrossAccountId;
-
-#[cfg(feature = "std")]
-use serde::{Deserialize, Serialize};
+use staging_xcm::{
+	opaque::latest::{prelude::XcmError, Weight},
+	v3::XcmContext,
+};
+use staging_xcm_executor::{traits::WeightTrader, Assets};
+use up_data_structs::{CollectionId, CollectionMode, CreateCollectionData, TokenId};
 
 // TODO: Move to primitives
 // Id of native currency.
@@ -79,8 +76,9 @@ use serde::{Deserialize, Serialize};
 	Encode,
 	Decode,
 	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
 pub enum NativeCurrency {
 	Here = 0,
 	Parent = 1,
@@ -98,9 +96,10 @@ pub enum NativeCurrency {
 	Encode,
 	Decode,
 	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
-pub enum AssetIds {
+pub enum AssetId {
 	ForeignAssetId(ForeignAssetId),
 	NativeAssetId(NativeCurrency),
 }
@@ -109,17 +108,17 @@ pub trait TryAsForeign<T, F> {
 	fn try_as_foreign(asset: T) -> Option<F>;
 }
 
-impl TryAsForeign<AssetIds, ForeignAssetId> for AssetIds {
-	fn try_as_foreign(asset: AssetIds) -> Option<ForeignAssetId> {
+impl TryAsForeign<AssetId, ForeignAssetId> for AssetId {
+	fn try_as_foreign(asset: AssetId) -> Option<ForeignAssetId> {
 		match asset {
-			AssetIds::ForeignAssetId(id) => Some(id),
+			Self::ForeignAssetId(id) => Some(id),
 			_ => None,
 		}
 	}
 }
 
 pub type ForeignAssetId = u32;
-pub type CurrencyId = AssetIds;
+pub type CurrencyId = AssetId;
 
 mod impl_fungibles;
 pub mod weights;
@@ -151,7 +150,7 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 {
 	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
 		log::trace!(target: "fassets::asset_metadatas", "call");
-		Pallet::<T>::asset_metadatas(AssetIds::ForeignAssetId(foreign_asset_id))
+		Pallet::<T>::asset_metadatas(AssetId::ForeignAssetId(foreign_asset_id))
 	}
 
 	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
@@ -161,7 +160,7 @@ impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<Bala
 
 	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
 		log::trace!(target: "fassets::get_currency_id", "call");
-		Pallet::<T>::location_to_currency_ids(multi_location).map(AssetIds::ForeignAssetId)
+		Pallet::<T>::location_to_currency_ids(multi_location).map(AssetId::ForeignAssetId)
 	}
 }
 
@@ -231,12 +230,12 @@ pub mod module {
 		},
 		/// The asset registered.
 		AssetRegistered {
-			asset_id: AssetIds,
+			asset_id: AssetId,
 			metadata: AssetMetadata<BalanceOf<T>>,
 		},
 		/// The asset updated.
 		AssetUpdated {
-			asset_id: AssetIds,
+			asset_id: AssetId,
 			metadata: AssetMetadata<BalanceOf<T>>,
 		},
 	}
@@ -253,7 +252,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_locations)]
 	pub type ForeignAssetLocations<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, xcm::v3::MultiLocation, OptionQuery>;
+		StorageMap<_, Twox64Concat, ForeignAssetId, staging_xcm::v3::MultiLocation, OptionQuery>;
 
 	/// The storages for CurrencyIds.
 	///
@@ -261,7 +260,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn location_to_currency_ids)]
 	pub type LocationToCurrencyIds<T: Config> =
-		StorageMap<_, Twox64Concat, xcm::v3::MultiLocation, ForeignAssetId, OptionQuery>;
+		StorageMap<_, Twox64Concat, staging_xcm::v3::MultiLocation, ForeignAssetId, OptionQuery>;
 
 	/// The storages for AssetMetadatas.
 	///
@@ -269,7 +268,7 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn asset_metadatas)]
 	pub type AssetMetadatas<T: Config> =
-		StorageMap<_, Twox64Concat, AssetIds, AssetMetadata<BalanceOf<T>>, OptionQuery>;
+		StorageMap<_, Twox64Concat, AssetId, AssetMetadata<BalanceOf<T>>, OptionQuery>;
 
 	/// The storages for assets to fungible collection binding
 	///
@@ -381,7 +380,7 @@ impl<T: Config> Pallet<T> {
 					*maybe_location = Some(*location);
 
 					AssetMetadatas::<T>::try_mutate(
-						AssetIds::ForeignAssetId(foreign_asset_id),
+						AssetId::ForeignAssetId(foreign_asset_id),
 						|maybe_asset_metadatas| -> DispatchResult {
 							ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
 							*maybe_asset_metadatas = Some(metadata.clone());
@@ -413,7 +412,7 @@ impl<T: Config> Pallet<T> {
 					.ok_or(Error::<T>::AssetIdNotExists)?;
 
 				AssetMetadatas::<T>::try_mutate(
-					AssetIds::ForeignAssetId(foreign_asset_id),
+					AssetId::ForeignAssetId(foreign_asset_id),
 					|maybe_asset_metadatas| -> DispatchResult {
 						ensure!(
 							maybe_asset_metadatas.is_some(),
@@ -450,7 +449,7 @@ pub use frame_support::{
 	traits::{
 		fungibles::Balanced, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT,
 	},
-	weights::{WeightToFeePolynomial, WeightToFee},
+	weights::{WeightToFee, WeightToFeePolynomial},
 };
 
 pub struct FreeForAll<
@@ -477,7 +476,12 @@ impl<
 		Self(Weight::default(), Zero::zero(), PhantomData)
 	}
 
-	fn buy_weight(&mut self, weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(
+		&mut self,
+		weight: Weight,
+		payment: Assets,
+		_xcm: &XcmContext,
+	) -> Result<Assets, XcmError> {
 		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
 		Ok(payment)
 	}

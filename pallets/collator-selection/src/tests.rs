@@ -30,14 +30,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{self as collator_selection, Config};
-use crate::{mock::*, Error};
 use frame_support::{
 	assert_noop, assert_ok,
-	traits::{fungible, GenesisBuild, OnInitialize},
+	traits::{fungible, OnInitialize},
 };
-use sp_runtime::{traits::BadOrigin, TokenError};
 use scale_info::prelude::*;
+use sp_runtime::{traits::BadOrigin, BuildStorage, TokenError};
+
+use crate::{self as collator_selection, mock::*, Config, Error};
 
 fn get_license_and_onboard(account_id: <Test as frame_system::Config>::AccountId) {
 	assert_ok!(CollatorSelection::get_license(RuntimeOrigin::signed(
@@ -464,8 +464,8 @@ fn kick_mechanism() {
 #[should_panic = "duplicate invulnerables in genesis."]
 fn cannot_set_genesis_value_twice() {
 	sp_tracing::try_init_simple();
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
+	let mut t = <frame_system::GenesisConfig<Test>>::default()
+		.build_storage()
 		.unwrap();
 	let invulnerables = vec![1, 1];
 

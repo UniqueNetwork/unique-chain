@@ -16,22 +16,24 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{
-	TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData, TokenOwnerError,
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo, ensure, fail, traits::Get, weights::Weight,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
+	RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_structure::Error as StructureError;
 use sp_runtime::{ArithmeticError, DispatchError};
-use sp_std::{vec::Vec, vec};
-use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemData, CreateItemExData, Property, PropertyKey,
+	PropertyKeyPermission, PropertyValue, TokenId, TokenOwnerError,
+};
 
 use crate::{
-	Allowance, TotalSupply, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
-	weights::WeightInfo,
+	weights::WeightInfo, Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
+	TotalSupply,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);

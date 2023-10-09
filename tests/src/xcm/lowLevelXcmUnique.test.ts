@@ -309,7 +309,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
-        await helper.assets.create(
+        await helper.getSudo().assets.forceCreate(
           alice,
           UNQ_ASSET_ID_ON_ASTAR,
           alice.address,

@@ -32,24 +32,23 @@
 
 //! Benchmarking setup for pallet-collator-selection
 
-use super::*;
-
-#[allow(unused)]
-use crate::{Pallet as CollatorSelection, BalanceOf};
 use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
 use frame_support::{
 	assert_ok,
-	codec::Decode,
 	traits::{
-		EnsureOrigin,
 		fungible::{Inspect, Mutate},
-		Get,
+		EnsureOrigin, Get,
 	},
 };
-use frame_system::{EventRecord, RawOrigin};
+use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
 use pallet_authorship::EventHandler;
 use pallet_session::{self as session, SessionManager};
+use parity_scale_codec::Decode;
 use sp_std::prelude::*;
+
+use super::*;
+#[allow(unused)]
+use crate::{BalanceOf, Pallet as CollatorSelection};
 
 const SEED: u32 = 0;
 
@@ -317,7 +316,7 @@ benchmarks! {
 			balance_unit::<T>() * 4u32.into(),
 		);
 		let author = account("author", 0, SEED);
-		let new_block: T::BlockNumber = 10u32.into();
+		let new_block: BlockNumberFor<T>= 10u32.into();
 
 		frame_system::Pallet::<T>::set_block_number(new_block);
 		assert!(T::Currency::balance(&author) == 0u32.into());
@@ -338,8 +337,8 @@ benchmarks! {
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
-		let new_block: T::BlockNumber = 1800u32.into();
-		let zero_block: T::BlockNumber = 0u32.into();
+		let new_block: BlockNumberFor<T>= 1800u32.into();
+		let zero_block: BlockNumberFor<T> = 0u32.into();
 		let candidates = <Candidates<T>>::get();
 
 		let non_removals = c.saturating_sub(r);

@@ -30,61 +30,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use super::*;
-use crate as collator_selection;
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{FindAuthor, GenesisBuild, ValidatorRegistration},
+	traits::{ConstU32, FindAuthor, ValidatorRegistration},
 	PalletId,
 };
 use frame_system as system;
 use frame_system::EnsureSignedBy;
-use sp_core::H256;
+use sp_core::{ConstBool, H256};
 use sp_runtime::{
-	testing::{Header, UintAuthorityId},
+	testing::UintAuthorityId,
 	traits::{BlakeTwo256, IdentityLookup, OpaqueKeys},
-	Perbill, RuntimeAppPublic,
+	BuildStorage, Perbill, RuntimeAppPublic,
 };
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+use super::*;
+use crate as collator_selection;
+
+type Block = frame_system::mocking::MockBlockU32<Test>;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
-		System: frame_system::{Pallet, Call, Config, Storage, Event<T>},
-		Timestamp: pallet_timestamp::{Pallet, Call, Storage, Inherent},
-		Session: pallet_session::{Pallet, Call, Storage, Event, Config<T>},
-		Aura: pallet_aura::{Pallet, Storage, Config<T>},
-		Balances: pallet_balances::{Pallet, Call, Storage, Config<T>, Event<T>},
-		CollatorSelection: collator_selection::{Pallet, Call, Storage, Event<T>},
-		Authorship: pallet_authorship::{Pallet, Storage},
+	pub enum Test {
+		System: frame_system,
+		Timestamp: pallet_timestamp,
+		Session: pallet_session,
+		Aura: pallet_aura,
+		Balances: pallet_balances,
+		CollatorSelection: collator_selection,
+		Authorship: pallet_authorship,
 	}
 );
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
 	type BaseCallFilter = frame_support::traits::Everything;
+	type Block = Block;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type RuntimeEvent = RuntimeEvent;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
@@ -95,7 +90,7 @@ impl system::Config for Test {
 	type SystemWeightInfo = ();
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
-	type MaxConsumers = frame_support::traits::ConstU32<16>;
+	type MaxConsumers = ConstU32<16>;
 }
 
 parameter_types! {
@@ -115,10 +110,10 @@ impl pallet_balances::Config for Test {
 	type MaxLocks = ();
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
-	type HoldIdentifier = [u8; 16];
 	type FreezeIdentifier = [u8; 16];
 	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 pub struct Author4;
@@ -151,6 +146,7 @@ impl pallet_aura::Config for Test {
 	type AuthorityId = sp_consensus_aura::sr25519::AuthorityId;
 	type MaxAuthorities = MaxAuthorities;
 	type DisabledValidators = ();
+	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 }
 
 sp_runtime::impl_opaque_keys! {
@@ -168,27 +164,27 @@ impl From<UintAuthorityId> for MockSessionKeys {
 
 parameter_types! {
 	pub static SessionHandlerCollators: Vec<u64> = Vec::new();
-	pub static SessionChangeBlock: u64 = 0;
+	pub static SessionChangeBlock: u32 = 0;
 }
 
 pub struct TestSessionHandler;
 impl pallet_session::SessionHandler<u64> for TestSessionHandler {
 	const KEY_TYPE_IDS: &'static [sp_runtime::KeyTypeId] = &[UintAuthorityId::ID];
 	fn on_genesis_session<Ks: OpaqueKeys>(keys: &[(u64, Ks)]) {
-		SessionHandlerCollators::set(keys.into_iter().map(|(a, _)| *a).collect::<Vec<_>>())
+		SessionHandlerCollators::set(keys.iter().map(|(a, _)| *a).collect::<Vec<_>>())
 	}
 	fn on_new_session<Ks: OpaqueKeys>(_: bool, keys: &[(u64, Ks)], _: &[(u64, Ks)]) {
 		SessionChangeBlock::set(System::block_number());
 		dbg!(keys.len());
-		SessionHandlerCollators::set(keys.into_iter().map(|(a, _)| *a).collect::<Vec<_>>())
+		SessionHandlerCollators::set(keys.iter().map(|(a, _)| *a).collect::<Vec<_>>())
 	}
 	fn on_before_session_ending() {}
 	fn on_disabled(_: u32) {}
 }
 
 parameter_types! {
-	pub const Offset: u64 = 0;
-	pub const Period: u64 = 10;
+	pub const Offset: u32 = 0;
+	pub const Period: u32 = 10;
 }
 
 impl pallet_session::Config for Test {
@@ -207,7 +203,7 @@ impl pallet_session::Config for Test {
 parameter_types! {
 	pub const MaxCollators: u32 = 5;
 	pub const LicenseBond: u64 = 10;
-	pub const KickThreshold: u64 = 10;
+	pub const KickThreshold: u32 = 10;
 	// the following values do not matter and are meaningless, etc.
 	pub const DefaultWeightToFeeCoefficient: u64 = 100_000;
 	pub const DefaultMinGasPrice: u64 = 100_000;
@@ -236,6 +232,7 @@ impl ValidatorRegistration<u64> for IsRegistered {
 
 impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type UpdateOrigin = EnsureSignedBy<RootAccount, u64>;
 	type PotId = PotId;
 	type MaxCollators = MaxCollators;
@@ -244,7 +241,6 @@ impl Config for Test {
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	type ValidatorIdOf = IdentityCollator;
 	type ValidatorRegistration = IsRegistered;
-	type LicenceBondIdentifier = LicenceBondIdentifier;
 	type Currency = Balances;
 	type DesiredCollators = MaxCollators;
 	type LicenseBond = LicenseBond;
@@ -254,8 +250,8 @@ impl Config for Test {
 
 pub fn new_test_ext() -> sp_io::TestExternalities {
 	sp_tracing::try_init_simple();
-	let mut t = frame_system::GenesisConfig::default()
-		.build_storage::<Test>()
+	let mut t = <frame_system::GenesisConfig<Test>>::default()
+		.build_storage()
 		.unwrap();
 	let invulnerables = vec![1, 2];
 
@@ -290,9 +286,9 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 	t.into()
 }
 
-pub fn initialize_to_block(n: u64) {
+pub fn initialize_to_block(n: u32) {
 	for i in System::block_number() + 1..=n {
 		System::set_block_number(i);
-		<AllPalletsWithSystem as frame_support::traits::OnInitialize<u64>>::on_initialize(i);
+		<AllPalletsWithSystem as frame_support::traits::OnInitialize<u32>>::on_initialize(i);
 	}
 }

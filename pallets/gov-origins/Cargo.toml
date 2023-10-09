@@ -23,9 +23,7 @@ try-runtime = ["frame-support/try-runtime"]
 ################################################################################
 # Substrate Dependencies
 
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
 parity-scale-codec = { workspace = true }
-
 scale-info = { workspace = true }
 
 frame-support = { workspace = true }

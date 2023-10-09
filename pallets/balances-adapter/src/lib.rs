@@ -4,8 +4,8 @@ extern crate alloc;
 use core::ops::Deref;
 
 use frame_support::sp_runtime::DispatchResult;
-use pallet_evm_coder_substrate::{WithRecorder, SubstrateRecorder};
 pub use pallet::*;
+use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 
 pub mod common;
 pub mod erc;
@@ -55,16 +55,16 @@ impl<T: Config> Deref for NativeFungibleHandle<T> {
 }
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use alloc::string::String;
+
 	use frame_support::{
 		dispatch::PostDispatchInfo,
 		ensure,
-		pallet_prelude::{DispatchResultWithPostInfo, Pays},
+		pallet_prelude::*,
 		traits::{
-			Get,
 			fungible::{Inspect, Mutate},
 			tokens::Preservation,
+			Get,
 		},
 	};
 	use pallet_balances::WeightInfo;
@@ -73,6 +73,8 @@ pub mod pallet {
 	use sp_core::U256;
 	use sp_runtime::DispatchError;
 	use up_data_structs::{budget::Budget, mapping::TokenAddressMapping};
+
+	use super::*;
 
 	#[pallet::config]
 	pub trait Config:

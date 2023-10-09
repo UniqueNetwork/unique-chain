@@ -16,10 +16,11 @@
 
 //! Benchmarking setup for pallet-configuration
 
-use super::*;
 use frame_benchmarking::benchmarks;
-use frame_system::{EventRecord, RawOrigin};
 use frame_support::assert_ok;
+use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
+
+use super::*;
 
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
@@ -52,7 +53,7 @@ benchmarks! {
 	}
 
 	set_app_promotion_configuration_override {
-		let configuration: AppPromotionConfiguration<T::BlockNumber> = Default::default();
+		let configuration: AppPromotionConfiguration<BlockNumberFor<T>> = Default::default();
 	}: {
 		assert_ok!(
 			<Pallet<T>>::set_app_promotion_configuration_override(RawOrigin::Root.into(), configuration)
@@ -82,7 +83,7 @@ benchmarks! {
 	}
 
 	set_collator_selection_kick_threshold {
-		let threshold: Option<T::BlockNumber> = Some(900u32.into());
+		let threshold: Option<BlockNumberFor<T>> = Some(900u32.into());
 	}: {
 		assert_ok!(
 			<Pallet<T>>::set_collator_selection_kick_threshold(RawOrigin::Root.into(), threshold)
