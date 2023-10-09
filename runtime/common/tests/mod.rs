@@ -19,7 +19,7 @@ pub use sp_runtime::AccountId32 as AccountId;
 use sp_runtime::{BuildStorage, Storage};
 use up_common::types::AuraId;
 
-use crate::{BuildGenesisConfig, ParachainInfoConfig, Runtime, RuntimeEvent, System};
+use crate::{ParachainInfoConfig, Runtime, RuntimeEvent, RuntimeGenesisConfig, System};
 pub type Balance = u128;
 
 pub mod xcm;
@@ -51,8 +51,8 @@ fn last_events(n: usize) -> Vec<RuntimeEvent> {
 fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
 	let mut storage = make_basic_storage();
 
-	pallet_balances::BuildGenesisConfig::<Runtime> { balances }
-		.build_storage(&mut storage)
+	pallet_balances::GenesisConfig::<Runtime> { balances }
+		.assimilate_storage(&mut storage)
 		.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(storage);
@@ -95,7 +95,7 @@ fn make_basic_storage() -> Storage {
 		.map(|acc| get_account_id_from_seed::<sr25519::Public>(acc))
 		.collect::<Vec<_>>();
 
-	let cfg = BuildGenesisConfig {
+	let cfg = RuntimeGenesisConfig {
 		collator_selection: CollatorSelectionConfig { invulnerables },
 		session: SessionConfig { keys },
 		parachain_info: ParachainInfoConfig {
@@ -112,7 +112,7 @@ fn make_basic_storage() -> Storage {
 fn make_basic_storage() -> Storage {
 	use crate::AuraConfig;
 
-	let cfg = BuildGenesisConfig {
+	let cfg = RuntimeGenesisConfig {
 		aura: AuraConfig {
 			authorities: vec![
 				get_from_seed::<AuraId>("Alice"),

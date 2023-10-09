@@ -52,9 +52,9 @@ pub fn xcm_transact_is_forbidden() {
 
 		let xcm_event = &last_events(1)[0];
 		match xcm_event {
-			RuntimeEvent::PolkadotXcm(pallet_xcm::Event::<Runtime>::Attempted(
-				Outcome::Incomplete(_weight, Error::NoPermission),
-			)) => { /* Pass */ }
+			RuntimeEvent::PolkadotXcm(pallet_xcm::Event::<Runtime>::Attempted {
+				outcome: Outcome::Incomplete(_weight, Error::NoPermission),
+			}) => { /* Pass */ }
 			_ => panic!(
 				"Expected PolkadotXcm.Attempted(Incomplete(_weight, NoPermission)),\
 				found: {xcm_event:#?}"

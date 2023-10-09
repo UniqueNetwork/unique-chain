@@ -34,12 +34,12 @@ use sp_runtime::{
 
 use crate as pallet_inflation;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type Block = frame_system::mocking::MockBlockU32<Test>;
 
-const YEAR: u64 = 5_259_600; // 6-second blocks
-							 // const YEAR: u64 = 2_629_800; // 12-second blocks
-							 // Expected 100-block inflation for year 1 is 100 * 100_000_000 / YEAR = FIRST_YEAR_BLOCK_INFLATION
+// 6-second blocks
+// const YEAR: u32 = 2_629_800; // 12-second blocks
+// Expected 100-block inflation for year 1 is 100 * 100_000_000 / YEAR = FIRST_YEAR_BLOCK_INFLATION
+const YEAR: u32 = 5_259_600;
 const FIRST_YEAR_BLOCK_INFLATION: u64 = 1901;
 
 parameter_types! {
@@ -60,6 +60,7 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = ();
 	type MaxHolds = ();
 	type MaxFreezes = ();
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 frame_support::construct_runtime!(
@@ -71,7 +72,7 @@ frame_support::construct_runtime!(
 );
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub BlockWeights: frame_system::limits::BlockWeights =
 		frame_system::limits::BlockWeights::simple_max(Weight::from_parts(1024, 0));
 	pub const SS58Prefix: u8 = 42;
@@ -79,6 +80,7 @@ parameter_types! {
 
 impl frame_system::Config for Test {
 	type BaseCallFilter = Everything;
+	type Block = Block;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -187,7 +189,7 @@ fn inflation_works() {
 fn inflation_second_deposit() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
-		let initial_issuance: u64 = 1_000_000_000;
+		let initial_issuance = 1_000_000_000;
 		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		MockBlockNumberProvider::set(1);
@@ -196,20 +198,20 @@ fn inflation_second_deposit() {
 		assert_ok!(Inflation::start_inflation(RawOrigin::Root.into(), 1));
 
 		// Next inflation deposit happens when block is greater then or equal to NextInflationBlock
-		let mut block: u64 = 2;
-		let balance_before: u64 = Balances::free_balance(1234);
+		let mut block = 2;
+		let balance_before = Balances::free_balance(1234);
 		while block < <pallet_inflation::NextInflationBlock<Test>>::get() {
-			MockBlockNumberProvider::set(block as u64);
+			MockBlockNumberProvider::set(block);
 			Inflation::on_initialize(0);
 			block += 1;
 		}
-		let balance_just_before: u64 = Balances::free_balance(1234);
+		let balance_just_before = Balances::free_balance(1234);
 		assert_eq!(balance_before, balance_just_before);
 
 		// The block with inflation
-		MockBlockNumberProvider::set(block as u64);
+		MockBlockNumberProvider::set(block);
 		Inflation::on_initialize(0);
-		let balance_after: u64 = Balances::free_balance(1234);
+		let balance_after = Balances::free_balance(1234);
 		assert_eq!(balance_after - balance_just_before, block_inflation!());
 	});
 }
@@ -234,7 +236,7 @@ fn inflation_in_1_year() {
 			Inflation::on_initialize(0);
 		}
 		assert_eq!(
-			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * (YEAR / 100)),
+			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * ((YEAR as u64) / 100)),
 			<Balances as Inspect<_>>::total_issuance()
 		);
 
@@ -243,8 +245,8 @@ fn inflation_in_1_year() {
 		let block_inflation_year_2 = block_inflation!();
 		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR == 1951
 		let expecter_year_2_inflation: u64 = (initial_issuance
-			+ FIRST_YEAR_BLOCK_INFLATION * YEAR / 100)
-			* 933 * 100 / (10000 * YEAR);
+			+ FIRST_YEAR_BLOCK_INFLATION * (YEAR as u64) / 100)
+			* 933 * 100 / (10000 * (YEAR as u64));
 		assert_eq!(block_inflation_year_2 / 10, expecter_year_2_inflation / 10); // divide by 10 for approx. equality
 	});
 }
@@ -253,8 +255,8 @@ fn inflation_in_1_year() {
 fn inflation_start_large_kusama_block() {
 	new_test_ext().execute_with(|| {
 		// Total issuance = 1_000_000_000
-		let initial_issuance: u64 = 1_000_000_000;
-		let start_block: u64 = 10457457;
+		let initial_issuance = 1_000_000_000;
+		let start_block = 10457457;
 		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 		MockBlockNumberProvider::set(start_block);
@@ -273,7 +275,7 @@ fn inflation_start_large_kusama_block() {
 			Inflation::on_initialize(0);
 		}
 		assert_eq!(
-			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * (YEAR / 100)),
+			initial_issuance + (FIRST_YEAR_BLOCK_INFLATION * ((YEAR as u64) / 100)),
 			<Balances as Inspect<_>>::total_issuance()
 		);
 
@@ -282,8 +284,8 @@ fn inflation_start_large_kusama_block() {
 		let block_inflation_year_2 = block_inflation!();
 		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR == 1951
 		let expecter_year_2_inflation: u64 = (initial_issuance
-			+ FIRST_YEAR_BLOCK_INFLATION * YEAR / 100)
-			* 933 * 100 / (10000 * YEAR);
+			+ FIRST_YEAR_BLOCK_INFLATION * (YEAR as u64) / 100)
+			* 933 * 100 / (10000 * (YEAR as u64));
 		assert_eq!(block_inflation_year_2 / 10, expecter_year_2_inflation / 10); // divide by 10 for approx. equality
 	});
 }
@@ -320,14 +322,14 @@ fn inflation_after_year_10_is_flat() {
 #[test]
 fn inflation_rate_by_year() {
 	new_test_ext().execute_with(|| {
-		let payouts: u64 = YEAR / InflationBlockInterval::get() as u64;
+		let payouts = (YEAR / InflationBlockInterval::get()) as u64;
 
 		// Inflation starts at 10% and does down by 2/3% every year until year 9 (included),
 		// then it is flat.
 		let payout_by_year: [u64; 11] = [1000, 933, 867, 800, 733, 667, 600, 533, 467, 400, 400];
 
 		// For accuracy total issuance = payout0 * payouts * 10;
-		let initial_issuance: u64 = payout_by_year[0] * payouts * 10;
+		let initial_issuance = payout_by_year[0] * payouts * 10;
 		let _ = <Balances as Balanced<_>>::deposit(&1234, initial_issuance, Precision::Exact);
 		assert_eq!(Balances::free_balance(1234), initial_issuance);
 

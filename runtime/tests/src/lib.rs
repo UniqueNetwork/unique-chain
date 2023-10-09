@@ -33,23 +33,20 @@ use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
-	testing::Header,
 	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
 };
 use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
-#[path = "../../common/dispatch.rs"]
 mod dispatch;
 
 use dispatch::CollectionDispatchT;
 
-#[path = "../../common/weights/mod.rs"]
 mod weights;
 
 use weights::CommonWeights;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type Block = frame_system::mocking::MockBlockU32<Test>;
 
 #[cfg(test)]
 mod tests;
@@ -73,13 +70,14 @@ frame_support::construct_runtime!(
 );
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type BaseCallFilter = Everything;
+	type Block = Block;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
@@ -120,6 +118,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = MaxLocks;
 	type FreezeIdentifier = [u8; 8];
 	type MaxHolds = MaxLocks;
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 parameter_types! {
@@ -232,6 +231,7 @@ impl pallet_evm::Config for Test {
 	type OnMethodCall = ();
 	type OnCreate = ();
 	type OnChargeTransaction = ();
+	type OnCheckEvmTransaction = ();
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type Timestamp = Timestamp;
@@ -296,8 +296,8 @@ impl pallet_unique::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default()
-		.build_storage::<Test>()
+	<system::GenesisConfig<Test>>::default()
+		.build_storage()
 		.unwrap()
 		.into()
 }
