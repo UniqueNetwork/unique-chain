@@ -111,7 +111,22 @@ make build-release
 
 ## Running as Parachain locally
 
-TODO
+### Dev mode
+
+You can launch the node in the dev mode where blocks are sealed automatically each 500 ms or on each new transaction.
+
+* Opal Runtime: `cargo run --release -- --dev`
+* Quartz Runtime: `cargo run --release --features quartz-runtime -- --dev`
+* Unique Runtime: `cargo run --release --features unique-runtime -- --dev`
+
+ You can tweak the dev mode with the following CLI options:
+ * --idle-autoseal-interval <IDLE_AUTOSEAL_INTERVAL>
+          When running the node in the `--dev` mode, an empty block will be sealed automatically after the `<IDLE_AUTOSEAL_INTERVAL>` milliseconds.
+ * --disable-autoseal-on-tx
+          Disable auto-sealing blocks on new transactions in the `--dev` mode
+ * --autoseal-finalization-delay <AUTOSEAL_FINALIZATION_DELAY>
+          Finalization delay (in seconds) of auto-sealed blocks in the `--dev` mode.
+          Disabled by default.
 
 ## Run Integration Tests
 
