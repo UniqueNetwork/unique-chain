@@ -14,36 +14,60 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_benchmarking::benchmarks;
+use frame_benchmarking::v2::*;
 use frame_support::{ensure, pallet_prelude::Weight, traits::StorePreimage};
 use frame_system::RawOrigin;
 use parity_scale_codec::Encode;
+use sp_std::vec;
 
 use super::*;
 use crate::{Config, Pallet as Maintenance};
 
-benchmarks! {
-	enable {
-	}: _(RawOrigin::Root)
-	verify {
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn enable() -> Result<(), BenchmarkError> {
+		#[extrinsic_call]
+		_(RawOrigin::Root);
+
 		ensure!(<Enabled<T>>::get(), "didn't enable the MM");
+
+		Ok(())
 	}
 
-	disable {
+	#[benchmark]
+	fn disable() -> Result<(), BenchmarkError> {
 		Maintenance::<T>::enable(RawOrigin::Root.into())?;
-	}: _(RawOrigin::Root)
-	verify {
+
+		#[extrinsic_call]
+		_(RawOrigin::Root);
+
 		ensure!(!<Enabled<T>>::get(), "didn't disable the MM");
+
+		Ok(())
 	}
 
-	#[pov_mode = MaxEncodedLen {
-		// PoV size is deducted from weight_bound
-		Preimage::PreimageFor: Measured
-	}]
-	execute_preimage {
-		let call = <T as Config>::RuntimeCall::from(frame_system::Call::<T>::remark { remark: 1u32.encode() });
+	// TODO: fix
+	// #[pov_mode = MaxEncodedLen {
+	// 	// PoV size is deducted from weight_bound
+	// 	Preimage::PreimageFor: Measured
+	// }]
+	#[benchmark]
+	fn execute_preimage() -> Result<(), BenchmarkError> {
+		let call = <T as Config>::RuntimeCall::from(frame_system::Call::<T>::remark {
+			remark: 1u32.encode(),
+		});
 		let hash = T::Preimages::note(call.encode().into())?;
-	}: _(RawOrigin::Root, hash, Weight::from_parts(100000000000, 100000000000))
-	verify {
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			hash,
+			Weight::from_parts(100000000000, 100000000000),
+		);
+
+		Ok(())
 	}
 }

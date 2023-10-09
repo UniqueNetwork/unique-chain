@@ -16,21 +16,29 @@
 
 #![allow(missing_docs)]
 
-use frame_benchmarking::benchmarks;
+use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use sp_core::{H160, H256};
 use sp_std::{vec, vec::Vec};
 
 use super::{Call, Config, Pallet};
 
-benchmarks! {
-	where_clause { where <T as Config>::RuntimeEvent: parity_scale_codec::Encode }
+#[benchmarks(
+	where <T as Config>::RuntimeEvent: parity_scale_codec::Encode
+)]
+mod benchmarks {
+	use super::*;
 
-	begin {
-	}: _(RawOrigin::Root, H160::default())
+	#[benchmark]
+	fn begin() -> Result<(), BenchmarkError> {
+		#[extrinsic_call]
+		_(RawOrigin::Root, H160::default());
 
-	set_data {
-		let b in 0..80;
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_data(b: Linear<0, 80>) -> Result<(), BenchmarkError> {
 		let address = H160::from_low_u64_be(b as u64);
 		let mut data = Vec::new();
 		for i in 0..b {
@@ -40,27 +48,51 @@ benchmarks! {
 			));
 		}
 		<Pallet<T>>::begin(RawOrigin::Root.into(), address)?;
-	}: _(RawOrigin::Root, address, data)
 
-	finish {
-		let b in 0..80;
+		#[extrinsic_call]
+		_(RawOrigin::Root, address, data);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn finish(b: Linear<0, 80>) -> Result<(), BenchmarkError> {
 		let address = H160::from_low_u64_be(b as u64);
 		let data: Vec<u8> = (0..b as u8).collect();
 		<Pallet<T>>::begin(RawOrigin::Root.into(), address)?;
-	}: _(RawOrigin::Root, address, data)
 
-	insert_eth_logs {
-		let b in 0..200;
-		let logs = (0..b).map(|_| ethereum::Log {
-			address: H160([b as u8; 20]),
-			data: vec![b as u8; 128],
-			topics: vec![H256([b as u8; 32]); 6],
-		}).collect::<Vec<_>>();
-	}: _(RawOrigin::Root, logs)
+		#[extrinsic_call]
+		_(RawOrigin::Root, address, data);
 
-	insert_events {
-		let b in 0..200;
+		Ok(())
+	}
+
+	#[benchmark]
+	fn insert_eth_logs(b: Linear<0, 200>) -> Result<(), BenchmarkError> {
+		let logs = (0..b)
+			.map(|_| ethereum::Log {
+				address: H160([b as u8; 20]),
+				data: vec![b as u8; 128],
+				topics: vec![H256([b as u8; 32]); 6],
+			})
+			.collect::<Vec<_>>();
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, logs);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn insert_events(b: Linear<0, 200>) -> Result<(), BenchmarkError> {
 		use parity_scale_codec::Encode;
-		let logs = (0..b).map(|_| <T as Config>::RuntimeEvent::from(crate::Event::<T>::TestEvent).encode()).collect::<Vec<_>>();
-	}: _(RawOrigin::Root, logs)
+		let logs = (0..b)
+			.map(|_| <T as Config>::RuntimeEvent::from(crate::Event::<T>::TestEvent).encode())
+			.collect::<Vec<_>>();
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, logs);
+
+		Ok(())
+	}
 }

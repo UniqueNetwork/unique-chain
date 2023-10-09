@@ -16,7 +16,7 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use frame_benchmarking::{account, benchmarks};
+use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
 use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
 use frame_system::RawOrigin;
 use pallet_common::{
@@ -63,81 +63,201 @@ pub fn create_nft_collection<T: Config>(
 	create_collection_helper::<T>(owner, CollectionMode::NFT)
 }
 
-benchmarks! {
-	create_collection {
-		let col_name = create_u16_data::<{MAX_COLLECTION_NAME_LENGTH}>();
-		let col_desc = create_u16_data::<{MAX_COLLECTION_DESCRIPTION_LENGTH}>();
-		let token_prefix = create_data::<{MAX_TOKEN_PREFIX_LENGTH}>();
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn create_collection() -> Result<(), BenchmarkError> {
+		let col_name = create_u16_data::<{ MAX_COLLECTION_NAME_LENGTH }>();
+		let col_desc = create_u16_data::<{ MAX_COLLECTION_DESCRIPTION_LENGTH }>();
+		let token_prefix = create_data::<{ MAX_TOKEN_PREFIX_LENGTH }>();
 		let mode: CollectionMode = CollectionMode::NFT;
 		let caller: T::AccountId = account("caller", 0, SEED);
-		let _ = <T as CommonConfig>::Currency::deposit(&caller, T::CollectionCreationPrice::get(), Precision::Exact).unwrap();
-	}: _(RawOrigin::Signed(caller.clone()), col_name, col_desc, token_prefix, mode)
-	verify {
-		assert_eq!(<pallet_common::CollectionById<T>>::get(CollectionId(1)).unwrap().owner, caller);
+		let _ = <T as CommonConfig>::Currency::deposit(
+			&caller,
+			T::CollectionCreationPrice::get(),
+			Precision::Exact,
+		)
+		.unwrap();
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(caller.clone()),
+			col_name,
+			col_desc,
+			token_prefix,
+			mode,
+		);
+
+		assert_eq!(
+			<pallet_common::CollectionById<T>>::get(CollectionId(1))
+				.unwrap()
+				.owner,
+			caller
+		);
+
+		Ok(())
 	}
 
-	destroy_collection {
+	#[benchmark]
+	fn destroy_collection() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection)
 
-	add_to_allow_list {
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()), collection);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn add_to_allow_list() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let allowlist_account: T::AccountId = account("admin", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(allowlist_account))
 
-	remove_from_allow_list {
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(caller.clone()),
+			collection,
+			T::CrossAccountId::from_sub(allowlist_account),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn remove_from_allow_list() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let allowlist_account: T::AccountId = account("admin", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		<Pallet<T>>::add_to_allow_list(RawOrigin::Signed(caller.clone()).into(), collection, T::CrossAccountId::from_sub(allowlist_account.clone()))?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(allowlist_account))
+		<Pallet<T>>::add_to_allow_list(
+			RawOrigin::Signed(caller.clone()).into(),
+			collection,
+			T::CrossAccountId::from_sub(allowlist_account.clone()),
+		)?;
 
-	change_collection_owner {
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(caller.clone()),
+			collection,
+			T::CrossAccountId::from_sub(allowlist_account),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn change_collection_owner() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
 		let new_owner: T::AccountId = account("admin", 0, SEED);
-	}: _(RawOrigin::Signed(caller.clone()), collection, new_owner)
 
-	add_collection_admin {
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()), collection, new_owner);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn add_collection_admin() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
 		let new_admin: T::AccountId = account("admin", 0, SEED);
-	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(new_admin))
 
-	remove_collection_admin {
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(caller.clone()),
+			collection,
+			T::CrossAccountId::from_sub(new_admin),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn remove_collection_admin() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
 		let new_admin: T::AccountId = account("admin", 0, SEED);
-		<Pallet<T>>::add_collection_admin(RawOrigin::Signed(caller.clone()).into(), collection, T::CrossAccountId::from_sub(new_admin.clone()))?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, T::CrossAccountId::from_sub(new_admin))
+		<Pallet<T>>::add_collection_admin(
+			RawOrigin::Signed(caller.clone()).into(),
+			collection,
+			T::CrossAccountId::from_sub(new_admin.clone()),
+		)?;
 
-	set_collection_sponsor {
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(caller.clone()),
+			collection,
+			T::CrossAccountId::from_sub(new_admin),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_collection_sponsor() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, caller.clone())
 
-	confirm_sponsorship {
+		#[extrinsic_call]
+		_(
+			RawOrigin::Signed(caller.clone()),
+			collection,
+			caller.clone(),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn confirm_sponsorship() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		<Pallet<T>>::set_collection_sponsor(RawOrigin::Signed(caller.clone()).into(), collection, caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection)
+		<Pallet<T>>::set_collection_sponsor(
+			RawOrigin::Signed(caller.clone()).into(),
+			collection,
+			caller.clone(),
+		)?;
 
-	remove_collection_sponsor {
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()), collection);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn remove_collection_sponsor() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-		<Pallet<T>>::set_collection_sponsor(RawOrigin::Signed(caller.clone()).into(), collection, caller.clone())?;
+		<Pallet<T>>::set_collection_sponsor(
+			RawOrigin::Signed(caller.clone()).into(),
+			collection,
+			caller.clone(),
+		)?;
 		<Pallet<T>>::confirm_sponsorship(RawOrigin::Signed(caller.clone()).into(), collection)?;
-	}: _(RawOrigin::Signed(caller.clone()), collection)
 
-	set_transfers_enabled_flag {
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()), collection);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_transfers_enabled_flag() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
-	}: _(RawOrigin::Signed(caller.clone()), collection, false)
 
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()), collection, false);
 
-	set_collection_limits {
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_collection_limits() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller.clone())?;
 
@@ -152,10 +272,21 @@ benchmarks! {
 			sponsored_data_rate_limit: None,
 			transfers_enabled: Some(true),
 		};
-	}: set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl)
 
-	force_repair_collection {
+		#[extrinsic_call]
+		set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn force_repair_collection() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let collection = create_nft_collection::<T>(caller)?;
-	}: _(RawOrigin::Root, collection)
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, collection);
+
+		Ok(())
+	}
 }

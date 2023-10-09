@@ -16,9 +16,10 @@
 
 //! Benchmarking setup for pallet-configuration
 
-use frame_benchmarking::benchmarks;
+use frame_benchmarking::v2::*;
 use frame_support::assert_ok;
 use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
+use sp_std::vec;
 
 use super::*;
 
@@ -30,66 +31,117 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	assert_eq!(event, &system_event);
 }
 
-benchmarks! {
-	where_clause { where
+#[benchmarks(
+	where
 		T: Config,
 		T::Balance: From<u32>
-	}
+)]
+mod benchmarks {
+	use super::*;
 
-	set_weight_to_fee_coefficient_override {
+	#[benchmark]
+	fn set_weight_to_fee_coefficient_override() -> Result<(), BenchmarkError> {
 		let coeff: u64 = 999;
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_weight_to_fee_coefficient_override(RawOrigin::Root.into(), Some(coeff))
-		);
+
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_weight_to_fee_coefficient_override(
+				RawOrigin::Root.into(),
+				Some(coeff)
+			));
+		}
+
+		Ok(())
 	}
 
-	set_min_gas_price_override {
+	#[benchmark]
+	fn set_min_gas_price_override() -> Result<(), BenchmarkError> {
 		let coeff: u64 = 999;
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_min_gas_price_override(RawOrigin::Root.into(), Some(coeff))
-		);
+
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_min_gas_price_override(
+				RawOrigin::Root.into(),
+				Some(coeff)
+			));
+		}
+
+		Ok(())
 	}
 
-	set_app_promotion_configuration_override {
+	#[benchmark]
+	fn set_app_promotion_configuration_override() -> Result<(), BenchmarkError> {
 		let configuration: AppPromotionConfiguration<BlockNumberFor<T>> = Default::default();
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_app_promotion_configuration_override(RawOrigin::Root.into(), configuration)
-		);
+
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_app_promotion_configuration_override(
+				RawOrigin::Root.into(),
+				configuration
+			));
+		}
+
+		Ok(())
 	}
 
-	set_collator_selection_desired_collators {
+	#[benchmark]
+	fn set_collator_selection_desired_collators() -> Result<(), BenchmarkError> {
 		let max: u32 = 999;
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_collator_selection_desired_collators(RawOrigin::Root.into(), Some(max))
+
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_collator_selection_desired_collators(
+				RawOrigin::Root.into(),
+				Some(max)
+			));
+		}
+
+		assert_last_event::<T>(
+			Event::NewDesiredCollators {
+				desired_collators: Some(max),
+			}
+			.into(),
 		);
-	}
-	verify {
-		assert_last_event::<T>(Event::NewDesiredCollators{desired_collators: Some(max)}.into());
+
+		Ok(())
 	}
 
-	set_collator_selection_license_bond {
+	#[benchmark]
+	fn set_collator_selection_license_bond() -> Result<(), BenchmarkError> {
 		let bond_cost: Option<T::Balance> = Some(1000u32.into());
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_collator_selection_license_bond(RawOrigin::Root.into(), bond_cost)
-		);
-	}
-	verify {
-		assert_last_event::<T>(Event::NewCollatorLicenseBond{bond_cost}.into());
+
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_collator_selection_license_bond(
+				RawOrigin::Root.into(),
+				bond_cost
+			));
+		}
+
+		assert_last_event::<T>(Event::NewCollatorLicenseBond { bond_cost }.into());
+
+		Ok(())
 	}
 
-	set_collator_selection_kick_threshold {
+	#[benchmark]
+	fn set_collator_selection_kick_threshold() -> Result<(), BenchmarkError> {
 		let threshold: Option<BlockNumberFor<T>> = Some(900u32.into());
-	}: {
-		assert_ok!(
-			<Pallet<T>>::set_collator_selection_kick_threshold(RawOrigin::Root.into(), threshold)
+
+		#[block]
+		{
+			assert_ok!(<Pallet<T>>::set_collator_selection_kick_threshold(
+				RawOrigin::Root.into(),
+				threshold
+			));
+		}
+
+		assert_last_event::<T>(
+			Event::NewCollatorKickThreshold {
+				length_in_blocks: threshold,
+			}
+			.into(),
 		);
-	}
-	verify {
-		assert_last_event::<T>(Event::NewCollatorKickThreshold{length_in_blocks: threshold}.into());
+
+		Ok(())
 	}
 }
