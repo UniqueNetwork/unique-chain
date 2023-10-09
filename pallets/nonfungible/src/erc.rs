@@ -23,34 +23,34 @@ extern crate alloc;
 
 use alloc::string::ToString;
 use core::{
-	char::{REPLACEMENT_CHARACTER, decode_utf16},
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
 	convert::TryInto,
 };
-use evm_coder::{abi::AbiType, AbiCoder, ToLog, generate_stubgen, solidity_interface, types::*};
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, AbiCoder, ToLog};
 use frame_support::BoundedVec;
-use up_data_structs::{
-	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,
-	CollectionPropertiesVec,
-};
-use pallet_evm_coder_substrate::{
-	dispatch_to_evm, frontier_contract,
-	execution::{Result, PreDispatch, Error},
-};
-use sp_std::{vec::Vec, vec};
 use pallet_common::{
-	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
+	erc::{static_property::key, CollectionCall, CommonEvmHandler, PrecompileResult},
 	eth::{self, TokenUri},
-	CommonWeightInfo,
+	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations, CommonWeightInfo,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
-use pallet_evm_coder_substrate::call;
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::{U256, Get};
+use pallet_evm_coder_substrate::{
+	call, dispatch_to_evm,
+	execution::{Error, PreDispatch, Result},
+	frontier_contract,
+};
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
+use sp_core::{Get, U256};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	CollectionId, CollectionPropertiesVec, Property, PropertyKey, PropertyKeyPermission,
+	PropertyPermission, TokenId,
+};
 
 use crate::{
-	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	TokenProperties, SelfWeightOf, weights::WeightInfo, common::CommonWeights,
+	common::CommonWeights, weights::WeightInfo, AccountBalance, Config, CreateItemData,
+	NonfungibleHandle, Pallet, SelfWeightOf, TokenData, TokenProperties, TokensMinted,
 };
 
 /// Nft events.

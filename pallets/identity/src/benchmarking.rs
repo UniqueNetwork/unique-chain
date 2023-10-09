@@ -37,16 +37,16 @@
 #![cfg(feature = "runtime-benchmarks")]
 #![allow(clippy::no_effect)]
 
-use super::*;
-
-use crate::Pallet as Identity;
 use frame_benchmarking::{account, benchmarks, whitelisted_caller};
 use frame_support::{
-	ensure, assert_ok,
+	assert_ok, ensure,
 	traits::{EnsureOrigin, Get},
 };
 use frame_system::RawOrigin;
 use sp_runtime::traits::Bounded;
+
+use super::*;
+use crate::Pallet as Identity;
 
 const SEED: u32 = 0;
 

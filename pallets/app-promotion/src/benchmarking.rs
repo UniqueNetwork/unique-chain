@@ -16,23 +16,22 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use super::*;
-use crate::Pallet as PromototionPallet;
-use frame_support::traits::fungible::Unbalanced;
+use frame_benchmarking::{account, benchmarks};
+use frame_support::traits::{fungible::Unbalanced, OnInitialize};
+use frame_system::RawOrigin;
+use pallet_evm_migration::Pallet as EvmMigrationPallet;
+use pallet_unique::benchmarking::create_nft_collection;
 use sp_runtime::traits::Bounded;
 
-use frame_benchmarking::{benchmarks, account};
-use frame_support::traits::OnInitialize;
-use frame_system::RawOrigin;
-use pallet_unique::benchmarking::create_nft_collection;
-use pallet_evm_migration::Pallet as EvmMigrationPallet;
+use super::*;
+use crate::Pallet as PromototionPallet;
 
 const SEED: u32 = 0;
 
 fn set_admin<T>() -> Result<T::AccountId, sp_runtime::DispatchError>
 where
 	T: Config + pallet_unique::Config + pallet_evm_migration::Config,
-	T::BlockNumber: From<u32> + Into<u32>,
+	BlockNumberFor<T>: From<u32> + Into<u32>,
 	BalanceOf<T>: Sum + From<u128>,
 {
 	let pallet_admin = account::<T::AccountId>("admin", 0, SEED);
@@ -53,7 +52,7 @@ where
 benchmarks! {
 	where_clause{
 		where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
-		T::BlockNumber: From<u32> + Into<u32>,
+		BlockNumberFor<T>: From<u32> + Into<u32>,
 		BalanceOf<T>: Sum + From<u128>
 	}
 

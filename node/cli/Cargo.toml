@@ -20,23 +20,24 @@ path = "src/main.rs"
 targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
-clap = "4.1"
+clap = "4.4"
 futures = '0.3.28'
-tokio = { version = "1.24", features = ["time"] }
 serde_json = "1.0"
+tokio = { version = "1.32", features = ["time"] }
 
 log = { workspace = true }
 
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
+parity-scale-codec = { workspace = true }
 
 cumulus-client-cli = { workspace = true }
+cumulus-client-collator = { workspace = true }
 cumulus-client-consensus-aura = { workspace = true }
 cumulus-client-consensus-common = { workspace = true }
+cumulus-client-consensus-proposer = { workspace = true }
 cumulus-client-network = { workspace = true }
 cumulus-client-service = { workspace = true }
 cumulus-primitives-core = { workspace = true }
-cumulus-primitives-parachain-inherent = { workspace = true }
+cumulus-primitives-parachain-inherent = { features = ["std"], workspace = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
@@ -85,28 +86,57 @@ up-data-structs = { workspace = true }
 fc-consensus = { workspace = true }
 fc-db = { workspace = true }
 fc-mapping-sync = { workspace = true }
-fc-rpc = { workspace = true }
 fc-rpc-core = { workspace = true }
+fc-rpc.workspace = true
 fp-rpc = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
+fc-api.workspace = true
+fp-storage.workspace = true
+jsonrpsee.workspace = true
+pallet-transaction-payment-rpc.workspace = true
+sc-rpc-api.workspace = true
+sc-rpc.workspace = true
+sp-inherents.workspace = true
 uc-rpc = { workspace = true }
-unique-rpc = { workspace = true }
 up-pov-estimate-rpc = { workspace = true }
 up-rpc = { workspace = true }
-jsonrpsee.workspace = true
-fp-storage.workspace = true
-sc-rpc.workspace = true
 
 [build-dependencies]
 substrate-build-script-utils = { workspace = true }
 
 [features]
-default = ["opal-runtime"]
 all-runtimes = ['opal-runtime', 'quartz-runtime', 'unique-runtime']
-pov-estimate = ['opal-runtime/pov-estimate', 'quartz-runtime?/pov-estimate', 'uc-rpc/pov-estimate', 'unique-rpc/pov-estimate', 'unique-runtime?/pov-estimate']
-runtime-benchmarks = ['opal-runtime/runtime-benchmarks', 'polkadot-cli/runtime-benchmarks', 'polkadot-service/runtime-benchmarks', 'quartz-runtime?/runtime-benchmarks', 'sc-service/runtime-benchmarks', 'unique-runtime?/runtime-benchmarks']
+default = ["opal-runtime"]
+gov-test-timings = [
+	'opal-runtime/gov-test-timings',
+	'quartz-runtime?/gov-test-timings',
+	'unique-runtime?/gov-test-timings',
+]
+lookahead = []
+pov-estimate = [
+	'opal-runtime/pov-estimate',
+	'quartz-runtime?/pov-estimate',
+	'uc-rpc/pov-estimate',
+	'unique-runtime?/pov-estimate',
+]
+runtime-benchmarks = [
+	'opal-runtime/runtime-benchmarks',
+	'polkadot-cli/runtime-benchmarks',
+	'polkadot-service/runtime-benchmarks',
+	'quartz-runtime?/runtime-benchmarks',
+	'sc-service/runtime-benchmarks',
+	'unique-runtime?/runtime-benchmarks',
+]
 sapphire-runtime = ['quartz-runtime', 'quartz-runtime/become-sapphire']
-try-runtime = ['opal-runtime?/try-runtime', 'quartz-runtime?/try-runtime', 'try-runtime-cli/try-runtime', 'unique-runtime?/try-runtime']
-session-test-timings = ['opal-runtime/session-test-timings', 'quartz-runtime?/session-test-timings', 'unique-runtime?/session-test-timings']
-gov-test-timings = ['opal-runtime/gov-test-timings', 'quartz-runtime?/gov-test-timings', 'unique-runtime?/gov-test-timings']
+session-test-timings = [
+	'opal-runtime/session-test-timings',
+	'quartz-runtime?/session-test-timings',
+	'unique-runtime?/session-test-timings',
+]
+try-runtime = [
+	'opal-runtime?/try-runtime',
+	'quartz-runtime?/try-runtime',
+	'try-runtime-cli/try-runtime',
+	'unique-runtime?/try-runtime',
+]

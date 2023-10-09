@@ -27,14 +27,11 @@ include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
 
 extern crate alloc;
 
+use ::staging_xcm::latest::NetworkId;
 use frame_support::parameter_types;
-
-use sp_version::RuntimeVersion;
 use sp_runtime::create_runtime_str;
-
+use sp_version::RuntimeVersion;
 use up_common::types::*;
-
-use ::xcm::latest::NetworkId;
 
 mod runtime_common;
 
@@ -52,7 +49,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	spec_name: create_runtime_str!("unique"),
 	impl_name: create_runtime_str!("unique"),
 	authoring_version: 1,
-	spec_version: 943061,
+	spec_version: 10010062,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,

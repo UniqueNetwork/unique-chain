@@ -37,17 +37,14 @@ mod benchmarking;
 #[cfg(test)]
 mod tests;
 
-use frame_support::{
-	dispatch::{DispatchResult},
-	traits::{
-		fungible::{Balanced, Inspect, Mutate},
-		Get,
-		tokens::Precision,
-	},
+use frame_support::traits::{
+	fungible::{Balanced, Inspect, Mutate},
+	tokens::Precision,
+	Get,
 };
+use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
-use sp_runtime::{Perbill, traits::BlockNumberProvider};
-
+use sp_runtime::{traits::BlockNumberProvider, Perbill};
 use sp_std::convert::TryInto;
 
 type BalanceOf<T> =
@@ -61,9 +58,10 @@ pub const END_INFLATION_PERCENT: u32 = 4;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
+
+	use super::*;
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
@@ -73,11 +71,11 @@ pub mod pallet {
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		// The block number provider
-		type BlockNumberProvider: BlockNumberProvider<BlockNumber = Self::BlockNumber>;
+		type BlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
 
 		/// Number of blocks that pass between treasury balance updates due to inflation
 		#[pallet::constant]
-		type InflationBlockInterval: Get<Self::BlockNumber>;
+		type InflationBlockInterval: Get<BlockNumberFor<Self>>;
 	}
 
 	#[pallet::pallet]
@@ -95,22 +93,23 @@ pub mod pallet {
 	/// Next target (relay) block when inflation will be applied
 	#[pallet::storage]
 	pub type NextInflationBlock<T: Config> =
-		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+		StorageValue<Value = BlockNumberFor<T>, QueryKind = ValueQuery>;
 
 	/// Next target (relay) block when inflation is recalculated
 	#[pallet::storage]
 	pub type NextRecalculationBlock<T: Config> =
-		StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+		StorageValue<Value = BlockNumberFor<T>, QueryKind = ValueQuery>;
 
 	/// Relay block when inflation has started
 	#[pallet::storage]
-	pub type StartBlock<T: Config> = StorageValue<Value = T::BlockNumber, QueryKind = ValueQuery>;
+	pub type StartBlock<T: Config> =
+		StorageValue<Value = BlockNumberFor<T>, QueryKind = ValueQuery>;
 
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_initialize(_: T::BlockNumber) -> Weight
+		fn on_initialize(_: BlockNumberFor<T>) -> Weight
 		where
-			<T as frame_system::Config>::BlockNumber: From<u32>,
+			BlockNumberFor<T>: From<u32>,
 		{
 			let mut consumed_weight = Weight::zero();
 			let mut add_weight = |reads, writes, weight| {
@@ -120,7 +119,7 @@ pub mod pallet {
 
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
 			let current_relay_block = T::BlockNumberProvider::current_block_number();
-			let next_inflation: T::BlockNumber = <NextInflationBlock<T>>::get();
+			let next_inflation: BlockNumberFor<T> = <NextInflationBlock<T>>::get();
 			add_weight(1, 0, Weight::from_parts(5_000_000, 0));
 
 			// Apply inflation every InflationBlockInterval blocks
@@ -129,7 +128,7 @@ pub mod pallet {
 				// Recalculate inflation on the first block of the year (or if it is not initialized yet)
 				// Do the "current_relay_block >= next_recalculation" check in the "current_relay_block >= next_inflation"
 				// block because it saves InflationBlockInterval DB reads for NextRecalculationBlock.
-				let next_recalculation: T::BlockNumber = <NextRecalculationBlock<T>>::get();
+				let next_recalculation: BlockNumberFor<T> = <NextRecalculationBlock<T>>::get();
 				add_weight(1, 0, Weight::zero());
 				if current_relay_block >= next_recalculation {
 					Self::recalculate_inflation(next_recalculation);
@@ -169,10 +168,10 @@ pub mod pallet {
 		#[pallet::weight(Weight::from_parts(0, 0))]
 		pub fn start_inflation(
 			origin: OriginFor<T>,
-			inflation_start_relay_block: T::BlockNumber,
+			inflation_start_relay_block: BlockNumberFor<T>,
 		) -> DispatchResult
 		where
-			<T as frame_system::Config>::BlockNumber: From<u32>,
+			BlockNumberFor<T>: From<u32>,
 		{
 			ensure_root(origin)?;
 
@@ -200,9 +199,9 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	pub fn recalculate_inflation(recalculation_block: T::BlockNumber) {
+	pub fn recalculate_inflation(recalculation_block: BlockNumberFor<T>) {
 		let current_year: u32 = ((recalculation_block - <StartBlock<T>>::get())
-			/ T::BlockNumber::from(YEAR))
+			/ BlockNumberFor::<T>::from(YEAR))
 		.try_into()
 		.unwrap_or(0);
 		let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);

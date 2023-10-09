@@ -17,23 +17,19 @@
 // Original License
 use std::sync::Arc;
 
-use codec::Decode;
-use jsonrpsee::{
-	core::{RpcResult as Result},
-	proc_macros::rpc,
-};
 use anyhow::anyhow;
+use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
+pub use app_promotion_unique_rpc::AppPromotionApiServer;
+use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
+use parity_scale_codec::Decode;
+use sp_api::{ApiExt, BlockT, ProvideRuntimeApi};
+use sp_blockchain::HeaderBackend;
 use sp_runtime::traits::{AtLeast32BitUnsigned, Member};
 use up_data_structs::{
-	RpcCollection, CollectionId, CollectionStats, CollectionLimits, TokenId, Property,
-	PropertyKeyPermission, TokenData, TokenChild,
+	CollectionId, CollectionLimits, CollectionStats, Property, PropertyKeyPermission,
+	RpcCollection, TokenChild, TokenData, TokenId,
 };
-use sp_api::{BlockT, ProvideRuntimeApi, ApiExt};
-use sp_blockchain::HeaderBackend;
 use up_rpc::UniqueApi as UniqueRuntimeApi;
-use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
-
-pub use app_promotion_unique_rpc::AppPromotionApiServer;
 
 #[cfg(feature = "pov-estimate")]
 pub mod pov_estimate;
@@ -549,16 +545,16 @@ fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> 
 	keys.map(|keys| keys.into_iter().map(|key| key.into_bytes()).collect())
 }
 
-fn decode_collection_from_bytes<T: codec::Decode>(
+fn decode_collection_from_bytes<T: parity_scale_codec::Decode>(
 	bytes: &[u8],
-) -> core::result::Result<T, codec::Error> {
-	let mut reader = codec::IoReader(bytes);
+) -> core::result::Result<T, parity_scale_codec::Error> {
+	let mut reader = parity_scale_codec::IoReader(bytes);
 	T::decode(&mut reader)
 }
 
 fn detect_type_and_decode_collection<AccountId: Decode>(
 	bytes: &[u8],
-) -> core::result::Result<RpcCollection<AccountId>, codec::Error> {
+) -> core::result::Result<RpcCollection<AccountId>, parity_scale_codec::Error> {
 	use up_data_structs::{CollectionVersion1, RpcCollectionVersion1};
 
 	decode_collection_from_bytes::<RpcCollection<AccountId>>(bytes)
@@ -574,10 +570,11 @@ fn detect_type_and_decode_collection<AccountId: Decode>(
 
 #[cfg(test)]
 mod tests {
-	use super::*;
-	use codec::IoReader;
 	use hex_literal::hex;
+	use parity_scale_codec::IoReader;
 	use up_data_structs::{CollectionVersion1, RawEncoded};
+
+	use super::*;
 
 	const ENCODED_COLLECTION_V1: [u8; 180] = hex!("aab94a1ee784bc17f68d76d4d48d736916ca6ff6315b8c1fa1175726c8345a390000285000720069006d00610020004c00690076006500d04500730065006d00700069006f00200064006900200063007200650061007a0069006f006e006500200064006900200075006e00610020006e0075006f0076006100200063006f006c006c0065007a0069006f006e00650020006400690020004e004600540021000c464e5400000000000000000000000000000000");
 	const ENCODED_RPC_COLLECTION_V2: [u8; 618] = hex!("d00dcc24bf66750d3809aa26884b930ec8a3094d6f6f19fdc62020b2fbec013400604d0069006e007400460065007300740020002d002000460075006e006e007900200061006e0069006d0061006c0073008c430072006f00730073006f0076006500720020006200650074007700650065006e00200061006e0069006d0061006c00730020002d00200066006f0072002000660075006e00104d46464100000000000000000000010001000100000004385f6f6c645f636f6e7374446174610001000c5c5f6f6c645f636f6e73744f6e436861696e536368656d6139047b226e6573746564223a7b226f6e436861696e4d65746144617461223a7b226e6573746564223a7b224e46544d657461223a7b226669656c6473223a7b22697066734a736f6e223a7b226964223a312c2272756c65223a227265717569726564222c2274797065223a22737472696e67227d2c2248656164223a7b226964223a322c2272756c65223a227265717569726564222c2274797065223a22737472696e67227d2c22426f6479223a7b226964223a332c2272756c65223a227265717569726564222c2274797065223a22737472696e67227d2c225461696c223a7b226964223a342c2272756c65223a227265717569726564222c2274797065223a22737472696e67227d7d7d7d7d7d7d485f6f6c645f736368656d6156657273696f6e18556e69717565685f6f6c645f7661726961626c654f6e436861696e536368656d6111017b22636f6c6c656374696f6e436f766572223a22516d53557a7139354c357a556777795a584d3731576a3762786b36557048515468633162536965347766706e5435227d000000");

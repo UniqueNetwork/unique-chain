@@ -26,10 +26,14 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use frame_support::{dispatch::*, pallet_prelude::*};
-	use frame_support::traits::{QueryPreimage, StorePreimage, EnsureOrigin};
+	use frame_support::{
+		dispatch::*,
+		pallet_prelude::*,
+		traits::{EnsureOrigin, QueryPreimage, StorePreimage},
+	};
 	use frame_system::pallet_prelude::*;
 	use sp_core::H256;
+	use sp_runtime::traits::Dispatchable;
 
 	use crate::weights::WeightInfo;
 
@@ -111,7 +115,7 @@ pub mod pallet {
 			hash: H256,
 			weight_bound: Weight,
 		) -> DispatchResultWithPostInfo {
-			use codec::Decode;
+			use parity_scale_codec::Decode;
 
 			T::PreimageOrigin::ensure_origin(origin.clone())?;
 

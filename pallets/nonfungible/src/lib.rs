@@ -90,37 +90,37 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::ops::Deref;
+
 use erc::ERC721Events;
 use evm_coder::ToLog;
 use frame_support::{
-	BoundedVec, ensure, fail, transactional,
+	dispatch::{Pays, PostDispatchInfo},
+	ensure, fail,
+	pallet_prelude::*,
 	storage::with_transaction,
-	pallet_prelude::DispatchResultWithPostInfo,
-	pallet_prelude::Weight,
-	dispatch::{PostDispatchInfo, Pays},
+	transactional, BoundedVec,
 };
-use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey, PropertyValue,
-	PropertyKeyPermission, PropertyScope, TokenChild, AuxPropertyValue, PropertiesPermissionMap,
-	TokenProperties as TokenPropertiesT,
+pub use pallet::*;
+use pallet_common::{
+	eth::collection_id_to_address, helpers::add_weight_to_post_info,
+	weights::WeightInfo as CommonWeightInfo, CollectionHandle, Error as CommonError,
+	Event as CommonEvent, Pallet as PalletCommon, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
-use pallet_common::{
-	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
-};
-use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_structure::{Error as StructureError, Pallet as PalletStructure};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
-use core::ops::Deref;
-use codec::{Encode, Decode, MaxEncodedLen};
-use scale_info::TypeInfo;
-
-pub use pallet::*;
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
+	CreateCollectionData, CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property,
+	PropertyKey, PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
+	TokenProperties as TokenPropertiesT,
+};
 use weights::WeightInfo;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -147,12 +147,12 @@ pub struct ItemData<CrossAccountId> {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::{
-		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion,
+		pallet_prelude::*, storage::Key, traits::StorageVersion, Blake2_128Concat, Twox64Concat,
 	};
 	use up_data_structs::{CollectionId, TokenId};
-	use super::weights::WeightInfo;
+
+	use super::{weights::WeightInfo, *};
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -285,7 +285,6 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T>(PhantomData<T>);
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self(Default::default())
@@ -293,7 +292,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			StorageVersion::new(1).put::<Pallet<T>>();
 		}

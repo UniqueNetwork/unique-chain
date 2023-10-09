@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use pallet_evm::{Precompile, PrecompileHandle, PrecompileResult, PrecompileSet, IsPrecompileResult};
+use pallet_evm::{
+	IsPrecompileResult, Precompile, PrecompileHandle, PrecompileResult, PrecompileSet,
+};
+use pallet_evm_precompile_simple::ECRecover;
 use sp_core::H160;
 use sp_std::marker::PhantomData;
-
-use pallet_evm_precompile_simple::{ECRecover};
 use sr25519::Sr25519Precompile;
 
 mod sr25519;

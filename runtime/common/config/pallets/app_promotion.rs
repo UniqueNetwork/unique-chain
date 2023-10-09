@@ -14,16 +14,16 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::{
-	runtime_common::config::pallets::{TreasuryAccountId, RelayChainBlockNumberProvider},
-	Runtime, Balances, BlockNumber, Unique, RuntimeEvent, EvmContractHelpers, Maintenance,
-};
-
 use frame_support::{parameter_types, PalletId};
 use sp_arithmetic::Perbill;
 use up_common::{
-	constants::{UNIQUE, DAYS, RELAY_DAYS},
+	constants::{DAYS, RELAY_DAYS, UNIQUE},
 	types::Balance,
+};
+
+use crate::{
+	runtime_common::config::pallets::{RelayChainBlockNumberProvider, TreasuryAccountId},
+	Balances, BlockNumber, EvmContractHelpers, Maintenance, Runtime, RuntimeEvent, Unique,
 };
 
 parameter_types! {

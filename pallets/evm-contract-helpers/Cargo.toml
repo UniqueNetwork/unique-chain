@@ -18,13 +18,11 @@ pallet-evm = { workspace = true }
 up-sponsorship = { workspace = true }
 
 # Locals
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
-
 evm-coder = { workspace = true }
 pallet-common = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-evm-transaction-payment = { workspace = true }
+parity-scale-codec = { workspace = true }
 up-data-structs = { workspace = true, features = ['serde1'] }
 
 [features]

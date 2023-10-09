@@ -17,30 +17,31 @@
 //! ERC-20 standart support implementation.
 
 extern crate alloc;
-use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
-use core::convert::TryInto;
-use evm_coder::AbiCoder;
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
-use up_data_structs::CollectionMode;
-use pallet_common::{
-	CollectionHandle,
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
-	eth::CrossAddress,
-	CommonWeightInfo as _,
+use core::{
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
+	convert::TryInto,
 };
-use sp_std::vec::Vec;
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, AbiCoder, ToLog};
+use pallet_common::{
+	erc::{CollectionCall, CommonEvmHandler, PrecompileResult},
+	eth::CrossAddress,
+	CollectionHandle, CommonWeightInfo as _,
+};
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{PreDispatch, Result},
 	frontier_contract,
 };
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::{U256, Get};
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
+use sp_core::{Get, U256};
+use sp_std::vec::Vec;
+use up_data_structs::CollectionMode;
 
 use crate::{
-	Allowance, Balance, Config, FungibleHandle, Pallet, TotalSupply, SelfWeightOf,
-	weights::WeightInfo, common::CommonWeights,
+	common::CommonWeights, weights::WeightInfo, Allowance, Balance, Config, FungibleHandle, Pallet,
+	SelfWeightOf, TotalSupply,
 };
 
 frontier_contract! {

@@ -15,28 +15,27 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{dispatch::DispatchResult, ensure, fail};
+use pallet_balances_adapter::NativeFungibleHandle;
+pub use pallet_common::dispatch::CollectionDispatch;
+#[cfg(not(feature = "refungible"))]
+use pallet_common::unsupported;
+use pallet_common::{
+	erc::CommonEvmHandler, eth::map_eth_to_id, CollectionById, CollectionHandle,
+	CommonCollectionOperations,
+};
 use pallet_evm::{PrecompileHandle, PrecompileResult};
+use pallet_fungible::{FungibleHandle, Pallet as PalletFungible};
+use pallet_nonfungible::{NonfungibleHandle, Pallet as PalletNonfungible};
+use pallet_refungible::{
+	erc_token::RefungibleTokenHandle, Pallet as PalletRefungible, RefungibleHandle,
+};
 use sp_core::H160;
 use sp_runtime::DispatchError;
 use sp_std::{borrow::ToOwned, vec::Vec};
-use pallet_common::{
-	CollectionById, CollectionHandle, CommonCollectionOperations, erc::CommonEvmHandler,
-	eth::map_eth_to_id,
-};
-pub use pallet_common::dispatch::CollectionDispatch;
-use pallet_fungible::{Pallet as PalletFungible, FungibleHandle};
-use pallet_balances_adapter::NativeFungibleHandle;
-use pallet_nonfungible::{Pallet as PalletNonfungible, NonfungibleHandle};
-use pallet_refungible::{
-	Pallet as PalletRefungible, RefungibleHandle, erc_token::RefungibleTokenHandle,
-};
 use up_data_structs::{
-	CollectionMode, CreateCollectionData, MAX_DECIMAL_POINTS, mapping::TokenAddressMapping,
-	CollectionId,
+	mapping::TokenAddressMapping, CollectionId, CollectionMode, CreateCollectionData,
+	MAX_DECIMAL_POINTS,
 };
-
-#[cfg(not(feature = "refungible"))]
-use pallet_common::unsupported;
 
 pub enum CollectionDispatchT<T>
 where

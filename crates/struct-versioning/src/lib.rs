@@ -17,13 +17,12 @@
 #![doc = include_str!("../README.md")]
 
 use proc_macro::TokenStream;
-use quote::format_ident;
+use quote::{format_ident, quote};
 use syn::{
-	parse::{Parse, ParseStream},
-	Token, LitInt, parse_macro_input, ItemStruct, Error, Fields, Result, Field, Expr,
 	parenthesized,
+	parse::{Parse, ParseStream},
+	parse_macro_input, Error, Expr, Field, Fields, ItemStruct, LitInt, Result, Token,
 };
-use quote::quote;
 
 mod kw {
 	syn::custom_keyword!(version);

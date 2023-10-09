@@ -16,87 +16,78 @@
 
 #![allow(clippy::from_over_into)]
 
-use sp_core::{H160, H256, U256};
 use frame_support::{
-	parameter_types,
-	traits::{Everything, ConstU32, ConstU64, fungible::Inspect},
-	weights::IdentityFee,
 	pallet_prelude::Weight,
+	parameter_types,
+	traits::{fungible::Inspect, ConstU32, ConstU64, Everything},
+	weights::IdentityFee,
 };
-use sp_runtime::{
-	traits::{BlakeTwo256, IdentityLookup},
-	testing::Header,
+use frame_system as system;
+use pallet_ethereum::PostLogContent;
+use pallet_evm::{
+	account::CrossAccountId, AddressMapping, BackwardsAddressMapping, EnsureAddressNever,
+	SubstrateBlockHashMapping,
 };
 use pallet_transaction_payment::CurrencyAdapter;
-use frame_system as system;
-use pallet_evm::{
-	AddressMapping, account::CrossAccountId, EnsureAddressNever, SubstrateBlockHashMapping,
-	BackwardsAddressMapping,
-};
-use pallet_ethereum::PostLogContent;
-use codec::{Encode, Decode, MaxEncodedLen};
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-
+use sp_core::{H160, H256, U256};
+use sp_runtime::{
+	traits::{BlakeTwo256, IdentityLookup},
+	BuildStorage,
+};
 use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
-#[path = "../../common/dispatch.rs"]
 mod dispatch;
 
 use dispatch::CollectionDispatchT;
 
-#[path = "../../common/weights/mod.rs"]
 mod weights;
 
 use weights::CommonWeights;
 
-type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
-type Block = frame_system::mocking::MockBlock<Test>;
+type Block = frame_system::mocking::MockBlockU32<Test>;
 
 #[cfg(test)]
 mod tests;
 
 // Configure a mock runtime to test the pallet.
 frame_support::construct_runtime!(
-	pub enum Test where
-		Block = Block,
-		NodeBlock = Block,
-		UncheckedExtrinsic = UncheckedExtrinsic,
-	{
+	pub enum Test {
 		System: frame_system,
 		Timestamp: pallet_timestamp,
-		Unique: pallet_unique::{Pallet, Call, Storage},
-		Balances: pallet_balances::{Pallet, Call, Storage, Event<T>},
-		Common: pallet_common::{Pallet, Storage, Event<T>},
-		Fungible: pallet_fungible::{Pallet, Storage},
-		Refungible: pallet_refungible::{Pallet, Storage},
-		Nonfungible: pallet_nonfungible::{Pallet, Storage},
-		Structure: pallet_structure::{Pallet, Storage, Event<T>},
-		TransactionPayment: pallet_transaction_payment::{Pallet, Storage, Event<T>},
-		Ethereum: pallet_ethereum::{Pallet, Config, Call, Storage, Event, Origin},
-		EVM: pallet_evm::{Pallet, Config, Call, Storage, Event<T>},
+		Unique: pallet_unique,
+		Balances: pallet_balances,
+		Common: pallet_common,
+		Fungible: pallet_fungible,
+		Refungible: pallet_refungible,
+		Nonfungible: pallet_nonfungible,
+		Structure: pallet_structure,
+		TransactionPayment: pallet_transaction_payment,
+		Ethereum: pallet_ethereum,
+		EVM: pallet_evm,
 	}
 );
 
 parameter_types! {
-	pub const BlockHashCount: u64 = 250;
+	pub const BlockHashCount: u32 = 250;
 	pub const SS58Prefix: u8 = 42;
 }
 
 impl system::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type BaseCallFilter = Everything;
+	type Block = Block;
 	type BlockWeights = ();
 	type BlockLength = ();
 	type DbWeight = ();
 	type RuntimeOrigin = RuntimeOrigin;
 	type RuntimeCall = RuntimeCall;
-	type Index = u64;
-	type BlockNumber = u64;
+	type Nonce = u64;
 	type Hash = H256;
 	type Hashing = BlakeTwo256;
 	type AccountId = u64;
 	type Lookup = IdentityLookup<Self::AccountId>;
-	type Header = Header;
 	type BlockHashCount = BlockHashCount;
 	type Version = ();
 	type PalletInfo = PalletInfo;
@@ -127,7 +118,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = MaxLocks;
 	type FreezeIdentifier = [u8; 8];
 	type MaxHolds = MaxLocks;
-	type HoldIdentifier = [u8; 8];
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 parameter_types! {
@@ -240,9 +231,9 @@ impl pallet_evm::Config for Test {
 	type OnMethodCall = ();
 	type OnCreate = ();
 	type OnChargeTransaction = ();
+	type OnCheckEvmTransaction = ();
 	type FindAuthor = ();
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
-	type TransactionValidityHack = ();
 	type Timestamp = Timestamp;
 	type GasLimitPovSizeRatio = ConstU64<0>;
 }
@@ -305,8 +296,8 @@ impl pallet_unique::Config for Test {
 
 // Build genesis storage according to the mock runtime.
 pub fn new_test_ext() -> sp_io::TestExternalities {
-	system::GenesisConfig::default()
-		.build_storage::<Test>()
+	<system::GenesisConfig<Test>>::default()
+		.build_storage()
 		.unwrap()
 		.into()
 }

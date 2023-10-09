@@ -14,14 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use xcm::{
-	VersionedXcm,
+use frame_support::pallet_prelude::Weight;
+use parity_scale_codec::Encode;
+use staging_xcm::{
 	latest::{prelude::*, Error},
+	VersionedXcm,
 };
-use codec::Encode;
-use crate::{Runtime, RuntimeCall, RuntimeOrigin, RuntimeEvent, PolkadotXcm};
-use super::{new_test_ext, last_events, AccountId};
-use frame_support::{pallet_prelude::Weight};
+
+use super::{last_events, new_test_ext, AccountId};
+use crate::{PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin};
 
 const ALICE: AccountId = AccountId::new([0u8; 32]);
 const BOB: AccountId = AccountId::new([1u8; 32]);
@@ -51,9 +52,9 @@ pub fn xcm_transact_is_forbidden() {
 
 		let xcm_event = &last_events(1)[0];
 		match xcm_event {
-			RuntimeEvent::PolkadotXcm(pallet_xcm::Event::<Runtime>::Attempted(
-				Outcome::Incomplete(_weight, Error::NoPermission),
-			)) => { /* Pass */ }
+			RuntimeEvent::PolkadotXcm(pallet_xcm::Event::<Runtime>::Attempted {
+				outcome: Outcome::Incomplete(_weight, Error::NoPermission),
+			}) => { /* Pass */ }
 			_ => panic!(
 				"Expected PolkadotXcm.Attempted(Incomplete(_weight, NoPermission)),\
 				found: {xcm_event:#?}"

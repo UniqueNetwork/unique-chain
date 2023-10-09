@@ -243,7 +243,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Shiden', () => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [QTZ_ASSET_ID_ON_SHIDEN])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
-        await helper.assets.create(
+        await helper.getSudo().assets.forceCreate(
           alice,
           QTZ_ASSET_ID_ON_SHIDEN,
           alice.address,

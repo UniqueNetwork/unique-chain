@@ -96,26 +96,27 @@ type BalanceOf<T> =
 	<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-	pub use crate::weights::WeightInfo;
 	use core::ops::Div;
+
 	use frame_support::{
 		dispatch::{DispatchClass, DispatchResultWithPostInfo},
-		inherent::Vec,
 		pallet_prelude::*,
 		sp_runtime::traits::{AccountIdConversion, CheckedSub, Saturating, Zero},
 		traits::{
-			EnsureOrigin,
-			fungible::{Balanced, BalancedHold, Inspect, InspectHold, Mutate, MutateHold},
-			ValidatorRegistration,
+			fungible::{Balanced, BalancedHold, Inspect, Mutate, MutateHold},
 			tokens::{Precision, Preservation},
+			EnsureOrigin, ValidatorRegistration,
 		},
 		BoundedVec, PalletId,
 	};
 	use frame_system::pallet_prelude::*;
 	use pallet_session::SessionManager;
-	use sp_runtime::{Perbill, traits::Convert};
+	use sp_runtime::{traits::Convert, Perbill};
 	use sp_staking::SessionIndex;
+	use sp_std::vec::Vec;
+
+	use super::*;
+	pub use crate::weights::WeightInfo;
 
 	/// A convertor from collators id. Since this pallet does not have stash/controller, this is
 	/// just identity.
@@ -131,8 +132,11 @@ pub mod pallet {
 	pub trait Config: frame_system::Config {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+		/// Overarching hold reason.
+		type RuntimeHoldReason: From<HoldReason>;
+
 		type Currency: Mutate<Self::AccountId>
-			+ MutateHold<Self::AccountId>
+			+ MutateHold<Self::AccountId, Reason = Self::RuntimeHoldReason>
 			+ BalancedHold<Self::AccountId>;
 
 		/// Origin that can dictate updating parameters of this pallet.
@@ -164,14 +168,17 @@ pub mod pallet {
 		/// The weight information of this pallet.
 		type WeightInfo: WeightInfo;
 
-		#[pallet::constant]
-		type LicenceBondIdentifier: Get<<Self::Currency as InspectHold<Self::AccountId>>::Reason>;
-
 		type DesiredCollators: Get<u32>;
 
 		type LicenseBond: Get<BalanceOf<Self>>;
 
-		type KickThreshold: Get<Self::BlockNumber>;
+		type KickThreshold: Get<BlockNumberFor<Self>>;
+	}
+
+	#[pallet::composite_enum]
+	pub enum HoldReason {
+		/// The funds are held as the license bond.
+		LicenseBond,
 	}
 
 	#[pallet::pallet]
@@ -199,14 +206,13 @@ pub mod pallet {
 	#[pallet::storage]
 	#[pallet::getter(fn last_authored_block)]
 	pub type LastAuthoredBlock<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, T::BlockNumber, ValueQuery>;
+		StorageMap<_, Twox64Concat, T::AccountId, BlockNumberFor<T>, ValueQuery>;
 
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T: Config> {
 		pub invulnerables: Vec<T::AccountId>,
 	}
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self {
@@ -216,12 +222,11 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
-			let duplicate_invulnerables = self
-				.invulnerables
-				.iter()
-				.collect::<std::collections::BTreeSet<_>>();
+			use sp_std::collections::btree_set::BTreeSet;
+
+			let duplicate_invulnerables = self.invulnerables.iter().collect::<BTreeSet<_>>();
 			assert!(
 				duplicate_invulnerables.len() == self.invulnerables.len(),
 				"duplicate invulnerables in genesis."
@@ -375,7 +380,7 @@ pub mod pallet {
 
 			let deposit = T::LicenseBond::get();
 
-			T::Currency::hold(&T::LicenceBondIdentifier::get(), &who, deposit)?;
+			T::Currency::hold(&HoldReason::LicenseBond.into(), &who, deposit)?;
 			LicenseDepositOf::<T>::insert(who.clone(), deposit);
 
 			Self::deposit_event(Event::LicenseObtained {
@@ -538,7 +543,7 @@ pub mod pallet {
 						let remaining = deposit - slashed;
 
 						let (imbalance, _) =
-							T::Currency::slash(&T::LicenceBondIdentifier::get(), who, slashed);
+							T::Currency::slash(&HoldReason::LicenseBond.into(), who, slashed);
 						deposit_returned = remaining;
 
 						T::Currency::resolve(&T::TreasuryAccountId::get(), imbalance)
@@ -548,7 +553,7 @@ pub mod pallet {
 					}
 
 					T::Currency::release(
-						&T::LicenceBondIdentifier::get(),
+						&HoldReason::LicenseBond.into(),
 						who,
 						deposit_returned,
 						Precision::Exact,
@@ -608,7 +613,7 @@ pub mod pallet {
 	/// Keep track of number of authored blocks per authority, uncles are counted as well since
 	/// they're a valid proof of being online.
 	impl<T: Config + pallet_authorship::Config>
-		pallet_authorship::EventHandler<T::AccountId, T::BlockNumber> for Pallet<T>
+		pallet_authorship::EventHandler<T::AccountId, BlockNumberFor<T>> for Pallet<T>
 	{
 		fn note_author(author: T::AccountId) {
 			let pot = Self::account_id();

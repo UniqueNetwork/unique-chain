@@ -1290,11 +1290,11 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   const shidenInitialBalance = 1n * (10n ** SHIDEN_DECIMALS); // 1 SHD, existential deposit required to actually create the account on Shiden
   const unitsPerSecond = 500_451_000_000_000_000_000n; // The value is taken from the live Shiden
   const qtzToShidenTransferred = 10n * (10n ** QTZ_DECIMALS); // 10 QTZ
-  const qtzToShidenArrived = 9_999_999_999_088_000_000n; // 9.999 ... QTZ, Shiden takes a commision in foreign tokens
+  const qtzToShidenArrived = 7_998_196_000_000_000_000n; // 7.99 ... QTZ, Shiden takes a commision in foreign tokens
 
   // Shiden -> Quartz
   const qtzFromShidenTransfered = 5n * (10n ** QTZ_DECIMALS); // 5 QTZ
-  const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 4.999_999_999_088_000_000n QTZ
+  const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 2.99 ... QTZ
 
   let balanceAfterQuartzToShidenXCM: bigint;
 
@@ -1311,7 +1311,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [QTZ_ASSET_ID_ON_SHIDEN])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
-        await helper.assets.create(
+        await helper.getSudo().assets.forceCreate(
           alice,
           QTZ_ASSET_ID_ON_SHIDEN,
           alice.address,

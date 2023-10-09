@@ -17,8 +17,9 @@
 /// Storage migration is not required for this change, as SponsoringRateLimit has same encoding as Option<u32>
 #[test]
 fn sponsoring_rate_limit_has_same_encoding_as_option_u32() {
+	use parity_scale_codec::Encode;
+
 	use crate::SponsoringRateLimit;
-	use codec::Encode;
 
 	fn limit_to_option(limit: SponsoringRateLimit) -> Option<u32> {
 		match limit {
@@ -41,8 +42,9 @@ fn sponsoring_rate_limit_has_same_encoding_as_option_u32() {
 
 #[test]
 fn collection_flags_have_same_encoding_as_bool() {
+	use parity_scale_codec::Encode;
+
 	use crate::CollectionFlags;
-	use codec::Encode;
 
 	assert_eq!(
 		true.encode(),

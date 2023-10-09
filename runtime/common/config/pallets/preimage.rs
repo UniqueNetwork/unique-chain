@@ -16,8 +16,9 @@
 
 use frame_support::parameter_types;
 use frame_system::EnsureRoot;
-use crate::{AccountId, Balance, Balances, Runtime, RuntimeEvent};
 use up_common::constants::*;
+
+use crate::{AccountId, Balance, Balances, Runtime, RuntimeEvent};
 
 parameter_types! {
 	pub PreimageBaseDeposit: Balance = 1000 * UNIQUE;
