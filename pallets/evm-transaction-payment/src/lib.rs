@@ -89,6 +89,8 @@ fn get_sponsor<T: Config>(
 ) -> Option<T::CrossAccountId> {
 	let accept_gas_fee = |gas_fee| {
 		let (base_fee, _) = T::FeeCalculator::min_gas_price();
+		// Metamask specifies base fee twice as much as chain reported minGasPrice
+		// But we allow further leeway (why?), sponsored base_fee to be 2.1*minGasPrice, thus 21/10.
 		base_fee <= gas_fee && gas_fee <= base_fee * 21 / 10
 	};
 	let (max_fee_per_gas, may_sponsor) = match (max_fee_per_gas, is_transactional) {
