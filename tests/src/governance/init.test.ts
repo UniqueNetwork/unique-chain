@@ -1,6 +1,5 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {Event} from '../util/playgrounds/unique.dev';
 import {ICounselors, democracyLaunchPeriod, democracyVotingPeriod, ITechComms, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util';
 
 describeGov('Governance: Initialization', () => {
@@ -19,8 +18,8 @@ describeGov('Governance: Initialization', () => {
 
       const councilMembers = await helper.council.membership.getMembers();
       const techcommMembers = await helper.technicalCommittee.membership.getMembers();
-      expect(councilMembers.length == 0, 'The Council must be empty before the Gov Init');
-      expect(techcommMembers.length == 0, 'The Technical Commettee must be empty before the Gov Init');
+      expect(councilMembers?.length == 0, 'The Council must be empty before the Gov Init');
+      expect(techcommMembers?.length == 0, 'The Technical Commettee must be empty before the Gov Init');
 
       donor = await privateKey({url: import.meta.url});
       sudoer = await privateKey('//Alice');
@@ -105,12 +104,11 @@ describeGov('Governance: Initialization', () => {
     const techCommMembers = await helper.technicalCommittee.membership.getMembers();
     const techCommPrime = await helper.technicalCommittee.membership.getPrimeMember();
     const expectedTechComms = [techcomms.greg.address, techcomms.andy.address, techcomms.constantine.address];
-    expect(techCommMembers.length).to.be.equal(expectedTechComms.length);
+    expect(techCommMembers?.length).to.be.equal(expectedTechComms.length);
     expect(techCommMembers).to.containSubset(expectedTechComms);
     expect(techCommPrime).to.be.equal(techcomms.greg.address);
 
     console.log('\t- The Council Prime initiates a referendum to add counselors');
-    const returnPreimageHash = true;
     const preimageHash = await helper.preimage.notePreimageFromCall(counselors.alex, helper.utility.batchAllCall([
       helper.council.membership.addMemberCall(counselors.ildar.address),
       helper.council.membership.addMemberCall(counselors.charu.address),
@@ -136,7 +134,7 @@ describeGov('Governance: Initialization', () => {
       ...promoteFellow(techcomms.constantine.address, expectedFellowRank),
       ...promoteFellow(coreDevs.yaroslav.address, expectedFellowRank),
       ...promoteFellow(coreDevs.daniel.address, expectedFellowRank),
-    ]), returnPreimageHash);
+    ]));
 
     await helper.council.collective.propose(
       counselors.alex,
@@ -145,9 +143,9 @@ describeGov('Governance: Initialization', () => {
     );
 
     console.log('\t- The referendum is being decided');
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.getApi().events.democracy.Started);
 
-    await helper.democracy.vote(counselors.filip, startedEvent.referendumIndex, {
+    await helper.democracy.vote(counselors.filip, startedEvent.refIndex.toNumber(), {
       Standard: {
         vote: {
           aye: true,
@@ -157,10 +155,10 @@ describeGov('Governance: Initialization', () => {
       },
     });
 
-    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, Event.Democracy.Passed);
-    expect(passedReferendumEvent.referendumIndex).to.be.equal(startedEvent.referendumIndex);
+    const passedReferendumEvent = await helper.wait.expectEvent(democracyVotingPeriod, helper.getApi().events.democracy.Passed);
+    expect(passedReferendumEvent.refIndex.toNumber()).to.be.equal(startedEvent.refIndex.toNumber());
 
-    await helper.wait.expectEvent(democracyEnactmentPeriod, Event.Scheduler.Dispatched);
+    await helper.wait.expectEvent(democracyEnactmentPeriod, helper.getApi().events.scheduler.Dispatched);
 
     councilMembers = await helper.council.membership.getMembers();
     const expectedCounselors = [
@@ -170,7 +168,7 @@ describeGov('Governance: Initialization', () => {
       counselors.filip.address,
       counselors.irina.address,
     ];
-    expect(councilMembers.length).to.be.equal(expectedCounselors.length);
+    expect(councilMembers?.length).to.be.equal(expectedCounselors.length);
     expect(councilMembers).to.containSubset(expectedCounselors);
 
     await expectFellowRank(counselors.ildar.address, expectedFellowRank);

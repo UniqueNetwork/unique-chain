@@ -119,8 +119,8 @@ describe('Integration Test: Unnesting', () => {
 
     if(childrenShouldPresent) {
       expect(children[0]).to.be.deep.equal({
-        collectionId: nested.collectionId,
-        tokenId: (nested instanceof UniqueFTCollection) ? 0 : nested.tokenId,
+        collection: nested.collectionId,
+        token: (nested instanceof UniqueFTCollection) ? 0 : nested.tokenId,
       });
     } else {
       expect(children.length).to.be.equal(0);
@@ -270,8 +270,8 @@ describe('Integration Test: Unnesting', () => {
 
       await nested.transfer(charlie, targetNft.nestingAccount());
       expect(await targetNft.getChildren()).to.be.deep.equal([{
-        collectionId: nested.collectionId,
-        tokenId: nested.tokenId,
+        collection: nested.collectionId,
+        token: nested.tokenId,
       }]);
 
       if(testCase.op === 'transfer') {

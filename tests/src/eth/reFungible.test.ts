@@ -17,7 +17,7 @@
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {expect, itEth, usingEthPlaygrounds} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {ICreateTokenPropertyPermission} from '../util/playgrounds/types';
 import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from './util/playgrounds/types';
 
 describe('Refungible: Plain calls', () => {
@@ -48,7 +48,7 @@ describe('Refungible: Plain calls', () => {
       const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
 
       const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
-      const permissions: ITokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {
+      const permissions: ICreateTokenPropertyPermission[] = properties.map(p => ({key: p.key, permission: {
         tokenOwner: false,
         collectionAdmin: true,
         mutable: false}}));

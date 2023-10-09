@@ -39,7 +39,7 @@ describe('Enable/Disable Transfers', () => {
     });
     const token = await collection.mintToken(alice, {Substrate: alice.address});
     await token.transfer(alice, {Substrate: bob.address});
-    expect(await token.getOwner()).to.be.deep.equal({Substrate: bob.address});
+    expect((await token.getOwner())?.Substrate).to.be.equal(bob.address);
   });
 
   itSub('User can\'n transfer token with disabled transfer flag', async ({helper}) => {

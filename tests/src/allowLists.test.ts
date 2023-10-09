@@ -177,7 +177,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner?.Substrate).to.be.equal(charlie.address);
     });
 
     itSub('If Public Access mode is set to AllowList, tokens can be transferred to a allowlisted address with transferFrom.', async ({helper}) => {
@@ -190,7 +190,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
       await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner?.Substrate).to.be.equal(charlie.address);
     });
 
     itSub('If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transfer', async ({helper}) => {
@@ -202,7 +202,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
       await helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner?.Substrate).to.be.equal(charlie.address);
     });
 
     itSub('If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transferFrom', async ({helper}) => {
@@ -215,7 +215,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
       await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner?.Substrate).to.be.equal(charlie.address);
     });
   });
 

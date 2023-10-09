@@ -1,7 +1,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
 import {clearFellowship, democracyLaunchPeriod, democracyTrackMinRank, dummyProposalCall, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, fellowshipPreparePeriod, fellowshipPropositionOrigin, initFellowship, voteUnanimouslyInFellowship} from './util';
-import {Event} from '../util/playgrounds/unique.dev';
 
 describeGov('Governance: Democracy tests', () => {
   let regularUser: IKeyringPair;
@@ -35,17 +34,21 @@ describeGov('Governance: Democracy tests', () => {
       {After: 0},
     );
 
-    const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event council.Proposed');
+    const fellowshipReferendumIndex = submittedEvent.data.index.toNumber();
+
     await voteUnanimouslyInFellowship(helper, fellows, democracyTrackMinRank, fellowshipReferendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
 
     await helper.wait.expectEvent(
       fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,
-      Event.Democracy.Proposed,
+      helper.getApi().events.democracy.Proposed,
     );
 
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
-    const referendumIndex = startedEvent.referendumIndex;
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.getApi().events.democracy.Started);
+    const referendumIndex = startedEvent.refIndex.toNumber();
 
     const ayeBalance = 10_000n;
 
@@ -60,9 +63,9 @@ describeGov('Governance: Democracy tests', () => {
     });
 
     const referendumInfo = await helper.democracy.referendumInfo(referendumIndex);
-    const tally = referendumInfo.ongoing.tally;
+    const tally = 'Ongoing' in referendumInfo! ? referendumInfo.Ongoing.tally : null;
 
-    expect(BigInt(tally.ayes)).to.be.equal(ayeBalance);
+    expect(BigInt(tally!.ayes)).to.be.equal(ayeBalance);
 
     await clearFellowship(sudoer);
   });

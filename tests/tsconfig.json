@@ -10,7 +10,7 @@
 		"strict": true,
 		"paths": {
 			"@polkadot/types/lookup": ["./src/interfaces/types-lookup.ts"],
-			"@unique-nft/types/*": ["./src/interfaces/*"]
+			"@unique-nft/opal-testnet-types/*": ["./src/interfaces/*"]
 		}
 	},
 	"include": ["./src/**/*", "./src/interfaces/*.ts"],

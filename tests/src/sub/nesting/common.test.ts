@@ -43,7 +43,7 @@ describe('Common nesting tests', () => {
       const collectionForNesting = await helper[testCase.mode].mintCollection(bob);
       // permissions should be set:
       await targetNFTCollection.setPermissions(alice, {
-        nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
+        nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : undefined},
       });
 
       // 1. Bob can immediately create nested token:
@@ -74,7 +74,7 @@ describe('Common nesting tests', () => {
       const collectionForNesting = await helper.ft.mintCollection(bob);
       // permissions should be set:
       await targetNFTCollection.setPermissions(alice, {
-        nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
+        nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : undefined},
       });
 
       // 1. Alice can immediately create nested tokens:
@@ -86,7 +86,7 @@ describe('Common nesting tests', () => {
       await collectionForNesting.mint(bob, 100n);
       await collectionForNesting.transfer(bob, targetTokenBob.nestingAccount(), 50n);
       expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(150n);
-      expect(await targetTokenBob.getChildren()).to.be.deep.equal([{collectionId: collectionForNesting.collectionId, tokenId: 0}]);
+      expect(await targetTokenBob.getChildren()).to.be.deep.equal([{collection: collectionForNesting.collectionId, token: 0}]);
     });
   });
 
@@ -103,7 +103,7 @@ describe('Common nesting tests', () => {
       const collectionForNesting = helper.ft.getCollectionObject(0);
       // permissions should be set:
       await targetNFTCollection.setPermissions(alice, {
-        nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : null},
+        nesting: {tokenOwner: true, restricted: testCase.restrictedMode ? [collectionForNesting.collectionId] : undefined},
       });
 
       // Bob can nest Native FT into their NFT:

@@ -31,7 +31,7 @@ describe('Integration Test: Access Rights to Token Properties', () => {
 
   itSub('Reads access rights to properties of a collection', async ({helper}) =>  {
     const collection = await helper.nft.mintCollection(alice);
-    const propertyRights = (await helper.callRpc('api.query.common.collectionPropertyPermissions', [collection.collectionId])).toJSON();
+    const propertyRights = await helper.callQuery('api.query.common.collectionPropertyPermissions', [collection.collectionId]);
     expect(propertyRights).to.be.empty;
   });
 

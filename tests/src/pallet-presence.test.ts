@@ -83,7 +83,7 @@ describe('Pallet presence', () => {
       ];
       const testUtils = 'testutils';
 
-      if(chain.eq('opal')) {
+      if(chain == 'opal') {
         requiredPallets.push(
           refungible,
           foreignAssets,
@@ -93,7 +93,7 @@ describe('Pallet presence', () => {
           ...preimage,
           ...governance,
         );
-      } else if(chain.eq('quartz') || chain.eq('sapphire')) {
+      } else if(chain == 'quartz' || chain == 'sapphire') {
         requiredPallets.push(
           refungible,
           appPromotion,
@@ -102,7 +102,7 @@ describe('Pallet presence', () => {
           ...preimage,
           ...governance,
         );
-      } else if(chain.eq('unique')) {
+      } else if(chain == 'unique') {
         // Insert Unique additional pallets here
         requiredPallets.push(
           refungible,

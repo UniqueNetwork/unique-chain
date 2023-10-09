@@ -60,6 +60,10 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
     };
     result = await code(helper, privateKey);
   }
+  catch (e) {
+    console.log(e);
+    throw e;
+  }
   finally {
     await helper.disconnect();
     silentConsole.disable();
@@ -95,8 +99,8 @@ export const MINIMUM_DONOR_FUND = 4_000_000n;
 export const DONOR_FUNDING = 4_000_000n;
 
 // App-promotion periods:
-export const LOCKING_PERIOD = 12n; // 12 blocks of relay
-export const UNLOCKING_PERIOD = 6n; // 6 blocks of parachain
+export const LOCKING_PERIOD = 12; // 12 blocks of relay
+export const UNLOCKING_PERIOD = 6; // 6 blocks of parachain
 
 // Native contracts
 export const COLLECTION_HELPER = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';

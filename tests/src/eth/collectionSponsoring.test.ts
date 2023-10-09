@@ -129,14 +129,14 @@ describe('evm nft collection sponsoring', () => {
       // Set collection sponsor:
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsorEth : sponsorCrossEth).send({from: owner});
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
-      expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      expect(sponsorship).to.be.deep.eq({Unconfirmed: helper.address.ethToSubstrate(sponsorEth, true)});
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       // Sponsor can confirm sponsorship:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
       sponsorship = (await collectionSub.getData())!.raw.sponsorship;
-      expect(sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      expect(sponsorship).to.be.deep.eq({Confirmed: helper.address.ethToSubstrate(sponsorEth, true)});
 
       // Create user with no balance:
       const user = helper.ethCrossAccount.createAccount();
@@ -348,12 +348,12 @@ describe('evm nft collection sponsoring', () => {
       // Set collection sponsor:
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsor : sponsorCross).send();
       let collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      expect(collectionData.raw.sponsorship).to.be.deep.eq({Unconfirmed: helper.address.ethToSubstrate(sponsor, true)});
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      expect(collectionData.raw.sponsorship).to.be.deep.eq({Confirmed: helper.address.ethToSubstrate(sponsor, true)});
 
       const user = helper.eth.createAccount();
       const userCross = helper.ethCrossAccount.fromAddress(user);
@@ -517,14 +517,14 @@ describe('evm RFT collection sponsoring', () => {
       // Set collection sponsor:
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsorEth : sponsorCrossEth).send({from: owner});
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
-      expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      expect(sponsorship).to.be.deep.eq({Unconfirmed: helper.address.ethToSubstrate(sponsorEth, true)});
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       // Sponsor can confirm sponsorship:
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsorEth});
       sponsorship = (await collectionSub.getData())!.raw.sponsorship;
-      expect(sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
+      expect(sponsorship).to.be.deep.eq({Confirmed: helper.address.ethToSubstrate(sponsorEth, true)});
 
       // Create user with no balance:
       const user = helper.eth.createAccount();
@@ -602,13 +602,13 @@ describe('evm RFT collection sponsoring', () => {
       await collectionEvm.methods[testCase](testCase === 'setCollectionSponsor' ? sponsor : sponsorCross).send();
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.true;
       let collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      expect(collectionData.raw.sponsorship).to.be.deep.eq({Unconfirmed: helper.address.ethToSubstrate(sponsor, true)});
       await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.true;
 
       await collectionEvm.methods.confirmCollectionSponsorship().send({from: sponsor});
       collectionData = (await collectionSub.getData())!;
-      expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
+      expect(collectionData.raw.sponsorship).to.be.deep.eq({Confirmed: helper.address.ethToSubstrate(sponsor, true)});
       expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
       const sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
       const sponsorSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.ethToSubstrate(sponsor));
@@ -659,12 +659,12 @@ describe('evm RFT collection sponsoring', () => {
     await collectionEvm.methods.setCollectionSponsorCross(sponsorCross).send();
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.true;
     let collectionData = (await collectionSub.getData())!;
-    expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(sponsor.address);
+    expect(collectionData.raw.sponsorship).to.be.deep.eq({Unconfirmed: sponsor.address});
     await expect(collectionEvm.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     await collectionSub.confirmSponsorship(sponsor);
     collectionData = (await collectionSub.getData())!;
-    expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(sponsor.address);
+    expect(collectionData.raw.sponsorship).to.be.deep.eq({Confirmed: sponsor.address});
     expect(await collectionEvm.methods.hasCollectionPendingSponsor().call()).to.be.false;
     const sponsorStruct = await collectionEvm.methods.collectionSponsor().call({from: owner});
     expect(BigInt(sponsorStruct.sub)).to.be.equal(BigInt('0x' + Buffer.from(sponsor.addressRaw).toString('hex')));

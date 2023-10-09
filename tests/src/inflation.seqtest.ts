@@ -41,8 +41,8 @@ describe('integration test: Inflation', () => {
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [tx])).to.not.be.rejected;
 
     const blockInterval = (helper.getApi().consts.inflation.inflationBlockInterval as any).toBigInt();
-    const totalIssuanceStart = ((await helper.callRpc('api.query.inflation.startingYearTotalIssuance', [])) as any).toBigInt();
-    const blockInflation = (await helper.callRpc('api.query.inflation.blockInflation', []) as any).toBigInt();
+    const totalIssuanceStart = await helper.callQuery('api.query.inflation.startingYearTotalIssuance', []);
+    const blockInflation = await helper.callQuery('api.query.inflation.blockInflation', []);
 
     const YEAR = 5259600n;  // 6-second block. Blocks in one year
     // const YEAR = 2629800n; // 12-second block. Blocks in one year

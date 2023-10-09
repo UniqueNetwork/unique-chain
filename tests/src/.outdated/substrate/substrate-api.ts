@@ -18,7 +18,7 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import {ApiOptions, ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
 import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
 import {EventRecord} from '@polkadot/types/interfaces/system/types';
-import {IKeyringPair} from '@polkadot/types/types';
+import {IEventLike, IKeyringPair} from '@polkadot/types/types';
 import config from '../../config';
 import '../../interfaces/augment-api-events';
 import * as defs from '../../interfaces/definitions';
@@ -122,10 +122,10 @@ function getTransactionStatus(events: EventRecord[], status: ExtrinsicStatus): T
     return TransactionStatus.NotReady;
   }
   if (status.isInBlock || status.isFinalized) {
-    if(events.filter(e => e.event.data.method === 'ExtrinsicFailed').length > 0) {
+    if(events.find(r => r.event.method === 'ExtrinsicFailed') != null) {
       return TransactionStatus.Fail;
     }
-    if(events.filter(e => e.event.data.method === 'ExtrinsicSuccess').length > 0) {
+    if(events.find(r => r.event.method === 'ExtrinsicSuccess') != null) {
       return TransactionStatus.Success;
     }
   }

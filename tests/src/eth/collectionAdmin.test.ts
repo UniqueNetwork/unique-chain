@@ -20,6 +20,9 @@ import {IEthCrossAccountId} from '../util/playgrounds/types';
 import {usingEthPlaygrounds, itEth} from './util';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev';
 import {CreateCollectionData} from './util/playgrounds/types';
+import {UniqueRpcResult, convert} from '../util/playgrounds/converter';
+import {RpcInterface} from '@polkadot/rpc-core/types';
+import { CrossAccountId } from '../util/playgrounds/unique';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
@@ -162,9 +165,12 @@ describe('Add collection admins', () => {
     await expect(collectionEvm.methods.addCollectionAdmin(user).call({from: admin}))
       .to.be.rejectedWith('NoPermission');
 
-    const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
+    const adminList = convert(await helper.callRpc('api.rpc.unique.adminlist', [collectionId])) as UniqueRpcResult<RpcInterface['unique']['adminlist']>;
     expect(adminList.length).to.be.eq(1);
-    expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
+    expect(adminList[0]).to.haveOwnProperty('Ethereum');
+    if(!('Ethereum' in adminList[0]))
+      throw Error();
+    expect(adminList[0].Ethereum.toString().toLocaleLowerCase())
       .to.be.eq(admin.toLocaleLowerCase());
   });
 
@@ -200,9 +206,8 @@ describe('Add collection admins', () => {
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
 
-    const admin0Cross = helper.ethCrossAccount.fromKeyringPair(adminList[0]);
-    expect(admin0Cross.eth.toLocaleLowerCase())
-      .to.be.eq(adminCross.eth.toLocaleLowerCase());
+    const admin0Cross = new CrossAccountId(adminList[0]);
+    expect(admin0Cross.Ethereum).to.be.undefined;
   });
 
   itEth('(!negative tests!) Add [cross] admin by USER is not allowed', async ({helper}) => {
@@ -242,7 +247,7 @@ describe('Remove collection admins', () => {
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(1);
-      expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
+      expect(new CrossAccountId(adminList[0]).Ethereum.toString().toLocaleLowerCase())
         .to.be.eq(newAdmin.toLocaleLowerCase());
     }
 
@@ -297,9 +302,9 @@ describe('Remove collection admins', () => {
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(2);
-      expect(adminList.toString().toLocaleLowerCase())
-        .to.be.deep.contains(admin0.toLocaleLowerCase())
-        .to.be.deep.contains(admin1.toLocaleLowerCase());
+      expect(adminList.map(address => (new CrossAccountId(address)).Ethereum.toLocaleLowerCase()))
+        .to.include(admin0.toLocaleLowerCase())
+        .to.include(admin1.toLocaleLowerCase());
     }
   });
 
@@ -318,7 +323,7 @@ describe('Remove collection admins', () => {
       .to.be.rejectedWith('NoPermission');
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
-      expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
+      expect(new CrossAccountId(adminList[0]).Ethereum.toString().toLocaleLowerCase())
         .to.be.eq(admin.toLocaleLowerCase());
       expect(adminList.length).to.be.eq(1);
     }
@@ -342,9 +347,9 @@ describe('Remove collection admins', () => {
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(2);
-    expect(adminList.toString().toLocaleLowerCase())
-      .to.be.deep.contains(admin1.address.toLocaleLowerCase())
-      .to.be.deep.contains(admin2.address.toLocaleLowerCase());
+    expect(adminList)
+      .to.be.deep.contains({Substrate: admin1.address})
+      .to.be.deep.contains({Substrate: admin2.address});
   });
 
   itEth('(!negative tests!) Remove [cross] admin by USER is not allowed', async ({helper}) => {
@@ -362,7 +367,7 @@ describe('Remove collection admins', () => {
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
-    expect(adminList[0].asSubstrate.toString().toLocaleLowerCase())
+    expect(new CrossAccountId(adminList[0]).Substrate.toString().toLocaleLowerCase())
       .to.be.eq(adminSub.address.toLocaleLowerCase());
   });
 });

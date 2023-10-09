@@ -50,7 +50,7 @@ describe('Create FT collection from EVM', () => {
     expect(data.name).to.be.eq(name);
     expect(data.description).to.be.eq(description);
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
-    expect(data.raw.mode).to.be.deep.eq({Fungible: DECIMALS.toString()});
+    expect(data.raw.mode).to.be.deep.eq({Fungible: DECIMALS});
   });
 
   // todo:playgrounds this test will fail when in async environment.

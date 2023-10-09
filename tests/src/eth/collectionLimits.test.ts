@@ -36,7 +36,7 @@ describe('Can set collection limits', () => {
       const expectedLimits = {
         accountTokenOwnershipLimit: 1000,
         sponsoredDataSize: 1024,
-        sponsoredDataRateLimit: {blocks: 30},
+        sponsoredDataRateLimit: {Blocks: 30},
         tokenLimit: 1000000,
         sponsorTransferTimeout: 6,
         sponsorApproveTimeout: 6,

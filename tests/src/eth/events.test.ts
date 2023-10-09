@@ -17,7 +17,7 @@
 import {expect} from 'chai';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
-import {IEvent, TCollectionMode} from '../util/playgrounds/types';
+import {TCollectionMode} from '../util/playgrounds/types';
 import {Pallets, requirePalletsOrSkip} from '../util';
 import {CollectionLimitField, TokenPermissionField, NormalizedEvent, CreateCollectionData} from './util/playgrounds/types';
 
@@ -29,7 +29,7 @@ before(async function () {
   });
 });
 
-function clearEvents(ethEvents: NormalizedEvent[] | null, subEvents: IEvent[]) {
+function clearEvents(ethEvents: NormalizedEvent[] | null, subEvents: any[]) {
   if(ethEvents !== null) {
     ethEvents.splice(0);
   }

@@ -32,7 +32,7 @@ describe('integration test: RPC methods', () => {
 
   itSub('returns None for fungible collection', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'RPC-1', tokenPrefix: 'RPC'});
-    const owner = (await helper.callRpc('api.rpc.unique.tokenOwner', [collection.collectionId, 0])).toJSON() as any;
+    const owner = await helper.callRpc('api.rpc.unique.tokenOwner', [collection.collectionId, 0]);
     expect(owner).to.be.null;
   });
 
@@ -55,7 +55,7 @@ describe('integration test: RPC methods', () => {
     // Set-up over
 
     const owners = await helper.callRpc('api.rpc.unique.tokenOwners', [collection.collectionId, 0]);
-    const ids = (owners.toJSON() as any[]).map(CrossAccountId.fromLowerCaseKeys);
+    const ids = owners.map(owner => new CrossAccountId(owner));
 
     expect(ids).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length == 10).to.be.true;

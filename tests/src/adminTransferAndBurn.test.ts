@@ -33,14 +33,14 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
     const {collectionId} = await helper.nft.mintCollection(alice, {name: 'name', description: 'descr', tokenPrefix: 'COL'});
     await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
     const limits = await helper.collection.getEffectiveLimits(collectionId);
-    expect(limits.ownerCanTransfer).to.be.true;
+    expect(limits?.ownerCanTransfer).to.be.true;
 
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
     await expect(helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address})).to.be.rejected;
 
     await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
     const newTokenOwner = await helper.nft.getTokenOwner(collectionId, tokenId);
-    expect(newTokenOwner.Substrate).to.be.equal(charlie.address);
+    expect(newTokenOwner?.Substrate).to.be.equal(charlie.address);
   });
 
   itSub('admin burns other user\'s token', async ({helper}) => {
@@ -48,7 +48,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
 
     await helper.collection.setLimits(alice, collectionId, {ownerCanTransfer: true});
     const limits = await helper.collection.getEffectiveLimits(collectionId);
-    expect(limits.ownerCanTransfer).to.be.true;
+    expect(limits?.ownerCanTransfer).to.be.true;
 
     const {tokenId} = await helper.nft.mintToken(alice, {collectionId: collectionId, owner: bob.address});
 

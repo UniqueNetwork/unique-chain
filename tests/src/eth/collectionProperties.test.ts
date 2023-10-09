@@ -16,7 +16,7 @@
 
 import {itEth, usingEthPlaygrounds, expect} from './util';
 import {Pallets} from '../util';
-import {IProperty, ITokenPropertyPermission} from '../util/playgrounds/types';
+import {IProperty} from '../util/playgrounds/types';
 import {IKeyringPair} from '@polkadot/types/types';
 
 describe('EVM collection properties', () => {
@@ -52,7 +52,7 @@ describe('EVM collection properties', () => {
       await collectionEvm.methods[testCase.method](...testCase.methodParams).send({from: caller});
 
       const raw = (await collection.getData())?.raw;
-      expect(raw.properties).to.deep.equal(testCase.expectedProps);
+      expect(raw?.properties).to.deep.equal(testCase.expectedProps);
 
       // collectionProperties returns properties:
       expect(await collectionEvm.methods.collectionProperties([]).call()).to.be.like(testCase.expectedProps.map(prop => helper.ethProperty.property(prop.key, prop.value)));
@@ -71,7 +71,7 @@ describe('EVM collection properties', () => {
     await expect(contract.methods.setCollectionProperties([{key: 'a'.repeat(257), value: Buffer.from('val3')}]).send({from: caller})).to.be.rejected;
     // TODO add more expects
     const raw = (await collection.getData())?.raw;
-    expect(raw.properties).to.deep.equal([]);
+    expect(raw?.properties).to.deep.equal([]);
   });
 
 
@@ -99,8 +99,8 @@ describe('EVM collection properties', () => {
 
       const raw = (await collection.getData())?.raw;
 
-      expect(raw.properties.length).to.equal(testCase.expectedProps.length);
-      expect(raw.properties).to.deep.equal(testCase.expectedProps);
+      expect(raw?.properties.length).to.equal(testCase.expectedProps.length);
+      expect(raw?.properties).to.deep.equal(testCase.expectedProps);
     }));
 
   [
@@ -181,9 +181,9 @@ describe('Supports ERC721Metadata', () => {
       const propertyPermissions = data2?.raw.tokenPropertyPermissions;
       expect(propertyPermissions?.length).to.equal(2);
 
-      expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => tpp.key === 'URI' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner)).to.be.not.null;
+      expect(propertyPermissions?.find((tpp) => tpp.key.toString() === 'URI' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner)).to.be.not.null;
 
-      expect(propertyPermissions.find((tpp: ITokenPropertyPermission) => tpp.key === 'URISuffix' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner)).to.be.not.null;
+      expect(propertyPermissions?.find((tpp) => tpp.key.toString() === 'URISuffix' && tpp.permission.mutable && tpp.permission.collectionAdmin && !tpp.permission.tokenOwner)).to.be.not.null;
 
       expect(data2?.raw.properties?.find((property: IProperty) => property.key === 'baseURI' && property.value === BASE_URI)).to.be.not.null;
 

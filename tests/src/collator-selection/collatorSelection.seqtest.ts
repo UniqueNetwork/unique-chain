@@ -19,7 +19,7 @@ import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '..
 
 async function nodeAddress(name: string) {
   // eslint-disable-next-line require-await
-  return await usingPlaygrounds(async (helper, _) => {
+  return await usingPlaygrounds(async (helper) => {
     const envNodeStash = `RELAY_UNIQUE_NODE_${name.toUpperCase()}_STASH`;
 
     const nodeStash = process.env[envNodeStash];
@@ -91,7 +91,7 @@ describe('Integration Test: Collator Selection', () => {
     let deltaNode: string;
 
     before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
+      await usingPlaygrounds(async (helper) => {
         // todo:collator see again if blocks start to be finalized in dev mode
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
         if(await helper.arrange.isDevNode()) this.skip();
@@ -118,13 +118,13 @@ describe('Integration Test: Collator Selection', () => {
 
       await helper.wait.newSessions(2);
 
-      const newValidators = await helper.callRpc('api.query.session.validators');
+      const newValidators = await helper.callQuery('api.query.session.validators');
       expect(newValidators).to.contain(gammaNode).and.contain(deltaNode).and.be.length(2);
 
       const lastBlockNumber = await helper.chain.getLatestBlockNumber();
       await helper.wait.newBlocks(1);
-      const lastGammaBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [gammaNode])).toNumber();
-      const lastDeltaBlock = (await helper.callRpc('api.query.collatorSelection.lastAuthoredBlock', [deltaNode])).toNumber();
+      const lastGammaBlock = await helper.callQuery('api.query.collatorSelection.lastAuthoredBlock', [gammaNode]);
+      const lastDeltaBlock = await helper.callQuery('api.query.collatorSelection.lastAuthoredBlock', [deltaNode]);
       expect(lastGammaBlock >= lastBlockNumber || lastDeltaBlock >= lastBlockNumber).to.be.true;
     });
 
@@ -137,7 +137,7 @@ describe('Integration Test: Collator Selection', () => {
     let crowd: IKeyringPair[];
 
     before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
+      await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
         // set session keys for everyone
@@ -219,7 +219,7 @@ describe('Integration Test: Collator Selection', () => {
     let crowd: IKeyringPair[];
 
     before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
+      await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
         // set session keys for everyone

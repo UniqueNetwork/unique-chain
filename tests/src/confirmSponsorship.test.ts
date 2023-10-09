@@ -165,7 +165,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
 
   itSub('NFT: Sponsoring of createItem is rate limited', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'col', description: 'descr', tokenPrefix: 'COL', limits: {
-      sponsoredDataRateLimit: {blocks: 1000},
+      sponsoredDataRateLimit: {Blocks: 1000},
       sponsorTransferTimeout: 1000,
     }});
     await collection.setSponsor(alice, bob.address);

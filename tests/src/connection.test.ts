@@ -18,7 +18,8 @@ import {itSub, expect, usingPlaygrounds} from './util';
 
 describe('Connection smoke test', () => {
   itSub('Connection can be established', async ({helper}) => {
-    const health = (await helper.callRpc('api.rpc.system.health')).toJSON();
+    const health = await helper.callRpc('api.rpc.system.health');
+    //TODO: probably another check is needed
     expect(health).to.be.not.empty;
   });
 

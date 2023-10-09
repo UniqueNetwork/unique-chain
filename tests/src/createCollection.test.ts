@@ -130,9 +130,9 @@ describe('integration test: ext. createCollection():', () => {
     expect(data?.normalizedOwner).to.be.equal(helper.address.normalizeSubstrate(alice.address));
     expect(data?.name).to.be.equal('name');
     expect(data?.description).to.be.equal('descr');
-    expect(raw.permissions.access).to.be.equal('AllowList');
-    expect(raw.mode).to.be.deep.equal({Fungible: '0'});
-    expect(limits.accountTokenOwnershipLimit).to.be.equal(3);
+    expect(raw?.permissions.access).to.be.equal('AllowList');
+    expect(raw?.mode).to.be.deep.equal({Fungible: 0});
+    expect(limits?.accountTokenOwnershipLimit).to.be.equal(3);
   });
 
   itSub('New collection is not external', async ({helper}) => {

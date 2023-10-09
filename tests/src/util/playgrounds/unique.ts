@@ -6,32 +6,30 @@
 /* eslint-disable no-prototype-builtins */
 
 import {ApiPromise, WsProvider, Keyring} from '@polkadot/api';
-import {SignerOptions} from '@polkadot/api/types/submittable';
+import {SignerOptions, SubmittableExtrinsic} from '@polkadot/api/types/submittable';
+import {u32, Vec} from '@polkadot/types-codec';
 import '../../interfaces/augment-api';
 import {AugmentedSubmittables} from '@polkadot/api-base/types/submittable';
 import {ApiInterfaceEvents} from '@polkadot/api/types';
-import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a, blake2AsHex} from '@polkadot/util-crypto';
-import {IKeyringPair} from '@polkadot/types/types';
+import {encodeAddress, decodeAddress, keccakAsHex, evmToAddress, addressToEvm, base58Encode, blake2AsU8a} from '@polkadot/util-crypto';
+import {Callback, IEvent, IEventLike, IKeyringPair, ISubmittableResult} from '@polkadot/types/types';
 import {hexToU8a} from '@polkadot/util/hex';
 import {u8aConcat} from '@polkadot/util/u8a';
 import {
   IApiListeners,
-  IBlock,
-  IEvent,
   IChainProperties,
   ICollectionCreationOptions,
   ICollectionLimits,
-  ICollectionPermissions,
+  ICreateCollectionPermissions,
   ICrossAccountId,
   ICrossAccountIdLower,
   ILogger,
   INestingPermissions,
   IProperty,
   IStakingInfo,
-  ISchedulerOptions,
   ISubstrateBalance,
   IToken,
-  ITokenPropertyPermission,
+  ICreateTokenPropertyPermission,
   ITransactionResult,
   IUniqueHelperLog,
   TApiAllowedListeners,
@@ -40,10 +38,16 @@ import {
   TSubstrateAccount,
   TNetworks,
   IEthCrossAccountId,
+  ITokenData,
+  TransactionStatus,
 } from './types';
 import {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
-import type {Vec} from '@polkadot/types-codec';
-import {FrameSystemEventRecord} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, PalletEvmAccountBasicCrossAccountIdRepr} from '@polkadot/types/lookup';
+import {RpcInterface} from '@polkadot/rpc-core/types';
+import {Queries, UniqueQueryResult, UniqueRpcResult, convert} from './converter';
+
+type RpcResult<Section extends keyof RpcInterface, Method extends keyof RpcInterface[Section]> = Method extends string ? `api.rpc.${Section}.${Method}` : never;
+type QueryResult<Section extends keyof Queries, Method extends keyof Queries[Section]> = Method extends string ? `api.query.${Section}.${Method}` : never;
 
 export class CrossAccountId {
   Substrate!: TSubstrateAccount;
@@ -130,12 +134,6 @@ const nesting = {
 };
 
 class UniqueUtil {
-  static transactionStatus = {
-    NOT_READY: 'NotReady',
-    FAIL: 'Fail',
-    SUCCESS: 'Success',
-  };
-
   static chainLogType = {
     EXTRINSIC: 'extrinsic',
     RPC: 'rpc',
@@ -162,8 +160,8 @@ class UniqueUtil {
     };
   }
 
-  static vec2str(arr: string[] | number[]) {
-    return arr.map(x => String.fromCharCode(parseInt(x.toString()))).join('');
+  static vec2str(arr: number[]) {
+    return arr.map(x => String.fromCharCode(x)).join('');
   }
 
   static str2vec(string: string) {
@@ -176,17 +174,12 @@ class UniqueUtil {
     return keyring.addFromUri(seed);
   }
 
-  static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
-    if(creationResult.status !== this.transactionStatus.SUCCESS) {
+  static extractCollectionIdFromCreationResult(api: ApiPromise, creationResult: ITransactionResult): number {
+    if(creationResult.status !== 'Success') {
       throw Error('Unable to create collection!');
     }
 
-    let collectionId = null;
-    creationResult.result.events.forEach(({event: {data, method, section}}) => {
-      if((section === 'common') && (method === 'CollectionCreated')) {
-        collectionId = parseInt(data[0].toString(), 10);
-      }
-    });
+    const collectionId = creationResult.result.events.filter(api.events.common.CollectionCreated.is).at(-1)!.data[0].toNumber();
 
     if(collectionId === null) {
       throw Error('No CollectionCreated event was found!');
@@ -195,69 +188,47 @@ class UniqueUtil {
     return collectionId;
   }
 
-  static extractTokensFromCreationResult(creationResult: ITransactionResult): {
+  static extractTokensFromCreationResult(api: ApiPromise, creationResult: ITransactionResult): {
     success: boolean,
     tokens: { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[],
   } {
-    if(creationResult.status !== this.transactionStatus.SUCCESS) {
+    if(creationResult.status !== 'Success') {
       throw Error('Unable to create tokens!');
     }
-    let success = false;
-    const tokens = [] as { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[];
-    creationResult.result.events.forEach(({event: {data, method, section}}) => {
-      if(method === 'ExtrinsicSuccess') {
-        success = true;
-      } else if((section === 'common') && (method === 'ItemCreated')) {
-        tokens.push({
-          collectionId: parseInt(data[0].toString(), 10),
-          tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toHuman(),
-          amount: data[3].toBigInt(),
-        });
-      }
-    });
+    const success = creationResult.result.events.find(api.events.system.ExtrinsicSuccess.is) != null;
+    const tokens = creationResult.result.events.filter(api.events.common.ItemCreated.is).map(e => ({
+      collectionId: e.data[0].toNumber(),
+      tokenId: e.data[1].toNumber(),
+      owner: convertCrossAccountId(e.data[2]),
+      amount: e.data[3].toBigInt(),
+    }));
     return {success, tokens};
   }
 
-  static extractTokensFromBurnResult(burnResult: ITransactionResult): {
+  static extractTokensFromBurnResult(api: ApiPromise, burnResult: ITransactionResult): {
     success: boolean,
     tokens: { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[],
   } {
-    if(burnResult.status !== this.transactionStatus.SUCCESS) {
+    if(burnResult.status !== 'Success') {
       throw Error('Unable to burn tokens!');
     }
-    let success = false;
-    const tokens = [] as { collectionId: number, tokenId: number, owner: CrossAccountId, amount: bigint }[];
-    burnResult.result.events.forEach(({event: {data, method, section}}) => {
-      if(method === 'ExtrinsicSuccess') {
-        success = true;
-      } else if((section === 'common') && (method === 'ItemDestroyed')) {
-        tokens.push({
-          collectionId: parseInt(data[0].toString(), 10),
-          tokenId: parseInt(data[1].toString(), 10),
-          owner: data[2].toHuman(),
-          amount: data[3].toBigInt(),
-        });
-      }
-    });
+    const success = burnResult.result.events.find(api.events.system.ExtrinsicSuccess.is) != null;
+    const tokens = burnResult.result.events.filter(api.events.common.ItemDestroyed.is).map(e => ({
+      collectionId: e.data[0].toNumber(),
+      tokenId: e.data[1].toNumber(),
+      owner: convertCrossAccountId(e.data[2]),
+      amount: e.data[3].toBigInt(),
+    }));
     return {success, tokens};
   }
 
-  static findCollectionInEvents(events: { event: IEvent }[], collectionId: number, expectedSection: string, expectedMethod: string): boolean {
-    let eventId = null;
-    events.forEach(({event: {data, method, section}}) => {
-      if((section === expectedSection) && (method === expectedMethod)) {
-        eventId = parseInt(data[0].toString(), 10);
-      }
-    });
-
-    if(eventId === null) {
-      throw Error(`No ${expectedMethod} event was found!`);
-    }
-    return eventId === collectionId;
+  static checkEvent<T extends [u32, ...any]>(event: IEvent<T, unknown> | undefined, collectionId: number): boolean {
+    if(event === null)
+      throw Error('No CollectionDestroyed event was found!');
+    return event?.data[0].toNumber() == collectionId;
   }
 
-  static isTokenTransferSuccess(events: { event: IEvent }[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount = 1n) {
+  static isTokenTransferSuccess(api: ApiPromise, events: IEventLike[], collectionId: number, tokenId: number, fromAddressObj: ICrossAccountId, toAddressObj: ICrossAccountId, amount = 1n) {
     const normalizeAddress = (address: string | ICrossAccountId) => {
       if(typeof address === 'string') return address;
       const obj = {} as any;
@@ -268,20 +239,18 @@ class UniqueUtil {
       if(obj.ethereum) return CrossAccountId.fromLowerCaseKeys(obj).toLowerCase();
       return address;
     };
-    let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1} as any;
-    events.forEach(({event: {data, method, section}}) => {
-      if((section === 'common') && (method === 'Transfer')) {
-        const hData = (data as any).toJSON();
-        transfer = {
-          collectionId: hData[0],
-          tokenId: hData[1],
-          from: normalizeAddress(hData[2]),
-          to: normalizeAddress(hData[3]),
-          amount: BigInt(hData[4]),
-        };
-      }
+    let transfer = {collectionId: null, tokenId: null, from: null, to: null, amount: 1n} as any;
+    events.filter(api.events.common.Transfer.is).forEach(e => {
+      transfer = {
+        collectionId: e.data[0].toNumber(),
+        tokenId: e.data[1].toNumber(),
+        from: normalizeAddress(convertCrossAccountId(e.data[2])),
+        to: normalizeAddress(convertCrossAccountId(e.data[3])),
+        amount: e.data[4].toBigInt(),
+      };
     });
-    let isSuccess = parseInt(collectionId.toString()) === transfer.collectionId && parseInt(tokenId.toString()) === transfer.tokenId;
+
+    let isSuccess = collectionId === transfer.collectionId && tokenId === transfer.tokenId;
     isSuccess = isSuccess && JSON.stringify(normalizeAddress(fromAddressObj)) === JSON.stringify(transfer.from);
     isSuccess = isSuccess && JSON.stringify(normalizeAddress(toAddressObj)) === JSON.stringify(transfer.to);
     isSuccess = isSuccess && amount === transfer.amount;
@@ -322,50 +291,25 @@ class UniqueEventHelper {
     return obj;
   }
 
-  private static toHuman(data: any) {
-    return data && data.toHuman ? data.toHuman() : `${data}`;
+  private static toJSON(data: any) {
+    return data && data.toJSON ? data.toJSON() : `${data}`;
   }
 
   private static extractData(data: any, type: any): any {
-    if(!type) return this.toHuman(data);
+    if(!type) return this.toJSON(data);
     if(['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if(['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
     if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
-    return this.toHuman(data);
-  }
-
-  public static extractEvents(events: { event: any, phase: any }[]): IEvent[] {
-    const parsedEvents: IEvent[] = [];
-
-    events.forEach((record) => {
-      const {event, phase} = record;
-      const types = event.typeDef;
-
-      const eventData: IEvent = {
-        section: event.section.toString(),
-        method: event.method.toString(),
-        index: this.extractIndex(event.index),
-        data: [],
-        phase: phase.toJSON(),
-      };
-
-      event.data.forEach((val: any, index: number) => {
-        eventData.data.push(this.extractData(val, types[index]));
-      });
-
-      parsedEvents.push(eventData);
-    });
-
-    return parsedEvents;
+    return this.toJSON(data);
   }
 }
-const InvalidTypeSymbol = Symbol('Invalid type');
+const INVALID_TYPE_SYMBOL = Symbol('Invalid type');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type Invalid<ErrorMessage> =
   | ((
-    invalidType: typeof InvalidTypeSymbol,
-    ..._: typeof InvalidTypeSymbol[]
-  ) => typeof InvalidTypeSymbol)
+    invalidType: typeof INVALID_TYPE_SYMBOL,
+    ..._: typeof INVALID_TYPE_SYMBOL[]
+  ) => typeof INVALID_TYPE_SYMBOL)
   | null
   | undefined;
 // Has slightly better error messages than Get
@@ -376,7 +320,6 @@ type ForceFunction<T> = T extends (...args: any) => any ? T : (...args: any) => 
 export class ChainHelperBase {
   helperBase: any;
 
-  transactionStatus = UniqueUtil.transactionStatus;
   chainLogType = UniqueUtil.chainLogType;
   util: typeof UniqueUtil;
   eventHelper: typeof UniqueEventHelper;
@@ -431,16 +374,12 @@ export class ChainHelperBase {
   }
 
   async subscribeEvents(expectedEvents: { section: string, names: string[] }[]) {
-    const collectedEvents: IEvent[] = [];
-    const unsubscribe = await this.getApi().query.system.events((events: Vec<FrameSystemEventRecord>) => {
-      const ievents = this.eventHelper.extractEvents(events);
-      ievents.forEach((event) => {
-        expectedEvents.forEach((e => {
-          if(event.section === e.section && e.names.includes(event.method)) {
-            collectedEvents.push(event);
-          }
-        }));
-      });
+    const collectedEvents: IEventLike[] = [];
+    const unsubscribe = await this.getApi().query.system.events((eventRecords: Vec<FrameSystemEventRecord>) => {
+      const newEvents = eventRecords.map(record => record.event)
+        .filter(event => expectedEvents.some(e => event.section === e.section && e.names.includes(event.method)))
+        .map(e => e as IEventLike);
+      collectedEvents.push(...newEvents);
     });
     return {unsubscribe: unsubscribe as any, collectedEvents};
   }
@@ -541,29 +480,8 @@ export class ChainHelperBase {
     return {api, network};
   }
 
-  getTransactionStatus(data: { events: { event: IEvent }[], status: any }) {
-    const {events, status} = data;
-    if(status.isReady) {
-      return this.transactionStatus.NOT_READY;
-    }
-    if(status.isBroadcast) {
-      return this.transactionStatus.NOT_READY;
-    }
-    if(status.isInBlock || status.isFinalized) {
-      const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
-      if(errors.length > 0) {
-        return this.transactionStatus.FAIL;
-      }
-      if(events.filter(e => e.event.method === 'ExtrinsicSuccess').length > 0) {
-        return this.transactionStatus.SUCCESS;
-      }
-    }
-
-    return this.transactionStatus.FAIL;
-  }
-
-  signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
-    const sign = (callback: any) => {
+  signTransaction(sender: TSigner, transaction: SubmittableExtrinsic<'promise'>, options: Partial<SignerOptions> | null = null, label = 'transaction'): Promise<ITransactionResult> {
+    const sign = (callback: Callback<ISubmittableResult>) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
@@ -571,14 +489,15 @@ export class ChainHelperBase {
     return new Promise(async (resolve, reject) => {
       try {
         const unsub = await sign((result: any) => {
-          const status = this.getTransactionStatus(result);
+          const status = getTransactionStatus(result);
 
-          if(status === this.transactionStatus.SUCCESS) {
+          if(status === 'Success') {
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
-          } else if(status === this.transactionStatus.FAIL) {
-            let moduleError = null;
+            //resolve({result, status, blockHash: result.status.asInBlock.toString()});
+            resolve(convertTransactionResult(result));
+          } else if(status === 'Fail') {
+            let moduleError: string | null = null;
 
             if(result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
@@ -593,6 +512,7 @@ export class ChainHelperBase {
                   moduleError = `Token: ${dispatchError.asToken}`;
                 } else {
                   // May be [object Object] in case of unhandled non-unit enum
+                  // eslint-disable-next-line no-restricted-syntax
                   moduleError = `Misc: ${dispatchError.toHuman()}`;
                 }
               } else {
@@ -640,9 +560,9 @@ export class ChainHelperBase {
     });
 
     if(len === null) {
-      return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()])) as RuntimeDispatchInfo;
+      return (await this.callRpc('api.rpc.payment.queryInfo', [tx.toHex()]));
     } else {
-      return (await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo;
+      return convert((await api.call.transactionPaymentApi.queryInfo(tx, len)) as RuntimeDispatchInfo);
     }
   }
 
@@ -671,7 +591,7 @@ export class ChainHelperBase {
           AugmentedSubmittables<'promise'>,
           E, (...args: any) => Invalid<'not found'>
         >
-      >
+      >,
   >(
     sender: TSigner,
     extrinsic: `api.tx.${E}`,
@@ -683,11 +603,11 @@ export class ChainHelperBase {
 
     const startTime = (new Date()).getTime();
     let result: ITransactionResult;
-    let events: IEvent[] = [];
+    let events: IEventLike[] = [];
     try {
-      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic) as ITransactionResult;
-      events = this.eventHelper.extractEvents(result.result.events);
-      const errorEvent = events.find((event) => event.method == 'ExecutedFailed' || event.method == 'CreatedFailed');
+      result = await this.signTransaction(sender, this.constructApiCall(extrinsic, params), options, extrinsic);
+      events = result.result.events;
+      const errorEvent = result.result.events.find(e => this.api!.events.evm.ExecutedFailed.is(e) || this.api!.events.evm.CreatedFailed.is(e));
       if(errorEvent)
         throw Error(errorEvent.method + ': ' + extrinsic);
     }
@@ -710,7 +630,7 @@ export class ChainHelperBase {
 
     let errorMessage = '';
 
-    if(result.status !== this.transactionStatus.SUCCESS) {
+    if(result.status !== 'Success') {
       if(result.moduleError) {
         errorMessage = typeof result.moduleError === 'string'
           ? result.moduleError
@@ -723,49 +643,24 @@ export class ChainHelperBase {
 
     this.chainLog.push(log);
 
-    if(expectSuccess && result.status !== this.transactionStatus.SUCCESS) {
+    if(expectSuccess && result.status !== 'Success') {
       if(result.moduleError) throw Error(`${errorMessage}`);
       else if(result.result.dispatchError) throw Error(JSON.stringify(result.result.dispatchError));
     }
-    return result as any;
-  }
-  executeExtrinsicUncheckedWeight<
-      E extends string,
-      V extends (
-         ...args: any) => any = ForceFunction<
-            Get2<
-               AugmentedSubmittables<'promise'>,
-               E, (...args: any) => Invalid<'not found'>
-            >
-         >
-   >(
-    sender: TSigner,
-    extrinsic: `api.tx.${E}`,
-    params: Parameters<V>,
-    expectSuccess = true,
-    options: Partial<SignerOptions> | null = null,/*, failureMessage='expected success'*/
-  ): Promise<ITransactionResult> {
-    throw new Error('executeExtrinsicUncheckedWeight only supported in sudo');
+    return result;
   }
 
-  async callRpc
-  // TODO: make it strongly typed, or use api.query/api.rpc directly
-  // <
-  // K extends 'rpc' | 'query',
-  // E extends string,
-  // V extends (...args: any) => any = ForceFunction<
-  //   Get2<
-  //     K extends 'rpc' ? DecoratedRpc<'promise', RpcInterface> : QueryableStorage<'promise'>,
-  //     E, (...args: any) => Invalid<'not found'>
-  //   >
-  // >,
-  // P = Parameters<V>,
-  // >
-  (rpc: string, params?: any[]): Promise<any> {
+  async callRpc<S extends keyof RpcInterface, M extends keyof RpcInterface[S]>(rpc: RpcResult<S, M>, params?: any[]): Promise<UniqueRpcResult<RpcInterface[S][M]>> {
+    return convert(await this.call(rpc, params)) as UniqueRpcResult<RpcInterface[S][M]>;
+  }
 
+  async callQuery<S extends keyof Queries, M extends keyof Queries[S]>(rpc: QueryResult<S, M>, params?: any[]): Promise<UniqueQueryResult<Queries[S][M]>> {
+    return convert(await this.call(rpc, params)) as UniqueQueryResult<Queries[S][M]>;
+  }
+
+  private async call(rpc: string, params?: any[]): Promise<any> {
     if(typeof params === 'undefined') params = [] as any;
     if(this.api === null) throw Error('API not initialized');
-    if(!rpc.startsWith('api.rpc.') && !rpc.startsWith('api.query.')) throw Error(`${rpc} is not RPC call`);
 
     const startTime = (new Date()).getTime();
     let result;
@@ -786,7 +681,7 @@ export class ChainHelperBase {
     const endTime = (new Date()).getTime();
 
     log.executedAt = endTime;
-    log.status = (error === null ? this.transactionStatus.SUCCESS : this.transactionStatus.FAIL) as 'Fail' | 'Success';
+    log.status = (error === null ? 'Success' : 'Fail');
     log.executionTime = endTime - startTime;
 
     this.chainLog.push(log);
@@ -833,7 +728,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
  * @returns number of blocks or null if sponsorship hasn't been set
  */
   async getTokenNextSponsored(collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<number | null> {
-    return (await this.helper.callRpc('api.rpc.unique.nextSponsored', [collectionId, addressObj, tokenId])).toJSON();
+    return (await this.helper.callRpc('api.rpc.unique.nextSponsored', [collectionId, addressObj, tokenId]));
   }
 
   /**
@@ -842,7 +737,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns number of created collections
    */
   async getTotalCount(): Promise<number> {
-    return (await this.helper.callRpc('api.rpc.unique.collectionStats')).created.toNumber();
+    return (await this.helper.callRpc('api.rpc.unique.collectionStats')).created;
   }
 
   /**
@@ -854,34 +749,21 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example await getData(2)
    * @returns collection information object
    */
-  async getData(collectionId: number): Promise<{
-    id: number;
-    name: string;
-    description: string;
-    tokensCount: number;
-    admins: CrossAccountId[];
-    normalizedOwner: TSubstrateAccount;
-    raw: any
-  } | null> {
+  async getData(collectionId: number) {
     const collection = await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]);
-    const humanCollection = collection.toHuman(), collectionData = {
-      id: collectionId, name: null, description: null, tokensCount: 0, admins: [],
-      raw: humanCollection,
-    } as any, jsonCollection = collection.toJSON();
-    if(humanCollection === null) return null;
-    collectionData.raw.limits = jsonCollection.limits;
-    collectionData.raw.permissions = jsonCollection.permissions;
-    collectionData.normalizedOwner = this.helper.address.normalizeSubstrate(collectionData.raw.owner);
-    for(const key of ['name', 'description']) {
-      collectionData[key] = this.helper.util.vec2str(humanCollection[key]);
-    }
-
-    collectionData.tokensCount = (['RFT', 'NFT'].includes(humanCollection.mode))
-      ? await this.helper[humanCollection.mode.toLocaleLowerCase() as 'nft' | 'rft'].getLastTokenId(collectionId)
+    if(collection === null) return null;
+    const tokensCount = collection.mode == 'Nft' || collection.mode == 'ReFungible'
+      ? await this.helper[collection.mode == 'Nft' ? 'nft' : 'rft'].getLastTokenId(collectionId)
       : 0;
-    collectionData.admins = await this.getAdmins(collectionId);
-
-    return collectionData;
+    return {
+      id: collectionId,
+      name: this.helper.util.vec2str(collection.name),
+      description: this.helper.util.vec2str(collection.description),
+      tokensCount,
+      admins: await this.getAdmins(collectionId),
+      normalizedOwner: this.helper.address.normalizeSubstrate(collection.owner.toString()),
+      raw: collection,
+    };
   }
 
   /**
@@ -893,11 +775,10 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns array of administrators
    */
   async getAdmins(collectionId: number, normalize = false): Promise<CrossAccountId[]> {
-    const admins = (await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId])).toHuman();
-
+    const admins = await this.helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     return normalize
-      ? admins.map((address: CrossAccountId) => address.withNormalizedSubstrate())
-      : admins;
+      ? admins.map((address) => CrossAccountId.withNormalizedSubstrate(new CrossAccountId(address).Substrate))
+      : admins.map((address) => new CrossAccountId(address));
   }
 
   /**
@@ -908,10 +789,10 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns array of allow-listed addresses
    */
   async getAllowList(collectionId: number, normalize = false): Promise<CrossAccountId[]> {
-    const allowListed = (await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId])).toHuman();
+    const allowListed = await this.helper.callRpc('api.rpc.unique.allowlist', [collectionId]);
     return normalize
-      ? allowListed.map((address: CrossAccountId) => address.withNormalizedSubstrate())
-      : allowListed;
+      ? allowListed.map((address) => CrossAccountId.withNormalizedSubstrate(new CrossAccountId(address).Substrate))
+      : allowListed.map((address) => new CrossAccountId(address));
   }
 
   /**
@@ -921,8 +802,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example await getEffectiveLimits(2)
    * @returns object of collection limits
    */
-  async getEffectiveLimits(collectionId: number): Promise<ICollectionLimits> {
-    return (await this.helper.callRpc('api.rpc.unique.effectiveCollectionLimits', [collectionId])).toJSON();
+  async getEffectiveLimits(collectionId: number) {
+    return await this.helper.callRpc('api.rpc.unique.effectiveCollectionLimits', [collectionId]);
   }
 
   /**
@@ -940,7 +821,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionDestroyed');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionDestroyed.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -959,7 +841,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorSet');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionSponsorSet.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -977,7 +860,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'SponsorshipConfirmed');
+    const event = result.result.events.find(this.helper.getApi().events.common.SponsorshipConfirmed.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -995,7 +879,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionSponsorRemoved');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionSponsorRemoved.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1022,7 +907,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionLimitSet');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionLimitSet.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1041,7 +927,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionOwnerChanged');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionOwnerChanged.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1060,7 +947,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminAdded');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionAdminAdded.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1079,7 +967,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionAdminRemoved');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionAdminRemoved.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1091,7 +980,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns is user in allow list
    */
   async allowed(collectionId: number, user: ICrossAccountId): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user])).toJSON();
+    return await this.helper.callRpc('api.rpc.unique.allowed', [collectionId, user]);
   }
 
   /**
@@ -1108,7 +997,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressAdded');
+    const event = result.result.events.find(this.helper.getApi().events.common.AllowListAddressAdded.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1126,7 +1016,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'AllowListAddressRemoved');
+    const event = result.result.events.find(this.helper.getApi().events.common.AllowListAddressRemoved.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1138,14 +1029,15 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example setPermissions(aliceKeyring, 10, {access:'AllowList', mintMode: true, nesting: {collectionAdmin: true, tokenOwner: true}});
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
-  async setPermissions(signer: TSigner, collectionId: number, permissions: ICollectionPermissions): Promise<boolean> {
+  async setPermissions(signer: TSigner, collectionId: number, permissions: ICreateCollectionPermissions): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setCollectionPermissions', [collectionId, permissions],
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPermissionSet');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionPermissionSet.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1189,7 +1081,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertySet');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionPropertySet.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1200,19 +1093,19 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @example getProperties(1219, ['location', 'date', 'time', 'isParadise']);
    * @returns array of key-value pairs
    */
-  async getProperties(collectionId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
-    return (await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys])).toHuman();
+  async getProperties(collectionId: number, propertyKeys?: string[] | null) {
+    return await this.helper.callRpc('api.rpc.unique.collectionProperties', [collectionId, propertyKeys]);
   }
 
   async getPropertiesConsumedSpace(collectionId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.common.collectionProperties(collectionId)).toJSON();
+    const props = await api.query.common.collectionProperties(collectionId);
 
-    return (props! as any).consumedSpace;
+    return props.consumedSpace.toNumber();
   }
 
   async getCollectionOptions(collectionId: number) {
-    return (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
+    return await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]);
   }
 
   /**
@@ -1231,7 +1124,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'CollectionPropertyDeleted');
+    const event = result.result.events.find(this.helper.getApi().events.common.CollectionPropertyDeleted.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1252,7 +1146,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
 
-    return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
+    return this.helper.util.isTokenTransferSuccess(this.helper.getApi(), result.result.events, collectionId, tokenId, {Substrate: typeof signer === 'string' ? signer : signer.address}, addressObj, amount);
   }
 
   /**
@@ -1274,7 +1168,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       'api.tx.unique.transferFrom', [fromAddressObj, toAddressObj, collectionId, tokenId, amount],
       true, // `Unable to transfer token #${tokenId} from collection #${collectionId}`,
     );
-    return this.helper.util.isTokenTransferSuccess(result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
+    return this.helper.util.isTokenTransferSuccess(this.helper.getApi(), result.result.events, collectionId, tokenId, fromAddressObj, toAddressObj, amount);
   }
 
   /**
@@ -1294,7 +1188,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       'api.tx.unique.burnItem', [collectionId, tokenId, amount],
       true, // `Unable to burn token for ${label}`,
     );
-    const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult);
+    const burnedTokens = this.helper.util.extractTokensFromBurnResult(this.helper.getApi(), burnResult);
     if(burnedTokens.tokens.length > 1) throw Error('Burned multiple tokens');
     return burnedTokens.success;
   }
@@ -1316,7 +1210,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       'api.tx.unique.burnFrom', [collectionId, fromAddressObj, tokenId, amount],
       true, // `Unable to burn token from for ${label}`,
     );
-    const burnedTokens = this.helper.util.extractTokensFromBurnResult(burnResult);
+    const burnedTokens = this.helper.util.extractTokensFromBurnResult(this.helper.getApi(), burnResult);
     return burnedTokens.success && burnedTokens.tokens.length > 0;
   }
 
@@ -1337,7 +1231,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to approve token for ${label}`,
     );
 
-    return this.helper.util.findCollectionInEvents(approveResult.result.events, collectionId, 'common', 'Approved');
+    const event = approveResult.result.events.find(this.helper.getApi().events.common.Approved.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1358,7 +1253,8 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
       true, // `Unable to approve token for ${label}`,
     );
 
-    return this.helper.util.findCollectionInEvents(approveResult.result.events, collectionId, 'common', 'Approved');
+    const event = approveResult.result.events.find(this.helper.getApi().events.common.Approved.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1387,7 +1283,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns number of approved to transfer pieces
    */
   async getTokenApprovedPieces(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId, fromAccountObj: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.allowance', [collectionId, fromAccountObj, toAccountObj, tokenId])).toBigInt();
+    return await this.helper.callRpc('api.rpc.unique.allowance', [collectionId, fromAccountObj, toAccountObj, tokenId]);
   }
 
   /**
@@ -1398,7 +1294,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns id of the last created token
    */
   async getLastTokenId(collectionId: number): Promise<number> {
-    return (await this.helper.callRpc('api.rpc.unique.lastTokenId', [collectionId])).toNumber();
+    return await this.helper.callRpc('api.rpc.unique.lastTokenId', [collectionId]);
   }
 
   /**
@@ -1410,7 +1306,7 @@ class CollectionGroup extends HelperGroup<UniqueHelper> {
    * @returns true if the token exists, otherwise false
    */
   async doesTokenExist(collectionId: number, tokenId: number): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId])).toJSON();
+    return await this.helper.callRpc('api.rpc.unique.tokenExists', [collectionId, tokenId]);
   }
 }
 
@@ -1424,7 +1320,7 @@ class NFTnRFT extends CollectionGroup {
    * @returns array of token ids owned by account
    */
   async getTokensByAddress(collectionId: number, addressObj: ICrossAccountId): Promise<number[]> {
-    return (await this.helper.callRpc('api.rpc.unique.accountTokens', [collectionId, addressObj])).toJSON();
+    return await this.helper.callRpc('api.rpc.unique.accountTokens', [collectionId, addressObj]);
   }
 
   /**
@@ -1437,33 +1333,27 @@ class NFTnRFT extends CollectionGroup {
    * @example getToken(10, 5);
    * @returns human readable token data
    */
-  async getToken(collectionId: number, tokenId: number, propertyKeys: string[] = [], blockHashAt?: string): Promise<{
-    properties: IProperty[];
-    owner: CrossAccountId;
-    normalizedOwner: CrossAccountId;
-  } | null> {
-    let tokenData;
+  async getToken(collectionId: number, tokenId: number, propertyKeys: string[] = [], blockHashAt?: string): Promise<ITokenData | null> {
+    let args;
     if(typeof blockHashAt === 'undefined') {
-      tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', [collectionId, tokenId]);
-    }
-    else {
+      args = [collectionId, tokenId];
+    } else {
       if(propertyKeys.length == 0) {
-        const collection = (await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId])).toHuman();
+        const collection = await this.helper.callRpc('api.rpc.unique.collectionById', [collectionId]);
         if(!collection) return null;
-        propertyKeys = collection.tokenPropertyPermissions.map((x: ITokenPropertyPermission) => x.key);
+        propertyKeys = collection.tokenPropertyPermissions.map(x => x.key);
       }
-      tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', [collectionId, tokenId, propertyKeys, blockHashAt]);
+      args = [collectionId, tokenId, propertyKeys, blockHashAt];
     }
-    tokenData = tokenData.toHuman();
-    if(tokenData === null || tokenData.owner === null) return null;
-    const owner = {} as any;
-    for(const key of Object.keys(tokenData.owner)) {
-      owner[key.toLocaleLowerCase()] = key.toLocaleLowerCase() == 'substrate'
-        ? CrossAccountId.normalizeSubstrateAddress(tokenData.owner[key])
-        : tokenData.owner[key];
-    }
-    tokenData.normalizedOwner = CrossAccountId.fromLowerCaseKeys(owner);
-    return tokenData;
+    const tokenData = await this.helper.callRpc('api.rpc.unique.tokenData', args);
+    const owner = tokenData.owner;
+    if(owner === null) return null;
+    const crossOwner = new CrossAccountId(owner);
+    return {
+      properties: tokenData.properties,
+      owner: crossOwner,
+      normalizedOwner: crossOwner.withNormalizedSubstrate(),
+    };
   }
 
   /**
@@ -1474,14 +1364,17 @@ class NFTnRFT extends CollectionGroup {
    * @example getTokenOwner(10, 5);
    * @returns Address in CrossAccountId format, e.g. {Substrate: "5DnSF6RRjwteE3BrCj..."}
    */
-  async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId> {
-    let owner;
+  async getTokenOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId | null> {
+    let args;
     if(typeof blockHashAt === 'undefined') {
-      owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId]);
+      args = [collectionId, tokenId];
     } else {
-      owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', [collectionId, tokenId, blockHashAt]);
+      args = [collectionId, tokenId, blockHashAt];
     }
-    return CrossAccountId.fromLowerCaseKeys(owner.toJSON());
+    const owner = await this.helper.callRpc('api.rpc.unique.tokenOwner', args);
+    if(!owner)
+      return null;
+    return new CrossAccountId(owner);
   }
 
   /**
@@ -1493,16 +1386,16 @@ class NFTnRFT extends CollectionGroup {
    * @returns address in CrossAccountId format, e.g. {Substrate: "5DyN4Y92vZCjv38fg..."}
    */
   async getTokenTopmostOwner(collectionId: number, tokenId: number, blockHashAt?: string): Promise<CrossAccountId | null> {
-    let owner;
+    let args;
     if(typeof blockHashAt === 'undefined') {
-      owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', [collectionId, tokenId]);
+      args = [collectionId, tokenId];
     } else {
-      owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', [collectionId, tokenId, blockHashAt]);
+      args = [collectionId, tokenId, blockHashAt];
     }
-
+    const owner = await this.helper.callRpc('api.rpc.unique.topmostTokenOwner', args);
     if(owner === null) return null;
 
-    return owner.toHuman();
+    return new CrossAccountId(owner);
   }
 
   /**
@@ -1551,14 +1444,15 @@ class NFTnRFT extends CollectionGroup {
    * )
    * @returns true if extrinsic success otherwise false
    */
-  async setTokenPropertyPermissions(signer: TSigner, collectionId: number, permissions: ITokenPropertyPermission[]): Promise<boolean> {
+  async setTokenPropertyPermissions(signer: TSigner, collectionId: number, permissions: ICreateTokenPropertyPermission[]): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(
       signer,
       'api.tx.unique.setTokenPropertyPermissions', [collectionId, permissions],
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'PropertyPermissionSet');
+    const event = result.result.events.find(this.helper.getApi().events.common.PropertyPermissionSet.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1569,8 +1463,8 @@ class NFTnRFT extends CollectionGroup {
    * @example getPropertyPermissions(1219, ['location', 'date', 'time', 'isParadise']);
    * @returns array of key-permission pairs
    */
-  async getPropertyPermissions(collectionId: number, propertyKeys: string[] | null = null): Promise<ITokenPropertyPermission[]> {
-    return (await this.helper.callRpc('api.rpc.unique.propertyPermissions', [collectionId, ...(propertyKeys === null ? [] : [propertyKeys])])).toHuman();
+  async getPropertyPermissions(collectionId: number, propertyKeys: string[] | null = null) {
+    return await this.helper.callRpc('api.rpc.unique.propertyPermissions', [collectionId, ...(propertyKeys === null ? [] : [propertyKeys])]);
   }
 
   /**
@@ -1590,7 +1484,8 @@ class NFTnRFT extends CollectionGroup {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertySet');
+    const event = result.result.events.find(this.helper.getApi().events.common.TokenPropertySet.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1603,7 +1498,7 @@ class NFTnRFT extends CollectionGroup {
    * @returns array of key-value pairs
    */
   async getTokenProperties(collectionId: number, tokenId: number, propertyKeys?: string[] | null): Promise<IProperty[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, propertyKeys])).toHuman();
+    return await this.helper.callRpc('api.rpc.unique.tokenProperties', [collectionId, tokenId, propertyKeys]);
   }
 
   /**
@@ -1622,7 +1517,8 @@ class NFTnRFT extends CollectionGroup {
       true,
     );
 
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'TokenPropertyDeleted');
+    const event = result.result.events.find(this.helper.getApi().events.common.TokenPropertyDeleted.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -1656,7 +1552,7 @@ class NFTnRFT extends CollectionGroup {
       'api.tx.unique.createCollectionEx', [collectionOptions],
       true, // errorLabel,
     );
-    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
+    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(this.helper.getApi(), creationResult));
   }
 
   getCollectionObject(_collectionId: number): any {
@@ -1674,8 +1570,8 @@ class NFTnRFT extends CollectionGroup {
    * @param operator operator addrees
    * @returns true if operator is enabled
    */
-  async allowanceForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean> {
-    return (await this.helper.callRpc('api.rpc.unique.allowanceForAll', [collectionId, owner, operator])).toJSON();
+  async allowanceForAll(collectionId: number, owner: ICrossAccountId, operator: ICrossAccountId): Promise<boolean | null> {
+    return await this.helper.callRpc('api.rpc.unique.allowanceForAll', [collectionId, owner, operator]);
   }
 
   /** Sets or unsets the approval of a given operator.
@@ -1690,7 +1586,9 @@ class NFTnRFT extends CollectionGroup {
       'api.tx.unique.setAllowanceForAll', [collectionId, operator, approved],
       true,
     );
-    return this.helper.util.findCollectionInEvents(result.result.events, collectionId, 'common', 'ApprovedForAll');
+
+    const event = result.result.events.find(this.helper.getApi().events.common.ApprovedForAll.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 }
 
@@ -1725,7 +1623,10 @@ class NFTGroup extends NFTnRFT {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async isTokenApproved(collectionId: number, tokenId: number, toAccountObj: ICrossAccountId): Promise<boolean> {
-    return (await this.getTokenApprovedPieces(collectionId, tokenId, toAccountObj, await this.getTokenOwner(collectionId, tokenId))) === 1n;
+    const owner = await this.getTokenOwner(collectionId, tokenId);
+    if(!owner)
+      throw Error('Token owner not found');
+    return (await this.getTokenApprovedPieces(collectionId, tokenId, toAccountObj, owner)) === 1n;
   }
 
   /**
@@ -1766,15 +1667,14 @@ class NFTGroup extends NFTnRFT {
    * @example getTokenChildren(10, 5);
    * @returns tokens whose depth of nesting is <= 5
    */
-  async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string): Promise<IToken[]> {
-    let children;
+  async getTokenChildren(collectionId: number, tokenId: number, blockHashAt?: string) {
+    let args;
     if(typeof blockHashAt === 'undefined') {
-      children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId]);
+      args = [collectionId, tokenId];
     } else {
-      children = await this.helper.callRpc('api.rpc.unique.tokenChildren', [collectionId, tokenId, blockHashAt]);
+      args = [collectionId, tokenId, blockHashAt];
     }
-
-    return children.toJSON().map((x: any) => ({collectionId: x.collection, tokenId: x.token}));
+    return await this.helper.callRpc('api.rpc.unique.tokenChildren', args);
   }
 
   /**
@@ -1809,7 +1709,7 @@ class NFTGroup extends NFTnRFT {
       }],
       true,
     );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult);
     if(createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
     if(createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
@@ -1837,7 +1737,7 @@ class NFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1859,7 +1759,7 @@ class NFTGroup extends NFTnRFT {
    * @returns array of newly created tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { properties?: IProperty[] }[]): Promise<UniqueNFToken[]> {
-    const rawTokens = [];
+    const rawTokens: any[] = [];
     for(const token of tokens) {
       const raw = {NFT: {properties: token.properties}};
       rawTokens.push(raw);
@@ -1870,7 +1770,7 @@ class NFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -1919,7 +1819,7 @@ class RFTGroup extends NFTnRFT {
    * @returns array of top 10 owners
    */
   async getTokenTop10Owners(collectionId: number, tokenId: number): Promise<CrossAccountId[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).toJSON().map(CrossAccountId.fromLowerCaseKeys);
+    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, tokenId])).map(owner => new CrossAccountId(owner));
   }
 
   /**
@@ -1931,7 +1831,7 @@ class RFTGroup extends NFTnRFT {
    * @returns number of pieces ownerd by address
    */
   async getTokenBalance(collectionId: number, tokenId: number, addressObj: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, tokenId])).toBigInt();
+    return await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, tokenId]);
   }
 
   /**
@@ -1997,7 +1897,7 @@ class RFTGroup extends NFTnRFT {
       }],
       true,
     );
-    const createdTokens = this.helper.util.extractTokensFromCreationResult(creationResult);
+    const createdTokens = this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult);
     if(createdTokens.tokens.length > 1) throw Error('Minted multiple tokens');
     if(createdTokens.tokens.length < 1) throw Error('No tokens minted');
     return this.getTokenObject(data.collectionId, createdTokens.tokens[0].tokenId);
@@ -2011,7 +1911,7 @@ class RFTGroup extends NFTnRFT {
       true, // `Unable to mint RFT tokens for ${label}`,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -2024,7 +1924,7 @@ class RFTGroup extends NFTnRFT {
    * @returns array of newly created RFT tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { pieces: bigint, properties?: IProperty[] }[]): Promise<UniqueRFToken[]> {
-    const rawTokens = [];
+    const rawTokens: any[] = [];
     for(const token of tokens) {
       const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
       rawTokens.push(raw);
@@ -2035,7 +1935,7 @@ class RFTGroup extends NFTnRFT {
       true,
     );
     const collection = this.getCollectionObject(collectionId);
-    return this.helper.util.extractTokensFromCreationResult(creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
+    return this.helper.util.extractTokensFromCreationResult(this.helper.getApi(), creationResult).tokens.map((x: IToken) => collection.getTokenObject(x.tokenId));
   }
 
   /**
@@ -2087,8 +1987,8 @@ class RFTGroup extends NFTnRFT {
    * @example getTokenTotalPieces(10, 5);
    * @returns number of pieces
    */
-  async getTokenTotalPieces(collectionId: number, tokenId: number): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, tokenId])).unwrap().toBigInt();
+  async getTokenTotalPieces(collectionId: number, tokenId: number): Promise<bigint | null> {
+    return await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, tokenId]);
   }
 
   /**
@@ -2107,8 +2007,15 @@ class RFTGroup extends NFTnRFT {
       'api.tx.unique.repartition', [collectionId, tokenId, amount],
       true,
     );
-    if(currentAmount < amount) return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemCreated');
-    return this.helper.util.findCollectionInEvents(repartitionResult.result.events, collectionId, 'common', 'ItemDestroyed');
+    if(!currentAmount)
+      throw Error("Token doens't exist");
+    if(currentAmount < amount) {
+      const event = repartitionResult.result.events.find(this.helper.getApi().events.common.ItemCreated.is);
+      return this.helper.util.checkEvent(event, collectionId);
+    }
+
+    const event = repartitionResult.result.events.find(this.helper.getApi().events.common.ItemDestroyed.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 }
 
@@ -2149,7 +2056,7 @@ class FTGroup extends CollectionGroup {
       'api.tx.unique.createCollectionEx', [collectionOptions],
       true,
     );
-    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(creationResult));
+    return this.getCollectionObject(this.helper.util.extractCollectionIdFromCreationResult(this.helper.getApi(), creationResult));
   }
 
   /**
@@ -2171,7 +2078,9 @@ class FTGroup extends CollectionGroup {
       }],
       true, // `Unable to mint fungible tokens for ${label}`,
     );
-    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated');
+
+    const event = creationResult.result.events.find(this.helper.getApi().events.common.ItemCreated.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -2183,7 +2092,7 @@ class FTGroup extends CollectionGroup {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: { value: bigint }[], owner: ICrossAccountId): Promise<boolean> {
-    const rawTokens = [];
+    const rawTokens: any[] = [];
     for(const token of tokens) {
       const raw = {Fungible: {Value: token.value}};
       rawTokens.push(raw);
@@ -2193,7 +2102,9 @@ class FTGroup extends CollectionGroup {
       'api.tx.unique.createMultipleItems', [collectionId, owner, rawTokens],
       true,
     );
-    return this.helper.util.findCollectionInEvents(creationResult.result.events, collectionId, 'common', 'ItemCreated');
+
+    const event = creationResult.result.events.find(this.helper.getApi().events.common.ItemCreated.is);
+    return this.helper.util.checkEvent(event, collectionId);
   }
 
   /**
@@ -2203,7 +2114,7 @@ class FTGroup extends CollectionGroup {
    * @returns array of ```ICrossAccountId```
    */
   async getTop10Owners(collectionId: number): Promise<CrossAccountId[]> {
-    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).toJSON().map(CrossAccountId.fromLowerCaseKeys);
+    return (await this.helper.callRpc('api.rpc.unique.tokenOwners', [collectionId, 0])).map(owner => new CrossAccountId(owner));
   }
 
   /**
@@ -2214,7 +2125,7 @@ class FTGroup extends CollectionGroup {
    * @returns amount of fungible tokens owned by address
    */
   async getBalance(collectionId: number, addressObj: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, 0])).toBigInt();
+    return await this.helper.callRpc('api.rpc.unique.balance', [collectionId, addressObj, 0]);
   }
 
   /**
@@ -2274,8 +2185,8 @@ class FTGroup extends CollectionGroup {
    * @param collectionId
    * @returns
    */
-  async getTotalPieces(collectionId: number): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, 0])).unwrap().toBigInt();
+  async getTotalPieces(collectionId: number): Promise<bigint | null> {
+    return await this.helper.callRpc('api.rpc.unique.totalPieces', [collectionId, 0]);
   }
 
   /**
@@ -2326,7 +2237,7 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    * @returns the number of the last block
    */
   async getLatestBlockNumber(): Promise<number> {
-    return (await this.helper.callRpc('api.rpc.chain.getHeader')).number.toNumber();
+    return (await this.helper.callRpc('api.rpc.chain.getHeader')).number;
   }
 
   /**
@@ -2336,25 +2247,25 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    * @returns hash of a block
    */
   async getBlockHashByNumber(blockNumber: number): Promise<string | null> {
-    const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])).toJSON();
+    const blockHash = (await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber]));
     if(blockHash === '0x0000000000000000000000000000000000000000000000000000000000000000') return null;
     return blockHash;
   }
 
   // TODO add docs
-  async getBlock(blockHashOrNumber: string | number): Promise<IBlock | null> {
+  async getBlock(blockHashOrNumber: string | number) {
     const blockHash = typeof blockHashOrNumber === 'string' ? blockHashOrNumber : await this.getBlockHashByNumber(blockHashOrNumber);
     if(!blockHash) return null;
-    return (await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash])).toHuman().block;
+    const signedBlock = await this.helper.callRpc('api.rpc.chain.getBlock', [blockHash]);
+    return signedBlock.block;
   }
 
   /**
    * Get latest relay block
    * @returns {number} relay block
    */
-  async getRelayBlockNumber(): Promise<bigint> {
-    const blockNumber = (await this.helper.callRpc('api.query.parachainSystem.validationData')).toJSON().relayParentNumber;
-    return BigInt(blockNumber);
+  async getRelayBlockNumber(): Promise<number | null> {
+    return (await this.helper.callQuery('api.query.parachainSystem.validationData'))?.relayParentNumber ?? null;
   }
 
   /**
@@ -2364,7 +2275,7 @@ class ChainGroup extends HelperGroup<ChainHelperBase> {
    * @returns number, account's nonce
    */
   async getNonce(address: TSubstrateAccount): Promise<number> {
-    return (await this.helper.callRpc('api.query.system.account', [address])).nonce.toNumber();
+    return (await this.helper.callQuery('api.query.system.account', [address])).nonce;
   }
 }
 
@@ -2376,7 +2287,7 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
  * @returns amount of tokens on address
  */
   async getSubstrate(address: TSubstrateAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.query.system.account', [address])).data.free.toBigInt();
+    return (await this.helper.callQuery('api.query.system.account', [address])).data.free;
   }
 
   /**
@@ -2390,16 +2301,12 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
 
-    let transfer = {from: null, to: null, amount: 0n} as any;
-    result.result.events.forEach(({event: {data, method, section}}) => {
-      if((section === 'balances') && (method === 'Transfer')) {
-        transfer = {
-          from: this.helper.address.normalizeSubstrate(data[0]),
-          to: this.helper.address.normalizeSubstrate(data[1]),
-          amount: BigInt(data[2]),
-        };
-      }
-    });
+    const event = result.result.events.filter(this.helper.getApi().events.balances.Transfer.is).at(-1)!;
+    const transfer = {
+      from: this.helper.address.normalizeSubstrate(event.data[0].toString()),
+      to: this.helper.address.normalizeSubstrate(event.data[1].toString()),
+      amount: event.data[2].toBigInt(),
+    };
     const isSuccess = this.helper.address.normalizeSubstrate(typeof signer === 'string' ? signer : signer.address) === transfer.from
       && this.helper.address.normalizeSubstrate(address) === transfer.to
       && BigInt(amount) === transfer.amount;
@@ -2411,9 +2318,8 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
    * @param address substrate address
    * @returns
    */
-  async getSubstrateFull(address: TSubstrateAccount): Promise<ISubstrateBalance> {
-    const accountInfo = (await this.helper.callRpc('api.query.system.account', [address])).data;
-    return {free: accountInfo.free.toBigInt(), frozen: accountInfo.frozen.toBigInt(), reserved: accountInfo.reserved.toBigInt()};
+  async getSubstrateFull(address: TSubstrateAccount) {
+    return (await this.helper.callQuery('api.query.system.account', [address])).data;
   }
 
   /**
@@ -2421,17 +2327,16 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
    * @returns
    */
   async getTotalIssuance(): Promise<bigint> {
-    const total = (await this.helper.callRpc('api.query.balances.totalIssuance', []));
-    return total.toBigInt();
+    return await this.helper.callQuery('api.query.balances.totalIssuance', []);
   }
 
-  async getLocked(address: TSubstrateAccount): Promise<{ id: string, amount: bigint, reason: string }[]> {
-    const locks = (await this.helper.callRpc('api.query.balances.locks', [address])).toHuman();
-    return locks.map((lock: any) => ({id: lock.id, amount: BigInt(lock.amount.replace(/,/g, '')), reasons: lock.reasons}));
+  async getLocked(address: TSubstrateAccount) {
+    return await this.helper.callQuery('api.query.balances.locks', [address]);
   }
-  async getFrozen(address: TSubstrateAccount): Promise<{ id: string, amount: bigint }[]> {
-    const locks = (await this.helper.api!.query.balances.freezes(address)) as unknown as Array<any>;
-    return locks.map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()}));
+
+  async getFrozen(address: TSubstrateAccount) {
+    const locks = await this.helper.callQuery('api.query.balances.freezes', [address]);
+    return locks;
   }
 }
 
@@ -2443,7 +2348,7 @@ export class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup
    * @returns amount of tokens on address
    */
   async getEthereum(address: TEthereumAccount): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.eth.getBalance', [address])).toBigInt();
+    return await this.helper.callRpc('api.rpc.eth.getBalance', [address]);
   }
 
   /**
@@ -2457,16 +2362,12 @@ export class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup
   async transferToEthereum(signer: TSigner, address: TEthereumAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true);
 
-    let transfer = {from: null, to: null, amount: 0n} as any;
-    result.result.events.forEach(({event: {data, method, section}}) => {
-      if((section === 'balances') && (method === 'Transfer')) {
-        transfer = {
-          from: data[0].toString(),
-          to: data[1].toString(),
-          amount: BigInt(data[2]),
-        };
-      }
-    });
+    const event = result.result.events.filter(this.helper.getApi().events.balances.Transfer.is).at(-1)!;
+    const transfer = {
+      from: event.data[0].toString(),
+      to: event.data[1].toString(),
+      amount: event.data[2].toBigInt(),
+    };
     const isSuccess = (typeof signer === 'string' ? signer : signer.address) === transfer.from
       && address === transfer.to
       && BigInt(amount) === transfer.amount;
@@ -2572,16 +2473,12 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async forceTransferToSubstrate(signer: TSigner, from: TSubstrateAccount, to: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.forceTransfer', [from, to, amount], true);
 
-    let transfer = {from: null, to: null, amount: 0n} as any;
-    result.result.events.forEach(({event: {data, method, section}}) => {
-      if((section === 'balances') && (method === 'Transfer')) {
-        transfer = {
-          from: this.helper.address.normalizeSubstrate(data[0]),
-          to: this.helper.address.normalizeSubstrate(data[1]),
-          amount: BigInt(data[2]),
-        };
-      }
-    });
+    const event = result.result.events.filter(this.helper.getApi().events.balances.Transfer.is).at(-1)!;
+    const transfer = {
+      from: this.helper.address.normalizeSubstrate(event.data[0].toString()),
+      to: this.helper.address.normalizeSubstrate(event.data[1].toString()),
+      amount: event.data[2].toBigInt(),
+    };
     let isSuccess = this.helper.address.normalizeSubstrate(from) === transfer.from;
     isSuccess = isSuccess && this.helper.address.normalizeSubstrate(to) === transfer.to;
     isSuccess = isSuccess && BigInt(amount) === transfer.amount;
@@ -2595,12 +2492,11 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param schedule Schedule params
    * @example vestedTransfer(signer, recepient.address, 20000, 100, 10, 50 * nominal); // total amount of vested tokens will be 100 * 50 = 5000
    */
-  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: { start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint }): Promise<void> {
+  async vestedTransfer(signer: TSigner, address: TSubstrateAccount, schedule: { start: number, period: number, periodCount: number, perPeriod: bigint }): Promise<void> {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.vestedTransfer', [address, schedule]);
     const event = result.result.events
-      .find(e => e.event.section === 'vesting' &&
-        e.event.method === 'VestingScheduleAdded' &&
-        e.event.data[0].toHuman() === signer.address);
+      .filter(this.helper.getApi().events.vesting.VestingScheduleAdded.is)
+      .find(event => this.helper.address.normalizeSubstrate(event.data[0].toString()) === signer.address);
     if(!event) throw Error('Cannot find transfer in events');
   }
 
@@ -2609,14 +2505,8 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
    * @param address Substrate address of recipient
    * @returns
    */
-  async getVestingSchedules(address: TSubstrateAccount): Promise<{ start: bigint, period: bigint, periodCount: bigint, perPeriod: bigint }[]> {
-    const schedule = (await this.helper.callRpc('api.query.vesting.vestingSchedules', [address])).toJSON();
-    return schedule.map((schedule: any) => ({
-      start: BigInt(schedule.start),
-      period: BigInt(schedule.period),
-      periodCount: BigInt(schedule.periodCount),
-      perPeriod: BigInt(schedule.perPeriod),
-    }));
+  async getVestingSchedules(address: TSubstrateAccount) {
+    return await this.helper.callQuery('api.query.vesting.vestingSchedules', [address]);
   }
 
   /**
@@ -2626,9 +2516,8 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async claim(signer: TSigner) {
     const result = await this.helper.executeExtrinsic(signer, 'api.tx.vesting.claim', []);
     const event = result.result.events
-      .find(e => e.event.section === 'vesting' &&
-        e.event.method === 'Claimed' &&
-        e.event.data[0].toHuman() === signer.address);
+      .filter(this.helper.getApi().events.vesting.Claimed.is)
+      .find(event => this.helper.address.normalizeSubstrate(event.data[0].toString()) === signer.address);
     if(!event) throw Error('Cannot find claim in events');
   }
 }
@@ -2813,7 +2702,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    */
   async getStakesNumber(address: ICrossAccountId): Promise<number> {
     if('Ethereum' in address) throw Error('only substrate address');
-    return (await this.helper.callRpc('api.query.appPromotion.stakesPerAccount', [address.Substrate])).toNumber();
+    return await this.helper.callQuery('api.query.appPromotion.stakesPerAccount', [address.Substrate]);
   }
 
   /**
@@ -2822,8 +2711,10 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns total staked amount
    */
   async getTotalStaked(address?: ICrossAccountId): Promise<bigint> {
-    if(address) return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked', [address])).toBigInt();
-    return (await this.helper.callRpc('api.rpc.appPromotion.totalStaked')).toBigInt();
+    let args: any[] | undefined;
+    if(address)
+      args = [address];
+    return await this.helper.callRpc('api.rpc.appPromotion.totalStaked', args);
   }
 
   /**
@@ -2831,11 +2722,11 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @param address substrate or ethereum address
    * @returns array of stakes. `block` – the number of the block in which the stake was made. `amount` - the number of tokens staked in the block
    */
-  async getTotalStakedPerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
+  async getTotalStakedPerBlock(address: ICrossAccountId) {
     const rawTotalStakerdPerBlock = await this.helper.callRpc('api.rpc.appPromotion.totalStakedPerBlock', [address]);
-    return rawTotalStakerdPerBlock.map(([block, amount]: any[]) => ({
-      block: block.toBigInt(),
-      amount: amount.toBigInt(),
+    return rawTotalStakerdPerBlock.map(([block, amount]) => ({
+      block: block,
+      amount: amount,
     }));
   }
 
@@ -2845,7 +2736,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
    * @returns total pending unstake amount
    */
   async getPendingUnstake(address: ICrossAccountId): Promise<bigint> {
-    return (await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address])).toBigInt();
+    return await this.helper.callRpc('api.rpc.appPromotion.pendingUnstake', [address]);
   }
 
   /**
@@ -2856,8 +2747,8 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
   async getPendingUnstakePerBlock(address: ICrossAccountId): Promise<IStakingInfo[]> {
     const rawUnstakedPerBlock = await this.helper.callRpc('api.rpc.appPromotion.pendingUnstakePerBlock', [address]);
     const result = rawUnstakedPerBlock.map(([block, amount]: any[]) => ({
-      block: block.toBigInt(),
-      amount: amount.toBigInt(),
+      block: block,
+      amount: amount,
     }));
     return result;
   }
@@ -2866,7 +2757,7 @@ class StakingGroup extends HelperGroup<UniqueHelper> {
 
 class PreimageGroup extends HelperGroup<UniqueHelper> {
   async getPreimageInfo(h256: string) {
-    return (await this.helper.callRpc('api.query.preimage.statusFor', [h256])).toJSON();
+    return await this.helper.callQuery('api.query.preimage.statusFor', [h256]);
   }
 
   /**
@@ -2878,8 +2769,8 @@ class PreimageGroup extends HelperGroup<UniqueHelper> {
    * );
    * @returns promise of extrinsic execution.
    */
-  notePreimageFromCall(signer: TSigner, call: any, returnPreimageHash = false) {
-    return this.notePreimage(signer, call.method.toHex(), returnPreimageHash);
+  notePreimageFromCall(signer: TSigner, call: any) {
+    return this.notePreimageHash(signer, call.method.toHex());
   }
 
   /**
@@ -2891,15 +2782,25 @@ class PreimageGroup extends HelperGroup<UniqueHelper> {
    * );
    * @returns promise of extrinsic execution.
    */
-  async notePreimage(signer: TSigner, bytes: string | Uint8Array, returnPreimageHash = false) {
-    const promise = this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
-    if(returnPreimageHash) {
-      const result = await promise;
-      const events = result.result.events.filter(x => x.event.method === 'Noted' && x.event.section === 'preimage');
-      const preimageHash = events[0].event.data[0].toHuman();
-      return preimageHash;
-    }
-    return promise;
+  async notePreimage(signer: TSigner, bytes: string | Uint8Array) {
+    return await this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
+  }
+
+  /**
+   * Create a preimage with a hex or a byte array and return it's hash.
+   * @param signer keyring of the signer.
+   * @param bytes preimage encoded in hex or a byte array, e.g. an extrinsic call.
+   * @example await notePreimageHash(preimageMaker,
+   *   helper.constructApiCall('api.tx.identity.forceInsertIdentities', [identitiesToAdd]).method.toHex()
+   * );
+   * @returns promise of preimage hash.
+   */
+  async notePreimageHash(signer: TSigner, bytes: string | Uint8Array) {
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.preimage.notePreimage', [bytes]);
+    const event = result.result.events.find(this.helper.getApi().events.preimage.Noted.is);
+    if(!event)
+      throw new Error('"Noted" event not found');
+    return event?.data.hash_.toHex();
   }
 
   /**
@@ -3067,7 +2968,7 @@ export class UniqueBaseCollection {
     return await this.helper.collection.deleteProperties(signer, this.collectionId, propertyKeys);
   }
 
-  async setPermissions(signer: TSigner, permissions: ICollectionPermissions) {
+  async setPermissions(signer: TSigner, permissions: ICreateCollectionPermissions) {
     return await this.helper.collection.setPermissions(signer, this.collectionId, permissions);
   }
 
@@ -3119,9 +3020,7 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
 
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
-
-    return (props! as any).consumedSpace;
+    return (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).consumedSpace.toNumber();
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
@@ -3164,7 +3063,7 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
     return await this.helper.nft.deleteTokenProperties(signer, this.collectionId, tokenId, propertyKeys);
   }
 
-  async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[]) {
+  async setTokenPropertyPermissions(signer: TSigner, permissions: ICreateTokenPropertyPermission[]) {
     return await this.helper.nft.setTokenPropertyPermissions(signer, this.collectionId, permissions);
   }
 
@@ -3224,9 +3123,7 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
-
-    return (props! as any).consumedSpace;
+    return (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).consumedSpace.toNumber();
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount = 1n) {
@@ -3269,7 +3166,7 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
     return await this.helper.rft.deleteTokenProperties(signer, this.collectionId, tokenId, propertyKeys);
   }
 
-  async setTokenPropertyPermissions(signer: TSigner, permissions: ITokenPropertyPermission[]) {
+  async setTokenPropertyPermissions(signer: TSigner, permissions: ICreateTokenPropertyPermission[]) {
     return await this.helper.rft.setTokenPropertyPermissions(signer, this.collectionId, permissions);
   }
 
@@ -3492,4 +3389,67 @@ export class UniqueRFToken extends UniqueBaseToken {
   async burnFrom(signer: TSigner, fromAddressObj: ICrossAccountId, amount = 1n) {
     return await this.collection.burnTokenFrom(signer, this.tokenId, fromAddressObj, amount);
   }
+}
+
+function convertCrossAccountId(crossAccount: PalletEvmAccountBasicCrossAccountIdRepr) : CrossAccountId {
+  return new CrossAccountId(crossAccount.isEthereum ? {Ethereum: crossAccount.asEthereum.toString()} : {Substrate: crossAccount.asSubstrate.toString()});
+}
+
+function getTransactionStatus(data: ISubmittableResult): TransactionStatus {
+  const {events, status} = data;
+  if(status.isReady) {
+    return 'NotReady';
+  }
+  if(status.isBroadcast) {
+    return 'NotReady';
+  }
+  if(status.isInBlock || status.isFinalized) {
+    const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
+    if(errors.length > 0) {
+      return 'Fail';
+    }
+    if(events.filter(e => e.event.method === 'ExtrinsicSuccess').length > 0) {
+      return 'Success';
+    }
+  }
+
+  return 'Fail';
+}
+
+function convertTransactionResult(result: ISubmittableResult): ITransactionResult {
+  const events: IEventLike[] = result.events.map(e =>  e.event);
+  return {
+    status: getTransactionStatus(result),
+    result: {
+      dispatchError: result.dispatchError,
+      events,
+    },
+    blockHash: result.status.asInBlock.toString(),
+  };
+}
+
+function toJSON(data: any) {
+  return data && data.toJSON ? data.toJSON() : `${data}`;
+}
+
+function extractData(data: any, type: any): any {
+  if(!type) return toJSON(data);
+  if(['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
+  if(['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
+  if(type.hasOwnProperty('sub')) return extractSub(data, type.sub);
+  return toJSON(data);
+}
+
+function extractSub(data: any, subTypes: any): { [key: string]: any } {
+  let obj: any = {};
+  let index = 0;
+
+  if(data.entries) {
+    for(const [key, value] of data.entries()) {
+      obj[key] = extractData(value, subTypes[index]);
+      index++;
+    }
+  } else obj = data.toJSON();
+
+  return obj;
 }

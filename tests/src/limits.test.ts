@@ -419,15 +419,15 @@ describe('Effective collection limits (NFT)', () => {
       const limits = collectionInfo?.raw.limits;
       expect(limits).to.be.any;
 
-      expect(limits.accountTokenOwnershipLimit).to.be.null;
-      expect(limits.sponsoredDataSize).to.be.null;
-      expect(limits.sponsoredDataRateLimit).to.be.null;
-      expect(limits.tokenLimit).to.be.null;
-      expect(limits.sponsorTransferTimeout).to.be.null;
-      expect(limits.sponsorApproveTimeout).to.be.null;
-      expect(limits.ownerCanTransfer).to.be.true;
-      expect(limits.ownerCanDestroy).to.be.null;
-      expect(limits.transfersEnabled).to.be.null;
+      expect(limits?.accountTokenOwnershipLimit).to.be.null;
+      expect(limits?.sponsoredDataSize).to.be.null;
+      expect(limits?.sponsoredDataRateLimit).to.be.null;
+      expect(limits?.tokenLimit).to.be.null;
+      expect(limits?.sponsorTransferTimeout).to.be.null;
+      expect(limits?.sponsorApproveTimeout).to.be.null;
+      expect(limits?.ownerCanTransfer).to.be.true;
+      expect(limits?.ownerCanDestroy).to.be.null;
+      expect(limits?.transfersEnabled).to.be.null;
     }
 
     { // Check that limits is undefined for non-existent collection
@@ -438,15 +438,15 @@ describe('Effective collection limits (NFT)', () => {
     { // Check that default values defined for collection limits
       const limits = await collection.getEffectiveLimits();
 
-      expect(limits.accountTokenOwnershipLimit).to.be.eq(100000);
-      expect(limits.sponsoredDataSize).to.be.eq(2048);
-      expect(limits.sponsoredDataRateLimit).to.be.deep.eq({sponsoringDisabled: null});
-      expect(limits.tokenLimit).to.be.eq(4294967295);
-      expect(limits.sponsorTransferTimeout).to.be.eq(5);
-      expect(limits.sponsorApproveTimeout).to.be.eq(5);
-      expect(limits.ownerCanTransfer).to.be.true;
-      expect(limits.ownerCanDestroy).to.be.true;
-      expect(limits.transfersEnabled).to.be.true;
+      expect(limits?.accountTokenOwnershipLimit).to.be.eq(100000);
+      expect(limits?.sponsoredDataSize).to.be.eq(2048);
+      expect(limits?.sponsoredDataRateLimit).to.be.eq('SponsoringDisabled');
+      expect(limits?.tokenLimit).to.be.eq(4294967295);
+      expect(limits?.sponsorTransferTimeout).to.be.eq(5);
+      expect(limits?.sponsorApproveTimeout).to.be.eq(5);
+      expect(limits?.ownerCanTransfer).to.be.true;
+      expect(limits?.ownerCanDestroy).to.be.true;
+      expect(limits?.transfersEnabled).to.be.true;
     }
 
     {
@@ -460,15 +460,15 @@ describe('Effective collection limits (NFT)', () => {
 
       const limits = await collection.getEffectiveLimits();
 
-      expect(limits.accountTokenOwnershipLimit).to.be.eq(99999);
-      expect(limits.sponsoredDataSize).to.be.eq(1024);
-      expect(limits.sponsoredDataRateLimit).to.be.deep.eq({sponsoringDisabled: null});
-      expect(limits.tokenLimit).to.be.eq(123);
-      expect(limits.sponsorTransferTimeout).to.be.eq(5);
-      expect(limits.sponsorApproveTimeout).to.be.eq(5);
-      expect(limits.ownerCanTransfer).to.be.true;
-      expect(limits.ownerCanDestroy).to.be.true;
-      expect(limits.transfersEnabled).to.be.false;
+      expect(limits?.accountTokenOwnershipLimit).to.be.eq(99999);
+      expect(limits?.sponsoredDataSize).to.be.eq(1024);
+      expect(limits?.sponsoredDataRateLimit).to.be.eq('SponsoringDisabled');
+      expect(limits?.tokenLimit).to.be.eq(123);
+      expect(limits?.sponsorTransferTimeout).to.be.eq(5);
+      expect(limits?.sponsorApproveTimeout).to.be.eq(5);
+      expect(limits?.ownerCanTransfer).to.be.true;
+      expect(limits?.ownerCanDestroy).to.be.true;
+      expect(limits?.transfersEnabled).to.be.false;
     }
   });
 });

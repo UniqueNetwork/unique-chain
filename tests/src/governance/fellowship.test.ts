@@ -1,6 +1,6 @@
 import {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {DevUniqueHelper} from '../util/playgrounds/unique.dev';
 import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util';
 
 describeGov('Governance: Fellowship tests', () => {
@@ -29,14 +29,18 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const referendumIndex = submittedEvent.data.index.toNumber();
+
     await voteUnanimouslyInFellowship(helper, members, democracyTrackMinRank, referendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, referendumIndex);
 
     const enactmentId = await helper.fellowship.referenda.enactmentEventId(referendumIndex);
     const dispatchedEvent = await helper.wait.expectEvent(
       fellowshipPreparePeriod + fellowshipConfirmPeriod + defaultEnactmentMoment.After,
-      Event.Scheduler.Dispatched,
+      helper.getApi().events.scheduler.Dispatched,
       (event: any) => event.id == enactmentId,
     );
 
@@ -84,17 +88,21 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const fellowshipReferendumIndex = submittedEvent.data.index.toNumber();
+
     await voteUnanimouslyInFellowship(helper, members, democracyTrackMinRank, fellowshipReferendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
 
     const democracyProposed = await helper.wait.expectEvent(
       fellowshipPreparePeriod + fellowshipConfirmPeriod + fellowshipMinEnactPeriod,
-      Event.Democracy.Proposed,
+      helper.getApi().events.democracy.Proposed,
     );
 
-    const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex);
-    expect(democracyEnqueuedProposal.inline, 'Fellowship proposal expected to be in the Democracy')
+    const democracyEnqueuedProposal = await helper.democracy.expectPublicProposal(democracyProposed.proposalIndex.toNumber());
+    expect('Inline' in democracyEnqueuedProposal ? democracyEnqueuedProposal.Inline : null, 'Fellowship proposal expected to be in the Democracy')
       .to.be.equal(democracyProposalCall.method.toHex());
 
     await helper.wait.newBlocks(democracyVotingPeriod);
@@ -114,10 +122,13 @@ describeGov('Governance: Fellowship tests', () => {
           newDummyProposal,
           defaultEnactmentMoment,
         );
+        const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+        if(!submittedEvent)
+          throw Error('Expected event fellowshipReferenda.Submitted');
+        const referendumIndex = submittedEvent.data.index.toNumber();
 
-        const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
         const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        expect(referendumInfo.ongoing.track, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
+        expect('Ongoing' in referendumInfo! ? referendumInfo.Ongoing.track : null, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
           .to.be.equal(democracyTrackId);
       }
     }
@@ -133,7 +144,10 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const referendumIndex = submittedEvent.data.index.toNumber();
 
     let expectedAyes = 0;
     for(let rank = democracyTrackMinRank; rank < fellowshipRankLimit; rank++) {
@@ -145,7 +159,7 @@ describeGov('Governance: Fellowship tests', () => {
         expectedAyes += 1;
 
         const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        expect(referendumInfo.ongoing.tally.bareAyes, `Vote from ${memberIdx}-th member of rank #${rank} isn't accounted`)
+        expect('Ongoing' in referendumInfo! ? referendumInfo.Ongoing.tally.bareAyes : null, `Vote from ${memberIdx}-th member of rank #${rank} isn't accounted`)
           .to.be.equal(expectedAyes);
       }
     }
@@ -170,7 +184,10 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const referendumIndex = submittedEvent.data.index.toNumber();
 
     for(let rank = democracyTrackMinRank; rank < fellowshipRankLimit; rank++) {
       const rankMembers = members[rank];
@@ -179,15 +196,15 @@ describeGov('Governance: Fellowship tests', () => {
         const member = rankMembers[memberIdx];
 
         const referendumInfoBefore = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        const ayesBefore = referendumInfoBefore.ongoing.tally.ayes;
+        const ayesBefore = 'Ongoing' in referendumInfoBefore! ? referendumInfoBefore.Ongoing.tally.ayes : null;
 
         await helper.fellowship.collective.vote(member, referendumIndex, true);
 
         const referendumInfoAfter = await helper.fellowship.referenda.referendumInfo(referendumIndex);
-        const ayesAfter = referendumInfoAfter.ongoing.tally.ayes;
+        const ayesAfter = 'Ongoing' in referendumInfoAfter! ? referendumInfoAfter.Ongoing.tally.ayes : null;
 
         const expectedVoteWeight = excessRankWeightTable[rank - democracyTrackMinRank];
-        const voteWeight = ayesAfter - ayesBefore;
+        const voteWeight = ayesAfter! - ayesBefore!;
 
         expect(voteWeight, `Vote weight of ${memberIdx}-th member of rank #${rank} is invalid`)
           .to.be.equal(expectedVoteWeight);
@@ -252,7 +269,10 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
+    const submittedEvent = submitResult.result.events.find(helper.getApi().events.fellowshipReferenda.Submitted.is);
+    if(!submittedEvent)
+      throw Error('Expected event fellowshipReferenda.Submitted');
+    const referendumIndex = submittedEvent.data.index.toNumber();
 
     for(let rank = 0; rank < democracyTrackMinRank; rank++) {
       for(const member of members[rank]) {
@@ -294,7 +314,7 @@ describeGov('Governance: Fellowship tests', () => {
   });
 
   itSub('[Negative] FellowshipProposition cannot fast-track Democracy proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
 
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
@@ -303,21 +323,25 @@ describeGov('Governance: Fellowship tests', () => {
 
   itSub('[Negative] FellowshipProposition cannot cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
-    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
+
+    const proposedEvent = proposeResult.result.events.find(helper.getApi().events.democracy.Proposed.is);
+    if(!proposedEvent)
+      throw Error('Expected event democracy.Proposed');
+    const proposalIndex = proposedEvent.data.proposalIndex.toNumber();
 
     await testBadFellowshipProposal(helper, helper.democracy.cancelProposalCall(proposalIndex));
   });
 
   itSub('[Negative] FellowshipProposition cannot cancel ongoing Democracy referendums', async ({helper}) => {
     await helper.getSudo().democracy.externalProposeDefault(sudoer, dummyProposalCall(helper));
-    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, Event.Democracy.Started);
-    const referendumIndex = startedEvent.referendumIndex;
+    const startedEvent = await helper.wait.expectEvent(democracyLaunchPeriod, helper.getApi().events.democracy.Started);
+    const referendumIndex = startedEvent.refIndex.toNumber();
 
     await testBadFellowshipProposal(helper, helper.democracy.emergencyCancelCall(referendumIndex));
   });
 
   itSub('[Negative] FellowshipProposition cannot blacklist Democracy proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
 
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
@@ -325,7 +349,7 @@ describeGov('Governance: Fellowship tests', () => {
   });
 
   itSub('[Negative] FellowshipProposition cannot veto external proposals', async ({helper}) => {
-    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper));
 
     await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
 
