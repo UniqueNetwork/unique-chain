@@ -360,29 +360,23 @@ mod benchmarks {
 			.collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
 
-		let (is_collection_admin, property_permissions) =
-			load_is_admin_and_property_permissions(&collection, &owner);
+		// let (is_collection_admin, property_permissions) =
+		// 	load_is_admin_and_property_permissions(&collection, &owner);
 		todo!();
 		#[block]
-		{}
-		// let mut property_writer = pallet_common::collection_info_loaded_property_writer(
-		// 	&collection,
-		// 	is_collection_admin,
-		// 	property_permissions,
-		// );
+		{
+			// let mut property_writer =
+			// 	pallet_common::BenchmarkPropertyWriter::new(&collection, lazy_collection_info);
 
-		// #[block]
-		// {
-		// 	property_writer.write_token_properties(
-		// 		true,
-		// 		item,
-		// 		props.into_iter(),
-		// 		crate::erc::ERC721TokenEvent::TokenChanged {
-		// 			token_id: item.into(),
-		// 		}
-		// 		.to_log(T::ContractAddress::get()),
-		// 	)?;
-		// }
+			// property_writer.write_token_properties(
+			// 	item,
+			// 	props.into_iter(),
+			// 	crate::erc::ERC721TokenEvent::TokenChanged {
+			// 		token_id: item.into(),
+			// 	}
+			// 	.to_log(T::ContractAddress::get()),
+			// )?;
+		}
 
 		Ok(())
 	}

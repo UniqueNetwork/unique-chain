@@ -354,6 +354,7 @@ pub fn run() -> Result<()> {
 		}
 		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
+			use polkadot_cli::Block;
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
@@ -363,6 +364,7 @@ pub fn run() -> Result<()> {
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
+						_,
 						default_runtime::RuntimeApi,
 						DefaultRuntimeExecutor,
 						_,
@@ -371,6 +373,7 @@ pub fn run() -> Result<()> {
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
+						_,
 						default_runtime::RuntimeApi,
 						DefaultRuntimeExecutor,
 						_,
