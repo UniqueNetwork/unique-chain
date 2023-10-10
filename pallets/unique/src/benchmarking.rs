@@ -24,6 +24,7 @@ use pallet_common::{
 	erc::CrossAccountId,
 	Config as CommonConfig,
 };
+use sp_std::vec;
 use sp_runtime::DispatchError;
 use up_data_structs::{
 	CollectionId, CollectionLimits, CollectionMode, MAX_COLLECTION_DESCRIPTION_LENGTH,
