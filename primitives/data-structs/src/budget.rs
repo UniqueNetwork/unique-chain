@@ -22,7 +22,7 @@ impl Value {
 	pub fn new(v: u32) -> Self {
 		Self(Cell::new(v))
 	}
-	pub fn remaining(&self) -> u32 {
+	pub fn refund_amount(self) -> u32 {
 		self.0.get()
 	}
 }

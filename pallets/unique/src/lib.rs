@@ -93,8 +93,7 @@ pub mod pallet {
 	use frame_system::{ensure_root, ensure_signed};
 	use pallet_common::{
 		dispatch::{dispatch_tx, CollectionDispatch},
-		CollectionHandle, CommonCollectionOperations, CommonWeightInfo, Pallet as PalletCommon,
-		RefungibleExtensionsWeightInfo,
+		CollectionHandle, CommonWeightInfo, Pallet as PalletCommon, RefungibleExtensionsWeightInfo,
 	};
 	use pallet_evm::account::CrossAccountId;
 	use pallet_structure::weights::WeightInfo as StructureWeightInfo;
@@ -682,9 +681,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.create_item(sender, owner, data, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.create_item(sender, owner, data, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Create multiple items within a collection.
@@ -717,9 +719,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.create_multiple_items(sender, owner, items_data, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.create_multiple_items(sender, owner, items_data, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Add or change collection properties.
@@ -809,9 +814,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.set_token_properties(sender, token_id, properties, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.set_token_properties(sender, token_id, properties, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Delete specified token properties. Currently properties only work with NFTs.
@@ -842,9 +850,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.delete_token_properties(sender, token_id, property_keys, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.delete_token_properties(sender, token_id, property_keys, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Add or change token property permissions of a collection.
@@ -903,9 +914,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.create_multiple_items_ex(sender, data, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.create_multiple_items_ex(sender, data, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Completely allow or disallow transfers for a particular collection.
@@ -1012,9 +1026,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.burn_from(sender, from, item_id, value, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.burn_from(sender, from, item_id, value, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Change ownership of the token.
@@ -1050,9 +1067,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.transfer(sender, recipient, item_id, value, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.transfer(sender, recipient, item_id, value, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Allow a non-permissioned address to transfer or burn an item.
@@ -1156,9 +1176,12 @@ pub mod pallet {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
 			let budget = Self::structure_nesting_budget();
 
-			Self::dispatch_tx_with_nesting_budget(collection_id, &budget, |d| {
-				d.transfer_from(sender, from, recipient, item_id, value, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.transfer_from(sender, from, recipient, item_id, value, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Set specific limits of a collection. Empty, or None fields mean chain default.
@@ -1359,22 +1382,16 @@ pub mod pallet {
 			budget::Value::new(Self::nesting_budget())
 		}
 
-		fn nesting_budget_weight(value: &budget::Value) -> Weight {
-			T::StructureWeightInfo::find_parent().saturating_mul(value.remaining() as u64)
-		}
-
 		fn nesting_budget_predispatch_weight() -> Weight {
-			Self::nesting_budget_weight(&Self::structure_nesting_budget())
+			T::StructureWeightInfo::find_parent().saturating_mul(Self::nesting_budget() as u64)
 		}
 
-		pub fn dispatch_tx_with_nesting_budget<
-			C: FnOnce(&dyn CommonCollectionOperations<T>) -> DispatchResultWithPostInfo,
-		>(
-			collection: CollectionId,
-			budget: &budget::Value,
-			call: C,
+		pub fn refund_nesting_budget(
+			mut result: DispatchResultWithPostInfo,
+			budget: budget::Value,
 		) -> DispatchResultWithPostInfo {
-			let mut result = dispatch_tx::<T, _>(collection, call);
+			let refund_amount = budget.refund_amount();
+			let consumed = Self::nesting_budget() - refund_amount;
 
 			match &mut result {
 				Ok(PostDispatchInfo {
@@ -1387,7 +1404,9 @@ pub mod pallet {
 						..
 					},
 					..
-				}) => *weight += Self::nesting_budget_weight(budget),
+				}) => {
+					*weight += T::StructureWeightInfo::find_parent().saturating_mul(consumed as u64)
+				}
 				_ => {}
 			}
 
