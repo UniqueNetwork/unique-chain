@@ -53,10 +53,12 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
+use alloc::boxed::Box;
 use core::{
 	marker::PhantomData,
 	ops::{Deref, DerefMut},
 	slice::from_ref,
+	unreachable,
 };
 
 use evm_coder::ToLog;
@@ -871,63 +873,81 @@ pub mod pallet {
 	>;
 }
 
-/// Value representation with delayed initialization time.
-pub struct LazyValue<T, F> {
-	value: Option<T>,
-	f: Option<F>,
+enum LazyValueState<'a, T> {
+	Pending(Box<dyn FnOnce() -> T + 'a>),
+	InProgress(PhantomData<sp_std::cell::Cell<T>>),
+	Computed(T),
 }
 
-impl<T, F: FnOnce() -> T> LazyValue<T, F> {
+/// Value representation with delayed initialization time.
+pub struct LazyValue<'a, T> {
+	state: LazyValueState<'a, T>,
+}
+
+impl<'a, T> LazyValue<'a, T> {
 	/// Create a new LazyValue.
-	pub fn new(f: F) -> Self {
+	pub fn new(f: impl FnOnce() -> T + 'a) -> Self {
 		Self {
-			value: None,
-			f: Some(f),
+			state: LazyValueState::Pending(Box::new(f)),
 		}
 	}
 
 	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value(&mut self) -> &T {
 		self.force_value();
-		self.value.as_ref().unwrap()
+		self.value_mut()
 	}
 
 	/// Get the value. If it is called the first time, the value will be initialized.
 	pub fn value_mut(&mut self) -> &mut T {
 		self.force_value();
-		self.value.as_mut().unwrap()
+
+		if let LazyValueState::Computed(value) = &mut self.state {
+			value
+		} else {
+			unreachable!()
+		}
 	}
 
 	fn into_inner(mut self) -> T {
 		self.force_value();
-		self.value.unwrap()
+		if let LazyValueState::Computed(value) = self.state {
+			value
+		} else {
+			unreachable!()
+		}
 	}
 
 	/// Is value initialized?
 	pub fn has_value(&self) -> bool {
-		self.value.is_some()
+		matches!(self.state, LazyValueState::Computed(_))
 	}
 
 	fn force_value(&mut self) {
-		if self.value.is_none() {
-			self.value = Some(self.f.take().unwrap()())
+		use LazyValueState::*;
+
+		if self.has_value() {
+			return;
+		}
+
+		match sp_std::mem::replace(&mut self.state, InProgress(PhantomData)) {
+			Pending(f) => self.state = Computed(f()),
+			_ => {
+				// Computed is ruled out by the above condition
+				// InProgress is ruled out by not implementing Sync and absence of recursion
+				unreachable!()
+			}
 		}
 	}
 }
 
-fn check_token_permissions<T, FCA, FTO, FTE>(
+fn check_token_permissions<T: Config>(
 	collection_admin_permitted: bool,
 	token_owner_permitted: bool,
-	is_collection_admin: &mut LazyValue<bool, FCA>,
-	is_token_owner: &mut LazyValue<Result<bool, DispatchError>, FTO>,
-	is_token_exist: &mut LazyValue<bool, FTE>,
-) -> DispatchResult
-where
-	T: Config,
-	FCA: FnOnce() -> bool,
-	FTO: FnOnce() -> Result<bool, DispatchError>,
-	FTE: FnOnce() -> bool,
-{
+	is_collection_admin: &mut LazyValue<bool>,
+	is_token_owner: &mut LazyValue<Result<bool, DispatchError>>,
+	is_token_exist: &mut LazyValue<bool>,
+) -> DispatchResult {
 	if !(collection_admin_permitted && *is_collection_admin.value()
 		|| token_owner_permitted && (*is_token_owner.value())?)
 	{
@@ -2346,36 +2366,24 @@ impl<T: Config> From<PropertiesError> for Error<T> {
 /// This type utilizes the lazy evaluation to avoid repeating the computation
 /// of several performance-heavy or PoV-heavy tasks,
 /// such as checking the indirect ownership or reading the token property permissions.
-pub struct PropertyWriter<'a, WriterVariant, T, Handle, FIsAdmin, FPropertyPermissions> {
+pub struct PropertyWriter<'a, WriterVariant, T, Handle> {
 	collection: &'a Handle,
-	collection_lazy_info: PropertyWriterLazyCollectionInfo<FIsAdmin, FPropertyPermissions>,
+	collection_lazy_info: PropertyWriterLazyCollectionInfo<'a>,
 	_phantom: PhantomData<(T, WriterVariant)>,
 }
 
-impl<'a, T, Handle, WriterVariant, FIsAdmin, FPropertyPermissions>
-	PropertyWriter<'a, WriterVariant, T, Handle, FIsAdmin, FPropertyPermissions>
+impl<'a, T, Handle, WriterVariant> PropertyWriter<'a, WriterVariant, T, Handle>
 where
 	T: Config,
 	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
-	FIsAdmin: FnOnce() -> bool,
-	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
 {
-	fn internal_write_token_properties<FCheckTokenExist, FCheckTokenOwner, FGetProperties>(
+	fn internal_write_token_properties(
 		&mut self,
 		token_id: TokenId,
-		mut token_lazy_info: PropertyWriterLazyTokenInfo<
-			FCheckTokenExist,
-			FCheckTokenOwner,
-			FGetProperties,
-		>,
+		mut token_lazy_info: PropertyWriterLazyTokenInfo,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
 		log: evm_coder::ethereum::Log,
-	) -> DispatchResult
-	where
-		FCheckTokenExist: FnOnce() -> bool,
-		FCheckTokenOwner: FnOnce() -> Result<bool, DispatchError>,
-		FGetProperties: FnOnce() -> TokenProperties,
-	{
+	) -> DispatchResult {
 		for (key, value) in properties_updates {
 			let permission = self
 				.collection_lazy_info
@@ -2400,7 +2408,7 @@ where
 					collection_admin,
 					token_owner,
 					..
-				} => check_token_permissions::<T, _, _, _>(
+				} => check_token_permissions::<T>(
 					collection_admin,
 					token_owner,
 					&mut self.collection_lazy_info.is_collection_admin,
@@ -2454,31 +2462,25 @@ where
 /// A helper structure for the [`PropertyWriter`] that holds
 /// the collection-related info. The info is loaded using lazy evaluation.
 /// This info is common for any token for which we write properties.
-pub struct PropertyWriterLazyCollectionInfo<FIsAdmin, FPropertyPermissions> {
-	is_collection_admin: LazyValue<bool, FIsAdmin>,
-	property_permissions: LazyValue<PropertiesPermissionMap, FPropertyPermissions>,
+pub struct PropertyWriterLazyCollectionInfo<'a> {
+	is_collection_admin: LazyValue<'a, bool>,
+	property_permissions: LazyValue<'a, PropertiesPermissionMap>,
 }
 
 /// A helper structure for the [`PropertyWriter`] that holds
 /// the token-related info. The info is loaded using lazy evaluation.
-pub struct PropertyWriterLazyTokenInfo<FCheckTokenExist, FCheckTokenOwner, FGetProperties> {
-	is_token_exist: LazyValue<bool, FCheckTokenExist>,
-	is_token_owner: LazyValue<Result<bool, DispatchError>, FCheckTokenOwner>,
-	stored_properties: LazyValue<TokenProperties, FGetProperties>,
+pub struct PropertyWriterLazyTokenInfo<'a> {
+	is_token_exist: LazyValue<'a, bool>,
+	is_token_owner: LazyValue<'a, Result<bool, DispatchError>>,
+	stored_properties: LazyValue<'a, TokenProperties>,
 }
 
-impl<FCheckTokenExist, FCheckTokenOwner, FGetProperties>
-	PropertyWriterLazyTokenInfo<FCheckTokenExist, FCheckTokenOwner, FGetProperties>
-where
-	FCheckTokenExist: FnOnce() -> bool,
-	FCheckTokenOwner: FnOnce() -> Result<bool, DispatchError>,
-	FGetProperties: FnOnce() -> TokenProperties,
-{
+impl<'a> PropertyWriterLazyTokenInfo<'a> {
 	/// Create a lazy token info.
 	pub fn new(
-		check_token_exist: FCheckTokenExist,
-		check_token_owner: FCheckTokenOwner,
-		get_token_properties: FGetProperties,
+		check_token_exist: impl FnOnce() -> bool + 'a,
+		check_token_owner: impl FnOnce() -> Result<bool, DispatchError> + 'a,
+		get_token_properties: impl FnOnce() -> TokenProperties + 'a,
 	) -> Self {
 		Self {
 			is_token_exist: LazyValue::new(check_token_exist),
@@ -2496,14 +2498,7 @@ impl<T: Config> NewTokenPropertyWriter<T> {
 	pub fn new<'a, Handle>(
 		collection: &'a Handle,
 		sender: &'a T::CrossAccountId,
-	) -> PropertyWriter<
-		'a,
-		Self,
-		T,
-		Handle,
-		impl FnOnce() -> bool + 'a,
-		impl FnOnce() -> PropertiesPermissionMap + 'a,
-	>
+	) -> PropertyWriter<'a, Self, T, Handle>
 	where
 		T: Config,
 		Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
@@ -2521,13 +2516,10 @@ impl<T: Config> NewTokenPropertyWriter<T> {
 	}
 }
 
-impl<'a, T, Handle, FIsAdmin, FPropertyPermissions>
-	PropertyWriter<'a, NewTokenPropertyWriter<T>, T, Handle, FIsAdmin, FPropertyPermissions>
+impl<'a, T, Handle> PropertyWriter<'a, NewTokenPropertyWriter<T>, T, Handle>
 where
 	T: Config,
 	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
-	FIsAdmin: FnOnce() -> bool,
-	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
 {
 	/// A function to write properties to a **newly created** token.
 	pub fn write_token_properties(
@@ -2570,14 +2562,7 @@ impl<T: Config> ExistingTokenPropertyWriter<T> {
 	pub fn new<'a, Handle>(
 		collection: &'a Handle,
 		sender: &'a T::CrossAccountId,
-	) -> PropertyWriter<
-		'a,
-		Self,
-		T,
-		Handle,
-		impl FnOnce() -> bool + 'a,
-		impl FnOnce() -> PropertiesPermissionMap + 'a,
-	>
+	) -> PropertyWriter<'a, Self, T, Handle>
 	where
 		Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
 	{
@@ -2594,13 +2579,10 @@ impl<T: Config> ExistingTokenPropertyWriter<T> {
 	}
 }
 
-impl<'a, T, Handle, FIsAdmin, FPropertyPermissions>
-	PropertyWriter<'a, ExistingTokenPropertyWriter<T>, T, Handle, FIsAdmin, FPropertyPermissions>
+impl<'a, T, Handle> PropertyWriter<'a, ExistingTokenPropertyWriter<T>, T, Handle>
 where
 	T: Config,
 	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
-	FIsAdmin: FnOnce() -> bool,
-	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
 {
 	/// A function to write properties to an **already existing** token.
 	pub fn write_token_properties(
@@ -2643,14 +2625,12 @@ pub struct BenchmarkPropertyWriter<T>(PhantomData<T>);
 #[cfg(feature = "runtime-benchmarks")]
 impl<T: Config> BenchmarkPropertyWriter<T> {
 	/// Creates a [`PropertyWriter`] for benchmarking tokens properties writing.
-	pub fn new<'a, Handle, FIsAdmin, FPropertyPermissions>(
+	pub fn new<'a, Handle>(
 		collection: &Handle,
-		collection_lazy_info: PropertyWriterLazyCollectionInfo<FIsAdmin, FPropertyPermissions>,
-	) -> PropertyWriter<Self, T, Handle, FIsAdmin, FPropertyPermissions>
+		collection_lazy_info: PropertyWriterLazyCollectionInfo,
+	) -> PropertyWriter<'a, Self, T, Handle>
 	where
 		Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
-		FIsAdmin: FnOnce() -> bool,
-		FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
 	{
 		PropertyWriter {
 			collection,
@@ -2663,10 +2643,7 @@ impl<T: Config> BenchmarkPropertyWriter<T> {
 	pub fn load_collection_info<Handle>(
 		collection_handle: &Handle,
 		sender: &T::CrossAccountId,
-	) -> PropertyWriterLazyCollectionInfo<
-		impl FnOnce() -> bool,
-		impl FnOnce() -> PropertiesPermissionMap,
-	>
+	) -> PropertyWriterLazyCollectionInfo<'static>
 	where
 		Handle: Deref<Target = CollectionHandle<T>>,
 	{
@@ -2683,11 +2660,7 @@ impl<T: Config> BenchmarkPropertyWriter<T> {
 	pub fn load_token_properties<Handle>(
 		collection: &Handle,
 		token_id: TokenId,
-	) -> PropertyWriterLazyTokenInfo<
-		impl FnOnce() -> bool,
-		impl FnOnce() -> Result<bool, DispatchError>,
-		impl FnOnce() -> TokenProperties,
-	>
+	) -> PropertyWriterLazyTokenInfo
 	where
 		Handle: CommonCollectionOperations<T>,
 	{
@@ -2704,13 +2677,10 @@ impl<T: Config> BenchmarkPropertyWriter<T> {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
-impl<'a, T, Handle, FIsAdmin, FPropertyPermissions>
-	PropertyWriter<'a, BenchmarkPropertyWriter<T>, T, Handle, FIsAdmin, FPropertyPermissions>
+impl<'a, T, Handle> PropertyWriter<'a, BenchmarkPropertyWriter<T>, T, Handle>
 where
 	T: Config,
 	Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
-	FIsAdmin: FnOnce() -> bool,
-	FPropertyPermissions: FnOnce() -> PropertiesPermissionMap,
 {
 	/// A function to benchmark the writing of token properties.
 	pub fn write_token_properties(
@@ -2826,20 +2796,14 @@ pub mod tests {
 		/* 15*/ TestCase::new(1, 1,  1, 1,  0),
 	];
 
-	pub fn check_token_permissions<T, FCA, FTO, FTE>(
+	pub fn check_token_permissions<T: Config>(
 		collection_admin_permitted: bool,
 		token_owner_permitted: bool,
-		is_collection_admin: &mut LazyValue<bool, FCA>,
-		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>, FTO>,
-		check_token_existence: &mut LazyValue<bool, FTE>,
-	) -> DispatchResult
-	where
-		T: Config,
-		FCA: FnOnce() -> bool,
-		FTO: FnOnce() -> Result<bool, DispatchError>,
-		FTE: FnOnce() -> bool,
-	{
-		crate::check_token_permissions::<T, FCA, FTO, FTE>(
+		is_collection_admin: &mut LazyValue<bool>,
+		check_token_ownership: &mut LazyValue<Result<bool, DispatchError>>,
+		check_token_existence: &mut LazyValue<bool>,
+	) -> DispatchResult {
+		crate::check_token_permissions::<T>(
 			collection_admin_permitted,
 			token_owner_permitted,
 			is_collection_admin,
