@@ -354,30 +354,38 @@ pub fn run() -> Result<()> {
 		}
 		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
-			use polkadot_cli::Block;
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+			use polkadot_cli::Block;
+			use sp_io::SubstrateHostFunctions;
+
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
+					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
 						_,
-						default_runtime::RuntimeApi,
-						DefaultRuntimeExecutor,
-						_,
-					>(&config, crate::service::parachain_build_import_queue)?;
+					>(
+						&config,
+						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+					)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
 						_,
-						default_runtime::RuntimeApi,
-						DefaultRuntimeExecutor,
-						_,
-					>(&config, crate::service::parachain_build_import_queue)?;
+					>(
+						&config,
+						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+					)?;
 					let db = partials.backend.expose_db();
 					let storage = partials.backend.expose_storage();
 
