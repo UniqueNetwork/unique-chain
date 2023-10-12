@@ -87,30 +87,29 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use crate::erc_token::ERC20Events;
-use crate::erc::ERC721Events;
+use core::{cmp::Ordering, ops::Deref};
 
-use core::{ops::Deref, cmp::Ordering};
 use evm_coder::ToLog;
 use frame_support::{ensure, storage::with_transaction, transactional};
+pub use pallet::*;
+use pallet_common::{
+	eth::collection_id_to_address, Error as CommonError, Event as CommonEvent,
+	Pallet as PalletCommon,
+};
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
-use pallet_common::{
-	CommonCollectionOperations, Error as CommonError, eth::collection_id_to_address,
-	Event as CommonEvent, Pallet as PalletCommon, SetPropertyMode,
-};
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
-	AccessMode, budget::Budget, CollectionId, CreateCollectionData, mapping::TokenAddressMapping,
-	MAX_REFUNGIBLE_PIECES, Property, PropertyKey, PropertyKeyPermission, PropertyScope,
-	PropertyValue, TokenId, TrySetProperty, PropertiesPermissionMap,
-	CreateRefungibleExMultipleOwners, TokenOwnerError, TokenProperties as TokenPropertiesT,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CreateCollectionData,
+	CreateRefungibleExMultipleOwners, PropertiesPermissionMap, Property, PropertyKey,
+	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TokenOwnerError,
+	TokenProperties as TokenPropertiesT, MAX_REFUNGIBLE_PIECES,
 };
 
-pub use pallet::*;
+use crate::{erc::ERC721Events, erc_token::ERC20Events};
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod common;
@@ -124,13 +123,13 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::{
-		Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key,
-		traits::StorageVersion,
+		pallet_prelude::*, storage::Key, traits::StorageVersion, Blake2_128, Blake2_128Concat,
+		Twox64Concat,
 	};
 	use up_data_structs::{CollectionId, TokenId};
-	use super::weights::WeightInfo;
+
+	use super::{weights::WeightInfo, *};
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -175,7 +174,7 @@ pub mod pallet {
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = TokenPropertiesT,
-		QueryKind = ValueQuery,
+		QueryKind = OptionQuery,
 	>;
 
 	/// Total amount of pieces for token
@@ -292,34 +291,6 @@ impl<T: Config> Pallet<T> {
 	/// - `token`: Token ID.
 	pub fn token_exists(collection: &RefungibleHandle<T>, token: TokenId) -> bool {
 		<TotalSupply<T>>::contains_key((collection.id, token))
-	}
-
-	pub fn set_scoped_token_property(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		property: Property,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |properties| {
-			properties.try_scoped_set(scope, property.key, property.value)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
-	}
-
-	pub fn set_scoped_token_properties(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		properties: impl Iterator<Item = Property>,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |stored_properties| {
-			stored_properties.try_scoped_set_from_iter(scope, properties)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
 	}
 }
 
@@ -533,50 +504,16 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut is_token_owner =
-			pallet_common::LazyValue::new(|| -> Result<bool, DispatchError> {
-				if let SetPropertyMode::NewToken {
-					mint_target_is_sender,
-				} = mode
-				{
-					return Ok(mint_target_is_sender);
-				}
+		let mut property_writer =
+			pallet_common::property_writer_for_existing_token(collection, sender);
 
-				let balance = collection.balance(sender.clone(), token_id);
-				let total_pieces: u128 =
-					Self::total_pieces(collection.id, token_id).unwrap_or(u128::MAX);
-				if balance != total_pieces {
-					return Ok(false);
-				}
-
-				let is_bundle_owner = <PalletStructure<T>>::check_indirectly_owned(
-					sender.clone(),
-					collection.id,
-					token_id,
-					None,
-					nesting_budget,
-				)?;
-
-				Ok(is_bundle_owner)
-			});
-
-		let mut is_token_exist =
-			pallet_common::LazyValue::new(|| Self::token_exists(collection, token_id));
-
-		let stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
-
-		<PalletCommon<T>>::modify_token_properties(
-			collection,
+		property_writer.write_token_properties(
 			sender,
 			token_id,
-			&mut is_token_exist,
 			properties_updates,
-			stored_properties,
-			&mut is_token_owner,
-			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+			nesting_budget,
 			erc::ERC721TokenEvent::TokenChanged {
 				token_id: token_id.into(),
 			}
@@ -602,7 +539,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -610,7 +546,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			mode,
 			nesting_budget,
 		)
 	}
@@ -627,7 +562,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -644,7 +578,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -925,10 +858,14 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
+		let mut property_writer = pallet_common::property_writer_for_new_token(collection, sender);
+
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {
 				let token_id = first_token_id + i as u32 + 1;
 				<TotalSupply<T>>::insert((collection.id, token_id), totals[i]);
+
+				let token = TokenId(token_id);
 
 				let mut mint_target_is_sender = true;
 				for (user, amount) in data.users.iter() {
@@ -939,23 +876,22 @@ impl<T: Config> Pallet<T> {
 					mint_target_is_sender = mint_target_is_sender && sender.conv_eq(user);
 
 					<Balance<T>>::insert((collection.id, token_id, &user), amount);
-					<Owned<T>>::insert((collection.id, &user, TokenId(token_id)), true);
+					<Owned<T>>::insert((collection.id, &user, token), true);
 					<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
 						user,
 						collection.id,
-						TokenId(token_id),
+						token,
 					);
 				}
 
-				if let Err(e) = Self::set_token_properties(
-					collection,
-					sender,
-					TokenId(token_id),
+				if let Err(e) = property_writer.write_token_properties(
+					mint_target_is_sender,
+					token,
 					data.properties.clone().into_iter(),
-					SetPropertyMode::NewToken {
-						mint_target_is_sender,
-					},
-					nesting_budget,
+					erc::ERC721TokenEvent::TokenChanged {
+						token_id: token.into(),
+					}
+					.to_log(T::ContractAddress::get()),
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}
@@ -1461,7 +1397,9 @@ impl<T: Config> Pallet<T> {
 
 	pub fn repair_item(collection: &RefungibleHandle<T>, token: TokenId) -> DispatchResult {
 		<TokenProperties<T>>::mutate((collection.id, token), |properties| {
-			properties.recompute_consumed_space();
+			if let Some(properties) = properties {
+				properties.recompute_consumed_space();
+			}
 		});
 
 		Ok(())

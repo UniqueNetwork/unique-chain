@@ -22,10 +22,9 @@ use alloc::string::{String, ToString};
 use std::string::{String, ToString};
 
 use evm_coder::ERC165Call;
-use evm_core::{ExitError, ExitFatal};
-
-pub use frame_support::weights::Weight;
 pub use evm_coder_substrate_procedural::PreDispatch;
+use evm_core::{ExitError, ExitFatal};
+pub use frame_support::weights::Weight;
 
 /// Execution error, should be convertible between EVM and Substrate.
 #[derive(Debug, Clone)]

@@ -20,26 +20,26 @@ use frame_support::{
 };
 use frame_system::EnsureSigned;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
-use sp_runtime::traits::Convert;
-use xcm::latest::{Weight, Junction::*, Junctions::*, MultiLocation};
-use xcm_executor::XcmExecutor;
-use sp_std::{vec, vec::Vec};
 use pallet_foreign_assets::{CurrencyId, NativeCurrency};
-use crate::{
-	Runtime, RuntimeEvent, RelayChainBlockNumberProvider,
-	runtime_common::config::{
-		xcm::{
-			SelfLocation, Weigher, XcmExecutorConfig, UniversalLocation,
-			xcm_assets::{CurrencyIdConvert},
-		},
-		pallets::TreasuryAccountId,
-		substrate::{MaxLocks, MaxReserves},
-	},
+use sp_runtime::traits::Convert;
+use sp_std::{vec, vec::Vec};
+use staging_xcm::latest::{Junction::*, Junctions::*, MultiLocation, Weight};
+use staging_xcm_executor::XcmExecutor;
+use up_common::{
+	constants::*,
+	types::{AccountId, Balance},
 };
 
-use up_common::{
-	types::{AccountId, Balance},
-	constants::*,
+use crate::{
+	runtime_common::config::{
+		pallets::TreasuryAccountId,
+		substrate::{MaxLocks, MaxReserves},
+		xcm::{
+			xcm_assets::CurrencyIdConvert, SelfLocation, UniversalLocation, Weigher,
+			XcmExecutorConfig,
+		},
+	},
+	RelayChainBlockNumberProvider, Runtime, RuntimeEvent,
 };
 
 // Signed version of balance

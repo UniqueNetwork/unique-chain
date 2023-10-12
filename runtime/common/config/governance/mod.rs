@@ -15,28 +15,30 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	PalletId, parameter_types,
+	pallet_prelude::*,
+	parameter_types,
 	traits::{
-		EnsureOrigin, EqualPrivilegeOnly, EitherOfDiverse, EitherOf, MapSuccess, ConstU16, Polling,
+		ConstU16, EitherOf, EitherOfDiverse, EnsureOrigin, EqualPrivilegeOnly, MapSuccess, Polling,
 	},
 	weights::Weight,
-	pallet_prelude::*,
+	PalletId,
 };
-use frame_system::{EnsureRoot, EnsureNever};
+use frame_system::{EnsureNever, EnsureRoot};
+use pallet_collective::EnsureProportionAtLeast;
 use sp_runtime::{
-	Perbill,
-	traits::{AccountIdConversion, ConstU32, Replace, CheckedSub, Convert},
 	morph_types,
-};
-use crate::{
-	Runtime, RuntimeOrigin, RuntimeEvent, RuntimeCall, OriginCaller, Preimage, Balances, Treasury,
-	Scheduler, Council, TechnicalCommittee,
+	traits::{AccountIdConversion, CheckedSub, ConstU32, Convert, Replace},
+	Perbill,
 };
 pub use up_common::{
-	constants::{UNIQUE, DAYS, HOURS, MINUTES, CENTIUNIQUE},
+	constants::{CENTIUNIQUE, DAYS, HOURS, MINUTES, UNIQUE},
 	types::{AccountId, Balance, BlockNumber},
 };
-use pallet_collective::EnsureProportionAtLeast;
+
+use crate::{
+	Balances, Council, OriginCaller, Preimage, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+	Scheduler, TechnicalCommittee, Treasury,
+};
 
 pub mod council;
 pub use council::*;

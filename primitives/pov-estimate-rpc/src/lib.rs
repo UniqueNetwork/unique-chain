@@ -17,12 +17,10 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use scale_info::TypeInfo;
-use sp_std::vec::Vec;
-
 #[cfg(feature = "std")]
 use serde::Serialize;
-
 use sp_runtime::ApplyExtrinsicResult;
+use sp_std::vec::Vec;
 
 #[cfg_attr(feature = "std", derive(Serialize))]
 #[derive(Debug, TypeInfo)]

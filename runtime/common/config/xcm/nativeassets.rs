@@ -14,30 +14,27 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+use cumulus_primitives_core::XcmContext;
 use frame_support::{
-	traits::{tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT, Get},
+	traits::{tokens::currency::Currency as CurrencyT, Get, OnUnbalanced as OnUnbalancedT},
 	weights::WeightToFeePolynomial,
 };
-use sp_runtime::traits::{CheckedConversion, Zero, Convert};
-use xcm::latest::{
-	AssetId::{Concrete},
-	Fungibility::Fungible as XcmFungible,
-	MultiAsset, Error as XcmError, Weight,
-	Junction::*,
-	MultiLocation,
-	Junctions::*,
-};
-use xcm_builder::{CurrencyAdapter, NativeAsset};
-use xcm_executor::{
-	Assets,
-	traits::{MatchesFungible, WeightTrader},
-};
 use pallet_foreign_assets::{AssetIds, NativeCurrency};
+use sp_runtime::traits::{CheckedConversion, Convert, Zero};
 use sp_std::marker::PhantomData;
-use crate::{Balances, ParachainInfo};
-use super::{LocationToAccountId, RelayLocation};
-
+use staging_xcm::latest::{
+	AssetId::Concrete, Error as XcmError, Fungibility::Fungible as XcmFungible, Junction::*,
+	Junctions::*, MultiAsset, MultiLocation, Weight,
+};
+use staging_xcm_builder::{CurrencyAdapter, NativeAsset};
+use staging_xcm_executor::{
+	traits::{MatchesFungible, WeightTrader},
+	Assets,
+};
 use up_common::types::{AccountId, Balance};
+
+use super::{LocationToAccountId, RelayLocation};
+use crate::{Balances, ParachainInfo};
 
 pub struct OnlySelfCurrency;
 impl<B: TryFrom<u128>> MatchesFungible<B> for OnlySelfCurrency {
@@ -106,7 +103,12 @@ impl<
 		Self(Weight::from_parts(0, 0), Zero::zero(), PhantomData)
 	}
 
-	fn buy_weight(&mut self, _weight: Weight, payment: Assets) -> Result<Assets, XcmError> {
+	fn buy_weight(
+		&mut self,
+		_weight: Weight,
+		payment: Assets,
+		_xcm: &XcmContext,
+	) -> Result<Assets, XcmError> {
 		Ok(payment)
 	}
 }

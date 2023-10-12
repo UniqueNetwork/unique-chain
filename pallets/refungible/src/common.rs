@@ -16,24 +16,25 @@
 
 use core::marker::PhantomData;
 
-use sp_std::collections::btree_map::BTreeMap;
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{
-	CollectionId, TokenId, CreateItemExData, budget::Budget, Property, PropertyKey, PropertyValue,
-	PropertyKeyPermission, CollectionPropertiesVec, CreateRefungibleExMultipleOwners,
-	CreateRefungibleExSingleOwner, TokenOwnerError,
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo, ensure, fail, traits::Get, weights::Weight,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _,
+	init_token_properties_delta, weights::WeightInfo as _, with_weight, CommonCollectionOperations,
+	CommonWeightInfo, RefungibleExtensions,
 };
-use pallet_structure::Error as StructureError;
-use sp_runtime::{DispatchError};
-use sp_std::{vec::Vec, vec};
+use pallet_structure::{Error as StructureError, Pallet as PalletStructure};
+use sp_runtime::DispatchError;
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemExData, CreateRefungibleExMultipleOwners,
+	CreateRefungibleExSingleOwner, Property, PropertyKey, PropertyKeyPermission, PropertyValue,
+	TokenId, TokenOwnerError,
+};
 
 use crate::{
-	AccountBalance, Allowance, Balance, Config, Error, Owned, Pallet, RefungibleHandle,
-	SelfWeightOf, weights::WeightInfo, TokensMinted, TotalSupply, CreateItemData,
+	weights::WeightInfo, AccountBalance, Allowance, Balance, Config, CreateItemData, Error, Owned,
+	Pallet, RefungibleHandle, SelfWeightOf, TokenProperties, TokensMinted, TotalSupply,
 };
 
 macro_rules! max_weight_of {
@@ -45,26 +46,19 @@ macro_rules! max_weight_of {
 	};
 }
 
-fn properties_weight<T: Config>(properties: &CollectionPropertiesVec) -> Weight {
-	if properties.len() > 0 {
-		<CommonWeights<T>>::set_token_properties(properties.len() as u32)
-	} else {
-		Weight::zero()
-	}
-}
-
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
 		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
-			data.iter()
-				.map(|data| match data {
+			init_token_properties_delta::<T, _>(
+				data.iter().map(|data| match data {
 					up_data_structs::CreateItemData::ReFungible(rft_data) => {
-						properties_weight::<T>(&rft_data.properties)
+						rft_data.properties.len() as u32
 					}
-					_ => Weight::zero(),
-				})
-				.fold(Weight::zero(), |a, b| a.saturating_add(b)),
+					_ => 0,
+				}),
+				<SelfWeightOf<T>>::init_token_properties,
+			),
 		)
 	}
 
@@ -72,15 +66,17 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		match call {
 			CreateItemExData::RefungibleMultipleOwners(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(i.users.len() as u32)
-					.saturating_add(properties_weight::<T>(&i.properties))
+					.saturating_add(init_token_properties_delta::<T, _>(
+						[i.properties.len() as u32].into_iter(),
+						<SelfWeightOf<T>>::init_token_properties,
+					))
 			}
 			CreateItemExData::RefungibleMultipleItems(i) => {
 				<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(i.len() as u32)
-					.saturating_add(
-						i.iter()
-							.map(|d| properties_weight::<T>(&d.properties))
-							.fold(Weight::zero(), |a, b| a.saturating_add(b)),
-					)
+					.saturating_add(init_token_properties_delta::<T, _>(
+						i.iter().map(|d| d.properties.len() as u32),
+						<SelfWeightOf<T>>::init_token_properties,
+					))
 			}
 			_ => Weight::zero(),
 		}
@@ -399,7 +395,6 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 				&sender,
 				token_id,
 				properties.into_iter(),
-				pallet_common::SetPropertyMode::ExistingToken,
 				nesting_budget,
 			),
 			weight,
@@ -441,6 +436,17 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		)
 	}
 
+	fn get_token_properties_raw(
+		&self,
+		token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
+		<TokenProperties<T>>::get((self.id, token_id))
+	}
+
+	fn set_token_properties_raw(&self, token_id: TokenId, map: up_data_structs::TokenProperties) {
+		<TokenProperties<T>>::insert((self.id, token_id), map)
+	}
+
 	fn check_nesting(
 		&self,
 		_sender: <T>::CrossAccountId,
@@ -479,19 +485,42 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		<Pallet<T>>::token_owner(self.id, token)
 	}
 
+	fn check_token_indirect_owner(
+		&self,
+		token: TokenId,
+		maybe_owner: &T::CrossAccountId,
+		nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		let balance = self.balance(maybe_owner.clone(), token);
+		let total_pieces: u128 = <Pallet<T>>::total_pieces(self.id, token).unwrap_or(u128::MAX);
+		if balance != total_pieces {
+			return Ok(false);
+		}
+
+		<PalletStructure<T>>::check_indirectly_owned(
+			maybe_owner.clone(),
+			self.id,
+			token,
+			None,
+			nesting_budget,
+		)
+	}
+
 	/// Returns 10 token in no particular order.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
 		<Pallet<T>>::token_owners(self.id, token).unwrap_or_default()
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
-		<Pallet<T>>::token_properties((self.id, token_id))
+		<Pallet<T>>::token_properties((self.id, token_id))?
 			.get(key)
 			.cloned()
 	}
 
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
-		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+		let Some(properties) = <Pallet<T>>::token_properties((self.id, token_id)) else {
+			return vec![];
+		};
 
 		keys.map(|keys| {
 			keys.into_iter()

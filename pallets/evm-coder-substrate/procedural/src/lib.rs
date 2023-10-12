@@ -1,12 +1,12 @@
 use std::result;
 
-use proc_macro2::{TokenStream, Ident};
+use proc_macro2::{Ident, TokenStream};
 use quote::quote;
 use syn::{
-	Error, DeriveInput, Data, Attribute,
+	parenthesized,
 	parse::{Parse, ParseBuffer},
 	spanned::Spanned,
-	Expr, parenthesized,
+	Attribute, Data, DeriveInput, Error, Expr,
 };
 
 type Result<T = TokenStream, E = syn::Error> = result::Result<T, E>;

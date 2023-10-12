@@ -4,9 +4,10 @@ import {usingPlaygrounds} from '../../util';
 import path, {dirname} from 'path';
 import {isInteger, parse} from 'lossless-json';
 import {fileURLToPath} from 'url';
+import config from '../../config';
 
 
-const WS_ENDPOINT = 'ws://localhost:9944';
+const WS_ENDPOINT = config.substrateUrl;
 const DONOR_SEED = '//Alice';
 const UPDATE_IF_VERSION = 942057;
 

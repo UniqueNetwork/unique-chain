@@ -14,13 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use sp_runtime::Perbill;
+use cumulus_primitives_core::relay_chain::MAX_POV_SIZE;
 use frame_support::{
 	parameter_types,
-	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
 };
-use cumulus_primitives_core::relay_chain::MAX_POV_SIZE;
-use crate::types::{BlockNumber, Balance};
+use sp_runtime::Perbill;
+
+use crate::types::{Balance, BlockNumber};
 
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 pub const MILLISECS_PER_RELAY_BLOCK: u64 = 6000;
@@ -28,14 +29,14 @@ pub const MILLISECS_PER_RELAY_BLOCK: u64 = 6000;
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 // These time units are defined in number of blocks.
-pub const MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_BLOCK as BlockNumber);
-pub const HOURS: BlockNumber = MINUTES * 60;
-pub const DAYS: BlockNumber = HOURS * 24;
+pub const MINUTES: u32 = 60_000 / (MILLISECS_PER_BLOCK as u32);
+pub const HOURS: u32 = MINUTES * 60;
+pub const DAYS: u32 = HOURS * 24;
 
 // These time units are defined in number of relay blocks.
-pub const RELAY_MINUTES: BlockNumber = 60_000 / (MILLISECS_PER_RELAY_BLOCK as BlockNumber);
-pub const RELAY_HOURS: BlockNumber = RELAY_MINUTES * 60;
-pub const RELAY_DAYS: BlockNumber = RELAY_HOURS * 24;
+pub const RELAY_MINUTES: u32 = 60_000 / (MILLISECS_PER_RELAY_BLOCK as u32);
+pub const RELAY_HOURS: u32 = RELAY_MINUTES * 60;
+pub const RELAY_DAYS: u32 = RELAY_HOURS * 24;
 
 pub const MICROUNIQUE: Balance = 1_000_000_000_000;
 pub const MILLIUNIQUE: Balance = 1_000 * MICROUNIQUE;
@@ -52,10 +53,10 @@ pub const MAX_COLLATORS: u32 = 10;
 pub const SESSION_LENGTH: BlockNumber = HOURS;
 
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/76_840_511_488_584_762/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/77_334_604_063_436_322/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_906_626_161_453/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_920_639_188_722/*</mingasprice>*/;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.

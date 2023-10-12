@@ -16,14 +16,11 @@
 
 import {IKeyringPair} from '@polkadot/types/types';
 import config from '../config';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util';
+import {Event} from '../util/playgrounds/unique.dev';
+import {hexToString, nToBigInt} from '@polkadot/util';
+import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
 
-const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
-const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
-const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
-const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
-const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
 
 const STATEMINT_PALLET_INSTANCE = 50;
 
@@ -32,6 +29,7 @@ const statemintUrl = config.statemintUrl;
 const acalaUrl = config.acalaUrl;
 const moonbeamUrl = config.moonbeamUrl;
 const astarUrl = config.astarUrl;
+const polkadexUrl = config.polkadexUrl;
 
 const RELAY_DECIMALS = 12;
 const STATEMINT_DECIMALS = 12;
@@ -51,8 +49,6 @@ const USDT_ASSET_METADATA_NAME = 'USDT';
 const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
-
-const SAFE_XCM_VERSION = 2;
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
@@ -498,8 +494,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
         decimals: 18,
         minimalBalance: 1250000000000000000n,
       };
+      const assets = (await (helper.callRpc('api.query.assetRegistry.assetMetadatas.entries'))).map(([_k, v] : [any, any]) =>
+        hexToString(v.toJSON()['symbol'])) as string[];
 
-      await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
+      if(!assets.includes('UNQ')) {
+        await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
+      } else {
+        console.log('UNQ token already registered on Acala assetRegistry pallet');
+      }
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
       balanceAcalaTokenInit = await helper.balance.getSubstrate(randomAccount.address);
       balanceUniqueForeignTokenInit = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
@@ -659,15 +661,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     let targetAccountBalance = 0n;
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
-    const uniqueMultilocation = {
-      V2: {
-        parents: 1,
-        interior: {
-          X1: {Parachain: UNIQUE_CHAIN},
-        },
-      },
-    };
-
     const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
       targetAccount.addressRaw,
       {
@@ -684,7 +677,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     // Try to trick Unique
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -709,7 +702,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
     );
 
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, validXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
@@ -735,16 +728,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -785,6 +769,238 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
 
     await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == maliciousXcmProgramHereIdSent.messageHash
         && event.outcome.isUntrustedReserveLocation);
+
+    accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+  });
+});
+
+describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+  let unqFees: bigint;
+  let balanceUniqueTokenInit: bigint;
+  let balanceUniqueTokenMiddle: bigint;
+  let balanceUniqueTokenFinal: bigint;
+  const maxWaitBlocks = 6;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', []))
+        .toJSON() as [])
+        .map(nToBigInt).length != 0;
+      /*
+      Check whether the Unique token has been added
+      to the whitelist, since an error will occur
+      if it is added again. Needed for debugging
+      when this test is run multiple times.
+      */
+      if(isWhitelisted) {
+        console.log('UNQ token is already whitelisted on Polkadex');
+      } else {
+        await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
+      }
+
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+    });
+
+    await usingPlaygrounds(async (helper) => {
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10n * TRANSFER_AMOUNT);
+      balanceUniqueTokenInit = await helper.balance.getSubstrate(randomAccount.address);
+    });
+  });
+
+  itSub('Should connect and send UNQ to Polkadex', async ({helper}) => {
+
+    const destination = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: POLKADEX_CHAIN,
+          },
+        },
+      },
+    };
+
+    const beneficiary = {
+      V2: {
+        parents: 0,
+        interior: {
+          X1: {
+            AccountId32: {
+              network: 'Any',
+              id: randomAccount.addressRaw,
+            },
+          },
+        },
+      },
+    };
+
+    const assets = {
+      V2: [
+        {
+          id: {
+            Concrete: {
+              parents: 0,
+              interior: 'Here',
+            },
+          },
+          fun: {
+            Fungible: TRANSFER_AMOUNT,
+          },
+        },
+      ],
+    };
+
+    const feeAssetItem = 0;
+
+    await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
+    const messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
+
+    unqFees = balanceUniqueTokenInit - balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
+    console.log('[Unique -> Polkadex] transaction fees on Unique: %s UNQ', helper.util.bigIntToDecimals(unqFees));
+    expect(unqFees > 0n, 'Negative fees UNQ, looks like nothing was transferred').to.be.true;
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      /*
+        Since only the parachain part of the Polkadex
+        infrastructure is launched (without their
+        solochain validators), processing incoming
+        assets will lead to an error.
+        This error indicates that the Polkadex chain
+        received a message from the Unique network,
+        since the hash is being checked to ensure
+        it matches what was sent.
+      */
+      await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
+    });
+  });
+
+
+  itSub('Should connect to Polkadex and send UNQ back', async ({helper}) => {
+
+    const xcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      randomAccount.addressRaw,
+      uniqueAssetId,
+      TRANSFER_AMOUNT,
+    );
+
+    let xcmProgramSent: any;
+
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, xcmProgram);
+
+      xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == xcmProgramSent.messageHash);
+
+    balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccount.address);
+
+    expect(balanceUniqueTokenFinal).to.be.equal(balanceUniqueTokenInit - unqFees);
+  });
+
+  itSub('Polkadex can send only up to its balance', async ({helper}) => {
+    const polkadexBalance = 10000n * (10n ** UNQ_DECIMALS);
+    const polkadexSovereignAccount = helper.address.paraSiblingSovereignAccount(POLKADEX_CHAIN);
+    await helper.getSudo().balance.setBalanceSubstrate(alice, polkadexSovereignAccount, polkadexBalance);
+    const moreThanPolkadexHas = 2n * polkadexBalance;
+
+    const targetAccount = helper.arrange.createEmptyAccount();
+
+    const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      moreThanPolkadexHas,
+    );
+
+    let maliciousXcmProgramSent: any;
+
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
+
+      maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectFailedToTransact(helper, maliciousXcmProgramSent);
+
+    const targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(targetAccountBalance).to.be.equal(0n);
+  });
+
+  itSub('Should not accept reserve transfer of UNQ from Polkadex', async ({helper}) => {
+    const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
+    const targetAccount = helper.arrange.createEmptyAccount();
+
+    const uniqueMultilocation = {
+      V2: {
+        parents: 1,
+        interior: {
+          X1: {
+            Parachain: UNIQUE_CHAIN,
+          },
+        },
+      },
+    };
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      uniqueAssetId,
+      testAmount,
+    );
+
+    const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      targetAccount.addressRaw,
+      {
+        Concrete: {
+          parents: 0,
+          interior: 'Here',
+        },
+      },
+      testAmount,
+    );
+
+    let maliciousXcmProgramFullIdSent: any;
+    let maliciousXcmProgramHereIdSent: any;
+    const maxWaitBlocks = 3;
+
+    // Try to trick Unique using full UNQ identification
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
+
+      maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramFullIdSent);
+
+    let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
+    expect(accountBalance).to.be.equal(0n);
+
+    // Try to trick Unique using shortened UNQ identification
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
+
+      maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramHereIdSent);
 
     accountBalance = await helper.balance.getSubstrate(targetAccount.address);
     expect(accountBalance).to.be.equal(0n);
@@ -868,10 +1084,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     });
   });
 
-  const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
-  };
+
 
   itSub('Unique rejects ACA tokens from Acala', async ({helper}) => {
     await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
@@ -925,6 +1138,31 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
         feeAssetItem,
       ]);
 
+      messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
+    });
+
+    await expectFailedToTransact(helper, messageSent);
+  });
+
+  itSub('Unique rejects PDX tokens from Polkadex', async ({helper}) => {
+
+    const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+      helper.arrange.createEmptyAccount().addressRaw,
+      {
+        Concrete: {
+          parents: 1,
+          interior: {
+            X1: {
+              Parachain: POLKADEX_CHAIN,
+            },
+          },
+        },
+      },
+      testAmount,
+    );
+
+    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+      await helper.getSudo().xcm.send(alice, uniqueParachainMultilocation, maliciousXcmProgramFullId);
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
@@ -996,24 +1234,27 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       const unitsPerSecond = 1n;
       const numAssetsWeightHint = 0;
 
-      const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
-        location: uniqueAssetLocation,
-        metadata: uniqueAssetMetadata,
-        existentialDeposit,
-        isSufficient,
-        unitsPerSecond,
-        numAssetsWeightHint,
-      });
+      if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON()) {
+        console.log('Unique asset is already registered on MoonBeam');
+      } else {
+        const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
+          location: uniqueAssetLocation,
+          metadata: uniqueAssetMetadata,
+          existentialDeposit,
+          isSufficient,
+          unitsPerSecond,
+          numAssetsWeightHint,
+        });
 
-      console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
+        console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
 
-      await helper.fastDemocracy.executeProposal('register UNQ foreign asset', encodedProposal);
+        await helper.fastDemocracy.executeProposal('register UNQ foreign asset', encodedProposal);
+      }
 
       // >>> Acquire Unique AssetId Info on Moonbeam >>>
       console.log('Acquire Unique AssetId Info on Moonbeam.......');
 
       assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
-
       console.log('UNQ asset ID is %s', assetId);
       console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
       // >>> Acquire Unique AssetId Info on Moonbeam >>>
@@ -1061,7 +1302,6 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
       await helper.wait.newBlocks(3);
-
       balanceGlmrTokenMiddle = await helper.balance.getEthereum(randomAccountMoonbeam.address);
 
       const glmrFees = balanceGlmrTokenInit - balanceGlmrTokenMiddle;
@@ -1148,15 +1388,6 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     let targetAccountBalance = 0n;
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
-    const uniqueMultilocation = {
-      V2: {
-        parents: 1,
-        interior: {
-          X1: {Parachain: UNIQUE_CHAIN},
-        },
-      },
-    };
-
     const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
       targetAccount.addressRaw,
       {
@@ -1173,7 +1404,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     // Try to trick Unique
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgram]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgram]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1202,7 +1433,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     );
 
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, validXcmProgram]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, validXcmProgram]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1219,29 +1450,9 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
     const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
-    const uniqueMultilocation = {
-      V2: {
-        parents: 1,
-        interior: {
-          X1: {
-            Parachain: UNIQUE_CHAIN,
-          },
-        },
-      },
-    };
-
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 0,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -1262,7 +1473,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     // Try to trick Unique using full UNQ identification
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramFullId]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramFullId]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1279,7 +1490,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
 
     // Try to trick Unique using shortened UNQ identification
     await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
-      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueMultilocation, maliciousXcmProgramHereId]);
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [uniqueVersionedMultilocation, maliciousXcmProgramHereId]);
 
       // Needed to bypass the call filter.
       const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -1300,18 +1511,18 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
-  const UNQ_ASSET_ID_ON_ASTAR = 1;
-  const UNQ_MINIMAL_BALANCE_ON_ASTAR = 1n;
+  const UNQ_ASSET_ID_ON_ASTAR = 18_446_744_073_709_551_631n; // The value is taken from the live Astar
+  const UNQ_MINIMAL_BALANCE_ON_ASTAR = 1n; // The value is taken from the live Astar
 
   // Unique -> Astar
   const astarInitialBalance = 1n * (10n ** ASTAR_DECIMALS); // 1 ASTR, existential deposit required to actually create the account on Astar.
-  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
+  const unitsPerSecond = 9_451_000_000_000_000_000n; // The value is taken from the live Astar
   const unqToAstarTransferred = 10n * (10n ** UNQ_DECIMALS); // 10 UNQ
-  const unqToAstarArrived = 9_999_999_999_088_000_000n; // 9.999 ... UNQ, Astar takes a commision in foreign tokens
+  const unqToAstarArrived = 9_962_196_000_000_000_000n; // 9.962 ... UNQ, Astar takes a commision in foreign tokens
 
   // Astar -> Unique
   const unqFromAstarTransfered = 5n * (10n ** UNQ_DECIMALS); // 5 UNQ
-  const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.999_999_999_088_000_000n UNQ
+  const unqOnAstarLeft = unqToAstarArrived - unqFromAstarTransfered; // 4.962_219_600_000_000_000n UNQ
 
   let balanceAfterUniqueToAstarXCM: bigint;
 
@@ -1326,40 +1537,42 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     });
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      console.log('1. Create foreign asset and metadata');
-      // TODO update metadata with values from production
-      await helper.assets.create(
-        alice,
-        UNQ_ASSET_ID_ON_ASTAR,
-        alice.address,
-        UNQ_MINIMAL_BALANCE_ON_ASTAR,
-      );
+      if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
+        console.log('1. Create foreign asset and metadata');
+        await helper.getSudo().assets.forceCreate(
+          alice,
+          UNQ_ASSET_ID_ON_ASTAR,
+          alice.address,
+          UNQ_MINIMAL_BALANCE_ON_ASTAR,
+        );
 
-      await helper.assets.setMetadata(
-        alice,
-        UNQ_ASSET_ID_ON_ASTAR,
-        'Cross chain UNQ',
-        'xcUNQ',
-        Number(UNQ_DECIMALS),
-      );
+        await helper.assets.setMetadata(
+          alice,
+          UNQ_ASSET_ID_ON_ASTAR,
+          'Unique Network',
+          'UNQ',
+          Number(UNQ_DECIMALS),
+        );
 
-      console.log('2. Register asset location on Astar');
-      const assetLocation = {
-        V2: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
+        console.log('2. Register asset location on Astar');
+        const assetLocation = {
+          V2: {
+            parents: 1,
+            interior: {
+              X1: {
+                Parachain: UNIQUE_CHAIN,
+              },
             },
           },
-        },
-      };
+        };
 
-      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_ASTAR]);
+        await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, UNQ_ASSET_ID_ON_ASTAR]);
 
-      console.log('3. Set UNQ payment for XCM execution on Astar');
-      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
-
+        console.log('3. Set UNQ payment for XCM execution on Astar');
+        await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+      } else {
+        console.log('UNQ is already registered on Astar');
+      }
       console.log('4. Transfer 1 ASTR to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, randomAccount.address, astarInitialBalance);
     });
@@ -1517,15 +1730,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     let targetAccountBalance = 0n;
     const [targetAccount] = await helper.arrange.createAccounts([targetAccountBalance], alice);
 
-    const uniqueMultilocation = {
-      V2: {
-        parents: 1,
-        interior: {
-          X1: {Parachain: UNIQUE_CHAIN},
-        },
-      },
-    };
-
     const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
       targetAccount.addressRaw,
       {
@@ -1542,7 +1746,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // Try to trick Unique
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgram);
 
       maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -1567,7 +1771,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     );
 
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, validXcmProgram);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, validXcmProgram);
     });
 
     await helper.wait.newBlocks(maxWaitBlocks);
@@ -1580,29 +1784,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
     const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
     const [targetAccount] = await helper.arrange.createAccounts([0n], alice);
 
-    const uniqueMultilocation = {
-      V2: {
-        parents: 1,
-        interior: {
-          X1: {
-            Parachain: UNIQUE_CHAIN,
-          },
-        },
-      },
-    };
-
     const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
       targetAccount.addressRaw,
-      {
-        Concrete: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
-          },
-        },
-      },
+      uniqueAssetId,
       testAmount,
     );
 
@@ -1623,7 +1807,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // Try to trick Unique using full UNQ identification
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramFullId);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgramFullId);
 
       maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
@@ -1636,7 +1820,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
     // Try to trick Unique using shortened UNQ identification
     await usingAstarPlaygrounds(astarUrl, async (helper) => {
-      await helper.getSudo().xcm.send(alice, uniqueMultilocation, maliciousXcmProgramHereId);
+      await helper.getSudo().xcm.send(alice, uniqueVersionedMultilocation, maliciousXcmProgramHereId);
 
       maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });

@@ -5,12 +5,14 @@
 macro_rules! bondrewd_codec {
 	($T:ty) => {
 		impl Encode for $T {
-			fn encode_to<O: codec::Output + ?Sized>(&self, dest: &mut O) {
+			fn encode_to<O: parity_scale_codec::Output + ?Sized>(&self, dest: &mut O) {
 				dest.write(&self.into_bytes())
 			}
 		}
-		impl codec::Decode for $T {
-			fn decode<I: codec::Input + ?Sized>(from: &mut I) -> Result<Self, codec::Error> {
+		impl parity_scale_codec::Decode for $T {
+			fn decode<I: parity_scale_codec::Input + ?Sized>(
+				from: &mut I,
+			) -> Result<Self, parity_scale_codec::Error> {
 				let mut bytes = [0; Self::BYTE_SIZE];
 				from.read(&mut bytes)?;
 				Ok(Self::from_bytes(bytes))

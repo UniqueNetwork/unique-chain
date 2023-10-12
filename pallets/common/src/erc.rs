@@ -16,15 +16,17 @@
 
 //! This module contains the implementation of pallet methods for evm.
 
-pub use pallet_evm::{PrecompileOutput, PrecompileResult, PrecompileHandle, account::CrossAccountId};
+pub use pallet_evm::{
+	account::CrossAccountId, PrecompileHandle, PrecompileOutput, PrecompileResult,
+};
 use pallet_evm_coder_substrate::{
 	abi::AbiType,
-	solidity_interface, ToLog,
+	dispatch_to_evm,
+	execution::{Error, PreDispatch, Result},
+	frontier_contract, solidity_interface,
 	types::*,
-	execution::{Result, Error, PreDispatch},
-	frontier_contract,
+	ToLog,
 };
-use pallet_evm_coder_substrate::dispatch_to_evm;
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property, SponsoringRateLimit,
@@ -32,7 +34,7 @@ use up_data_structs::{
 };
 
 use crate::{
-	Pallet, CollectionHandle, Config, CollectionProperties, eth, SelfWeightOf, weights::WeightInfo,
+	eth, weights::WeightInfo, CollectionHandle, CollectionProperties, Config, Pallet, SelfWeightOf,
 };
 
 frontier_contract! {
@@ -727,10 +729,9 @@ where
 
 /// Contains static property keys and values.
 pub mod static_property {
-	use pallet_evm_coder_substrate::{
-		execution::{Result, Error},
-	};
 	use alloc::format;
+
+	use pallet_evm_coder_substrate::execution::{Error, Result};
 
 	const EXPECT_CONVERT_ERROR: &str = "length < limit";
 

@@ -1,22 +1,24 @@
-use sp_core::{U256, H160};
 use frame_support::{
-	weights::{Weight, constants::WEIGHT_REF_TIME_PER_SECOND},
-	traits::{FindAuthor},
-	parameter_types, ConsensusEngineId,
+	parameter_types,
+	traits::FindAuthor,
+	weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},
+	ConsensusEngineId,
 };
-use sp_runtime::{RuntimeAppPublic, Perbill, traits::ConstU32};
+use pallet_ethereum::PostLogContent;
+use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
+use sp_core::{H160, U256};
+use sp_runtime::{traits::ConstU32, Perbill, RuntimeAppPublic};
+use up_common::constants::*;
+
 use crate::{
 	runtime_common::{
 		config::sponsoring::DefaultSponsoringRateLimit,
-		DealWithFees,
 		dispatch::CollectionDispatchT,
 		ethereum::{precompiles::UniquePrecompiles, sponsoring::EvmSponsorshipHandler},
+		DealWithFees,
 	},
-	Runtime, Aura, Balances, RuntimeEvent, ChainId,
+	Aura, Balances, ChainId, Runtime, RuntimeEvent,
 };
-use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
-use pallet_ethereum::PostLogContent;
-use up_common::constants::*;
 
 pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
@@ -87,12 +89,13 @@ impl pallet_evm::Config for Runtime {
 	type OnCreate = pallet_evm_contract_helpers::HelpersOnCreate<Self>;
 	type ChainId = ChainId;
 	type Runner = pallet_evm::runner::stack::Runner<Self>;
-	type OnChargeTransaction = pallet_evm::EVMCurrencyAdapter<Balances, DealWithFees>;
-	type TransactionValidityHack = pallet_evm_transaction_payment::TransactionValidityHack<Self>;
+	type OnChargeTransaction =
+		pallet_evm_transaction_payment::WrappedEVMCurrencyAdapter<Balances, DealWithFees>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
 	type Timestamp = crate::Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type GasLimitPovSizeRatio = ProofSizePerGas;
+	type OnCheckEvmTransaction = pallet_evm_transaction_payment::TransactionValidity<Self>;
 }
 
 impl pallet_evm_migration::Config for Runtime {

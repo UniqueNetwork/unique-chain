@@ -2,13 +2,13 @@
 
 use frame_support::{
 	dispatch::{
-		DispatchResultWithPostInfo, PostDispatchInfo, Weight, DispatchErrorWithPostInfo,
-		DispatchResult,
+		DispatchErrorWithPostInfo, DispatchResult, DispatchResultWithPostInfo, Pays,
+		PostDispatchInfo,
 	},
-	dispatch::Pays,
 	traits::Get,
 };
 use sp_runtime::DispatchError;
+use sp_weights::Weight;
 use up_data_structs::{CollectionId, CreateCollectionData};
 
 use crate::{pallet::Config, CommonCollectionOperations};

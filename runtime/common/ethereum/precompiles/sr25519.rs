@@ -17,8 +17,7 @@
 use fp_evm::{Context, ExitSucceed, PrecompileHandle, PrecompileOutput};
 use pallet_evm::Precompile;
 use sp_core::{crypto::UncheckedFrom, sr25519, H256};
-use sp_std::marker::PhantomData;
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 
 use super::utils::{Bytes, EvmDataReader, EvmDataWriter, EvmResult, FunctionModifier, Gasometer};
 

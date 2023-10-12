@@ -18,32 +18,35 @@
 
 extern crate alloc;
 use core::marker::PhantomData;
+
 use evm_coder::{
-	abi::{AbiType, AbiEncode},
+	abi::{AbiEncode, AbiType},
 	generate_stubgen, solidity_interface,
 	types::*,
 	ToLog,
 };
+use frame_support::traits::Get;
+use frame_system::pallet_prelude::*;
 use pallet_common::eth;
 use pallet_evm::{
-	ExitRevert, OnCreate, OnMethodCall, PrecompileResult, PrecompileFailure, PrecompileHandle,
-	account::CrossAccountId,
+	account::CrossAccountId, ExitRevert, OnCreate, OnMethodCall, PrecompileFailure,
+	PrecompileHandle, PrecompileResult,
 };
 use pallet_evm_coder_substrate::{
-	SubstrateRecorder, WithRecorder, dispatch_to_evm,
-	execution::{Result, PreDispatch},
-	frontier_contract,
+	dispatch_to_evm,
+	execution::{PreDispatch, Result},
+	frontier_contract, SubstrateRecorder, WithRecorder,
 };
 use pallet_evm_transaction_payment::CallContext;
 use sp_core::{H160, U256};
-use up_data_structs::SponsorshipState;
-use crate::{
-	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, SponsoringFeeLimit,
-	SponsoringRateLimit, SponsoringModeT, Sponsoring,
-};
-use frame_support::traits::Get;
-use up_sponsorship::SponsorshipHandler;
 use sp_std::vec::Vec;
+use up_data_structs::SponsorshipState;
+use up_sponsorship::SponsorshipHandler;
+
+use crate::{
+	AllowlistEnabled, Config, Owner, Pallet, SponsorBasket, Sponsoring, SponsoringFeeLimit,
+	SponsoringModeT, SponsoringRateLimit,
+};
 
 frontier_contract! {
 	macro_rules! ContractHelpers_result {...}
@@ -422,7 +425,7 @@ impl<T: Config> SponsorshipHandler<T::CrossAccountId, CallContext>
 		{
 			return None;
 		}
-		let block_number = <frame_system::Pallet<T>>::block_number() as T::BlockNumber;
+		let block_number = <frame_system::Pallet<T>>::block_number() as BlockNumberFor<T>;
 
 		if let Some(last_tx_block) = <SponsorBasket<T>>::get(contract_address, who.as_eth()) {
 			let limit = <SponsoringRateLimit<T>>::get(contract_address);

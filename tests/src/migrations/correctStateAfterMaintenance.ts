@@ -1,8 +1,9 @@
+import config from '../config';
 import {usingPlaygrounds} from '../util';
 
 
 
-const WS_ENDPOINT = 'ws://localhost:9944';
+const WS_ENDPOINT = config.substrateUrl;
 const DONOR_SEED = '//Alice';
 
 export const main = async(options: { wsEndpoint: string; donorSeed: string } = {

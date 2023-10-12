@@ -192,19 +192,22 @@ describe('Integration Test: Maintenance Functionality', () => {
       const blocksToWait = 6;
 
       // Scheduling works before the maintenance
-      await nftBeforeMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdBeforeMM})
-        .transfer(bob, {Substrate: superuser.address});
+      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdBeforeMM})
+        .nft.transferToken(bob, collection.collectionId, nftBeforeMM.tokenId, {Substrate: superuser.address});
+
 
       await helper.wait.newBlocks(blocksToWait + 1);
       expect(await nftBeforeMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
 
       // Schedule a transaction that should occur *during* the maintenance
-      await nftDuringMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdDuringMM})
-        .transfer(bob, {Substrate: superuser.address});
+      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdDuringMM})
+        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address});
+
 
       // Schedule a transaction that should occur *after* the maintenance
-      await nftDuringMM.scheduleAfter(blocksToWait * 2, {scheduledId: scheduledIdBunkerThroughMM})
-        .transfer(bob, {Substrate: superuser.address});
+      await helper.scheduler.scheduleAfter(blocksToWait * 2, {scheduledId: scheduledIdBunkerThroughMM})
+        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address});
+
 
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.enable', []);
       expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
@@ -214,16 +217,16 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(await nftDuringMM.getOwner()).to.be.deep.equal({Substrate: bob.address});
 
       // Any attempts to schedule a tx during the MM should be rejected
-      await expect(nftDuringMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAttemptDuringMM})
-        .transfer(bob, {Substrate: superuser.address}))
+      await expect(helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAttemptDuringMM})
+        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address}))
         .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
 
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
       expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
 
       // Scheduling works after the maintenance
-      await nftAfterMM.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAfterMM})
-        .transfer(bob, {Substrate: superuser.address});
+      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAfterMM})
+        .nft.transferToken(bob, collection.collectionId, nftAfterMM.tokenId, {Substrate: superuser.address});
 
       await helper.wait.newBlocks(blocksToWait + 1);
 
@@ -276,87 +279,6 @@ describe('Integration Test: Maintenance Functionality', () => {
           await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
         }
         expect(await maintenanceEnabled(helper.getApi()), 'Disastrous! Exited the test suite with maintenance mode on.').to.be.false;
-      });
-    });
-  });
-
-  describe('Preimage Execution', () => {
-    const preimageHashes: string[] = [];
-
-    before(async function() {
-      await usingPlaygrounds(async (helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.Preimage, Pallets.Maintenance]);
-
-        // create a preimage to be operated with in the tests
-        const randomAccounts = await helper.arrange.createCrowd(10, 0n, superuser);
-        const randomIdentities = randomAccounts.map((acc, i) => [
-          acc.address, {
-            deposit: 0n,
-            judgements: [],
-            info: {
-              display: {
-                raw: `Random Account #${i}`,
-              },
-            },
-          },
-        ]);
-        const preimage = helper.constructApiCall('api.tx.identity.forceInsertIdentities', [randomIdentities]).method.toHex();
-        preimageHashes.push(await helper.preimage.notePreimage(bob, preimage, true));
-      });
-    });
-
-    itSub('Successfully executes call in a preimage', async ({helper}) => {
-      const result = await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.fulfilled;
-
-      // preimage is executed, and an appropriate event is present
-      const events = result.result.events.filter((x: any) => x.event.method === 'IdentitiesInserted' && x.event.section === 'identity');
-      expect(events.length).to.be.equal(1);
-
-      // the preimage goes back to being unrequested
-      expect(await helper.preimage.getPreimageInfo(preimageHashes[0])).to.have.property('unrequested');
-    });
-
-    itSub('Does not allow execution of a preimage that would fail', async ({helper}) => {
-      const [zeroAccount] = await helper.arrange.createAccounts([0n], superuser);
-
-      const preimage = helper.constructApiCall('api.tx.balances.forceTransfer', [
-        {Id: zeroAccount.address}, {Id: superuser.address}, 1000n,
-      ]).method.toHex();
-      const preimageHash = await helper.preimage.notePreimage(bob, preimage, true);
-      preimageHashes.push(preimageHash);
-
-      await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHash, {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/^Token: FundsUnavailable$/);
-    });
-
-    itSub('Does not allow preimage execution with non-root', async ({helper}) => {
-      await expect(helper.executeExtrinsic(bob, 'api.tx.maintenance.executePreimage', [
-        preimageHashes[0], {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/^Misc: BadOrigin$/);
-    });
-
-    itSub('Does not allow execution of non-existent preimages', async ({helper}) => {
-      await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        '0x1010101010101010101010101010101010101010101010101010101010101010', {refTime: 10000000000, proofSize: 10000},
-      ])).to.be.rejectedWith(/^Misc: Unavailable$/);
-    });
-
-    itSub('Does not allow preimage execution with less than minimum weights', async ({helper}) => {
-      await expect(helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.executePreimage', [
-        preimageHashes[0], {refTime: 1000, proofSize: 100},
-      ])).to.be.rejectedWith(/^Misc: Exhausted$/);
-    });
-
-    after(async function() {
-      await usingPlaygrounds(async (helper) => {
-        if(helper.fetchMissingPalletNames([Pallets.Preimage, Pallets.Maintenance]).length != 0) return;
-
-        for(const hash of preimageHashes) {
-          await helper.preimage.unnotePreimage(bob, hash);
-        }
       });
     });
   });

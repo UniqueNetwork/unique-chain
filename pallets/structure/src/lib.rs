@@ -53,29 +53,31 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use pallet_common::CommonCollectionOperations;
-use pallet_common::{erc::CrossAccountId, eth::is_collection};
+use frame_support::{
+	dispatch::{DispatchResult, DispatchResultWithPostInfo},
+	fail,
+	pallet_prelude::*,
+};
+use pallet_common::{
+	dispatch::CollectionDispatch, erc::CrossAccountId, eth::is_collection,
+	CommonCollectionOperations,
+};
 use sp_std::collections::btree_set::BTreeSet;
-
-use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
-use frame_support::fail;
-pub use pallet::*;
-use pallet_common::{dispatch::CollectionDispatch};
 use up_data_structs::{
-	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
+	budget::Budget, mapping::TokenAddressMapping, CollectionId, TokenId, TokenOwnerError,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod weights;
 
+pub use pallet::*;
+
 pub type SelfWeightOf<T> = <T as crate::Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::Parameter;
-	use frame_support::dispatch::{GetDispatchInfo, UnfilteredDispatchable};
-	use frame_support::pallet_prelude::*;
+	use frame_support::{dispatch::GetDispatchInfo, traits::UnfilteredDispatchable, Parameter};
 
 	use super::*;
 

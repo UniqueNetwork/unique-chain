@@ -17,34 +17,35 @@
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
 use core::{convert::TryInto, marker::PhantomData};
-use evm_coder::{Call};
-use pallet_common::{CollectionHandle, eth::map_eth_to_id};
+
+use evm_coder::Call;
+use pallet_common::{eth::map_eth_to_id, CollectionHandle};
 use pallet_evm::account::CrossAccountId;
 use pallet_evm_transaction_payment::CallContext;
-use pallet_nonfungible::{
-	Config as NonfungibleConfig, Pallet as NonfungiblePallet, NonfungibleHandle,
-	erc::{
-		UniqueNFTCall, ERC721UniqueExtensionsCall, ERC721UniqueMintableCall, ERC721Call,
-		TokenPropertiesCall,
-	},
-};
 use pallet_fungible::{
+	erc::{ERC20Call, UniqueFungibleCall},
 	Config as FungibleConfig,
-	erc::{UniqueFungibleCall, ERC20Call},
+};
+use pallet_nonfungible::{
+	erc::{
+		ERC721Call, ERC721UniqueExtensionsCall, ERC721UniqueMintableCall, TokenPropertiesCall,
+		UniqueNFTCall,
+	},
+	Config as NonfungibleConfig, NonfungibleHandle, Pallet as NonfungiblePallet,
 };
 use pallet_refungible::{
-	Config as RefungibleConfig,
 	erc::UniqueRefungibleCall,
 	erc_token::{RefungibleTokenHandle, UniqueRefungibleTokenCall},
-	RefungibleHandle,
+	Config as RefungibleConfig, RefungibleHandle,
 };
 use pallet_unique::Config as UniqueConfig;
 use sp_std::prelude::*;
 use up_data_structs::{
-	CollectionMode, CreateItemData, CreateNftData, mapping::TokenAddressMapping, TokenId,
+	mapping::TokenAddressMapping, CollectionMode, CreateItemData, CreateNftData, TokenId,
 };
 use up_sponsorship::SponsorshipHandler;
-use crate::{Runtime, runtime_common::sponsoring::*};
+
+use crate::{runtime_common::sponsoring::*, Runtime};
 
 mod refungible;
 
@@ -206,9 +207,9 @@ where
 }
 
 mod common {
-	use super::*;
+	use pallet_common::erc::CollectionCall;
 
-	use pallet_common::erc::{CollectionCall};
+	use super::*;
 
 	pub fn collection_call_sponsor<T>(
 		call: CollectionCall<T>,

@@ -15,20 +15,21 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use frame_support::{weights::Weight};
-use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight, RefungibleExtensionsWeightInfo};
 
+use frame_support::weights::Weight;
 use pallet_balances_adapter::{
-	Config as NativeFungibleConfig, common::CommonWeights as NativeFungibleWeights,
+	common::CommonWeights as NativeFungibleWeights, Config as NativeFungibleConfig,
 };
-use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
-use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
-
+use pallet_common::{dispatch::dispatch_weight, CommonWeightInfo, RefungibleExtensionsWeightInfo};
+use pallet_fungible::{common::CommonWeights as FungibleWeights, Config as FungibleConfig};
+use pallet_nonfungible::{
+	common::CommonWeights as NonfungibleWeights, Config as NonfungibleConfig,
+};
 #[cfg(feature = "refungible")]
 use pallet_refungible::{
-	Config as RefungibleConfig, weights::WeightInfo, common::CommonWeights as RefungibleWeights,
+	common::CommonWeights as RefungibleWeights, weights::WeightInfo, Config as RefungibleConfig,
 };
-use up_data_structs::{CreateItemExData, CreateItemData};
+use up_data_structs::{CreateItemData, CreateItemExData};
 
 pub mod xcm;
 

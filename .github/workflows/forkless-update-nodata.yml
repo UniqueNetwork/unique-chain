@@ -40,7 +40,7 @@ jobs:
             network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, runtime_features {quartz-runtime}, wasm_name {quartz}
             network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, runtime_features {unique-runtime}, wasm_name {unique}
 
-  forkless-nodata-build:
+  forkless-nodata:
 
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
@@ -48,7 +48,7 @@ jobs:
 
     timeout-minutes: 1380
 
-    name: ${{ matrix.network }}-nodata-build
+    name: ${{ matrix.network }}-nodata
 
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 

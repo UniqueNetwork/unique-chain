@@ -22,42 +22,39 @@ extern crate self as pallet_evm_coder_substrate;
 extern crate alloc;
 #[cfg(not(feature = "std"))]
 use alloc::format;
-use execution::PreDispatch;
-use frame_support::dispatch::Weight;
-
 use core::marker::PhantomData;
-use sp_std::{cell::RefCell, vec::Vec};
 
-use codec::Decode;
-use frame_support::pallet_prelude::DispatchError;
-use frame_support::traits::PalletInfo;
-use frame_support::{ensure, sp_runtime::ModuleError};
-use up_data_structs::budget;
-use pallet_evm::{
-	ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileOutput,
-	PrecompileResult, PrecompileHandle,
+use execution::PreDispatch;
+use frame_support::{
+	ensure, pallet_prelude::DispatchError, sp_runtime::ModuleError, traits::PalletInfo,
 };
+use pallet_evm::{
+	ExitError, ExitRevert, ExitSucceed, GasWeightMapping, PrecompileFailure, PrecompileHandle,
+	PrecompileOutput, PrecompileResult,
+};
+use parity_scale_codec::Decode;
 use sp_core::{Get, H160};
+use sp_std::{cell::RefCell, vec::Vec};
+use sp_weights::Weight;
+use up_data_structs::budget;
 // #[cfg(feature = "runtime-benchmarks")]
 // pub mod benchmarking;
 pub mod execution;
 
-#[doc(hidden)]
-pub use spez::spez;
-
+pub use evm_coder::{abi, solidity_interface, types, Contract, ResultWithPostInfoOf, ToLog};
 use evm_coder::{
 	types::{Msg, Value},
 	AbiEncode,
 };
-
 pub use pallet::*;
-pub use evm_coder::{ResultWithPostInfoOf, Contract, abi, solidity_interface, ToLog, types};
+#[doc(hidden)]
+pub use spez::spez;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
-
 	pub use frame_support::dispatch::DispatchResult;
+
+	use super::*;
 
 	/// DispatchError is opaque, but we need to somehow extract correct error in case of OutOfGas failure
 	/// So we have this pallet, which defines OutOfGas error, and knews its own id to check if DispatchError

@@ -17,53 +17,46 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use up_data_structs::{
-	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue, TokenOwnerError,
-};
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
+	init_token_properties_delta, weights::WeightInfo as _, with_weight, CommonCollectionOperations,
+	CommonWeightInfo, RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
+use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
-use sp_std::{vec::Vec, vec};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemExData, Property, PropertyKey, PropertyKeyPermission,
+	PropertyValue, TokenId, TokenOwnerError,
+};
 
 use crate::{
-	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
+	weights::WeightInfo, AccountBalance, Allowance, Config, CreateItemData, Error,
+	NonfungibleHandle, Owned, Pallet, SelfWeightOf, TokenData, TokenProperties, TokensMinted,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match data {
-			CreateItemExData::NFT(t) => {
-				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
-					+ t.iter()
-						.filter_map(|t| {
-							if t.properties.len() > 0 {
-								Some(Self::set_token_properties(t.properties.len() as u32))
-							} else {
-								None
-							}
-						})
-						.fold(Weight::zero(), |a, b| a.saturating_add(b))
-			}
+			CreateItemExData::NFT(t) => <SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
+				.saturating_add(init_token_properties_delta::<T, _>(
+					t.iter().map(|t| t.properties.len() as u32),
+					<SelfWeightOf<T>>::init_token_properties,
+				)),
 			_ => Weight::zero(),
 		}
 	}
 
 	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
-			+ data
-				.iter()
-				.filter_map(|t| match t {
-					up_data_structs::CreateItemData::NFT(n) if n.properties.len() > 0 => {
-						Some(Self::set_token_properties(n.properties.len() as u32))
-					}
-					_ => None,
-				})
-				.fold(Weight::zero(), |a, b| a.saturating_add(b))
+		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
+			init_token_properties_delta::<T, _>(
+				data.iter().map(|t| match t {
+					up_data_structs::CreateItemData::NFT(n) => n.properties.len() as u32,
+					_ => 0,
+				}),
+				<SelfWeightOf<T>>::init_token_properties,
+			),
+		)
 	}
 
 	fn burn_item() -> Weight {
@@ -245,7 +238,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				&sender,
 				token_id,
 				properties.into_iter(),
-				pallet_common::SetPropertyMode::ExistingToken,
 				nesting_budget,
 			),
 			weight,
@@ -271,6 +263,17 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			),
 			weight,
 		)
+	}
+
+	fn get_token_properties_raw(
+		&self,
+		token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
+		<TokenProperties<T>>::get((self.id, token_id))
+	}
+
+	fn set_token_properties_raw(&self, token_id: TokenId, map: up_data_structs::TokenProperties) {
+		<TokenProperties<T>>::insert((self.id, token_id), map)
 	}
 
 	fn set_token_property_permissions(
@@ -457,19 +460,36 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			.ok_or(TokenOwnerError::NotFound)
 	}
 
+	fn check_token_indirect_owner(
+		&self,
+		token: TokenId,
+		maybe_owner: &T::CrossAccountId,
+		nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		<PalletStructure<T>>::check_indirectly_owned(
+			maybe_owner.clone(),
+			self.id,
+			token,
+			None,
+			nesting_budget,
+		)
+	}
+
 	/// Returns token owners.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
 		self.token_owner(token).map_or_else(|_| vec![], |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
-		<Pallet<T>>::token_properties((self.id, token_id))
+		<Pallet<T>>::token_properties((self.id, token_id))?
 			.get(key)
 			.cloned()
 	}
 
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
-		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+		let Some(properties) = <Pallet<T>>::token_properties((self.id, token_id)) else {
+			return vec![];
+		};
 
 		keys.map(|keys| {
 			keys.into_iter()

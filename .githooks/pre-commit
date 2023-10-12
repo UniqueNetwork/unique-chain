@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+#
+# Pre-push hook verifying that inappropriate code will not be pushed.
+
+# Colors for the terminal output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+NC='\033[0m' # No Color
+
+echo "Starting cargo fmt.."
+cargo fmt --check
+FMT_EXIT="$?"
+
+# Check that prettier formatting rules are not violated.
+if [[ "${FMT_EXIT}" = 0 ]]; then
+    echo -e "${GREEN}cargo fmt succeded${NC}"
+else
+    echo -e "${RED}Commit error!${NC}"
+    echo "Please format the code via 'cargo fmt', cannot commit unformatted code"
+    exit 1
+fi
+
+STAGED_TEST_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep "\.ts$\|\.js$")
+
+if [[ "$STAGED_TEST_FILES" = "" ]]; then
+  echo -e "${GREEN}eslint succeded${NC}"
+  exit 0
+fi
+
+echo "Starting eslint.."
+./tests/node_modules/.bin/eslint --max-warnings 0 ${STAGED_TEST_FILES[@]}
+ESLINT_EXIT="$?"
+
+if [[ "${ESLINT_EXIT}" = 0 ]]; then
+    echo -e "${GREEN}eslint succeded${NC}"
+else
+    echo -e "${RED}Commit error!${NC}"
+    echo "Please format the code via 'yarn fix', cannot Commit unformatted code"
+    exit 1
+fi
+
+exit $?

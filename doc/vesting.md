@@ -7,7 +7,7 @@ In order to optimize storage used for chain state, as well as keep the rest of f
 ## VestedTransfer
 
 ### Description
-This method transfers tokens to a vesting account with pre-defined vesting period. The token will not show up as owned by the recepient address, but will not be show as owned by the previous owner (sender) either. Instead, it will be shown as owned by a special value address - Vesting address (with unknown private key). After the vesting timestamp, token can be claimed using VestingClaim method, which will transfer the token to the recipient address.
+This method transfers tokens to a vesting account with pre-defined vesting period. The token will not show up as owned by the recipient address, but will not be shown as owned by the previous owner (sender) either. Instead, it will be shown as owned by a special value address - Vesting address (with unknown private key). After the vesting timestamp, token can be claimed using VestingClaim method, which will transfer the token to the recipient address.
 
 ### Permissions
 * Collection Owner
@@ -38,7 +38,7 @@ This method transfers tokens to a vesting account with pre-defined vesting perio
 ## VestedClaim
 
 ### Description
-This method transfers tokens from the vesting account to the recipient, which was defined in VestingTrasnfer transaction. This method may be called by anyone, and it will only work after the vesting timestamp.
+This method transfers tokens from the vesting account to the recipient, which was defined in VestingTransfer transaction. This method may be called by anyone, and it will only work after the vesting timestamp.
 
 ### Permissions
 * Anyone

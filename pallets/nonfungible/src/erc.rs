@@ -23,34 +23,34 @@ extern crate alloc;
 
 use alloc::string::ToString;
 use core::{
-	char::{REPLACEMENT_CHARACTER, decode_utf16},
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
 	convert::TryInto,
 };
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, AbiCoder, ToLog};
 use frame_support::BoundedVec;
-use up_data_structs::{
-	TokenId, PropertyPermission, PropertyKeyPermission, Property, CollectionId, PropertyKey,
-	CollectionPropertiesVec,
-};
-use pallet_evm_coder_substrate::{
-	dispatch_to_evm, frontier_contract,
-	execution::{Result, PreDispatch, Error},
-};
-use sp_std::{vec::Vec, vec};
 use pallet_common::{
-	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations,
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall, static_property::key},
+	erc::{static_property::key, CollectionCall, CommonEvmHandler, PrecompileResult},
 	eth::{self, TokenUri},
-	CommonWeightInfo,
+	CollectionHandle, CollectionPropertyPermissions, CommonCollectionOperations, CommonWeightInfo,
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
-use pallet_evm_coder_substrate::call;
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::{U256, Get};
+use pallet_evm_coder_substrate::{
+	call, dispatch_to_evm,
+	execution::{Error, PreDispatch, Result},
+	frontier_contract,
+};
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
+use sp_core::{Get, U256};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	CollectionId, CollectionPropertiesVec, Property, PropertyKey, PropertyKeyPermission,
+	PropertyPermission, TokenId,
+};
 
 use crate::{
-	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, TokenData, TokensMinted,
-	TokenProperties, SelfWeightOf, weights::WeightInfo, common::CommonWeights,
+	common::CommonWeights, weights::WeightInfo, AccountBalance, Config, CreateItemData,
+	NonfungibleHandle, Pallet, SelfWeightOf, TokenData, TokenProperties, TokensMinted,
 };
 
 /// Nft events.
@@ -62,6 +62,15 @@ pub enum ERC721TokenEvent {
 		#[indexed]
 		token_id: U256,
 	},
+}
+
+/// Token minting parameters
+#[derive(AbiCoder, Default, Debug)]
+pub struct MintTokenData {
+	/// Minted token owner
+	pub owner: eth::CrossAddress,
+	/// Minted token properties
+	pub properties: Vec<eth::Property>,
 }
 
 frontier_contract! {
@@ -194,7 +203,6 @@ impl<T: Config> NonfungibleHandle<T> {
 			&caller,
 			TokenId(token_id),
 			properties.into_iter(),
-			pallet_common::SetPropertyMode::ExistingToken,
 			&nesting_budget,
 		)
 		.map_err(dispatch_to_evm::<T>)
@@ -264,7 +272,8 @@ impl<T: Config> NonfungibleHandle<T> {
 			.try_into()
 			.map_err(|_| "key too long")?;
 
-		let props = <TokenProperties<T>>::get((self.id, token_id));
+		let props =
+			<TokenProperties<T>>::get((self.id, token_id)).ok_or("token properties not found")?;
 		let prop = props.get(&key).ok_or("key not found")?;
 
 		Ok(prop.to_vec().into())
@@ -358,7 +367,7 @@ where
 				.transpose()
 				.map_err(|e| {
 					Error::Revert(alloc::format!(
-						"Can not convert value \"baseURI\" to string with error \"{e}\""
+						"can not convert value \"baseURI\" to string with error \"{e}\""
 					))
 				})?;
 
@@ -649,7 +658,7 @@ impl<T: Config> NonfungibleHandle<T> {
 		let key = key::url();
 		let permission = get_token_permission::<T>(self.id, &key)?;
 		if !permission.collection_admin {
-			return Err("Operation is not allowed".into());
+			return Err("operation is not allowed".into());
 		}
 
 		let caller = T::CrossAccountId::from_eth(caller);
@@ -676,7 +685,7 @@ impl<T: Config> NonfungibleHandle<T> {
 					.try_into()
 					.map_err(|_| "token uri is too long")?,
 			})
-			.map_err(|e| Error::Revert(alloc::format!("Can't add property: {e:?}")))?;
+			.map_err(|e| Error::Revert(alloc::format!("can't add property: {e:?}")))?;
 
 		<Pallet<T>>::create_item(
 			self,
@@ -699,12 +708,12 @@ fn get_token_property<T: Config>(
 ) -> Result<String> {
 	collection.consume_store_reads(1)?;
 	let properties = <TokenProperties<T>>::try_get((collection.id, token_id))
-		.map_err(|_| Error::Revert("Token properties not found".into()))?;
+		.map_err(|_| Error::Revert("token properties not found".into()))?;
 	if let Some(property) = properties.get(key) {
 		return Ok(String::from_utf8_lossy(property).into());
 	}
 
-	Err("Property tokenURI not found".into())
+	Err("property tokenURI not found".into())
 }
 
 fn get_token_permission<T: Config>(
@@ -712,13 +721,13 @@ fn get_token_permission<T: Config>(
 	key: &PropertyKey,
 ) -> Result<PropertyPermission> {
 	let token_property_permissions = CollectionPropertyPermissions::<T>::try_get(collection_id)
-		.map_err(|_| Error::Revert("No permissions for collection".into()))?;
+		.map_err(|_| Error::Revert("no permissions for collection".into()))?;
 	let a = token_property_permissions
 		.get(key)
 		.map(Clone::clone)
 		.ok_or_else(|| {
 			let key = String::from_utf8(key.clone().into_inner()).unwrap_or_default();
-			Error::Revert(alloc::format!("No permission for key {key}"))
+			Error::Revert(alloc::format!("no permission for key {key}"))
 		})?;
 	Ok(a)
 }
@@ -981,13 +990,41 @@ where
 		Ok(true)
 	}
 
+	/// @notice Function to mint a token.
+	/// @param data Array of pairs of token owner and token's properties for minted token
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(data.len() as u32) + <SelfWeightOf<T>>::set_token_properties(data.len() as u32))]
+	fn mint_bulk_cross(&mut self, caller: Caller, data: Vec<MintTokenData>) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let budget = self
+			.recorder
+			.weight_calls_budget(<StructureWeight<T>>::find_parent());
+
+		let mut create_nft_data = Vec::with_capacity(data.len());
+		for MintTokenData { owner, properties } in data {
+			let owner = owner.into_sub_cross_account::<T>()?;
+			create_nft_data.push(CreateItemData::<T> {
+				properties: properties
+					.into_iter()
+					.map(|property| property.try_into())
+					.collect::<Result<Vec<_>>>()?
+					.try_into()
+					.map_err(|_| "too many properties")?,
+				owner,
+			});
+		}
+
+		<Pallet<T>>::create_multiple_items(self, &caller, create_nft_data, &budget)
+			.map_err(dispatch_to_evm::<T>)?;
+		Ok(true)
+	}
+
 	/// @notice Function to mint multiple tokens with the given tokenUris.
 	/// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
 	///  numbers and first number should be obtained with `nextTokenId` method
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32)  + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
+	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32) + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
 	fn mint_bulk_with_token_uri(
 		&mut self,
 		caller: Caller,
@@ -1021,7 +1058,7 @@ where
 						.try_into()
 						.map_err(|_| "token uri is too long")?,
 				})
-				.map_err(|e| Error::Revert(alloc::format!("Can't add property: {e:?}")))?;
+				.map_err(|e| Error::Revert(alloc::format!("can't add property: {e:?}")))?;
 
 			data.push(CreateItemData::<T> {
 				properties,

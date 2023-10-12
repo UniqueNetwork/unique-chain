@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use sp_runtime::{BuildStorage, Storage};
-use sp_core::{Public, Pair};
-use up_common::types::AuraId;
-use crate::{Runtime, GenesisConfig, ParachainInfoConfig, RuntimeEvent, System};
-
+use sp_core::{Pair, Public};
 pub use sp_runtime::AccountId32 as AccountId;
+use sp_runtime::{BuildStorage, Storage};
+use up_common::types::AuraId;
+
+use crate::{ParachainInfoConfig, Runtime, RuntimeEvent, RuntimeGenesisConfig, System};
 pub type Balance = u128;
 
 pub mod xcm;
@@ -33,7 +33,7 @@ const PARA_ID: u32 = 2095;
 const PARA_ID: u32 = 2037;
 
 fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public {
-	TPublic::Pair::from_string(&format!("//{}", seed), None)
+	TPublic::Pair::from_string(&format!("//{seed}"), None)
 		.expect("static values are valid; qed")
 		.public()
 }
@@ -62,9 +62,10 @@ fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities
 
 #[cfg(feature = "collator-selection")]
 fn make_basic_storage() -> Storage {
-	use sp_core::{sr25519};
+	use sp_core::sr25519;
 	use sp_runtime::traits::{IdentifyAccount, Verify};
-	use crate::{AccountId, Signature, SessionKeys, CollatorSelectionConfig, SessionConfig};
+
+	use crate::{AccountId, CollatorSelectionConfig, SessionConfig, SessionKeys, Signature};
 
 	type AccountPublic = <Signature as Verify>::Signer;
 
@@ -94,13 +95,14 @@ fn make_basic_storage() -> Storage {
 		.map(|acc| get_account_id_from_seed::<sr25519::Public>(acc))
 		.collect::<Vec<_>>();
 
-	let cfg = GenesisConfig {
+	let cfg = RuntimeGenesisConfig {
 		collator_selection: CollatorSelectionConfig { invulnerables },
 		session: SessionConfig { keys },
 		parachain_info: ParachainInfoConfig {
 			parachain_id: PARA_ID.into(),
+			..Default::default()
 		},
-		..GenesisConfig::default()
+		..Default::default()
 	};
 
 	cfg.build_storage().unwrap()
@@ -110,7 +112,7 @@ fn make_basic_storage() -> Storage {
 fn make_basic_storage() -> Storage {
 	use crate::AuraConfig;
 
-	let cfg = GenesisConfig {
+	let cfg = RuntimeGenesisConfig {
 		aura: AuraConfig {
 			authorities: vec![
 				get_from_seed::<AuraId>("Alice"),
@@ -119,8 +121,9 @@ fn make_basic_storage() -> Storage {
 		},
 		parachain_info: ParachainInfoConfig {
 			parachain_id: PARA_ID.into(),
+			..Default::default()
 		},
-		..GenesisConfig::default()
+		..Default::default()
 	};
 
 	cfg.build_storage().unwrap().into()

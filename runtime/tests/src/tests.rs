@@ -15,19 +15,22 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // Tests to be written here
-use crate::{Test, TestCrossAccountId, CollectionCreationPrice, RuntimeOrigin, Unique, new_test_ext};
-use up_data_structs::{
-	COLLECTION_NUMBER_LIMIT, CollectionId, CreateItemData, CreateFungibleData, CreateNftData,
-	CreateReFungibleData, MAX_DECIMAL_POINTS, COLLECTION_ADMINS_LIMIT, TokenId,
-	MAX_TOKEN_OWNERSHIP, CreateCollectionData, CollectionMode, AccessMode, CollectionPermissions,
-	PropertyKeyPermission, PropertyPermission, Property, CollectionPropertiesVec,
-	CollectionPropertiesPermissionsVec,
-};
-use frame_support::{assert_noop, assert_ok, assert_err};
-use sp_std::convert::TryInto;
-use pallet_evm::account::CrossAccountId;
+use frame_support::{assert_err, assert_noop, assert_ok};
 use pallet_common::Error as CommonError;
+use pallet_evm::account::CrossAccountId;
 use pallet_unique::Error as UniqueError;
+use sp_std::convert::TryInto;
+use up_data_structs::{
+	AccessMode, CollectionId, CollectionMode, CollectionPermissions,
+	CollectionPropertiesPermissionsVec, CollectionPropertiesVec, CreateCollectionData,
+	CreateFungibleData, CreateItemData, CreateNftData, CreateReFungibleData, Property,
+	PropertyKeyPermission, PropertyPermission, TokenId, COLLECTION_ADMINS_LIMIT,
+	COLLECTION_NUMBER_LIMIT, MAX_DECIMAL_POINTS, MAX_TOKEN_OWNERSHIP,
+};
+
+use crate::{
+	new_test_ext, CollectionCreationPrice, RuntimeOrigin, Test, TestCrossAccountId, Unique,
+};
 
 fn add_balance(user: u64, value: u64) {
 	const DONOR_USER: u64 = 999;
@@ -168,6 +171,7 @@ fn get_collection_properties(collection_id: CollectionId) -> Vec<Property> {
 
 fn get_token_properties(collection_id: CollectionId, token_id: TokenId) -> Vec<Property> {
 	<pallet_nonfungible::Pallet<Test>>::token_properties((collection_id, token_id))
+		.unwrap_or_default()
 		.into_iter()
 		.map(|(key, value)| Property { key, value })
 		.collect()
@@ -2616,8 +2620,9 @@ fn collection_sponsoring() {
 }
 
 mod check_token_permissions {
-	use super::*;
 	use pallet_common::LazyValue;
+
+	use super::*;
 
 	fn test<FTE: FnOnce() -> bool>(
 		i: usize,

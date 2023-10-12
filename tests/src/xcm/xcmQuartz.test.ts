@@ -15,29 +15,14 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {IKeyringPair} from '@polkadot/types/types';
-import config from '../config';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
 import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
+import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types';
+import {hexToString} from '@polkadot/util';
 
-const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
-const STATEMINE_CHAIN = +(process.env.RELAY_STATEMINE_ID || 1000);
-const KARURA_CHAIN = +(process.env.RELAY_KARURA_ID || 2000);
-const MOONRIVER_CHAIN = +(process.env.RELAY_MOONRIVER_ID || 2023);
-const SHIDEN_CHAIN = +(process.env.RELAY_SHIDEN_ID || 2007);
+
 
 const STATEMINE_PALLET_INSTANCE = 50;
-
-const relayUrl = config.relayUrl;
-const statemineUrl = config.statemineUrl;
-const karuraUrl = config.karuraUrl;
-const moonriverUrl = config.moonriverUrl;
-const shidenUrl = config.shidenUrl;
-
-const RELAY_DECIMALS = 12;
-const STATEMINE_DECIMALS = 12;
-const KARURA_DECIMALS = 12;
-const SHIDEN_DECIMALS = 18n;
-const QTZ_DECIMALS = 18n;
 
 const TRANSFER_AMOUNT = 2000000000000000000000000n;
 
@@ -499,7 +484,14 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
         minimalBalance: 1000000000000000000n,
       };
 
-      await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
+      const assets = (await (helper.callRpc('api.query.assetRegistry.assetMetadatas.entries'))).map(([_k, v]: [any, any]) =>
+        hexToString(v.toJSON()['symbol'])) as string[];
+
+      if(!assets.includes('QTZ')) {
+        await helper.getSudo().assetRegistry.registerForeignAsset(alice, destination, metadata);
+      } else {
+        console.log('QTZ token already registered on Karura assetRegistry pallet');
+      }
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
       balanceKaruraTokenInit = await helper.balance.getSubstrate(randomAccount.address);
       balanceQuartzForeignTokenInit = await helper.tokens.accounts(randomAccount.address, {ForeignAsset: 0});
@@ -985,19 +977,22 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
       const unitsPerSecond = 1n;
       const numAssetsWeightHint = 0;
 
-      const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
-        location: quartzAssetLocation,
-        metadata: quartzAssetMetadata,
-        existentialDeposit,
-        isSufficient,
-        unitsPerSecond,
-        numAssetsWeightHint,
-      });
+      if((await helper.assetManager.assetTypeId(quartzAssetLocation)).toJSON()) {
+        console.log('Quartz asset already registered on Moonriver');
+      } else {
+        const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
+          location: quartzAssetLocation,
+          metadata: quartzAssetMetadata,
+          existentialDeposit,
+          isSufficient,
+          unitsPerSecond,
+          numAssetsWeightHint,
+        });
 
-      console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
+        console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
 
-      await helper.fastDemocracy.executeProposal('register QTZ foreign asset', encodedProposal);
-
+        await helper.fastDemocracy.executeProposal('register QTZ foreign asset', encodedProposal);
+      }
       // >>> Acquire Quartz AssetId Info on Moonriver >>>
       console.log('Acquire Quartz AssetId Info on Moonriver.......');
 
@@ -1288,18 +1283,18 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
   let alice: IKeyringPair;
   let sender: IKeyringPair;
 
-  const QTZ_ASSET_ID_ON_SHIDEN = 1;
-  const QTZ_MINIMAL_BALANCE_ON_SHIDEN = 1n;
+  const QTZ_ASSET_ID_ON_SHIDEN = 18_446_744_073_709_551_633n; // The value is taken from the live Shiden
+  const QTZ_MINIMAL_BALANCE_ON_SHIDEN = 1n; // The value is taken from the live Shiden
 
   // Quartz -> Shiden
   const shidenInitialBalance = 1n * (10n ** SHIDEN_DECIMALS); // 1 SHD, existential deposit required to actually create the account on Shiden
-  const unitsPerSecond = 228_000_000_000n; // This is Phala's value. What will be ours?
+  const unitsPerSecond = 500_451_000_000_000_000_000n; // The value is taken from the live Shiden
   const qtzToShidenTransferred = 10n * (10n ** QTZ_DECIMALS); // 10 QTZ
-  const qtzToShidenArrived = 9_999_999_999_088_000_000n; // 9.999 ... QTZ, Shiden takes a commision in foreign tokens
+  const qtzToShidenArrived = 7_998_196_000_000_000_000n; // 7.99 ... QTZ, Shiden takes a commision in foreign tokens
 
   // Shiden -> Quartz
   const qtzFromShidenTransfered = 5n * (10n ** QTZ_DECIMALS); // 5 QTZ
-  const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 4.999_999_999_088_000_000n QTZ
+  const qtzOnShidenLeft = qtzToShidenArrived - qtzFromShidenTransfered; // 2.99 ... QTZ
 
   let balanceAfterQuartzToShidenXCM: bigint;
 
@@ -1314,40 +1309,42 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
     });
 
     await usingShidenPlaygrounds(shidenUrl, async (helper) => {
-      console.log('1. Create foreign asset and metadata');
-      // TODO update metadata with values from production
-      await helper.assets.create(
-        alice,
-        QTZ_ASSET_ID_ON_SHIDEN,
-        alice.address,
-        QTZ_MINIMAL_BALANCE_ON_SHIDEN,
-      );
+      if(!(await helper.callRpc('api.query.assets.asset', [QTZ_ASSET_ID_ON_SHIDEN])).toJSON()) {
+        console.log('1. Create foreign asset and metadata');
+        await helper.getSudo().assets.forceCreate(
+          alice,
+          QTZ_ASSET_ID_ON_SHIDEN,
+          alice.address,
+          QTZ_MINIMAL_BALANCE_ON_SHIDEN,
+        );
 
-      await helper.assets.setMetadata(
-        alice,
-        QTZ_ASSET_ID_ON_SHIDEN,
-        'Cross chain QTZ',
-        'xcQTZ',
-        Number(QTZ_DECIMALS),
-      );
+        await helper.assets.setMetadata(
+          alice,
+          QTZ_ASSET_ID_ON_SHIDEN,
+          'Quartz',
+          'QTZ',
+          Number(QTZ_DECIMALS),
+        );
 
-      console.log('2. Register asset location on Shiden');
-      const assetLocation = {
-        V2: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: QUARTZ_CHAIN,
+        console.log('2. Register asset location on Shiden');
+        const assetLocation = {
+          V2: {
+            parents: 1,
+            interior: {
+              X1: {
+                Parachain: QUARTZ_CHAIN,
+              },
             },
           },
-        },
-      };
+        };
 
-      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, QTZ_ASSET_ID_ON_SHIDEN]);
+        await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.registerAssetLocation', [assetLocation, QTZ_ASSET_ID_ON_SHIDEN]);
 
-      console.log('3. Set QTZ payment for XCM execution on Shiden');
-      await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
-
+        console.log('3. Set QTZ payment for XCM execution on Shiden');
+        await helper.getSudo().executeExtrinsic(alice, 'api.tx.xcAssetConfig.setAssetUnitsPerSecond', [assetLocation, unitsPerSecond]);
+      } else {
+        console.log('QTZ is already registered on Shiden');
+      }
       console.log('4. Transfer 1 SDN to recipient to create the account (needed due to existential balance)');
       await helper.balance.transferToSubstrate(alice, sender.address, shidenInitialBalance);
     });

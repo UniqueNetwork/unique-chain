@@ -37,12 +37,12 @@ pallet-unique = { workspace = true }
 
 pallet-evm-coder-substrate = { workspace = true }
 
-codec = { workspace = true, package = "parity-scale-codec" }
+parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
 evm-coder = { workspace = true }
+staging-xcm = { workspace = true }
 up-sponsorship = { workspace = true }
-xcm = { workspace = true }
 
 [dev-dependencies]
 pallet-common = { workspace = true, features = ["tests"] }

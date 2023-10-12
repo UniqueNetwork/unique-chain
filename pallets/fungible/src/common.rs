@@ -16,22 +16,24 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{
-	TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData, TokenOwnerError,
+use frame_support::{
+	dispatch::DispatchResultWithPostInfo, ensure, fail, traits::Get, weights::Weight,
 };
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
+	RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_structure::Error as StructureError;
-use sp_runtime::ArithmeticError;
-use sp_std::{vec::Vec, vec};
-use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
+use sp_runtime::{ArithmeticError, DispatchError};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemData, CreateItemExData, Property, PropertyKey,
+	PropertyKeyPermission, PropertyValue, TokenId, TokenOwnerError,
+};
 
 use crate::{
-	Allowance, TotalSupply, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
-	weights::WeightInfo,
+	weights::WeightInfo, Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
+	TotalSupply,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -364,6 +366,18 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
+	fn get_token_properties_raw(
+		&self,
+		_token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
+		// No token properties are defined on fungibles
+		None
+	}
+
+	fn set_token_properties_raw(&self, _token_id: TokenId, _map: up_data_structs::TokenProperties) {
+		// No token properties are defined on fungibles
+	}
+
 	fn check_nesting(
 		&self,
 		_sender: <T>::CrossAccountId,
@@ -400,6 +414,15 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn token_owner(&self, _token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
 		Err(TokenOwnerError::MultipleOwners)
+	}
+
+	fn check_token_indirect_owner(
+		&self,
+		_token: TokenId,
+		_maybe_owner: &T::CrossAccountId,
+		_nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		Ok(false)
 	}
 
 	/// Returns 10 tokens owners in no particular order.

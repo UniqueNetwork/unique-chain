@@ -15,7 +15,7 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 
 #Parity
-codec = { workspace = true, package = "parity-scale-codec" }
+parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 
 # Unique

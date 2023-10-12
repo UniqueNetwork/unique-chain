@@ -13,6 +13,7 @@ default = ['std']
 std = [
 	'cumulus-primitives-core/std',
 	'fp-rpc/std',
+	'fp-self-contained/std',
 	'frame-support/std',
 	'pallet-evm/std',
 	'sp-consensus-aura/std',
@@ -24,6 +25,7 @@ std = [
 [dependencies]
 cumulus-primitives-core = { workspace = true }
 fp-rpc = { workspace = true }
+fp-self-contained = { workspace = true }
 frame-support = { workspace = true }
 pallet-evm = { workspace = true }
 sp-consensus-aura = { workspace = true }
