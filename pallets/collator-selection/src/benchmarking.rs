@@ -32,7 +32,9 @@
 
 //! Benchmarking setup for pallet-collator-selection
 
-use frame_benchmarking::{account, benchmarks, impl_benchmark_test_suite, whitelisted_caller};
+use frame_benchmarking::v2::{
+	account, benchmarks, impl_benchmark_test_suite, whitelisted_caller, BenchmarkError,
+};
 use frame_support::{
 	assert_ok,
 	traits::{
@@ -159,16 +161,18 @@ fn balance_unit<T: Config>() -> BalanceOf<T> {
 /// Our benchmarking environment already has invulnerables registered.
 const INITIAL_INVULNERABLES: u32 = 2;
 
-benchmarks! {
-	where_clause { where
-		T: Config + pallet_authorship::Config + session::Config
-	}
+#[benchmarks(where T: Config + pallet_authorship::Config + session::Config)]
+mod benchmarks {
+	use super::*;
+	const MAX_COLLATORS: u32 = 10;
+	const MAX_INVULNERABLES: u32 = MAX_COLLATORS - INITIAL_INVULNERABLES;
 
 	// todo:collator this and all the following do not work for some reason, going all the way up to 10 in length
 	// Both invulnerables and candidates count together against MaxCollators.
 	// Maybe try putting it in braces? 1 .. (T::MaxCollators::get() - 2)
-	add_invulnerable {
-		let b in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES - 1;
+	#[benchmark]
+	fn add_invulnerable<T>(b: Linear<2, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+		let b = b - 1;
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
@@ -181,39 +185,59 @@ benchmarks! {
 		<session::Pallet<T>>::set_keys(
 			RawOrigin::Signed(new_invulnerable.clone()).into(),
 			keys::<T>(b + 1),
-			Vec::new()
-		).unwrap();
+			Vec::new(),
+		)
+		.unwrap();
 
 		let root_origin = T::UpdateOrigin::try_successful_origin().unwrap();
-	}: {
-		assert_ok!(
-			<CollatorSelection<T>>::add_invulnerable(root_origin, new_invulnerable.clone())
+
+		#[block]
+		{
+			assert_ok!(<CollatorSelection<T>>::add_invulnerable(
+				root_origin,
+				new_invulnerable.clone()
+			));
+		}
+
+		assert_last_event::<T>(
+			Event::InvulnerableAdded {
+				invulnerable: new_invulnerable,
+			}
+			.into(),
 		);
-	}
-	verify {
-		assert_last_event::<T>(Event::InvulnerableAdded{invulnerable: new_invulnerable}.into());
+
+		Ok(())
 	}
 
-	remove_invulnerable {
-		let b in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES - 1;
+	#[benchmark]
+	fn remove_invulnerable(b: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
 		let root_origin = T::UpdateOrigin::try_successful_origin().unwrap();
 		let leaving = <Invulnerables<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
-	}: {
-		assert_ok!(
-			<CollatorSelection<T>>::remove_invulnerable(root_origin, leaving.clone())
+
+		#[block]
+		{
+			assert_ok!(<CollatorSelection<T>>::remove_invulnerable(
+				root_origin,
+				leaving.clone()
+			));
+		}
+
+		assert_last_event::<T>(
+			Event::InvulnerableRemoved {
+				invulnerable: leaving,
+			}
+			.into(),
 		);
-	}
-	verify {
-		assert_last_event::<T>(Event::InvulnerableRemoved{invulnerable: leaving}.into());
+
+		Ok(())
 	}
 
-	get_license {
-		let c in 1 .. T::MaxCollators::get() - 1;
-
+	#[benchmark]
+	fn get_license(c: Linear<1, MAX_COLLATORS>) -> Result<(), BenchmarkError> {
 		register_validators::<T>(c);
 		get_licenses::<T>(c);
 
@@ -224,19 +248,29 @@ benchmarks! {
 		<session::Pallet<T>>::set_keys(
 			RawOrigin::Signed(caller.clone()).into(),
 			keys::<T>(c + 1),
-			Vec::new()
-		).unwrap();
+			Vec::new(),
+		)
+		.unwrap();
 
-	}: _(RawOrigin::Signed(caller.clone()))
-	verify {
-		assert_last_event::<T>(Event::LicenseObtained{account_id: caller, deposit: bond / 2u32.into()}.into());
+		#[extrinsic_call]
+		_(RawOrigin::Signed(caller.clone()));
+
+		assert_last_event::<T>(
+			Event::LicenseObtained {
+				account_id: caller,
+				deposit: bond / 2u32.into(),
+			}
+			.into(),
+		);
+
+		Ok(())
 	}
 
 	// worst case is when we have all the max-candidate slots filled except one, and we fill that
 	// one.
-	onboard {
-		let c in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES - 1;
-
+	#[benchmark]
+	fn onboard(c: Linear<2, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+		let c = c - 1;
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
@@ -246,37 +280,44 @@ benchmarks! {
 
 		let origin = RawOrigin::Signed(caller.clone());
 
-		<session::Pallet<T>>::set_keys(
-			origin.clone().into(),
-			keys::<T>(c + 1),
-			Vec::new()
-		).unwrap();
+		<session::Pallet<T>>::set_keys(origin.clone().into(), keys::<T>(c + 1), Vec::new())
+			.unwrap();
 
-		assert_ok!(
-			<CollatorSelection<T>>::get_license(origin.clone().into())
-		);
-	}: _(origin)
-	verify {
-		assert_last_event::<T>(Event::CandidateAdded{account_id: caller}.into());
+		assert_ok!(<CollatorSelection<T>>::get_license(origin.clone().into()));
+
+		#[extrinsic_call]
+		_(origin);
+
+		assert_last_event::<T>(Event::CandidateAdded { account_id: caller }.into());
+
+		Ok(())
 	}
 
 	// worst case is the last candidate leaving.
-	offboard {
-		let c in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES;
-
+	#[benchmark]
+	fn offboard(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
 		let leaving = <Candidates<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
-	}: _(RawOrigin::Signed(leaving.clone()))
-	verify {
-		assert_last_event::<T>(Event::CandidateRemoved{account_id: leaving}.into());
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(leaving.clone()));
+
+		assert_last_event::<T>(
+			Event::CandidateRemoved {
+				account_id: leaving,
+			}
+			.into(),
+		);
+
+		Ok(())
 	}
 
 	// worst case is the last candidate leaving.
-	release_license {
-		let c in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES;
+	#[benchmark]
+	fn release_license(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		let bond = balance_unit::<T>();
 
 		register_validators::<T>(c);
@@ -284,14 +325,24 @@ benchmarks! {
 
 		let leaving = <Candidates<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
-	}: _(RawOrigin::Signed(leaving.clone()))
-	verify {
-		assert_last_event::<T>(Event::LicenseReleased{account_id: leaving, deposit_returned: bond}.into());
+
+		#[extrinsic_call]
+		_(RawOrigin::Signed(leaving.clone()));
+
+		assert_last_event::<T>(
+			Event::LicenseReleased {
+				account_id: leaving,
+				deposit_returned: bond,
+			}
+			.into(),
+		);
+
+		Ok(())
 	}
 
 	// worst case is the last candidate leaving.
-	force_release_license {
-		let c in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES;
+	#[benchmark]
+	fn force_release_license(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		let bond = balance_unit::<T>();
 
 		register_validators::<T>(c);
@@ -300,44 +351,62 @@ benchmarks! {
 		let leaving = <Candidates<T>>::get().last().unwrap().clone();
 		whitelist!(leaving);
 		let origin = T::UpdateOrigin::try_successful_origin().unwrap();
-	}: {
-		assert_ok!(
-			<CollatorSelection<T>>::force_release_license(origin, leaving.clone())
+
+		#[block]
+		{
+			assert_ok!(<CollatorSelection<T>>::force_release_license(
+				origin,
+				leaving.clone()
+			));
+		}
+
+		assert_last_event::<T>(
+			Event::LicenseReleased {
+				account_id: leaving,
+				deposit_returned: bond,
+			}
+			.into(),
 		);
-	}
-	verify {
-		assert_last_event::<T>(Event::LicenseReleased{account_id: leaving, deposit_returned: bond}.into());
+
+		Ok(())
 	}
 
 	// worst case is paying a non-existing candidate account.
-	note_author {
+	#[benchmark]
+	fn note_author() -> Result<(), BenchmarkError> {
 		T::Currency::set_balance(
 			&<CollatorSelection<T>>::account_id(),
 			balance_unit::<T>() * 4u32.into(),
 		);
 		let author = account("author", 0, SEED);
-		let new_block: BlockNumberFor<T>= 10u32.into();
+		let new_block: BlockNumberFor<T> = 10u32.into();
 
 		frame_system::Pallet::<T>::set_block_number(new_block);
 		assert!(T::Currency::balance(&author) == 0u32.into());
-	}: {
-		<CollatorSelection<T> as EventHandler<_, _>>::note_author(author.clone())
-	} verify {
+
+		#[block]
+		{
+			<CollatorSelection<T> as EventHandler<_, _>>::note_author(author.clone());
+		}
+
 		assert!(T::Currency::balance(&author) > 0u32.into());
 		assert_eq!(frame_system::Pallet::<T>::block_number(), new_block);
+
+		Ok(())
 	}
 
 	// worst case for new session.
-	new_session {
-		let r in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES;
-		let c in 1 .. T::MaxCollators::get() - INITIAL_INVULNERABLES;
-
+	#[benchmark]
+	fn new_session(
+		r: Linear<1, MAX_INVULNERABLES>,
+		c: Linear<1, MAX_INVULNERABLES>,
+	) -> Result<(), BenchmarkError> {
 		frame_system::Pallet::<T>::set_block_number(0u32.into());
 
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
-		let new_block: BlockNumberFor<T>= 1800u32.into();
+		let new_block: BlockNumberFor<T> = 1800u32.into();
 		let zero_block: BlockNumberFor<T> = 0u32.into();
 		let candidates = <Candidates<T>>::get();
 
@@ -362,19 +431,24 @@ benchmarks! {
 		frame_system::Pallet::<T>::set_block_number(new_block);
 
 		assert!(<Candidates<T>>::get().len() == c as usize);
-	}: {
-		<CollatorSelection<T> as SessionManager<_>>::new_session(0)
-	} verify {
+
+		#[block]
+		{
+			<CollatorSelection<T> as SessionManager<_>>::new_session(0);
+		}
+
 		if c > r {
 			assert!(<Candidates<T>>::get().len() < pre_length);
 		} else {
 			assert!(<Candidates<T>>::get().len() == pre_length);
 		}
-	}
-}
 
-impl_benchmark_test_suite!(
-	CollatorSelection,
-	crate::mock::new_test_ext(),
-	crate::mock::Test,
-);
+		Ok(())
+	}
+
+	impl_benchmark_test_suite!(
+		CollatorSelection,
+		crate::mock::new_test_ext(),
+		crate::mock::Test,
+	);
+}

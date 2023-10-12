@@ -42,10 +42,6 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
-#[cfg(feature = "runtime-benchmarks")]
-use crate::chain_spec::default_runtime;
-#[cfg(feature = "runtime-benchmarks")]
-use crate::service::DefaultRuntimeExecutor;
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
 #[cfg(feature = "unique-runtime")]
@@ -355,26 +351,37 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+			use polkadot_cli::Block;
+			use sp_io::SubstrateHostFunctions;
+
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
+					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						default_runtime::RuntimeApi,
-						DefaultRuntimeExecutor,
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
 						_,
-					>(&config, crate::service::parachain_build_import_queue)?;
+					>(
+						&config,
+						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+					)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						default_runtime::RuntimeApi,
-						DefaultRuntimeExecutor,
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
 						_,
-					>(&config, crate::service::parachain_build_import_queue)?;
+					>(
+						&config,
+						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+					)?;
 					let db = partials.backend.expose_db();
 					let storage = partials.backend.expose_storage();
 
@@ -392,6 +399,7 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use std::{future::Future, pin::Pin};
 
+			use polkadot_cli::Block;
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 
