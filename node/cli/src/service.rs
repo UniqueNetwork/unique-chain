@@ -498,7 +498,7 @@ where
 				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, RuntimeApi, _>(&mut rpc_handle, full_deps)?;
+			create_full::<_, _, _, Runtime, _>(&mut rpc_handle, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -547,7 +547,7 @@ where
 		config: parachain_config,
 		keystore: params.keystore_container.keystore(),
 		backend: backend.clone(),
-		network: network.clone(),
+		network,
 		sync_service: sync_service.clone(),
 		system_rpc_tx,
 		telemetry: telemetry.as_mut(),
@@ -600,19 +600,21 @@ where
 	if validator {
 		start_consensus(
 			client.clone(),
-			backend.clone(),
-			prometheus_registry.as_ref(),
-			telemetry.as_ref().map(|t| t.handle()),
-			&task_manager,
-			relay_chain_interface.clone(),
 			transaction_pool,
-			sync_service.clone(),
-			params.keystore_container.keystore(),
-			overseer_handle,
-			relay_chain_slot_duration,
-			para_id,
-			collator_key.expect("cli args do not allow this"),
-			announce_block,
+			StartConsensusParameters {
+				backend: backend.clone(),
+				prometheus_registry: prometheus_registry.as_ref(),
+				telemetry: telemetry.as_ref().map(|t| t.handle()),
+				task_manager: &task_manager,
+				relay_chain_interface: relay_chain_interface.clone(),
+				sync_oracle: sync_service,
+				keystore: params.keystore_container.keystore(),
+				overseer_handle,
+				relay_chain_slot_duration,
+				para_id,
+				collator_key: collator_key.expect("cli args do not allow this"),
+				announce_block,
+			}
 		)?;
 	}
 
@@ -670,16 +672,12 @@ where
 	.map_err(Into::into)
 }
 
-pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+pub struct StartConsensusParameters<'a> {
 	backend: Arc<FullBackend>,
-	prometheus_registry: Option<&Registry>,
+	prometheus_registry: Option<&'a Registry>,
 	telemetry: Option<TelemetryHandle>,
-	task_manager: &TaskManager,
+	task_manager: &'a TaskManager,
 	relay_chain_interface: Arc<dyn RelayChainInterface>,
-	transaction_pool: Arc<
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
-	>,
 	sync_oracle: Arc<SyncingService<Block>>,
 	keystore: KeystorePtr,
 	overseer_handle: OverseerHandle,
@@ -687,6 +685,14 @@ pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
 	para_id: ParaId,
 	collator_key: CollatorPair,
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
+}
+
+pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
+	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+	transaction_pool: Arc<
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
+	>,
+	parameters: StartConsensusParameters<'_>,
 ) -> Result<(), sc_service::Error>
 where
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
@@ -697,6 +703,20 @@ where
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
 {
+	let StartConsensusParameters {
+		backend,
+		prometheus_registry,
+		telemetry,
+		task_manager,
+		relay_chain_interface,
+		sync_oracle,
+		keystore,
+		overseer_handle,
+		relay_chain_slot_duration,
+		para_id,
+		collator_key,
+		announce_block,
+	} = parameters;
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
@@ -704,7 +724,7 @@ where
 		client.clone(),
 		transaction_pool,
 		prometheus_registry,
-		telemetry.clone(),
+		telemetry,
 	);
 	let proposer = Proposer::new(proposer_factory);
 
@@ -1043,7 +1063,7 @@ where
 				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, RuntimeApi, _>(&mut rpc_module, full_deps)?;
+			create_full::<_, _, _, Runtime, _>(&mut rpc_module, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,

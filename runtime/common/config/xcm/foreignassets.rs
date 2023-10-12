@@ -77,19 +77,18 @@ impl<ConvertAssetId: MaybeEquivalence<AssetId, AssetId>> MaybeEquivalence<MultiL
 		let here_id =
 			ConvertAssetId::convert(&AssetId::NativeAssetId(NativeCurrency::Here)).unwrap();
 
-		if asset_id.clone() == parent_id {
+		if *asset_id == parent_id {
 			return Some(MultiLocation::parent());
 		}
 
-		if asset_id.clone() == here_id {
+		if *asset_id == here_id {
 			return Some(MultiLocation::new(
 				1,
 				X1(Parachain(ParachainInfo::get().into())),
 			));
 		}
 
-		let fid =
-			<AssetId as TryAsForeign<AssetId, ForeignAssetId>>::try_as_foreign(asset_id.clone())?;
+		let fid = <AssetId as TryAsForeign<AssetId, ForeignAssetId>>::try_as_foreign(*asset_id)?;
 		XcmForeignAssetIdMapping::<Runtime>::get_multi_location(fid)
 	}
 }

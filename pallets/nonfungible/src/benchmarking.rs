@@ -75,7 +75,7 @@ mod benchmarks {
 
 		#[block]
 		{
-			create_max_item(&collection, &sender, to.clone())?;
+			create_max_item(&collection, &sender, to)?;
 		}
 
 		Ok(())

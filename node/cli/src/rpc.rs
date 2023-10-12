@@ -67,7 +67,7 @@ pub struct FullDeps<C, P, SC> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, R, A, B>(
+pub fn create_full<C, P, SC, R, B>(
 	io: &mut RpcModule<()>,
 	deps: FullDeps<C, P, SC>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
@@ -244,7 +244,7 @@ where
 			EthFilter::new(
 				client.clone(),
 				eth_backend,
-				graph.clone(),
+				graph,
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,

@@ -107,7 +107,7 @@ mod benchmarks {
 		let collection = create_nft_collection::<T>(caller.clone())?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()), collection);
+		_(RawOrigin::Signed(caller), collection);
 
 		Ok(())
 	}
@@ -120,7 +120,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(caller),
 			collection,
 			T::CrossAccountId::from_sub(allowlist_account),
 		);
@@ -141,7 +141,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(caller),
 			collection,
 			T::CrossAccountId::from_sub(allowlist_account),
 		);
@@ -156,7 +156,7 @@ mod benchmarks {
 		let new_owner: T::AccountId = account("admin", 0, SEED);
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()), collection, new_owner);
+		_(RawOrigin::Signed(caller), collection, new_owner);
 
 		Ok(())
 	}
@@ -169,7 +169,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(caller),
 			collection,
 			T::CrossAccountId::from_sub(new_admin),
 		);
@@ -190,7 +190,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(caller),
 			collection,
 			T::CrossAccountId::from_sub(new_admin),
 		);
@@ -204,11 +204,7 @@ mod benchmarks {
 		let collection = create_nft_collection::<T>(caller.clone())?;
 
 		#[extrinsic_call]
-		_(
-			RawOrigin::Signed(caller.clone()),
-			collection,
-			caller.clone(),
-		);
+		_(RawOrigin::Signed(caller), collection, caller.clone());
 
 		Ok(())
 	}
@@ -224,7 +220,7 @@ mod benchmarks {
 		)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()), collection);
+		_(RawOrigin::Signed(caller), collection);
 
 		Ok(())
 	}
@@ -241,7 +237,7 @@ mod benchmarks {
 		<Pallet<T>>::confirm_sponsorship(RawOrigin::Signed(caller.clone()).into(), collection)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()), collection);
+		_(RawOrigin::Signed(caller), collection);
 
 		Ok(())
 	}
@@ -252,7 +248,7 @@ mod benchmarks {
 		let collection = create_nft_collection::<T>(caller.clone())?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()), collection, false);
+		_(RawOrigin::Signed(caller), collection, false);
 
 		Ok(())
 	}
@@ -275,7 +271,7 @@ mod benchmarks {
 		};
 
 		#[extrinsic_call]
-		set_collection_limits(RawOrigin::Signed(caller.clone()), collection, cl);
+		set_collection_limits(RawOrigin::Signed(caller), collection, cl);
 
 		Ok(())
 	}

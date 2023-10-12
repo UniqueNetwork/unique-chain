@@ -238,7 +238,7 @@ macro_rules! testnet_genesis {
 			vesting: VestingConfig { vesting: vec![] },
 			parachain_info: ParachainInfoConfig {
 				parachain_id: $id.into(),
-				Default::default()
+				..Default::default()
 			},
 			aura: AuraConfig {
 				authorities: $initial_invulnerables

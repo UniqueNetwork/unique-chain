@@ -161,7 +161,7 @@ mod benchmarks {
 		T::RelayBlockNumberProvider::set_block_number(30_000.into());
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(pallet_admin.clone()), Some(b as u8));
+		_(RawOrigin::Signed(pallet_admin), Some(b as u8));
 
 		Ok(())
 	}
@@ -178,7 +178,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(caller),
 			share * <T as Config>::Currency::total_balance(&caller),
 		);
 
@@ -211,7 +211,7 @@ mod benchmarks {
 			.collect::<Result<Vec<_>, _>>()?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(caller.clone()));
+		_(RawOrigin::Signed(caller));
 
 		Ok(())
 	}
@@ -242,7 +242,7 @@ mod benchmarks {
 
 		#[extrinsic_call]
 		_(
-			RawOrigin::Signed(caller.clone()),
+			RawOrigin::Signed(caller),
 			Into::<BalanceOf<T>>::into(1000u128) * T::Nominal::get(),
 		);
 
@@ -268,7 +268,7 @@ mod benchmarks {
 		let collection = create_nft_collection::<T>(caller)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(pallet_admin.clone()), collection);
+		_(RawOrigin::Signed(pallet_admin), collection);
 
 		Ok(())
 	}
@@ -296,7 +296,7 @@ mod benchmarks {
 		)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(pallet_admin.clone()), collection);
+		_(RawOrigin::Signed(pallet_admin), collection);
 
 		Ok(())
 	}
@@ -319,7 +319,7 @@ mod benchmarks {
 		<EvmMigrationPallet<T>>::finish(RawOrigin::Root.into(), address, data)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(pallet_admin.clone()), address);
+		_(RawOrigin::Signed(pallet_admin), address);
 
 		Ok(())
 	}
@@ -346,7 +346,7 @@ mod benchmarks {
 		)?;
 
 		#[extrinsic_call]
-		_(RawOrigin::Signed(pallet_admin.clone()), address);
+		_(RawOrigin::Signed(pallet_admin), address);
 
 		Ok(())
 	}
