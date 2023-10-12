@@ -109,7 +109,7 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn payout_stakers(b: Linear<0, 100>) -> Result<(), BenchmarkError> {
+	fn payout_stakers(b: Linear<1, 100>) -> Result<(), BenchmarkError> {
 		let pallet_admin = account::<T::AccountId>("admin", 1, SEED);
 		PromototionPallet::<T>::set_admin_address(
 			RawOrigin::Root.into(),

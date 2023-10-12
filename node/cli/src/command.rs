@@ -42,10 +42,6 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
-#[cfg(feature = "runtime-benchmarks")]
-use crate::chain_spec::default_runtime;
-#[cfg(feature = "runtime-benchmarks")]
-use crate::service::DefaultRuntimeExecutor;
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
 #[cfg(feature = "unique-runtime")]

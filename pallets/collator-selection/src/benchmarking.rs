@@ -171,7 +171,8 @@ mod benchmarks {
 	// Both invulnerables and candidates count together against MaxCollators.
 	// Maybe try putting it in braces? 1 .. (T::MaxCollators::get() - 2)
 	#[benchmark]
-	fn add_invulnerable<T>(b: Linear<1, MAX_COLLATORS>) -> Result<(), BenchmarkError> {
+	fn add_invulnerable<T>(b: Linear<2, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+		let b = b - 1;
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
@@ -268,7 +269,8 @@ mod benchmarks {
 	// worst case is when we have all the max-candidate slots filled except one, and we fill that
 	// one.
 	#[benchmark]
-	fn onboard(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+	fn onboard(c: Linear<2, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+		let c = c - 1;
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
@@ -293,9 +295,7 @@ mod benchmarks {
 
 	// worst case is the last candidate leaving.
 	#[benchmark]
-	fn offboard(c: Linear<0, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
-		let c = c + 1;
-
+	fn offboard(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		register_validators::<T>(c);
 		register_candidates::<T>(c);
 
@@ -317,8 +317,7 @@ mod benchmarks {
 
 	// worst case is the last candidate leaving.
 	#[benchmark]
-	fn release_license(c: Linear<0, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
-		let c = c + 1;
+	fn release_license(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		let bond = balance_unit::<T>();
 
 		register_validators::<T>(c);
@@ -343,8 +342,7 @@ mod benchmarks {
 
 	// worst case is the last candidate leaving.
 	#[benchmark]
-	fn force_release_license(c: Linear<0, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
-		let c = c + 1;
+	fn force_release_license(c: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		let bond = balance_unit::<T>();
 
 		register_validators::<T>(c);
@@ -400,12 +398,9 @@ mod benchmarks {
 	// worst case for new session.
 	#[benchmark]
 	fn new_session(
-		r: Linear<0, MAX_INVULNERABLES>,
-		c: Linear<0, MAX_INVULNERABLES>,
+		r: Linear<1, MAX_INVULNERABLES>,
+		c: Linear<1, MAX_INVULNERABLES>,
 	) -> Result<(), BenchmarkError> {
-		let r = r + 1;
-		let c = c + 1;
-
 		frame_system::Pallet::<T>::set_block_number(0u32.into());
 
 		register_validators::<T>(c);
