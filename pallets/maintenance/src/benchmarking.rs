@@ -15,9 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_benchmarking::v2::*;
-use frame_support::{ensure, pallet_prelude::Weight, traits::StorePreimage};
+use frame_support::ensure;
 use frame_system::RawOrigin;
-use parity_scale_codec::Encode;
 use sp_std::vec;
 
 use super::*;
@@ -45,28 +44,6 @@ mod benchmarks {
 		_(RawOrigin::Root);
 
 		ensure!(!<Enabled<T>>::get(), "didn't disable the MM");
-
-		Ok(())
-	}
-
-	// TODO: fix
-	// #[pov_mode = MaxEncodedLen {
-	// 	// PoV size is deducted from weight_bound
-	// 	Preimage::PreimageFor: Measured
-	// }]
-	#[benchmark]
-	fn execute_preimage() -> Result<(), BenchmarkError> {
-		let call = <T as Config>::RuntimeCall::from(frame_system::Call::<T>::remark {
-			remark: 1u32.encode(),
-		});
-		let hash = T::Preimages::note(call.encode().into())?;
-
-		#[extrinsic_call]
-		_(
-			RawOrigin::Root,
-			hash,
-			Weight::from_parts(100000000000, 100000000000),
-		);
 
 		Ok(())
 	}

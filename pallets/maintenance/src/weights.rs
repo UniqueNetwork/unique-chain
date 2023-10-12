@@ -35,7 +35,6 @@ use sp_std::marker::PhantomData;
 pub trait WeightInfo {
 	fn enable() -> Weight;
 	fn disable() -> Weight;
-	fn execute_preimage() -> Weight;
 }
 
 /// Weights for pallet_maintenance using the Substrate node and recommended hardware.
@@ -61,18 +60,6 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(3_111_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
-	/// Storage: Preimage StatusFor (r:1 w:0)
-	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
-	/// Storage: Preimage PreimageFor (r:1 w:0)
-	/// Proof: Preimage PreimageFor (max_values: None, max_size: Some(4194344), added: 4196819, mode: Measured)
-	fn execute_preimage() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `209`
-		//  Estimated: `3674`
-		// Minimum execution time: 7_359_000 picoseconds.
-		Weight::from_parts(7_613_000, 3674)
-			.saturating_add(T::DbWeight::get().reads(2_u64))
-	}
 }
 
 // For backwards compatibility and tests
@@ -96,18 +83,6 @@ impl WeightInfo for () {
 		// Minimum execution time: 2_976_000 picoseconds.
 		Weight::from_parts(3_111_000, 0)
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
-	}
-	/// Storage: Preimage StatusFor (r:1 w:0)
-	/// Proof: Preimage StatusFor (max_values: None, max_size: Some(91), added: 2566, mode: MaxEncodedLen)
-	/// Storage: Preimage PreimageFor (r:1 w:0)
-	/// Proof: Preimage PreimageFor (max_values: None, max_size: Some(4194344), added: 4196819, mode: Measured)
-	fn execute_preimage() -> Weight {
-		// Proof Size summary in bytes:
-		//  Measured:  `209`
-		//  Estimated: `3674`
-		// Minimum execution time: 7_359_000 picoseconds.
-		Weight::from_parts(7_613_000, 3674)
-			.saturating_add(RocksDbWeight::get().reads(2_u64))
 	}
 }
 

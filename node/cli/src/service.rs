@@ -614,7 +614,7 @@ where
 				para_id,
 				collator_key: collator_key.expect("cli args do not allow this"),
 				announce_block,
-			}
+			},
 		)?;
 	}
 
