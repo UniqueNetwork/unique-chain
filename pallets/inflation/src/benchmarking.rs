@@ -16,18 +16,29 @@
 
 #![cfg(feature = "runtime-benchmarks")]
 
-use frame_benchmarking::benchmarks;
-use frame_support::{pallet_prelude::*, traits::Hooks};
+use frame_benchmarking::v2::*;
+use frame_support::traits::Hooks;
+use sp_std::vec;
 
 use super::*;
 use crate::Pallet as Inflation;
 
-benchmarks! {
+#[benchmarks]
+mod benchmarks {
+	use super::*;
 
-	on_initialize {
+	#[benchmark]
+	fn on_initialize() -> Result<(), BenchmarkError> {
 		let block1: BlockNumberFor<T> = 1u32.into();
 		let block2: BlockNumberFor<T> = 2u32.into();
-		<Inflation<T> as Hooks>::on_initialize(block1); // Create Treasury account
-	}: { <Inflation<T> as Hooks>::on_initialize(block2); } // Benchmark deposit_into_existing path
+		<Inflation<T> as Hooks<_>>::on_initialize(block1); // Create Treasury account
 
+		#[block]
+		{
+			<Inflation<T> as Hooks<_>>::on_initialize(block2);
+			// Benchmark deposit_into_existing path
+		}
+
+		Ok(())
+	}
 }

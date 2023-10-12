@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_benchmarking::{account, benchmarks};
+use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
 use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
 use pallet_common::Config as CommonConfig;
 use pallet_evm::account::CrossAccountId;
+use sp_std::vec;
 use up_data_structs::{
 	budget::Unlimited, CollectionMode, CreateCollectionData, CreateItemData, CreateNftData,
 };
@@ -26,12 +27,21 @@ use super::*;
 
 const SEED: u32 = 1;
 
-benchmarks! {
-	find_parent {
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn find_parent() -> Result<(), BenchmarkError> {
 		let caller: T::AccountId = account("caller", 0, SEED);
 		let caller_cross = T::CrossAccountId::from_sub(caller.clone());
 
-		let _ = <T as CommonConfig>::Currency::deposit(&caller, T::CollectionCreationPrice::get(), Precision::Exact).unwrap();
+		let _ = <T as CommonConfig>::Currency::deposit(
+			&caller,
+			T::CollectionCreationPrice::get(),
+			Precision::Exact,
+		)
+		.unwrap();
 		T::CollectionDispatch::create(
 			caller_cross.clone(),
 			caller_cross.clone(),
@@ -43,9 +53,19 @@ benchmarks! {
 		let dispatch = T::CollectionDispatch::dispatch(CollectionId(1))?;
 		let dispatch = dispatch.as_dyn();
 
-		dispatch.create_item(caller_cross.clone(), caller_cross, CreateItemData::NFT(CreateNftData::default()), &Unlimited)?;
-	}: {
-		let parent = <Pallet<T>>::find_parent(CollectionId(1), TokenId(1))?;
-		assert!(matches!(parent, Parent::User(_)))
+		dispatch.create_item(
+			caller_cross.clone(),
+			caller_cross,
+			CreateItemData::NFT(CreateNftData::default()),
+			&Unlimited,
+		)?;
+
+		#[block]
+		{
+			let parent = <Pallet<T>>::find_parent(CollectionId(1), TokenId(1))?;
+			assert!(matches!(parent, Parent::User(_)));
+		}
+
+		Ok(())
 	}
 }
