@@ -2687,7 +2687,7 @@ where
 	) -> DispatchResult {
 		let check_token_exist = || true;
 		let check_token_owner = || Ok(true);
-		let get_token_properties = || TokenProperties::new();
+		let get_token_properties = TokenProperties::new;
 
 		self.internal_write_token_properties(
 			token_id,
