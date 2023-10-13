@@ -83,7 +83,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn set_token_properties(amount: u32) -> Weight {
 		write_token_properties_total_weight::<T, _>([amount].into_iter(), |amount| {
 			<SelfWeightOf<T>>::load_token_properties()
-				+ <SelfWeightOf<T>>::write_token_properties(amount)
+				.saturating_add(<SelfWeightOf<T>>::write_token_properties(amount))
 		})
 	}
 
