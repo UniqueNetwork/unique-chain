@@ -109,7 +109,7 @@ use pallet_common::{
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
-use pallet_structure::{Error as StructureError, Pallet as PalletStructure};
+use pallet_structure::Pallet as PalletStructure;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::{Get, H160};
@@ -503,51 +503,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Same as [`burn`] but burns all the tokens that are nested in the token first
-	///
-	/// - `self_budget`: Limit for searching children in depth.
-	/// - `breadth_budget`: Limit of breadth of searching children.
-	///
-	/// [`burn`]: struct.Pallet.html#method.burn
-	#[transactional]
-	pub fn burn_recursively(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
-
-		let current_token_account =
-			T::CrossTokenAddressMapping::token_to_address(collection.id, token);
-
-		let mut weight = Weight::zero();
-
-		// This method is transactional, if user in fact doesn't have permissions to remove token -
-		// tokens removed here will be restored after rejected transaction
-		for ((collection, token), _) in <TokenChildren<T>>::iter_prefix((collection.id, token)) {
-			ensure!(breadth_budget.consume(), <StructureError<T>>::BreadthLimit,);
-			let PostDispatchInfo { actual_weight, .. } =
-				<PalletStructure<T>>::burn_item_recursively(
-					current_token_account.clone(),
-					collection,
-					token,
-					self_budget,
-					breadth_budget,
-				)?;
-			if let Some(actual_weight) = actual_weight {
-				weight = weight.saturating_add(actual_weight);
-			}
-		}
-
-		Self::burn(collection, sender, token)?;
-		DispatchResultWithPostInfo::Ok(PostDispatchInfo {
-			actual_weight: Some(weight + <SelfWeightOf<T>>::burn_item()),
-			pays_fee: Pays::Yes,
-		})
-	}
-
 	/// A batch operation to add, edit or remove properties for a token.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
@@ -568,7 +523,7 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut property_writer =
-			pallet_common::property_writer_for_existing_token(collection, sender);
+			pallet_common::ExistingTokenPropertyWriter::new(collection, sender);
 
 		property_writer.write_token_properties(
 			sender,
@@ -915,7 +870,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		let mut property_writer = pallet_common::property_writer_for_new_token(collection, sender);
+		let mut property_writer = pallet_common::NewTokenPropertyWriter::new(collection, sender);
 
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {

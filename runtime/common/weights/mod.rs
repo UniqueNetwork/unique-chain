@@ -98,10 +98,6 @@ where
 		dispatch_weight::<T>() + max_weight_of!(set_token_properties(amount))
 	}
 
-	fn delete_token_properties(amount: u32) -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(delete_token_properties(amount))
-	}
-
 	fn set_token_property_permissions(amount: u32) -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(set_token_property_permissions(amount))
 	}
@@ -126,24 +122,12 @@ where
 		dispatch_weight::<T>() + max_weight_of!(burn_from())
 	}
 
-	fn burn_recursively_self_raw() -> Weight {
-		max_weight_of!(burn_recursively_self_raw())
-	}
-
-	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
-		max_weight_of!(burn_recursively_breadth_raw(amount))
-	}
-
-	fn token_owner() -> Weight {
-		max_weight_of!(token_owner())
-	}
-
 	fn set_allowance_for_all() -> Weight {
-		max_weight_of!(set_allowance_for_all())
+		dispatch_weight::<T>() + max_weight_of!(set_allowance_for_all())
 	}
 
 	fn force_repair_item() -> Weight {
-		max_weight_of!(force_repair_item())
+		dispatch_weight::<T>() + max_weight_of!(force_repair_item())
 	}
 }
 

@@ -30,15 +30,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		Weight::default()
 	}
 
-	fn delete_collection_properties(_amount: u32) -> Weight {
-		Weight::default()
-	}
-
 	fn set_token_properties(_amount: u32) -> Weight {
-		Weight::default()
-	}
-
-	fn delete_token_properties(_amount: u32) -> Weight {
 		Weight::default()
 	}
 
@@ -63,18 +55,6 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn burn_from() -> Weight {
-		Weight::default()
-	}
-
-	fn burn_recursively_self_raw() -> Weight {
-		Weight::default()
-	}
-
-	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
-		Weight::default()
-	}
-
-	fn token_owner() -> Weight {
 		Weight::default()
 	}
 
@@ -124,16 +104,6 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_sender: <T>::CrossAccountId,
 		_token: TokenId,
 		_amount: u128,
-	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
-	}
-
-	fn burn_item_recursively(
-		&self,
-		_sender: <T>::CrossAccountId,
-		_token: TokenId,
-		_self_budget: &dyn up_data_structs::budget::Budget,
-		_breadth_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
 		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
 	}

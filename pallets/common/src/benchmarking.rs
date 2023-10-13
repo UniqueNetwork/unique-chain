@@ -29,12 +29,11 @@ use sp_runtime::{traits::Zero, DispatchError};
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionMode, CollectionPermissions, CreateCollectionData,
-	NestingPermissions, PropertiesPermissionMap, Property, PropertyKey, PropertyValue,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM,
-	MAX_TOKEN_PREFIX_LENGTH,
+	NestingPermissions, Property, PropertyKey, PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM, MAX_TOKEN_PREFIX_LENGTH,
 };
 
-use crate::{CollectionHandle, Config, Pallet};
+use crate::{BenchmarkPropertyWriter, CollectionHandle, Config, Pallet};
 
 const SEED: u32 = 1;
 
@@ -126,16 +125,6 @@ fn create_collection<T: Config>(
 	)
 }
 
-pub fn load_is_admin_and_property_permissions<T: Config>(
-	collection: &CollectionHandle<T>,
-	sender: &T::CrossAccountId,
-) -> (bool, PropertiesPermissionMap) {
-	(
-		collection.is_owner_or_admin(sender),
-		<Pallet<T>>::property_permissions(collection.id),
-	)
-}
-
 /// Helper macros, which handles all benchmarking preparation in semi-declarative way
 ///
 /// `name` is a substrate account
@@ -206,31 +195,6 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn delete_collection_properties(
-		b: Linear<0, MAX_PROPERTIES_PER_ITEM>,
-	) -> Result<(), BenchmarkError> {
-		bench_init! {
-			owner: sub; collection: collection(owner);
-			owner: cross_from_sub;
-		};
-		let props = (0..b)
-			.map(|p| Property {
-				key: property_key(p as usize),
-				value: property_value(),
-			})
-			.collect::<Vec<_>>();
-		<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?;
-		let to_delete = (0..b).map(|p| property_key(p as usize)).collect::<Vec<_>>();
-
-		#[block]
-		{
-			<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete.into_iter())?;
-		}
-
-		Ok(())
-	}
-
-	#[benchmark]
 	fn check_accesslist() -> Result<(), BenchmarkError> {
 		bench_init! {
 			owner: sub; collection: collection(owner);
@@ -263,7 +227,7 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn init_token_properties_common() -> Result<(), BenchmarkError> {
+	fn property_writer_load_collection_info() -> Result<(), BenchmarkError> {
 		bench_init! {
 			owner: sub; collection: collection(owner);
 			sender: sub;
@@ -272,7 +236,7 @@ mod benchmarks {
 
 		#[block]
 		{
-			load_is_admin_and_property_permissions(&collection, &sender);
+			<BenchmarkPropertyWriter<T>>::load_collection_info(&&collection, &sender);
 		}
 
 		Ok(())

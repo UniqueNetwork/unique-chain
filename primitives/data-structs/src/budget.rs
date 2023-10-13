@@ -1,4 +1,4 @@
-use core::cell::Cell;
+use sp_std::cell::Cell;
 
 pub trait Budget {
 	/// Returns true while not exceeded
@@ -22,7 +22,7 @@ impl Value {
 	pub fn new(v: u32) -> Self {
 		Self(Cell::new(v))
 	}
-	pub fn refund(self) -> u32 {
+	pub fn refund_amount(self) -> u32 {
 		self.0.get()
 	}
 }

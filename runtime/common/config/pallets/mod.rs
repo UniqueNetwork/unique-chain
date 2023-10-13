@@ -116,6 +116,7 @@ impl pallet_inflation::Config for Runtime {
 impl pallet_unique::Config for Runtime {
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
+	type StructureWeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
 }
 
