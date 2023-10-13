@@ -49,8 +49,10 @@ use up_data_structs::{
 };
 
 use crate::{
-	common::CommonWeights, weights::WeightInfo, AccountBalance, Config, CreateItemData,
-	NonfungibleHandle, Pallet, SelfWeightOf, TokenData, TokenProperties, TokensMinted,
+	common::{mint_with_props_weight, CommonWeights},
+	weights::WeightInfo,
+	AccountBalance, Config, CreateItemData, NonfungibleHandle, Pallet, SelfWeightOf, TokenData,
+	TokenProperties, TokensMinted,
 };
 
 /// Nft events.
@@ -620,7 +622,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenUri Token URI that would be stored in the NFT properties
 	/// @return uint256 The id of the newly minted token
 	#[solidity(rename_selector = "mintWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(1))]
+	#[weight(mint_with_props_weight::<T>(<SelfWeightOf<T>>::create_item(), [1].into_iter()))]
 	fn mint_with_token_uri(
 		&mut self,
 		caller: Caller,
@@ -642,7 +644,7 @@ impl<T: Config> NonfungibleHandle<T> {
 	/// @param tokenId ID of the minted NFT
 	/// @param tokenUri Token URI that would be stored in the NFT properties
 	#[solidity(hide, rename_selector = "mintWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(1))]
+	#[weight(mint_with_props_weight::<T>(<SelfWeightOf<T>>::create_item(), [1].into_iter()))]
 	fn mint_with_token_uri_check_id(
 		&mut self,
 		caller: Caller,
@@ -974,7 +976,12 @@ where
 
 	/// @notice Function to mint a token.
 	/// @param data Array of pairs of token owner and token's properties for minted token
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(data.len() as u32) + <SelfWeightOf<T>>::set_token_properties(data.len() as u32))]
+	#[weight(
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items_ex(data.len() as u32),
+			data.iter().map(|d| d.properties.len() as u32),
+		)
+	)]
 	fn mint_bulk_cross(&mut self, caller: Caller, data: Vec<MintTokenData>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
 
@@ -1008,7 +1015,12 @@ where
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32) + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
+	#[weight(
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32),
+			tokens.iter().map(|_| 1),
+		)
+	)]
 	fn mint_bulk_with_token_uri(
 		&mut self,
 		caller: Caller,
@@ -1056,7 +1068,7 @@ where
 	/// @param to The new owner crossAccountId
 	/// @param properties Properties of minted token
 	/// @return uint256 The id of the newly minted token
-	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
+	#[weight(mint_with_props_weight::<T>(<SelfWeightOf<T>>::create_item(), [properties.len() as u32].into_iter()))]
 	fn mint_cross(
 		&mut self,
 		caller: Caller,

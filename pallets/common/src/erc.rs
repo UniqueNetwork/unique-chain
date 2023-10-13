@@ -126,7 +126,7 @@ where
 	///
 	/// @param key Property key.
 	#[solidity(hide)]
-	#[weight(<SelfWeightOf<T>>::delete_collection_properties(1))]
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(1))]
 	fn delete_collection_property(&mut self, caller: Caller, key: String) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let key = <Vec<u8>>::from(key)
@@ -139,7 +139,7 @@ where
 	/// Delete collection properties.
 	///
 	/// @param keys Properties keys.
-	#[weight(<SelfWeightOf<T>>::delete_collection_properties(keys.len() as u32))]
+	#[weight(<SelfWeightOf<T>>::set_collection_properties(keys.len() as u32))]
 	fn delete_collection_properties(&mut self, caller: Caller, keys: Vec<String>) -> Result<()> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let keys = keys

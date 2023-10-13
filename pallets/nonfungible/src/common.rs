@@ -39,24 +39,21 @@ pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match data {
-			CreateItemExData::NFT(t) => <SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
-				.saturating_add(write_token_properties_total_weight::<T, _>(
-					t.iter().map(|t| t.properties.len() as u32),
-					<SelfWeightOf<T>>::write_token_properties,
-				)),
+			CreateItemExData::NFT(t) => mint_with_props_weight::<T>(
+				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32),
+				t.iter().map(|t| t.properties.len() as u32),
+			),
 			_ => Weight::zero(),
 		}
 	}
 
 	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32).saturating_add(
-			write_token_properties_total_weight::<T, _>(
-				data.iter().map(|t| match t {
-					up_data_structs::CreateItemData::NFT(n) => n.properties.len() as u32,
-					_ => 0,
-				}),
-				<SelfWeightOf<T>>::write_token_properties,
-			),
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items(data.len() as u32),
+			data.iter().map(|t| match t {
+				up_data_structs::CreateItemData::NFT(n) => n.properties.len() as u32,
+				_ => 0,
+			}),
 		)
 	}
 
@@ -111,6 +108,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn force_repair_item() -> Weight {
 		<SelfWeightOf<T>>::repair_item()
 	}
+}
+
+pub(crate) fn mint_with_props_weight<T: Config>(
+	create_no_data_weight: Weight,
+	tokens: impl Iterator<Item = u32> + Clone,
+) -> Weight {
+	create_no_data_weight.saturating_add(write_token_properties_total_weight::<T, _>(
+		tokens,
+		<SelfWeightOf<T>>::write_token_properties,
+	))
 }
 
 fn map_create_data<T: Config>(

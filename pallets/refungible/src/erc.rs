@@ -50,8 +50,10 @@ use up_data_structs::{
 };
 
 use crate::{
-	common::CommonWeights, weights::WeightInfo, AccountBalance, Balance, Config, CreateItemData,
-	Pallet, RefungibleHandle, SelfWeightOf, TokenProperties, TokensMinted, TotalSupply,
+	common::{mint_with_props_weight, CommonWeights},
+	weights::WeightInfo,
+	AccountBalance, Balance, Config, CreateItemData, Pallet, RefungibleHandle, SelfWeightOf,
+	TokenProperties, TokensMinted, TotalSupply,
 };
 
 frontier_contract! {
@@ -661,7 +663,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenUri Token URI that would be stored in the NFT properties
 	/// @return uint256 The id of the newly minted token
 	#[solidity(rename_selector = "mintWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(1))]
+	#[weight(mint_with_props_weight::<T>(<SelfWeightOf<T>>::create_item(), [1].into_iter()))]
 	fn mint_with_token_uri(
 		&mut self,
 		caller: Caller,
@@ -683,7 +685,7 @@ impl<T: Config> RefungibleHandle<T> {
 	/// @param tokenId ID of the minted RFT
 	/// @param tokenUri Token URI that would be stored in the RFT properties
 	#[solidity(hide, rename_selector = "mintWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(1))]
+	#[weight(mint_with_props_weight::<T>(<SelfWeightOf<T>>::create_item(), [1].into_iter()))]
 	fn mint_with_token_uri_check_id(
 		&mut self,
 		caller: Caller,
@@ -1052,22 +1054,26 @@ where
 	}
 
 	/// @notice Function to mint a token.
-	/// @param tokenProperties Properties of minted token
-	#[weight(if token_properties.len() == 1 {
-		<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(token_properties.iter().next().unwrap().owners.len() as u32)
-	} else {
-		<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(token_properties.len() as u32)
-	} + <SelfWeightOf<T>>::set_token_properties(token_properties.len() as u32))]
-	fn mint_bulk_cross(
-		&mut self,
-		caller: Caller,
-		token_properties: Vec<MintTokenData>,
-	) -> Result<bool> {
-		let caller = T::CrossAccountId::from_eth(caller);
-		let has_multiple_tokens = token_properties.len() > 1;
+	/// @param tokensData Data of minted token(s)
+	#[weight(if tokens_data.len() == 1 {
+		let token_data = tokens_data.first().unwrap();
 
-		let mut create_rft_data = Vec::with_capacity(token_properties.len());
-		for MintTokenData { owners, properties } in token_properties {
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items_ex_multiple_owners(token_data.owners.len() as u32),
+			[token_data.properties.len() as u32].into_iter(),
+		)
+	} else {
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items_ex_multiple_items(tokens_data.len() as u32),
+			tokens_data.iter().map(|d| d.properties.len() as u32),
+		)
+	})]
+	fn mint_bulk_cross(&mut self, caller: Caller, tokens_data: Vec<MintTokenData>) -> Result<bool> {
+		let caller = T::CrossAccountId::from_eth(caller);
+		let has_multiple_tokens = tokens_data.len() > 1;
+
+		let mut create_rft_data = Vec::with_capacity(tokens_data.len());
+		for MintTokenData { owners, properties } in tokens_data {
 			let has_multiple_owners = owners.len() > 1;
 			if has_multiple_tokens & has_multiple_owners {
 				return Err(
@@ -1108,7 +1114,12 @@ where
 	/// @param to The new owner
 	/// @param tokens array of pairs of token ID and token URI for minted tokens
 	#[solidity(hide, rename_selector = "mintBulkWithTokenURI")]
-	#[weight(<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32) + <SelfWeightOf<T>>::set_token_properties(tokens.len() as u32))]
+	#[weight(
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items(tokens.len() as u32),
+			tokens.iter().map(|_| 1),
+		)
+	)]
 	fn mint_bulk_with_token_uri(
 		&mut self,
 		caller: Caller,
@@ -1162,7 +1173,7 @@ where
 	/// @param to The new owner crossAccountId
 	/// @param properties Properties of minted token
 	/// @return uint256 The id of the newly minted token
-	#[weight(<SelfWeightOf<T>>::create_item() + <SelfWeightOf<T>>::set_token_properties(properties.len() as u32))]
+	#[weight(mint_with_props_weight::<T>(<SelfWeightOf<T>>::create_item(), [properties.len() as u32].into_iter()))]
 	fn mint_cross(
 		&mut self,
 		caller: Caller,

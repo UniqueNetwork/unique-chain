@@ -2626,8 +2626,8 @@ pub struct BenchmarkPropertyWriter<T>(PhantomData<T>);
 impl<T: Config> BenchmarkPropertyWriter<T> {
 	/// Creates a [`PropertyWriter`] for benchmarking tokens properties writing.
 	pub fn new<'a, Handle>(
-		collection: &Handle,
-		collection_lazy_info: PropertyWriterLazyCollectionInfo,
+		collection: &'a Handle,
+		collection_lazy_info: PropertyWriterLazyCollectionInfo<'a>,
 	) -> PropertyWriter<'a, Self, T, Handle>
 	where
 		Handle: CommonCollectionOperations<T> + Deref<Target = CollectionHandle<T>>,
