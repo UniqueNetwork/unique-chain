@@ -2624,10 +2624,10 @@ mod check_token_permissions {
 
 	use super::*;
 
-	fn test<FTE: FnOnce() -> bool>(
+	fn test(
 		i: usize,
 		test_case: &pallet_common::tests::TestCase,
-		check_token_existence: &mut LazyValue<bool, FTE>,
+		check_token_existence: &mut LazyValue<bool>,
 	) {
 		let collection_admin = test_case.collection_admin;
 		let mut is_collection_admin = LazyValue::new(|| test_case.is_collection_admin);
@@ -2635,7 +2635,7 @@ mod check_token_permissions {
 		let mut is_token_owner = LazyValue::new(|| Ok(test_case.is_token_owner));
 		let is_no_permission = test_case.no_permission;
 
-		let result = pallet_common::tests::check_token_permissions::<Test, _, _, FTE>(
+		let result = pallet_common::tests::check_token_permissions::<Test>(
 			collection_admin,
 			token_owner,
 			&mut is_collection_admin,
