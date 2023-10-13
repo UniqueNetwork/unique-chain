@@ -875,7 +875,7 @@ pub mod pallet {
 
 enum LazyValueState<'a, T> {
 	Pending(Box<dyn FnOnce() -> T + 'a>),
-	InProgress(PhantomData<sp_std::cell::Cell<T>>),
+	InProgress,
 	Computed(T),
 }
 
@@ -930,13 +930,9 @@ impl<'a, T> LazyValue<'a, T> {
 			return;
 		}
 
-		match sp_std::mem::replace(&mut self.state, InProgress(PhantomData)) {
+		match sp_std::mem::replace(&mut self.state, InProgress) {
 			Pending(f) => self.state = Computed(f()),
-			_ => {
-				// Computed is ruled out by the above condition
-				// InProgress is ruled out by not implementing Sync and absence of recursion
-				unreachable!()
-			}
+			_ => panic!("recursion isn't supported"),
 		}
 	}
 }
