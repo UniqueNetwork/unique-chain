@@ -3119,9 +3119,9 @@ export class UniqueNFTCollection extends UniqueBaseCollection {
 
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+    const props = (await api.query.nonfungible.tokenProperties(this.collectionId, tokenId)).toJSON() as any;
 
-    return (props! as any).consumedSpace;
+    return props?.consumedSpace ?? 0;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId) {
@@ -3224,9 +3224,9 @@ export class UniqueRFTCollection extends UniqueBaseCollection {
 
   async getTokenPropertiesConsumedSpace(tokenId: number): Promise<number> {
     const api = this.helper.getApi();
-    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON();
+    const props = (await api.query.refungible.tokenProperties(this.collectionId, tokenId)).toJSON() as any;
 
-    return (props! as any).consumedSpace;
+    return props?.consumedSpace ?? 0;
   }
 
   async transferToken(signer: TSigner, tokenId: number, addressObj: ICrossAccountId, amount = 1n) {

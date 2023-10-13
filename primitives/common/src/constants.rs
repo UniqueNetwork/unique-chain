@@ -45,6 +45,7 @@ pub const UNIQUE: Balance = 100 * CENTIUNIQUE;
 
 /// Minimum balance required to create or keep an account open.
 pub const EXISTENTIAL_DEPOSIT: u128 = 0;
+
 /// Amount of Balance reserved for candidate registration.
 pub const GENESIS_LICENSE_BOND: u128 = 1_000_000_000_000 * UNIQUE;
 /// Amount of maximum collators for Collator Selection.

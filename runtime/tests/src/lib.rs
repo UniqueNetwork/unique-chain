@@ -292,6 +292,7 @@ impl pallet_unique::Config for Test {
 	type WeightInfo = ();
 	type CommonWeightInfo = CommonWeights<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
+	type StructureWeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 }
 
 // Build genesis storage according to the mock runtime.

@@ -23,7 +23,7 @@ use frame_system::Config as SystemConfig;
 use pallet_common::{CollectionHandle, CommonCollectionOperations};
 use pallet_fungible::FungibleHandle;
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
-use up_data_structs::budget::Value;
+use up_data_structs::budget;
 
 use super::*;
 
@@ -327,7 +327,7 @@ where
 					&collection,
 					&account,
 					amount_data,
-					&Value::new(0),
+					&budget::Value::new(0),
 				)?;
 
 				Ok(amount)
@@ -440,7 +440,7 @@ where
 					&T::CrossAccountId::from_sub(source.clone()),
 					&T::CrossAccountId::from_sub(dest.clone()),
 					amount.into(),
-					&Value::new(0),
+					&budget::Value::new(0),
 				)
 				.map_err(|e| e.error)?;
 

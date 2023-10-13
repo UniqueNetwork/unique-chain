@@ -507,7 +507,7 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		let mut property_writer =
-			pallet_common::property_writer_for_existing_token(collection, sender);
+			pallet_common::ExistingTokenPropertyWriter::new(collection, sender);
 
 		property_writer.write_token_properties(
 			sender,
@@ -858,7 +858,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		let mut property_writer = pallet_common::property_writer_for_new_token(collection, sender);
+		let mut property_writer = pallet_common::NewTokenPropertyWriter::new(collection, sender);
 
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {

@@ -53,11 +53,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::{
-	dispatch::{DispatchResult, DispatchResultWithPostInfo},
-	fail,
-	pallet_prelude::*,
-};
+use frame_support::{dispatch::DispatchResult, fail, pallet_prelude::*};
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, eth::is_collection,
 	CommonCollectionOperations,
@@ -267,22 +263,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Err(<Error<T>>::DepthLimit.into())
-	}
-
-	/// Burn token and all of it's nested tokens
-	///
-	/// - `self_budget`: Limit for searching children in depth.
-	/// - `breadth_budget`: Limit of breadth of searching children.
-	pub fn burn_item_recursively(
-		from: T::CrossAccountId,
-		collection: CollectionId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		let dispatch = T::CollectionDispatch::dispatch(collection)?;
-		let dispatch = dispatch.as_dyn();
-		dispatch.burn_item_recursively(from, token, self_budget, breadth_budget)
 	}
 
 	/// Check if `token` indirectly owned by `user`

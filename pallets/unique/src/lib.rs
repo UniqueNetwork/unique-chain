@@ -84,13 +84,19 @@ pub mod weights;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{dispatch::DispatchResult, ensure, fail, storage::Key, BoundedVec};
+	use frame_support::{
+		dispatch::{DispatchErrorWithPostInfo, DispatchResult, PostDispatchInfo},
+		ensure, fail,
+		storage::Key,
+		BoundedVec,
+	};
 	use frame_system::{ensure_root, ensure_signed};
 	use pallet_common::{
 		dispatch::{dispatch_tx, CollectionDispatch},
 		CollectionHandle, CommonWeightInfo, Pallet as PalletCommon, RefungibleExtensionsWeightInfo,
 	};
 	use pallet_evm::account::CrossAccountId;
+	use pallet_structure::weights::WeightInfo as StructureWeightInfo;
 	use scale_info::TypeInfo;
 	use sp_std::{vec, vec::Vec};
 	use up_data_structs::{
@@ -104,9 +110,6 @@ pub mod pallet {
 	use weights::WeightInfo;
 
 	use super::*;
-
-	/// A maximum number of levels of depth in the token nesting tree.
-	pub const NESTING_BUDGET: u32 = 5;
 
 	/// Errors for the common Unique transactions.
 	#[pallet::error]
@@ -127,6 +130,8 @@ pub mod pallet {
 
 		/// Weight information for common pallet operations.
 		type CommonWeightInfo: CommonWeightInfo<Self::CrossAccountId>;
+
+		type StructureWeightInfo: StructureWeightInfo;
 
 		/// Weight info information for extra refungible pallet operations.
 		type RefungibleExtensionsWeightInfo: RefungibleExtensionsWeightInfo;
@@ -264,7 +269,7 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		/// A maximum number of levels of depth in the token nesting tree.
 		fn nesting_budget() -> u32 {
-			NESTING_BUDGET
+			5
 		}
 
 		/// Maximal length of a collection name.
@@ -666,7 +671,7 @@ pub mod pallet {
 		/// * `owner`: Address of the initial owner of the item.
 		/// * `data`: Token data describing the item to store on chain.
 		#[pallet::call_index(11)]
-		#[pallet::weight(T::CommonWeightInfo::create_item(data))]
+		#[pallet::weight(T::CommonWeightInfo::create_item(data) + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn create_item(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -674,11 +679,14 @@ pub mod pallet {
 			data: CreateItemData,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.create_item(sender, owner, data, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.create_item(sender, owner, data, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Create multiple items within a collection.
@@ -700,7 +708,7 @@ pub mod pallet {
 		/// * `owner`: Address of the initial owner of the tokens.
 		/// * `items_data`: Vector of data describing each item to be created.
 		#[pallet::call_index(12)]
-		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(items_data))]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items(items_data) + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn create_multiple_items(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -709,11 +717,14 @@ pub mod pallet {
 		) -> DispatchResultWithPostInfo {
 			ensure!(!items_data.is_empty(), Error::<T>::EmptyArgument);
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.create_multiple_items(sender, owner, items_data, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.create_multiple_items(sender, owner, items_data, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Add or change collection properties.
@@ -791,7 +802,7 @@ pub mod pallet {
 		/// * `properties`: Vector of key-value pairs stored as the token's metadata.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[pallet::call_index(15)]
-		#[pallet::weight(T::CommonWeightInfo::set_token_properties(properties.len() as u32))]
+		#[pallet::weight(T::CommonWeightInfo::set_token_properties(properties.len() as u32) + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn set_token_properties(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -801,11 +812,14 @@ pub mod pallet {
 			ensure!(!properties.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.set_token_properties(sender, token_id, properties, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.set_token_properties(sender, token_id, properties, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Delete specified token properties. Currently properties only work with NFTs.
@@ -824,7 +838,7 @@ pub mod pallet {
 		/// * `property_keys`: Vector of keys of the properties to be deleted.
 		/// Keys support Latin letters, `-`, `_`, and `.` as symbols.
 		#[pallet::call_index(16)]
-		#[pallet::weight(T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32))]
+		#[pallet::weight(T::CommonWeightInfo::delete_token_properties(property_keys.len() as u32) + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn delete_token_properties(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -834,11 +848,14 @@ pub mod pallet {
 			ensure!(!property_keys.is_empty(), Error::<T>::EmptyArgument);
 
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.delete_token_properties(sender, token_id, property_keys, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.delete_token_properties(sender, token_id, property_keys, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Add or change token property permissions of a collection.
@@ -888,18 +905,21 @@ pub mod pallet {
 		/// * `collection_id`: ID of the collection to which the tokens would belong.
 		/// * `data`: Explicit item creation data.
 		#[pallet::call_index(18)]
-		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(data))]
+		#[pallet::weight(T::CommonWeightInfo::create_multiple_items_ex(data) + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn create_multiple_items_ex(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
 			data: CreateItemExData<T::CrossAccountId>,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.create_multiple_items_ex(sender, data, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.create_multiple_items_ex(sender, data, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Completely allow or disallow transfers for a particular collection.
@@ -995,7 +1015,7 @@ pub mod pallet {
 		///     * Fungible Mode: The desired number of pieces to burn.
 		///     * Re-Fungible Mode: The desired number of pieces to burn.
 		#[pallet::call_index(21)]
-		#[pallet::weight(T::CommonWeightInfo::burn_from())]
+		#[pallet::weight(T::CommonWeightInfo::burn_from() + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn burn_from(
 			origin: OriginFor<T>,
 			collection_id: CollectionId,
@@ -1004,11 +1024,14 @@ pub mod pallet {
 			value: u128,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.burn_from(sender, from, item_id, value, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.burn_from(sender, from, item_id, value, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Change ownership of the token.
@@ -1033,7 +1056,7 @@ pub mod pallet {
 		///     * Fungible Mode: The desired number of pieces to transfer.
 		///     * Re-Fungible Mode: The desired number of pieces to transfer.
 		#[pallet::call_index(22)]
-		#[pallet::weight(T::CommonWeightInfo::transfer())]
+		#[pallet::weight(T::CommonWeightInfo::transfer() + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn transfer(
 			origin: OriginFor<T>,
 			recipient: T::CrossAccountId,
@@ -1042,11 +1065,14 @@ pub mod pallet {
 			value: u128,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.transfer(sender, recipient, item_id, value, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.transfer(sender, recipient, item_id, value, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Allow a non-permissioned address to transfer or burn an item.
@@ -1138,7 +1164,7 @@ pub mod pallet {
 		///     * Fungible Mode: The desired number of pieces to transfer.
 		///     * Re-Fungible Mode: The desired number of pieces to transfer.
 		#[pallet::call_index(25)]
-		#[pallet::weight(T::CommonWeightInfo::transfer_from())]
+		#[pallet::weight(T::CommonWeightInfo::transfer_from() + <Pallet<T>>::nesting_budget_predispatch_weight())]
 		pub fn transfer_from(
 			origin: OriginFor<T>,
 			from: T::CrossAccountId,
@@ -1148,11 +1174,14 @@ pub mod pallet {
 			value: u128,
 		) -> DispatchResultWithPostInfo {
 			let sender = T::CrossAccountId::from_sub(ensure_signed(origin)?);
-			let budget = budget::Value::new(NESTING_BUDGET);
+			let budget = Self::structure_nesting_budget();
 
-			dispatch_tx::<T, _>(collection_id, |d| {
-				d.transfer_from(sender, from, recipient, item_id, value, &budget)
-			})
+			Self::refund_nesting_budget(
+				dispatch_tx::<T, _>(collection_id, |d| {
+					d.transfer_from(sender, from, recipient, item_id, value, &budget)
+				}),
+				budget,
+			)
 		}
 
 		/// Set specific limits of a collection. Empty, or None fields mean chain default.
@@ -1347,6 +1376,41 @@ pub mod pallet {
 			let _ = <RefungibleApproveBasket<T>>::clear_prefix((collection_id,), u32::MAX, None);
 
 			Ok(())
+		}
+
+		fn structure_nesting_budget() -> budget::Value {
+			budget::Value::new(Self::nesting_budget())
+		}
+
+		fn nesting_budget_predispatch_weight() -> Weight {
+			T::StructureWeightInfo::find_parent().saturating_mul(Self::nesting_budget() as u64)
+		}
+
+		pub fn refund_nesting_budget(
+			mut result: DispatchResultWithPostInfo,
+			budget: budget::Value,
+		) -> DispatchResultWithPostInfo {
+			let refund_amount = budget.refund_amount();
+			let consumed = Self::nesting_budget() - refund_amount;
+
+			match &mut result {
+				Ok(PostDispatchInfo {
+					actual_weight: Some(weight),
+					..
+				})
+				| Err(DispatchErrorWithPostInfo {
+					post_info: PostDispatchInfo {
+						actual_weight: Some(weight),
+						..
+					},
+					..
+				}) => {
+					*weight += T::StructureWeightInfo::find_parent().saturating_mul(consumed as u64)
+				}
+				_ => {}
+			}
+
+			result
 		}
 	}
 }
