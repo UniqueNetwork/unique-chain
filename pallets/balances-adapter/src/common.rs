@@ -221,7 +221,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 
 	fn check_nesting(
 		&self,
-		_sender: <T>::CrossAccountId,
+		_sender: Option<&<T>::CrossAccountId>,
 		_from: (up_data_structs::CollectionId, TokenId),
 		_under: TokenId,
 		_budget: &dyn up_data_structs::budget::Budget,

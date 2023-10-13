@@ -384,6 +384,19 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let nester = from;
+
+		Self::transfer_internal(collection, Some(nester), from, to, amount, nesting_budget)
+	}
+
+	fn transfer_internal(
+		collection: &FungibleHandle<T>,
+		nester: Option<&T::CrossAccountId>,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed,
@@ -416,7 +429,7 @@ impl<T: Config> Pallet<T> {
 			// from != to && amount != 0
 
 			<PalletStructure<T>>::nest_if_sent_to_token(
-				from.clone(),
+				nester,
 				to,
 				collection.id,
 				TokenId::default(),
@@ -473,7 +486,7 @@ impl<T: Config> Pallet<T> {
 
 		for (to, _) in data.iter() {
 			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
+				Some(sender),
 				to,
 				collection.id,
 				TokenId::default(),
@@ -730,7 +743,8 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		let mut result = Self::transfer(collection, from, to, amount, nesting_budget);
+		let mut result =
+			Self::transfer_internal(collection, Some(spender), from, to, amount, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result?;
 

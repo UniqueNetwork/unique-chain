@@ -2188,13 +2188,13 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Check permission to nest token.
 	///
-	/// * `sender` - The user who initiated the check.
+	/// * `sender` - The user who initiated the check. If the user is unknown, nesting is not allowed.
 	/// * `from` - The token that is checked for embedding.
 	/// * `under` - Token under which to check.
 	/// * `budget` - The maximum budget that can be spent on the check.
 	fn check_nesting(
 		&self,
-		sender: T::CrossAccountId,
+		sender: Option<&T::CrossAccountId>,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		budget: &dyn Budget,
