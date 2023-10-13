@@ -110,12 +110,16 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 }
 
+/// Weight of minting tokens with properties
+/// * `create_no_data_weight` -- the weight of minting without properties
+/// * `token_properties_nums` -- number of properties of each token
+#[inline]
 pub(crate) fn mint_with_props_weight<T: Config>(
 	create_no_data_weight: Weight,
-	tokens: impl Iterator<Item = u32> + Clone,
+	token_properties_nums: impl Iterator<Item = u32> + Clone,
 ) -> Weight {
 	create_no_data_weight.saturating_add(write_token_properties_total_weight::<T, _>(
-		tokens,
+		token_properties_nums,
 		<SelfWeightOf<T>>::write_token_properties,
 	))
 }
