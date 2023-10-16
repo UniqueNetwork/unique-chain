@@ -2194,7 +2194,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// * `budget` - The maximum budget that can be spent on the check.
 	fn check_nesting(
 		&self,
-		sender: T::CrossAccountId,
+		sender: &T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		budget: &dyn Budget,
