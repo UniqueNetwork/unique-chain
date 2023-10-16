@@ -105,10 +105,6 @@ const tryMintExplicit = async (helper: UniqueHelper, signer: IKeyringPair, token
   return tokensCount;
 };
 
-function sizeOfProperty(prop: IProperty) {
-  return sizeOfEncodedStr(prop.key) + sizeOfEncodedStr(prop.value!);
-}
-
 function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');
   if(i < 0b11_1111) {
