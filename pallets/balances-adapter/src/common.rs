@@ -1,7 +1,7 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
 
-use frame_support::{fail, weights::Weight};
+use frame_support::{ensure, fail, weights::Weight};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
 use pallet_common::{CommonCollectionOperations, CommonWeightInfo};
 use up_data_structs::TokenId;
@@ -168,11 +168,16 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		&self,
 		sender: <T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		_token: TokenId,
+		token: TokenId,
 		amount: u128,
-		budget: &dyn up_data_structs::budget::Budget,
+		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		<Pallet<T>>::transfer(self, &sender, &to, amount, budget)
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer(&sender, &to, amount)
 	}
 
 	fn approve(
@@ -201,11 +206,16 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		sender: <T>::CrossAccountId,
 		from: <T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		_token: TokenId,
+		token: TokenId,
 		amount: u128,
 		budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, budget)
+		ensure!(
+			token == TokenId::default(),
+			pallet_fungible::Error::<T>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer_from(&sender, &from, &to, amount, budget)
 	}
 
 	fn burn_from(

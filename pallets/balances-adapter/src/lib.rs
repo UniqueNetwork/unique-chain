@@ -81,6 +81,7 @@ pub mod pallet {
 		frame_system::Config
 		+ pallet_evm_coder_substrate::Config
 		+ pallet_common::Config
+		+ pallet_fungible::Config
 		+ pallet_structure::Config
 	{
 		/// Inspect from `pallet_balances`
@@ -155,20 +156,15 @@ pub mod pallet {
 			Ok(Self::balance_of(from))
 		}
 
-		/// Transfers the specified amount of tokens. Will check that
-		/// the transfer is allowed for the token.
+		/// Transfers the specified amount of tokens.
 		///
-		/// - `collection`: Collection that contains the token.
 		/// - `from`: Owner of tokens to transfer.
 		/// - `to`: Recepient of transfered tokens.
 		/// - `amount`: Amount of tokens to transfer.
-		/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
 		pub fn transfer(
-			_collection: &NativeFungibleHandle<T>,
 			from: &T::CrossAccountId,
 			to: &T::CrossAccountId,
 			amount: u128,
-			_nesting_budget: &dyn Budget,
 		) -> DispatchResultWithPostInfo {
 			<PalletCommon<T>>::ensure_correct_receiver(to)?;
 
@@ -185,19 +181,18 @@ pub mod pallet {
 			})
 		}
 
-		/// Transfer NFT token from one account to another.
+		/// Transfer tokens from one account to another.
 		///
-		/// Same as the [`Self::transfer`] but spender doesn't needs to be the owner of the token.
-		/// The owner should set allowance for the spender to transfer token.
+		/// Same as the [`Self::transfer`] but the spender doesn't needs to be the direct owner of the token.
+		/// The spender must be allowed to transfer token.
+		/// If the tokens are nested in an NFT and the spender owns the NFT, the allowance is considered to be set.
 		///
-		/// - `collection`: Collection that contains the token.
 		/// - `spender`: Account that spend the money.
 		/// - `from`: Owner of tokens to transfer.
 		/// - `to`: Recepient of transfered tokens.
 		/// - `amount`: Amount of tokens to transfer.
 		/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
 		pub fn transfer_from(
-			collection: &NativeFungibleHandle<T>,
 			spender: &T::CrossAccountId,
 			from: &T::CrossAccountId,
 			to: &T::CrossAccountId,
@@ -208,7 +203,7 @@ pub mod pallet {
 			if allowance < amount {
 				return Err(<CommonError<T>>::ApprovedValueTooLow.into());
 			}
-			Self::transfer(collection, from, to, amount, nesting_budget)
+			Self::transfer(from, to, amount)
 		}
 	}
 }

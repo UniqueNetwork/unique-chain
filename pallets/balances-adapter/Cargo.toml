@@ -24,6 +24,7 @@ pallet-evm = { workspace = true }
 
 #Local
 pallet-common = { workspace = true }
+pallet-fungible = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-evm-transaction-payment = { workspace = true }
 up-data-structs = { workspace = true, features = ['serde1'] }
@@ -36,6 +37,7 @@ std = [
 	"frame-system/std",
 	"pallet-balances/std",
 	"pallet-common/std",
+	"pallet-fungible/std",
 	"pallet-evm-coder-substrate/std",
 	"pallet-evm/std",
 	"sp-core/std",
