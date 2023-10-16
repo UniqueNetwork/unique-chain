@@ -682,11 +682,10 @@ macro_rules! impl_common_runtime_apis {
 			#[cfg(feature = "lookahead")]
 			impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
 				fn can_build_upon(
-					_included_hash: <Block as BlockT>::Hash,
-					_slot: cumulus_primitives_aura::Slot,
+					included_hash: <Block as BlockT>::Hash,
+					slot: cumulus_primitives_aura::Slot,
 				) -> bool {
-					// FIXME: Limit velocity
-					true
+					$crate::config::parachain::ConsensusHook::can_build_upon(included_hash, slot)
 				}
 			}
 

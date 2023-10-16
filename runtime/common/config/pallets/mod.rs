@@ -21,7 +21,7 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, Currency},
 };
 use sp_arithmetic::Perbill;
-use sp_runtime::traits::{BlockNumberProvider, AccountIdConversion};
+use sp_runtime::traits::{AccountIdConversion, BlockNumberProvider};
 use up_common::{
 	constants::*,
 	types::{AccountId, Balance, BlockNumber},
@@ -111,8 +111,8 @@ impl BlockNumberProvider for OnInitializeBlockNumberProvider {
 	type BlockNumber = BlockNumber;
 
 	fn current_block_number() -> Self::BlockNumber {
-		use parity_scale_codec::Decode;
 		use hex_literal::hex;
+		use parity_scale_codec::Decode;
 		use sp_io::storage;
 		// TODO: Replace with the following code after https://github.com/paritytech/polkadot-sdk/commit/3ea497b5a0fdda252f9c5a3c257cfaf8685f02fd lands
 		// <cumulus_pallet_parachain_system::Pallet<Runtime>>::last_relay_block_number()
@@ -122,7 +122,8 @@ impl BlockNumberProvider for OnInitializeBlockNumberProvider {
 			// First parachain block
 			return Default::default()
 		};
-		BlockNumber::decode(&mut encoded.as_ref()).expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
+		BlockNumber::decode(&mut encoded.as_ref())
+			.expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
 	}
 }
 

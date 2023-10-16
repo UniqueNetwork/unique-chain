@@ -71,7 +71,9 @@ pub mod pallet {
 		type TreasuryAccountId: Get<Self::AccountId>;
 
 		// The block number provider, which should be callable from `on_initialize` hook.
-		type OnInitializeBlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
+		type OnInitializeBlockNumberProvider: BlockNumberProvider<
+			BlockNumber = BlockNumberFor<Self>,
+		>;
 
 		/// Number of blocks that pass between treasury balance updates due to inflation
 		#[pallet::constant]
