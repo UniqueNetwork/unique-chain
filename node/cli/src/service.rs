@@ -221,6 +221,14 @@ ez_bounds!(
 	{
 	}
 );
+#[cfg(not(feature = "lookahead"))]
+ez_bounds!(
+	pub trait LookaheadApiDep {}
+);
+#[cfg(feature = "lookahead")]
+ez_bounds!(
+	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
+);
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -358,6 +366,7 @@ where
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: LookaheadApiDep,
 	Runtime: RuntimeInstance,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
@@ -687,6 +696,8 @@ pub struct StartConsensusParameters<'a> {
 	announce_block: Arc<dyn Fn(Hash, Option<Vec<u8>>) + Send + Sync>,
 }
 
+// Clones ignored for optional lookahead collator
+#[allow(clippy::redundant_clone)]
 pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
 	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 	transaction_pool: Arc<
@@ -701,6 +712,7 @@ where
 		+ Sync
 		+ 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: LookaheadApiDep,
 	Runtime: RuntimeInstance,
 {
 	let StartConsensusParameters {
@@ -735,12 +747,12 @@ where
 		client.clone(),
 	);
 
-	let block_import = ParachainBlockImport::new(client.clone(), backend);
+	let block_import = ParachainBlockImport::new(client.clone(), backend.clone());
 
 	let params = BuildAuraConsensusParams {
 		create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 		block_import,
-		para_client: client,
+		para_client: client.clone(),
 		#[cfg(feature = "lookahead")]
 		para_backend: backend,
 		para_id,
@@ -751,10 +763,19 @@ where
 		proposer,
 		collator_service,
 		// With async-baking, we allowed to be both slower (longer authoring) and faster (multiple para blocks per relay block)
+		#[cfg(not(feature = "lookahead"))]
 		authoring_duration: Duration::from_millis(500),
+		#[cfg(feature = "lookahead")]
+		authoring_duration: Duration::from_millis(1500),
 		overseer_handle,
 		#[cfg(feature = "lookahead")]
-		code_hash_provider: || {},
+		code_hash_provider: move |block_hash| {
+			client
+				.code_at(block_hash)
+				.ok()
+				.map(cumulus_primitives_core::relay_chain::ValidationCode)
+				.map(|c| c.hash())
+		},
 		collator_key,
 		relay_chain_slot_duration,
 	};
@@ -762,7 +783,10 @@ where
 	task_manager.spawn_essential_handle().spawn(
 		"aura",
 		None,
+		#[cfg(not(feature = "lookahead"))]
 		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _>(params),
+		#[cfg(feature = "lookahead")]
+		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _, _>(params),
 	);
 	Ok(())
 }

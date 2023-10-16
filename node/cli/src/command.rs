@@ -396,6 +396,8 @@ pub fn run() -> Result<()> {
 			}
 		}
 		#[cfg(feature = "try-runtime")]
+		// embedded try-runtime cli will be removed soon.
+		#[allow(deprecated)]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use std::{future::Future, pin::Pin};
 
