@@ -718,14 +718,16 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		let nester = from;
-
-		Self::transfer_internal(collection, nester, from, to, token, nesting_budget)
+		let depositor = from;
+		Self::transfer_internal(collection, depositor, from, to, token, nesting_budget)
 	}
 
+	/// Transfers an NFT from the `from` account to the `to` account.
+	/// The `depositor` is the account who deposits the NFT.
+	/// For instance, the nesting rules will be checked against the `depositor`'s permissions.
 	pub fn transfer_internal(
 		collection: &NonfungibleHandle<T>,
-		nester: &T::CrossAccountId,
+		depositor: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		token: TokenId,
@@ -767,7 +769,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		<PalletStructure<T>>::nest_if_sent_to_token(
-			nester,
+			depositor,
 			to,
 			collection.id,
 			token,

@@ -384,14 +384,16 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
-		let nester = from;
-
-		Self::transfer_internal(collection, nester, from, to, amount, nesting_budget)
+		let depositor = from;
+		Self::transfer_internal(collection, depositor, from, to, amount, nesting_budget)
 	}
 
+	/// Transfers tokens from the `from` account to the `to` account.
+	/// The `depositor` is the account who deposits the tokens.
+	/// For instance, the nesting rules will be checked against the `depositor`'s permissions.
 	fn transfer_internal(
 		collection: &FungibleHandle<T>,
-		nester: &T::CrossAccountId,
+		depositor: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		amount: u128,
@@ -429,7 +431,7 @@ impl<T: Config> Pallet<T> {
 			// from != to && amount != 0
 
 			<PalletStructure<T>>::nest_if_sent_to_token(
-				nester,
+				depositor,
 				to,
 				collection.id,
 				TokenId::default(),

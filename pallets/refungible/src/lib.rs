@@ -615,14 +615,24 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let nester = from;
-
-		Self::transfer_internal(collection, nester, from, to, token, amount, nesting_budget)
+		let depositor = from;
+		Self::transfer_internal(
+			collection,
+			depositor,
+			from,
+			to,
+			token,
+			amount,
+			nesting_budget,
+		)
 	}
 
+	/// Transfers RFT tokens from the `from` account to the `to` account.
+	/// The `depositor` is the account who deposits the tokens.
+	/// For instance, the nesting rules will be checked against the `depositor`'s permissions.
 	pub fn transfer_internal(
 		collection: &RefungibleHandle<T>,
-		nester: &T::CrossAccountId,
+		depositor: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		token: TokenId,
@@ -697,7 +707,7 @@ impl<T: Config> Pallet<T> {
 			// from != to && amount != 0
 
 			<PalletStructure<T>>::nest_if_sent_to_token(
-				nester,
+				depositor,
 				to,
 				collection.id,
 				token,
