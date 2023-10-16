@@ -718,6 +718,21 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let depositor = from;
+		Self::transfer_internal(collection, depositor, from, to, token, nesting_budget)
+	}
+
+	/// Transfers an NFT from the `from` account to the `to` account.
+	/// The `depositor` is the account who deposits the NFT.
+	/// For instance, the nesting rules will be checked against the `depositor`'s permissions.
+	pub fn transfer_internal(
+		collection: &NonfungibleHandle<T>,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
@@ -754,7 +769,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
+			depositor,
 			to,
 			collection.id,
 			token,
@@ -860,7 +875,7 @@ impl<T: Config> Pallet<T> {
 			let token = TokenId(first_token + i as u32 + 1);
 
 			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
+				sender,
 				&data.owner,
 				collection.id,
 				token,
@@ -1154,7 +1169,8 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		let mut result = Self::transfer(collection, from, to, token, nesting_budget);
+		let mut result =
+			Self::transfer_internal(collection, spender, from, to, token, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result
 	}
@@ -1183,7 +1199,7 @@ impl<T: Config> Pallet<T> {
 	///
 	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
-		sender: T::CrossAccountId,
+		sender: &T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
