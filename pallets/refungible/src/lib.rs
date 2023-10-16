@@ -617,20 +617,12 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		let nester = from;
 
-		Self::transfer_internal(
-			collection,
-			Some(nester),
-			from,
-			to,
-			token,
-			amount,
-			nesting_budget,
-		)
+		Self::transfer_internal(collection, nester, from, to, token, amount, nesting_budget)
 	}
 
 	pub fn transfer_internal(
 		collection: &RefungibleHandle<T>,
-		nester: Option<&T::CrossAccountId>,
+		nester: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		token: TokenId,
@@ -869,7 +861,7 @@ impl<T: Config> Pallet<T> {
 			let token_id = TokenId(first_token_id + i as u32 + 1);
 			for (to, _) in token.users.iter() {
 				<PalletStructure<T>>::check_nesting(
-					Some(sender),
+					sender,
 					to,
 					collection.id,
 					token_id,
@@ -1168,15 +1160,7 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		Self::transfer_internal(
-			collection,
-			Some(spender),
-			from,
-			to,
-			token,
-			amount,
-			nesting_budget,
-		)?;
+		Self::transfer_internal(collection, spender, from, to, token, amount, nesting_budget)?;
 		if let Some(allowance) = allowance {
 			Self::set_allowance_unchecked(collection, from, spender, token, allowance);
 		}

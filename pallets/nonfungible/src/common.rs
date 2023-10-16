@@ -407,7 +407,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn check_nesting(
 		&self,
-		sender: Option<&T::CrossAccountId>,
+		sender: &T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,

@@ -720,12 +720,12 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResultWithPostInfo {
 		let nester = from;
 
-		Self::transfer_internal(collection, Some(nester), from, to, token, nesting_budget)
+		Self::transfer_internal(collection, nester, from, to, token, nesting_budget)
 	}
 
 	pub fn transfer_internal(
 		collection: &NonfungibleHandle<T>,
-		nester: Option<&T::CrossAccountId>,
+		nester: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
 		token: TokenId,
@@ -873,7 +873,7 @@ impl<T: Config> Pallet<T> {
 			let token = TokenId(first_token + i as u32 + 1);
 
 			<PalletStructure<T>>::check_nesting(
-				Some(sender),
+				sender,
 				&data.owner,
 				collection.id,
 				token,
@@ -1168,7 +1168,7 @@ impl<T: Config> Pallet<T> {
 
 		// Allowance is reset in [`transfer`]
 		let mut result =
-			Self::transfer_internal(collection, Some(spender), from, to, token, nesting_budget);
+			Self::transfer_internal(collection, spender, from, to, token, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result
 	}
@@ -1197,15 +1197,11 @@ impl<T: Config> Pallet<T> {
 	///
 	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
-		sender: Option<&T::CrossAccountId>,
+		sender: &T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let Some(sender) = sender else {
-			fail!(<CommonError<T>>::UserIsNotAllowedToNest);
-		};
-
 		let nesting = handle.permissions.nesting();
 
 		#[cfg(not(feature = "runtime-benchmarks"))]
