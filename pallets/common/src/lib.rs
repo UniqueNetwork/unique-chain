@@ -783,6 +783,9 @@ pub mod pallet {
 
 		/// The user is not an administrator.
 		UserIsNotCollectionAdmin,
+
+		/// Fungible tokens hold no ID, and the default value of TokenId for a fungible collection is 0.
+		FungibleItemsHaveNoId,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.

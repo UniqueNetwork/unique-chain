@@ -81,7 +81,6 @@ pub mod pallet {
 		frame_system::Config
 		+ pallet_evm_coder_substrate::Config
 		+ pallet_common::Config
-		+ pallet_fungible::Config
 		+ pallet_structure::Config
 	{
 		/// Inspect from `pallet_balances`
