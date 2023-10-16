@@ -135,7 +135,7 @@ pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
 
 /// How much items can be created per single
 /// create_many call.
-pub const MAX_ITEMS_PER_BATCH: u32 = 200;
+pub const MAX_ITEMS_PER_BATCH: u32 = 120;
 
 /// Used for limit bounded types of token custom data.
 pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;

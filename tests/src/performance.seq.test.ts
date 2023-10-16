@@ -22,7 +22,7 @@ import {UniqueHelper} from './util/playgrounds/unique';
 
 describe('Performace tests', () => {
   let alice: IKeyringPair;
-  const MAX_TOKENS_TO_MINT = 200;
+  const MAX_TOKENS_TO_MINT = 120;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -42,8 +42,6 @@ describe('Performace tests', () => {
       ],
     });
 
-
-    const results = [];
     const step = 1_000;
     const sizeOfKey = sizeOfEncodedStr(propertyKey);
     let currentSize = step;
@@ -56,52 +54,17 @@ describe('Performace tests', () => {
       startCount = await tryMintExplicit(helper, alice, MAX_TOKENS_TO_MINT, collection.collectionId, {Substrate: alice.address});
       minterFunc = tryMintExplicit;
     }
-    results.push({propertySize: 0, tokens: startCount});
+
+    expect(startCount).to.be.equal(MAX_TOKENS_TO_MINT);
 
     while(currentSize <= 32_000) {
       const property = {key: propertyKey, value: 'A'.repeat(currentSize - sizeOfKey - sizeOfInt(currentSize))};
-      const maxTokens = Math.ceil(results.map(x => x.tokens).reduce((a, b) => a + b) / results.length);
-      const tokens = await minterFunc(helper, alice, maxTokens, collection.collectionId, {Substrate: alice.address}, property);
-      results.push({propertySize: sizeOfProperty(property), tokens});
+      const tokens = await minterFunc(helper, alice, MAX_TOKENS_TO_MINT, collection.collectionId, {Substrate: alice.address}, property);
+      expect(tokens).to.be.equal(MAX_TOKENS_TO_MINT);
+
       currentSize += step;
       await helper.wait.newBlocks(2);
     }
-
-    expect(results).to.be.deep.equal([
-      {propertySize: 0, tokens: 200},
-      {propertySize: 1000, tokens: 149},
-      {propertySize: 2000, tokens: 149},
-      {propertySize: 3000, tokens: 149},
-      {propertySize: 4000, tokens: 149},
-      {propertySize: 5000, tokens: 149},
-      {propertySize: 6000, tokens: 149},
-      {propertySize: 7000, tokens: 149},
-      {propertySize: 8000, tokens: 149},
-      {propertySize: 9000, tokens: 149},
-      {propertySize: 10000, tokens: 149},
-      {propertySize: 11000, tokens: 149},
-      {propertySize: 12000, tokens: 149},
-      {propertySize: 13000, tokens: 149},
-      {propertySize: 14000, tokens: 149},
-      {propertySize: 15000, tokens: 149},
-      {propertySize: 16000, tokens: 149},
-      {propertySize: 17000, tokens: 149},
-      {propertySize: 18000, tokens: 149},
-      {propertySize: 19000, tokens: 149},
-      {propertySize: 20000, tokens: 149},
-      {propertySize: 21000, tokens: 149},
-      {propertySize: 22000, tokens: 149},
-      {propertySize: 23000, tokens: 149},
-      {propertySize: 24000, tokens: 149},
-      {propertySize: 25000, tokens: 149},
-      {propertySize: 26000, tokens: 149},
-      {propertySize: 27000, tokens: 145},
-      {propertySize: 28000, tokens: 140},
-      {propertySize: 29000, tokens: 135},
-      {propertySize: 30000, tokens: 130},
-      {propertySize: 31000, tokens: 126},
-      {propertySize: 32000, tokens: 122},
-    ]);
   });
 });
 
@@ -141,10 +104,6 @@ const tryMintExplicit = async (helper: UniqueHelper, signer: IKeyringPair, token
   }
   return tokensCount;
 };
-
-function sizeOfProperty(prop: IProperty) {
-  return sizeOfEncodedStr(prop.key) + sizeOfEncodedStr(prop.value!);
-}
 
 function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');
