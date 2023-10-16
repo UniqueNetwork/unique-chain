@@ -1,9 +1,9 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
 
-use frame_support::{fail, weights::Weight};
+use frame_support::{ensure, fail, weights::Weight};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo};
+use pallet_common::{CommonCollectionOperations, CommonWeightInfo, Error as CommonError};
 use up_data_structs::TokenId;
 
 use crate::{Config, NativeFungibleHandle, Pallet};
@@ -77,7 +77,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_data: up_data_structs::CreateItemData,
 		_nesting_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn create_multiple_items(
@@ -87,7 +87,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_data: Vec<up_data_structs::CreateItemData>,
 		_nesting_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn create_multiple_items_ex(
@@ -96,7 +96,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_data: up_data_structs::CreateItemExData<<T>::CrossAccountId>,
 		_nesting_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn burn_item(
@@ -105,7 +105,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_token: TokenId,
 		_amount: u128,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn set_collection_properties(
@@ -113,7 +113,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_sender: <T>::CrossAccountId,
 		_properties: Vec<up_data_structs::Property>,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn delete_collection_properties(
@@ -121,7 +121,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_sender: &<T>::CrossAccountId,
 		_property_keys: Vec<up_data_structs::PropertyKey>,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn set_token_properties(
@@ -131,7 +131,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_properties: Vec<up_data_structs::Property>,
 		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn delete_token_properties(
@@ -141,7 +141,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_property_keys: Vec<up_data_structs::PropertyKey>,
 		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn get_token_properties_raw(
@@ -161,18 +161,23 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_sender: &<T>::CrossAccountId,
 		_property_permissions: Vec<up_data_structs::PropertyKeyPermission>,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn transfer(
 		&self,
 		sender: <T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		_token: TokenId,
+		token: TokenId,
 		amount: u128,
-		budget: &dyn up_data_structs::budget::Budget,
+		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		<Pallet<T>>::transfer(self, &sender, &to, amount, budget)
+		ensure!(
+			token == TokenId::default(),
+			<CommonError<T>>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer(&sender, &to, amount)
 	}
 
 	fn approve(
@@ -182,7 +187,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_token: TokenId,
 		_amount: u128,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn approve_from(
@@ -193,7 +198,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_token: TokenId,
 		_amount: u128,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn transfer_from(
@@ -201,11 +206,16 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		sender: <T>::CrossAccountId,
 		from: <T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		_token: TokenId,
+		token: TokenId,
 		amount: u128,
 		budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, budget)
+		ensure!(
+			token == TokenId::default(),
+			<CommonError<T>>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer_from(&sender, &from, &to, amount, budget)
 	}
 
 	fn burn_from(
@@ -216,7 +226,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_amount: u128,
 		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn check_nesting(
@@ -226,7 +236,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_under: TokenId,
 		_budget: &dyn up_data_structs::budget::Budget,
 	) -> frame_support::sp_runtime::DispatchResult {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn nest(&self, _under: TokenId, _to_nest: (up_data_structs::CollectionId, TokenId)) {}
@@ -332,7 +342,7 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_operator: <T>::CrossAccountId,
 		_approve: bool,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
 	fn allowance_for_all(
@@ -347,6 +357,6 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		&self,
 		_token: TokenId,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
-		fail!(<pallet_common::Error<T>>::UnsupportedOperation);
+		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 }
