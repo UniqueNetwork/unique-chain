@@ -2188,7 +2188,7 @@ pub trait CommonCollectionOperations<T: Config> {
 
 	/// Check permission to nest token.
 	///
-	/// * `sender` - The user who initiated the check. If the user is unknown, nesting is not allowed.
+	/// * `sender` - The user who initiated the check.
 	/// * `from` - The token that is checked for embedding.
 	/// * `under` - Token under which to check.
 	/// * `budget` - The maximum budget that can be spent on the check.
