@@ -1225,7 +1225,7 @@ impl<T: Config> Pallet<T> {
 				nesting_budget,
 			)? {
 			// Pass, token existence and ouroboros checks are done in `check_indirectly_owned`
-		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
+		} else if nesting.collection_admin && handle.is_owner_or_admin(sender) {
 			// token existence and ouroboros checks are done in `get_checked_topmost_owner`
 			let _ = <PalletStructure<T>>::get_checked_topmost_owner(
 				handle.id,
