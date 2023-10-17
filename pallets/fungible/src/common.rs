@@ -428,10 +428,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		<Allowance<T>>::get((self.id, sender, spender))
 	}
 
-	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
-		None
-	}
-
 	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		if token != TokenId::default() {
 			return None;

@@ -14,31 +14,21 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{
-	parameter_types,
-	traits::{Contains, Everything},
-};
+use frame_support::{parameter_types, traits::Everything};
 use frame_system::EnsureSigned;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
-use pallet_foreign_assets::{CurrencyId, NativeCurrency};
+use pallet_foreign_assets::CurrencyIdConvert;
 use sp_runtime::traits::Convert;
-use sp_std::{vec, vec::Vec};
 use staging_xcm::latest::{Junction::*, Junctions::*, MultiLocation, Weight};
 use staging_xcm_executor::XcmExecutor;
 use up_common::{
 	constants::*,
 	types::{AccountId, Balance},
 };
+use up_data_structs::CollectionId;
 
 use crate::{
-	runtime_common::config::{
-		pallets::TreasuryAccountId,
-		substrate::{MaxLocks, MaxReserves},
-		xcm::{
-			xcm_assets::CurrencyIdConvert, SelfLocation, UniversalLocation, Weigher,
-			XcmExecutorConfig,
-		},
-	},
+	runtime_common::config::xcm::{SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig},
 	RelayChainBlockNumberProvider, Runtime, RuntimeEvent,
 };
 
@@ -59,29 +49,6 @@ parameter_type_with_key! {
 	};
 }
 
-parameter_type_with_key! {
-	pub ExistentialDeposits: |currency_id: CurrencyId| -> Balance {
-		match currency_id {
-			CurrencyId::NativeAssetId(symbol) => match symbol {
-				NativeCurrency::Here => 0,
-				NativeCurrency::Parent=> 0,
-			},
-			_ => 100_000
-		}
-	};
-}
-
-pub fn get_all_module_accounts() -> Vec<AccountId> {
-	vec![TreasuryAccountId::get()]
-}
-
-pub struct DustRemovalWhitelist;
-impl Contains<AccountId> for DustRemovalWhitelist {
-	fn contains(a: &AccountId) -> bool {
-		get_all_module_accounts().contains(a)
-	}
-}
-
 pub struct AccountIdToMultiLocation;
 impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	fn convert(account: AccountId) -> MultiLocation {
@@ -91,18 +58,6 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 		})
 		.into()
 	}
-}
-
-pub struct CurrencyHooks;
-impl orml_traits::currency::MutationHooks<AccountId, CurrencyId, Balance> for CurrencyHooks {
-	type OnDust = orml_tokens::TransferDust<Runtime, TreasuryAccountId>;
-	type OnSlash = ();
-	type PreTransfer = ();
-	type PostTransfer = ();
-	type PreDeposit = ();
-	type PostDeposit = ();
-	type OnNewTokenAccount = ();
-	type OnKilledTokenAccount = ();
 }
 
 impl orml_vesting::Config for Runtime {
@@ -115,27 +70,11 @@ impl orml_vesting::Config for Runtime {
 	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
 }
 
-impl orml_tokens::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Balance = Balance;
-	type Amount = Amount;
-	type CurrencyId = CurrencyId;
-	type WeightInfo = ();
-	type ExistentialDeposits = ExistentialDeposits;
-	type CurrencyHooks = CurrencyHooks;
-	type MaxLocks = MaxLocks;
-	type MaxReserves = MaxReserves;
-	// TODO: Add all module accounts
-	type DustRemovalWhitelist = DustRemovalWhitelist;
-	/// The id type for named reserves.
-	type ReserveIdentifier = ();
-}
-
 impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
-	type CurrencyId = CurrencyId;
-	type CurrencyIdConvert = CurrencyIdConvert;
+	type CurrencyId = CollectionId;
+	type CurrencyIdConvert = CurrencyIdConvert<Self>;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;

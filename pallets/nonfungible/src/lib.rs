@@ -383,19 +383,6 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	/// Create NFT collection
-	///
-	/// `init_collection` will take non-refundable deposit for collection creation.
-	///
-	/// - `data`: Contains settings for collection limits and permissions.
-	pub fn init_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data)
-	}
-
 	/// Destroy NFT collection
 	///
 	/// `destroy_collection` will throw error if collection contains any tokens.

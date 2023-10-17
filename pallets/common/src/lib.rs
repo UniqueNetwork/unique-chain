@@ -1132,23 +1132,37 @@ impl<T: Config> Pallet<T> {
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
-		Self::init_collection_internal(owner, payer, data)
+
+		// Take a (non-refundable) deposit of collection creation
+		{
+			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+			imbalance.subsume(<T as Config>::Currency::deposit(
+				&T::TreasuryAccountId::get(),
+				T::CollectionCreationPrice::get(),
+				Precision::Exact,
+			)?);
+			let credit =
+				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
+					.map_err(|_| Error::<T>::NotSufficientFounds)?;
+
+			debug_assert!(credit.peek().is_zero())
+		}
+
+		Self::init_collection_internal(owner, data)
 	}
 
 	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
 	pub fn init_foreign_collection(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
 		mut data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		data.flags.foreign = true;
-		let id = Self::init_collection_internal(owner, payer, data)?;
+		let id = Self::init_collection_internal(owner, data)?;
 		Ok(id)
 	}
 
 	fn init_collection_internal(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		{
@@ -1224,21 +1238,6 @@ impl<T: Config> Pallet<T> {
 			<Error<T>>::CollectionAdminCountExceeded,
 		);
 		<AdminAmount<T>>::insert(id, admin_amount);
-
-		// Take a (non-refundable) deposit of collection creation
-		{
-			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
-			imbalance.subsume(<T as Config>::Currency::deposit(
-				&T::TreasuryAccountId::get(),
-				T::CollectionCreationPrice::get(),
-				Precision::Exact,
-			)?);
-			let credit =
-				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
-					.map_err(|_| Error::<T>::NotSufficientFounds)?;
-
-			debug_assert!(credit.peek().is_zero())
-		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
 		<Pallet<T>>::deposit_event(Event::CollectionCreated(
@@ -2293,7 +2292,14 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> u128;
 
 	/// Get extension for RFT collection.
-	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		None
+	}
+
+	/// Get XCM extensions.
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		None
+	}
 
 	/// The `operator` is allowed to transfer all tokens of the `owner` on their behalf.
 	/// * `owner` - Token owner
@@ -2331,6 +2337,34 @@ where
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
+}
+
+/// XCM extensions for fungible and NFT collections
+pub trait XcmExtensions<T>
+where
+	T: Config,
+{
+	/// Is the collection a foreign one?
+	fn is_foreign(&self) -> bool;
+
+	/// Create a collection's item.
+	fn create_item(
+		&self,
+		to: T::CrossAccountId,
+		data: CreateItemData,
+	) -> Result<TokenId, DispatchError>;
+
+	/// Transfer an item from the `from` account to the `to` account.
+	fn transfer(
+		&self,
+		from: T::CrossAccountId,
+		to: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult;
+
+	/// Burn a collection's item.
+	fn burn(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult;
 }
 
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].

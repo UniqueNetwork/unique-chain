@@ -167,7 +167,6 @@ macro_rules! testnet_genesis {
 					.map(|k| (k, 1 << 100))
 					.collect(),
 			},
-			tokens: TokensConfig { balances: vec![] },
 			sudo: SudoConfig {
 				key: Some($root_key),
 			},

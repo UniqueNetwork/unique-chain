@@ -1,10 +1,14 @@
-use up_common::types::AccountId;
+use frame_support::{parameter_types, PalletId};
 
-use crate::{Balances, Runtime, RuntimeEvent};
+use crate::{runtime_common::config::governance, Runtime, RuntimeEvent};
+
+parameter_types! {
+	pub ForeignAssetPalletId: PalletId = PalletId(*b"frgnasts");
+}
 
 impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type RegisterOrigin = frame_system::EnsureRoot<AccountId>;
+	type ForceRegisterOrigin = governance::RootOrTechnicalCommitteeMember;
+	type PalletId = ForeignAssetPalletId;
 	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
 }

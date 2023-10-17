@@ -332,10 +332,6 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		0
 	}
 
-	fn refungible_extensions(&self) -> Option<&dyn pallet_common::RefungibleExtensions<T>> {
-		None
-	}
-
 	fn set_allowance_for_all(
 		&self,
 		_owner: <T>::CrossAccountId,
