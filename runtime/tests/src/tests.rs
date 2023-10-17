@@ -1161,7 +1161,7 @@ fn burn_fungible_item_with_token_id() {
 		// Try to burn item using Token ID
 		assert_noop!(
 			Unique::burn_item(origin1, CollectionId(1), TokenId(1), 5).map_err(|e| e.error),
-			<pallet_fungible::Error::<Test>>::FungibleItemsHaveNoId
+			<CommonError::<Test>>::FungibleItemsHaveNoId
 		);
 	});
 }

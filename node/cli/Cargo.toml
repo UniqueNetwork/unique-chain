@@ -114,9 +114,7 @@ gov-test-timings = [
 	'quartz-runtime?/gov-test-timings',
 	'unique-runtime?/gov-test-timings',
 ]
-lookahead = [
-	'opal-runtime/lookahead'
-]
+lookahead = ['opal-runtime/lookahead']
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',
