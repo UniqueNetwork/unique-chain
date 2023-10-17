@@ -22,13 +22,6 @@
 //!
 //! ## Overview
 //!
-//! The foreign assests pallet provides functions for:
-//!
-//! - Local and foreign assets management. The foreign assets can be updated without runtime upgrade.
-//! - Bounds between asset and target collection for cross chain transfer and inner transfers.
-//!
-//! ## Overview
-//!
 //! Under construction
 
 #![cfg_attr(not(feature = "std"), no_std)]
@@ -37,22 +30,21 @@
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::EnsureOrigin, PalletId};
 use frame_system::pallet_prelude::*;
 use pallet_common::{
-	dispatch::CollectionDispatch, erc::CrossAccountId, NATIVE_FUNGIBLE_COLLECTION_ID,
+	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{vec, vec::Vec};
-// NOTE: MultiLocation is used in storages, we will need to do migration if upgrade the
-// MultiLocation to the XCM v3.
 use staging_xcm::{
 	opaque::latest::{prelude::XcmError, Weight},
 	v3::{prelude::*, MultiAsset, XcmContext},
 };
 use staging_xcm_executor::{
-	traits::{TransactAsset, WeightTrader},
+	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
 	Assets,
 };
 use up_data_structs::{
-	CollectionId, CollectionMode, CollectionName, CreateCollectionData, PropertyKey, TokenId,
+	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CreateCollectionData,
+	CreateFungibleData, CreateItemData, CreateNftData, Property, PropertyKey, TokenId,
 };
 
 pub mod weights;
@@ -87,6 +79,12 @@ pub mod module {
 		/// The ID of the foreign assets pallet.
 		type PalletId: Get<PalletId>;
 
+		/// Self-location of this parachain.
+		type SelfLocation: Get<MultiLocation>;
+
+		/// The converter from a MultiLocation to a CrossAccountId.
+		type LocationToAccountId: ConvertLocation<Self::CrossAccountId>;
+
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
 	}
@@ -112,6 +110,12 @@ pub mod module {
 	#[pallet::getter(fn foreign_reserve_location_to_collection)]
 	pub type ForeignReserveLocationToCollection<T: Config> =
 		StorageMap<_, Twox64Concat, staging_xcm::v3::MultiLocation, CollectionId, OptionQuery>;
+
+	/// The corresponding reserve location of collections.
+	#[pallet::storage]
+	#[pallet::getter(fn collection_to_foreign_reserve_location)]
+	pub type CollectionToForeignReserveLocation<T: Config> =
+		StorageMap<_, Twox64Concat, CollectionId, staging_xcm::v3::MultiLocation, OptionQuery>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
@@ -180,6 +184,7 @@ pub mod module {
 			)?;
 
 			<ForeignReserveLocationToCollection<T>>::insert(reserve_location, collection_id);
+			<CollectionToForeignReserveLocation<T>>::insert(collection_id, reserve_location);
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 				asset_id: collection_id,
@@ -210,6 +215,132 @@ impl<T: Config> Pallet<T> {
 			.try_into()
 			.expect("key length < max property key length; qed")
 	}
+
+	fn native_asset_location_to_collection(
+		asset_location: &MultiLocation,
+	) -> Result<Option<CollectionId>, XcmError> {
+		let self_location = T::SelfLocation::get();
+
+		if *asset_location == Here.into() {
+			Ok(Some(NATIVE_FUNGIBLE_COLLECTION_ID))
+		} else if *asset_location == self_location {
+			Ok(Some(NATIVE_FUNGIBLE_COLLECTION_ID))
+		} else if asset_location.parents == self_location.parents {
+			match asset_location
+				.interior
+				.match_and_split(&self_location.interior)
+			{
+				Some(GeneralIndex(collection_id)) => Ok(Some(CollectionId(
+					(*collection_id)
+						.try_into()
+						.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?,
+				))),
+				_ => Ok(None),
+			}
+		} else {
+			Ok(None)
+		}
+	}
+
+	fn multiasset_to_collection(asset: &MultiAsset) -> Result<CollectionId, XcmError> {
+		let AssetId::Concrete(asset_reserve_location) = asset.id else {
+			return Err(XcmExecutorError::AssetNotHandled.into());
+		};
+
+		Self::native_asset_location_to_collection(&asset_reserve_location)?
+			.or_else(|| Self::foreign_reserve_location_to_collection(asset_reserve_location))
+			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
+	}
+
+	fn native_asset_instance_to_token_id(
+		asset_instance: &AssetInstance,
+	) -> Result<TokenId, XcmError> {
+		match asset_instance {
+			AssetInstance::Index(token_id) => Ok(TokenId(
+				(*token_id)
+					.try_into()
+					.map_err(|_| XcmError::AssetNotFound)?,
+			)),
+			_ => Err(XcmError::AssetNotFound),
+		}
+	}
+
+	/// Obtains the token id of the `asset_instance` in the collection.
+	///
+	/// Returns `Ok(None)` only if the `asset_instance` points to a foreign item
+	/// and it haven't been created on this blockchain yet.
+	///
+	/// If the `asset_instance` points to a native item, it cannot return `Ok(None)`.
+	fn asset_instance_to_token_id(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_id: CollectionId,
+		asset_instance: &AssetInstance,
+	) -> Result<Option<TokenId>, XcmError> {
+		if xcm_ext.is_foreign() {
+			Ok(Self::foreign_reserve_asset_instance_to_token_id(
+				collection_id,
+				asset_instance,
+			))
+		} else {
+			Self::native_asset_instance_to_token_id(asset_instance).map(Some)
+		}
+	}
+
+	fn create_foreign_asset_instance(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_id: CollectionId,
+		asset_instance: &AssetInstance,
+		to: T::CrossAccountId,
+	) -> XcmResult {
+		let asset_instance_encoded = asset_instance.encode();
+
+		let derivative_token_id = xcm_ext
+			.create_item(
+				&Self::pallet_account(),
+				to,
+				CreateItemData::NFT(CreateNftData {
+					properties: vec![Property {
+					key: Self::reserve_asset_instance_property_key(),
+					value: asset_instance_encoded
+						.try_into()
+						.expect("asset instance length <= 32 bytes which is less than value length limit; qed"),
+				}]
+					.try_into()
+					.expect("just one property can always be stored; qed"),
+				}),
+				&ZeroBudget,
+			)
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))?;
+
+		<ForeignReserveAssetInstanceToTokenId<T>>::insert(
+			collection_id,
+			asset_instance,
+			derivative_token_id,
+		);
+
+		Ok(())
+	}
+
+	fn deposit_asset_instance(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_id: CollectionId,
+		to: T::CrossAccountId,
+		asset_instance: &AssetInstance,
+	) -> XcmResult {
+		if let Some(token_id) =
+			Self::asset_instance_to_token_id(xcm_ext, collection_id, asset_instance)?
+		{
+			let depositor = &Self::pallet_account();
+			let from = depositor;
+			let amount = 1;
+
+			xcm_ext
+				.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
+				.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))
+		} else {
+			Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
+		}
+	}
 }
 
 impl<T: Config> TransactAsset for Pallet<T> {
@@ -234,7 +365,31 @@ impl<T: Config> TransactAsset for Pallet<T> {
 	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
 	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, context: &XcmContext) -> XcmResult {
-		Err(XcmError::Unimplemented)
+		let collection_id = Self::multiasset_to_collection(what)?;
+		let dispatch =
+			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
+
+		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::Unimplemented)?;
+
+		let to = T::LocationToAccountId::convert_location(to)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		match what.fun {
+			Fungibility::Fungible(amount) => xcm_ext
+				.create_item(
+					&Self::pallet_account(),
+					to,
+					CreateItemData::Fungible(CreateFungibleData { value: amount }),
+					&ZeroBudget,
+				)
+				.map(|_| ())
+				.map_err(|_| XcmError::FailedToTransactAsset("fungible item deposit failed")),
+
+			Fungibility::NonFungible(asset_instance) => {
+				Self::deposit_asset_instance(xcm_ext, collection_id, to, &asset_instance)
+			}
+		}
 	}
 
 	fn withdraw_asset(
@@ -263,20 +418,17 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
 			Some(Here.into())
 		} else {
-			// let dispatch = T::CollectionDispatch::dispatch(collection_id).ok()?;
-			// let collection = dispatch.as_dyn();
-			// let xcm_ext = collection.xcm_extensions()?;
+			let dispatch = T::CollectionDispatch::dispatch(collection_id).ok()?;
+			let collection = dispatch.as_dyn();
+			let xcm_ext = collection.xcm_extensions()?;
 
-			// if xcm_ext.is_foreign() {
-			// 	let encoded_location =
-			// 		collection.property(&<Pallet<T>>::reserve_location_property_key())?;
-			// 	MultiLocation::decode(&mut &encoded_location[..]).ok()
-			// } else {
-			// 	T::SelfLocation::get()
-			// 		.pushed_with_interior(GeneralIndex(collection_id.0.into()))
-			// 		.ok()
-			// }
-			todo!()
+			if xcm_ext.is_foreign() {
+				<Pallet<T>>::collection_to_foreign_reserve_location(collection_id)
+			} else {
+				T::SelfLocation::get()
+					.pushed_with_interior(GeneralIndex(collection_id.0.into()))
+					.ok()
+			}
 		}
 	}
 }

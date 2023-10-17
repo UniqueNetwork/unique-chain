@@ -80,15 +80,16 @@ use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, DispatchResult};
 use sp_std::vec::Vec;
 use sp_weights::Weight;
 use up_data_structs::{
-	budget::Budget, AccessMode, Collection, CollectionId, CollectionLimits, CollectionMode,
-	CollectionPermissions, CollectionProperties as CollectionPropertiesT, CollectionStats,
-	CreateCollectionData, CreateItemData, CreateItemExData, PhantomType, PropertiesError,
-	PropertiesPermissionMap, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, RpcCollection, RpcCollectionFlags, SponsoringRateLimit,
-	SponsorshipState, TokenChild, TokenData, TokenId, TokenOwnerError, TokenProperties,
-	TrySetProperty, COLLECTION_ADMINS_LIMIT, COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP,
-	MAX_TOKEN_PREFIX_LENGTH, NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, Collection, CollectionId,
+	CollectionLimits, CollectionMode, CollectionPermissions,
+	CollectionProperties as CollectionPropertiesT, CollectionStats, CreateCollectionData,
+	CreateItemData, CreateItemExData, PhantomType, PropertiesError, PropertiesPermissionMap,
+	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	RpcCollection, RpcCollectionFlags, SponsoringRateLimit, SponsorshipState, TokenChild,
+	TokenData, TokenId, TokenOwnerError, TokenProperties, TrySetProperty, COLLECTION_ADMINS_LIMIT,
+	COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_TOKEN_PREFIX_LENGTH,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -786,6 +787,9 @@ pub mod pallet {
 
 		/// Fungible tokens hold no ID, and the default value of TokenId for a fungible collection is 0.
 		FungibleItemsHaveNoId,
+
+		/// Not Fungible item data used to mint in Fungible collection.
+		NotFungibleDataUsedToMintFungibleCollectionToken,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.
@@ -2347,24 +2351,77 @@ where
 	/// Is the collection a foreign one?
 	fn is_foreign(&self) -> bool;
 
-	/// Create a collection's item.
+	/// Create a collection's item using a transaction.
+	///
+	/// This function performs additional XCM-related checks before the actual creation.
+	#[transactional]
 	fn create_item(
 		&self,
+		depositor: &T::CrossAccountId,
 		to: T::CrossAccountId,
 		data: CreateItemData,
+		nesting_budget: &dyn Budget,
+	) -> Result<TokenId, DispatchError> {
+		if T::CrossTokenAddressMapping::is_token_address(&to) {
+			return unsupported!(T);
+		}
+
+		self.create_item_internal(depositor, to, data, nesting_budget)
+	}
+
+	/// Create a collection's item.
+	fn create_item_internal(
+		&self,
+		depositor: &T::CrossAccountId,
+		to: T::CrossAccountId,
+		data: CreateItemData,
+		nesting_budget: &dyn Budget,
 	) -> Result<TokenId, DispatchError>;
 
+	/// Transfer an item from the `from` account to the `to` account using a transaction.
+	///
+	/// This function performs additional XCM-related checks before the actual transfer.
+	#[transactional]
+	fn transfer_item(
+		&self,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		if T::CrossTokenAddressMapping::is_token_address(&to) {
+			return unsupported!(T);
+		}
+
+		self.transfer_item_internal(depositor, from, to, token, amount, nesting_budget)
+	}
+
 	/// Transfer an item from the `from` account to the `to` account.
-	fn transfer(
+	fn transfer_item_internal(
+		&self,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult;
+
+	/// Burn a collection's item using a transaction.
+	#[transactional]
+	fn burn_item(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult {
+		self.burn_item_internal(from, token, amount)
+	}
+
+	/// Burn a collection's item.
+	fn burn_item_internal(
 		&self,
 		from: T::CrossAccountId,
-		to: T::CrossAccountId,
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResult;
-
-	/// Burn a collection's item.
-	fn burn(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult;
 }
 
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].

@@ -19,8 +19,8 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use pallet_common::{
 	weights::WeightInfo as _, with_weight, write_token_properties_total_weight,
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions,
-	SelfWeightOf as PalletCommonWeightOf,
+	CommonCollectionOperations, CommonWeightInfo, SelfWeightOf as PalletCommonWeightOf,
+	XcmExtensions,
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
@@ -543,6 +543,10 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 		}
 	}
 
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		Some(self)
+	}
+
 	fn set_allowance_for_all(
 		&self,
 		owner: T::CrossAccountId,
@@ -564,5 +568,55 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			<Pallet<T>>::repair_item(self, token),
 			<CommonWeights<T>>::force_repair_item(),
 		)
+	}
+}
+
+impl<T: Config> XcmExtensions<T> for NonfungibleHandle<T> {
+	fn is_foreign(&self) -> bool {
+		self.flags.foreign
+	}
+
+	fn create_item_internal(
+		&self,
+		depositor: &<T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemData,
+		nesting_budget: &dyn Budget,
+	) -> Result<TokenId, sp_runtime::DispatchError> {
+		<Pallet<T>>::create_multiple_items(
+			self,
+			&depositor,
+			vec![map_create_data::<T>(data, &to)?],
+			nesting_budget,
+		)?;
+
+		Ok(self.last_token_id())
+	}
+
+	fn transfer_item_internal(
+		&self,
+		depositor: &<T>::CrossAccountId,
+		from: &<T>::CrossAccountId,
+		to: &<T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> sp_runtime::DispatchResult {
+		ensure!(amount == 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		<Pallet<T>>::transfer_internal(self, &depositor, &from, &to, token, nesting_budget)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
+	}
+
+	fn burn_item_internal(
+		&self,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		ensure!(amount == 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
+
+		<Pallet<T>>::burn(self, &from, token)
 	}
 }
