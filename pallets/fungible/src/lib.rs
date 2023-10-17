@@ -123,8 +123,6 @@ pub mod pallet {
 	pub enum Error<T> {
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
-		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
 		/// Fungible token does not support nesting.

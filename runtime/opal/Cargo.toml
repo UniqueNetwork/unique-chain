@@ -69,6 +69,7 @@ std = [
 	'cumulus-pallet-parachain-system/std',
 	'cumulus-pallet-xcm/std',
 	'cumulus-pallet-xcmp-queue/std',
+	'cumulus-primitives-aura/std',
 	'cumulus-primitives-core/std',
 	'cumulus-primitives-utility/std',
 	'frame-executive/std',
@@ -136,7 +137,7 @@ std = [
 	'sp-runtime/std',
 	'sp-session/std',
 	'sp-std/std',
-    'sp-storage/std',
+	'sp-storage/std',
 	'sp-transaction-pool/std',
 	'sp-version/std',
 	'staging-xcm-builder/std',
@@ -227,6 +228,7 @@ collator-selection = []
 foreign-assets = []
 gov-test-timings = []
 governance = []
+lookahead = []
 preimage = []
 refungible = []
 session-test-timings = []
@@ -240,6 +242,7 @@ cumulus-pallet-dmp-queue = { workspace = true }
 cumulus-pallet-parachain-system = { workspace = true }
 cumulus-pallet-xcm = { workspace = true }
 cumulus-pallet-xcmp-queue = { workspace = true }
+cumulus-primitives-aura = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }

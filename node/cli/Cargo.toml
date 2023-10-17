@@ -36,6 +36,7 @@ cumulus-client-consensus-common = { workspace = true }
 cumulus-client-consensus-proposer = { workspace = true }
 cumulus-client-network = { workspace = true }
 cumulus-client-service = { workspace = true }
+cumulus-primitives-aura = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-parachain-inherent = { features = ["std"], workspace = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
@@ -113,7 +114,7 @@ gov-test-timings = [
 	'quartz-runtime?/gov-test-timings',
 	'unique-runtime?/gov-test-timings',
 ]
-lookahead = []
+lookahead = ['opal-runtime/lookahead']
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',

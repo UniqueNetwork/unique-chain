@@ -679,6 +679,16 @@ macro_rules! impl_common_runtime_apis {
 				}
 			}
 
+			#[cfg(feature = "lookahead")]
+			impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
+				fn can_build_upon(
+					included_hash: <Block as BlockT>::Hash,
+					slot: cumulus_primitives_aura::Slot,
+				) -> bool {
+					$crate::config::parachain::ConsensusHook::can_build_upon(included_hash, slot)
+				}
+			}
+
 			/// Should never be used, yet still required because of https://github.com/paritytech/polkadot-sdk/issues/27
 			/// Not allowed to panic, because rpc may be called using native runtime, thus causing thread panic.
 			impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {

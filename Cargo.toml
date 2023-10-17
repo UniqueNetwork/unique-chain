@@ -100,6 +100,7 @@ cumulus-pallet-dmp-queue = { default-features = false, git = "https://github.com
 cumulus-pallet-parachain-system = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 cumulus-pallet-xcm = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 cumulus-pallet-xcmp-queue = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
+cumulus-primitives-aura = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 cumulus-primitives-core = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 cumulus-primitives-parachain-inherent = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 cumulus-primitives-timestamp = { default-features = false, git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
@@ -197,11 +198,11 @@ frame-try-runtime = { default-features = false, git = "https://github.com/parity
 try-runtime-cli = { git = "https://github.com/paritytech/polkadot-sdk", branch = "release-polkadot-v1.1.0" }
 
 # ORML
-orml-tokens = { default-features = false, git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "upgrade-to-polkadot-v1.1.0" }
-orml-traits = { default-features = false, git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "upgrade-to-polkadot-v1.1.0" }
-orml-vesting = { default-features = false, git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "upgrade-to-polkadot-v1.1.0" }
-orml-xcm-support = { default-features = false, git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "upgrade-to-polkadot-v1.1.0" }
-orml-xtokens = { default-features = false, git = "https://github.com/moonbeam-foundation/open-runtime-module-library", branch = "upgrade-to-polkadot-v1.1.0" }
+orml-tokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0" }
+orml-traits = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0" }
+orml-vesting = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0" }
+orml-xcm-support = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0" }
+orml-xtokens = { default-features = false, git = "https://github.com/open-web3-stack/open-runtime-module-library", branch = "polkadot-v1.1.0" }
 
 # Other
 derivative = { version = "2.2.0", features = ["use_core"] }

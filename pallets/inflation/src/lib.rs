@@ -70,8 +70,10 @@ pub mod pallet {
 			+ Mutate<Self::AccountId>;
 		type TreasuryAccountId: Get<Self::AccountId>;
 
-		// The block number provider
-		type BlockNumberProvider: BlockNumberProvider<BlockNumber = BlockNumberFor<Self>>;
+		// The block number provider, which should be callable from `on_initialize` hook.
+		type OnInitializeBlockNumberProvider: BlockNumberProvider<
+			BlockNumber = BlockNumberFor<Self>,
+		>;
 
 		/// Number of blocks that pass between treasury balance updates due to inflation
 		#[pallet::constant]
@@ -118,7 +120,7 @@ pub mod pallet {
 			};
 
 			let block_interval: u32 = T::InflationBlockInterval::get().try_into().unwrap_or(0);
-			let current_relay_block = T::BlockNumberProvider::current_block_number();
+			let current_relay_block = T::OnInitializeBlockNumberProvider::current_block_number();
 			let next_inflation: BlockNumberFor<T> = <NextInflationBlock<T>>::get();
 			add_weight(1, 0, Weight::from_parts(5_000_000, 0));
 

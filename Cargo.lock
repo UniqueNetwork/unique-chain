@@ -6450,6 +6450,7 @@ dependencies = [
  "cumulus-pallet-parachain-system",
  "cumulus-pallet-xcm",
  "cumulus-pallet-xcmp-queue",
+ "cumulus-primitives-aura",
  "cumulus-primitives-core",
  "cumulus-primitives-timestamp",
  "cumulus-primitives-utility",
@@ -6612,7 +6613,7 @@ dependencies = [
 [[package]]
 name = "orml-tokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/moonbeam-foundation/open-runtime-module-library?branch=upgrade-to-polkadot-v1.1.0#26b6fd59ab71429604a81c99ac093d20982c5459"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6629,7 +6630,7 @@ dependencies = [
 [[package]]
 name = "orml-traits"
 version = "0.4.1-dev"
-source = "git+https://github.com/moonbeam-foundation/open-runtime-module-library?branch=upgrade-to-polkadot-v1.1.0#26b6fd59ab71429604a81c99ac093d20982c5459"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
 dependencies = [
  "frame-support",
  "impl-trait-for-tuples",
@@ -6649,7 +6650,7 @@ dependencies = [
 [[package]]
 name = "orml-utilities"
 version = "0.4.1-dev"
-source = "git+https://github.com/moonbeam-foundation/open-runtime-module-library?branch=upgrade-to-polkadot-v1.1.0#26b6fd59ab71429604a81c99ac093d20982c5459"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -6664,7 +6665,7 @@ dependencies = [
 [[package]]
 name = "orml-vesting"
 version = "0.4.1-dev"
-source = "git+https://github.com/moonbeam-foundation/open-runtime-module-library?branch=upgrade-to-polkadot-v1.1.0#26b6fd59ab71429604a81c99ac093d20982c5459"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
 dependencies = [
  "frame-support",
  "frame-system",
@@ -6679,7 +6680,7 @@ dependencies = [
 [[package]]
 name = "orml-xcm-support"
 version = "0.4.1-dev"
-source = "git+https://github.com/moonbeam-foundation/open-runtime-module-library?branch=upgrade-to-polkadot-v1.1.0#26b6fd59ab71429604a81c99ac093d20982c5459"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
 dependencies = [
  "frame-support",
  "orml-traits",
@@ -6693,7 +6694,7 @@ dependencies = [
 [[package]]
 name = "orml-xtokens"
 version = "0.4.1-dev"
-source = "git+https://github.com/moonbeam-foundation/open-runtime-module-library?branch=upgrade-to-polkadot-v1.1.0#26b6fd59ab71429604a81c99ac093d20982c5459"
+source = "git+https://github.com/open-web3-stack/open-runtime-module-library?branch=polkadot-v1.1.0#b3694e631df7f1ca16b1973122937753fcdee9d4"
 dependencies = [
  "cumulus-primitives-core",
  "frame-support",
@@ -8109,12 +8110,14 @@ dependencies = [
  "pallet-evm-coder-substrate",
  "pallet-nonfungible",
  "pallet-refungible",
+ "pallet-structure",
  "parity-scale-codec",
  "scale-info",
  "sp-core",
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "up-common",
  "up-data-structs",
 ]
 
@@ -14732,6 +14735,7 @@ dependencies = [
  "cumulus-client-consensus-proposer",
  "cumulus-client-network",
  "cumulus-client-service",
+ "cumulus-primitives-aura",
  "cumulus-primitives-core",
  "cumulus-primitives-parachain-inherent",
  "cumulus-relay-chain-inprocess-interface",

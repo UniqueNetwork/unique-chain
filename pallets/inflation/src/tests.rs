@@ -122,7 +122,7 @@ impl pallet_inflation::Config for Test {
 	type Currency = Balances;
 	type TreasuryAccountId = TreasuryAccountId;
 	type InflationBlockInterval = InflationBlockInterval;
-	type BlockNumberProvider = MockBlockNumberProvider;
+	type OnInitializeBlockNumberProvider = MockBlockNumberProvider;
 }
 
 pub fn new_test_ext() -> sp_io::TestExternalities {

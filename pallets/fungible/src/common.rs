@@ -19,7 +19,7 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use pallet_common::{
 	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
-	RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
+	Error as CommonError, RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_std::{vec, vec::Vec};
@@ -169,7 +169,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
@@ -188,7 +188,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		<Pallet<T>>::transfer(self, &from, &to, amount, nesting_budget)
@@ -203,7 +203,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
@@ -222,7 +222,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
@@ -242,7 +242,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, nesting_budget)
@@ -258,7 +258,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
