@@ -140,6 +140,10 @@ pub mod module {
 		) -> DispatchResult {
 			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
+			if <ForeignReserveLocationToCollection<T>>::contains_key(reserve_location) {
+				return Err(<Error<T>>::ForeignAssetAlreadyRegistered.into());
+			}
+
 			let foreign_collection_owner = Self::pallet_account();
 
 			let description: CollectionDescription = "Foreign Assets Collection"
