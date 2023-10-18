@@ -14,15 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! # Foreign assets
-//!
-//! - [`Config`]
-//! - [`Call`]
-//! - [`Pallet`]
+//! # Foreign Assets
 //!
 //! ## Overview
 //!
-//! Under construction
+//! The Foreign Assets is a proxy that maps XCM operations to the Unique Network's pallets logic.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
