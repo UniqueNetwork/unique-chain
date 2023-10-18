@@ -64,6 +64,7 @@ function fixupUnique(version: string): string {
         case '55': return 'v5.3.0';
         case '57': return 'v5.4.0';
         case '61': return 'v5.11.0';
+        case '66': return 'v5.18.0';
         default: throw new Error('unknown astar branch for runtime ' + r);
       }
     }).then(v => env = setVar(env, 'ASTAR_BUILD_BRANCH', v)),
@@ -73,6 +74,7 @@ function fixupUnique(version: string): string {
         case '96': return 'v5.4.0';
         case '100': return 'v5.10.0';
         case '104': return 'v5.15.0';
+        case '106': return 'v5.18.0';
         default: throw new Error('unknown shiden branch for runtime ' + r);
       }
     }).then(v => env = setVar(env, 'SHIDEN_BUILD_BRANCH', v)),
