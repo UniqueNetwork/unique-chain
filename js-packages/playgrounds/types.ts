@@ -160,8 +160,6 @@ export enum CollectionFlag {
   External = 1,
   /// Supports ERC721Metadata
   Erc721metadata = 64,
-  /// Tokens in foreign collections can be transferred, but not burnt
-  Foreign = 128,
 }
 
 export interface ICollectionCreationOptions {
