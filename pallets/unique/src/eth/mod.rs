@@ -110,8 +110,9 @@ fn create_collection_internal<T: Config>(
 	let collection_helpers_address =
 		T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-	let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-		.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
+	let collection_id =
+		T::CollectionDispatch::create(caller, Some(collection_helpers_address), data)
+			.map_err(pallet_evm_coder_substrate::dispatch_to_evm::<T>)?;
 	let address = pallet_common::eth::collection_id_to_address(collection_id);
 	Ok(address)
 }
@@ -240,8 +241,9 @@ where
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
 
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(dispatch_to_evm::<T>)?;
+		let collection_id =
+			T::CollectionDispatch::create(caller, Some(collection_helpers_address), data)
+				.map_err(dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)
@@ -274,8 +276,9 @@ where
 		check_sent_amount_equals_collection_creation_price::<T>(value)?;
 		let collection_helpers_address =
 			T::CrossAccountId::from_eth(<T as pallet_common::Config>::ContractAddress::get());
-		let collection_id = T::CollectionDispatch::create(caller, collection_helpers_address, data)
-			.map_err(dispatch_to_evm::<T>)?;
+		let collection_id =
+			T::CollectionDispatch::create(caller, Some(collection_helpers_address), data)
+				.map_err(dispatch_to_evm::<T>)?;
 
 		let address = pallet_common::eth::collection_id_to_address(collection_id);
 		Ok(address)

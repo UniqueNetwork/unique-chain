@@ -72,20 +72,11 @@ pub trait CollectionDispatch<T: Config> {
 	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	///
 	/// * `sender` - The user who will become the owner of the collection.
-	/// * `payer` - The user who pays the collection creation fee.
+	/// * `payer` - If set, the user who pays the collection creation deposit.
 	/// * `data` - Description of the created collection.
 	fn create(
 		sender: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError>;
-
-	/// Create a foreign collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
-	///
-	/// * `sender` - The user who will become the owner of the collection.
-	/// * `data` - Description of the created collection.
-	fn create_foreign(
-		sender: T::CrossAccountId,
+		payer: Option<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError>;
 

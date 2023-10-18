@@ -152,8 +152,10 @@ pub mod module {
 				.try_into()
 				.expect("description length < max description length; qed");
 
-			let collection_id = T::CollectionDispatch::create_foreign(
+			let payer = None;
+			let collection_id = T::CollectionDispatch::create(
 				foreign_collection_owner,
+				payer,
 				CreateCollectionData {
 					name,
 					description,

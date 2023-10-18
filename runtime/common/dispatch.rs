@@ -18,7 +18,7 @@ use frame_support::{dispatch::DispatchResult, ensure, fail};
 use pallet_balances_adapter::NativeFungibleHandle;
 pub use pallet_common::dispatch::CollectionDispatch;
 use pallet_common::{
-	erc::CommonEvmHandler, eth::map_eth_to_id, unsupported, CollectionById, CollectionHandle,
+	erc::CommonEvmHandler, eth::map_eth_to_id, CollectionById, CollectionHandle,
 	CommonCollectionOperations, Pallet as PalletCommon,
 };
 use pallet_evm::{PrecompileHandle, PrecompileResult};
@@ -68,7 +68,7 @@ where
 
 	fn create(
 		sender: T::CrossAccountId,
-		payer: T::CrossAccountId,
+		payer: Option<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		match data.mode {
@@ -86,27 +86,6 @@ where
 			_ => {}
 		};
 
-		<PalletCommon<T>>::init_collection(sender, Some(payer), data)
-	}
-
-	fn create_foreign(
-		sender: <T>::CrossAccountId,
-		data: CreateCollectionData<<T>::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		match data.mode {
-			CollectionMode::Fungible(decimal_points) => {
-				// check params
-				ensure!(
-					decimal_points <= MAX_DECIMAL_POINTS,
-					pallet_unique::Error::<T>::CollectionDecimalPointLimitExceeded
-				);
-			}
-
-			CollectionMode::ReFungible => return unsupported!(T),
-			_ => {}
-		};
-
-		let payer = None;
 		<PalletCommon<T>>::init_collection(sender, payer, data)
 	}
 
