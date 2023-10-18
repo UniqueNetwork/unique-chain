@@ -216,6 +216,18 @@ impl<T: Config> Pallet<T> {
 			.expect("key length < max property key length; qed")
 	}
 
+	/// Converts a multilocation to the Unique Network's local collection
+	/// (i.e. the collection originally created on the Unique Network's parachain).
+	///
+	/// The multilocation corresponds to a Unique Network's collection if:
+	/// * It is `Here` location that corresponds to the native token of this parachain.
+	/// * It is `../Parachain(<Unique Network Para ID>)` that also corresponds to the native token of this parachain.
+	/// * It is `../Parachain(<Unique Network Para ID>)/GeneralIndex(<Collection ID>)` that corresponds
+	/// to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
+	/// otherwise the `AssetIdConversionFailed` error will be returned.
+	///
+	/// If the multilocation doesn't match the patterns listed above, the function returns `Ok(None)`,
+	/// identifying that the given multilocation doesn't correspond to a local collection.
 	fn native_asset_location_to_collection(
 		asset_location: &MultiLocation,
 	) -> Result<Option<CollectionId>, XcmError> {
@@ -242,6 +254,16 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// Converts a multiasset to a Unique Network's collection (either local or the foreign one).
+	///
+	/// The function will try to convert the multiasset's reserve location
+	/// to the Unique Network's local collection.
+	///
+	/// If the multilocation doesn't correspond to a local collection,
+	/// the function will check if the reserve location has the corresponding
+	/// derivative Unique Network's collection, and will return the said collection ID if found.
+	///
+	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
 	fn multiasset_to_collection(asset: &MultiAsset) -> Result<CollectionId, XcmError> {
 		let AssetId::Concrete(asset_reserve_location) = asset.id else {
 			return Err(XcmExecutorError::AssetNotHandled.into());
@@ -252,6 +274,13 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
 
+	/// Converts an XCM asset instance to the Unique Network's token ID.
+	///
+	/// The asset instance corresponds to the Unique Network's token ID if it is in the following format:
+	/// `AssetInstance::Index(<token ID>)`.
+	///
+	/// If the asset instance is not in the valid format or the `<token ID>` points to a non-existent token,
+	/// the `AssetNotFound` error will be returned.
 	fn native_asset_instance_to_token_id(
 		asset_instance: &AssetInstance,
 	) -> Result<TokenId, XcmError> {
@@ -265,12 +294,15 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Obtains the token id of the `asset_instance` in the collection.
+	/// Obtains the token ID of the `asset_instance` in the collection.
 	///
-	/// Returns `Ok(None)` only if the `asset_instance` points to a foreign item
-	/// and it haven't been created on this blockchain yet.
+	/// Returns `Ok(None)` only if the `asset_instance` is a part of a foreign collection
+	/// and the item hasn't yet been created on this blockchain.
 	///
-	/// If the `asset_instance` points to a native item, it cannot return `Ok(None)`.
+	/// If the `asset_instance` exists and it is a part of a foreign collection, the function will return `Ok(Some(<token ID>))`.
+	///
+	/// If the `asset_instance` is a part of a local collection,
+	/// the function will return either `Ok(Some(<token ID>))` or an error if the token is not found.
 	fn asset_instance_to_token_id(
 		xcm_ext: &dyn XcmExtensions<T>,
 		collection_id: CollectionId,
@@ -286,31 +318,30 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
+	/// Creates a foreign item in the the collection.
 	fn create_foreign_asset_instance(
 		xcm_ext: &dyn XcmExtensions<T>,
 		collection_id: CollectionId,
 		asset_instance: &AssetInstance,
 		to: T::CrossAccountId,
-	) -> XcmResult {
+	) -> DispatchResult {
 		let asset_instance_encoded = asset_instance.encode();
 
-		let derivative_token_id = xcm_ext
-			.create_item(
-				&Self::pallet_account(),
-				to,
-				CreateItemData::NFT(CreateNftData {
-					properties: vec![Property {
+		let derivative_token_id = xcm_ext.create_item(
+			&Self::pallet_account(),
+			to,
+			CreateItemData::NFT(CreateNftData {
+				properties: vec![Property {
 					key: Self::reserve_asset_instance_property_key(),
 					value: asset_instance_encoded
 						.try_into()
 						.expect("asset instance length <= 32 bytes which is less than value length limit; qed"),
 				}]
-					.try_into()
-					.expect("just one property can always be stored; qed"),
-				}),
-				&ZeroBudget,
-			)
-			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))?;
+				.try_into()
+				.expect("just one property can always be stored; qed"),
+			}),
+			&ZeroBudget,
+		)?;
 
 		<ForeignReserveAssetInstanceToTokenId<T>>::insert(
 			collection_id,
@@ -321,25 +352,58 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Deposits an asset instance to the `to` account.
+	///
+	/// Either transfers an existing item from the pallet's account
+	/// or creates a foreign item.
 	fn deposit_asset_instance(
 		xcm_ext: &dyn XcmExtensions<T>,
 		collection_id: CollectionId,
-		to: T::CrossAccountId,
 		asset_instance: &AssetInstance,
+		to: T::CrossAccountId,
 	) -> XcmResult {
-		if let Some(token_id) =
+		let deposit_result = if let Some(token_id) =
 			Self::asset_instance_to_token_id(xcm_ext, collection_id, asset_instance)?
 		{
 			let depositor = &Self::pallet_account();
 			let from = depositor;
 			let amount = 1;
 
-			xcm_ext
-				.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
-				.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))
+			xcm_ext.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
 		} else {
 			Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
+		};
+
+		deposit_result
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))
+	}
+
+	/// Withdraws an asset instance from the `from` account.
+	///
+	/// Transfers the asset instance to the pallet's account.
+	///
+	/// Won't withdraw the instance if it has children.
+	fn withdraw_asset_instance(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_id: CollectionId,
+		asset_instance: &AssetInstance,
+		from: T::CrossAccountId,
+	) -> XcmResult {
+		let token_id = Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
+			.ok_or(XcmError::AssetNotFound)?;
+
+		if xcm_ext.token_has_children(token_id) {
+			return Err(XcmError::Unimplemented);
 		}
+
+		let depositor = &from;
+		let to = Self::pallet_account();
+		let amount = 1;
+		xcm_ext
+			.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
+			.map_err(|_| XcmError::FailedToTransactAsset("nonfungible item withdraw failed"))?;
+
+		Ok(())
 	}
 }
 
@@ -365,15 +429,15 @@ impl<T: Config> TransactAsset for Pallet<T> {
 	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
 	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, _context: &XcmContext) -> XcmResult {
+		let to = T::LocationToAccountId::convert_location(to)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
 		let collection_id = Self::multiasset_to_collection(what)?;
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
 
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::Unimplemented)?;
-
-		let to = T::LocationToAccountId::convert_location(to)
-			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
 		match what.fun {
 			Fungibility::Fungible(amount) => xcm_ext
@@ -387,7 +451,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				.map_err(|_| XcmError::FailedToTransactAsset("fungible item deposit failed")),
 
 			Fungibility::NonFungible(asset_instance) => {
-				Self::deposit_asset_instance(xcm_ext, collection_id, to, &asset_instance)
+				Self::deposit_asset_instance(xcm_ext, collection_id, &asset_instance, to)
 			}
 		}
 	}
@@ -413,22 +477,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				.map_err(|_| XcmError::FailedToTransactAsset("fungible item withdraw failed"))?,
 
 			Fungibility::NonFungible(asset_instance) => {
-				let token_id =
-					Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
-						.ok_or(XcmError::AssetNotFound)?;
-
-				if xcm_ext.token_has_children(token_id) {
-					return Err(XcmError::Unimplemented);
-				}
-
-				let depositor = &from;
-				let to = Self::pallet_account();
-				let amount = 1;
-				xcm_ext
-					.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
-					.map_err(|_| {
-						XcmError::FailedToTransactAsset("nonfungible item withdraw failed")
-					})?;
+				Self::withdraw_asset_instance(xcm_ext, collection_id, &asset_instance, from)?;
 			}
 		}
 
@@ -441,6 +490,12 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		to: &MultiLocation,
 		_context: &XcmContext,
 	) -> Result<staging_xcm_executor::Assets, XcmError> {
+		let from = T::LocationToAccountId::convert_location(from)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let to = T::LocationToAccountId::convert_location(to)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
 		let collection_id = Self::multiasset_to_collection(what)?;
 
 		let dispatch =
@@ -448,40 +503,32 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
 
-		let from = T::LocationToAccountId::convert_location(from)
-			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
-
-		let to = T::LocationToAccountId::convert_location(to)
-			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
-
 		let depositor = &from;
 
+		let token_id;
+		let amount;
+		let map_error: fn(DispatchError) -> XcmError;
+
 		match what.fun {
-			Fungibility::Fungible(amount) => xcm_ext
-				.transfer_item(
-					depositor,
-					&from,
-					&to,
-					TokenId::default(),
-					amount,
-					&ZeroBudget,
-				)
-				.map_err(|_| XcmError::FailedToTransactAsset("fungible item transfer failed"))?,
+			Fungibility::Fungible(fungible_amount) => {
+				token_id = TokenId::default();
+				amount = fungible_amount;
+				map_error = |_| XcmError::FailedToTransactAsset("fungible item transfer failed");
+			}
 
 			Fungibility::NonFungible(asset_instance) => {
-				let token_id =
+				token_id =
 					Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
 						.ok_or(XcmError::AssetNotFound)?;
 
-				let amount = 1;
-
-				xcm_ext
-					.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
-					.map_err(|_| {
-						XcmError::FailedToTransactAsset("nonfungible item transfer failed")
-					})?;
+				amount = 1;
+				map_error = |_| XcmError::FailedToTransactAsset("nonfungible item transfer failed")
 			}
 		}
+
+		xcm_ext
+			.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
+			.map_err(map_error)?;
 
 		Ok(what.clone().into())
 	}
