@@ -4,10 +4,15 @@ use sp_core::H160;
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
 
+#[cfg(feature = "governance")]
+use crate::runtime_common::config::governance;
+
+#[cfg(not(feature = "governance"))]
+use frame_system::EnsureRoot;
+
 use crate::{
 	runtime_common::config::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,
-		governance,
 		xcm::{LocationToAccountId, SelfLocation},
 	},
 	RelayNetwork, Runtime, RuntimeEvent,
@@ -35,7 +40,13 @@ impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
 
 impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+
+	#[cfg(feature = "governance")]
 	type ForceRegisterOrigin = governance::RootOrTechnicalCommitteeMember;
+
+	#[cfg(not(feature = "governance"))]
+	type ForceRegisterOrigin = EnsureRoot<Self::AccountId>;
+
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
 	type LocationToAccountId = LocationToCrossAccountId;
