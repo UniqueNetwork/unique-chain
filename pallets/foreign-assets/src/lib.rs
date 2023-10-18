@@ -364,7 +364,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
-	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, context: &XcmContext) -> XcmResult {
+	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, _context: &XcmContext) -> XcmResult {
 		let collection_id = Self::multiasset_to_collection(what)?;
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
@@ -397,7 +397,42 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		from: &MultiLocation,
 		_maybe_context: Option<&XcmContext>,
 	) -> Result<staging_xcm_executor::Assets, XcmError> {
-		Err(XcmError::Unimplemented)
+		let from = T::LocationToAccountId::convert_location(from)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let collection_id = Self::multiasset_to_collection(what)?;
+		let dispatch =
+			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
+
+		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
+
+		match what.fun {
+			Fungibility::Fungible(amount) => xcm_ext
+				.burn_item(from, TokenId::default(), amount)
+				.map_err(|_| XcmError::FailedToTransactAsset("fungible item withdraw failed"))?,
+
+			Fungibility::NonFungible(asset_instance) => {
+				let token_id =
+					Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
+						.ok_or(XcmError::AssetNotFound)?;
+
+				if xcm_ext.token_has_children(token_id) {
+					return Err(XcmError::Unimplemented);
+				}
+
+				let depositor = &from;
+				let to = Self::pallet_account();
+				let amount = 1;
+				xcm_ext
+					.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
+					.map_err(|_| {
+						XcmError::FailedToTransactAsset("nonfungible item withdraw failed")
+					})?;
+			}
+		}
+
+		Ok(what.clone().into())
 	}
 
 	fn internal_transfer_asset(
@@ -406,7 +441,49 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		to: &MultiLocation,
 		_context: &XcmContext,
 	) -> Result<staging_xcm_executor::Assets, XcmError> {
-		Err(XcmError::Unimplemented)
+		let collection_id = Self::multiasset_to_collection(what)?;
+
+		let dispatch =
+			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
+		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
+
+		let from = T::LocationToAccountId::convert_location(from)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let to = T::LocationToAccountId::convert_location(to)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let depositor = &from;
+
+		match what.fun {
+			Fungibility::Fungible(amount) => xcm_ext
+				.transfer_item(
+					depositor,
+					&from,
+					&to,
+					TokenId::default(),
+					amount,
+					&ZeroBudget,
+				)
+				.map_err(|_| XcmError::FailedToTransactAsset("fungible item transfer failed"))?,
+
+			Fungibility::NonFungible(asset_instance) => {
+				let token_id =
+					Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
+						.ok_or(XcmError::AssetNotFound)?;
+
+				let amount = 1;
+
+				xcm_ext
+					.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
+					.map_err(|_| {
+						XcmError::FailedToTransactAsset("nonfungible item transfer failed")
+					})?;
+			}
+		}
+
+		Ok(what.clone().into())
 	}
 }
 

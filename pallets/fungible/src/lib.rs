@@ -95,9 +95,8 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use up_data_structs::{
-	budget::{Budget, ZeroBudget},
-	mapping::TokenAddressMapping,
-	AccessMode, CollectionId, CreateCollectionData, Property, PropertyKey, TokenId,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, Property, PropertyKey,
+	TokenId,
 };
 use weights::WeightInfo;
 

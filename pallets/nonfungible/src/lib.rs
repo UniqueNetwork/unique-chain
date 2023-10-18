@@ -117,8 +117,8 @@ use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutc
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
-	CreateCollectionData, CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property,
-	PropertyKey, PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
+	CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property, PropertyKey,
+	PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
 	TokenProperties as TokenPropertiesT,
 };
 use weights::WeightInfo;

@@ -576,6 +576,10 @@ impl<T: Config> XcmExtensions<T> for NonfungibleHandle<T> {
 		self.flags.foreign
 	}
 
+	fn token_has_children(&self, token: TokenId) -> bool {
+		<Pallet<T>>::token_has_children(self.id, token)
+	}
+
 	fn create_item_internal(
 		&self,
 		depositor: &<T>::CrossAccountId,

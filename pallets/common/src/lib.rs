@@ -2351,6 +2351,11 @@ where
 	/// Is the collection a foreign one?
 	fn is_foreign(&self) -> bool;
 
+	/// Does the token have children?
+	fn token_has_children(&self, _token: TokenId) -> bool {
+		false
+	}
+
 	/// Create a collection's item using a transaction.
 	///
 	/// This function performs additional XCM-related checks before the actual creation.
