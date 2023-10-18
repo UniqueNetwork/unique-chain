@@ -86,7 +86,7 @@ where
 			_ => {}
 		};
 
-		<PalletCommon<T>>::init_collection(sender, payer, data)
+		<PalletCommon<T>>::init_collection(sender, Some(payer), data)
 	}
 
 	fn create_foreign(
@@ -106,7 +106,8 @@ where
 			_ => {}
 		};
 
-		<PalletCommon<T>>::init_foreign_collection(sender, data)
+		let payer = None;
+		<PalletCommon<T>>::init_collection(sender, payer, data)
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {

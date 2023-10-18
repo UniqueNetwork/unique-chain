@@ -304,11 +304,10 @@ impl<T: Config> Pallet<T> {
 	/// If the `asset_instance` is a part of a local collection,
 	/// the function will return either `Ok(Some(<token ID>))` or an error if the token is not found.
 	fn asset_instance_to_token_id(
-		xcm_ext: &dyn XcmExtensions<T>,
 		collection_id: CollectionId,
 		asset_instance: &AssetInstance,
 	) -> Result<Option<TokenId>, XcmError> {
-		if xcm_ext.is_foreign() {
+		if <CollectionToForeignReserveLocation<T>>::contains_key(collection_id) {
 			Ok(Self::foreign_reserve_asset_instance_to_token_id(
 				collection_id,
 				asset_instance,
@@ -363,7 +362,7 @@ impl<T: Config> Pallet<T> {
 		to: T::CrossAccountId,
 	) -> XcmResult {
 		let deposit_result = if let Some(token_id) =
-			Self::asset_instance_to_token_id(xcm_ext, collection_id, asset_instance)?
+			Self::asset_instance_to_token_id(collection_id, asset_instance)?
 		{
 			let depositor = &Self::pallet_account();
 			let from = depositor;
@@ -389,7 +388,7 @@ impl<T: Config> Pallet<T> {
 		asset_instance: &AssetInstance,
 		from: T::CrossAccountId,
 	) -> XcmResult {
-		let token_id = Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
+		let token_id = Self::asset_instance_to_token_id(collection_id, &asset_instance)?
 			.ok_or(XcmError::AssetNotFound)?;
 
 		if xcm_ext.token_has_children(token_id) {
@@ -517,9 +516,8 @@ impl<T: Config> TransactAsset for Pallet<T> {
 			}
 
 			Fungibility::NonFungible(asset_instance) => {
-				token_id =
-					Self::asset_instance_to_token_id(xcm_ext, collection_id, &asset_instance)?
-						.ok_or(XcmError::AssetNotFound)?;
+				token_id = Self::asset_instance_to_token_id(collection_id, &asset_instance)?
+					.ok_or(XcmError::AssetNotFound)?;
 
 				amount = 1;
 				map_error = |_| XcmError::FailedToTransactAsset("nonfungible item transfer failed")
@@ -542,17 +540,11 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
 			Some(Here.into())
 		} else {
-			let dispatch = T::CollectionDispatch::dispatch(collection_id).ok()?;
-			let collection = dispatch.as_dyn();
-			let xcm_ext = collection.xcm_extensions()?;
-
-			if xcm_ext.is_foreign() {
-				<Pallet<T>>::collection_to_foreign_reserve_location(collection_id)
-			} else {
+			<Pallet<T>>::collection_to_foreign_reserve_location(collection_id).or_else(|| {
 				T::SelfLocation::get()
 					.pushed_with_interior(GeneralIndex(collection_id.0.into()))
 					.ok()
-			}
+			})
 		}
 	}
 }

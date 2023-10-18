@@ -459,10 +459,6 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 }
 
 impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
-	fn is_foreign(&self) -> bool {
-		self.flags.foreign
-	}
-
 	fn create_item_internal(
 		&self,
 		depositor: &<T>::CrossAccountId,

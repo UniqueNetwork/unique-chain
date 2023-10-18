@@ -572,10 +572,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 }
 
 impl<T: Config> XcmExtensions<T> for NonfungibleHandle<T> {
-	fn is_foreign(&self) -> bool {
-		self.flags.foreign
-	}
-
 	fn token_has_children(&self, token: TokenId) -> bool {
 		<Pallet<T>>::token_has_children(self.id, token)
 	}

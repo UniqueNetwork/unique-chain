@@ -378,9 +378,9 @@ pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH
 #[derive(AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[bondrewd(enforce_bytes = 1)]
 pub struct CollectionFlags {
-	/// Tokens in foreign collections can be transferred, but not burnt
+	/// Reserved flag
 	#[bondrewd(bits = "0..1")]
-	pub foreign: bool,
+	pub reserved_0: bool,
 	/// Supports ERC721Metadata
 	#[bondrewd(bits = "1..2")]
 	pub erc721metadata: bool,
@@ -395,7 +395,7 @@ bondrewd_codec!(CollectionFlags);
 
 impl CollectionFlags {
 	pub fn is_allowed_for_user(self) -> bool {
-		!self.foreign && !self.external && self.reserved == 0
+		!self.reserved_0 && !self.external && self.reserved == 0
 	}
 }
 
@@ -461,8 +461,6 @@ pub struct Collection<AccountId> {
 
 #[derive(Debug, Encode, Decode, Clone, PartialEq, TypeInfo, Serialize, Deserialize)]
 pub struct RpcCollectionFlags {
-	/// Is collection is foreign.
-	pub foreign: bool,
 	/// Collection supports ERC721Metadata.
 	pub erc721metadata: bool,
 }
@@ -505,7 +503,7 @@ pub struct RpcCollection<AccountId> {
 	pub read_only: bool,
 
 	/// Extra collection flags
-	#[version(2.., upper(RpcCollectionFlags {foreign: false, erc721metadata: false}))]
+	#[version(2.., upper(RpcCollectionFlags {erc721metadata: false}))]
 	pub flags: RpcCollectionFlags,
 }
 
@@ -542,7 +540,6 @@ impl<AccountId> From<CollectionVersion1<AccountId>> for RpcCollection<AccountId>
 			read_only: true,
 
 			flags: RpcCollectionFlags {
-				foreign: false,
 				erc721metadata: false,
 			},
 		}

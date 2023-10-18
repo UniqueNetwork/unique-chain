@@ -368,10 +368,6 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 }
 
 impl<T: Config> pallet_common::XcmExtensions<T> for NativeFungibleHandle<T> {
-	fn is_foreign(&self) -> bool {
-		false
-	}
-
 	fn create_item_internal(
 		&self,
 		_depositor: &<T>::CrossAccountId,

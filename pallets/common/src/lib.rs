@@ -1088,7 +1088,6 @@ impl<T: Config> Pallet<T> {
 			read_only: flags.external,
 
 			flags: RpcCollectionFlags {
-				foreign: flags.foreign,
 				erc721metadata: flags.erc721metadata,
 			},
 		})
@@ -1128,17 +1127,17 @@ impl<T: Config> Pallet<T> {
 	/// Create new collection.
 	///
 	/// * `owner` - The owner of the collection.
+	/// * `payer` - If set, the user that will pay a deposit for the collection creation.
 	/// * `data` - Description of the created collection.
-	/// * `flags` - Extra flags to store.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
+		payer: Option<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
 
 		// Take a (non-refundable) deposit of collection creation
-		{
+		if let Some(payer) = payer {
 			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
 			imbalance.subsume(<T as Config>::Currency::deposit(
 				&T::TreasuryAccountId::get(),
@@ -1153,16 +1152,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Self::init_collection_internal(owner, data)
-	}
-
-	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_foreign_collection(
-		owner: T::CrossAccountId,
-		mut data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		data.flags.foreign = true;
-		let id = Self::init_collection_internal(owner, data)?;
-		Ok(id)
 	}
 
 	fn init_collection_internal(
@@ -2348,9 +2337,6 @@ pub trait XcmExtensions<T>
 where
 	T: Config,
 {
-	/// Is the collection a foreign one?
-	fn is_foreign(&self) -> bool;
-
 	/// Does the token have children?
 	fn token_has_children(&self, _token: TokenId) -> bool {
 		false
