@@ -44,7 +44,7 @@ mod benchmarks {
 		.unwrap();
 		T::CollectionDispatch::create(
 			caller_cross.clone(),
-			caller_cross.clone(),
+			Some(caller_cross.clone()),
 			CreateCollectionData {
 				mode: CollectionMode::NFT,
 				..Default::default()
