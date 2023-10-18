@@ -47,7 +47,6 @@ const requiredPallets = [
   'nonfungible',
   'charging',
   'configuration',
-  'tokens',
   'xtokens',
   'maintenance',
 ];
