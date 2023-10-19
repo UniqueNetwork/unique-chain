@@ -135,7 +135,7 @@ pub struct RpcCollection<AccountId> {
 	pub read_only: bool,
 
 	/// Extra collection flags
-	#[version(2.., upper(RpcCollectionFlags {erc721metadata: false}))]
+	#[version(2.., upper(RpcCollectionFlags {foreign: false, erc721metadata: false}))]
 	pub flags: RpcCollectionFlags,
 }
 ```
