@@ -103,7 +103,7 @@ use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
-	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CreateCollectionData,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId,
 	CreateRefungibleExMultipleOwners, PropertiesPermissionMap, Property, PropertyKey,
 	PropertyKeyPermission, PropertyScope, PropertyValue, TokenId, TokenOwnerError,
 	TokenProperties as TokenPropertiesT, MAX_REFUNGIBLE_PIECES,
@@ -296,19 +296,6 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	/// Create RFT collection
-	///
-	/// `init_collection` will take non-refundable deposit for collection creation.
-	///
-	/// - `data`: Contains settings for collection limits and permissions.
-	pub fn init_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, Some(payer), data)
-	}
-
 	/// Destroy RFT collection
 	///
 	/// `destroy_collection` will throw error if collection contains any tokens.

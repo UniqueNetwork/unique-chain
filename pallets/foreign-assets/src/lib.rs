@@ -153,9 +153,11 @@ pub mod module {
 				.expect("description length < max description length; qed");
 
 			let payer = None;
-			let collection_id = T::CollectionDispatch::create(
+			let is_special_collection = true;
+			let collection_id = T::CollectionDispatch::create_internal(
 				foreign_collection_owner,
 				payer,
+				is_special_collection,
 				CreateCollectionData {
 					name,
 					description,

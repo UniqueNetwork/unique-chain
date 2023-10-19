@@ -121,7 +121,7 @@ fn create_collection<T: Config>(
 		owner,
 		CollectionMode::NFT,
 		|owner: T::CrossAccountId, data| {
-			<Pallet<T>>::init_collection(owner.clone(), Some(owner), data)
+			<Pallet<T>>::init_collection(owner.clone(), Some(owner), false, data)
 		},
 		|h| h,
 	)

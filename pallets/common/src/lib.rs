@@ -1088,6 +1088,7 @@ impl<T: Config> Pallet<T> {
 			read_only: flags.external,
 
 			flags: RpcCollectionFlags {
+				foreign: flags.foreign,
 				erc721metadata: flags.erc721metadata,
 			},
 		})
@@ -1129,12 +1130,16 @@ impl<T: Config> Pallet<T> {
 	/// * `owner` - The owner of the collection.
 	/// * `payer` - If set, the user that will pay a deposit for the collection creation.
 	/// * `data` - Description of the created collection.
+	/// * `is_special_collection` -- Whether this collection is a special one, i.e. can have special flags set.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
 		payer: Option<T::CrossAccountId>,
+		is_special_collection: bool,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
+		if !is_special_collection {
+			ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
+		}
 
 		// Take a (non-refundable) deposit of collection creation
 		if let Some(payer) = payer {

@@ -1,4 +1,6 @@
 use frame_support::{parameter_types, PalletId};
+#[cfg(not(feature = "governance"))]
+use frame_system::EnsureRoot;
 use pallet_evm::account::CrossAccountId;
 use sp_core::H160;
 use staging_xcm::prelude::*;
@@ -6,10 +8,6 @@ use staging_xcm_builder::AccountKey20Aliases;
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
-
-#[cfg(not(feature = "governance"))]
-use frame_system::EnsureRoot;
-
 use crate::{
 	runtime_common::config::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,

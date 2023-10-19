@@ -66,9 +66,10 @@ where
 		}
 	}
 
-	fn create(
+	fn create_internal(
 		sender: T::CrossAccountId,
 		payer: Option<T::CrossAccountId>,
+		is_special_collection: bool,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		match data.mode {
@@ -86,7 +87,7 @@ where
 			_ => {}
 		};
 
-		<PalletCommon<T>>::init_collection(sender, payer, data)
+		<PalletCommon<T>>::init_collection(sender, payer, is_special_collection, data)
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {
