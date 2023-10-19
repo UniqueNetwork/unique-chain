@@ -60,7 +60,6 @@ local karura = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			legacyRpc: true,
 		},
 		for name in ['alice', 'bob']
 	},
@@ -80,7 +79,6 @@ local moonriver = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
-			legacyRpc: true,
 		},
 		for name in ['alith', 'baltathar']
 	},

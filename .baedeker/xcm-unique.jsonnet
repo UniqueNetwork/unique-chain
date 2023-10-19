@@ -61,7 +61,6 @@ local acala = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			legacyRpc: true,
 		},
 		for name in ['alice', 'bob']
 	},
@@ -81,7 +80,6 @@ local moonbeam = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
-			legacyRpc: true,
 		},
 		for name in ['alith', 'baltathar']
 	},
@@ -116,7 +114,6 @@ local astar = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			legacyRpc: true,
 		},
 		for name in ['alice', 'bob']
 	},
