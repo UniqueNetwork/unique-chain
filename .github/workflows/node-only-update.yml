@@ -166,7 +166,7 @@ jobs:
 
       - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
-        if: success() || failure()
+        if: success()
         run: |
           yarn
           yarn add mochawesome
@@ -195,7 +195,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
-        if: success() || failure()    # run this step even if previous step failed
+        if: success()
         run: |
           ./tests/scripts/wait_for_first_block.sh
         env:
