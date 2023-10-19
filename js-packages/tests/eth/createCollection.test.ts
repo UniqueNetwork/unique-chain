@@ -1404,16 +1404,16 @@ describe('Create collection from EVM', () => {
 
       {
         const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: 0}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({erc721metadata: false});
+        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: false});
       }
 
       {
         const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: 64}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({erc721metadata: true});
+        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: true});
       }
     });
 
-    itEth('NFT: cannot set a reserved flag number', async ({helper}) => {
+    itEth('NFT: can\'t set foreign flag number', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       {
@@ -1430,7 +1430,19 @@ describe('Create collection from EVM', () => {
 
       {
         const {collectionId} = await helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Erc721metadata]}).send();
-        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({erc721metadata: true});
+        expect((await helper.nft.getData(collectionId))?.raw.flags).to.be.deep.equal({foreign: false, erc721metadata: true});
+      }
+    });
+
+    itEth('NFT: foreign flag enum is ignored', async ({helper}) => {
+      const owner = await helper.eth.createAccountWithBalance(donor);
+
+      {
+        await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Foreign]}).call({from: owner})).to.be.rejectedWith(/internal flags were used/);
+      }
+
+      {
+        await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Erc721metadata | CollectionFlag.Foreign]}).call({from: owner})).to.be.rejectedWith(/internal flags were used/);
       }
     });
   });
