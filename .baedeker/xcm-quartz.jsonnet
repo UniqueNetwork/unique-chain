@@ -11,13 +11,13 @@ local relay = {
 	spec: {Genesis:{
 		chain: relay_spec,
 		modify:: m.genericRelay($, hrmp = std.join([], [
-			[[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
-			for [a, b] in [
-				['quartz', 'karura'],
-				['quartz', 'moonriver'],
-				['quartz', 'statemine'],
-				['quartz', 'shiden'],
-			]
+			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+			// for [a, b] in [
+			// 	['quartz', 'karura'],
+			// 	['quartz', 'moonriver'],
+			// 	['quartz', 'statemine'],
+			// 	['quartz', 'shiden'],
+			// ]
 		])),
 	}},
 	nodes: {
