@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect} from './util';
-import {Pallets} from '../util';
-import {IProperty, ITokenPropertyPermission} from '../util/playgrounds/types';
-import {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
+import {Pallets} from '../util/index.js';
+import type {IProperty, ITokenPropertyPermission} from '../util/playgrounds/types.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;

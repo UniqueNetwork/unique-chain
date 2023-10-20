@@ -3,7 +3,7 @@
 
 import {
   usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD, makeNames,
-} from './index';
+} from './index.js';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 
@@ -70,7 +70,7 @@ const fundFilenames = async () => {
     const batchSize = 300;
     let balanceGrantedCounter = 0;
     for(let b = 0; b < filenames.length; b += batchSize) {
-      const tx = [];
+      const tx: Promise<boolean>[] = [];
       let batchBalanceGrantedCounter = 0;
       for(let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filenames.length; i++) {
         const f = filenames[b + i];

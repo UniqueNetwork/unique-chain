@@ -7,8 +7,8 @@
 // Example: `yarn checkRelayIdentities wss://polkadot-rpc.dwellir.com wss://kusama-rpc.dwellir.com`
 
 import {encodeAddress} from '@polkadot/keyring';
-import {usingPlaygrounds} from './index';
-import {getIdentities, getSubs, getSupers, constructSubInfo} from './identitySetter';
+import {usingPlaygrounds} from './index.js';
+import {getIdentities, getSubs, getSupers, constructSubInfo} from './identitySetter.js';
 
 const relay1Url = process.argv[2] ?? 'ws://localhost:9844';
 const relay2Url = process.argv[3] ?? 'ws://localhost:9844';

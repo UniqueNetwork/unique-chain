@@ -1,7 +1,8 @@
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
-import {ICounselors, initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util/index.js';
+import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev.js';
+import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util.js';
+import type {ICounselors, ITechComms} from './util.js';
 
 describeGov('Governance: Fellowship tests', () => {
   let members: IKeyringPair[][];

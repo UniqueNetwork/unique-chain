@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {Pallets, requirePalletsOrSkip} from '../util';
-import {expect, itEth, usingEthPlaygrounds} from './util';
-import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from './util/playgrounds/types';
-import {CollectionFlag, IEthCrossAccountId, TCollectionMode} from '../util/playgrounds/types';
+import {Pallets, requirePalletsOrSkip} from '../util/index.js';
+import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from './util/playgrounds/types.js';
+import {CollectionFlag} from '../util/playgrounds/types.js';
+import type {IEthCrossAccountId, TCollectionMode} from '../util/playgrounds/types.js';
 
 const DECIMALS = 18;
 const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [

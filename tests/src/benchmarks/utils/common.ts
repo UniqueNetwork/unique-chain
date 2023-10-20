@@ -1,7 +1,7 @@
-import {EthUniqueHelper} from '../../eth/util';
-import {ITokenPropertyPermission, TCollectionMode} from '../../util/playgrounds/types';
-import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
-import {IKeyringPair} from '@polkadot/types/types';
+import {EthUniqueHelper} from '../../eth/util/playgrounds/unique.dev.js';
+import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique.js';
+import type {ITokenPropertyPermission, TCollectionMode} from '../../util/playgrounds/types.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 export const PROPERTIES = Array(40)
   .fill(0)

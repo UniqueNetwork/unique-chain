@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from '../util';
-import {IEvent} from '../util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub} from '../util/index.js';
+import type {IEvent} from '../util/playgrounds/types.js';
 
 
 describe('Burn Item event ', () => {

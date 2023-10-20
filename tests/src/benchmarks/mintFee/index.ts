@@ -1,15 +1,14 @@
-import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
+import {usingEthPlaygrounds} from '../../eth/util/index.js';
+import {EthUniqueHelper} from '../../eth/util/playgrounds/unique.dev.js';
 import {readFile} from 'fs/promises';
-import {
-  ICrossAccountId,
-} from '../../util/playgrounds/types';
-import {IKeyringPair} from '@polkadot/types/types';
-import {UniqueNFTCollection} from '../../util/playgrounds/unique';
+import type {ICrossAccountId} from '../../util/playgrounds/types.js';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {UniqueNFTCollection} from '../../util/playgrounds/unique.js';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
-import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common';
-import {makeNames} from '../../util';
-import {ContractImports} from '../../eth/util/playgrounds/types';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.js';
+import {makeNames} from '../../util/index.js';
+import type {ContractImports} from '../../eth/util/playgrounds/types.js';
 
 const {dirname} = makeNames(import.meta.url);
 

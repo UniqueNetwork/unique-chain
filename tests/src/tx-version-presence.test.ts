@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Metadata} from '@polkadot/types';
-import {itSub, usingPlaygrounds, expect} from './util';
+import {itSub, usingPlaygrounds, expect} from './util/index.js';
 
 let metadata: Metadata;
 

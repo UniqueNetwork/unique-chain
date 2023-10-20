@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Keyring} from '@polkadot/api';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 // WARNING: the WASM interface must be initialized before this function is called. 
 // Use either `usingApi`, or `cryptoWaitReady` for consistency.

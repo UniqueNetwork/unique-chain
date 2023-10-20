@@ -3,18 +3,20 @@
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import {UniqueHelper, ChainHelperBase, ChainHelperBaseConstructor, HelperGroup, UniqueHelperConstructor} from './unique';
+import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from './unique.js';
+import {UniqueHelper, ChainHelperBase, HelperGroup} from './unique.js';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
-import * as defs from '../../interfaces/definitions';
-import {IKeyringPair} from '@polkadot/types/types';
-import {EventRecord} from '@polkadot/types/interfaces';
-import {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types';
-import {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
-import {SignerOptions, VoidFn} from '@polkadot/api/types';
-import {Pallets} from '..';
+import * as defs from '../../interfaces/definitions.js';
+import type {IKeyringPair} from '@polkadot/types/types';
+import type {EventRecord} from '@polkadot/types/interfaces';
+import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types.js';
+import type {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
+import type {SignerOptions, VoidFn} from '@polkadot/api/types';
+import {Pallets} from '../index.js';
 import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup} from './unique.xcm';
-import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, ICollectiveGroup, IFellowshipGroup, RankedCollectiveGroup, ReferendaGroup} from './unique.governance';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup} from './unique.xcm.js';
+import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './unique.governance.js';
+import type {ICollectiveGroup, IFellowshipGroup} from './unique.governance.js';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -275,7 +277,7 @@ export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       super(...args);
     }
 
-    async executeExtrinsic(
+    override async executeExtrinsic(
       sender: IKeyringPair,
       extrinsic: string,
       params: any[],
@@ -307,7 +309,7 @@ export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
       }
       return result;
     }
-    async executeExtrinsicUncheckedWeight(
+    override async executeExtrinsicUncheckedWeight(
       sender: IKeyringPair,
       extrinsic: string,
       params: any[],
@@ -504,7 +506,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.democracy = new DemocracyGroup(this);
   }
 
-  async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
+  override async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
     if(!wsEndpoint) throw new Error('wsEndpoint was not set');
     const wsProvider = new WsProvider(wsEndpoint);
     this.api = new ApiPromise({
@@ -692,7 +694,7 @@ export class ArrangeGroup {
       accounts.push(recipient);
       if(balance !== 0n) {
         const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
-        transactions.push(this.helper.signTransaction(donor, tx, {nonce, era: 0}, 'account generation'));
+        transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
         nonce++;
       }
     }
@@ -806,6 +808,7 @@ export class ArrangeGroup {
     const block1date = await findCreationDate(block1);
     const block2date = await findCreationDate(block2);
     if(block2date! - block1date! < 9000) return true;
+    return false;
   };
 
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
@@ -1502,7 +1505,7 @@ function ScheduledUniqueHelper<T extends UniqueHelperConstructor>(Base: T) {
       this.options = options.options;
     }
 
-    executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
+    override executeExtrinsic(sender: IKeyringPair, scheduledExtrinsic: string, scheduledParams: any[], expectSuccess?: boolean): Promise<ITransactionResult> {
       const scheduledTx = this.constructApiCall(scheduledExtrinsic, scheduledParams);
 
       const mandatorySchedArgs = [

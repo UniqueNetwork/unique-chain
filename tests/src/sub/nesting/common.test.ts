@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../../util';
-import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, Pallets, usingPlaygrounds} from '../../util/index.js';
+import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique.js';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -128,7 +128,7 @@ describe('Common nesting tests', () => {
 
     const nestedNFT = await nftCollectionToBeNested.mintToken(alice, tokenA.nestingAccount());
     const nestedRFT = await rftCollectionToBeNested.mintToken(alice, 100n, tokenA.nestingAccount());
-    const _nestedFT = await ftCollectionToBeNested.mint(alice, 100n, tokenA.nestingAccount());
+    //const _nestedFT = await ftCollectionToBeNested.mint(alice, 100n, tokenA.nestingAccount());
     await nativeFtCollectionToBeNested.transfer(alice, tokenA.nestingAccount(), 100n);
     expect(await nestedNFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
     expect(await nestedRFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());

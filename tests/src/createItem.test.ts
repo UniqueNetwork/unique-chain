@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets} from './util';
-import {IProperty, ICrossAccountId} from './util/playgrounds/types';
-import {UniqueHelper} from './util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub, Pallets} from './util/index.js';
+import type {IProperty, ICrossAccountId} from './util/playgrounds/types.js';
+import {UniqueHelper} from './util/playgrounds/unique.js';
 
 async function mintTokenHelper(helper: UniqueHelper, collection: any, signer: IKeyringPair, owner: ICrossAccountId, type: 'nft' | 'fungible' | 'refungible'='nft', properties?: IProperty[]) {
   let token;

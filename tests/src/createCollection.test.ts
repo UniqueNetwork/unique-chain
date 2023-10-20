@@ -14,10 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets} from './util';
-import {CollectionFlag, ICollectionCreationOptions, IProperty} from './util/playgrounds/types';
-import {UniqueHelper} from './util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub, Pallets} from './util/index.js';
+import {CollectionFlag} from './util/playgrounds/types.js';
+import type {ICollectionCreationOptions, IProperty} from './util/playgrounds/types.js';
+import {UniqueHelper} from './util/playgrounds/unique.js';
 
 async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
   let collection;

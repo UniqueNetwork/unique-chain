@@ -1,5 +1,6 @@
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingEthPlaygrounds, EthUniqueHelper} from './eth/util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingEthPlaygrounds} from './eth/util/index.js';
+import {EthUniqueHelper} from './eth/util/playgrounds/unique.dev.js';
 
 class Fract {
   static ZERO = new Fract(0n);
@@ -174,14 +175,14 @@ function linearRegression(points: { x: Fract, y: Fract }[]) {
 
 const hypothesisLinear = (a: Fract, b: Fract) => (x: Fract) => rpn(x, a, '*', b, '+');
 
-function _error(points: { x: Fract, y: Fract }[], hypothesis: (a: Fract) => Fract) {
-  return points.map(p => {
-    const v = hypothesis(p.x);
-    const vv = p.y;
+// function error(points: { x: Fract, y: Fract }[], hypothesis: (a: Fract) => Fract) {
+//   return points.map(p => {
+//     const v = hypothesis(p.x);
+//     const vv = p.y;
 
-    return rpn(v, vv, '-', 'dup', '*');
-  }).reduce((a, b) => a.plus(b), Fract.ZERO).sqrt().div(new Fract(BigInt(points.length)));
-}
+//     return rpn(v, vv, '-', 'dup', '*');
+//   }).reduce((a, b) => a.plus(b), Fract.ZERO).sqrt().div(new Fract(BigInt(points.length)));
+// }
 
 async function calibrateWeightToFee(helper: EthUniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>) {
   const alice = await privateKey('//Alice');

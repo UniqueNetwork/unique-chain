@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from './util';
-import {ICollectionPermissions, NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub} from './util/index.js';
+import type {ICollectionPermissions} from './util/playgrounds/types.js';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types.js';
 
 describe('Integration Test ext. Allow list tests', () => {
   let alice: IKeyringPair;

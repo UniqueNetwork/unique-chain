@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '../../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from '../../util/index.js';
 
 describe('Composite nesting tests', () => {
   let alice: IKeyringPair;

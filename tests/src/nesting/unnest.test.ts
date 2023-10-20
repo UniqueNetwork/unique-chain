@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../util';
-import {UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '../util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, Pallets, usingPlaygrounds} from '../util/index.js';
+import {UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '../util/playgrounds/unique.js';
 
 describe('Integration Test: Unnesting', () => {
   let alice: IKeyringPair;

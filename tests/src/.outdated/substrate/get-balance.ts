@@ -16,8 +16,8 @@
 
 import {ApiPromise} from '@polkadot/api';
 import {AccountInfo} from '@polkadot/types/interfaces/system';
-import promisifySubstrate from './promisify-substrate';
-import {IKeyringPair} from '@polkadot/types/types';
+import promisifySubstrate from './promisify-substrate.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {submitTransactionAsync} from './substrate-api';
 import {getGenericResult} from '../deprecated-helpers/helpers';
 import {expect} from 'chai';

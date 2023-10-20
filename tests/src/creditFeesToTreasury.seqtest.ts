@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import './interfaces/augment-api-consts';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub} from './util';
+import {usingPlaygrounds, expect, itSub} from './util/index.js';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '../util';
-import {UniqueHelper} from '../util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '../util/index.js';
+import {UniqueHelper} from '../util/playgrounds/unique.js';
 
 async function getIdentities(helper: UniqueHelper) {
   const identities: [string, any][] = [];

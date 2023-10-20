@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets, requirePalletsOrSkip} from '../util';
-import {expect, itEth, usingEthPlaygrounds} from './util';
-import {IKeyringPair} from '@polkadot/types/types';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
-import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from './util/playgrounds/types';
+import {Pallets, requirePalletsOrSkip} from '../util/index.js';
+import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import type {IKeyringPair} from '@polkadot/types/types';
+import type {ITokenPropertyPermission} from '../util/playgrounds/types.js';
+import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from './util/playgrounds/types.js';
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;

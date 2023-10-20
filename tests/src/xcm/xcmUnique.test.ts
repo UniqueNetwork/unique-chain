@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import config from '../config';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util';
-import {Event} from '../util/playgrounds/unique.dev';
+import type {IKeyringPair} from '@polkadot/types/types';
+import config from '../config.js';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util/index.js';
+import {Event} from '../util/playgrounds/unique.dev.js';
 import {hexToString, nToBigInt} from '@polkadot/util';
-import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types';
+import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types.js';
 
 
 const STATEMINT_PALLET_INSTANCE = 50;

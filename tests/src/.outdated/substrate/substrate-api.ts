@@ -15,17 +15,17 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise, WsProvider} from '@polkadot/api';
-import {ApiOptions, ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
-import {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
-import {EventRecord} from '@polkadot/types/interfaces/system/types';
-import {IKeyringPair} from '@polkadot/types/types';
-import config from '../../config';
+import type {ApiOptions, ApiTypes, SubmittableExtrinsic} from '@polkadot/api/types';
+import type {ExtrinsicStatus} from '@polkadot/types/interfaces/author/types';
+import type {EventRecord} from '@polkadot/types/interfaces/system/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import config from '../../config.js';
 import '../../interfaces/augment-api-events';
-import * as defs from '../../interfaces/definitions';
-import privateKey from './privateKey';
-import promisifySubstrate from './promisify-substrate';
+import * as defs from '../../interfaces/definitions.js';
+import privateKey from './privateKey.js';
+import promisifySubstrate from './promisify-substrate.js';
 
-import {SilentConsole} from '../../util/playgrounds/unique.dev';
+import {SilentConsole} from '../../util/playgrounds/unique.dev.js';
 
 
 

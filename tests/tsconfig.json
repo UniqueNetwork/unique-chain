@@ -1,22 +1,22 @@
 {
+	"extends": "@polkadot/dev/config/tsconfig.json",
 	"compilerOptions": {
-		"target": "ES2020",
-		"moduleResolution": "node",
-		"esModuleInterop": true,
+		"composite": false,
 		"resolveJsonModule": true,
-		"module": "ESNext",
 		"sourceMap": true,
 		"outDir": "dist",
-		"strict": true,
+		"verbatimModuleSyntax": false,
 		"paths": {
-			"@polkadot/types/lookup": ["./src/interfaces/types-lookup.ts"],
-			"@unique-nft/types/*": ["./src/interfaces/*"]
-		}
+			"@polkadot/api-base/types/consts": ["./node_modules/@polkadot/api-base/types/consts.d.ts", "./src/interfaces/augment-api-consts.ts"],
+			"@polkadot/api-base/types/errors": ["./node_modules/@polkadot/api-base/types/errors.d.ts","./src/interfaces/augment-api-errors.ts"],
+			"@polkadot/api-base/types/events": ["./node_modules/@polkadot/api-base/types/events.d.ts", "./src/interfaces/augment-api-events.ts"],
+			"@polkadot/api-base/types/storage": ["./node_modules/@polkadot/api-base/types/storage.d.ts", "./src/interfaces/augment-api-query.ts"],
+			"@polkadot/rpc-core/types/jsonrpc": ["./node_modules/@polkadot/rpc-core/types/jsonrpc.d.ts", "./src/interfaces/augment-api-rpc.ts"],
+			"@polkadot/api-base/types/calls": ["./node_modules/@polkadot/api-base/types/calls.d.ts", "./src/interfaces/augment-api-runtime.ts"],
+			"@polkadot/api-base/types/submittable": ["./node_modules/@polkadot/api-base/types/submittable.d.ts", "./src/interfaces/augment-api-tx.ts"],
+			"@polkadot/types/types/registry": ["./node_modules/@polkadot/types/types/registry.d.ts", "./src/interfaces/augment-types.ts"],
+		  }
 	},
 	"include": ["./src/**/*", "./src/interfaces/*.ts"],
 	"exclude": ["./src/.outdated"],
-	"lib": ["es2017"],
-	"ts-node": {
-		"experimentalSpecifierResolution": "node"
-	}
 }

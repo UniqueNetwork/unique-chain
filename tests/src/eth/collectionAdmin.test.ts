@@ -13,13 +13,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {Pallets} from '../util';
-import {IEthCrossAccountId} from '../util/playgrounds/types';
-import {usingEthPlaygrounds, itEth} from './util';
-import {EthUniqueHelper} from './util/playgrounds/unique.dev';
-import {CreateCollectionData} from './util/playgrounds/types';
+import {Pallets} from '../util/index.js';
+import type {IEthCrossAccountId} from '../util/playgrounds/types.js';
+import {usingEthPlaygrounds, itEth} from './util/index.js';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
+import {CreateCollectionData} from './util/playgrounds/types.js';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));

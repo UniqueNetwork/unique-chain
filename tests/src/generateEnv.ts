@@ -1,7 +1,7 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {readFile} from 'fs/promises';
 import {join} from 'path';
-import {makeNames} from './util';
+import {makeNames} from './util/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 

@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
-import {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
-import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionMode, CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
+import type {ITokenPropertyPermission} from '../util/playgrounds/types.js';
+import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from './util/playgrounds/types.js';
 
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;

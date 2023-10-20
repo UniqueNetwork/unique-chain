@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itEth, usingEthPlaygrounds} from './util';
-import {UniqueHelper} from '../util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import {UniqueHelper} from '../util/playgrounds/unique.js';
 
 describe('NativeFungible: ERC20 calls', () => {
   let donor: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_, privateKey) => {
       donor = await privateKey({url: import.meta.url});
     });
   });
@@ -128,7 +128,7 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
   let donor: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_, privateKey) => {
       donor = await privateKey({url: import.meta.url});
     });
   });

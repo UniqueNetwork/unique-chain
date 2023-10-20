@@ -1,13 +1,15 @@
-import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
+import {usingEthPlaygrounds} from '../../eth/util/index.js';
+import {EthUniqueHelper} from '../../eth/util/playgrounds/unique.dev.js';
 import {readFile} from 'fs/promises';
-import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '../../eth/util/playgrounds/types';
-import {IKeyringPair} from '@polkadot/types/types';
-import {UniqueFTCollection, UniqueNFTCollection} from '../../util/playgrounds/unique';
+import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '../../eth/util/playgrounds/types.js';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {UniqueFTCollection, UniqueNFTCollection} from '../../util/playgrounds/unique.js';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
-import {FunctionFeeVM, IFunctionFee} from '../utils/types';
-import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common';
-import {makeNames} from '../../util';
+import {FunctionFeeVM} from '../utils/types.js';
+import type {IFunctionFee} from '../utils/types.js';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common.js';
+import {makeNames} from '../../util/index.js';
 
 
 const {dirname} = makeNames(import.meta.url);

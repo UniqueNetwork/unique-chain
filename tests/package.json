@@ -4,6 +4,7 @@
   "description": "Unique Chain Tests",
   "main": "",
   "devDependencies": {
+    "@polkadot/dev": "^0.73.2",
     "@polkadot/typegen": "10.10.1",
     "@types/chai": "^4.3.3",
     "@types/chai-as-promised": "^7.1.5",

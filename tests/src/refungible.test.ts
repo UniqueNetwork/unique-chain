@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from './util/index.js';
 
 const MAX_REFUNGIBLE_PIECES = 1_000_000_000_000_000_000_000n;
 

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets} from './util';
-import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub, Pallets} from './util/index.js';
+import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types.js';
 
 async function setSponsorHelper(collection: any, signer: IKeyringPair, sponsorAddress: string) {
   await collection.setSponsor(signer, sponsorAddress);

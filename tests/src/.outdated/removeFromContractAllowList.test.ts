@@ -17,7 +17,7 @@
 import usingApi from '../substrate/substrate-api';
 import {deployFlipper, toggleFlipValueExpectFailure, toggleFlipValueExpectSuccess} from '../deprecated-helpers/contracthelpers';
 import {addToContractAllowListExpectSuccess, isAllowlistedInContract, removeFromContractAllowListExpectFailure, removeFromContractAllowListExpectSuccess, toggleContractAllowlistExpectSuccess} from '../deprecated-helpers/helpers';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 
 // todo:playgrounds skipped again

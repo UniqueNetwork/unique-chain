@@ -1,5 +1,5 @@
-import config from '../config';
-import {usingPlaygrounds} from '../util';
+import config from '../config.js';
+import {usingPlaygrounds} from '../util/index.js';
 
 
 

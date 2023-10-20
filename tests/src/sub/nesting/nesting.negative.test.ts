@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../../util';
-import {UniqueFTCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '../../util/playgrounds/unique';
-import {itEth} from '../../eth/util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, Pallets, usingPlaygrounds} from '../../util/index.js';
+import {UniqueFTCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '../../util/playgrounds/unique.js';
+import {itEth} from '../../eth/util/index.js';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -182,7 +182,7 @@ describe('Negative Test: Nesting', () => {
       // 2. Alice cannot mint and nest token:
       const nft = await nftCollectionForNesting.mintToken(alice);
       const rft = await rftCollectionForNesting.mintToken(alice, 100n);
-      const _ft = await ftCollectionForNesting.mint(alice, 100n);
+      //const _ft = await ftCollectionForNesting.mint(alice, 100n);
       await expect(nft.transfer(alice, testCase.token.nestingAccount())).to.be.rejectedWith(testCase.error);
       await expect(rft.transfer(alice, testCase.token.nestingAccount())).to.be.rejectedWith(testCase.error);
       await expect(ftCollectionForNesting.transfer(alice, testCase.token.nestingAccount(), 50n)).to.be.rejectedWith(testCase.error);
@@ -214,7 +214,7 @@ describe('Negative Test: Nesting', () => {
     const nativeFtCollection = helper.ft.getCollectionObject(0);
 
     const rftToken = await rftCollection.mintToken(alice);
-    const _ftToken = await ftCollection.mint(alice, 100n);
+    //const _ftToken = await ftCollection.mint(alice, 100n);
 
     const collectionForNesting = await helper.nft.mintCollection(alice);
 

@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
-import {itEth} from './eth/util';
-import {main as correctState} from './migrations/correctStateAfterMaintenance';
+import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/index.js';
+import {itEth} from './eth/util/index.js';
+import {main as correctState} from './migrations/correctStateAfterMaintenance.js';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
   return (await api.query.maintenance.enabled()).toJSON() as boolean;

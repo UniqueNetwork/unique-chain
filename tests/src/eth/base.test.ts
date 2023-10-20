@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
 
 
 describe('Contract calls', () => {

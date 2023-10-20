@@ -1,7 +1,7 @@
 import {readFile, writeFile} from 'fs/promises';
 import path from 'path';
-import usingApi from './.outdated/substrate/substrate-api';
-import {makeNames} from './util';
+import usingApi from './.outdated/substrate/substrate-api.js';
+import {makeNames} from './util/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 

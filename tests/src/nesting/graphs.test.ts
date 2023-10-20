@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '../util';
-import {UniqueHelper, UniqueNFTCollection, UniqueNFToken} from '../util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from '../util/index.js';
+import {UniqueHelper, UniqueNFTCollection, UniqueNFToken} from '../util/playgrounds/unique.js';
 
 /**
  * ```dot

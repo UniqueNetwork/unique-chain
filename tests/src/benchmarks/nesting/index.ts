@@ -1,11 +1,12 @@
-import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
+import {usingEthPlaygrounds} from '../../eth/util/index.js';
+import {EthUniqueHelper} from '../../eth/util/playgrounds/unique.dev.js';
 import {readFile} from 'fs/promises';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {convertToTokens} from '../utils/common';
-import {makeNames} from '../../util';
-import {ContractImports} from '../../eth/util/playgrounds/types';
-import {RMRKNestableMintable} from './ABIGEN';
+import {convertToTokens} from '../utils/common.js';
+import {makeNames} from '../../util/index.js';
+import type {ContractImports} from '../../eth/util/playgrounds/types.js';
+import type {RMRKNestableMintable} from './ABIGEN/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 

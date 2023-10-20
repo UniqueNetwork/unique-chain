@@ -15,10 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from './util';
-import {ICrossAccountId, IProperty} from './util/playgrounds/types';
-import {UniqueHelper} from './util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from './util/index.js';
+import type {ICrossAccountId, IProperty} from './util/playgrounds/types.js';
+import {UniqueHelper} from './util/playgrounds/unique.js';
 
 describe('Performace tests', () => {
   let alice: IKeyringPair;

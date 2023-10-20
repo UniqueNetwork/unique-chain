@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itSub, expect, usingPlaygrounds} from './util';
+import {itSub, expect, usingPlaygrounds} from './util/index.js';
 
 describe('Connection smoke test', () => {
   itSub('Connection can be established', async ({helper}) => {
