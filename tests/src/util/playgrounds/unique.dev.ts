@@ -263,7 +263,7 @@ export class Event {
 
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<XcmV3TraitsOutcome>(data, 1),
+      outcome: eventData<XcmV3TraitsOutcome>(data, 2),
     }));
   };
 }
