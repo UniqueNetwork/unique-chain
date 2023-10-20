@@ -227,6 +227,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       EmptyPropertyKey: AugmentedError<ApiType>;
       /**
+       * Fungible tokens hold no ID, and the default value of TokenId for a fungible collection is 0.
+       **/
+      FungibleItemsHaveNoId: AugmentedError<ApiType>;
+      /**
        * Only ASCII letters, digits, and symbols `_`, `-`, and `.` are allowed
        **/
       InvalidCharacterInPropertyKey: AugmentedError<ApiType>;
@@ -327,6 +331,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Account is not a member
        **/
       NotMember: AugmentedError<ApiType>;
+      /**
+       * Prime account is not a member
+       **/
+      PrimeAccountNotMember: AugmentedError<ApiType>;
       /**
        * Proposal must exist
        **/
@@ -738,10 +746,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       FungibleItemsDontHaveData: AugmentedError<ApiType>;
       /**
-       * Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
-       **/
-      FungibleItemsHaveNoId: AugmentedError<ApiType>;
-      /**
        * Only a fungible collection could be possibly broken; any fungible token is valid.
        **/
       FungibleTokensAreAlwaysValid: AugmentedError<ApiType>;
@@ -966,8 +970,8 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NoSubscription: AugmentedError<ApiType>;
       /**
-       * There was some other issue (i.e. not to do with routing) in sending the message. Perhaps
-       * a lack of space for buffering the message.
+       * There was some other issue (i.e. not to do with routing) in sending the message.
+       * Perhaps a lack of space for buffering the message.
        **/
       SendFailure: AugmentedError<ApiType>;
       /**
@@ -1224,6 +1228,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       NotMember: AugmentedError<ApiType>;
       /**
+       * Prime account is not a member
+       **/
+      PrimeAccountNotMember: AugmentedError<ApiType>;
+      /**
        * Proposal must exist
        **/
       ProposalMissing: AugmentedError<ApiType>;
@@ -1353,6 +1361,16 @@ declare module '@polkadot/api-base/types/errors' {
        * Repertition is only supported by refungible collection.
        **/
       RepartitionCalledOnNonRefungibleCollection: AugmentedError<ApiType>;
+      /**
+       * Generic error
+       **/
+      [key: string]: AugmentedError<ApiType>;
+    };
+    utility: {
+      /**
+       * Too many calls batched.
+       **/
+      TooManyCalls: AugmentedError<ApiType>;
       /**
        * Generic error
        **/
