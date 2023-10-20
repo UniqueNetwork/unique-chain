@@ -257,7 +257,7 @@ export class Event {
 
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
-      outcome: eventData<XcmV2TraitsError>(data, 1),
+      outcome: eventData<XcmV2TraitsError>(data, 2),
     }));
   };
 
@@ -1306,7 +1306,7 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<T | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
-        const blockNumber = header.number.toHuman();
+        const blockNumber = header.number.toJSON();
         const blockHash = header.hash;
         const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;
