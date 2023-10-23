@@ -39,8 +39,9 @@ use staging_xcm_executor::{
 	Assets,
 };
 use up_data_structs::{
-	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CreateCollectionData,
-	CreateFungibleData, CreateItemData, CreateNftData, Property, PropertyKey, TokenId,
+	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CollectionTokenPrefix,
+	CreateCollectionData, CreateFungibleData, CreateItemData, CreateNftData, Property, PropertyKey,
+	TokenId,
 };
 
 pub mod weights;
@@ -87,7 +88,7 @@ pub mod module {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The foreign asset is already registered
+		/// The foreign asset is already registered.
 		ForeignAssetAlreadyRegistered,
 	}
 
@@ -136,7 +137,8 @@ pub mod module {
 			origin: OriginFor<T>,
 			reserve_location: MultiLocation,
 			name: CollectionName,
-			mode: CollectionMode,
+			token_prefix: CollectionTokenPrefix,
+			mode: ForeignCollectionMode,
 		) -> DispatchResult {
 			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
@@ -160,8 +162,9 @@ pub mod module {
 				is_special_collection,
 				CreateCollectionData {
 					name,
+					token_prefix,
 					description,
-					mode,
+					mode: mode.into(),
 
 					properties: vec![Property {
 						key: Self::reserve_location_property_key(),
@@ -559,6 +562,21 @@ pub use frame_support::{
 	},
 	weights::{WeightToFee, WeightToFeePolynomial},
 };
+
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+pub enum ForeignCollectionMode {
+	NFT,
+	Fungible(u8),
+}
+
+impl Into<CollectionMode> for ForeignCollectionMode {
+	fn into(self) -> CollectionMode {
+		match self {
+			Self::NFT => CollectionMode::NFT,
+			Self::Fungible(decimals) => CollectionMode::Fungible(decimals),
+		}
+	}
+}
 
 pub struct FreeForAll;
 

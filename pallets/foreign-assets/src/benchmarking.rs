@@ -18,12 +18,12 @@
 
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
-use pallet_common::benchmarking::create_u16_data;
+use pallet_common::benchmarking::{create_data, create_u16_data};
 use sp_std::vec;
 use staging_xcm::prelude::*;
-use up_data_structs::{CollectionMode, MAX_COLLECTION_NAME_LENGTH};
+use up_data_structs::{MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH};
 
-use super::{Call, Config, Pallet};
+use super::{Call, Config, ForeignCollectionMode, Pallet};
 
 #[benchmarks]
 mod benchmarks {
@@ -35,10 +35,11 @@ mod benchmarks {
 		let location =
 			MultiLocation::from(X3(Parachain(1000), PalletInstance(42), GeneralIndex(1)));
 		let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
-		let mode = CollectionMode::NFT;
+		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
+		let mode = ForeignCollectionMode::NFT;
 
 		#[extrinsic_call]
-		_(RawOrigin::Root, location, name, mode);
+		_(RawOrigin::Root, location, name, token_prefix, mode);
 
 		Ok(())
 	}
