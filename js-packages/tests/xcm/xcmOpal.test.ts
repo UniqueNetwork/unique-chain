@@ -17,6 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util/index.js';
+import {XcmTestHelper} from './xcm.types';
 
 const STATEMINE_CHAIN = +(process.env.RELAY_WESTMINT_ID || 1000);
 const UNIQUE_CHAIN = +(process.env.RELAY_OPAL_ID || 2095);
@@ -25,11 +26,11 @@ const relayUrl = config.relayUrl;
 const westmintUrl = config.westmintUrl;
 
 const STATEMINE_PALLET_INSTANCE = 50;
-const ASSET_ID = 100;
-const ASSET_METADATA_DECIMALS = 18;
-const ASSET_METADATA_NAME = 'USDT';
-const ASSET_METADATA_DESCRIPTION = 'USDT';
-const ASSET_METADATA_MINIMAL_BALANCE = 1n;
+const USDT_ASSET_ID = 100;
+const USDT_ASSET_METADATA_DECIMALS = 18;
+const USDT_ASSET_METADATA_NAME = 'USDT';
+const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
+const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 
 const RELAY_DECIMALS = 12;
 const WESTMINT_DECIMALS = 12;
@@ -37,7 +38,9 @@ const WESTMINT_DECIMALS = 12;
 const TRANSFER_AMOUNT = 1_000_000_000_000_000_000n;
 
 // 10,000.00 (ten thousands) USDT
-const ASSET_AMOUNT = 1_000_000_000_000_000_000_000n;
+const USDT_ASSET_AMOUNT = 1_000_000_000_000_000_000_000n;
+
+const testHelper = new XcmTestHelper('opal');
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let alice: IKeyringPair;
@@ -57,56 +60,77 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
   let balanceBobRelayTokenBefore: bigint;
   let balanceBobRelayTokenAfter: bigint;
 
+  let usdtCollectionId: number;
+  let relayCollectionId: number;
 
   before(async () => {
     await usingPlaygrounds(async (_helper, privateKey) => {
       alice = await privateKey('//Alice');
       bob = await privateKey('//Bob'); // funds donor
+
+      relayCollectionId = await testHelper.registerRelayNativeTokenOnUnique(alice);
     });
 
     await usingWestmintPlaygrounds(westmintUrl, async (helper) => {
-      // 350.00 (three hundred fifty) DOT
-      const fundingAmount = 3_500_000_000_000n;
+      const assetInfo = await helper.assets.assetInfo(USDT_ASSET_ID);
+      if(assetInfo == null) {
+        await helper.assets.create(
+          alice,
+          USDT_ASSET_ID,
+          alice.address,
+          USDT_ASSET_METADATA_MINIMAL_BALANCE,
+        );
+        await helper.assets.setMetadata(
+          alice,
+          USDT_ASSET_ID,
+          USDT_ASSET_METADATA_NAME,
+          USDT_ASSET_METADATA_DESCRIPTION,
+          USDT_ASSET_METADATA_DECIMALS,
+        );
+      } else {
+        console.log('The USDT asset is already registered on AssetHub');
+      }
 
-      await helper.assets.create(alice, ASSET_ID, alice.address, ASSET_METADATA_MINIMAL_BALANCE);
-      await helper.assets.setMetadata(alice, ASSET_ID, ASSET_METADATA_NAME, ASSET_METADATA_DESCRIPTION, ASSET_METADATA_DECIMALS);
-      await helper.assets.mint(alice, ASSET_ID, alice.address, ASSET_AMOUNT);
+      await helper.assets.mint(
+        alice,
+        USDT_ASSET_ID,
+        alice.address,
+        USDT_ASSET_AMOUNT,
+      );
+
+      const sovereignFundingAmount = 3_500_000_000n;
 
       // funding parachain sovereing account (Parachain: 2095)
       const parachainSovereingAccount = helper.address.paraSiblingSovereignAccount(UNIQUE_CHAIN);
-      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, fundingAmount);
+      await helper.balance.transferToSubstrate(bob, parachainSovereingAccount, sovereignFundingAmount);
     });
-
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V2: {
-          parents: 1,
-          interior: {X3: [
-            {
-              Parachain: STATEMINE_CHAIN,
-            },
-            {
-              PalletInstance: STATEMINE_PALLET_INSTANCE,
-            },
-            {
-              GeneralIndex: ASSET_ID,
-            },
-          ]},
-        },
+        parents: 1,
+        interior: {X3: [
+          {
+            Parachain: STATEMINE_CHAIN,
+          },
+          {
+            PalletInstance: STATEMINE_PALLET_INSTANCE,
+          },
+          {
+            GeneralIndex: USDT_ASSET_ID,
+          },
+        ]},
       };
 
-      const metadata =
-      {
-        name: ASSET_ID,
-        symbol: ASSET_METADATA_NAME,
-        decimals: ASSET_METADATA_DECIMALS,
-        minimalBalance: ASSET_METADATA_MINIMAL_BALANCE,
-      };
-      await helper.getSudo().foreignAssets.register(alice, alice.address, location, metadata);
+      if(await helper.foreignAssets.foreignCollectionId(location) == null) {
+        const tokenPrefix = USDT_ASSET_METADATA_NAME;
+        await helper.getSudo().foreignAssets.register(alice, location, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+      } else {
+        console.log('Foreign collection is already registered on Opal');
+      }
+
       balanceOpalBefore = await helper.balance.getSubstrate(alice.address);
+      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(location);
     });
-
 
     // Providing the relay currency to the unique sender account
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -189,7 +213,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
                       PalletInstance: STATEMINE_PALLET_INSTANCE,
                     },
                     {
-                      GeneralIndex: ASSET_ID,
+                      GeneralIndex: USDT_ASSET_ID,
                     },
                   ]},
               },
@@ -217,18 +241,16 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     });
 
-
     // ensure that asset has been delivered
     await helper.wait.newBlocks(3);
 
-    // expext collection id will be with id 1
-    const free = await helper.ft.getBalance(1, {Substrate: alice.address});
+    const free = await helper.ft.getBalance(usdtCollectionId, {Substrate: alice.address});
 
     balanceOpalAfter = await helper.balance.getSubstrate(alice.address);
 
     console.log(
       '[Westmint -> Opal] transaction fees on Opal: %s USDT',
-      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, ASSET_METADATA_DECIMALS),
+      helper.util.bigIntToDecimals(TRANSFER_AMOUNT - free, USDT_ASSET_METADATA_DECIMALS),
     );
     console.log(
       '[Westmint -> Opal] transaction fees on Opal: %s OPL',
@@ -261,16 +283,11 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     const currencies: [any, bigint][] = [
       [
-        {
-          ForeignAssetId: 0,
-        },
-        //10_000_000_000_000_000n,
+        usdtCollectionId,
         TRANSFER_AMOUNT,
       ],
       [
-        {
-          NativeAssetId: 'Parent',
-        },
+        relayCollectionId,
         400_000_000_000_000n,
       ],
     ];
@@ -288,7 +305,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
       // The USDT token never paid fees. Its amount not changed from begin value.
       // Also check that xcm transfer has been succeeded
-      expect((await helper.assets.account(ASSET_ID, alice.address))! == ASSET_AMOUNT).to.be.true;
+      expect((await helper.assets.account(USDT_ASSET_ID, alice.address))! == USDT_ASSET_AMOUNT).to.be.true;
     });
   });
 
@@ -296,7 +313,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     const TRANSFER_AMOUNT_RELAY = 50_000_000_000_000_000n;
 
     balanceBobBefore = await helper.balance.getSubstrate(bob.address);
-    balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+    balanceBobRelayTokenBefore = await helper.ft.getBalance(relayCollectionId, {Substrate: bob.address});
 
     // Providing the relay currency to the unique sender account
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -345,7 +362,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
     await helper.wait.newBlocks(3);
 
     balanceBobAfter = await helper.balance.getSubstrate(bob.address);
-    balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+    balanceBobRelayTokenAfter = await helper.ft.getBalance(relayCollectionId, {Substrate: bob.address});
 
     const wndFee = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
     console.log(
@@ -383,9 +400,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
 
     const currencies: any = [
       [
-        {
-          NativeAssetId: 'Parent',
-        },
+        relayCollectionId,
         50_000_000_000_000_000n,
       ],
     ];

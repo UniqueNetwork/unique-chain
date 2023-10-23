@@ -19,8 +19,7 @@ import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, us
 import {DevUniqueHelper, Event} from '@unique/playgrounds/unique.dev.js';
 import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types.js';
 import {hexToString} from '@polkadot/util';
-
-
+import {XcmTestHelper} from './xcm.types';
 
 const STATEMINE_PALLET_INSTANCE = 50;
 
@@ -38,6 +37,8 @@ const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
 const SAFE_XCM_VERSION = 2;
+
+const testHelper = new XcmTestHelper('quartz');
 
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   let alice: IKeyringPair;
@@ -57,6 +58,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
   let balanceBobRelayTokenBefore: bigint;
   let balanceBobRelayTokenAfter: bigint;
 
+  let usdtCollectionId: number;
+  let relayCollectionId: number;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -65,6 +68,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+
+      relayCollectionId = await testHelper.registerRelayNativeTokenOnUnique(alice);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -74,27 +79,33 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     });
 
     await usingStateminePlaygrounds(statemineUrl, async (helper) => {
-      const sovereignFundingAmount = 3_500_000_000n;
+      const assetInfo = await helper.assets.assetInfo(USDT_ASSET_ID);
+      if(assetInfo == null) {
+        await helper.assets.create(
+          alice,
+          USDT_ASSET_ID,
+          alice.address,
+          USDT_ASSET_METADATA_MINIMAL_BALANCE,
+        );
+        await helper.assets.setMetadata(
+          alice,
+          USDT_ASSET_ID,
+          USDT_ASSET_METADATA_NAME,
+          USDT_ASSET_METADATA_DESCRIPTION,
+          USDT_ASSET_METADATA_DECIMALS,
+        );
+      } else {
+        console.log('The USDT asset is already registered on AssetHub');
+      }
 
-      await helper.assets.create(
-        alice,
-        USDT_ASSET_ID,
-        alice.address,
-        USDT_ASSET_METADATA_MINIMAL_BALANCE,
-      );
-      await helper.assets.setMetadata(
-        alice,
-        USDT_ASSET_ID,
-        USDT_ASSET_METADATA_NAME,
-        USDT_ASSET_METADATA_DESCRIPTION,
-        USDT_ASSET_METADATA_DECIMALS,
-      );
       await helper.assets.mint(
         alice,
         USDT_ASSET_ID,
         alice.address,
         USDT_ASSET_AMOUNT,
       );
+
+      const sovereignFundingAmount = 3_500_000_000n;
 
       // funding parachain sovereing account on Statemine(t).
       // The sovereign account should be created before any action
@@ -106,31 +117,29 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V2: {
-          parents: 1,
-          interior: {X3: [
-            {
-              Parachain: STATEMINE_CHAIN,
-            },
-            {
-              PalletInstance: STATEMINE_PALLET_INSTANCE,
-            },
-            {
-              GeneralIndex: USDT_ASSET_ID,
-            },
-          ]},
-        },
+        parents: 1,
+        interior: {X3: [
+          {
+            Parachain: STATEMINE_CHAIN,
+          },
+          {
+            PalletInstance: STATEMINE_PALLET_INSTANCE,
+          },
+          {
+            GeneralIndex: USDT_ASSET_ID,
+          },
+        ]},
       };
 
-      const metadata =
-      {
-        name: USDT_ASSET_ID,
-        symbol: USDT_ASSET_METADATA_NAME,
-        decimals: USDT_ASSET_METADATA_DECIMALS,
-        minimalBalance: USDT_ASSET_METADATA_MINIMAL_BALANCE,
-      };
-      await helper.getSudo().foreignAssets.register(alice, alice.address, location, metadata);
+      if(await helper.foreignAssets.foreignCollectionId(location) == null) {
+        const tokenPrefix = USDT_ASSET_METADATA_NAME;
+        await helper.getSudo().foreignAssets.register(alice, location, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+      } else {
+        console.log('Foreign collection is already registered on Quartz');
+      }
+
       balanceQuartzBefore = await helper.balance.getSubstrate(alice.address);
+      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(location);
     });
 
 
@@ -248,8 +257,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     // ensure that asset has been delivered
     await helper.wait.newBlocks(3);
 
-    // expext collection id will be with id 1
-    const free = await helper.ft.getBalance(1, {Substrate: alice.address});
+    const free = await helper.ft.getBalance(usdtCollectionId, {Substrate: alice.address});
 
     balanceQuartzAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -288,15 +296,11 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     const relayFee = 400_000_000_000_000n;
     const currencies: [any, bigint][] = [
       [
-        {
-          ForeignAssetId: 0,
-        },
+        usdtCollectionId,
         TRANSFER_AMOUNT,
       ],
       [
-        {
-          NativeAssetId: 'Parent',
-        },
+        relayCollectionId,
         relayFee,
       ],
     ];
@@ -321,7 +325,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
   itSub('Should connect and send Relay token to Quartz', async ({helper}) => {
     balanceBobBefore = await helper.balance.getSubstrate(bob.address);
-    balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+    balanceBobRelayTokenBefore = await helper.ft.getBalance(relayCollectionId, {Substrate: bob.address});
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
@@ -369,7 +373,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
     await helper.wait.newBlocks(3);
 
     balanceBobAfter = await helper.balance.getSubstrate(bob.address);
-    balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+    balanceBobRelayTokenAfter = await helper.ft.getBalance(relayCollectionId, {Substrate: bob.address});
 
     const wndFeeOnQuartz = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
     const wndDiffOnQuartz = balanceBobRelayTokenAfter - balanceBobRelayTokenBefore;
@@ -409,9 +413,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
 
     const currencies: any = [
       [
-        {
-          NativeAssetId: 'Parent',
-        },
+        relayCollectionId,
         TRANSFER_AMOUNT_RELAY,
       ],
     ];

@@ -2,7 +2,7 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from './unique.js';
 import type {ILogger, TSigner, TSubstrateAccount} from './types.js';
-import type {AcalaAssetMetadata, DemocracyStandardAccountVote, IForeignAssetMetadata, MoonbeamAssetInfo} from './types.xcm.js';
+import type {AcalaAssetMetadata, DemocracyStandardAccountVote, MoonbeamAssetInfo} from './types.xcm.js';
 
 
 export class XcmChainHelper extends ChainHelperBase {
@@ -104,22 +104,17 @@ class PolkadexXcmHelperGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 }
 
 export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
-  async register(signer: TSigner, ownerAddress: TSubstrateAccount, location: any, metadata: IForeignAssetMetadata) {
+  async register(signer: TSigner, location: any, name: string, tokenPrefix: string, mode: 'NFT' | { Fungible: number }) {
     await this.helper.executeExtrinsic(
       signer,
-      'api.tx.foreignAssets.registerForeignAsset',
-      [ownerAddress, location, metadata],
+      'api.tx.foreignAssets.forceRegisterForeignAsset',
+      [location, this.helper.util.str2vec(name), tokenPrefix, mode],
       true,
     );
   }
 
-  async update(signer: TSigner, foreignAssetId: number, location: any, metadata: IForeignAssetMetadata) {
-    await this.helper.executeExtrinsic(
-      signer,
-      'api.tx.foreignAssets.updateForeignAsset',
-      [foreignAssetId, location, metadata],
-      true,
-    );
+  async foreignCollectionId(location: any) {
+    return (await this.helper.callRpc('api.query.foreignAssets.foreignReserveLocationToCollection', [location])).toJSON();
   }
 }
 
@@ -254,6 +249,10 @@ export class AssetsGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
   async mint(signer: TSigner, assetId: number | bigint, beneficiary: string, amount: bigint) {
     await this.helper.executeExtrinsic(signer, 'api.tx.assets.mint', [assetId, beneficiary, amount], true);
+  }
+
+  async assetInfo(assetId: number | bigint) {
+    return (await this.helper.callRpc('api.query.assets.asset', [assetId])).toJSON();
   }
 
   async account(assetId: string | number | bigint, address: string) {

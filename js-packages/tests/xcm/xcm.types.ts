@@ -505,4 +505,26 @@ export class XcmTestHelper {
       await expectFailedToTransact(helper, messageSent);
     });
   }
+
+  async registerRelayNativeTokenOnUnique(alice: IKeyringPair) {
+    return await usingPlaygrounds(async (helper) => {
+      const relayLocation = {
+        parents: 1,
+        interior: 'Here',
+      };
+
+      const relayCollectionId = await helper.foreignAssets.foreignCollectionId(relayLocation);
+      if(relayCollectionId == null) {
+        const name = 'Relay Tokens';
+        const tokenPrefix = 'xDOT';
+        const decimals = 10;
+        await helper.getSudo().foreignAssets.register(alice, relayLocation, name, tokenPrefix, {Fungible: decimals});
+
+        return await helper.foreignAssets.foreignCollectionId(relayLocation);
+      } else {
+        console.log('Relay foreign collection is already registered');
+        return relayCollectionId;
+      }
+    });
+  }
 }
