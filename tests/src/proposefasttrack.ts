@@ -13,9 +13,9 @@ async function main() {
   if(externalDemocracyProposal.isInline) {
     proposalHash = blake2AsHex(externalDemocracyProposal.asInline, 256);
   } else if(externalDemocracyProposal.isLegacy) {
-    proposalHash = blake2AsHex(externalDemocracyProposal.asLegacy, 256);
+    proposalHash = externalDemocracyProposal.asLegacy.toJSON().hash;
   } else {
-    proposalHash = blake2AsHex(externalDemocracyProposal.asLookup, 256);
+    proposalHash = externalDemocracyProposal.asLookup.toJSON().hash;
   }
 
   const voringPeriod = 7200;
