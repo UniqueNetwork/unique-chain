@@ -585,7 +585,7 @@ impl<T: Config> XcmExtensions<T> for NonfungibleHandle<T> {
 	) -> Result<TokenId, sp_runtime::DispatchError> {
 		<Pallet<T>>::create_multiple_items(
 			self,
-			&depositor,
+			depositor,
 			vec![map_create_data::<T>(data, &to)?],
 			nesting_budget,
 		)?;
@@ -604,7 +604,7 @@ impl<T: Config> XcmExtensions<T> for NonfungibleHandle<T> {
 	) -> sp_runtime::DispatchResult {
 		ensure!(amount == 1, <Error<T>>::NonfungibleItemsHaveNoAmount);
 
-		<Pallet<T>>::transfer_internal(self, &depositor, &from, &to, token, nesting_budget)
+		<Pallet<T>>::transfer_internal(self, depositor, from, to, token, nesting_budget)
 			.map(|_| ())
 			.map_err(|post_info| post_info.error)
 	}

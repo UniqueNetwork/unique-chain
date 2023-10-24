@@ -2387,7 +2387,7 @@ where
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		if T::CrossTokenAddressMapping::is_token_address(&to) {
+		if T::CrossTokenAddressMapping::is_token_address(to) {
 			return unsupported!(T);
 		}
 

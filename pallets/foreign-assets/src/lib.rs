@@ -240,9 +240,7 @@ impl<T: Config> Pallet<T> {
 	) -> Result<Option<CollectionId>, XcmError> {
 		let self_location = T::SelfLocation::get();
 
-		if *asset_location == Here.into() {
-			Ok(Some(NATIVE_FUNGIBLE_COLLECTION_ID))
-		} else if *asset_location == self_location {
+		if *asset_location == Here.into() || *asset_location == self_location {
 			Ok(Some(NATIVE_FUNGIBLE_COLLECTION_ID))
 		} else if asset_location.parents == self_location.parents {
 			match asset_location
@@ -395,7 +393,7 @@ impl<T: Config> Pallet<T> {
 		asset_instance: &AssetInstance,
 		from: T::CrossAccountId,
 	) -> XcmResult {
-		let token_id = Self::asset_instance_to_token_id(collection_id, &asset_instance)?
+		let token_id = Self::asset_instance_to_token_id(collection_id, asset_instance)?
 			.ok_or(XcmError::AssetNotFound)?;
 
 		if xcm_ext.token_has_children(token_id) {
@@ -569,11 +567,11 @@ pub enum ForeignCollectionMode {
 	Fungible(u8),
 }
 
-impl Into<CollectionMode> for ForeignCollectionMode {
-	fn into(self) -> CollectionMode {
-		match self {
-			Self::NFT => CollectionMode::NFT,
-			Self::Fungible(decimals) => CollectionMode::Fungible(decimals),
+impl From<ForeignCollectionMode> for CollectionMode {
+	fn from(value: ForeignCollectionMode) -> Self {
+		match value {
+			ForeignCollectionMode::NFT => Self::NFT,
+			ForeignCollectionMode::Fungible(decimals) => Self::Fungible(decimals),
 		}
 	}
 }

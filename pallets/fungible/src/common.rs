@@ -470,7 +470,7 @@ impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
 			up_data_structs::CreateItemData::Fungible(fungible_data) => {
 				<Pallet<T>>::create_multiple_items(
 					self,
-					&depositor,
+					depositor,
 					[(to, fungible_data.value)].into_iter().collect(),
 					nesting_budget,
 				)?
@@ -495,7 +495,7 @@ impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
 			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
-		<Pallet<T>>::transfer_internal(self, &depositor, &from, &to, amount, nesting_budget)
+		<Pallet<T>>::transfer_internal(self, depositor, from, to, amount, nesting_budget)
 			.map(|_| ())
 			.map_err(|post_info| post_info.error)
 	}
@@ -506,7 +506,7 @@ impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
 		token: TokenId,
 		amount: u128,
 	) -> sp_runtime::DispatchResult {
-		<Self as CommonCollectionOperations<T>>::burn_item(&self, from, token, amount)
+		<Self as CommonCollectionOperations<T>>::burn_item(self, from, token, amount)
 			.map(|_| ())
 			.map_err(|post_info| post_info.error)
 	}

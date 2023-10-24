@@ -26,7 +26,7 @@ impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
 {
 	fn convert_location(location: &MultiLocation) -> Option<ConfigCrossAccountId> {
 		LocationToAccountId::convert_location(location)
-			.map(|sub| ConfigCrossAccountId::from_sub(sub))
+			.map(ConfigCrossAccountId::from_sub)
 			.or_else(|| {
 				let eth_address =
 					AccountKey20Aliases::<RelayNetwork, H160>::convert_location(location)?;
