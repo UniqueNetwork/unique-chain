@@ -543,7 +543,7 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
 {
 	fn convert(collection_id: CollectionId) -> Option<MultiLocation> {
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
-			Some(Here.into())
+			Some(T::SelfLocation::get())
 		} else {
 			<Pallet<T>>::collection_to_foreign_reserve_location(collection_id).or_else(|| {
 				T::SelfLocation::get()
