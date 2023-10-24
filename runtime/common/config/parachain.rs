@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{weights::Weight, parameter_types};
-use crate::{Runtime, RuntimeEvent, XcmpQueue, DmpQueue};
+use frame_support::{parameter_types, weights::Weight};
 use up_common::constants::*;
+
+use crate::{DmpQueue, Runtime, RuntimeEvent, XcmpQueue};
 
 parameter_types! {
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
@@ -37,9 +38,29 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	type XcmpMessageHandler = XcmpQueue;
+	#[cfg(not(feature = "lookahead"))]
 	type CheckAssociatedRelayNumber = cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases;
+	#[cfg(feature = "lookahead")]
+	type CheckAssociatedRelayNumber =
+		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 }
 
 impl parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
+
+/// Maximum number of blocks simultaneously accepted by the Runtime, not yet included
+/// into the relay chain.
+#[cfg(feature = "lookahead")]
+const UNINCLUDED_SEGMENT_CAPACITY: u32 = 3;
+/// How many parachain blocks are processed by the relay chain per parent. Limits the
+/// number of blocks authored per slot.
+#[cfg(feature = "lookahead")]
+const BLOCK_PROCESSING_VELOCITY: u32 = 2;
+#[cfg(feature = "lookahead")]
+pub type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
+	Runtime,
+	{ MILLISECS_PER_RELAY_BLOCK as u32 },
+	BLOCK_PROCESSING_VELOCITY,
+	UNINCLUDED_SEGMENT_CAPACITY,
+>;

@@ -210,20 +210,10 @@ jobs:
                                 return 1
                         fi
                 else
-                        DOCKER_LOGS=$(do_docker_logs)
-                        while [ $counter_life -lt 3 ] 
-                            do
-                              (( counter_life++ ))
-                              if [[ -n ${DOCKER_LOGS} ]]; then
-                                      echo "TryRuntime_on_runtime_upgrade executed without errors"
-                                      return 0
-                              else
-                                      echo "Container try-runtime not RUNNING"
-                                      return 1
-                              fi
-                            done
+                    (( counter_life++ ))
+                    echo "Container try-runtime not RUNNING" $counter_life "time"
+                    return 1
                 fi
-          exit 0
           }
 
           while ! is_started; do
@@ -231,10 +221,10 @@ jobs:
                 sleep 30s
                 counter=$(( $counter - 1 ))
                 echo "Counter: $counter"
-                if [ "$counter" -gt "0" ]; then
+                if [ "$counter" -gt "0" ] && [ "$counter_life" -lt "3" ]; then
                          continue
                 else
-                         echo "Counter reached zero, yet upgrade is not finished"
+                         echo "Counter reached zero, yet upgrade is not finished correctly or Container try-runtime is not RUNNING"
                          exit 1
                 fi
           done

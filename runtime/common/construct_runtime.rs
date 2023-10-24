@@ -19,11 +19,7 @@ macro_rules! construct_runtime {
 	() => {
 		frame_support::construct_runtime! {
 
-			pub enum Runtime where
-				Block = Block,
-				NodeBlock = opaque::Block,
-				UncheckedExtrinsic = UncheckedExtrinsic
-			{
+			pub enum Runtime {
 				System: frame_system = 0,
 				StateTrieMigration: pallet_state_trie_migration = 1,
 

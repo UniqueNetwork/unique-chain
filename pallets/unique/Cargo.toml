@@ -19,7 +19,6 @@ default = ['std']
 limit-testing = ["up-data-structs/limit-testing"]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
-	'codec/std',
 	'evm-coder/std',
 	'frame-benchmarking/std',
 	'frame-support/std',
@@ -29,8 +28,11 @@ std = [
 	'pallet-evm-coder-substrate/std',
 	'pallet-evm/std',
 	'pallet-nonfungible/std',
+	'pallet-structure/std',
+	'parity-scale-codec/std',
 	'sp-runtime/std',
 	'sp-std/std',
+	'up-common/std',
 	'up-data-structs/std',
 ]
 stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
@@ -39,8 +41,7 @@ try-runtime = ["frame-support/try-runtime"]
 ################################################################################
 # Local Dependencies
 [dependencies]
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
+parity-scale-codec = { workspace = true }
 
 ethereum = { workspace = true }
 evm-coder = { workspace = true }
@@ -54,9 +55,11 @@ pallet-evm = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
 pallet-nonfungible = { workspace = true }
 pallet-refungible = { workspace = true }
+pallet-structure = { workspace = true }
 scale-info = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+up-common = { workspace = true }
 up-data-structs = { workspace = true }

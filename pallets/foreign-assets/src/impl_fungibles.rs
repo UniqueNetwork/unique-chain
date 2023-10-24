@@ -16,44 +16,43 @@
 
 //! Implementations for fungibles trait.
 
-use super::*;
-use frame_system::Config as SystemConfig;
-
 use frame_support::traits::tokens::{
-	DepositConsequence, WithdrawConsequence, Preservation, Fortitude, Provenance, Precision,
+	DepositConsequence, Fortitude, Precision, Preservation, Provenance, WithdrawConsequence,
 };
-use pallet_common::CollectionHandle;
+use frame_system::Config as SystemConfig;
+use pallet_common::{CollectionHandle, CommonCollectionOperations};
 use pallet_fungible::FungibleHandle;
-use pallet_common::CommonCollectionOperations;
-use up_data_structs::budget::Value;
 use sp_runtime::traits::{CheckedAdd, CheckedSub};
+use up_data_structs::budget;
+
+use super::*;
 
 impl<T: Config> fungibles::Inspect<<T as SystemConfig>::AccountId> for Pallet<T>
 where
-	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	T: orml_tokens::Config<CurrencyId = AssetId>,
 	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
 	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
 	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
 	<T as orml_tokens::Config>::Balance: From<BalanceOf<T>>,
 {
-	type AssetId = AssetIds;
+	type AssetId = AssetId;
 	type Balance = BalanceOf<T>;
 
 	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible total_issuance");
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::total_issuance()
 					.into()
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::total_issuance(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 				)
 				.into()
 			}
-			AssetIds::ForeignAssetId(fid) => {
+			AssetId::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
 					Some(v) => v,
 					None => return Zero::zero(),
@@ -71,38 +70,36 @@ where
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible minimum_balance");
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::minimum_balance()
 					.into()
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::minimum_balance(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 				)
 				.into()
 			}
-			AssetIds::ForeignAssetId(fid) => {
-				AssetMetadatas::<T>::get(AssetIds::ForeignAssetId(fid))
-					.map(|x| x.minimal_balance)
-					.unwrap_or_else(Zero::zero)
-			}
+			AssetId::ForeignAssetId(fid) => AssetMetadatas::<T>::get(AssetId::ForeignAssetId(fid))
+				.map(|x| x.minimal_balance)
+				.unwrap_or_else(Zero::zero),
 		}
 	}
 
 	fn balance(asset: Self::AssetId, who: &<T as SystemConfig>::AccountId) -> Self::Balance {
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible balance");
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::balance(who).into()
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::balance(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					who,
 				)
 				.into()
 			}
-			AssetIds::ForeignAssetId(fid) => {
+			AssetId::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
 					Some(v) => v,
 					None => return Zero::zero(),
@@ -133,7 +130,7 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible reducible_balance");
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::reducible_balance(
 					who,
 					preservation,
@@ -141,9 +138,9 @@ where
 				)
 				.into()
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::reducible_balance(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					who,
 					preservation,
 					fortitude,
@@ -163,16 +160,16 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible can_deposit");
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Inspect<T::AccountId>>::can_deposit(
 					who,
 					amount.into(),
 					provenance,
 				)
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::can_deposit(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					who,
 					amount.into(),
 					provenance,
@@ -219,7 +216,7 @@ where
 		};
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				let this_amount: <T as pallet_balances::Config>::Balance = match value.try_into() {
 					Ok(val) => val,
 					Err(_) => {
@@ -240,7 +237,7 @@ where
 					_ => WithdrawConsequence::BalanceLow,
 				}
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				let parent_amount: <T as orml_tokens::Config>::Balance = match value.try_into() {
 					Ok(val) => val,
 					Err(_) => {
@@ -248,7 +245,7 @@ where
 					}
 				};
 				match <orml_tokens::Pallet<T> as fungibles::Inspect<T::AccountId>>::can_withdraw(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					who,
 					parent_amount,
 				) {
@@ -269,17 +266,17 @@ where
 		}
 	}
 
-	fn asset_exists(asset: AssetIds) -> bool {
+	fn asset_exists(asset: AssetId) -> bool {
 		match asset {
-			AssetIds::NativeAssetId(_) => true,
-			AssetIds::ForeignAssetId(fid) => <AssetBinding<T>>::contains_key(fid),
+			AssetId::NativeAssetId(_) => true,
+			AssetId::ForeignAssetId(fid) => <AssetBinding<T>>::contains_key(fid),
 		}
 	}
 }
 
 impl<T: Config> fungibles::Mutate<<T as SystemConfig>::AccountId> for Pallet<T>
 where
-	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	T: orml_tokens::Config<CurrencyId = AssetId>,
 	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
 	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
 	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,
@@ -295,22 +292,22 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible mint_into {:?}", asset);
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::mint_into(
 					who,
 					amount.into(),
 				)
 				.map(Into::into)
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::mint_into(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					who,
 					amount.into(),
 				)
 				.map(Into::into)
 			}
-			AssetIds::ForeignAssetId(fid) => {
+			AssetId::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
 					Some(v) => v,
 					None => {
@@ -330,7 +327,7 @@ where
 					&collection,
 					&account,
 					amount_data,
-					&Value::new(0),
+					&budget::Value::new(0),
 				)?;
 
 				Ok(amount)
@@ -349,7 +346,7 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible burn_from");
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				<pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::burn_from(
 					who,
 					amount.into(),
@@ -358,9 +355,9 @@ where
 				)
 				.map(Into::into)
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				<orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::burn_from(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					who,
 					amount.into(),
 					precision,
@@ -368,7 +365,7 @@ where
 				)
 				.map(Into::into)
 			}
-			AssetIds::ForeignAssetId(fid) => {
+			AssetId::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
 					Some(v) => v,
 					None => {
@@ -401,7 +398,7 @@ where
 		log::trace!(target: "fassets::impl_foreign_assets", "impl_fungible transfer");
 
 		match asset {
-			AssetIds::NativeAssetId(NativeCurrency::Here) => {
+			AssetId::NativeAssetId(NativeCurrency::Here) => {
 				match <pallet_balances::Pallet<T> as fungible::Mutate<T::AccountId>>::transfer(
 					source,
 					dest,
@@ -414,9 +411,9 @@ where
 					)),
 				}
 			}
-			AssetIds::NativeAssetId(NativeCurrency::Parent) => {
+			AssetId::NativeAssetId(NativeCurrency::Parent) => {
 				match <orml_tokens::Pallet<T> as fungibles::Mutate<T::AccountId>>::transfer(
-					AssetIds::NativeAssetId(NativeCurrency::Parent),
+					AssetId::NativeAssetId(NativeCurrency::Parent),
 					source,
 					dest,
 					amount.into(),
@@ -426,7 +423,7 @@ where
 					Err(e) => Err(e),
 				}
 			}
-			AssetIds::ForeignAssetId(fid) => {
+			AssetId::ForeignAssetId(fid) => {
 				let target_collection_id = match <AssetBinding<T>>::get(fid) {
 					Some(v) => v,
 					None => {
@@ -443,7 +440,7 @@ where
 					&T::CrossAccountId::from_sub(source.clone()),
 					&T::CrossAccountId::from_sub(dest.clone()),
 					amount.into(),
-					&Value::new(0),
+					&budget::Value::new(0),
 				)
 				.map_err(|e| e.error)?;
 
@@ -479,7 +476,7 @@ macro_rules! ensure_balanced {
 
 impl<T: Config> fungibles::Unbalanced<<T as SystemConfig>::AccountId> for Pallet<T>
 where
-	T: orml_tokens::Config<CurrencyId = AssetIds>,
+	T: orml_tokens::Config<CurrencyId = AssetId>,
 	BalanceOf<T>: From<<T as pallet_balances::Config>::Balance>,
 	BalanceOf<T>: From<<T as orml_tokens::Config>::Balance>,
 	<T as pallet_balances::Config>::Balance: From<BalanceOf<T>>,

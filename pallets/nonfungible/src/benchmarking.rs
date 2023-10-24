@@ -14,20 +14,19 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use super::*;
-use crate::{Pallet, Config, NonfungibleHandle};
-
-use frame_benchmarking::{benchmarks, account};
+use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
 use pallet_common::{
 	bench_init,
 	benchmarking::{create_collection_raw, property_key, property_value},
-	CommonCollectionOperations,
 };
 use sp_std::prelude::*;
 use up_data_structs::{
-	CollectionMode, MAX_ITEMS_PER_BATCH, MAX_PROPERTIES_PER_ITEM, budget::Unlimited,
-	PropertyPermission,
+	budget::Unlimited, CollectionMode, PropertyPermission, MAX_ITEMS_PER_BATCH,
+	MAX_PROPERTIES_PER_ITEM,
 };
+
+use super::*;
+use crate::{Config, NonfungibleHandle, Pallet};
 
 const SEED: u32 = 1;
 
@@ -62,195 +61,303 @@ fn create_collection<T: Config>(
 	)
 }
 
-benchmarks! {
-	create_item {
-		bench_init!{
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn create_item() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
-	}: {create_max_item(&collection, &sender, to.clone())?}
 
-	create_multiple_items {
-		let b in 0..MAX_ITEMS_PER_BATCH;
-		bench_init!{
+		#[block]
+		{
+			create_max_item(&collection, &sender, to)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn create_multiple_items(b: Linear<0, MAX_ITEMS_PER_BATCH>) -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
-		let data = (0..b).map(|_| create_max_item_data::<T>(to.clone())).collect();
-	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
+		let data = (0..b)
+			.map(|_| create_max_item_data::<T>(to.clone()))
+			.collect();
 
-	create_multiple_items_ex {
-		let b in 0..MAX_ITEMS_PER_BATCH;
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn create_multiple_items_ex(b: Linear<0, MAX_ITEMS_PER_BATCH>) -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner);
 		};
-		let data = (0..b).map(|i| {
-			bench_init!(to: cross_sub(i););
-			create_max_item_data::<T>(to)
-		}).collect();
-	}: {<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?}
+		let data = (0..b)
+			.map(|i| {
+				bench_init!(to: cross_sub(i););
+				create_max_item_data::<T>(to)
+			})
+			.collect();
 
-	burn_item {
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			sender: cross_from_sub(owner); burner: cross_sub;
-		};
-		let item = create_max_item(&collection, &sender, burner.clone())?;
-	}: {<Pallet<T>>::burn(&collection, &burner, item)?}
-
-	burn_recursively_self_raw {
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			sender: cross_from_sub(owner); burner: cross_sub;
-		};
-		let item = create_max_item(&collection, &sender, burner.clone())?;
-	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
-
-	burn_recursively_breadth_plus_self_plus_self_per_each_raw {
-		let b in 0..200;
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			sender: cross_from_sub(owner); burner: cross_sub;
-		};
-		let item = create_max_item(&collection, &sender, burner.clone())?;
-		for i in 0..b {
-			create_max_item(&collection, &sender, T::CrossTokenAddressMapping::token_to_address(collection.id, item))?;
+		#[block]
+		{
+			<Pallet<T>>::create_multiple_items(&collection, &sender, data, &Unlimited)?;
 		}
-	}: {<Pallet<T>>::burn_recursively(&collection, &burner, item, &Unlimited, &Unlimited)?}
 
-	transfer_raw {
-		bench_init!{
+		Ok(())
+	}
+
+	#[benchmark]
+	fn burn_item() -> Result<(), BenchmarkError> {
+		bench_init! {
+			owner: sub; collection: collection(owner);
+			sender: cross_from_sub(owner); burner: cross_sub;
+		};
+		let item = create_max_item(&collection, &sender, burner.clone())?;
+
+		#[block]
+		{
+			<Pallet<T>>::burn(&collection, &burner, item)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn transfer_raw() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; receiver: cross_sub;
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
-	}: {<Pallet<T>>::transfer(&collection, &sender, &receiver, item, &Unlimited)?}
 
-	approve {
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::transfer(&collection, &sender, &receiver, item, &Unlimited)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn approve() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
-	}: {<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&spender))?}
 
-	approve_from {
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&spender))?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn approve_from() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;
 		};
 		let owner_eth = T::CrossAccountId::from_eth(*sender.as_eth());
 		let item = create_max_item(&collection, &owner, owner_eth.clone())?;
-	}: {<Pallet<T>>::set_allowance_from(&collection, &sender, &owner_eth, item, Some(&spender))?}
 
-	check_allowed_raw {
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::set_allowance_from(
+				&collection,
+				&sender,
+				&owner_eth,
+				item,
+				Some(&spender),
+			)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn check_allowed_raw() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
-			owner: cross_from_sub; sender: cross_sub; spender: cross_sub; receiver: cross_sub;
+			owner: cross_from_sub; sender: cross_sub; spender: cross_sub;
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&spender))?;
-	}: {<Pallet<T>>::check_allowed(&collection, &spender, &sender, item, &Unlimited)?}
 
-	burn_from {
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::check_allowed(&collection, &spender, &sender, item, &Unlimited)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn burn_from() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub; sender: cross_sub; burner: cross_sub;
 		};
 		let item = create_max_item(&collection, &owner, sender.clone())?;
 		<Pallet<T>>::set_allowance(&collection, &sender, item, Some(&burner))?;
-	}: {<Pallet<T>>::burn_from(&collection, &burner, &sender, item, &Unlimited)?}
 
-	set_token_property_permissions {
-		let b in 0..MAX_PROPERTIES_PER_ITEM;
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::burn_from(&collection, &burner, &sender, item, &Unlimited)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn load_token_properties() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
-		let perms = (0..b).map(|k| PropertyKeyPermission {
-			key: property_key(k as usize),
-			permission: PropertyPermission {
-				mutable: false,
-				collection_admin: false,
-				token_owner: false,
-			},
-		}).collect::<Vec<_>>();
-	}: {<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?}
 
-	set_token_properties {
-		let b in 0..MAX_PROPERTIES_PER_ITEM;
-		bench_init!{
+		let item = create_max_item(&collection, &owner, owner.clone())?;
+
+		#[block]
+		{
+			pallet_common::BenchmarkPropertyWriter::<T>::load_token_properties(&collection, item);
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn write_token_properties(b: Linear<0, MAX_PROPERTIES_PER_ITEM>) -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
-		let perms = (0..b).map(|k| PropertyKeyPermission {
-			key: property_key(k as usize),
-			permission: PropertyPermission {
-				mutable: false,
-				collection_admin: true,
-				token_owner: true,
-			},
-		}).collect::<Vec<_>>();
+
+		let perms = (0..b)
+			.map(|k| PropertyKeyPermission {
+				key: property_key(k as usize),
+				permission: PropertyPermission {
+					mutable: false,
+					collection_admin: true,
+					token_owner: true,
+				},
+			})
+			.collect::<Vec<_>>();
 		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
-		let props = (0..b).map(|k| Property {
-			key: property_key(k as usize),
-			value: property_value(),
-		}).collect::<Vec<_>>();
+		let props = (0..b)
+			.map(|k| Property {
+				key: property_key(k as usize),
+				value: property_value(),
+			})
+			.collect::<Vec<_>>();
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?}
 
-	delete_token_properties {
-		let b in 0..MAX_PROPERTIES_PER_ITEM;
-		bench_init!{
+		let lazy_collection_info =
+			pallet_common::BenchmarkPropertyWriter::<T>::load_collection_info(&collection, &owner);
+
+		#[block]
+		{
+			let mut property_writer =
+				pallet_common::BenchmarkPropertyWriter::new(&collection, lazy_collection_info);
+
+			property_writer.write_token_properties(
+				item,
+				props.into_iter(),
+				crate::erc::ERC721TokenEvent::TokenChanged {
+					token_id: item.into(),
+				}
+				.to_log(T::ContractAddress::get()),
+			)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_token_property_permissions(
+		b: Linear<0, MAX_PROPERTIES_PER_ITEM>,
+	) -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
-		let perms = (0..b).map(|k| PropertyKeyPermission {
-			key: property_key(k as usize),
-			permission: PropertyPermission {
-				mutable: true,
-				collection_admin: true,
-				token_owner: true,
-			},
-		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
-		let props = (0..b).map(|k| Property {
-			key: property_key(k as usize),
-			value: property_value(),
-		}).collect::<Vec<_>>();
-		let item = create_max_item(&collection, &owner, owner.clone())?;
-		<Pallet<T>>::set_token_properties(&collection, &owner, item, props.into_iter(), SetPropertyMode::ExistingToken, &Unlimited)?;
-		let to_delete = (0..b).map(|k| property_key(k as usize)).collect::<Vec<_>>();
-	}: {<Pallet<T>>::delete_token_properties(&collection, &owner, item, to_delete.into_iter(), &Unlimited)?}
+		let perms = (0..b)
+			.map(|k| PropertyKeyPermission {
+				key: property_key(k as usize),
+				permission: PropertyPermission {
+					mutable: false,
+					collection_admin: false,
+					token_owner: false,
+				},
+			})
+			.collect::<Vec<_>>();
 
-	token_owner {
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			owner: cross_from_sub;
-		};
-		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {collection.token_owner(item).unwrap()}
+		#[block]
+		{
+			<Pallet<T>>::set_token_property_permissions(&collection, &owner, perms)?;
+		}
 
-	set_allowance_for_all {
-		bench_init!{
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_allowance_for_all() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner); owner: cross_from_sub;
 			operator: cross_sub;
 		};
-	}: {<Pallet<T>>::set_allowance_for_all(&collection, &owner, &operator, true)?}
 
-	allowance_for_all {
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::set_allowance_for_all(&collection, &owner, &operator, true)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn allowance_for_all() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner); owner: cross_from_sub;
 			operator: cross_sub;
 		};
-	}: {<Pallet<T>>::allowance_for_all(&collection, &owner, &operator)}
 
-	repair_item {
-		bench_init!{
+		#[block]
+		{
+			<Pallet<T>>::allowance_for_all(&collection, &owner, &operator);
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn repair_item() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
 		let item = create_max_item(&collection, &owner, owner.clone())?;
-	}: {<Pallet<T>>::repair_item(&collection, item)?}
+
+		#[block]
+		{
+			<Pallet<T>>::repair_item(&collection, item)?;
+		}
+
+		Ok(())
+	}
 }

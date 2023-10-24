@@ -20,11 +20,12 @@
 //! Method implementations are mostly doing parameter conversion and calling Nonfungible Pallet methods.
 
 use core::{
-	char::{REPLACEMENT_CHARACTER, decode_utf16},
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
 	convert::TryInto,
 	ops::Deref,
 };
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, ToLog};
 use pallet_common::{
 	erc::{CommonEvmHandler, PrecompileResult},
 	eth::{collection_id_to_address, CrossAddress},
@@ -32,17 +33,17 @@ use pallet_common::{
 };
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
-	call, dispatch_to_evm, WithRecorder, frontier_contract,
-	execution::{Result, PreDispatch},
+	call, dispatch_to_evm,
+	execution::{PreDispatch, Result},
+	frontier_contract, WithRecorder,
 };
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_std::vec::Vec;
 use sp_core::U256;
+use sp_std::vec::Vec;
 use up_data_structs::TokenId;
 
 use crate::{
-	Allowance, Balance, Config, Pallet, RefungibleHandle, TotalSupply, common::CommonWeights,
-	SelfWeightOf, weights::WeightInfo,
+	common::CommonWeights, erc::nesting_budget, weights::WeightInfo, Allowance, Balance, Config,
+	Pallet, RefungibleHandle, SelfWeightOf, TotalSupply,
 };
 
 /// Refungible token handle contains information about token's collection and id
@@ -138,12 +139,16 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(
+			self,
+			&caller,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -163,12 +168,17 @@ impl<T: Config> RefungibleTokenHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -229,12 +239,16 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(
+			self,
+			&caller,
+			&from,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -252,12 +266,16 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(
+			self,
+			&caller,
+			&from,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -313,12 +331,16 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer(
+			self,
+			&caller,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -338,12 +360,17 @@ where
 		let from = from.into_sub_cross_account::<T>()?;
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, self.1, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			self.1,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 }

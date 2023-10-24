@@ -15,20 +15,21 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use core::marker::PhantomData;
-use frame_support::{weights::Weight};
-use pallet_common::{CommonWeightInfo, dispatch::dispatch_weight, RefungibleExtensionsWeightInfo};
 
+use frame_support::weights::Weight;
 use pallet_balances_adapter::{
-	Config as NativeFungibleConfig, common::CommonWeights as NativeFungibleWeights,
+	common::CommonWeights as NativeFungibleWeights, Config as NativeFungibleConfig,
 };
-use pallet_fungible::{Config as FungibleConfig, common::CommonWeights as FungibleWeights};
-use pallet_nonfungible::{Config as NonfungibleConfig, common::CommonWeights as NonfungibleWeights};
-
+use pallet_common::{dispatch::dispatch_weight, CommonWeightInfo, RefungibleExtensionsWeightInfo};
+use pallet_fungible::{common::CommonWeights as FungibleWeights, Config as FungibleConfig};
+use pallet_nonfungible::{
+	common::CommonWeights as NonfungibleWeights, Config as NonfungibleConfig,
+};
 #[cfg(feature = "refungible")]
 use pallet_refungible::{
-	Config as RefungibleConfig, weights::WeightInfo, common::CommonWeights as RefungibleWeights,
+	common::CommonWeights as RefungibleWeights, weights::WeightInfo, Config as RefungibleConfig,
 };
-use up_data_structs::{CreateItemExData, CreateItemData};
+use up_data_structs::{CreateItemData, CreateItemExData};
 
 pub mod xcm;
 
@@ -97,10 +98,6 @@ where
 		dispatch_weight::<T>() + max_weight_of!(set_token_properties(amount))
 	}
 
-	fn delete_token_properties(amount: u32) -> Weight {
-		dispatch_weight::<T>() + max_weight_of!(delete_token_properties(amount))
-	}
-
 	fn set_token_property_permissions(amount: u32) -> Weight {
 		dispatch_weight::<T>() + max_weight_of!(set_token_property_permissions(amount))
 	}
@@ -125,24 +122,12 @@ where
 		dispatch_weight::<T>() + max_weight_of!(burn_from())
 	}
 
-	fn burn_recursively_self_raw() -> Weight {
-		max_weight_of!(burn_recursively_self_raw())
-	}
-
-	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
-		max_weight_of!(burn_recursively_breadth_raw(amount))
-	}
-
-	fn token_owner() -> Weight {
-		max_weight_of!(token_owner())
-	}
-
 	fn set_allowance_for_all() -> Weight {
-		max_weight_of!(set_allowance_for_all())
+		dispatch_weight::<T>() + max_weight_of!(set_allowance_for_all())
 	}
 
 	fn force_repair_item() -> Weight {
-		max_weight_of!(force_repair_item())
+		dispatch_weight::<T>() + max_weight_of!(force_repair_item())
 	}
 }
 

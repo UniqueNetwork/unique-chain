@@ -16,15 +16,14 @@
 
 #![allow(missing_docs)]
 
-use super::{Config, Pallet, Call};
-use frame_benchmarking::{benchmarks, account};
-use frame_system::RawOrigin;
-use crate::AssetMetadata;
-use xcm::opaque::latest::Junction::Parachain;
-use xcm::VersionedMultiLocation;
-use xcm::v3::Junctions::X1;
+use frame_benchmarking::{account, v2::*};
 use frame_support::traits::Currency;
-use sp_std::{vec::Vec, boxed::Box};
+use frame_system::RawOrigin;
+use sp_std::{boxed::Box, vec, vec::Vec};
+use staging_xcm::{opaque::latest::Junction::Parachain, v3::Junctions::X1, VersionedMultiLocation};
+
+use super::{Call, Config, Pallet};
+use crate::AssetMetadata;
 
 fn bounded<T: TryFrom<Vec<u8>>>(slice: &[u8]) -> T {
 	T::try_from(slice.to_vec())
@@ -32,42 +31,74 @@ fn bounded<T: TryFrom<Vec<u8>>>(slice: &[u8]) -> T {
 		.unwrap()
 }
 
-benchmarks! {
-	register_foreign_asset {
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn register_foreign_asset() -> Result<(), BenchmarkError> {
 		let owner: T::AccountId = account("user", 0, 1);
 		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(1000)));
-		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
+		let metadata: AssetMetadata<
+			<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+		> = AssetMetadata {
 			name: bounded(b"name"),
 			symbol: bounded(b"symbol"),
 			decimals: 18,
-			minimal_balance: 1u32.into()
+			minimal_balance: 1u32.into(),
 		};
-		let mut balance: <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance =
-		   4_000_000_000u32.into();
+		let mut balance: <<T as Config>::Currency as Currency<
+			<T as frame_system::Config>::AccountId,
+		>>::Balance = 4_000_000_000u32.into();
 		balance = balance * balance;
-		<T as Config>::Currency::make_free_balance_be(&owner,
-			balance);
-	}: _(RawOrigin::Root, owner, Box::new(location), Box::new(metadata))
+		<T as Config>::Currency::make_free_balance_be(&owner, balance);
 
-	update_foreign_asset {
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			owner,
+			Box::new(location),
+			Box::new(metadata),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn update_foreign_asset() -> Result<(), BenchmarkError> {
 		let owner: T::AccountId = account("user", 0, 1);
 		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(2000)));
-		let metadata: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
+		let metadata: AssetMetadata<
+			<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+		> = AssetMetadata {
 			name: bounded(b"name"),
 			symbol: bounded(b"symbol"),
 			decimals: 18,
-			minimal_balance: 1u32.into()
+			minimal_balance: 1u32.into(),
 		};
-		let metadata2: AssetMetadata<<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance> = AssetMetadata{
+		let metadata2: AssetMetadata<
+			<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance,
+		> = AssetMetadata {
 			name: bounded(b"name2"),
 			symbol: bounded(b"symbol2"),
 			decimals: 18,
-			minimal_balance: 1u32.into()
+			minimal_balance: 1u32.into(),
 		};
-		let mut balance: <<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance =
-		   4_000_000_000u32.into();
+		let mut balance: <<T as Config>::Currency as Currency<
+			<T as frame_system::Config>::AccountId,
+		>>::Balance = 4_000_000_000u32.into();
 		balance = balance * balance;
 		<T as Config>::Currency::make_free_balance_be(&owner, balance);
-		Pallet::<T>::register_foreign_asset(RawOrigin::Root.into(), owner, Box::new(location.clone()), Box::new(metadata))?;
-	}: _(RawOrigin::Root, 0, Box::new(location), Box::new(metadata2))
+		Pallet::<T>::register_foreign_asset(
+			RawOrigin::Root.into(),
+			owner,
+			Box::new(location.clone()),
+			Box::new(metadata),
+		)?;
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, 0, Box::new(location), Box::new(metadata2));
+
+		Ok(())
+	}
 }

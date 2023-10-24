@@ -25,20 +25,21 @@ use core::{
 	fmt,
 	ops::Deref,
 };
-use frame_support::storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet};
 
-#[cfg(feature = "serde")]
-use serde::{Serialize, Deserialize};
-
-use sp_core::U256;
-use sp_runtime::{ArithmeticError, sp_std::prelude::Vec};
-use sp_std::collections::btree_set::BTreeSet;
-use codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
-use frame_support::{BoundedVec, traits::ConstU32};
-use derivative::Derivative;
-use scale_info::TypeInfo;
-use evm_coder::AbiCoderFlags;
 use bondrewd::Bitfields;
+use derivative::Derivative;
+use evm_coder::AbiCoderFlags;
+use frame_support::{
+	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
+	traits::ConstU32,
+	BoundedVec,
+};
+use parity_scale_codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
+use scale_info::TypeInfo;
+use serde::{Deserialize, Serialize};
+use sp_core::U256;
+use sp_runtime::{sp_std::prelude::Vec, ArithmeticError};
+use sp_std::collections::btree_set::BTreeSet;
 
 mod bondrewd_codec;
 mod bounded;
@@ -134,7 +135,7 @@ pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
 
 /// How much items can be created per single
 /// create_many call.
-pub const MAX_ITEMS_PER_BATCH: u32 = 200;
+pub const MAX_ITEMS_PER_BATCH: u32 = 120;
 
 /// Used for limit bounded types of token custom data.
 pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
@@ -153,8 +154,9 @@ pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
 	Default,
 	TypeInfo,
 	MaxEncodedLen,
+	Serialize,
+	Deserialize,
 )]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct CollectionId(pub u32);
 impl EncodeLike<u32> for CollectionId {}
 impl EncodeLike<CollectionId> for u32 {}
@@ -187,8 +189,9 @@ impl Deref for CollectionId {
 	Default,
 	TypeInfo,
 	MaxEncodedLen,
+	Serialize,
+	Deserialize,
 )]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 pub struct TokenId(pub u32);
 impl EncodeLike<u32> for TokenId {}
 impl EncodeLike<TokenId> for u32 {}
@@ -221,8 +224,7 @@ impl TryFrom<U256> for TokenId {
 
 /// Token data.
 #[struct_versioning::versioned(version = 2, upper)]
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Serialize, Deserialize)]
 pub struct TokenData<CrossAccountId> {
 	/// Properties of token.
 	pub properties: Vec<Property>,
@@ -251,8 +253,9 @@ pub type DecimalPoints = u8;
 /// Collection can represent various types of tokens.
 /// Each collection can contain only one type of tokens at a time.
 /// This type helps to understand which tokens the collection contains.
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+)]
 pub enum CollectionMode {
 	/// Non fungible tokens.
 	NFT,
@@ -279,8 +282,19 @@ pub trait SponsoringResolve<AccountId, Call> {
 }
 
 /// Access mode for some token operations.
-#[derive(Encode, Decode, Eq, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	Eq,
+	Debug,
+	Clone,
+	Copy,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+)]
 pub enum AccessMode {
 	/// Access grant for owner and admins. Used as default.
 	Normal,
@@ -294,8 +308,9 @@ impl Default for AccessMode {
 }
 
 // TODO: remove in future.
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+)]
 pub enum SchemaVersion {
 	ImageURL,
 	Unique,
@@ -307,16 +322,16 @@ impl Default for SchemaVersion {
 }
 
 // TODO: unused type
-#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(Encode, Decode, Default, Debug, Clone, PartialEq, TypeInfo, Serialize, Deserialize)]
 pub struct Ownership<AccountId> {
 	pub owner: AccountId,
 	pub fraction: u128,
 }
 
 /// The state of collection sponsorship.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+)]
 pub enum SponsorshipState<AccountId> {
 	/// The fees are applied to the transaction sender.
 	Disabled,
@@ -444,8 +459,7 @@ pub struct Collection<AccountId> {
 	pub meta_update_permission: MetaUpdatePermission,
 }
 
-#[derive(Debug, Encode, Decode, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone, PartialEq, TypeInfo, Serialize, Deserialize)]
 pub struct RpcCollectionFlags {
 	/// Is collection is foreign.
 	pub foreign: bool,
@@ -455,8 +469,7 @@ pub struct RpcCollectionFlags {
 
 /// Collection parameters, used in RPC calls (see [`Collection`] for the storage version).
 #[struct_versioning::versioned(version = 2, upper)]
-#[derive(Debug, Encode, Decode, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(Debug, Encode, Decode, Clone, PartialEq, TypeInfo, Serialize, Deserialize)]
 pub struct RpcCollection<AccountId> {
 	/// Collection owner account.
 	pub owner: AccountId,
@@ -538,8 +551,10 @@ impl<AccountId> From<CollectionVersion1<AccountId>> for RpcCollection<AccountId>
 
 pub struct RawEncoded(Vec<u8>);
 
-impl codec::Decode for RawEncoded {
-	fn decode<I: codec::Input>(input: &mut I) -> Result<Self, codec::Error> {
+impl parity_scale_codec::Decode for RawEncoded {
+	fn decode<I: parity_scale_codec::Input>(
+		input: &mut I,
+	) -> Result<Self, parity_scale_codec::Error> {
 		let mut out = Vec::new();
 		while let Ok(v) = input.read_byte() {
 			out.push(v);
@@ -612,8 +627,18 @@ pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_
 ///
 /// Update with `pallet_common::Pallet::clamp_limits`.
 // IMPORTANT: When adding/removing fields from this struct - don't forget to also
-#[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	Debug,
+	Default,
+	Clone,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+)]
 // When adding/removing fields from this struct - don't forget to also update with `pallet_common::Pallet::clamp_limits`.
 // TODO: move `pallet_common::Pallet::clamp_limits` into `impl CollectionLimits`.
 // TODO: may be remove [`Option`] and **pub** from fields and create struct with default values.
@@ -769,8 +794,18 @@ impl CollectionLimits {
 /// Some fields are wrapped in [`Option`], where `None` means chain default.
 ///
 /// Update with `pallet_common::Pallet::clamp_permissions`.
-#[derive(Encode, Decode, Debug, Default, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	Debug,
+	Default,
+	Clone,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
+)]
 // When adding/removing fields from this struct - don't forget to also update `pallet_common::Pallet::clamp_permissions`.
 // TODO: move `pallet_common::Pallet::clamp_permissions` into `impl CollectionPermissions`.
 pub struct CollectionPermissions {
@@ -821,11 +856,12 @@ impl CollectionPermissions {
 type OwnerRestrictedSetInner = BoundedBTreeSet<CollectionId, ConstU32<16>>;
 
 /// Wraper for collections set allowing nest.
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative, Serialize, Deserialize,
+)]
 #[derivative(Debug)]
 pub struct OwnerRestrictedSet(
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::set_serde"))]
+	#[serde(with = "bounded::set_serde")]
 	#[derivative(Debug(format_with = "bounded::set_debug"))]
 	pub OwnerRestrictedSetInner,
 );
@@ -862,8 +898,9 @@ impl TryFrom<BTreeSet<CollectionId>> for OwnerRestrictedSet {
 }
 
 /// Part of collection permissions, if set, defines who is able to nest tokens into other tokens.
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative, Serialize, Deserialize,
+)]
 #[derivative(Debug)]
 pub struct NestingPermissions {
 	/// Owner of token can nest tokens under it.
@@ -881,8 +918,9 @@ pub struct NestingPermissions {
 /// Enum denominating how often can sponsoring occur if it is enabled.
 ///
 /// Used for [`collection limits`](CollectionLimits).
-#[derive(Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+)]
 pub enum SponsoringRateLimit {
 	/// Sponsoring is disabled, and the collection sponsor will not pay for transactions
 	SponsoringDisabled,
@@ -891,42 +929,73 @@ pub enum SponsoringRateLimit {
 }
 
 /// Data used to describe an NFT at creation.
-#[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	Default,
+	PartialEq,
+	Clone,
+	Derivative,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
 #[derivative(Debug)]
 pub struct CreateNftData {
 	/// Key-value pairs used to describe the token as metadata
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[serde(with = "bounded::vec_serde")]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	/// Properties that wil be assignet to created item.
 	pub properties: CollectionPropertiesVec,
 }
 
 /// Data used to describe a Fungible token at creation.
-#[derive(Encode, Decode, MaxEncodedLen, Default, Debug, Clone, PartialEq, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	Default,
+	Debug,
+	Clone,
+	PartialEq,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
 pub struct CreateFungibleData {
 	/// Number of fungible coins minted
 	pub value: u128,
 }
 
 /// Data used to describe a Refungible token at creation.
-#[derive(Encode, Decode, MaxEncodedLen, Default, PartialEq, Clone, Derivative, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	MaxEncodedLen,
+	Default,
+	PartialEq,
+	Clone,
+	Derivative,
+	TypeInfo,
+	Serialize,
+	Deserialize,
+)]
 #[derivative(Debug)]
 pub struct CreateReFungibleData {
 	/// Number of pieces the RFT is split into
 	pub pieces: u128,
 
 	/// Key-value pairs used to describe the token as metadata
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[serde(with = "bounded::vec_serde")]
 	#[derivative(Debug(format_with = "bounded::vec_debug"))]
 	pub properties: CollectionPropertiesVec,
 }
 
 // TODO: remove this.
-#[derive(Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+)]
 pub enum MetaUpdatePermission {
 	ItemOwner,
 	Admin,
@@ -935,8 +1004,9 @@ pub enum MetaUpdatePermission {
 
 /// Enum holding data used for creation of all three item types.
 /// Unified data for create item.
-#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo, Serialize, Deserialize,
+)]
 pub enum CreateItemData {
 	/// Data for create NFT.
 	NFT(CreateNftData),
@@ -1025,8 +1095,9 @@ impl From<CreateFungibleData> for CreateItemData {
 }
 
 /// Token's address, dictated by its collection and token IDs.
-#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo, Serialize, Deserialize,
+)]
 // todo possibly rename to be used generally as an address pair
 pub struct TokenChild {
 	/// Token id.
@@ -1037,8 +1108,9 @@ pub struct TokenChild {
 }
 
 /// Collection statistics.
-#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo, Serialize, Deserialize,
+)]
 pub struct CollectionStats {
 	/// Number of created items.
 	pub created: u32,
@@ -1060,10 +1132,9 @@ impl<T: TypeInfo + 'static> TypeInfo for PhantomType<T> {
 
 	fn type_info() -> scale_info::Type {
 		use scale_info::{
-			Type, Path,
 			build::{FieldsBuilder, UnnamedFields},
 			form::MetaForm,
-			type_params,
+			type_params, Path, Type,
 		};
 		Type::builder()
 			.path(Path::new("up_data_structs", "PhantomType"))
@@ -1092,8 +1163,18 @@ pub type PropertyKey = BoundedBytes<ConstU32<MAX_PROPERTY_KEY_LENGTH>>;
 pub type PropertyValue = BoundedBytes<ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
 
 /// Property permission.
-#[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone, Default)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode,
+	Decode,
+	TypeInfo,
+	Debug,
+	MaxEncodedLen,
+	PartialEq,
+	Clone,
+	Default,
+	Serialize,
+	Deserialize,
+)]
 pub struct PropertyPermission {
 	/// Permission to change the property and property permission.
 	///
@@ -1119,15 +1200,16 @@ impl PropertyPermission {
 }
 
 /// Property is simpl key-value record.
-#[derive(Encode, Decode, Debug, TypeInfo, Clone, PartialEq, MaxEncodedLen)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, Debug, TypeInfo, Clone, PartialEq, MaxEncodedLen, Serialize, Deserialize,
+)]
 pub struct Property {
 	/// Property key.
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[serde(with = "bounded::vec_serde")]
 	pub key: PropertyKey,
 
 	/// Property value.
-	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
+	#[serde(with = "bounded::vec_serde")]
 	pub value: PropertyValue,
 }
 
@@ -1138,8 +1220,9 @@ impl From<Property> for (PropertyKey, PropertyValue) {
 }
 
 /// Record for proprty key permission.
-#[derive(Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone)]
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(
+	Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone, Serialize, Deserialize,
+)]
 pub struct PropertyKeyPermission {
 	/// Key.
 	#[cfg_attr(feature = "serde1", serde(with = "bounded::vec_serde"))]
@@ -1362,7 +1445,7 @@ fn slice_size(data: &[u8]) -> u32 {
 	scoped_slice_size(PropertyScope::None, data)
 }
 fn scoped_slice_size(scope: PropertyScope, data: &[u8]) -> u32 {
-	use codec::Compact;
+	use parity_scale_codec::Compact;
 	let prefix = scope.prefix();
 	<Compact<u32>>::encoded_size(&Compact(data.len() as u32 + prefix.len() as u32)) as u32
 		+ data.len() as u32

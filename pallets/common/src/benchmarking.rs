@@ -16,22 +16,24 @@
 
 #![allow(missing_docs)]
 
-use sp_std::vec::Vec;
-use crate::{Config, CollectionHandle, Pallet};
-use pallet_evm::account::CrossAccountId;
-use frame_benchmarking::{benchmarks, account};
-use up_data_structs::{
-	CollectionMode, CreateCollectionData, CollectionId, Property, PropertyKey, PropertyValue,
-	CollectionPermissions, NestingPermissions, AccessMode, MAX_COLLECTION_NAME_LENGTH,
-	MAX_COLLECTION_DESCRIPTION_LENGTH, MAX_TOKEN_PREFIX_LENGTH, MAX_PROPERTIES_PER_ITEM,
-};
+use core::convert::TryInto;
+
+use frame_benchmarking::{account, v2::*};
 use frame_support::{
-	traits::{Get, fungible::Balanced, Imbalance, tokens::Precision},
 	pallet_prelude::ConstU32,
+	traits::{fungible::Balanced, tokens::Precision, Get, Imbalance},
 	BoundedVec,
 };
-use core::convert::TryInto;
-use sp_runtime::{DispatchError, traits::Zero};
+use pallet_evm::account::CrossAccountId;
+use sp_runtime::{traits::Zero, DispatchError};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	AccessMode, CollectionId, CollectionMode, CollectionPermissions, CreateCollectionData,
+	NestingPermissions, Property, PropertyKey, PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH,
+	MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM, MAX_TOKEN_PREFIX_LENGTH,
+};
+
+use crate::{BenchmarkPropertyWriter, CollectionHandle, Config, Pallet};
 
 const SEED: u32 = 1;
 
@@ -165,54 +167,78 @@ macro_rules! bench_init {
 	() => {}
 }
 
-benchmarks! {
-	set_collection_properties {
-		let b in 0..MAX_PROPERTIES_PER_ITEM;
-		bench_init!{
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn set_collection_properties(
+		b: Linear<0, MAX_PROPERTIES_PER_ITEM>,
+	) -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			owner: cross_from_sub;
 		};
-		let props = (0..b).map(|p| Property {
-			key: property_key(p as usize),
-			value: property_value(),
-		}).collect::<Vec<_>>();
-	}: {<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?}
+		let props = (0..b)
+			.map(|p| Property {
+				key: property_key(p as usize),
+				value: property_value(),
+			})
+			.collect::<Vec<_>>();
 
-	delete_collection_properties {
-		let b in 0..MAX_PROPERTIES_PER_ITEM;
-		bench_init!{
-			owner: sub; collection: collection(owner);
-			owner: cross_from_sub;
-		};
-		let props = (0..b).map(|p| Property {
-			key: property_key(p as usize),
-			value: property_value(),
-		}).collect::<Vec<_>>();
-		<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?;
-		let to_delete = (0..b).map(|p| property_key(p as usize)).collect::<Vec<_>>();
-	}: {<Pallet<T>>::delete_collection_properties(&collection, &owner, to_delete.into_iter())?}
+		#[block]
+		{
+			<Pallet<T>>::set_collection_properties(&collection, &owner, props.into_iter())?;
+		}
 
-	check_accesslist{
-		bench_init!{
+		Ok(())
+	}
+
+	#[benchmark]
+	fn check_accesslist() -> Result<(), BenchmarkError> {
+		bench_init! {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner);
 		};
 
 		let mut collection_handle = <CollectionHandle<T>>::try_get(collection.id)?;
-			<Pallet<T>>::update_permissions(
-				&sender,
-				&mut collection_handle,
-				CollectionPermissions { access: Some(AccessMode::AllowList), ..Default::default() }
-			)?;
+		<Pallet<T>>::update_permissions(
+			&sender,
+			&mut collection_handle,
+			CollectionPermissions {
+				access: Some(AccessMode::AllowList),
+				..Default::default()
+			},
+		)?;
 
-		<Pallet<T>>::toggle_allowlist(
-				&collection,
-				&sender,
-				&sender,
-				true,
-			)?;
+		<Pallet<T>>::toggle_allowlist(&collection, &sender, &sender, true)?;
 
-		assert_eq!(collection_handle.permissions.access(), AccessMode::AllowList);
+		assert_eq!(
+			collection_handle.permissions.access(),
+			AccessMode::AllowList
+		);
 
-	}: {collection_handle.check_allowlist(&sender)?;}
+		#[block]
+		{
+			collection_handle.check_allowlist(&sender)?;
+		}
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn property_writer_load_collection_info() -> Result<(), BenchmarkError> {
+		bench_init! {
+			owner: sub; collection: collection(owner);
+			sender: sub;
+			sender: cross_from_sub(sender);
+		};
+
+		#[block]
+		{
+			<BenchmarkPropertyWriter<T>>::load_collection_info(&&collection, &sender);
+		}
+
+		Ok(())
+	}
 }

@@ -17,53 +17,44 @@
 use core::marker::PhantomData;
 
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
-use up_data_structs::{
-	TokenId, CreateItemExData, CollectionId, budget::Budget, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue, TokenOwnerError,
-};
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as _, with_weight, write_token_properties_total_weight,
+	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions,
+	SelfWeightOf as PalletCommonWeightOf,
 };
+use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
-use sp_std::{vec::Vec, vec};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemExData, Property, PropertyKey, PropertyKeyPermission,
+	PropertyValue, TokenId, TokenOwnerError,
+};
 
 use crate::{
-	AccountBalance, Allowance, Config, CreateItemData, Error, NonfungibleHandle, Owned, Pallet,
-	SelfWeightOf, TokenData, weights::WeightInfo, TokensMinted,
+	weights::WeightInfo, AccountBalance, Allowance, Config, CreateItemData, Error,
+	NonfungibleHandle, Owned, Pallet, SelfWeightOf, TokenData, TokenProperties, TokensMinted,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
 impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn create_multiple_items_ex(data: &CreateItemExData<T::CrossAccountId>) -> Weight {
 		match data {
-			CreateItemExData::NFT(t) => {
-				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32)
-					+ t.iter()
-						.filter_map(|t| {
-							if t.properties.len() > 0 {
-								Some(Self::set_token_properties(t.properties.len() as u32))
-							} else {
-								None
-							}
-						})
-						.fold(Weight::zero(), |a, b| a.saturating_add(b))
-			}
+			CreateItemExData::NFT(t) => mint_with_props_weight::<T>(
+				<SelfWeightOf<T>>::create_multiple_items_ex(t.len() as u32),
+				t.iter().map(|t| t.properties.len() as u32),
+			),
 			_ => Weight::zero(),
 		}
 	}
 
 	fn create_multiple_items(data: &[up_data_structs::CreateItemData]) -> Weight {
-		<SelfWeightOf<T>>::create_multiple_items(data.len() as u32)
-			+ data
-				.iter()
-				.filter_map(|t| match t {
-					up_data_structs::CreateItemData::NFT(n) if n.properties.len() > 0 => {
-						Some(Self::set_token_properties(n.properties.len() as u32))
-					}
-					_ => None,
-				})
-				.fold(Weight::zero(), |a, b| a.saturating_add(b))
+		mint_with_props_weight::<T>(
+			<SelfWeightOf<T>>::create_multiple_items(data.len() as u32),
+			data.iter().map(|t| match t {
+				up_data_structs::CreateItemData::NFT(n) => n.properties.len() as u32,
+				_ => 0,
+			}),
+		)
 	}
 
 	fn burn_item() -> Weight {
@@ -74,16 +65,15 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(amount: u32) -> Weight {
-		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
-	}
-
 	fn set_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::set_token_properties(amount)
+		write_token_properties_total_weight::<T, _>([amount].into_iter(), |amount| {
+			<SelfWeightOf<T>>::load_token_properties()
+				.saturating_add(<SelfWeightOf<T>>::write_token_properties(amount))
+		})
 	}
 
 	fn delete_token_properties(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::delete_token_properties(amount)
+		Self::set_token_properties(amount)
 	}
 
 	fn set_token_property_permissions(amount: u32) -> Weight {
@@ -91,7 +81,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer_raw() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
+		<SelfWeightOf<T>>::transfer_raw()
+			.saturating_add(<PalletCommonWeightOf<T>>::check_accesslist().saturating_mul(2))
 	}
 
 	fn approve() -> Weight {
@@ -103,24 +94,11 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer_from() -> Weight {
-		Self::transfer() + <SelfWeightOf<T>>::check_allowed_raw()
+		Self::transfer().saturating_add(<SelfWeightOf<T>>::check_allowed_raw())
 	}
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
-	}
-
-	fn burn_recursively_self_raw() -> Weight {
-		<SelfWeightOf<T>>::burn_recursively_self_raw()
-	}
-
-	fn burn_recursively_breadth_raw(amount: u32) -> Weight {
-		<SelfWeightOf<T>>::burn_recursively_breadth_plus_self_plus_self_per_each_raw(amount)
-			.saturating_sub(Self::burn_recursively_self_raw().saturating_mul(amount as u64 + 1))
-	}
-
-	fn token_owner() -> Weight {
-		<SelfWeightOf<T>>::token_owner()
 	}
 
 	fn set_allowance_for_all() -> Weight {
@@ -130,6 +108,20 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	fn force_repair_item() -> Weight {
 		<SelfWeightOf<T>>::repair_item()
 	}
+}
+
+/// Weight of minting tokens with properties
+/// * `create_no_data_weight` -- the weight of minting without properties
+/// * `token_properties_nums` -- number of properties of each token
+#[inline]
+pub(crate) fn mint_with_props_weight<T: Config>(
+	create_no_data_weight: Weight,
+	token_properties_nums: impl Iterator<Item = u32> + Clone,
+) -> Weight {
+	create_no_data_weight.saturating_add(write_token_properties_total_weight::<T, _>(
+		token_properties_nums,
+		<SelfWeightOf<T>>::write_token_properties,
+	))
 }
 
 fn map_create_data<T: Config>(
@@ -245,7 +237,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 				&sender,
 				token_id,
 				properties.into_iter(),
-				pallet_common::SetPropertyMode::ExistingToken,
 				nesting_budget,
 			),
 			weight,
@@ -271,6 +262,17 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			),
 			weight,
 		)
+	}
+
+	fn get_token_properties_raw(
+		&self,
+		token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
+		<TokenProperties<T>>::get((self.id, token_id))
+	}
+
+	fn set_token_properties_raw(&self, token_id: TokenId, map: up_data_structs::TokenProperties) {
+		<TokenProperties<T>>::insert((self.id, token_id), map)
 	}
 
 	fn set_token_property_permissions(
@@ -303,16 +305,6 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			<Pallet<T>>::check_token_immediate_ownership(self, token, &sender)?;
 			Ok(().into())
 		}
-	}
-
-	fn burn_item_recursively(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		<Pallet<T>>::burn_recursively(self, &sender, token, self_budget, breadth_budget)
 	}
 
 	fn transfer(
@@ -415,7 +407,7 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 
 	fn check_nesting(
 		&self,
-		sender: T::CrossAccountId,
+		sender: &T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
@@ -457,19 +449,36 @@ impl<T: Config> CommonCollectionOperations<T> for NonfungibleHandle<T> {
 			.ok_or(TokenOwnerError::NotFound)
 	}
 
+	fn check_token_indirect_owner(
+		&self,
+		token: TokenId,
+		maybe_owner: &T::CrossAccountId,
+		nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		<PalletStructure<T>>::check_indirectly_owned(
+			maybe_owner.clone(),
+			self.id,
+			token,
+			None,
+			nesting_budget,
+		)
+	}
+
 	/// Returns token owners.
 	fn token_owners(&self, token: TokenId) -> Vec<T::CrossAccountId> {
 		self.token_owner(token).map_or_else(|_| vec![], |t| vec![t])
 	}
 
 	fn token_property(&self, token_id: TokenId, key: &PropertyKey) -> Option<PropertyValue> {
-		<Pallet<T>>::token_properties((self.id, token_id))
+		<Pallet<T>>::token_properties((self.id, token_id))?
 			.get(key)
 			.cloned()
 	}
 
 	fn token_properties(&self, token_id: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property> {
-		let properties = <Pallet<T>>::token_properties((self.id, token_id));
+		let Some(properties) = <Pallet<T>>::token_properties((self.id, token_id)) else {
+			return vec![];
+		};
 
 		keys.map(|keys| {
 			keys.into_iter()

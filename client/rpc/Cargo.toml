@@ -5,13 +5,11 @@ name = "uc-rpc"
 version = "0.1.4"
 
 [dependencies]
-anyhow = "1.0.57"
-jsonrpsee = { version = "0.16.2", features = ["macros", "server"] }
-trie-db = { version = "0.24.0", default-features = false }
-zstd = { version = "0.11.2", default-features = false }
-
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
+anyhow = "1.0.75"
+jsonrpsee = { version = "0.16.3", features = ["macros", "server"] }
+parity-scale-codec = { workspace = true }
+trie-db = { version = "0.27.1", default-features = false }
+zstd = { version = "0.12.4", default-features = false }
 
 app-promotion-rpc = { workspace = true }
 up-common = { workspace = true }
@@ -44,12 +42,8 @@ unique-runtime = { workspace = true, optional = true }
 hex-literal = { workspace = true }
 
 [features]
+all-runtimes = ['opal-runtime', 'quartz-runtime', 'unique-runtime']
 default = ['opal-runtime']
-all-runtimes = [
-	'opal-runtime',
-	'quartz-runtime',
-	'unique-runtime',
-]
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',

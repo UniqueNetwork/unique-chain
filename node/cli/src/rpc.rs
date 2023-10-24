@@ -14,32 +14,33 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use fc_mapping_sync::{EthereumBlockNotificationSinks, EthereumBlockNotification};
-use sp_runtime::traits::BlakeTwo256;
+use std::sync::Arc;
+
+use fc_mapping_sync::{EthereumBlockNotification, EthereumBlockNotificationSinks};
 use fc_rpc::{
-	EthBlockDataCacheTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override,
-	StorageOverride, SchemaV2Override, SchemaV3Override,
+	pending::AuraConsensusDataProvider, EthBlockDataCacheTask, EthConfig, OverrideHandle,
 };
+use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
+use fp_rpc::NoTransactionConverter;
 use jsonrpsee::RpcModule;
-use fc_rpc_core::types::{FilterPool, FeeHistoryCache};
-use fp_storage::EthereumStorageSchema;
 use sc_client_api::{
 	backend::{AuxStore, StorageProvider},
 	client::BlockchainEvents,
-	StateBackend, Backend,
+	UsageProvider,
 };
 use sc_network::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
+use sc_service::TransactionPool;
 use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
-use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
-use sc_service::TransactionPool;
-use std::{collections::BTreeMap, sync::Arc};
-
+use sp_inherents::CreateInherentDataProviders;
+use sp_runtime::traits::BlakeTwo256;
 use up_common::types::opaque::*;
+
+use crate::service::RuntimeApiDep;
 
 #[cfg(feature = "pov-estimate")]
 type FullBackend = sc_service::TFullBackend<Block>;
@@ -65,39 +66,8 @@ pub struct FullDeps<C, P, SC> {
 	pub backend: Arc<FullBackend>,
 }
 
-pub fn overrides_handle<C, BE, R>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
-where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-	R: RuntimeInstance + Send + Sync + 'static,
-{
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-
-	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
-	})
-}
-
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, R, A, B>(
+pub fn create_full<C, P, SC, R, B>(
 	io: &mut RpcModule<()>,
 	deps: FullDeps<C, P, SC>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
@@ -106,20 +76,8 @@ where
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
-	C::Api: substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Index>,
-	C::Api: BlockBuilder<Block>,
-	// C::Api: pallet_contracts_rpc::ContractsRuntimeApi<Block, AccountId, Balance, BlockNumber, Hash>,
-	C::Api: pallet_transaction_payment_rpc::TransactionPaymentRuntimeApi<Block, Balance>,
-	C::Api: up_rpc::UniqueApi<Block, <R as RuntimeInstance>::CrossAccountId, AccountId>,
-	C::Api: app_promotion_rpc::AppPromotionApi<
-		Block,
-		BlockNumber,
-		<R as RuntimeInstance>::CrossAccountId,
-		AccountId,
-	>,
-	C::Api: up_pov_estimate_rpc::PovEstimateApi<Block>,
+	C::Api: RuntimeApiDep<R>,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
-	B::State: sc_client_api::backend::StateBackend<sp_runtime::traits::HashFor<Block>>,
 	P: TransactionPool<Block = Block> + 'static,
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
@@ -131,16 +89,12 @@ where
 	>,
 	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {
-	use uc_rpc::{UniqueApiServer, Unique};
-
-	use uc_rpc::{AppPromotionApiServer, AppPromotion};
-
-	#[cfg(feature = "pov-estimate")]
-	use uc_rpc::pov_estimate::{PovEstimateApiServer, PovEstimate};
-
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
 	use substrate_frame_rpc_system::{System, SystemApiServer};
+	#[cfg(feature = "pov-estimate")]
+	use uc_rpc::pov_estimate::{PovEstimate, PovEstimateApiServer};
+	use uc_rpc::{AppPromotion, AppPromotionApiServer, Unique, UniqueApiServer};
 
 	let FullDeps {
 		client,
@@ -179,7 +133,7 @@ where
 	Ok(())
 }
 
-pub struct EthDeps<C, P, CA: ChainApi> {
+pub struct EthDeps<C, P, CA: ChainApi, CIDP> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
@@ -194,7 +148,7 @@ pub struct EthDeps<C, P, CA: ChainApi> {
 	pub network: Arc<NetworkService<Block, Hash>>,
 
 	/// Ethereum Backend.
-	pub eth_backend: Arc<dyn fc_db::BackendReader<Block> + Send + Sync>,
+	pub eth_backend: Arc<dyn fc_api::Backend<Block> + Send + Sync>,
 	/// Maximum number of logs in a query.
 	pub max_past_logs: u32,
 	/// Maximum fee history cache size.
@@ -210,22 +164,12 @@ pub struct EthDeps<C, P, CA: ChainApi> {
 	pub enable_dev_signer: bool,
 
 	pub overrides: Arc<OverrideHandle<Block>>,
+	pub pending_create_inherent_data_providers: CIDP,
 }
 
-/// This converter is never used, but we have a generic
-/// Option<T>, where T should implement ConvertTransaction
-///
-/// TODO: remove after never-type (`!`) stabilization
-enum NeverConvert {}
-impl<T> fp_rpc::ConvertTransaction<T> for NeverConvert {
-	fn convert_transaction(&self, _transaction: pallet_ethereum::Transaction) -> T {
-		unreachable!()
-	}
-}
-
-pub fn create_eth<C, P, CA, B>(
+pub fn create_eth<C, R, P, CA, B, CIDP, EC>(
 	io: &mut RpcModule<()>,
-	deps: EthDeps<C, P, CA>,
+	deps: EthDeps<C, P, CA, CIDP>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
@@ -233,23 +177,19 @@ where
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
-	C::Api: BlockBuilder<Block>,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	C::Api: fp_rpc::ConvertTransactionRuntimeApi<Block>,
+	C: UsageProvider<Block>,
+	C::Api: RuntimeApiDep<R>,
 	P: TransactionPool<Block = Block> + 'static,
 	CA: ChainApi<Block = Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
-	C: sp_api::CallApiAt<
-		sp_runtime::generic::Block<
-			sp_runtime::generic::Header<u32, BlakeTwo256>,
-			sp_runtime::OpaqueExtrinsic,
-		>,
-	>,
+	C: sp_api::CallApiAt<Block>,
+	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
+	EC: EthConfig<Block, C>,
+	R: RuntimeInstance,
 {
 	use fc_rpc::{
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,
-		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer, TxPool,
-		TxPoolApiServer,
+		EthPubSubApiServer, EthSigner, Net, NetApiServer, Web3, Web3ApiServer,
 	};
 
 	let EthDeps {
@@ -268,6 +208,7 @@ where
 		is_authority,
 		network,
 		overrides,
+		pending_create_inherent_data_providers,
 	} = deps;
 
 	let mut signers = Vec::new();
@@ -276,12 +217,12 @@ where
 	}
 	let execute_gas_limit_multiplier = 10;
 	io.merge(
-		Eth::new(
+		Eth::<_, _, _, _, _, _, _, EC>::new(
 			client.clone(),
 			pool.clone(),
 			graph.clone(),
 			// We have no runtimes old enough to only accept converted transactions
-			None::<NeverConvert>,
+			None::<NoTransactionConverter>,
 			sync.clone(),
 			signers,
 			overrides.clone(),
@@ -292,18 +233,18 @@ where
 			fee_history_limit,
 			execute_gas_limit_multiplier,
 			None,
+			pending_create_inherent_data_providers,
+			Some(Box::new(AuraConsensusDataProvider::new(client.clone()))),
 		)
 		.into_rpc(),
 	)?;
-
-	let tx_pool = TxPool::new(client.clone(), graph);
 
 	if let Some(filter_pool) = eth_filter_pool {
 		io.merge(
 			EthFilter::new(
 				client.clone(),
 				eth_backend,
-				tx_pool.clone(),
+				graph,
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,
@@ -333,7 +274,6 @@ where
 		)
 		.into_rpc(),
 	)?;
-	io.merge(tx_pool.into_rpc())?;
 
 	Ok(())
 }

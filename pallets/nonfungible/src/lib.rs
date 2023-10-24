@@ -90,37 +90,37 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+use core::ops::Deref;
+
 use erc::ERC721Events;
 use evm_coder::ToLog;
 use frame_support::{
-	BoundedVec, ensure, fail, transactional,
+	dispatch::{Pays, PostDispatchInfo},
+	ensure, fail,
+	pallet_prelude::*,
 	storage::with_transaction,
-	pallet_prelude::DispatchResultWithPostInfo,
-	pallet_prelude::Weight,
-	dispatch::{PostDispatchInfo, Pays},
+	transactional, BoundedVec,
 };
-use up_data_structs::{
-	AccessMode, CollectionId, CustomDataLimit, TokenId, CreateCollectionData, CreateNftExData,
-	mapping::TokenAddressMapping, budget::Budget, Property, PropertyKey, PropertyValue,
-	PropertyKeyPermission, PropertyScope, TrySetProperty, TokenChild, AuxPropertyValue,
-	PropertiesPermissionMap, TokenProperties as TokenPropertiesT,
+pub use pallet::*;
+use pallet_common::{
+	eth::collection_id_to_address, helpers::add_weight_to_post_info,
+	weights::WeightInfo as CommonWeightInfo, CollectionHandle, Error as CommonError,
+	Event as CommonEvent, Pallet as PalletCommon, SelfWeightOf as PalletCommonWeightOf,
 };
 use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
-use pallet_common::{
-	Error as CommonError, Pallet as PalletCommon, Event as CommonEvent, CollectionHandle,
-	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info, SetPropertyMode,
-};
-use pallet_structure::{Pallet as PalletStructure, Error as StructureError};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
+use pallet_structure::Pallet as PalletStructure;
+use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use scale_info::TypeInfo;
 use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{vec::Vec, vec, collections::btree_map::BTreeMap};
-use core::ops::Deref;
-use codec::{Encode, Decode, MaxEncodedLen};
-use scale_info::TypeInfo;
-
-pub use pallet::*;
+use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
+	CreateCollectionData, CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property,
+	PropertyKey, PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
+	TokenProperties as TokenPropertiesT,
+};
 use weights::WeightInfo;
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
@@ -147,12 +147,12 @@ pub struct ItemData<CrossAccountId> {
 
 #[frame_support::pallet]
 pub mod pallet {
-	use super::*;
 	use frame_support::{
-		Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key, traits::StorageVersion,
+		pallet_prelude::*, storage::Key, traits::StorageVersion, Blake2_128Concat, Twox64Concat,
 	};
 	use up_data_structs::{CollectionId, TokenId};
-	use super::weights::WeightInfo;
+
+	use super::{weights::WeightInfo, *};
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -201,7 +201,7 @@ pub mod pallet {
 	pub type TokenProperties<T: Config> = StorageNMap<
 		Key = (Key<Twox64Concat, CollectionId>, Key<Twox64Concat, TokenId>),
 		Value = TokenPropertiesT,
-		QueryKind = ValueQuery,
+		QueryKind = OptionQuery,
 	>;
 
 	/// Custom data of a token that is serialized to bytes,
@@ -285,7 +285,6 @@ pub mod pallet {
 	#[pallet::genesis_config]
 	pub struct GenesisConfig<T>(PhantomData<T>);
 
-	#[cfg(feature = "std")]
 	impl<T: Config> Default for GenesisConfig<T> {
 		fn default() -> Self {
 			Self(Default::default())
@@ -293,7 +292,7 @@ pub mod pallet {
 	}
 
 	#[pallet::genesis_build]
-	impl<T: Config> GenesisBuild<T> for GenesisConfig<T> {
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
 		fn build(&self) {
 			StorageVersion::new(1).put::<Pallet<T>>();
 		}
@@ -340,38 +339,6 @@ impl<T: Config> Pallet<T> {
 	/// - `token`: Token ID.
 	pub fn token_exists(collection: &NonfungibleHandle<T>, token: TokenId) -> bool {
 		<TokenData<T>>::contains_key((collection.id, token))
-	}
-
-	/// Set the token property with the scope.
-	///
-	/// - `property`: Contains key-value pair.
-	pub fn set_scoped_token_property(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		property: Property,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |properties| {
-			properties.try_scoped_set(scope, property.key, property.value)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
-	}
-
-	/// Batch operation to set multiple properties with the same scope.
-	pub fn set_scoped_token_properties(
-		collection_id: CollectionId,
-		token_id: TokenId,
-		scope: PropertyScope,
-		properties: impl Iterator<Item = Property>,
-	) -> DispatchResult {
-		TokenProperties::<T>::try_mutate((collection_id, token_id), |stored_properties| {
-			stored_properties.try_scoped_set_from_iter(scope, properties)
-		})
-		.map_err(<CommonError<T>>::from)?;
-
-		Ok(())
 	}
 
 	/// Add or edit auxiliary data for the property.
@@ -536,51 +503,6 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
-	/// Same as [`burn`] but burns all the tokens that are nested in the token first
-	///
-	/// - `self_budget`: Limit for searching children in depth.
-	/// - `breadth_budget`: Limit of breadth of searching children.
-	///
-	/// [`burn`]: struct.Pallet.html#method.burn
-	#[transactional]
-	pub fn burn_recursively(
-		collection: &NonfungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
-
-		let current_token_account =
-			T::CrossTokenAddressMapping::token_to_address(collection.id, token);
-
-		let mut weight = Weight::zero();
-
-		// This method is transactional, if user in fact doesn't have permissions to remove token -
-		// tokens removed here will be restored after rejected transaction
-		for ((collection, token), _) in <TokenChildren<T>>::iter_prefix((collection.id, token)) {
-			ensure!(breadth_budget.consume(), <StructureError<T>>::BreadthLimit,);
-			let PostDispatchInfo { actual_weight, .. } =
-				<PalletStructure<T>>::burn_item_recursively(
-					current_token_account.clone(),
-					collection,
-					token,
-					self_budget,
-					breadth_budget,
-				)?;
-			if let Some(actual_weight) = actual_weight {
-				weight = weight.saturating_add(actual_weight);
-			}
-		}
-
-		Self::burn(collection, sender, token)?;
-		DispatchResultWithPostInfo::Ok(PostDispatchInfo {
-			actual_weight: Some(weight + <SelfWeightOf<T>>::burn_item()),
-			pays_fee: Pays::Yes,
-		})
-	}
-
 	/// A batch operation to add, edit or remove properties for a token.
 	///
 	/// - `nesting_budget`: Limit for searching parents in-depth to check ownership.
@@ -598,42 +520,16 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties_updates: impl Iterator<Item = (PropertyKey, Option<PropertyValue>)>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
-		let mut is_token_owner = pallet_common::LazyValue::new(|| {
-			if let SetPropertyMode::NewToken {
-				mint_target_is_sender,
-			} = mode
-			{
-				return Ok(mint_target_is_sender);
-			}
+		let mut property_writer =
+			pallet_common::ExistingTokenPropertyWriter::new(collection, sender);
 
-			let is_owned = <PalletStructure<T>>::check_indirectly_owned(
-				sender.clone(),
-				collection.id,
-				token_id,
-				None,
-				nesting_budget,
-			)?;
-
-			Ok(is_owned)
-		});
-
-		let mut is_token_exist =
-			pallet_common::LazyValue::new(|| Self::token_exists(collection, token_id));
-
-		let stored_properties = <TokenProperties<T>>::get((collection.id, token_id));
-
-		<PalletCommon<T>>::modify_token_properties(
-			collection,
+		property_writer.write_token_properties(
 			sender,
 			token_id,
-			&mut is_token_exist,
 			properties_updates,
-			stored_properties,
-			&mut is_token_owner,
-			|properties| <TokenProperties<T>>::set((collection.id, token_id), properties),
+			nesting_budget,
 			erc::ERC721TokenEvent::TokenChanged {
 				token_id: token_id.into(),
 			}
@@ -664,7 +560,6 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		token_id: TokenId,
 		properties: impl Iterator<Item = Property>,
-		mode: SetPropertyMode,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::modify_token_properties(
@@ -672,7 +567,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			properties.map(|p| (p.key, Some(p.value))),
-			mode,
 			nesting_budget,
 		)
 	}
@@ -694,7 +588,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			[property].into_iter(),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -716,7 +609,6 @@ impl<T: Config> Pallet<T> {
 			sender,
 			token_id,
 			property_keys.into_iter().map(|key| (key, None)),
-			SetPropertyMode::ExistingToken,
 			nesting_budget,
 		)
 	}
@@ -826,6 +718,21 @@ impl<T: Config> Pallet<T> {
 		token: TokenId,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let depositor = from;
+		Self::transfer_internal(collection, depositor, from, to, token, nesting_budget)
+	}
+
+	/// Transfers an NFT from the `from` account to the `to` account.
+	/// The `depositor` is the account who deposits the NFT.
+	/// For instance, the nesting rules will be checked against the `depositor`'s permissions.
+	pub fn transfer_internal(
+		collection: &NonfungibleHandle<T>,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed
@@ -862,7 +769,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		<PalletStructure<T>>::nest_if_sent_to_token(
-			from.clone(),
+			depositor,
 			to,
 			collection.id,
 			token,
@@ -968,7 +875,7 @@ impl<T: Config> Pallet<T> {
 			let token = TokenId(first_token + i as u32 + 1);
 
 			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
+				sender,
 				&data.owner,
 				collection.id,
 				token,
@@ -977,6 +884,8 @@ impl<T: Config> Pallet<T> {
 		}
 
 		// =========
+
+		let mut property_writer = pallet_common::NewTokenPropertyWriter::new(collection, sender);
 
 		with_transaction(|| {
 			for (i, data) in data.iter().enumerate() {
@@ -990,21 +899,22 @@ impl<T: Config> Pallet<T> {
 					},
 				);
 
+				let token = TokenId(token);
+
 				<PalletStructure<T>>::nest_if_sent_to_token_unchecked(
 					&data.owner,
 					collection.id,
-					TokenId(token),
+					token,
 				);
 
-				if let Err(e) = Self::set_token_properties(
-					collection,
-					sender,
-					TokenId(token),
+				if let Err(e) = property_writer.write_token_properties(
+					sender.conv_eq(&data.owner),
+					token,
 					data.properties.clone().into_iter(),
-					SetPropertyMode::NewToken {
-						mint_target_is_sender: sender.conv_eq(&data.owner),
-					},
-					nesting_budget,
+					erc::ERC721TokenEvent::TokenChanged {
+						token_id: token.into(),
+					}
+					.to_log(T::ContractAddress::get()),
 				) {
 					return TransactionOutcome::Rollback(Err(e));
 				}
@@ -1259,7 +1169,8 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		// Allowance is reset in [`transfer`]
-		let mut result = Self::transfer(collection, from, to, token, nesting_budget);
+		let mut result =
+			Self::transfer_internal(collection, spender, from, to, token, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result
 	}
@@ -1288,7 +1199,7 @@ impl<T: Config> Pallet<T> {
 	///
 	pub fn check_nesting(
 		handle: &NonfungibleHandle<T>,
-		sender: T::CrossAccountId,
+		sender: &T::CrossAccountId,
 		from: (CollectionId, TokenId),
 		under: TokenId,
 		nesting_budget: &dyn Budget,
@@ -1314,7 +1225,7 @@ impl<T: Config> Pallet<T> {
 				nesting_budget,
 			)? {
 			// Pass, token existence and ouroboros checks are done in `check_indirectly_owned`
-		} else if nesting.collection_admin && handle.is_owner_or_admin(&sender) {
+		} else if nesting.collection_admin && handle.is_owner_or_admin(sender) {
 			// token existence and ouroboros checks are done in `get_checked_topmost_owner`
 			let _ = <PalletStructure<T>>::get_checked_topmost_owner(
 				handle.id,
@@ -1421,7 +1332,9 @@ impl<T: Config> Pallet<T> {
 
 	pub fn repair_item(collection: &NonfungibleHandle<T>, token: TokenId) -> DispatchResult {
 		<TokenProperties<T>>::mutate((collection.id, token), |properties| {
-			properties.recompute_consumed_space();
+			if let Some(properties) = properties {
+				properties.recompute_consumed_space();
+			}
 		});
 
 		Ok(())

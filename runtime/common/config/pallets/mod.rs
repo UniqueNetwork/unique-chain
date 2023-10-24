@@ -15,32 +15,30 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use alloc::string::{String, ToString};
-use frame_support::parameter_types;
-use sp_runtime::traits::AccountIdConversion;
-use crate::{
-	runtime_common::{
-		dispatch::CollectionDispatchT,
-		config::{substrate::TreasuryModuleId, ethereum::EvmCollectionHelpersAddress},
-		weights::CommonWeights,
-		RelayChainBlockNumberProvider,
-	},
-	Runtime, RuntimeEvent, RuntimeCall, VERSION, TOKEN_SYMBOL, DECIMALS, Balances,
-};
-use frame_support::traits::{ConstU32, ConstU64, Currency};
-use up_common::{
-	types::{AccountId, Balance, BlockNumber},
-	constants::*,
-};
-use up_data_structs::{
-	mapping::{EvmTokenAddressMapping, CrossTokenAddressMapping},
+
+use frame_support::{
+	parameter_types,
+	traits::{ConstU32, ConstU64, Currency},
 };
 use sp_arithmetic::Perbill;
+use sp_runtime::traits::{AccountIdConversion, BlockNumberProvider};
+use up_common::{
+	constants::*,
+	types::{AccountId, Balance, BlockNumber},
+};
+use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
-
-#[cfg(feature = "unique-scheduler")]
-pub mod scheduler;
+use crate::{
+	runtime_common::{
+		config::{ethereum::EvmCollectionHelpersAddress, substrate::TreasuryModuleId},
+		dispatch::CollectionDispatchT,
+		weights::CommonWeights,
+		RelayChainBlockNumberProvider,
+	},
+	Balances, Runtime, RuntimeCall, RuntimeEvent, DECIMALS, TOKEN_SYMBOL, VERSION,
+};
 
 #[cfg(feature = "foreign-assets")]
 pub mod foreign_asset;
@@ -107,17 +105,40 @@ parameter_types! {
 	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
 }
 
+/// Pallet-inflation needs block number in on_initialize, where there is no `validation_data` exists yet
+pub struct OnInitializeBlockNumberProvider;
+impl BlockNumberProvider for OnInitializeBlockNumberProvider {
+	type BlockNumber = BlockNumber;
+
+	fn current_block_number() -> Self::BlockNumber {
+		use hex_literal::hex;
+		use parity_scale_codec::Decode;
+		use sp_io::storage;
+		// TODO: Replace with the following code after https://github.com/paritytech/polkadot-sdk/commit/3ea497b5a0fdda252f9c5a3c257cfaf8685f02fd lands
+		// <cumulus_pallet_parachain_system::Pallet<Runtime>>::last_relay_block_number()
+
+		// ParachainSystem.LastRelayChainBlockNumber
+		let Some(encoded) = storage::get(&hex!("45323df7cc47150b3930e2666b0aa313a2bca190d36bd834cc73a38fc213ecbd")) else {
+			// First parachain block
+			return Default::default()
+		};
+		BlockNumber::decode(&mut encoded.as_ref())
+			.expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
+	}
+}
+
 /// Used for the pallet inflation
 impl pallet_inflation::Config for Runtime {
 	type Currency = Balances;
 	type TreasuryAccountId = TreasuryAccountId;
 	type InflationBlockInterval = InflationBlockInterval;
-	type BlockNumberProvider = RelayChainBlockNumberProvider<Runtime>;
+	type OnInitializeBlockNumberProvider = OnInitializeBlockNumberProvider;
 }
 
 impl pallet_unique::Config for Runtime {
 	type WeightInfo = pallet_unique::weights::SubstrateWeight<Self>;
 	type CommonWeightInfo = CommonWeights<Self>;
+	type StructureWeightInfo = pallet_structure::weights::SubstrateWeight<Self>;
 	type RefungibleExtensionsWeightInfo = CommonWeights<Self>;
 }
 

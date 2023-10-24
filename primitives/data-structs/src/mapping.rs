@@ -18,10 +18,10 @@
 
 use core::marker::PhantomData;
 
+use pallet_evm::account::CrossAccountId;
 use sp_core::H160;
 
 use crate::{CollectionId, TokenId};
-use pallet_evm::account::CrossAccountId;
 
 /// Trait for mapping between token id and some `Address`.
 pub trait TokenAddressMapping<Address> {

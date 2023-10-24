@@ -18,6 +18,7 @@ import {itEth, usingEthPlaygrounds, expect, EthUniqueHelper} from './util';
 import {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {ITokenPropertyPermission} from '../util/playgrounds/types';
+import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionMode, CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
 
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;
@@ -194,6 +195,96 @@ describe('NFT: Plain calls', () => {
 
         expect(await contract.methods.tokenURI(+nextTokenId + i).call()).to.be.equal(`Test URI ${i}`);
       }
+    }
+  });
+
+  itEth('Can perform mintBulkCross()', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const callerCross = helper.ethCrossAccount.fromAddress(caller);
+    const receiver = helper.eth.createAccount();
+    const receiverCross = helper.ethCrossAccount.fromAddress(receiver);
+
+    const permissions = [
+      {code: TokenPermissionField.Mutable, value: true},
+      {code: TokenPermissionField.TokenOwner, value: true},
+      {code: TokenPermissionField.CollectionAdmin, value: true},
+    ];
+    const {collectionAddress} = await helper.eth.createCollection(
+      caller,
+      {
+        ...CREATE_COLLECTION_DATA_DEFAULTS,
+        name: 'A',
+        description: 'B',
+        tokenPrefix: 'C',
+        collectionMode: 'nft',
+        adminList: [callerCross],
+        tokenPropertyPermissions: [
+          {key: 'key_0_0', permissions},
+          {key: 'key_1_0', permissions},
+          {key: 'key_1_1', permissions},
+          {key: 'key_2_0', permissions},
+          {key: 'key_2_1', permissions},
+          {key: 'key_2_2', permissions},
+        ],
+      },
+    ).send();
+
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    {
+      const nextTokenId = await contract.methods.nextTokenId().call();
+      expect(nextTokenId).to.be.equal('1');
+      const result = await contract.methods.mintBulkCross([
+        {
+          owner: receiverCross,
+          properties: [
+            {key: 'key_0_0', value: Buffer.from('value_0_0')},
+          ],
+        },
+        {
+          owner: receiverCross,
+          properties: [
+            {key: 'key_1_0', value: Buffer.from('value_1_0')},
+            {key: 'key_1_1', value: Buffer.from('value_1_1')},
+          ],
+        },
+        {
+          owner: receiverCross,
+          properties: [
+            {key: 'key_2_0', value: Buffer.from('value_2_0')},
+            {key: 'key_2_1', value: Buffer.from('value_2_1')},
+            {key: 'key_2_2', value: Buffer.from('value_2_2')},
+          ],
+        },
+      ]).send({from: caller});
+      const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
+      const bulkSize = 3;
+      for(let i = 0; i < bulkSize; i++) {
+        const event = events[i];
+        expect(event.address).to.equal(collectionAddress);
+        expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
+        expect(event.returnValues.to).to.equal(receiver);
+        expect(event.returnValues.tokenId).to.equal(`${+nextTokenId + i}`);
+      }
+
+      const properties = [
+        await contract.methods.properties(+nextTokenId, []).call(),
+        await contract.methods.properties(+nextTokenId + 1, []).call(),
+        await contract.methods.properties(+nextTokenId + 2, []).call(),
+      ];
+      expect(properties).to.be.deep.equal([
+        [
+          ['key_0_0', helper.getWeb3().utils.toHex('value_0_0')],
+        ],
+        [
+          ['key_1_0', helper.getWeb3().utils.toHex('value_1_0')],
+          ['key_1_1', helper.getWeb3().utils.toHex('value_1_1')],
+        ],
+        [
+          ['key_2_0', helper.getWeb3().utils.toHex('value_2_0')],
+          ['key_2_1', helper.getWeb3().utils.toHex('value_2_1')],
+          ['key_2_2', helper.getWeb3().utils.toHex('value_2_2')],
+        ],
+      ]);
     }
   });
 

@@ -4,8 +4,7 @@ name = "pallet-configuration"
 version = "0.2.0"
 
 [dependencies]
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
+parity-scale-codec = { workspace = true }
 
 fp-evm = { workspace = true }
 frame-benchmarking = { workspace = true, optional = true }
@@ -16,23 +15,26 @@ smallvec = { workspace = true }
 sp-arithmetic = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
+sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+staging-xcm = { workspace = true }
 up-common = { workspace = true }
-xcm = { workspace = true }
 
 hex-literal = { workspace = true }
+log = { workspace = true }
 
 [features]
 default = ["std"]
 runtime-benchmarks = ["frame-benchmarking"]
 std = [
-	"codec/std",
 	"fp-evm/std",
 	"frame-benchmarking/std",
 	"frame-support/std",
 	"frame-system/std",
+	"parity-scale-codec/std",
 	"sp-arithmetic/std",
 	"sp-core/std",
+	"sp-runtime/std",
 	"sp-std/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

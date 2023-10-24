@@ -52,17 +52,17 @@ curl https://sh.rustup.rs -sSf | sh
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install toolchain nightly-2022-11-15 and make it default:
+3. Install toolchain nightly-2023-05-22 and make it default:
 
 ```bash
-rustup toolchain install nightly-2022-11-15
-rustup default nightly-2022-11-15
+rustup toolchain install nightly-2023-05-22
+rustup default nightly-2023-05-22
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2022-11-15
+rustup target add wasm32-unknown-unknown --toolchain nightly-2023-05-22
 ```
 
 5. Build:
@@ -83,13 +83,6 @@ cargo build --features=unique-runtime --release
 ## Building as Parachain locally
 
 Note: checkout this project and all related projects (see below) in the sibling folders (both under the same folder)
-
-### Polkadot launch utility
-
-```
-git clone https://github.com/UniqueNetwork/polkadot-launch.git
-git checkout unique-network
-```
 
 ### Build relay
 
@@ -118,18 +111,26 @@ make build-release
 
 ## Running as Parachain locally
 
-```
-./launch-testnet.sh
-```
+### Dev mode
 
-Optional, full setup with Acala and Statemint
-```
-./launch-testnet-full.sh
-```
+You can launch the node in the dev mode where blocks are sealed automatically each 500 ms or on each new transaction.
+
+* Opal Runtime: `cargo run --release -- --dev`
+* Quartz Runtime: `cargo run --release --features quartz-runtime -- --dev`
+* Unique Runtime: `cargo run --release --features unique-runtime -- --dev`
+
+ You can tweak the dev mode with the following CLI options:
+ * --idle-autoseal-interval <IDLE_AUTOSEAL_INTERVAL>
+          When running the node in the `--dev` mode, an empty block will be sealed automatically after the `<IDLE_AUTOSEAL_INTERVAL>` milliseconds.
+ * --disable-autoseal-on-tx
+          Disable auto-sealing blocks on new transactions in the `--dev` mode
+ * --autoseal-finalization-delay <AUTOSEAL_FINALIZATION_DELAY>
+          Finalization delay (in seconds) of auto-sealed blocks in the `--dev` mode.
+          Disabled by default.
 
 ## Run Integration Tests
 
-1. Install all needed dependecies
+1. Install all needed dependencies
 ```
 cd tests
 yarn install
@@ -157,6 +158,11 @@ pushd tests && yarn fix ; popd
 ### Check code style in tests
 ```bash
 cd tests && yarn eslint --ext .ts,.js src/
+```
+
+### Enable checking of code style on commits
+```bash
+make git-hooks
 ```
 
 

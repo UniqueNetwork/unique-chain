@@ -26,10 +26,13 @@ pub mod weights;
 #[frame_support::pallet]
 pub mod pallet {
 
-	use frame_support::{dispatch::*, pallet_prelude::*};
-	use frame_support::traits::{QueryPreimage, StorePreimage, EnsureOrigin};
+	use frame_support::{
+		dispatch::*,
+		pallet_prelude::*,
+		traits::{EnsureOrigin, QueryPreimage, StorePreimage},
+	};
 	use frame_system::pallet_prelude::*;
-	use sp_core::H256;
+	use sp_runtime::traits::Dispatchable;
 
 	use crate::weights::WeightInfo;
 
@@ -98,50 +101,6 @@ pub mod pallet {
 			Self::deposit_event(Event::MaintenanceDisabled);
 
 			Ok(())
-		}
-
-		/// Execute a runtime call stored as a preimage.
-		///
-		/// `weight_bound` is the maximum weight that the caller is willing
-		/// to allow the extrinsic to be executed with.
-		#[pallet::call_index(2)]
-		#[pallet::weight(<T as Config>::WeightInfo::execute_preimage() + *weight_bound)]
-		pub fn execute_preimage(
-			origin: OriginFor<T>,
-			hash: H256,
-			weight_bound: Weight,
-		) -> DispatchResultWithPostInfo {
-			use codec::Decode;
-
-			T::PreimageOrigin::ensure_origin(origin.clone())?;
-
-			let data = T::Preimages::fetch(&hash, None)?;
-			weight_bound.set_proof_size(
-				weight_bound
-					.proof_size()
-					.checked_sub(
-						data.len()
-							.try_into()
-							.map_err(|_| DispatchError::Corruption)?,
-					)
-					.ok_or(DispatchError::Exhausted)?,
-			);
-
-			let call = <T as Config>::RuntimeCall::decode(&mut &data[..])
-				.map_err(|_| DispatchError::Corruption)?;
-
-			ensure!(
-				call.get_dispatch_info().weight.all_lte(weight_bound),
-				DispatchError::Exhausted
-			);
-
-			match call.dispatch(origin) {
-				Ok(_) => Ok(Pays::No.into()),
-				Err(error_and_info) => Err(DispatchErrorWithPostInfo {
-					post_info: Pays::No.into(),
-					error: error_and_info.error,
-				}),
-			}
 		}
 	}
 }

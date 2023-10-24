@@ -15,27 +15,32 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Everything, Nothing, Get, ConstU32, ProcessMessageError},
 	parameter_types,
+	traits::{ConstU32, Contains, Everything, Get, Nothing, ProcessMessageError},
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
-use polkadot_parachain::primitives::Sibling;
-use xcm::latest::{prelude::*, Weight, MultiLocation};
-use xcm::v3::Instruction;
-use xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation, ParentIsPreset,
-};
-use xcm_executor::{XcmExecutor, traits::ShouldExecute};
+use polkadot_parachain_primitives::primitives::Sibling;
 use sp_std::marker::PhantomData;
-use crate::{
-	Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, ParachainInfo, ParachainSystem, PolkadotXcm,
-	XcmpQueue, xcm_barrier::Barrier, RelayNetwork, AllPalletsWithSystem, Balances,
+use staging_xcm::{
+	latest::{prelude::*, MultiLocation, Weight},
+	v3::Instruction,
 };
-
+use staging_xcm_builder::{
+	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser, ParentIsPreset,
+	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
+};
+use staging_xcm_executor::{
+	traits::{Properties, ShouldExecute},
+	XcmExecutor,
+};
 use up_common::types::AccountId;
+
+use crate::{
+	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem,
+	PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
+};
 
 #[cfg(feature = "foreign-assets")]
 pub mod foreignassets;
@@ -45,14 +50,12 @@ pub mod nativeassets;
 
 #[cfg(feature = "foreign-assets")]
 pub use foreignassets as xcm_assets;
-
 #[cfg(not(feature = "foreign-assets"))]
 pub use nativeassets as xcm_assets;
+use xcm_assets::{AssetTransactor, IsReserve, Trader};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
-
-use xcm_assets::{AssetTransactor, IsReserve, Trader};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -153,17 +156,65 @@ where
 		origin: &MultiLocation,
 		message: &mut [Instruction<Call>],
 		max_weight: Weight,
-		weight_credit: &mut Weight,
+		properties: &mut Properties,
 	) -> Result<(), ProcessMessageError> {
 		Deny::try_pass(origin, message)?;
-		Allow::should_execute(origin, message, max_weight, weight_credit)
+		Allow::should_execute(origin, message, max_weight, properties)
 	}
 }
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
+pub struct XcmCallFilter;
+impl XcmCallFilter {
+	fn allow_gov_and_sys_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::System(..) => true,
+
+			#[cfg(feature = "governance")]
+			RuntimeCall::Identity(..)
+			| RuntimeCall::Preimage(..)
+			| RuntimeCall::Democracy(..)
+			| RuntimeCall::Council(..)
+			| RuntimeCall::TechnicalCommittee(..)
+			| RuntimeCall::CouncilMembership(..)
+			| RuntimeCall::TechnicalCommitteeMembership(..)
+			| RuntimeCall::FellowshipCollective(..)
+			| RuntimeCall::FellowshipReferenda(..) => true,
+			_ => false,
+		}
+	}
+
+	fn allow_utility_call(call: &RuntimeCall) -> bool {
+		match call {
+			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) => {
+				calls.iter().all(Self::allow_gov_and_sys_call)
+			}
+			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) => {
+				calls.iter().all(Self::allow_gov_and_sys_call)
+			}
+			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) => {
+				Self::allow_gov_and_sys_call(call)
+			}
+			RuntimeCall::Utility(pallet_utility::Call::dispatch_as { call, .. }) => {
+				Self::allow_gov_and_sys_call(call)
+			}
+			RuntimeCall::Utility(pallet_utility::Call::force_batch { calls, .. }) => {
+				calls.iter().all(Self::allow_gov_and_sys_call)
+			}
+			_ => false,
+		}
+	}
+}
+
+impl Contains<RuntimeCall> for XcmCallFilter {
+	fn contains(call: &RuntimeCall) -> bool {
+		Self::allow_gov_and_sys_call(call) || Self::allow_utility_call(call)
+	}
+}
+
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
-impl<T> xcm_executor::Config for XcmExecutorConfig<T>
+impl<T> staging_xcm_executor::Config for XcmExecutorConfig<T>
 where
 	T: pallet_configuration::Config,
 {
@@ -191,9 +242,8 @@ where
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
-
-	// Deny all XCM Transacts.
-	type SafeCallFilter = Nothing;
+	type SafeCallFilter = XcmCallFilter;
+	type Aliasers = Nothing;
 }
 
 #[cfg(feature = "runtime-benchmarks")]

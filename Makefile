@@ -88,76 +88,38 @@ CollectionHelpers: CollectionHelpers.sol
 
 evm_stubs: UniqueFungible UniqueNFT UniqueRefungible UniqueRefungibleToken ContractHelpers CollectionHelpers
 
-.PHONY: _bench
-_bench:
-	cargo run --release --features runtime-benchmarks,$(RUNTIME) -- \
-	benchmark pallet --pallet pallet-$(if $(PALLET),$(PALLET),$(error Must set PALLET)) \
+# TODO: Create benchmarking profile, make it a proper dependency
+.PHONY: benchmarking-node
+benchmarking-node:
+	cargo build --profile production --features runtime-benchmarks
+
+define _bench =
+.PHONY: bench-$(1)
+bench-$(1): benchmarking-node
+	./target/production/unique-collator \
+	benchmark pallet --pallet pallet-$(1) \
 	--wasm-execution compiled --extrinsic '*' \
-	$(if $(TEMPLATE),$(TEMPLATE),--template=.maintain/frame-weight-template.hbs) --steps=50 --repeat=80 --heap-pages=4096 \
-	--output=$(if $(OUTPUT),$(OUTPUT),./pallets/$(if $(PALLET_DIR),$(PALLET_DIR),$(PALLET))/src/weights.rs)
+	$(if $(4),$(4),--template=.maintain/frame-weight-template.hbs) --steps=50 --repeat=80 --heap-pages=4096 \
+	--output=$$(if $(3),$(3),./pallets/$(if $(2),$(2),$(1))/src/weights.rs)
+endef
 
-.PHONY: bench-evm-migration
-bench-evm-migration:
-	make _bench PALLET=evm-migration
-
-.PHONY: bench-configuration
-bench-configuration:
-	make _bench PALLET=configuration
-
-.PHONY: bench-common
-bench-common:
-	make _bench PALLET=common
-
-.PHONY: bench-unique
-bench-unique:
-	make _bench PALLET=unique
-
-.PHONY: bench-fungible
-bench-fungible:
-	make _bench PALLET=fungible
-
-.PHONY: bench-refungible
-bench-refungible:
-	make _bench PALLET=refungible
-
-.PHONY: bench-nonfungible
-bench-nonfungible:
-	make _bench PALLET=nonfungible
-
-.PHONY: bench-structure
-bench-structure:
-	make _bench PALLET=structure
-
-.PHONY: bench-scheduler
-bench-scheduler:
-	make _bench PALLET=unique-scheduler-v2 PALLET_DIR=scheduler-v2
-
-.PHONY: bench-foreign-assets
-bench-foreign-assets:
-	make _bench PALLET=foreign-assets
-
-.PHONY: bench-collator-selection
-bench-collator-selection:
-	make _bench PALLET=collator-selection
-
-.PHONY: bench-identity
-bench-identity:
-	make _bench PALLET=identity
-
-.PHONY: bench-app-promotion
-bench-app-promotion:
-	make _bench PALLET=app-promotion
-
-.PHONY: bench-maintenance
-bench-maintenance:
-	make _bench PALLET=maintenance
-
-.PHONY: bench-xcm
-bench-xcm:
-	make _bench PALLET=xcm OUTPUT=./runtime/common/weights/xcm.rs TEMPLATE="--template=.maintain/external-weight-template.hbs"
+# _bench,pallet,(pallet_dir|),(output|),(extra|)
+$(eval $(call _bench,evm-migration))
+$(eval $(call _bench,configuration))
+$(eval $(call _bench,common))
+$(eval $(call _bench,unique))
+$(eval $(call _bench,fungible))
+$(eval $(call _bench,refungible))
+$(eval $(call _bench,nonfungible))
+$(eval $(call _bench,structure))
+$(eval $(call _bench,foreign-assets))
+$(eval $(call _bench,collator-selection))
+$(eval $(call _bench,identity))
+$(eval $(call _bench,app-promotion))
+$(eval $(call _bench,maintenance))
+$(eval $(call _bench,xcm,,./runtime/common/weights/xcm.rs,"--template=.maintain/external-weight-template.hbs"))
 
 .PHONY: bench
-# Disabled: bench-scheduler
 bench: bench-app-promotion bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm bench-collator-selection bench-identity
 
 .PHONY: check
@@ -167,3 +129,13 @@ check:
 .PHONY: clippy
 clippy:
 	cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests
+
+.PHONY: git-hooks
+git-hooks:
+	cp .githooks/pre-commit .git/hooks/pre-commit
+
+.PHONY: init
+init:
+	make git-hooks
+	cd tests
+	yarn install

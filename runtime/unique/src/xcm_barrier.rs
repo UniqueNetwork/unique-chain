@@ -15,15 +15,19 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{match_types, traits::Everything};
-use xcm::latest::{Junctions::*, MultiLocation};
-use xcm_builder::{
-	AllowKnownQueryResponses, AllowSubscriptionsFrom, TakeWeightCredit,
-	AllowTopLevelPaidExecutionFrom,
+use staging_xcm::latest::{Junctions::*, MultiLocation};
+use staging_xcm_builder::{
+	AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses, AllowSubscriptionsFrom,
+	AllowTopLevelPaidExecutionFrom, TakeWeightCredit,
 };
 
 use crate::PolkadotXcm;
 
 match_types! {
+	pub type ParentOnly: impl Contains<MultiLocation> = {
+		MultiLocation { parents: 1, interior: Here }
+	};
+
 	pub type ParentOrSiblings: impl Contains<MultiLocation> = {
 		MultiLocation { parents: 1, interior: Here } |
 		MultiLocation { parents: 1, interior: X1(_) }
@@ -32,6 +36,7 @@ match_types! {
 
 pub type Barrier = (
 	TakeWeightCredit,
+	AllowExplicitUnpaidExecutionFrom<ParentOnly>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
 	// Expected responses are OK.
 	AllowKnownQueryResponses<PolkadotXcm>,

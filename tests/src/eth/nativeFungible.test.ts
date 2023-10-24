@@ -33,7 +33,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await expect(contract.methods.approve(spender, 100).call({from: owner})).to.be.rejectedWith('Approve not supported');
+    await expect(contract.methods.approve(spender, 100).call({from: owner})).to.be.rejectedWith('approve not supported');
   });
 
   itEth('balanceOf()', async ({helper}) => {

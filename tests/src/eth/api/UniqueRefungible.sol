@@ -551,7 +551,7 @@ interface ERC721UniqueMintable is Dummy, ERC165 {
 }
 
 /// @title Unique extensions for ERC721.
-/// @dev the ERC-165 identifier for this interface is 0x95c0f66c
+/// @dev the ERC-165 identifier for this interface is 0x4abaabdb
 interface ERC721UniqueExtensions is Dummy, ERC165 {
 	/// @notice A descriptive name for a collection of NFTs in this contract
 	/// @dev EVM selector for this function is: 0x06fdde03,
@@ -668,6 +668,12 @@ interface ERC721UniqueExtensions is Dummy, ERC165 {
 	// ///  or in textual repr: mintBulk(address,uint256[])
 	// function mintBulk(address to, uint256[] memory tokenIds) external returns (bool);
 
+	/// @notice Function to mint a token.
+	/// @param tokenProperties Properties of minted token
+	/// @dev EVM selector for this function is: 0xdf7a5db7,
+	///  or in textual repr: mintBulkCross((((address,uint256),uint128)[],(string,bytes)[])[])
+	function mintBulkCross(MintTokenData[] memory tokenProperties) external returns (bool);
+
 	// /// @notice Function to mint multiple tokens with the given tokenUris.
 	// /// @dev `tokenIds` is array of pairs of token ID and token URI. Token IDs should be consecutive
 	// ///  numbers and first number should be obtained with `nextTokenId` method
@@ -704,6 +710,22 @@ struct TokenUri {
 	uint256 id;
 	/// Uri of new token.
 	string uri;
+}
+
+/// Token minting parameters
+struct MintTokenData {
+	/// Minted token owner and number of pieces
+	OwnerPieces[] owners;
+	/// Minted token properties
+	Property[] properties;
+}
+
+/// Token minting parameters
+struct OwnerPieces {
+	/// Minted token owner
+	CrossAddress owner;
+	/// Number of token pieces
+	uint128 pieces;
 }
 
 /// @title ERC-721 Non-Fungible Token Standard, optional enumeration extension

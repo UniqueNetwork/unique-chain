@@ -1,4 +1,4 @@
-name: xcm-testnet-build
+name: xcm-testnet
 
 # Controls when the action will run.
 on:
@@ -13,9 +13,7 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   prepare-execution-marix:
-
     name: Prepare execution matrix
 
     runs-on: [self-hosted-ci]
@@ -23,14 +21,13 @@ jobs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3.1.0
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
@@ -41,20 +38,19 @@ jobs:
         with:
           matrix: |
             network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmOpal}, runtime_features {opal-runtime}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmQuartz}, runtime_features {quartz-runtime}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmUnique}, runtime_features {unique-runtime}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runtime_features {quartz-runtime}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runtime_features {unique-runtime}
 
-  xcm-build:
-
+  xcm:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [XL]
 
     timeout-minutes: 600
 
-    name: ${{ matrix.network }}-build
+    name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -71,7 +67,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v3.1.0
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       # Prepare SHA
       - name: Prepare SHA
@@ -330,11 +326,20 @@ jobs:
           path: ${{ steps.bdk.outputs.composeProject }}
           retention-days: 2
 
-      - name: Run XCM tests
+      - name: Yarn install
         working-directory: tests
         run: |
           yarn install
           yarn add mochawesome
+
+      - name: Call HRMP initialization
+        working-directory: tests
+        run: |
+          yarn ts-node --esm src/util/createHrmp.ts ${{matrix.network}}
+
+      - name: Run XCM tests
+        working-directory: tests
+        run: |
           # Wanted by both wait_for_first_block
           export RPC_URL="${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
           ./scripts/wait_for_first_block.sh

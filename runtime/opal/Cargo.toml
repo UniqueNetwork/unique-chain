@@ -38,8 +38,10 @@ runtime-benchmarks = [
 	'pallet-app-promotion/runtime-benchmarks',
 	'pallet-balances/runtime-benchmarks',
 	'pallet-collator-selection/runtime-benchmarks',
+	'pallet-collective/runtime-benchmarks',
 	'pallet-common/runtime-benchmarks',
 	'pallet-configuration/runtime-benchmarks',
+	'pallet-democracy/runtime-benchmarks',
 	'pallet-ethereum/runtime-benchmarks',
 	'pallet-evm-coder-substrate/runtime-benchmarks',
 	'pallet-evm-migration/runtime-benchmarks',
@@ -48,29 +50,26 @@ runtime-benchmarks = [
 	'pallet-identity/runtime-benchmarks',
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
-	'pallet-nonfungible/runtime-benchmarks',
-	'pallet-democracy/runtime-benchmarks',
-	'pallet-collective/runtime-benchmarks',
-	'pallet-ranked-collective/runtime-benchmarks',
 	'pallet-membership/runtime-benchmarks',
+	'pallet-nonfungible/runtime-benchmarks',
+	'pallet-ranked-collective/runtime-benchmarks',
 	'pallet-referenda/runtime-benchmarks',
-	'pallet-scheduler/runtime-benchmarks',
 	'pallet-refungible/runtime-benchmarks',
+	'pallet-scheduler/runtime-benchmarks',
 	'pallet-structure/runtime-benchmarks',
 	'pallet-timestamp/runtime-benchmarks',
-	'pallet-utility/runtime-benchmarks',
-	'pallet-unique-scheduler-v2/runtime-benchmarks',
 	'pallet-unique/runtime-benchmarks',
+	'pallet-utility/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
-	'xcm-builder/runtime-benchmarks',
+	'staging-xcm-builder/runtime-benchmarks',
 ]
 std = [
-	'codec/std',
 	'cumulus-pallet-aura-ext/std',
 	'cumulus-pallet-parachain-system/std',
 	'cumulus-pallet-xcm/std',
 	'cumulus-pallet-xcmp-queue/std',
+	'cumulus-primitives-aura/std',
 	'cumulus-primitives-core/std',
 	'cumulus-primitives-utility/std',
 	'frame-executive/std',
@@ -80,13 +79,14 @@ std = [
 	'frame-try-runtime/std',
 	'pallet-aura/std',
 	'pallet-balances/std',
-	'pallet-democracy/std',
 	'pallet-collective/std',
-	'pallet-ranked-collective/std',
-	'pallet-membership/std',
-	'pallet-referenda/std',
+	'pallet-democracy/std',
 	'pallet-gov-origins/std',
+	'pallet-membership/std',
+	'pallet-ranked-collective/std',
+	'pallet-referenda/std',
 	'pallet-scheduler/std',
+	'parity-scale-codec/std',
 	# 'pallet-contracts/std',
 	# 'pallet-contracts-primitives/std',
 	# 'pallet-contracts-rpc-runtime-api/std',
@@ -121,12 +121,11 @@ std = [
 	'pallet-structure/std',
 	'pallet-sudo/std',
 	'pallet-timestamp/std',
-	'pallet-utility/std',
 	'pallet-transaction-payment-rpc-runtime-api/std',
 	'pallet-transaction-payment/std',
 	'pallet-treasury/std',
-	'pallet-unique-scheduler-v2/std',
 	'pallet-unique/std',
+	'pallet-utility/std',
 	'parachain-info/std',
 	'serde',
 	'sp-api/std',
@@ -138,16 +137,17 @@ std = [
 	'sp-runtime/std',
 	'sp-session/std',
 	'sp-std/std',
+	'sp-storage/std',
 	'sp-transaction-pool/std',
 	'sp-version/std',
+	'staging-xcm-builder/std',
+	'staging-xcm-executor/std',
+	'staging-xcm/std',
 	'up-common/std',
 	'up-data-structs/std',
 	'up-pov-estimate-rpc/std',
 	'up-rpc/std',
 	'up-sponsorship/std',
-	'xcm-builder/std',
-	'xcm-executor/std',
-	'xcm/std',
 
 	"orml-tokens/std",
 	"orml-traits/std",
@@ -187,8 +187,10 @@ try-runtime = [
 	'pallet-base-fee/try-runtime',
 	'pallet-charge-transaction/try-runtime',
 	'pallet-collective/try-runtime',
+	'pallet-collective/try-runtime',
 	'pallet-common/try-runtime',
 	'pallet-configuration/try-runtime',
+	'pallet-democracy/try-runtime',
 	'pallet-democracy/try-runtime',
 	'pallet-ethereum/try-runtime',
 	'pallet-evm-coder-substrate/try-runtime',
@@ -198,28 +200,25 @@ try-runtime = [
 	'pallet-evm/try-runtime',
 	'pallet-foreign-assets/try-runtime',
 	'pallet-fungible/try-runtime',
+	'pallet-gov-origins/try-runtime',
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
 	'pallet-membership/try-runtime',
-	'pallet-nonfungible/try-runtime',
-	'pallet-democracy/try-runtime',
-	'pallet-collective/try-runtime',
-	'pallet-ranked-collective/try-runtime',
 	'pallet-membership/try-runtime',
+	'pallet-nonfungible/try-runtime',
+	'pallet-ranked-collective/try-runtime',
 	'pallet-referenda/try-runtime',
-	'pallet-gov-origins/try-runtime',
-	'pallet-scheduler/try-runtime',
 	'pallet-refungible/try-runtime',
+	'pallet-scheduler/try-runtime',
 	'pallet-scheduler/try-runtime',
 	'pallet-structure/try-runtime',
 	'pallet-sudo/try-runtime',
 	'pallet-test-utils?/try-runtime',
 	'pallet-timestamp/try-runtime',
-	'pallet-utility/try-runtime',
 	'pallet-transaction-payment/try-runtime',
 	'pallet-treasury/try-runtime',
-	'pallet-unique-scheduler-v2/try-runtime',
 	'pallet-unique/try-runtime',
+	'pallet-utility/try-runtime',
 	'pallet-xcm/try-runtime',
 	'parachain-info/try-runtime',
 ]
@@ -227,25 +226,23 @@ try-runtime = [
 app-promotion = []
 collator-selection = []
 foreign-assets = []
-governance = []
 gov-test-timings = []
+governance = []
+lookahead = []
 preimage = []
 refungible = []
-unique-scheduler = []
 session-test-timings = []
 
 ################################################################################
 # local dependencies
 
 [dependencies]
-# Note: `package = "parity-scale-codec"` must be supplied since the `Encode` macro searches for it.
-codec = { workspace = true, package = "parity-scale-codec" }
-
 cumulus-pallet-aura-ext = { workspace = true }
 cumulus-pallet-dmp-queue = { workspace = true }
 cumulus-pallet-parachain-system = { workspace = true }
 cumulus-pallet-xcm = { workspace = true }
 cumulus-pallet-xcmp-queue = { workspace = true }
+cumulus-primitives-aura = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }
@@ -266,13 +263,14 @@ pallet-session = { workspace = true }
 pallet-state-trie-migration = { workspace = true }
 pallet-sudo = { workspace = true }
 pallet-timestamp = { workspace = true }
-pallet-utility = { workspace = true }
 pallet-transaction-payment = { workspace = true }
 pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
+pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
 parachain-info = { workspace = true }
-polkadot-parachain = { workspace = true }
+parity-scale-codec = { workspace = true }
+polkadot-parachain-primitives = { workspace = true }
 smallvec = { workspace = true }
 sp-api = { workspace = true }
 sp-arithmetic = { workspace = true }
@@ -285,11 +283,12 @@ sp-offchain = { workspace = true }
 sp-runtime = { workspace = true }
 sp-session = { workspace = true }
 sp-std = { workspace = true }
+sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
-xcm = { workspace = true }
-xcm-builder = { workspace = true }
-xcm-executor = { workspace = true }
+staging-xcm = { workspace = true }
+staging-xcm-builder = { workspace = true }
+staging-xcm-executor = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
 derivative = { workspace = true }
@@ -304,8 +303,10 @@ pallet-balances-adapter = { workspace = true }
 pallet-base-fee = { workspace = true }
 pallet-charge-transaction = { workspace = true }
 pallet-collator-selection = { workspace = true }
+pallet-collective = { workspace = true }
 pallet-common = { workspace = true }
 pallet-configuration = { workspace = true }
+pallet-democracy = { workspace = true }
 pallet-ethereum = { workspace = true }
 pallet-evm = { workspace = true }
 pallet-evm-coder-substrate = { workspace = true }
@@ -315,21 +316,18 @@ pallet-evm-precompile-simple = { workspace = true }
 pallet-evm-transaction-payment = { workspace = true }
 pallet-foreign-assets = { workspace = true }
 pallet-fungible = { workspace = true }
+pallet-gov-origins = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }
 pallet-maintenance = { workspace = true }
-pallet-nonfungible = { workspace = true }
-pallet-democracy = { workspace = true }
-pallet-collective = { workspace = true }
-pallet-ranked-collective = { workspace = true }
 pallet-membership = { workspace = true }
+pallet-nonfungible = { workspace = true }
+pallet-ranked-collective = { workspace = true }
 pallet-referenda = { workspace = true }
-pallet-gov-origins = { workspace = true }
-pallet-scheduler = { workspace = true }
 pallet-refungible = { workspace = true }
+pallet-scheduler = { workspace = true }
 pallet-structure = { workspace = true }
 pallet-unique = { workspace = true }
-pallet-unique-scheduler-v2 = { workspace = true }
 precompile-utils-macro = { workspace = true }
 scale-info = { workspace = true }
 up-common = { workspace = true }

@@ -62,7 +62,8 @@ const consensusPallets = [
 describe('Pallet presence', () => {
   before(async () => {
     await usingPlaygrounds(async helper => {
-      const chain = await helper.callRpc('api.rpc.system.chain', []);
+      const runtimeVersion = await helper.callRpc('api.rpc.state.getRuntimeVersion', []);
+      const chain = runtimeVersion.specName;
 
       const refungible = 'refungible';
       const foreignAssets = 'foreignassets';
@@ -82,7 +83,7 @@ describe('Pallet presence', () => {
       ];
       const testUtils = 'testutils';
 
-      if(chain.eq('OPAL by UNIQUE')) {
+      if(chain.eq('opal')) {
         requiredPallets.push(
           refungible,
           foreignAssets,
@@ -92,7 +93,7 @@ describe('Pallet presence', () => {
           ...preimage,
           ...governance,
         );
-      } else if(chain.eq('QUARTZ by UNIQUE') || chain.eq('SAPPHIRE by UNIQUE')) {
+      } else if(chain.eq('quartz') || chain.eq('sapphire')) {
         requiredPallets.push(
           refungible,
           appPromotion,
@@ -101,7 +102,7 @@ describe('Pallet presence', () => {
           ...preimage,
           ...governance,
         );
-      } else if(chain.eq('UNIQUE')) {
+      } else if(chain.eq('unique')) {
         // Insert Unique additional pallets here
         requiredPallets.push(
           refungible,

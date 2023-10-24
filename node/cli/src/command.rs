@@ -32,39 +32,25 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{
-	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
-	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, start_node, start_dev_node},
+use cumulus_primitives_core::ParaId;
+use log::info;
+use sc_cli::{
+	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
+	NetworkParams, Result, SharedParams, SubstrateCli,
 };
-#[cfg(feature = "runtime-benchmarks")]
-use crate::chain_spec::default_runtime;
-
-#[cfg(feature = "unique-runtime")]
-use crate::service::UniqueRuntimeExecutor;
+use sc_service::config::{BasePath, PrometheusConfig};
+use sp_runtime::traits::AccountIdConversion;
+use up_common::types::opaque::RuntimeId;
 
 #[cfg(feature = "quartz-runtime")]
 use crate::service::QuartzRuntimeExecutor;
-
-use crate::service::OpalRuntimeExecutor;
-
-#[cfg(feature = "runtime-benchmarks")]
-use crate::service::DefaultRuntimeExecutor;
-
-use codec::Encode;
-use cumulus_primitives_core::ParaId;
-use cumulus_client_cli::generate_genesis_block;
-use log::{debug, info};
-use sc_cli::{
-	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
-	NetworkParams, Result, RuntimeVersion, SharedParams, SubstrateCli,
+#[cfg(feature = "unique-runtime")]
+use crate::service::UniqueRuntimeExecutor;
+use crate::{
+	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
+	cli::{Cli, RelayChainCli, Subcommand},
+	service::{new_partial, start_dev_node, start_node, OpalRuntimeExecutor},
 };
-use sc_service::config::{BasePath, PrometheusConfig};
-use sp_core::hexdisplay::HexDisplay;
-use sp_runtime::traits::{AccountIdConversion, Block as BlockT};
-use std::{time::Duration};
-
-use up_common::types::opaque::{Block, RuntimeId};
 
 macro_rules! no_runtime_err {
 	($runtime_id:expr) => {
@@ -136,19 +122,6 @@ impl SubstrateCli for Cli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		load_spec(id)
 	}
-
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		match chain_spec.runtime_id() {
-			#[cfg(feature = "unique-runtime")]
-			RuntimeId::Unique => &unique_runtime::VERSION,
-
-			#[cfg(feature = "quartz-runtime")]
-			RuntimeId::Quartz => &quartz_runtime::VERSION,
-
-			RuntimeId::Opal => &opal_runtime::VERSION,
-			runtime_id => panic!("{}", no_runtime_err!(runtime_id)),
-		}
-	}
 }
 
 impl SubstrateCli for RelayChainCli {
@@ -186,24 +159,20 @@ impl SubstrateCli for RelayChainCli {
 	fn load_spec(&self, id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 		polkadot_cli::Cli::from_iter([RelayChainCli::executable_name()].iter()).load_spec(id)
 	}
-
-	fn native_runtime_version(chain_spec: &Box<dyn ChainSpec>) -> &'static RuntimeVersion {
-		polkadot_cli::Cli::native_runtime_version(chain_spec)
-	}
 }
 
 macro_rules! async_run_with_runtime {
 	(
-		$runtime_api:path, $executor:path,
+		$runtime:path, $runtime_api:path, $executor:path,
 		$runner:ident, $components:ident, $cli:ident, $cmd:ident, $config:ident,
 		$( $code:tt )*
 	) => {
 		$runner.async_run(|$config| {
 			let $components = new_partial::<
-				$runtime_api, $executor, _
+				$runtime, $runtime_api, $executor, _
 			>(
 				&$config,
-				crate::service::parachain_build_import_queue,
+				crate::service::parachain_build_import_queue::<$runtime, _, _>,
 			)?;
 			let task_manager = $components.task_manager;
 
@@ -219,18 +188,18 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => async_run_with_runtime!(
-				unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => async_run_with_runtime!(
-				quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => async_run_with_runtime!(
-				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -241,11 +210,18 @@ macro_rules! construct_async_run {
 
 macro_rules! sync_run_with_runtime {
 	(
-		$runtime_api:path, $executor:path,
+		$runtime:path, $runtime_api:path, $executor:path,
 		$runner:ident, $components:ident, $cli:ident, $cmd:ident, $config:ident,
 		$( $code:tt )*
 	) => {
 		$runner.sync_run(|$config| {
+			let $components = new_partial::<
+				$runtime, $runtime_api, $executor, _
+			>(
+				&$config,
+				crate::service::parachain_build_import_queue::<$runtime, _, _>,
+			)?;
+
 			$( $code )*
 		})
 	};
@@ -258,18 +234,18 @@ macro_rules! construct_sync_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => sync_run_with_runtime!(
-				unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => sync_run_with_runtime!(
-				quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => sync_run_with_runtime!(
-				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -363,12 +339,11 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::ExportGenesisState(cmd)) => {
 			construct_sync_run!(|components, cli, cmd, _config| {
 				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
-				let state_version = Cli::native_runtime_version(&spec).state_version();
-				cmd.run::<Block>(&*spec, state_version)
+				cmd.run(&*spec, &*components.client)
 			})
 		}
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
-			construct_sync_run!(|components, cli, cmd, _config| {
+			construct_sync_run!(|_components, cli, cmd, _config| {
 				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
 				cmd.run(&*spec)
 			})
@@ -376,26 +351,37 @@ pub fn run() -> Result<()> {
 		#[cfg(feature = "runtime-benchmarks")]
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
+			use polkadot_cli::Block;
+			use sp_io::SubstrateHostFunctions;
+
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, DefaultRuntimeExecutor>(config))
+					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						default_runtime::RuntimeApi,
-						DefaultRuntimeExecutor,
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
 						_,
-					>(&config, crate::service::parachain_build_import_queue)?;
+					>(
+						&config,
+						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+					)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
-						default_runtime::RuntimeApi,
-						DefaultRuntimeExecutor,
+						opal_runtime::Runtime,
+						opal_runtime::RuntimeApi,
+						OpalRuntimeExecutor,
 						_,
-					>(&config, crate::service::parachain_build_import_queue)?;
+					>(
+						&config,
+						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+					)?;
 					let db = partials.backend.expose_db();
 					let storage = partials.backend.expose_storage();
 
@@ -410,8 +396,12 @@ pub fn run() -> Result<()> {
 			}
 		}
 		#[cfg(feature = "try-runtime")]
+		// embedded try-runtime cli will be removed soon.
+		#[allow(deprecated)]
 		Some(Subcommand::TryRuntime(cmd)) => {
 			use std::{future::Future, pin::Pin};
+
+			use polkadot_cli::Block;
 			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 
@@ -425,7 +415,7 @@ pub fn run() -> Result<()> {
 				.map(|cfg| &cfg.registry);
 			let task_manager =
 				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-					.map_err(|e| format!("Error: {:?}", e))?;
+					.map_err(|e| format!("Error: {e:?}"))?;
 			let info_provider = Some(timestamp_with_aura_info(12000));
 
 			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
@@ -481,14 +471,12 @@ pub fn run() -> Result<()> {
 				if is_dev_service {
 					info!("Running Dev service");
 
-					let autoseal_interval = Duration::from_millis(cli.idle_autoseal_interval);
-
 					let mut config = config;
 
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, autoseal_interval).map_err(Into::into)
+						start_dev_node(config, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
 
@@ -510,12 +498,6 @@ pub fn run() -> Result<()> {
 						&para_id,
 					);
 
-				let state_version = Cli::native_runtime_version(&config.chain_spec).state_version();
-				let block: Block = generate_genesis_block(&*config.chain_spec, state_version)
-					.map_err(|e| format!("{e:?}"))?;
-				let genesis_state = format!("0x{:?}", HexDisplay::from(&block.header().encode()));
-				let genesis_hash = format!("0x{:?}", HexDisplay::from(&block.header().hash().0));
-
 				let polkadot_config = SubstrateCli::create_configuration(
 					&polkadot_cli,
 					&polkadot_cli,
@@ -525,9 +507,6 @@ pub fn run() -> Result<()> {
 
 				info!("Parachain id: {:?}", para_id);
 				info!("Parachain Account: {}", parachain_account);
-				info!("Parachain genesis state: {}", genesis_state);
-				info!("Parachain genesis hash: {}", genesis_hash);
-				debug!("Parachain genesis block: {:?}", block);
 				info!(
 					"Is collating: {}",
 					if config.role.is_authority() {

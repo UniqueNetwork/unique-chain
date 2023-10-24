@@ -1,4 +1,3 @@
-use crate::{Config, NativeFungibleHandle, Pallet, SelfWeightOf};
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*};
 use pallet_balances::WeightInfo;
 use pallet_common::{
@@ -10,8 +9,10 @@ use pallet_evm_coder_substrate::{
 	execution::{PreDispatch, Result},
 	frontier_contract, WithRecorder,
 };
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::{U256, Get};
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
+use sp_core::{Get, U256};
+
+use crate::{Config, NativeFungibleHandle, Pallet, SelfWeightOf};
 
 frontier_contract! {
 	macro_rules! NativeFungibleHandle_result {...}
@@ -25,7 +26,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 	}
 
 	fn approve(&mut self, _caller: Caller, _spender: Address, _amount: U256) -> Result<bool> {
-		Err("Approve not supported".into())
+		Err("approve not supported".into())
 	}
 
 	fn balance_of(&self, owner: Address) -> Result<U256> {
@@ -57,12 +58,8 @@ impl<T: Config> NativeFungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder()
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
-			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+		<Pallet<T>>::transfer(&caller, &to, amount).map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 
@@ -82,7 +79,7 @@ impl<T: Config> NativeFungibleHandle<T> {
 			.recorder()
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
+		<Pallet<T>>::transfer_from(&caller, &from, &to, amount, &budget)
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
@@ -105,12 +102,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder()
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
-			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+		<Pallet<T>>::transfer(&caller, &to, amount).map_err(|e| dispatch_to_evm::<T>(e.error))?;
 
 		Ok(true)
 	}
@@ -136,7 +129,7 @@ where
 			.recorder()
 			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
+		<Pallet<T>>::transfer_from(&caller, &from, &to, amount, &budget)
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 
 		Ok(true)

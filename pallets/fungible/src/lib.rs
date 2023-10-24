@@ -79,30 +79,26 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 
 use core::ops::Deref;
+
 use evm_coder::ToLog;
-use frame_support::{
-	ensure,
-	pallet_prelude::{DispatchResultWithPostInfo, Pays},
-	dispatch::PostDispatchInfo,
-};
-use pallet_evm::account::CrossAccountId;
-use up_data_structs::{
-	AccessMode, CollectionId, TokenId, CreateCollectionData, mapping::TokenAddressMapping,
-	budget::Budget, PropertyKey, Property,
-};
+use frame_support::{dispatch::PostDispatchInfo, ensure, pallet_prelude::*};
+pub use pallet::*;
 use pallet_common::{
-	Error as CommonError, Event as CommonEvent, Pallet as PalletCommon,
-	eth::collection_id_to_address, SelfWeightOf as PalletCommonWeightOf,
-	weights::WeightInfo as CommonWeightInfo, helpers::add_weight_to_post_info,
+	eth::collection_id_to_address, helpers::add_weight_to_post_info,
+	weights::WeightInfo as CommonWeightInfo, Error as CommonError, Event as CommonEvent,
+	Pallet as PalletCommon, SelfWeightOf as PalletCommonWeightOf,
 };
-use pallet_evm::Pallet as PalletEvm;
-use pallet_structure::Pallet as PalletStructure;
+use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
+use pallet_structure::Pallet as PalletStructure;
 use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use up_data_structs::{
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CreateCollectionData,
+	Property, PropertyKey, TokenId,
+};
 use weights::WeightInfo;
-pub use pallet::*;
 
 use crate::erc::ERC20Events;
 #[cfg(feature = "runtime-benchmarks")]
@@ -116,16 +112,17 @@ pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::{Blake2_128, Blake2_128Concat, Twox64Concat, pallet_prelude::*, storage::Key};
+	use frame_support::{
+		pallet_prelude::*, storage::Key, Blake2_128, Blake2_128Concat, Twox64Concat,
+	};
 	use up_data_structs::CollectionId;
+
 	use super::weights::WeightInfo;
 
 	#[pallet::error]
 	pub enum Error<T> {
 		/// Not Fungible item data used to mint in Fungible collection.
 		NotFungibleDataUsedToMintFungibleCollectionToken,
-		/// Fungible tokens hold no ID, and the default value of TokenId for Fungible collection is 0.
-		FungibleItemsHaveNoId,
 		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
 		/// Fungible token does not support nesting.
@@ -385,6 +382,21 @@ impl<T: Config> Pallet<T> {
 		amount: u128,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo {
+		let depositor = from;
+		Self::transfer_internal(collection, depositor, from, to, amount, nesting_budget)
+	}
+
+	/// Transfers tokens from the `from` account to the `to` account.
+	/// The `depositor` is the account who deposits the tokens.
+	/// For instance, the nesting rules will be checked against the `depositor`'s permissions.
+	fn transfer_internal(
+		collection: &FungibleHandle<T>,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResultWithPostInfo {
 		ensure!(
 			collection.limits.transfers_enabled(),
 			<CommonError<T>>::TransferNotAllowed,
@@ -417,7 +429,7 @@ impl<T: Config> Pallet<T> {
 			// from != to && amount != 0
 
 			<PalletStructure<T>>::nest_if_sent_to_token(
-				from.clone(),
+				depositor,
 				to,
 				collection.id,
 				TokenId::default(),
@@ -474,7 +486,7 @@ impl<T: Config> Pallet<T> {
 
 		for (to, _) in data.iter() {
 			<PalletStructure<T>>::check_nesting(
-				sender.clone(),
+				sender,
 				to,
 				collection.id,
 				TokenId::default(),
@@ -731,7 +743,8 @@ impl<T: Config> Pallet<T> {
 
 		// =========
 
-		let mut result = Self::transfer(collection, from, to, amount, nesting_budget);
+		let mut result =
+			Self::transfer_internal(collection, spender, from, to, amount, nesting_budget);
 		add_weight_to_post_info(&mut result, <SelfWeightOf<T>>::check_allowed_raw());
 		result?;
 

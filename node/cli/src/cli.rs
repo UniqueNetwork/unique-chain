@@ -14,9 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use crate::chain_spec;
 use std::path::PathBuf;
+
 use clap::Parser;
+
+use crate::chain_spec;
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -80,9 +82,19 @@ pub struct Cli {
 	/// an empty block will be sealed automatically
 	/// after the `--idle-autoseal-interval` milliseconds.
 	///
-	/// The default interval is 500 milliseconds
+	/// The default interval is 500 milliseconds.
 	#[structopt(default_value = "500", long)]
 	pub idle_autoseal_interval: u64,
+
+	/// Disable auto-sealing blocks on new transactions in the `--dev` mode.
+	#[structopt(long)]
+	pub disable_autoseal_on_tx: bool,
+
+	/// Finalization delay (in seconds) of auto-sealed blocks in the `--dev` mode.
+	///
+	/// Disabled by default.
+	#[structopt(long)]
+	pub autoseal_finalization_delay: Option<u64>,
 
 	/// Disable automatic hardware benchmarks.
 	///

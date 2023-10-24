@@ -14,36 +14,37 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use super::*;
-use crate::{Pallet as Maintenance, Config};
-
-use codec::Encode;
-use frame_benchmarking::benchmarks;
+use frame_benchmarking::v2::*;
+use frame_support::ensure;
 use frame_system::RawOrigin;
-use frame_support::{ensure, pallet_prelude::Weight, traits::StorePreimage};
+use sp_std::vec;
 
-benchmarks! {
-	enable {
-	}: _(RawOrigin::Root)
-	verify {
+use super::*;
+use crate::{Config, Pallet as Maintenance};
+
+#[benchmarks]
+mod benchmarks {
+	use super::*;
+
+	#[benchmark]
+	fn enable() -> Result<(), BenchmarkError> {
+		#[extrinsic_call]
+		_(RawOrigin::Root);
+
 		ensure!(<Enabled<T>>::get(), "didn't enable the MM");
+
+		Ok(())
 	}
 
-	disable {
+	#[benchmark]
+	fn disable() -> Result<(), BenchmarkError> {
 		Maintenance::<T>::enable(RawOrigin::Root.into())?;
-	}: _(RawOrigin::Root)
-	verify {
-		ensure!(!<Enabled<T>>::get(), "didn't disable the MM");
-	}
 
-	#[pov_mode = MaxEncodedLen {
-		// PoV size is deducted from weight_bound
-		Preimage::PreimageFor: Measured
-	}]
-	execute_preimage {
-		let call = <T as Config>::RuntimeCall::from(frame_system::Call::<T>::remark { remark: 1u32.encode() });
-		let hash = T::Preimages::note(call.encode().into())?;
-	}: _(RawOrigin::Root, hash, Weight::from_parts(100000000000, 100000000000))
-	verify {
+		#[extrinsic_call]
+		_(RawOrigin::Root);
+
+		ensure!(!<Enabled<T>>::get(), "didn't disable the MM");
+
+		Ok(())
 	}
 }

@@ -16,22 +16,21 @@
 
 use core::marker::PhantomData;
 
-use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight, traits::Get};
-use up_data_structs::{
-	TokenId, CollectionId, CreateItemExData, budget::Budget, CreateItemData, TokenOwnerError,
-};
+use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use pallet_common::{
-	CommonCollectionOperations, CommonWeightInfo, RefungibleExtensions, with_weight,
-	weights::WeightInfo as _, SelfWeightOf as PalletCommonWeightOf,
+	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
+	Error as CommonError, RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
 };
-use pallet_structure::Error as StructureError;
-use sp_runtime::ArithmeticError;
-use sp_std::{vec::Vec, vec};
-use up_data_structs::{Property, PropertyKey, PropertyValue, PropertyKeyPermission};
+use sp_runtime::{ArithmeticError, DispatchError};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{
+	budget::Budget, CollectionId, CreateItemData, CreateItemExData, Property, PropertyKey,
+	PropertyKeyPermission, PropertyValue, TokenId, TokenOwnerError,
+};
 
 use crate::{
-	Allowance, TotalSupply, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
-	weights::WeightInfo,
+	weights::WeightInfo, Allowance, Balance, Config, Error, FungibleHandle, Pallet, SelfWeightOf,
+	TotalSupply,
 };
 
 pub struct CommonWeights<T: Config>(PhantomData<T>);
@@ -58,16 +57,7 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 		<pallet_common::SelfWeightOf<T>>::set_collection_properties(amount)
 	}
 
-	fn delete_collection_properties(amount: u32) -> Weight {
-		<pallet_common::SelfWeightOf<T>>::delete_collection_properties(amount)
-	}
-
 	fn set_token_properties(_amount: u32) -> Weight {
-		// Error
-		Weight::zero()
-	}
-
-	fn delete_token_properties(_amount: u32) -> Weight {
 		// Error
 		Weight::zero()
 	}
@@ -78,7 +68,8 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 	}
 
 	fn transfer() -> Weight {
-		<SelfWeightOf<T>>::transfer_raw() + <PalletCommonWeightOf<T>>::check_accesslist() * 2
+		<SelfWeightOf<T>>::transfer_raw()
+			.saturating_add(<PalletCommonWeightOf<T>>::check_accesslist().saturating_mul(2))
 	}
 
 	fn approve() -> Weight {
@@ -91,26 +82,12 @@ impl<T: Config> CommonWeightInfo<T::CrossAccountId> for CommonWeights<T> {
 
 	fn transfer_from() -> Weight {
 		Self::transfer()
-			+ <SelfWeightOf<T>>::check_allowed_raw()
-			+ <SelfWeightOf<T>>::set_allowance_unchecked_raw()
+			.saturating_add(<SelfWeightOf<T>>::check_allowed_raw())
+			.saturating_add(<SelfWeightOf<T>>::set_allowance_unchecked_raw())
 	}
 
 	fn burn_from() -> Weight {
 		<SelfWeightOf<T>>::burn_from()
-	}
-
-	fn burn_recursively_self_raw() -> Weight {
-		// Read to get total balance
-		Self::burn_item() + T::DbWeight::get().reads(1)
-	}
-
-	fn burn_recursively_breadth_raw(_amount: u32) -> Weight {
-		// Fungible tokens can't have children
-		Weight::zero()
-	}
-
-	fn token_owner() -> Weight {
-		Weight::zero()
 	}
 
 	fn set_allowance_for_all() -> Weight {
@@ -192,32 +169,12 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
 			<Pallet<T>>::burn(self, &sender, amount),
 			<CommonWeights<T>>::burn_item(),
-		)
-	}
-
-	fn burn_item_recursively(
-		&self,
-		sender: T::CrossAccountId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		_breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		// Should not happen?
-		ensure!(
-			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
-		);
-		ensure!(self_budget.consume(), <StructureError<T>>::DepthLimit,);
-
-		with_weight(
-			<Pallet<T>>::burn(self, &sender, <Balance<T>>::get((self.id, &sender))),
-			<CommonWeights<T>>::burn_recursively_self_raw(),
 		)
 	}
 
@@ -231,7 +188,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		<Pallet<T>>::transfer(self, &from, &to, amount, nesting_budget)
@@ -246,7 +203,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
@@ -265,7 +222,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
@@ -285,7 +242,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		<Pallet<T>>::transfer_from(self, &sender, &from, &to, amount, nesting_budget)
@@ -301,7 +258,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	) -> DispatchResultWithPostInfo {
 		ensure!(
 			token == TokenId::default(),
-			<Error<T>>::FungibleItemsHaveNoId
+			<CommonError<T>>::FungibleItemsHaveNoId
 		);
 
 		with_weight(
@@ -364,9 +321,21 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		fail!(<Error<T>>::SettingPropertiesNotAllowed)
 	}
 
+	fn get_token_properties_raw(
+		&self,
+		_token_id: TokenId,
+	) -> Option<up_data_structs::TokenProperties> {
+		// No token properties are defined on fungibles
+		None
+	}
+
+	fn set_token_properties_raw(&self, _token_id: TokenId, _map: up_data_structs::TokenProperties) {
+		// No token properties are defined on fungibles
+	}
+
 	fn check_nesting(
 		&self,
-		_sender: <T>::CrossAccountId,
+		_sender: &<T>::CrossAccountId,
 		_from: (CollectionId, TokenId),
 		_under: TokenId,
 		_nesting_budget: &dyn Budget,
@@ -400,6 +369,15 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 
 	fn token_owner(&self, _token: TokenId) -> Result<T::CrossAccountId, TokenOwnerError> {
 		Err(TokenOwnerError::MultipleOwners)
+	}
+
+	fn check_token_indirect_owner(
+		&self,
+		_token: TokenId,
+		_maybe_owner: &T::CrossAccountId,
+		_nesting_budget: &dyn Budget,
+	) -> Result<bool, DispatchError> {
+		Ok(false)
 	}
 
 	/// Returns 10 tokens owners in no particular order.

@@ -17,30 +17,31 @@
 //! ERC-20 standart support implementation.
 
 extern crate alloc;
-use core::char::{REPLACEMENT_CHARACTER, decode_utf16};
-use core::convert::TryInto;
-use evm_coder::AbiCoder;
-use evm_coder::{abi::AbiType, ToLog, generate_stubgen, solidity_interface, types::*};
-use up_data_structs::CollectionMode;
-use pallet_common::{
-	CollectionHandle,
-	erc::{CommonEvmHandler, PrecompileResult, CollectionCall},
-	eth::CrossAddress,
-	CommonWeightInfo as _,
+use core::{
+	char::{decode_utf16, REPLACEMENT_CHARACTER},
+	convert::TryInto,
 };
-use sp_std::vec::Vec;
+
+use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, AbiCoder, ToLog};
+use pallet_common::{
+	erc::{CollectionCall, CommonEvmHandler, PrecompileResult},
+	eth::CrossAddress,
+	CollectionHandle, CommonWeightInfo as _,
+};
 use pallet_evm::{account::CrossAccountId, PrecompileHandle};
 use pallet_evm_coder_substrate::{
 	call, dispatch_to_evm,
 	execution::{PreDispatch, Result},
-	frontier_contract,
+	frontier_contract, SubstrateRecorder,
 };
-use pallet_structure::{SelfWeightOf as StructureWeight, weights::WeightInfo as _};
-use sp_core::{U256, Get};
+use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
+use sp_core::{Get, U256};
+use sp_std::vec::Vec;
+use up_data_structs::{budget::Budget, CollectionMode};
 
 use crate::{
-	Allowance, Balance, Config, FungibleHandle, Pallet, TotalSupply, SelfWeightOf,
-	weights::WeightInfo, common::CommonWeights,
+	common::CommonWeights, weights::WeightInfo, Allowance, Balance, Config, FungibleHandle, Pallet,
+	SelfWeightOf, TotalSupply,
 };
 
 frontier_contract! {
@@ -70,6 +71,10 @@ pub enum ERC20Events {
 pub struct AmountForAddress {
 	to: Address,
 	amount: U256,
+}
+
+fn nesting_budget<T: Config>(recorder: &SubstrateRecorder<T>) -> impl Budget + '_ {
+	recorder.weight_calls_budget(<StructureWeight<T>>::find_parent())
 }
 
 #[solidity_interface(name = ERC20, events(ERC20Events), enum(derive(PreDispatch)), enum_attr(weight), expect_selector = 0x942e8b22)]
@@ -105,11 +110,8 @@ impl<T: Config> FungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget)
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &nesting_budget(&self.recorder))
 			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
@@ -126,12 +128,16 @@ impl<T: Config> FungibleHandle<T> {
 		let from = T::CrossAccountId::from_eth(from);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
-			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 	#[weight(<SelfWeightOf<T>>::approve())]
@@ -163,10 +169,8 @@ impl<T: Config> FungibleHandle<T> {
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = T::CrossAccountId::from_eth(to);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		<Pallet<T>>::create_item(self, &caller, (to, amount), &budget)
+
+		<Pallet<T>>::create_item(self, &caller, (to, amount), &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -200,10 +204,8 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
-		<Pallet<T>>::create_item(self, &caller, (to, amount), &budget)
+
+		<Pallet<T>>::create_item(self, &caller, (to, amount), &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -235,12 +237,15 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = T::CrossAccountId::from_eth(from);
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(
+			self,
+			&caller,
+			&from,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -259,12 +264,15 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let from = from.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::burn_from(self, &caller, &from, amount, &budget)
-			.map_err(dispatch_to_evm::<T>)?;
+		<Pallet<T>>::burn_from(
+			self,
+			&caller,
+			&from,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
 
@@ -273,9 +281,6 @@ where
 	#[weight(<SelfWeightOf<T>>::create_multiple_items_ex(amounts.len() as u32))]
 	fn mint_bulk(&mut self, caller: Caller, amounts: Vec<AmountForAddress>) -> Result<bool> {
 		let caller = T::CrossAccountId::from_eth(caller);
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 		let amounts = amounts
 			.into_iter()
 			.map(|AmountForAddress { to, amount }| {
@@ -286,7 +291,7 @@ where
 			})
 			.collect::<Result<_>>()?;
 
-		<Pallet<T>>::create_multiple_items(self, &caller, amounts, &budget)
+		<Pallet<T>>::create_multiple_items(self, &caller, amounts, &nesting_budget(&self.recorder))
 			.map_err(dispatch_to_evm::<T>)?;
 		Ok(true)
 	}
@@ -296,11 +301,9 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer(self, &caller, &to, amount, &budget).map_err(|_| "transfer error")?;
+		<Pallet<T>>::transfer(self, &caller, &to, amount, &nesting_budget(&self.recorder))
+			.map_err(|_| "transfer error")?;
 		Ok(true)
 	}
 
@@ -316,12 +319,16 @@ where
 		let from = from.into_sub_cross_account::<T>()?;
 		let to = to.into_sub_cross_account::<T>()?;
 		let amount = amount.try_into().map_err(|_| "amount overflow")?;
-		let budget = self
-			.recorder
-			.weight_calls_budget(<StructureWeight<T>>::find_parent());
 
-		<Pallet<T>>::transfer_from(self, &caller, &from, &to, amount, &budget)
-			.map_err(|e| dispatch_to_evm::<T>(e.error))?;
+		<Pallet<T>>::transfer_from(
+			self,
+			&caller,
+			&from,
+			&to,
+			amount,
+			&nesting_budget(&self.recorder),
+		)
+		.map_err(|e| dispatch_to_evm::<T>(e.error))?;
 		Ok(true)
 	}
 

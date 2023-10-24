@@ -2,6 +2,7 @@ import {IKeyringPair} from '@polkadot/types/types';
 import {xxhashAsHex} from '@polkadot/util-crypto';
 import {usingPlaygrounds, expect} from '../util';
 import {UniqueHelper} from '../util/playgrounds/unique';
+import {DevUniqueHelper} from '../util/playgrounds/unique.dev';
 
 export const democracyLaunchPeriod = 35;
 export const democracyVotingPeriod = 35;
@@ -203,7 +204,7 @@ export async function hardResetGovScheduler(sudoer: IKeyringPair) {
   });
 }
 
-export async function voteUnanimouslyInFellowship(helper: UniqueHelper, fellows: IKeyringPair[][], minRank: number, referendumIndex: number) {
+export async function voteUnanimouslyInFellowship(helper: DevUniqueHelper, fellows: IKeyringPair[][], minRank: number, referendumIndex: number) {
   for(let rank = minRank; rank < fellowshipRankLimit; rank++) {
     for(const member of fellows[rank]) {
       await helper.fellowship.collective.vote(member, referendumIndex, true);

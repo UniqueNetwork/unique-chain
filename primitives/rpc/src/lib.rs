@@ -18,14 +18,13 @@
 
 extern crate alloc;
 
-use up_data_structs::{
-	CollectionId, TokenId, RawEncoded, RpcCollection, CollectionStats, CollectionLimits, Property,
-	PropertyKeyPermission, TokenData, TokenChild, TokenDataVersion1,
-};
-
-use sp_std::vec::Vec;
-use codec::Decode;
+use parity_scale_codec::Decode;
 use sp_runtime::DispatchError;
+use sp_std::vec::Vec;
+use up_data_structs::{
+	CollectionId, CollectionLimits, CollectionStats, Property, PropertyKeyPermission,
+	RpcCollection, TokenChild, TokenData, TokenId,
+};
 
 type Result<T> = core::result::Result<T, DispatchError>;
 
@@ -82,7 +81,7 @@ sp_api::decl_runtime_apis! {
 			collection: CollectionId,
 			token_id: TokenId,
 			keys: Option<Vec<Vec<u8>>>
-		) -> Result<TokenDataVersion1<CrossAccountId>>;
+		) -> Result<up_data_structs::TokenDataVersion1<CrossAccountId>>;
 
 		/// Total number of tokens in collection.
 		fn total_supply(collection: CollectionId) -> Result<u32>;
@@ -117,7 +116,7 @@ sp_api::decl_runtime_apis! {
 		fn collection_by_id(collection: CollectionId) -> Result<Option<RpcCollection<AccountId>>>;
 
 		#[changed_in(3)]
-		fn collection_by_id(collection: CollectionId) -> Result<Option<RawEncoded>>;
+		fn collection_by_id(collection: CollectionId) -> Result<Option<up_data_structs::RawEncoded>>;
 
 		/// Get collection stats.
 		fn collection_stats() -> Result<CollectionStats>;

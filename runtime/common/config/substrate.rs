@@ -15,31 +15,32 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
-	traits::{Everything, ConstU32, NeverEnsureOrigin},
+	dispatch::DispatchClass,
+	ord_parameter_types, parameter_types,
+	traits::{ConstBool, ConstU32, Everything, NeverEnsureOrigin},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
 	},
-	dispatch::DispatchClass,
-	parameter_types, ord_parameter_types, PalletId,
+	PalletId,
 };
-use sp_runtime::{
-	generic,
-	traits::{BlakeTwo256, AccountIdLookup},
-	Perbill, Permill, Percent,
-};
-use sp_arithmetic::traits::One;
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureSignedBy,
 };
-use pallet_transaction_payment::{Multiplier, ConstFeeMultiplier};
-use crate::{
-	runtime_common::DealWithFees, Runtime, RuntimeEvent, RuntimeCall, RuntimeOrigin, OriginCaller,
-	PalletInfo, System, Balances, SS58Prefix, Version,
+use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
+use sp_arithmetic::traits::One;
+use sp_runtime::{
+	traits::{AccountIdLookup, BlakeTwo256},
+	Perbill, Percent, Permill,
 };
-use up_common::{types::*, constants::*};
 use sp_std::vec;
+use up_common::{constants::*, types::*};
+
+use crate::{
+	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
+	RuntimeEvent, RuntimeHoldReason, RuntimeOrigin, SS58Prefix, System, Version,
+};
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
@@ -76,10 +77,10 @@ impl frame_system::Config for Runtime {
 	type BaseCallFilter = Everything;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
+	/// The block type.
+	type Block = Block;
 	/// The maximum length of a block (in bytes).
 	type BlockLength = RuntimeBlockLength;
-	/// The index type for blocks.
-	type BlockNumber = BlockNumber;
 	/// The weight of the overhead invoked on the block import process, independent of the extrinsics included in that block.
 	type BlockWeights = RuntimeBlockWeights;
 	/// The aggregated dispatch type that is available for extrinsics.
@@ -92,10 +93,8 @@ impl frame_system::Config for Runtime {
 	type Hash = Hash;
 	/// The hashing algorithm used.
 	type Hashing = BlakeTwo256;
-	/// The header type.
-	type Header = generic::Header<BlockNumber, BlakeTwo256>;
 	/// The index type for storing how many extrinsics an account has signed.
-	type Index = Index;
+	type Nonce = Nonce;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
 	/// What to do if an account is fully reaped from the system.
@@ -171,7 +170,7 @@ impl pallet_balances::Config for Runtime {
 	type ExistentialDeposit = ExistentialDeposit;
 	type AccountStore = System;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
-	type HoldIdentifier = [u8; 16];
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type FreezeIdentifier = [u8; 16];
 	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
@@ -247,6 +246,7 @@ impl pallet_aura::Config for Runtime {
 	type AuthorityId = AuraId;
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
+	type AllowMultipleBlocksPerSlot = ConstBool<true>;
 }
 
 impl pallet_utility::Config for Runtime {

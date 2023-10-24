@@ -53,29 +53,27 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use pallet_common::CommonCollectionOperations;
-use pallet_common::{erc::CrossAccountId, eth::is_collection};
+use frame_support::{dispatch::DispatchResult, fail, pallet_prelude::*};
+use pallet_common::{
+	dispatch::CollectionDispatch, erc::CrossAccountId, eth::is_collection,
+	CommonCollectionOperations,
+};
 use sp_std::collections::btree_set::BTreeSet;
-
-use frame_support::dispatch::{DispatchError, DispatchResult, DispatchResultWithPostInfo};
-use frame_support::fail;
-pub use pallet::*;
-use pallet_common::{dispatch::CollectionDispatch};
 use up_data_structs::{
-	CollectionId, TokenId, mapping::TokenAddressMapping, budget::Budget, TokenOwnerError,
+	budget::Budget, mapping::TokenAddressMapping, CollectionId, TokenId, TokenOwnerError,
 };
 
 #[cfg(feature = "runtime-benchmarks")]
 pub mod benchmarking;
 pub mod weights;
 
+pub use pallet::*;
+
 pub type SelfWeightOf<T> = <T as crate::Config>::WeightInfo;
 
 #[frame_support::pallet]
 pub mod pallet {
-	use frame_support::Parameter;
-	use frame_support::dispatch::{GetDispatchInfo, UnfilteredDispatchable};
-	use frame_support::pallet_prelude::*;
+	use frame_support::{dispatch::GetDispatchInfo, traits::UnfilteredDispatchable, Parameter};
 
 	use super::*;
 
@@ -267,22 +265,6 @@ impl<T: Config> Pallet<T> {
 		Err(<Error<T>>::DepthLimit.into())
 	}
 
-	/// Burn token and all of it's nested tokens
-	///
-	/// - `self_budget`: Limit for searching children in depth.
-	/// - `breadth_budget`: Limit of breadth of searching children.
-	pub fn burn_item_recursively(
-		from: T::CrossAccountId,
-		collection: CollectionId,
-		token: TokenId,
-		self_budget: &dyn Budget,
-		breadth_budget: &dyn Budget,
-	) -> DispatchResultWithPostInfo {
-		let dispatch = T::CollectionDispatch::dispatch(collection)?;
-		let dispatch = dispatch.as_dyn();
-		dispatch.burn_item_recursively(from, token, self_budget, breadth_budget)
-	}
-
 	/// Check if `token` indirectly owned by `user`
 	///
 	/// Returns `true` if `user` is `token`'s owner. Or If token is provided as `user` then
@@ -318,7 +300,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// - `nesting_budget`: Limit for searching parents in depth.
 	pub fn check_nesting(
-		from: T::CrossAccountId,
+		from: &T::CrossAccountId,
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,
@@ -335,7 +317,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// - `nesting_budget`: Limit for searching parents in depth.
 	pub fn nest_if_sent_to_token(
-		from: T::CrossAccountId,
+		from: &T::CrossAccountId,
 		under: &T::CrossAccountId,
 		collection_id: CollectionId,
 		token_id: TokenId,

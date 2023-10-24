@@ -17,15 +17,16 @@
 //! The module contains a number of functions for converting and checking ethereum identifiers.
 
 use alloc::format;
-use sp_std::{vec, vec::Vec};
+
 use evm_coder::{
-	AbiCoder,
 	types::{Address, String},
+	AbiCoder,
 };
-pub use pallet_evm::{Config, account::CrossAccountId};
-use sp_core::{H160, U256};
-use up_data_structs::{CollectionId, CollectionFlags};
+pub use pallet_evm::{account::CrossAccountId, Config};
 use pallet_evm_coder_substrate::execution::Error;
+use sp_core::{H160, U256};
+use sp_std::{vec, vec::Vec};
+use up_data_structs::{CollectionFlags, CollectionId};
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
 // TODO: Unhardcode prefix
@@ -119,7 +120,7 @@ impl CrossAddress {
 		} else if self.sub == Default::default() {
 			Ok(Some(T::CrossAccountId::from_eth(self.eth)))
 		} else {
-			Err(format!("All fields of cross account is non zeroed {:?}", self).into())
+			Err(format!("All fields of cross account is non zeroed {self:?}").into())
 		}
 	}
 

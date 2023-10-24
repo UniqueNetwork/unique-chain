@@ -16,10 +16,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Utils.  If not, see <http://www.gnu.org/licenses/>.
 
-use sp_std::borrow::ToOwned;
 use fp_evm::{Context, ExitRevert, PrecompileFailure};
 use sp_core::U256;
-use sp_std::marker::PhantomData;
+use sp_std::{borrow::ToOwned, marker::PhantomData};
 
 mod data;
 
