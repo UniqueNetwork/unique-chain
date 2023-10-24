@@ -1278,9 +1278,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   });
 
   itSub('Should connect and send UNQ to Moonbeam', async ({helper}) => {
-    const currencyId = {
-      NativeAssetId: 'Here',
-    };
+    const currencyId = 0;
     const dest = {
       V2: {
         parents: 1,

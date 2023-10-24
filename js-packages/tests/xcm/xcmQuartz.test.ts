@@ -1020,9 +1020,7 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   });
 
   itSub('Should connect and send QTZ to Moonriver', async ({helper}) => {
-    const currencyId = {
-      NativeAssetId: 'Here',
-    };
+    const currencyId = 0;
     const dest = {
       V2: {
         parents: 1,
