@@ -29,7 +29,7 @@ use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use sp_runtime::traits::AccountIdConversion;
-use sp_std::{vec, vec::Vec};
+use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{
 	opaque::latest::{prelude::XcmError, Weight},
 	v3::{prelude::*, MultiAsset, XcmContext},
@@ -98,7 +98,7 @@ pub mod module {
 		/// The foreign asset registered.
 		ForeignAssetRegistered {
 			asset_id: CollectionId,
-			reserve_location: MultiLocation,
+			reserve_location: Box<MultiLocation>,
 		},
 	}
 
@@ -135,14 +135,14 @@ pub mod module {
 		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
 		pub fn force_register_foreign_asset(
 			origin: OriginFor<T>,
-			reserve_location: MultiLocation,
+			reserve_location: Box<MultiLocation>,
 			name: CollectionName,
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
 			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
-			if <ForeignReserveLocationToCollection<T>>::contains_key(reserve_location) {
+			if <ForeignReserveLocationToCollection<T>>::contains_key(*reserve_location) {
 				return Err(<Error<T>>::ForeignAssetAlreadyRegistered.into());
 			}
 
@@ -190,8 +190,8 @@ pub mod module {
 				},
 			)?;
 
-			<ForeignReserveLocationToCollection<T>>::insert(reserve_location, collection_id);
-			<CollectionToForeignReserveLocation<T>>::insert(collection_id, reserve_location);
+			<ForeignReserveLocationToCollection<T>>::insert(*reserve_location, collection_id);
+			<CollectionToForeignReserveLocation<T>>::insert(collection_id, *reserve_location);
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 				asset_id: collection_id,
