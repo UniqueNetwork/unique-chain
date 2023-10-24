@@ -131,7 +131,8 @@
     "polkadot-types-from-chain": "ts-node --esm ./node_modules/.bin/polkadot-types-from-chain --endpoint src/interfaces/metadata.json --output src/interfaces/ --package .",
     "polkadot-types": "echo \"export default {}\" > src/interfaces/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain",
     "generateEnv": "ts-node --esm ./src/generateEnv.ts",
-    "propose-upgrade": "ts-node --esm ./src/proposeupgrade.ts"
+    "propose-upgrade": "ts-node --esm ./src/proposeupgrade.ts",
+    "propose-fast-track": "ts-node --esm ./src/proposefasttrack.ts"
   },
   "author": "",
   "license": "SEE LICENSE IN ../LICENSE",

@@ -18,20 +18,30 @@ async function main() {
   const councilMembers = (await api.query.council.members()).toJSON() as any[];
   const councilProposalThreshold = Math.floor(councilMembers.length / 2) + 1;
 
+  const democracyProposalContent = api.tx.utility.batchAll([
+    authorizeUpgrade.method.toHex(),
+    enableMaintenance.method.toHex(),
+  ]).method.toHex();
+
+  const democracyProposalHash = blake2AsHex(democracyProposalContent, 256);
+  const democracyProposalPreimage = api.tx.preimage.notePreimage(democracyProposalContent).method.toHex();
+
   const democracyProposal = api.tx.democracy.externalProposeDefault({
-    Inline: api.tx.utility.batchAll([
-      authorizeUpgrade.method.toHex(),
-      enableMaintenance.method.toHex(),
-    ]).method.toHex(),
+    Legacy: democracyProposalHash,
   });
 
   const councilProposal = api.tx.council.propose(
     councilProposalThreshold,
     democracyProposal,
     democracyProposal.method.encodedLength,
-  );
+  ).method.toHex();
 
-  const encodedCall = councilProposal.method.toHex();
+  const proposeUpgradeBatch = api.tx.utility.batchAll([
+    democracyProposalPreimage,
+    councilProposal,
+  ]);
+
+  const encodedCall = proposeUpgradeBatch.method.toHex();
 
   console.log('-----------------');
   console.log('Upgrade Proposal: ', `https://polkadot.js.org/apps/?rpc=${networkUrl}#/extrinsics/decode/${encodedCall}`);
