@@ -111,19 +111,21 @@ impl BlockNumberProvider for OnInitializeBlockNumberProvider {
 	type BlockNumber = BlockNumber;
 
 	fn current_block_number() -> Self::BlockNumber {
-		use hex_literal::hex;
-		use parity_scale_codec::Decode;
-		use sp_io::storage;
-		// TODO: Replace with the following code after https://github.com/paritytech/polkadot-sdk/commit/3ea497b5a0fdda252f9c5a3c257cfaf8685f02fd lands
-		// <cumulus_pallet_parachain_system::Pallet<Runtime>>::last_relay_block_number()
-
-		// ParachainSystem.LastRelayChainBlockNumber
-		let Some(encoded) = storage::get(&hex!("45323df7cc47150b3930e2666b0aa313a2bca190d36bd834cc73a38fc213ecbd")) else {
-			// First parachain block
-			return Default::default()
-		};
-		BlockNumber::decode(&mut encoded.as_ref())
-			.expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
+		// This code was broken previously, but after fixing, we decided it would be better to leave it broken for now.
+		0.into()
+		// use hex_literal::hex;
+		// use parity_scale_codec::Decode;
+		// use sp_io::storage;
+		// // TODO: Replace with the following code after https://github.com/paritytech/polkadot-sdk/commit/3ea497b5a0fdda252f9c5a3c257cfaf8685f02fd lands
+		// // <cumulus_pallet_parachain_system::Pallet<Runtime>>::last_relay_block_number()
+		//
+		// // ParachainSystem.LastRelayChainBlockNumber
+		// let Some(encoded) = storage::get(&hex!("45323df7cc47150b3930e2666b0aa313a2bca190d36bd834cc73a38fc213ecbd")) else {
+		// 	// First parachain block
+		// 	return Default::default()
+		// };
+		// BlockNumber::decode(&mut encoded.as_ref())
+		// 	.expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
 	}
 }
 
