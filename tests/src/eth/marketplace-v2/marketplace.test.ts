@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import type Web3 from 'web3/types/index.js';
+import Web3 from 'web3';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
 import {SponsoringMode, itEth, usingEthPlaygrounds} from '../util/index.js';

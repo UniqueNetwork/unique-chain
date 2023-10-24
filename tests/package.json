@@ -4,8 +4,8 @@
   "description": "Unique Chain Tests",
   "main": "",
   "devDependencies": {
-    "@polkadot/dev": "^0.73.2",
     "@polkadot/typegen": "10.10.1",
+    "@tsconfig/strictest": "^2.0.2",
     "@types/chai": "^4.3.3",
     "@types/chai-as-promised": "^7.1.5",
     "@types/chai-like": "^1.1.1",
@@ -153,7 +153,9 @@
     "csv-writer": "^1.6.0",
     "find-process": "^1.4.7",
     "lossless-json": "^2.0.9",
+    "n": "^9.2.0",
     "solc": "0.8.20",
+    "tls": "^0.0.1",
     "typechain": "^8.2.0",
     "web3": "1.10.0"
   },

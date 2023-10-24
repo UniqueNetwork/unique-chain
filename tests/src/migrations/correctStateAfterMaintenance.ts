@@ -1,7 +1,6 @@
 import config from '../config.js';
 import {usingPlaygrounds} from '../util/index.js';
-
-
+import type {u32} from '@polkadot/types-codec';
 
 const WS_ENDPOINT = config.substrateUrl;
 const DONOR_SEED = '//Alice';
@@ -20,11 +19,11 @@ export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const pendingBlocks = (
       await api.query.appPromotion.pendingUnstake.entries()
     ).map(([k, _v]) =>
-      k.args[0]);
+      (k.args[0] as u32).toNumber());
 
-    const currentBlock = await api.query.system.number();
+    const currentBlock = (await api.query.system.number() as u32).toNumber();
 
-    const filteredBlocks = pendingBlocks.filter((b) => currentBlock.gt(b));
+    const filteredBlocks = pendingBlocks.filter(b => currentBlock > b);
 
     if(filteredBlocks.length != 0) {
       console.log(`During maintenance mode, ${filteredBlocks.length} block(s) were not processed. Number(s): ${filteredBlocks}`);
@@ -45,12 +44,12 @@ export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
 
     await Promise.allSettled(promises.map((p) => p()));
 
-    const failedBlocks: bigint[] = [];
+    const failedBlocks: number[] = [];
     let isSuccess = true;
 
     for(const b of filteredBlocks) {
       if(((await api.query.appPromotion.pendingUnstake(b)).toJSON() as any[]).length != 0) {
-        failedBlocks.push(b.toBigInt());
+        failedBlocks.push(b);
         isSuccess = false;
       }
     }

@@ -1,5 +1,5 @@
 {
-	"extends": "@polkadot/dev/config/tsconfig.json",
+	"extends": "./tsconfig.base.json",
 	"compilerOptions": {
 		"composite": false,
 		"resolveJsonModule": true,
@@ -15,6 +15,7 @@
 			"@polkadot/api-base/types/calls": ["./node_modules/@polkadot/api-base/types/calls.d.ts", "./src/interfaces/augment-api-runtime.ts"],
 			"@polkadot/api-base/types/submittable": ["./node_modules/@polkadot/api-base/types/submittable.d.ts", "./src/interfaces/augment-api-tx.ts"],
 			"@polkadot/types/types/registry": ["./node_modules/@polkadot/types/types/registry.d.ts", "./src/interfaces/augment-types.ts"],
+			"@polkadot/types/lookup": ["./src/interfaces/types-lookup.ts"],
 		  }
 	},
 	"include": ["./src/**/*", "./src/interfaces/*.ts"],
