@@ -9,7 +9,7 @@ import * as defs from '../../interfaces/definitions';
 import {IKeyringPair} from '@polkadot/types/types';
 import {EventRecord} from '@polkadot/types/interfaces';
 import {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types';
-import {FrameSystemEventRecord, XcmV2TraitsError, XcmV3TraitsOutcome} from '@polkadot/types/lookup';
+import {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
 import {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {Pallets} from '..';
 import {spawnSync} from 'child_process';
@@ -257,13 +257,13 @@ export class Event {
 
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
-      outcome: eventData<XcmV2TraitsError>(data, 1),
+      outcome: eventData<StagingXcmV2TraitsError>(data, 2),
     }));
   };
 
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<XcmV3TraitsOutcome>(data, 1),
+      outcome: eventData<StagingXcmV3TraitsOutcome>(data, 2),
     }));
   };
 }
@@ -1306,7 +1306,7 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<T | null>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
-        const blockNumber = header.number.toHuman();
+        const blockNumber = header.number.toJSON();
         const blockHash = header.hash;
         const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
         const waitLimitStr = `wait blocks remaining: ${maxBlocksToWait}`;

@@ -11,8 +11,8 @@ local relay = {
 	spec: {Genesis:{
 		chain: relay_spec,
 		modify:: m.genericRelay($, hrmp = [
-			[$.parachains.opal.paraId, $.parachains.westmint.paraId, 8, 512],
-			[$.parachains.westmint.paraId, $.parachains.opal.paraId, 8, 512],
+			// [$.parachains.opal.paraId, $.parachains.westmint.paraId, 8, 512],
+			// [$.parachains.westmint.paraId, $.parachains.opal.paraId, 8, 512],
 		]),
 	}},
 	nodes: {
