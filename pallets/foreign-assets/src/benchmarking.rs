@@ -39,7 +39,7 @@ mod benchmarks {
 		let mode = ForeignCollectionMode::NFT;
 
 		#[extrinsic_call]
-		_(RawOrigin::Root, location, name, token_prefix, mode);
+		_(RawOrigin::Root, Box::new(location), name, token_prefix, mode);
 
 		Ok(())
 	}
