@@ -15,12 +15,12 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{parameter_types, PalletId};
-use sp_arithmetic::Perbill;
 use up_common::{
 	constants::{DAYS, RELAY_DAYS, UNIQUE},
 	types::Balance,
 };
 
+use super::AppPromotionDailyRate;
 use crate::{
 	runtime_common::config::pallets::{RelayChainBlockNumberProvider, TreasuryAccountId},
 	Balances, BlockNumber, EvmContractHelpers, Maintenance, Runtime, RuntimeEvent, Unique,
@@ -32,7 +32,6 @@ parameter_types! {
 	pub const PendingInterval: BlockNumber = 7 * DAYS;
 	pub const Nominal: Balance = UNIQUE;
 	pub const HoldAndFreezeIdentifier: [u8; 16] = *b"appstakeappstake";
-	pub IntervalIncome: Perbill = Perbill::from_rational(5u32, 10_000);
 	pub MaintenanceMode: bool =  Maintenance::is_enabled();
 }
 
@@ -47,7 +46,7 @@ impl pallet_app_promotion::Config for Runtime {
 	type RecalculationInterval = RecalculationInterval;
 	type PendingInterval = PendingInterval;
 	type Nominal = Nominal;
-	type IntervalIncome = IntervalIncome;
+	type IntervalIncome = AppPromotionDailyRate;
 	type RuntimeEvent = RuntimeEvent;
 	type FreezeIdentifier = HoldAndFreezeIdentifier;
 	type IsMaintenanceModeEnabled = MaintenanceMode;

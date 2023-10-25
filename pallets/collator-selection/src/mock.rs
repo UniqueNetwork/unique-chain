@@ -208,7 +208,7 @@ parameter_types! {
 	pub const DefaultWeightToFeeCoefficient: u64 = 100_000;
 	pub const DefaultMinGasPrice: u64 = 100_000;
 	pub const MaxXcmAllowedLocations: u32 = 16;
-	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(453_256u64, 1_000_000_000u64);
 	pub const DayRelayBlocks: u32 = 1;
 	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
 }
