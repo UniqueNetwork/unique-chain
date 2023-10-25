@@ -1156,13 +1156,6 @@ impl<T: Config> Pallet<T> {
 			debug_assert!(credit.peek().is_zero())
 		}
 
-		Self::init_collection_internal(owner, data)
-	}
-
-	fn init_collection_internal(
-		owner: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
 		{
 			ensure!(
 				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
