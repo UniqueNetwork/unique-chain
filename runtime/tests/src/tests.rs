@@ -2357,7 +2357,8 @@ fn create_max_collections() {
 #[test]
 fn total_number_collections_bound_neg() {
 	new_test_ext().execute_with(|| {
-		let origin1 = RuntimeOrigin::signed(1);
+		let user = 1;
+		let origin1 = RuntimeOrigin::signed(user);
 
 		for i in 1..=COLLECTION_NUMBER_LIMIT {
 			create_test_collection(&CollectionMode::NFT, CollectionId(i));
@@ -2376,6 +2377,7 @@ fn total_number_collections_bound_neg() {
 		};
 
 		// 11-th collection in chain. Expects error
+		add_balance(user, CollectionCreationPrice::get() as u64 + 1);
 		assert_noop!(
 			Unique::create_collection_ex(origin1, data),
 			CommonError::<Test>::TotalCollectionsLimitExceeded
