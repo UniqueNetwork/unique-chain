@@ -396,10 +396,6 @@ impl<T: Config> Pallet<T> {
 		let token_id = Self::asset_instance_to_token_id(collection_id, asset_instance)?
 			.ok_or(XcmError::AssetNotFound)?;
 
-		if xcm_ext.token_has_children(token_id) {
-			return Err(XcmError::Unimplemented);
-		}
-
 		let depositor = &from;
 		let to = Self::pallet_account();
 		let amount = 1;

@@ -2384,6 +2384,10 @@ where
 			return unsupported!(T);
 		}
 
+		if self.token_has_children(token) {
+			return unsupported!(T);
+		}
+
 		self.transfer_item_internal(depositor, from, to, token, amount, nesting_budget)
 	}
 
