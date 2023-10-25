@@ -156,7 +156,7 @@ pub mod module {
 
 			let payer = None;
 			let is_special_collection = true;
-			let collection_id = T::CollectionDispatch::create_internal(
+			let collection_id = T::CollectionDispatch::create_raw(
 				foreign_collection_owner,
 				payer,
 				is_special_collection,

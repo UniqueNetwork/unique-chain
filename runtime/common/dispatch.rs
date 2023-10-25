@@ -66,7 +66,7 @@ where
 		}
 	}
 
-	fn create_internal(
+	fn create_raw(
 		sender: T::CrossAccountId,
 		payer: Option<T::CrossAccountId>,
 		is_special_collection: bool,
