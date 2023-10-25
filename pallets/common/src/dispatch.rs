@@ -69,7 +69,7 @@ pub trait CollectionDispatch<T: Config> {
 	/// Check if the collection is internal.
 	fn check_is_internal(&self) -> DispatchResult;
 
-	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
+	/// Create a regular collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	///
 	/// * `sender` - The user who will become the owner of the collection.
 	/// * `payer` - If set, the user who pays the collection creation deposit.
@@ -82,12 +82,12 @@ pub trait CollectionDispatch<T: Config> {
 		Self::create_raw(sender, payer, false, data)
 	}
 
-	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
+	/// Function for creating regular and special collections.
 	///
 	/// * `sender` - The user who will become the owner of the collection.
 	/// * `payer` - If set, the user who pays the collection creation deposit.
 	/// * `data` - Description of the created collection.
-	/// * `is_special_collection` -- Whether this collection is a system one, i.e. can have special flags set.
+	/// * `is_special_collection` -- Whether this collection is a special one, i.e. can have special flags set.
 	fn create_raw(
 		sender: T::CrossAccountId,
 		payer: Option<T::CrossAccountId>,
