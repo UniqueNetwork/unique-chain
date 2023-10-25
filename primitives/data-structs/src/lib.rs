@@ -378,7 +378,7 @@ pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH
 #[derive(AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
 #[bondrewd(enforce_bytes = 1)]
 pub struct CollectionFlags {
-	/// Reserved flag
+	/// A collection of foreign assets
 	#[bondrewd(bits = "0..1")]
 	pub foreign: bool,
 	/// Supports ERC721Metadata

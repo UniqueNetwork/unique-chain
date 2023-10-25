@@ -132,7 +132,7 @@ struct CreateCollectionData {
 type CollectionFlags is uint8;
 
 library CollectionFlagsLib {
-	/// Tokens in foreign collections can be transferred, but not burnt
+	/// A collection of foreign assets
 	CollectionFlags constant foreignField = CollectionFlags.wrap(128);
 	/// Supports ERC721Metadata
 	CollectionFlags constant erc721metadataField = CollectionFlags.wrap(64);

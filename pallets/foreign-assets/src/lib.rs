@@ -259,7 +259,7 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Converts a multiasset to a Unique Network's collection (either local or the foreign one).
+	/// Converts a multiasset to a Unique Network's collection (either local or a foreign one).
 	///
 	/// The function will try to convert the multiasset's reserve location
 	/// to the Unique Network's local collection.
@@ -385,8 +385,6 @@ impl<T: Config> Pallet<T> {
 	/// Withdraws an asset instance from the `from` account.
 	///
 	/// Transfers the asset instance to the pallet's account.
-	///
-	/// Won't withdraw the instance if it has children.
 	fn withdraw_asset_instance(
 		xcm_ext: &dyn XcmExtensions<T>,
 		collection_id: CollectionId,
