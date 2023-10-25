@@ -187,7 +187,7 @@ jobs:
         if: success() || failure()
         uses: UniqueNetwork/baedeker-action/reconcile@built
         with:
-          baedeker: ${{ steps.bdk.baedeker }}
+          baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes expect one, then set mainnet binary for the last node, and then force chainspec to be still generated from mainnet
           inputs: |
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, leave = 1, for_chain = false)
@@ -205,7 +205,7 @@ jobs:
         if: success() || failure()
         uses: UniqueNetwork/baedeker-action/reconcile@built
         with:
-          baedeker: ${{ steps.bdk.baedeker }}
+          baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
           inputs: |
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, for_chain = false)

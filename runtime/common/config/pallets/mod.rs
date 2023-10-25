@@ -112,7 +112,7 @@ impl BlockNumberProvider for OnInitializeBlockNumberProvider {
 
 	fn current_block_number() -> Self::BlockNumber {
 		// This code was broken previously, but after fixing, we decided it would be better to leave it broken for now.
-		0u32.into()
+		0
 		// use hex_literal::hex;
 		// use parity_scale_codec::Decode;
 		// use sp_io::storage;
