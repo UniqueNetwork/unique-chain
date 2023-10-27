@@ -898,7 +898,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
 
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const xcmpSuccess = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success);
-      expect(xcmpSuccess.messageHash).to.be.equal(messageSent.messageSent);
+      expect(xcmpSuccess.messageHash).to.be.equal(messageSent.messageHash);
     });
   });
 });
