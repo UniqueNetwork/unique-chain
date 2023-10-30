@@ -233,8 +233,9 @@ impl<T: Config> Pallet<T> {
 	/// to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
 	/// otherwise the `AssetIdConversionFailed` error will be returned.
 	///
-	/// If the multilocation doesn't match the patterns listed above, the function returns `Ok(None)`,
-	/// identifying that the given multilocation doesn't correspond to a local collection.
+	/// If the multilocation doesn't match the patterns listed above,
+	/// or the `<Collection ID>` points to a foreign collection,
+	/// the function returns `Ok(None)`, identifying that the given multilocation doesn't correspond to a local collection.
 	fn native_asset_location_to_collection(
 		asset_location: &MultiLocation,
 	) -> Result<Option<CollectionId>, XcmError> {
@@ -247,11 +248,19 @@ impl<T: Config> Pallet<T> {
 				.interior
 				.match_and_split(&self_location.interior)
 			{
-				Some(GeneralIndex(collection_id)) => Ok(Some(CollectionId(
-					(*collection_id)
-						.try_into()
-						.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?,
-				))),
+				Some(GeneralIndex(collection_id)) => {
+					let collection_id = CollectionId(
+						(*collection_id)
+							.try_into()
+							.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?,
+					);
+
+					if Self::collection_to_foreign_reserve_location(collection_id).is_some() {
+						Ok(None)
+					} else {
+						Ok(Some(collection_id))
+					}
+				}
 				_ => Ok(None),
 			}
 		} else {
