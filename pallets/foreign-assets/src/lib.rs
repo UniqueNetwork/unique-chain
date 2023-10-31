@@ -223,68 +223,59 @@ impl<T: Config> Pallet<T> {
 			.expect("key length < max property key length; qed")
 	}
 
-	/// Converts a multilocation to the Unique Network's local collection
-	/// (i.e. the collection originally created on the Unique Network's parachain).
+	/// Converts a multilocation to a local collection on Unique Network.
 	///
-	/// The multilocation corresponds to a Unique Network's collection if:
+	/// The multilocation corresponds to a local collection if:
 	/// * It is `Here` location that corresponds to the native token of this parachain.
 	/// * It is `../Parachain(<Unique Network Para ID>)` that also corresponds to the native token of this parachain.
 	/// * It is `../Parachain(<Unique Network Para ID>)/GeneralIndex(<Collection ID>)` that corresponds
 	/// to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
-	/// otherwise the `AssetIdConversionFailed` error will be returned.
+	/// otherwise `None` is returned.
 	///
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
-	/// the function returns `Ok(None)`, identifying that the given multilocation doesn't correspond to a local collection.
-	fn native_asset_location_to_collection(
-		asset_location: &MultiLocation,
-	) -> Result<Option<CollectionId>, XcmError> {
+	/// `None` is returned, identifying that the given multilocation doesn't correspond to a native collection.
+	fn local_asset_location_to_collection(asset_location: &MultiLocation) -> Option<CollectionId> {
 		let self_location = T::SelfLocation::get();
 
 		if *asset_location == Here.into() || *asset_location == self_location {
-			Ok(Some(NATIVE_FUNGIBLE_COLLECTION_ID))
+			Some(NATIVE_FUNGIBLE_COLLECTION_ID)
 		} else if asset_location.parents == self_location.parents {
 			match asset_location
 				.interior
 				.match_and_split(&self_location.interior)
 			{
 				Some(GeneralIndex(collection_id)) => {
-					let collection_id = CollectionId(
-						(*collection_id)
-							.try_into()
-							.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?,
-					);
+					let collection_id = CollectionId((*collection_id).try_into().ok()?);
 
-					if Self::collection_to_foreign_reserve_location(collection_id).is_some() {
-						Ok(None)
-					} else {
-						Ok(Some(collection_id))
-					}
+					Self::collection_to_foreign_reserve_location(collection_id)
+						.is_none()
+						.then_some(collection_id)
 				}
-				_ => Ok(None),
+				_ => None,
 			}
 		} else {
-			Ok(None)
+			None
 		}
 	}
 
-	/// Converts a multiasset to a Unique Network's collection (either local or a foreign one).
+	/// Converts an asset ID to a Unique Network's collection (either foreign or a local one).
 	///
-	/// The function will try to convert the multiasset's reserve location
-	/// to the Unique Network's local collection.
+	/// The function will check if the asset's reserve location has the corresponding
+	/// foreign collection on Unique Network, and will return the collection ID if found.
 	///
-	/// If the multilocation doesn't correspond to a local collection,
-	/// the function will check if the reserve location has the corresponding
-	/// derivative Unique Network's collection, and will return the said collection ID if found.
+	/// If no corresponding foreign collection is found, the function will check
+	/// if the asset's reserve location corresponds to a local collection.
+	/// If the local collection is found, its ID is returned.
 	///
 	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
-	fn multiasset_to_collection(asset: &MultiAsset) -> Result<CollectionId, XcmError> {
-		let AssetId::Concrete(asset_reserve_location) = asset.id else {
+	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionId, XcmError> {
+		let AssetId::Concrete(asset_reserve_location) = asset_id else {
 			return Err(XcmExecutorError::AssetNotHandled.into());
 		};
 
-		Self::native_asset_location_to_collection(&asset_reserve_location)?
-			.or_else(|| Self::foreign_reserve_location_to_collection(asset_reserve_location))
+		Self::foreign_reserve_location_to_collection(asset_reserve_location)
+			.or_else(|| Self::local_asset_location_to_collection(asset_reserve_location))
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
 
@@ -293,7 +284,7 @@ impl<T: Config> Pallet<T> {
 	/// The asset instance corresponds to the Unique Network's token ID if it is in the following format:
 	/// `AssetInstance::Index(<token ID>)`.
 	///
-	/// If the asset instance is not in the valid format or the `<token ID>` points to a non-existent token,
+	/// If the asset instance is not in the valid format or the `<token ID>` can't fit into the valid token ID,
 	/// the `AssetNotFound` error will be returned.
 	fn native_asset_instance_to_token_id(
 		asset_instance: &AssetInstance,
@@ -439,7 +430,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let to = T::LocationToAccountId::convert_location(to)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
-		let collection_id = Self::multiasset_to_collection(what)?;
+		let collection_id = Self::asset_to_collection(&what.id)?;
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
 
@@ -471,7 +462,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let from = T::LocationToAccountId::convert_location(from)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
-		let collection_id = Self::multiasset_to_collection(what)?;
+		let collection_id = Self::asset_to_collection(&what.id)?;
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
 
@@ -503,7 +494,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let to = T::LocationToAccountId::convert_location(to)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
-		let collection_id = Self::multiasset_to_collection(what)?;
+		let collection_id = Self::asset_to_collection(&what.id)?;
 
 		let dispatch =
 			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
