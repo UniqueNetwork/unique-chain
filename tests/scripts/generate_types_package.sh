@@ -96,7 +96,7 @@ if test "$rc" = 1; then
 	repo_tag=$repo_branch
 fi
 
-package_version=${spec_version:0:3}.$(echo ${spec_version:3:3} | sed 's/^0*//').
+package_version=${spec_version:0:4}.$(echo ${spec_version:4:4} | sed 's/^0*//').
 last_patch=NEVER
 for tag in $(git ls-remote -t --refs $GIT_REPO | cut -f 2 | sort -r); do
 	tag_prefix=refs/tags/$repo_tag-v$package_version
