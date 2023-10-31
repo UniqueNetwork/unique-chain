@@ -234,7 +234,7 @@ impl<T: Config> Pallet<T> {
 	///
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
-	/// `None` is returned, identifying that the given multilocation doesn't correspond to a native collection.
+	/// `None` is returned, identifying that the given multilocation doesn't correspond to a local collection.
 	fn local_asset_location_to_collection(asset_location: &MultiLocation) -> Option<CollectionId> {
 		let self_location = T::SelfLocation::get();
 
