@@ -70,3 +70,8 @@ jobs:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
     uses: ./.github/workflows/codestyle.yml
     secrets: inherit
+
+  polkadot-types:
+    if: contains(github.event.pull_request.labels.*.name, 'CI-hotfix-types')
+    uses: ./.github/workflows/polkadot-types.yml
+    secrets: inherit
