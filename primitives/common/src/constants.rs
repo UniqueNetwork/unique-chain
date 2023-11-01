@@ -26,7 +26,7 @@ use crate::types::{Balance, BlockNumber};
 #[cfg(not(feature = "lookahead"))]
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 #[cfg(feature = "lookahead")]
-pub const MILLISECS_PER_BLOCK: u64 = 3000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const MILLISECS_PER_RELAY_BLOCK: u64 = 6000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;

@@ -35,7 +35,6 @@ use cumulus_client_consensus_aura::collators::lookahead::{
 };
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
-use cumulus_client_network::RequireSecondedInBlockAnnounce;
 use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, DARecoveryProfile,
 	StartRelayChainTasksParams,
@@ -399,8 +398,15 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
+	#[cfg(not(feature = "lookahead"))]
+	let block_announce_validator = cumulus_client_network::RequireSecondedInBlockAnnounce::new(
+		relay_chain_interface.clone(),
+		para_id,
+	);
+	// Aura is sybil-resistant. We should enable it without lookahead too.
+	#[cfg(feature = "lookahead")]
 	let block_announce_validator =
-		RequireSecondedInBlockAnnounce::new(relay_chain_interface.clone(), para_id);
+		cumulus_client_network::AssumeSybilResistance::allow_seconded_messages();
 
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();

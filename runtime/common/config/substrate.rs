@@ -17,7 +17,7 @@
 use frame_support::{
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
-	traits::{ConstBool, ConstU32, Everything, NeverEnsureOrigin},
+	traits::{ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
@@ -134,15 +134,14 @@ impl pallet_state_trie_migration::Config for Runtime {
 	type MaxKeyLen = MigrationMaxKeyLen;
 }
 
-parameter_types! {
-	pub const MinimumPeriod: u64 = SLOT_DURATION / 2;
-}
-
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = ();
-	type MinimumPeriod = MinimumPeriod;
+	#[cfg(not(feature = "lookahead"))]
+	type MinimumPeriod = ConstU64<{SLOT_DURATION / 2}>;
+	#[cfg(feature = "lookahead")]
+	type MinimumPeriod = ConstU64<0>;
 	type WeightInfo = ();
 }
 
@@ -247,6 +246,8 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
+	#[cfg(feature = "lookahead")]
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
 impl pallet_utility::Config for Runtime {
