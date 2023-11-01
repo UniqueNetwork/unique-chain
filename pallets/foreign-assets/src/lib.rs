@@ -126,6 +126,18 @@ pub mod module {
 		QueryKind = OptionQuery,
 	>;
 
+	/// The correponding reserve NFT of a token ID
+	#[pallet::storage]
+	#[pallet::getter(fn token_id_to_foreign_reserve_asset_instance)]
+	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
+		Hasher1 = Twox64Concat,
+		Key1 = CollectionId,
+		Hasher2 = Twox64Concat,
+		Key2 = TokenId,
+		Value = staging_xcm::v3::AssetInstance,
+		QueryKind = OptionQuery,
+	>;
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
@@ -279,14 +291,14 @@ impl<T: Config> Pallet<T> {
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
 
-	/// Converts an XCM asset instance to the Unique Network's token ID.
+	/// Converts an XCM asset instance of local collection to the Unique Network's token ID.
 	///
 	/// The asset instance corresponds to the Unique Network's token ID if it is in the following format:
 	/// `AssetInstance::Index(<token ID>)`.
 	///
 	/// If the asset instance is not in the valid format or the `<token ID>` can't fit into the valid token ID,
 	/// the `AssetNotFound` error will be returned.
-	fn native_asset_instance_to_token_id(
+	fn local_asset_instance_to_token_id(
 		asset_instance: &AssetInstance,
 	) -> Result<TokenId, XcmError> {
 		match asset_instance {
@@ -318,7 +330,7 @@ impl<T: Config> Pallet<T> {
 				asset_instance,
 			))
 		} else {
-			Self::native_asset_instance_to_token_id(asset_instance).map(Some)
+			Self::local_asset_instance_to_token_id(asset_instance).map(Some)
 		}
 	}
 
@@ -351,6 +363,12 @@ impl<T: Config> Pallet<T> {
 			collection_id,
 			asset_instance,
 			derivative_token_id,
+		);
+
+		<TokenIdToForeignReserveAssetInstance<T>>::insert(
+			collection_id,
+			derivative_token_id,
+			asset_instance,
 		);
 
 		Ok(())
@@ -399,7 +417,7 @@ impl<T: Config> Pallet<T> {
 		let amount = 1;
 		xcm_ext
 			.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
-			.map_err(|_| XcmError::FailedToTransactAsset("nonfungible item withdraw failed"))?;
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item withdraw failed"))?;
 
 		Ok(())
 	}
@@ -519,7 +537,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 					.ok_or(XcmError::AssetNotFound)?;
 
 				amount = 1;
-				map_error = |_| XcmError::FailedToTransactAsset("nonfungible item transfer failed")
+				map_error = |_| XcmError::FailedToTransactAsset("non-fungible item transfer failed")
 			}
 		}
 
