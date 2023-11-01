@@ -425,6 +425,7 @@ where
 				Box::new(block_announce_validator)
 			})),
 			warp_sync_params: None,
+			block_relay: None,
 		})?;
 
 	let select_chain = params.select_chain.clone();
@@ -893,6 +894,7 @@ where
 			import_queue,
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
+			block_relay: None,
 		})?;
 
 	let collator = config.role.is_authority();
