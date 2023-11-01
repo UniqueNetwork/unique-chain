@@ -23,6 +23,8 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
+use core::ops::Deref;
+
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::EnsureOrigin, PalletId};
 use frame_system::pallet_prelude::*;
 use pallet_common::{
@@ -247,11 +249,13 @@ impl<T: Config> Pallet<T> {
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
 	/// `None` is returned, identifying that the given multilocation doesn't correspond to a local collection.
-	fn local_asset_location_to_collection(asset_location: &MultiLocation) -> Option<CollectionId> {
+	fn local_asset_location_to_collection(
+		asset_location: &MultiLocation,
+	) -> Option<CollectionLocality> {
 		let self_location = T::SelfLocation::get();
 
 		if *asset_location == Here.into() || *asset_location == self_location {
-			Some(NATIVE_FUNGIBLE_COLLECTION_ID)
+			Some(CollectionLocality::Local(NATIVE_FUNGIBLE_COLLECTION_ID))
 		} else if asset_location.parents == self_location.parents {
 			match asset_location
 				.interior
@@ -262,7 +266,7 @@ impl<T: Config> Pallet<T> {
 
 					Self::collection_to_foreign_reserve_location(collection_id)
 						.is_none()
-						.then_some(collection_id)
+						.then_some(CollectionLocality::Local(collection_id))
 				}
 				_ => None,
 			}
@@ -271,22 +275,24 @@ impl<T: Config> Pallet<T> {
 		}
 	}
 
-	/// Converts an asset ID to a Unique Network's collection (either foreign or a local one).
+	/// Converts an asset ID to a Unique Network's collection locality (either foreign or a local one).
 	///
 	/// The function will check if the asset's reserve location has the corresponding
-	/// foreign collection on Unique Network, and will return the collection ID if found.
+	/// foreign collection on Unique Network,
+	/// and will return the "foreign" locality containing the collection ID if found.
 	///
 	/// If no corresponding foreign collection is found, the function will check
 	/// if the asset's reserve location corresponds to a local collection.
-	/// If the local collection is found, its ID is returned.
+	/// If the local collection is found, the "local" locality with the collection ID is returned.
 	///
 	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
-	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionId, XcmError> {
+	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionLocality, XcmError> {
 		let AssetId::Concrete(asset_reserve_location) = asset_id else {
 			return Err(XcmExecutorError::AssetNotHandled.into());
 		};
 
 		Self::foreign_reserve_location_to_collection(asset_reserve_location)
+			.map(CollectionLocality::Foreign)
 			.or_else(|| Self::local_asset_location_to_collection(asset_reserve_location))
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
@@ -297,40 +303,24 @@ impl<T: Config> Pallet<T> {
 	/// `AssetInstance::Index(<token ID>)`.
 	///
 	/// If the asset instance is not in the valid format or the `<token ID>` can't fit into the valid token ID,
-	/// the `AssetNotFound` error will be returned.
-	fn local_asset_instance_to_token_id(
-		asset_instance: &AssetInstance,
-	) -> Result<TokenId, XcmError> {
+	/// `None` will be returned.
+	fn local_asset_instance_to_token_id(asset_instance: &AssetInstance) -> Option<TokenId> {
 		match asset_instance {
-			AssetInstance::Index(token_id) => Ok(TokenId(
-				(*token_id)
-					.try_into()
-					.map_err(|_| XcmError::AssetNotFound)?,
-			)),
-			_ => Err(XcmError::AssetNotFound),
+			AssetInstance::Index(token_id) => Some(TokenId((*token_id).try_into().ok()?)),
+			_ => None,
 		}
 	}
 
 	/// Obtains the token ID of the `asset_instance` in the collection.
-	///
-	/// Returns `Ok(None)` only if the `asset_instance` is a part of a foreign collection
-	/// and the item hasn't yet been created on this blockchain.
-	///
-	/// If the `asset_instance` exists and it is a part of a foreign collection, the function will return `Ok(Some(<token ID>))`.
-	///
-	/// If the `asset_instance` is a part of a local collection,
-	/// the function will return either `Ok(Some(<token ID>))` or an error if the token is not found.
 	fn asset_instance_to_token_id(
-		collection_id: CollectionId,
+		collection_locality: CollectionLocality,
 		asset_instance: &AssetInstance,
-	) -> Result<Option<TokenId>, XcmError> {
-		if <CollectionToForeignReserveLocation<T>>::contains_key(collection_id) {
-			Ok(Self::foreign_reserve_asset_instance_to_token_id(
-				collection_id,
-				asset_instance,
-			))
-		} else {
-			Self::local_asset_instance_to_token_id(asset_instance).map(Some)
+	) -> Option<TokenId> {
+		match collection_locality {
+			CollectionLocality::Local(_) => Self::local_asset_instance_to_token_id(asset_instance),
+			CollectionLocality::Foreign(collection_id) => {
+				Self::foreign_reserve_asset_instance_to_token_id(collection_id, asset_instance)
+			}
 		}
 	}
 
@@ -380,20 +370,26 @@ impl<T: Config> Pallet<T> {
 	/// or creates a foreign item.
 	fn deposit_asset_instance(
 		xcm_ext: &dyn XcmExtensions<T>,
-		collection_id: CollectionId,
+		collection_locality: CollectionLocality,
 		asset_instance: &AssetInstance,
 		to: T::CrossAccountId,
 	) -> XcmResult {
-		let deposit_result = if let Some(token_id) =
-			Self::asset_instance_to_token_id(collection_id, asset_instance)?
-		{
-			let depositor = &Self::pallet_account();
-			let from = depositor;
-			let amount = 1;
+		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance);
 
-			xcm_ext.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
-		} else {
-			Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
+		let deposit_result = match (collection_locality, token_id) {
+			(_, Some(token_id)) => {
+				let depositor = &Self::pallet_account();
+				let from = depositor;
+				let amount = 1;
+
+				xcm_ext.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
+			}
+			(CollectionLocality::Foreign(collection_id), None) => {
+				Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
+			}
+			(CollectionLocality::Local(_), None) => {
+				return Err(XcmError::AssetNotFound);
+			}
 		};
 
 		deposit_result
@@ -405,11 +401,11 @@ impl<T: Config> Pallet<T> {
 	/// Transfers the asset instance to the pallet's account.
 	fn withdraw_asset_instance(
 		xcm_ext: &dyn XcmExtensions<T>,
-		collection_id: CollectionId,
+		collection_locality: CollectionLocality,
 		asset_instance: &AssetInstance,
 		from: T::CrossAccountId,
 	) -> XcmResult {
-		let token_id = Self::asset_instance_to_token_id(collection_id, asset_instance)?
+		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance)
 			.ok_or(XcmError::AssetNotFound)?;
 
 		let depositor = &from;
@@ -448,9 +444,9 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let to = T::LocationToAccountId::convert_location(to)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
-		let collection_id = Self::asset_to_collection(&what.id)?;
-		let dispatch =
-			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
+		let collection_locality = Self::asset_to_collection(&what.id)?;
+		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
+			.map_err(|_| XcmError::AssetNotFound)?;
 
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::Unimplemented)?;
@@ -467,7 +463,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				.map_err(|_| XcmError::FailedToTransactAsset("fungible item deposit failed")),
 
 			Fungibility::NonFungible(asset_instance) => {
-				Self::deposit_asset_instance(xcm_ext, collection_id, &asset_instance, to)
+				Self::deposit_asset_instance(xcm_ext, collection_locality, &asset_instance, to)
 			}
 		}
 	}
@@ -480,9 +476,9 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let from = T::LocationToAccountId::convert_location(from)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
-		let collection_id = Self::asset_to_collection(&what.id)?;
-		let dispatch =
-			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
+		let collection_locality = Self::asset_to_collection(&what.id)?;
+		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
+			.map_err(|_| XcmError::AssetNotFound)?;
 
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
@@ -493,7 +489,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				.map_err(|_| XcmError::FailedToTransactAsset("fungible item withdraw failed"))?,
 
 			Fungibility::NonFungible(asset_instance) => {
-				Self::withdraw_asset_instance(xcm_ext, collection_id, &asset_instance, from)?;
+				Self::withdraw_asset_instance(xcm_ext, collection_locality, &asset_instance, from)?;
 			}
 		}
 
@@ -512,10 +508,10 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let to = T::LocationToAccountId::convert_location(to)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
-		let collection_id = Self::asset_to_collection(&what.id)?;
+		let collection_locality = Self::asset_to_collection(&what.id)?;
 
-		let dispatch =
-			T::CollectionDispatch::dispatch(collection_id).map_err(|_| XcmError::AssetNotFound)?;
+		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
+			.map_err(|_| XcmError::AssetNotFound)?;
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
 
@@ -533,7 +529,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 			}
 
 			Fungibility::NonFungible(asset_instance) => {
-				token_id = Self::asset_instance_to_token_id(collection_id, &asset_instance)?
+				token_id = Self::asset_instance_to_token_id(collection_locality, &asset_instance)
 					.ok_or(XcmError::AssetNotFound)?;
 
 				amount = 1;
@@ -546,6 +542,23 @@ impl<T: Config> TransactAsset for Pallet<T> {
 			.map_err(map_error)?;
 
 		Ok(what.clone().into())
+	}
+}
+
+#[derive(Clone, Copy)]
+pub enum CollectionLocality {
+	Local(CollectionId),
+	Foreign(CollectionId),
+}
+
+impl Deref for CollectionLocality {
+	type Target = CollectionId;
+
+	fn deref(&self) -> &Self::Target {
+		match self {
+			Self::Local(id) => id,
+			Self::Foreign(id) => id,
+		}
 	}
 }
 
@@ -565,13 +578,6 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
 		}
 	}
 }
-
-pub use frame_support::{
-	traits::{
-		fungibles::Balanced, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT,
-	},
-	weights::{WeightToFee, WeightToFeePolynomial},
-};
 
 #[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
 pub enum ForeignCollectionMode {
