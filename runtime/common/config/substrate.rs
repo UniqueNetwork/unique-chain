@@ -17,7 +17,7 @@
 use frame_support::{
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
-	traits::{ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin},
+	traits::{ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin, tokens::{PayFromAccount, UnityAssetBalanceConversion}},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
@@ -31,7 +31,7 @@ use frame_system::{
 use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use sp_arithmetic::traits::One;
 use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256},
+	traits::{AccountIdLookup, BlakeTwo256, IdentityLookup},
 	Perbill, Percent, Permill,
 };
 use sp_std::vec;
@@ -39,7 +39,7 @@ use up_common::{constants::*, types::*};
 
 use crate::{
 	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeHoldReason, RuntimeOrigin, SS58Prefix, System, Version,
+	RuntimeEvent, RuntimeHoldReason, RuntimeFreezeReason, RuntimeOrigin, SS58Prefix, System, Version, Treasury,
 };
 
 parameter_types! {
@@ -170,6 +170,7 @@ impl pallet_balances::Config for Runtime {
 	type AccountStore = System;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = [u8; 16];
 	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
@@ -205,6 +206,7 @@ parameter_types! {
 	pub const BountyDepositBase: Balance = 1 * UNIQUE;
 	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
 	pub const TreasuryModuleId: PalletId = PalletId(*b"py/trsry");
+	pub TreasuryAccount: AccountId = Treasury::account_id();
 	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
@@ -229,6 +231,12 @@ impl pallet_treasury::Config for Runtime {
 	type SpendFunds = ();
 	type WeightInfo = pallet_treasury::weights::SubstrateWeight<Self>;
 	type MaxApprovals = MaxApprovals;
+	type AssetKind = ();
+	type Beneficiary = AccountId;
+	type BeneficiaryLookup = IdentityLookup<Self::Beneficiary>;
+	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
+	type BalanceConverter = UnityAssetBalanceConversion;
+	type PayoutPeriod = ConstU32<10>;
 }
 
 impl pallet_sudo::Config for Runtime {

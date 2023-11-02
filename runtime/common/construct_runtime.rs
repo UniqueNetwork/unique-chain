@@ -24,7 +24,7 @@ macro_rules! construct_runtime {
 				StateTrieMigration: pallet_state_trie_migration = 1,
 
 				ParachainSystem: cumulus_pallet_parachain_system = 20,
-				ParachainInfo: parachain_info = 21,
+				ParachainInfo: staging_parachain_info = 21,
 
 				#[cfg(feature = "collator-selection")]
 				Authorship: pallet_authorship = 22,

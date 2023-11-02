@@ -36,6 +36,8 @@ use staging_xcm_executor::{
 	XcmExecutor,
 };
 use up_common::types::AccountId;
+use cumulus_primitives_core::ParaId;
+use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 
 use crate::{
 	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem,
@@ -283,7 +285,6 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 }
-
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type WeightInfo = ();
 	type RuntimeEvent = RuntimeEvent;
@@ -299,7 +300,7 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type ControllerOrigin = frame_system::EnsureRoot<AccountId>;
 
 	type ControllerOriginConverter = XcmOriginToTransactDispatchOrigin;
-	type PriceForSiblingDelivery = ();
+	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 }
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
