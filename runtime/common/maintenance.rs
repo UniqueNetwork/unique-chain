@@ -78,9 +78,12 @@ impl SignedExtension for CheckMaintenance {
 				}
 
 				#[cfg(feature = "collator-selection")]
-				RuntimeCall::CollatorSelection(_)
-				| RuntimeCall::Session(_)
-				| RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
+				RuntimeCall::CollatorSelection(_) | RuntimeCall::Session(_) => {
+					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
+				}
+
+				#[cfg(feature = "governance")]
+				RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
 				#[cfg(feature = "pallet-test-utils")]
 				RuntimeCall::TestUtils(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
