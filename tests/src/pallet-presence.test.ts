@@ -68,7 +68,7 @@ describe('Pallet presence', () => {
       const refungible = 'refungible';
       const foreignAssets = 'foreignassets';
       const appPromotion = 'apppromotion';
-      const collatorSelection = ['authorship', 'session', 'collatorselection', 'identity'];
+      const collatorSelection = ['authorship', 'session', 'collatorselection'];
       const preimage = ['preimage'];
       const governance = [
         'council',
@@ -80,6 +80,7 @@ describe('Pallet presence', () => {
         'scheduler',
         'technicalcommittee',
         'technicalcommitteemembership',
+        'identity',
       ];
       const testUtils = 'testutils';
 
