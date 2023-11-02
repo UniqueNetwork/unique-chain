@@ -137,8 +137,8 @@ jobs:
       - name: Checkout at '${{ matrix.mainnet_branch }}' branch
         uses: actions/checkout@master
         with:
-          ref: ${{ github.head_ref }}
-          # ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
+          #ref: ${{ github.head_ref }}
+          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
           path: ${{ matrix.mainnet_branch }}
 
       - uses: actions/setup-node@v3.5.1
