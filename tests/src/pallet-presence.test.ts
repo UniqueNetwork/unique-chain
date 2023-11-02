@@ -109,6 +109,8 @@ describe('Pallet presence', () => {
           refungible,
           foreignAssets,
           appPromotion,
+          ...preimage,
+          ...governance,
         );
       }
     });
