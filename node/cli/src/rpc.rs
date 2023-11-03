@@ -17,9 +17,7 @@
 use std::sync::Arc;
 
 use fc_mapping_sync::{EthereumBlockNotification, EthereumBlockNotificationSinks};
-use fc_rpc::{
-	pending::AuraConsensusDataProvider, EthBlockDataCacheTask, EthConfig, OverrideHandle,
-};
+use fc_rpc::{EthBlockDataCacheTask, EthConfig, OverrideHandle};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::NoTransactionConverter;
 use jsonrpsee::RpcModule;
@@ -221,7 +219,7 @@ where
 			client.clone(),
 			pool.clone(),
 			graph.clone(),
-			// We have no runtimes old enough to only accept converted transactions
+			// We have no runtimes old enough to only accept converted transactions.
 			None::<NoTransactionConverter>,
 			sync.clone(),
 			signers,
@@ -234,7 +232,8 @@ where
 			execute_gas_limit_multiplier,
 			None,
 			pending_create_inherent_data_providers,
-			Some(Box::new(AuraConsensusDataProvider::new(client.clone()))),
+			// Our extrinsics have nothing to do with consensus digest items yet.
+			None,
 		)
 		.into_rpc(),
 	)?;
