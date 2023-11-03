@@ -55,6 +55,8 @@ pub use fellowship::*;
 pub mod scheduler;
 pub use scheduler::*;
 
+pub mod identity;
+
 impl pallet_gov_origins::Config for Runtime {}
 
 morph_types! {

@@ -22,14 +22,13 @@ use pallet_configuration::{
 	CollatorSelectionLicenseBondOverride,
 };
 use sp_runtime::Perbill;
-use up_common::constants::{MILLIUNIQUE, UNIQUE};
 
 #[cfg(feature = "governance")]
 use crate::config::governance;
 use crate::{
 	config::pallets::{MaxCollators, SessionPeriod, TreasuryAccountId},
 	Aura, Balance, Balances, BlockNumber, CollatorSelection, Runtime, RuntimeEvent,
-	RuntimeHoldReason, Session, SessionKeys, Treasury,
+	RuntimeHoldReason, Session, SessionKeys,
 };
 parameter_types! {
 	pub const SessionOffset: BlockNumber = 0;
@@ -59,43 +58,9 @@ impl pallet_authorship::Config for Runtime {
 }
 
 parameter_types! {
-	// These do not matter as we forbid non-sudo operations with the identity pallet
-	pub const BasicDeposit: Balance = 10 * UNIQUE;
-	pub const FieldDeposit: Balance = 25 * MILLIUNIQUE;
-	pub const SubAccountDeposit: Balance = 2 * UNIQUE;
-	pub const MaxSubAccounts: u32 = 100;
-	pub const MaxAdditionalFields: u32 = 100;
-	pub const MaxRegistrars: u32 = 20;
-	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
 	pub LicenseBond: Balance =  CollatorSelectionLicenseBondOverride::<Runtime>::get();
 	pub DesiredCollators: u32 = CollatorSelectionDesiredCollatorsOverride::<Runtime>::get();
 	pub KickThreshold: BlockNumber = CollatorSelectionKickThresholdOverride::<Runtime>::get();
-}
-
-impl pallet_identity::Config for Runtime {
-	type RuntimeEvent = RuntimeEvent;
-	type Currency = Balances;
-	type BasicDeposit = BasicDeposit;
-	type FieldDeposit = FieldDeposit;
-	type MaxAdditionalFields = MaxAdditionalFields;
-	type MaxRegistrars = MaxRegistrars;
-	type MaxSubAccounts = MaxSubAccounts;
-	type SubAccountDeposit = SubAccountDeposit;
-
-	#[cfg(feature = "governance")]
-	type RegistrarOrigin = governance::RootOrTechnicalCommitteeMember;
-
-	#[cfg(feature = "governance")]
-	type ForceOrigin = governance::RootOrTechnicalCommitteeMember;
-
-	#[cfg(not(feature = "governance"))]
-	type RegistrarOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
-
-	#[cfg(not(feature = "governance"))]
-	type ForceOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
-
-	type Slashed = Treasury;
-	type WeightInfo = pallet_identity::weights::SubstrateWeight<Runtime>;
 }
 
 parameter_types! {

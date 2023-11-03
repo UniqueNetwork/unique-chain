@@ -31,6 +31,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
+            network {unique}, wasm_name {unique}
             network {quartz}, wasm_name {quartz}
             network {opal}, wasm_name {opal}
             network {sapphire}, wasm_name {quartz}
