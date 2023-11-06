@@ -15,11 +15,13 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds} from './util';
-import {IEvent, TCollectionMode} from '../util/playgrounds/types';
-import {Pallets, requirePalletsOrSkip} from '../util';
-import {CollectionLimitField, TokenPermissionField, NormalizedEvent, CreateCollectionData} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds} from './util/index.js';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
+import type {IEvent, TCollectionMode} from '@unique/playgrounds/src/types.js';
+import {Pallets, requirePalletsOrSkip} from '../util/index.js';
+import {CollectionLimitField, TokenPermissionField, CreateCollectionData} from './util/playgrounds/types.js';
+import type {NormalizedEvent} from './util/playgrounds/types.js';
 
 let donor: IKeyringPair;
 
@@ -498,9 +500,9 @@ describe('[RFT] Sync sub & eth events', () => {
   const mode: TCollectionMode = 'rft';
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds((helper) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
-      const _donor = await privateKey({url: import.meta.url});
+      return Promise.resolve();
     });
   });
 

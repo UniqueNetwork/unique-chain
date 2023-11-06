@@ -1,7 +1,8 @@
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {Event} from '../util/playgrounds/unique.dev';
-import {initCouncil, democracyLaunchPeriod, democracyFastTrackVotingPeriod, clearCouncil, clearTechComm, ITechComms, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util/index.js';
+import {Event} from '@unique/playgrounds/src/unique.dev.js';
+import {initCouncil, democracyLaunchPeriod, democracyFastTrackVotingPeriod, clearCouncil, clearTechComm, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util.js';
+import type {ITechComms} from './util.js';
 
 describeGov('Governance: Technical Committee tests', () => {
   let sudoer: IKeyringPair;
@@ -190,11 +191,11 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
 
-  itSub.skip('[Negative] TechComm cannot promote/demote Fellowship member', async ({helper}) => {
+  itSub.skip('[Negative] TechComm cannot promote/demote Fellowship member', async () => {
 
   });
 
-  itSub.skip('[Negative] TechComm member cannot promote/demote Fellowship member', async ({helper}) => {
+  itSub.skip('[Negative] TechComm member cannot promote/demote Fellowship member', async () => {
 
   });
 
@@ -338,7 +339,7 @@ describeGov('Governance: Technical Committee tests', () => {
     )).to.be.rejectedWith('BadOrigin');
   });
 
-  itSub.skip('[Negative] TechComm member cannot veto external Democracy proposals until the cool-off period pass', async ({helper}) => {
+  itSub.skip('[Negative] TechComm member cannot veto external Democracy proposals until the cool-off period pass', async () => {
 
   });
 

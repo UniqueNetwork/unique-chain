@@ -14,11 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itEth, usingEthPlaygrounds} from './util';
-import {IKeyringPair} from '@polkadot/types/types';
+import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {Struct} from '@polkadot/types';
 
-import {IEvent} from '../util/playgrounds/types';
+import type {IEvent} from '@unique/playgrounds/src/types.js';
+import type {InterfaceTypes} from '@polkadot/types/types/registry';
 import {ApiPromise} from '@polkadot/api';
 
 const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, event: string, fields: any) => {
@@ -32,7 +33,8 @@ const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, even
   data.push(...new Struct(api.registry, {data: metaEvent}, {data: fields}).toU8a());
 
   const typeName = api.registry.lookup.names.find(n => n.endsWith('RuntimeEvent'))!;
-  return api.registry.createType(typeName, new Uint8Array(data)).toHex();
+  const obj = api.registry.createType(typeName, new Uint8Array(data)) as InterfaceTypes['RuntimeEvent'];
+  return obj.toHex();
 };
 
 describe('EVM Migrations', () => {

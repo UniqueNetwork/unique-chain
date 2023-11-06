@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect} from '../util';
-import {IEvent} from '../util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, itSub, expect} from '../util/index.js';
+import type {IEvent} from '@unique/playgrounds/src/types.js';
 
 describe('Create collection event ', () => {
   let alice: IKeyringPair;

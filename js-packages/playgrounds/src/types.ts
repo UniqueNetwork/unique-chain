@@ -1,7 +1,7 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 export const NON_EXISTENT_COLLECTION_ID = 4_294_967_295;
 

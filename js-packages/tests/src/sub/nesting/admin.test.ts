@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '../../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from '../../util/index.js';
+import {CrossAccountId} from '@unique/playgrounds/src/unique.js';
 
 describe('Nesting by collection admin', () => {
   let alice: IKeyringPair;
@@ -51,9 +52,9 @@ describe('Nesting by collection admin', () => {
       // 1.2 From different collection:
       const nestedTokenB = await collectionB.mintToken(bob, targetTokenA.nestingAccount());
       expect(await nestedTokenA.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-      expect(await nestedTokenA.getOwner()).to.be.deep.equal(targetTokenA.nestingAccount().toLowerCase());
+      expect(await nestedTokenA.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetTokenA.nestingAccount()));
       expect(await nestedTokenB.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-      expect(await nestedTokenB.getOwner()).to.be.deep.equal(targetTokenA.nestingAccount().toLowerCase());
+      expect(await nestedTokenB.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetTokenA.nestingAccount()));
 
       // 2. Create a token to be nested and nest:
       const newNestedTokenA = await collectionA.mintToken(bob);
@@ -63,7 +64,7 @@ describe('Nesting by collection admin', () => {
       // 2.2 From different collection:
       await newNestedTokenB.nest(bob, targetTokenA);
       expect(await newNestedTokenB.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-      expect(await newNestedTokenB.getOwner()).to.be.deep.equal(targetTokenA.nestingAccount().toLowerCase());
+      expect(await newNestedTokenB.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetTokenA.nestingAccount()));
     });
   });
 
@@ -75,12 +76,12 @@ describe('Nesting by collection admin', () => {
     // Admin can create an immediately nested token:
     const nestedToken = await collection.mintToken(bob, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
 
     // Owner can create and and nest:
     const newToken = await collection.mintToken(alice, {Substrate: charlie.address});
     await newToken.nest(charlie, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: charlie.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
   });
 });

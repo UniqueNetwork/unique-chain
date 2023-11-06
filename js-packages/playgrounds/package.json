@@ -1,0 +1,20 @@
+{
+  "author": "",
+  "license": "SEE LICENSE IN ../../../LICENSE",
+  "description": "Interfaces for interacting with contracts and contract ABIs",
+  "engines": {
+    "node": ">=16"
+  },
+  "name": "@unique/playgrounds",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "unique.js",
+  "dependencies": {
+    "@polkadot/api": "10.10.1",
+    "@polkadot/util": "^12.5.1",
+    "@polkadot/util-crypto": "^12.5.1",
+    "@unique/opal-types": "workspace:*",
+    "rxjs": "^7.8.1",
+    "tslib": "^2.6.2"
+  }
+}

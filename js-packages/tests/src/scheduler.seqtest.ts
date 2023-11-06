@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util';
-import {IKeyringPair} from '@polkadot/types/types';
-import {DevUniqueHelper, Event} from './util/playgrounds/unique.dev';
+import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/index.js';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {DevUniqueHelper, Event} from '@unique/playgrounds/src/unique.dev.js';
 
 describe('Scheduling token and balance transfers', () => {
   let superuser: IKeyringPair;
@@ -32,7 +32,7 @@ describe('Scheduling token and balance transfers', () => {
       const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);
 
-      await helper.testUtils.enable();
+      await helper.testUtils.enable(Pallets.TestUtils);
     });
   });
 
@@ -571,7 +571,7 @@ describe('Negative Test: Scheduling', () => {
       const donor = await privateKey({url: import.meta.url});
       [alice, bob] = await helper.arrange.createAccounts([100n, 100n], donor);
 
-      await helper.testUtils.enable();
+      await helper.testUtils.enable(Pallets.TestUtils);
     });
   });
 

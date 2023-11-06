@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util';
-import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds, expect} from './util/index.js';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique/playgrounds/src/types.js';
 
 describe('integration test: ext. removeCollectionSponsor():', () => {
   let donor: IKeyringPair;

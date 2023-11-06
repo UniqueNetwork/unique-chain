@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper} from './util/playgrounds/unique.dev';
-import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from './util';
-import {usingPlaygrounds} from '../util';
-import {CompiledContract} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
+import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from './util/index.js';
+import {usingPlaygrounds} from '../util/index.js';
+import type {CompiledContract} from './util/playgrounds/types.js';
 
 describe('Sponsoring EVM contracts', () => {
   let donor: IKeyringPair;
@@ -433,7 +433,7 @@ describe('Sponsoring EVM contracts', () => {
       callerBalanceBefore = callerBalanceAfter;
     };
 
-    const gasPrice = BigInt(await helper.eth.getGasPrice());
+    const gasPrice = BigInt((await helper.eth.getGasPrice())!);
     await flip(gasPrice);
     await flip(gasPrice * 2n);
     await flip(gasPrice * 21n / 10n);

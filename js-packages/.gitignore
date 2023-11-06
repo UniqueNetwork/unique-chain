@@ -1,4 +1,6 @@
 /node_modules/
+/*/dist/
+/*/tsconfig.tsbuildinfo
 properties.csv
 erc721.csv
 erc20.csv

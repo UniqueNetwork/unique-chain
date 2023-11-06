@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-export {default as unique} from './unique/definitions';
-export {default as appPromotion} from './appPromotion/definitions';
-export {default as povinfo} from './povinfo/definitions';
-export {default as default} from './default/definitions';
+export {default as unique} from './unique/definitions.js';
+export {default as appPromotion} from './appPromotion/definitions.js';
+export {default as povinfo} from './povinfo/definitions.js';
+export {default as default} from './default/definitions.js';

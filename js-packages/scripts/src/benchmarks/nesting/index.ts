@@ -1,57 +1,58 @@
-import {EthUniqueHelper, usingEthPlaygrounds} from '../../eth/util';
+import {usingEthPlaygrounds} from '@unique/tests/src/eth/util/index.js';
+import {EthUniqueHelper} from '@unique/tests/src/eth/util/playgrounds/unique.dev.js';
 import {readFile} from 'fs/promises';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {convertToTokens} from '../utils/common';
-import {makeNames} from '../../util';
-import {ContractImports} from '../../eth/util/playgrounds/types';
-import {RMRKNestableMintable} from './ABIGEN';
+import {convertToTokens} from '../utils/common.js';
+import {makeNames} from '@unique/tests/src/util/index.js';
+import type {ContractImports} from '@unique/tests/src/eth/util/playgrounds/types.js';
+import type {RMRKNestableMintable} from './ABIGEN/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 
 export const CONTRACT_IMPORT: ContractImports[] = [
   {
-    fsPath: `${dirname}/../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC6059.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC6059.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC6059.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/core/RMRKCore.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/core/RMRKCore.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/core/RMRKCore.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol`,
     solPath: '@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
     solPath: '@openzeppelin/contracts/token/ERC721/IERC721.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol`,
     solPath: '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/Address.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/Address.sol`,
     solPath: '@openzeppelin/contracts/utils/Address.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/Context.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/Context.sol`,
     solPath: '@openzeppelin/contracts/utils/Context.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
     solPath: '@openzeppelin/contracts/utils/introspection/IERC165.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/library/RMRKErrors.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/library/RMRKErrors.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/library/RMRKErrors.sol',
   },
   {
-    fsPath: `${dirname}/../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/core/IRMRKCore.sol`,
+    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/core/IRMRKCore.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/core/IRMRKCore.sol',
   },
   {

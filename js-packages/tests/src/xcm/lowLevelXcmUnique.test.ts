@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import config from '../config';
-import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds} from '../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import config from '../config.js';
+import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds} from '../util/index.js';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
-import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl,  moonbeamUrl, polkadexUrl, relayUrl, uniqueAssetId} from './xcm.types';
+import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl,  moonbeamUrl, polkadexUrl, relayUrl, uniqueAssetId} from './xcm.types.js';
 
 const testHelper = new XcmTestHelper('unique');
 

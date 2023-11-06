@@ -14,13 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
-import {itEth, usingEthPlaygrounds, expect} from './util';
-import {ITokenPropertyPermission} from '../util/playgrounds/types';
-import {Pallets} from '../util';
-import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '../util/playgrounds/unique';
-import {CreateCollectionData, TokenPermissionField} from './util/playgrounds/types';
+import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
+import type {ITokenPropertyPermission} from '@unique/playgrounds/src/types.js';
+import {Pallets} from '../util/index.js';
+import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique/playgrounds/src/unique.js';
+import {CreateCollectionData, TokenPermissionField} from './util/playgrounds/types.js';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;

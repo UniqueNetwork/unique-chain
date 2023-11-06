@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
-import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect} from './util';
-import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds, expect} from './util/index.js';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique/playgrounds/src/types.js';
 
 const accountTokenOwnershipLimit = 0;
 const sponsoredDataSize = 0;

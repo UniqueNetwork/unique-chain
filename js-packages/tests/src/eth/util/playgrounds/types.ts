@@ -1,4 +1,5 @@
-import {CollectionFlag, TCollectionMode} from '../../../util/playgrounds/types';
+import {CollectionFlag} from '@unique/playgrounds/src/types.js';
+import type {TCollectionMode} from '@unique/playgrounds/src/types.js';
 
 export interface ContractImports {
   solPath: string;

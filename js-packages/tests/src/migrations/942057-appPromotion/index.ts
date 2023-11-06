@@ -1,6 +1,6 @@
-import {Migration} from '../../util/frankensteinMigrate';
-import {collectData} from './collectData';
-import {migrateLockedToFreeze} from './lockedToFreeze';
+import type {Migration} from '../../util/frankensteinMigrate.js';
+import {collectData} from './collectData.js';
+import {migrateLockedToFreeze} from './lockedToFreeze.js';
 
 export const migration: Migration = {
   async before() {

@@ -1,4 +1,4 @@
-import {migrateLockedToFreeze} from './lockedToFreeze';
+import {migrateLockedToFreeze} from './lockedToFreeze.js';
 
 
 const WS_RPC = process.env.WS_RPC || 'wss://ws-opal.unique.network:443';

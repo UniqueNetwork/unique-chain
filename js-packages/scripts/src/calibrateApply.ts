@@ -1,7 +1,6 @@
 import {readFile, writeFile} from 'fs/promises';
 import path from 'path';
-import usingApi from './.outdated/substrate/substrate-api';
-import {makeNames} from './util';
+import {makeNames, usingPlaygrounds} from '@unique/tests/src/util/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -10,9 +9,9 @@ const formatNumber = (num: string): string => num.split('').reverse().join('').r
 (async () => {
   let weightToFeeCoefficientOverride: string;
   let minGasPriceOverride: string;
-  await usingApi(async (api, _privateKey) => {
-    weightToFeeCoefficientOverride = (await api.query.configuration.weightToFeeCoefficientOverride() as any).toBigInt().toString();
-    minGasPriceOverride = (await api.query.configuration.minGasPriceOverride() as any).toBigInt().toString();
+  await usingPlaygrounds(async (helpers, _privateKey) => {
+    weightToFeeCoefficientOverride = (await helpers.getApi().query.configuration.weightToFeeCoefficientOverride() as any).toBigInt().toString();
+    minGasPriceOverride = (await helpers.getApi().query.configuration.minGasPriceOverride() as any).toBigInt().toString();
   });
   const constantsFile = path.resolve(dirname, '../../primitives/common/src/constants.rs');
   let constants = (await readFile(constantsFile)).toString();

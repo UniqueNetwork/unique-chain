@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util';
-import {makeNames} from '../../util';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util/index.js';
+import {makeNames} from '../../util/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 

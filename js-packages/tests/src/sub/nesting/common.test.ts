@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../../util';
-import {UniqueNFTCollection, UniqueRFTCollection} from '../../util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, Pallets, usingPlaygrounds} from '../../util/index.js';
+import {CrossAccountId, UniqueNFTCollection, UniqueRFTCollection} from '@unique/playgrounds/src/unique.js';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;
@@ -51,13 +51,13 @@ describe('Common nesting tests', () => {
         ? await (collectionForNesting as UniqueNFTCollection).mintToken(bob, targetTokenBob.nestingAccount())
         : await (collectionForNesting as UniqueRFTCollection).mintToken(bob, 10n, targetTokenBob.nestingAccount());
       expect(await nestedToken1.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-      expect(await nestedToken1.getOwner()).to.be.deep.equal(targetTokenBob.nestingAccount().toLowerCase());
+      expect(await nestedToken1.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetTokenBob.nestingAccount()));
 
       // 2. Bob can mint and nest token:
       const nestedToken2 = await collectionForNesting.mintToken(bob);
       await nestedToken2.nest(bob, targetTokenBob);
       expect(await nestedToken2.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-      expect(await nestedToken2.getOwner()).to.be.deep.equal(targetTokenBob.nestingAccount().toLowerCase());
+      expect(await nestedToken2.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetTokenBob.nestingAccount()));
     });
   });
 
@@ -79,7 +79,7 @@ describe('Common nesting tests', () => {
 
       // 1. Alice can immediately create nested tokens:
       await collectionForNesting.mint(bob, 100n, targetTokenBob.nestingAccount());
-      expect(await collectionForNesting.getTop10Owners()).deep.eq([targetTokenBob.nestingAccount().toLowerCase()]);
+      expect(await collectionForNesting.getTop10Owners()).deep.eq([CrossAccountId.toLowerCase(targetTokenBob.nestingAccount())]);
       expect(await collectionForNesting.getBalance(targetTokenBob.nestingAccount())).eq(100n);
 
       // 2. Alice can mint and nest token:
@@ -128,10 +128,10 @@ describe('Common nesting tests', () => {
 
     const nestedNFT = await nftCollectionToBeNested.mintToken(alice, tokenA.nestingAccount());
     const nestedRFT = await rftCollectionToBeNested.mintToken(alice, 100n, tokenA.nestingAccount());
-    const _nestedFT = await ftCollectionToBeNested.mint(alice, 100n, tokenA.nestingAccount());
+    await ftCollectionToBeNested.mint(alice, 100n, tokenA.nestingAccount());
     await nativeFtCollectionToBeNested.transfer(alice, tokenA.nestingAccount(), 100n);
-    expect(await nestedNFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
-    expect(await nestedRFT.getOwner()).to.be.deep.equal(tokenA.nestingAccount().toLowerCase());
+    expect(await nestedNFT.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(tokenA.nestingAccount()));
+    expect(await nestedRFT.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(tokenA.nestingAccount()));
     expect(await ftCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(100n);
     expect(await nativeFtCollectionToBeNested.getBalance(tokenA.nestingAccount())).to.equal(100n);
 
@@ -145,7 +145,7 @@ describe('Common nesting tests', () => {
     await nativeFtCollectionToBeNested.transferFrom(alice, tokenA.nestingAccount(), tokenB.nestingAccount(), 25n);
 
     expect(await nestedNFT.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await nestedNFT.getOwner()).to.be.deep.equal(tokenB.nestingAccount().toLowerCase());
+    expect(await nestedNFT.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(tokenB.nestingAccount()));
 
     expect(await nestedRFT.getBalance(tokenB.nestingAccount())).to.equal(25n);
     expect(await nestedRFT.getBalance(tokenA.nestingAccount())).to.equal(75n);

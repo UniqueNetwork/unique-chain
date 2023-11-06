@@ -14,11 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {Pallets} from '../util';
-import {expect, itEth, usingEthPlaygrounds} from './util';
-import {TCollectionMode} from '../util/playgrounds/types';
-import {CreateCollectionData} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {Pallets} from '../util/index.js';
+import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import type {TCollectionMode} from '@unique/playgrounds/src/types.js';
+import {CreateCollectionData} from './util/playgrounds/types.js';
 
 describe('Destroy Collection from EVM', function() {
   let donor: IKeyringPair;

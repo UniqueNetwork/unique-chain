@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import './interfaces/augment-api-consts';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub} from './util';
+import {usingPlaygrounds, expect, itSub} from './util/index.js';
+import type {u32} from '@polkadot/types-codec';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;
@@ -29,7 +29,8 @@ const createCollectionDeposit = 100;
 /*eslint no-async-promise-executor: "off"*/
 function skipInflationBlock(api: ApiPromise): Promise<void> {
   const promise = new Promise<void>(async (resolve) => {
-    const blockInterval = api.consts.inflation.inflationBlockInterval.toNumber();
+    const inflationBlockInterval = api.consts.inflation.inflationBlockInterval as u32;
+    const blockInterval = inflationBlockInterval.toNumber();
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
       if(currentBlock % blockInterval < blockInterval - 10) {

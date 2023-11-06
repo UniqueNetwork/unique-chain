@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, SponsoringMode} from './util';
-import {usingPlaygrounds} from '../util/index';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itEth, expect, SponsoringMode} from './util/index.js';
+import {usingPlaygrounds} from '../util/index.js';
 
 describe('EVM sponsoring', () => {
   let donor: IKeyringPair;

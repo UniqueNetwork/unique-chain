@@ -15,14 +15,15 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect} from 'chai';
-import {EthUniqueHelper, itSchedEth} from './util';
-import {Pallets, usingPlaygrounds} from '../util';
+import {itSchedEth} from './util/index.js';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
+import {Pallets, usingPlaygrounds} from '../util/index.js';
 
 describe('Scheduing EVM smart contracts', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper) => {
-      await helper.testUtils.enable();
+      await helper.testUtils.enable(Pallets.TestUtils);
     });
   });
 

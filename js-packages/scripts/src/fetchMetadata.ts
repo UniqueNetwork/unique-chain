@@ -25,7 +25,7 @@ for(let i = 0; i < 10; i++) {
       }),
     });
     const json = await response.json();
-    const output = join(srcDir, 'interfaces/metadata.json');
+    const output = join(srcDir, 'metadata.json');
     console.log(`Received response, saving to ${output}`);
     await writeFile(output, JSON.stringify(json));
     exit(0);

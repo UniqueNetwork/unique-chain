@@ -1,12 +1,12 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
-import {IKeyringPair} from '@polkadot/types/types';
-import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from './unique';
-import {ILogger, TSigner, TSubstrateAccount} from './types';
-import {AcalaAssetMetadata, DemocracyStandardAccountVote, IForeignAssetMetadata, MoonbeamAssetInfo} from './types.xcm';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from './unique.js';
+import type {ILogger, TSigner, TSubstrateAccount} from './types.js';
+import type {AcalaAssetMetadata, DemocracyStandardAccountVote, IForeignAssetMetadata, MoonbeamAssetInfo} from './types.xcm.js';
 
 
 export class XcmChainHelper extends ChainHelperBase {
-  async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
+  override async connect(wsEndpoint: string, _listeners?: any): Promise<void> {
     const wsProvider = new WsProvider(wsEndpoint);
     this.api = new ApiPromise({
       provider: wsProvider,

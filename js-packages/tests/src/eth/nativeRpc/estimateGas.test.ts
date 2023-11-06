@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itEth, usingEthPlaygrounds} from '../util';
-import {IKeyringPair} from '@polkadot/types/types';
+import {expect, itEth, usingEthPlaygrounds} from '../util/index.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 
 describe('Ethereum native RPC calls', () => {
@@ -23,7 +23,7 @@ describe('Ethereum native RPC calls', () => {
   const NATIVE_TOKEN_ADDRESS = '0x17c4e6453cc49aaaaeaca894e6d9683e00000000';
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_, privateKey) => {
       donor = await privateKey({url: import.meta.url});
     });
   });

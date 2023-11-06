@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '../util/index';
-import {itEth, expect} from './util';
-import {CollectionLimitField, TokenPermissionField} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '../util/index.js';
+import {itEth, expect} from './util/index.js';
+import {CollectionLimitField, TokenPermissionField} from './util/playgrounds/types.js';
 
 describe('evm nft collection sponsoring', () => {
   let donor: IKeyringPair;

@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect} from './util';
-import {CrossAccountId} from './util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, itSub, expect} from './util/index.js';
+import {ICrossAccountId} from '@unique/playgrounds/src/types.js';
 
 describe('integration test: RPC methods', () => {
   let donor: IKeyringPair;
@@ -55,9 +55,9 @@ describe('integration test: RPC methods', () => {
     // Set-up over
 
     const owners = await helper.callRpc('api.rpc.unique.tokenOwners', [collection.collectionId, 0]);
-    const ids = (owners.toJSON() as any[]).map(CrossAccountId.fromLowerCaseKeys);
+    const ids = owners.toHuman() as ICrossAccountId[];
 
-    expect(ids).to.deep.include.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
+    expect(ids).to.have.deep.members([{Substrate: alice.address}, ethAcc, {Substrate: bob.address}, ...facelessCrowd]);
     expect(owners.length == 10).to.be.true;
 
     // Make sure only 10 results are returned with this RPC

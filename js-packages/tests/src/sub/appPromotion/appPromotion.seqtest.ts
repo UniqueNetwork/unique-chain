@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../../util';
-import {expect} from '../../eth/util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '../../util/index.js';
+import {expect} from '../../eth/util/index.js';
 
 let superuser: IKeyringPair;
 let donor: IKeyringPair;

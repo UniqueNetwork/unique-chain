@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '../../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from '../../util/index.js';
+import {CrossAccountId} from '@unique/playgrounds/src/unique.js';
 
 describe('Composite nesting tests', () => {
   let alice: IKeyringPair;
@@ -119,7 +120,7 @@ describe('Composite nesting tests', () => {
     // Create an immediately nested token
     const nestedToken = await collection.mintToken(alice, targetToken.nestingAccount());
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
 
     // Create a token to be nested
     const newToken = await collection.mintToken(alice);
@@ -127,14 +128,14 @@ describe('Composite nesting tests', () => {
     // Nest
     await newToken.nest(alice, targetToken);
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: alice.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
 
     // Move bundle to different user
     await targetToken.transfer(alice, {Substrate: bob.address});
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
     expect(await newToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await newToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await newToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
 
     // Unnest
     await newToken.unnest(bob, targetToken, {Substrate: bob.address});

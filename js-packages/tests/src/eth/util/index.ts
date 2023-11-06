@@ -2,20 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as path from 'path';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 
-import config from '../../config';
+import config from '../../config.js';
 
-import {EthUniqueHelper} from './playgrounds/unique.dev';
-import {SilentLogger, SilentConsole} from '../../util/playgrounds/unique.dev';
-import {SchedKind, makeNames} from '../../util';
-
-export {EthUniqueHelper} from './playgrounds/unique.dev';
+import {EthUniqueHelper} from './playgrounds/unique.dev.js';
+import {SilentLogger, SilentConsole} from '@unique/playgrounds/src/unique.dev.js';
+import {makeNames} from '../../util/index.js';
+import type {SchedKind} from '../../util/index.js';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip} from '../../util';
+import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip} from '../../util/index.js';
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);

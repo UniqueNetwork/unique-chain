@@ -1,7 +1,7 @@
-import {IKeyringPair} from '@polkadot/types/types';
-import {Pallets} from '../util';
-import {expect, itEth, usingEthPlaygrounds} from './util';
-import {CollectionLimitField, CreateCollectionData} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {Pallets} from '../util/index.js';
+import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import {CollectionLimitField, CreateCollectionData} from './util/playgrounds/types.js';
 
 
 describe('Can set collection limits', () => {

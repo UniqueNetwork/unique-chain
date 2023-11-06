@@ -14,11 +14,12 @@ import {Contract} from 'web3-eth-contract';
 import solc from 'solc';
 
 import {evmToAddress} from '@polkadot/util-crypto';
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 
-import {ArrangeGroup, DevUniqueHelper} from '../../../util/playgrounds/unique.dev';
+import {ArrangeGroup, DevUniqueHelper} from '@unique/playgrounds/src/unique.dev.js';
 
-import {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty, CollectionMode, CreateCollectionData} from './types';
+import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.js';
+import {CollectionMode, CreateCollectionData} from './types.js';
 
 // Native contracts ABI
 import collectionHelpersAbi from '../../abi/collectionHelpers.json' assert {type: 'json'};
@@ -32,8 +33,7 @@ import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json' assert
 import refungibleTokenAbi from '../../abi/reFungibleToken.json' assert {type: 'json'};
 import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json' assert {type: 'json'};
 import contractHelpersAbi from '../../abi/contractHelpers.json' assert {type: 'json'};
-import {ICrossAccountId, TEthereumAccount} from '../../../util/playgrounds/types';
-import {TCollectionMode} from '../../../util/playgrounds/types';
+import type {ICrossAccountId, TEthereumAccount, TCollectionMode} from '@unique/playgrounds/src/types.js';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -192,8 +192,10 @@ class CreateCollectionTransaction {
 
     let flags = 0;
     // convert CollectionFlags to number and join them in one number
-    if(!data.flags || typeof data.flags == 'number') {
-      flags = data.flags ?? 0;
+    if(!data.flags) {
+      flags = 0;
+    } else if(typeof data.flags == 'number') {
+      flags = data.flags;
     } else {
       for(let i = 0; i < data.flags.length; i++){
         const flag = data.flags[i];
@@ -345,7 +347,7 @@ class EthGroup extends EthGroupBase {
     return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'rft')).send();
   }
 
-  createFungibleCollection(signer: string, name: string, decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
+  createFungibleCollection(signer: string, name: string, _decimals: number, description: string, tokenPrefix: string): Promise<{ collectionId: number, collectionAddress: string, events: NormalizedEvent[] }> {
     return this.createCollection(signer, new CreateCollectionData(name, description, tokenPrefix, 'ft')).send();
   }
 
@@ -459,7 +461,7 @@ class EthAddressGroup extends EthGroupBase {
 
   fromCollectionId(collectionId: number): string {
     if(collectionId >= 0xffffffff || collectionId < 0) throw new Error('collectionId overflow');
-    return Web3.utils.toChecksumAddress(`0x17c4e6453cc49aaaaeaca894e6d9683e${collectionId.toString(16).padStart(8, '0')}`);
+    return (Web3 as any).utils.toChecksumAddress(`0x17c4e6453cc49aaaaeaca894e6d9683e${collectionId.toString(16).padStart(8, '0')}`);
   }
 
   extractTokenId(address: string): { collectionId: number, tokenId: number } {
@@ -545,7 +547,7 @@ export class FeeGas {
 }
 
 class EthArrangeGroup extends ArrangeGroup {
-  helper: EthUniqueHelper;
+  declare helper: EthUniqueHelper;
 
   constructor(helper: EthUniqueHelper) {
     super(helper);
@@ -558,7 +560,7 @@ class EthArrangeGroup extends ArrangeGroup {
   }
 }
 export class EthUniqueHelper extends DevUniqueHelper {
-  web3: Web3 | null = null;
+  web3: Web3.default | null = null;
   web3Provider: WebsocketProvider | null = null;
 
   eth: EthGroup;
@@ -567,7 +569,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
   ethNativeContract: NativeContractGroup;
   ethContract: ContractGroup;
   ethProperty: EthPropertyGroup;
-  arrange: EthArrangeGroup;
+  declare arrange: EthArrangeGroup;
   constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: { [key: string]: any } = {}) {
     options.helperBase = options.helperBase ?? EthUniqueHelper;
 
@@ -582,30 +584,30 @@ export class EthUniqueHelper extends DevUniqueHelper {
     super.arrange = this.arrange;
   }
 
-  getWeb3(): Web3 {
+  getWeb3(): Web3.default {
     if(this.web3 === null) throw Error('Web3 not connected');
     return this.web3;
   }
 
   connectWeb3(wsEndpoint: string) {
     if(this.web3 !== null) return;
-    this.web3Provider = new Web3.providers.WebsocketProvider(wsEndpoint);
-    this.web3 = new Web3(this.web3Provider);
+    this.web3Provider = new (Web3 as any).providers.WebsocketProvider(wsEndpoint);
+    this.web3 = new (Web3 as any)(this.web3Provider);
   }
 
-  async disconnect() {
+  override async disconnect() {
     if(this.web3 === null) return;
     this.web3Provider?.connection.close();
 
     await super.disconnect();
   }
 
-  clearApi() {
+  override clearApi() {
     super.clearApi();
     this.web3 = null;
   }
 
-  clone(helperCls: EthUniqueHelperConstructor, options?: { [key: string]: any; }): EthUniqueHelper {
+  override clone(helperCls: EthUniqueHelperConstructor, options?: { [key: string]: any; }): EthUniqueHelper {
     const newHelper = super.clone(helperCls, options) as EthUniqueHelper;
     newHelper.web3 = this.web3;
     newHelper.web3Provider = this.web3Provider;

@@ -15,9 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {readFile} from 'fs/promises';
-import {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper, itEth, usingEthPlaygrounds, expect} from '../util';
-import {makeNames} from '../../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds, expect} from '../util/index.js';
+import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
+import {makeNames} from '../../util/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 

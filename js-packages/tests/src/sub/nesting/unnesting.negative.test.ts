@@ -14,8 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from '../../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, usingPlaygrounds} from '../../util/index.js';
+import {CrossAccountId} from '@unique/playgrounds/src/unique.js';
 
 describe('Negative Test: Unnesting', () => {
   let alice: IKeyringPair;
@@ -48,7 +49,7 @@ describe('Negative Test: Unnesting', () => {
 
     expect(await targetToken.getChildren()).to.be.length(1);
     expect(await nestedToken.getTopmostOwner()).to.be.deep.equal({Substrate: bob.address});
-    expect(await nestedToken.getOwner()).to.be.deep.equal(targetToken.nestingAccount().toLowerCase());
+    expect(await nestedToken.getOwner()).to.be.deep.equal(CrossAccountId.toLowerCase(targetToken.nestingAccount()));
   });
 
   [

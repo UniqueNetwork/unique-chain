@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds} from './eth/util';
-import {itSub, Pallets, usingPlaygrounds, expect} from './util';
-import {NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds} from './eth/util/index.js';
+import {itSub, Pallets, usingPlaygrounds, expect} from './util/index.js';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique/playgrounds/src/types.js';
 
 describe('Integration Test Transfer(recipient, collection_id, item_id, value)', () => {
   let donor: IKeyringPair;

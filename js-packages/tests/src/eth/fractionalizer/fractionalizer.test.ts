@@ -17,14 +17,15 @@
 
 import {readFile} from 'fs/promises';
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 
 import {Contract} from 'web3-eth-contract';
 
-import {usingEthPlaygrounds, expect, itEth, EthUniqueHelper} from '../util';
-import {CompiledContract} from '../util/playgrounds/types';
-import {requirePalletsOrSkip, Pallets, makeNames} from '../../util';
+import {usingEthPlaygrounds, expect, itEth} from '../util/index.js';
+import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
+import type {CompiledContract} from '../util/playgrounds/types.js';
+import {requirePalletsOrSkip, Pallets, makeNames} from '../../util/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 

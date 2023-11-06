@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util';
-import {DevUniqueHelper, Event} from '../util/playgrounds/unique.dev';
-import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '../util/index.js';
+import {DevUniqueHelper, Event} from '@unique/playgrounds/src/unique.dev.js';
+import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types.js';
 import {hexToString} from '@polkadot/util';
 
 

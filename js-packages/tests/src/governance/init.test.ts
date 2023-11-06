@@ -1,7 +1,8 @@
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {Event} from '../util/playgrounds/unique.dev';
-import {ICounselors, democracyLaunchPeriod, democracyVotingPeriod, ITechComms, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util/index.js';
+import {Event} from '@unique/playgrounds/src/unique.dev.js';
+import {democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util.js';
+import type {ICounselors, ITechComms} from './util.js';
 
 describeGov('Governance: Initialization', () => {
   let donor: IKeyringPair;

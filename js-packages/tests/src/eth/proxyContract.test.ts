@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds, EthUniqueHelper} from './util';
+import {itEth, expect, usingEthPlaygrounds} from './util/index.js';
+import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;

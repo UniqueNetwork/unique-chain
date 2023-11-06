@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds} from './util';
-import {CrossAccountId} from '../util/playgrounds/unique';
-import {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds} from './util/index.js';
+import {CrossAccountId} from '@unique/playgrounds/src/unique.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('Token transfer between substrate address and EVM address. Fungible', () => {
   let donor: IKeyringPair;
@@ -32,15 +32,16 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
   });
 
   itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {
-    const bobCA = CrossAccountId.fromKeyring(bob);
-    const charlieCA = CrossAccountId.fromKeyring(charlie);
+    const bobCA = CrossAccountId.fromKeyring(bob).toICrossAccountId();
+    const charlieCA = CrossAccountId.fromKeyring(charlie).toICrossAccountId();
+    const charlieCAEth = CrossAccountId.fromKeyring(charlie).toEthereum().toICrossAccountId();
 
     const collection = await helper.ft.mintCollection(alice);
     await collection.setLimits(alice, {ownerCanTransfer: true});
 
     await collection.mint(alice, 200n);
-    await collection.transfer(alice, charlieCA.toEthereum(), 200n);
-    await collection.transferFrom(alice, charlieCA.toEthereum(), charlieCA, 50n);
+    await collection.transfer(alice, charlieCAEth, 200n);
+    await collection.transferFrom(alice, charlieCAEth, charlieCA, 50n);
     await collection.transfer(charlie, bobCA, 50n);
   });
 
@@ -56,8 +57,8 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
 
     await collection.mint(alice, 200n, {Ethereum: aliceProxy});
     await contract.methods.transfer(bobProxy, 50).send({from: aliceProxy});
-    await collection.transferFrom(alice, {Ethereum: bobProxy}, CrossAccountId.fromKeyring(bob), 50n);
-    await collection.transfer(bob, CrossAccountId.fromKeyring(alice), 50n);
+    await collection.transferFrom(alice, {Ethereum: bobProxy}, CrossAccountId.fromKeyring(bob).toICrossAccountId(), 50n);
+    await collection.transfer(bob, CrossAccountId.fromKeyring(alice).toICrossAccountId(), 50n);
   });
 });
 
@@ -75,14 +76,14 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
   });
 
   itEth('The private key X create a substrate address. Alice sends a token to the corresponding EVM address, and X can send it to Bob in the substrate', async ({helper}) => {
-    const charlieEth = CrossAccountId.fromKeyring(charlie, 'Ethereum');
+    const charlieEth = CrossAccountId.fromKeyring(charlie, 'Ethereum').toICrossAccountId();
 
     const collection = await helper.nft.mintCollection(alice);
     await collection.setLimits(alice, {ownerCanTransfer: true});
     const token = await collection.mintToken(alice);
     await token.transfer(alice, charlieEth);
-    await token.transferFrom(alice, charlieEth, CrossAccountId.fromKeyring(charlie));
-    await token.transfer(charlie, CrossAccountId.fromKeyring(bob));
+    await token.transferFrom(alice, charlieEth, CrossAccountId.fromKeyring(charlie).toICrossAccountId());
+    await token.transfer(charlie, CrossAccountId.fromKeyring(bob).toICrossAccountId());
   });
 
   itEth('The private key X create a EVM address. Alice sends a token to the substrate address corresponding to this EVM address, and X can send it to Bob in the EVM', async ({helper}) => {

@@ -14,9 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from './util';
-import {ICollectionPermissions, NON_EXISTENT_COLLECTION_ID} from './util/playgrounds/types';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub} from './util/index.js';
+import type {ICollectionPermissions} from '@unique/playgrounds/src/types.js';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique/playgrounds/src/types.js';
 
 describe('Integration Test ext. Allow list tests', () => {
   let alice: IKeyringPair;
@@ -177,7 +178,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
       await helper.nft.addToAllowList(alice, collectionId, {Substrate: charlie.address});
       await helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner).to.be.deep.equal({Substrate: charlie.address});
     });
 
     itSub('If Public Access mode is set to AllowList, tokens can be transferred to a allowlisted address with transferFrom.', async ({helper}) => {
@@ -190,7 +191,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
       await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner).to.be.deep.equal({Substrate: charlie.address});
     });
 
     itSub('If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transfer', async ({helper}) => {
@@ -202,7 +203,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
       await helper.nft.transferToken(alice, collectionId, tokenId, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner).to.be.deep.equal({Substrate: charlie.address});
     });
 
     itSub('If Public Access mode is set to AllowList, tokens can be transferred from a allowlisted address with transferFrom', async ({helper}) => {
@@ -215,7 +216,7 @@ describe('Integration Test ext. Transfer if included in Allow List', () => {
 
       await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: alice.address}, {Substrate: charlie.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(charlie.address);
+      expect(owner).to.be.deep.equal({Substrate: charlie.address});
     });
   });
 

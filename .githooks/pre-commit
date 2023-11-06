@@ -28,7 +28,7 @@ if [[ "$STAGED_TEST_FILES" = "" ]]; then
 fi
 
 echo "Starting eslint.."
-./tests/node_modules/.bin/eslint --max-warnings 0 ${STAGED_TEST_FILES[@]}
+./js-packages/node_modules/.bin/eslint --max-warnings 0 ${STAGED_TEST_FILES[@]}
 ESLINT_EXIT="$?"
 
 if [[ "${ESLINT_EXIT}" = 0 ]]; then

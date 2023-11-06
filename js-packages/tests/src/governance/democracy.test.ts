@@ -1,7 +1,7 @@
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util';
-import {clearFellowship, democracyLaunchPeriod, democracyTrackMinRank, dummyProposalCall, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, fellowshipPreparePeriod, fellowshipPropositionOrigin, initFellowship, voteUnanimouslyInFellowship} from './util';
-import {Event} from '../util/playgrounds/unique.dev';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util/index.js';
+import {clearFellowship, democracyLaunchPeriod, democracyTrackMinRank, dummyProposalCall, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, fellowshipPreparePeriod, fellowshipPropositionOrigin, initFellowship, voteUnanimouslyInFellowship} from './util.js';
+import {Event} from '@unique/playgrounds/src/unique.dev.js';
 
 describeGov('Governance: Democracy tests', () => {
   let regularUser: IKeyringPair;

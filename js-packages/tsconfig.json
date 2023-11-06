@@ -1,22 +1,11 @@
 {
-	"compilerOptions": {
-		"target": "ES2020",
-		"moduleResolution": "node",
-		"esModuleInterop": true,
-		"resolveJsonModule": true,
-		"module": "ESNext",
-		"sourceMap": true,
-		"outDir": "dist",
-		"strict": true,
-		"paths": {
-			"@polkadot/types/lookup": ["./src/interfaces/types-lookup.ts"],
-			"@unique-nft/types/*": ["./src/interfaces/*"]
-		}
-	},
-	"include": ["./src/**/*", "./src/interfaces/*.ts"],
-	"exclude": ["./src/.outdated"],
-	"lib": ["es2017"],
-	"ts-node": {
-		"experimentalSpecifierResolution": "node"
-	}
-}
+	"references": [
+	  { "path": "./types/tsconfig.json" },
+	  { "path": "./playgrounds/tsconfig.json" },
+	  { "path": "./scripts/tsconfig.json" },
+	  { "path": "./tests/tsconfig.json" }
+	],
+	"files": [],
+	"exclude": ["**/node_modules"]
+  }
+  

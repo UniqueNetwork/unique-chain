@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub} from './util/index.js';
 
 describe('Integration Test: ownerCanTransfer allows admins to use only transferFrom/burnFrom:', () => {
   let alice: IKeyringPair;
@@ -40,7 +40,7 @@ describe('Integration Test: ownerCanTransfer allows admins to use only transferF
 
     await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: bob.address}, {Substrate: charlie.address});
     const newTokenOwner = await helper.nft.getTokenOwner(collectionId, tokenId);
-    expect(newTokenOwner.Substrate).to.be.equal(charlie.address);
+    expect(newTokenOwner).to.be.deep.equal({Substrate: charlie.address});
   });
 
   itSub('admin burns other user\'s token', async ({helper}) => {

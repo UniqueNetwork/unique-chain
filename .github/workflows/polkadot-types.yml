@@ -77,10 +77,10 @@ jobs:
         working-directory: tests
         run: |
           yarn install
-          /bin/bash ./scripts/wait_for_first_block.sh
+          /bin/bash ./scripts/generate_types/wait_for_first_block.sh
           git config --global user.name "Unique"
           git config --global user.email github-actions@usetech.com          
-          /bin/bash ./scripts/generate_types_package.sh --release ${{ matrix.usage }} --push
+          /bin/bash ./scripts/generate_types/generate_types_package.sh --release ${{ matrix.usage }} --push
         env:
           RPC_URL: http://127.0.0.1:9944/
 

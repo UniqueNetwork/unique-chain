@@ -14,12 +14,13 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {readFile} from 'fs/promises';
-import {EthUniqueHelper, SponsoringMode, itEth, usingEthPlaygrounds} from '../util';
-import {makeNames} from '../../util';
-import {expect} from 'chai';
 import Web3 from 'web3';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {readFile} from 'fs/promises';
+import {SponsoringMode, itEth, usingEthPlaygrounds} from '../util/index.js';
+import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
+import {makeNames} from '../../util/index.js';
+import {expect} from 'chai';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -54,27 +55,27 @@ describe('Market V2 Contract', () => {
         },
         {
           solPath: '@openzeppelin/contracts/utils/introspection/IERC165.sol',
-          fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
+          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/access/Ownable.sol',
-          fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/access/Ownable.sol`,
+          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/access/Ownable.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/utils/Context.sol',
-          fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/Context.sol`,
+          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/Context.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/security/ReentrancyGuard.sol',
-          fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol`,
+          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/utils/introspection/ERC165Checker.sol',
-          fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/utils/introspection/ERC165Checker.sol`,
+          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/introspection/ERC165Checker.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/token/ERC721/IERC721.sol',
-          fsPath: `${dirname}/../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
+          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
         },
         {
           solPath: '@unique-nft/solidity-interfaces/contracts/CollectionHelpers.sol',
@@ -98,11 +99,12 @@ describe('Market V2 Contract', () => {
     );
   }
 
-  function substrateAddressToHex(sub: Uint8Array| string, web3: Web3) {
+  function substrateAddressToHex(sub: Uint8Array| string, web3: Web3.default) {
     if(typeof sub === 'string')
       return web3.utils.padLeft(web3.utils.toHex(web3.utils.toBN(sub)), 64);
     else if(sub instanceof Uint8Array)
       return web3.utils.padLeft(web3.utils.bytesToHex(Array.from(sub)), 64);
+    throw Error('Infallible');
   }
 
   itEth('Put + Buy [eth]', async ({helper}) => {

@@ -3,15 +3,15 @@
 
 import * as path from 'path';
 import * as crypto from 'crypto';
-import {IKeyringPair} from '@polkadot/types/types/interfaces';
+import type {IKeyringPair} from '@polkadot/types/types/interfaces';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiSubset from 'chai-subset';
 import {Context} from 'mocha';
-import config from '../config';
-import {ChainHelperBase} from './playgrounds/unique';
-import {ILogger} from './playgrounds/types';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper} from './playgrounds/unique.dev';
+import config from '../config.js';
+import {ChainHelperBase} from '@unique/playgrounds/src/unique.js';
+import type {ILogger} from '@unique/playgrounds/src/types.js';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper} from '@unique/playgrounds/src/unique.dev.js';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 

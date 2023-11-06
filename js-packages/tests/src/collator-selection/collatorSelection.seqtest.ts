@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '../util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '../util/index.js';
 
 async function nodeAddress(name: string) {
   // eslint-disable-next-line require-await
-  return await usingPlaygrounds(async (helper, _) => {
+  return await usingPlaygrounds(async (helper) => {
     const envNodeStash = `RELAY_UNIQUE_NODE_${name.toUpperCase()}_STASH`;
 
     const nodeStash = process.env[envNodeStash];
@@ -91,7 +91,7 @@ describe('Integration Test: Collator Selection', () => {
     let deltaNode: string;
 
     before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
+      await usingPlaygrounds(async (helper) => {
         // todo:collator see again if blocks start to be finalized in dev mode
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
         if(await helper.arrange.isDevNode()) this.skip();
@@ -137,7 +137,7 @@ describe('Integration Test: Collator Selection', () => {
     let crowd: IKeyringPair[];
 
     before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
+      await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
         // set session keys for everyone
@@ -219,7 +219,7 @@ describe('Integration Test: Collator Selection', () => {
     let crowd: IKeyringPair[];
 
     before(async function() {
-      await usingPlaygrounds(async (helper, privateKey) => {
+      await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
         // set session keys for everyone

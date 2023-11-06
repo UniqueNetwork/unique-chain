@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://witww.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect} from './util';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
 
 describe('Eth fees are correct', () => {
   let donor: IKeyringPair;
@@ -44,7 +44,7 @@ describe('Eth fees are correct', () => {
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const balanceBeforeWeb3Transfer = await helper.balance.getEthereum(owner);
-    await contract.methods.transfer(receiver, tokenA).send({from: owner, maxFeePerGas: (await helper.eth.getGasPrice()).toString()});
+    await contract.methods.transfer(receiver, tokenA).send({from: owner, maxFeePerGas: ((await helper.eth.getGasPrice())!).toString()});
     const balanceAfterWeb3Transfer = await helper.balance.getEthereum(owner);
     const web3Diff = balanceBeforeWeb3Transfer - balanceAfterWeb3Transfer;
 

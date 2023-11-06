@@ -5,11 +5,11 @@
 // this is required to allow for ambient/previous definitions
 import '@polkadot/rpc-core/types/jsonrpc';
 
-import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData, UpPovEstimateRpcPovInfo } from './default';
+import type { PalletEvmAccountBasicCrossAccountIdRepr, UpDataStructsCollectionLimits, UpDataStructsCollectionStats, UpDataStructsProperty, UpDataStructsPropertyKeyPermission, UpDataStructsRpcCollection, UpDataStructsTokenChild, UpDataStructsTokenData, UpPovEstimateRpcPovInfo } from './default/index.js';
 import type { AugmentedRpc } from '@polkadot/rpc-core/types';
 import type { Metadata, StorageKey } from '@polkadot/types';
-import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u128, u32, u64 } from '@polkadot/types-codec';
-import type { AnyNumber, Codec, ITuple } from '@polkadot/types-codec/types';
+import type { Bytes, HashMap, Json, Null, Option, Text, U256, U64, Vec, bool, f64, u32, u64 } from '@polkadot/types-codec';
+import type { AnyNumber, Codec } from '@polkadot/types-codec/types';
 import type { ExtrinsicOrHash, ExtrinsicStatus } from '@polkadot/types/interfaces/author';
 import type { EpochAuthorship } from '@polkadot/types/interfaces/babe';
 import type { BeefySignedCommitment } from '@polkadot/types/interfaces/beefy';
@@ -35,24 +35,6 @@ export type __AugmentedRpc = AugmentedRpc<() => unknown>;
 
 declare module '@polkadot/rpc-core/types/jsonrpc' {
   interface RpcInterface {
-    appPromotion: {
-      /**
-       * Returns the total amount of unstaked tokens
-       **/
-      pendingUnstake: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Returns the total amount of unstaked tokens per block
-       **/
-      pendingUnstakePerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
-      /**
-       * Returns the total amount of staked tokens
-       **/
-      totalStaked: AugmentedRpc<(staker?: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Returns the total amount of staked tokens per block when staked
-       **/
-      totalStakedPerBlock: AugmentedRpc<(staker: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<ITuple<[u32, u128]>>>>;
-    };
     author: {
       /**
        * Returns true if the keystore has private keys for the given public key and key type.
@@ -444,12 +426,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        **/
       queryInfo: AugmentedRpc<(extrinsic: Bytes | string | Uint8Array, at?: BlockHash | string | Uint8Array) => Observable<RuntimeDispatchInfoV1>>;
     };
-    povinfo: {
-      /**
-       * Estimate PoV size of encoded signed extrinsics
-       **/
-      estimateExtrinsicPoV: AugmentedRpc<(encodedXt: Vec<Bytes> | (Bytes | string | Uint8Array)[], at?: Hash | string | Uint8Array) => Observable<UpPovEstimateRpcPovInfo>>;
-    };
     rpc: {
       /**
        * Retrieves the list of RPC methods that are exposed by the node
@@ -627,116 +603,6 @@ declare module '@polkadot/rpc-core/types/jsonrpc' {
        * Retrieves the version of the node
        **/
       version: AugmentedRpc<() => Observable<Text>>;
-    };
-    unique: {
-      /**
-       * Get the amount of any user tokens owned by an account
-       **/
-      accountBalance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
-      /**
-       * Get tokens owned by an account in a collection
-       **/
-      accountTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
-      /**
-       * Get the list of admin accounts of a collection
-       **/
-      adminlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Get the amount of currently possible sponsored transactions on a token for the fee to be taken off a sponsor
-       **/
-      allowance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, sender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, spender: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Tells whether the given `owner` approves the `operator`.
-       **/
-      allowanceForAll: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, owner: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, operator: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<bool>>>;
-      /**
-       * Check if a user is allowed to operate within a collection
-       **/
-      allowed: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
-      /**
-       * Get the list of accounts allowed to operate within a collection
-       **/
-      allowlist: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Get the amount of a specific token owned by an account
-       **/
-      balance: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u128>>;
-      /**
-       * Get a collection by the specified ID
-       **/
-      collectionById: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsRpcCollection>>>;
-      /**
-       * Get collection properties, optionally limited to the provided keys
-       **/
-      collectionProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
-      /**
-       * Get chain stats about collections
-       **/
-      collectionStats: AugmentedRpc<(at?: Hash | string | Uint8Array) => Observable<UpDataStructsCollectionStats>>;
-      /**
-       * Get tokens contained within a collection
-       **/
-      collectionTokens: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<u32>>>;
-      /**
-       * Get token constant metadata
-       **/
-      constMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
-      /**
-       * Get effective collection limits
-       **/
-      effectiveCollectionLimits: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<UpDataStructsCollectionLimits>>>;
-      /**
-       * Get the last token ID created in a collection
-       **/
-      lastTokenId: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
-      /**
-       * Get the number of blocks until sponsoring a transaction is available
-       **/
-      nextSponsored: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, account: PalletEvmAccountBasicCrossAccountIdRepr | { Substrate: any } | { Ethereum: any } | string | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u64>>>;
-      /**
-       * Get property permissions, optionally limited to the provided keys
-       **/
-      propertyPermissions: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsPropertyKeyPermission>>>;
-      /**
-       * Get tokens nested directly into the token
-       **/
-      tokenChildren: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsTokenChild>>>;
-      /**
-       * Get token data, including properties, optionally limited to the provided keys, and total pieces for an RFT
-       **/
-      tokenData: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<UpDataStructsTokenData>>;
-      /**
-       * Check if the token exists
-       **/
-      tokenExists: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<bool>>;
-      /**
-       * Get the token owner
-       **/
-      tokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Returns 10 tokens owners in no particular order
-       **/
-      tokenOwners: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Vec<PalletEvmAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Get token properties, optionally limited to the provided keys
-       **/
-      tokenProperties: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, propertyKeys?: Option<Vec<Text>> | null | Uint8Array | Vec<Text> | (Text | string)[], at?: Hash | string | Uint8Array) => Observable<Vec<UpDataStructsProperty>>>;
-      /**
-       * Get the topmost token owner in the hierarchy of a possibly nested token
-       **/
-      topmostTokenOwner: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<PalletEvmAccountBasicCrossAccountIdRepr>>>;
-      /**
-       * Get the total amount of pieces of an RFT
-       **/
-      totalPieces: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Option<u128>>>;
-      /**
-       * Get the amount of distinctive tokens present in a collection
-       **/
-      totalSupply: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<u32>>;
-      /**
-       * Get token variable metadata
-       **/
-      variableMetadata: AugmentedRpc<(collection: u32 | AnyNumber | Uint8Array, tokenId: u32 | AnyNumber | Uint8Array, at?: Hash | string | Uint8Array) => Observable<Bytes>>;
     };
     web3: {
       /**

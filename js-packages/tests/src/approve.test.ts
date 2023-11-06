@@ -14,15 +14,15 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from './util';
-import {CrossAccountId} from './util/playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {expect, itSub, Pallets, usingPlaygrounds} from './util/index.js';
+import {CrossAccountId} from '@unique/playgrounds/src/unique.js';
 
 
 
 [
-  {method: 'approveToken', account: (account: IKeyringPair) => CrossAccountId.fromKeyring(account)},
-  {method: 'approveTokenFromEth', account: (account: IKeyringPair) => CrossAccountId.fromKeyring(account).toEthereum()},
+  {method: 'approveToken', account: (account: IKeyringPair) => CrossAccountId.fromKeyring(account).toICrossAccountId()},
+  {method: 'approveTokenFromEth', account: (account: IKeyringPair) => CrossAccountId.fromKeyring(account).toEthereum().toICrossAccountId()},
 ].map(testCase => {
   describe(`Integration Test ${testCase.method}(spender, collection_id, item_id, amount):`, () => {
     let alice: IKeyringPair;
@@ -158,7 +158,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
       await (helper.nft as any)[testCase.method](bob, collectionId, tokenId, {Substrate: charlie.address});
       await helper.nft.transferTokenFrom(charlie, collectionId, tokenId, testCase.account(bob), {Substrate: alice.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(alice.address);
+      expect(owner).to.be.deep.equal({Substrate: alice.address});
     });
 
     itSub('Fungible up to an approved amount', async ({helper}) => {
@@ -201,7 +201,7 @@ import {CrossAccountId} from './util/playgrounds/unique';
       await (helper.nft as any)[testCase.method](bob, collectionId, tokenId, {Substrate: charlie.address});
       await helper.nft.transferTokenFrom(charlie, collectionId, tokenId, testCase.account(bob), {Substrate: alice.address});
       const owner = await helper.nft.getTokenOwner(collectionId, tokenId);
-      expect(owner.Substrate).to.be.equal(alice.address);
+      expect(owner).to.be.deep.equal({Substrate: alice.address});
       const transferTokenFromTx = () => helper.nft.transferTokenFrom(charlie, collectionId, tokenId, testCase.account(bob), {Substrate: alice.address});
       await expect(transferTokenFromTx()).to.be.rejectedWith('common.ApprovedValueTooLow');
     });
@@ -559,12 +559,12 @@ describe('Administrator and collection owner do not need approval in order to ex
 
     await helper.nft.transferTokenFrom(alice, collectionId, tokenId, {Substrate: charlie.address}, {Substrate: dave.address});
     const owner1 = await helper.nft.getTokenOwner(collectionId, tokenId);
-    expect(owner1.Substrate).to.be.equal(dave.address);
+    expect(owner1).to.be.deep.equal({Substrate: dave.address});
 
     await helper.collection.addAdmin(alice, collectionId, {Substrate: bob.address});
     await helper.nft.transferTokenFrom(bob, collectionId, tokenId, {Substrate: dave.address}, {Substrate: alice.address});
     const owner2 = await helper.nft.getTokenOwner(collectionId, tokenId);
-    expect(owner2.Substrate).to.be.equal(alice.address);
+    expect(owner2).to.be.deep.equal({Substrate: alice.address});
   });
 
   itSub('Fungible up to an approved amount', async ({helper}) => {

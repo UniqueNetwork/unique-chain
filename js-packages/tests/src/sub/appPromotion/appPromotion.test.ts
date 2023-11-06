@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {IKeyringPair} from '@polkadot/types/types';
+import type {IKeyringPair} from '@polkadot/types/types';
 import {
   itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD, UNLOCKING_PERIOD,
-} from '../../util';
-import {DevUniqueHelper} from '../../util/playgrounds/unique.dev';
-import {itEth, expect, SponsoringMode} from '../../eth/util';
+} from '../../util/index.js';
+import {DevUniqueHelper} from '@unique/playgrounds/src/unique.dev.js';
+import {itEth, expect, SponsoringMode} from '../../eth/util/index.js';
 
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;

@@ -8,9 +8,9 @@
 // Example: `yarn setIdentities wss://polkadot-rpc.dwellir.com ws://localhost:9944 escape pattern miracle train sudden cart adapt embark wedding alien lamp mesh`
 
 import {encodeAddress} from '@polkadot/keyring';
-import {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, Pallets} from './index';
-import {ChainHelperBase} from './playgrounds/unique';
+import type {IKeyringPair} from '@polkadot/types/types';
+import {usingPlaygrounds, Pallets} from './index.js';
+import {ChainHelperBase} from '@unique/playgrounds/src/unique.js';
 
 const relayUrl = process.argv[2] ?? 'ws://localhost:9844';
 const paraUrl = process.argv[3] ?? 'ws://localhost:9944';
