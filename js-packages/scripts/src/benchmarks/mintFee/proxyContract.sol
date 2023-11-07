@@ -1,10 +1,10 @@
 // SPDX-License-Identifier:  Apache License
 pragma solidity >=0.8.0;
-import {CollectionHelpers} from "../../eth/api/CollectionHelpers.sol";
-import {ContractHelpers} from "../../eth/api/ContractHelpers.sol";
-import {UniqueRefungibleToken} from "../../eth/api/UniqueRefungibleToken.sol";
-import {UniqueRefungible, Collection, CrossAddress as RftCrossAccountId, Property as RftProperty} from "../../eth/api/UniqueRefungible.sol";
-import {UniqueNFT, CrossAddress as NftCrossAccountId, Property as NftProperty} from "../../eth/api/UniqueNFT.sol";
+import {CollectionHelpers} from "eth/api/CollectionHelpers.sol";
+import {ContractHelpers} from "eth/api/ContractHelpers.sol";
+import {UniqueRefungibleToken} from "eth/api/UniqueRefungibleToken.sol";
+import {UniqueRefungible, Collection, CrossAddress as RftCrossAccountId, Property as RftProperty} from "eth/api/UniqueRefungible.sol";
+import {UniqueNFT, CrossAddress as NftCrossAccountId, Property as NftProperty} from "eth/api/UniqueNFT.sol";
 
 struct Property {
 	string key;

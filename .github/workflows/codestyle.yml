@@ -42,10 +42,10 @@ jobs:
         with:
           node-version: 18
       - name: Install modules
-        run: cd tests && yarn
+        run: cd js-packages && yarn
       - name: Run ESLint
-        # run: cd tests && yarn eslint --ext .ts,.js --max-warnings=0 src/
-        run: cd tests && yarn eslint --ext .ts,.js src/
+        # run: cd js-packages && yarn eslint --ext .ts,.js --max-warnings=0 src/
+        run: cd js-packages && yarn eslint --ext .ts,.js ./*/src
 
   clippy:
     runs-on: [ self-hosted-ci ]
