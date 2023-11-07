@@ -99,22 +99,22 @@ pub mod module {
 	pub enum Event<T: Config> {
 		/// The foreign asset registered.
 		ForeignAssetRegistered {
-			asset_id: CollectionId,
-			reserve_location: Box<MultiLocation>,
+			collection_id: CollectionId,
+			asset_id: Box<AssetId>,
 		},
 	}
 
-	/// The corresponding collections of reserve locations.
+	/// The corresponding collections of foreign assets.
 	#[pallet::storage]
-	#[pallet::getter(fn foreign_reserve_location_to_collection)]
-	pub type ForeignReserveLocationToCollection<T: Config> =
-		StorageMap<_, Twox64Concat, staging_xcm::v3::MultiLocation, CollectionId, OptionQuery>;
+	#[pallet::getter(fn foreign_asset_to_collection)]
+	pub type ForeignAssetToCollection<T: Config> =
+		StorageMap<_, Twox64Concat, staging_xcm::v3::AssetId, CollectionId, OptionQuery>;
 
-	/// The corresponding reserve location of collections.
+	/// The corresponding foreign assets of collections.
 	#[pallet::storage]
-	#[pallet::getter(fn collection_to_foreign_reserve_location)]
-	pub type CollectionToForeignReserveLocation<T: Config> =
-		StorageMap<_, Twox64Concat, CollectionId, staging_xcm::v3::MultiLocation, OptionQuery>;
+	#[pallet::getter(fn collection_to_foreign_asset)]
+	pub type CollectionToForeignAsset<T: Config> =
+		StorageMap<_, Twox64Concat, CollectionId, staging_xcm::v3::AssetId, OptionQuery>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
@@ -149,16 +149,17 @@ pub mod module {
 		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
 		pub fn force_register_foreign_asset(
 			origin: OriginFor<T>,
-			reserve_location: Box<MultiLocation>,
+			asset_id: Box<AssetId>,
 			name: CollectionName,
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
 			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
-			if <ForeignReserveLocationToCollection<T>>::contains_key(*reserve_location) {
-				return Err(<Error<T>>::ForeignAssetAlreadyRegistered.into());
-			}
+			ensure!(
+				!<ForeignAssetToCollection<T>>::contains_key(*asset_id),
+				<Error<T>>::ForeignAssetAlreadyRegistered,
+			);
 
 			let foreign_collection_owner = Self::pallet_account();
 
@@ -182,7 +183,7 @@ pub mod module {
 
 					properties: vec![Property {
 						key: Self::reserve_location_property_key(),
-						value: reserve_location
+						value: asset_id
 							.encode()
 							.try_into()
 							.expect("multilocation is less than 32k; qed"),
@@ -204,12 +205,12 @@ pub mod module {
 				},
 			)?;
 
-			<ForeignReserveLocationToCollection<T>>::insert(*reserve_location, collection_id);
-			<CollectionToForeignReserveLocation<T>>::insert(collection_id, *reserve_location);
+			<ForeignAssetToCollection<T>>::insert(*asset_id, collection_id);
+			<CollectionToForeignAsset<T>>::insert(collection_id, *asset_id);
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
-				asset_id: collection_id,
-				reserve_location,
+				collection_id,
+				asset_id,
 			});
 
 			Ok(())
@@ -237,7 +238,7 @@ impl<T: Config> Pallet<T> {
 			.expect("key length < max property key length; qed")
 	}
 
-	/// Converts a multilocation to a local collection on Unique Network.
+	/// Converts a concrete asset ID (the asset multilocation) to a local collection on Unique Network.
 	///
 	/// The multilocation corresponds to a local collection if:
 	/// * It is `Here` location that corresponds to the native token of this parachain.
@@ -249,9 +250,11 @@ impl<T: Config> Pallet<T> {
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
 	/// `None` is returned, identifying that the given multilocation doesn't correspond to a local collection.
-	fn local_asset_location_to_collection(
-		asset_location: &MultiLocation,
-	) -> Option<CollectionLocality> {
+	fn local_asset_id_to_collection(asset_id: &AssetId) -> Option<CollectionLocality> {
+		let AssetId::Concrete(asset_location) = asset_id else {
+			return None;
+		};
+
 		let self_location = T::SelfLocation::get();
 
 		if *asset_location == Here.into() || *asset_location == self_location {
@@ -264,7 +267,7 @@ impl<T: Config> Pallet<T> {
 				Some(GeneralIndex(collection_id)) => {
 					let collection_id = CollectionId((*collection_id).try_into().ok()?);
 
-					Self::collection_to_foreign_reserve_location(collection_id)
+					Self::collection_to_foreign_asset(collection_id)
 						.is_none()
 						.then_some(CollectionLocality::Local(collection_id))
 				}
@@ -287,13 +290,9 @@ impl<T: Config> Pallet<T> {
 	///
 	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
 	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionLocality, XcmError> {
-		let AssetId::Concrete(asset_reserve_location) = asset_id else {
-			return Err(XcmExecutorError::AssetNotHandled.into());
-		};
-
-		Self::foreign_reserve_location_to_collection(asset_reserve_location)
+		Self::foreign_asset_to_collection(asset_id)
 			.map(CollectionLocality::Foreign)
-			.or_else(|| Self::local_asset_location_to_collection(asset_reserve_location))
+			.or_else(|| Self::local_asset_id_to_collection(asset_id))
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
 
@@ -570,11 +569,16 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
 			Some(T::SelfLocation::get())
 		} else {
-			<Pallet<T>>::collection_to_foreign_reserve_location(collection_id).or_else(|| {
-				T::SelfLocation::get()
-					.pushed_with_interior(GeneralIndex(collection_id.0.into()))
-					.ok()
-			})
+			<Pallet<T>>::collection_to_foreign_asset(collection_id)
+				.and_then(|asset_id| match asset_id {
+					AssetId::Concrete(location) => Some(location),
+					_ => None,
+				})
+				.or_else(|| {
+					T::SelfLocation::get()
+						.pushed_with_interior(GeneralIndex(collection_id.0.into()))
+						.ok()
+				})
 		}
 	}
 }
