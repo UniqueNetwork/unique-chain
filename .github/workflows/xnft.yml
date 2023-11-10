@@ -178,7 +178,7 @@ jobs:
             .baedeker/vendor
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
-            inputs: |
+          inputs: |
             xnft-tests/.baedeker/testnets.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xnft-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
