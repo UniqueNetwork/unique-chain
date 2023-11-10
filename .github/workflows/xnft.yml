@@ -201,7 +201,7 @@ jobs:
         if: success() || failure()
         with:
           name: XNFT Tests ${{ matrix.network }}
-          path: tests/mochawesome-report/test-*.json
+          path: xnft-tests/mochawesome-report/test-*.json
           reporter: mochawesome-json
           fail-on-error: 'false'
 
