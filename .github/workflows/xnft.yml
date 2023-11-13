@@ -37,7 +37,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, runtest {quartz-karura}, runtime_features {quartz-runtime}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, runtest {all-quartz}, runtime_features {quartz-runtime}
 
   xnft:
     needs: prepare-execution-marix
