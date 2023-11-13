@@ -31,6 +31,10 @@ jobs:
   xcm:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested
+
+  xnft:
+    uses: ./.github/workflows/xnft.yml
+    secrets: inherit # pass all secrets from initial workflow to nested
     
   collator-selection:
     uses: ./.github/workflows/collator-selection.yml
