@@ -181,8 +181,8 @@ jobs:
           inputs: |
             xnft-tests/.baedeker/testnets.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xnft-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/quartz':{dockerImage:'uniquenetwork/ci-xnft-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/karura':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
 
       - name: Yarn install
         working-directory: xnft-tests
