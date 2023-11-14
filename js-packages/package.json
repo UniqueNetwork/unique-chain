@@ -42,6 +42,7 @@
     ]
   },
   "scripts": {
+    "prepublish": "yarn tsc",
     "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
     "polkadot-types-fetch-metadata": "yarn ts-node --esm scripts/fetchMetadata.ts",

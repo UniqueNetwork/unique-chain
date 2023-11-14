@@ -44,8 +44,8 @@ jobs:
       - name: Install modules
         run: cd js-packages && yarn
       - name: Run ESLint
-        # run: cd js-packages && yarn eslint --ext .ts,.js --max-warnings=0 src/
-        run: cd js-packages && yarn eslint --ext .ts,.js ./*/src
+        # run: cd js-packages && yarn lint --max-warnings=0
+        run: cd js-packages && yarn lint
 
   clippy:
     runs-on: [ self-hosted-ci ]
