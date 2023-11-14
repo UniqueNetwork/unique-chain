@@ -163,6 +163,18 @@ pub mod pallet {
 			Self::deposit_event(Event::BatchCompleted);
 			Ok(None::<Weight>.into())
 		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(*w)]
+		pub fn consume_block_space(
+			origin: OriginFor<T>,
+			w: Weight,
+			_consume_block_len_array: Vec<u8>
+		) -> DispatchResult {
+			Self::ensure_origin_and_enabled(origin.clone())?;
+
+			Ok(())
+		}
 	}
 }
 
