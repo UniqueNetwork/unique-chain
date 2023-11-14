@@ -82,11 +82,11 @@ jobs:
           node-version: 18
 
       - name: Run tests
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
           yarn install
           yarn add mochawesome
-          ./scripts/wait_for_first_block.sh
+          ../scripts/src/generate_types/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testGovernance --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
@@ -98,7 +98,7 @@ jobs:
         if: success() || failure() # run this step even if previous step failed
         with:
           name: int test results - ${{ matrix.network }} # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json # Path to test results
+          path: js-packages/tests/mochawesome-report/test-*.json # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 

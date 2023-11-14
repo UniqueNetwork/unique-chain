@@ -1,0 +1,31 @@
+{
+    "author": "",
+    "license": "SEE LICENSE IN ../../../LICENSE",
+    "description": "Interfaces for interacting with contracts and contract ABIs",
+    "engines": {
+        "node": ">=16"
+    },
+    "name": "@unique/tests",
+    "type": "module",
+    "version": "1.0.0",
+    "main": "",
+    "dependencies": {
+        "rxjs": "^7.8.1",
+        "tslib": "^2.6.2"
+    },
+    "devDependencies": {
+        "@types/node": "^20.8.10",
+        "mocha": "^10.1.0",
+        "ts-node": "^10.9.1",
+        "typescript": "^5.1.6"
+    },
+    "scripts": {
+        "setup": "ts-node --esm ./util/globalSetup.ts",
+        "setIdentities": "ts-node --esm ./util/identitySetter.ts",
+        "checkRelayIdentities": "ts-node --esm ./util/relayIdentitiesChecker.ts",
+        "_test": "yarn setup && mocha --timeout 9999999 --loader=ts-node/esm.mjs",
+        "_testParallel": "yarn setup && mocha --timeout 9999999 --parallel --loader=ts-node/esm.mjs",
+        "test": "yarn _test './**/*.*test.ts'",
+        "load": "yarn _test './**/*.load.ts'"
+    }
+}

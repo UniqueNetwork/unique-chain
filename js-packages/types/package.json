@@ -1,0 +1,15 @@
+{
+    "author": "",
+    "license": "SEE LICENSE IN ../../../LICENSE",
+    "description": "Interfaces for interacting with contracts and contract ABIs",
+    "engines": {
+        "node": ">=16"
+    },
+    "name": "@unique/opal-types",
+    "type": "module",
+    "version": "1.0.0",
+    "main": "index.js",
+    "devDependencies": {
+        "@polkadot/typegen": "^10.10.1"
+    }
+}
