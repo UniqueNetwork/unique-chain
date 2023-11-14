@@ -134,6 +134,10 @@ clippy:
 git-hooks:
 	cp .githooks/pre-commit .git/hooks/pre-commit
 
+.PHONY: git-blame
+git-blame:
+	git config blame.ignoreRevsFile .git-blame-ignore-revs
+
 .PHONY: init
 init:
 	make git-hooks
