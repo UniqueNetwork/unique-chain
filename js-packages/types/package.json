@@ -9,8 +9,7 @@
     "type": "module",
     "version": "1.0.0",
     "main": "index.js",
-    "dependencies": {
-        "rxjs": "^7.8.1",
-        "tslib": "^2.6.2"
+    "devDependencies": {
+        "@polkadot/typegen": "^10.10.1"
     }
 }

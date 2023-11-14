@@ -20,13 +20,12 @@
         "typescript": "^5.1.6"
     },
     "scripts": {
-        "setup": "ts-node --esm ./src/util/globalSetup.ts",
-        "setIdentities": "ts-node --esm ./src/util/identitySetter.ts",
-        "checkRelayIdentities": "ts-node --esm ./src/util/relayIdentitiesChecker.ts",
-        "frankenstein": "ts-node --esm ./src/util/frankenstein.ts",
+        "setup": "ts-node --esm ./util/globalSetup.ts",
+        "setIdentities": "ts-node --esm ./util/identitySetter.ts",
+        "checkRelayIdentities": "ts-node --esm ./util/relayIdentitiesChecker.ts",
         "_test": "yarn setup && mocha --timeout 9999999 --loader=ts-node/esm.mjs",
         "_testParallel": "yarn setup && mocha --timeout 9999999 --parallel --loader=ts-node/esm.mjs",
-        "test": "yarn _test './src/**/*.*test.ts'",
+        "test": "yarn _test './**/*.*test.ts'",
         "load": "yarn _test './**/*.load.ts'"
     }
 }

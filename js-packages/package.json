@@ -2,6 +2,9 @@
   "name": "unique-tests",
   "version": "1.0.0",
   "description": "Unique Chain Tests",
+  "author": "",
+  "license": "SEE LICENSE IN ../LICENSE",
+  "homepage": "",
   "main": "",
   "private": true,
   "dependencies": {
@@ -29,6 +32,7 @@
     "chai-subset": "^1.6.0",
     "eslint": "^8.53.0",
     "eslint-plugin-mocha": "^10.2.0",
+    "ts-node": "^10.9.1",
     "typescript": "^5.2.2"
   },
   "mocha": {
@@ -38,16 +42,13 @@
     ]
   },
   "scripts": {
-    "lint": "eslint --ext .ts,.js src/",
+    "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
-    "polkadot-types-fetch-metadata": "yarn ts-node --esm scripts/src/fetchMetadata.ts",
-    "polkadot-types-from-defs": "ts-node --esm ./node_modules/.bin/polkadot-types-from-defs --endpoint types/src/metadata.json --input types/src/ --package .",
-    "polkadot-types-from-chain": "ts-node --esm ./node_modules/.bin/polkadot-types-from-chain --endpoint types/src/metadata.json --output types/src/ --package .",
-    "polkadot-types": "echo \"export default {}\" > types/src/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain"
+    "polkadot-types-fetch-metadata": "yarn ts-node --esm scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "ts-node --esm ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "ts-node --esm ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types": "echo \"export default {}\" > types/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain && rm types/registry.ts"
   },
-  "author": "",
-  "license": "SEE LICENSE IN ../LICENSE",
-  "homepage": "",
   "resolutions": {
     "decode-uri-component": "^0.2.1"
   },

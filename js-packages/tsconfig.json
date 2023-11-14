@@ -1,11 +1,15 @@
 {
-	"references": [
-	  { "path": "./types/tsconfig.json" },
-	  { "path": "./playgrounds/tsconfig.json" },
-	  { "path": "./scripts/tsconfig.json" },
-	  { "path": "./tests/tsconfig.json" }
+	"exclude": [
+		"**/node_modules"
 	],
-	"files": [],
-	"exclude": ["**/node_modules"]
-  }
-  
+	"compilerOptions": {
+		"skipLibCheck": true,
+		"module": "ESNext",
+		"moduleResolution": "Bundler",
+		"target": "ES2022",
+		"declaration": true,
+		"checkJs": false,
+		"strict": true,
+		"resolveJsonModule": true,
+	},
+}
