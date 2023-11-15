@@ -170,6 +170,7 @@ jobs:
         run: |
           yarn
           yarn add mochawesome
+          # TODO: Update to new script structure after mainnet will have it
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -197,7 +198,7 @@ jobs:
       - name: Ensure network is alive
         if: success()
         run: |
-          ./tests/scripts/wait_for_first_block.sh
+          ./js-packages/scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -217,6 +218,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
+          # TODO: Update to new script structure after mainnet will have it
           ./scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}

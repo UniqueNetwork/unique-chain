@@ -66,7 +66,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          ../scripts/src/generate_types/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
@@ -90,13 +90,13 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           yarn install
-          npx ts-node --esm ./src/benchmarks/mintFee/index.ts
+          npx ts-node --esm ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
         working-directory: js-packages/scripts
         run: |
           yarn install
-          npx ts-node --esm ./src/benchmarks/opsFee/index.ts
+          npx ts-node --esm ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
         if: always()                   # run this step always

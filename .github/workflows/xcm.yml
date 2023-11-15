@@ -327,22 +327,22 @@ jobs:
           retention-days: 2
 
       - name: Yarn install
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
           yarn install
           yarn add mochawesome
 
       - name: Call HRMP initialization
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
-          yarn ts-node --esm src/util/createHrmp.ts ${{matrix.network}}
+          yarn ts-node --esm util/createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests
         run: |
           # Wanted by both wait_for_first_block
           export RPC_URL="${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
-          ../scripts/src/generate_types/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
 

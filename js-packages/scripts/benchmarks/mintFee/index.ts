@@ -14,23 +14,23 @@ const {dirname} = makeNames(import.meta.url);
 
 export const CONTRACT_IMPORT: ContractImports[] = [
   {
-    fsPath: `${dirname}/../../../../tests/eth/api/CollectionHelpers.sol`,
+    fsPath: `${dirname}/../../../tests/eth/api/CollectionHelpers.sol`,
     solPath: 'eth/api/CollectionHelpers.sol',
   },
   {
-    fsPath: `${dirname}/../../../../tests/eth/api/ContractHelpers.sol`,
+    fsPath: `${dirname}/../../../tests/eth/api/ContractHelpers.sol`,
     solPath: 'eth/api/ContractHelpers.sol',
   },
   {
-    fsPath: `${dirname}/../../../../tests/eth/api/UniqueRefungibleToken.sol`,
+    fsPath: `${dirname}/../../../tests/eth/api/UniqueRefungibleToken.sol`,
     solPath: 'eth/api/UniqueRefungibleToken.sol',
   },
   {
-    fsPath: `${dirname}/../../../../tests/eth/api/UniqueRefungible.sol`,
+    fsPath: `${dirname}/../../../tests/eth/api/UniqueRefungible.sol`,
     solPath: 'eth/api/UniqueRefungible.sol',
   },
   {
-    fsPath: `${dirname}/../../../../tests/eth/api/UniqueNFT.sol`,
+    fsPath: `${dirname}/../../../tests/eth/api/UniqueNFT.sol`,
     solPath: 'eth/api/UniqueNFT.sol',
   },
 ];

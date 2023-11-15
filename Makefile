@@ -7,25 +7,25 @@ _help:
 	@echo "  bench-unique"
 
 NATIVE_FUNGIBLE_EVM_STUBS=./pallets/balances-adapter/src/stubs
-NATIVE_FUNGIBLE_EVM_ABI=./js-packages/tests/src/eth/abi/nativeFungible.json
+NATIVE_FUNGIBLE_EVM_ABI=./js-packages/tests/eth/abi/nativeFungible.json
 
 FUNGIBLE_EVM_STUBS=./pallets/fungible/src/stubs
-FUNGIBLE_EVM_ABI=./js-packages/tests/src/eth/abi/fungible.json
+FUNGIBLE_EVM_ABI=./js-packages/tests/eth/abi/fungible.json
 
 NONFUNGIBLE_EVM_STUBS=./pallets/nonfungible/src/stubs
-NONFUNGIBLE_EVM_ABI=./js-packages/tests/src/eth/abi/nonFungible.json
+NONFUNGIBLE_EVM_ABI=./js-packages/tests/eth/abi/nonFungible.json
 
 REFUNGIBLE_EVM_STUBS=./pallets/refungible/src/stubs
-REFUNGIBLE_EVM_ABI=./js-packages/tests/src/eth/abi/reFungible.json
-REFUNGIBLE_TOKEN_EVM_ABI=./js-packages/tests/src/eth/abi/reFungibleToken.json
+REFUNGIBLE_EVM_ABI=./js-packages/tests/eth/abi/reFungible.json
+REFUNGIBLE_TOKEN_EVM_ABI=./js-packages/tests/eth/abi/reFungibleToken.json
 
 CONTRACT_HELPERS_STUBS=./pallets/evm-contract-helpers/src/stubs/
-CONTRACT_HELPERS_ABI=./js-packages/tests/src/eth/abi/contractHelpers.json
+CONTRACT_HELPERS_ABI=./js-packages/tests/eth/abi/contractHelpers.json
 
 COLLECTION_HELPER_STUBS=./pallets/unique/src/eth/stubs/
-COLLECTION_HELPER_ABI=./js-packages/tests/src/eth/abi/collectionHelpers.json
+COLLECTION_HELPER_ABI=./js-packages/tests/eth/abi/collectionHelpers.json
 
-TESTS_API=./js-packages/tests/src/eth/api/
+TESTS_API=./js-packages/tests/eth/api/
 
 .PHONY: regenerate_solidity
 regenerate_solidity: UniqueFungible.sol UniqueNFT.sol UniqueRefungible.sol UniqueRefungibleToken.sol ContractHelpers.sol CollectionHelpers.sol

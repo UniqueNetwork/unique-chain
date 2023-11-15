@@ -119,10 +119,10 @@ jobs:
 
 # Temporary disable node readyness check. Have to dig into the script logic.
 #      - name: Wait for chain up and running
-#        working-directory: tests
+#        working-directory: js-packages/tests
 #        run: |
 #          yarn install
-#          ./scripts/wait_for_first_block.sh
+#          ../scripts/wait_for_first_block.sh
 #          echo "Ready to start tests"
 #        env:
 #          RPC_URL: http://127.0.0.1:9944/

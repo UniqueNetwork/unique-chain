@@ -74,13 +74,13 @@ jobs:
       #   run: sudo apt install jq -y
 
       - name: Run generate_types_package script
-        working-directory: tests
+        working-directory: js-packages
         run: |
           yarn install
-          /bin/bash ./scripts/generate_types/wait_for_first_block.sh
+          ./scripts/wait_for_first_block.sh
           git config --global user.name "Unique"
           git config --global user.email github-actions@usetech.com          
-          /bin/bash ./scripts/generate_types/generate_types_package.sh --release ${{ matrix.usage }} --push
+          ./scripts/generate_types/generate_types_package.sh --release ${{ matrix.usage }} --push
         env:
           RPC_URL: http://127.0.0.1:9944/
 

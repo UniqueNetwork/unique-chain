@@ -43,16 +43,15 @@ jobs:
           time make bench
 
       - name: Run node dev mode in background
-        working-directory: ./
         run: |
           ./target/release/unique-collator --dev &
 
       - name: RUN Calibrate
-        working-directory: ./tests
+        working-directory: js-packages/scripts
         run: |
-          yarn install
-          yarn ts-node --esm src/calibrate.ts
-          yarn ts-node --esm src/calibrateApply.ts
+          yarn
+          yarn ts-node --esm calibrate.ts
+          yarn ts-node --esm calibrateApply.ts
           
       - name: show git diff
         run: |

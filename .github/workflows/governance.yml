@@ -86,7 +86,7 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          ../scripts/src/generate_types/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testGovernance --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
