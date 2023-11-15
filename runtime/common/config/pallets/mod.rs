@@ -102,7 +102,7 @@ impl pallet_balances_adapter::Config for Runtime {
 }
 
 parameter_types! {
-	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
+	pub const InflationBlockInterval: BlockNumber = 10; // every time per how many blocks inflation is applied
 }
 
 /// Pallet-inflation needs block number in on_initialize, where there is no `validation_data` exists yet

@@ -106,7 +106,7 @@ impl frame_system::Config for Test {
 
 parameter_types! {
 	pub TreasuryAccountId: u64 = 1234;
-	pub const InflationBlockInterval: u32 = 100; // every time per how many blocks inflation is applied
+	pub const InflationBlockInterval: u32 = 10; // every time per how many blocks inflation is applied
 	pub static MockBlockNumberProvider: u32 = 0;
 }
 

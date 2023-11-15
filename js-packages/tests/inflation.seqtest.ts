@@ -17,6 +17,8 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, usingPlaygrounds} from './util/index.js';
 
+const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
+
 // todo:playgrounds requires sudo, look into on the later stage
 describe('integration test: Inflation', () => {
   let superuser: IKeyringPair;
@@ -54,5 +56,24 @@ describe('integration test: Inflation', () => {
     const expectedInflation = totalExpectedInflation / totalActualInflation - 1n;
 
     expect(Math.abs(Number(expectedInflation))).to.be.lessThanOrEqual(tolerance);
+  });
+
+  itSub('Inflation happens after inflation block interval', async ({helper}) => {
+    const api = helper.getApi();
+    const blockInterval = await api.consts.inflation.inflationBlockInterval.toNumber();
+
+    const relayBlock = (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
+    await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [helper.constructApiCall('api.tx.inflation.startInflation', [relayBlock])]);
+    const blockInflation = (await helper.callRpc('api.query.inflation.blockInflation', []) as any).toBigInt();
+    const startBlock = (relayBlock + blockInterval) - (relayBlock % blockInterval) + 1;
+
+    await helper.wait.forRelayBlockNumber(startBlock);
+
+    const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
+
+    await helper.wait.forRelayBlockNumber(startBlock + blockInterval);
+
+    const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
+    expect(Number(treasuryBalanceAfter)).to.be.eqls(Number(treasuryBalanceBefore + blockInflation));
   });
 });

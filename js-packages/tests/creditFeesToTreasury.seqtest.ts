@@ -33,7 +33,7 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
     const blockInterval = inflationBlockInterval.toNumber();
     const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
-      if(currentBlock % blockInterval < blockInterval - 10) {
+      if(currentBlock % blockInterval < blockInterval - 2) {
         unsubscribe();
         resolve();
       } else {
