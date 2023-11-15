@@ -590,8 +590,8 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   connectWeb3(wsEndpoint: string) {
     if(this.web3 !== null) return;
-    this.web3Provider = new (web3 as any).providers.WebsocketProvider(wsEndpoint);
-    this.web3 = new (web3 as any)(this.web3Provider);
+    this.web3Provider = new web3.default.providers.WebsocketProvider(wsEndpoint);
+    this.web3 = new web3.default(this.web3Provider);
   }
 
   override async disconnect() {
