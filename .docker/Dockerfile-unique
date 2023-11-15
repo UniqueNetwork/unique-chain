@@ -47,7 +47,7 @@ RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/unique_parachain/unique-chain/target \
     cd unique-chain && \
     echo "Using runtime features '$RUNTIME_FEATURES'" && \
-    CARGO_INCREMENTAL=0 cargo build --profile integration-tests --features="$RUNTIME_FEATURES" --locked && \
+    CARGO_INCREMENTAL=0 cargo build --profile integration-tests --features=fast-inflation,"$RUNTIME_FEATURES" --locked && \
     mv ./target/integration-tests/unique-collator /unique_parachain/unique-chain/ && \
     cd target/integration-tests/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "../../../wasm/$(dirname {})"; cp {} "../../../wasm/{}"' \;
 
