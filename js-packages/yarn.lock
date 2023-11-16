@@ -1266,9 +1266,6 @@ __metadata:
 "@unique/scripts@workspace:scripts":
   version: 0.0.0-use.local
   resolution: "@unique/scripts@workspace:scripts"
-  dependencies:
-    rxjs: ^7.8.1
-    tslib: ^2.6.2
   languageName: unknown
   linkType: soft
 
