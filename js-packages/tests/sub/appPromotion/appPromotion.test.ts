@@ -983,8 +983,8 @@ async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
 function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
   const DAY = 7200n;
   const ACCURACY = 1_000_000_000n;
-  // 5n / 10_000n = 0.05% p/day
-  const income = base + base * (ACCURACY * (calcPeriod * 5n) / (10_000n * DAY)) / ACCURACY ;
+  // 453_256n / 1_000_000_000n = 0.0453256% /day
+  const income = base + base * (ACCURACY * (calcPeriod * 453_256n) / (1_000_000_000n * DAY)) / ACCURACY ;
 
   if(iter > 1) {
     return calculateIncome(income, iter - 1, calcPeriod);
