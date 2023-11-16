@@ -246,6 +246,7 @@ impl<T: Config> Pallet<T> {
 	/// * It is `../Parachain(<Unique Network Para ID>)/GeneralIndex(<Collection ID>)` that corresponds
 	/// to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
 	/// otherwise `None` is returned.
+	/// * It is `GeneralIndex(<Collection ID>)`. Same as the last one above.
 	///
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
@@ -258,24 +259,31 @@ impl<T: Config> Pallet<T> {
 		let self_location = T::SelfLocation::get();
 
 		if *asset_location == Here.into() || *asset_location == self_location {
-			Some(CollectionLocality::Local(NATIVE_FUNGIBLE_COLLECTION_ID))
-		} else if asset_location.parents == self_location.parents {
-			match asset_location
-				.interior
-				.match_and_split(&self_location.interior)
-			{
-				Some(GeneralIndex(collection_id)) => {
-					let collection_id = CollectionId((*collection_id).try_into().ok()?);
-
-					Self::collection_to_foreign_asset(collection_id)
-						.is_none()
-						.then_some(CollectionLocality::Local(collection_id))
-				}
-				_ => None,
-			}
-		} else {
-			None
+			return Some(CollectionLocality::Local(NATIVE_FUNGIBLE_COLLECTION_ID));
 		}
+
+		let collection_junction = if asset_location.parents == 0 {
+			match &asset_location.interior {
+				X1(junction) => junction,
+				_ => return None,
+			}
+		} else if asset_location.parents == self_location.parents {
+			asset_location
+				.interior
+				.match_and_split(&self_location.interior)?
+		} else {
+			return None;
+		};
+
+		let GeneralIndex(collection_id) = collection_junction else {
+			return None;
+		};
+
+		let collection_id = CollectionId((*collection_id).try_into().ok()?);
+
+		Self::collection_to_foreign_asset(collection_id)
+			.is_none()
+			.then_some(CollectionLocality::Local(collection_id))
 	}
 
 	/// Converts an asset ID to a Unique Network's collection locality (either foreign or a local one).
