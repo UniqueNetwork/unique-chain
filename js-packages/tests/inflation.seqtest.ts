@@ -17,13 +17,19 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, usingPlaygrounds} from './util/index.js';
 
+const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
+
 // todo:playgrounds requires sudo, look into on the later stage
 describe('integration test: Inflation', () => {
   let superuser: IKeyringPair;
 
   before(async () => {
-    await usingPlaygrounds(async (_, privateKey) => {
+    await usingPlaygrounds(async (helper, privateKey) => {
       superuser = await privateKey('//Alice');
+      const api = helper.getApi();
+
+      const relayBlock = (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
+      await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [helper.constructApiCall('api.tx.inflation.startInflation', [relayBlock])])).to.not.be.rejected;
     });
   });
 
@@ -35,10 +41,6 @@ describe('integration test: Inflation', () => {
 
     // Make sure superuser can't start inflation without explicit sudo
     await expect(helper.executeExtrinsic(superuser, 'api.tx.inflation.startInflation', [1])).to.be.rejectedWith(/BadOrigin/);
-
-    // Start inflation on relay block 1 (Alice is sudo)
-    const tx = helper.constructApiCall('api.tx.inflation.startInflation', [1]);
-    await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [tx])).to.not.be.rejected;
 
     const blockInterval = (helper.getApi().consts.inflation.inflationBlockInterval as any).toBigInt();
     const totalIssuanceStart = ((await helper.callRpc('api.query.inflation.startingYearTotalIssuance', [])) as any).toBigInt();
@@ -54,5 +56,23 @@ describe('integration test: Inflation', () => {
     const expectedInflation = totalExpectedInflation / totalActualInflation - 1n;
 
     expect(Math.abs(Number(expectedInflation))).to.be.lessThanOrEqual(tolerance);
+  });
+
+  itSub('Inflation happens after inflation block interval', async ({helper}) => {
+    const api = helper.getApi();
+    const blockInterval = await api.consts.inflation.inflationBlockInterval.toNumber();
+
+    const relayBlock = (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
+    const blockInflation = (await helper.callRpc('api.query.inflation.blockInflation', []) as any).toBigInt();
+    const startBlock = (relayBlock + blockInterval) - (relayBlock % blockInterval) + 1;
+
+    await helper.wait.forRelayBlockNumber(startBlock);
+
+    const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
+
+    await helper.wait.forRelayBlockNumber(startBlock + blockInterval + 1);
+
+    const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
+    expect(Number(treasuryBalanceAfter)).to.be.eqls(Number(treasuryBalanceBefore + blockInflation));
   });
 });

@@ -232,6 +232,7 @@ lookahead = []
 preimage = []
 refungible = []
 session-test-timings = []
+fast-inflation = []
 
 ################################################################################
 # local dependencies

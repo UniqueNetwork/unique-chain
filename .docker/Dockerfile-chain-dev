@@ -21,7 +21,7 @@ COPY . /dev_chain
 
 WORKDIR /dev_chain
 
-RUN cargo build --profile integration-tests --features=${NETWORK}-runtime
+RUN cargo build --profile integration-tests --features=${NETWORK}-runtime,fast-inflation
 RUN echo "$NETWORK"
 
-CMD cargo run --profile integration-tests --features=${NETWORK}-runtime -- --dev -linfo --rpc-cors=all --unsafe-rpc-external
+CMD cargo run --profile integration-tests --features=${NETWORK}-runtime,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external

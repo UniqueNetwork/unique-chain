@@ -27,6 +27,7 @@ std = [
 	'sp-std/std',
 ]
 try-runtime = ["frame-support/try-runtime"]
+fast-inflation = []
 
 [dependencies]
 parity-scale-codec = { workspace = true }

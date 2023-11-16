@@ -460,7 +460,7 @@ class EthAddressGroup extends EthGroupBase {
 
   fromCollectionId(collectionId: number): string {
     if(collectionId >= 0xffffffff || collectionId < 0) throw new Error('collectionId overflow');
-    return (web3 as any).utils.toChecksumAddress(`0x17c4e6453cc49aaaaeaca894e6d9683e${collectionId.toString(16).padStart(8, '0')}`);
+    return web3.default.utils.toChecksumAddress(`0x17c4e6453cc49aaaaeaca894e6d9683e${collectionId.toString(16).padStart(8, '0')}`);
   }
 
   extractTokenId(address: string): { collectionId: number, tokenId: number } {
@@ -590,8 +590,8 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   connectWeb3(wsEndpoint: string) {
     if(this.web3 !== null) return;
-    this.web3Provider = new (web3 as any).providers.WebsocketProvider(wsEndpoint);
-    this.web3 = new (web3 as any)(this.web3Provider);
+    this.web3Provider = new web3.default.providers.WebsocketProvider(wsEndpoint);
+    this.web3 = new web3.default(this.web3Provider);
   }
 
   override async disconnect() {
