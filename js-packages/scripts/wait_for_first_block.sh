@@ -2,7 +2,7 @@
 
 DIR=$(dirname "$0")
 
-. "$DIR/functions.sh"
+. "$DIR/generate_types/functions.sh"
 
 last_block_id=0
 block_id=0
