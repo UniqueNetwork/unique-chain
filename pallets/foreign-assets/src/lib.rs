@@ -262,20 +262,15 @@ impl<T: Config> Pallet<T> {
 			return Some(CollectionLocality::Local(NATIVE_FUNGIBLE_COLLECTION_ID));
 		}
 
-		let collection_junction = if asset_location.parents == 0 {
-			match &asset_location.interior {
-				X1(junction) => junction,
-				_ => return None,
-			}
+		let prefix = if asset_location.parents == 0 {
+			&Here
 		} else if asset_location.parents == self_location.parents {
-			asset_location
-				.interior
-				.match_and_split(&self_location.interior)?
+			&self_location.interior
 		} else {
 			return None;
 		};
 
-		let GeneralIndex(collection_id) = collection_junction else {
+		let GeneralIndex(collection_id) = asset_location.interior.match_and_split(prefix)? else {
 			return None;
 		};
 
