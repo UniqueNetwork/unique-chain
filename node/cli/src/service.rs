@@ -779,6 +779,8 @@ where
 		},
 		collator_key,
 		relay_chain_slot_duration,
+		#[cfg(not(feature = "lookahead"))]
+		collation_request_receiver: None,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
