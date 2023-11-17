@@ -2391,7 +2391,7 @@ export class SubstrateBalanceGroup<T extends ChainHelperBase> extends HelperGrou
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferToSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint | string): Promise<boolean> {
-    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transferKeepAlive', [address, amount], true/*, `Unable to transfer balance from ${this.helper.getSignerAddress(signer)} to ${address}`*/);
 
     let transfer = {from: null, to: null, amount: 0n} as any;
     result.result.events.forEach(({event: {data, method, section}}: any) => {
@@ -2458,7 +2458,7 @@ export class EthereumBalanceGroup<T extends ChainHelperBase> extends HelperGroup
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async transferToEthereum(signer: TSigner, address: TEthereumAccount, amount: bigint | string): Promise<boolean> {
-    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transfer', [address, amount], true);
+    const result = await this.helper.executeExtrinsic(signer, 'api.tx.balances.transferKeepAlive', [address, amount], true);
 
     let transfer = {from: null, to: null, amount: 0n} as any;
     result.result.events.forEach(({event: {data, method, section}}: any) => {
