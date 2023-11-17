@@ -43,10 +43,7 @@ use sp_std::vec::Vec;
 use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
 
-use crate::{
-	AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature,
-	Treasury,
-};
+use crate::{AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature, Treasury};
 
 #[macro_export]
 macro_rules! unsupported {

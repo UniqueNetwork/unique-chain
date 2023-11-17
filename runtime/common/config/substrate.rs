@@ -17,7 +17,10 @@
 use frame_support::{
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
-	traits::{ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin, tokens::{PayFromAccount, UnityAssetBalanceConversion}},
+	traits::{
+		tokens::{PayFromAccount, UnityAssetBalanceConversion},
+		ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin,
+	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
@@ -39,7 +42,8 @@ use up_common::{constants::*, types::*};
 
 use crate::{
 	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeHoldReason, RuntimeFreezeReason, RuntimeOrigin, SS58Prefix, System, Version, Treasury,
+	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, SS58Prefix, System,
+	Treasury, Version,
 };
 
 parameter_types! {
@@ -139,7 +143,7 @@ impl pallet_timestamp::Config for Runtime {
 	type Moment = u64;
 	type OnTimestampSet = ();
 	#[cfg(not(feature = "lookahead"))]
-	type MinimumPeriod = ConstU64<{SLOT_DURATION / 2}>;
+	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	#[cfg(feature = "lookahead")]
 	type MinimumPeriod = ConstU64<0>;
 	type WeightInfo = ();

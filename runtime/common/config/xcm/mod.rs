@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+use cumulus_primitives_core::ParaId;
 use frame_support::{
 	parameter_types,
 	traits::{ConstU32, Contains, Everything, Get, Nothing, ProcessMessageError},
@@ -21,6 +22,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain_primitives::primitives::Sibling;
+use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_std::marker::PhantomData;
 use staging_xcm::{
 	latest::{prelude::*, MultiLocation, Weight},
@@ -36,8 +38,6 @@ use staging_xcm_executor::{
 	XcmExecutor,
 };
 use up_common::types::AccountId;
-use cumulus_primitives_core::ParaId;
-use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 
 use crate::{
 	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem,
