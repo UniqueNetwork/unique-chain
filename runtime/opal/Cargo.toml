@@ -61,6 +61,7 @@ runtime-benchmarks = [
 	'pallet-unique/runtime-benchmarks',
 	'pallet-utility/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
+	'polkadot-runtime-common/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
 	'staging-xcm-builder/runtime-benchmarks',
 ]
@@ -126,7 +127,6 @@ std = [
 	'pallet-treasury/std',
 	'pallet-unique/std',
 	'pallet-utility/std',
-	'staging-parachain-info/std',
 	'polkadot-runtime-common/std',
 	'serde',
 	'sp-api/std',
@@ -141,6 +141,7 @@ std = [
 	'sp-storage/std',
 	'sp-transaction-pool/std',
 	'sp-version/std',
+	'staging-parachain-info/std',
 	'staging-xcm-builder/std',
 	'staging-xcm-executor/std',
 	'staging-xcm/std',
@@ -221,12 +222,13 @@ try-runtime = [
 	'pallet-unique/try-runtime',
 	'pallet-utility/try-runtime',
 	'pallet-xcm/try-runtime',
-	'staging-parachain-info/try-runtime',
 	'polkadot-runtime-common/try-runtime',
+	'staging-parachain-info/try-runtime',
 ]
 
 app-promotion = []
 collator-selection = []
+fast-inflation = []
 foreign-assets = []
 gov-test-timings = []
 governance = []
@@ -234,7 +236,6 @@ lookahead = ['cumulus-pallet-parachain-system/parameterized-consensus-hook', 'pa
 preimage = []
 refungible = []
 session-test-timings = []
-fast-inflation = []
 
 ################################################################################
 # local dependencies
@@ -271,7 +272,6 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
-staging-parachain-info = { workspace = true }
 parity-scale-codec = { workspace = true }
 polkadot-parachain-primitives = { workspace = true }
 polkadot-runtime-common = { workspace = true }
@@ -290,6 +290,7 @@ sp-std = { workspace = true }
 sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
+staging-parachain-info = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-builder = { workspace = true }
 staging-xcm-executor = { workspace = true }

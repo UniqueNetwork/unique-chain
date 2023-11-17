@@ -131,13 +131,12 @@ pallet-transaction-payment-rpc = "27.0.0"
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "25.0.0" }
 pallet-treasury = { default-features = false, version = "24.0.0" }
 pallet-utility = { default-features = false, version = "25.0.0" }
-pallet-xcm = { default-features = false , version = "4.0.0" }
-staging-parachain-info = { default-features = false, version = "0.4.0" }
+pallet-xcm = { default-features = false, version = "4.0.0" }
 parity-scale-codec = { version = "3.6.5", features = ["derive"], default-features = false }
 polkadot-cli = "4.0.0"
-polkadot-parachain-primitives = { default-features = false , version = "3.0.0" }
-polkadot-runtime-common = { default-features = false , version = "4.0.0" }
+polkadot-parachain-primitives = { default-features = false, version = "3.0.0" }
 polkadot-primitives = "4.0.0"
+polkadot-runtime-common = { default-features = false, version = "4.0.0" }
 polkadot-service = "4.0.0"
 sc-basic-authorship = "0.31.0"
 sc-chain-spec = "24.0.0"
@@ -179,9 +178,10 @@ sp-transaction-pool = { default-features = false, version = "23.0.0" }
 sp-trie = { default-features = false, version = "26.0.0" }
 sp-version = { default-features = false, version = "26.0.0" }
 sp-weights = { default-features = false, version = "24.0.0" }
-staging-xcm = { default-features = false , version = "4.0.0" }
-staging-xcm-builder = { default-features = false , version = "4.0.0" }
-staging-xcm-executor = { default-features = false , version = "4.0.0" }
+staging-parachain-info = { default-features = false, version = "0.4.0" }
+staging-xcm = { default-features = false, version = "4.0.0" }
+staging-xcm-builder = { default-features = false, version = "4.0.0" }
+staging-xcm-executor = { default-features = false, version = "4.0.0" }
 substrate-frame-rpc-system = "25.0.0"
 substrate-prometheus-endpoint = "0.16.0"
 
@@ -216,4 +216,3 @@ log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }
 smallvec = "1.11.1"
-

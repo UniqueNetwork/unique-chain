@@ -16,6 +16,7 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [features]
 default = ['std']
+fast-inflation = []
 runtime-benchmarks = ['frame-benchmarking']
 std = [
 	'frame-benchmarking/std',
@@ -27,7 +28,6 @@ std = [
 	'sp-std/std',
 ]
 try-runtime = ["frame-support/try-runtime"]
-fast-inflation = []
 
 [dependencies]
 parity-scale-codec = { workspace = true }
