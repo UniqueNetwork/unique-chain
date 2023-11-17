@@ -43,6 +43,8 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	#[cfg(feature = "lookahead")]
 	type CheckAssociatedRelayNumber =
 		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
+	#[cfg(feature = "lookahead")]
+	type ConsensusHook = ConsensusHook;
 }
 
 impl parachain_info::Config for Runtime {}

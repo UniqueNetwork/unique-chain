@@ -44,7 +44,7 @@ use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
 
 use crate::{
-	AllPalletsWithSystem, Aura, Balances, InherentDataExt, Runtime, RuntimeCall, Signature,
+	AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature,
 	Treasury,
 };
 
@@ -146,13 +146,17 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 	}
 }
 
+#[cfg(not(feature = "lookahead"))]
 pub(crate) struct CheckInherents;
 
+#[cfg(not(feature = "lookahead"))]
 impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 	fn check_inherents(
 		block: &Block,
 		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
 	) -> sp_inherents::CheckInherentsResult {
+		use crate::InherentDataExt;
+
 		let relay_chain_slot = relay_state_proof
 			.read_slot()
 			.expect("Could not read the relay chain slot from the proof");

@@ -67,8 +67,15 @@ construct_runtime!();
 
 impl_common_runtime_apis!();
 
+// CheckInherents is included in consensus hook
+#[cfg(not(feature = "lookahead"))]
 cumulus_pallet_parachain_system::register_validate_block!(
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 	CheckInherents = CheckInherents,
+);
+#[cfg(feature = "lookahead")]
+cumulus_pallet_parachain_system::register_validate_block!(
+	Runtime = Runtime,
+	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
 );
