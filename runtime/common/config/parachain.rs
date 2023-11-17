@@ -26,7 +26,7 @@ parameter_types! {
 
 impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type SelfParaId = parachain_info::Pallet<Self>;
+	type SelfParaId = staging_parachain_info::Pallet<Self>;
 	type OnSystemEvent = ();
 	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
 	// 	MaxDownwardMessageWeight,
@@ -47,7 +47,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type ConsensusHook = ConsensusHook;
 }
 
-impl parachain_info::Config for Runtime {}
+impl staging_parachain_info::Config for Runtime {}
 
 impl cumulus_pallet_aura_ext::Config for Runtime {}
 

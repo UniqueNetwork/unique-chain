@@ -124,7 +124,7 @@ std = [
 	'pallet-treasury/std',
 	'pallet-unique/std',
 	'pallet-utility/std',
-	'parachain-info/std',
+	'staging-parachain-info/std',
 	'sp-api/std',
 	'sp-block-builder/std',
 	'sp-core/std',
@@ -212,7 +212,7 @@ try-runtime = [
 	'pallet-unique/try-runtime',
 	'pallet-utility/try-runtime',
 	'pallet-xcm/try-runtime',
-	'parachain-info/try-runtime',
+	'staging-parachain-info/try-runtime',
 ]
 unique-runtime = ['app-promotion', 'foreign-assets', 'refungible', 'governance', 'preimage']
 
@@ -260,7 +260,7 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
-parachain-info = { workspace = true }
+staging-parachain-info = { workspace = true }
 parity-scale-codec = { workspace = true }
 polkadot-parachain-primitives = { workspace = true }
 smallvec = { workspace = true }

@@ -126,7 +126,8 @@ std = [
 	'pallet-treasury/std',
 	'pallet-unique/std',
 	'pallet-utility/std',
-	'parachain-info/std',
+	'staging-parachain-info/std',
+	'polkadot-runtime-common/std',
 	'serde',
 	'sp-api/std',
 	'sp-block-builder/std',
@@ -220,7 +221,8 @@ try-runtime = [
 	'pallet-unique/try-runtime',
 	'pallet-utility/try-runtime',
 	'pallet-xcm/try-runtime',
-	'parachain-info/try-runtime',
+	'staging-parachain-info/try-runtime',
+	'polkadot-runtime-common/try-runtime',
 ]
 
 app-promotion = []
@@ -228,7 +230,7 @@ collator-selection = []
 foreign-assets = []
 gov-test-timings = []
 governance = []
-lookahead = []
+lookahead = ['cumulus-pallet-parachain-system/parameterized-consensus-hook', 'pallet-aura/experimental']
 preimage = []
 refungible = []
 session-test-timings = []
@@ -269,9 +271,10 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
-parachain-info = { workspace = true }
+staging-parachain-info = { workspace = true }
 parity-scale-codec = { workspace = true }
 polkadot-parachain-primitives = { workspace = true }
+polkadot-runtime-common = { workspace = true }
 smallvec = { workspace = true }
 sp-api = { workspace = true }
 sp-arithmetic = { workspace = true }
