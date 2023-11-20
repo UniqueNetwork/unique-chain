@@ -21,6 +21,7 @@
         "test": "yarn _test './**/*.*test.ts'",
         "testParallel": "yarn _testParallel './**/*.test.ts'",
         "testSequential": "yarn _test './**/*.seqtest.ts'",
+        "testEth": "yarn _test ./**/eth/*.*test.ts",
         "testGovernance": "RUN_GOV_TESTS=1 yarn _test ./**/governance/*.*test.ts",
         "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/collator-selection/**.*test.ts --timeout 49999999",
         "testFullXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Unique.test.ts",
