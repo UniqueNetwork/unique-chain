@@ -15,11 +15,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '../util/index.js';
+import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '../../util/index.js';
 
-describe('Integration Test: Collection Properties with sudo', () => {
+describe('Integration Test: Token Properties with sudo', () => {
   let superuser: IKeyringPair;
-  let alice: IKeyringPair;
+  let alice: IKeyringPair; // collection owner
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -30,9 +30,8 @@ describe('Integration Test: Collection Properties with sudo', () => {
   });
 
   [
-    {mode: 'nft' as const, requiredPallets: []},
-    {mode: 'ft' as const, requiredPallets: []},
-    {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
+    {mode: 'nft' as const, pieces: undefined, requiredPallets: []} as const,
+    {mode: 'rft' as const, pieces: 100n, requiredPallets: [Pallets.ReFungible]} as const,
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
@@ -41,20 +40,31 @@ describe('Integration Test: Collection Properties with sudo', () => {
       });
     });
 
-    itSub('Repairing an unbroken collection\'s properties preserves the consumed space', async({helper}) => {
-      const properties = [
-        {key: 'sea-creatures', value: 'mermaids'},
-        {key: 'goldenratio', value: '1.6180339887498948482045868343656381177203091798057628621354486227052604628189'},
-      ];
-      const collection = await helper[testSuite.mode].mintCollection(alice, {properties});
+    itSub('force_repair_item preserves valid consumed space', async({helper}) => {
+      const propKey = 'tok-prop';
 
-      const newProperty = {key: 'space', value: ' '.repeat(4096)};
-      await collection.setProperties(alice, [newProperty]);
-      const originalSpace = await collection.getPropertiesConsumedSpace();
-      expect(originalSpace).to.be.equal(sizeOfProperty(properties[0]) + sizeOfProperty(properties[1]) + sizeOfProperty(newProperty));
+      const collection = await helper[testSuite.mode].mintCollection(alice, {
+        tokenPropertyPermissions: [
+          {
+            key: propKey,
+            permission: {mutable: true, tokenOwner: true},
+          },
+        ],
+      });
+      const token = await (
+        testSuite.pieces
+          ? collection.mintToken(alice, testSuite.pieces as any)
+          : collection.mintToken(alice)
+      );
 
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.unique.forceRepairCollection', [collection.collectionId], true);
-      const recomputedSpace = await collection.getPropertiesConsumedSpace();
+      const prop = {key: propKey, value: 'a'.repeat(4096)};
+
+      await token.setProperties(alice, [prop]);
+      const originalSpace = await token.getTokenPropertiesConsumedSpace();
+      expect(originalSpace).to.be.equal(sizeOfProperty(prop));
+
+      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.unique.forceRepairItem', [token.collectionId, token.tokenId], true);
+      const recomputedSpace = await token.getTokenPropertiesConsumedSpace();
       expect(recomputedSpace).to.be.equal(originalSpace);
     });
   }));

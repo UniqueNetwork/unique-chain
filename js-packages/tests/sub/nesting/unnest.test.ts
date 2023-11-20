@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '../util/index.js';
+import {expect, itSub, Pallets, usingPlaygrounds} from '../../util/index.js';
 import {CrossAccountId, UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '@unique/playgrounds/unique.js';
 
 describe('Integration Test: Unnesting', () => {

@@ -16,10 +16,10 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect} from '../util/index.js';
+import {itSub, usingPlaygrounds, expect} from '../../util/index.js';
 import type {IEvent} from '@unique/playgrounds/types.js';
 
-describe('Create Multiple Items Event event ', () => {
+describe('Create Item event ', () => {
   let alice: IKeyringPair;
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -27,14 +27,9 @@ describe('Create Multiple Items Event event ', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  itSub('Check event from createMultipleItems(): ', async ({helper}) => {
+  itSub('Check event from createItem(): ', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-
-    await collection.mintMultipleTokens(alice, [
-      {owner: {Substrate: alice.address}},
-      {owner: {Substrate: alice.address}},
-    ]);
-
+    await collection.mintToken(alice, {Substrate: alice.address});
     await helper.wait.newBlocks(1);
     const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
     const eventStrings = event.map(e => `${e.section}.${e.method}`);

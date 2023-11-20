@@ -16,10 +16,10 @@
 
 // https://unique-network.readthedocs.io/en/latest/jsapi.html#setchainlimits
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect} from '../util/index.js';
+import {itSub, usingPlaygrounds, expect} from '../../util/index.js';
 import type {IEvent} from '@unique/playgrounds/types.js';
 
-describe('Create collection event ', () => {
+describe('Destroy collection event ', () => {
   let alice: IKeyringPair;
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -27,13 +27,15 @@ describe('Create collection event ', () => {
       [alice] = await helper.arrange.createAccounts([10n], donor);
     });
   });
-  itSub('Check event from createCollection(): ', async ({helper}) => {
-    await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+
+  itSub('Check event from destroyCollection(): ', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
+    await collection.burn(alice);
     await helper.wait.newBlocks(1);
     const event = helper.chainLog[helper.chainLog.length - 1].events as IEvent[];
     const eventStrings = event.map(e => `${e.section}.${e.method}`);
 
-    expect(eventStrings).to.contains('common.CollectionCreated');
+    expect(eventStrings).to.contains('common.CollectionDestroyed');
     expect(eventStrings).to.contains('treasury.Deposit');
     expect(eventStrings).to.contains('system.ExtrinsicSuccess');
   });
