@@ -169,7 +169,7 @@ pub struct XcmCallFilter;
 impl XcmCallFilter {
 	fn allow_gov_and_sys_call(call: &RuntimeCall) -> bool {
 		match call {
-			RuntimeCall::System(..) => true,
+			RuntimeCall::Sudo(pallet_sudo::Call::set_key { .. }) => true,
 
 			#[cfg(feature = "governance")]
 			RuntimeCall::Identity(..)

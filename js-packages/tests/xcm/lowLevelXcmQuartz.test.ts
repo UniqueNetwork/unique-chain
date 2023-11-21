@@ -326,20 +326,8 @@ describeXCM('[XCMLL] Integration test: The relay can do some root ops', () => {
     });
   });
 
-  itSub('The relay can set storage', async () => {
-    await testHelper.relayIsPermittedToSetStorage(sudoer, 'plain');
-  });
-
-  itSub('The relay can batch set storage', async () => {
-    await testHelper.relayIsPermittedToSetStorage(sudoer, 'batch');
-  });
-
-  itSub('The relay can batchAll set storage', async () => {
-    await testHelper.relayIsPermittedToSetStorage(sudoer, 'batchAll');
-  });
-
-  itSub('The relay can forceBatch set storage', async () => {
-    await testHelper.relayIsPermittedToSetStorage(sudoer, 'forceBatch');
+  itSub('The relay can set sudo key', async ({helper}) => {
+    await testHelper.relayCanSetSudoKey(sudoer, helper);
   });
 
   itSub('[negative] The relay cannot set balance', async () => {

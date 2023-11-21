@@ -506,49 +506,15 @@ export class XcmTestHelper {
     });
   }
 
-  private async _relayXcmTransactSetStorage(variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch') {
+  async setSudoKeyFromRelay(relaySudoer: IKeyringPair, key: string) {
     // eslint-disable-next-line require-await
-    return await usingPlaygrounds(async (helper) => {
-      const relayForceKV = () => {
-        const random = Math.random();
-        const key = `relay-forced-key (instance: ${random})`;
-        const val = `relay-forced-value (instance: ${random})`;
-        const call = helper.constructApiCall('api.tx.system.setStorage', [[[key, val]]]).method.toHex();
-
-        return {
-          call,
-          key,
-          val,
-        };
-      };
-
-      if(variant == 'plain') {
-        const kv = relayForceKV();
-        return {
-          program: helper.arrange.makeUnpaidSudoTransactProgram({
-            weightMultiplier: 1,
-            call: kv.call,
-          }),
-          kvs: [kv],
-        };
-      } else {
-        const kv0 = relayForceKV();
-        const kv1 = relayForceKV();
-
-        const batchCall = helper.constructApiCall(`api.tx.utility.${variant}`, [[kv0.call, kv1.call]]).method.toHex();
-        return {
-          program: helper.arrange.makeUnpaidSudoTransactProgram({
-            weightMultiplier: 2,
-            call: batchCall,
-          }),
-          kvs: [kv0, kv1],
-        };
-      }
+    const program = await usingPlaygrounds(async (helper) => {
+      const call = helper.constructApiCall('api.tx.sudo.setKey', [key]);
+      return helper.arrange.makeUnpaidSudoTransactProgram({
+        weightMultiplier: 1,
+        call,
+      });
     });
-  }
-
-  async relayIsPermittedToSetStorage(relaySudoer: IKeyringPair, variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch') {
-    const {program, kvs} = await this._relayXcmTransactSetStorage(variant);
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       await helper.getSudo().executeExtrinsic(relaySudoer, 'api.tx.xcmPallet.send', [
@@ -556,15 +522,18 @@ export class XcmTestHelper {
         program,
       ]);
     });
+  }
 
-    await usingPlaygrounds(async (helper) => {
-      await expectDownwardXcmComplete(helper);
+  async relayCanSetSudoKey(sudoer: IKeyringPair, helper: DevUniqueHelper) {
+    const [newAccount] = await helper.arrange.createAccounts([1000n], sudoer);
+    const newSudoKey = newAccount.address;
 
-      for(const kv of kvs) {
-        const forcedValue = await helper.callRpc('api.rpc.state.getStorage', [kv.key]);
-        expect(hexToString(forcedValue.toHex())).to.be.equal(kv.val);
-      }
-    });
+    await this.setSudoKeyFromRelay(sudoer, newSudoKey);
+
+    const currentSudoKey = await helper.callRpc('api.query.sudo.key', []);
+    expect(currentSudoKey).to.be.equal(newSudoKey);
+
+    await helper.getSudo().executeExtrinsic(newAccount, 'api.tx.sudo.setKey', [sudoer.address]);
   }
 
   private async _relayXcmTransactSetBalance(variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch' | 'dispatchAs') {
