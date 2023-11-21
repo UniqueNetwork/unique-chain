@@ -81,18 +81,16 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
-
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
+	pallet_charge_transaction::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
 	identity::DisableIdentityCalls,
-	ChargeTransactionPayment,
+	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
