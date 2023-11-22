@@ -442,7 +442,11 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
-	fn deposit_asset(what: &MultiAsset, to: &MultiLocation, _context: &XcmContext) -> XcmResult {
+	fn deposit_asset(
+		what: &MultiAsset,
+		to: &MultiLocation,
+		_context: Option<&XcmContext>,
+	) -> XcmResult {
 		let to = T::LocationToAccountId::convert_location(to)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
