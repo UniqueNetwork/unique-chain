@@ -523,7 +523,7 @@ export class XcmTestHelper {
             },
           },
           sudoSetKey,
-        ]
+        ],
       ).method.toHex();
       return helper.arrange.makeUnpaidSudoTransactProgram({
         weightMultiplier: 1,
