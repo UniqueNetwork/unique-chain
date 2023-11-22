@@ -30,7 +30,7 @@ const MAX_TOKEN_PROPERTIES_SIZE = 32768n;
 const NESTING_BUDGET = 5n;
 
 const DEFAULT_COLLETCTION_LIMIT = {
-  accountTokenOwnershipLimit: '1,000,000',
+  accountTokenOwnershipLimit: '100,000,000',
   sponsoredDataSize: '2,048',
   sponsoredDataRateLimit: 'SponsoringDisabled',
   tokenLimit: '4,294,967,295',
