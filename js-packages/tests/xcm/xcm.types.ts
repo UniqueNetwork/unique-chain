@@ -509,7 +509,22 @@ export class XcmTestHelper {
   async setSudoKeyFromRelay(relaySudoer: IKeyringPair, key: string) {
     // eslint-disable-next-line require-await
     const program = await usingPlaygrounds(async (helper) => {
-      const call = helper.constructApiCall('api.tx.sudo.setKey', [key]);
+      const currentSudoKey = await helper.callRpc('api.query.sudo.key', [])
+        .then(k => k.toString());
+
+      const sudoSetKey = helper.constructApiCall('api.tx.sudo.setKey', [key]).method.toHex();
+
+      const call = helper.constructApiCall(
+        'api.tx.utility.dispatchAs',
+        [
+          {
+            system: {
+              Signed: currentSudoKey,
+            },
+          },
+          sudoSetKey,
+        ]
+      ).method.toHex();
       return helper.arrange.makeUnpaidSudoTransactProgram({
         weightMultiplier: 1,
         call,
@@ -530,10 +545,13 @@ export class XcmTestHelper {
 
     await this.setSudoKeyFromRelay(sudoer, newSudoKey);
 
-    const currentSudoKey = await helper.callRpc('api.query.sudo.key', []);
+    await expectDownwardXcmComplete(helper);
+
+    const currentSudoKey = await helper.callRpc('api.query.sudo.key', [])
+      .then(k => k.toString());
     expect(currentSudoKey).to.be.equal(newSudoKey);
 
-    await helper.getSudo().executeExtrinsic(newAccount, 'api.tx.sudo.setKey', [sudoer.address]);
+    await helper.executeExtrinsic(newAccount, 'api.tx.sudo.setKey', [sudoer.address]);
   }
 
   private async _relayXcmTransactSetBalance(variant: 'plain' | 'batch' | 'batchAll' | 'forceBatch' | 'dispatchAs') {
