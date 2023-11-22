@@ -22,7 +22,7 @@ use sp_std::{borrow::ToOwned, marker::PhantomData};
 
 mod data;
 
-pub use data::{Bytes, EvmData, EvmDataReader, EvmDataWriter};
+pub use data::{Bytes, EvmDataReader, EvmDataWriter};
 
 /// Alias for Result returning an EVM precompile error.
 pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;

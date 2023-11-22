@@ -81,7 +81,7 @@ const fundFilenames = async () => {
         if(aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
           tx.push(helper.executeExtrinsic(
             alice,
-            'api.tx.balances.transfer',
+            'api.tx.balances.transferKeepAlive',
             [account.address, DONOR_FUNDING * oneToken],
             true,
             {nonce: nonce + balanceGrantedCounter++},

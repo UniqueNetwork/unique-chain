@@ -696,7 +696,7 @@ export class ArrangeGroup {
       const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
       accounts.push(recipient);
       if(balance !== 0n) {
-        const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, balance * tokenNominal]);
+        const tx = this.helper.constructApiCall('api.tx.balances.transferKeepAlive', [{Id: recipient.address}, balance * tokenNominal]);
         transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
         nonce++;
       }
@@ -749,7 +749,7 @@ export class ArrangeGroup {
         const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
         accounts.push(recipient);
         if(withBalance !== 0n) {
-          const tx = this.helper.constructApiCall('api.tx.balances.transfer', [{Id: recipient.address}, withBalance * tokenNominal]);
+          const tx = this.helper.constructApiCall('api.tx.balances.transferKeepAlive', [{Id: recipient.address}, withBalance * tokenNominal]);
           transactions.push(this.helper.signTransaction(donor, tx, {nonce}, 'account generation'));
           nonce++;
         }

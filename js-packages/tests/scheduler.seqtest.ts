@@ -507,7 +507,7 @@ describe('Scheduling token and balance transfers', () => {
     for(let offset = 0; offset < numFilledBlocks; offset ++) {
       for(let i = 0; i < maxScheduledPerBlock; i++) {
 
-        const scheduledTx = helper.constructApiCall('api.tx.balances.transfer', [bob.address, 1n]);
+        const scheduledTx = helper.constructApiCall('api.tx.balances.transferKeepAlive', [bob.address, 1n]);
 
         const when = firstExecutionBlockNumber + period + offset;
         const mandatoryArgs = [when, null, null, scheduledTx];
@@ -710,7 +710,7 @@ describe.skip('Sponsoring scheduling', () => {
     //   await addToAllowListExpectSuccess(alice, collectionId, zeroBalance.address);
 
     //   // Grace zeroBalance with money, enough to cover future transactions
-    //   const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
+    //   const balanceTx = api.tx.balances.transferKeepAlive(zeroBalance.address, 1n * UNIQUE);
     //   await submitTransactionAsync(alice, balanceTx);
 
     //   // Mint a fresh NFT
@@ -722,7 +722,7 @@ describe.skip('Sponsoring scheduling', () => {
     //   await scheduleTransferExpectSuccess(api, collectionId, tokenId, zeroBalance, alice, 1, waitForBlocks, scheduledId);
 
     //   // Get rid of the account's funds before the scheduled transaction takes place
-    //   const balanceTx2 = api.tx.balances.transfer(alice.address, UNIQUE * 68n / 100n);
+    //   const balanceTx2 = api.tx.balances.transferKeepAlive(alice.address, UNIQUE * 68n / 100n);
     //   const events = await submitTransactionAsync(zeroBalance, balanceTx2);
     //   expect(getGenericResult(events).success).to.be.true;
     //   /*const emptyBalanceTx = api.tx.balances.setBalance(zeroBalance.address, 0, 0); // do not null reserved?
@@ -742,7 +742,7 @@ describe.skip('Sponsoring scheduling', () => {
 
     // await usingApi(async (api, privateKey) => {
     //   const zeroBalance = await findUnusedAddress(api, privateKey);
-    //   const balanceTx = api.tx.balances.transfer(zeroBalance.address, 1n * UNIQUE);
+    //   const balanceTx = api.tx.balances.transferKeepAlive(zeroBalance.address, 1n * UNIQUE);
     //   await submitTransactionAsync(alice, balanceTx);
 
     //   await setCollectionSponsorExpectSuccess(collectionId, zeroBalance.address);

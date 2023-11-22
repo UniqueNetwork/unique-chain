@@ -40,6 +40,8 @@ describe('Market V2 Contract', () => {
   });
 
   async function deployMarket(helper: EthUniqueHelper, marketOwner: string) {
+    const nodeModulesDir = `${dirname}/../../../node_modules`;
+    const solApiDir = `${dirname}/../api`;
     return await helper.ethContract.deployByCode(
       marketOwner,
       'Market',
@@ -47,39 +49,39 @@ describe('Market V2 Contract', () => {
       [
         {
           solPath: '@unique-nft/solidity-interfaces/contracts/UniqueNFT.sol',
-          fsPath: `${dirname}/../api/UniqueNFT.sol`,
+          fsPath: `${solApiDir}/UniqueNFT.sol`,
         },
         {
           solPath: '@unique-nft/solidity-interfaces/contracts/UniqueFungible.sol',
-          fsPath: `${dirname}/../api/UniqueFungible.sol`,
+          fsPath: `${solApiDir}/UniqueFungible.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/utils/introspection/IERC165.sol',
-          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
+          fsPath: `${nodeModulesDir}/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/access/Ownable.sol',
-          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/access/Ownable.sol`,
+          fsPath: `${nodeModulesDir}/@openzeppelin/contracts/access/Ownable.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/utils/Context.sol',
-          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/Context.sol`,
+          fsPath: `${nodeModulesDir}/@openzeppelin/contracts/utils/Context.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/security/ReentrancyGuard.sol',
-          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/security/ReentrancyGuard.sol`,
+          fsPath: `${nodeModulesDir}/@openzeppelin/contracts/security/ReentrancyGuard.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/utils/introspection/ERC165Checker.sol',
-          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/introspection/ERC165Checker.sol`,
+          fsPath: `${nodeModulesDir}/@openzeppelin/contracts/utils/introspection/ERC165Checker.sol`,
         },
         {
           solPath: '@openzeppelin/contracts/token/ERC721/IERC721.sol',
-          fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
+          fsPath: `${nodeModulesDir}/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
         },
         {
           solPath: '@unique-nft/solidity-interfaces/contracts/CollectionHelpers.sol',
-          fsPath: `${dirname}/../api/CollectionHelpers.sol`,
+          fsPath: `${solApiDir}/CollectionHelpers.sol`,
         },
         {
           solPath: 'royalty/UniqueRoyaltyHelper.sol',

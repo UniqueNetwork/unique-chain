@@ -419,6 +419,7 @@ where
 				Box::new(block_announce_validator)
 			})),
 			warp_sync_params: None,
+			block_relay: None,
 		})?;
 
 	let select_chain = params.select_chain.clone();
@@ -778,6 +779,8 @@ where
 		},
 		collator_key,
 		relay_chain_slot_duration,
+		#[cfg(not(feature = "lookahead"))]
+		collation_request_receiver: None,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
@@ -887,6 +890,7 @@ where
 			import_queue,
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
+			block_relay: None,
 		})?;
 
 	let collator = config.role.is_authority();

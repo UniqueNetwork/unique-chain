@@ -14,14 +14,18 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::parameter_types;
+use frame_support::{
+	parameter_types,
+	traits::{fungible::HoldConsideration, LinearStoragePrice},
+};
 use frame_system::EnsureRoot;
 use up_common::constants::*;
 
-use crate::{AccountId, Balance, Balances, Runtime, RuntimeEvent};
+use crate::{AccountId, Balance, Balances, Runtime, RuntimeEvent, RuntimeHoldReason};
 
 parameter_types! {
 	pub PreimageBaseDeposit: Balance = 1000 * UNIQUE;
+	pub const PreimageHoldReason: RuntimeHoldReason = RuntimeHoldReason::Preimage(pallet_preimage::HoldReason::Preimage);
 }
 
 impl pallet_preimage::Config for Runtime {
@@ -29,6 +33,10 @@ impl pallet_preimage::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = Balances;
 	type ManagerOrigin = EnsureRoot<AccountId>;
-	type BaseDeposit = PreimageBaseDeposit;
-	type ByteDeposit = TransactionByteFee;
+	type Consideration = HoldConsideration<
+		AccountId,
+		Balances,
+		PreimageHoldReason,
+		LinearStoragePrice<PreimageBaseDeposit, TransactionByteFee, Balance>,
+	>;
 }

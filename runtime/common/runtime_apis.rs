@@ -485,7 +485,14 @@ macro_rules! impl_common_runtime_apis {
 
 			impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 				fn slot_duration() -> sp_consensus_aura::SlotDuration {
-					sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+					#[cfg(not(feature = "lookahead"))]
+					{
+						sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
+					}
+					#[cfg(feature = "lookahead")]
+					{
+						sp_consensus_aura::SlotDuration::from_millis(up_common::constants::SLOT_DURATION)
+					}
 				}
 
 				fn authorities() -> Vec<AuraId> {

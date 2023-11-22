@@ -132,7 +132,11 @@ impl TransactAsset for AssetTransactor {
 
 	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
-	fn deposit_asset(what: &MultiAsset, who: &MultiLocation, context: &XcmContext) -> XcmResult {
+	fn deposit_asset(
+		what: &MultiAsset,
+		who: &MultiLocation,
+		context: Option<&XcmContext>,
+	) -> XcmResult {
 		FungiblesTransactor::deposit_asset(what, who, context)
 	}
 

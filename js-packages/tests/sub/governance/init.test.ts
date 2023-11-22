@@ -1,5 +1,5 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../util/index.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../../util/index.js';
 import {Event} from '@unique/playgrounds/unique.dev.js';
 import {democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, clearFellowship} from './util.js';
 import type {ICounselors, ITechComms} from './util.js';

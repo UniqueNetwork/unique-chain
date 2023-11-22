@@ -43,10 +43,7 @@ use sp_std::vec::Vec;
 use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
 
-use crate::{
-	AllPalletsWithSystem, Aura, Balances, InherentDataExt, Runtime, RuntimeCall, Signature,
-	Treasury,
-};
+use crate::{AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature, Treasury};
 
 #[macro_export]
 macro_rules! unsupported {
@@ -84,18 +81,16 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-pub type ChargeTransactionPayment = pallet_charge_transaction::ChargeTransactionPayment<Runtime>;
-
 pub type SignedExtra = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
 	frame_system::CheckEra<Runtime>,
-	frame_system::CheckNonce<Runtime>,
+	pallet_charge_transaction::CheckNonce<Runtime>,
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
 	identity::DisableIdentityCalls,
-	ChargeTransactionPayment,
+	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 );
@@ -146,13 +141,17 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 	}
 }
 
+#[cfg(not(feature = "lookahead"))]
 pub(crate) struct CheckInherents;
 
+#[cfg(not(feature = "lookahead"))]
 impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
 	fn check_inherents(
 		block: &Block,
 		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
 	) -> sp_inherents::CheckInherentsResult {
+		use crate::InherentDataExt;
+
 		let relay_chain_slot = relay_state_proof
 			.read_slot()
 			.expect("Could not read the relay chain slot from the proof");

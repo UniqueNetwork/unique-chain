@@ -171,13 +171,13 @@ impl<T: Config> OnCheckEvmTransaction<T> for TransactionValidity<T> {
 		origin: &T::CrossAccountId,
 	) -> Result<(), TransactionValidationError> {
 		let who = &v.who;
-		let max_fee_per_gas = Some(v.transaction_fee_input()?.0);
+		let max_fee_per_gas = v.transaction_fee_input()?.0;
 		let gas_limit = v.transaction.gas_limit.low_u64();
 		let reason = if let Some(to) = v.transaction.to {
 			WithdrawReason::Call {
 				target: to,
 				input: v.transaction.input.clone(),
-				max_fee_per_gas,
+				max_fee_per_gas: Some(max_fee_per_gas),
 				gas_limit,
 				is_transactional: v.config.is_transactional,
 				is_check: true,
@@ -187,7 +187,7 @@ impl<T: Config> OnCheckEvmTransaction<T> for TransactionValidity<T> {
 		};
 		let sponsor = get_sponsor::<T>(
 			*origin.as_eth(),
-			max_fee_per_gas,
+			Some(max_fee_per_gas),
 			gas_limit,
 			&reason,
 			v.config.is_transactional,
@@ -196,9 +196,7 @@ impl<T: Config> OnCheckEvmTransaction<T> for TransactionValidity<T> {
 		.as_ref()
 		.map(pallet_evm::Pallet::<T>::account_basic_by_id)
 		.map(|v| v.0);
-		let fee = max_fee_per_gas
-			.unwrap()
-			.saturating_mul(v.transaction.gas_limit);
+		let fee = max_fee_per_gas.saturating_mul(v.transaction.gas_limit);
 		if let Some(sponsor) = sponsor.as_ref() {
 			if who.balance < v.transaction.value || sponsor.balance < fee {
 				return Err(TransactionValidationError::BalanceTooLow);

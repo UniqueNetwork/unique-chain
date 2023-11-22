@@ -1,7 +1,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {xxhashAsHex} from '@polkadot/util-crypto';
 import type {u32} from '@polkadot/types-codec';
-import {usingPlaygrounds, expect} from '../util/index.js';
+import {usingPlaygrounds, expect} from '../../util/index.js';
 import {UniqueHelper} from '@unique/playgrounds/unique.js';
 import {DevUniqueHelper} from '@unique/playgrounds/unique.dev.js';
 
