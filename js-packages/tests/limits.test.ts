@@ -438,7 +438,7 @@ describe('Effective collection limits (NFT)', () => {
     { // Check that default values defined for collection limits
       const limits = await collection.getEffectiveLimits();
 
-      expect(limits.accountTokenOwnershipLimit).to.be.eq(100000);
+      expect(limits.accountTokenOwnershipLimit).to.be.eq(100000000);
       expect(limits.sponsoredDataSize).to.be.eq(2048);
       expect(limits.sponsoredDataRateLimit).to.be.deep.eq({sponsoringDisabled: null});
       expect(limits.tokenLimit).to.be.eq(4294967295);

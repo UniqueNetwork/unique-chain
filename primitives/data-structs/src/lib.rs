@@ -56,7 +56,7 @@ pub const MAX_SPONSOR_TIMEOUT: u32 = 10_368_000;
 
 /// Maximum tokens for user.
 pub const MAX_TOKEN_OWNERSHIP: u32 = if cfg!(not(feature = "limit-testing")) {
-	100_000
+	100_000_000
 } else {
 	10
 };
@@ -83,7 +83,7 @@ pub const COLLECTION_TOKEN_LIMIT: u32 = u32::MAX;
 
 /// Maximum tokens per account.
 pub const ACCOUNT_TOKEN_OWNERSHIP_LIMIT: u32 = if cfg!(not(feature = "limit-testing")) {
-	1_000_000
+	100_000_000
 } else {
 	10
 };
