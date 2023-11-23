@@ -17,7 +17,7 @@
 use cumulus_primitives_core::ParaId;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Contains, Everything, Get, Nothing, ProcessMessageError},
+	traits::{ConstU32, Everything, Get, Nothing, ProcessMessageError},
 };
 use frame_system::EnsureRoot;
 use pallet_xcm::XcmPassthrough;
@@ -29,9 +29,9 @@ use staging_xcm::{
 	v3::Instruction,
 };
 use staging_xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentAsSuperuser, ParentIsPreset,
-	RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
+	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentIsPreset, RelayChainAsNative,
+	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
+	SignedToAccountId32, SovereignSignedViaLocation,
 };
 use staging_xcm_executor::{
 	traits::{Properties, ShouldExecute},
@@ -111,9 +111,6 @@ pub type XcmOriginToTransactDispatchOrigin = (
 	// Native converter for sibling Parachains; will convert to a `SiblingPara` origin when
 	// recognised.
 	SiblingParachainAsNative<cumulus_pallet_xcm::Origin, RuntimeOrigin>,
-	// Superuser converter for the Relay-chain (Parent) location. This will allow it to issue a
-	// transaction from the Root origin.
-	ParentAsSuperuser<RuntimeOrigin>,
 	// Native signed account converter; this just converts an `AccountId32` origin into a normal
 	// `Origin::Signed` origin of the same 32-byte value.
 	SignedAccountId32AsNative<RelayNetwork, RuntimeOrigin>,
@@ -167,54 +164,6 @@ where
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
-pub struct XcmCallFilter;
-impl XcmCallFilter {
-	fn allow_gov_and_sys_call(call: &RuntimeCall) -> bool {
-		match call {
-			RuntimeCall::System(..) => true,
-
-			#[cfg(feature = "governance")]
-			RuntimeCall::Identity(..)
-			| RuntimeCall::Preimage(..)
-			| RuntimeCall::Democracy(..)
-			| RuntimeCall::Council(..)
-			| RuntimeCall::TechnicalCommittee(..)
-			| RuntimeCall::CouncilMembership(..)
-			| RuntimeCall::TechnicalCommitteeMembership(..)
-			| RuntimeCall::FellowshipCollective(..)
-			| RuntimeCall::FellowshipReferenda(..) => true,
-			_ => false,
-		}
-	}
-
-	fn allow_utility_call(call: &RuntimeCall) -> bool {
-		match call {
-			RuntimeCall::Utility(pallet_utility::Call::batch { calls, .. }) => {
-				calls.iter().all(Self::allow_gov_and_sys_call)
-			}
-			RuntimeCall::Utility(pallet_utility::Call::batch_all { calls, .. }) => {
-				calls.iter().all(Self::allow_gov_and_sys_call)
-			}
-			RuntimeCall::Utility(pallet_utility::Call::as_derivative { call, .. }) => {
-				Self::allow_gov_and_sys_call(call)
-			}
-			RuntimeCall::Utility(pallet_utility::Call::dispatch_as { call, .. }) => {
-				Self::allow_gov_and_sys_call(call)
-			}
-			RuntimeCall::Utility(pallet_utility::Call::force_batch { calls, .. }) => {
-				calls.iter().all(Self::allow_gov_and_sys_call)
-			}
-			_ => false,
-		}
-	}
-}
-
-impl Contains<RuntimeCall> for XcmCallFilter {
-	fn contains(call: &RuntimeCall) -> bool {
-		Self::allow_gov_and_sys_call(call) || Self::allow_utility_call(call)
-	}
-}
-
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
 impl<T> staging_xcm_executor::Config for XcmExecutorConfig<T>
 where
@@ -244,7 +193,7 @@ where
 	type MessageExporter = ();
 	type UniversalAliases = Nothing;
 	type CallDispatcher = RuntimeCall;
-	type SafeCallFilter = XcmCallFilter;
+	type SafeCallFilter = Nothing;
 	type Aliasers = Nothing;
 }
 
