@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util/index.js';
-import {XcmTestHelper} from './xcm.types';
+import {XcmTestHelper} from './xcm.types.js';
 
 const STATEMINE_CHAIN = +(process.env.RELAY_WESTMINT_ID || 1000);
 const UNIQUE_CHAIN = +(process.env.RELAY_OPAL_ID || 2095);
@@ -120,16 +120,23 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
           },
         ]},
       };
+      const assetId = {Concrete: location};
 
-      if(await helper.foreignAssets.foreignCollectionId(location) == null) {
+      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
         const tokenPrefix = USDT_ASSET_METADATA_NAME;
-        await helper.getSudo().foreignAssets.register(alice, location, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+        await helper.getSudo().foreignAssets.register(
+          alice,
+          assetId,
+          USDT_ASSET_METADATA_NAME,
+          tokenPrefix,
+          {Fungible: USDT_ASSET_METADATA_DECIMALS},
+        );
       } else {
         console.log('Foreign collection is already registered on Opal');
       }
 
       balanceOpalBefore = await helper.balance.getSubstrate(alice.address);
-      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(location);
+      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
     });
 
     // Providing the relay currency to the unique sender account

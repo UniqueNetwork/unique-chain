@@ -20,7 +20,7 @@ import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usi
 import {Event} from '@unique/playgrounds/unique.dev.js';
 import {hexToString, nToBigInt} from '@polkadot/util';
 import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types.js';
-import {XcmTestHelper} from './xcm.types';
+import {XcmTestHelper} from './xcm.types.js';
 
 const STATEMINT_PALLET_INSTANCE = 50;
 
@@ -142,16 +142,17 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
           },
         ]},
       };
+      const assetId = {Concrete: location};
 
-      if(await helper.foreignAssets.foreignCollectionId(location) == null) {
+      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
         const tokenPrefix = USDT_ASSET_METADATA_NAME;
-        await helper.getSudo().foreignAssets.register(alice, location, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+        await helper.getSudo().foreignAssets.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
       } else {
         console.log('Foreign collection is already registered on Unique');
       }
 
       balanceUniqueBefore = await helper.balance.getSubstrate(alice.address);
-      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(location);
+      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
     });
 
 

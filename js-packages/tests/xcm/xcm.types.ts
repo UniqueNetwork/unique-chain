@@ -512,15 +512,16 @@ export class XcmTestHelper {
         parents: 1,
         interior: 'Here',
       };
+      const relayAssetId = {Concrete: relayLocation};
 
-      const relayCollectionId = await helper.foreignAssets.foreignCollectionId(relayLocation);
+      const relayCollectionId = await helper.foreignAssets.foreignCollectionId(relayAssetId);
       if(relayCollectionId == null) {
         const name = 'Relay Tokens';
         const tokenPrefix = 'xDOT';
         const decimals = 10;
-        await helper.getSudo().foreignAssets.register(alice, relayLocation, name, tokenPrefix, {Fungible: decimals});
+        await helper.getSudo().foreignAssets.register(alice, relayAssetId, name, tokenPrefix, {Fungible: decimals});
 
-        return await helper.foreignAssets.foreignCollectionId(relayLocation);
+        return await helper.foreignAssets.foreignCollectionId(relayAssetId);
       } else {
         console.log('Relay foreign collection is already registered');
         return relayCollectionId;

@@ -19,7 +19,7 @@ import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, us
 import {DevUniqueHelper, Event} from '@unique/playgrounds/unique.dev.js';
 import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types.js';
 import {hexToString} from '@polkadot/util';
-import {XcmTestHelper} from './xcm.types';
+import {XcmTestHelper} from './xcm.types.js';
 
 const STATEMINE_PALLET_INSTANCE = 50;
 
@@ -130,16 +130,17 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
           },
         ]},
       };
+      const assetId = {Concrete: location};
 
-      if(await helper.foreignAssets.foreignCollectionId(location) == null) {
+      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
         const tokenPrefix = USDT_ASSET_METADATA_NAME;
-        await helper.getSudo().foreignAssets.register(alice, location, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+        await helper.getSudo().foreignAssets.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
       } else {
         console.log('Foreign collection is already registered on Quartz');
       }
 
       balanceQuartzBefore = await helper.balance.getSubstrate(alice.address);
-      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(location);
+      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
     });
 
 
