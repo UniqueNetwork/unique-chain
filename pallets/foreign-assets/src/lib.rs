@@ -42,8 +42,7 @@ use staging_xcm_executor::{
 };
 use up_data_structs::{
 	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CollectionTokenPrefix,
-	CreateCollectionData, CreateFungibleData, CreateItemData, CreateNftData, Property, PropertyKey,
-	TokenId,
+	CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
 };
 
 pub mod weights;
@@ -57,9 +56,7 @@ pub use weights::WeightInfo;
 #[frame_support::pallet]
 pub mod module {
 	use pallet_common::CollectionIssuer;
-	use up_data_structs::{
-		CollectionDescription, Property, PropertyKeyPermission, PropertyPermission,
-	};
+	use up_data_structs::CollectionDescription;
 
 	use super::*;
 
@@ -178,27 +175,6 @@ pub mod module {
 					token_prefix,
 					description,
 					mode: mode.into(),
-
-					properties: vec![Property {
-						key: Self::reserve_location_property_key(),
-						value: asset_id
-							.encode()
-							.try_into()
-							.expect("multilocation is less than 32k; qed"),
-					}]
-					.try_into()
-					.expect("just one property can always be stored; qed"),
-
-					token_property_permissions: vec![PropertyKeyPermission {
-						key: Self::reserve_asset_instance_property_key(),
-						permission: PropertyPermission {
-							mutable: false,
-							collection_admin: true,
-							token_owner: false,
-						},
-					}]
-					.try_into()
-					.expect("just one property permission can always be stored; qed"),
 					..Default::default()
 				},
 			)?;
@@ -220,20 +196,6 @@ impl<T: Config> Pallet<T> {
 	fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
-	}
-
-	fn reserve_location_property_key() -> PropertyKey {
-		b"reserve-location"
-			.to_vec()
-			.try_into()
-			.expect("key length < max property key length; qed")
-	}
-
-	fn reserve_asset_instance_property_key() -> PropertyKey {
-		b"reserve-asset-instance"
-			.to_vec()
-			.try_into()
-			.expect("key length < max property key length; qed")
 	}
 
 	/// Converts a concrete asset ID (the asset multilocation) to a local collection on Unique Network.
@@ -331,21 +293,10 @@ impl<T: Config> Pallet<T> {
 		asset_instance: &AssetInstance,
 		to: T::CrossAccountId,
 	) -> DispatchResult {
-		let asset_instance_encoded = asset_instance.encode();
-
 		let derivative_token_id = xcm_ext.create_item(
 			&Self::pallet_account(),
 			to,
-			CreateItemData::NFT(CreateNftData {
-				properties: vec![Property {
-					key: Self::reserve_asset_instance_property_key(),
-					value: asset_instance_encoded
-						.try_into()
-						.expect("asset instance length <= 32 bytes which is less than value length limit; qed"),
-				}]
-				.try_into()
-				.expect("just one property can always be stored; qed"),
-			}),
+			CreateItemData::NFT(Default::default()),
 			&ZeroBudget,
 		)?;
 
@@ -388,7 +339,7 @@ impl<T: Config> Pallet<T> {
 				Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
 			}
 			(CollectionLocality::Local(_), None) => {
-				return Err(XcmError::AssetNotFound);
+				return Err(XcmExecutorError::InstanceConversionFailed.into());
 			}
 		};
 
@@ -406,7 +357,7 @@ impl<T: Config> Pallet<T> {
 		from: T::CrossAccountId,
 	) -> XcmResult {
 		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance)
-			.ok_or(XcmError::AssetNotFound)?;
+			.ok_or(XcmExecutorError::InstanceConversionFailed)?;
 
 		let depositor = &from;
 		let to = Self::pallet_account();
@@ -450,7 +401,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 		let collection_locality = Self::asset_to_collection(&what.id)?;
 		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
-			.map_err(|_| XcmError::AssetNotFound)?;
+			.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?;
 
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::Unimplemented)?;
@@ -482,7 +433,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 		let collection_locality = Self::asset_to_collection(&what.id)?;
 		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
-			.map_err(|_| XcmError::AssetNotFound)?;
+			.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?;
 
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
@@ -515,7 +466,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		let collection_locality = Self::asset_to_collection(&what.id)?;
 
 		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
-			.map_err(|_| XcmError::AssetNotFound)?;
+			.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?;
 		let collection = dispatch.as_dyn();
 		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
 
@@ -534,7 +485,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 
 			Fungibility::NonFungible(asset_instance) => {
 				token_id = Self::asset_instance_to_token_id(collection_locality, &asset_instance)
-					.ok_or(XcmError::AssetNotFound)?;
+					.ok_or(XcmExecutorError::InstanceConversionFailed)?;
 
 				amount = 1;
 				map_error = |_| XcmError::FailedToTransactAsset("non-fungible item transfer failed")
