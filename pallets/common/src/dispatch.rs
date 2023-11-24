@@ -11,7 +11,7 @@ use sp_runtime::DispatchError;
 use sp_weights::Weight;
 use up_data_structs::{CollectionId, CreateCollectionData};
 
-use crate::{pallet::Config, CommonCollectionOperations};
+use crate::{pallet::Config, CollectionIssuer, CommonCollectionOperations};
 
 // TODO: move to benchmarking
 /// Price of [`dispatch_tx`] call with noop `call` argument
@@ -72,26 +72,11 @@ pub trait CollectionDispatch<T: Config> {
 	/// Create a regular collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	///
 	/// * `sender` - The user who will become the owner of the collection.
-	/// * `payer` - If set, the user who pays the collection creation deposit.
+	/// * `issuer` - An entity that creates the collection.
 	/// * `data` - Description of the created collection.
 	fn create(
 		sender: T::CrossAccountId,
-		payer: Option<T::CrossAccountId>,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		Self::create_raw(sender, payer, false, data)
-	}
-
-	/// Function for creating regular and special collections.
-	///
-	/// * `sender` - The user who will become the owner of the collection.
-	/// * `payer` - If set, the user who pays the collection creation deposit.
-	/// * `data` - Description of the created collection.
-	/// * `is_special_collection` -- Whether this collection is a special one, i.e. can have special flags set.
-	fn create_raw(
-		sender: T::CrossAccountId,
-		payer: Option<T::CrossAccountId>,
-		is_special_collection: bool,
+		issuer: CollectionIssuer<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError>;
 

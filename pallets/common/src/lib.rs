@@ -944,6 +944,15 @@ impl<'a, T> LazyValue<'a, T> {
 	}
 }
 
+/// An issuer of a collection.
+pub enum CollectionIssuer<CrossAccountId> {
+	/// A user who creates the collection.
+	User(CrossAccountId),
+
+	/// The internal mechanisms are creating the collection.
+	Internals,
+}
+
 fn check_token_permissions<T: Config>(
 	collection_admin_permitted: bool,
 	token_owner_permitted: bool,
@@ -1128,32 +1137,34 @@ impl<T: Config> Pallet<T> {
 	/// Create new collection.
 	///
 	/// * `owner` - The owner of the collection.
-	/// * `payer` - If set, the user that will pay a deposit for the collection creation.
-	/// * `data` - Description of the created collection.
+	/// * `issuer` - An entity that creates the collection.
 	/// * `is_special_collection` -- Whether this collection is a special one, i.e. can have special flags set.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
-		payer: Option<T::CrossAccountId>,
-		is_special_collection: bool,
+		issuer: CollectionIssuer<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		if !is_special_collection {
-			ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
-		}
+		match issuer {
+			CollectionIssuer::User(payer) => {
+				ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
 
-		// Take a (non-refundable) deposit of collection creation
-		if let Some(payer) = payer {
-			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
-			imbalance.subsume(<T as Config>::Currency::deposit(
-				&T::TreasuryAccountId::get(),
-				T::CollectionCreationPrice::get(),
-				Precision::Exact,
-			)?);
-			let credit =
-				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
-					.map_err(|_| Error::<T>::NotSufficientFounds)?;
+				// Take a (non-refundable) deposit of collection creation
+				let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+				imbalance.subsume(<T as Config>::Currency::deposit(
+					&T::TreasuryAccountId::get(),
+					T::CollectionCreationPrice::get(),
+					Precision::Exact,
+				)?);
+				let credit = <T as Config>::Currency::settle(
+					payer.as_sub(),
+					imbalance,
+					Preservation::Preserve,
+				)
+				.map_err(|_| Error::<T>::NotSufficientFounds)?;
 
-			debug_assert!(credit.peek().is_zero())
+				debug_assert!(credit.peek().is_zero());
+			}
+			CollectionIssuer::Internals => {}
 		}
 
 		{

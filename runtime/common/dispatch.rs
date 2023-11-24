@@ -18,7 +18,7 @@ use frame_support::{dispatch::DispatchResult, ensure, fail};
 use pallet_balances_adapter::NativeFungibleHandle;
 pub use pallet_common::dispatch::CollectionDispatch;
 use pallet_common::{
-	erc::CommonEvmHandler, eth::map_eth_to_id, CollectionById, CollectionHandle,
+	erc::CommonEvmHandler, eth::map_eth_to_id, CollectionById, CollectionHandle, CollectionIssuer,
 	CommonCollectionOperations, Pallet as PalletCommon,
 };
 use pallet_evm::{PrecompileHandle, PrecompileResult};
@@ -66,10 +66,9 @@ where
 		}
 	}
 
-	fn create_raw(
+	fn create(
 		sender: T::CrossAccountId,
-		payer: Option<T::CrossAccountId>,
-		is_special_collection: bool,
+		issuer: CollectionIssuer<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
 		match data.mode {
@@ -87,7 +86,7 @@ where
 			_ => {}
 		};
 
-		<PalletCommon<T>>::init_collection(sender, payer, is_special_collection, data)
+		<PalletCommon<T>>::init_collection(sender, issuer, data)
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {

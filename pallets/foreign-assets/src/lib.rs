@@ -56,6 +56,7 @@ pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod module {
+	use pallet_common::CollectionIssuer;
 	use up_data_structs::{
 		CollectionDescription, Property, PropertyKeyPermission, PropertyPermission,
 	};
@@ -169,12 +170,9 @@ pub mod module {
 				.try_into()
 				.expect("description length < max description length; qed");
 
-			let payer = None;
-			let is_special_collection = true;
-			let collection_id = T::CollectionDispatch::create_raw(
+			let collection_id = T::CollectionDispatch::create(
 				foreign_collection_owner,
-				payer,
-				is_special_collection,
+				CollectionIssuer::Internals,
 				CreateCollectionData {
 					name,
 					token_prefix,
