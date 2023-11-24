@@ -32,6 +32,19 @@ describeGov('Governance: Elect Sudo', () => {
     const [newAccount] = await helper.arrange.createAccounts([1000n], donor);
     const newSudoKey = newAccount.address;
 
+    // Have to use `afterEach` here instead of `after` to ensure it will be executed before `describe.after`.
+    afterEach(async () => {
+      // For some reason, the outer helper API is not initialized inside `afterEach`.
+      await usingPlaygrounds(async (helper) => {
+        await helper.executeExtrinsic(
+          newAccount,
+          'api.tx.sudo.setKey',
+          [sudoer.address],
+          false,
+        );
+      });
+    });
+
     const democracyProposal = helper.constructApiCall('api.tx.utility.dispatchAs', [
       {
         system: {
@@ -82,7 +95,5 @@ describeGov('Governance: Elect Sudo', () => {
     const currentSudoKey = await helper.callRpc('api.query.sudo.key', [])
       .then(k => k.toString());
     expect(currentSudoKey).to.be.equal(newSudoKey);
-
-    await helper.executeExtrinsic(newAccount, 'api.tx.sudo.setKey', [sudoer.address]);
   });
 });
