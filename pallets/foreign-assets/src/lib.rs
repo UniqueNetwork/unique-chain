@@ -122,7 +122,7 @@ pub mod module {
 	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox64Concat,
 		Key1 = CollectionId,
-		Hasher2 = Twox64Concat,
+		Hasher2 = Blake2_128Concat,
 		Key2 = staging_xcm::v3::AssetInstance,
 		Value = TokenId,
 		QueryKind = OptionQuery,
@@ -134,7 +134,7 @@ pub mod module {
 	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
 		Hasher1 = Twox64Concat,
 		Key1 = CollectionId,
-		Hasher2 = Twox64Concat,
+		Hasher2 = Blake2_128Concat,
 		Key2 = TokenId,
 		Value = staging_xcm::v3::AssetInstance,
 		QueryKind = OptionQuery,
