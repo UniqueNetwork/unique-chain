@@ -114,6 +114,7 @@ impl pallet_balances::Config for Test {
 	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 pub struct Author4;
