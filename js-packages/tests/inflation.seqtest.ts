@@ -58,12 +58,13 @@ describe('integration test: Inflation', () => {
     expect(Math.abs(Number(expectedInflation))).to.be.lessThanOrEqual(tolerance);
   });
 
+  // (1) - inflation is broken on purpose, see relevant changes in pallet_inflation config
   itSub('Inflation happens after inflation block interval', async ({helper}) => {
     const api = helper.getApi();
-    const blockInterval = await api.consts.inflation.inflationBlockInterval.toNumber();
+    const blockInterval = api.consts.inflation.inflationBlockInterval.toNumber();
 
-    const relayBlock = (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
-    const blockInflation = (await helper.callRpc('api.query.inflation.blockInflation', []) as any).toBigInt();
+    const relayBlock = 0; //(1) (await api.query.parachainSystem.lastRelayChainBlockNumber()).toNumber();
+    //(1) const blockInflation = (await helper.callRpc('api.query.inflation.blockInflation', []) as any).toBigInt();
     const startBlock = (relayBlock + blockInterval) - (relayBlock % blockInterval) + 1;
 
     await helper.wait.forRelayBlockNumber(startBlock);
@@ -73,6 +74,6 @@ describe('integration test: Inflation', () => {
     await helper.wait.forRelayBlockNumber(startBlock + blockInterval + 1);
 
     const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
-    expect(Number(treasuryBalanceAfter)).to.be.eqls(Number(treasuryBalanceBefore + blockInflation));
+    expect(Number(treasuryBalanceAfter)).to.be.equal(Number(treasuryBalanceBefore)); //(1) .eqls(Number(treasuryBalanceBefore + blockInflation));
   });
 });
