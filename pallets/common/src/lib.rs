@@ -2354,6 +2354,14 @@ where
 	/// Create a collection's item using a transaction.
 	///
 	/// This function performs additional XCM-related checks before the actual creation.
+	///
+	/// The `transactional` attribute is needed because the inbound XCM messages
+	/// are processed in a non-transactional context.
+	/// To perform the needed logic, we use the internal pallets' functions
+	/// that are not inherently safe to use outside a transaction.
+	///
+	/// This requirement is temporary until XCM message processing becomes transactional:
+	/// https://github.com/paritytech/polkadot-sdk/issues/490
 	#[transactional]
 	fn create_item(
 		&self,
@@ -2381,6 +2389,14 @@ where
 	/// Transfer an item from the `from` account to the `to` account using a transaction.
 	///
 	/// This function performs additional XCM-related checks before the actual transfer.
+	///
+	/// The `transactional` attribute is needed because the inbound XCM messages
+	/// are processed in a non-transactional context.
+	/// To perform the needed logic, we use the internal pallets' functions
+	/// that are not inherently safe to use outside a transaction.
+	///
+	/// This requirement is temporary until XCM message processing becomes transactional:
+	/// https://github.com/paritytech/polkadot-sdk/issues/490
 	#[transactional]
 	fn transfer_item(
 		&self,
@@ -2414,6 +2430,14 @@ where
 	) -> DispatchResult;
 
 	/// Burn a collection's item using a transaction.
+	///
+	/// The `transactional` attribute is needed because the inbound XCM messages
+	/// are processed in a non-transactional context.
+	/// To perform the needed logic, we use the internal pallets' functions
+	/// that are not inherently safe to use outside a transaction.
+	///
+	/// This requirement is temporary until XCM message processing becomes transactional:
+	/// https://github.com/paritytech/polkadot-sdk/issues/490
 	#[transactional]
 	fn burn_item(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult {
 		self.burn_item_internal(from, token, amount)
