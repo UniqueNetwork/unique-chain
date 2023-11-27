@@ -15,7 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_benchmarking::{account, v2::*};
-use pallet_common::{bench_init, benchmarking::create_collection_raw, Pallet as PalletCommon};
+use pallet_common::{
+	bench_init, benchmarking::create_collection_raw, CollectionIssuer, Pallet as PalletCommon,
+};
 use sp_std::prelude::*;
 use up_data_structs::{budget::Unlimited, CollectionMode, MAX_ITEMS_PER_BATCH};
 
@@ -31,7 +33,7 @@ fn create_collection<T: Config>(
 		owner,
 		CollectionMode::Fungible(0),
 		|owner: T::CrossAccountId, data| {
-			<PalletCommon<T>>::init_collection(owner.clone(), Some(owner), false, data)
+			<PalletCommon<T>>::init_collection(owner.clone(), CollectionIssuer::User(owner), data)
 		},
 		FungibleHandle::cast,
 	)

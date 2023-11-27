@@ -16,7 +16,7 @@
 
 use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
 use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
-use pallet_common::Config as CommonConfig;
+use pallet_common::{CollectionIssuer, Config as CommonConfig};
 use pallet_evm::account::CrossAccountId;
 use sp_std::vec;
 use up_data_structs::{
@@ -44,7 +44,7 @@ mod benchmarks {
 		.unwrap();
 		T::CollectionDispatch::create(
 			caller_cross.clone(),
-			Some(caller_cross.clone()),
+			CollectionIssuer::User(caller_cross.clone()),
 			CreateCollectionData {
 				mode: CollectionMode::NFT,
 				..Default::default()

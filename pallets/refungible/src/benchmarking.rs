@@ -20,7 +20,7 @@ use frame_benchmarking::v2::*;
 use pallet_common::{
 	bench_init,
 	benchmarking::{create_collection_raw, property_key, property_value},
-	Pallet as PalletCommon,
+	CollectionIssuer, Pallet as PalletCommon,
 };
 use sp_std::prelude::*;
 use up_data_structs::{
@@ -63,7 +63,7 @@ fn create_collection<T: Config>(
 		owner,
 		CollectionMode::ReFungible,
 		|owner: T::CrossAccountId, data| {
-			<PalletCommon<T>>::init_collection(owner.clone(), Some(owner), false, data)
+			<PalletCommon<T>>::init_collection(owner.clone(), CollectionIssuer::User(owner), data)
 		},
 		RefungibleHandle::cast,
 	)
