@@ -108,7 +108,7 @@ export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
     await this.helper.executeExtrinsic(
       signer,
       'api.tx.foreignAssets.forceRegisterForeignAsset',
-      [assetId, this.helper.util.str2vec(name), tokenPrefix, mode],
+      [{V3: assetId}, this.helper.util.str2vec(name), tokenPrefix, mode],
       true,
     );
   }

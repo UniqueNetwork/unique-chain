@@ -35,6 +35,7 @@ use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{
 	opaque::latest::{prelude::XcmError, Weight},
 	v3::{prelude::*, MultiAsset, XcmContext},
+	VersionedAssetId,
 };
 use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
@@ -90,6 +91,9 @@ pub mod module {
 	pub enum Error<T> {
 		/// The foreign asset is already registered.
 		ForeignAssetAlreadyRegistered,
+
+		/// The given asset ID could not be converted into the current XCM version.
+		BadForeignAssetId,
 	}
 
 	#[pallet::event]
@@ -98,7 +102,7 @@ pub mod module {
 		/// The foreign asset registered.
 		ForeignAssetRegistered {
 			collection_id: CollectionId,
-			asset_id: Box<AssetId>,
+			asset_id: Box<VersionedAssetId>,
 		},
 	}
 
@@ -147,15 +151,21 @@ pub mod module {
 		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
 		pub fn force_register_foreign_asset(
 			origin: OriginFor<T>,
-			asset_id: Box<AssetId>,
+			versioned_asset_id: Box<VersionedAssetId>,
 			name: CollectionName,
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
 			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
 			ensure!(
-				!<ForeignAssetToCollection<T>>::contains_key(*asset_id),
+				!<ForeignAssetToCollection<T>>::contains_key(asset_id),
 				<Error<T>>::ForeignAssetAlreadyRegistered,
 			);
 
@@ -179,12 +189,12 @@ pub mod module {
 				},
 			)?;
 
-			<ForeignAssetToCollection<T>>::insert(*asset_id, collection_id);
-			<CollectionToForeignAsset<T>>::insert(collection_id, *asset_id);
+			<ForeignAssetToCollection<T>>::insert(asset_id, collection_id);
+			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 				collection_id,
-				asset_id,
+				asset_id: versioned_asset_id,
 			});
 
 			Ok(())
