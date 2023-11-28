@@ -278,6 +278,7 @@ impl<T: Config> Pallet<T> {
 	/// `None` will be returned.
 	///
 	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
+	/// It returns `None` when it failed to convert the `asset_instance` to a local ID.
 	fn local_asset_instance_to_token_id(asset_instance: &AssetInstance) -> Option<TokenId> {
 		match asset_instance {
 			AssetInstance::Index(token_id) => Some(TokenId((*token_id).try_into().ok()?)),
@@ -286,6 +287,9 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Obtains the token ID of the `asset_instance` in the collection.
+	///
+	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
+	/// It returns `None` when it failed to convert the `asset_instance` to a local ID.
 	fn asset_instance_to_token_id(
 		collection_locality: CollectionLocality,
 		asset_instance: &AssetInstance,
