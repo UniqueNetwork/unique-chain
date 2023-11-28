@@ -276,6 +276,8 @@ impl<T: Config> Pallet<T> {
 	///
 	/// If the asset instance is not in the valid format or the `<token ID>` can't fit into the valid token ID,
 	/// `None` will be returned.
+	///
+	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
 	fn local_asset_instance_to_token_id(asset_instance: &AssetInstance) -> Option<TokenId> {
 		match asset_instance {
 			AssetInstance::Index(token_id) => Some(TokenId((*token_id).try_into().ok()?)),
