@@ -151,7 +151,6 @@ std = [
 	'up-rpc/std',
 	'up-sponsorship/std',
 
-	"orml-tokens/std",
 	"orml-traits/std",
 	"orml-vesting/std",
 	"orml-xcm-support/std",
@@ -179,7 +178,6 @@ try-runtime = [
 	'frame-system/try-runtime',
 	'frame-try-runtime',
 	'frame-try-runtime?/try-runtime',
-	'orml-tokens/try-runtime',
 	'orml-vesting/try-runtime',
 	'orml-xtokens/try-runtime',
 	'pallet-app-promotion/try-runtime',
@@ -254,7 +252,6 @@ frame-executive = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
-orml-tokens = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
 orml-xcm-support = { workspace = true }

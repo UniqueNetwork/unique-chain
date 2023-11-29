@@ -1,0 +1,215 @@
+name: xnft-testnet
+
+# Controls when the action will run.
+on:
+  workflow_call:
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+#Define Workflow variables
+env:
+  REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  prepare-execution-marix:
+    name: Prepare execution matrix
+
+    runs-on: [self-hosted-ci]
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }} #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v4
+        id: create_matrix
+        with:
+          matrix: |
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, runtest {all-quartz}, runtime_features {quartz-runtime}
+
+  xnft:
+    needs: prepare-execution-marix
+    # The type of runner that the job will run on
+    runs-on: [XL]
+
+    timeout-minutes: 600
+
+    name: ${{ matrix.network }}
+
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+    steps:
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3.1.0
+        with:
+          ref: ${{ github.head_ref }} #Checking out head commit
+
+      # Prepare SHA
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v2.1.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      # Check POLKADOT version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for POLKADOT
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-polkadot.j2
+          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+
+      - name: Check if the dockerhub repository contains the needed version POLKADOT
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB POLKADOT repository
+            POLKADOT_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadot/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "POLKADOT TAGS:"
+            echo $POLKADOT_TAGS
+          # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
+            if [[ ${POLKADOT_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.relay_branch }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed POLKADOT version";
+                docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
+            else
+                echo "Repository has not needed POLKADOT version, so build it";
+                cd .docker/ && docker build --file ./Dockerfile-polkadot.${{ matrix.relay_branch }}.yml --tag uniquenetwork/builder-polkadot:${{ matrix.relay_branch }} .
+                echo "Push needed POLKADOT version to the repository";
+                docker push uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
+            fi
+        shell: bash
+
+      # Check ACALA version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for ACALA
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-acala.j2
+          output_file: .docker/Dockerfile-acala.${{ matrix.acala_version }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
+
+      - name: Check if the dockerhub repository contains the needed ACALA version
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            ACALA_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-acala/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "ACALA TAGS:"
+            echo $ACALA_TAGS
+          # Check correct version ACALA and build it if it doesn't exist in ACALA TAGS
+            if [[ ${ACALA_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.acala_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed ACALA version";
+                docker pull uniquenetwork/builder-acala:${{ matrix.acala_version }}
+            else
+                echo "Repository has not needed ACALA version, so build it";
+                cd .docker/ && docker build --file ./Dockerfile-acala.${{ matrix.acala_version }}.yml --tag uniquenetwork/builder-acala:${{ matrix.acala_version }} .
+                echo "Push needed ACALA version to the repository";
+                docker push uniquenetwork/builder-acala:${{ matrix.acala_version }}
+            fi
+        shell: bash
+
+      - name: Build unique-chain
+        run: |
+          docker build --file .docker/Dockerfile-unique \
+            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
+            --tag uniquenetwork/ci-xnft-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }} \
+            .
+
+      - name: Push docker image version
+        run: docker push uniquenetwork/ci-xnft-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+
+      - uses: actions/setup-node@v3.5.1
+        with:
+          node-version: 18
+
+      - name: Clone xnft-tests
+        run: git clone https://github.com/UniqueNetwork/xnft-tests.git
+
+      - name: Install baedeker
+        uses: UniqueNetwork/baedeker-action/setup@built
+
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
+      - name: Start network
+        uses: UniqueNetwork/baedeker-action@built
+        id: bdk
+        with:
+          jpath: |
+            .baedeker/vendor
+          tla-str: |
+            relay_spec=rococo-local
+          inputs: |
+            xnft-tests/.baedeker/testnets.jsonnet
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/quartz':{dockerImage:'uniquenetwork/ci-xnft-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/karura':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
+
+      - name: Yarn install
+        working-directory: xnft-tests
+        run: |
+          yarn install
+          yarn add mochawesome
+
+      - name: Run XNFT Tests
+        working-directory: xnft-tests
+        run: |
+          NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+
+      - name: XNFT Tests Report
+        uses: phoenix-actions/test-reporting@v10
+        id: test-report
+        if: success() || failure()
+        with:
+          name: XNFT Tests ${{ matrix.network }}
+          path: xnft-tests/mochawesome-report/test-*.json
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
+      - name: Clean Workspace
+        if: always()
+        uses: AutoModality/action-clean@v1.1.0
+
+      - name: Remove builder cache
+        if: always()
+        run: |
+          docker system prune -a -f

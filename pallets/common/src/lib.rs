@@ -80,15 +80,16 @@ use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, DispatchResult};
 use sp_std::vec::Vec;
 use sp_weights::Weight;
 use up_data_structs::{
-	budget::Budget, AccessMode, Collection, CollectionId, CollectionLimits, CollectionMode,
-	CollectionPermissions, CollectionProperties as CollectionPropertiesT, CollectionStats,
-	CreateCollectionData, CreateItemData, CreateItemExData, PhantomType, PropertiesError,
-	PropertiesPermissionMap, Property, PropertyKey, PropertyKeyPermission, PropertyPermission,
-	PropertyScope, PropertyValue, RpcCollection, RpcCollectionFlags, SponsoringRateLimit,
-	SponsorshipState, TokenChild, TokenData, TokenId, TokenOwnerError, TokenProperties,
-	TrySetProperty, COLLECTION_ADMINS_LIMIT, COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT,
-	FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP,
-	MAX_TOKEN_PREFIX_LENGTH, NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, Collection, CollectionId,
+	CollectionLimits, CollectionMode, CollectionPermissions,
+	CollectionProperties as CollectionPropertiesT, CollectionStats, CreateCollectionData,
+	CreateItemData, CreateItemExData, PhantomType, PropertiesError, PropertiesPermissionMap,
+	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
+	RpcCollection, RpcCollectionFlags, SponsoringRateLimit, SponsorshipState, TokenChild,
+	TokenData, TokenId, TokenOwnerError, TokenProperties, TrySetProperty, COLLECTION_ADMINS_LIMIT,
+	COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_TOKEN_PREFIX_LENGTH,
+	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -786,6 +787,9 @@ pub mod pallet {
 
 		/// Fungible tokens hold no ID, and the default value of TokenId for a fungible collection is 0.
 		FungibleItemsHaveNoId,
+
+		/// Not Fungible item data used to mint in Fungible collection.
+		NotFungibleDataUsedToMintFungibleCollectionToken,
 	}
 
 	/// Storage of the count of created collections. Essentially contains the last collection ID.
@@ -938,6 +942,15 @@ impl<'a, T> LazyValue<'a, T> {
 			_ => panic!("recursion isn't supported"),
 		}
 	}
+}
+
+/// An issuer of a collection.
+pub enum CollectionIssuer<CrossAccountId> {
+	/// A user who creates the collection.
+	User(CrossAccountId),
+
+	/// The internal mechanisms are creating the collection.
+	Internals,
 }
 
 fn check_token_permissions<T: Config>(
@@ -1124,33 +1137,36 @@ impl<T: Config> Pallet<T> {
 	/// Create new collection.
 	///
 	/// * `owner` - The owner of the collection.
-	/// * `data` - Description of the created collection.
-	/// * `flags` - Extra flags to store.
+	/// * `issuer` - An entity that creates the collection.
+	/// * `is_special_collection` -- Whether this collection is a special one, i.e. can have special flags set.
 	pub fn init_collection(
 		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
+		issuer: CollectionIssuer<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
-		Self::init_collection_internal(owner, payer, data)
-	}
+		match issuer {
+			CollectionIssuer::User(payer) => {
+				ensure!(data.flags.is_allowed_for_user(), <Error<T>>::NoPermission);
 
-	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_foreign_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		mut data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		data.flags.foreign = true;
-		let id = Self::init_collection_internal(owner, payer, data)?;
-		Ok(id)
-	}
+				// Take a (non-refundable) deposit of collection creation
+				let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
+				imbalance.subsume(<T as Config>::Currency::deposit(
+					&T::TreasuryAccountId::get(),
+					T::CollectionCreationPrice::get(),
+					Precision::Exact,
+				)?);
+				let credit = <T as Config>::Currency::settle(
+					payer.as_sub(),
+					imbalance,
+					Preservation::Preserve,
+				)
+				.map_err(|_| Error::<T>::NotSufficientFounds)?;
 
-	fn init_collection_internal(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
+				debug_assert!(credit.peek().is_zero());
+			}
+			CollectionIssuer::Internals => {}
+		}
+
 		{
 			ensure!(
 				data.token_prefix.len() <= MAX_TOKEN_PREFIX_LENGTH as usize,
@@ -1224,21 +1240,6 @@ impl<T: Config> Pallet<T> {
 			<Error<T>>::CollectionAdminCountExceeded,
 		);
 		<AdminAmount<T>>::insert(id, admin_amount);
-
-		// Take a (non-refundable) deposit of collection creation
-		{
-			let mut imbalance = <Debt<T::AccountId, <T as Config>::Currency>>::zero();
-			imbalance.subsume(<T as Config>::Currency::deposit(
-				&T::TreasuryAccountId::get(),
-				T::CollectionCreationPrice::get(),
-				Precision::Exact,
-			)?);
-			let credit =
-				<T as Config>::Currency::settle(payer.as_sub(), imbalance, Preservation::Preserve)
-					.map_err(|_| Error::<T>::NotSufficientFounds)?;
-
-			debug_assert!(credit.peek().is_zero())
-		}
 
 		<CreatedCollectionCount<T>>::put(created_count);
 		<Pallet<T>>::deposit_event(Event::CollectionCreated(
@@ -2293,7 +2294,14 @@ pub trait CommonCollectionOperations<T: Config> {
 	) -> u128;
 
 	/// Get extension for RFT collection.
-	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>>;
+	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
+		None
+	}
+
+	/// Get XCM extensions.
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		None
+	}
 
 	/// The `operator` is allowed to transfer all tokens of the `owner` on their behalf.
 	/// * `owner` - Token owner
@@ -2331,6 +2339,117 @@ where
 		token: TokenId,
 		amount: u128,
 	) -> DispatchResultWithPostInfo;
+}
+
+/// XCM extensions for fungible and NFT collections
+pub trait XcmExtensions<T>
+where
+	T: Config,
+{
+	/// Does the token have children?
+	fn token_has_children(&self, _token: TokenId) -> bool {
+		false
+	}
+
+	/// Create a collection's item using a transaction.
+	///
+	/// This function performs additional XCM-related checks before the actual creation.
+	///
+	/// The `transactional` attribute is needed because the inbound XCM messages
+	/// are processed in a non-transactional context.
+	/// To perform the needed logic, we use the internal pallets' functions
+	/// that are not inherently safe to use outside a transaction.
+	///
+	/// This requirement is temporary until XCM message processing becomes transactional:
+	/// https://github.com/paritytech/polkadot-sdk/issues/490
+	#[transactional]
+	fn create_item(
+		&self,
+		depositor: &T::CrossAccountId,
+		to: T::CrossAccountId,
+		data: CreateItemData,
+		nesting_budget: &dyn Budget,
+	) -> Result<TokenId, DispatchError> {
+		if T::CrossTokenAddressMapping::is_token_address(&to) {
+			return unsupported!(T);
+		}
+
+		self.create_item_internal(depositor, to, data, nesting_budget)
+	}
+
+	/// Create a collection's item.
+	fn create_item_internal(
+		&self,
+		depositor: &T::CrossAccountId,
+		to: T::CrossAccountId,
+		data: CreateItemData,
+		nesting_budget: &dyn Budget,
+	) -> Result<TokenId, DispatchError>;
+
+	/// Transfer an item from the `from` account to the `to` account using a transaction.
+	///
+	/// This function performs additional XCM-related checks before the actual transfer.
+	///
+	/// The `transactional` attribute is needed because the inbound XCM messages
+	/// are processed in a non-transactional context.
+	/// To perform the needed logic, we use the internal pallets' functions
+	/// that are not inherently safe to use outside a transaction.
+	///
+	/// This requirement is temporary until XCM message processing becomes transactional:
+	/// https://github.com/paritytech/polkadot-sdk/issues/490
+	#[transactional]
+	fn transfer_item(
+		&self,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult {
+		if T::CrossTokenAddressMapping::is_token_address(to) {
+			return unsupported!(T);
+		}
+
+		if self.token_has_children(token) {
+			return unsupported!(T);
+		}
+
+		self.transfer_item_internal(depositor, from, to, token, amount, nesting_budget)
+	}
+
+	/// Transfer an item from the `from` account to the `to` account.
+	fn transfer_item_internal(
+		&self,
+		depositor: &T::CrossAccountId,
+		from: &T::CrossAccountId,
+		to: &T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> DispatchResult;
+
+	/// Burn a collection's item using a transaction.
+	///
+	/// The `transactional` attribute is needed because the inbound XCM messages
+	/// are processed in a non-transactional context.
+	/// To perform the needed logic, we use the internal pallets' functions
+	/// that are not inherently safe to use outside a transaction.
+	///
+	/// This requirement is temporary until XCM message processing becomes transactional:
+	/// https://github.com/paritytech/polkadot-sdk/issues/490
+	#[transactional]
+	fn burn_item(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult {
+		self.burn_item_internal(from, token, amount)
+	}
+
+	/// Burn a collection's item.
+	fn burn_item_internal(
+		&self,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> DispatchResult;
 }
 
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].

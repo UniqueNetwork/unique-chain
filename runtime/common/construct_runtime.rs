@@ -47,7 +47,7 @@ macro_rules! construct_runtime {
 				Vesting: orml_vesting = 37,
 
 				XTokens: orml_xtokens = 38,
-				Tokens: orml_tokens = 39,
+				// [REMOVED] Tokens: orml_tokens = 39,
 				// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
 				#[cfg(feature = "governance")]

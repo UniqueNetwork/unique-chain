@@ -33,7 +33,7 @@ use up_data_structs::{
 	MAX_COLLECTION_NAME_LENGTH, MAX_PROPERTIES_PER_ITEM, MAX_TOKEN_PREFIX_LENGTH,
 };
 
-use crate::{BenchmarkPropertyWriter, CollectionHandle, Config, Pallet};
+use crate::{BenchmarkPropertyWriter, CollectionHandle, CollectionIssuer, Config, Pallet};
 
 const SEED: u32 = 1;
 
@@ -120,7 +120,9 @@ fn create_collection<T: Config>(
 	create_collection_raw(
 		owner,
 		CollectionMode::NFT,
-		|owner: T::CrossAccountId, data| <Pallet<T>>::init_collection(owner.clone(), owner, data),
+		|owner: T::CrossAccountId, data| {
+			<Pallet<T>>::init_collection(owner.clone(), CollectionIssuer::User(owner), data)
+		},
 		|h| h,
 	)
 }

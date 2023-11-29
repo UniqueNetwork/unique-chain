@@ -95,8 +95,8 @@ use sp_core::H160;
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
 use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
 use up_data_structs::{
-	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, CreateCollectionData,
-	Property, PropertyKey, TokenId,
+	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, Property, PropertyKey,
+	TokenId,
 };
 use weights::WeightInfo;
 
@@ -121,8 +121,6 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// Not Fungible item data used to mint in Fungible collection.
-		NotFungibleDataUsedToMintFungibleCollectionToken,
 		/// Tried to set data for fungible item.
 		FungibleItemsDontHaveData,
 		/// Fungible token does not support nesting.
@@ -212,24 +210,6 @@ impl<T: Config> Deref for FungibleHandle<T> {
 
 /// Pallet implementation for fungible assets
 impl<T: Config> Pallet<T> {
-	/// Initializes the collection. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data)
-	}
-
-	/// Initializes the collection with ForeignCollection flag. Returns [CollectionId] on success, [DispatchError] otherwise.
-	pub fn init_foreign_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_foreign_collection(owner, payer, data)
-	}
-
 	/// Destroys a collection.
 	pub fn destroy_collection(
 		collection: FungibleHandle<T>,
@@ -294,53 +274,10 @@ impl<T: Config> Pallet<T> {
 			.checked_sub(amount)
 			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 
-		// Foreign collection check
-		ensure!(!collection.flags.foreign, <CommonError<T>>::NoPermission);
-
 		if collection.permissions.access() == AccessMode::AllowList {
 			collection.check_allowlist(owner)?;
 		}
 
-		// =========
-
-		if balance == 0 {
-			<Balance<T>>::remove((collection.id, owner));
-			<PalletStructure<T>>::unnest_if_nested(owner, collection.id, TokenId::default());
-		} else {
-			<Balance<T>>::insert((collection.id, owner), balance);
-		}
-		<TotalSupply<T>>::insert(collection.id, total_supply);
-
-		<PalletEvm<T>>::deposit_log(
-			ERC20Events::Transfer {
-				from: *owner.as_eth(),
-				to: H160::default(),
-				value: amount.into(),
-			}
-			.to_log(collection_id_to_address(collection.id)),
-		);
-		<PalletCommon<T>>::deposit_event(CommonEvent::ItemDestroyed(
-			collection.id,
-			TokenId::default(),
-			owner.clone(),
-			amount,
-		));
-		Ok(())
-	}
-
-	/// Burns the specified amount of the token.
-	pub fn burn_foreign(
-		collection: &FungibleHandle<T>,
-		owner: &T::CrossAccountId,
-		amount: u128,
-	) -> DispatchResult {
-		let total_supply = <TotalSupply<T>>::get(collection.id)
-			.checked_sub(amount)
-			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
-
-		let balance = <Balance<T>>::get((collection.id, owner))
-			.checked_sub(amount)
-			.ok_or(<CommonError<T>>::TokenValueTooLow)?;
 		// =========
 
 		if balance == 0 {
@@ -468,14 +405,25 @@ impl<T: Config> Pallet<T> {
 	}
 
 	/// Minting tokens for multiple IDs.
-	/// It is a utility function used in [`create_multiple_items`][`Pallet::create_multiple_items`]
-	/// and [`create_multiple_items_foreign`][`Pallet::create_multiple_items_foreign`]
-	pub fn create_multiple_items_common(
+	/// See [`create_item`][`Pallet::create_item`] for more details.
+	pub fn create_multiple_items(
 		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
+		depositor: &T::CrossAccountId,
 		data: BTreeMap<T::CrossAccountId, u128>,
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
+		if !collection.is_owner_or_admin(depositor) {
+			ensure!(
+				collection.permissions.mint_mode(),
+				<CommonError<T>>::PublicMintingNotAllowed
+			);
+			collection.check_allowlist(depositor)?;
+
+			for (owner, _) in data.iter() {
+				collection.check_allowlist(owner)?;
+			}
+		}
+
 		let total_supply = data
 			.values()
 			.copied()
@@ -486,7 +434,7 @@ impl<T: Config> Pallet<T> {
 
 		for (to, _) in data.iter() {
 			<PalletStructure<T>>::check_nesting(
-				sender,
+				depositor,
 				to,
 				collection.id,
 				TokenId::default(),
@@ -531,43 +479,6 @@ impl<T: Config> Pallet<T> {
 		}
 
 		Ok(())
-	}
-
-	/// Minting tokens for multiple IDs.
-	/// See [`create_item`][`Pallet::create_item`] for more details.
-	pub fn create_multiple_items(
-		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		data: BTreeMap<T::CrossAccountId, u128>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
-		// Foreign collection check
-		ensure!(!collection.flags.foreign, <CommonError<T>>::NoPermission);
-
-		if !collection.is_owner_or_admin(sender) {
-			ensure!(
-				collection.permissions.mint_mode(),
-				<CommonError<T>>::PublicMintingNotAllowed
-			);
-			collection.check_allowlist(sender)?;
-
-			for (owner, _) in data.iter() {
-				collection.check_allowlist(owner)?;
-			}
-		}
-
-		Self::create_multiple_items_common(collection, sender, data, nesting_budget)
-	}
-
-	/// Minting tokens for multiple IDs.
-	/// See [`create_item_foreign`][`Pallet::create_item_foreign`] for more details.
-	pub fn create_multiple_items_foreign(
-		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		data: BTreeMap<T::CrossAccountId, u128>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
-		Self::create_multiple_items_common(collection, sender, data, nesting_budget)
 	}
 
 	fn set_allowance_unchecked(
@@ -795,24 +706,6 @@ impl<T: Config> Pallet<T> {
 		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		Self::create_multiple_items(
-			collection,
-			sender,
-			[(data.0, data.1)].into_iter().collect(),
-			nesting_budget,
-		)
-	}
-
-	/// Creates fungible token.
-	///
-	/// - `data`: Contains user who will become the owners of the tokens and amount
-	///   of tokens he will receive.
-	pub fn create_item_foreign(
-		collection: &FungibleHandle<T>,
-		sender: &T::CrossAccountId,
-		data: CreateItemData<T>,
-		nesting_budget: &dyn Budget,
-	) -> DispatchResult {
-		Self::create_multiple_items_foreign(
 			collection,
 			sender,
 			[(data.0, data.1)].into_iter().collect(),

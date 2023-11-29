@@ -117,8 +117,8 @@ use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutc
 use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
-	CreateCollectionData, CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property,
-	PropertyKey, PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
+	CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property, PropertyKey,
+	PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
 	TokenProperties as TokenPropertiesT,
 };
 use weights::WeightInfo;
@@ -383,19 +383,6 @@ impl<T: Config> Pallet<T> {
 
 // unchecked calls skips any permission checks
 impl<T: Config> Pallet<T> {
-	/// Create NFT collection
-	///
-	/// `init_collection` will take non-refundable deposit for collection creation.
-	///
-	/// - `data`: Contains settings for collection limits and permissions.
-	pub fn init_collection(
-		owner: T::CrossAccountId,
-		payer: T::CrossAccountId,
-		data: CreateCollectionData<T::CrossAccountId>,
-	) -> Result<CollectionId, DispatchError> {
-		<PalletCommon<T>>::init_collection(owner, payer, data)
-	}
-
 	/// Destroy NFT collection
 	///
 	/// `destroy_collection` will throw error if collection contains any tokens.

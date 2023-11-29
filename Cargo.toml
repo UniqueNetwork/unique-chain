@@ -199,7 +199,6 @@ frame-try-runtime = { default-features = false, version = "0.31.0" }
 try-runtime-cli = "0.35.0"
 
 # ORML
-orml-tokens = { default-features = false, git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "unique-polkadot-v1.3.0" }
 orml-traits = { default-features = false, git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "unique-polkadot-v1.3.0" }
 orml-vesting = { default-features = false, git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "unique-polkadot-v1.3.0" }
 orml-xcm-support = { default-features = false, git = "https://github.com/uniquenetwork/open-runtime-module-library", branch = "unique-polkadot-v1.3.0" }

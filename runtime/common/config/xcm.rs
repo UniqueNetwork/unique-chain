@@ -20,6 +20,9 @@ use frame_support::{
 	traits::{ConstU32, Everything, Get, Nothing, ProcessMessageError},
 };
 use frame_system::EnsureRoot;
+use orml_traits::location::AbsoluteReserveProvider;
+use orml_xcm_support::MultiNativeAsset;
+use pallet_foreign_assets::FreeForAll;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
@@ -39,25 +42,13 @@ use staging_xcm_executor::{
 };
 use up_common::types::AccountId;
 
-use crate::{
-	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem,
-	PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
-};
-
-#[cfg(feature = "foreign-assets")]
-pub mod foreignassets;
-
-#[cfg(not(feature = "foreign-assets"))]
-pub mod nativeassets;
-
-#[cfg(feature = "foreign-assets")]
-pub use foreignassets as xcm_assets;
-#[cfg(not(feature = "foreign-assets"))]
-pub use nativeassets as xcm_assets;
-use xcm_assets::{AssetTransactor, IsReserve, Trader};
-
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
+use crate::{
+	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ForeignAssets, ParachainInfo,
+	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+	XcmpQueue,
+};
 
 parameter_types! {
 	pub const RelayLocation: MultiLocation = MultiLocation::parent();
@@ -164,6 +155,10 @@ where
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
+pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
+
+pub type Trader = FreeForAll;
+
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
 impl<T> staging_xcm_executor::Config for XcmExecutorConfig<T>
 where
@@ -172,14 +167,14 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = AssetTransactor;
+	type AssetTransactor = ForeignAssets;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = Weigher;
-	type Trader = Trader<T>;
+	type Trader = Trader;
 	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type PalletInstancesInfo = AllPalletsWithSystem;

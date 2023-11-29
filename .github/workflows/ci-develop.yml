@@ -35,6 +35,11 @@ jobs:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xcm')
     uses: ./.github/workflows/xcm.yml
     secrets: inherit
+
+  xnft:
+    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xnft')
+    uses: ./.github/workflows/xnft.yml
+    secrets: inherit
     
   collator-selection:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-collator-selection')

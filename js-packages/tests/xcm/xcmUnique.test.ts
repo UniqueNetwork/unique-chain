@@ -20,7 +20,7 @@ import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usi
 import {Event} from '@unique/playgrounds/unique.dev.js';
 import {hexToString, nToBigInt} from '@polkadot/util';
 import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types.js';
-
+import {XcmTestHelper} from './xcm.types.js';
 
 const STATEMINT_PALLET_INSTANCE = 50;
 
@@ -50,6 +50,8 @@ const USDT_ASSET_METADATA_DESCRIPTION = 'USDT';
 const USDT_ASSET_METADATA_MINIMAL_BALANCE = 1n;
 const USDT_ASSET_AMOUNT = 10_000_000_000_000_000_000_000_000n;
 
+const testHelper = new XcmTestHelper('unique');
+
 describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let alice: IKeyringPair;
   let bob: IKeyringPair;
@@ -68,6 +70,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
   let balanceBobRelayTokenBefore: bigint;
   let balanceBobRelayTokenAfter: bigint;
 
+  let usdtCollectionId: number;
+  let relayCollectionId: number;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
@@ -76,6 +80,8 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+
+      relayCollectionId = await testHelper.registerRelayNativeTokenOnUnique(alice);
     });
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
@@ -85,27 +91,33 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     });
 
     await usingStatemintPlaygrounds(statemintUrl, async (helper) => {
-      const sovereignFundingAmount = 3_500_000_000n;
+      const assetInfo = await helper.assets.assetInfo(USDT_ASSET_ID);
+      if(assetInfo == null) {
+        await helper.assets.create(
+          alice,
+          USDT_ASSET_ID,
+          alice.address,
+          USDT_ASSET_METADATA_MINIMAL_BALANCE,
+        );
+        await helper.assets.setMetadata(
+          alice,
+          USDT_ASSET_ID,
+          USDT_ASSET_METADATA_NAME,
+          USDT_ASSET_METADATA_DESCRIPTION,
+          USDT_ASSET_METADATA_DECIMALS,
+        );
+      } else {
+        console.log('The USDT asset is already registered on AssetHub');
+      }
 
-      await helper.assets.create(
-        alice,
-        USDT_ASSET_ID,
-        alice.address,
-        USDT_ASSET_METADATA_MINIMAL_BALANCE,
-      );
-      await helper.assets.setMetadata(
-        alice,
-        USDT_ASSET_ID,
-        USDT_ASSET_METADATA_NAME,
-        USDT_ASSET_METADATA_DESCRIPTION,
-        USDT_ASSET_METADATA_DECIMALS,
-      );
       await helper.assets.mint(
         alice,
         USDT_ASSET_ID,
         alice.address,
         USDT_ASSET_AMOUNT,
       );
+
+      const sovereignFundingAmount = 3_500_000_000n;
 
       // funding parachain sovereing account on Statemint.
       // The sovereign account should be created before any action
@@ -117,31 +129,30 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     await usingPlaygrounds(async (helper) => {
       const location = {
-        V2: {
-          parents: 1,
-          interior: {X3: [
-            {
-              Parachain: STATEMINT_CHAIN,
-            },
-            {
-              PalletInstance: STATEMINT_PALLET_INSTANCE,
-            },
-            {
-              GeneralIndex: USDT_ASSET_ID,
-            },
-          ]},
-        },
+        parents: 1,
+        interior: {X3: [
+          {
+            Parachain: STATEMINT_CHAIN,
+          },
+          {
+            PalletInstance: STATEMINT_PALLET_INSTANCE,
+          },
+          {
+            GeneralIndex: USDT_ASSET_ID,
+          },
+        ]},
       };
+      const assetId = {Concrete: location};
 
-      const metadata =
-      {
-        name: USDT_ASSET_ID,
-        symbol: USDT_ASSET_METADATA_NAME,
-        decimals: USDT_ASSET_METADATA_DECIMALS,
-        minimalBalance: USDT_ASSET_METADATA_MINIMAL_BALANCE,
-      };
-      await helper.getSudo().foreignAssets.register(alice, alice.address, location, metadata);
+      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
+        const tokenPrefix = USDT_ASSET_METADATA_NAME;
+        await helper.getSudo().foreignAssets.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+      } else {
+        console.log('Foreign collection is already registered on Unique');
+      }
+
       balanceUniqueBefore = await helper.balance.getSubstrate(alice.address);
+      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
     });
 
 
@@ -259,8 +270,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     // ensure that asset has been delivered
     await helper.wait.newBlocks(3);
 
-    // expext collection id will be with id 1
-    const free = await helper.ft.getBalance(1, {Substrate: alice.address});
+    const free = await helper.ft.getBalance(usdtCollectionId, {Substrate: alice.address});
 
     balanceUniqueAfter = await helper.balance.getSubstrate(alice.address);
 
@@ -299,15 +309,11 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     const relayFee = 400_000_000_000_000n;
     const currencies: [any, bigint][] = [
       [
-        {
-          ForeignAssetId: 0,
-        },
+        usdtCollectionId,
         TRANSFER_AMOUNT,
       ],
       [
-        {
-          NativeAssetId: 'Parent',
-        },
+        relayCollectionId,
         relayFee,
       ],
     ];
@@ -332,7 +338,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
   itSub('Should connect and send Relay token to Unique', async ({helper}) => {
     balanceBobBefore = await helper.balance.getSubstrate(bob.address);
-    balanceBobRelayTokenBefore = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+    balanceBobRelayTokenBefore = await helper.ft.getBalance(relayCollectionId, {Substrate: bob.address});
 
     await usingRelayPlaygrounds(relayUrl, async (helper) => {
       const destination = {
@@ -380,7 +386,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
     await helper.wait.newBlocks(3);
 
     balanceBobAfter = await helper.balance.getSubstrate(bob.address);
-    balanceBobRelayTokenAfter = await helper.tokens.accounts(bob.address, {NativeAssetId: 'Parent'});
+    balanceBobRelayTokenAfter = await helper.ft.getBalance(relayCollectionId, {Substrate: bob.address});
 
     const wndFeeOnUnique = balanceBobRelayTokenAfter - TRANSFER_AMOUNT_RELAY - balanceBobRelayTokenBefore;
     const wndDiffOnUnique = balanceBobRelayTokenAfter - balanceBobRelayTokenBefore;
@@ -420,9 +426,7 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
 
     const currencies: any = [
       [
-        {
-          NativeAssetId: 'Parent',
-        },
+        relayCollectionId,
         TRANSFER_AMOUNT_RELAY,
       ],
     ];
@@ -1275,9 +1279,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   });
 
   itSub('Should connect and send UNQ to Moonbeam', async ({helper}) => {
-    const currencyId = {
-      NativeAssetId: 'Here',
-    };
+    const currencyId = 0;
     const dest = {
       V2: {
         parents: 1,

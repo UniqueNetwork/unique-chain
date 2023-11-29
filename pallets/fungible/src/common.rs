@@ -19,7 +19,7 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use pallet_common::{
 	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
-	Error as CommonError, RefungibleExtensions, SelfWeightOf as PalletCommonWeightOf,
+	Error as CommonError, SelfWeightOf as PalletCommonWeightOf, XcmExtensions,
 };
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_std::{vec, vec::Vec};
@@ -114,7 +114,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 				<Pallet<T>>::create_item(self, &sender, (to, fungible_data.value), nesting_budget),
 				<CommonWeights<T>>::create_item(&data),
 			),
-			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
+			_ => fail!(<CommonError<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
 		}
 	}
 
@@ -133,7 +133,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 						.checked_add(data.value)
 						.ok_or(ArithmeticError::Overflow)?;
 				}
-				_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
+				_ => fail!(<CommonError<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
 			}
 		}
 
@@ -152,7 +152,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		let weight = <CommonWeights<T>>::create_multiple_items_ex(&data);
 		let data = match data {
 			up_data_structs::CreateItemExData::Fungible(f) => f,
-			_ => fail!(<Error<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
+			_ => fail!(<CommonError<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
 		};
 
 		with_weight(
@@ -428,15 +428,15 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		<Allowance<T>>::get((self.id, sender, spender))
 	}
 
-	fn refungible_extensions(&self) -> Option<&dyn RefungibleExtensions<T>> {
-		None
-	}
-
 	fn total_pieces(&self, token: TokenId) -> Option<u128> {
 		if token != TokenId::default() {
 			return None;
 		}
 		<TotalSupply<T>>::try_get(self.id).ok()
+	}
+
+	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+		Some(self)
 	}
 
 	fn set_allowance_for_all(
@@ -455,5 +455,59 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	/// Repairs a possibly broken item.
 	fn repair_item(&self, _token: TokenId) -> DispatchResultWithPostInfo {
 		fail!(<Error<T>>::FungibleTokensAreAlwaysValid)
+	}
+}
+
+impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
+	fn create_item_internal(
+		&self,
+		depositor: &<T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		data: CreateItemData,
+		nesting_budget: &dyn Budget,
+	) -> Result<TokenId, sp_runtime::DispatchError> {
+		match &data {
+			up_data_structs::CreateItemData::Fungible(fungible_data) => {
+				<Pallet<T>>::create_multiple_items(
+					self,
+					depositor,
+					[(to, fungible_data.value)].into_iter().collect(),
+					nesting_budget,
+				)?
+			}
+			_ => fail!(<CommonError<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
+		}
+
+		Ok(TokenId::default())
+	}
+
+	fn transfer_item_internal(
+		&self,
+		depositor: &<T>::CrossAccountId,
+		from: &<T>::CrossAccountId,
+		to: &<T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		nesting_budget: &dyn Budget,
+	) -> sp_runtime::DispatchResult {
+		ensure!(
+			token == TokenId::default(),
+			<CommonError<T>>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer_internal(self, depositor, from, to, amount, nesting_budget)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
+	}
+
+	fn burn_item_internal(
+		&self,
+		from: <T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		<Self as CommonCollectionOperations<T>>::burn_item(self, from, token, amount)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
 	}
 }

@@ -12,7 +12,6 @@ frame-benchmarking = { workspace = true, optional = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 log = { workspace = true }
-orml-tokens = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-common = { workspace = true }
 pallet-fungible = { workspace = true }
@@ -30,7 +29,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"log/std",
-	"orml-tokens/std",
 	"pallet-balances/std",
 	"pallet-common/std",
 	"pallet-fungible/std",

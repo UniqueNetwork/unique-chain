@@ -11,7 +11,7 @@ use sp_runtime::DispatchError;
 use sp_weights::Weight;
 use up_data_structs::{CollectionId, CreateCollectionData};
 
-use crate::{pallet::Config, CommonCollectionOperations};
+use crate::{pallet::Config, CollectionIssuer, CommonCollectionOperations};
 
 // TODO: move to benchmarking
 /// Price of [`dispatch_tx`] call with noop `call` argument
@@ -69,13 +69,14 @@ pub trait CollectionDispatch<T: Config> {
 	/// Check if the collection is internal.
 	fn check_is_internal(&self) -> DispatchResult;
 
-	/// Create a collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
+	/// Create a regular collection. The collection will be created according to the value of [`data.mode`](CreateCollectionData::mode).
 	///
 	/// * `sender` - The user who will become the owner of the collection.
+	/// * `issuer` - An entity that creates the collection.
 	/// * `data` - Description of the created collection.
 	fn create(
 		sender: T::CrossAccountId,
-		payer: T::CrossAccountId,
+		issuer: CollectionIssuer<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError>;
 
