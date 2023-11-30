@@ -119,9 +119,9 @@ fi
 package_version=${package_version}$last_patch
 echo "New package version: $new_package_version"
 
-pjsapi_ver=^$(cat "$DIR/../package.json" | jq -r '.dependencies."@polkadot/api"' | sed -e "s/^\^//")
-tsnode_ver=^$(cat "$DIR/../package.json" | jq -r '.devDependencies."ts-node"' | sed -e "s/^\^//")
-ts_ver=^$(cat "$DIR/../package.json" | jq -r '.devDependencies."typescript"' | sed -e "s/^\^//")
+pjsapi_ver=^$(cat "$DIR/../../package.json" | jq -r '.dependencies."@polkadot/api"' | sed -e "s/^\^//")
+tsnode_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."ts-node"' | sed -e "s/^\^//")
+ts_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."typescript"' | sed -e "s/^\^//")
 
 gen=$(mktemp -d)
 pushd "$gen"
@@ -152,7 +152,7 @@ package_name_replacement=$(printf '%s\n' "$package_name" | sed -e 's/[\/&]/\\&/g
 sed -i "s/PKGNAME/$package_name_replacement/" "$gen/README.md"
 
 rsync -ar --exclude .gitignore types/ "$gen"
-for file in "$gen"/augment-* "$gen"/**/types.ts "$gen/registry.ts"; do
+for file in "$gen"/augment-* "$gen"/**/types.ts; do
 	sed -i '1s;^;//@ts-nocheck\n;' "$file"
 done
 
