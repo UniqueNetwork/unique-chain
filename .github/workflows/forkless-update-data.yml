@@ -158,6 +158,7 @@ jobs:
       - name: Run Parallel tests after forkless upgrade
         working-directory: js-packages/tests
         run: |
+          yarn add mochawesome
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
