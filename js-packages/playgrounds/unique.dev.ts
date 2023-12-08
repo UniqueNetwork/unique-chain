@@ -1198,20 +1198,6 @@ class HydraFastDemocracyGroup {
       externalMotion.encodedLength,
     );
 
-    // const councilProposalIdx = await this.helper.collective.council.proposalCount() - 1;
-    // await this.helper.collective.council.vote(aliceAccount, motionHash, councilProposalIdx, true);
-
-
-    // await this.helper.collective.council.close(
-    //   aliceAccount,
-    //   motionHash,
-    //   councilProposalIdx,
-    //   {
-    //     refTime: 1_000_000_000,
-    //     proofSize: 1_000_000,
-    //   },
-    //   externalMotion.encodedLength,
-    // );
     console.log('\t* Propose external motion through council.......DONE');
     // <<< Propose external motion through council <<<
 
