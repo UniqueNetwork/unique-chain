@@ -24,6 +24,9 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
 	},
@@ -40,6 +43,9 @@ local quartz = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -60,6 +66,9 @@ local karura = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -79,6 +88,9 @@ local moonriver = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alith', 'baltathar']
 	},
@@ -96,6 +108,9 @@ local statemine = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -113,6 +128,9 @@ local shiden = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},

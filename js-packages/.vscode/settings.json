@@ -3,7 +3,7 @@
 		"RUN_GOV_TESTS": "1",
 		"RUN_XCM_TESTS": "1"
 	},
-	"mochaExplorer.files": "src/**/*.test.ts",
+	"mochaExplorer.files": "tests/**/*.test.ts",
 	"mochaExplorer.require": "ts-node/register",
 	"eslint.format.enable": true,
 	"[javascript]": {

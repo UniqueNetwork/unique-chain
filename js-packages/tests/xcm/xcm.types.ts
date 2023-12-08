@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {hexToString} from '@polkadot/util';
-import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util/index.js';
+import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util/index.js';
 import {DevUniqueHelper, Event} from '@unique/playgrounds/unique.dev.js';
 import config from '../config.js';
 
@@ -10,6 +10,7 @@ export const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
 export const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
 export const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
 export const POLKADEX_CHAIN = +(process.env.RELAY_POLKADEX_ID || 2040);
+export const HYDRADX_CHAIN = +(process.env.RELAY_HYDRADX_ID || 2034);
 
 export const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
 export const STATEMINE_CHAIN = +(process.env.RELAY_STATEMINE_ID || 1000);
@@ -25,6 +26,7 @@ export const acalaUrl = config.acalaUrl;
 export const moonbeamUrl = config.moonbeamUrl;
 export const astarUrl = config.astarUrl;
 export const polkadexUrl = config.polkadexUrl;
+export const hydraDxUrl = config.hydraDxUrl;
 
 export const karuraUrl = config.karuraUrl;
 export const moonriverUrl = config.moonriverUrl;
@@ -87,6 +89,7 @@ export const NETWORKS = {
   moonriver: usingMoonriverPlaygrounds,
   karura: usingKaruraPlaygrounds,
   shiden: usingShidenPlaygrounds,
+  hydraDx: usingHydraDxPlaygrounds,
 } as const;
 type NetworkNames = keyof typeof NETWORKS;
 
@@ -108,6 +111,8 @@ export function mapToChainId(networkName: keyof typeof NETWORKS): number {
       return KARURA_CHAIN;
     case 'shiden':
       return SHIDEN_CHAIN;
+    case 'hydraDx':
+      return HYDRADX_CHAIN;
   }
 }
 
@@ -127,6 +132,8 @@ export function mapToChainUrl(networkName: NetworkNames): string {
       return karuraUrl;
     case 'shiden':
       return shidenUrl;
+    case 'hydraDx':
+      return hydraDxUrl;
   }
 }
 
@@ -277,7 +284,7 @@ export class XcmTestHelper {
         since the hash is being checked to ensure
         it matches what was sent.
       */
-        if(networkName == 'polkadex') {
+        if(networkName == 'polkadex' || networkName =='hydraDx') {
           await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
         } else {
           await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == messageSent.messageHash);

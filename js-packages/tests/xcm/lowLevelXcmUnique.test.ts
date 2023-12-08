@@ -16,10 +16,10 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
-import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds} from '../util/index.js';
+import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingHydraDxPlaygrounds} from '../util/index.js';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
-import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl,  moonbeamUrl, polkadexUrl, relayUrl, uniqueAssetId} from './xcm.types.js';
+import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl,  hydraDxUrl,  moonbeamUrl, polkadexUrl, uniqueAssetId} from './xcm.types.js';
 
 const testHelper = new XcmTestHelper('unique');
 
@@ -362,5 +362,42 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
 
   itSub('Should not accept reserve transfer of UNQ from Astar', async () => {
     await testHelper.rejectReserveTransferUNQfrom('astar', alice);
+  });
+});
+
+describeXCM('[XCMLL] Integration test: Exchanging tokens with HydraDx', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      console.log(config.acalaUrl);
+      randomAccount = helper.arrange.createEmptyAccount();
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
+    });
+
+    await usingHydraDxPlaygrounds(hydraDxUrl, async (helper) => {
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+    });
+  });
+
+  itSub('Should connect and send UNQ to HydraDx', async () => {
+    await testHelper.sendUnqTo('hydraDx', randomAccount);
+  });
+
+  itSub('Should connect to HydraDx and send UNQ back', async () => {
+    await testHelper.sendUnqBack('hydraDx', alice, randomAccount);
+  });
+
+  itSub('HydraDx can send only up to its balance', async () => {
+    await testHelper.sendOnlyOwnedBalance('hydraDx', alice);
+  });
+
+  itSub('Should not accept reserve transfer of UNQ from HydraDx', async () => {
+    await testHelper.rejectReserveTransferUNQfrom('hydraDx', alice);
   });
 });
