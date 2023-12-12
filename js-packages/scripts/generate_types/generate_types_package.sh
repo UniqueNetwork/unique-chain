@@ -119,7 +119,7 @@ fi
 package_version=${package_version}$last_patch
 echo "New package version: $new_package_version"
 
-pjsapi_ver=^$(cat "$DIR/../../package.json" | jq -r '.dependencies."@polkadot/api"' | sed -e "s/^\^//")
+pjsapi_ver=^$(cat "$DIR/../../playgrounds/package.json" | jq -r '.dependencies."@polkadot/api"' | sed -e "s/^\^//")
 tsnode_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."ts-node"' | sed -e "s/^\^//")
 ts_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."typescript"' | sed -e "s/^\^//")
 
