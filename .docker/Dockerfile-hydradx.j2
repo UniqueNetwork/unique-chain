@@ -1,0 +1,46 @@
+# ===== Rust builder =====
+FROM ubuntu:22.04 as rust-builder
+LABEL maintainer="Unique.Network"
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+RUN rustup toolchain install {{ RUST_TOOLCHAIN }} && \
+    rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }} && \
+    rustup default {{ RUST_TOOLCHAIN }} && \
+    rustup target list --installed && \
+    rustup show
+
+RUN mkdir /unique_parachain
+WORKDIR /unique_parachain
+
+# ===== BUILD ACALA =====
+FROM rust-builder as builder-hydradx-bin
+
+WORKDIR /unique_parachain
+
+RUN git clone --depth 1 -b {{ HYDRADX_BUILD_BRANCH }} https://github.com/galacticcouncil/HydraDX-node.git
+
+RUN --mount=type=cache,target=/cargo-home/registry \
+    --mount=type=cache,target=/cargo-home/git \
+    --mount=type=cache,target=/unique_parachain/parachain/target \
+    cd parachain && \
+    CARGO_INCREMENTAL=0 cargo build --release --locked && \
+    mkdir /unique_parachain/Hydradx && \
+    mv ./target/release/hydradx /unique_parachain/Hydradx/hydradx
+
+# ===== BIN ======
+
+FROM ubuntu:22.04 as builder-hydradx
+
+COPY --from=builder-hydradx-bin /unique_parachain/Hydradx/hydradx /bin/hydradx
+ENTRYPOINT ["/bin/hydradx"]
