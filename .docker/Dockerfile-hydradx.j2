@@ -33,7 +33,7 @@ RUN git clone --depth 1 -b {{ HYDRADX_BUILD_BRANCH }} https://github.com/galacti
 RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/cargo-home/git \
     --mount=type=cache,target=/unique_parachain/parachain/target \
-    cd parachain && \
+    cd HydraDX-node && \
     CARGO_INCREMENTAL=0 cargo build --release --locked && \
     mkdir /unique_parachain/Hydradx && \
     mv ./target/release/hydradx /unique_parachain/Hydradx/hydradx
