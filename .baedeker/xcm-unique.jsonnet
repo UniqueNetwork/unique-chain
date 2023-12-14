@@ -11,22 +11,25 @@ local relay = {
 	spec: {Genesis:{
 		chain: relay_spec,
 		modify:: m.genericRelay($, hrmp = std.join([], [
-			[[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
-			for [a, b] in [
+			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+			// for [a, b] in [
 				// ['unique', 'acala'],
 				// ['unique', 'moonbeam'],
 				// ['unique', 'statemint'],
 				// ['unique', 'astar'],
 				// ['unique', 'polkadex'],
-			]
+			// ]
 		])),
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
 	},
 };
 
@@ -41,6 +44,9 @@ local unique = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -61,6 +67,9 @@ local acala = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -80,6 +89,9 @@ local moonbeam = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alith', 'baltathar']
 	},
@@ -97,6 +109,9 @@ local statemint = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-ed',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -114,6 +129,9 @@ local astar = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -131,14 +149,39 @@ local polkadex = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				"-lxcm=trace"
+			],
 		},
 		for name in ['alice', 'bob']
 	},
 };
 
+local hydraDx = {
+	name: 'hydraDx',
+	bin: 'bin/hydradx',
+	paraId: 1007,
+	spec: {Genesis:{
+		chain: 'local',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+			legacyRpc: true,
+			extraArgs: [
+				"-lxcm=trace"
+			],
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, polkadex]
+		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
 	},
 }

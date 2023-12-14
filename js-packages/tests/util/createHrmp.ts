@@ -27,6 +27,7 @@ await usingPlaygrounds(async (helper, privateKey) => {
       await bidirOpen(1001, 1004);
       await bidirOpen(1001, 1005);
       await bidirOpen(1001, 1006);
+      await bidirOpen(1001, 1007);
       break;
     default:
       throw new Error(`unknown hrmp config profile: ${profile}`);

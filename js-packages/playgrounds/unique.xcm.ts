@@ -71,6 +71,31 @@ class MoonbeamDemocracyGroup extends HelperGroup<MoonbeamHelper> {
   }
 }
 
+class DemocracyGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  notePreimagePallet: string;
+
+  constructor(helper: T, options: { [key: string]: any } = {}) {
+    super(helper);
+    this.notePreimagePallet = options.notePreimagePallet;
+  }
+
+  async notePreimage(signer: TSigner, encodedProposal: string) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.notePreimagePallet}.notePreimage`, [encodedProposal], true);
+  }
+
+  externalProposeMajority(proposal: any) {
+    return this.helper.constructApiCall('api.tx.democracy.externalProposeMajority', [proposal]);
+  }
+
+  fastTrack(proposalHash: string, votingPeriod: number, delayPeriod: number) {
+    return this.helper.constructApiCall('api.tx.democracy.fastTrack', [proposalHash, votingPeriod, delayPeriod]);
+  }
+
+  async referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
+  }
+}
+
 class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
   collective: string;
 
@@ -97,6 +122,31 @@ class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
   }
 }
 
+class CollectiveGroup<T extends ChainHelperBase> extends HelperGroup<T> {
+  collective: string;
+
+  constructor(helper: T, palletName: string) {
+    super(helper);
+
+    this.collective = palletName;
+  }
+
+  async propose(signer: TSigner, threshold: number, proposalHash: string, lengthBound: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.propose`, [threshold, proposalHash, lengthBound], true);
+  }
+
+  async vote(signer: TSigner, proposalHash: string, proposalIndex: number, approve: boolean) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.vote`, [proposalHash, proposalIndex, approve], true);
+  }
+
+  async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
+    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
+  }
+
+  async proposalCount() {
+    return Number(await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, []));
+  }
+}
 class PolkadexXcmHelperGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   async whitelistToken(signer: TSigner, assetId: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xcmHelper.whitelistToken', [assetId], true);
@@ -369,6 +419,31 @@ export class PolkadexHelper extends XcmChainHelper {
     this.xTokens = new XTokensGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.xcmHelper = new PolkadexXcmHelperGroup(this);
+  }
+}
+
+export class HydraDxHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<HydraDxHelper>;
+  xcm: XcmGroup<HydraDxHelper>;
+  xTokens: XTokensGroup<HydraDxHelper>;
+  democracy: DemocracyGroup<HydraDxHelper>;
+  collective: {
+    council: CollectiveGroup<HydraDxHelper>,
+    techCommittee: CollectiveGroup<HydraDxHelper>,
+  };
+
+  constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
+    super(logger, options.helperBase ?? HydraDxHelper);
+    options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
+
+    this.balance = new SubstrateBalanceGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
+    this.xTokens = new XTokensGroup(this);
+    this.democracy = new DemocracyGroup(this, options);
+    this.collective = {
+      council: new CollectiveGroup(this, 'council'),
+      techCommittee: new CollectiveGroup(this, 'technicalCommittee'),
+    };
   }
 }
 
