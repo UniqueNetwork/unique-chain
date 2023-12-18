@@ -18,7 +18,7 @@ function(prev, repoDir)
       'bin/hydradx': { dockerImage: 'uniquenetwork/builder-hydraDx:%s' % dotenv.HYDRADX_BUILD_BRANCH },
     },
     extra_node_mixin={
-      extraArgs: [
+      extraArgs+: [
         '-lxcm=trace',
       ],
     },
