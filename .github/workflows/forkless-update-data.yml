@@ -122,7 +122,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version:  20
+          node-version: 20
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built
@@ -151,7 +151,7 @@ jobs:
           yarn
           ../scripts/wait_for_first_block.sh
           echo "Executing upgrade"
-          yarn ts-node --esm util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
