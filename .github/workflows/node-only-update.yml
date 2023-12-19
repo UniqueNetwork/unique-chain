@@ -143,7 +143,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 20
+          node-version: 18.17.1 # Update node version to 20 after mainnet will have changes for it
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built

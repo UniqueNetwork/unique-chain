@@ -158,6 +158,7 @@ jobs:
       - name: Run Parallel tests after forkless upgrade
         working-directory: js-packages/tests
         run: |
+          yarn 
           yarn add mochawesome
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
@@ -168,7 +169,10 @@ jobs:
       - name: Run Sequential tests after forkless upgrade
         if: success() || failure()
         working-directory: js-packages/tests
-        run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+        run: |
+          yarn
+          yarn add mochawesome
+          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
