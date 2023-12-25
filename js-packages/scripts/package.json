@@ -15,6 +15,7 @@
     "generateEnv": "yarn ts-node --esm ./generateEnv.ts",
     "propose-upgrade": "yarn ts-node --esm ./proposeupgrade.ts",
     "propose-fast-track": "yarn ts-node --esm ./proposefasttrack.ts",
-    "council-democracy-proposal": "yarn ts-node --esm ./councilproposal.ts"
+    "council-democracy-proposal": "yarn ts-node --esm ./councilproposal.ts",
+    "hrmp-channel": "yarn ts-node --esm ./hrmpchannel.ts"
   }
 }
