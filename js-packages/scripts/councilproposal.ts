@@ -24,12 +24,12 @@ async function main() {
     democracyProposal.method.encodedLength,
   ).method.toHex();
 
-  const proposeUpgradeBatch = api.tx.utility.batchAll([
+  const proposeBatch = api.tx.utility.batchAll([
     democracyProposalPreimage,
     councilProposal,
   ]);
 
-  const encodedCall = proposeUpgradeBatch.method.toHex();
+  const encodedCall = proposeBatch.method.toHex();
 
   console.log('-----------------');
   console.log('Council Proposal: ', `https://polkadot.js.org/apps/?rpc=${networkUrl}#/extrinsics/decode/${encodedCall}`);
