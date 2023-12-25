@@ -1,11 +1,33 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
-import {blake2AsHex} from '@polkadot/util-crypto';
+import {blake2AsHex, encodeAddress} from '@polkadot/util-crypto';
 
-const proposeOpenChannel = async (relayApi: ApiPromise, receiverParaId: number) => {
+export const paraChildSovereignAccount = (relayApi: ApiPromise, paraid: number) => {
+  // We are getting a *child* parachain sovereign account,
+  // so we need a child prefix: encoded(b"para") == 0x70617261
+  const childPrefix = '0x70617261';
+
+  const encodedParaId = relayApi.createType('u32', paraid).toHex(true).substring(2);
+  const suffix = '000000000000000000000000000000000000000000000000';
+
+  return childPrefix + encodedParaId + suffix;
+};
+
+const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, receiverParaId: number) => {
     const conf: any = await relayApi.query.configuration.activeConfig()
         .then(data => data.toJSON());
     const maxCapacity = conf.hrmpChannelMaxCapacity;
     const maxSize = conf.hrmpChannelMaxMessageSize;
+
+    const senderDeposit = BigInt(conf.hrmpSenderDeposit);
+
+    const requiredBalance = relayFee + senderDeposit;
+    const sovereignAccount = await paraChildSovereignAccount(relayApi, senderParaId);
+    const balance = await relayApi.query.system.account(sovereignAccount)
+        .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
+
+    if(balance < requiredBalance) {
+        throw Error(`Not enough balance on the sender's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
+    }
 
     return relayApi.tx.hrmp.hrmpInitOpenChannel(
         receiverParaId,
@@ -14,7 +36,21 @@ const proposeOpenChannel = async (relayApi: ApiPromise, receiverParaId: number) 
     ).method.toHex();
 };
 
-const proposeAcceptChannel = (relayApi: ApiPromise, senderParaId: number) => {
+const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, recipientParaId: number) => {
+    const conf: any = await relayApi.query.configuration.activeConfig()
+        .then(data => data.toJSON());
+    const recipientDeposit = BigInt(conf.hrmpRecipientDeposit);
+
+    const requiredBalance = relayFee + recipientDeposit;
+
+    const sovereignAccount = await paraChildSovereignAccount(relayApi, recipientParaId);
+    const balance = await relayApi.query.system.account(sovereignAccount)
+        .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
+
+    if(balance < requiredBalance) {
+        throw Error(`Not enough balance on the recipient's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
+    }
+
     return relayApi.tx.hrmp.hrmpAcceptOpenChannel(senderParaId).method.toHex();
 };
 
@@ -39,19 +75,19 @@ async function main() {
   const otherParaId = await otherApi.query.parachainInfo.parachainId()
     .then(data => data.toJSON() as number);
 
-  let encodedRelayCall: string;
-  if(op == 'open') {
-    encodedRelayCall = await proposeOpenChannel(relayApi, otherParaId);
-  } else if(op == 'accept') {
-    encodedRelayCall = proposeAcceptChannel(relayApi, otherParaId);
-  } else {
-    throw Error(`Unknown hrmp channel operation: ${op}`);
-  }
-
   const relayDecimals = await relayApi.rpc.system.properties()
     .then(data => data.tokenDecimals.unwrap()[0].toNumber());
 
-  const relayFee = 1 * (10 ** relayDecimals);
+  const relayFee = 2n * BigInt(10 ** relayDecimals);
+
+  let encodedRelayCall: string;
+  if(op == 'open') {
+    encodedRelayCall = await proposeOpenChannel(relayApi, relayFee, uniqueParaId, otherParaId);
+  } else if(op == 'accept') {
+    encodedRelayCall = await proposeAcceptChannel(relayApi, relayFee, otherParaId, uniqueParaId);
+  } else {
+    throw Error(`Unknown hrmp channel operation: ${op}`);
+  }
 
   const proposal = uniqueApi.tx.polkadotXcm.send(
     {
