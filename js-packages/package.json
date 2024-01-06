@@ -26,8 +26,9 @@
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
-    "@unique/opal-types": "workspace:*",
-    "@unique/playgrounds": "workspace:*",
+    "@unique-nft/opal-testnet-types": "workspace:*",
+    "@unique-nft/playgrounds": "workspace:*",
+    "@unique/test-utils": "workspace:*",
     "chai": "^4.3.10",
     "chai-subset": "^1.6.0",
     "eslint": "^8.53.0",
@@ -59,6 +60,7 @@
     "types",
     "playgrounds",
     "scripts",
+    "test-utils",
     "tests"
   ]
 }

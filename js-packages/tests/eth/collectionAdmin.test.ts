@@ -15,8 +15,8 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {Pallets} from '../util/index.js';
-import type {IEthCrossAccountId} from '@unique/playgrounds/types.js';
+import {Pallets} from '@unique/test-utils/util.js';
+import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.js';
 import {usingEthPlaygrounds, itEth} from './util/index.js';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
 import {CreateCollectionData} from './util/playgrounds/types.js';

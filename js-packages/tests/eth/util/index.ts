@@ -7,14 +7,13 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../../config.js';
 
 import {EthUniqueHelper} from './playgrounds/unique.dev.js';
-import {SilentLogger, SilentConsole} from '@unique/playgrounds/unique.dev.js';
-import {makeNames} from '../../util/index.js';
-import type {SchedKind} from '../../util/index.js';
+import {SilentLogger, SilentConsole} from '@unique/test-utils';
+import type {SchedKind} from '@unique/test-utils/util.js';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip} from '../../util/index.js';
+import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames} from '@unique/test-utils/util.js';
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);

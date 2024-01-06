@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '../util/index.js';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingWestmintPlaygrounds, usingRelayPlaygrounds} from '@unique/test-utils/util.js';
 import {XcmTestHelper} from './xcm.types.js';
 
 const STATEMINE_CHAIN = +(process.env.RELAY_WESTMINT_ID || 1000);

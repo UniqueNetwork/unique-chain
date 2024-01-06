@@ -1,5 +1,5 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Pallets} from '../util/index.js';
+import {Pallets} from '@unique/test-utils/util.js';
 import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
 import {CollectionLimitField, CreateCollectionData} from './util/playgrounds/types.js';
 

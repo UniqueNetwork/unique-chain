@@ -18,7 +18,7 @@ import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Struct} from '@polkadot/types';
 
-import type {IEvent} from '@unique/playgrounds/types.js';
+import type {IEvent} from '@unique-nft/playgrounds/types.js';
 import type {InterfaceTypes} from '@polkadot/types/types/registry';
 import {ApiPromise} from '@polkadot/api';
 

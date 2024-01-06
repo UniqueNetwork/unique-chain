@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, expect, SponsoringMode} from './util/index.js';
-import {usingPlaygrounds} from '../util/index.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
 
 describe('EVM sponsoring', () => {
   let donor: IKeyringPair;

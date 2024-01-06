@@ -1,18 +1,17 @@
 {
-  "author": "",
-  "license": "SEE LICENSE IN ../../../LICENSE",
-  "description": "Playground scripts",
+  "author": "Unique Network",
+  "license": "Apache 2.0",
+  "description": "Helpers for Unique Network chain",
   "engines": {
-    "node": ">=16"
+    "node": ">=18"
   },
-  "name": "@unique/playgrounds",
+  "name": "@unique-nft/playgrounds",
   "type": "module",
   "version": "1.0.0",
   "main": "unique.js",
   "dependencies": {
     "@polkadot/api": "10.10.1",
     "@polkadot/util": "^12.5.1",
-    "@polkadot/util-crypto": "^12.5.1",
-    "@unique/opal-types": "workspace:*"
+    "@polkadot/util-crypto": "^12.5.1"
   }
 }

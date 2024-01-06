@@ -1,0 +1,18 @@
+{
+  "author": "",
+  "license": "SEE LICENSE IN ../../../LICENSE",
+  "description": "Playground scripts",
+  "engines": {
+    "node": ">=16"
+  },
+  "name": "@unique/test-utils",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "@polkadot/api": "10.10.1",
+    "@polkadot/util": "^12.5.1",
+    "@polkadot/util-crypto": "^12.5.1",
+    "@unique-nft/opal-testnet-types": "workspace:*"
+  }
+}

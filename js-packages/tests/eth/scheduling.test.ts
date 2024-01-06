@@ -17,7 +17,7 @@
 import {expect} from 'chai';
 import {itSchedEth} from './util/index.js';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
-import {Pallets, usingPlaygrounds} from '../util/index.js';
+import {Pallets, usingPlaygrounds} from '@unique/test-utils/util.js';
 
 describe('Scheduing EVM smart contracts', () => {
 

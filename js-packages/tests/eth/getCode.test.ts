@@ -16,7 +16,7 @@
 
 import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {COLLECTION_HELPER, CONTRACT_HELPER} from '../util/index.js';
+import {COLLECTION_HELPER, CONTRACT_HELPER} from '@unique/test-utils/util.js';
 
 describe('RPC eth_getCode', () => {
   let donor: IKeyringPair;

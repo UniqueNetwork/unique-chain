@@ -16,11 +16,11 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {Pallets, requirePalletsOrSkip} from '../util/index.js';
+import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from './util/playgrounds/types.js';
-import {CollectionFlag} from '@unique/playgrounds/types.js';
-import type {IEthCrossAccountId, TCollectionMode} from '@unique/playgrounds/types.js';
+import {CollectionFlag} from '@unique-nft/playgrounds/types.js';
+import type {IEthCrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 
 const DECIMALS = 18;
 const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [

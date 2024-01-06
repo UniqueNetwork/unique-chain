@@ -3,13 +3,13 @@ import {EthUniqueHelper} from '@unique/tests/eth/util/playgrounds/unique.dev.js'
 import {readFile} from 'fs/promises';
 import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/tests/eth/util/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {UniqueFTCollection, UniqueNFTCollection} from '@unique/playgrounds/unique.js';
+import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {FunctionFeeVM} from '../utils/types.js';
 import type {IFunctionFee} from '../utils/types.js';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common.js';
-import {makeNames} from '@unique/tests/util/index.js';
+import {makeNames} from '@unique/test-utils/util.js';
 
 
 const {dirname} = makeNames(import.meta.url);

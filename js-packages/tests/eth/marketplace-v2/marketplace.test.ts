@@ -19,8 +19,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
 import {SponsoringMode, itEth, usingEthPlaygrounds} from '../util/index.js';
 import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
-import {makeNames} from '../../util/index.js';
-import {expect} from 'chai';
+import {makeNames, expect} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
 

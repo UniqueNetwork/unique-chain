@@ -1,13 +1,13 @@
 import {usingEthPlaygrounds} from '@unique/tests/eth/util/index.js';
 import {EthUniqueHelper} from '@unique/tests/eth/util/playgrounds/unique.dev.js';
 import {readFile} from 'fs/promises';
-import type {ICrossAccountId} from '@unique/playgrounds/types.js';
+import type {ICrossAccountId} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {UniqueNFTCollection} from '@unique/playgrounds/unique.js';
+import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
 import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.js';
-import {makeNames} from '@unique/tests/util/index.js';
+import {makeNames} from '@unique/test-utils/util.js';
 import type {ContractImports} from '@unique/tests/eth/util/playgrounds/types.js';
 
 const {dirname} = makeNames(import.meta.url);

@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
 import {itEth, expect, SponsoringMode, usingEthPlaygrounds} from './util/index.js';
-import {usingPlaygrounds} from '../util/index.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {CompiledContract} from './util/playgrounds/types.js';
 
 describe('Sponsoring EVM contracts', () => {

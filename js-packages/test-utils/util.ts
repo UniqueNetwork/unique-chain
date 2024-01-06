@@ -8,10 +8,10 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiSubset from 'chai-subset';
 import {Context} from 'mocha';
-import config from '../config.js';
-import {ChainHelperBase} from '@unique/playgrounds/unique.js';
-import type {ILogger} from '@unique/playgrounds/types.js';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/playgrounds/unique.dev.js';
+import config from '../tests/config.js';
+import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
+import type {ILogger} from '@unique-nft/playgrounds/types.js';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 

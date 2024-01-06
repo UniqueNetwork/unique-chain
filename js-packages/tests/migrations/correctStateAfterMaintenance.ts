@@ -1,5 +1,5 @@
 import config from '../config.js';
-import {usingPlaygrounds} from '../util/index.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {u32} from '@polkadot/types-codec';
 
 const WS_ENDPOINT = config.substrateUrl;

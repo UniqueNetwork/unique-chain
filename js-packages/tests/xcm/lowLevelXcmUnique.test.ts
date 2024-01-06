@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
-import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingHydraDxPlaygrounds} from '../util/index.js';
+import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingHydraDxPlaygrounds} from '@unique/test-utils/util.js';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
 import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl,  hydraDxUrl,  moonbeamUrl, polkadexUrl, uniqueAssetId} from './xcm.types.js';

@@ -15,7 +15,7 @@ import solc from 'solc';
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {ArrangeGroup, DevUniqueHelper} from '@unique/playgrounds/unique.dev.js';
+import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils/index.js';
 
 import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.js';
 import {CollectionMode, CreateCollectionData} from './types.js';
@@ -32,7 +32,7 @@ import refungibleDeprecatedAbi from '../../abi/reFungibleDeprecated.json' assert
 import refungibleTokenAbi from '../../abi/reFungibleToken.json' assert {type: 'json'};
 import refungibleTokenDeprecatedAbi from '../../abi/reFungibleTokenDeprecated.json' assert {type: 'json'};
 import contractHelpersAbi from '../../abi/contractHelpers.json' assert {type: 'json'};
-import type {ICrossAccountId, TEthereumAccount, TCollectionMode} from '@unique/playgrounds/types.js';
+import type {ICrossAccountId, TEthereumAccount, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 
 class EthGroupBase {
   helper: EthUniqueHelper;

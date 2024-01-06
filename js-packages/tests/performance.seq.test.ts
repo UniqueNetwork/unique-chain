@@ -16,9 +16,9 @@
 
 import {ApiPromise} from '@polkadot/api';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, usingPlaygrounds} from './util/index.js';
-import type {ICrossAccountId, IProperty} from '@unique/playgrounds/types.js';
-import {UniqueHelper} from '@unique/playgrounds/unique.js';
+import {expect, itSub, usingPlaygrounds} from '@unique/test-utils/util.js';
+import type {ICrossAccountId, IProperty} from '@unique-nft/playgrounds/types.js';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
 
 describe('Performace tests', () => {
   let alice: IKeyringPair;

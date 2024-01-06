@@ -1,7 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {hexToString} from '@polkadot/util';
-import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '../util/index.js';
-import {DevUniqueHelper, Event} from '@unique/playgrounds/unique.dev.js';
+import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
+import {DevUniqueHelper, Event} from '@unique/test-utils';
 import config from '../config.js';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
