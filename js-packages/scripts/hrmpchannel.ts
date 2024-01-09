@@ -59,6 +59,11 @@ const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, send
 };
 
 async function main() {
+  if(process.argv.length != 6) {
+    console.log('Usage: yarn hrmpChannel <RELAY_URL> <OUR_CHAIN_URL> <OTHER_CHAIN_URL> <open | accept>');
+    process.exit(1);
+  }
+
   const relayUrl = process.argv[2]
   const uniqueParachainUrl = process.argv[3];
   const otherParachainUrl = process.argv[4];
