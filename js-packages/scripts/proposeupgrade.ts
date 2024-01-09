@@ -3,6 +3,11 @@ import {blake2AsHex} from '@polkadot/util-crypto';
 import {readFileSync} from 'fs';
 
 async function main() {
+  if(process.argv.length != 4) {
+    console.log('Usage: proposeUpgrade <CHAIN_URL> <WASM_FILE_PATH>');
+    process.exit(1);
+  }
+
   const networkUrl = process.argv[2];
   const wasmFile = process.argv[3];
 
