@@ -2,6 +2,11 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
 
 async function main() {
+  if(process.argv.length != 4) {
+    console.log('Usage: yarn councilDemocracyProposal <CHAIN_URL> <ENCODED_PROPOSAL>');
+    process.exit(1);
+  }
+
   const networkUrl = process.argv[2];
   const democracyProposalContent = process.argv[3];
 
