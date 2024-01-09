@@ -2,6 +2,11 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
 
 async function main() {
+  if(process.argv.length != 4) {
+    console.log('Usage: yarn proposeFastTrack <CHAIN_URL> <PROPOSAL_HASH | existing-external-proposal>');
+    process.exit(1);
+  }
+
   const networkUrl = process.argv[2];
   const proposal = process.argv[3];
 
@@ -10,7 +15,7 @@ async function main() {
 
   let proposalHash;
 
-  if(proposal == 'existing-proposal') {
+  if(proposal == 'existing-external-proposal') {
     const externalDemocracyProposal = (await api.query.democracy.nextExternal() as any).unwrap()[0];
     if(externalDemocracyProposal.isInline) {
       proposalHash = blake2AsHex(externalDemocracyProposal.asInline, 256);
