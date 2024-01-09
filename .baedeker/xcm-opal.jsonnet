@@ -19,9 +19,6 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
-			extraArgs: [
-				"-lxcm=trace"
-			],
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
 	},
@@ -38,9 +35,6 @@ local opal = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			extraArgs: [
-				"-lxcm=trace"
-			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -58,9 +52,6 @@ local westmint = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			extraArgs: [
-				"-lxcm=trace"
-			],
 		},
 		for name in ['alice', 'bob']
 	},
