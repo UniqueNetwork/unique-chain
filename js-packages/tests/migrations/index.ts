@@ -1,4 +1,4 @@
-import {migration as locksToFreezesMigration} from '../migrations/942057-appPromotion/index.js';
+import {migration as locksToFreezesMigration} from './942057-appPromotion/index.js';
 export interface Migration {
   before: () => Promise<void>,
   after: () => Promise<void>,

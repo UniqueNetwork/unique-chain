@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, expect, usingPlaygrounds, Pallets} from './util/index.js';
+import {itSub, expect, usingPlaygrounds, Pallets} from '@unique/test-utils/util.js';
 
 describe('integration test: ext. destroyCollection():', () => {
   let alice: IKeyringPair;

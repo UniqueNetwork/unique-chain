@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {itEth, usingEthPlaygrounds} from './util/index.js';
-import {CrossAccountId} from '@unique/playgrounds/unique.js';
+import {CrossAccountId} from '@unique-nft/playgrounds/unique.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('Token transfer between substrate address and EVM address. Fungible', () => {

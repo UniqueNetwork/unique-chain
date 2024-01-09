@@ -1,25 +1,25 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import '@unique/opal-types/augment-api.js';
-import '@unique/opal-types/augment-types.js';
-import '@unique/opal-types/types-lookup.js';
+import '@unique-nft/opal-testnet-types/augment-api.js';
+import '@unique-nft/opal-testnet-types/augment-types.js';
+import '@unique-nft/opal-testnet-types/types-lookup.js';
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from './unique.js';
-import {UniqueHelper, ChainHelperBase, HelperGroup} from './unique.js';
+import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique.js';
+import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique.js';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
-import * as defs from '@unique/opal-types/definitions.js';
+import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
-import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from './types.js';
+import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
 import type {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './unique.xcm.js';
-import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './unique.governance.js';
-import type {ICollectiveGroup, IFellowshipGroup} from './unique.governance.js';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
+import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
+import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }

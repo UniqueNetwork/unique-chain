@@ -368,9 +368,9 @@ jobs:
           yarn add mochawesome
 
       - name: Call HRMP initialization
-        working-directory: js-packages/tests
+        working-directory: js-packages/scripts
         run: |
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm util/createHrmp.ts ${{matrix.network}}
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests

@@ -18,8 +18,8 @@ import {expect} from 'chai';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds} from './util/index.js';
 import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
-import type {IEvent, TCollectionMode} from '@unique/playgrounds/types.js';
-import {Pallets, requirePalletsOrSkip} from '../util/index.js';
+import type {IEvent, TCollectionMode} from '@unique-nft/playgrounds/types.js';
+import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {CollectionLimitField, TokenPermissionField, CreateCollectionData} from './util/playgrounds/types.js';
 import type {NormalizedEvent} from './util/playgrounds/types.js';
 

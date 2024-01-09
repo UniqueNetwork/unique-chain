@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {Pallets, requirePalletsOrSkip} from '../util/index.js';
+import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
 import {CollectionLimitField} from './util/playgrounds/types.js';
 

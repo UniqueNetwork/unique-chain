@@ -1,6 +1,6 @@
 // import { usingApi, privateKey, onlySign } from "./../../load/lib";
 import * as fs from 'fs';
-import {usingPlaygrounds} from '../../util/index.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import path, {dirname} from 'path';
 import {isInteger, parse} from 'lossless-json';
 import {fileURLToPath} from 'url';

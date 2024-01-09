@@ -25,7 +25,7 @@ import {Contract} from 'web3-eth-contract';
 import {usingEthPlaygrounds, expect, itEth} from '../util/index.js';
 import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
 import type {CompiledContract} from '../util/playgrounds/types.js';
-import {requirePalletsOrSkip, Pallets, makeNames} from '../../util/index.js';
+import {requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
 

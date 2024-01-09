@@ -17,9 +17,9 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
-import type {ITokenPropertyPermission} from '@unique/playgrounds/types.js';
-import {Pallets} from '../util/index.js';
-import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique/playgrounds/unique.js';
+import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
+import {Pallets} from '@unique/test-utils/util.js';
+import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
 import {CreateCollectionData, TokenPermissionField} from './util/playgrounds/types.js';
 
 describe('EVM token properties', () => {

@@ -17,8 +17,8 @@
 /* eslint-disable @typescript-eslint/no-floating-promises */
 import os from 'os';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds} from '@unique/tests/util/index.js';
-import {UniqueHelper} from '@unique/playgrounds/unique.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
 import * as notReallyCluster from 'cluster'; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346
 const cluster = notReallyCluster as unknown as notReallyCluster.Cluster;
 

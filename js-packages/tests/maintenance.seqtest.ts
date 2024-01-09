@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/index.js';
+import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
 import {itEth} from './eth/util/index.js';
 import {main as correctState} from './migrations/correctStateAfterMaintenance.js';
 import type {PalletBalancesIdAmount} from '@polkadot/types/lookup';

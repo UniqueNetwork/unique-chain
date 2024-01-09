@@ -1,4 +1,4 @@
-import type {Migration} from '../../util/frankensteinMigrate.js';
+import type {Migration} from '../index.js';
 import {collectData} from './collectData.js';
 import {migrateLockedToFreeze} from './lockedToFreeze.js';
 

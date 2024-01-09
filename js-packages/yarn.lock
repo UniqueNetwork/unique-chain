@@ -1242,28 +1242,38 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@unique/opal-types@workspace:*, @unique/opal-types@workspace:types":
+"@unique-nft/opal-testnet-types@workspace:*, @unique-nft/opal-testnet-types@workspace:types":
   version: 0.0.0-use.local
-  resolution: "@unique/opal-types@workspace:types"
+  resolution: "@unique-nft/opal-testnet-types@workspace:types"
   dependencies:
     "@polkadot/typegen": ^10.10.1
   languageName: unknown
   linkType: soft
 
-"@unique/playgrounds@workspace:*, @unique/playgrounds@workspace:playgrounds":
+"@unique-nft/playgrounds@workspace:*, @unique-nft/playgrounds@workspace:playgrounds":
   version: 0.0.0-use.local
-  resolution: "@unique/playgrounds@workspace:playgrounds"
+  resolution: "@unique-nft/playgrounds@workspace:playgrounds"
   dependencies:
     "@polkadot/api": 10.10.1
     "@polkadot/util": ^12.5.1
     "@polkadot/util-crypto": ^12.5.1
-    "@unique/opal-types": "workspace:*"
   languageName: unknown
   linkType: soft
 
 "@unique/scripts@workspace:scripts":
   version: 0.0.0-use.local
   resolution: "@unique/scripts@workspace:scripts"
+  languageName: unknown
+  linkType: soft
+
+"@unique/test-utils@workspace:*, @unique/test-utils@workspace:test-utils":
+  version: 0.0.0-use.local
+  resolution: "@unique/test-utils@workspace:test-utils"
+  dependencies:
+    "@polkadot/api": 10.10.1
+    "@polkadot/util": ^12.5.1
+    "@polkadot/util-crypto": ^12.5.1
+    "@unique-nft/opal-testnet-types": "workspace:*"
   languageName: unknown
   linkType: soft
 
@@ -6001,8 +6011,9 @@ __metadata:
     "@types/node": ^20.8.10
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
-    "@unique/opal-types": "workspace:*"
-    "@unique/playgrounds": "workspace:*"
+    "@unique-nft/opal-testnet-types": "workspace:*"
+    "@unique-nft/playgrounds": "workspace:*"
+    "@unique/test-utils": "workspace:*"
     chai: ^4.3.10
     chai-as-promised: ^7.1.1
     chai-like: ^1.1.1

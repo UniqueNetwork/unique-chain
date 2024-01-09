@@ -5,7 +5,7 @@
     "engines": {
         "node": ">=16"
     },
-    "name": "@unique/opal-types",
+    "name": "@unique-nft/opal-testnet-types",
     "type": "module",
     "version": "1.0.0",
     "main": "index.js",

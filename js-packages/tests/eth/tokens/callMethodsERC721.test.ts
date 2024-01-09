@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets} from '../../util/index.js';
+import {Pallets} from '@unique/test-utils/util.js';
 import {expect, itEth, usingEthPlaygrounds} from '../util/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {CreateCollectionData} from '../util/playgrounds/types.js';

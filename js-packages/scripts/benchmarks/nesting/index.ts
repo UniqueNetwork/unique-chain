@@ -4,7 +4,7 @@ import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {convertToTokens} from '../utils/common.js';
-import {makeNames} from '@unique/tests/util/index.js';
+import {makeNames} from '@unique/test-utils/util.js';
 import type {ContractImports} from '@unique/tests/eth/util/playgrounds/types.js';
 import type {RMRKNestableMintable} from './ABIGEN/index.js';
 

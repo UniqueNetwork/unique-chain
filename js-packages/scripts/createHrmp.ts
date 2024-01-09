@@ -1,5 +1,5 @@
-import {usingPlaygrounds} from './index.js';
-import config from '../config.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
+import config from '../tests/config.js';
 
 const profile = process.argv[2];
 if(!profile) throw new Error('missing profile/relay argument');
