@@ -4,12 +4,16 @@ import {blake2AsHex, encodeAddress} from '@polkadot/util-crypto';
 export const paraChildSovereignAccount = (relayApi: ApiPromise, paraid: number) => {
   // We are getting a *child* parachain sovereign account,
   // so we need a child prefix: encoded(b"para") == 0x70617261
-  const childPrefix = '0x70617261';
+  const childPrefix = '70617261';
 
-  const encodedParaId = relayApi.createType('u32', paraid).toHex(true).substring(2);
-  const suffix = '000000000000000000000000000000000000000000000000';
+  const encodedParaId = relayApi
+    .createType('u32', paraid)
+    .toHex(true)
+    .substring(2 /* skip 0x */);
 
-  return childPrefix + encodedParaId + suffix;
+  const addrBytesLen = 32;
+  const byteLenInHex = 2;
+  return '0x' + (childPrefix + encodedParaId).padEnd(addrBytesLen * byteLenInHex, '0');
 };
 
 const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, receiverParaId: number) => {
@@ -21,7 +25,7 @@ const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, sender
     const senderDeposit = BigInt(conf.hrmpSenderDeposit);
 
     const requiredBalance = relayFee + senderDeposit;
-    const sovereignAccount = await paraChildSovereignAccount(relayApi, senderParaId);
+    const sovereignAccount = paraChildSovereignAccount(relayApi, senderParaId);
     const balance = await relayApi.query.system.account(sovereignAccount)
         .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
 
@@ -43,7 +47,7 @@ const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, send
 
     const requiredBalance = relayFee + recipientDeposit;
 
-    const sovereignAccount = await paraChildSovereignAccount(relayApi, recipientParaId);
+    const sovereignAccount = paraChildSovereignAccount(relayApi, recipientParaId);
     const balance = await relayApi.query.system.account(sovereignAccount)
         .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
 
