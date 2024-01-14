@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '../util/index.js';
+import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {CreateCollectionData} from '../util/playgrounds/types.js';
+import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
 [
   {mode: 'ft' as const, requiredPallets: []},

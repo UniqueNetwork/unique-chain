@@ -22,23 +22,25 @@ import {evmToAddress} from '@polkadot/util-crypto';
 
 import {Contract} from 'web3-eth-contract';
 
-import {usingEthPlaygrounds, expect, itEth} from '../util/index.js';
-import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
-import type {CompiledContract} from '../util/playgrounds/types.js';
+import {usingEthPlaygrounds, expect, itEth} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import type {CompiledContract} from '@unique/test-utils/eth/types.js';
 import {requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
 
 let compiledFractionalizer: CompiledContract;
 
+const EVM_ABI_DIR = `${dirname}/../../../evm-abi`;
+
 const compileContract = async (helper: EthUniqueHelper): Promise<CompiledContract> => {
   if(!compiledFractionalizer) {
     compiledFractionalizer = await helper.ethContract.compile('Fractionalizer', (await readFile(`${dirname}/Fractionalizer.sol`)).toString(), [
-      {solPath: 'api/CollectionHelpers.sol', fsPath: `${dirname}/../api/CollectionHelpers.sol`},
-      {solPath: 'api/ContractHelpers.sol', fsPath: `${dirname}/../api/ContractHelpers.sol`},
-      {solPath: 'api/UniqueRefungibleToken.sol', fsPath: `${dirname}/../api/UniqueRefungibleToken.sol`},
-      {solPath: 'api/UniqueRefungible.sol', fsPath: `${dirname}/../api/UniqueRefungible.sol`},
-      {solPath: 'api/UniqueNFT.sol', fsPath: `${dirname}/../api/UniqueNFT.sol`},
+      {solPath: 'api/CollectionHelpers.sol', fsPath: `${EVM_ABI_DIR}/api/CollectionHelpers.sol`},
+      {solPath: 'api/ContractHelpers.sol', fsPath: `${EVM_ABI_DIR}/api/ContractHelpers.sol`},
+      {solPath: 'api/UniqueRefungibleToken.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueRefungibleToken.sol`},
+      {solPath: 'api/UniqueRefungible.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueRefungible.sol`},
+      {solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`},
     ]);
   }
   return compiledFractionalizer;

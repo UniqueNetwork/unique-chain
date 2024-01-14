@@ -1,4 +1,4 @@
-import config from '../config.js';
+import config from '../tests/config.js';
 import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {u32} from '@polkadot/types-codec';
 

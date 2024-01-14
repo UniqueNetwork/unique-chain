@@ -17,8 +17,8 @@
 import * as web3 from 'web3';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {SponsoringMode, itEth, usingEthPlaygrounds} from '../util/index.js';
-import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
+import {SponsoringMode, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames, expect} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
@@ -40,7 +40,7 @@ describe('Market V2 Contract', () => {
 
   async function deployMarket(helper: EthUniqueHelper, marketOwner: string) {
     const nodeModulesDir = `${dirname}/../../../node_modules`;
-    const solApiDir = `${dirname}/../api`;
+    const solApiDir = `${dirname}/../../../evm-abi/api`;
     return await helper.ethContract.deployByCode(
       marketOwner,
       'Market',

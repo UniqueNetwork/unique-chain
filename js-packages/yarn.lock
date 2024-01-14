@@ -1242,6 +1242,12 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@unique-nft/evm-abi@workspace:*, @unique-nft/evm-abi@workspace:evm-abi":
+  version: 0.0.0-use.local
+  resolution: "@unique-nft/evm-abi@workspace:evm-abi"
+  languageName: unknown
+  linkType: soft
+
 "@unique-nft/opal-testnet-types@workspace:*, @unique-nft/opal-testnet-types@workspace:types":
   version: 0.0.0-use.local
   resolution: "@unique-nft/opal-testnet-types@workspace:types"
@@ -6011,6 +6017,7 @@ __metadata:
     "@types/node": ^20.8.10
     "@typescript-eslint/eslint-plugin": ^6.10.0
     "@typescript-eslint/parser": ^6.10.0
+    "@unique-nft/evm-abi": "workspace:*"
     "@unique-nft/opal-testnet-types": "workspace:*"
     "@unique-nft/playgrounds": "workspace:*"
     "@unique/test-utils": "workspace:*"

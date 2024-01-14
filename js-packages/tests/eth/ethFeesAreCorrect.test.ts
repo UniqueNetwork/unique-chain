@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://witww.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect} from './util/index.js';
+import {itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util.js';
 
 describe('Eth fees are correct', () => {
   let donor: IKeyringPair;
