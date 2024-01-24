@@ -30,7 +30,10 @@ use frame_system::pallet_prelude::*;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::{
+	traits::{AccountIdConversion, Convert},
+	FixedPointNumber, FixedU128, Saturating,
+};
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{
 	opaque::latest::{prelude::XcmError, Weight},
@@ -117,6 +120,12 @@ pub mod module {
 	#[pallet::getter(fn collection_to_foreign_asset)]
 	pub type CollectionToForeignAsset<T: Config> =
 		StorageMap<_, Twox64Concat, CollectionId, staging_xcm::v3::AssetId, OptionQuery>;
+
+	/// The fee multiplier used in the trader to pay for XCM execution.
+	#[pallet::storage]
+	#[pallet::getter(fn collection_fee_multiplier)]
+	pub type CollectionFeeMultiplier<T: Config> =
+		StorageMap<_, Twox64Concat, CollectionId, FixedU128, OptionQuery>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
@@ -206,6 +215,10 @@ impl<T: Config> Pallet<T> {
 	fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
+	}
+
+	fn collection_mode(collection_id: CollectionId) -> Option<CollectionMode> {
+		pallet_common::CollectionById::<T>::get(collection_id).map(|collection| collection.mode)
 	}
 
 	/// Converts a concrete asset ID (the asset multilocation) to a local collection on Unique Network.
@@ -567,6 +580,99 @@ impl From<ForeignCollectionMode> for CollectionMode {
 			ForeignCollectionMode::NFT => Self::NFT,
 			ForeignCollectionMode::Fungible(decimals) => Self::Fungible(decimals),
 		}
+	}
+}
+
+pub struct Trader<T: Config, WeightToFee: Convert<Weight, <T as pallet_balances::Config>::Balance>>
+{
+	weight: Weight,
+	payment_asset: Option<AssetId>,
+	amount_to_pay: <T as pallet_balances::Config>::Balance,
+	_phantom: PhantomData<(T, WeightToFee)>,
+}
+
+impl<T: Config, WeightToFee: Convert<Weight, <T as pallet_balances::Config>::Balance>> WeightTrader
+	for Trader<T, WeightToFee>
+where
+	u128: From<<T as pallet_balances::Config>::Balance>,
+{
+	fn new() -> Self {
+		Self {
+			weight: Weight::zero(),
+			payment_asset: None,
+			amount_to_pay: 0u32.into(),
+			_phantom: PhantomData,
+		}
+	}
+
+	fn buy_weight(
+		&mut self,
+		weight: Weight,
+		payment: Assets,
+		context: &XcmContext,
+	) -> Result<Assets, XcmError> {
+		log::trace!(target: "xcm::weight::trader", "buy_weight weight: {weight:?}, payment: {payment:?}, context: {context:?}");
+
+		// In the case of multiple assets in the `BuyExecution`
+		// we will use only the first one.
+		// Handling multiple types of assets in here is yet to be implemented.
+		let payment_asset = payment
+			.fungible_assets_iter()
+			.next()
+			.ok_or(XcmError::TooExpensive)?;
+
+		if let Some(prev_payment_asset) = self.payment_asset {
+			if prev_payment_asset != payment_asset.id {
+				// In the case of multiple `BuyExecution` instructions,
+				// we will handle only one type of assets.
+				// Handling different types of assets is yet to be implemented.
+				return Err(XcmError::Unimplemented);
+			}
+		}
+
+		let collection_locality = <Pallet<T>>::asset_to_collection(&payment_asset.id)?;
+		let collection_id = *collection_locality;
+
+		let collection_mode =
+			<Pallet<T>>::collection_mode(collection_id).ok_or(XcmError::AssetNotFound)?;
+
+		let decimals = match collection_mode {
+			CollectionMode::Fungible(decimals) => decimals,
+
+			// NFTs and RFTs are not supported for XCM payment at the moment.
+			_ => return Err(XcmError::Unimplemented),
+		};
+
+		let multiplier =
+			<Pallet<T>>::collection_fee_multiplier(collection_id).ok_or(XcmError::TooExpensive)?;
+
+		let fee = WeightToFee::convert(weight);
+
+		let amount_to_pay = sp_std::cmp::max(multiplier.saturating_mul_int(fee), 1u32.into());
+
+		let required_payment = MultiAsset {
+			id: payment_asset.id,
+			fun: Fungible(amount_to_pay.into()),
+		};
+
+		let unused_payment = payment
+			.checked_sub(required_payment)
+			.map_err(|_| XcmError::TooExpensive)?;
+
+		// -- Changing the trader's state only after all checks passed --
+
+		if self.payment_asset.is_none() {
+			self.payment_asset = Some(payment_asset.id);
+		}
+
+		self.weight = self.weight.saturating_add(weight);
+		self.amount_to_pay = self.amount_to_pay.saturating_add(amount_to_pay);
+
+		Ok(unused_payment)
+	}
+
+	fn refund_weight(&mut self, _weight: Weight, _context: &XcmContext) -> Option<MultiAsset> {
+		todo!()
 	}
 }
 
