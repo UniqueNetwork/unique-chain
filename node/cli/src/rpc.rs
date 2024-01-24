@@ -65,7 +65,7 @@ pub struct FullDeps<C, P, SC> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, R, B>(
+pub fn create_full<C, P, SC, B>(
 	io: &mut RpcModule<()>,
 	deps: FullDeps<C, P, SC>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
@@ -74,18 +74,15 @@ where
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
-	C::Api: RuntimeApiDep<R>,
+	C::Api: RuntimeApiDep,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	P: TransactionPool<Block = Block> + 'static,
-	R: RuntimeInstance + Send + Sync + 'static,
-	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
 	C: sp_api::CallApiAt<
 		sp_runtime::generic::Block<
 			sp_runtime::generic::Header<u32, BlakeTwo256>,
 			sp_runtime::OpaqueExtrinsic,
 		>,
 	>,
-	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {
 	// use pallet_contracts_rpc::{Contracts, ContractsApi};
 	use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
@@ -165,7 +162,7 @@ pub struct EthDeps<C, P, CA: ChainApi, CIDP> {
 	pub pending_create_inherent_data_providers: CIDP,
 }
 
-pub fn create_eth<C, R, P, CA, B, CIDP, EC>(
+pub fn create_eth<C, P, CA, B, CIDP, EC>(
 	io: &mut RpcModule<()>,
 	deps: EthDeps<C, P, CA, CIDP>,
 	subscription_task_executor: SubscriptionTaskExecutor,
@@ -176,14 +173,13 @@ where
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
 	C: UsageProvider<Block>,
-	C::Api: RuntimeApiDep<R>,
+	C::Api: RuntimeApiDep,
 	P: TransactionPool<Block = Block> + 'static,
 	CA: ChainApi<Block = Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	C: sp_api::CallApiAt<Block>,
 	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
 	EC: EthConfig<Block, C>,
-	R: RuntimeInstance,
 {
 	use fc_rpc::{
 		Eth, EthApiServer, EthDevSigner, EthFilter, EthFilterApiServer, EthPubSub,

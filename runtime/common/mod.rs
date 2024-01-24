@@ -19,7 +19,6 @@ pub mod construct_runtime;
 pub mod dispatch;
 pub mod ethereum;
 pub mod identity;
-pub mod instance;
 pub mod maintenance;
 pub mod runtime_apis;
 

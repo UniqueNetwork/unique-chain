@@ -16,7 +16,7 @@
 
 use sp_runtime::{
 	generic,
-	traits::{IdentifyAccount, Verify},
+	traits::{BlakeTwo256, IdentifyAccount, Verify},
 	MultiSignature,
 };
 
@@ -25,9 +25,11 @@ use sp_runtime::{
 /// of data like extrinsics, allowing for them to continue syncing the network through upgrades
 /// to even the core data structures.
 pub mod opaque {
-	pub use sp_runtime::{generic, traits::BlakeTwo256, OpaqueExtrinsic as UncheckedExtrinsic};
+	pub use sp_runtime::{generic, OpaqueExtrinsic as UncheckedExtrinsic};
 
-	pub use super::{AccountId, AuraId, Balance, BlockNumber, Hash, Signature};
+	pub use super::{
+		AccountId, AuraId, Balance, BlockNumber, CrossAccountId, Hash, Hashing, Signature,
+	};
 
 	#[derive(Debug, Clone)]
 	pub enum RuntimeId {
@@ -37,16 +39,9 @@ pub mod opaque {
 		Unknown(sp_std::vec::Vec<u8>),
 	}
 
-	pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
+	pub type Header = generic::Header<BlockNumber, Hashing>;
 
 	pub type Block = generic::Block<Header, UncheckedExtrinsic>;
-
-	pub trait RuntimeInstance {
-		type CrossAccountId: pallet_evm::account::CrossAccountId<sp_runtime::AccountId32>
-			+ Send
-			+ Sync
-			+ 'static;
-	}
 }
 
 pub type SessionHandlers = ();
@@ -61,6 +56,16 @@ pub type Signature = MultiSignature;
 /// to the public key of our transaction signing scheme.
 pub type AccountId = <<Signature as Verify>::Signer as IdentifyAccount>::AccountId;
 
+pub struct CrossAccountConfig;
+impl pallet_evm::account::CrossAccountConfig for CrossAccountConfig {
+	type AccountId = AccountId;
+	type AddressMapping = pallet_evm::HashedAddressMapping<Hashing>;
+	type BackwardsAddressMapping = pallet_evm::HashedAddressMapping<Hashing>;
+}
+
+/// Way to identify both Substrate and Ethereum accounts.
+pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<CrossAccountConfig>;
+
 /// The type for looking up accounts. We don't expect more than 4 billion of them, but you
 /// never know...
 pub type AccountIndex = u32;
@@ -73,6 +78,9 @@ pub type Nonce = u32;
 
 /// A hash of some data used by the chain.
 pub type Hash = sp_core::H256;
+
+/// The hashing algorithm used.
+pub type Hashing = BlakeTwo256;
 
 /// Digest item type.
 pub type DigestItem = generic::DigestItem;

@@ -65,7 +65,6 @@ use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
-use serde::{Deserialize, Serialize};
 use sp_api::{ProvideRuntimeApi, StateBackend};
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -193,23 +192,23 @@ type ParachainBlockImport<RuntimeApi, ExecutorDispatch> =
 
 /// Generate a supertrait based on bounds, and blanket impl for it.
 macro_rules! ez_bounds {
-	($vis:vis trait $name:ident$(<$($gen:ident $(: $($(+)? $bound:path)*)?),* $(,)?>)? $(:)? $($(+)? $super:path)* {}) => {
-		$vis trait $name $(<$($gen $(: $($bound+)*)?,)*>)?: $($super +)* {}
+	($vis:vis trait $name:ident$(<$($gen:ident $(: $($(+)? $bound:path)*)?),* $(,)?>)? $(:)? $($lt:lifetime)? $($(+)? $super:path)* {}) => {
+		$vis trait $name $(<$($gen $(: $($bound+)*)?,)*>)?: $($lt +)? $($super +)* {}
 		impl<T, $($($gen $(: $($bound+)*)?,)*)?> $name$(<$($gen,)*>)? for T
-		where T: $($super +)* {}
+		where T: $($lt +)? $($super +)* {}
 	}
 }
 ez_bounds!(
-	pub trait RuntimeApiDep<Runtime: RuntimeInstance>:
-		sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
+	pub trait RuntimeApiDep: 'static
+		+ sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block>
 		+ sp_consensus_aura::AuraApi<Block, AuraId>
 		+ fp_rpc::EthereumRuntimeRPCApi<Block>
 		+ sp_session::SessionKeys<Block>
 		+ sp_block_builder::BlockBuilder<Block>
 		+ pallet_transaction_payment_rpc_runtime_api::TransactionPaymentApi<Block, Balance>
 		+ sp_api::ApiExt<Block>
-		+ up_rpc::UniqueApi<Block, Runtime::CrossAccountId, AccountId>
-		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, Runtime::CrossAccountId, AccountId>
+		+ up_rpc::UniqueApi<Block, CrossAccountId, AccountId>
+		+ app_promotion_rpc::AppPromotionApi<Block, BlockNumber, CrossAccountId, AccountId>
 		+ up_pov_estimate_rpc::PovEstimateApi<Block>
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ sp_api::Metadata<Block>
@@ -234,7 +233,7 @@ ez_bounds!(
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
 #[allow(clippy::type_complexity)]
-pub fn new_partial<Runtime, RuntimeApi, ExecutorDispatch, BIQ>(
+pub fn new_partial<RuntimeApi, ExecutorDispatch, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
 ) -> Result<
@@ -254,8 +253,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
-	Runtime: RuntimeInstance,
+	RuntimeApi::RuntimeApi: RuntimeApiDep,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 	BIQ: FnOnce(
 		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
@@ -348,7 +346,7 @@ macro_rules! clone {
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
+pub async fn start_node<RuntimeApi, ExecutorDispatch>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
@@ -357,21 +355,17 @@ pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
-	Runtime: RuntimeInstance + Send + Sync + 'static,
-	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
-	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
 	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: RuntimeApiDep,
 	RuntimeApi::RuntimeApi: LookaheadApiDep,
-	Runtime: RuntimeInstance,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
+	let params = new_partial::<RuntimeApi, ExecutorDispatch, _>(
 		&parachain_config,
 		parachain_build_import_queue,
 	)?;
@@ -508,7 +502,7 @@ where
 				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_handle, full_deps)?;
+			create_full(&mut rpc_handle, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -531,15 +525,7 @@ where
 				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
 			};
 
-			create_eth::<
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>,
-			>(
+			create_eth::<_, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>>(
 				&mut rpc_handle,
 				eth_deps,
 				subscription_task_executor.clone(),
@@ -634,7 +620,7 @@ where
 }
 
 /// Build the import queue for the the parachain runtime.
-pub fn parachain_build_import_queue<Runtime, RuntimeApi, ExecutorDispatch>(
+pub fn parachain_build_import_queue<RuntimeApi, ExecutorDispatch>(
 	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 	backend: Arc<FullBackend>,
 	config: &Configuration,
@@ -646,8 +632,7 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
-	Runtime: RuntimeInstance,
+	RuntimeApi::RuntimeApi: RuntimeApiDep,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
@@ -699,7 +684,7 @@ pub struct StartConsensusParameters<'a> {
 
 // Clones ignored for optional lookahead collator
 #[allow(clippy::redundant_clone)]
-pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
+pub fn start_consensus<ExecutorDispatch, RuntimeApi>(
 	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
 	transaction_pool: Arc<
 		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
@@ -712,9 +697,8 @@ where
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: RuntimeApiDep,
 	RuntimeApi::RuntimeApi: LookaheadApiDep,
-	Runtime: RuntimeInstance,
 {
 	let StartConsensusParameters {
 		backend,
@@ -835,21 +819,18 @@ where
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
-pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
+pub fn start_dev_node<RuntimeApi, ExecutorDispatch>(
 	config: Configuration,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
 	disable_autoseal_on_tx: bool,
 ) -> sc_service::error::Result<TaskManager>
 where
-	Runtime: RuntimeInstance + Send + Sync + 'static,
-	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
-	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
 	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
 		+ Send
 		+ Sync
 		+ 'static,
-	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
+	RuntimeApi::RuntimeApi: RuntimeApiDep,
 	ExecutorDispatch: NativeExecutionDispatch + 'static,
 {
 	use fc_consensus::FrontierBlockImport;
@@ -873,7 +854,7 @@ where
 				eth_backend,
 				telemetry_worker_handle: _,
 			},
-	} = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
+	} = new_partial::<RuntimeApi, ExecutorDispatch, _>(
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
 	)?;
@@ -1091,7 +1072,7 @@ where
 				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_module, full_deps)?;
+			create_full(&mut rpc_module, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -1115,15 +1096,7 @@ where
 				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
 			};
 
-			create_eth::<
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>,
-			>(
+			create_eth::<_, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>>(
 				&mut rpc_module,
 				eth_deps,
 				subscription_task_executor.clone(),

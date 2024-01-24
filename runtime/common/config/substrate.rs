@@ -34,7 +34,7 @@ use frame_system::{
 use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use sp_arithmetic::traits::One;
 use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256, IdentityLookup},
+	traits::{AccountIdLookup, IdentityLookup},
 	Perbill, Percent, Permill,
 };
 use sp_std::vec;
@@ -96,7 +96,7 @@ impl frame_system::Config for Runtime {
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	/// The hashing algorithm used.
-	type Hashing = BlakeTwo256;
+	type Hashing = Hashing;
 	/// The index type for storing how many extrinsics an account has signed.
 	type Nonce = Nonce;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
