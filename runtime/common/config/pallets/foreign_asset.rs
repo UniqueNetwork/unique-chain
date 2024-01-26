@@ -40,7 +40,7 @@ impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 
 	#[cfg(feature = "governance")]
-	type ManagerOrigin = governance::RootOrTechnicalCommitteeMember;
+	type ManagerOrigin = governance::RootOrFinancialCouncilMember;
 
 	#[cfg(not(feature = "governance"))]
 	type ManagerOrigin = EnsureRoot<Self::AccountId>;
