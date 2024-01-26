@@ -32,7 +32,10 @@ use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping}
 use crate::runtime_common::config::governance;
 use crate::{
 	runtime_common::{
-		config::{ethereum::EvmCollectionHelpersAddress, substrate::TreasuryModuleId},
+		config::{
+			ethereum::EvmCollectionHelpersAddress, pallets::foreign_asset::ForeignAssetPalletId,
+			substrate::TreasuryModuleId,
+		},
 		dispatch::CollectionDispatchT,
 		weights::CommonWeights,
 		RelayChainBlockNumberProvider,
@@ -98,6 +101,7 @@ impl pallet_balances_adapter::Config for Runtime {
 	type Decimals = Decimals;
 	type Name = Name;
 	type Symbol = Symbol;
+	type XcmDepositorPalletId = ForeignAssetPalletId;
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 

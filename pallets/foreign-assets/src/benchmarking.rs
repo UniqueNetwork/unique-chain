@@ -28,6 +28,8 @@ use super::{Call, Config, ForeignCollectionMode, Pallet};
 #[benchmarks]
 mod benchmarks {
 
+	use sp_runtime::FixedU128;
+
 	use super::*;
 
 	#[benchmark]
@@ -45,6 +47,34 @@ mod benchmarks {
 			name,
 			token_prefix,
 			mode,
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn set_fee_payment_with() -> Result<(), BenchmarkError> {
+		let location =
+			MultiLocation::from(X3(Parachain(1000), PalletInstance(42), GeneralIndex(1)));
+
+		let versioned_asset_id = Box::<VersionedAssetId>::new(location.into());
+		let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
+		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
+		let mode = ForeignCollectionMode::Fungible(18);
+
+		<Pallet<T>>::force_register_foreign_asset(
+			RawOrigin::Root.into(),
+			versioned_asset_id.clone(),
+			name,
+			token_prefix,
+			mode
+		).unwrap();
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			versioned_asset_id,
+			Some(FixedU128::from_rational(1, 10000)),
 		);
 
 		Ok(())

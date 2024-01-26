@@ -28,11 +28,12 @@ use core::ops::Deref;
 use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::EnsureOrigin, PalletId};
 use frame_system::pallet_prelude::*;
 use pallet_common::{
-	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
+	dispatch::CollectionDispatch, erc::CrossAccountId, Error as CommonError, XcmExtensions,
+	NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use sp_runtime::{
-	traits::{AccountIdConversion, Convert},
-	FixedPointNumber, FixedU128, Saturating,
+	traits::{AccountIdConversion, Convert, Zero},
+	FixedPointNumber, FixedU128,
 };
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{
@@ -74,8 +75,9 @@ pub mod module {
 		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// Origin for force registering of a foreign asset.
-		type ForceRegisterOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// Origin for force registering of a foreign asset
+		/// and setting fee payment variants.
+		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// The ID of the foreign assets pallet.
 		type PalletId: Get<PalletId>;
@@ -97,6 +99,9 @@ pub mod module {
 
 		/// The given asset ID could not be converted into the current XCM version.
 		BadForeignAssetId,
+
+		/// Zero fee multiplier can't be set.
+		ZeroFeeMultiplier,
 	}
 
 	#[pallet::event]
@@ -165,7 +170,7 @@ pub mod module {
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
-			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
 
 			let asset_id: AssetId = versioned_asset_id
 				.as_ref()
@@ -205,6 +210,39 @@ pub mod module {
 				collection_id,
 				asset_id: versioned_asset_id,
 			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::set_fee_payment_with())]
+		pub fn set_fee_payment_with(
+			origin: OriginFor<T>,
+			versioned_asset_id: Box<VersionedAssetId>,
+			fee_adjustment_multiplier: Option<FixedU128>,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+
+			if let Some(fee_adjustment_multiplier) = fee_adjustment_multiplier.as_ref() {
+				ensure!(
+					!fee_adjustment_multiplier.is_zero(),
+					<Error<T>>::ZeroFeeMultiplier
+				);
+			}
+
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
+			let collection_id =
+				Self::asset_to_fungible_collection(&asset_id).map_err(|xcm_err| match xcm_err {
+					XcmError::AssetNotFound => <CommonError<T>>::CollectionNotFound,
+					_ => <CommonError<T>>::UnsupportedOperation,
+				})?;
+
+			<CollectionFeeMultiplier<T>>::set(collection_id, fee_adjustment_multiplier);
 
 			Ok(())
 		}
@@ -274,12 +312,28 @@ impl<T: Config> Pallet<T> {
 	/// if the asset's reserve location corresponds to a local collection.
 	/// If the local collection is found, the "local" locality with the collection ID is returned.
 	///
-	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
+	/// If all of the above have failed, the `AssetNotHandled` error will be returned.
 	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionLocality, XcmError> {
 		Self::foreign_asset_to_collection(asset_id)
 			.map(CollectionLocality::Foreign)
 			.or_else(|| Self::local_asset_id_to_collection(asset_id))
-			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
+			.ok_or_else(|| XcmExecutorError::AssetNotHandled.into())
+	}
+
+	/// Same as `asset_to_collection` but will return `Ok` only if the collection is a fungible one.
+	fn asset_to_fungible_collection(asset_id: &AssetId) -> Result<CollectionId, XcmError> {
+		let collection_locality = <Pallet<T>>::asset_to_collection(asset_id)?;
+		let collection_id = *collection_locality;
+
+		let collection_mode =
+			<Pallet<T>>::collection_mode(collection_id).ok_or(XcmError::AssetNotFound)?;
+
+		ensure!(
+			matches!(collection_mode, CollectionMode::Fungible(_)),
+			XcmError::Unimplemented
+		);
+
+		Ok(collection_id)
 	}
 
 	/// Converts an XCM asset instance of local collection to the Unique Network's token ID.
@@ -583,24 +637,42 @@ impl From<ForeignCollectionMode> for CollectionMode {
 	}
 }
 
-pub struct Trader<T: Config, WeightToFee: Convert<Weight, <T as pallet_balances::Config>::Balance>>
-{
-	weight: Weight,
-	payment_asset: Option<AssetId>,
-	amount_to_pay: <T as pallet_balances::Config>::Balance,
-	_phantom: PhantomData<(T, WeightToFee)>,
+pub struct Trader<T: Config, WeightToFee: Convert<Weight, u128>, Beneficiary: Get<T::AccountId>> {
+	payment_asset_id: Option<AssetId>,
+	consumed_weight: Weight,
+	charged_fee: u128,
+	_phantom: PhantomData<(T, WeightToFee, Beneficiary)>,
 }
 
-impl<T: Config, WeightToFee: Convert<Weight, <T as pallet_balances::Config>::Balance>> WeightTrader
-	for Trader<T, WeightToFee>
-where
-	u128: From<<T as pallet_balances::Config>::Balance>,
+impl<T: Config, WeightToFee: Convert<Weight, u128>, Beneficiary: Get<T::AccountId>>
+	Trader<T, WeightToFee, Beneficiary>
+{
+	fn weight_to_asset_fee_amount(
+		&self,
+		asset_id: &AssetId,
+		weight: Weight,
+	) -> Result<u128, XcmError> {
+		let collection_id = <Pallet<T>>::asset_to_fungible_collection(asset_id)?;
+
+		let multiplier =
+			<Pallet<T>>::collection_fee_multiplier(collection_id).ok_or(XcmError::TooExpensive)?;
+
+		let fee = WeightToFee::convert(weight);
+		let adjusted_fee = multiplier.saturating_mul_int(fee);
+		let min_fee = 1u32.into();
+
+		Ok(adjusted_fee.max(min_fee))
+	}
+}
+
+impl<T: Config, WeightToFee: Convert<Weight, u128>, Beneficiary: Get<T::AccountId>> WeightTrader
+	for Trader<T, WeightToFee, Beneficiary>
 {
 	fn new() -> Self {
 		Self {
-			weight: Weight::zero(),
-			payment_asset: None,
-			amount_to_pay: 0u32.into(),
+			payment_asset_id: None,
+			consumed_weight: Weight::zero(),
+			charged_fee: 0u32.into(),
 			_phantom: PhantomData,
 		}
 	}
@@ -621,8 +693,8 @@ where
 			.next()
 			.ok_or(XcmError::TooExpensive)?;
 
-		if let Some(prev_payment_asset) = self.payment_asset {
-			if prev_payment_asset != payment_asset.id {
+		if let Some(prev_payment_asset_id) = self.payment_asset_id {
+			if prev_payment_asset_id != payment_asset.id {
 				// In the case of multiple `BuyExecution` instructions,
 				// we will handle only one type of assets.
 				// Handling different types of assets is yet to be implemented.
@@ -630,25 +702,7 @@ where
 			}
 		}
 
-		let collection_locality = <Pallet<T>>::asset_to_collection(&payment_asset.id)?;
-		let collection_id = *collection_locality;
-
-		let collection_mode =
-			<Pallet<T>>::collection_mode(collection_id).ok_or(XcmError::AssetNotFound)?;
-
-		let decimals = match collection_mode {
-			CollectionMode::Fungible(decimals) => decimals,
-
-			// NFTs and RFTs are not supported for XCM payment at the moment.
-			_ => return Err(XcmError::Unimplemented),
-		};
-
-		let multiplier =
-			<Pallet<T>>::collection_fee_multiplier(collection_id).ok_or(XcmError::TooExpensive)?;
-
-		let fee = WeightToFee::convert(weight);
-
-		let amount_to_pay = sp_std::cmp::max(multiplier.saturating_mul_int(fee), 1u32.into());
+		let amount_to_pay = self.weight_to_asset_fee_amount(&payment_asset.id, weight)?;
 
 		let required_payment = MultiAsset {
 			id: payment_asset.id,
@@ -661,18 +715,75 @@ where
 
 		// -- Changing the trader's state only after all checks passed --
 
-		if self.payment_asset.is_none() {
-			self.payment_asset = Some(payment_asset.id);
+		if self.payment_asset_id.is_none() {
+			self.payment_asset_id = Some(payment_asset.id);
 		}
 
-		self.weight = self.weight.saturating_add(weight);
-		self.amount_to_pay = self.amount_to_pay.saturating_add(amount_to_pay);
+		self.consumed_weight = self.consumed_weight.saturating_add(weight);
+		self.charged_fee = self.charged_fee.saturating_add(amount_to_pay);
 
 		Ok(unused_payment)
 	}
 
-	fn refund_weight(&mut self, _weight: Weight, _context: &XcmContext) -> Option<MultiAsset> {
-		todo!()
+	fn refund_weight(
+		&mut self,
+		weight_surplus: Weight,
+		context: &XcmContext,
+	) -> Option<MultiAsset> {
+		log::trace!(target: "xcm::weight::trader", "refund_weight weight_surplus: {weight_surplus:?}, context: {context:?}");
+
+		let payment_asset_id = self.payment_asset_id?;
+
+		let weight_to_refund = weight_surplus.min(self.consumed_weight);
+		let amount_to_refund = self
+			.weight_to_asset_fee_amount(&payment_asset_id, weight_to_refund)
+			.ok()?;
+
+		let is_nonzero_refund = !amount_to_refund.is_zero();
+
+		is_nonzero_refund.then_some(MultiAsset {
+			id: payment_asset_id,
+			fun: Fungible(amount_to_refund.into()),
+		})
+	}
+}
+
+impl<T: Config, WeightToFee: Convert<Weight, u128>, Beneficiary: Get<T::AccountId>> Drop
+	for Trader<T, WeightToFee, Beneficiary>
+{
+	fn drop(&mut self) {
+		if self.charged_fee.is_zero() {
+			return;
+		}
+
+		let Some(payment_asset_id) = self.payment_asset_id.take() else {
+			return;
+		};
+
+		let Ok(collection_id) = <Pallet<T>>::asset_to_fungible_collection(&payment_asset_id) else {
+			return;
+		};
+
+		let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+			return;
+		};
+
+		let collection = dispatch.as_dyn();
+		let Some(xcm_ext) = collection.xcm_extensions() else {
+			return;
+		};
+
+		let depositor = <Pallet<T>>::pallet_account();
+		let to = T::CrossAccountId::from_sub(Beneficiary::get());
+
+		let _ = xcm_ext.create_item(
+			&depositor,
+			to,
+			CreateItemData::Fungible(CreateFungibleData {
+				value: self.charged_fee,
+			}),
+			&ZeroBudget,
+		);
 	}
 }
 

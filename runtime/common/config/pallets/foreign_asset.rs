@@ -40,10 +40,10 @@ impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 
 	#[cfg(feature = "governance")]
-	type ForceRegisterOrigin = governance::RootOrTechnicalCommitteeMember;
+	type ManagerOrigin = governance::RootOrTechnicalCommitteeMember;
 
 	#[cfg(not(feature = "governance"))]
-	type ForceRegisterOrigin = EnsureRoot<Self::AccountId>;
+	type ManagerOrigin = EnsureRoot<Self::AccountId>;
 
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
