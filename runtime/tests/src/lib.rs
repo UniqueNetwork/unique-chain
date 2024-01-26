@@ -21,6 +21,7 @@ use frame_support::{
 	parameter_types,
 	traits::{fungible::Inspect, ConstU32, ConstU64, Everything},
 	weights::IdentityFee,
+	PalletId,
 };
 use frame_system as system;
 use pallet_ethereum::PostLogContent;
@@ -148,6 +149,7 @@ impl pallet_timestamp::Config for Test {
 parameter_types! {
 	pub const CollectionCreationPrice: u32 = 100;
 	pub TreasuryAccountId: u64 = 1234;
+	pub ForeignAssetPalletId: PalletId = PalletId(*b"frgnasts");
 	pub EthereumChainId: u32 = 1111;
 }
 
@@ -279,6 +281,7 @@ impl pallet_balances_adapter::Config for Test {
 	type Decimals = Decimals;
 	type Name = Name;
 	type Symbol = Symbol;
+	type XcmDepositorPalletId = ForeignAssetPalletId;
 	type WeightInfo = ();
 }
 
