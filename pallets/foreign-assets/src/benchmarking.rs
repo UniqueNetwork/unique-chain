@@ -67,8 +67,9 @@ mod benchmarks {
 			versioned_asset_id.clone(),
 			name,
 			token_prefix,
-			mode
-		).unwrap();
+			mode,
+		)
+		.unwrap();
 
 		#[extrinsic_call]
 		_(
