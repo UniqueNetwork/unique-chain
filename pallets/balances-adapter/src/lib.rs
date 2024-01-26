@@ -3,7 +3,7 @@
 extern crate alloc;
 use core::ops::Deref;
 
-use frame_support::sp_runtime::DispatchResult;
+use frame_support::{sp_runtime::DispatchResult, PalletId};
 pub use pallet::*;
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 
@@ -104,6 +104,8 @@ pub mod pallet {
 		type Name: Get<String>;
 		/// Collection symbol
 		type Symbol: Get<String>;
+
+		type XcmDepositorPalletId: Get<PalletId>;
 
 		/// Weight information
 		type WeightInfo: WeightInfo;
