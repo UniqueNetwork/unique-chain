@@ -786,21 +786,3 @@ impl<T: Config, WeightToFee: Convert<Weight, u128>, Beneficiary: Get<T::AccountI
 		);
 	}
 }
-
-pub struct FreeForAll;
-
-impl WeightTrader for FreeForAll {
-	fn new() -> Self {
-		Self
-	}
-
-	fn buy_weight(
-		&mut self,
-		weight: Weight,
-		payment: Assets,
-		_xcm: &XcmContext,
-	) -> Result<Assets, XcmError> {
-		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
-		Ok(payment)
-	}
-}

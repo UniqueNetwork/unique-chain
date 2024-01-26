@@ -22,7 +22,7 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
-use pallet_foreign_assets::FreeForAll;
+use pallet_foreign_assets::Trader;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
@@ -45,9 +45,9 @@ use up_common::types::AccountId;
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ForeignAssets, ParachainInfo,
-	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	XcmpQueue,
+	runtime_common::config::pallets::TreasuryAccountId, xcm_barrier::Barrier, AllPalletsWithSystem,
+	Balances, ForeignAssets, ParachainInfo, ParachainSystem, PolkadotXcm, RelayNetwork, Runtime,
+	RuntimeCall, RuntimeEvent, RuntimeOrigin, TransactionPayment, XcmpQueue,
 };
 
 parameter_types! {
@@ -157,12 +157,11 @@ pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstruction
 
 pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 
-pub type Trader = FreeForAll;
-
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
 impl<T> staging_xcm_executor::Config for XcmExecutorConfig<T>
 where
-	T: pallet_configuration::Config,
+	T: pallet_foreign_assets::Config,
+	<T as frame_system::Config>::AccountId: From<up_common::types::AccountId>,
 {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
@@ -174,7 +173,7 @@ where
 	type UniversalLocation = UniversalLocation;
 	type Barrier = Barrier;
 	type Weigher = Weigher;
-	type Trader = Trader;
+	type Trader = Trader<T, TransactionPayment, TreasuryAccountId>;
 	type ResponseHandler = PolkadotXcm;
 	type SubscriptionService = PolkadotXcm;
 	type PalletInstancesInfo = AllPalletsWithSystem;
