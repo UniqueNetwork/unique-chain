@@ -93,7 +93,8 @@ pub mod pallet {
 	use frame_system::{ensure_root, ensure_signed};
 	use pallet_common::{
 		dispatch::{dispatch_tx, CollectionDispatch},
-		CollectionHandle, CommonWeightInfo, Pallet as PalletCommon, RefungibleExtensionsWeightInfo,
+		CollectionHandle, CollectionIssuer, CommonWeightInfo, Pallet as PalletCommon,
+		RefungibleExtensionsWeightInfo,
 	};
 	use pallet_evm::account::CrossAccountId;
 	use pallet_structure::weights::WeightInfo as StructureWeightInfo;
@@ -401,7 +402,11 @@ pub mod pallet {
 
 			// =========
 			let sender = T::CrossAccountId::from_sub(sender);
-			let _id = T::CollectionDispatch::create(sender.clone(), sender, data)?;
+			let _id = T::CollectionDispatch::create(
+				sender.clone(),
+				CollectionIssuer::User(sender),
+				data,
+			)?;
 
 			Ok(())
 		}

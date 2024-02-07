@@ -18,6 +18,7 @@ use frame_support::{match_types, traits::Everything};
 use staging_xcm::latest::{Junctions::*, MultiLocation};
 use staging_xcm_builder::{
 	AllowExplicitUnpaidExecutionFrom, AllowTopLevelPaidExecutionFrom, TakeWeightCredit,
+	TrailingSetTopicAsId,
 };
 
 match_types! {
@@ -26,8 +27,8 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
+pub type Barrier = TrailingSetTopicAsId<(
 	TakeWeightCredit,
 	AllowExplicitUnpaidExecutionFrom<ParentOnly>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
-);
+)>;

@@ -26,7 +26,7 @@ use crate::types::{Balance, BlockNumber};
 #[cfg(not(feature = "lookahead"))]
 pub const MILLISECS_PER_BLOCK: u64 = 12000;
 #[cfg(feature = "lookahead")]
-pub const MILLISECS_PER_BLOCK: u64 = 3000;
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
 pub const MILLISECS_PER_RELAY_BLOCK: u64 = 6000;
 
 pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
@@ -57,10 +57,10 @@ pub const MAX_COLLATORS: u32 = 10;
 pub const SESSION_LENGTH: BlockNumber = HOURS;
 
 // Targeting 0.1 UNQ per transfer
-pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/74_401_761_267_585_092/*</weight2fee>*/;
+pub const WEIGHT_TO_FEE_COEFF: u64 = /*<weight2fee>*/74_374_502_416_291_841/*</weight2fee>*/;
 
 // Targeting 0.15 UNQ per transfer via ETH
-pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_873_477_799_288/*</mingasprice>*/;
+pub const MIN_GAS_PRICE: u64 = /*<mingasprice>*/1_873_548_000_299/*</mingasprice>*/;
 
 /// We assume that ~10% of the block weight is consumed by `on_initalize` handlers.
 /// This is used to limit the maximal weight of a single extrinsic.

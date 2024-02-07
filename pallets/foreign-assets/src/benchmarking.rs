@@ -16,88 +16,36 @@
 
 #![allow(missing_docs)]
 
-use frame_benchmarking::{account, v2::*};
-use frame_support::traits::Currency;
+use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
-use sp_std::{boxed::Box, vec, vec::Vec};
-use staging_xcm::{opaque::latest::Junction::Parachain, v3::Junctions::X1, VersionedMultiLocation};
+use pallet_common::benchmarking::{create_data, create_u16_data};
+use sp_std::{boxed::Box, vec};
+use staging_xcm::prelude::*;
+use up_data_structs::{MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH};
 
-use super::{Call, Config, Pallet};
-use crate::AssetMetadata;
-
-fn bounded<T: TryFrom<Vec<u8>>>(slice: &[u8]) -> T {
-	T::try_from(slice.to_vec())
-		.map_err(|_| "slice doesn't fit")
-		.unwrap()
-}
+use super::{Call, Config, ForeignCollectionMode, Pallet};
 
 #[benchmarks]
 mod benchmarks {
+
 	use super::*;
 
 	#[benchmark]
-	fn register_foreign_asset() -> Result<(), BenchmarkError> {
-		let owner: T::AccountId = account("user", 0, 1);
-		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(1000)));
-		let metadata: AssetMetadata<
-			<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		> = AssetMetadata {
-			name: bounded(b"name"),
-			symbol: bounded(b"symbol"),
-			decimals: 18,
-			minimal_balance: 1u32.into(),
-		};
-		let mut balance: <<T as Config>::Currency as Currency<
-			<T as frame_system::Config>::AccountId,
-		>>::Balance = 4_000_000_000u32.into();
-		balance = balance * balance;
-		<T as Config>::Currency::make_free_balance_be(&owner, balance);
+	fn force_register_foreign_asset() -> Result<(), BenchmarkError> {
+		let location =
+			MultiLocation::from(X3(Parachain(1000), PalletInstance(42), GeneralIndex(1)));
+		let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
+		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
+		let mode = ForeignCollectionMode::NFT;
 
 		#[extrinsic_call]
 		_(
 			RawOrigin::Root,
-			owner,
-			Box::new(location),
-			Box::new(metadata),
+			Box::new(location.into()),
+			name,
+			token_prefix,
+			mode,
 		);
-
-		Ok(())
-	}
-
-	#[benchmark]
-	fn update_foreign_asset() -> Result<(), BenchmarkError> {
-		let owner: T::AccountId = account("user", 0, 1);
-		let location: VersionedMultiLocation = VersionedMultiLocation::from(X1(Parachain(2000)));
-		let metadata: AssetMetadata<
-			<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		> = AssetMetadata {
-			name: bounded(b"name"),
-			symbol: bounded(b"symbol"),
-			decimals: 18,
-			minimal_balance: 1u32.into(),
-		};
-		let metadata2: AssetMetadata<
-			<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		> = AssetMetadata {
-			name: bounded(b"name2"),
-			symbol: bounded(b"symbol2"),
-			decimals: 18,
-			minimal_balance: 1u32.into(),
-		};
-		let mut balance: <<T as Config>::Currency as Currency<
-			<T as frame_system::Config>::AccountId,
-		>>::Balance = 4_000_000_000u32.into();
-		balance = balance * balance;
-		<T as Config>::Currency::make_free_balance_be(&owner, balance);
-		Pallet::<T>::register_foreign_asset(
-			RawOrigin::Root.into(),
-			owner,
-			Box::new(location.clone()),
-			Box::new(metadata),
-		)?;
-
-		#[extrinsic_call]
-		_(RawOrigin::Root, 0, Box::new(location), Box::new(metadata2));
 
 		Ok(())
 	}

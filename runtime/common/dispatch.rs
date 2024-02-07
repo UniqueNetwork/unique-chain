@@ -17,11 +17,9 @@
 use frame_support::{dispatch::DispatchResult, ensure, fail};
 use pallet_balances_adapter::NativeFungibleHandle;
 pub use pallet_common::dispatch::CollectionDispatch;
-#[cfg(not(feature = "refungible"))]
-use pallet_common::unsupported;
 use pallet_common::{
-	erc::CommonEvmHandler, eth::map_eth_to_id, CollectionById, CollectionHandle,
-	CommonCollectionOperations,
+	erc::CommonEvmHandler, eth::map_eth_to_id, CollectionById, CollectionHandle, CollectionIssuer,
+	CommonCollectionOperations, Pallet as PalletCommon,
 };
 use pallet_evm::{PrecompileHandle, PrecompileResult};
 use pallet_fungible::{FungibleHandle, Pallet as PalletFungible};
@@ -70,27 +68,25 @@ where
 
 	fn create(
 		sender: T::CrossAccountId,
-		payer: T::CrossAccountId,
+		issuer: CollectionIssuer<T::CrossAccountId>,
 		data: CreateCollectionData<T::CrossAccountId>,
 	) -> Result<CollectionId, DispatchError> {
-		let id = match data.mode {
-			CollectionMode::NFT => <PalletNonfungible<T>>::init_collection(sender, payer, data)?,
+		match data.mode {
 			CollectionMode::Fungible(decimal_points) => {
 				// check params
 				ensure!(
 					decimal_points <= MAX_DECIMAL_POINTS,
 					pallet_unique::Error::<T>::CollectionDecimalPointLimitExceeded
 				);
-				<PalletFungible<T>>::init_collection(sender, payer, data)?
 			}
-
-			#[cfg(feature = "refungible")]
-			CollectionMode::ReFungible => <PalletRefungible<T>>::init_collection(sender, payer, data)?,
 
 			#[cfg(not(feature = "refungible"))]
 			CollectionMode::ReFungible => return unsupported!(T),
+
+			_ => {}
 		};
-		Ok(id)
+
+		<PalletCommon<T>>::init_collection(sender, issuer, data)
 	}
 
 	fn destroy(sender: T::CrossAccountId, collection_id: CollectionId) -> DispatchResult {

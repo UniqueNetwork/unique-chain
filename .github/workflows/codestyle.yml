@@ -40,12 +40,12 @@ jobs:
           ref: ${{ github.head_ref }}            
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
       - name: Install modules
-        run: cd tests && yarn
+        run: cd js-packages && yarn
       - name: Run ESLint
-        # run: cd tests && yarn eslint --ext .ts,.js --max-warnings=0 src/
-        run: cd tests && yarn eslint --ext .ts,.js src/
+        # run: cd js-packages && yarn lint --max-warnings=0
+        run: cd js-packages && yarn lint
 
   clippy:
     runs-on: [ self-hosted-ci ]

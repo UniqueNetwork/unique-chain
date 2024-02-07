@@ -59,14 +59,14 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Run tests
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
           yarn install
           yarn add mochawesome
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
@@ -78,7 +78,7 @@ jobs:
         if: success() || failure()    # run this step even if previous step failed
         with:
           name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json    # Path to test results
+          path: js-packages/tests/mochawesome-report/test-*.json    # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 
@@ -87,16 +87,16 @@ jobs:
           echo "url is ${{ steps.test-report.outputs.runHtmlUrl }}"
 
       - name: Run benchmark mintFee tests
-        working-directory: tests
+        working-directory: js-packages/scripts
         run: |
           yarn install
-          npx ts-node --esm ./src/benchmarks/mintFee/index.ts
+          node --no-warnings=ExperimentalWarning --loader ts-node/esm ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
-        working-directory: tests
+        working-directory: js-packages/scripts
         run: |
           yarn install
-          npx ts-node --esm ./src/benchmarks/opsFee/index.ts
+          node --no-warnings=ExperimentalWarning --loader ts-node/esm ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
         if: always()                   # run this step always

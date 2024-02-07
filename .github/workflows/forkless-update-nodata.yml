@@ -137,7 +137,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built
@@ -161,19 +161,20 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: "Reconcile: runtime is upgraded"
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
           yarn
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Executing upgrade"
-          yarn ts-node --esm src/util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Parallel tests after forkless upgrade
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
-          ./scripts/wait_for_first_block.sh
+          yarn add mochawesome
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
@@ -181,7 +182,7 @@ jobs:
 
       - name: Run Sequential tests after forkless upgrade
         if: success() || failure()
-        working-directory: tests
+        working-directory: js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}

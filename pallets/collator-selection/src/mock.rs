@@ -114,6 +114,7 @@ impl pallet_balances::Config for Test {
 	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
 	type RuntimeHoldReason = RuntimeHoldReason;
+	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
 
 pub struct Author4;
@@ -208,7 +209,7 @@ parameter_types! {
 	pub const DefaultWeightToFeeCoefficient: u64 = 100_000;
 	pub const DefaultMinGasPrice: u64 = 100_000;
 	pub const MaxXcmAllowedLocations: u32 = 16;
-	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub AppPromotionDailyRate: Perbill = Perbill::from_parts(453_256);
 	pub const DayRelayBlocks: u32 = 1;
 	pub const LicenceBondIdentifier: [u8; 16] = *b"licenceidentifie";
 }

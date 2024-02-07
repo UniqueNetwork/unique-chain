@@ -18,7 +18,7 @@ use frame_support::{match_types, traits::Everything};
 use staging_xcm::latest::{Junctions::*, MultiLocation};
 use staging_xcm_builder::{
 	AllowExplicitUnpaidExecutionFrom, AllowKnownQueryResponses, AllowSubscriptionsFrom,
-	AllowTopLevelPaidExecutionFrom, TakeWeightCredit,
+	AllowTopLevelPaidExecutionFrom, TakeWeightCredit, TrailingSetTopicAsId,
 };
 
 use crate::PolkadotXcm;
@@ -34,7 +34,7 @@ match_types! {
 	};
 }
 
-pub type Barrier = (
+pub type Barrier = TrailingSetTopicAsId<(
 	TakeWeightCredit,
 	AllowExplicitUnpaidExecutionFrom<ParentOnly>,
 	AllowTopLevelPaidExecutionFrom<Everything>,
@@ -42,4 +42,4 @@ pub type Barrier = (
 	AllowKnownQueryResponses<PolkadotXcm>,
 	// Subscriptions for version tracking are OK.
 	AllowSubscriptionsFrom<ParentOrSiblings>,
-);
+)>;

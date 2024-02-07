@@ -101,8 +101,14 @@ impl pallet_balances_adapter::Config for Runtime {
 	type WeightInfo = pallet_balances::weights::SubstrateWeight<Self>;
 }
 
+// every time per how many blocks inflation is applied
+#[cfg(feature = "fast-inflation")]
 parameter_types! {
-	pub const InflationBlockInterval: BlockNumber = 100; // every time per how many blocks inflation is applied
+	pub const InflationBlockInterval: BlockNumber = 10;
+}
+#[cfg(not(feature = "fast-inflation"))]
+parameter_types! {
+	pub const InflationBlockInterval: BlockNumber = 100;
 }
 
 /// Pallet-inflation needs block number in on_initialize, where there is no `validation_data` exists yet
@@ -111,19 +117,21 @@ impl BlockNumberProvider for OnInitializeBlockNumberProvider {
 	type BlockNumber = BlockNumber;
 
 	fn current_block_number() -> Self::BlockNumber {
-		use hex_literal::hex;
-		use parity_scale_codec::Decode;
-		use sp_io::storage;
-		// TODO: Replace with the following code after https://github.com/paritytech/polkadot-sdk/commit/3ea497b5a0fdda252f9c5a3c257cfaf8685f02fd lands
-		// <cumulus_pallet_parachain_system::Pallet<Runtime>>::last_relay_block_number()
-
-		// ParachainSystem.LastRelayChainBlockNumber
-		let Some(encoded) = storage::get(&hex!("45323df7cc47150b3930e2666b0aa313a2bca190d36bd834cc73a38fc213ecbd")) else {
-			// First parachain block
-			return Default::default()
-		};
-		BlockNumber::decode(&mut encoded.as_ref())
-			.expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
+		// This code was broken previously, but after fixing, we decided it would be better to leave it broken for now.
+		0
+		// use hex_literal::hex;
+		// use parity_scale_codec::Decode;
+		// use sp_io::storage;
+		// // TODO: Replace with the following code after https://github.com/paritytech/polkadot-sdk/commit/3ea497b5a0fdda252f9c5a3c257cfaf8685f02fd lands
+		// // <cumulus_pallet_parachain_system::Pallet<Runtime>>::last_relay_block_number()
+		//
+		// // ParachainSystem.LastRelayChainBlockNumber
+		// let Some(encoded) = storage::get(&hex!("45323df7cc47150b3930e2666b0aa313a2bca190d36bd834cc73a38fc213ecbd")) else {
+		// 	// First parachain block
+		// 	return Default::default()
+		// };
+		// BlockNumber::decode(&mut encoded.as_ref())
+		// 	.expect("typeof(RelayBlockNumber) == typeof(BlockNumber) == u32; qed")
 	}
 }
 
@@ -143,7 +151,7 @@ impl pallet_unique::Config for Runtime {
 }
 
 parameter_types! {
-	pub AppPromotionDailyRate: Perbill = Perbill::from_rational(5u32, 10_000);
+	pub AppPromotionDailyRate: Perbill = Perbill::from_parts(453_256);
 	pub const MaxCollators: u32 = MAX_COLLATORS;
 	pub const LicenseBond: Balance = GENESIS_LICENSE_BOND;
 

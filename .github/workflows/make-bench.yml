@@ -36,23 +36,22 @@ jobs:
 
       - uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
 
       - name: RUN benchmarking
         run: |
           time make bench
 
       - name: Run node dev mode in background
-        working-directory: ./
         run: |
           ./target/release/unique-collator --dev &
 
       - name: RUN Calibrate
-        working-directory: ./tests
+        working-directory: js-packages/scripts
         run: |
-          yarn install
-          yarn ts-node --esm src/calibrate.ts
-          yarn ts-node --esm src/calibrateApply.ts
+          yarn
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm calibrate.ts
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm calibrateApply.ts
           
       - name: show git diff
         run: |

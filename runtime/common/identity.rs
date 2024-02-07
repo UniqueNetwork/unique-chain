@@ -16,7 +16,7 @@
 
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
-#[cfg(feature = "collator-selection")]
+#[cfg(feature = "governance")]
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::{
 	traits::{DispatchInfoOf, SignedExtension},
@@ -59,7 +59,7 @@ impl SignedExtension for DisableIdentityCalls {
 		_len: usize,
 	) -> TransactionValidity {
 		match call {
-			#[cfg(feature = "collator-selection")]
+			#[cfg(feature = "governance")]
 			RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 			_ => Ok(ValidTransaction::default()),
 		}

@@ -31,6 +31,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
+            network {unique}, wasm_name {unique}
             network {quartz}, wasm_name {quartz}
             network {opal}, wasm_name {opal}
             network {sapphire}, wasm_name {quartz}
@@ -78,14 +79,14 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Run tests
-        working-directory: tests
+        working-directory: js-packages/tests
         run: |
           yarn install
           yarn add mochawesome
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testGovernance --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
@@ -97,7 +98,7 @@ jobs:
         if: success() || failure() # run this step even if previous step failed
         with:
           name: int test results - ${{ matrix.network }} # Name of the check run which will be created
-          path: tests/mochawesome-report/test-*.json # Path to test results
+          path: js-packages/tests/mochawesome-report/test-*.json # Path to test results
           reporter: mochawesome-json
           fail-on-error: 'false'
 

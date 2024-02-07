@@ -1,0 +1,32 @@
+{
+    "author": "",
+    "license": "SEE LICENSE IN ../../../LICENSE",
+    "description": "Interfaces for interacting with contracts and contract ABIs",
+    "engines": {
+        "node": ">=16"
+    },
+    "name": "@unique/tests",
+    "type": "module",
+    "version": "1.0.0",
+    "main": "",
+    "devDependencies": {
+        "mocha": "^10.1.0"
+    },
+    "scripts": {
+        "setup": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../test-utils/globalSetup.ts",
+        "setIdentities": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/identitySetter.ts",
+        "checkRelayIdentities": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/relayIdentitiesChecker.ts",
+        "_test": "yarn setup && yarn mocha --timeout 9999999 --loader=ts-node/esm.mjs",
+        "_testParallel": "yarn setup && yarn mocha --timeout 9999999 --parallel --loader=ts-node/esm.mjs",
+        "test": "yarn _test './**/*.*test.ts'",
+        "testParallel": "yarn _testParallel './**/*.test.ts'",
+        "testSequential": "yarn _test './**/*.seqtest.ts'",
+        "testEth": "yarn _test ./**/eth/*.*test.ts",
+        "testGovernance": "RUN_GOV_TESTS=1 yarn _test ./**/sub/governance/*.*test.ts",
+        "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/sub/collator-selection/**.*test.ts --timeout 49999999",
+        "testFullXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Unique.test.ts",
+        "testFullXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Quartz.test.ts",
+        "testXcmOpal": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmOpal.test.ts",
+        "load": "yarn _test './**/*.load.ts'"
+    }
+}

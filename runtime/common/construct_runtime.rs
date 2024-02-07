@@ -24,7 +24,7 @@ macro_rules! construct_runtime {
 				StateTrieMigration: pallet_state_trie_migration = 1,
 
 				ParachainSystem: cumulus_pallet_parachain_system = 20,
-				ParachainInfo: parachain_info = 21,
+				ParachainInfo: staging_parachain_info = 21,
 
 				#[cfg(feature = "collator-selection")]
 				Authorship: pallet_authorship = 22,
@@ -47,10 +47,10 @@ macro_rules! construct_runtime {
 				Vesting: orml_vesting = 37,
 
 				XTokens: orml_xtokens = 38,
-				Tokens: orml_tokens = 39,
+				// [REMOVED] Tokens: orml_tokens = 39,
 				// Contracts: pallet_contracts::{Pallet, Call, Storage, Event<T>} = 38,
 
-				#[cfg(feature = "collator-selection")]
+				#[cfg(feature = "governance")]
 				Identity: pallet_identity = 40,
 
 				#[cfg(feature = "preimage")]

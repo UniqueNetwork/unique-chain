@@ -35,7 +35,6 @@ use cumulus_client_consensus_aura::collators::lookahead::{
 };
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
-use cumulus_client_network::RequireSecondedInBlockAnnounce;
 use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, DARecoveryProfile,
 	StartRelayChainTasksParams,
@@ -399,8 +398,9 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
+	// Aura is sybil-resistant, collator-selection is generally too.
 	let block_announce_validator =
-		RequireSecondedInBlockAnnounce::new(relay_chain_interface.clone(), para_id);
+		cumulus_client_network::AssumeSybilResistance::allow_seconded_messages();
 
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
@@ -419,6 +419,7 @@ where
 				Box::new(block_announce_validator)
 			})),
 			warp_sync_params: None,
+			block_relay: None,
 		})?;
 
 	let select_chain = params.select_chain.clone();
@@ -778,6 +779,8 @@ where
 		},
 		collator_key,
 		relay_chain_slot_duration,
+		#[cfg(not(feature = "lookahead"))]
+		collation_request_receiver: None,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
@@ -887,6 +890,7 @@ where
 			import_queue,
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
+			block_relay: None,
 		})?;
 
 	let collator = config.role.is_authority();

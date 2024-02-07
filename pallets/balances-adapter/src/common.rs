@@ -1,10 +1,16 @@
 use alloc::{vec, vec::Vec};
 use core::marker::PhantomData;
 
-use frame_support::{ensure, fail, weights::Weight};
+use frame_support::{
+	ensure, fail,
+	traits::tokens::{fungible::Mutate, Fortitude, Precision},
+	weights::Weight,
+};
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
-use pallet_common::{CommonCollectionOperations, CommonWeightInfo, Error as CommonError};
-use up_data_structs::TokenId;
+use pallet_common::{
+	erc::CrossAccountId, CommonCollectionOperations, CommonWeightInfo, Error as CommonError,
+};
+use up_data_structs::{budget::Budget, TokenId};
 
 use crate::{Config, NativeFungibleHandle, Pallet};
 
@@ -332,8 +338,8 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		0
 	}
 
-	fn refungible_extensions(&self) -> Option<&dyn pallet_common::RefungibleExtensions<T>> {
-		None
+	fn xcm_extensions(&self) -> Option<&dyn pallet_common::XcmExtensions<T>> {
+		Some(self)
 	}
 
 	fn set_allowance_for_all(
@@ -358,5 +364,74 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		_token: TokenId,
 	) -> frame_support::pallet_prelude::DispatchResultWithPostInfo {
 		fail!(<CommonError<T>>::UnsupportedOperation);
+	}
+}
+
+impl<T: Config> pallet_common::XcmExtensions<T> for NativeFungibleHandle<T> {
+	fn create_item_internal(
+		&self,
+		_depositor: &<T>::CrossAccountId,
+		to: <T>::CrossAccountId,
+		data: up_data_structs::CreateItemData,
+		_nesting_budget: &dyn Budget,
+	) -> Result<TokenId, sp_runtime::DispatchError> {
+		match &data {
+			up_data_structs::CreateItemData::Fungible(fungible_data) => {
+				T::Mutate::mint_into(
+					to.as_sub(),
+					fungible_data
+						.value
+						.try_into()
+						.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+				)?;
+
+				Ok(TokenId::default())
+			}
+			_ => {
+				fail!(<CommonError<T>>::NotFungibleDataUsedToMintFungibleCollectionToken)
+			}
+		}
+	}
+
+	fn transfer_item_internal(
+		&self,
+		_depositor: &<T>::CrossAccountId,
+		from: &<T>::CrossAccountId,
+		to: &<T>::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+		_nesting_budget: &dyn Budget,
+	) -> sp_runtime::DispatchResult {
+		ensure!(
+			token == TokenId::default(),
+			<CommonError<T>>::FungibleItemsHaveNoId
+		);
+
+		<Pallet<T>>::transfer(from, to, amount)
+			.map(|_| ())
+			.map_err(|post_info| post_info.error)
+	}
+
+	fn burn_item_internal(
+		&self,
+		from: T::CrossAccountId,
+		token: TokenId,
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		ensure!(
+			token == TokenId::default(),
+			<CommonError<T>>::FungibleItemsHaveNoId
+		);
+
+		T::Mutate::burn_from(
+			from.as_sub(),
+			amount
+				.try_into()
+				.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+			Precision::Exact,
+			Fortitude::Polite,
+		)?;
+
+		Ok(())
 	}
 }

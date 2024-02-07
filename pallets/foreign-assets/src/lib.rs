@@ -14,113 +14,38 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-//! # Foreign assets
-//!
-//! - [`Config`]
-//! - [`Call`]
-//! - [`Pallet`]
+//! # Foreign Assets
 //!
 //! ## Overview
 //!
-//! The foreign assests pallet provides functions for:
-//!
-//! - Local and foreign assets management. The foreign assets can be updated without runtime upgrade.
-//! - Bounds between asset and target collection for cross chain transfer and inner transfers.
-//!
-//! ## Overview
-//!
-//! Under construction
+//! The Foreign Assets is a proxy that maps XCM operations to the Unique Network's pallets logic.
 
 #![cfg_attr(not(feature = "std"), no_std)]
 #![allow(clippy::unused_unit)]
 
-use frame_support::{
-	dispatch::DispatchResult,
-	ensure,
-	pallet_prelude::*,
-	traits::{fungible, fungibles, Currency, EnsureOrigin},
-};
+use core::ops::Deref;
+
+use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::EnsureOrigin, PalletId};
 use frame_system::pallet_prelude::*;
-use pallet_common::erc::CrossAccountId;
-use pallet_fungible::Pallet as PalletFungible;
-use scale_info::TypeInfo;
-use serde::{Deserialize, Serialize};
-use sp_runtime::{
-	traits::{One, Zero},
-	ArithmeticError,
+use pallet_common::{
+	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
-use sp_std::{boxed::Box, vec::Vec};
-use staging_xcm::{latest::MultiLocation, VersionedMultiLocation};
-// NOTE: MultiLocation is used in storages, we will need to do migration if upgrade the
-// MultiLocation to the XCM v3.
+use sp_runtime::traits::AccountIdConversion;
+use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{
 	opaque::latest::{prelude::XcmError, Weight},
-	v3::XcmContext,
+	v3::{prelude::*, MultiAsset, XcmContext},
+	VersionedAssetId,
 };
-use staging_xcm_executor::{traits::WeightTrader, Assets};
-use up_data_structs::{CollectionId, CollectionMode, CreateCollectionData, TokenId};
+use staging_xcm_executor::{
+	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
+	Assets,
+};
+use up_data_structs::{
+	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CollectionTokenPrefix,
+	CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
+};
 
-// TODO: Move to primitives
-// Id of native currency.
-// 0 - QTZ\UNQ
-// 1 - KSM\DOT
-#[derive(
-	Clone,
-	Copy,
-	Eq,
-	PartialEq,
-	PartialOrd,
-	Ord,
-	MaxEncodedLen,
-	RuntimeDebug,
-	Encode,
-	Decode,
-	TypeInfo,
-	Serialize,
-	Deserialize,
-)]
-pub enum NativeCurrency {
-	Here = 0,
-	Parent = 1,
-}
-
-#[derive(
-	Clone,
-	Copy,
-	Eq,
-	PartialEq,
-	PartialOrd,
-	Ord,
-	MaxEncodedLen,
-	RuntimeDebug,
-	Encode,
-	Decode,
-	TypeInfo,
-	Serialize,
-	Deserialize,
-)]
-pub enum AssetId {
-	ForeignAssetId(ForeignAssetId),
-	NativeAssetId(NativeCurrency),
-}
-
-pub trait TryAsForeign<T, F> {
-	fn try_as_foreign(asset: T) -> Option<F>;
-}
-
-impl TryAsForeign<AssetId, ForeignAssetId> for AssetId {
-	fn try_as_foreign(asset: AssetId) -> Option<ForeignAssetId> {
-		match asset {
-			Self::ForeignAssetId(id) => Some(id),
-			_ => None,
-		}
-	}
-}
-
-pub type ForeignAssetId = u32;
-pub type CurrencyId = AssetId;
-
-mod impl_fungibles;
 pub mod weights;
 
 #[cfg(feature = "runtime-benchmarks")]
@@ -129,43 +54,11 @@ mod benchmarking;
 pub use module::*;
 pub use weights::WeightInfo;
 
-/// Type alias for currency balance.
-pub type BalanceOf<T> =
-	<<T as Config>::Currency as Currency<<T as frame_system::Config>::AccountId>>::Balance;
-
-/// A mapping between ForeignAssetId and AssetMetadata.
-pub trait AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata> {
-	/// Returns the AssetMetadata associated with a given ForeignAssetId.
-	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata>;
-	/// Returns the MultiLocation associated with a given ForeignAssetId.
-	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation>;
-	/// Returns the CurrencyId associated with a given MultiLocation.
-	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId>;
-}
-
-pub struct XcmForeignAssetIdMapping<T>(sp_std::marker::PhantomData<T>);
-
-impl<T: Config> AssetIdMapping<ForeignAssetId, MultiLocation, AssetMetadata<BalanceOf<T>>>
-	for XcmForeignAssetIdMapping<T>
-{
-	fn get_asset_metadata(foreign_asset_id: ForeignAssetId) -> Option<AssetMetadata<BalanceOf<T>>> {
-		log::trace!(target: "fassets::asset_metadatas", "call");
-		Pallet::<T>::asset_metadatas(AssetId::ForeignAssetId(foreign_asset_id))
-	}
-
-	fn get_multi_location(foreign_asset_id: ForeignAssetId) -> Option<MultiLocation> {
-		log::trace!(target: "fassets::get_multi_location", "call");
-		Pallet::<T>::foreign_asset_locations(foreign_asset_id)
-	}
-
-	fn get_currency_id(multi_location: MultiLocation) -> Option<CurrencyId> {
-		log::trace!(target: "fassets::get_currency_id", "call");
-		Pallet::<T>::location_to_currency_ids(multi_location).map(AssetId::ForeignAssetId)
-	}
-}
-
 #[frame_support::pallet]
 pub mod module {
+	use pallet_common::CollectionIssuer;
+	use up_data_structs::CollectionDescription;
+
 	use super::*;
 
 	#[pallet::config]
@@ -173,44 +66,34 @@ pub mod module {
 		frame_system::Config
 		+ pallet_common::Config
 		+ pallet_fungible::Config
-		+ orml_tokens::Config
 		+ pallet_balances::Config
 	{
 		/// The overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
-		/// Currency type for withdraw and balance storage.
-		type Currency: Currency<Self::AccountId>;
+		/// Origin for force registering of a foreign asset.
+		type ForceRegisterOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
-		/// Required origin for registering asset.
-		type RegisterOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		/// The ID of the foreign assets pallet.
+		type PalletId: Get<PalletId>;
+
+		/// Self-location of this parachain.
+		type SelfLocation: Get<MultiLocation>;
+
+		/// The converter from a MultiLocation to a CrossAccountId.
+		type LocationToAccountId: ConvertLocation<Self::CrossAccountId>;
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
 	}
 
-	pub type AssetName = BoundedVec<u8, ConstU32<32>>;
-	pub type AssetSymbol = BoundedVec<u8, ConstU32<7>>;
-
-	#[derive(Clone, Eq, PartialEq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
-	pub struct AssetMetadata<Balance> {
-		pub name: AssetName,
-		pub symbol: AssetSymbol,
-		pub decimals: u8,
-		pub minimal_balance: Balance,
-	}
-
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The given location could not be used (e.g. because it cannot be expressed in the
-		/// desired version of XCM).
-		BadLocation,
-		/// MultiLocation existed
-		MultiLocationExisted,
-		/// AssetId not exists
-		AssetIdNotExists,
-		/// AssetId exists
-		AssetIdExisted,
+		/// The foreign asset is already registered.
+		ForeignAssetAlreadyRegistered,
+
+		/// The given asset ID could not be converted into the current XCM version.
+		BadForeignAssetId,
 	}
 
 	#[pallet::event]
@@ -218,64 +101,46 @@ pub mod module {
 	pub enum Event<T: Config> {
 		/// The foreign asset registered.
 		ForeignAssetRegistered {
-			asset_id: ForeignAssetId,
-			asset_address: MultiLocation,
-			metadata: AssetMetadata<BalanceOf<T>>,
-		},
-		/// The foreign asset updated.
-		ForeignAssetUpdated {
-			asset_id: ForeignAssetId,
-			asset_address: MultiLocation,
-			metadata: AssetMetadata<BalanceOf<T>>,
-		},
-		/// The asset registered.
-		AssetRegistered {
-			asset_id: AssetId,
-			metadata: AssetMetadata<BalanceOf<T>>,
-		},
-		/// The asset updated.
-		AssetUpdated {
-			asset_id: AssetId,
-			metadata: AssetMetadata<BalanceOf<T>>,
+			collection_id: CollectionId,
+			asset_id: Box<VersionedAssetId>,
 		},
 	}
 
-	/// Next available Foreign AssetId ID.
-	///
-	/// NextForeignAssetId: ForeignAssetId
+	/// The corresponding collections of foreign assets.
 	#[pallet::storage]
-	#[pallet::getter(fn next_foreign_asset_id)]
-	pub type NextForeignAssetId<T: Config> = StorageValue<_, ForeignAssetId, ValueQuery>;
-	/// The storages for MultiLocations.
-	///
-	/// ForeignAssetLocations: map ForeignAssetId => Option<MultiLocation>
-	#[pallet::storage]
-	#[pallet::getter(fn foreign_asset_locations)]
-	pub type ForeignAssetLocations<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, staging_xcm::v3::MultiLocation, OptionQuery>;
+	#[pallet::getter(fn foreign_asset_to_collection)]
+	pub type ForeignAssetToCollection<T: Config> =
+		StorageMap<_, Twox64Concat, staging_xcm::v3::AssetId, CollectionId, OptionQuery>;
 
-	/// The storages for CurrencyIds.
-	///
-	/// LocationToCurrencyIds: map MultiLocation => Option<ForeignAssetId>
+	/// The corresponding foreign assets of collections.
 	#[pallet::storage]
-	#[pallet::getter(fn location_to_currency_ids)]
-	pub type LocationToCurrencyIds<T: Config> =
-		StorageMap<_, Twox64Concat, staging_xcm::v3::MultiLocation, ForeignAssetId, OptionQuery>;
+	#[pallet::getter(fn collection_to_foreign_asset)]
+	pub type CollectionToForeignAsset<T: Config> =
+		StorageMap<_, Twox64Concat, CollectionId, staging_xcm::v3::AssetId, OptionQuery>;
 
-	/// The storages for AssetMetadatas.
-	///
-	/// AssetMetadatas: map AssetIds => Option<AssetMetadata>
+	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
-	#[pallet::getter(fn asset_metadatas)]
-	pub type AssetMetadatas<T: Config> =
-		StorageMap<_, Twox64Concat, AssetId, AssetMetadata<BalanceOf<T>>, OptionQuery>;
+	#[pallet::getter(fn foreign_reserve_asset_instance_to_token_id)]
+	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
+		Hasher1 = Twox64Concat,
+		Key1 = CollectionId,
+		Hasher2 = Blake2_128Concat,
+		Key2 = staging_xcm::v3::AssetInstance,
+		Value = TokenId,
+		QueryKind = OptionQuery,
+	>;
 
-	/// The storages for assets to fungible collection binding
-	///
+	/// The correponding reserve NFT of a token ID
 	#[pallet::storage]
-	#[pallet::getter(fn asset_binding)]
-	pub type AssetBinding<T: Config> =
-		StorageMap<_, Twox64Concat, ForeignAssetId, CollectionId, OptionQuery>;
+	#[pallet::getter(fn token_id_to_foreign_reserve_asset_instance)]
+	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
+		Hasher1 = Twox64Concat,
+		Key1 = CollectionId,
+		Hasher2 = Blake2_128Concat,
+		Key2 = TokenId,
+		Value = staging_xcm::v3::AssetInstance,
+		QueryKind = OptionQuery,
+	>;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -283,197 +148,433 @@ pub mod module {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
-		#[pallet::weight(<T as Config>::WeightInfo::register_foreign_asset())]
-		pub fn register_foreign_asset(
+		#[pallet::weight(<T as Config>::WeightInfo::force_register_foreign_asset())]
+		pub fn force_register_foreign_asset(
 			origin: OriginFor<T>,
-			owner: T::AccountId,
-			location: Box<VersionedMultiLocation>,
-			metadata: Box<AssetMetadata<BalanceOf<T>>>,
+			versioned_asset_id: Box<VersionedAssetId>,
+			name: CollectionName,
+			token_prefix: CollectionTokenPrefix,
+			mode: ForeignCollectionMode,
 		) -> DispatchResult {
-			T::RegisterOrigin::ensure_origin(origin.clone())?;
+			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
 
-			let location: MultiLocation = (*location)
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
 				.try_into()
-				.map_err(|()| Error::<T>::BadLocation)?;
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
 
-			let md = metadata.clone();
-			let name: Vec<u16> = md.name.into_iter().map(|x| x as u16).collect::<Vec<u16>>();
-			let mut description: Vec<u16> = "Foreign assets collection for "
+			ensure!(
+				!<ForeignAssetToCollection<T>>::contains_key(asset_id),
+				<Error<T>>::ForeignAssetAlreadyRegistered,
+			);
+
+			let foreign_collection_owner = Self::pallet_account();
+
+			let description: CollectionDescription = "Foreign Assets Collection"
 				.encode_utf16()
-				.collect::<Vec<u16>>();
-			description.append(&mut name.clone());
+				.collect::<Vec<_>>()
+				.try_into()
+				.expect("description length < max description length; qed");
 
-			let data: CreateCollectionData<T::CrossAccountId> = CreateCollectionData {
-				name: name.try_into().unwrap(),
-				description: description.try_into().unwrap(),
-				mode: CollectionMode::Fungible(md.decimals),
-				..Default::default()
-			};
-			let owner = T::CrossAccountId::from_sub(owner);
-			let bounded_collection_id =
-				<PalletFungible<T>>::init_foreign_collection(owner.clone(), owner, data)?;
-			let foreign_asset_id =
-				Self::do_register_foreign_asset(&location, &metadata, bounded_collection_id)?;
+			let collection_id = T::CollectionDispatch::create(
+				foreign_collection_owner,
+				CollectionIssuer::Internals,
+				CreateCollectionData {
+					name,
+					token_prefix,
+					description,
+					mode: mode.into(),
+					..Default::default()
+				},
+			)?;
+
+			<ForeignAssetToCollection<T>>::insert(asset_id, collection_id);
+			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
-				asset_id: foreign_asset_id,
-				asset_address: location,
-				metadata: *metadata,
+				collection_id,
+				asset_id: versioned_asset_id,
 			});
-			Ok(())
-		}
 
-		#[pallet::call_index(1)]
-		#[pallet::weight(<T as Config>::WeightInfo::update_foreign_asset())]
-		pub fn update_foreign_asset(
-			origin: OriginFor<T>,
-			foreign_asset_id: ForeignAssetId,
-			location: Box<VersionedMultiLocation>,
-			metadata: Box<AssetMetadata<BalanceOf<T>>>,
-		) -> DispatchResult {
-			T::RegisterOrigin::ensure_origin(origin)?;
-
-			let location: MultiLocation = (*location)
-				.try_into()
-				.map_err(|()| Error::<T>::BadLocation)?;
-			Self::do_update_foreign_asset(foreign_asset_id, &location, &metadata)?;
-
-			Self::deposit_event(Event::<T>::ForeignAssetUpdated {
-				asset_id: foreign_asset_id,
-				asset_address: location,
-				metadata: *metadata,
-			});
 			Ok(())
 		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	fn get_next_foreign_asset_id() -> Result<ForeignAssetId, DispatchError> {
-		NextForeignAssetId::<T>::try_mutate(|current| -> Result<ForeignAssetId, DispatchError> {
-			let id = *current;
-			*current = current
-				.checked_add(One::one())
-				.ok_or(ArithmeticError::Overflow)?;
-			Ok(id)
-		})
+	fn pallet_account() -> T::CrossAccountId {
+		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
+		T::CrossAccountId::from_sub(owner)
 	}
 
-	fn do_register_foreign_asset(
-		location: &MultiLocation,
-		metadata: &AssetMetadata<BalanceOf<T>>,
-		bounded_collection_id: CollectionId,
-	) -> Result<ForeignAssetId, DispatchError> {
-		let foreign_asset_id = Self::get_next_foreign_asset_id()?;
-		LocationToCurrencyIds::<T>::try_mutate(location, |maybe_currency_ids| -> DispatchResult {
-			ensure!(
-				maybe_currency_ids.is_none(),
-				Error::<T>::MultiLocationExisted
-			);
-			*maybe_currency_ids = Some(foreign_asset_id);
-			// *maybe_currency_ids = Some(CurrencyId::ForeignAsset(foreign_asset_id));
+	/// Converts a concrete asset ID (the asset multilocation) to a local collection on Unique Network.
+	///
+	/// The multilocation corresponds to a local collection if:
+	/// * It is `Here` location that corresponds to the native token of this parachain.
+	/// * It is `../Parachain(<Unique Network Para ID>)` that also corresponds to the native token of this parachain.
+	/// * It is `../Parachain(<Unique Network Para ID>)/GeneralIndex(<Collection ID>)` that corresponds
+	/// to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
+	/// otherwise `None` is returned.
+	/// * It is `GeneralIndex(<Collection ID>)`. Same as the last one above.
+	///
+	/// If the multilocation doesn't match the patterns listed above,
+	/// or the `<Collection ID>` points to a foreign collection,
+	/// `None` is returned, identifying that the given multilocation doesn't correspond to a local collection.
+	fn local_asset_id_to_collection(asset_id: &AssetId) -> Option<CollectionLocality> {
+		let AssetId::Concrete(asset_location) = asset_id else {
+			return None;
+		};
 
-			ForeignAssetLocations::<T>::try_mutate(
-				foreign_asset_id,
-				|maybe_location| -> DispatchResult {
-					ensure!(maybe_location.is_none(), Error::<T>::MultiLocationExisted);
-					*maybe_location = Some(*location);
+		let self_location = T::SelfLocation::get();
 
-					AssetMetadatas::<T>::try_mutate(
-						AssetId::ForeignAssetId(foreign_asset_id),
-						|maybe_asset_metadatas| -> DispatchResult {
-							ensure!(maybe_asset_metadatas.is_none(), Error::<T>::AssetIdExisted);
-							*maybe_asset_metadatas = Some(metadata.clone());
-							Ok(())
-						},
-					)
-				},
-			)?;
+		if *asset_location == Here.into() || *asset_location == self_location {
+			return Some(CollectionLocality::Local(NATIVE_FUNGIBLE_COLLECTION_ID));
+		}
 
-			AssetBinding::<T>::try_mutate(foreign_asset_id, |collection_id| -> DispatchResult {
-				*collection_id = Some(bounded_collection_id);
-				Ok(())
-			})
-		})?;
+		let prefix = if asset_location.parents == 0 {
+			&Here
+		} else if asset_location.parents == self_location.parents {
+			&self_location.interior
+		} else {
+			return None;
+		};
 
-		Ok(foreign_asset_id)
+		let GeneralIndex(collection_id) = asset_location.interior.match_and_split(prefix)? else {
+			return None;
+		};
+
+		let collection_id = CollectionId((*collection_id).try_into().ok()?);
+
+		Self::collection_to_foreign_asset(collection_id)
+			.is_none()
+			.then_some(CollectionLocality::Local(collection_id))
 	}
 
-	fn do_update_foreign_asset(
-		foreign_asset_id: ForeignAssetId,
-		location: &MultiLocation,
-		metadata: &AssetMetadata<BalanceOf<T>>,
+	/// Converts an asset ID to a Unique Network's collection locality (either foreign or a local one).
+	///
+	/// The function will check if the asset's reserve location has the corresponding
+	/// foreign collection on Unique Network,
+	/// and will return the "foreign" locality containing the collection ID if found.
+	///
+	/// If no corresponding foreign collection is found, the function will check
+	/// if the asset's reserve location corresponds to a local collection.
+	/// If the local collection is found, the "local" locality with the collection ID is returned.
+	///
+	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
+	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionLocality, XcmError> {
+		Self::foreign_asset_to_collection(asset_id)
+			.map(CollectionLocality::Foreign)
+			.or_else(|| Self::local_asset_id_to_collection(asset_id))
+			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
+	}
+
+	/// Converts an XCM asset instance of local collection to the Unique Network's token ID.
+	///
+	/// The asset instance corresponds to the Unique Network's token ID if it is in the following format:
+	/// `AssetInstance::Index(<token ID>)`.
+	///
+	/// If the asset instance is not in the valid format or the `<token ID>` can't fit into the valid token ID,
+	/// `None` will be returned.
+	///
+	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
+	/// It returns `None` when it failed to convert the `asset_instance` to a local ID.
+	fn local_asset_instance_to_token_id(asset_instance: &AssetInstance) -> Option<TokenId> {
+		match asset_instance {
+			AssetInstance::Index(token_id) => Some(TokenId((*token_id).try_into().ok()?)),
+			_ => None,
+		}
+	}
+
+	/// Obtains the token ID of the `asset_instance` in the collection.
+	///
+	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
+	/// It returns `None` when it failed to convert the `asset_instance` to a local ID.
+	fn asset_instance_to_token_id(
+		collection_locality: CollectionLocality,
+		asset_instance: &AssetInstance,
+	) -> Option<TokenId> {
+		match collection_locality {
+			CollectionLocality::Local(_) => Self::local_asset_instance_to_token_id(asset_instance),
+			CollectionLocality::Foreign(collection_id) => {
+				Self::foreign_reserve_asset_instance_to_token_id(collection_id, asset_instance)
+			}
+		}
+	}
+
+	/// Creates a foreign item in the the collection.
+	fn create_foreign_asset_instance(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_id: CollectionId,
+		asset_instance: &AssetInstance,
+		to: T::CrossAccountId,
 	) -> DispatchResult {
-		ForeignAssetLocations::<T>::try_mutate(
-			foreign_asset_id,
-			|maybe_multi_locations| -> DispatchResult {
-				let old_multi_locations = maybe_multi_locations
-					.as_mut()
-					.ok_or(Error::<T>::AssetIdNotExists)?;
+		let derivative_token_id = xcm_ext.create_item(
+			&Self::pallet_account(),
+			to,
+			CreateItemData::NFT(Default::default()),
+			&ZeroBudget,
+		)?;
 
-				AssetMetadatas::<T>::try_mutate(
-					AssetId::ForeignAssetId(foreign_asset_id),
-					|maybe_asset_metadatas| -> DispatchResult {
-						ensure!(
-							maybe_asset_metadatas.is_some(),
-							Error::<T>::AssetIdNotExists
-						);
+		<ForeignReserveAssetInstanceToTokenId<T>>::insert(
+			collection_id,
+			asset_instance,
+			derivative_token_id,
+		);
 
-						// modify location
-						if location != old_multi_locations {
-							LocationToCurrencyIds::<T>::remove(*old_multi_locations);
-							LocationToCurrencyIds::<T>::try_mutate(
-								location,
-								|maybe_currency_ids| -> DispatchResult {
-									ensure!(
-										maybe_currency_ids.is_none(),
-										Error::<T>::MultiLocationExisted
-									);
-									// *maybe_currency_ids = Some(CurrencyId::ForeignAsset(foreign_asset_id));
-									*maybe_currency_ids = Some(foreign_asset_id);
-									Ok(())
-								},
-							)?;
-						}
-						*maybe_asset_metadatas = Some(metadata.clone());
-						*old_multi_locations = *location;
-						Ok(())
-					},
-				)
-			},
-		)
+		<TokenIdToForeignReserveAssetInstance<T>>::insert(
+			collection_id,
+			derivative_token_id,
+			asset_instance,
+		);
+
+		Ok(())
+	}
+
+	/// Deposits an asset instance to the `to` account.
+	///
+	/// Either transfers an existing item from the pallet's account
+	/// or creates a foreign item.
+	fn deposit_asset_instance(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_locality: CollectionLocality,
+		asset_instance: &AssetInstance,
+		to: T::CrossAccountId,
+	) -> XcmResult {
+		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance);
+
+		let deposit_result = match (collection_locality, token_id) {
+			(_, Some(token_id)) => {
+				let depositor = &Self::pallet_account();
+				let from = depositor;
+				let amount = 1;
+
+				xcm_ext.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
+			}
+			(CollectionLocality::Foreign(collection_id), None) => {
+				Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
+			}
+			(CollectionLocality::Local(_), None) => {
+				return Err(XcmExecutorError::InstanceConversionFailed.into());
+			}
+		};
+
+		deposit_result
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))
+	}
+
+	/// Withdraws an asset instance from the `from` account.
+	///
+	/// Transfers the asset instance to the pallet's account.
+	fn withdraw_asset_instance(
+		xcm_ext: &dyn XcmExtensions<T>,
+		collection_locality: CollectionLocality,
+		asset_instance: &AssetInstance,
+		from: T::CrossAccountId,
+	) -> XcmResult {
+		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance)
+			.ok_or(XcmExecutorError::InstanceConversionFailed)?;
+
+		let depositor = &from;
+		let to = Self::pallet_account();
+		let amount = 1;
+		xcm_ext
+			.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
+			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item withdraw failed"))?;
+
+		Ok(())
 	}
 }
 
-pub use frame_support::{
-	traits::{
-		fungibles::Balanced, tokens::currency::Currency as CurrencyT, OnUnbalanced as OnUnbalancedT,
-	},
-	weights::{WeightToFee, WeightToFeePolynomial},
-};
+impl<T: Config> TransactAsset for Pallet<T> {
+	fn can_check_in(
+		_origin: &MultiLocation,
+		_what: &MultiAsset,
+		_context: &XcmContext,
+	) -> XcmResult {
+		Err(XcmError::Unimplemented)
+	}
 
-pub struct FreeForAll<
-	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
-	AccountId,
-	Currency: CurrencyT<AccountId>,
-	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
->(
-	Weight,
-	Currency::Balance,
-	PhantomData<(WeightToFee, AssetId, AccountId, Currency, OnUnbalanced)>,
-);
+	fn check_in(_origin: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
 
-impl<
-		WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-		AssetId: Get<MultiLocation>,
-		AccountId,
-		Currency: CurrencyT<AccountId>,
-		OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-	> WeightTrader for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
+	fn can_check_out(
+		_dest: &MultiLocation,
+		_what: &MultiAsset,
+		_context: &XcmContext,
+	) -> XcmResult {
+		Err(XcmError::Unimplemented)
+	}
+
+	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
+
+	fn deposit_asset(
+		what: &MultiAsset,
+		to: &MultiLocation,
+		_context: Option<&XcmContext>,
+	) -> XcmResult {
+		let to = T::LocationToAccountId::convert_location(to)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let collection_locality = Self::asset_to_collection(&what.id)?;
+		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
+			.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?;
+
+		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::Unimplemented)?;
+
+		match what.fun {
+			Fungibility::Fungible(amount) => xcm_ext
+				.create_item(
+					&Self::pallet_account(),
+					to,
+					CreateItemData::Fungible(CreateFungibleData { value: amount }),
+					&ZeroBudget,
+				)
+				.map(|_| ())
+				.map_err(|_| XcmError::FailedToTransactAsset("fungible item deposit failed")),
+
+			Fungibility::NonFungible(asset_instance) => {
+				Self::deposit_asset_instance(xcm_ext, collection_locality, &asset_instance, to)
+			}
+		}
+	}
+
+	fn withdraw_asset(
+		what: &MultiAsset,
+		from: &MultiLocation,
+		_maybe_context: Option<&XcmContext>,
+	) -> Result<staging_xcm_executor::Assets, XcmError> {
+		let from = T::LocationToAccountId::convert_location(from)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let collection_locality = Self::asset_to_collection(&what.id)?;
+		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
+			.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?;
+
+		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
+
+		match what.fun {
+			Fungibility::Fungible(amount) => xcm_ext
+				.burn_item(from, TokenId::default(), amount)
+				.map_err(|_| XcmError::FailedToTransactAsset("fungible item withdraw failed"))?,
+
+			Fungibility::NonFungible(asset_instance) => {
+				Self::withdraw_asset_instance(xcm_ext, collection_locality, &asset_instance, from)?;
+			}
+		}
+
+		Ok(what.clone().into())
+	}
+
+	fn internal_transfer_asset(
+		what: &MultiAsset,
+		from: &MultiLocation,
+		to: &MultiLocation,
+		_context: &XcmContext,
+	) -> Result<staging_xcm_executor::Assets, XcmError> {
+		let from = T::LocationToAccountId::convert_location(from)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let to = T::LocationToAccountId::convert_location(to)
+			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
+
+		let collection_locality = Self::asset_to_collection(&what.id)?;
+
+		let dispatch = T::CollectionDispatch::dispatch(*collection_locality)
+			.map_err(|_| XcmExecutorError::AssetIdConversionFailed)?;
+		let collection = dispatch.as_dyn();
+		let xcm_ext = collection.xcm_extensions().ok_or(XcmError::NoPermission)?;
+
+		let depositor = &from;
+
+		let token_id;
+		let amount;
+		let map_error: fn(DispatchError) -> XcmError;
+
+		match what.fun {
+			Fungibility::Fungible(fungible_amount) => {
+				token_id = TokenId::default();
+				amount = fungible_amount;
+				map_error = |_| XcmError::FailedToTransactAsset("fungible item transfer failed");
+			}
+
+			Fungibility::NonFungible(asset_instance) => {
+				token_id = Self::asset_instance_to_token_id(collection_locality, &asset_instance)
+					.ok_or(XcmExecutorError::InstanceConversionFailed)?;
+
+				amount = 1;
+				map_error = |_| XcmError::FailedToTransactAsset("non-fungible item transfer failed")
+			}
+		}
+
+		xcm_ext
+			.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
+			.map_err(map_error)?;
+
+		Ok(what.clone().into())
+	}
+}
+
+#[derive(Clone, Copy)]
+pub enum CollectionLocality {
+	Local(CollectionId),
+	Foreign(CollectionId),
+}
+
+impl Deref for CollectionLocality {
+	type Target = CollectionId;
+
+	fn deref(&self) -> &Self::Target {
+		match self {
+			Self::Local(id) => id,
+			Self::Foreign(id) => id,
+		}
+	}
+}
+
+pub struct CurrencyIdConvert<T: Config>(PhantomData<T>);
+impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
+	for CurrencyIdConvert<T>
 {
+	fn convert(collection_id: CollectionId) -> Option<MultiLocation> {
+		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
+			Some(T::SelfLocation::get())
+		} else {
+			<Pallet<T>>::collection_to_foreign_asset(collection_id)
+				.and_then(|asset_id| match asset_id {
+					AssetId::Concrete(location) => Some(location),
+					_ => None,
+				})
+				.or_else(|| {
+					T::SelfLocation::get()
+						.pushed_with_interior(GeneralIndex(collection_id.0.into()))
+						.ok()
+				})
+		}
+	}
+}
+
+#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+pub enum ForeignCollectionMode {
+	NFT,
+	Fungible(u8),
+}
+
+impl From<ForeignCollectionMode> for CollectionMode {
+	fn from(value: ForeignCollectionMode) -> Self {
+		match value {
+			ForeignCollectionMode::NFT => Self::NFT,
+			ForeignCollectionMode::Fungible(decimals) => Self::Fungible(decimals),
+		}
+	}
+}
+
+pub struct FreeForAll;
+
+impl WeightTrader for FreeForAll {
 	fn new() -> Self {
-		Self(Weight::default(), Zero::zero(), PhantomData)
+		Self
 	}
 
 	fn buy_weight(
@@ -484,17 +585,5 @@ impl<
 	) -> Result<Assets, XcmError> {
 		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
 		Ok(payment)
-	}
-}
-impl<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced> Drop
-	for FreeForAll<WeightToFee, AssetId, AccountId, Currency, OnUnbalanced>
-where
-	WeightToFee: WeightToFeePolynomial<Balance = Currency::Balance>,
-	AssetId: Get<MultiLocation>,
-	Currency: CurrencyT<AccountId>,
-	OnUnbalanced: OnUnbalancedT<Currency::NegativeImbalance>,
-{
-	fn drop(&mut self) {
-		OnUnbalanced::on_unbalanced(Currency::issue(self.1));
 	}
 }

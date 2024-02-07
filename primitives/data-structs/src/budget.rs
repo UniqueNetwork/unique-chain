@@ -36,3 +36,10 @@ impl Budget for Value {
 		true
 	}
 }
+
+pub struct ZeroBudget;
+impl Budget for ZeroBudget {
+	fn consume_custom(&self, _calls: u32) -> bool {
+		false
+	}
+}

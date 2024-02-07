@@ -42,4 +42,4 @@ RUN --mount=type=cache,target=/cargo-home/registry \
 FROM ubuntu:22.04 as builder-astar
 
 COPY --from=builder-astar-bin /unique_parachain/Astar/astar /bin/astar
-ENTRYPOINT ["/bin/astar-collator"]
+ENTRYPOINT ["/bin/astar"]

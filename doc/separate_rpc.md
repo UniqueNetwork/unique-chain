@@ -77,7 +77,7 @@
     * runtime/quartz/Cargo.toml
     * runtime/unique/Cargo.toml
 
-7. Create tests/src/interfaces/ModuleName/definitions.ts and describe the necessary methods in it.
+7. Create js-packages/types/ModuleName/definitions.ts and describe the necessary methods in it.
     ```ts
     type RpcParam = {
         name: string;
@@ -105,18 +105,18 @@
         };
     ```
 
-8. Describe definitions from paragraph 7 in tests/src/interfaces/definitions.ts.
+8. Describe definitions from paragraph 7 in js-packages/types/definitions.ts.
     ```ts
     export {default as ModuleName} from './module/definitions';
     ```
 
-9. tests/src/substrate/substrate-api.ts
+9. js-packages/tests/substrate/substrate-api.ts
     * Set the RPC interface in the `defaultApiOptions` function, add an entry in the `rpc` parameter
         ```ts
         module: defs.module.rpc,
         ```
 
-10. tests/src/util/playgrounds/unique.dev.ts
+10. js-packages/playgrounds/unique.dev.ts
     * Specify RPC interface in `connect` function, add entry in `rpc` parameter
         ```ts
         module: defs.module.rpc,
