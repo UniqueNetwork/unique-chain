@@ -16,7 +16,7 @@ export const paraChildSovereignAccount = (relayApi: ApiPromise, paraid: number) 
   return '0x' + (childPrefix + encodedParaId).padEnd(addrBytesLen * byteLenInHex, '0');
 };
 
-const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, receiverParaId: number) => {
+const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, receiverParaId: number, skipBalanceCheck: boolean) => {
   const conf: any = await relayApi.query.configuration.activeConfig()
     .then(data => data.toJSON());
   const maxCapacity = conf.hrmpChannelMaxCapacity;
@@ -29,7 +29,7 @@ const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, sender
   const balance = await relayApi.query.system.account(sovereignAccount)
     .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
 
-  if(balance < requiredBalance) {
+  if(!skipBalanceCheck && balance < requiredBalance) {
     throw Error(`Not enough balance on the sender's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
   }
 
@@ -40,7 +40,7 @@ const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, sender
   ).method.toHex();
 };
 
-const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, recipientParaId: number) => {
+const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, recipientParaId: number, skipBalanceCheck: boolean) => {
   const conf: any = await relayApi.query.configuration.activeConfig()
     .then(data => data.toJSON());
   const recipientDeposit = BigInt(conf.hrmpRecipientDeposit);
@@ -51,7 +51,7 @@ const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, send
   const balance = await relayApi.query.system.account(sovereignAccount)
     .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
 
-  if(balance < requiredBalance) {
+  if(!skipBalanceCheck && balance < requiredBalance) {
     throw Error(`Not enough balance on the recipient's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
   }
 
@@ -59,8 +59,14 @@ const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, send
 };
 
 async function main() {
-  if(process.argv.length != 6) {
-    console.log('Usage: yarn hrmpChannel <RELAY_URL> <OUR_CHAIN_URL> <OTHER_CHAIN_URL> <open | accept>');
+  let skipBalanceCheck;
+  if(process.argv.length == 6) {
+    skipBalanceCheck = false;
+  }
+  else if(process.argv.length == 7 && process.argv[6] == 'skip-balance-check') {
+    skipBalanceCheck = true;
+  } else {
+    console.log('Usage: yarn hrmpChannel <RELAY_URL> <OUR_CHAIN_URL> <OTHER_CHAIN_URL> <open | accept> [skip-balance-check]');
     process.exit(1);
   }
 
@@ -90,10 +96,11 @@ async function main() {
   const relayFee = 2n * BigInt(10 ** relayDecimals);
 
   let encodedRelayCall: string;
+
   if(op == 'open') {
-    encodedRelayCall = await proposeOpenChannel(relayApi, relayFee, uniqueParaId, otherParaId);
+    encodedRelayCall = await proposeOpenChannel(relayApi, relayFee, uniqueParaId, otherParaId, skipBalanceCheck);
   } else if(op == 'accept') {
-    encodedRelayCall = await proposeAcceptChannel(relayApi, relayFee, otherParaId, uniqueParaId);
+    encodedRelayCall = await proposeAcceptChannel(relayApi, relayFee, otherParaId, uniqueParaId, skipBalanceCheck);
   } else {
     throw Error(`Unknown hrmp channel operation: ${op}`);
   }
