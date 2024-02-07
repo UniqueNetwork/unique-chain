@@ -45,7 +45,7 @@ use up_common::types::AccountId;
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ForeignAssets, ParachainInfo,
+	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, XFun, ParachainInfo,
 	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
 	XcmpQueue,
 };
@@ -167,7 +167,9 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = ForeignAssets;
+	type AssetTransactor = (
+		XFun,
+	);
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled

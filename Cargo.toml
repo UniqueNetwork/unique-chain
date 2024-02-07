@@ -42,7 +42,6 @@ pallet-evm-coder-substrate = { default-features = false, path = "pallets/evm-cod
 pallet-evm-contract-helpers = { path = "pallets/evm-contract-helpers", default-features = false }
 pallet-evm-migration = { path = "pallets/evm-migration", default-features = false }
 pallet-evm-transaction-payment = { path = "pallets/evm-transaction-payment", default-features = false }
-pallet-foreign-assets = { default-features = false, path = "pallets/foreign-assets" }
 pallet-fungible = { default-features = false, path = "pallets/fungible" }
 pallet-gov-origins = { default-features = false, path = "pallets/gov-origins" }
 pallet-identity = { default-features = false, path = "pallets/identity" }
@@ -62,6 +61,10 @@ up-data-structs = { path = "primitives/data-structs", default-features = false }
 up-pov-estimate-rpc = { path = "primitives/pov-estimate-rpc", default-features = false }
 up-rpc = { path = "primitives/rpc", default-features = false }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v1.3.0" }
+
+# Foreign Assets
+pallet-foreign-assets = { default-features = false, path = "pallets/foreign-assets" }
+pallet-xfun = { default-features = false, path = "pallets/xfun" }
 
 # Unique: Runtimes
 opal-runtime = { path = "runtime/opal" }

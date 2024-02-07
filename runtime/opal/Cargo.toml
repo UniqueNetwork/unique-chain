@@ -156,6 +156,7 @@ std = [
 	"orml-xcm-support/std",
 	"orml-xtokens/std",
 	"pallet-foreign-assets/std",
+	"pallet-xfun/std",
 
 	'pallet-maintenance/std',
 	'pallet-test-utils?/std',
@@ -199,6 +200,7 @@ try-runtime = [
 	'pallet-evm-transaction-payment/try-runtime',
 	'pallet-evm/try-runtime',
 	'pallet-foreign-assets/try-runtime',
+	'pallet-xfun/try-runtime',
 	'pallet-fungible/try-runtime',
 	'pallet-gov-origins/try-runtime',
 	'pallet-inflation/try-runtime',
@@ -317,6 +319,7 @@ pallet-evm-migration = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
 pallet-evm-transaction-payment = { workspace = true }
 pallet-foreign-assets = { workspace = true }
+pallet-xfun = { workspace = true }
 pallet-fungible = { workspace = true }
 pallet-gov-origins = { workspace = true }
 pallet-identity = { workspace = true }

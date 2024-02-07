@@ -119,6 +119,9 @@ macro_rules! construct_runtime {
 				#[cfg(feature = "foreign-assets")]
 				ForeignAssets: pallet_foreign_assets = 80,
 
+				#[cfg(feature = "foreign-assets")]
+				XFun: pallet_xfun = 81,
+
 				// Frontier
 				EVM: pallet_evm = 100,
 				Ethereum: pallet_ethereum = 101,

@@ -1,4 +1,7 @@
-use frame_support::{parameter_types, PalletId};
+use frame_support::{
+	traits::AsEnsureOriginWithArg,
+	parameter_types, PalletId
+};
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
 use pallet_evm::account::CrossAccountId;
@@ -11,7 +14,7 @@ use crate::runtime_common::config::governance;
 use crate::{
 	runtime_common::config::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,
-		xcm::{LocationToAccountId, SelfLocation},
+		xcm::{LocationToAccountId, SelfLocation, UniversalLocation},
 	},
 	RelayNetwork, Runtime, RuntimeEvent,
 };
@@ -38,15 +41,16 @@ impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
 
 impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type SelfLocation = SelfLocation;
+	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
+}
 
-	#[cfg(feature = "governance")]
-	type ForceRegisterOrigin = governance::RootOrTechnicalCommitteeMember;
-
-	#[cfg(not(feature = "governance"))]
-	type ForceRegisterOrigin = EnsureRoot<Self::AccountId>;
+impl pallet_xfun::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
 
 	type PalletId = ForeignAssetPalletId;
-	type SelfLocation = SelfLocation;
+	type UniversalLocation = UniversalLocation;
 	type LocationToAccountId = LocationToCrossAccountId;
-	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
+
+	type ForeignAssetRegisterOrigin = AsEnsureOriginWithArg<governance::RootOrTechnicalCommitteeMember>;
 }
