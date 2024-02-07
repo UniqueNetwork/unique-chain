@@ -17,45 +17,45 @@ export const paraChildSovereignAccount = (relayApi: ApiPromise, paraid: number) 
 };
 
 const proposeOpenChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, receiverParaId: number) => {
-    const conf: any = await relayApi.query.configuration.activeConfig()
-        .then(data => data.toJSON());
-    const maxCapacity = conf.hrmpChannelMaxCapacity;
-    const maxSize = conf.hrmpChannelMaxMessageSize;
+  const conf: any = await relayApi.query.configuration.activeConfig()
+    .then(data => data.toJSON());
+  const maxCapacity = conf.hrmpChannelMaxCapacity;
+  const maxSize = conf.hrmpChannelMaxMessageSize;
 
-    const senderDeposit = BigInt(conf.hrmpSenderDeposit);
+  const senderDeposit = BigInt(conf.hrmpSenderDeposit);
 
-    const requiredBalance = relayFee + senderDeposit;
-    const sovereignAccount = paraChildSovereignAccount(relayApi, senderParaId);
-    const balance = await relayApi.query.system.account(sovereignAccount)
-        .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
+  const requiredBalance = relayFee + senderDeposit;
+  const sovereignAccount = paraChildSovereignAccount(relayApi, senderParaId);
+  const balance = await relayApi.query.system.account(sovereignAccount)
+    .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
 
-    if(balance < requiredBalance) {
-        throw Error(`Not enough balance on the sender's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
-    }
+  if(balance < requiredBalance) {
+    throw Error(`Not enough balance on the sender's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
+  }
 
-    return relayApi.tx.hrmp.hrmpInitOpenChannel(
-        receiverParaId,
-        maxCapacity,
-        maxSize,
-    ).method.toHex();
+  return relayApi.tx.hrmp.hrmpInitOpenChannel(
+    receiverParaId,
+    maxCapacity,
+    maxSize,
+  ).method.toHex();
 };
 
 const proposeAcceptChannel = async (relayApi: ApiPromise, relayFee: bigint, senderParaId: number, recipientParaId: number) => {
-    const conf: any = await relayApi.query.configuration.activeConfig()
-        .then(data => data.toJSON());
-    const recipientDeposit = BigInt(conf.hrmpRecipientDeposit);
+  const conf: any = await relayApi.query.configuration.activeConfig()
+    .then(data => data.toJSON());
+  const recipientDeposit = BigInt(conf.hrmpRecipientDeposit);
 
-    const requiredBalance = relayFee + recipientDeposit;
+  const requiredBalance = relayFee + recipientDeposit;
 
-    const sovereignAccount = paraChildSovereignAccount(relayApi, recipientParaId);
-    const balance = await relayApi.query.system.account(sovereignAccount)
-        .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
+  const sovereignAccount = paraChildSovereignAccount(relayApi, recipientParaId);
+  const balance = await relayApi.query.system.account(sovereignAccount)
+    .then(accountInfo => (accountInfo.toJSON() as any).data.free as bigint);
 
-    if(balance < requiredBalance) {
-        throw Error(`Not enough balance on the recipient's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
-    }
+  if(balance < requiredBalance) {
+    throw Error(`Not enough balance on the recipient's sovereign account: balance(${balance}) < requiredBalance(${requiredBalance})`);
+  }
 
-    return relayApi.tx.hrmp.hrmpAcceptOpenChannel(senderParaId).method.toHex();
+  return relayApi.tx.hrmp.hrmpAcceptOpenChannel(senderParaId).method.toHex();
 };
 
 async function main() {
@@ -64,7 +64,7 @@ async function main() {
     process.exit(1);
   }
 
-  const relayUrl = process.argv[2]
+  const relayUrl = process.argv[2];
   const uniqueParachainUrl = process.argv[3];
   const otherParachainUrl = process.argv[4];
   const op = process.argv[5];
@@ -100,75 +100,75 @@ async function main() {
 
   const proposal = uniqueApi.tx.polkadotXcm.send(
     {
-        V3: {
-            parents: 1,
-            interior: 'Here',
-        }
+      V3: {
+        parents: 1,
+        interior: 'Here',
+      },
     },
     {
-        V3: [
+      V3: [
+        {
+          WithdrawAsset: [
             {
-                WithdrawAsset: [
-                    {
-                        id: {
-                            Concrete: {
-                                parents: 0,
-                                interior: 'Here',
-                            },
-                        },
-                        fun: {
-                            Fungible: relayFee,
-                        },
-                    },
-                ],
-            },
-            {
-                BuyExecution: {
-                    fees: {
-                        id: {
-                            Concrete: {
-                                parents: 0,
-                                interior: 'Here',
-                            },
-                        },
-                        fun: {
-                            Fungible: relayFee,
-                        },
-                    },
-                    weightLimit: 'Unlimited',
+              id: {
+                Concrete: {
+                  parents: 0,
+                  interior: 'Here',
                 },
+              },
+              fun: {
+                Fungible: relayFee,
+              },
             },
-            {
-                Transact: {
-                    originKind: 'Native',
-                    requireWeightAtMost: {
-                        refTime: 1000000000,
-                        proofSize: 65536,
-                    },
-                    call: {
-                        encoded: encodedRelayCall,
-                    },
+          ],
+        },
+        {
+          BuyExecution: {
+            fees: {
+              id: {
+                Concrete: {
+                  parents: 0,
+                  interior: 'Here',
                 },
+              },
+              fun: {
+                Fungible: relayFee,
+              },
             },
-            'RefundSurplus',
-            {
-                DepositAsset: {
-                    assets: {
-                        Wild: {
-                            AllCounted: 1,
-                        },
-                    },
-                    beneficiary: {
-                        parents: 0,
-                        interior: {
-                            X1: {
-                                Parachain: uniqueParaId,
-                            },
-                        },
-                    },
+            weightLimit: 'Unlimited',
+          },
+        },
+        {
+          Transact: {
+            originKind: 'Native',
+            requireWeightAtMost: {
+              refTime: 1000000000,
+              proofSize: 65536,
+            },
+            call: {
+              encoded: encodedRelayCall,
+            },
+          },
+        },
+        'RefundSurplus',
+        {
+          DepositAsset: {
+            assets: {
+              Wild: {
+                AllCounted: 1,
+              },
+            },
+            beneficiary: {
+              parents: 0,
+              interior: {
+                X1: {
+                  Parachain: uniqueParaId,
                 },
+              },
             },
-        ],
+          },
+        },
+      ],
     },
   ).method.toHex();
 
