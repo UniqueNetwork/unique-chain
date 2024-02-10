@@ -166,6 +166,18 @@ impl From<u32> for CollectionId {
 		Self(value)
 	}
 }
+impl TryFrom<u128> for CollectionId {
+	type Error = <u32 as TryFrom<u128>>::Error;
+
+	fn try_from(value: u128) -> Result<Self, Self::Error> {
+		value.try_into().map(Self)
+	}
+}
+impl From<CollectionId> for u128 {
+	fn from(value: CollectionId) -> Self {
+		value.0.into()
+	}
+}
 
 impl Deref for CollectionId {
 	type Target = u32;
@@ -219,6 +231,19 @@ impl TryFrom<U256> for TokenId {
 
 	fn try_from(value: U256) -> Result<Self, Self::Error> {
 		Ok(TokenId(value.try_into().map_err(|_| "too large token id")?))
+	}
+}
+
+impl TryFrom<u128> for TokenId {
+	type Error = <u32 as TryFrom<u128>>::Error;
+
+	fn try_from(value: u128) -> Result<Self, Self::Error> {
+		value.try_into().map(Self)
+	}
+}
+impl From<TokenId> for u128 {
+	fn from(value: TokenId) -> Self {
+		value.0.into()
 	}
 }
 

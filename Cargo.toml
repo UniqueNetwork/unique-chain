@@ -63,8 +63,8 @@ up-rpc = { path = "primitives/rpc", default-features = false }
 up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v1.3.0" }
 
 # Foreign Assets
-pallet-foreign-assets = { default-features = false, path = "pallets/foreign-assets" }
 pallet-xfun = { default-features = false, path = "pallets/xfun" }
+pallet-xnft = { default-features = false, git = "https://github.com/uniquenetwork/xnft", branch = "refactor/types-and-namings" }
 
 # Unique: Runtimes
 opal-runtime = { path = "runtime/opal" }

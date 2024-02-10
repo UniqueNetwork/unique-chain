@@ -45,7 +45,6 @@ runtime-benchmarks = [
 	'pallet-ethereum/runtime-benchmarks',
 	'pallet-evm-coder-substrate/runtime-benchmarks',
 	'pallet-evm-migration/runtime-benchmarks',
-	'pallet-foreign-assets/runtime-benchmarks',
 	'pallet-fungible/runtime-benchmarks',
 	'pallet-identity/runtime-benchmarks',
 	'pallet-inflation/runtime-benchmarks',
@@ -155,8 +154,8 @@ std = [
 	"orml-vesting/std",
 	"orml-xcm-support/std",
 	"orml-xtokens/std",
-	"pallet-foreign-assets/std",
 	"pallet-xfun/std",
+	"pallet-xnft/std",
 
 	'pallet-maintenance/std',
 	'pallet-test-utils?/std',
@@ -199,8 +198,8 @@ try-runtime = [
 	'pallet-evm-migration/try-runtime',
 	'pallet-evm-transaction-payment/try-runtime',
 	'pallet-evm/try-runtime',
-	'pallet-foreign-assets/try-runtime',
 	'pallet-xfun/try-runtime',
+	'pallet-xnft/try-runtime',
 	'pallet-fungible/try-runtime',
 	'pallet-gov-origins/try-runtime',
 	'pallet-inflation/try-runtime',
@@ -318,8 +317,8 @@ pallet-evm-contract-helpers = { workspace = true }
 pallet-evm-migration = { workspace = true }
 pallet-evm-precompile-simple = { workspace = true }
 pallet-evm-transaction-payment = { workspace = true }
-pallet-foreign-assets = { workspace = true }
 pallet-xfun = { workspace = true }
+pallet-xnft = { workspace = true }
 pallet-fungible = { workspace = true }
 pallet-gov-origins = { workspace = true }
 pallet-identity = { workspace = true }

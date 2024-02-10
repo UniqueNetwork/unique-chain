@@ -22,7 +22,6 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
-use pallet_foreign_assets::FreeForAll;
 use pallet_xcm::XcmPassthrough;
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
@@ -37,17 +36,16 @@ use staging_xcm_builder::{
 	SignedToAccountId32, SovereignSignedViaLocation,
 };
 use staging_xcm_executor::{
-	traits::{Properties, ShouldExecute},
-	XcmExecutor,
+	traits::{Properties, ShouldExecute, WeightTrader},
+	Assets, XcmExecutor,
 };
 use up_common::types::AccountId;
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, XFun, ParachainInfo,
-	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	XcmpQueue,
+	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem,
+	PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XFun, XcmpQueue,
 };
 
 parameter_types! {
@@ -157,6 +155,23 @@ pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstruction
 
 pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 
+pub struct FreeForAll;
+impl WeightTrader for FreeForAll {
+	fn new() -> Self {
+		Self
+	}
+
+	fn buy_weight(
+		&mut self,
+		weight: Weight,
+		payment: Assets,
+		_xcm: &XcmContext,
+	) -> Result<Assets, XcmError> {
+		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
+		Ok(payment)
+	}
+}
+
 pub type Trader = FreeForAll;
 
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
@@ -167,9 +182,7 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = (
-		XFun,
-	);
+	type AssetTransactor = (XFun,);
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled

@@ -17,9 +17,9 @@
 use frame_support::{parameter_types, traits::Everything};
 use frame_system::EnsureSigned;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
-use pallet_foreign_assets::CurrencyIdConvert;
+use pallet_common::NATIVE_FUNGIBLE_COLLECTION_ID;
 use sp_runtime::traits::Convert;
-use staging_xcm::latest::{Junction::*, Junctions::*, MultiLocation, Weight};
+use staging_xcm::latest::{AssetId, Junction::*, Junctions::*, MultiLocation, Weight};
 use staging_xcm_executor::XcmExecutor;
 use up_common::{
 	constants::*,
@@ -29,7 +29,7 @@ use up_data_structs::CollectionId;
 
 use crate::{
 	runtime_common::config::xcm::{SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig},
-	RelayChainBlockNumberProvider, Runtime, RuntimeEvent,
+	RelayChainBlockNumberProvider, Runtime, RuntimeEvent, XFun, XNft,
 };
 
 // Signed version of balance
@@ -60,6 +60,27 @@ impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
 	}
 }
 
+pub struct CurrencyIdConvert;
+impl Convert<CollectionId, Option<MultiLocation>> for CurrencyIdConvert {
+	fn convert(collection_id: CollectionId) -> Option<MultiLocation> {
+		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
+			Some(SelfLocation::get())
+		} else {
+			XFun::collection_to_foreign_asset(collection_id)
+				.or_else(|| XNft::local_class_to_foreign_asset(collection_id))
+				.and_then(|asset_id| match asset_id {
+					AssetId::Concrete(location) => Some(location),
+					_ => None,
+				})
+				.or_else(|| {
+					SelfLocation::get()
+						.pushed_with_interior(GeneralIndex(collection_id.0.into()))
+						.ok()
+				})
+		}
+	}
+}
+
 impl orml_vesting::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Currency = pallet_balances::Pallet<Runtime>;
@@ -74,7 +95,7 @@ impl orml_xtokens::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
 	type CurrencyId = CollectionId;
-	type CurrencyIdConvert = CurrencyIdConvert<Self>;
+	type CurrencyIdConvert = CurrencyIdConvert;
 	type AccountIdToMultiLocation = AccountIdToMultiLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;

@@ -2299,7 +2299,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	}
 
 	/// Get XCM extensions.
-	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+	fn as_xfungibles(&self) -> Option<&dyn XFungibles<T>> {
 		None
 	}
 
@@ -2341,16 +2341,11 @@ where
 	) -> DispatchResultWithPostInfo;
 }
 
-/// XCM extensions for fungible and NFT collections
-pub trait XcmExtensions<T>
+/// XCM extensions for fungible collections.
+pub trait XFungibles<T>
 where
 	T: Config,
 {
-	/// Does the token have children?
-	fn token_has_children(&self, _token: TokenId) -> bool {
-		false
-	}
-
 	/// Create a collection's item using a transaction.
 	///
 	/// This function performs additional XCM-related checks before the actual creation.
@@ -2363,28 +2358,16 @@ where
 	/// This requirement is temporary until XCM message processing becomes transactional:
 	/// https://github.com/paritytech/polkadot-sdk/issues/490
 	#[transactional]
-	fn create_item(
-		&self,
-		depositor: &T::CrossAccountId,
-		to: T::CrossAccountId,
-		data: CreateItemData,
-		nesting_budget: &dyn Budget,
-	) -> Result<TokenId, DispatchError> {
+	fn create_items(&self, to: T::CrossAccountId, amount: u128) -> DispatchResult {
 		if T::CrossTokenAddressMapping::is_token_address(&to) {
 			return unsupported!(T);
 		}
 
-		self.create_item_internal(depositor, to, data, nesting_budget)
+		self.create_items_internal(to, amount)
 	}
 
 	/// Create a collection's item.
-	fn create_item_internal(
-		&self,
-		depositor: &T::CrossAccountId,
-		to: T::CrossAccountId,
-		data: CreateItemData,
-		nesting_budget: &dyn Budget,
-	) -> Result<TokenId, DispatchError>;
+	fn create_items_internal(&self, to: T::CrossAccountId, amount: u128) -> DispatchResult;
 
 	/// Transfer an item from the `from` account to the `to` account using a transaction.
 	///
@@ -2398,35 +2381,25 @@ where
 	/// This requirement is temporary until XCM message processing becomes transactional:
 	/// https://github.com/paritytech/polkadot-sdk/issues/490
 	#[transactional]
-	fn transfer_item(
+	fn transfer_items(
 		&self,
-		depositor: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
-		token: TokenId,
 		amount: u128,
-		nesting_budget: &dyn Budget,
 	) -> DispatchResult {
 		if T::CrossTokenAddressMapping::is_token_address(to) {
 			return unsupported!(T);
 		}
 
-		if self.token_has_children(token) {
-			return unsupported!(T);
-		}
-
-		self.transfer_item_internal(depositor, from, to, token, amount, nesting_budget)
+		self.transfer_items_internal(from, to, amount)
 	}
 
 	/// Transfer an item from the `from` account to the `to` account.
-	fn transfer_item_internal(
+	fn transfer_items_internal(
 		&self,
-		depositor: &T::CrossAccountId,
 		from: &T::CrossAccountId,
 		to: &T::CrossAccountId,
-		token: TokenId,
 		amount: u128,
-		nesting_budget: &dyn Budget,
 	) -> DispatchResult;
 
 	/// Burn a collection's item using a transaction.
@@ -2439,17 +2412,12 @@ where
 	/// This requirement is temporary until XCM message processing becomes transactional:
 	/// https://github.com/paritytech/polkadot-sdk/issues/490
 	#[transactional]
-	fn burn_item(&self, from: T::CrossAccountId, token: TokenId, amount: u128) -> DispatchResult {
-		self.burn_item_internal(from, token, amount)
+	fn burn_items(&self, from: T::CrossAccountId, amount: u128) -> DispatchResult {
+		self.burn_items_internal(from, amount)
 	}
 
 	/// Burn a collection's item.
-	fn burn_item_internal(
-		&self,
-		from: T::CrossAccountId,
-		token: TokenId,
-		amount: u128,
-	) -> DispatchResult;
+	fn burn_items_internal(&self, from: T::CrossAccountId, amount: u128) -> DispatchResult;
 }
 
 /// Merge [`DispatchResult`] with [`Weight`] into [`DispatchResultWithPostInfo`].

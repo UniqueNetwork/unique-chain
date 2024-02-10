@@ -73,7 +73,7 @@ impl SignedExtension for CheckMaintenance {
 				}
 
 				#[cfg(feature = "foreign-assets")]
-				RuntimeCall::ForeignAssets(_) => {
+				RuntimeCall::XFun(_) | RuntimeCall::XNft(_) => {
 					Err(TransactionValidityError::Invalid(InvalidTransaction::Call))
 				}
 

@@ -34,6 +34,7 @@ std = [
 	'sp-std/std',
 	'up-common/std',
 	'up-data-structs/std',
+	'pallet-xnft/std',
 ]
 stubgen = ["evm-coder/stubgen", "pallet-common/stubgen"]
 try-runtime = ["frame-support/try-runtime"]
@@ -63,3 +64,4 @@ sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
+pallet-xnft = { workspace = true }

@@ -116,11 +116,14 @@ macro_rules! construct_runtime {
 				#[cfg(feature = "app-promotion")]
 				AppPromotion: pallet_app_promotion = 73,
 
-				#[cfg(feature = "foreign-assets")]
-				ForeignAssets: pallet_foreign_assets = 80,
+				// #[cfg(feature = "foreign-assets")]
+				// ForeignAssets: pallet_foreign_assets = 80,
 
 				#[cfg(feature = "foreign-assets")]
 				XFun: pallet_xfun = 81,
+
+				#[cfg(feature = "foreign-assets")]
+				XNft: pallet_xnft = 82,
 
 				// Frontier
 				EVM: pallet_evm = 100,

@@ -19,13 +19,15 @@ use core::marker::PhantomData;
 use frame_support::{dispatch::DispatchResultWithPostInfo, ensure, fail, weights::Weight};
 use pallet_common::{
 	weights::WeightInfo as _, with_weight, CommonCollectionOperations, CommonWeightInfo,
-	Error as CommonError, SelfWeightOf as PalletCommonWeightOf, XcmExtensions,
+	Error as CommonError, SelfWeightOf as PalletCommonWeightOf, XFungibles,
 };
+use pallet_evm::account::CrossAccountId;
 use sp_runtime::{ArithmeticError, DispatchError};
 use sp_std::{vec, vec::Vec};
 use up_data_structs::{
-	budget::Budget, CollectionId, CreateItemData, CreateItemExData, Property, PropertyKey,
-	PropertyKeyPermission, PropertyValue, TokenId, TokenOwnerError,
+	budget::{Budget, ZeroBudget},
+	CollectionId, CreateItemData, CreateItemExData, Property, PropertyKey, PropertyKeyPermission,
+	PropertyValue, TokenId, TokenOwnerError,
 };
 
 use crate::{
@@ -435,7 +437,7 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		<TotalSupply<T>>::try_get(self.id).ok()
 	}
 
-	fn xcm_extensions(&self) -> Option<&dyn XcmExtensions<T>> {
+	fn as_xfungibles(&self) -> Option<&dyn XFungibles<T>> {
 		Some(self)
 	}
 
@@ -458,56 +460,43 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 	}
 }
 
-impl<T: Config> XcmExtensions<T> for FungibleHandle<T> {
-	fn create_item_internal(
+impl<T: Config> XFungibles<T> for FungibleHandle<T> {
+	fn create_items_internal(
 		&self,
-		depositor: &<T>::CrossAccountId,
 		to: <T>::CrossAccountId,
-		data: CreateItemData,
-		nesting_budget: &dyn Budget,
-	) -> Result<TokenId, sp_runtime::DispatchError> {
-		match &data {
-			up_data_structs::CreateItemData::Fungible(fungible_data) => {
-				<Pallet<T>>::create_multiple_items(
-					self,
-					depositor,
-					[(to, fungible_data.value)].into_iter().collect(),
-					nesting_budget,
-				)?
-			}
-			_ => fail!(<CommonError<T>>::NotFungibleDataUsedToMintFungibleCollectionToken),
-		}
+		amount: u128,
+	) -> sp_runtime::DispatchResult {
+		let collection_owner = self.owner.clone();
+		let depositor = T::CrossAccountId::from_sub(collection_owner);
 
-		Ok(TokenId::default())
+		<Pallet<T>>::create_item(self, &depositor, (to, amount), &ZeroBudget)?;
+
+		Ok(())
 	}
 
-	fn transfer_item_internal(
+	fn transfer_items_internal(
 		&self,
-		depositor: &<T>::CrossAccountId,
 		from: &<T>::CrossAccountId,
 		to: &<T>::CrossAccountId,
-		token: TokenId,
 		amount: u128,
-		nesting_budget: &dyn Budget,
 	) -> sp_runtime::DispatchResult {
-		ensure!(
-			token == TokenId::default(),
-			<CommonError<T>>::FungibleItemsHaveNoId
-		);
+		let collection_owner = self.owner.clone();
+		let depositor = T::CrossAccountId::from_sub(collection_owner);
 
-		<Pallet<T>>::transfer_internal(self, depositor, from, to, amount, nesting_budget)
+		<Pallet<T>>::transfer_internal(self, &depositor, from, to, amount, &ZeroBudget)
 			.map(|_| ())
-			.map_err(|post_info| post_info.error)
+			.map_err(|post_info| post_info.error)?;
+
+		Ok(())
 	}
 
-	fn burn_item_internal(
+	fn burn_items_internal(
 		&self,
 		from: <T>::CrossAccountId,
-		token: TokenId,
 		amount: u128,
 	) -> sp_runtime::DispatchResult {
-		<Self as CommonCollectionOperations<T>>::burn_item(self, from, token, amount)
-			.map(|_| ())
-			.map_err(|post_info| post_info.error)
+		<Pallet<T>>::burn(self, &from, amount)?;
+
+		Ok(())
 	}
 }
