@@ -38,6 +38,8 @@ runtime-benchmarks = [
 	'pallet-evm-coder-substrate/runtime-benchmarks',
 	'pallet-evm-migration/runtime-benchmarks',
 	'pallet-fungible/runtime-benchmarks',
+	# 'pallet-xfun/runtime-benchmarks',
+	'pallet-xnft/runtime-benchmarks',
 	'pallet-identity/runtime-benchmarks',
 	'pallet-inflation/runtime-benchmarks',
 	'pallet-maintenance/runtime-benchmarks',
@@ -108,6 +110,8 @@ std = [
 	'pallet-evm-transaction-payment/std',
 	'pallet-evm/std',
 	'pallet-fungible/std',
+	'pallet-xfun/std',
+	'pallet-xnft/std',
 	'pallet-gov-origins/std',
 	'pallet-inflation/std',
 	'pallet-membership/std',
@@ -190,6 +194,8 @@ try-runtime = [
 	'pallet-evm-transaction-payment/try-runtime',
 	'pallet-evm/try-runtime',
 	'pallet-fungible/try-runtime',
+	'pallet-xfun/try-runtime',
+	'pallet-xnft/try-runtime',
 	'pallet-gov-origins/try-runtime',
 	'pallet-inflation/try-runtime',
 	'pallet-maintenance/try-runtime',
@@ -291,6 +297,8 @@ pallet-common = { workspace = true }
 pallet-configuration = { workspace = true }
 pallet-democracy = { workspace = true }
 pallet-fungible = { workspace = true }
+pallet-xfun = { workspace = true }
+pallet-xnft = { workspace = true }
 pallet-gov-origins = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }

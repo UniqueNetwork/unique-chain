@@ -122,21 +122,21 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Westmint', () => {
       };
       const assetId = {Concrete: location};
 
-      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
+      if(await helper.xfun.foreignCollectionId(assetId) == null) {
         const tokenPrefix = USDT_ASSET_METADATA_NAME;
-        await helper.getSudo().foreignAssets.register(
+        await helper.getSudo().xfun.register(
           alice,
           assetId,
           USDT_ASSET_METADATA_NAME,
           tokenPrefix,
-          {Fungible: USDT_ASSET_METADATA_DECIMALS},
+          USDT_ASSET_METADATA_DECIMALS,
         );
       } else {
         console.log('Foreign collection is already registered on Opal');
       }
 
       balanceOpalBefore = await helper.balance.getSubstrate(alice.address);
-      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
+      usdtCollectionId = await helper.xfun.foreignCollectionId(assetId);
     });
 
     // Providing the relay currency to the unique sender account

@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingRelayPlaygrounds, usingMoonriverPlaygrounds, usingStateminePlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
 import {DevUniqueHelper, Event} from '@unique/test-utils';
-import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl} from './xcm.types.js';
+import {STATEMINE_CHAIN, QUARTZ_CHAIN, KARURA_CHAIN, MOONRIVER_CHAIN, SHIDEN_CHAIN, STATEMINE_DECIMALS, KARURA_DECIMALS, QTZ_DECIMALS, RELAY_DECIMALS, SHIDEN_DECIMALS, karuraUrl, moonriverUrl, relayUrl, shidenUrl, statemineUrl, expectAssetNotFound} from './xcm.types.js';
 import {hexToString} from '@polkadot/util';
 import {XcmTestHelper} from './xcm.types.js';
 
@@ -132,15 +132,15 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemine', () => {
       };
       const assetId = {Concrete: location};
 
-      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
+      if(await helper.xfun.foreignCollectionId(assetId) == null) {
         const tokenPrefix = USDT_ASSET_METADATA_NAME;
-        await helper.getSudo().foreignAssets.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+        await helper.getSudo().xfun.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, USDT_ASSET_METADATA_DECIMALS);
       } else {
         console.log('Foreign collection is already registered on Quartz');
       }
 
       balanceQuartzBefore = await helper.balance.getSubstrate(alice.address);
-      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
+      usdtCollectionId = await helper.xfun.foreignCollectionId(assetId);
     });
 
 
@@ -852,11 +852,6 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
     });
   });
 
-  const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-    await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
-  };
-
   itSub('Quartz rejects KAR tokens from Karura', async ({helper}) => {
     await usingKaruraPlaygrounds(karuraUrl, async (helper) => {
       const id = {
@@ -868,7 +863,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 
   itSub('Quartz rejects MOVR tokens from Moonriver', async ({helper}) => {
@@ -880,7 +875,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 
   itSub('Quartz rejects SDN tokens from Shiden', async ({helper}) => {
@@ -912,7 +907,7 @@ describeXCM('[XCM] Integration test: Quartz rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 });
 

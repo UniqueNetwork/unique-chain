@@ -153,18 +153,18 @@ class PolkadexXcmHelperGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 }
 
-export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
-  async register(signer: TSigner, assetId: any, name: string, tokenPrefix: string, mode: 'NFT' | { Fungible: number }) {
+export class XFunGroup extends HelperGroup<UniqueHelper> {
+  async register(signer: TSigner, assetId: any, name: string, tokenPrefix: string, decimals: number) {
     await this.helper.executeExtrinsic(
       signer,
-      'api.tx.foreignAssets.forceRegisterForeignAsset',
-      [{V3: assetId}, this.helper.util.str2vec(name), tokenPrefix, mode],
+      'api.tx.xFun.registerForeignAsset',
+      [{V3: assetId}, this.helper.util.str2vec(name), tokenPrefix, decimals],
       true,
     );
   }
 
   async foreignCollectionId(assetId: any) {
-    return (await this.helper.callRpc('api.query.foreignAssets.foreignAssetToCollection', [assetId])).toJSON();
+    return (await this.helper.callRpc('api.query.xFun.foreignAssetToCollection', [assetId])).toJSON();
   }
 }
 

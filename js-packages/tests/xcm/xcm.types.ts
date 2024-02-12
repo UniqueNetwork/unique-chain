@@ -65,6 +65,10 @@ export const expectFailedToTransact = async (helper: DevUniqueHelper, messageSen
   await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
         && event.outcome.isFailedToTransactAsset);
 };
+export const expectAssetNotFound = async (helper: DevUniqueHelper, messageSent: any) => {
+  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
+        && event.outcome.isAssetNotFound);
+};
 export const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
   await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
          && event.outcome.isUntrustedReserveLocation);
@@ -508,7 +512,7 @@ export class XcmTestHelper {
           messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
         }
       });
-      await expectFailedToTransact(helper, messageSent);
+      await expectAssetNotFound(helper, messageSent);
     });
   }
 
@@ -520,14 +524,14 @@ export class XcmTestHelper {
       };
       const relayAssetId = {Concrete: relayLocation};
 
-      const relayCollectionId = await helper.foreignAssets.foreignCollectionId(relayAssetId);
+      const relayCollectionId = await helper.xfun.foreignCollectionId(relayAssetId);
       if(relayCollectionId == null) {
         const name = 'Relay Tokens';
         const tokenPrefix = 'xDOT';
         const decimals = 10;
-        await helper.getSudo().foreignAssets.register(alice, relayAssetId, name, tokenPrefix, {Fungible: decimals});
+        await helper.getSudo().xfun.register(alice, relayAssetId, name, tokenPrefix, decimals);
 
-        return await helper.foreignAssets.foreignCollectionId(relayAssetId);
+        return await helper.xfun.foreignCollectionId(relayAssetId);
       } else {
         console.log('Relay foreign collection is already registered');
         return relayCollectionId;

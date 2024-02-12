@@ -19,7 +19,7 @@ import config from '../config.js';
 import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '@unique/test-utils/util.js';
 import {Event} from '@unique/test-utils';
 import {hexToString, nToBigInt} from '@polkadot/util';
-import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types.js';
+import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectAssetNotFound, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types.js';
 import {XcmTestHelper} from './xcm.types.js';
 
 const STATEMINT_PALLET_INSTANCE = 50;
@@ -144,15 +144,15 @@ describeXCM('[XCM] Integration test: Exchanging USDT with Statemint', () => {
       };
       const assetId = {Concrete: location};
 
-      if(await helper.foreignAssets.foreignCollectionId(assetId) == null) {
+      if(await helper.xfun.foreignCollectionId(assetId) == null) {
         const tokenPrefix = USDT_ASSET_METADATA_NAME;
-        await helper.getSudo().foreignAssets.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, {Fungible: USDT_ASSET_METADATA_DECIMALS});
+        await helper.getSudo().xfun.register(alice, assetId, USDT_ASSET_METADATA_NAME, tokenPrefix, USDT_ASSET_METADATA_DECIMALS);
       } else {
         console.log('Foreign collection is already registered on Unique');
       }
 
       balanceUniqueBefore = await helper.balance.getSubstrate(alice.address);
-      usdtCollectionId = await helper.foreignAssets.foreignCollectionId(assetId);
+      usdtCollectionId = await helper.xfun.foreignCollectionId(assetId);
     });
 
 
@@ -1101,7 +1101,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 
   itSub('Unique rejects GLMR tokens from Moonbeam', async ({helper}) => {
@@ -1113,7 +1113,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 
   itSub('Unique rejects ASTR tokens from Astar', async ({helper}) => {
@@ -1145,7 +1145,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 
   itSub('Unique rejects PDX tokens from Polkadex', async ({helper}) => {
@@ -1170,7 +1170,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
       messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
     });
 
-    await expectFailedToTransact(helper, messageSent);
+    await expectAssetNotFound(helper, messageSent);
   });
 });
 

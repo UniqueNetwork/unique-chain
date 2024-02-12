@@ -17,7 +17,7 @@ import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransaction
 import type {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, XFunGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
 import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
 import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
 
@@ -468,7 +468,7 @@ export class DevUniqueHelper extends UniqueHelper {
   admin: AdminGroup;
   session: SessionGroup;
   testUtils: TestUtilGroup;
-  foreignAssets: ForeignAssetsGroup;
+  xfun: XFunGroup;
   xcm: XcmGroup<DevUniqueHelper>;
   xTokens: XTokensGroup<DevUniqueHelper>;
   tokens: TokensGroup<DevUniqueHelper>;
@@ -488,7 +488,7 @@ export class DevUniqueHelper extends UniqueHelper {
     this.admin = new AdminGroup(this);
     this.testUtils = new TestUtilGroup(this);
     this.session = new SessionGroup(this);
-    this.foreignAssets = new ForeignAssetsGroup(this);
+    this.xfun = new XFunGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.xTokens = new XTokensGroup(this);
     this.tokens = new TokensGroup(this);
