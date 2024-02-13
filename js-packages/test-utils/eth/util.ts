@@ -4,9 +4,9 @@
 import * as path from 'path';
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import config from '../../config.js';
+import config from '../../tests/config.js';
 
-import {EthUniqueHelper} from './playgrounds/unique.dev.js';
+import {EthUniqueHelper} from './index.js';
 import {SilentLogger, SilentConsole} from '@unique/test-utils';
 import type {SchedKind} from '@unique/test-utils/util.js';
 

@@ -16,8 +16,8 @@
 
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect} from '../util/index.js';
-import {EthUniqueHelper} from '../util/playgrounds/unique.dev.js';
+import {itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
