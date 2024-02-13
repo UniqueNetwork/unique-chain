@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, Pallets, usingPlaygrounds} from '@unique/test-utils/util.js';
 import {UniqueFTCollection, UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection, UniqueRFToken} from '@unique-nft/playgrounds/unique.js';
-import {itEth} from '../../eth/util/index.js';
+import {itEth} from '@unique/test-utils/eth/util.js';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;

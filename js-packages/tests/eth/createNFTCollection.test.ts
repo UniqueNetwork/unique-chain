@@ -16,8 +16,8 @@
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
-import {CollectionLimitField} from './util/playgrounds/types.js';
+import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
 
 
 describe('Create NFT collection from EVM', () => {

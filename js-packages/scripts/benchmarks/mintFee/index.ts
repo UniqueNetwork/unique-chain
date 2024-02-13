@@ -1,5 +1,5 @@
-import {usingEthPlaygrounds} from '@unique/tests/eth/util/index.js';
-import {EthUniqueHelper} from '@unique/tests/eth/util/playgrounds/unique.dev.js';
+import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {readFile} from 'fs/promises';
 import type {ICrossAccountId} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
@@ -8,29 +8,31 @@ import {Contract} from 'web3-eth-contract';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.js';
 import {makeNames} from '@unique/test-utils/util.js';
-import type {ContractImports} from '@unique/tests/eth/util/playgrounds/types.js';
+import type {ContractImports} from '@unique/test-utils/eth/types.js';
 
 const {dirname} = makeNames(import.meta.url);
 
+const EVM_ABI_DIR = `${dirname}/../../../evm-abi`;
+
 export const CONTRACT_IMPORT: ContractImports[] = [
   {
-    fsPath: `${dirname}/../../../tests/eth/api/CollectionHelpers.sol`,
+    fsPath: `${EVM_ABI_DIR}/api/CollectionHelpers.sol`,
     solPath: 'eth/api/CollectionHelpers.sol',
   },
   {
-    fsPath: `${dirname}/../../../tests/eth/api/ContractHelpers.sol`,
+    fsPath: `${EVM_ABI_DIR}/api/ContractHelpers.sol`,
     solPath: 'eth/api/ContractHelpers.sol',
   },
   {
-    fsPath: `${dirname}/../../../tests/eth/api/UniqueRefungibleToken.sol`,
+    fsPath: `${EVM_ABI_DIR}/api/UniqueRefungibleToken.sol`,
     solPath: 'eth/api/UniqueRefungibleToken.sol',
   },
   {
-    fsPath: `${dirname}/../../../tests/eth/api/UniqueRefungible.sol`,
+    fsPath: `${EVM_ABI_DIR}/api/UniqueRefungible.sol`,
     solPath: 'eth/api/UniqueRefungible.sol',
   },
   {
-    fsPath: `${dirname}/../../../tests/eth/api/UniqueNFT.sol`,
+    fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`,
     solPath: 'eth/api/UniqueNFT.sol',
   },
 ];

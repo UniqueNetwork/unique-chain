@@ -16,10 +16,11 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '../util/index.js';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
 import {makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
+const EVM_ABI_DIR = `${dirname}/../../../evm-abi`;
 
 describe('Matcher contract usage', () => {
   const PRICE = 2000n;
@@ -50,7 +51,7 @@ describe('Matcher contract usage', () => {
 
   itEth('With UNQ', async ({helper}) => {
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${dirname}/../api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
@@ -102,7 +103,7 @@ describe('Matcher contract usage', () => {
 
   itEth('With escrow', async ({helper}) => {
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${dirname}/../api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const escrow = await helper.eth.createAccountWithBalance(donor);
@@ -166,7 +167,7 @@ describe('Matcher contract usage', () => {
 
   itEth('Sell tokens from substrate user via EVM contract', async ({helper}) => {
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${dirname}/../api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
 
     await helper.eth.transferBalanceFromSubstrate(donor, matcher.options.address);
 

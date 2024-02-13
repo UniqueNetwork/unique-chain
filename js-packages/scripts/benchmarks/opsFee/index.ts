@@ -1,7 +1,7 @@
-import {usingEthPlaygrounds} from '@unique/tests/eth/util/index.js';
-import {EthUniqueHelper} from '@unique/tests/eth/util/playgrounds/unique.dev.js';
+import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {readFile} from 'fs/promises';
-import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/tests/eth/util/playgrounds/types.js';
+import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/test-utils/eth/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
 import {Contract} from 'web3-eth-contract';
@@ -76,7 +76,7 @@ async function erc721CalculateFeeGas(
     PERMISSIONS,
   )) as UniqueNFTCollection;
 
-  const helperContract = await helper.ethNativeContract.collectionHelpers(ethSigner);
+  const helperContract = helper.ethNativeContract.collectionHelpers(ethSigner);
   let zeppelelinContract: Contract | null = null;
   const ZEPPELIN_OBJECT = '0x' + (await readFile(`${dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.bin`)).toString();
   const ZEPPELIN_ABI = JSON.parse((await readFile(`${dirname}/../utils/openZeppelin/ERC721/bin/ZeppelinContract.abi`)).toString());
