@@ -12,7 +12,7 @@ use pallet_nonfungible::{CreateItemData, NonfungibleHandle};
 use pallet_unique::weights::WeightInfo as UniqueWeightInfo;
 use pallet_xnft::{
 	conversion::{IndexAssetInstance, InteriorGeneralIndex},
-	traits::{DerivativeWithdrawal, NftClass, NftEngine},
+	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftClass, NftEngine},
 };
 use sp_core::H160;
 use sp_runtime::traits::TryConvertInto;
@@ -34,7 +34,7 @@ use crate::{
 		},
 		dispatch::CollectionDispatchT,
 	},
-	Nonfungible, RelayNetwork, Runtime, RuntimeEvent,
+	Common, Nonfungible, RelayNetwork, Runtime, RuntimeEvent,
 };
 
 parameter_types! {
@@ -54,11 +54,6 @@ impl staging_xcm_executor::traits::ConvertLocation<CrossAccountId> for LocationT
 			})
 	}
 }
-
-// impl pallet_foreign_assets::Config for Runtime {
-// 	type RuntimeEvent = RuntimeEvent;
-// 	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
-// }
 
 impl pallet_xfun::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
@@ -184,6 +179,8 @@ parameter_types! {
 
 impl pallet_xnft::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_xnft::weights::SubstrateWeight<Self>;
+
 	type PalletId = ForeignAssetsPalletId;
 	type NftEngine = UniqueNftEngine;
 	type InteriorAssetIdConvert =
@@ -191,8 +188,21 @@ impl pallet_xnft::Config for Runtime {
 	type AssetInstanceConvert = IndexAssetInstance<TokenId, TryConvertInto>;
 	type UniversalLocation = UniversalLocation;
 	type LocationToAccountId = LocationToAccountId;
-	type DispatchErrorsConvert = ();
 	type ForeignAssetRegisterOrigin =
 		AsEnsureOriginWithArg<governance::RootOrTechnicalCommitteeMember>;
-	type WeightInfo = pallet_xnft::weights::SubstrateWeight<Self>;
+
+	type DispatchErrorsConvert = (CommonToXcmError,);
+}
+
+pub struct CommonToXcmError;
+impl DispatchErrorConvert for CommonToXcmError {
+	type Pallet = Common;
+	type Error = CommonError<Runtime>;
+
+	fn convert(error: CommonError<Runtime>) -> XcmError {
+		match error {
+			CommonError::NoPermission => XcmError::NoPermission,
+			_ => XcmError::FailedToTransactAsset(error.into()),
+		}
+	}
 }

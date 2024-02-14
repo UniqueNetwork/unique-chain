@@ -45,7 +45,8 @@ use up_common::types::AccountId;
 use crate::runtime_common::config::governance;
 use crate::{
 	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ParachainInfo, ParachainSystem,
-	PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XFun, XNft, XcmpQueue,
+	PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XFun, XNft,
+	XcmpQueue,
 };
 
 parameter_types! {
