@@ -319,6 +319,7 @@ pallet-evm-precompile-simple = { workspace = true }
 pallet-evm-transaction-payment = { workspace = true }
 pallet-xfun = { workspace = true }
 pallet-xnft = { workspace = true }
+xnft-primitives = { workspace = true }
 pallet-fungible = { workspace = true }
 pallet-gov-origins = { workspace = true }
 pallet-identity = { workspace = true }

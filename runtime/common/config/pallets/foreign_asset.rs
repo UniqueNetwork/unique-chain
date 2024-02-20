@@ -10,7 +10,7 @@ use pallet_common::{
 use pallet_evm::account::CrossAccountId as CrossAccountIdT;
 use pallet_nonfungible::{CreateItemData, NonfungibleHandle};
 use pallet_unique::weights::WeightInfo as UniqueWeightInfo;
-use pallet_xnft::{
+use xnft_primitives::{
 	conversion::{IndexAssetInstance, InteriorGeneralIndex},
 	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftClass, NftEngine},
 };
