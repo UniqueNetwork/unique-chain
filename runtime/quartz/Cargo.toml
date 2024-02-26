@@ -297,6 +297,7 @@ pallet-democracy = { workspace = true }
 pallet-fungible = { workspace = true }
 pallet-xfun = { workspace = true }
 pallet-xnft = { workspace = true }
+xnft-primitives = { workspace = true }
 pallet-gov-origins = { workspace = true }
 pallet-identity = { workspace = true }
 pallet-inflation = { workspace = true }

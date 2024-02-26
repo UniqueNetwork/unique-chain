@@ -15,7 +15,7 @@ use xnft_primitives::{
 	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftClass, NftEngine},
 };
 use sp_core::H160;
-use sp_runtime::traits::TryConvertInto;
+use sp_runtime::traits::{TryConvertInto, AccountIdConversion};
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
 use up_common::types::AccountId;
@@ -73,20 +73,20 @@ pub struct DerivativeCollectionData {
 }
 
 pub struct UniqueClassData;
-impl NftClass<AccountId> for UniqueClassData {
+impl NftClass<CrossAccountId> for UniqueClassData {
 	type ClassId = CollectionId;
 	type ClassData = DerivativeCollectionData;
 
-	fn class_creation_weight(_data: &Self::ClassData) -> Weight {
+	fn create_class_weight(_data: &Self::ClassData) -> Weight {
 		<Runtime as pallet_unique::Config>::WeightInfo::create_collection()
 	}
 
 	fn create_class(
-		owner: &AccountId,
+		owner: &CrossAccountId,
 		data: Self::ClassData,
 	) -> Result<Self::ClassId, DispatchError> {
 		<Runtime as pallet_common::Config>::CollectionDispatch::create(
-			<Runtime as pallet_evm::Config>::CrossAccountId::from_sub(owner.clone()),
+			owner.clone(),
 			CollectionIssuer::Internals,
 			CreateCollectionData {
 				name: data.name,
@@ -117,18 +117,17 @@ impl UniqueNftEngine {
 }
 
 impl NftEngine<AccountId> for UniqueNftEngine {
+	type AccountId = CrossAccountId;
 	type Class = UniqueClassData;
 	type ClassInstanceId = TokenId;
 
 	fn transfer_class_instance(
 		collection_id: &CollectionId,
 		token_id: &TokenId,
-		from: &AccountId,
-		to: &AccountId,
+		from: &CrossAccountId,
+		to: &CrossAccountId,
 	) -> DispatchResult {
 		let collection = Self::nft_collection(*collection_id)?;
-		let from = CrossAccountId::from_sub(from.clone());
-		let to = CrossAccountId::from_sub(to.clone());
 
 		Nonfungible::transfer(&collection, &from, &to, *token_id, &ZeroNestingBudget)
 			.map_err(|info| info.error)?;
@@ -138,14 +137,12 @@ impl NftEngine<AccountId> for UniqueNftEngine {
 
 	fn mint_derivative(
 		collection_id: &CollectionId,
-		to: &AccountId,
+		to: &CrossAccountId,
 	) -> Result<Self::ClassInstanceId, DispatchError> {
 		let collection = Self::nft_collection(*collection_id)?;
 		if !collection.flags.foreign {
 			return Err(<CommonError<Runtime>>::NoPermission.into());
 		}
-
-		let to = CrossAccountId::from_sub(to.clone());
 
 		let collection_owner = collection.owner.clone();
 		let depositor = CrossAccountId::from_sub(collection_owner);
@@ -154,7 +151,7 @@ impl NftEngine<AccountId> for UniqueNftEngine {
 			&collection,
 			&depositor,
 			CreateItemData::<Runtime> {
-				owner: to,
+				owner: to.clone(),
 				properties: Default::default(),
 			},
 			&ZeroNestingBudget,
@@ -167,7 +164,7 @@ impl NftEngine<AccountId> for UniqueNftEngine {
 	fn withdraw_derivative(
 		_collection_id: &CollectionId,
 		_token_id: &TokenId,
-		_from: &AccountId,
+		_from: &CrossAccountId,
 	) -> Result<DerivativeWithdrawal, DispatchError> {
 		Ok(DerivativeWithdrawal::Stash)
 	}
@@ -175,19 +172,24 @@ impl NftEngine<AccountId> for UniqueNftEngine {
 
 parameter_types! {
 	pub NftEnginePrefix: InteriorMultiLocation = Here.into();
+
+	pub XnftPalletAccountId: CrossAccountId = {
+		CrossAccountId::from_sub(ForeignAssetsPalletId::get().into_account_truncating())
+	};
 }
 
 impl pallet_xnft::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_xnft::weights::SubstrateWeight<Self>;
 
-	type PalletId = ForeignAssetsPalletId;
 	type NftEngine = UniqueNftEngine;
+
+	type PalletAccountId = XnftPalletAccountId;
 	type InteriorAssetIdConvert =
 		InteriorGeneralIndex<NftEnginePrefix, CollectionId, TryConvertInto>;
 	type AssetInstanceConvert = IndexAssetInstance<TokenId, TryConvertInto>;
 	type UniversalLocation = UniversalLocation;
-	type LocationToAccountId = LocationToAccountId;
+	type LocationToAccountId = LocationToCrossAccountId;
 	type ForeignAssetRegisterOrigin =
 		AsEnsureOriginWithArg<governance::RootOrTechnicalCommitteeMember>;
 
