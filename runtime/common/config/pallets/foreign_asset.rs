@@ -185,11 +185,14 @@ impl pallet_xnft::Config for Runtime {
 	type NftEngine = UniqueNftEngine;
 
 	type PalletAccountId = XnftPalletAccountId;
-	type InteriorAssetIdConvert =
+
+	type LocalAssetIdConvert =
 		InteriorGeneralIndex<NftEnginePrefix, CollectionId, TryConvertInto>;
 	type AssetInstanceConvert = IndexAssetInstance<TokenId, TryConvertInto>;
+
 	type UniversalLocation = UniversalLocation;
 	type LocationToAccountId = LocationToCrossAccountId;
+
 	type ForeignAssetRegisterOrigin =
 		AsEnsureOriginWithArg<governance::RootOrTechnicalCommitteeMember>;
 
