@@ -12,13 +12,12 @@ use pallet_nonfungible::{CreateItemData, NonfungibleHandle};
 use pallet_unique::weights::WeightInfo as UniqueWeightInfo;
 use xnft_primitives::{
 	conversion::{IndexAssetInstance, InteriorGeneralIndex},
-	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftClass, NftEngine},
+	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftClasses, NftEngine},
 };
 use sp_core::H160;
 use sp_runtime::traits::{TryConvertInto, AccountIdConversion};
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
-use up_common::types::AccountId;
 use up_data_structs::{
 	budget::ZeroBudget as ZeroNestingBudget, CollectionFlags, CollectionId, CollectionName,
 	CollectionTokenPrefix, CreateCollectionData, TokenId,
@@ -72,8 +71,8 @@ pub struct DerivativeCollectionData {
 	pub token_prefix: CollectionTokenPrefix,
 }
 
-pub struct UniqueClassData;
-impl NftClass<CrossAccountId> for UniqueClassData {
+pub struct UniqueClasses;
+impl NftClasses<CrossAccountId> for UniqueClasses {
 	type ClassId = CollectionId;
 	type ClassData = DerivativeCollectionData;
 
@@ -116,9 +115,9 @@ impl UniqueNftEngine {
 	}
 }
 
-impl NftEngine<AccountId> for UniqueNftEngine {
+impl NftEngine for UniqueNftEngine {
 	type AccountId = CrossAccountId;
-	type Class = UniqueClassData;
+	type Classes = UniqueClasses;
 	type ClassInstanceId = TokenId;
 
 	fn transfer_class_instance(
@@ -188,6 +187,7 @@ impl pallet_xnft::Config for Runtime {
 
 	type LocalAssetIdConvert =
 		InteriorGeneralIndex<NftEnginePrefix, CollectionId, TryConvertInto>;
+
 	type AssetInstanceConvert = IndexAssetInstance<TokenId, TryConvertInto>;
 
 	type UniversalLocation = UniversalLocation;
