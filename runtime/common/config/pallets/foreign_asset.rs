@@ -12,7 +12,7 @@ use pallet_nonfungible::{CreateItemData, NonfungibleHandle};
 use pallet_unique::weights::WeightInfo as UniqueWeightInfo;
 use xnft_primitives::{
 	conversion::{IndexAssetInstance, InteriorGeneralIndex},
-	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftClasses, NftEngine},
+	traits::{DerivativeWithdrawal, DispatchErrorConvert, NftEngine, NftTransactor},
 };
 use sp_core::H160;
 use sp_runtime::traits::{TryConvertInto, AccountIdConversion};
@@ -65,43 +65,8 @@ impl pallet_xfun::Config for Runtime {
 		AsEnsureOriginWithArg<governance::RootOrTechnicalCommitteeMember>;
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
-pub struct DerivativeCollectionData {
-	pub name: CollectionName,
-	pub token_prefix: CollectionTokenPrefix,
-}
-
-pub struct UniqueClasses;
-impl NftClasses<CrossAccountId> for UniqueClasses {
-	type ClassId = CollectionId;
-	type ClassData = DerivativeCollectionData;
-
-	fn create_class_weight(_data: &Self::ClassData) -> Weight {
-		<Runtime as pallet_unique::Config>::WeightInfo::create_collection()
-	}
-
-	fn create_class(
-		owner: &CrossAccountId,
-		data: Self::ClassData,
-	) -> Result<Self::ClassId, DispatchError> {
-		<Runtime as pallet_common::Config>::CollectionDispatch::create(
-			owner.clone(),
-			CollectionIssuer::Internals,
-			CreateCollectionData {
-				name: data.name,
-				token_prefix: data.token_prefix,
-				flags: CollectionFlags {
-					foreign: true,
-					..Default::default()
-				},
-				..Default::default()
-			},
-		)
-	}
-}
-
-pub struct UniqueNftEngine;
-impl UniqueNftEngine {
+pub struct UniqueNftTransactor;
+impl UniqueNftTransactor {
 	fn nft_collection(
 		collection_id: CollectionId,
 	) -> Result<NonfungibleHandle<Runtime>, DispatchError> {
@@ -115,10 +80,10 @@ impl UniqueNftEngine {
 	}
 }
 
-impl NftEngine for UniqueNftEngine {
+impl NftTransactor for UniqueNftTransactor {
 	type AccountId = CrossAccountId;
-	type Classes = UniqueClasses;
-	type ClassInstanceId = TokenId;
+	type ClassId = CollectionId;
+	type InstanceId = TokenId;
 
 	fn transfer_class_instance(
 		collection_id: &CollectionId,
@@ -137,8 +102,9 @@ impl NftEngine for UniqueNftEngine {
 	fn mint_derivative(
 		collection_id: &CollectionId,
 		to: &CrossAccountId,
-	) -> Result<Self::ClassInstanceId, DispatchError> {
+	) -> Result<Self::InstanceId, DispatchError> {
 		let collection = Self::nft_collection(*collection_id)?;
+
 		if !collection.flags.foreign {
 			return Err(<CommonError<Runtime>>::NoPermission.into());
 		}
@@ -166,6 +132,42 @@ impl NftEngine for UniqueNftEngine {
 		_from: &CrossAccountId,
 	) -> Result<DerivativeWithdrawal, DispatchError> {
 		Ok(DerivativeWithdrawal::Stash)
+	}
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Encode, Decode, TypeInfo)]
+pub struct DerivativeCollectionData {
+	pub name: CollectionName,
+	pub token_prefix: CollectionTokenPrefix,
+}
+
+pub struct UniqueNftEngine;
+impl NftEngine for UniqueNftEngine {
+	type Transactor = UniqueNftTransactor;
+	
+	type ClassInitData = DerivativeCollectionData;
+
+	fn create_class_weight(_data: &Self::ClassInitData) -> Weight {
+		<Runtime as pallet_unique::Config>::WeightInfo::create_collection()
+	}
+
+	fn create_class(
+		owner: &CrossAccountId,
+		data: Self::ClassInitData,
+	) -> Result<CollectionId, DispatchError> {
+		<Runtime as pallet_common::Config>::CollectionDispatch::create(
+			owner.clone(),
+			CollectionIssuer::Internals,
+			CreateCollectionData {
+				name: data.name,
+				token_prefix: data.token_prefix,
+				flags: CollectionFlags {
+					foreign: true,
+					..Default::default()
+				},
+				..Default::default()
+			},
+		)
 	}
 }
 
