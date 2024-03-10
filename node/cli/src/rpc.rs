@@ -80,8 +80,8 @@ where
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
 	C: sp_api::CallApiAt<
-		sp_runtime::generic::Block<
-			sp_runtime::generic::Header<u32, BlakeTwo256>,
+		generic::Block<
+			generic::Header<u32, BlakeTwo256>,
 			sp_runtime::OpaqueExtrinsic,
 		>,
 	>,
