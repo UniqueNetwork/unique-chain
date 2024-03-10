@@ -98,16 +98,19 @@ jobs:
           yarn install
           node --no-warnings=ExperimentalWarning --loader ts-node/esm ./benchmarks/opsFee/index.ts
 
-      - name: Stop running containers
-        if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+      # - name: Stop running containers
+      #   if: always()                   # run this step always
+      #   run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
-      - name: Remove builder cache
-        if: always()                   # run this step always
-        run: |
-          docker builder prune -f -a
-          docker system prune -f
-          docker image prune -f -a
+      # - name: Remove builder cache
+      #   if: always()                   # run this step always
+      #   run: |
+      #     docker builder prune -f -a
+      #     docker system prune -f
+      #     docker image prune -f -a
+
+#########
+
 
   # check:
   #   if: always()
