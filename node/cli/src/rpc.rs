@@ -71,7 +71,7 @@ pub fn create_full<C, P, SC, R, B>(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
 	C::Api: RuntimeApiDep<R>,
