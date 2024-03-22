@@ -37,7 +37,7 @@ export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const signer = await privateKey(options.donorSeed);
 
     const txs = skippedBlocks.map((b) =>
-      api.tx.sudo.sudo(api.tx.appPromotion.forceUnstake(b)));
+      api.tx.appPromotion.resolveSkippedBlocks(b));
 
 
     const promises = txs.map((tx) => () => helper.signTransaction(signer, tx));
