@@ -1261,4 +1261,4 @@ contract UniqueNFT is
 	ERC721Metadata,
 	Collection,
 	TokenProperties
-{}
+{0xc1d78db0f5d00110935df8679a9b61da759f1e04}
