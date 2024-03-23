@@ -163,16 +163,14 @@ impl SubstrateCli for RelayChainCli {
 
 macro_rules! async_run_with_runtime {
 	(
-		$runtime:path, $runtime_api:path, $executor:path,
+		$runtime_api:path, $executor:path,
 		$runner:ident, $components:ident, $cli:ident, $cmd:ident, $config:ident,
 		$( $code:tt )*
 	) => {
 		$runner.async_run(|$config| {
-			let $components = new_partial::<
-				$runtime, $runtime_api, $executor, _
-			>(
+			let $components = new_partial::<$runtime_api, $executor, _>(
 				&$config,
-				crate::service::parachain_build_import_queue::<$runtime, _, _>,
+				crate::service::parachain_build_import_queue,
 			)?;
 			let task_manager = $components.task_manager;
 
@@ -188,18 +186,18 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => async_run_with_runtime!(
-				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => async_run_with_runtime!(
-				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => async_run_with_runtime!(
-				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::RuntimeApi, OpalRuntimeExecutor,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -215,11 +213,9 @@ macro_rules! sync_run_with_runtime {
 		$( $code:tt )*
 	) => {
 		$runner.sync_run(|$config| {
-			let $components = new_partial::<
-				$runtime, $runtime_api, $executor, _
-			>(
+			let $components = new_partial::<$runtime_api, $executor, _>(
 				&$config,
-				crate::service::parachain_build_import_queue::<$runtime, _, _>,
+				crate::service::parachain_build_import_queue,
 			)?;
 
 			$( $code )*
@@ -259,20 +255,17 @@ macro_rules! start_node_using_chain_runtime {
 		match $config.chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => $start_node_fn::<
-				unique_runtime::Runtime,
 				unique_runtime::RuntimeApi,
 				UniqueRuntimeExecutor,
 			>($config $(, $($args),+)?) $($code)*,
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => $start_node_fn::<
-				quartz_runtime::Runtime,
 				quartz_runtime::RuntimeApi,
 				QuartzRuntimeExecutor,
 			>($config $(, $($args),+)?) $($code)*,
 
 			RuntimeId::Opal => $start_node_fn::<
-				opal_runtime::Runtime,
 				opal_runtime::RuntimeApi,
 				OpalRuntimeExecutor,
 			>($config $(, $($args),+)?) $($code)*,
@@ -361,26 +354,16 @@ pub fn run() -> Result<()> {
 					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
-					let partials = new_partial::<
-						opal_runtime::Runtime,
-						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
-						_,
-					>(
+					let partials = new_partial::<opal_runtime::RuntimeApi, OpalRuntimeExecutor, _>(
 						&config,
-						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+						crate::service::parachain_build_import_queue,
 					)?;
 					cmd.run(partials.client)
 				}),
 				BenchmarkCmd::Storage(cmd) => runner.sync_run(|config| {
-					let partials = new_partial::<
-						opal_runtime::Runtime,
-						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
-						_,
-					>(
+					let partials = new_partial::<opal_runtime::RuntimeApi, OpalRuntimeExecutor, _>(
 						&config,
-						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
+						crate::service::parachain_build_import_queue,
 					)?;
 					let db = partials.backend.expose_db();
 					let storage = partials.backend.expose_storage();

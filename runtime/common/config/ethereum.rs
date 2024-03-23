@@ -8,7 +8,7 @@ use pallet_ethereum::PostLogContent;
 use pallet_evm::{EnsureAddressTruncated, HashedAddressMapping};
 use sp_core::{H160, U256};
 use sp_runtime::{traits::ConstU32, Perbill, RuntimeAppPublic};
-use up_common::constants::*;
+use up_common::{constants::*, types::CrossAccountId};
 
 use crate::{
 	runtime_common::{
@@ -19,8 +19,6 @@ use crate::{
 	},
 	Aura, Balances, ChainId, Runtime, RuntimeEvent,
 };
-
-pub type CrossAccountId = pallet_evm::account::BasicCrossAccountId<Runtime>;
 
 // Assuming PoV size per read is 96 bytes: 16 for twox128(Evm), 16 for twox128(Storage), 32 for storage key, and 32 for storage value
 const EVM_SLOAD_PROOF_SIZE: u64 = 96;

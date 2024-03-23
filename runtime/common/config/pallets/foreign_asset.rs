@@ -1,18 +1,16 @@
 use frame_support::{parameter_types, PalletId};
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
-use pallet_evm::account::CrossAccountId;
+use pallet_evm::account::CrossAccountId as CrossAccountIdT;
 use sp_core::H160;
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
+use up_common::types::CrossAccountId;
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	runtime_common::config::{
-		ethereum::CrossAccountId as ConfigCrossAccountId,
-		xcm::{LocationToAccountId, SelfLocation},
-	},
+	runtime_common::config::xcm::{LocationToAccountId, SelfLocation},
 	RelayNetwork, Runtime, RuntimeEvent,
 };
 
@@ -21,17 +19,15 @@ parameter_types! {
 }
 
 pub struct LocationToCrossAccountId;
-impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
-	for LocationToCrossAccountId
-{
-	fn convert_location(location: &MultiLocation) -> Option<ConfigCrossAccountId> {
+impl staging_xcm_executor::traits::ConvertLocation<CrossAccountId> for LocationToCrossAccountId {
+	fn convert_location(location: &MultiLocation) -> Option<CrossAccountId> {
 		LocationToAccountId::convert_location(location)
-			.map(ConfigCrossAccountId::from_sub)
+			.map(CrossAccountId::from_sub)
 			.or_else(|| {
 				let eth_address =
 					AccountKey20Aliases::<RelayNetwork, H160>::convert_location(location)?;
 
-				Some(ConfigCrossAccountId::from_eth(eth_address))
+				Some(CrossAccountId::from_eth(eth_address))
 			})
 	}
 }

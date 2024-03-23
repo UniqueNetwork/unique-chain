@@ -57,8 +57,8 @@ macro_rules! impl_common_runtime_apis {
 		use runtime_common::{
 			sponsoring::{SponsorshipPredict, UniqueSponsorshipPredict},
 			dispatch::CollectionDispatch,
-			config::ethereum::CrossAccountId,
 		};
+		use up_common::types::CrossAccountId;
 		use up_data_structs::*;
 
 		impl_runtime_apis! {
