@@ -79,6 +79,8 @@ describe('Pallet presence', () => {
         'scheduler',
         'technicalcommittee',
         'technicalcommitteemembership',
+        'financialcouncil',
+        'financialcouncilmembership',
         'identity',
       ];
       const testUtils = 'testutils';
