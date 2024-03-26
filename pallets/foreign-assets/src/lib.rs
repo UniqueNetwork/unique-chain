@@ -68,7 +68,7 @@ pub mod module {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Origin for force registering of a foreign asset.
-		type ForceRegisterOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// The ID of the foreign assets pallet.
 		type PalletId: Get<PalletId>;
@@ -154,7 +154,7 @@ pub mod module {
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
-			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
 
 			let asset_id: AssetId = versioned_asset_id
 				.as_ref()

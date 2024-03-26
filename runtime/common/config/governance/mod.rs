@@ -49,6 +49,9 @@ pub use democracy::*;
 pub mod technical_committee;
 pub use technical_committee::*;
 
+pub mod financial_council;
+pub use financial_council::*;
+
 pub mod fellowship;
 pub use fellowship::*;
 
