@@ -166,13 +166,12 @@ jobs:
             ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Run Parallel tests before Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         if: success()
         run: |
           yarn
           yarn add mochawesome
-          # TODO: Update to new script structure after mainnet will have it
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
@@ -180,7 +179,7 @@ jobs:
 
       - name: Run Sequential tests before Node Parachain upgrade
         if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -214,13 +213,12 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Run Parallel tests after Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         if: success() || failure()    # run this step even if previous step failed
         run: |
           yarn install
           yarn add mochawesome
-          # TODO: Update to new script structure after mainnet will have it
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
@@ -228,7 +226,7 @@ jobs:
 
       - name: Run Sequential tests after Node Parachain upgrade
         if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
