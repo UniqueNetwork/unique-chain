@@ -91,13 +91,13 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           yarn install
-          npx ts-node --esm ./benchmarks/mintFee/index.ts
+          npx node --loader ts-node/esm ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
         working-directory: js-packages/scripts
         run: |
           yarn install
-          npx ts-node --esm ./benchmarks/opsFee/index.ts
+          npx node --loader ts-node/esm ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
         if: always()                   # run this step always
