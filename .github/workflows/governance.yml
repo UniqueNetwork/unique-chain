@@ -80,7 +80,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Run tests
         working-directory: js-packages/tests

@@ -40,7 +40,7 @@ jobs:
           ref: ${{ github.head_ref }}            
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
       - name: Install modules
         run: cd js-packages && yarn
       - name: Run ESLint

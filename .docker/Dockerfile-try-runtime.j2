@@ -1,7 +1,7 @@
 # ===== Rust builder =====
 FROM uniquenetwork/services:latest as rust-builder
 
-ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
+ENV RUST_TOOLCHAIN {{ RUST_TOOLCHAIN }}
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
