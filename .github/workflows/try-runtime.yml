@@ -93,7 +93,7 @@ jobs:
           container: uniquenetwork/ci-tryruntime-local
           tag: ${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
           context: .
-          dockerfile: ./Dockerfile-try-runtime
+          dockerfile: .docker/Dockerfile-try-runtime
           args: |
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             --build-arg NETWORK=${{ matrix.network }}
