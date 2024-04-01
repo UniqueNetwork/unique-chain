@@ -169,6 +169,7 @@ jobs:
           variables: |
             NETWORK=${{ matrix.network }}
             BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
+            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml

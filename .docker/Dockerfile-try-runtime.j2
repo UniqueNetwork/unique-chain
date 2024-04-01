@@ -25,6 +25,10 @@ ARG PROFILE=release
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
+ARG GIT_PRIVATE_CREDENTIALS
+
+RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
+
 RUN echo "Requested features: {{ NETWORK }}-runtime\n" && \
     echo "Fork from: {{ REPLICA_FROM }}\n" && \
     cargo build --features=try-runtime,{{ NETWORK }}-runtime --release

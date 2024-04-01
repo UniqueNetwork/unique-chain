@@ -39,6 +39,7 @@ jobs:
           output_file: .docker/docker-compose.unit.yml
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}
     
 
       - name: Show build configuration

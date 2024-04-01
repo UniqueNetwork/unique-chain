@@ -49,6 +49,7 @@ jobs:
           variables: |
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
+            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}
     
 
       - name: Show build configuration

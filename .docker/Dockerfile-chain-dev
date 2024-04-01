@@ -21,6 +21,10 @@ COPY . /dev_chain
 
 WORKDIR /dev_chain
 
+ARG GIT_PRIVATE_CREDENTIALS
+
+RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
+
 RUN cargo build --profile integration-tests --features=${NETWORK}-runtime,fast-inflation
 RUN echo "$NETWORK"
 
