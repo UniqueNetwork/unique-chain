@@ -73,22 +73,6 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      # Build main image for TRY-RUNTIME
-      - name: Generate ENV related extend Dockerfile file
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-try-runtime.j2
-          output_file: .docker/Dockerfile-try-runtime.${{ matrix.network }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            NETWORK=${{ matrix.network }}
-            WASM_NAME=${{ matrix.wasm_name }}
-            REPLICA_FROM=${{ matrix.replica_from_address }}
-            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}            
-
-      - name: Show build Dockerfile
-        run: cat .docker/Dockerfile-try-runtime.${{ matrix.network }}.yml
-
       - name: Run find-and-replace to remove slashes from branch name
         uses: mad9000/actions-find-and-replace-string@4
         id: branchname
@@ -102,8 +86,25 @@ jobs:
         run: |
           echo "BUILD_SHA=${LAST_COMMIT_SHA:0:8}" >> $GITHUB_ENV
 
-      - name: Build the stack
-        run: cd .docker/ && docker build --no-cache --file ./Dockerfile-try-runtime.${{ matrix.network }}.yml --tag uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
+      - name: Prepare docker containers
+        uses: ./.github/actions/buildContainer
+        id: try-runtime
+        with:
+          container: uniquenetwork/ci-tryruntime-local
+          tag: ${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
+          context: .
+          dockerfile: ./Dockerfile-try-runtime
+          args: |
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg NETWORK=${{ matrix.network }}
+            --build-arg WASM_NAME=${{ matrix.wasm_name }}
+            --build-arg REPLICA_FROM=${{ matrix.replica_from_address }}
+            --build-arg GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS}}            
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      # - name: Build the stack
+      #   run: cd .docker/ && docker build --no-cache --file ./Dockerfile-try-runtime.${{ matrix.network }}.yml --tag uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA ../
 
       - name: Push docker image version
         run: docker push uniquenetwork/ci-tryruntime-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
