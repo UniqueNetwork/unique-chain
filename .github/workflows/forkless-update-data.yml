@@ -110,6 +110,7 @@ jobs:
           args: |
             --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS}}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 

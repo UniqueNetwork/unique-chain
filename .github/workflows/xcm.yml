@@ -285,6 +285,7 @@ jobs:
           docker build --file .docker/Dockerfile-unique \
             --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
             --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
+            --build-arg GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS}} \
             --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }} \
             .
 
