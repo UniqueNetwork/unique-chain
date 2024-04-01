@@ -61,6 +61,8 @@ jobs:
             toolchain: ${{ env.RUST_TOOLCHAIN }}
             targets: wasm32-unknown-unknown
             components: rustfmt, clippy
+      - name: set git configuration
+        run: git config --global url."https://${{ secrets.GIT_PRIVATE_CREDENTIALS }}@github.com".insteadOf ssh://git@github.com   
       - name: Run cargo check
         run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
         env:

@@ -70,6 +70,7 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
+            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}            
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml

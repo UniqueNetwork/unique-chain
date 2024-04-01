@@ -84,6 +84,7 @@ jobs:
             NETWORK=${{ matrix.network }}
             WASM_NAME=${{ matrix.wasm_name }}
             REPLICA_FROM=${{ matrix.replica_from_address }}
+            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}            
 
       - name: Show build Dockerfile
         run: cat .docker/Dockerfile-try-runtime.${{ matrix.network }}.yml
@@ -169,7 +170,6 @@ jobs:
           variables: |
             NETWORK=${{ matrix.network }}
             BUILD_TAG=${{ steps.branchname.outputs.value }}-$BUILD_SHA
-            GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.try-runtime.${{ matrix.network }}.yml
