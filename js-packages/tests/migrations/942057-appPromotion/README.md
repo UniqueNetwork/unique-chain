@@ -38,5 +38,5 @@ To run, you need to set an environment variables:
 Run the migration by executing the following command:
 
 ```sh
-npx node --loader ts-node/esm executeMigration.ts
+npx ts-node-esm executeMigration.ts
 ```
