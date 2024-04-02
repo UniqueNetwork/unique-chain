@@ -169,6 +169,7 @@ jobs:
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         if: success()
         run: |
+          yarn cache clean --all
           yarn
           yarn add mochawesome
           ../scripts/wait_for_first_block.sh
