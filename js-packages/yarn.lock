@@ -5803,8 +5803,8 @@ __metadata:
       optional: true
   bin:
     ts-node: dist/bin.js
-    ts-node-cwd: dist/bin-cwd.js
     ts-node --esm: dist/bin-esm.js
+    ts-node-cwd: dist/bin-cwd.js
     ts-node-script: dist/bin-script.js
     ts-node-transpile-only: dist/bin-transpile.js
     ts-script: dist/bin-script-deprecated.js
