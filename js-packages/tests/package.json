@@ -13,9 +13,9 @@
         "mocha": "^10.1.0"
     },
     "scripts": {
-        "setup": "yarn ts-node-esm ./util/globalSetup.ts",
-        "setIdentities": "yarn ts-node-esm ./util/identitySetter.ts",
-        "checkRelayIdentities": "yarn ts-node-esm ./util/relayIdentitiesChecker.ts",
+        "setup": "yarn ts-node --esm ./util/globalSetup.ts",
+        "setIdentities": "yarn ts-node --esm ./util/identitySetter.ts",
+        "checkRelayIdentities": "yarn ts-node --esm ./util/relayIdentitiesChecker.ts",
         "_test": "yarn setup && yarn mocha --timeout 9999999 --loader ts-node/esm",
         "_testParallel": "yarn setup && yarn mocha --timeout 9999999 --parallel --loader ts-node/esm",
         "test": "yarn _test './**/*.*test.ts'",

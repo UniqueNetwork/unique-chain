@@ -167,7 +167,7 @@ jobs:
           yarn
           ../scripts/wait_for_first_block.sh
           echo "Executing upgrade"
-          yarn ts-node-esm util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
+          yarn ts-node --esm util/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
