@@ -1,11 +1,4 @@
 {
-  "include": [
-      "./src/**/*"
-  ],
-  "exclude": [
-      "**/*.test.*",
-      "node_modules"
-  ],
   "ts-node": {
       // Tell ts-node CLI to install the --loader automatically
       "esm": true
@@ -14,7 +7,6 @@
       "target": "ESNext",
       "module": "commonjs",
       "sourceMap": true,
-      "outDir": "dist",
       "strict": true,
       "lib": [
           "esnext"
