@@ -2,9 +2,6 @@
 	"exclude": [
 		"**/node_modules"
 	],
-	"ts-node": {
-		"transpileOnly": true
-    },
 	"compilerOptions": {
 		"skipLibCheck": true,
 		"module": "ESNext",

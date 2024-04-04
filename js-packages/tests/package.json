@@ -13,7 +13,7 @@
         "mocha": "^10.1.0"
     },
     "scripts": {
-        "setup": "yarn node --trace-warnings --no-warnings=ExperimentalWarning --loader ts-node/esm ../test-utils/globalSetup.ts",
+        "setup": "yarn node --trace-warnings --no-warnings=ExperimentalWarning --loader ts-node/esm.mjs ../test-utils/globalSetup.ts",
         "setIdentities": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/identitySetter.ts",
         "checkRelayIdentities": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/relayIdentitiesChecker.ts",
         "_test": "yarn setup && yarn mocha --timeout 9999999 --loader=ts-node/esm.mjs",
