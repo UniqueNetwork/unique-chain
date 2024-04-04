@@ -41,21 +41,21 @@ jobs:
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
 
-      # - name: Generate ENV related extend file for docker-compose
-      #   uses: cuchi/jinja2-action@v1.2.0
-      #   with:
-      #     template: .docker/docker-compose.tmp-dev.j2
-      #     output_file: .docker/docker-compose.${{ matrix.network }}.yml
-      #     variables: |
-      #       RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-      #       NETWORK=${{ matrix.network }}
+      - name: Generate ENV related extend file for docker-compose
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/docker-compose.tmp-dev.j2
+          output_file: .docker/docker-compose.${{ matrix.network }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            NETWORK=${{ matrix.network }}
     
 
-      # - name: Show build configuration
-      #   run: cat .docker/docker-compose.${{ matrix.network }}.yml
+      - name: Show build configuration
+        run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
-      # - name: Build the stack
-      #   run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
+      - name: Build the stack
+        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
       - uses: actions/setup-node@v3.5.1
         with:
@@ -67,7 +67,7 @@ jobs:
           yarn --version
           yarn install
           yarn add mochawesome
-          # ../scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
