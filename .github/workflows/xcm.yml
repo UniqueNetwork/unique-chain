@@ -336,7 +336,7 @@ jobs:
       - name: Call HRMP initialization
         working-directory: js-packages/tests
         run: |
-          yarn ts-node --esm util/createHrmp.ts ${{matrix.network}}
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm util/createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests

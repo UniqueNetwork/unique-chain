@@ -45,9 +45,9 @@
     "prepublish": "yarn tsc",
     "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
-    "polkadot-types-fetch-metadata": "yarn ts-node --esm scripts/fetchMetadata.ts",
-    "polkadot-types-from-defs": "ts-node --esm ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
-    "polkadot-types-from-chain": "ts-node --esm ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types-fetch-metadata": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
     "polkadot-types": "echo \"export default {}\" > types/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain && rm types/registry.ts"
   },
   "resolutions": {

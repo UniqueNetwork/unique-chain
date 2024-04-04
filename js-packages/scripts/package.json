@@ -10,11 +10,11 @@
   "version": "1.0.0",
   "main": "",
   "scripts": {
-    "benchMintingFee": "yarn ts-node benchmarks/mintFee/benchmark.ts",
-    "loadTransfer": "yarn ts-node transfer.nload.ts",
-    "generateEnv": "yarn ts-node --esm ./generateEnv.ts",
-    "propose-upgrade": "yarn ts-node --esm ./proposeupgrade.ts",
-    "propose-fast-track": "yarn ts-node --esm ./proposefasttrack.ts",
-    "council-democracy-proposal": "yarn ts-node --esm ./councilproposal.ts"
+    "benchMintingFee": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm benchmarks/mintFee/benchmark.ts",
+    "loadTransfer": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm transfer.nload.ts",
+    "generateEnv": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ./generateEnv.ts",
+    "propose-upgrade": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ./proposeupgrade.ts",
+    "propose-fast-track": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ./proposefasttrack.ts",
+    "council-democracy-proposal": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ./councilproposal.ts"
   }
 }
