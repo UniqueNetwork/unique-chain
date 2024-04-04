@@ -39,6 +39,7 @@ jobs:
           matrix: |
             network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, runtime_features {opal-runtime}
 
+
   node-only-update:
 
     needs: prepare-execution-matrix
@@ -169,6 +170,7 @@ jobs:
           yarn cache clean --all
           yarn
           yarn add mochawesome
+          node --version
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
