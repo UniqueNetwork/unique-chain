@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '../util/index.js';
-import {itEth, expect} from './util/index.js';
-import {CollectionLimitField, TokenPermissionField} from './util/playgrounds/types.js';
+import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {itEth, expect} from '@unique/test-utils/eth/util.js';
+import {CollectionLimitField, TokenPermissionField} from '@unique/test-utils/eth/types.js';
 
 describe('evm nft collection sponsoring', () => {
   let donor: IKeyringPair;

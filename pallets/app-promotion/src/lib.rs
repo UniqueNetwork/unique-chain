@@ -689,21 +689,18 @@ pub mod pallet {
 
 		/// Called for blocks that, for some reason, have not been unstacked
 		///
-		/// # Permissions
-		///
-		/// * Sudo
 		///
 		///   # Arguments
 		///
-		/// * `origin`: Must be `Root`.
+		/// * `origin`: Must be `Signed`.
 		/// * `pending_blocks`: Block numbers that will be processed.
 		#[pallet::call_index(9)]
 		#[pallet::weight(<T as Config>::WeightInfo::on_initialize(PENDING_LIMIT_PER_BLOCK*pending_blocks.len() as u32))]
-		pub fn force_unstake(
+		pub fn resolve_skipped_blocks(
 			origin: OriginFor<T>,
 			pending_blocks: Vec<BlockNumberFor<T>>,
 		) -> DispatchResult {
-			ensure_root(origin)?;
+			ensure_signed(origin)?;
 
 			ensure!(
 				pending_blocks

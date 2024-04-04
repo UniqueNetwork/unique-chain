@@ -1,5 +1,5 @@
-import {CollectionFlag} from '@unique/playgrounds/types.js';
-import type {TCollectionMode} from '@unique/playgrounds/types.js';
+import {CollectionFlag} from '@unique-nft/playgrounds/types.js';
+import type {TCollectionMode} from '@unique-nft/playgrounds/types.js';
 
 export interface ContractImports {
   solPath: string;

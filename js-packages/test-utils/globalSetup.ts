@@ -3,7 +3,7 @@
 
 import {
   usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD, makeNames,
-} from './index.js';
+} from './util.js';
 import * as path from 'path';
 import {promises as fs} from 'fs';
 

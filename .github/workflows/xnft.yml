@@ -159,7 +159,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Clone xnft-tests
         run: git clone https://github.com/UniqueNetwork/xnft-tests.git

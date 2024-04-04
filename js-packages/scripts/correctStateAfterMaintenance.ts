@@ -1,5 +1,5 @@
-import config from '../config.js';
-import {usingPlaygrounds} from '../util/index.js';
+import config from '../tests/config.js';
+import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {u32} from '@polkadot/types-codec';
 
 const WS_ENDPOINT = config.substrateUrl;
@@ -37,7 +37,7 @@ export const main = async(options: { wsEndpoint: string; donorSeed: string } = {
     const signer = await privateKey(options.donorSeed);
 
     const txs = skippedBlocks.map((b) =>
-      api.tx.sudo.sudo(api.tx.appPromotion.forceUnstake(b)));
+      api.tx.appPromotion.resolveSkippedBlocks(b));
 
 
     const promises = txs.map((tx) => () => helper.signTransaction(signer, tx));

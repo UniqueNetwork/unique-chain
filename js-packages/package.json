@@ -26,8 +26,10 @@
     "@types/node": "^20.8.10",
     "@typescript-eslint/eslint-plugin": "^6.10.0",
     "@typescript-eslint/parser": "^6.10.0",
-    "@unique/opal-types": "workspace:*",
-    "@unique/playgrounds": "workspace:*",
+    "@unique-nft/evm-abi": "workspace:*",
+    "@unique-nft/opal-testnet-types": "workspace:*",
+    "@unique-nft/playgrounds": "workspace:*",
+    "@unique/test-utils": "workspace:*",
     "chai": "^4.3.10",
     "chai-subset": "^1.6.0",
     "eslint": "^8.53.0",
@@ -45,9 +47,9 @@
     "prepublish": "yarn tsc",
     "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
-    "polkadot-types-fetch-metadata": "yarn node --loader ts-node/esm scripts/fetchMetadata.ts",
-    "polkadot-types-from-defs": "node --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
-    "polkadot-types-from-chain": "node --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types-fetch-metadata": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "node --no-warnings=ExperimentalWarning --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "node --no-warnings=ExperimentalWarning --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
     "polkadot-types": "echo \"export default {}\" > types/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain && rm types/registry.ts"
   },
   "resolutions": {
@@ -57,8 +59,10 @@
   "packageManager": "yarn@3.6.1",
   "workspaces": [
     "types",
+    "evm-abi",
     "playgrounds",
     "scripts",
+    "test-utils",
     "tests"
   ]
 }

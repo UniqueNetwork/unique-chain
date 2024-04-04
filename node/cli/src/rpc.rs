@@ -71,7 +71,7 @@ pub fn create_full<C, P, SC, R, B>(
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
 	C::Api: RuntimeApiDep<R>,
@@ -80,8 +80,8 @@ where
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
 	C: sp_api::CallApiAt<
-		sp_runtime::generic::Block<
-			sp_runtime::generic::Header<u32, BlakeTwo256>,
+		generic::Block<
+			generic::Header<u32, BlakeTwo256>,
 			sp_runtime::OpaqueExtrinsic,
 		>,
 	>,

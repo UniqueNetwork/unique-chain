@@ -37,9 +37,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testXcmOpal}, runtime_features {opal-runtime}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runtime_features {quartz-runtime}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runtime_features {unique-runtime}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testXcmOpal}, runtime_features {opal-runtime}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runtime_features {quartz-runtime}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runtime_features {unique-runtime}
 
   xcm:
     needs: prepare-execution-marix
@@ -280,6 +280,40 @@ jobs:
             fi
         shell: bash
 
+      # Check Hydradx version and build it if it doesn't exist in repository
+      - name: Generate ENV related extend Dockerfile file for Hydradx
+        uses: cuchi/jinja2-action@v1.2.0
+        with:
+          template: .docker/Dockerfile-hydradx.j2
+          output_file: .docker/Dockerfile-hydradx.${{ matrix.hydradx_version }}.yml
+          variables: |
+            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            HYDRADX_BUILD_BRANCH=${{ matrix.hydradx_version }}
+
+      - name: Check if the dockerhub repository contains the needed HYDRADX version
+        run: |
+          # aquire token
+            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
+            export TOKEN=$TOKEN
+
+          # Get TAGS from DOCKERHUB repository
+            HYDRADX_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-hydradx/tags/?page_size=100 | jq -r '."results"[]["name"]')
+          # Show TAGS
+            echo "HYDRADX TAGS:"
+            echo $HYDRADX_TAGS
+          # Check correct version HYDRADX and build it if it doesn't exist in HYDRADX TAGS
+            if [[ ${HYDRADX_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.hydradx_version }}"($|[[:space:]]) ]]; then
+                echo "Repository has needed HYDRADX version";
+                docker pull uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }}
+            else
+                echo "Repository has not needed HYDRADX version, so build it";
+                cd .docker/ && docker build --file ./Dockerfile-hydradx.${{ matrix.hydradx_version }}.yml --tag uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }} .
+                echo "Push needed HYDRADX version to the repository";
+                docker push uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }}
+            fi
+        shell: bash
+
+
       - name: Build unique-chain
         run: |
           docker build --file .docker/Dockerfile-unique \
@@ -293,7 +327,7 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18
+          node-version: 20
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built
@@ -318,6 +352,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/cumulus':{dockerImage:'uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'uniquenetwork/builder-astar:${{ matrix.astar_version }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }}'}})
 
       - name: Upload network config
         uses: actions/upload-artifact@v3
@@ -333,9 +368,9 @@ jobs:
           yarn add mochawesome
 
       - name: Call HRMP initialization
-        working-directory: js-packages/tests
+        working-directory: js-packages/scripts
         run: |
-          yarn ts-node --esm util/createHrmp.ts ${{matrix.network}}
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests
