@@ -7,7 +7,7 @@ services:
         - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
         - "NETWORK={{ NETWORK }}"
         - "WASM_NAME={{ WASM_NAME }}"
-        - "GIT_PRIVATE_CREDENTIALS"={{ GIT_PRIVATE_CREDENTIALS }}
+        - "GIT_PRIVATE_CREDENTIALS={{ GIT_PRIVATE_CREDENTIALS }}"
       context: ../
       dockerfile: .docker/Dockerfile-chain-dev
     image: node-dev

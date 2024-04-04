@@ -2,6 +2,7 @@ FROM uniquenetwork/services:latest
 
 ARG RUST_TOOLCHAIN
 ARG NETWORK
+ARG GIT_PRIVATE_CREDENTIALS
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=Etc/UTC
@@ -20,8 +21,6 @@ RUN mkdir /dev_chain
 COPY . /dev_chain
 
 WORKDIR /dev_chain
-
-ARG GIT_PRIVATE_CREDENTIALS
 
 RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
 
