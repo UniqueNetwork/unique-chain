@@ -15,7 +15,7 @@ jobs:
 
     name: execution matrix
 
-    runs-on: test
+    runs-on: self-hosted-ci
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -46,7 +46,7 @@ jobs:
 
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci]
+    runs-on: [test]
 
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
