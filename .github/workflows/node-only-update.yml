@@ -140,9 +140,9 @@ jobs:
           ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
           path: ${{ matrix.mainnet_branch }}
 
-      - uses: actions/setup-node@v3.5.1
-        with:
-          node-version: 20
+      # - uses: actions/setup-node@v3.5.1
+      #   with:
+      #     node-version: 20
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@built
@@ -171,6 +171,7 @@ jobs:
           yarn
           yarn add mochawesome
           node --version
+          yarn node --version
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
