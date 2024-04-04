@@ -2,27 +2,20 @@
 	"exclude": [
 		"**/node_modules"
 	],
-    "ts-node": {
-        // Tell ts-node CLI to install the --loader automatically
-        "esm": true
-    },	
+	"ts-node": {
+		"transpileOnly": true
+    },
 	"compilerOptions": {
 		"skipLibCheck": true,
-		"module": "commonjs",
+		"module": "ESNext",
 		"moduleResolution": "Bundler",
 		"target": "ES2022",
 		"declaration": true,
 		"checkJs": false,
 		"strict": true,
-		"resolveJsonModule": true,
-        "lib": [
-            "esnext"
-        ],
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true, /* Ensure that casing is correct in imports. */
-        "skipLibCheck": true /* Skip type checking all .d.ts files. */		
+		"resolveJsonModule": true
 	},
 	"include": [
 		"./**/*.ts"
-	],
+	]
 }
