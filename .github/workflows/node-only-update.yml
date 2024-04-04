@@ -172,7 +172,7 @@ jobs:
           yarn add mochawesome
           node --version
           yarn node --version
-          ../scripts/wait_for_first_block.sh
+            # ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
