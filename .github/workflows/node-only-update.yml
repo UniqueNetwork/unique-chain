@@ -92,46 +92,46 @@ jobs:
             RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
             
-      - name: Prepare polkadot
-        uses: ./.github/actions/buildContainer
-        id: polkadot
-        with:
-          container: uniquenetwork/builder-polkadot
-          tag: ${{ matrix.relay_branch }}
-          context: .docker
-          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+      # - name: Prepare polkadot
+      #   uses: ./.github/actions/buildContainer
+      #   id: polkadot
+      #   with:
+      #     container: uniquenetwork/builder-polkadot
+      #     tag: ${{ matrix.relay_branch }}
+      #     context: .docker
+      #     dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
+      #     dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+      #     dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Prepare mainnet
-        uses: ./.github/actions/buildContainer
-        id: mainnet
-        with:
-          container: uniquenetwork/ci-node-only-${{ matrix.network }}
-          tag: ${{ matrix.mainnet_branch }}
-          context: .docker
-          dockerfile: Dockerfile-unique-release
-          args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+      # - name: Prepare mainnet
+      #   uses: ./.github/actions/buildContainer
+      #   id: mainnet
+      #   with:
+      #     container: uniquenetwork/ci-node-only-${{ matrix.network }}
+      #     tag: ${{ matrix.mainnet_branch }}
+      #     context: .docker
+      #     dockerfile: Dockerfile-unique-release
+      #     args: |
+      #       --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+      #       --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+      #       --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
+      #     dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+      #     dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Prepare latest
-        uses: ./.github/actions/buildContainer
-        id: latest
-        with:
-          container: uniquenetwork/ci-node-only-${{ matrix.network }}
-          tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
-          context: .
-          dockerfile: .docker/Dockerfile-unique
-          args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            --build-arg GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS}}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+      # - name: Prepare latest
+      #   uses: ./.github/actions/buildContainer
+      #   id: latest
+      #   with:
+      #     container: uniquenetwork/ci-node-only-${{ matrix.network }}
+      #     tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+      #     context: .
+      #     dockerfile: .docker/Dockerfile-unique
+      #     args: |
+      #       --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
+      #       --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+      #       --build-arg GIT_PRIVATE_CREDENTIALS=${{ secrets.GIT_PRIVATE_CREDENTIALS}}
+      #     dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+      #     dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Checkout at '${{ matrix.mainnet_branch }}' branch
         uses: actions/checkout@master
@@ -144,24 +144,24 @@ jobs:
       #   with:
       #     node-version: 20
 
-      - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@built
+      # - name: Install baedeker
+      #   uses: UniqueNetwork/baedeker-action/setup@built
 
-      - name: Setup library
-        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+      # - name: Setup library
+      #   run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
-      - name: Start network
-        uses: UniqueNetwork/baedeker-action@built
-        id: bdk
-        with:
-          jpath: |
-            .baedeker/vendor
-          tla-str: |
-            relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
-          inputs: |
-            .baedeker/node-only.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
+      # - name: Start network
+      #   uses: UniqueNetwork/baedeker-action@built
+      #   id: bdk
+      #   with:
+      #     jpath: |
+      #       .baedeker/vendor
+      #     tla-str: |
+      #       relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
+      #     inputs: |
+      #       .baedeker/node-only.jsonnet
+      #       snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+      #       ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
