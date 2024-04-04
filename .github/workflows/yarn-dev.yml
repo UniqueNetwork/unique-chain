@@ -110,6 +110,7 @@ jobs:
           docker system prune -f
           docker image prune -f -a
 
+
   # check:
   #   if: always()
   #   runs-on: [self-hosted-ci]
