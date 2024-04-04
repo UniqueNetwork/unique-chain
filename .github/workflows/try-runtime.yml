@@ -186,7 +186,7 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
+        run: docker compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" up -d --remove-orphans --force-recreate --timeout 300
 
       - name: Check if docker logs consist logs related to Runtime Upgrade testing.
         if: success()
@@ -246,7 +246,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+        run: docker compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always

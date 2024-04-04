@@ -46,11 +46,11 @@ jobs:
         run: cat .docker/docker-compose.unit.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.unit.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from node-dev
+        run: docker compose -f ".docker/docker-compose.unit.yml" up --build  --force-recreate --timeout 300 --remove-orphans --exit-code-from node-dev
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.unit.yml" down
+        run: docker compose -f ".docker/docker-compose.unit.yml" down
         
       - name: Remove builder cache
         if: always()                   # run this step always

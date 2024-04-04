@@ -99,7 +99,7 @@ jobs:
 
       - name: Start node-parachain
         working-directory: qa-tests
-        run: docker-compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
+        run: docker compose -f ".docker/docker-compose.market.yml" -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans --force-recreate node-parachain 
      
       - uses: actions/setup-node@v3.5.1
         with:
@@ -177,7 +177,7 @@ jobs:
           path: qa-tests/
 
       - name: local-market:start
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
+        run: docker compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" up -d --build
 
       - name: Wait for market readyness
         working-directory: qa-tests
@@ -207,7 +207,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
+        run: docker compose -f "qa-tests/.docker/docker-compose.market.yml" -f "qa-tests/.docker/docker-compose.${{ matrix.network }}.yml" down --volumes
 
       - name: Remove builder cache
         if: always()                   # run this step always
