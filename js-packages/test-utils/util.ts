@@ -8,10 +8,10 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiSubset from 'chai-subset';
 import {Context} from 'mocha';
-import config from '../config.js';
-import {ChainHelperBase} from '@unique/playgrounds/unique.js';
-import type {ILogger} from '@unique/playgrounds/types.js';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper} from '@unique/playgrounds/unique.dev.js';
+import config from '../tests/config.js';
+import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
+import type {ILogger} from '@unique-nft/playgrounds/types.js';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -90,6 +90,8 @@ export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper
 export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
 
 export const usingPolkadexPlaygrounds = (url: string, code: (helper: DevPolkadexHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevPolkadexHelper>(DevPolkadexHelper, url, code);
+
+export const usingHydraDxPlaygrounds = (url: string, code: (helper: DevHydraDxHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevHydraDxHelper>(DevHydraDxHelper, url, code);
 
 export const MINIMUM_DONOR_FUND = 4_000_000n;
 export const DONOR_FUNDING = 4_000_000n;

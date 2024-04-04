@@ -14,8 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds} from './util/index.js';
-import {CrossAccountId} from '@unique/playgrounds/unique.js';
+import {itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {CrossAccountId} from '@unique-nft/playgrounds/unique.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('Token transfer between substrate address and EVM address. Fungible', () => {

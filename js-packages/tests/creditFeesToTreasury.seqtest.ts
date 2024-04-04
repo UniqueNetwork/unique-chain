@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub} from './util/index.js';
+import {usingPlaygrounds, expect, itSub} from '@unique/test-utils/util.js';
 import type {u32} from '@polkadot/types-codec';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';

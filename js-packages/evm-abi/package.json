@@ -1,0 +1,12 @@
+{
+  "author": "Unique Network",
+  "license": "Apache 2.0",
+  "description": "EVM interfaces for Unique Network chains",
+  "engines": {
+    "node": ">=18"
+  },
+  "name": "@unique-nft/evm-abi",
+  "type": "module",
+  "version": "1.0.0",
+  "main": "index.js"
+}
