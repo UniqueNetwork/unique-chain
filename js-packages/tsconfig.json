@@ -10,9 +10,13 @@
 		"declaration": true,
 		"checkJs": false,
 		"strict": true,
-		"resolveJsonModule": true,
+		"resolveJsonModule": true
 	},
+    "ts-node": {
+        "esm": true,
+        "experimentalSpecifierResolution": "node"
+    },	
 	"include": [
 		"./**/*.ts"
-	],
+	]
 }
