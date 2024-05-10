@@ -14979,6 +14979,7 @@ dependencies = [
  "cumulus-relay-chain-inprocess-interface",
  "cumulus-relay-chain-interface",
  "cumulus-relay-chain-minimal-node",
+ "cumulus-test-relay-sproof-builder",
  "fc-api",
  "fc-consensus",
  "fc-db",
