@@ -14,57 +14,58 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, Everything, Get, Nothing, ProcessMessageError},
+	traits::{
+		ConstU32, EnqueueWithOrigin, Everything, Get, Nothing, ProcessMessageError, TransformOrigin,
+	},
 };
 use frame_system::EnsureRoot;
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
 use pallet_foreign_assets::FreeForAll;
 use pallet_xcm::XcmPassthrough;
+use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_std::marker::PhantomData;
-use staging_xcm::{
-	latest::{prelude::*, MultiLocation, Weight},
-	v3::Instruction,
-};
+use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, ParentIsPreset, RelayChainAsNative,
-	SiblingParachainAsNative, SiblingParachainConvertsVia, SignedAccountId32AsNative,
-	SignedToAccountId32, SovereignSignedViaLocation,
+	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor,
+	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
 };
 use staging_xcm_executor::{
 	traits::{Properties, ShouldExecute},
 	XcmExecutor,
 };
-use up_common::types::AccountId;
+use up_common::{constants::MAXIMUM_BLOCK_WEIGHT, types::AccountId};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	xcm_barrier::Barrier, AllPalletsWithSystem, Balances, ForeignAssets, ParachainInfo,
-	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	XcmpQueue,
+	runtime_common::config::parachain::RelayMsgOrigin, xcm_barrier::Barrier, AllPalletsWithSystem,
+	Balances, ForeignAssets, MessageQueue, ParachainInfo, ParachainSystem, PolkadotXcm,
+	RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
 
 parameter_types! {
-	pub const RelayLocation: MultiLocation = MultiLocation::parent();
+	pub const RelayLocation: Location = Location::parent();
 	pub RelayOrigin: RuntimeOrigin = cumulus_pallet_xcm::Origin::Relay.into();
-	pub UniversalLocation: InteriorMultiLocation = (
+	pub UniversalLocation: InteriorLocation = (
 		GlobalConsensus(crate::RelayNetwork::get()),
 		Parachain(ParachainInfo::get().into()),
 	).into();
-	pub SelfLocation: MultiLocation = MultiLocation::new(1, X1(Parachain(ParachainInfo::get().into())));
+	pub SelfLocation: Location = Location::new(1, Parachain(ParachainInfo::get().into()));
 
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000, 1000); // ?
 	pub const MaxInstructions: u32 = 100;
+	pub const MessageQueueServiceWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4); // TODO
 }
 
-/// Type for specifying how a `MultiLocation` can be converted into an `AccountId`. This is used
+/// Type for specifying how a `Location` can be converted into an `AccountId`. This is used
 /// when determining ownership of accounts for asset transacting and when attempting to use XCM
 /// `Transact` in order to determine the dispatch Origin.
 pub type LocationToAccountId = (
@@ -111,7 +112,7 @@ pub type XcmOriginToTransactDispatchOrigin = (
 
 pub trait TryPass {
 	fn try_pass<Call>(
-		origin: &MultiLocation,
+		origin: &Location,
 		message: &mut [Instruction<Call>],
 	) -> Result<(), ProcessMessageError>;
 }
@@ -119,7 +120,7 @@ pub trait TryPass {
 #[impl_trait_for_tuples::impl_for_tuples(30)]
 impl TryPass for Tuple {
 	fn try_pass<Call>(
-		origin: &MultiLocation,
+		origin: &Location,
 		message: &mut [Instruction<Call>],
 	) -> Result<(), ProcessMessageError> {
 		for_tuples!( #(
@@ -143,7 +144,7 @@ where
 	Allow: ShouldExecute,
 {
 	fn should_execute<Call>(
-		origin: &MultiLocation,
+		origin: &Location,
 		message: &mut [Instruction<Call>],
 		max_weight: Weight,
 		properties: &mut Properties,
@@ -190,11 +191,12 @@ where
 	type CallDispatcher = RuntimeCall;
 	type SafeCallFilter = Nothing;
 	type Aliasers = Nothing;
+	type TransactionalProcessor = FrameTransactionalProcessor;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
 parameter_types! {
-	pub ReachableDest: Option<MultiLocation> = Some(Parent.into());
+	pub ReachableDest: Option<Location> = Some(Parent.into());
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -229,13 +231,39 @@ impl cumulus_pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 }
-impl cumulus_pallet_xcmp_queue::Config for Runtime {
-	type WeightInfo = ();
+
+impl pallet_message_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
+	type WeightInfo = pallet_message_queue::weights::SubstrateWeight<Self>;
+
+	#[cfg(not(feature = "runtime-benchmarks"))]
+	type MessageProcessor = staging_xcm_builder::ProcessXcmMessage<
+		AggregateMessageOrigin,
+		XcmExecutor<XcmExecutorConfig<Self>>,
+		RuntimeCall,
+	>;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type MessageProcessor =
+		pallet_message_queue::mock_helpers::NoopMessageProcessor<AggregateMessageOrigin>;
+
+	type Size = u32;
+	// The XCMP queue pallet is only ever able to handle the `Sibling(ParaId)` origin:
+	type QueueChangeHandler = NarrowOriginToSibling<XcmpQueue>;
+	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
+	type HeapSize = ConstU32<{ 64 * 1024 }>;
+	type MaxStale = ConstU32<8>;
+	type ServiceWeight = MessageQueueServiceWeight;
+}
+
+impl cumulus_pallet_xcmp_queue::Config for Runtime {
+	type WeightInfo = cumulus_pallet_xcmp_queue::weights::SubstrateWeight<Self>;
+	type RuntimeEvent = RuntimeEvent;
+	type XcmpQueue = TransformOrigin<MessageQueue, AggregateMessageOrigin, ParaId, ParaIdToSibling>;
+	type MaxInboundSuspended = ConstU32<1000>;
+
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = PolkadotXcm;
-	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
 
 	#[cfg(feature = "governance")]
 	type ControllerOrigin = governance::RootOrTechnicalCommitteeMember;
@@ -249,6 +277,6 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
-	type ExecuteOverweightOrigin = frame_system::EnsureRoot<AccountId>;
+	type WeightInfo = cumulus_pallet_dmp_queue::weights::SubstrateWeight<Self>;
+	type DmpSink = EnqueueWithOrigin<MessageQueue, RelayMsgOrigin>;
 }

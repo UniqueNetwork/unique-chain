@@ -35,7 +35,6 @@ use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_inherents::CreateInherentDataProviders;
-use sp_runtime::traits::BlakeTwo256;
 use up_common::types::opaque::*;
 
 use crate::service::RuntimeApiDep;
@@ -80,10 +79,7 @@ where
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
 	C: sp_api::CallApiAt<
-		generic::Block<
-			generic::Header<u32, BlakeTwo256>,
-			sp_runtime::OpaqueExtrinsic,
-		>,
+		generic::Block<generic::Header<u32, BlakeTwo256>, sp_runtime::OpaqueExtrinsic>,
 	>,
 	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {

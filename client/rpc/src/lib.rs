@@ -17,14 +17,13 @@
 // Original License
 use std::sync::Arc;
 
-use anyhow::anyhow;
 use app_promotion_rpc::AppPromotionApi as AppPromotionRuntimeApi;
 pub use app_promotion_unique_rpc::AppPromotionApiServer;
-use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc};
+use jsonrpsee::{core::RpcResult as Result, proc_macros::rpc, types::ErrorCode};
 use parity_scale_codec::Decode;
-use sp_api::{ApiExt, BlockT, ProvideRuntimeApi};
+use sp_api::{ApiExt, ProvideRuntimeApi};
 use sp_blockchain::HeaderBackend;
-use sp_runtime::traits::{AtLeast32BitUnsigned, Member};
+use sp_runtime::traits::{AtLeast32BitUnsigned, Block as BlockT, Member};
 use up_data_structs::{
 	CollectionId, CollectionLimits, CollectionStats, Property, PropertyKeyPermission,
 	RpcCollection, TokenChild, TokenData, TokenId,
@@ -345,7 +344,7 @@ macro_rules! pass_method {
 				api_version
 			} else {
 				// unreachable for our runtime
-				return Err(anyhow!("api is not available").into())
+				return Err(ErrorCode::MethodNotFound.into())
 			};
 
 			let result = $(if _api_version < $ver {
@@ -354,8 +353,8 @@ macro_rules! pass_method {
 			{ api.$method_name(at, $($($map)? ($name)),*) };
 
 			Ok(result
-				.map_err(|e| anyhow!("unable to query: {e}"))?
-				.map_err(|e| anyhow!("runtime error: {e:?}"))$(.map($mapper))??)
+				.map_err(|_| ErrorCode::InternalError /* TODO proper error */)?
+				.map_err(|_| ErrorCode::InvalidParams)$(.map($mapper))??)
 		}
 	};
 }
@@ -513,7 +512,7 @@ where
 	{
 		api_version
 	} else {
-		return Err(anyhow!("api is not available").into());
+		return Err(ErrorCode::MethodNotFound.into());
 	};
 	let result = if api_version >= 3 {
 		api.token_data(at, collection, token_id, string_keys_to_bytes_keys(keys))
@@ -537,8 +536,8 @@ where
 			})
 	};
 	Ok(result
-		.map_err(|e| anyhow!("unable to query: {e}"))?
-		.map_err(|e| anyhow!("runtime error: {e:?}"))?)
+		.map_err(|_| ErrorCode::InternalError /* TODO proper error */)?
+		.map_err(|_| ErrorCode::InvalidParams)?)
 }
 
 fn string_keys_to_bytes_keys(keys: Option<Vec<String>>) -> Option<Vec<Vec<u8>>> {

@@ -40,7 +40,7 @@ macro_rules! impl_common_runtime_apis {
 			Permill,
 			traits::{Block as BlockT},
 			transaction_validity::{TransactionSource, TransactionValidity},
-			ApplyExtrinsicResult, DispatchError,
+			ApplyExtrinsicResult, DispatchError, ExtrinsicInclusionMode,
 		};
 		use frame_support::{
 			pallet_prelude::Weight,
@@ -243,7 +243,7 @@ macro_rules! impl_common_runtime_apis {
 					Executive::execute_block(block)
 				}
 
-				fn initialize_block(header: &<Block as BlockT>::Header) {
+				fn initialize_block(header: &<Block as BlockT>::Header) -> ExtrinsicInclusionMode {
 					Executive::initialize_block(header)
 				}
 			}
@@ -442,7 +442,7 @@ macro_rules! impl_common_runtime_apis {
 					)
 				}
 
-				fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
+				fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
 					xts.into_iter().filter_map(|xt| match xt.0.function {
 						RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
 						_ => None

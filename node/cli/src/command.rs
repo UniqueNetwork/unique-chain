@@ -49,7 +49,9 @@ use crate::service::UniqueRuntimeExecutor;
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, start_dev_node, start_node, OpalRuntimeExecutor},
+	service::{
+		new_partial, start_dev_node, start_node, OpalRuntimeExecutor, ParachainHostFunctions,
+	},
 };
 
 macro_rules! no_runtime_err {
@@ -337,10 +339,7 @@ pub fn run() -> Result<()> {
 			Ok(cmd.run(components.client, components.backend, None))
 		}),
 		Some(Subcommand::ExportGenesisState(cmd)) => {
-			construct_sync_run!(|components, cli, cmd, _config| {
-				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
-				cmd.run(&*spec, &*components.client)
-			})
+			construct_sync_run!(|components, cli, cmd, _config| cmd.run(components.client))
 		}
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
 			construct_sync_run!(|_components, cli, cmd, _config| {
@@ -352,13 +351,12 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
-			use sp_io::SubstrateHostFunctions;
 
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
+					runner.sync_run(|config| cmd.run::<Block, ParachainHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
@@ -422,21 +420,27 @@ pub fn run() -> Result<()> {
 				Ok((
 					match config.chain_spec.runtime_id() {
 						#[cfg(feature = "unique-runtime")]
-						RuntimeId::Unique => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
+						RuntimeId::Unique => Box::pin(
+							cmd
+								.run::<Block, <UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
+								info_provider,
+							),
+						),
 
 						#[cfg(feature = "quartz-runtime")]
-						RuntimeId::Quartz => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
+						RuntimeId::Quartz => Box::pin(
+							cmd
+								.run::<Block, <QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
+								info_provider,
+							),
+						),
 
-						RuntimeId::Opal => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
+						RuntimeId::Opal => Box::pin(
+							cmd
+								.run::<Block, <OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
+								info_provider,
+							),
+						),
 						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
 					},
 					task_manager,

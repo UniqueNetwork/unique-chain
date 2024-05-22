@@ -33,7 +33,7 @@ mod benchmarks {
 	#[benchmark]
 	fn force_register_foreign_asset() -> Result<(), BenchmarkError> {
 		let location =
-			MultiLocation::from(X3(Parachain(1000), PalletInstance(42), GeneralIndex(1)));
+			Location::from((Parachain(1000), PalletInstance(42), GeneralIndex(1)).into());
 		let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
 		let mode = ForeignCollectionMode::NFT;

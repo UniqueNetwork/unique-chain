@@ -88,6 +88,7 @@ macro_rules! construct_runtime {
 				PolkadotXcm: pallet_xcm = 51,
 				CumulusXcm: cumulus_pallet_xcm = 52,
 				DmpQueue: cumulus_pallet_dmp_queue = 53,
+				MessageQueue: pallet_message_queue = 54,
 
 				// Unique Pallets
 				Inflation: pallet_inflation = 60,

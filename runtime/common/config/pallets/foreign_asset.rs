@@ -24,7 +24,7 @@ pub struct LocationToCrossAccountId;
 impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
 	for LocationToCrossAccountId
 {
-	fn convert_location(location: &MultiLocation) -> Option<ConfigCrossAccountId> {
+	fn convert_location(location: &Location) -> Option<ConfigCrossAccountId> {
 		LocationToAccountId::convert_location(location)
 			.map(ConfigCrossAccountId::from_sub)
 			.or_else(|| {

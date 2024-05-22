@@ -33,7 +33,8 @@
 //! Benchmarking setup for pallet-collator-selection
 
 use frame_benchmarking::v2::{
-	account, benchmarks, impl_benchmark_test_suite, whitelisted_caller, BenchmarkError,
+	account, benchmarks, impl_benchmark_test_suite, impl_test_function, whitelisted_caller,
+	BenchmarkError,
 };
 use frame_support::{
 	assert_ok,

@@ -16,6 +16,7 @@
 
 use std::collections::BTreeMap;
 
+use default_runtime::WASM_BINARY;
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 pub use opal_runtime as default_runtime;
 #[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
@@ -153,12 +154,7 @@ macro_rules! testnet_genesis {
 		use $runtime::*;
 
 		RuntimeGenesisConfig {
-			system: SystemConfig {
-				code: WASM_BINARY
-					.expect("WASM binary was not build, please build it!")
-					.to_vec(),
-				..Default::default()
-			},
+			system: Default::default(),
 			balances: BalancesConfig {
 				balances: $endowed_accounts
 					.iter()
@@ -216,12 +212,7 @@ macro_rules! testnet_genesis {
 		use $runtime::*;
 
 		RuntimeGenesisConfig {
-			system: SystemConfig {
-				code: WASM_BINARY
-					.expect("WASM binary was not build, please build it!")
-					.to_vec(),
-				..Default::default()
-			},
+			system: Default::default(),
 			balances: BalancesConfig {
 				balances: $endowed_accounts
 					.iter()
@@ -324,6 +315,7 @@ pub fn development_config() -> DefaultChainSpec {
 			relay_chain: "rococo-dev".into(),
 			para_id: PARA_ID,
 		},
+		WASM_BINARY.expect("WASM binary was not build, please build it!"),
 	)
 }
 
@@ -398,5 +390,6 @@ pub fn local_testnet_config() -> DefaultChainSpec {
 			relay_chain: "westend-local".into(),
 			para_id: PARA_ID,
 		},
+		WASM_BINARY.expect("WASM binary was not build, please build it!"),
 	)
 }
