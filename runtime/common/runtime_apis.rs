@@ -535,9 +535,10 @@ macro_rules! impl_common_runtime_apis {
 				) {
 					use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 					use frame_support::traits::StorageInfoTrait;
+					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
 					let mut list = Vec::<BenchmarkList>::new();
-					list_benchmark!(list, extra, pallet_xcm, PolkadotXcm);
+					list_benchmark!(list, extra, pallet_xcm, PalletXcmBenchmarks::<Runtime>);
 
 					list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
 					list_benchmark!(list, extra, pallet_common, Common);
@@ -578,6 +579,7 @@ macro_rules! impl_common_runtime_apis {
 				) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 					use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark};
 					use sp_storage::TrackedStorageKey;
+					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
 					let allowlist: Vec<TrackedStorageKey> = vec![
 						// Total Issuance
@@ -601,7 +603,8 @@ macro_rules! impl_common_runtime_apis {
 
 					let mut batches = Vec::<BenchmarkBatch>::new();
 					let params = (&config, &allowlist);
-					add_benchmark!(params, batches, pallet_xcm, PolkadotXcm);
+
+					add_benchmark!(params, batches, pallet_xcm, PalletXcmBenchmarks::<Runtime>);
 
 					add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 					add_benchmark!(params, batches, pallet_common, Common);

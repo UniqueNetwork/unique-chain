@@ -32,8 +32,7 @@ mod benchmarks {
 
 	#[benchmark]
 	fn force_register_foreign_asset() -> Result<(), BenchmarkError> {
-		let location =
-			Location::from((Parachain(1000), PalletInstance(42), GeneralIndex(1)).into());
+		let asset_id: AssetId = (Parachain(1000), PalletInstance(42), GeneralIndex(1)).into();
 		let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
 		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
 		let mode = ForeignCollectionMode::NFT;
@@ -41,7 +40,7 @@ mod benchmarks {
 		#[extrinsic_call]
 		_(
 			RawOrigin::Root,
-			Box::new(location.into()),
+			Box::new(asset_id.into()),
 			name,
 			token_prefix,
 			mode,

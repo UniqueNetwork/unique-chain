@@ -194,11 +194,6 @@ where
 	type TransactionalProcessor = FrameTransactionalProcessor;
 }
 
-#[cfg(feature = "runtime-benchmarks")]
-parameter_types! {
-	pub ReachableDest: Option<Location> = Some(Parent.into());
-}
-
 impl pallet_xcm::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type SendXcmOrigin = EnsureXcmOrigin<RuntimeOrigin, ()>;
@@ -223,8 +218,19 @@ impl pallet_xcm::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
-	#[cfg(feature = "runtime-benchmarks")]
-	type ReachableDest = ReachableDest;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+impl pallet_xcm::benchmarking::Config for Runtime {
+	type DeliveryHelper = ();
+
+	fn reachable_dest() -> Option<Location> {
+		Some(Parent.into())
+	}
+
+	fn get_asset() -> Asset {
+		(Location::here(), 1_000_000_000_000_000_000u128).into()
+	}
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {

@@ -352,11 +352,14 @@ pub fn run() -> Result<()> {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
 
+			type Header = <Block as sp_runtime::traits::Block>::Header;
+			type Hasher = <Header as sp_runtime::traits::Header>::Hashing;
+
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, ParachainHostFunctions>(config))
+					runner.sync_run(|config| cmd.run::<Hasher, ParachainHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<

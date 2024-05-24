@@ -73,6 +73,9 @@ impl RankedConfig for Runtime {
 	type Polls = FellowshipReferenda;
 	type MinRankOfClass = ClassToRankMapper<Self, ()>;
 	type VoteWeight = pallet_ranked_collective::Geometric;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkSetup = ();
 }
 
 pub struct EnsureFellowshipProposition;
