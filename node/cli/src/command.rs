@@ -49,9 +49,7 @@ use crate::service::UniqueRuntimeExecutor;
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{
-		new_partial, start_dev_node, start_node, OpalRuntimeExecutor, ParachainHostFunctions,
-	},
+	service::{new_partial, start_dev_node, start_node, OpalRuntimeExecutor},
 };
 
 macro_rules! no_runtime_err {
@@ -65,8 +63,8 @@ macro_rules! no_runtime_err {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"dev" => Box::new(chain_spec::development_config()),
-		"" | "local" => Box::new(chain_spec::local_testnet_config()),
+		"dev" => Box::new(chain_spec::test_config("dev", "rococo-dev")),
+		"" | "local" => Box::new(chain_spec::test_config("local", "westend-local")),
 		path => {
 			let path = std::path::PathBuf::from(path);
 			#[allow(clippy::redundant_clone)]
@@ -352,6 +350,8 @@ pub fn run() -> Result<()> {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
 
+			use crate::service::ParachainHostFunctions;
+
 			type Header = <Block as sp_runtime::traits::Block>::Header;
 			type Hasher = <Header as sp_runtime::traits::Header>::Hashing;
 
@@ -403,7 +403,7 @@ pub fn run() -> Result<()> {
 			use std::{future::Future, pin::Pin};
 
 			use polkadot_cli::Block;
-			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			use sc_executor::NativeExecutionDispatch;
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 
 			let runner = cli.create_runner(cmd)?;

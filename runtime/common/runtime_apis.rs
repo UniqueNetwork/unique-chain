@@ -43,6 +43,7 @@ macro_rules! impl_common_runtime_apis {
 			ApplyExtrinsicResult, DispatchError, ExtrinsicInclusionMode,
 		};
 		use frame_support::{
+			genesis_builder_helper::{build_config, create_default_config},
 			pallet_prelude::Weight,
 			traits::OnFinalize,
 		};
@@ -708,6 +709,16 @@ macro_rules! impl_common_runtime_apis {
 					UncheckedExtrinsic::new_unsigned(
 						pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 					)
+				}
+			}
+
+			impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
+				fn create_default_config() -> Vec<u8> {
+					create_default_config::<RuntimeGenesisConfig>()
+				}
+
+				fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
+					build_config::<RuntimeGenesisConfig>(config)
 				}
 			}
 		}

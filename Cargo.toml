@@ -181,6 +181,7 @@ sp-transaction-pool = { default-features = false, version = "29.0.0" }
 sp-trie = { default-features = false, version = "32.0.0" }
 sp-version = { default-features = false, version = "32.0.0" }
 sp-weights = { default-features = false, version = "30.0.0" }
+sp-genesis-builder = { default-features = false, version = "0.10.0" }
 staging-parachain-info = { default-features = false, version = "0.10.0" }
 staging-xcm = { default-features = false, version = "10.0.0" }
 staging-xcm-builder = { default-features = false, version = "10.0.0" }
@@ -217,4 +218,5 @@ jsonrpsee = { version = "0.22.5", features = ["macros", "server"] }
 log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }
+serde_json = "1"
 smallvec = "1.11.1"

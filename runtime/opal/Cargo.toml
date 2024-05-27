@@ -146,6 +146,7 @@ std = [
 	'sp-storage/std',
 	'sp-transaction-pool/std',
 	'sp-version/std',
+	'sp-genesis-builder/std',
 	'staging-parachain-info/std',
 	'staging-xcm-builder/std',
 	'staging-xcm-executor/std',
@@ -295,6 +296,7 @@ sp-std = { workspace = true }
 sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
+sp-genesis-builder = { workspace = true }
 staging-parachain-info = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-builder = { workspace = true }
