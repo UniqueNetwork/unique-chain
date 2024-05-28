@@ -181,7 +181,7 @@ fn genesis_patch() -> serde_json::Value {
 
 		"aura": {
 			"authorities": invulnerables.into_iter()
-				.map(|name| get_from_seed::<AuraId>(name))
+				.map(get_from_seed::<AuraId>)
 				.collect::<Vec<_>>(),
 		},
 
