@@ -765,6 +765,7 @@ where
 		relay_client: relay_chain_interface,
 		sync_oracle,
 		keystore,
+		#[cfg(not(feature = "lookahead"))]
 		slot_duration,
 		proposer,
 		collator_service,
@@ -786,6 +787,8 @@ where
 		relay_chain_slot_duration,
 		#[cfg(not(feature = "lookahead"))]
 		collation_request_receiver: None,
+		#[cfg(feature = "lookahead")]
+		reinitialize: false,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
