@@ -98,6 +98,14 @@ impl system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
+
+	type RuntimeTask = ();
+
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 parameter_types! {
@@ -117,7 +125,6 @@ impl pallet_balances::Config for Test {
 	type ReserveIdentifier = [u8; 8];
 	type MaxFreezes = MaxLocks;
 	type FreezeIdentifier = [u8; 8];
-	type MaxHolds = MaxLocks;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 }
@@ -237,6 +244,7 @@ impl pallet_evm::Config for Test {
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type Timestamp = Timestamp;
 	type GasLimitPovSizeRatio = ConstU64<0>;
+	type SuicideQuickClearLimit = ConstU32<0>;
 }
 impl pallet_evm_coder_substrate::Config for Test {}
 
