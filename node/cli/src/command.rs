@@ -63,8 +63,8 @@ macro_rules! no_runtime_err {
 
 fn load_spec(id: &str) -> std::result::Result<Box<dyn sc_service::ChainSpec>, String> {
 	Ok(match id {
-		"dev" => Box::new(chain_spec::development_config()),
-		"" | "local" => Box::new(chain_spec::local_testnet_config()),
+		"dev" => Box::new(chain_spec::test_config("dev", "rococo-dev")),
+		"" | "local" => Box::new(chain_spec::test_config("local", "westend-local")),
 		path => {
 			let path = std::path::PathBuf::from(path);
 			#[allow(clippy::redundant_clone)]
@@ -337,10 +337,7 @@ pub fn run() -> Result<()> {
 			Ok(cmd.run(components.client, components.backend, None))
 		}),
 		Some(Subcommand::ExportGenesisState(cmd)) => {
-			construct_sync_run!(|components, cli, cmd, _config| {
-				let spec = cli.load_spec(&cmd.shared_params.chain.clone().unwrap_or_default())?;
-				cmd.run(&*spec, &*components.client)
-			})
+			construct_sync_run!(|components, cli, cmd, _config| cmd.run(components.client))
 		}
 		Some(Subcommand::ExportGenesisWasm(cmd)) => {
 			construct_sync_run!(|_components, cli, cmd, _config| {
@@ -352,13 +349,17 @@ pub fn run() -> Result<()> {
 		Some(Subcommand::Benchmark(cmd)) => {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
-			use sp_io::SubstrateHostFunctions;
+
+			use crate::service::ParachainHostFunctions;
+
+			type Header = <Block as sp_runtime::traits::Block>::Header;
+			type Hasher = <Header as sp_runtime::traits::Header>::Hashing;
 
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
 				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Block, SubstrateHostFunctions>(config))
+					runner.sync_run(|config| cmd.run::<Hasher, ParachainHostFunctions>(config))
 				}
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
@@ -402,7 +403,7 @@ pub fn run() -> Result<()> {
 			use std::{future::Future, pin::Pin};
 
 			use polkadot_cli::Block;
-			use sc_executor::{sp_wasm_interface::ExtendedHostFunctions, NativeExecutionDispatch};
+			use sc_executor::NativeExecutionDispatch;
 			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
 
 			let runner = cli.create_runner(cmd)?;
@@ -422,21 +423,27 @@ pub fn run() -> Result<()> {
 				Ok((
 					match config.chain_spec.runtime_id() {
 						#[cfg(feature = "unique-runtime")]
-						RuntimeId::Unique => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
+						RuntimeId::Unique => Box::pin(
+							cmd
+								.run::<Block, <UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
+								info_provider,
+							),
+						),
 
 						#[cfg(feature = "quartz-runtime")]
-						RuntimeId::Quartz => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
+						RuntimeId::Quartz => Box::pin(
+							cmd
+								.run::<Block, <QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
+								info_provider,
+							),
+						),
 
-						RuntimeId::Opal => Box::pin(cmd.run::<Block, ExtendedHostFunctions<
-							sp_io::SubstrateHostFunctions,
-							<OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions,
-						>, _>(info_provider)),
+						RuntimeId::Opal => Box::pin(
+							cmd
+								.run::<Block, <OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
+								info_provider,
+							),
+						),
 						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
 					},
 					task_manager,

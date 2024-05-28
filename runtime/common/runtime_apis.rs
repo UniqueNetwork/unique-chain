@@ -40,9 +40,10 @@ macro_rules! impl_common_runtime_apis {
 			Permill,
 			traits::{Block as BlockT},
 			transaction_validity::{TransactionSource, TransactionValidity},
-			ApplyExtrinsicResult, DispatchError,
+			ApplyExtrinsicResult, DispatchError, ExtrinsicInclusionMode,
 		};
 		use frame_support::{
+			genesis_builder_helper::{build_config, create_default_config},
 			pallet_prelude::Weight,
 			traits::OnFinalize,
 		};
@@ -243,7 +244,7 @@ macro_rules! impl_common_runtime_apis {
 					Executive::execute_block(block)
 				}
 
-				fn initialize_block(header: &<Block as BlockT>::Header) {
+				fn initialize_block(header: &<Block as BlockT>::Header) -> ExtrinsicInclusionMode {
 					Executive::initialize_block(header)
 				}
 			}
@@ -442,7 +443,7 @@ macro_rules! impl_common_runtime_apis {
 					)
 				}
 
-				fn extrinsic_filter(xts: Vec<<Block as sp_api::BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
+				fn extrinsic_filter(xts: Vec<<Block as BlockT>::Extrinsic>) -> Vec<pallet_ethereum::Transaction> {
 					xts.into_iter().filter_map(|xt| match xt.0.function {
 						RuntimeCall::Ethereum(pallet_ethereum::Call::transact { transaction }) => Some(transaction),
 						_ => None
@@ -535,9 +536,10 @@ macro_rules! impl_common_runtime_apis {
 				) {
 					use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
 					use frame_support::traits::StorageInfoTrait;
+					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
 					let mut list = Vec::<BenchmarkList>::new();
-					list_benchmark!(list, extra, pallet_xcm, PolkadotXcm);
+					list_benchmark!(list, extra, pallet_xcm, PalletXcmBenchmarks::<Runtime>);
 
 					list_benchmark!(list, extra, pallet_evm_migration, EvmMigration);
 					list_benchmark!(list, extra, pallet_common, Common);
@@ -578,6 +580,7 @@ macro_rules! impl_common_runtime_apis {
 				) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
 					use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark};
 					use sp_storage::TrackedStorageKey;
+					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
 					let allowlist: Vec<TrackedStorageKey> = vec![
 						// Total Issuance
@@ -601,7 +604,8 @@ macro_rules! impl_common_runtime_apis {
 
 					let mut batches = Vec::<BenchmarkBatch>::new();
 					let params = (&config, &allowlist);
-					add_benchmark!(params, batches, pallet_xcm, PolkadotXcm);
+
+					add_benchmark!(params, batches, pallet_xcm, PalletXcmBenchmarks::<Runtime>);
 
 					add_benchmark!(params, batches, pallet_evm_migration, EvmMigration);
 					add_benchmark!(params, batches, pallet_common, Common);
@@ -705,6 +709,16 @@ macro_rules! impl_common_runtime_apis {
 					UncheckedExtrinsic::new_unsigned(
 						pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 					)
+				}
+			}
+
+			impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
+				fn create_default_config() -> Vec<u8> {
+					create_default_config::<RuntimeGenesisConfig>()
+				}
+
+				fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
+					build_config::<RuntimeGenesisConfig>(config)
 				}
 			}
 		}

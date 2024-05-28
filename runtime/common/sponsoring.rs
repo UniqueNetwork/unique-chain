@@ -341,12 +341,11 @@ impl<T: Config> SponsorshipPredict<T> for UniqueSponsorshipPredict<T> {
 		};
 
 		if let Some(last_tx_block) = last_tx_block {
-			return Some(
+			return Some(u64::from(
 				last_tx_block
 					.saturating_add(limit.into())
-					.saturating_sub(block_number)
-					.into(),
-			);
+					.saturating_sub(block_number),
+			));
 		}
 
 		let token_exists = match collection.mode {

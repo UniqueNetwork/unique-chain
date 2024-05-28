@@ -1,5 +1,6 @@
 use pallet_gov_origins::Origin as GovOrigins;
 use pallet_ranked_collective::{Config as RankedConfig, Rank, TallyOf};
+use sp_runtime::traits::ReplaceWithDefault;
 
 use super::*;
 use crate::{
@@ -63,17 +64,18 @@ impl pallet_referenda::Config for Runtime {
 impl RankedConfig for Runtime {
 	type WeightInfo = pallet_ranked_collective::weights::SubstrateWeight<Self>;
 	type RuntimeEvent = RuntimeEvent;
-	// Promotion is by any of:
-	// - Council member.
-	// - Technical committee member.
+	type AddOrigin = FellowshipAddOrigin<Self::AccountId>;
+	type RemoveOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
+	type ExchangeOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
+	type MemberSwappedHandler = ();
 	type PromoteOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
-	// Demotion is by any of:
-	// - Council member.
-	// - Technical committee member.
 	type DemoteOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type Polls = FellowshipReferenda;
 	type MinRankOfClass = ClassToRankMapper<Self, ()>;
 	type VoteWeight = pallet_ranked_collective::Geometric;
+
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkSetup = ();
 }
 
 pub struct EnsureFellowshipProposition;
@@ -95,6 +97,14 @@ where
 		Ok(O::from(GovOrigins::FellowshipProposition))
 	}
 }
+
+pub type FellowshipAddOrigin<AccountId> = EitherOf<
+	EnsureRoot<AccountId>,
+	EitherOf<
+		MapSuccess<TechnicalCommitteeMember, ReplaceWithDefault<()>>,
+		MapSuccess<CouncilMember, ReplaceWithDefault<()>>,
+	>,
+>;
 
 pub type FellowshipPromoteDemoteOrigin<AccountId> = EitherOf<
 	MapSuccess<EnsureRoot<AccountId>, Replace<ConstU16<65535>>>,

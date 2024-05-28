@@ -92,6 +92,7 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction =
 		pallet_evm_transaction_payment::WrappedEVMCurrencyAdapter<Balances, DealWithFees>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
+	type SuicideQuickClearLimit = ConstU32<0>;
 	type Timestamp = crate::Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type GasLimitPovSizeRatio = ProofSizePerGas;

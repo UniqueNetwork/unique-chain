@@ -117,6 +117,14 @@ impl frame_system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	type MaxConsumers = ConstU32<16>;
+
+	type RuntimeTask = ();
+
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
 }
 
 parameter_types! {
@@ -136,6 +144,7 @@ impl pallet_state_trie_migration::Config for Runtime {
 	// Only root can perform this migration
 	type SignedFilter = EnsureSignedBy<TrieMigrationSigned, AccountId>;
 	type MaxKeyLen = MigrationMaxKeyLen;
+	type RuntimeHoldReason = RuntimeHoldReason;
 }
 
 impl pallet_timestamp::Config for Runtime {
@@ -176,7 +185,6 @@ impl pallet_balances::Config for Runtime {
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = [u8; 16];
-	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
 }
 

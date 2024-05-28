@@ -66,15 +66,20 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
-use sp_api::{ProvideRuntimeApi, StateBackend};
+use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
 use sp_keystore::KeystorePtr;
-use sp_runtime::traits::BlakeTwo256;
+use sp_state_machine::Backend as StateBackend;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
+
+pub type ParachainHostFunctions = (
+	sp_io::SubstrateHostFunctions,
+	cumulus_client_service::storage_proof_size::HostFunctions,
+);
 
 use crate::{
 	chain_spec::RuntimeIdentification,
@@ -99,7 +104,7 @@ impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 	/// Otherwise we only use the default Substrate host functions.
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = ParachainHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		unique_runtime::api::dispatch(method, data)
@@ -117,7 +122,7 @@ impl NativeExecutionDispatch for QuartzRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 	/// Otherwise we only use the default Substrate host functions.
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = ParachainHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		quartz_runtime::api::dispatch(method, data)
@@ -134,7 +139,7 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 	/// Otherwise we only use the default Substrate host functions.
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = ParachainHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		opal_runtime::api::dispatch(method, data)
@@ -249,7 +254,7 @@ pub fn new_partial<Runtime, RuntimeApi, ExecutorDispatch, BIQ>(
 	sc_service::Error,
 >
 where
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: StateBackend<BlakeTwo256>,
 	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
 		+ Send
 		+ Sync
@@ -356,7 +361,7 @@ pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: StateBackend<BlakeTwo256>,
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
 	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
@@ -760,6 +765,7 @@ where
 		relay_client: relay_chain_interface,
 		sync_oracle,
 		keystore,
+		#[cfg(not(feature = "lookahead"))]
 		slot_duration,
 		proposer,
 		collator_service,
@@ -781,6 +787,8 @@ where
 		relay_chain_slot_duration,
 		#[cfg(not(feature = "lookahead"))]
 		collation_request_receiver: None,
+		#[cfg(feature = "lookahead")]
+		reinitialize: false,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
@@ -975,12 +983,12 @@ where
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-						let mocked_parachain = cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
+						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
 							para_blocks_per_relay_epoch: 0,
-							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
+							xcm_config: cumulus_client_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
 								Default::default(),
@@ -989,6 +997,7 @@ where
 							relay_randomness_config: (),
 							raw_downward_messages: vec![],
 							raw_horizontal_messages: vec![],
+							additional_key_values: None,
 						};
 
 						let slot =

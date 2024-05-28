@@ -42,6 +42,7 @@ cumulus-primitives-parachain-inherent = { features = ["std"], workspace = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
+cumulus-client-parachain-inherent = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 opal-runtime = { workspace = true, optional = true }
@@ -66,6 +67,7 @@ sc-tracing = { workspace = true }
 sc-transaction-pool = { workspace = true }
 serde = { workspace = true }
 sp-api = { workspace = true }
+sp-state-machine = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-blockchain = { workspace = true }
 sp-consensus-aura = { workspace = true }

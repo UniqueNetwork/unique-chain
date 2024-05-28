@@ -14,8 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use std::collections::BTreeMap;
-
+use default_runtime::WASM_BINARY;
 #[cfg(all(not(feature = "unique-runtime"), not(feature = "quartz-runtime")))]
 pub use opal_runtime as default_runtime;
 #[cfg(all(not(feature = "unique-runtime"), feature = "quartz-runtime"))]
@@ -23,7 +22,7 @@ pub use quartz_runtime as default_runtime;
 use sc_chain_spec::{ChainSpecExtension, ChainSpecGroup};
 use sc_service::ChainType;
 use serde::{Deserialize, Serialize};
-use serde_json::map::Map;
+use serde_json::{json, map::Map};
 use sp_core::{sr25519, Pair, Public};
 use sp_runtime::traits::{IdentifyAccount, Verify};
 #[cfg(feature = "unique-runtime")]
@@ -141,119 +140,102 @@ where
 	AccountPublic::from(get_from_seed::<TPublic>(seed)).into_account()
 }
 
-#[cfg(not(feature = "unique-runtime"))]
-macro_rules! testnet_genesis {
-	(
-		$runtime:path,
-		$root_key:expr,
-		$initial_invulnerables:expr,
-		$endowed_accounts:expr,
-		$id:expr
-	) => {{
-		use $runtime::*;
-
-		RuntimeGenesisConfig {
-			system: SystemConfig {
-				code: WASM_BINARY
-					.expect("WASM binary was not build, please build it!")
-					.to_vec(),
-				..Default::default()
-			},
-			balances: BalancesConfig {
-				balances: $endowed_accounts
-					.iter()
-					.cloned()
-					// 1e13 UNQ
-					.map(|k| (k, 1 << 100))
-					.collect(),
-			},
-			sudo: SudoConfig {
-				key: Some($root_key),
-			},
-
-			vesting: VestingConfig { vesting: vec![] },
-			parachain_info: ParachainInfoConfig {
-				parachain_id: $id.into(),
-				..Default::default()
-			},
-			collator_selection: CollatorSelectionConfig {
-				invulnerables: $initial_invulnerables
-					.iter()
-					.cloned()
-					.map(|(acc, _)| acc)
-					.collect(),
-			},
-			session: SessionConfig {
-				keys: $initial_invulnerables
-					.into_iter()
-					.map(|(acc, aura)| {
-						(
-							acc.clone(),          // account id
-							acc,                  // validator id
-							SessionKeys { aura }, // session keys
-						)
-					})
-					.collect(),
-			},
-			evm: EVMConfig {
-				accounts: BTreeMap::new(),
-				..Default::default()
-			},
-			..Default::default()
+pub fn test_config(chain_id: &str, relay_chain: &str) -> DefaultChainSpec {
+	DefaultChainSpec::builder(
+		WASM_BINARY.expect("WASM binary was not build, please build it!"),
+		Extensions {
+			relay_chain: relay_chain.into(),
+			para_id: PARA_ID,
+		},
+	)
+	.with_id(&format!(
+		"{}_{}",
+		default_runtime::VERSION.spec_name,
+		chain_id
+	))
+	.with_name(&format!(
+		"{}{}",
+		default_runtime::VERSION.spec_name.to_uppercase(),
+		if cfg!(feature = "unique-runtime") {
+			""
+		} else {
+			" by UNIQUE"
 		}
-	}};
+	))
+	.with_properties(chain_properties())
+	.with_chain_type(ChainType::Development)
+	.with_genesis_config_patch(genesis_patch())
+	.build()
 }
 
-#[cfg(feature = "unique-runtime")]
-macro_rules! testnet_genesis {
-	(
-		$runtime:path,
-		$root_key:expr,
-		$initial_invulnerables:expr,
-		$endowed_accounts:expr,
-		$id:expr
-	) => {{
-		use $runtime::*;
+fn genesis_patch() -> serde_json::Value {
+	use default_runtime::*;
 
-		RuntimeGenesisConfig {
-			system: SystemConfig {
-				code: WASM_BINARY
-					.expect("WASM binary was not build, please build it!")
-					.to_vec(),
-				..Default::default()
-			},
-			balances: BalancesConfig {
-				balances: $endowed_accounts
-					.iter()
-					.cloned()
-					// 1e13 UNQ
-					.map(|k| (k, 1 << 100))
-					.collect(),
-			},
-			sudo: SudoConfig {
-				key: Some($root_key),
-			},
-			vesting: VestingConfig { vesting: vec![] },
-			parachain_info: ParachainInfoConfig {
-				parachain_id: $id.into(),
-				..Default::default()
-			},
-			aura: AuraConfig {
-				authorities: $initial_invulnerables
-					.into_iter()
-					.map(|(_, aura)| aura)
-					.collect(),
-			},
-			evm: EVMConfig {
-				accounts: BTreeMap::new(),
-				..Default::default()
-			},
-			..Default::default()
-		}
-	}};
+	let invulnerables = ["Alice", "Bob"];
+
+	#[allow(unused_mut)]
+	let mut patch = json!({
+		"parachainInfo": {
+			"parachainId": PARA_ID,
+		},
+
+		"aura": {
+			"authorities": invulnerables.into_iter()
+				.map(get_from_seed::<AuraId>)
+				.collect::<Vec<_>>(),
+		},
+
+		"session": {
+			"keys": invulnerables.into_iter()
+				.map(|name| {
+					let account = get_account_id_from_seed::<sr25519::Public>(name);
+					let aura = get_from_seed::<AuraId>(name);
+
+					(
+						/*   account id: */ account.clone(),
+						/* validator id: */ account,
+						/* session keys: */ SessionKeys { aura },
+					)
+				})
+				.collect::<Vec<_>>()
+		},
+
+		"sudo": {
+			"key": get_account_id_from_seed::<sr25519::Public>("Alice"),
+		},
+
+		"balances": {
+			"balances": &[
+				get_account_id_from_seed::<sr25519::Public>("Alice"),
+				get_account_id_from_seed::<sr25519::Public>("Bob"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie"),
+				get_account_id_from_seed::<sr25519::Public>("Dave"),
+				get_account_id_from_seed::<sr25519::Public>("Eve"),
+				get_account_id_from_seed::<sr25519::Public>("Ferdie"),
+				get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
+				get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
+			].into_iter()
+			.map(|k| (k, /* ~1.2e+12 UNQ */ 1u128 << 100))
+			.collect::<Vec<_>>(),
+		},
+	});
+
+	#[cfg(feature = "unique-runtime")]
+	{
+		patch
+			.as_object_mut()
+			.expect("the genesis patch is always an object; qed")
+			.remove("session");
+	}
+
+	patch
 }
 
-pub fn development_config() -> DefaultChainSpec {
+fn chain_properties() -> sc_chain_spec::Properties {
 	let mut properties = Map::new();
 	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
 	properties.insert("tokenDecimals".into(), default_runtime::DECIMALS.into());
@@ -262,141 +244,5 @@ pub fn development_config() -> DefaultChainSpec {
 		default_runtime::SS58Prefix::get().into(),
 	);
 
-	DefaultChainSpec::from_genesis(
-		// Name
-		format!(
-			"{}{}",
-			default_runtime::VERSION.spec_name.to_uppercase(),
-			if cfg!(feature = "unique-runtime") {
-				""
-			} else {
-				" by UNIQUE"
-			}
-		)
-		.as_str(),
-		// ID
-		format!("{}_dev", default_runtime::VERSION.spec_name).as_str(),
-		ChainType::Local,
-		move || {
-			testnet_genesis!(
-				default_runtime,
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				[
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_from_seed::<AuraId>("Alice"),
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						get_from_seed::<AuraId>("Bob"),
-					),
-				],
-				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				PARA_ID
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		Extensions {
-			relay_chain: "rococo-dev".into(),
-			para_id: PARA_ID,
-		},
-	)
-}
-
-pub fn local_testnet_config() -> DefaultChainSpec {
-	let mut properties = Map::new();
-	properties.insert("tokenSymbol".into(), default_runtime::TOKEN_SYMBOL.into());
-	properties.insert("tokenDecimals".into(), default_runtime::DECIMALS.into());
-	properties.insert(
-		"ss58Format".into(),
-		default_runtime::SS58Prefix::get().into(),
-	);
-
-	DefaultChainSpec::from_genesis(
-		// Name
-		format!(
-			"{}{}",
-			default_runtime::VERSION.impl_name.to_uppercase(),
-			if cfg!(feature = "unique-runtime") {
-				""
-			} else {
-				" by UNIQUE"
-			}
-		)
-		.as_str(),
-		// ID
-		format!("{}_local", default_runtime::VERSION.spec_name).as_str(),
-		ChainType::Local,
-		move || {
-			testnet_genesis!(
-				default_runtime,
-				// Sudo account
-				get_account_id_from_seed::<sr25519::Public>("Alice"),
-				[
-					(
-						get_account_id_from_seed::<sr25519::Public>("Alice"),
-						get_from_seed::<AuraId>("Alice"),
-					),
-					(
-						get_account_id_from_seed::<sr25519::Public>("Bob"),
-						get_from_seed::<AuraId>("Bob"),
-					),
-				],
-				// Pre-funded accounts
-				vec![
-					get_account_id_from_seed::<sr25519::Public>("Alice"),
-					get_account_id_from_seed::<sr25519::Public>("Bob"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie"),
-					get_account_id_from_seed::<sr25519::Public>("Dave"),
-					get_account_id_from_seed::<sr25519::Public>("Eve"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie"),
-					get_account_id_from_seed::<sr25519::Public>("Alice//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Bob//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Charlie//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Dave//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Eve//stash"),
-					get_account_id_from_seed::<sr25519::Public>("Ferdie//stash"),
-				],
-				PARA_ID
-			)
-		},
-		// Bootnodes
-		vec![],
-		// Telemetry
-		None,
-		// Protocol ID
-		None,
-		None,
-		// Properties
-		Some(properties),
-		// Extensions
-		Extensions {
-			relay_chain: "westend-local".into(),
-			para_id: PARA_ID,
-		},
-	)
+	properties
 }

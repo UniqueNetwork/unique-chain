@@ -24,6 +24,7 @@ quartz-runtime = ['app-promotion', 'collator-selection', 'foreign-assets', 'gove
 runtime-benchmarks = [
 	"pallet-preimage/runtime-benchmarks",
 	'cumulus-pallet-parachain-system/runtime-benchmarks',
+	'parachains-common/runtime-benchmarks',
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',
 	'frame-system-benchmarking',
@@ -58,6 +59,7 @@ runtime-benchmarks = [
 	'pallet-unique/runtime-benchmarks',
 	'pallet-utility/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
+	'pallet-message-queue/runtime-benchmarks',
 	'polkadot-runtime-common/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
 	'staging-xcm-builder/runtime-benchmarks',
@@ -69,6 +71,7 @@ std = [
 	'cumulus-pallet-xcmp-queue/std',
 	'cumulus-primitives-core/std',
 	'cumulus-primitives-utility/std',
+	'parachains-common/std',
 	'frame-executive/std',
 	'frame-support/std',
 	'frame-system-rpc-runtime-api/std',
@@ -127,6 +130,8 @@ std = [
 	'pallet-treasury/std',
 	'pallet-unique/std',
 	'pallet-utility/std',
+	'pallet-xcm/std',
+	'pallet-message-queue/std',
 	'polkadot-runtime-common/std',
 	'serde',
 	'sp-api/std',
@@ -140,6 +145,7 @@ std = [
 	'sp-std/std',
 	'sp-transaction-pool/std',
 	'sp-version/std',
+	'sp-genesis-builder/std',
 	'staging-parachain-info/std',
 	'staging-xcm-builder/std',
 	'staging-xcm-executor/std',
@@ -210,6 +216,7 @@ try-runtime = [
 	'pallet-unique/try-runtime',
 	'pallet-utility/try-runtime',
 	'pallet-xcm/try-runtime',
+	'pallet-message-queue/try-runtime',
 	'polkadot-runtime-common/try-runtime',
 	'staging-parachain-info/try-runtime',
 ]
@@ -236,6 +243,7 @@ cumulus-pallet-xcmp-queue = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }
+parachains-common = { workspace = true }
 frame-executive = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
@@ -257,6 +265,7 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
+pallet-message-queue = { workspace = true }
 parity-scale-codec = { workspace = true }
 polkadot-parachain-primitives = { workspace = true }
 polkadot-runtime-common = { workspace = true }
@@ -275,6 +284,7 @@ sp-std = { workspace = true }
 sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }
 sp-version = { workspace = true }
+sp-genesis-builder = { workspace = true }
 staging-parachain-info = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-builder = { workspace = true }

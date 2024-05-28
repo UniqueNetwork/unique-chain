@@ -761,7 +761,7 @@ fn get_token_permission<T: Config>(
 		.map_err(|_| Error::Revert("no permissions for collection".into()))?;
 	let a = token_property_permissions
 		.get(key)
-		.map(Clone::clone)
+		.cloned()
 		.ok_or_else(|| {
 			let key = String::from_utf8(key.clone().into_inner()).unwrap_or_default();
 			Error::Revert(alloc::format!("no permission for key {key}"))
