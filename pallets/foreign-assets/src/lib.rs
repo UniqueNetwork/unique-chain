@@ -40,8 +40,8 @@ use staging_xcm_executor::{
 	AssetsInHolding,
 };
 use up_data_structs::{
-	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CollectionTokenPrefix,
-	CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
+	budget::ZeroBudget, CollectionFlags, CollectionId, CollectionMode, CollectionName,
+	CollectionTokenPrefix, CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
 };
 
 pub mod weights;
@@ -224,6 +224,10 @@ pub mod module {
 					token_prefix,
 					description,
 					mode: mode.into(),
+					flags: CollectionFlags {
+						foreign: true,
+						..Default::default()
+					},
 					..Default::default()
 				},
 			)?;
@@ -243,7 +247,19 @@ pub mod module {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			Self::migrate_v3_to_v4()
+			if Self::on_chain_storage_version() < staging_xcm::v4::VERSION as u16 {
+				let put_version_weight = T::DbWeight::get().writes(1);
+				let fix_foreign_flag_weight = Self::fix_foreign_flag();
+				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
+
+				StorageVersion::new(staging_xcm::v4::VERSION as u16).put::<Self>();
+
+				put_version_weight
+					.saturating_add(fix_foreign_flag_weight)
+					.saturating_add(weight_v3_to_v4)
+			} else {
+				Weight::zero()
+			}
 		}
 	}
 }
@@ -283,24 +299,31 @@ mod v3_storage {
 }
 
 impl<T: Config> Pallet<T> {
-	fn migrate_v3_to_v4() -> Weight {
-		if Self::on_chain_storage_version() < staging_xcm::v4::VERSION as u16 {
-			let put_version_weight = T::DbWeight::get().writes(1);
-			let event_weight = T::DbWeight::get().writes(1);
-			let collection_migration_weight = Self::migrate_collections();
+	fn fix_foreign_flag() -> Weight {
+		let mut weight = Weight::zero();
 
-			StorageVersion::new(staging_xcm::v4::VERSION as u16).put::<Self>();
+		for (_, collection_id) in v3_storage::ForeignAssetToCollection::<T>::iter() {
+			pallet_common::CollectionById::<T>::mutate(collection_id, |collection| {
+				if let Some(collection) = collection {
+					collection.flags.foreign = true;
+				}
+			});
 
-			Self::deposit_event(Event::<T>::MigrationStatus(MigrationStatus::V3ToV4(
-				MigrationStatusV3ToV4::Done,
-			)));
-
-			put_version_weight
-				.saturating_add(collection_migration_weight)
-				.saturating_add(event_weight)
-		} else {
-			Weight::zero()
+			weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 		}
+
+		weight
+	}
+
+	fn migrate_v3_to_v4() -> Weight {
+		let event_weight = T::DbWeight::get().writes(1);
+		let collection_migration_weight = Self::migrate_collections();
+
+		Self::deposit_event(Event::<T>::MigrationStatus(MigrationStatus::V3ToV4(
+			MigrationStatusV3ToV4::Done,
+		)));
+
+		collection_migration_weight.saturating_add(event_weight)
 	}
 
 	fn migrate_collections() -> Weight {
