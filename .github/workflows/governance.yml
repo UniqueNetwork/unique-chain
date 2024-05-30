@@ -34,7 +34,6 @@ jobs:
             network {unique}, wasm_name {unique}
             network {quartz}, wasm_name {quartz}
             network {opal}, wasm_name {opal}
-            network {sapphire}, wasm_name {quartz}
 
   dev_build_int_tests:
     needs: prepare-execution-marix

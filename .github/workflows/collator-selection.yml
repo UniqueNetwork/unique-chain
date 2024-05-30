@@ -42,7 +42,6 @@ jobs:
           matrix: |
             network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
             network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {sapphire}, relay_branch {${{ env.UNIQUEEAST_MAINNET_BRANCH }}}
 
   collator-selection:
 
