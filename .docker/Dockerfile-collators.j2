@@ -9,6 +9,7 @@ ENV TZ=UTC
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install {{ RUST_TOOLCHAIN }} && \
     rustup default {{ RUST_TOOLCHAIN }} && \
+    rustup component add --toolchain {{ RUST_TOOLCHAIN }} rust-src && \
     rustup target list --installed && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}

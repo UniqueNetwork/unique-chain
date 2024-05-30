@@ -12,6 +12,7 @@ ENV TZ=UTC
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
     rustup default $RUST_TOOLCHAIN && \
+    rustup component add --toolchain $RUST_TOOLCHAIN rust-src && \
     rustup target list --installed && \
     rustup show
 RUN rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
@@ -42,12 +43,12 @@ FROM ubuntu:22.04
 ARG POLKADOT_LAUNCH_BRANCH=
 
 RUN apt-get -y update && \
-      apt-get -y install curl git && \
-      curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
-      export NVM_DIR="$HOME/.nvm" && \
-      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
-      nvm install v16.16.0 && \
-      nvm use v16.16.0
+    apt-get -y install curl git && \
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.35.3/install.sh | bash && \
+    export NVM_DIR="$HOME/.nvm" && \
+    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" && \
+    nvm install v16.16.0 && \
+    nvm use v16.16.0
 
 RUN git clone https://github.com/uniquenetwork/polkadot-launch -b ${POLKADOT_LAUNCH_BRANCH}
 
