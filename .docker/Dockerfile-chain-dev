@@ -14,6 +14,7 @@ RUN echo "$NETWORK\n" && echo "$RUST_TOOLCHAIN\n"
 RUN rustup toolchain uninstall $(rustup toolchain list) && \
     rustup toolchain install $RUST_TOOLCHAIN && \
     rustup default $RUST_TOOLCHAIN && \
+    rustup component add --toolchain $RUST_TOOLCHAIN rust-src && \
     rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 RUN mkdir /dev_chain

@@ -29,8 +29,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - network: "sapphire"
-            usage: ""
           - network: "opal"
             usage: ""
           - network: "quartz"

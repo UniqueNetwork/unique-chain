@@ -22,7 +22,12 @@ use staging_xcm::{
 };
 
 use super::{last_events, new_test_ext, AccountId};
-use crate::{PolkadotXcm, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin};
+use crate::{
+	runtime_common::config::xcm::XcmExecutorConfig, PolkadotXcm, Runtime, RuntimeCall,
+	RuntimeEvent, RuntimeOrigin,
+};
+
+type XcmExecutor = staging_xcm_executor::XcmExecutor<XcmExecutorConfig<Runtime>>;
 
 const ALICE: AccountId = AccountId::new([0u8; 32]);
 const BOB: AccountId = AccountId::new([1u8; 32]);
@@ -32,35 +37,37 @@ const INITIAL_BALANCE: u128 = 10_000_000_000_000_000_000_000; // 10_000 UNQ
 #[test]
 pub fn xcm_transact_is_forbidden() {
 	new_test_ext(vec![(ALICE, INITIAL_BALANCE)]).execute_with(|| {
-		PolkadotXcm::execute(
-			RuntimeOrigin::signed(ALICE),
-			Box::new(VersionedXcm::from(Xcm(vec![Transact {
-				origin_kind: OriginKind::Native,
-				require_weight_at_most: Weight::from_parts(1000, 1000),
-				call: RuntimeCall::Balances(
-					pallet_balances::Call::<Runtime>::transfer_keep_alive {
-						dest: BOB.into(),
-						value: INITIAL_BALANCE / 2,
-					},
-				)
-				.encode()
-				.into(),
-			}]))),
-			Weight::from_parts(1001000, 2000),
-		)
-		.expect(
-			"XCM execute must succeed, the error should be in the `PolkadotXcm::Attempted` event",
-		);
+		let max_weight = Weight::from_parts(1001000, 2000);
 
-		let xcm_event = &last_events(1)[0];
-		match xcm_event {
-			RuntimeEvent::PolkadotXcm(pallet_xcm::Event::<Runtime>::Attempted {
-				outcome: Outcome::Incomplete(_weight, Error::NoPermission),
-			}) => { /* Pass */ }
-			_ => panic!(
-				"Expected PolkadotXcm.Attempted(Incomplete(_weight, NoPermission)),\
-				found: {xcm_event:#?}"
-			),
+		let origin: Location = AccountId32 {
+			network: None,
+			id: *ALICE.as_ref(),
 		}
+		.into();
+		let message = Xcm(vec![Transact {
+			origin_kind: OriginKind::Native,
+			require_weight_at_most: Weight::from_parts(1000, 1000),
+			call: RuntimeCall::Balances(pallet_balances::Call::<Runtime>::transfer_keep_alive {
+				dest: BOB.into(),
+				value: INITIAL_BALANCE / 2,
+			})
+			.encode()
+			.into(),
+		}]);
+		let mut hash = message.using_encoded(sp_io::hashing::blake2_256);
+		let weight_limit = max_weight;
+		let weight_credit = max_weight;
+
+		let error = XcmExecutor::prepare_and_execute(
+			origin,
+			message,
+			&mut hash,
+			weight_limit,
+			weight_credit,
+		)
+		.ensure_complete()
+		.expect_err("XCM Transact shouldn't succeed");
+
+		assert_eq!(error, Error::NoPermission);
 	});
 }
