@@ -52,17 +52,17 @@ curl https://sh.rustup.rs -sSf | sh
 
 2. Remove all installed toolchains with `rustup toolchain list` and `rustup toolchain uninstall <toolchain>`.
 
-3. Install toolchain nightly-2024-02-21 and make it default:
+3. Install toolchain nightly-2024-04-10 and make it default:
 
 ```bash
-rustup toolchain install nightly-2024-02-21
-rustup default nightly-2024-02-21
+rustup toolchain install nightly-2024-04-10
+rustup default nightly-2024-04-10
 ```
 
 4. Add wasm target for nightly toolchain:
 
 ```bash
-rustup target add wasm32-unknown-unknown --toolchain nightly-2024-02-21
+rustup target add wasm32-unknown-unknown --toolchain nightly-2024-04-10
 ```
 
 5. Build:
