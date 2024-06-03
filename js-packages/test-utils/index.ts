@@ -475,6 +475,7 @@ export class DevUniqueHelper extends UniqueHelper {
   scheduler: SchedulerGroup;
   collatorSelection: CollatorSelectionGroup;
   council: ICollectiveGroup;
+  finCouncil: ICollectiveGroup;
   technicalCommittee: ICollectiveGroup;
   fellowship: IFellowshipGroup;
   democracy: DemocracyGroup;
@@ -497,6 +498,10 @@ export class DevUniqueHelper extends UniqueHelper {
     this.council = {
       collective: new CollectiveGroup(this, 'council'),
       membership: new CollectiveMembershipGroup(this, 'councilMembership'),
+    };
+    this.finCouncil = {
+      collective: new CollectiveGroup(this, 'financialCouncil'),
+      membership: new CollectiveMembershipGroup(this, 'financialCouncilMembership'),
     };
     this.technicalCommittee = {
       collective: new CollectiveGroup(this, 'technicalCommittee'),
