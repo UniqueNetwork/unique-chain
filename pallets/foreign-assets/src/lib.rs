@@ -89,6 +89,7 @@ pub enum MigrationStatusV3ToV4 {
 
 #[frame_support::pallet]
 pub mod module {
+	use frame_support::traits::BuildGenesisConfig;
 	use pallet_common::CollectionIssuer;
 	use up_data_structs::CollectionDescription;
 
@@ -244,6 +245,17 @@ pub mod module {
 		}
 	}
 
+	#[pallet::genesis_config]
+	#[derive(Default)]
+	pub struct GenesisConfig<T: Config>(PhantomData<T>);
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			<Pallet<T>>::in_code_storage_version().put::<Pallet<T>>();
+		}
+	}
+
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
@@ -252,7 +264,7 @@ pub mod module {
 				let fix_foreign_flag_weight = Self::fix_foreign_flag();
 				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
 
-				StorageVersion::new(staging_xcm::v4::VERSION as u16).put::<Self>();
+				Self::in_code_storage_version().put::<Self>();
 
 				put_version_weight
 					.saturating_add(fix_foreign_flag_weight)
