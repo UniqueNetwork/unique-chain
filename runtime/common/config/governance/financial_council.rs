@@ -39,8 +39,8 @@ impl pallet_membership::Config<FinancialCollectiveMembership> for Runtime {
 	type SwapOrigin = RootOrMoreThanHalfCouncil;
 	type ResetOrigin = EnsureRoot<AccountId>;
 	type PrimeOrigin = RootOrMoreThanHalfCouncil;
-	type MembershipInitialized = FinancialCollective;
-	type MembershipChanged = FinancialCollective;
+	type MembershipInitialized = FinancialCouncil;
+	type MembershipChanged = FinancialCouncil;
 	type MaxMembers = FinancialCouncilMaxMembers;
 	type WeightInfo = pallet_membership::weights::SubstrateWeight<Runtime>;
 }

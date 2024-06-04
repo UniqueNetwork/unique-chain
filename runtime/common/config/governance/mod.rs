@@ -36,8 +36,8 @@ pub use up_common::{
 };
 
 use crate::{
-	Balances, Council, OriginCaller, Preimage, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	Scheduler, TechnicalCommittee, Treasury,
+	Balances, Council, FinancialCouncil, OriginCaller, Preimage, Runtime, RuntimeCall,
+	RuntimeEvent, RuntimeOrigin, Scheduler, TechnicalCommittee, Treasury,
 };
 
 pub mod council;
