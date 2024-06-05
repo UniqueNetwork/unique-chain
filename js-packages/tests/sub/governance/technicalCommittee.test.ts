@@ -130,6 +130,32 @@ describeGov('Governance: Technical Committee tests', () => {
     await clearFellowship(sudoer);
   });
 
+  itSub('[Negative] TechComm cannot register foreign asset', async ({helper}) => {
+    const location = {
+      parents: 1,
+      interior: {X3: [
+        {
+          Parachain: 1000,
+        },
+        {
+          PalletInstance: 50,
+        },
+        {
+          GeneralIndex: 1985,
+        },
+      ]},
+    };
+    const assetId = {Concrete: location};
+
+    const foreignAssetProposal = helper.constructApiCall(
+      'api.tx.foreignAssets.forceRegisterForeignAsset',
+      [{V3: assetId}, helper.util.str2vec('New Asset2'), 'NEW', {Fungible: 10}],
+    );
+
+    await expect(helper.technicalCommittee.collective.execute(techcomms.andy, foreignAssetProposal))
+      .to.be.rejectedWith('BadOrigin');
+  });
+
   itSub('[Negative] TechComm cannot submit regular democracy proposal', async ({helper}) => {
     const councilProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 

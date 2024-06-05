@@ -33,7 +33,7 @@ export interface ICounselors {
 export interface IFinCounselors {
   greg: IKeyringPair;
   ildar: IKeyringPair;
-  andrey: IKeyringPair;
+  andy: IKeyringPair;
 }
 
 export interface ITechComms {
@@ -44,7 +44,7 @@ export interface ITechComms {
 
 export function initFinCouncil(donor: IKeyringPair, superuser: IKeyringPair): Promise<IFinCounselors> {
   return usingPlaygrounds(async (helper) => {
-    const [greg, ildar, andrey] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
+    const [greg, ildar, andy] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
     const sudo = helper.getSudo();
     {
       const members = (await helper.callRpc('api.query.financialCouncilMembership.members')).toJSON() as [];
@@ -52,7 +52,7 @@ export function initFinCouncil(donor: IKeyringPair, superuser: IKeyringPair): Pr
         await clearFinCouncil(superuser);
       }
     }
-    const expectedMembers = [greg, ildar, andrey];
+    const expectedMembers = [greg, ildar, andy];
     for(const member of expectedMembers) {
       await sudo.executeExtrinsic(superuser, 'api.tx.financialCouncilMembership.addMember', [member.address]);
     }
@@ -66,7 +66,7 @@ export function initFinCouncil(donor: IKeyringPair, superuser: IKeyringPair): Pr
     return {
       greg,
       ildar,
-      andrey,
+      andy,
     };
   });
 }

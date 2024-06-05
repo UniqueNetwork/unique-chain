@@ -214,6 +214,23 @@ export class Event {
     }));
   };
 
+  static FinCouncil = class extends EventSection('financialCouncil') {
+    static Proposed = this.Method('Proposed', data => ({
+      account: eventHumanData(data, 0),
+      proposalIndex: eventJsonData<number>(data, 1),
+      proposalHash: eventHumanData(data, 2),
+      threshold: eventJsonData<number>(data, 3),
+    }));
+    static Closed = this.Method('Closed', data => ({
+      proposalHash: eventHumanData(data, 0),
+      yes: eventJsonData<number>(data, 1),
+      no: eventJsonData<number>(data, 2),
+    }));
+    static Executed = this.Method('Executed', data => ({
+      proposalHash: eventHumanData(data, 0),
+    }));
+  };
+
   static TechnicalCommittee = class extends EventSection('technicalCommittee') {
     static Proposed = this.Method('Proposed', data => ({
       account: eventHumanData(data, 0),
