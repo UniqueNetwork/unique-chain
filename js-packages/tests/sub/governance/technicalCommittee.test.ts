@@ -130,6 +130,50 @@ describeGov('Governance: Technical Committee tests', () => {
     await clearFellowship(sudoer);
   });
 
+  itSub('[Negative] TechComm can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    const addMemberProposal = helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address);
+    await proposalFromAllCommittee(addMemberProposal);
+
+    const finCouncilMembers = await helper.finCouncil.membership.getMembers();
+    expect(finCouncilMembers).to.contains(newFinCouncilMember.address);
+  });
+
+
+  itSub('[Negative] TechComm member can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.greg,
+      helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address),
+    )).rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] TechComm member cannot register foreign asset', async ({helper}) => {
+    const location = {
+      parents: 1,
+      interior: {X3: [
+        {
+          Parachain: 1000,
+        },
+        {
+          PalletInstance: 50,
+        },
+        {
+          GeneralIndex: 1985,
+        },
+      ]},
+    };
+    const assetId = {Concrete: location};
+
+    const foreignAssetProposal = helper.constructApiCall(
+      'api.tx.foreignAssets.forceRegisterForeignAsset',
+      [{V3: assetId}, helper.util.str2vec('New Asset2'), 'NEW', {Fungible: 10}],
+    );
+
+    await expect(helper.technicalCommittee.collective.execute(techcomms.andy, foreignAssetProposal))
+      .to.be.rejectedWith('BadOrigin');
+  });
+
   itSub('[Negative] TechComm cannot submit regular democracy proposal', async ({helper}) => {
     const councilProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 

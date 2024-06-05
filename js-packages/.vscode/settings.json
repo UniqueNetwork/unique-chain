@@ -5,6 +5,8 @@
 	},
 	"mochaExplorer.files": "tests/**/*.test.ts",
 	"mochaExplorer.require": "ts-node/register",
+  "mochaExplorer.esmLoader": true,
+  "mochaExplorer.nodeArgv": ["--loader", "ts-node/esm"],
 	"eslint.format.enable": true,
 	"[javascript]": {
 		"editor.defaultFormatter": "dbaeumer.vscode-eslint"

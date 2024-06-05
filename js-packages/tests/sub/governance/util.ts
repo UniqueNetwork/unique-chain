@@ -29,10 +29,60 @@ export interface ICounselors {
   filip: IKeyringPair;
   irina: IKeyringPair;
 }
+
+export interface IFinCounselors {
+  greg: IKeyringPair;
+  ildar: IKeyringPair;
+  andy: IKeyringPair;
+}
+
 export interface ITechComms {
     greg: IKeyringPair;
     andy: IKeyringPair;
     constantine: IKeyringPair;
+}
+
+export function initFinCouncil(donor: IKeyringPair, superuser: IKeyringPair): Promise<IFinCounselors> {
+  return usingPlaygrounds(async (helper) => {
+    const [greg, ildar, andy] = await helper.arrange.createAccounts([10_000n, 10_000n, 10_000n], donor);
+    const sudo = helper.getSudo();
+    {
+      const members = (await helper.callRpc('api.query.financialCouncilMembership.members')).toJSON() as [];
+      if(members.length != 0) {
+        await clearFinCouncil(superuser);
+      }
+    }
+    const expectedMembers = [greg, ildar, andy];
+    for(const member of expectedMembers) {
+      await sudo.executeExtrinsic(superuser, 'api.tx.financialCouncilMembership.addMember', [member.address]);
+    }
+    await sudo.executeExtrinsic(superuser, 'api.tx.financialCouncilMembership.setPrime', [greg.address]);
+    {
+      const members = (await helper.callRpc('api.query.financialCouncilMembership.members')).toJSON();
+      expect(members).to.containSubset(expectedMembers.map((x: IKeyringPair) => x.address));
+      expect(members.length).to.be.equal(expectedMembers.length);
+    }
+
+    return {
+      greg,
+      ildar,
+      andy,
+    };
+  });
+}
+
+export async function clearFinCouncil(superuser: IKeyringPair) {
+  await usingPlaygrounds(async (helper) => {
+    let members = (await helper.callRpc('api.query.financialCouncilMembership.members')).toJSON();
+    if(members.length) {
+      const sudo = helper.getSudo();
+      for(const address of members) {
+        await sudo.executeExtrinsic(superuser, 'api.tx.financialCouncilMembership.removeMember', [address]);
+      }
+      members = (await helper.callRpc('api.query.financialCouncilMembership.members')).toJSON();
+    }
+    expect(members).to.be.deep.equal([]);
+  });
 }
 
 export async function initCouncil(donor: IKeyringPair, superuser: IKeyringPair) {
