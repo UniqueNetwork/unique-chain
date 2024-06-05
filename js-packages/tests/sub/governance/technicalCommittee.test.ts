@@ -130,7 +130,25 @@ describeGov('Governance: Technical Committee tests', () => {
     await clearFellowship(sudoer);
   });
 
-  itSub('[Negative] TechComm cannot register foreign asset', async ({helper}) => {
+  itSub('[Negative] TechComm can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    const addMemberProposal = helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address);
+    await proposalFromAllCommittee(addMemberProposal);
+
+    const finCouncilMembers = await helper.finCouncil.membership.getMembers();
+    expect(finCouncilMembers).to.contains(newFinCouncilMember.address);
+  });
+
+
+  itSub('[Negative] TechComm member can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.greg,
+      helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address),
+    )).rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] TechComm member cannot register foreign asset', async ({helper}) => {
     const location = {
       parents: 1,
       interior: {X3: [

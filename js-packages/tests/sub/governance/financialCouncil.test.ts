@@ -3,34 +3,6 @@ import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe
 import {Event} from '@unique/test-utils';
 import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.js';
 
-const location1 = {
-  parents: 1,
-  interior: {X3: [
-    {
-      Parachain: 1000,
-    },
-    {
-      PalletInstance: 50,
-    },
-    {
-      GeneralIndex: 1984,
-    },
-  ]},
-};
-const location2 = {
-  parents: 1,
-  interior: {X3: [
-    {
-      Parachain: 1000,
-    },
-    {
-      PalletInstance: 50,
-    },
-    {
-      GeneralIndex: 1985,
-    },
-  ]},
-};
 
 describeGov('Governance: Financial Council tests', () => {
   let donor: IKeyringPair;
@@ -98,7 +70,21 @@ describeGov('Governance: Financial Council tests', () => {
   }
 
   itSub('FinCouncil member can register foreign asset', async ({helper}) => {
-    const assetId = {Concrete: location1};
+    const location = {
+      parents: 1,
+      interior: {X3: [
+        {
+          Parachain: 1000,
+        },
+        {
+          PalletInstance: 50,
+        },
+        {
+          GeneralIndex: 1984,
+        },
+      ]},
+    };
+    const assetId = {Concrete: location};
 
     const registerForeignAssetCall = helper.constructApiCall(
       'api.tx.foreignAssets.forceRegisterForeignAsset',
@@ -107,21 +93,7 @@ describeGov('Governance: Financial Council tests', () => {
 
     await helper.finCouncil.collective.execute(finCounselors.andy, registerForeignAssetCall);
 
-    const asset = await helper.foreignAssets.foreignCollectionId(location1);
-    expect(asset).not.null;
-  });
-
-  itSub.skip('FinCouncil can register foreign asset', async ({helper}) => {
-    const assetId = {Concrete: location2};
-
-    const registerForeignAssetCall = helper.constructApiCall(
-      'api.tx.foreignAssets.forceRegisterForeignAsset',
-      [{V3: assetId}, helper.util.str2vec('New Asset'), 'NEW', {Fungible: 10}],
-    );
-    // TODO: why BadOrigin?
-    await proposalFromAllCouncil(registerForeignAssetCall);
-
-    const asset = await helper.foreignAssets.foreignCollectionId(location2);
+    const asset = await helper.foreignAssets.foreignCollectionId(location);
     expect(asset).not.null;
   });
 
@@ -267,18 +239,6 @@ describeGov('Governance: Financial Council tests', () => {
     await expect(proposalFromAllCouncil(commiteeProposal)).to.be.rejectedWith('BadOrigin');
   });
 
-  itSub('[Negative] FinCouncil cannot externally propose SimpleMajority', async ({helper}) => {
-    const commiteeProposal = await helper.democracy.externalProposeMajorityCall(dummyProposalCall(helper));
-
-    await expect(proposalFromAllCouncil(commiteeProposal)).to.be.rejectedWith('BadOrigin');
-  });
-
-  itSub('[Negative] FinCouncil cannot externally propose SuperMajorityApprove', async ({helper}) => {
-    const commiteeProposal = await helper.democracy.externalProposeCall(dummyProposalCall(helper));
-
-    await expect(proposalFromAllCouncil(commiteeProposal)).to.be.rejectedWith('BadOrigin');
-  });
-
   itSub('[Negative] FinCouncil member cannot submit regular democracy proposal', async ({helper}) => {
     const memberProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
 
@@ -286,12 +246,6 @@ describeGov('Governance: Financial Council tests', () => {
       finCounselors.andy,
       memberProposal,
     )).to.be.rejectedWith('BadOrigin');
-  });
-
-  itSub('[Negative] FinCouncil cannot externally propose SuperMajorityAgainst', async ({helper}) => {
-    const commiteeProposal = await helper.democracy.externalProposeDefaultCall(dummyProposalCall(helper));
-
-    await expect(proposalFromAllCouncil(commiteeProposal)).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] FinCouncil cannot externally propose SimpleMajority', async ({helper}) => {
@@ -304,15 +258,6 @@ describeGov('Governance: Financial Council tests', () => {
     const commiteeProposal = await helper.democracy.externalProposeCall(dummyProposalCall(helper));
 
     await expect(proposalFromAllCouncil(commiteeProposal)).to.be.rejectedWith('BadOrigin');
-  });
-
-  itSub('[Negative] FinCouncil member cannot submit regular democracy proposal', async ({helper}) => {
-    const memberProposal = await helper.democracy.proposeCall(dummyProposalCall(helper), 0n);
-
-    await expect(helper.finCouncil.collective.execute(
-      finCounselors.andy,
-      memberProposal,
-    )).to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] FinCouncil member cannot externally propose SuperMajorityAgainst', async ({helper}) => {
