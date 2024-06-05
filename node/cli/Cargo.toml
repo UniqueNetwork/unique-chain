@@ -43,6 +43,7 @@ cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
 cumulus-client-parachain-inherent = { workspace = true }
+cumulus-test-relay-sproof-builder = { workspace = true }
 frame-benchmarking = { workspace = true }
 frame-benchmarking-cli = { workspace = true }
 opal-runtime = { workspace = true, optional = true }

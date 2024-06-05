@@ -109,6 +109,7 @@ cumulus-primitives-utility = { default-features = false, version = "0.10.0" }
 cumulus-relay-chain-inprocess-interface = "0.10.0"
 cumulus-relay-chain-interface = "0.10.0"
 cumulus-relay-chain-minimal-node = "0.10.0"
+cumulus-test-relay-sproof-builder = "0.10.0"
 parachains-common = { default-features = false, version = "10.0.0"}
 frame-executive = { default-features = false, version = "31.0.0" }
 frame-support = { default-features = false, version = "31.0.0" }

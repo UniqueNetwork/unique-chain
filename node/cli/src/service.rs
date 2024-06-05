@@ -40,6 +40,7 @@ use cumulus_client_service::{
 	StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
+use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
 use fc_rpc::{
@@ -80,6 +81,9 @@ pub type ParachainHostFunctions = (
 	sp_io::SubstrateHostFunctions,
 	cumulus_client_service::storage_proof_size::HostFunctions,
 );
+
+use cumulus_primitives_core::PersistedValidationData;
+use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 
 use crate::{
 	chain_spec::RuntimeIdentification,
@@ -233,6 +237,25 @@ ez_bounds!(
 ez_bounds!(
 	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
 );
+
+fn ethereum_parachain_inherent() -> ParachainInherentData {
+	let (relay_parent_storage_root, relay_chain_state) =
+		RelayStateSproofBuilder::default().into_state_root_and_proof();
+	let vfp = PersistedValidationData {
+		// This is a hack to make `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases`
+		// happy. Relay parent number can't be bigger than u32::MAX.
+		relay_parent_number: u32::MAX,
+		relay_parent_storage_root,
+		..Default::default()
+	};
+
+	ParachainInherentData {
+		validation_data: vfp,
+		relay_chain_state,
+		downward_messages: Default::default(),
+		horizontal_messages: Default::default(),
+	}
+}
 
 /// Starts a `ServiceBuilder` for a full service.
 ///
@@ -533,7 +556,9 @@ where
 				eth_pubsub_notification_sinks,
 				overrides,
 				sync: sync_service.clone(),
-				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
+				pending_create_inherent_data_providers: |_, ()| async move {
+					Ok((ethereum_parachain_inherent(),))
+				},
 			};
 
 			create_eth::<
@@ -1121,7 +1146,9 @@ where
 				overrides,
 				sync: sync_service.clone(),
 				// We don't have any inherents except parachain built-ins, which we can't even extract from inside `run_aura`.
-				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
+				pending_create_inherent_data_providers: |_, ()| async move {
+					Ok((ethereum_parachain_inherent(),))
+				},
 			};
 
 			create_eth::<
