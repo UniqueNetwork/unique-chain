@@ -3,6 +3,34 @@ import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe
 import {Event} from '@unique/test-utils';
 import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.js';
 
+const location1 = {
+  parents: 1,
+  interior: {X3: [
+    {
+      Parachain: 1000,
+    },
+    {
+      PalletInstance: 50,
+    },
+    {
+      GeneralIndex: 1984,
+    },
+  ]},
+};
+const location2 = {
+  parents: 1,
+  interior: {X3: [
+    {
+      Parachain: 1000,
+    },
+    {
+      PalletInstance: 50,
+    },
+    {
+      GeneralIndex: 1985,
+    },
+  ]},
+};
 
 describeGov('Governance: Financial Council tests', () => {
   let donor: IKeyringPair;
@@ -37,10 +65,9 @@ describeGov('Governance: Financial Council tests', () => {
         moreThanHalfCouncilThreshold,
       );
 
-      const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
+      const councilProposedEvent = Event.FinCouncil.Proposed.expect(proposeResult);
       const proposalIndex = councilProposedEvent.proposalIndex;
       const proposalHash = councilProposedEvent.proposalHash;
-
 
       await helper.finCouncil.collective.vote(finCounselors.greg, proposalHash, proposalIndex, true);
       await helper.finCouncil.collective.vote(finCounselors.ildar, proposalHash, proposalIndex, true);
@@ -70,22 +97,8 @@ describeGov('Governance: Financial Council tests', () => {
     });
   }
 
-  itSub('FinCouncil can register foreign asset', async ({helper}) => {
-    const location = {
-      parents: 1,
-      interior: {X3: [
-        {
-          Parachain: 1000,
-        },
-        {
-          PalletInstance: 50,
-        },
-        {
-          GeneralIndex: 1984,
-        },
-      ]},
-    };
-    const assetId = {Concrete: location};
+  itSub('FinCouncil member can register foreign asset', async ({helper}) => {
+    const assetId = {Concrete: location1};
 
     const registerForeignAssetCall = helper.constructApiCall(
       'api.tx.foreignAssets.forceRegisterForeignAsset',
@@ -94,7 +107,21 @@ describeGov('Governance: Financial Council tests', () => {
 
     await helper.finCouncil.collective.execute(finCounselors.andy, registerForeignAssetCall);
 
-    const asset = await helper.foreignAssets.foreignCollectionId(location);
+    const asset = await helper.foreignAssets.foreignCollectionId(location1);
+    expect(asset).not.null;
+  });
+
+  itSub.skip('FinCouncil can register foreign asset', async ({helper}) => {
+    const assetId = {Concrete: location2};
+
+    const registerForeignAssetCall = helper.constructApiCall(
+      'api.tx.foreignAssets.forceRegisterForeignAsset',
+      [{V3: assetId}, helper.util.str2vec('New Asset'), 'NEW', {Fungible: 10}],
+    );
+    // TODO: why BadOrigin?
+    await proposalFromAllCouncil(registerForeignAssetCall);
+
+    const asset = await helper.foreignAssets.foreignCollectionId(location2);
     expect(asset).not.null;
   });
 
