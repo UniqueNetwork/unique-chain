@@ -489,4 +489,21 @@ describeGov('Governance: Council tests', () => {
     await expect(helper.council.collective.close(counselors.filip, proposalHash, proposalIndex)).to.be.rejectedWith('TooEarly');
   });
 
+  itSub('[Negative] Council can\'t veto Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(proposalFromAllCouncil(helper.democracy.vetoExternalCall(preimageHash)))
+      .rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] Council member can\'t veto Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(helper.council.collective.execute(
+      counselors.charu,
+      helper.democracy.vetoExternalCall(preimageHash),
+    )).rejectedWith('BadOrigin');
+  });
 });
