@@ -25,6 +25,7 @@
 
 use core::ops::Deref;
 
+use derivative::Derivative;
 use frame_support::{
 	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::EnsureOrigin, PalletId,
 };
@@ -246,7 +247,8 @@ pub mod module {
 	}
 
 	#[pallet::genesis_config]
-	#[derive(Default)]
+	#[derive(Derivative)]
+	#[derivative(Default(bound = ""))]
 	pub struct GenesisConfig<T: Config>(PhantomData<T>);
 
 	#[pallet::genesis_build]
