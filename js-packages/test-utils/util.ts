@@ -117,7 +117,6 @@ export enum Pallets {
   Identity = 'identity',
   Democracy = 'democracy',
   Council = 'council',
-  FinancialCouncil = 'financialcouncil',
   //CouncilMembership = 'councilmembership',
   TechnicalCommittee = 'technicalcommittee',
   Fellowship = 'fellowshipcollective',

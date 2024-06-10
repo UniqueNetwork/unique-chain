@@ -1,5 +1,5 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, describeGov} from '@unique/test-utils/util.js';
 import {Event} from '@unique/test-utils';
 import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.js';
 
@@ -13,7 +13,6 @@ describeGov('Governance: Financial Council tests', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.FinancialCouncil]);
       sudoer = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
     });
@@ -227,7 +226,14 @@ describeGov('Governance: Financial Council tests', () => {
     )).to.be.rejectedWith('BadOrigin');
   });
 
-  itSub('[Negative] FinCouncil member can\'t add a Fellowship member', async ({helper}) => {
+  itSub('[Negative] FinCouncil cannot add a Fellowship member', async ({helper}) => {
+    const newFellowshipMember = helper.arrange.createEmptyAccount();
+    const addMemberProposal = helper.fellowship.collective.addMemberCall(newFellowshipMember.address);
+
+    await expect(proposalFromAllFinCouncil(addMemberProposal)).to.be.rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] FinCouncil member cannot add a Fellowship member', async ({helper}) => {
     const newFellowshipMember = helper.arrange.createEmptyAccount();
     await expect(helper.finCouncil.collective.execute(
       finCounselors.andy,

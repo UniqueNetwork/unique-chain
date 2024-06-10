@@ -133,10 +133,10 @@ describeGov('Governance: Technical Committee tests', () => {
   itSub('[Negative] TechComm can\'t add FinCouncil member', async ({helper}) => {
     const newFinCouncilMember = helper.arrange.createEmptyAccount();
     const addMemberProposal = helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address);
-    await proposalFromAllCommittee(addMemberProposal);
+    await expect(proposalFromAllCommittee(addMemberProposal)).rejectedWith('BadOrigin');
 
     const finCouncilMembers = await helper.finCouncil.membership.getMembers();
-    expect(finCouncilMembers).to.contains(newFinCouncilMember.address);
+    expect(finCouncilMembers).to.not.contains(newFinCouncilMember.address);
   });
 
 
