@@ -52,3 +52,11 @@ pub mod technical_committee {
 		pub TechnicalMotionDuration: BlockNumber = 15 * MINUTES;
 	}
 }
+
+pub mod financial_council {
+	use super::*;
+
+	parameter_types! {
+		pub FinancialCouncilMotionDuration: BlockNumber = 15 * MINUTES;
+	}
+}

@@ -2,7 +2,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
 import {Event} from '@unique/test-utils';
-import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin} from './util.js';
+import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin, initFinCouncil} from './util.js';
 import type {ICounselors} from './util.js';
 
 describeGov('Governance: Council tests', () => {
@@ -192,6 +192,25 @@ describeGov('Governance: Council tests', () => {
     expect(techCommMembers).to.not.contains(techComm.andy.address);
   });
 
+  itSub('Council can remove FinCouncil member', async ({helper}) => {
+    const finCouncil = await initFinCouncil(donor, sudoer);
+    const removeMemberPrpoposal = helper.finCouncil.membership.removeMemberCall(finCouncil.andy.address);
+    await proposalFromMoreThanHalfCouncil(removeMemberPrpoposal);
+
+    const finCouncilMembers = await helper.finCouncil.membership.getMembers();
+    expect(finCouncilMembers).to.not.contains(finCouncil.andy.address);
+  });
+
+  itSub('Council can add FinCouncil member', async ({helper}) => {
+    await initFinCouncil(donor, sudoer);
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    const addMemberPrpoposal = helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address);
+    await proposalFromMoreThanHalfCouncil(addMemberPrpoposal);
+
+    const finCouncilMembers = await helper.finCouncil.membership.getMembers();
+    expect(finCouncilMembers).to.contains(newFinCouncilMember.address);
+  });
+
   itSub.skip('Council member can add Fellowship member', async ({helper}) => {
     const newFellowshipMember = helper.arrange.createEmptyAccount();
     await expect(helper.council.collective.execute(
@@ -328,6 +347,22 @@ describeGov('Governance: Council tests', () => {
     )).to.be.rejectedWith('BadOrigin');
   });
 
+  itSub('[Negative] Council member can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address),
+    )).rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] Council member can\'t remove FinCouncil member', async ({helper}) => {
+    const finCouncil = await initFinCouncil(donor, sudoer);
+    await expect(helper.council.collective.execute(
+      counselors.alex,
+      helper.finCouncil.membership.removeMemberCall(finCouncil.ildar.address),
+    )).rejectedWith('BadOrigin');
+  });
+
   itSub('[Negative] Council member cannot promote/demote a Fellowship member', async ({helper}) => {
     const fellowship = await initFellowship(donor, sudoer);
     const memberWithRankOne = fellowship[1][0];
@@ -454,4 +489,21 @@ describeGov('Governance: Council tests', () => {
     await expect(helper.council.collective.close(counselors.filip, proposalHash, proposalIndex)).to.be.rejectedWith('TooEarly');
   });
 
+  itSub('[Negative] Council can\'t veto Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(proposalFromAllCouncil(helper.democracy.vetoExternalCall(preimageHash)))
+      .rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] Council member can\'t veto Democracy proposals', async ({helper}) => {
+    const preimageHash = await helper.preimage.notePreimageFromCall(sudoer, dummyProposalCall(helper), true);
+    await helper.getSudo().democracy.externalProposeDefaultWithPreimage(sudoer, preimageHash);
+
+    await expect(helper.council.collective.execute(
+      counselors.charu,
+      helper.democracy.vetoExternalCall(preimageHash),
+    )).rejectedWith('BadOrigin');
+  });
 });
