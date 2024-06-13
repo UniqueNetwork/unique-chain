@@ -87,9 +87,9 @@ Note: checkout this project and all related projects (see below) in the sibling 
 ### Build relay
 
 ```
-git clone https://github.com/paritytech/polkadot.git
+git clone https://github.com/paritytech/polkadot-sdk.git
 cd polkadot
-git checkout release-v0.9.43
+git checkout release-polkadot-v1.9.0
 cargo build --release
 ```
 

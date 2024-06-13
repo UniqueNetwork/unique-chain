@@ -12,7 +12,7 @@
   "scripts": {
     "benchMintingFee": "yarn ts-node benchmarks/mintFee/benchmark.ts",
     "loadTransfer": "yarn ts-node transfer.nload.ts",
-    "generateEnv": "yarn ts-node --esm ./generateEnv.ts",
+    "generateEnv": "node --loader ts-node/esm ./generateEnv.ts",
     "proposeUpgrade": "yarn ts-node --esm ./proposeupgrade.ts",
     "proposeFastTrack": "yarn ts-node --esm ./proposefasttrack.ts",
     "councilDemocracyProposal": "yarn ts-node --esm ./councilproposal.ts",
