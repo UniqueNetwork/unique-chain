@@ -87,10 +87,10 @@ local moonbeam = {
 
 local statemint = {
 	name: 'statemint',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'statemint-local',
+		chain: 'asset-hub-polkadot',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
@@ -108,23 +108,6 @@ local astar = {
 	paraId: 1005,
 	spec: {Genesis:{
 		chain: 'astar-dev',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-		},
-		for name in ['alice', 'bob']
-	},
-};
-
-local polkadex = {
-	name: 'polkadex',
-	bin: 'bin/polkadex',
-	paraId: 1006,
-	spec: {Genesis:{
-		chain: 'mainnet',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
@@ -158,6 +141,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
+		for para in [unique, acala, moonbeam, statemint, astar, hydraDx]
 	},
 }

@@ -42,10 +42,10 @@ local opal = {
 
 local westmint = {
 	name: 'westmint',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1002,
 	spec: {Genesis:{
-		chain: 'westmint-local',
+		chain: 'asset-hub-westend',
 		modify:: m.genericPara($),
 	}},
 	nodes: {

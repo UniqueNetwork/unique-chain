@@ -41,19 +41,21 @@ function fixupUnique(version: string): string {
   let env = (await readFile(join(dirname, '../../.env'))).toString();
   await Promise.all([
     // Version from polkadot-fellows
-    ff('wss://rpc.polkadot.io/', /^(.)(...)(...)$/, 'v$1.$2.$3').then(v => env = setVar(env, 'POLKADOT_MAINNET_BRANCH', v)),
+    //ff('wss://rpc.polkadot.io/', /^(.)(...)(...)$/, 'v$1.$2.$3').then(v => env = setVar(env, 'POLKADOT_MAINNET_BRANCH', v)),
+    ff('wss://rococo-rpc.polkadot.io/', /^(.)(...)(...)$/, 'v$1.$2.$3').then(v => env = setVar(env, 'POLKADOT_MAINNET_BRANCH', v)),
     // ff('wss://statemint-rpc.polkadot.io/', /^(....)$/, 'release-parachains-v$1').then(v => env = setVar(env, 'STATEMINT_BUILD_BRANCH', v)),
     ff('wss://acala-rpc-0.aca-api.network/', /^(.)(..)(.)$/, '$1.$2.$3').then(v => env = setVar(env, 'ACALA_BUILD_BRANCH', v)),
     ff('wss://wss.api.moonbeam.network/', /^(....)$/, 'runtime-$1').then(v => env = setVar(env, 'MOONBEAM_BUILD_BRANCH', v)),
     ff('wss://ws.unique.network/', /^(........)$/, 'release-v$1').then(v => env = setVar(env, 'UNIQUE_MAINNET_BRANCH', fixupUnique(v))),
 
-    ff('wss://kusama-rpc.polkadot.io/', /^(.)(...)(...)$/, 'v$1.$2.$3').then(v => env = setVar(env, 'KUSAMA_MAINNET_BRANCH', v)),
+    //ff('wss://kusama-rpc.polkadot.io/', /^(.)(...)(...)$/, 'v$1.$2.$3').then(v => env = setVar(env, 'KUSAMA_MAINNET_BRANCH', v)),
+    ff('wss://rococo-rpc.polkadot.io/', /^(.)(...)(...)$/, 'v$1.$2.$3').then(v => env = setVar(env, 'KUSAMA_MAINNET_BRANCH', v)),
     // ff('wss://statemine-rpc.polkadot.io/', /^(....)$/, 'release-parachains-v$1').then(v => env = setVar(env, 'STATEMINE_BUILD_BRANCH', v)),
     ff('wss://karura-rpc-0.aca-api.network/', /^(.)(..)(.)$/, 'release-karura-$1.$2.$3').then(v => env = setVar(env, 'KARURA_BUILD_BRANCH', v)),
     ff('wss://wss.api.moonriver.moonbeam.network/', /^(....)$/, 'runtime-$1').then(v => env = setVar(env, 'MOONRIVER_BUILD_BRANCH', v)),
     ff('wss://ws-quartz.unique.network/', /^(........)$/, 'release-v$1').then(v => env = setVar(env, 'QUARTZ_MAINNET_BRANCH', fixupUnique(v))),
 
-    ff('wss://ws-westend.unique.network/', /^(.)(..)(.)$/, 'release-v0.$1.$2').then(v => env = setVar(env, 'UNIQUEWEST_MAINNET_BRANCH', v)),
+    ff('wss://eu-ws-westend.unique.network/', /^(.)(..)(.)$/, 'release-v$1.$2.$3').then(v => env = setVar(env, 'UNIQUEWEST_MAINNET_BRANCH', v)),
     ff('wss://westmint-rpc.polkadot.io/', /^(.......)$/, 'bad-branch-v$1').then(v => env = setVar(env, 'WESTMINT_BUILD_BRANCH', v)),
     ff('wss://ws-opal.unique.network/', /^(........)$/, 'release-v$1').then(v => env = setVar(env, 'OPAL_MAINNET_BRANCH', fixupUnique(v))),
 

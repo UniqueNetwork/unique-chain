@@ -4,7 +4,6 @@ services:
   node-dev:
     build:
       args:
-        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
         - "NETWORK={{ NETWORK }}"
       context: ../
       dockerfile: .docker/Dockerfile-chain-dev

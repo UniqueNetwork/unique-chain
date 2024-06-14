@@ -86,10 +86,10 @@ local moonriver = {
 
 local statemine = {
 	name: 'statemine',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'statemine-local',
+		chain: 'asset-hub-kusama',
 		modify:: m.genericPara($),
 	}},
 	nodes: {

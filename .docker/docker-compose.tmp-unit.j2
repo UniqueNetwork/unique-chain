@@ -6,7 +6,6 @@ services:
       context: ../
       dockerfile: .docker/Dockerfile-chain-dev-unit
       args:
-        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
         - "NETWORK={{ NETWORK }}"
     image: node-dev
     container_name: node-dev        

@@ -14,15 +14,6 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
-ARG RUST_TOOLCHAIN
-RUN echo "Using Rust '$RUST_TOOLCHAIN'" && \
-    rustup toolchain install $RUST_TOOLCHAIN && \
-    rustup target add wasm32-unknown-unknown --toolchain ${RUST_TOOLCHAIN} && \
-    rustup default $RUST_TOOLCHAIN && \
-    rustup component add --toolchain $RUST_TOOLCHAIN rust-src && \
-    rustup target list --installed && \
-    rustup show
-
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
@@ -33,7 +24,7 @@ WORKDIR /unique_parachain
 
 COPY . unique-chain/
 
-ARG RUNTIME_FEATURES
+ARG FEATURES
 # registry for Updating registry. It is safe to cache it, because it only contains references to the dependency files,
 #   and the caches for the files themselves are set in Cargo.lock, which won't be updated because of --locked flag
 # git for Updating git repository. It is safe to cache it, because git dependencies are cached by revision,
@@ -47,8 +38,8 @@ RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/cargo-home/git \
     --mount=type=cache,target=/unique_parachain/unique-chain/target \
     cd unique-chain && \
-    echo "Using runtime features '$RUNTIME_FEATURES'" && \
-    CARGO_INCREMENTAL=0 cargo build --profile integration-tests --features=fast-inflation,"$RUNTIME_FEATURES" --locked && \
+    echo "Using runtime features ${FEATURES}" && \
+    CARGO_INCREMENTAL=0 cargo build --profile integration-tests --features=fast-inflation,"${FEATURES}" --locked && \
     mv ./target/integration-tests/unique-collator /unique_parachain/unique-chain/ && \
     cd target/integration-tests/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "../../../wasm/$(dirname {})"; cp {} "../../../wasm/{}"' \;
 

@@ -1,18 +1,18 @@
 # ===== Rust builder =====
-FROM uniquenetwork/services:latest as rust-builder
+FROM ubuntu:22.04 as rust-builder
+LABEL maintainer="Unique.Network"
 
-ENV RUST_TOOLCHAIN $RUST_TOOLCHAIN
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
-RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install {{ RUST_TOOLCHAIN }} && \
-    rustup default {{ RUST_TOOLCHAIN }} && \
-    rustup target list --installed && \
-    rustup component add --toolchain {{ RUST_TOOLCHAIN }} rust-src && \
-    rustup show
-RUN rustup target add wasm32-unknown-unknown --toolchain {{ RUST_TOOLCHAIN }}
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
@@ -30,4 +30,4 @@ RUN echo "Requested features: {{ NETWORK }}-runtime\n" && \
     echo "Fork from: {{ REPLICA_FROM }}\n" && \
     cargo build --features=try-runtime,{{ NETWORK }}-runtime --release
 
-CMD cargo run --release --features {{ NETWORK }}-runtime,try-runtime -- try-runtime --runtime target/release/wbuild/{{ WASM_NAME }}-runtime/{{ WASM_NAME }}_runtime.compact.compressed.wasm -lruntime=debug -ltry-runtime::cli=debug on-runtime-upgrade --checks live --uri {{ REPLICA_FROM }}
+CMD cargo run --release --features {{ NETWORK }}-runtime,try-runtime -- try-runtime --runtime target/release/wbuild/{{ NETWORK }}-runtime/{{ NETWORK }}_runtime.compact.compressed.wasm -lruntime=debug -ltry-runtime::cli=debug on-runtime-upgrade --checks live --uri {{ REPLICA_FROM }}

@@ -15,7 +15,7 @@ jobs:
 
     name: execution matrix
 
-    runs-on: self-hosted-ci
+    runs-on: [ self-hosted-ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -25,27 +25,27 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Create Execution matrix
         uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, runtime_features {opal-runtime}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, runtime_features {quartz-runtime}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, runtime_features {unique-runtime}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
   node-only-update:
 
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci]
+    runs-on: [ self-hosted-ci ]
 
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
@@ -67,7 +67,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -76,7 +76,7 @@ jobs:
         uses: ./.github/actions/prepare
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v2.1.0
@@ -84,25 +84,16 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Generate ENV related extend Dockerfile file for POLKADOT
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            
-      - name: Prepare polkadot
-        uses: ./.github/actions/buildContainer
+      - name: Check and pull polkadot image
         id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          container: uniquenetwork/builder-polkadot
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
-          context: .docker
-          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Prepare mainnet
         uses: ./.github/actions/buildContainer
@@ -113,8 +104,7 @@ jobs:
           context: .docker
           dockerfile: Dockerfile-unique-release
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg FEATURES=${{ matrix.network }}-runtime
             --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
@@ -128,13 +118,12 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg FEATURES=${{ matrix.network }}-runtime
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Checkout at '${{ matrix.mainnet_branch }}' branch
-        uses: actions/checkout@master
+        uses: actions/checkout@v4.1.7
         with:
           #ref: ${{ github.head_ref }}
           ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
@@ -142,16 +131,19 @@ jobs:
 
       - uses: actions/setup-node@v3.5.1
         with:
-          node-version: 18.17.1 # Update node version to 20 after mainnet will have changes for it
+          node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@built
+        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        with:
+          useCache: false        
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@built
+        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        if: success()
         id: bdk
         with:
           jpath: |
@@ -160,32 +152,40 @@ jobs:
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           inputs: |
             .baedeker/node-only.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
-      - name: Run Parallel tests before Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/tests
-        if: success()
+      - name: Ensure network is alive
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        id: alive1
+        if: steps.bdk.outcome == 'success'
         run: |
           yarn
           yarn add mochawesome
-          # TODO: Update to new script structure after mainnet will have it
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Parallel tests before Node Parachain upgrade
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        if: steps.alive1.outcome == 'success'
+        run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests before Node Parachain upgrade
-        if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: steps.alive1.outcome == 'success'
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: "Reconcile: only one old node"
-        if: success() || failure()
-        uses: UniqueNetwork/baedeker-action/reconcile@built
+        if: steps.alive1.outcome == 'success'
+        id: reconcile1
+        uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
         with:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes expect one, then set mainnet binary for the last node, and then force chainspec to be still generated from mainnet
@@ -195,15 +195,18 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
-        if: success()
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        id: alive2
+        if: steps.reconcile1.outcome == 'success'
         run: |
-          ./js-packages/scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: "Reconcile: all nodes are updated"
-        if: success() || failure()
-        uses: UniqueNetwork/baedeker-action/reconcile@built
+        if: steps.alive2.outcome == 'success'
+        id: reconcile2
+        uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
         with:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
@@ -211,22 +214,27 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, for_chain = false)
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
-      - name: Run Parallel tests after Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/tests
-        if: success() || failure()    # run this step even if previous step failed
+      - name: Ensure network is alive
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        id: alive3
+        if: steps.reconcile2.outcome == 'success'
         run: |
-          yarn install
-          yarn add mochawesome
-          # TODO: Update to new script structure after mainnet will have it
-          ./scripts/wait_for_first_block.sh
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Parallel tests after Node Parachain upgrade
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        if: steps.alive3.outcome == 'success'
+        run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests after Node Parachain upgrade
-        if: success() || failure()
-        working-directory: ${{ matrix.mainnet_branch }}/tests
+        if: steps.alive3.outcome == 'success'
+        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}

@@ -4,9 +4,7 @@ services:
   node-dev:
     build:
       args:
-        - "RUST_TOOLCHAIN={{ RUST_TOOLCHAIN }}"
         - "NETWORK={{ NETWORK }}"
-        - "WASM_NAME={{ WASM_NAME }}"
       context: ../
       dockerfile: .docker/Dockerfile-chain-dev
     image: node-dev
