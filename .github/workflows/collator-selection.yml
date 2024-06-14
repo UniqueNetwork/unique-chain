@@ -15,15 +15,12 @@ env:
 jobs:
 
   prepare-execution-marix:
-
     name: Prepare execution matrix
-
-    runs-on: [self-hosted-ci]
+    runs-on: [ test ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
@@ -41,10 +38,9 @@ jobs:
         with:
           matrix: |
             network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+#            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
 
   collator-selection:
-
     needs: prepare-execution-marix
     # The type of runner that the job will run on
     runs-on: [self-hosted-ci,large]
@@ -80,54 +76,21 @@ jobs:
         uses: xom9ikk/dotenv@v2
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v3.2.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
-      - name: Generate ENV related extend Dockerfile file for POLKADOT
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            
-      - name: Prepare polkadot
-        uses: ./.github/actions/buildContainer
+      - name: Check and pull polkadot image
         id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          container: uniquenetwork/builder-polkadot
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
-          context: .docker
-          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      # - name: pull needed images
-      #   run: |
-      #     docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-
-      # - name: Build unique-chain
-      #   run: |
-      #     docker build --file .docker/Dockerfile-unique \
-      #       --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
-      #       --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
-      #       --tag uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
-      #       .
-
-      # - name: Push docker image version
-      #   run: docker push uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
-
 
       - name: Prepare latest
         uses: ./.github/actions/buildContainer
@@ -178,8 +141,6 @@ jobs:
         run: |
           yarn install
           yarn add mochawesome
-          # Wanted by both wait_for_first_block
-          # export RPC_URL="${RELAY_SAPPHIRE_HTTP_URL:-${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}}"
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}

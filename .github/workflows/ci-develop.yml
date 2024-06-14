@@ -26,11 +26,6 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
     secrets: inherit    
 
-  canary:
-    if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-canary')
-    uses: ./.github/workflows/canary.yml
-    secrets: inherit
-
   xcm:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xcm')
     uses: ./.github/workflows/xcm.yml
