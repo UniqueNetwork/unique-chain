@@ -295,7 +295,7 @@ jobs:
       - name: Build unique-chain
         run: |
           docker build --file .docker/Dockerfile-unique \
-            --build-arg NETWORK=${{ matrix.network }} \
+            --build-arg FEATURES=${{ matrix.network }}-runtime \
             --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }} \
             .
 

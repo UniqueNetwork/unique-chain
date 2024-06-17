@@ -104,7 +104,7 @@ jobs:
           context: .docker
           dockerfile: Dockerfile-unique-release
           args: |
-            --build-arg NETWORK=${{ matrix.network }}
+            --build-arg FEATURES=${{ matrix.network }}-runtime
             --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
@@ -118,7 +118,7 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg NETWORK=${{ matrix.network }}
+            --build-arg FEATURES=${{ matrix.network }}-runtime
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 

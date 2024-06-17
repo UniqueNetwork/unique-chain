@@ -25,12 +25,12 @@ WORKDIR /unique_parachain
 ARG UNIQUE_VERSION
 RUN git clone -b "$UNIQUE_VERSION" --depth 1 https://github.com/uniquenetwork/unique-chain.git
 
-ARG NETWORK
+ARG FEATURES
 RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/cargo-home/git \
     --mount=type=cache,target=/unique_parachain/polkadot/target \
     cd unique-chain && \
-    CARGO_INCREMENTAL=0 cargo build --release --features="$NETWORK"-runtime --locked && \
+    CARGO_INCREMENTAL=0 cargo build --release --features="${FEATURES}" --locked && \
     mv ./target/release/unique-collator /unique_parachain/unique-chain/
 
 # ===== BIN ======
