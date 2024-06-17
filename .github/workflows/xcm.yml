@@ -16,7 +16,7 @@ jobs:
   prepare-execution-marix:
     name: Prepare execution matrix
 
-    runs-on: [self-hosted-ci]
+    runs-on: [self-hosted]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -37,9 +37,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testXcmOpal}, runtime_features {opal-runtime}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runtime_features {quartz-runtime}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runtime_features {unique-runtime}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testXcmOpal}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmUnique}
 
   xcm:
     needs: prepare-execution-marix
@@ -82,38 +82,16 @@ jobs:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      # Check POLKADOT version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for POLKADOT
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull polkadot image
+        id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-
-      - name: Check if the dockerhub repository contains the needed version POLKADOT
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB POLKADOT repository
-            POLKADOT_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadot/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "POLKADOT TAGS:"
-            echo $POLKADOT_TAGS
-          # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
-            if [[ ${POLKADOT_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.relay_branch }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed POLKADOT version";
-                docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-            else
-                echo "Repository has not needed POLKADOT version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-polkadot.${{ matrix.relay_branch }}.yml --tag uniquenetwork/builder-polkadot:${{ matrix.relay_branch }} .
-                echo "Push needed POLKADOT version to the repository";
-                docker push uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-            fi
-        shell: bash
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.relay_branch }}
 
       # Check ACALA version and build it if it doesn't exist in repository
       - name: Generate ENV related extend Dockerfile file for ACALA
@@ -317,8 +295,7 @@ jobs:
       - name: Build unique-chain
         run: |
           docker build --file .docker/Dockerfile-unique \
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
+            --build-arg NETWORK=${{ matrix.network }} \
             --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }} \
             .
 
@@ -345,7 +322,7 @@ jobs:
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:dockerImage:'${{ steps.polkadot.outputs.name }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}'}})

@@ -12,7 +12,7 @@ jobs:
   
   unit_tests:
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,medium]
+    runs-on: [self-hosted,medium]
     timeout-minutes: 1380
 
     name: ${{ github.base_ref }}
@@ -37,9 +37,6 @@ jobs:
         with:
           template: .docker/docker-compose.tmp-unit.j2
           output_file: .docker/docker-compose.unit.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-    
 
       - name: Show build configuration
         run: cat .docker/docker-compose.unit.yml

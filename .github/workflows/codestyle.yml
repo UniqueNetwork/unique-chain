@@ -9,7 +9,7 @@ on:
 
 jobs:
   rustfmt:
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ self-hosted ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -17,13 +17,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}            
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2          
-      - name: Install toolchain version from .env
-        uses: dtolnay/rust-toolchain@master
-        with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            targets: wasm32-unknown-unknown
-            components: rustfmt, clippy
+        uses: xom9ikk/dotenv@v2
       - name: Run cargo fmt
         run: cargo fmt -- --check   # In that mode it returns only exit code.
       - name: Cargo fmt state
@@ -31,7 +25,7 @@ jobs:
         run: echo "Nothing to do. Command 'cargo fmt -- --check' returned exit code 0."
 
   yarn_eslint:
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ self-hosted ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -48,19 +42,13 @@ jobs:
         run: cd js-packages && yarn lint
 
   clippy:
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ self-hosted ]
     steps:
       - uses: actions/checkout@v3.1.0
       - name: Install substrate dependencies
         run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Read .env file
         uses: xom9ikk/dotenv@v2
-      - name: Install toolchain version from .env
-        uses: dtolnay/rust-toolchain@master
-        with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            targets: wasm32-unknown-unknown
-            components: rustfmt, clippy
       - name: Run cargo check
         run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
         env:

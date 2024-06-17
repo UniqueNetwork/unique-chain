@@ -10,7 +10,7 @@ jobs:
   prepare-execution-marix:
     name: Prepare execution matrix
 
-    runs-on: self-hosted-ci
+    runs-on: self-hosted
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -31,14 +31,14 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {unique}, wasm_name {unique}
-            network {quartz}, wasm_name {quartz}
-            network {opal}, wasm_name {opal}
+            network {unique}
+            network {quartz}
+            network {opal}
 
   dev_build_int_tests:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci, medium]
+    runs-on: [self-hosted, medium]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
@@ -66,9 +66,7 @@ jobs:
           template: .docker/docker-compose.gov.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
-            WASM_NAME=${{ matrix.wasm_name }}
 
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml

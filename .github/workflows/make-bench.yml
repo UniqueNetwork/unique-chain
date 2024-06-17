@@ -27,13 +27,6 @@ jobs:
       - name: Install substrate dependencies
         run: sudo apt install -y curl cmake make libssl-dev pkg-config libclang-dev clang protobuf-compiler
 
-      - name: Install actual toolchain
-        uses: actions-rs/toolchain@v1.0.7
-        with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            default: true
-            target: wasm32-unknown-unknown
-
       - uses: actions/setup-node@v3
         with:
           node-version: 20

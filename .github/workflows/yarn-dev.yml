@@ -13,7 +13,7 @@ jobs:
   
   dev_build_int_tests:
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,medium]
+    runs-on: [self-hosted,medium]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
@@ -46,7 +46,6 @@ jobs:
           template: .docker/docker-compose.tmp-dev.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
     
 
@@ -110,7 +109,7 @@ jobs:
 
   # check:
   #   if: always()
-  #   runs-on: [self-hosted-ci]
+  #   runs-on: [self-hosted]
   #   needs:
   #   - dev_build_int_tests
 
