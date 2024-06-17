@@ -14,6 +14,7 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/chaindata',
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
 	},
