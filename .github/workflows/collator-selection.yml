@@ -43,7 +43,7 @@ jobs:
   collator-selection:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [test]
+    runs-on: [self-hosted]
 
     timeout-minutes: 1380
 
@@ -127,7 +127,7 @@ jobs:
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           inputs: |
             .baedeker/collator-selection.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: Upload network config
