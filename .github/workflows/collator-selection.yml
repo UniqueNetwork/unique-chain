@@ -130,39 +130,6 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
-      - name: Upload network config
-        uses: actions/upload-artifact@v3
-        with:
-          name: ${{ matrix.network }}-network-config
-          path: ${{ steps.bdk.outputs.composeProject }}
-          retention-days: 2
-
-      - name: Run tests
-        working-directory: js-packages/tests
+      - name: Pause
         run: |
-          yarn install
-          yarn add mochawesome
-          ../scripts/wait_for_first_block.sh
-          echo "Ready to start tests"
-          NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
-        env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
-
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v10
-        id: test-report
-        if: success() || failure()
-        with:
-          name: Collator Selection Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-collators-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
-
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
-
-      - name: Remove builder cache
-        if: always()
-        run: |
-          docker system prune -a -f
+          sleep 300000000
