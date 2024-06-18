@@ -119,14 +119,13 @@ describeGov('Governance: Technical Committee tests', () => {
     Event.FellowshipReferenda.Cancelled.expect(cancelProposal);
   });
 
-  itSub.skip('TechComm member can add a Fellowship member', async ({helper}) => {
+  itSub('TechComm member can add a Fellowship member', async ({helper}) => {
     const newFellowshipMember = helper.arrange.createEmptyAccount();
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
     )).to.be.fulfilled;
-    const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
-    expect(fellowshipMembers).to.contains(newFellowshipMember.address);
+    expect(await helper.fellowship.collective.getMembers()).to.be.deep.contain(newFellowshipMember.address);
     await clearFellowship(sudoer);
   });
 
@@ -235,12 +234,36 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
 
-  itSub.skip('[Negative] TechComm cannot promote/demote Fellowship member', async () => {
+  itSub('[Negative] TechComm cannot promote/demote Fellowship member', async ({helper}) => {
+    const fellowship = await initFellowship(donor, sudoer);
+    const memberWithRankOne = fellowship[1][0];
 
+    const promoteProposal = helper.fellowship.collective.promoteCall(memberWithRankOne.address);
+    await expect(proposalFromAllCommittee(promoteProposal)).rejectedWith('BadOrigin');
+
+    const demoteProposal = helper.fellowship.collective.demoteCall(memberWithRankOne.address);
+    await expect(proposalFromAllCommittee(demoteProposal)).rejectedWith('BadOrigin');
+
+    await clearFellowship(sudoer);
   });
 
-  itSub.skip('[Negative] TechComm member cannot promote/demote Fellowship member', async () => {
+  itSub('[Negative] TechComm member cannot promote/demote Fellowship member', async ({helper}) => {
+    const fellowship = await initFellowship(donor, sudoer);
+    const memberWithRankOne = fellowship[1][0];
 
+    const promoteProposal = helper.fellowship.collective.promoteCall(memberWithRankOne.address);
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.andy,
+      promoteProposal,
+    )).to.be.rejectedWith('BadOrigin');
+
+    const demoteProposal = helper.fellowship.collective.demoteCall(memberWithRankOne.address);
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.andy,
+      demoteProposal,
+    )).to.be.rejectedWith('BadOrigin');
+
+    await clearFellowship(sudoer);
   });
 
   itSub('[Negative] TechComm cannot add/remove a Council member', async ({helper}) => {

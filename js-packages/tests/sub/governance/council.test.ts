@@ -211,14 +211,14 @@ describeGov('Governance: Council tests', () => {
     expect(finCouncilMembers).to.contains(newFinCouncilMember.address);
   });
 
-  itSub.skip('Council member can add Fellowship member', async ({helper}) => {
+  itSub('Council member can add Fellowship member', async ({helper}) => {
     const newFellowshipMember = helper.arrange.createEmptyAccount();
     await expect(helper.council.collective.execute(
       counselors.alex,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
     )).to.be.fulfilled;
-    const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
-    expect(fellowshipMembers).to.contains(newFellowshipMember.address);
+    expect(await helper.fellowship.collective.getMembers()).to.be.deep.contain(newFellowshipMember.address);
+    await clearFellowship(sudoer);
   });
 
   itSub('>50% Council can promote Fellowship member', async ({helper}) => {
@@ -246,16 +246,14 @@ describeGov('Governance: Council tests', () => {
     await clearFellowship(sudoer);
   });
 
-  itSub('>50% Council can add\remove Fellowship member', async ({helper}) => {
+  itSub('>50% Council can remove Fellowship member', async ({helper}) => {
     try {
-      const newMember = helper.arrange.createEmptyAccount();
+      const fellowship = await initFellowship(donor, sudoer);
+      const memberRank6 = fellowship[6][0];
 
-      const proposalAdd = helper.fellowship.collective.addMemberCall(newMember.address);
-      const proposalRemove = helper.fellowship.collective.removeMemberCall(newMember.address, fellowshipRankLimit);
-      await expect(proposalFromMoreThanHalfCouncil(proposalAdd)).to.be.fulfilled;
-      expect(await helper.fellowship.collective.getMembers()).to.be.deep.contain(newMember.address);
+      const proposalRemove = helper.fellowship.collective.removeMemberCall(memberRank6.address, fellowshipRankLimit);
       await expect(proposalFromMoreThanHalfCouncil(proposalRemove)).to.be.fulfilled;
-      expect(await helper.fellowship.collective.getMembers()).to.be.not.deep.contain(newMember.address);
+      expect(await helper.fellowship.collective.getMembers()).to.be.not.deep.contain(memberRank6.address);
     }
     finally {
       await clearFellowship(sudoer);
