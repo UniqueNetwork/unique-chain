@@ -19,6 +19,6 @@ WORKDIR /dev_chain
 
 ARG GIT_PRIVATE_CREDENTIALS
 
-RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
+#RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
 
 CMD cargo test --features=limit-testing,tests --workspace

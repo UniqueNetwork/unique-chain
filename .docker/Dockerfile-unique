@@ -22,7 +22,7 @@ COPY . unique-chain/
 
 ARG GIT_PRIVATE_CREDENTIALS
 
-RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
+#RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
 
 ARG RUNTIME_FEATURES
 # registry for Updating registry. It is safe to cache it, because it only contains references to the dependency files,

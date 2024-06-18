@@ -28,7 +28,7 @@ ARG GIT_PRIVATE_CREDENTIALS
 COPY . /unique_parachain
 WORKDIR /unique_parachain
 
-RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
+#RUN git config --global url."https://$GIT_PRIVATE_CREDENTIALS@github.com".insteadOf ssh://git@github.com
 
 RUN echo "Requested features: $NETWORK-runtime\n" && \
     echo "Fork from: $REPLICA_FROM\n" && \
