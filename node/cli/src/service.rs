@@ -238,7 +238,7 @@ ez_bounds!(
 	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
 );
 
-fn ethereum_parachain_inherent() -> ParachainInherentData {
+fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, ParachainInherentData) {
 	let (relay_parent_storage_root, relay_chain_state) =
 		RelayStateSproofBuilder::default().into_state_root_and_proof();
 	let vfp = PersistedValidationData {
@@ -249,12 +249,15 @@ fn ethereum_parachain_inherent() -> ParachainInherentData {
 		..Default::default()
 	};
 
-	ParachainInherentData {
-		validation_data: vfp,
-		relay_chain_state,
-		downward_messages: Default::default(),
-		horizontal_messages: Default::default(),
-	}
+	(
+		sp_timestamp::InherentDataProvider::from_system_time(),
+		ParachainInherentData {
+			validation_data: vfp,
+			relay_chain_state,
+			downward_messages: Default::default(),
+			horizontal_messages: Default::default(),
+		},
+	)
 }
 
 /// Starts a `ServiceBuilder` for a full service.
@@ -557,7 +560,7 @@ where
 				overrides,
 				sync: sync_service.clone(),
 				pending_create_inherent_data_providers: |_, ()| async move {
-					Ok((ethereum_parachain_inherent(),))
+					Ok(ethereum_parachain_inherent())
 				},
 			};
 
@@ -1147,7 +1150,7 @@ where
 				sync: sync_service.clone(),
 				// We don't have any inherents except parachain built-ins, which we can't even extract from inside `run_aura`.
 				pending_create_inherent_data_providers: |_, ()| async move {
-					Ok((ethereum_parachain_inherent(),))
+					Ok(ethereum_parachain_inherent())
 				},
 			};
 
