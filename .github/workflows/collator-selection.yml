@@ -92,19 +92,6 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
-      - name: Prepare latest
-        uses: ./.github/actions/buildContainer
-        id: latest
-        with:
-          container: uniquenetwork/ci-collator-selection-local
-          tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
-          context: .
-          dockerfile: .docker/Dockerfile-unique
-          args: |
-            --build-arg FEATURES=${{ matrix.network }}-runtime,session-test-timings
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
       - uses: actions/setup-node@v3.5.1
         with:
           node-version: 20
@@ -128,7 +115,6 @@ jobs:
           inputs: |
             .baedeker/collator-selection.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: Pause
         run: |

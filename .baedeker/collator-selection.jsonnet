@@ -20,25 +20,4 @@ local relay = {
 	},
 };
 
-local unique = {
-	name: 'unique',
-	bin: 'bin/unique',
-	paraId: 1001,
-	spec: {Genesis:{
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-		},
-		for name in ['alpha', 'beta', 'gamma', 'delta']
-	},
-};
-
-relay + {
-	parachains: {
-		[para.name]: para,
-		for para in [unique]
-	},
-}
+relay
