@@ -25,7 +25,7 @@ use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
 	},
-	PalletId,
+	PalletId, derive_impl,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -43,7 +43,7 @@ use up_common::{constants::*, types::*};
 use crate::{
 	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, SS58Prefix, System,
-	Treasury, Version,
+	Treasury, Version, RuntimeTask,
 };
 
 parameter_types! {
@@ -72,13 +72,12 @@ parameter_types! {
 		.build_or_panic();
 }
 
+#[derive_impl(frame_system::config_preludes::ParaChainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Runtime {
 	/// The data to be stored in an account.
 	type AccountData = pallet_balances::AccountData<Balance>;
 	/// The identifier used to distinguish between accounts.
 	type AccountId = AccountId;
-	/// The basic call filter to use in dispatchable.
-	type BaseCallFilter = Everything;
 	/// Maximum number of block number to block hash mappings to keep (oldest pruned first).
 	type BlockHashCount = BlockHashCount;
 	/// The block type.
@@ -87,12 +86,8 @@ impl frame_system::Config for Runtime {
 	type BlockLength = RuntimeBlockLength;
 	/// The weight of the overhead invoked on the block import process, independent of the extrinsics included in that block.
 	type BlockWeights = RuntimeBlockWeights;
-	/// The aggregated dispatch type that is available for extrinsics.
-	type RuntimeCall = RuntimeCall;
 	/// The weight of database operations that the runtime can invoke.
 	type DbWeight = RocksDbWeight;
-	/// The ubiquitous event type.
-	type RuntimeEvent = RuntimeEvent;
 	/// The type for hashing blocks and tries.
 	type Hash = Hash;
 	/// The hashing algorithm used.
@@ -101,10 +96,6 @@ impl frame_system::Config for Runtime {
 	type Nonce = Nonce;
 	/// The lookup mechanism to get account ID from whatever is passed in dispatchers.
 	type Lookup = AccountIdLookup<AccountId, ()>;
-	/// What to do if an account is fully reaped from the system.
-	type OnKilledAccount = ();
-	/// What to do if a new account is created.
-	type OnNewAccount = ();
 	type OnSetCode = cumulus_pallet_parachain_system::ParachainSetCode<Self>;
 	/// The ubiquitous origin type.
 	type RuntimeOrigin = RuntimeOrigin;
@@ -117,14 +108,6 @@ impl frame_system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	type MaxConsumers = ConstU32<16>;
-
-	type RuntimeTask = ();
-
-	type SingleBlockMigrations = ();
-	type MultiBlockMigrator = ();
-	type PreInherents = ();
-	type PostInherents = ();
-	type PostTransactions = ();
 }
 
 parameter_types! {
