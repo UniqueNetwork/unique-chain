@@ -36,8 +36,8 @@ use cumulus_client_consensus_aura::collators::lookahead::{
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_service::{
-	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, DARecoveryProfile,
-	StartRelayChainTasksParams,
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
+	CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
@@ -85,10 +85,7 @@ pub type ParachainHostFunctions = (
 use cumulus_primitives_core::PersistedValidationData;
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 
-use crate::{
-	chain_spec::RuntimeIdentification,
-	rpc::{create_eth, create_full, EthDeps, FullDeps},
-};
+use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]
@@ -429,33 +426,25 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
-	// Aura is sybil-resistant, collator-selection is generally too.
-	let block_announce_validator =
-		cumulus_client_network::AssumeSybilResistance::allow_seconded_messages();
-
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
-		sc_service::build_network(sc_service::BuildNetworkParams {
-			config: &parachain_config,
+		cumulus_client_service::build_network(cumulus_client_service::BuildNetworkParams {
+			parachain_config: &parachain_config,
 			net_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
+			para_id,
 			spawn_handle: task_manager.spawn_handle(),
+			relay_chain_interface: relay_chain_interface.clone(),
 			import_queue: params.import_queue,
-			block_announce_validator_builder: Some(Box::new(|_| {
-				Box::new(block_announce_validator)
-			})),
-			warp_sync_params: None,
-			block_relay: None,
-		})?;
-
-	let select_chain = params.select_chain.clone();
-
-	let runtime_id = parachain_config.chain_spec.runtime_id();
+			// Aura is sybil-resistant, collator-selection is generally too.
+			sybil_resistance_level: CollatorSybilResistance::Resistant,
+		})
+		.await?;
 
 	// Frontier
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
@@ -508,9 +497,7 @@ where
 				fee_history_cache,
 				eth_block_data_cache,
 				network,
-				runtime_id,
 				transaction_pool,
-				select_chain,
 				overrides,
 			);
 
@@ -521,7 +508,6 @@ where
 
 			let full_deps = FullDeps {
 				client: client.clone(),
-				runtime_id,
 
 				#[cfg(feature = "pov-estimate")]
 				exec_params: uc_rpc::pov_estimate::ExecutorParams {
@@ -536,10 +522,9 @@ where
 
 				deny_unsafe,
 				pool: transaction_pool.clone(),
-				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_handle, full_deps)?;
+			create_full::<_, _, Runtime, _>(&mut rpc_handle, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -1044,8 +1029,6 @@ where
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
 
-	let runtime_id = config.chain_spec.runtime_id();
-
 	// Frontier
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
 	let fee_history_limit = 2048;
@@ -1097,9 +1080,7 @@ where
 				fee_history_cache,
 				eth_block_data_cache,
 				network,
-				runtime_id,
 				transaction_pool,
-				select_chain,
 				overrides,
 			);
 
@@ -1109,8 +1090,6 @@ where
 			let mut rpc_module = RpcModule::new(());
 
 			let full_deps = FullDeps {
-				runtime_id,
-
 				#[cfg(feature = "pov-estimate")]
 				exec_params: uc_rpc::pov_estimate::ExecutorParams {
 					wasm_method: config.wasm_method,
@@ -1125,10 +1104,9 @@ where
 				deny_unsafe,
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_module, full_deps)?;
+			create_full::<_, _, Runtime, _>(&mut rpc_module, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
