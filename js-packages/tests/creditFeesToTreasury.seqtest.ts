@@ -172,7 +172,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     let result = null;
     
     const lambda = async () => {
-      result = await helper.executeExtrinsic(alice, "api.tx.evm.call", [
+      result = await helper.executeExtrinsic(alice, 'api.tx.evm.call', [
         helper.address.substrateToEth(alice.address),
         helper.address.substrateToEth(bob.address),
         "0x",
