@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_support::{
+	derive_impl,
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
 	traits::{
@@ -25,7 +26,7 @@ use frame_support::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
 		ConstantMultiplier,
 	},
-	PalletId, derive_impl,
+	PalletId,
 };
 use frame_system::{
 	limits::{BlockLength, BlockWeights},
@@ -42,8 +43,8 @@ use up_common::{constants::*, types::*};
 
 use crate::{
 	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, SS58Prefix, System,
-	Treasury, Version, RuntimeTask,
+	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, SS58Prefix,
+	System, Treasury, Version,
 };
 
 parameter_types! {
