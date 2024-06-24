@@ -43,7 +43,7 @@ describe('Number of tokens per address (NFT)', () => {
 
   itSub('Collection limits allow lower number than chain limits, collection limits are enforced', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {});
-    await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 2});
 
     await collection.mintToken(alice);
     await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
@@ -81,7 +81,7 @@ describe('Number of tokens per address (ReFungible)', () => {
 
   itSub('Collection limits allow lower number than chain limits, collection limits are enforced', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
-    await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 2});
 
     await collection.mintToken(alice);
     await expect(collection.mintToken(alice)).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
