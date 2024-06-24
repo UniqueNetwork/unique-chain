@@ -175,7 +175,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       result = await helper.executeExtrinsic(alice, 'api.tx.evm.call', [
         helper.address.substrateToEth(alice.address),
         helper.address.substrateToEth(bob.address),
-        "0x",
+        '0x',
         value,
         25_000,
         gasPrice,
