@@ -181,7 +181,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
         gasPrice,
         null,
         null,
-        []
+        [],
       ]);
     };
     
