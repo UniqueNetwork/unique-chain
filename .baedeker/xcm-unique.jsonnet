@@ -101,6 +101,7 @@ local statemint = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-ed',
+			expectedDataPath: '/parity',			
 		},
 		for name in ['alice', 'bob']
 	},

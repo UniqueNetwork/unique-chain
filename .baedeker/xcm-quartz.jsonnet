@@ -100,6 +100,7 @@ local statemine = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			expectedDataPath: '/parity',			
 		},
 		for name in ['alice', 'bob']
 	},
