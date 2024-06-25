@@ -2405,7 +2405,7 @@ fn owned_tokens_bound_neg() {
 
 		let origin1 = RuntimeOrigin::signed(1);
 
-		for _ in 1..MAX_TOKEN_OWNERSHIP {
+		for _ in 1..=MAX_TOKEN_OWNERSHIP {
 			let data = default_nft_data();
 			create_test_item(collection_id, &data.clone().into());
 		}
