@@ -679,7 +679,7 @@ impl<T: Config> Pallet<T> {
 				.checked_add(1)
 				.ok_or(ArithmeticError::Overflow)?;
 			ensure!(
-				account_balance_to < collection.limits.account_token_ownership_limit(),
+				account_balance_to <= collection.limits.account_token_ownership_limit(),
 				<CommonError<T>>::AccountTokenLimitExceeded,
 			);
 
