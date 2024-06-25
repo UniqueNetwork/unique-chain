@@ -137,6 +137,17 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.astar_version }}
 
+      - name: Check and pull POLKADEX image
+        id: polkadex
+        uses: cloudposse/github-action-docker-image-exists@main
+        with:
+          registry: registry.hub.docker.com
+          organization: polkadex
+          repository: mainnet
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.polkadex_version }}
+
       - name: Prepare Hydradx
         uses: ./.github/actions/buildContainer
         id: hydradx
@@ -192,6 +203,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'${{ steps.polkadex.outputs.image }}:${{ steps.polkadex.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: Upload network config

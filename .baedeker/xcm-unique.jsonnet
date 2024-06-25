@@ -119,6 +119,23 @@ local astar = {
 	},
 };
 
+local polkadex = {
+	name: 'polkadex',
+	bin: 'bin/polkadex',
+	paraId: 1006,
+	spec: {Genesis:{
+		chain: 'mainnet',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
 local hydraDx = {
 	name: 'hydraDx',
 	bin: 'bin/hydradx',
@@ -141,6 +158,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, hydraDx]
+		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
 	},
 }
