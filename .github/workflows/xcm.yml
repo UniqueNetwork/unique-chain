@@ -146,7 +146,7 @@ jobs:
           repository: mainnet
           login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ matrix.polkadex_version }}
+          tag: ${{ env.POLKADEX_BUILD_BRANCH }}
 
       - name: Prepare Hydradx
         uses: ./.github/actions/buildContainer
