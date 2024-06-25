@@ -89,7 +89,7 @@ local statemine = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'asset-hub-kusama',
+		chain: 'asset-hub-kusama-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
