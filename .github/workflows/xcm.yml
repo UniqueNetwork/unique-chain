@@ -202,7 +202,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}', docker:'/usr/local/bin/astar-collator'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'${{ steps.polkadex.outputs.image }}:${{ steps.polkadex.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
