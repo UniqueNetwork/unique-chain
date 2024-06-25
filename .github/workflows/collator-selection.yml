@@ -105,7 +105,7 @@ jobs:
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
 
@@ -159,7 +159,7 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
 
       - name: Test Report
-        uses: phoenix-actions/test-reporting@v10
+        uses: phoenix-actions/test-reporting@v15
         id: test-report
         if: success() || failure()
         with:
