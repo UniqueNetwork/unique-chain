@@ -101,26 +101,26 @@ local statemine = {
 	},
 };
 
-local shiden = {
-	name: 'shiden',
-	bin: 'bin/astar',
-	paraId: 1005,
-	spec: {Genesis:{
-		chain: 'shiden-dev',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-		},
-		for name in ['alice', 'bob']
-	},
-};
+// local shiden = {
+// 	name: 'shiden',
+// 	bin: 'bin/astar',
+// 	paraId: 1005,
+// 	spec: {Genesis:{
+// 		chain: 'shiden-dev',
+// 		modify:: m.genericPara($),
+// 	}},
+// 	nodes: {
+// 		[name]: {
+// 			bin: $.bin,
+// 			wantedKeys: 'para',
+// 		},
+// 		for name in ['alice', 'bob']
+// 	},
+// };
 
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [quartz, karura, moonriver, statemine, shiden]
+		for para in [quartz, karura, moonriver, statemine]
 	},
 }
