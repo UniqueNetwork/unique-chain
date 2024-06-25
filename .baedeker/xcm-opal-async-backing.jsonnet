@@ -39,6 +39,10 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
+        	extraArgs: [
+          		'--insecure-validator-i-know-what-i-do',
+	        ],				
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
 	},
