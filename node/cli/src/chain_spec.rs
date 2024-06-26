@@ -185,20 +185,24 @@ fn genesis_patch() -> serde_json::Value {
 				.collect::<Vec<_>>(),
 		},
 
-		"session": {
-			"keys": invulnerables.into_iter()
-				.map(|name| {
-					let account = get_account_id_from_seed::<sr25519::Public>(name);
-					let aura = get_from_seed::<AuraId>(name);
-
-					(
-						/*   account id: */ account.clone(),
-						/* validator id: */ account,
-						/* session keys: */ SessionKeys { aura },
-					)
-				})
-				.collect::<Vec<_>>()
-		},
+		// We don't have Session pallet in production anywhere,
+		// Adding this config makes baedeker think we have pallet-session, and it tries to
+		// reconfigure chain using it, which makes no sense, because then aura knows no
+		// authority, as baedeker expects them to be configured by session pallet.
+		// "session": {
+		// 	"keys": invulnerables.into_iter()
+		// 		.map(|name| {
+		// 			let account = get_account_id_from_seed::<sr25519::Public>(name);
+		// 			let aura = get_from_seed::<AuraId>(name);
+		//
+		// 			(
+		// 				/*   account id: */ account.clone(),
+		// 				/* validator id: */ account,
+		// 				/* session keys: */ SessionKeys { aura },
+		// 			)
+		// 		})
+		// 		.collect::<Vec<_>>()
+		// },
 
 		"sudo": {
 			"key": get_account_id_from_seed::<sr25519::Public>("Alice"),

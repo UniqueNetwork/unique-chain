@@ -19,11 +19,12 @@ import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@u
 
 describe('Number of tokens per address (NFT)', () => {
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([10n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([10n, 0n], donor);
     });
   });
 
@@ -51,17 +52,40 @@ describe('Number of tokens per address (NFT)', () => {
     await collection.burnToken(alice, 1);
     await expect(collection.burn(alice)).to.be.not.rejected;
   });
+
+  itSub('Can transfer tokens to address equal to accountTokenOwnershipLimit', async ({helper}) => {
+    const collection = await helper.nft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
+
+    // Limit 1 - can transfer #1 token
+    const tkn1 = await collection.mintToken(alice);
+    await collection.transferToken(alice, tkn1.tokenId, {Substrate: bob.address});
+
+    // Limit 1 - cannot transfer #2 token
+    const tkn2 = await collection.mintToken(alice);
+    await expect(collection.transferToken(alice, tkn2.tokenId, {Substrate: bob.address})).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
+
+    // Increase limit to 2
+    // Now can transfer token #2
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 2});
+    await collection.transferToken(alice, tkn2.tokenId, {Substrate: bob.address});
+
+    // But cannot transfer token #3
+    const tkn3 = await collection.mintToken(alice);
+    await expect(collection.transferToken(alice, tkn3.tokenId, {Substrate: bob.address})).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
+  });
 });
 
 describe('Number of tokens per address (ReFungible)', () => {
   let alice: IKeyringPair;
+  let bob: IKeyringPair;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
 
       const donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([10n], donor);
+      [alice, bob] = await helper.arrange.createAccounts([10n, 0n], donor);
     });
   });
 
@@ -88,6 +112,28 @@ describe('Number of tokens per address (ReFungible)', () => {
 
     await collection.burnToken(alice, 1);
     await expect(collection.burn(alice)).to.be.not.rejected;
+  });
+
+  itSub('Can transfer tokens to address equal to accountTokenOwnershipLimit', async ({helper}) => {
+    const collection = await helper.rft.mintCollection(alice, {});
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 1});
+
+    // Limit 1 - can transfer #1 token
+    const tkn1 = await collection.mintToken(alice);
+    await collection.transferToken(alice, tkn1.tokenId, {Substrate: bob.address});
+
+    // Limit 1 - cannot transfer #2 token
+    const tkn2 = await collection.mintToken(alice);
+    await expect(collection.transferToken(alice, tkn2.tokenId, {Substrate: bob.address})).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
+
+    // Increase limit to 2
+    // Now can transfer token #2
+    await collection.setLimits(alice, {accountTokenOwnershipLimit: 2});
+    await collection.transferToken(alice, tkn2.tokenId, {Substrate: bob.address});
+
+    // But cannot transfer token #3
+    const tkn3 = await collection.mintToken(alice);
+    await expect(collection.transferToken(alice, tkn3.tokenId, {Substrate: bob.address})).to.be.rejectedWith(/common\.AccountTokenLimitExceeded/);
   });
 });
 
