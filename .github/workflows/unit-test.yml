@@ -1,11 +1,12 @@
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586738699/Unit+Tests
 # Re-Usable Workflow for lanching Unit tests
-name: unit tests
+name: unit-tests
 
 # Controls when the action will run.
 # Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

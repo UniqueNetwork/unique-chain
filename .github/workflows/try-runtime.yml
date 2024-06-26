@@ -2,8 +2,11 @@
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2587656213/Try+runtime
 
 # Triger: only call from main workflow(re-usable workflows)
+name: try-runtime
+
 on:
   workflow_call:
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

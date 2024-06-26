@@ -1,9 +1,10 @@
 # Governance tests in --dev mode with gov-test-timings feature enabled to reduce gov timings
-name: governance tests
+name: governance
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:

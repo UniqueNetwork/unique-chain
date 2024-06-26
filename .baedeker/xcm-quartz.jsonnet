@@ -33,8 +33,8 @@ local relay = {
 	},
 };
 
-local quartz = {
-	name: 'quartz',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
@@ -93,7 +93,7 @@ local statemine = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'asset-hub-kusama-local',
+		chain: 'statemine-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
@@ -126,6 +126,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [quartz, karura, moonriver, statemine]
+		for para in [unique, karura, moonriver, statemine]
 	},
 }

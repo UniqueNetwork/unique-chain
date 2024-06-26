@@ -28,8 +28,8 @@ local relay = {
 	},
 };
 
-local opal = {
-	name: 'opal',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
@@ -49,7 +49,7 @@ local westmint = {
 	bin: 'bin/assethub',
 	paraId: 1002,
 	spec: {Genesis:{
-		chain: 'asset-hub-westend-local',
+		chain: 'westmint-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
@@ -65,6 +65,6 @@ local westmint = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [opal, westmint]
+		for para in [unique, westmint]
 	},
 }

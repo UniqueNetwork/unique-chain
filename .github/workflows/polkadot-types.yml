@@ -1,6 +1,6 @@
 # Integration test in --dev mode
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586411104/Integration+tests
-name: Polkadot types
+name: polkadot-types
 
 # Triger: only call from main workflow(re-usable workflows)
 on:

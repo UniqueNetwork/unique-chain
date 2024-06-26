@@ -48,8 +48,8 @@ local relay = {
 	},
 };
 
-local opal = {
-	name: 'opal',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
@@ -67,6 +67,6 @@ local opal = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [opal]
+		for para in [unique]
 	},
 }

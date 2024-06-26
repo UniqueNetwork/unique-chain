@@ -94,7 +94,7 @@ local statemint = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'asset-hub-polkadot-local',
+		chain: 'statemint-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {

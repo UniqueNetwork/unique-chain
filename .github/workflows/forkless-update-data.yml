@@ -2,8 +2,11 @@
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586869792/Forkless+update+with+data
 
 # Triger: only call from main workflow(re-usable workflows)
+name: forkless-update-data
+
 on:
   workflow_call:
+  workflow_dispatch:
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel

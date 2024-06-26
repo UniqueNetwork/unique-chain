@@ -2,8 +2,11 @@
 # Forkless update without data replication
 
 # Triger: only call from main workflow(re-usable workflows)
+name: forkless-update-nodata
+
 on:
   workflow_call:
+  workflow_dispatch:
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
