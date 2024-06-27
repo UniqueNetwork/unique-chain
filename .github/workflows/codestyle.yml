@@ -18,6 +18,12 @@ jobs:
           ref: ${{ github.head_ref }}            
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
+      - name: Install toolchain version from .env
+        uses: dtolnay/rust-toolchain@master
+        with:
+            toolchain: ${{ env.RUST_TOOLCHAIN }}
+            targets: wasm32-unknown-unknown
+            components: rustfmt, clippy        
       - name: Run cargo fmt
         run: cargo fmt -- --check   # In that mode it returns only exit code.
       - name: Cargo fmt state
@@ -53,6 +59,12 @@ jobs:
         run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
+      - name: Install toolchain version from .env
+        uses: dtolnay/rust-toolchain@master
+        with:
+            toolchain: ${{ env.RUST_TOOLCHAIN }}
+            targets: wasm32-unknown-unknown
+            components: rustfmt, clippy        
       - name: Run cargo check
         run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
         env:
