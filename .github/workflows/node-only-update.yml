@@ -159,7 +159,7 @@ jobs:
       - name: Ensure network is alive
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         id: alive1
-        if: steps.bdk.outcome == 'success'
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
           yarn
           yarn add mochawesome
@@ -169,7 +169,7 @@ jobs:
 
       - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
-        if: steps.alive1.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -177,14 +177,14 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests before Node Parachain upgrade
-        if: steps.alive1.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: "Reconcile: only one old node"
-        if: steps.alive1.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         id: reconcile1
         uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
         with:
@@ -198,14 +198,14 @@ jobs:
       - name: Ensure network is alive
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         id: alive2
-        if: steps.reconcile1.outcome == 'success'
+        if: ${{ !cancelled() && steps.reconcile1.outcome == 'success' }}
         run: |
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: "Reconcile: all nodes are updated"
-        if: steps.alive2.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         id: reconcile2
         uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
         with:
@@ -218,7 +218,7 @@ jobs:
       - name: Ensure network is alive
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         id: alive3
-        if: steps.reconcile2.outcome == 'success'
+        if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
         run: |
           ../scripts/wait_for_first_block.sh
         env:
@@ -226,7 +226,7 @@ jobs:
 
       - name: Run Parallel tests after Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
-        if: steps.alive3.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -234,7 +234,7 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests after Node Parachain upgrade
-        if: steps.alive3.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:

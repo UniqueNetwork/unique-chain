@@ -141,7 +141,7 @@ jobs:
       - name: Ensure network is alive
         working-directory: js-packages/tests
         id: alive1
-        if: steps.bdk.outcome == 'success'
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
           yarn
           yarn add mochawesome
@@ -151,7 +151,7 @@ jobs:
 
       - name: Run tests
         working-directory: js-packages/tests
-        if: steps.alive1.outcome == 'success'        
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}      
         run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}

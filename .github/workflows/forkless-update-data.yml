@@ -143,7 +143,7 @@ jobs:
       - name: Ensure network is alive
         working-directory: js-packages/tests
         id: alive1
-        if: steps.bdk.outcome == 'success'
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
           yarn        
           ../scripts/wait_for_first_block.sh
@@ -153,7 +153,7 @@ jobs:
       - name: "Reconcile: runtime is upgraded"
         working-directory: js-packages/tests
         id: reconcile1
-        if: steps.alive1.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Executing upgrade"
           yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
@@ -163,7 +163,7 @@ jobs:
       - name: Ensure network is alive
         working-directory: js-packages/tests
         id: alive2
-        if: steps.reconcile1.outcome == 'success'
+        if: ${{ !cancelled() && steps.reconcile1.outcome == 'success' }}
         run: |
           yarn        
           ../scripts/wait_for_first_block.sh
@@ -172,7 +172,7 @@ jobs:
 
       - name: Run Parallel tests after forkless upgrade
         working-directory: js-packages/tests
-        if: steps.alive2.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -181,7 +181,7 @@ jobs:
 
       - name: Run Sequential tests after forkless upgrade
         working-directory: js-packages/tests
-        if: steps.alive2.outcome == 'success'
+        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
