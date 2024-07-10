@@ -106,6 +106,15 @@ pub struct Cli {
 	#[clap(long)]
 	pub no_hardware_benchmarks: bool,
 
+	/// Make future pool the same size as the ready pool.
+	///
+	/// By default, future pool is factor 10 smaler than the ready pool, which causes transactions to be dropped as they
+	/// are retracted, without the ability to move them back to the ready pool after revalidation.
+	///
+	/// This switch makes that transactions still can be dropped, but only when there is more transactions than the pool
+	/// size configured with `--pool-limit` (amount of txes), `--pool-kbytes` (size of all txes in kbytes).
+	pub increase_future_pool: bool,
+
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
