@@ -17,22 +17,15 @@ jobs:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: develop 
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2.1.1        
+        uses: xom9ikk/dotenv@v2.3.0.3.0
 
       - name: Install substrate dependencies
         run: sudo apt install -y curl cmake make libssl-dev pkg-config libclang-dev clang protobuf-compiler
-
-      - name: Install actual toolchain
-        uses: actions-rs/toolchain@v1.0.7
-        with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            default: true
-            target: wasm32-unknown-unknown
 
       - uses: actions/setup-node@v3
         with:

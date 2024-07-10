@@ -2,8 +2,11 @@
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586869792/Forkless+update+with+data
 
 # Triger: only call from main workflow(re-usable workflows)
+name: forkless-update-data
+
 on:
   workflow_call:
+  workflow_dispatch:
 
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
@@ -13,7 +16,7 @@ jobs:
 
     name: execution matrix
 
-    runs-on: self-hosted-ci
+    runs-on: [ self-hosted-ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -23,27 +26,27 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Create Execution matrix
         uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, runtime_features {opal-runtime}, wasm_name {opal}, fork_source {${{ env.OPAL_REPLICA_FROM }}}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, runtime_features {quartz-runtime}, wasm_name {quartz}, fork_source {${{ env.QUARTZ_REPLICA_FROM }}}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, runtime_features {unique-runtime}, wasm_name {unique}, fork_source {${{ env.UNIQUE_REPLICA_FROM }}}
+            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, fork_source {${{ env.OPAL_REPLICA_FROM }}}
+            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, fork_source {${{ env.QUARTZ_REPLICA_FROM }}}
+            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, fork_source {${{ env.UNIQUE_REPLICA_FROM }}}
 
   forkless-data:
 
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,large]
+    runs-on: [ self-hosted-ci,large ]
 
     timeout-minutes: 1380
 
@@ -61,7 +64,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -70,33 +73,24 @@ jobs:
         uses: ./.github/actions/prepare
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v3.2.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Generate ENV related extend Dockerfile file for POLKADOT
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            
-      - name: Prepare polkadot
-        uses: ./.github/actions/buildContainer
+      - name: Check and pull polkadot image
         id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          container: uniquenetwork/builder-polkadot
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
-          context: .docker
-          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Prepare latest
         uses: ./.github/actions/buildContainer
@@ -107,8 +101,7 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg FEATURES=${{ matrix.network }}-runtime
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
@@ -119,18 +112,21 @@ jobs:
           image: ${{ steps.latest.outputs.name }}
           directory: /wasm
 
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@built
+        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        with:
+          useCache: false        
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@built
+        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        if: success()
         id: bdk
         with:
           jpath: |
@@ -141,36 +137,52 @@ jobs:
             fork_source=${{ matrix.fork_source }}
           inputs: |
             .baedeker/forkless-data.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
+
+      - name: Ensure network is alive
+        working-directory: js-packages/tests
+        id: alive1
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
+        run: |
+          yarn        
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: "Reconcile: runtime is upgraded"
         working-directory: js-packages/tests
+        id: reconcile1
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
-          yarn
-          ../scripts/wait_for_first_block.sh
           echo "Executing upgrade"
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.wasm_name }}-runtime/${{ matrix.wasm_name }}_runtime.compact.compressed.wasm
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Ensure network is alive
+        working-directory: js-packages/tests
+        id: alive2
+        if: ${{ !cancelled() && steps.reconcile1.outcome == 'success' }}
+        run: |
+          yarn        
+          ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Parallel tests after forkless upgrade
         working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
-          yarn 
-          yarn add mochawesome
-          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Sequential tests after forkless upgrade
-        if: success() || failure()
         working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
-          yarn
-          yarn add mochawesome
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}

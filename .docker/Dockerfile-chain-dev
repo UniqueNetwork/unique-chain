@@ -1,6 +1,5 @@
 FROM uniquenetwork/services:latest
 
-ARG RUST_TOOLCHAIN
 ARG NETWORK
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -8,14 +7,6 @@ ENV TZ=Etc/UTC
 ENV NETWORK=$NETWORK
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
-
-RUN echo "$NETWORK\n" && echo "$RUST_TOOLCHAIN\n"
-
-RUN rustup toolchain uninstall $(rustup toolchain list) && \
-    rustup toolchain install $RUST_TOOLCHAIN && \
-    rustup default $RUST_TOOLCHAIN && \
-    rustup component add --toolchain $RUST_TOOLCHAIN rust-src && \
-    rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN
 
 RUN mkdir /dev_chain
 COPY . /dev_chain

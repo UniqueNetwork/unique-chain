@@ -24,13 +24,14 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
 	},
 };
 
-local quartz = {
-	name: 'quartz',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
@@ -89,7 +90,7 @@ local moonriver = {
 
 local statemine = {
 	name: 'statemine',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
 		chain: 'statemine-local',
@@ -99,6 +100,7 @@ local statemine = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			expectedDataPath: '/parity',			
 		},
 		for name in ['alice', 'bob']
 	},
@@ -124,6 +126,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [quartz, karura, moonriver, statemine, shiden]
+		for para in [unique, karura, moonriver, statemine, shiden]
 	},
 }

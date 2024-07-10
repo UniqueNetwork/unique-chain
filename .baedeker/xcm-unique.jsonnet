@@ -25,6 +25,7 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
 	},
@@ -90,7 +91,7 @@ local moonbeam = {
 
 local statemint = {
 	name: 'statemint',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
 		chain: 'statemint-local',
@@ -100,6 +101,7 @@ local statemint = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-ed',
+			expectedDataPath: '/parity',			
 		},
 		for name in ['alice', 'bob']
 	},

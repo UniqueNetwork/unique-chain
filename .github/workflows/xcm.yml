@@ -16,7 +16,7 @@ jobs:
   prepare-execution-marix:
     name: Prepare execution matrix
 
-    runs-on: [self-hosted-ci]
+    runs-on: [ self-hosted-ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -25,21 +25,21 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Create Execution matrix
         uses: CertainLach/create-matrix-action@v4
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.WESTMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testXcmOpal}, runtime_features {opal-runtime}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINE_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runtime_features {quartz-runtime}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, cumulus_version {${{ env.STATEMINT_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, polkadex_version {${{ env.POLKADEX_BUILD_BRANCH }}}, hydradx_version {${{ env.HYDRADX_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runtime_features {unique-runtime}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.WESTMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINE_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}
 
   xcm:
     needs: prepare-execution-marix
@@ -65,7 +65,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }} #Checking out head commit
 
@@ -74,269 +74,121 @@ jobs:
         uses: ./.github/actions/prepare
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v3.2.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      # Check POLKADOT version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for POLKADOT
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull polkadot image
+        id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.relay_branch }}
 
-      - name: Check if the dockerhub repository contains the needed version POLKADOT
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB POLKADOT repository
-            POLKADOT_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadot/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "POLKADOT TAGS:"
-            echo $POLKADOT_TAGS
-          # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
-            if [[ ${POLKADOT_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.relay_branch }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed POLKADOT version";
-                docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-            else
-                echo "Repository has not needed POLKADOT version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-polkadot.${{ matrix.relay_branch }}.yml --tag uniquenetwork/builder-polkadot:${{ matrix.relay_branch }} .
-                echo "Push needed POLKADOT version to the repository";
-                docker push uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-            fi
-        shell: bash
-
-      # Check ACALA version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for ACALA
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull acala image
+        id: acala
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-acala.j2
-          output_file: .docker/Dockerfile-acala.${{ matrix.acala_version }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            ACALA_BUILD_BRANCH=${{ matrix.acala_version }}
+          registry: registry.hub.docker.com
+          organization: acala
+          repository: ${{ matrix.acala_repository }}
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.acala_version }}
 
-      - name: Check if the dockerhub repository contains the needed ACALA version
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB repository
-            ACALA_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-acala/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "ACALA TAGS:"
-            echo $ACALA_TAGS
-          # Check correct version ACALA and build it if it doesn't exist in ACALA TAGS
-            if [[ ${ACALA_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.acala_version }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed ACALA version";
-                docker pull uniquenetwork/builder-acala:${{ matrix.acala_version }}
-            else
-                echo "Repository has not needed ACALA version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-acala.${{ matrix.acala_version }}.yml --tag uniquenetwork/builder-acala:${{ matrix.acala_version }} .
-                echo "Push needed ACALA version to the repository";
-                docker push uniquenetwork/builder-acala:${{ matrix.acala_version }}
-            fi
-        shell: bash
-
-      # Check MOONBEAM version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for MOONBEAM
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull MOONBEAM image
+        id: moonbeam
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-moonbeam.j2
-          output_file: .docker/Dockerfile-moonbeam.${{ matrix.moonbeam_version }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            MOONBEAM_BUILD_BRANCH=${{ matrix.moonbeam_version }}
+          registry: registry.hub.docker.com
+          organization: moonbeamfoundation
+          repository: moonbeam
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.moonbeam_version }}
 
-      - name: Check if the dockerhub repository contains the needed MOONBEAM version
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB repository
-            MOONBEAM_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-moonbeam/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "MOONBEAM TAGS:"
-            echo $MOONBEAM_TAGS
-          # Check correct version MOONBEAM and build it if it doesn't exist in MOONBEAM TAGS
-            if [[ ${MOONBEAM_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.moonbeam_version }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed MOONBEAM version";
-                docker pull uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
-            else
-                echo "Repository has not needed MOONBEAM version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-moonbeam.${{ matrix.moonbeam_version }}.yml --tag uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }} .
-                echo "Push needed MOONBEAM version to the repository";
-                docker push uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}
-            fi
-        shell: bash
-
-      # Check CUMULUS version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for CUMULUS
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull ASSETHUB image
+        id: assethub
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-cumulus.j2
-          output_file: .docker/Dockerfile-cumulus.${{ matrix.cumulus_version }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            CUMULUS_BUILD_BRANCH=${{ matrix.cumulus_version }}
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot-parachain
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.assethub_version }}
 
-      - name: Check if the dockerhub repository contains the needed CUMULUS version
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB repository
-            CUMULUS_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-cumulus/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "CUMULUS TAGS:"
-            echo $CUMULUS_TAGS
-          # Check correct version CUMULUS and build it if it doesn't exist in CUMULUS TAGS
-            if [[ ${CUMULUS_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.cumulus_version }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed CUMULUS version";
-                docker pull uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
-            else
-                echo "Repository has not needed CUMULUS version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-cumulus.${{ matrix.cumulus_version }}.yml --tag uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }} .
-                echo "Push needed CUMULUS version to the repository";
-                docker push uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}
-            fi
-        shell: bash
-
-      # Check ASTAR version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for ASTAR
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull ASTAR image
+        id: astar
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-astar.j2
-          output_file: .docker/Dockerfile-astar.${{ matrix.astar_version }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            ASTAR_BUILD_BRANCH=${{ matrix.astar_version }}
+          registry: registry.hub.docker.com
+          organization: staketechnologies
+          repository: astar-collator
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.astar_version }}
 
-      - name: Check if the dockerhub repository contains the needed ASTAR version
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB repository
-            ASTAR_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-astar/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "ASTAR TAGS:"
-            echo $ASTAR_TAGS
-          # Check correct version ASTAR and build it if it doesn't exist in ASTAR TAGS
-            if [[ ${ASTAR_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.astar_version }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed ASTAR version";
-                docker pull uniquenetwork/builder-astar:${{ matrix.astar_version }}
-            else
-                echo "Repository has not needed ASTAR version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-astar.${{ matrix.astar_version }}.yml --tag uniquenetwork/builder-astar:${{ matrix.astar_version }} .
-                echo "Push needed ASTAR version to the repository";
-                docker push uniquenetwork/builder-astar:${{ matrix.astar_version }}
-            fi
-        shell: bash
-
-      # Check POLKADEX version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for POLKADEX
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Check and pull POLKADEX image
+        id: polkadex
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          template: .docker/Dockerfile-polkadex.j2
-          output_file: .docker/Dockerfile-polkadex.${{ matrix.polkadex_version }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADEX_BUILD_BRANCH=${{ matrix.polkadex_version }}
+          registry: registry.hub.docker.com
+          organization: polkadex
+          repository: mainnet
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ env.POLKADEX_BUILD_BRANCH }}
 
-      - name: Check if the dockerhub repository contains the needed POLKADEX version
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
-
-          # Get TAGS from DOCKERHUB repository
-            POLKADEX_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-polkadex/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "POLKADEX TAGS:"
-            echo $POLKADEX_TAGS
-          # Check correct version POLKADEX and build it if it doesn't exist in POLKADEX TAGS
-            if [[ ${POLKADEX_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.polkadex_version }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed POLKADEX version";
-                docker pull uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}
-            else
-                echo "Repository has not needed POLKADEX version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-polkadex.${{ matrix.polkadex_version }}.yml --tag uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }} .
-                echo "Push needed POLKADEX version to the repository";
-                docker push uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}
-            fi
-        shell: bash
-
-      # Check Hydradx version and build it if it doesn't exist in repository
-      - name: Generate ENV related extend Dockerfile file for Hydradx
-        uses: cuchi/jinja2-action@v1.2.0
+      - name: Prepare Hydradx
+        uses: ./.github/actions/buildContainer
+        id: hydradx
         with:
-          template: .docker/Dockerfile-hydradx.j2
-          output_file: .docker/Dockerfile-hydradx.${{ matrix.hydradx_version }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            HYDRADX_BUILD_BRANCH=${{ matrix.hydradx_version }}
+          container: uniquenetwork/builder-hydradx
+          tag: ${{ env.HYDRADX_BUILD_BRANCH }}
+          context: .
+          dockerfile: .docker/Dockerfile-hydradx
+          args: |
+            --build-arg HYDRADX_BUILD_BRANCH=${{ env.HYDRADX_BUILD_BRANCH }}
+            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Check if the dockerhub repository contains the needed HYDRADX version
-        run: |
-          # aquire token
-            TOKEN=$(curl -s -H "Content-Type: application/json" -X POST -d '{"username": "'${{ secrets.CORE_DOCKERHUB_USERNAME }}'", "password": "'${{ secrets.CORE_DOCKERHUB_TOKEN }}'"}' https://hub.docker.com/v2/users/login/ | jq -r .token)
-            export TOKEN=$TOKEN
+      - name: Prepare latest
+        uses: ./.github/actions/buildContainer
+        id: latest
+        with:
+          container: uniquenetwork/ci-xcm-local
+          tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          context: .
+          dockerfile: .docker/Dockerfile-unique
+          args: |
+            --build-arg FEATURES=${{ matrix.network }}-runtime
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-          # Get TAGS from DOCKERHUB repository
-            HYDRADX_TAGS=$(curl -s -H "Authorization: JWT ${TOKEN}" https://hub.docker.com/v2/repositories/uniquenetwork/builder-hydradx/tags/?page_size=100 | jq -r '."results"[]["name"]')
-          # Show TAGS
-            echo "HYDRADX TAGS:"
-            echo $HYDRADX_TAGS
-          # Check correct version HYDRADX and build it if it doesn't exist in HYDRADX TAGS
-            if [[ ${HYDRADX_TAGS[*]} =~ (^|[[:space:]])"${{ matrix.hydradx_version }}"($|[[:space:]]) ]]; then
-                echo "Repository has needed HYDRADX version";
-                docker pull uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }}
-            else
-                echo "Repository has not needed HYDRADX version, so build it";
-                cd .docker/ && docker build --file ./Dockerfile-hydradx.${{ matrix.hydradx_version }}.yml --tag uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }} .
-                echo "Push needed HYDRADX version to the repository";
-                docker push uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }}
-            fi
-        shell: bash
-
-
-      - name: Build unique-chain
-        run: |
-          docker build --file .docker/Dockerfile-unique \
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
-            --tag uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }} \
-            .
-
-      - name: Push docker image version
-        run: docker push uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
-
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@built
+        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        with:
+          useCache: false        
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@built
+        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
         id: bdk
         with:
           jpath: |
@@ -345,14 +197,14 @@ jobs:
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'uniquenetwork/ci-xcm-local:${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'uniquenetwork/builder-acala:${{ matrix.acala_version }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'uniquenetwork/builder-moonbeam:${{ matrix.moonbeam_version }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/cumulus':{dockerImage:'uniquenetwork/builder-cumulus:${{ matrix.cumulus_version }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'uniquenetwork/builder-astar:${{ matrix.astar_version }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'uniquenetwork/builder-polkadex:${{ matrix.polkadex_version }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'uniquenetwork/builder-hydradx:${{ matrix.hydradx_version }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}', docker:'/usr/local/bin/astar-collator'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'${{ steps.polkadex.outputs.image }}:${{ steps.polkadex.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: Upload network config
         uses: actions/upload-artifact@v3
@@ -361,28 +213,36 @@ jobs:
           path: ${{ steps.bdk.outputs.composeProject }}
           retention-days: 2
 
-      - name: Yarn install
+      - name: Ensure network is alive
         working-directory: js-packages/tests
+        id: alive1
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
-          yarn install
+          yarn
           yarn add mochawesome
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Call HRMP initialization
         working-directory: js-packages/scripts
+        id: hrmp
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests
+        id: tests
+        if: ${{ !cancelled() && steps.hrmp.outcome == 'success' }}
         run: |
-          # Wanted by both wait_for_first_block
-          export RPC_URL="${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}"
-          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
 
       - name: XCM Test Report
-        uses: phoenix-actions/test-reporting@v10
+        uses: phoenix-actions/test-reporting@v15
         id: test-report
         if: success() || failure()
         with:

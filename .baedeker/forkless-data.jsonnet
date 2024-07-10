@@ -17,6 +17,7 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
 	},

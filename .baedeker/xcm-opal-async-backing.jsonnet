@@ -39,13 +39,14 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
 	},
 };
 
-local opal = {
-	name: 'opal',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
@@ -66,6 +67,6 @@ local opal = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [opal]
+		for para in [unique]
 	},
 }

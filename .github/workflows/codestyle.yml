@@ -13,17 +13,17 @@ jobs:
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}            
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2          
+        uses: xom9ikk/dotenv@v2.3.0
       - name: Install toolchain version from .env
         uses: dtolnay/rust-toolchain@master
         with:
             toolchain: ${{ env.RUST_TOOLCHAIN }}
             targets: wasm32-unknown-unknown
-            components: rustfmt, clippy
+            components: rustfmt, clippy        
       - name: Run cargo fmt
         run: cargo fmt -- --check   # In that mode it returns only exit code.
       - name: Cargo fmt state
@@ -35,10 +35,10 @@ jobs:
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}            
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
       - name: Install modules
@@ -50,17 +50,21 @@ jobs:
   clippy:
     runs-on: [ self-hosted-ci ]
     steps:
-      - uses: actions/checkout@v3.1.0
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+      - uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.head_ref }}   
       - name: Install substrate dependencies
         run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
       - name: Install toolchain version from .env
         uses: dtolnay/rust-toolchain@master
         with:
             toolchain: ${{ env.RUST_TOOLCHAIN }}
             targets: wasm32-unknown-unknown
-            components: rustfmt, clippy
+            components: rustfmt, clippy        
       - name: Run cargo check
         run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
         env:

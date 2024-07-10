@@ -1,19 +1,18 @@
 # Integration test in --dev mode
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586411104/Integration+tests
-name: yarn dev
+name: yarn-dev
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
   workflow_call:
-
-
+  workflow_dispatch:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   
   dev_build_int_tests:
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,medium]
+    runs-on: [ self-hosted-ci,medium ]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
@@ -28,17 +27,16 @@ jobs:
           - network: "unique"
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Generate ENV related extend file for docker-compose
         uses: cuchi/jinja2-action@v1.2.0
@@ -46,17 +44,15 @@ jobs:
           template: .docker/docker-compose.tmp-dev.j2
           output_file: .docker/docker-compose.${{ matrix.network }}.yml
           variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
             NETWORK=${{ matrix.network }}
     
-
       - name: Show build configuration
         run: cat .docker/docker-compose.${{ matrix.network }}.yml
 
       - name: Build the stack
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
+        run: docker compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
 
@@ -72,7 +68,7 @@ jobs:
           RPC_URL: http://127.0.0.1:9944/
 
       - name: Test Report
-        uses: phoenix-actions/test-reporting@v10
+        uses: phoenix-actions/test-reporting@v15
         id: test-report
         if: success() || failure()    # run this step even if previous step failed
         with:
@@ -99,7 +95,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker-compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
+        run: docker compose -f ".docker/docker-compose.${{ matrix.network }}.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always

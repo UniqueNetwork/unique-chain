@@ -1,4 +1,4 @@
-name: collator-selection-test-run
+name: collator-selection
 
 # Controls when the action will run.
 on:
@@ -15,25 +15,22 @@ env:
 jobs:
 
   prepare-execution-marix:
-
     name: Prepare execution matrix
-
-    runs-on: [self-hosted-ci]
+    runs-on: [ self-hosted-ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Create Execution matrix
         uses: CertainLach/create-matrix-action@v4
@@ -44,10 +41,9 @@ jobs:
             network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
 
   collator-selection:
-
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [self-hosted-ci,large]
+    runs-on: [ self-hosted-ci ]
 
     timeout-minutes: 1380
 
@@ -68,7 +64,7 @@ jobs:
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v3.1.0
+      - uses: actions/checkout@v4.1.7
         with:
           ref: ${{ github.head_ref }}  #Checking out head commit
 
@@ -77,57 +73,24 @@ jobs:
         uses: ./.github/actions/prepare
 
       - name: Read .env file
-        uses: xom9ikk/dotenv@v2
+        uses: xom9ikk/dotenv@v2.3.0
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2.1.0
+        uses: docker/login-action@v3.2.0
         with:
           username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Run find-and-replace to remove slashes from branch name
-        uses: mad9000/actions-find-and-replace-string@4
-        id: branchname
-        with:
-          source: ${{ github.head_ref }}
-          find: '/'
-          replace: '-'
-
-      - name: Generate ENV related extend Dockerfile file for POLKADOT
-        uses: cuchi/jinja2-action@v1.2.0
-        with:
-          template: .docker/Dockerfile-polkadot.j2
-          output_file: .docker/Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          variables: |
-            RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-            POLKADOT_BUILD_BRANCH=${{ matrix.relay_branch }}
-            
-      - name: Prepare polkadot
-        uses: ./.github/actions/buildContainer
+      - name: Check and pull polkadot image
         id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          container: uniquenetwork/builder-polkadot
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
-          context: .docker
-          dockerfile: Dockerfile-polkadot.${{ matrix.relay_branch }}.yml
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      # - name: pull needed images
-      #   run: |
-      #     docker pull uniquenetwork/builder-polkadot:${{ matrix.relay_branch }}
-
-      # - name: Build unique-chain
-      #   run: |
-      #     docker build --file .docker/Dockerfile-unique \
-      #       --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }} \
-      #       --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }} \
-      #       --tag uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }} \
-      #       .
-
-      # - name: Push docker image version
-      #   run: docker push uniquenetwork/ci-collator-selection-local:${{ matrix.network }}-${{ steps.branchname.outputs.value }}-${{ env.BUILD_SHA }}
-
 
       - name: Prepare latest
         uses: ./.github/actions/buildContainer
@@ -138,23 +101,25 @@ jobs:
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
-            --build-arg RUNTIME_FEATURES=${{ matrix.runtime_features }},session-test-timings
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
+            --build-arg FEATURES=${{ matrix.network }}-runtime,session-test-timings
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - uses: actions/setup-node@v3.5.1
+      - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@built
+        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        with:
+          useCache: false        
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@built
+        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        if: success()
         id: bdk
         with:
           jpath: |
@@ -163,7 +128,7 @@ jobs:
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           inputs: |
             .baedeker/collator-selection.jsonnet
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: Upload network config
@@ -173,21 +138,28 @@ jobs:
           path: ${{ steps.bdk.outputs.composeProject }}
           retention-days: 2
 
+      - name: Ensure network is alive
+        working-directory: js-packages/tests
+        id: alive1
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
+        run: |
+          yarn
+          yarn add mochawesome
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
       - name: Run tests
         working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}      
         run: |
-          yarn install
-          yarn add mochawesome
-          # Wanted by both wait_for_first_block
-          # export RPC_URL="${RELAY_SAPPHIRE_HTTP_URL:-${RELAY_OPAL_HTTP_URL:-${RELAY_QUARTZ_HTTP_URL:-${RELAY_UNIQUE_HTTP_URL:-}}}}"
-          ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
 
       - name: Test Report
-        uses: phoenix-actions/test-reporting@v10
+        uses: phoenix-actions/test-reporting@v15
         id: test-report
         if: success() || failure()
         with:
