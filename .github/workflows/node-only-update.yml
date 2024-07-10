@@ -161,7 +161,8 @@ jobs:
           inputs: |
             .baedeker/node-only.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.name }}'}})
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
+            # extra_node_mixin due to mainnet unique node not supporting --increase-future-pool
+            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
 
       - name: Run Parallel tests before Node Parachain upgrade
         working-directory: ${{ matrix.mainnet_branch }}/tests
