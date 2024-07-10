@@ -458,7 +458,7 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
 
-			runner.run_node_until_exit(|config| async move {
+			runner.run_node_until_exit(|mut config| async move {
 				let hwbench = if !cli.no_hardware_benchmarks {
 					config.database.path().map(|database_path| {
 						let _ = std::fs::create_dir_all(database_path);
@@ -467,6 +467,10 @@ pub fn run() -> Result<()> {
 				} else {
 					None
 				};
+				
+				if cli.increase_future_pool {
+					config.transaction_pool.future = config.transaction_pool.ready.clone();
+				}
 
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
 

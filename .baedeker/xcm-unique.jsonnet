@@ -42,6 +42,9 @@ local unique = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				'--increase-future-pool',
+			],
 		},
 		for name in ['alice', 'bob']
 	},
