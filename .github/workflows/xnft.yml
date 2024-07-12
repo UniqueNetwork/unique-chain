@@ -121,7 +121,7 @@ jobs:
           node-version: 20
 
       - name: Clone xnft-tests
-        run: git clone -b ci https://github.com/UniqueNetwork/xnft-tests.git
+        run: git clone -b master https://github.com/UniqueNetwork/xnft-tests.git
 
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
