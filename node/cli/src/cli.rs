@@ -113,6 +113,7 @@ pub struct Cli {
 	///
 	/// This switch makes that transactions still can be dropped, but only when there is more transactions than the pool
 	/// size configured with `--pool-limit` (amount of txes), `--pool-kbytes` (size of all txes in kbytes).
+	#[clap(long)]
 	pub increase_future_pool: bool,
 
 	/// Relaychain arguments
