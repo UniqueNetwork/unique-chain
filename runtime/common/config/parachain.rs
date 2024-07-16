@@ -14,12 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::{parameter_types, weights::Weight};
+use cumulus_primitives_core::AggregateMessageOrigin;
+use frame_support::{parameter_types, traits::EnqueueWithOrigin, weights::Weight};
 use up_common::constants::*;
 
-use crate::{DmpQueue, Runtime, RuntimeEvent, XcmpQueue};
+use crate::{MessageQueue, Runtime, RuntimeEvent, XcmpQueue};
 
 parameter_types! {
+	pub const RelayMsgOrigin: AggregateMessageOrigin = AggregateMessageOrigin::Parent;
 	pub const ReservedDmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 	pub const ReservedXcmpWeight: Weight = MAXIMUM_BLOCK_WEIGHT.saturating_div(4);
 }
@@ -28,13 +30,9 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type SelfParaId = staging_parachain_info::Pallet<Self>;
 	type OnSystemEvent = ();
-	// type DownwardMessageHandlers = cumulus_primitives_utility::UnqueuedDmpAsParent<
-	// 	MaxDownwardMessageWeight,
-	// 	XcmExecutor<XcmConfig>,
-	// 	Call,
-	// >;
+	type WeightInfo = cumulus_pallet_parachain_system::weights::SubstrateWeight<Self>;
 	type OutboundXcmpMessageSource = XcmpQueue;
-	type DmpMessageHandler = DmpQueue;
+	type DmpQueue = EnqueueWithOrigin<MessageQueue, RelayMsgOrigin>;
 	type ReservedDmpWeight = ReservedDmpWeight;
 	type ReservedXcmpWeight = ReservedXcmpWeight;
 	type XcmpMessageHandler = XcmpQueue;

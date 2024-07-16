@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from './util/index.js';
+import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {DevUniqueHelper, Event} from '@unique/playgrounds/unique.dev.js';
+import {DevUniqueHelper, Event} from '@unique/test-utils';
 
 describe('Scheduling token and balance transfers', () => {
   let superuser: IKeyringPair;

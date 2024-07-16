@@ -17,9 +17,9 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {
   itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD, UNLOCKING_PERIOD,
-} from '../../util/index.js';
-import {DevUniqueHelper} from '@unique/playgrounds/unique.dev.js';
-import {itEth, expect, SponsoringMode} from '../../eth/util/index.js';
+} from '@unique/test-utils/util.js';
+import {DevUniqueHelper} from '@unique/test-utils';
+import {itEth, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
 
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;

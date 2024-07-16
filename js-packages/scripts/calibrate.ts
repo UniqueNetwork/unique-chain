@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingEthPlaygrounds} from '@unique/tests/eth/util/index.js';
-import {EthUniqueHelper} from '@unique/tests//eth/util/playgrounds/unique.dev.js';
+import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 
 class Fract {
   static ZERO = new Fract(0n);

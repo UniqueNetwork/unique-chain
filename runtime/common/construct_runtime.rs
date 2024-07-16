@@ -81,6 +81,12 @@ macro_rules! construct_runtime {
 				Scheduler: pallet_scheduler = 49,
 
 				#[cfg(feature = "governance")]
+				FinancialCouncil: pallet_collective::<Instance3> = 97,
+
+				#[cfg(feature = "governance")]
+				FinancialCouncilMembership: pallet_membership::<Instance3> = 98,
+
+				#[cfg(feature = "governance")]
 				Origins: pallet_gov_origins = 99,
 
 				// XCM helpers.
@@ -88,6 +94,7 @@ macro_rules! construct_runtime {
 				PolkadotXcm: pallet_xcm = 51,
 				CumulusXcm: cumulus_pallet_xcm = 52,
 				DmpQueue: cumulus_pallet_dmp_queue = 53,
+				MessageQueue: pallet_message_queue = 54,
 
 				// Unique Pallets
 				Inflation: pallet_inflation = 60,

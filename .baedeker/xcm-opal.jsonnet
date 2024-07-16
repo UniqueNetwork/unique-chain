@@ -19,13 +19,14 @@ local relay = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
 	},
 };
 
-local opal = {
-	name: 'opal',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
@@ -35,6 +36,9 @@ local opal = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				'--increase-future-pool',
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -42,7 +46,7 @@ local opal = {
 
 local westmint = {
 	name: 'westmint',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1002,
 	spec: {Genesis:{
 		chain: 'westmint-local',
@@ -52,6 +56,7 @@ local westmint = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			expectedDataPath: '/parity',			
 		},
 		for name in ['alice', 'bob']
 	},
@@ -60,6 +65,6 @@ local westmint = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [opal, westmint]
+		for para in [unique, westmint]
 	},
 }

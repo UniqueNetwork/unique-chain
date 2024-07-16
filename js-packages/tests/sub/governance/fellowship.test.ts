@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../../util/index.js';
-import {DevUniqueHelper, Event} from '@unique/playgrounds/unique.dev.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {DevUniqueHelper, Event} from '@unique/test-utils';
 import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, voteUnanimouslyInFellowship, democracyTrackMinRank, fellowshipPreparePeriod, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, democracyTrackId, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util.js';
 import type {ICounselors, ITechComms} from './util.js';
 

@@ -21,6 +21,7 @@ sp-std = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-executor = { workspace = true }
 up-data-structs = { workspace = true }
+derivative = { workspace = true }
 
 [features]
 default = ["std"]

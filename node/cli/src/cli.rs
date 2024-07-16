@@ -24,7 +24,7 @@ use crate::chain_spec;
 #[derive(Debug, Parser)]
 pub enum Subcommand {
 	/// Export the genesis state of the parachain.
-	ExportGenesisState(cumulus_client_cli::ExportGenesisStateCommand),
+	ExportGenesisState(cumulus_client_cli::ExportGenesisHeadCommand),
 
 	/// Export the genesis wasm of the parachain.
 	ExportGenesisWasm(cumulus_client_cli::ExportGenesisWasmCommand),
@@ -105,6 +105,16 @@ pub struct Cli {
 	/// telemetry, if telemetry is enabled.
 	#[clap(long)]
 	pub no_hardware_benchmarks: bool,
+
+	/// Make future pool the same size as the ready pool.
+	///
+	/// By default, future pool is factor 10 smaler than the ready pool, which causes transactions to be dropped as they
+	/// are retracted, without the ability to move them back to the ready pool after revalidation.
+	///
+	/// This switch makes that transactions still can be dropped, but only when there is more transactions than the pool
+	/// size configured with `--pool-limit` (amount of txes), `--pool-kbytes` (size of all txes in kbytes).
+	#[clap(long)]
+	pub increase_future_pool: bool,
 
 	/// Relaychain arguments
 	#[structopt(raw = true)]

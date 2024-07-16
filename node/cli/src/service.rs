@@ -36,10 +36,11 @@ use cumulus_client_consensus_aura::collators::lookahead::{
 use cumulus_client_consensus_common::ParachainBlockImport as TParachainBlockImport;
 use cumulus_client_consensus_proposer::Proposer;
 use cumulus_client_service::{
-	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks, DARecoveryProfile,
-	StartRelayChainTasksParams,
+	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
+	CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
 };
 use cumulus_primitives_core::ParaId;
+use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
 use fc_rpc::{
@@ -66,20 +67,25 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
-use sp_api::{ProvideRuntimeApi, StateBackend};
+use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
 use sp_keystore::KeystorePtr;
-use sp_runtime::traits::BlakeTwo256;
+use sp_state_machine::Backend as StateBackend;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
 
-use crate::{
-	chain_spec::RuntimeIdentification,
-	rpc::{create_eth, create_full, EthDeps, FullDeps},
-};
+pub type ParachainHostFunctions = (
+	sp_io::SubstrateHostFunctions,
+	cumulus_client_service::storage_proof_size::HostFunctions,
+);
+
+use cumulus_primitives_core::PersistedValidationData;
+use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
+
+use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 /// Unique native executor instance.
 #[cfg(feature = "unique-runtime")]
@@ -99,7 +105,7 @@ impl NativeExecutionDispatch for UniqueRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 	/// Otherwise we only use the default Substrate host functions.
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = ParachainHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		unique_runtime::api::dispatch(method, data)
@@ -117,7 +123,7 @@ impl NativeExecutionDispatch for QuartzRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 	/// Otherwise we only use the default Substrate host functions.
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = ParachainHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		quartz_runtime::api::dispatch(method, data)
@@ -134,7 +140,7 @@ impl NativeExecutionDispatch for OpalRuntimeExecutor {
 	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 	/// Otherwise we only use the default Substrate host functions.
 	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ();
+	type ExtendHostFunctions = ParachainHostFunctions;
 
 	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
 		opal_runtime::api::dispatch(method, data)
@@ -229,6 +235,28 @@ ez_bounds!(
 	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
 );
 
+fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, ParachainInherentData) {
+	let (relay_parent_storage_root, relay_chain_state) =
+		RelayStateSproofBuilder::default().into_state_root_and_proof();
+	let vfp = PersistedValidationData {
+		// This is a hack to make `cumulus_pallet_parachain_system::RelayNumberStrictlyIncreases`
+		// happy. Relay parent number can't be bigger than u32::MAX.
+		relay_parent_number: u32::MAX,
+		relay_parent_storage_root,
+		..Default::default()
+	};
+
+	(
+		sp_timestamp::InherentDataProvider::from_system_time(),
+		ParachainInherentData {
+			validation_data: vfp,
+			relay_chain_state,
+			downward_messages: Default::default(),
+			horizontal_messages: Default::default(),
+		},
+	)
+}
+
 /// Starts a `ServiceBuilder` for a full service.
 ///
 /// Use this macro if you don't actually need the full service, but just the builder in order to
@@ -249,7 +277,7 @@ pub fn new_partial<Runtime, RuntimeApi, ExecutorDispatch, BIQ>(
 	sc_service::Error,
 >
 where
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: StateBackend<BlakeTwo256>,
 	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
 		+ Send
 		+ Sync
@@ -356,7 +384,7 @@ pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
 	hwbench: Option<sc_sysinfo::HwBench>,
 ) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
 where
-	sc_client_api::StateBackendFor<FullBackend, Block>: sp_api::StateBackend<BlakeTwo256>,
+	sc_client_api::StateBackendFor<FullBackend, Block>: StateBackend<BlakeTwo256>,
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
 	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
@@ -398,33 +426,25 @@ where
 	.await
 	.map_err(|e| sc_service::Error::Application(Box::new(e) as Box<_>))?;
 
-	// Aura is sybil-resistant, collator-selection is generally too.
-	let block_announce_validator =
-		cumulus_client_network::AssumeSybilResistance::allow_seconded_messages();
-
 	let validator = parachain_config.role.is_authority();
 	let prometheus_registry = parachain_config.prometheus_registry().cloned();
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
 	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
-		sc_service::build_network(sc_service::BuildNetworkParams {
-			config: &parachain_config,
+		cumulus_client_service::build_network(cumulus_client_service::BuildNetworkParams {
+			parachain_config: &parachain_config,
 			net_config,
 			client: client.clone(),
 			transaction_pool: transaction_pool.clone(),
+			para_id,
 			spawn_handle: task_manager.spawn_handle(),
+			relay_chain_interface: relay_chain_interface.clone(),
 			import_queue: params.import_queue,
-			block_announce_validator_builder: Some(Box::new(|_| {
-				Box::new(block_announce_validator)
-			})),
-			warp_sync_params: None,
-			block_relay: None,
-		})?;
-
-	let select_chain = params.select_chain.clone();
-
-	let runtime_id = parachain_config.chain_spec.runtime_id();
+			// Aura is sybil-resistant, collator-selection is generally too.
+			sybil_resistance_level: CollatorSybilResistance::Resistant,
+		})
+		.await?;
 
 	// Frontier
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
@@ -477,9 +497,7 @@ where
 				fee_history_cache,
 				eth_block_data_cache,
 				network,
-				runtime_id,
 				transaction_pool,
-				select_chain,
 				overrides,
 			);
 
@@ -490,7 +508,6 @@ where
 
 			let full_deps = FullDeps {
 				client: client.clone(),
-				runtime_id,
 
 				#[cfg(feature = "pov-estimate")]
 				exec_params: uc_rpc::pov_estimate::ExecutorParams {
@@ -505,10 +522,9 @@ where
 
 				deny_unsafe,
 				pool: transaction_pool.clone(),
-				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_handle, full_deps)?;
+			create_full::<_, _, Runtime, _>(&mut rpc_handle, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -528,7 +544,9 @@ where
 				eth_pubsub_notification_sinks,
 				overrides,
 				sync: sync_service.clone(),
-				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
+				pending_create_inherent_data_providers: |_, ()| async move {
+					Ok(ethereum_parachain_inherent())
+				},
 			};
 
 			create_eth::<
@@ -760,6 +778,7 @@ where
 		relay_client: relay_chain_interface,
 		sync_oracle,
 		keystore,
+		#[cfg(not(feature = "lookahead"))]
 		slot_duration,
 		proposer,
 		collator_service,
@@ -781,6 +800,8 @@ where
 		relay_chain_slot_duration,
 		#[cfg(not(feature = "lookahead"))]
 		collation_request_receiver: None,
+		#[cfg(feature = "lookahead")]
+		reinitialize: false,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
@@ -975,12 +996,12 @@ where
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
-						let mocked_parachain = cumulus_primitives_parachain_inherent::MockValidationDataInherentDataProvider {
+						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
 							current_para_block,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
 							para_blocks_per_relay_epoch: 0,
-							xcm_config: cumulus_primitives_parachain_inherent::MockXcmConfig::new(
+							xcm_config: cumulus_client_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
 								Default::default(),
@@ -989,6 +1010,7 @@ where
 							relay_randomness_config: (),
 							raw_downward_messages: vec![],
 							raw_horizontal_messages: vec![],
+							additional_key_values: None,
 						};
 
 						let slot =
@@ -1006,8 +1028,6 @@ where
 
 	#[cfg(feature = "pov-estimate")]
 	let rpc_backend = backend.clone();
-
-	let runtime_id = config.chain_spec.runtime_id();
 
 	// Frontier
 	let fee_history_cache: FeeHistoryCache = Arc::new(Mutex::new(BTreeMap::new()));
@@ -1060,9 +1080,7 @@ where
 				fee_history_cache,
 				eth_block_data_cache,
 				network,
-				runtime_id,
 				transaction_pool,
-				select_chain,
 				overrides,
 			);
 
@@ -1072,8 +1090,6 @@ where
 			let mut rpc_module = RpcModule::new(());
 
 			let full_deps = FullDeps {
-				runtime_id,
-
 				#[cfg(feature = "pov-estimate")]
 				exec_params: uc_rpc::pov_estimate::ExecutorParams {
 					wasm_method: config.wasm_method,
@@ -1088,10 +1104,9 @@ where
 				deny_unsafe,
 				client: client.clone(),
 				pool: transaction_pool.clone(),
-				select_chain,
 			};
 
-			create_full::<_, _, _, Runtime, _>(&mut rpc_module, full_deps)?;
+			create_full::<_, _, Runtime, _>(&mut rpc_module, full_deps)?;
 
 			let eth_deps = EthDeps {
 				client,
@@ -1112,7 +1127,9 @@ where
 				overrides,
 				sync: sync_service.clone(),
 				// We don't have any inherents except parachain built-ins, which we can't even extract from inside `run_aura`.
-				pending_create_inherent_data_providers: |_, ()| async move { Ok(()) },
+				pending_create_inherent_data_providers: |_, ()| async move {
+					Ok(ethereum_parachain_inherent())
+				},
 			};
 
 			create_eth::<

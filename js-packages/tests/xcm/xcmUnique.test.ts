@@ -16,8 +16,8 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
-import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '../util/index.js';
-import {Event} from '@unique/playgrounds/unique.dev.js';
+import {itSub, expect, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingRelayPlaygrounds, usingMoonbeamPlaygrounds, usingStatemintPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds} from '@unique/test-utils/util.js';
+import {Event} from '@unique/test-utils';
 import {hexToString, nToBigInt} from '@polkadot/util';
 import {ACALA_CHAIN, ASTAR_CHAIN, MOONBEAM_CHAIN, POLKADEX_CHAIN, SAFE_XCM_VERSION, STATEMINT_CHAIN, UNIQUE_CHAIN, expectFailedToTransact, expectUntrustedReserveLocationFail, uniqueAssetId, uniqueVersionedMultilocation} from './xcm.types.js';
 import {XcmTestHelper} from './xcm.types.js';

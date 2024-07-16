@@ -287,8 +287,7 @@ where
 	}
 
 	fn pay_priority_fee(tip: Self::LiquidityInfo) {
-		<pallet_evm::EVMCurrencyAdapter<C, OU> as OnChargeEVMTransaction<T>>::pay_priority_fee(
-			tip.0,
-		)
+		let Some(imbalance) = tip.0 else { return };
+		OU::on_unbalanced(imbalance)
 	}
 }

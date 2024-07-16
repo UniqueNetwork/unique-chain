@@ -2,6 +2,11 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
 
 async function main() {
+  if(process.argv.length != 4) {
+    console.log('Usage: yarn councilDemocracyProposal <CHAIN_URL> <ENCODED_PROPOSAL>');
+    process.exit(1);
+  }
+
   const networkUrl = process.argv[2];
   const democracyProposalContent = process.argv[3];
 
@@ -24,12 +29,12 @@ async function main() {
     democracyProposal.method.encodedLength,
   ).method.toHex();
 
-  const proposeUpgradeBatch = api.tx.utility.batchAll([
+  const proposeBatch = api.tx.utility.batchAll([
     democracyProposalPreimage,
     councilProposal,
   ]);
 
-  const encodedCall = proposeUpgradeBatch.method.toHex();
+  const encodedCall = proposeBatch.method.toHex();
 
   console.log('-----------------');
   console.log('Council Proposal: ', `https://polkadot.js.org/apps/?rpc=${networkUrl}#/extrinsics/decode/${encodedCall}`);

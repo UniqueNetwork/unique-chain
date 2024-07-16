@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
+import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {COLLECTION_HELPER, CONTRACT_HELPER} from '../util/index.js';
+import {COLLECTION_HELPER, CONTRACT_HELPER} from '@unique/test-utils/util.js';
 
 describe('RPC eth_getCode', () => {
   let donor: IKeyringPair;

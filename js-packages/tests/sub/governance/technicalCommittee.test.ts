@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '../../util/index.js';
-import {Event} from '@unique/playgrounds/unique.dev.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {Event} from '@unique/test-utils';
 import {initCouncil, democracyLaunchPeriod, democracyFastTrackVotingPeriod, clearCouncil, clearTechComm, clearFellowship, defaultEnactmentMoment, dummyProposal, dummyProposalCall, fellowshipPropositionOrigin, initFellowship, initTechComm, hardResetFellowshipReferenda, hardResetDemocracy, hardResetGovScheduler} from './util.js';
 import type {ITechComms} from './util.js';
 
@@ -119,15 +119,58 @@ describeGov('Governance: Technical Committee tests', () => {
     Event.FellowshipReferenda.Cancelled.expect(cancelProposal);
   });
 
-  itSub.skip('TechComm member can add a Fellowship member', async ({helper}) => {
+  itSub('TechComm member can add a Fellowship member', async ({helper}) => {
     const newFellowshipMember = helper.arrange.createEmptyAccount();
     await expect(helper.technicalCommittee.collective.execute(
       techcomms.andy,
       helper.fellowship.collective.addMemberCall(newFellowshipMember.address),
     )).to.be.fulfilled;
-    const fellowshipMembers = (await helper.callRpc('api.query.fellowshipCollective.members')).toJSON();
-    expect(fellowshipMembers).to.contains(newFellowshipMember.address);
+    expect(await helper.fellowship.collective.getMembers()).to.be.deep.contain(newFellowshipMember.address);
     await clearFellowship(sudoer);
+  });
+
+  itSub('[Negative] TechComm can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    const addMemberProposal = helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address);
+    await expect(proposalFromAllCommittee(addMemberProposal)).rejectedWith('BadOrigin');
+
+    const finCouncilMembers = await helper.finCouncil.membership.getMembers();
+    expect(finCouncilMembers).to.not.contains(newFinCouncilMember.address);
+  });
+
+
+  itSub('[Negative] TechComm member can\'t add FinCouncil member', async ({helper}) => {
+    const newFinCouncilMember = helper.arrange.createEmptyAccount();
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.greg,
+      helper.finCouncil.membership.addMemberCall(newFinCouncilMember.address),
+    )).rejectedWith('BadOrigin');
+  });
+
+  itSub('[Negative] TechComm member cannot register foreign asset', async ({helper}) => {
+    const location = {
+      parents: 1,
+      interior: {X3: [
+        {
+          Parachain: 1000,
+        },
+        {
+          PalletInstance: 50,
+        },
+        {
+          GeneralIndex: 1985,
+        },
+      ]},
+    };
+    const assetId = {Concrete: location};
+
+    const foreignAssetProposal = helper.constructApiCall(
+      'api.tx.foreignAssets.forceRegisterForeignAsset',
+      [{V3: assetId}, helper.util.str2vec('New Asset2'), 'NEW', {Fungible: 10}],
+    );
+
+    await expect(helper.technicalCommittee.collective.execute(techcomms.andy, foreignAssetProposal))
+      .to.be.rejectedWith('BadOrigin');
   });
 
   itSub('[Negative] TechComm cannot submit regular democracy proposal', async ({helper}) => {
@@ -191,12 +234,36 @@ describeGov('Governance: Technical Committee tests', () => {
   });
 
 
-  itSub.skip('[Negative] TechComm cannot promote/demote Fellowship member', async () => {
+  itSub('[Negative] TechComm cannot promote/demote Fellowship member', async ({helper}) => {
+    const fellowship = await initFellowship(donor, sudoer);
+    const memberWithRankOne = fellowship[1][0];
 
+    const promoteProposal = helper.fellowship.collective.promoteCall(memberWithRankOne.address);
+    await expect(proposalFromAllCommittee(promoteProposal)).rejectedWith('BadOrigin');
+
+    const demoteProposal = helper.fellowship.collective.demoteCall(memberWithRankOne.address);
+    await expect(proposalFromAllCommittee(demoteProposal)).rejectedWith('BadOrigin');
+
+    await clearFellowship(sudoer);
   });
 
-  itSub.skip('[Negative] TechComm member cannot promote/demote Fellowship member', async () => {
+  itSub('[Negative] TechComm member cannot promote/demote Fellowship member', async ({helper}) => {
+    const fellowship = await initFellowship(donor, sudoer);
+    const memberWithRankOne = fellowship[1][0];
 
+    const promoteProposal = helper.fellowship.collective.promoteCall(memberWithRankOne.address);
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.andy,
+      promoteProposal,
+    )).to.be.rejectedWith('BadOrigin');
+
+    const demoteProposal = helper.fellowship.collective.demoteCall(memberWithRankOne.address);
+    await expect(helper.technicalCommittee.collective.execute(
+      techcomms.andy,
+      demoteProposal,
+    )).to.be.rejectedWith('BadOrigin');
+
+    await clearFellowship(sudoer);
   });
 
   itSub('[Negative] TechComm cannot add/remove a Council member', async ({helper}) => {

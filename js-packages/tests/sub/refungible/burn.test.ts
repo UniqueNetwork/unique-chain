@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '../../util/index.js';
+import {itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
 
 describe('Refungible: burn', () => {
   let donor: IKeyringPair;

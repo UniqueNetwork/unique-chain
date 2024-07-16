@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds,  usingMoonriverPlaygrounds, usingShidenPlaygrounds, usingRelayPlaygrounds} from '../util/index.js';
+import {itSub, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds,  usingMoonriverPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
 import {QUARTZ_CHAIN,  QTZ_DECIMALS,  SHIDEN_DECIMALS, karuraUrl, moonriverUrl,  shidenUrl,  SAFE_XCM_VERSION, XcmTestHelper, TRANSFER_AMOUNT, SENDER_BUDGET, relayUrl} from './xcm.types.js';
 import {hexToString} from '@polkadot/util';
 

@@ -19,7 +19,7 @@ use frame_system::EnsureSigned;
 use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
 use pallet_foreign_assets::CurrencyIdConvert;
 use sp_runtime::traits::Convert;
-use staging_xcm::latest::{Junction::*, Junctions::*, MultiLocation, Weight};
+use staging_xcm::latest::prelude::*;
 use staging_xcm_executor::XcmExecutor;
 use up_common::{
 	constants::*,
@@ -44,18 +44,18 @@ parameter_types! {
 }
 
 parameter_type_with_key! {
-	pub ParachainMinFee: |_location: MultiLocation| -> Option<u128> {
+	pub ParachainMinFee: |_location: Location| -> Option<u128> {
 		Some(100_000_000_000)
 	};
 }
 
-pub struct AccountIdToMultiLocation;
-impl Convert<AccountId, MultiLocation> for AccountIdToMultiLocation {
-	fn convert(account: AccountId) -> MultiLocation {
-		X1(AccountId32 {
+pub struct AccountIdToLocation;
+impl Convert<AccountId, Location> for AccountIdToLocation {
+	fn convert(account: AccountId) -> Location {
+		AccountId32 {
 			network: None,
 			id: account.into(),
-		})
+		}
 		.into()
 	}
 }
@@ -75,14 +75,16 @@ impl orml_xtokens::Config for Runtime {
 	type Balance = Balance;
 	type CurrencyId = CollectionId;
 	type CurrencyIdConvert = CurrencyIdConvert<Self>;
-	type AccountIdToMultiLocation = AccountIdToMultiLocation;
+	type AccountIdToLocation = AccountIdToLocation;
 	type SelfLocation = SelfLocation;
 	type XcmExecutor = XcmExecutor<XcmExecutorConfig<Self>>;
 	type Weigher = Weigher;
 	type BaseXcmWeight = BaseXcmWeight;
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
-	type MultiLocationsFilter = Everything;
+	type LocationsFilter = Everything;
 	type ReserveProvider = AbsoluteReserveProvider;
 	type UniversalLocation = UniversalLocation;
+	type RateLimiter = ();
+	type RateLimiterId = ();
 }

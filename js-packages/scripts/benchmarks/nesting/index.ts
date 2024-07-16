@@ -1,58 +1,60 @@
-import {usingEthPlaygrounds} from '@unique/tests/eth/util/index.js';
-import {EthUniqueHelper} from '@unique/tests/eth/util/playgrounds/unique.dev.js';
+import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'web3-eth-contract';
 import {convertToTokens} from '../utils/common.js';
-import {makeNames} from '@unique/tests/util/index.js';
-import type {ContractImports} from '@unique/tests/eth/util/playgrounds/types.js';
+import {makeNames} from '@unique/test-utils/util.js';
+import type {ContractImports} from '@unique/test-utils/eth/types.js';
 import type {RMRKNestableMintable} from './ABIGEN/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 
+const NODE_MODULES = `${dirname}/../../../../node_modules`;
+
 export const CONTRACT_IMPORT: ContractImports[] = [
   {
-    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol`,
+    fsPath: `${NODE_MODULES}/@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/nestable/RMRKNestable.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC6059.sol`,
+    fsPath: `${NODE_MODULES}/@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC6059.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/nestable/IERC6059.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/core/RMRKCore.sol`,
+    fsPath: `${NODE_MODULES}/@rmrk-team/evm-contracts/contracts/RMRK/core/RMRKCore.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/core/RMRKCore.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol`,
+    fsPath: `${NODE_MODULES}/@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol`,
     solPath: '@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
+    fsPath: `${NODE_MODULES}/@openzeppelin/contracts/token/ERC721/IERC721.sol`,
     solPath: '@openzeppelin/contracts/token/ERC721/IERC721.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol`,
+    fsPath: `${NODE_MODULES}/@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol`,
     solPath: '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/Address.sol`,
+    fsPath: `${NODE_MODULES}/@openzeppelin/contracts/utils/Address.sol`,
     solPath: '@openzeppelin/contracts/utils/Address.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/Context.sol`,
+    fsPath: `${NODE_MODULES}/@openzeppelin/contracts/utils/Context.sol`,
     solPath: '@openzeppelin/contracts/utils/Context.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
+    fsPath: `${NODE_MODULES}/@openzeppelin/contracts/utils/introspection/IERC165.sol`,
     solPath: '@openzeppelin/contracts/utils/introspection/IERC165.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/library/RMRKErrors.sol`,
+    fsPath: `${NODE_MODULES}/@rmrk-team/evm-contracts/contracts/RMRK/library/RMRKErrors.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/library/RMRKErrors.sol',
   },
   {
-    fsPath: `${dirname}/../../../../node_modules/@rmrk-team/evm-contracts/contracts/RMRK/core/IRMRKCore.sol`,
+    fsPath: `${NODE_MODULES}/@rmrk-team/evm-contracts/contracts/RMRK/core/IRMRKCore.sol`,
     solPath: '@rmrk-team/evm-contracts/contracts/RMRK/core/IRMRKCore.sol',
   },
   {

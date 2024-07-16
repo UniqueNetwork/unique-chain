@@ -29,6 +29,7 @@ const config = {
   statemineUrl: process.env.RELAY_STATEMINE_URL || 'ws://127.0.0.1:9948',
   statemintUrl: process.env.RELAY_STATEMINT_URL || 'ws://127.0.0.1:9948',
   polkadexUrl: process.env.RELAY_POLKADEX_URL || 'ws://127.0.0.1:9950',
+  hydraDxUrl: process.env.RELAY_HYDRADX_URL || 'ws://127.0.0.1:9951',
 };
 
 export default config;

@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds} from './util/index.js';
-import {EthUniqueHelper} from './util/playgrounds/unique.dev.js';
-import {makeNames} from '../util/index.js';
+import {itEth, expect, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -261,11 +261,11 @@ describe('EVM transaction fees', () => {
       [
         {
           solPath: 'api/CollectionHelpers.sol',
-          fsPath: `${dirname}/api/CollectionHelpers.sol`,
+          fsPath: `${dirname}/../../evm-abi/api/CollectionHelpers.sol`,
         },
         {
           solPath: 'api/UniqueNFT.sol',
-          fsPath: `${dirname}/api/UniqueNFT.sol`,
+          fsPath: `${dirname}/../../evm-abi/api/UniqueNFT.sol`,
         },
       ],
     );

@@ -17,7 +17,7 @@ on substrate 2 version.
 The node can be run using docker container:
 
 ```
-docker-compose up -d
+docker compose up -d
 ```
 
 #### NFT Tracking Module

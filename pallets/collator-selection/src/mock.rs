@@ -91,6 +91,12 @@ impl system::Config for Test {
 	type SS58Prefix = SS58Prefix;
 	type OnSetCode = ();
 	type MaxConsumers = ConstU32<16>;
+	type RuntimeTask = ();
+	type PreInherents = ();
+	type PostInherents = ();
+	type PostTransactions = ();
+	type SingleBlockMigrations = ();
+	type MultiBlockMigrator = ();
 }
 
 parameter_types! {
@@ -111,7 +117,6 @@ impl pallet_balances::Config for Test {
 	type MaxReserves = MaxReserves;
 	type ReserveIdentifier = [u8; 8];
 	type FreezeIdentifier = [u8; 16];
-	type MaxHolds = MaxHolds;
 	type MaxFreezes = MaxFreezes;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;

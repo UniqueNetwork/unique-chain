@@ -35,7 +35,6 @@ use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_inherents::CreateInherentDataProviders;
-use sp_runtime::traits::BlakeTwo256;
 use up_common::types::opaque::*;
 
 use crate::service::RuntimeApiDep;
@@ -44,18 +43,13 @@ use crate::service::RuntimeApiDep;
 type FullBackend = sc_service::TFullBackend<Block>;
 
 /// Full client dependencies.
-pub struct FullDeps<C, P, SC> {
+pub struct FullDeps<C, P> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// The SelectChain Strategy
-	pub select_chain: SC,
 	/// Whether to deny unsafe calls
 	pub deny_unsafe: DenyUnsafe,
-
-	/// Runtime identification (read from the chain spec)
-	pub runtime_id: RuntimeId,
 	/// Executor params for PoV estimating
 	#[cfg(feature = "pov-estimate")]
 	pub exec_params: uc_rpc::pov_estimate::ExecutorParams,
@@ -65,13 +59,13 @@ pub struct FullDeps<C, P, SC> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, SC, R, B>(
+pub fn create_full<C, P, R, B>(
 	io: &mut RpcModule<()>,
-	deps: FullDeps<C, P, SC>,
+	deps: FullDeps<C, P>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
 	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
+	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
 	C::Api: RuntimeApiDep<R>,
@@ -80,10 +74,7 @@ where
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
 	C: sp_api::CallApiAt<
-		sp_runtime::generic::Block<
-			sp_runtime::generic::Header<u32, BlakeTwo256>,
-			sp_runtime::OpaqueExtrinsic,
-		>,
+		generic::Block<generic::Header<u32, BlakeTwo256>, sp_runtime::OpaqueExtrinsic>,
 	>,
 	for<'de> <R as RuntimeInstance>::CrossAccountId: serde::Deserialize<'de>,
 {
@@ -97,10 +88,7 @@ where
 	let FullDeps {
 		client,
 		pool,
-		select_chain: _,
 		deny_unsafe,
-
-		runtime_id: _,
 
 		#[cfg(feature = "pov-estimate")]
 		exec_params,

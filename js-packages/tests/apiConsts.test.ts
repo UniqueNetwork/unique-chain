@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, itSub, expect, COLLECTION_HELPER, CONTRACT_HELPER} from './util/index.js';
+import {usingPlaygrounds, itSub, expect, COLLECTION_HELPER, CONTRACT_HELPER} from '@unique/test-utils/util.js';
 
 
 const MAX_COLLECTION_DESCRIPTION_LENGTH = 256n;

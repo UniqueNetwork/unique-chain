@@ -11,22 +11,23 @@ local relay = {
 	spec: {Genesis:{
 		chain: relay_spec,
 		modify:: m.genericRelay($, hrmp = std.join([], [
-			[[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
-			for [a, b] in [
+			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+			// for [a, b] in [
 				// ['unique', 'acala'],
 				// ['unique', 'moonbeam'],
 				// ['unique', 'statemint'],
 				// ['unique', 'astar'],
 				// ['unique', 'polkadex'],
-			]
+			// ]
 		])),
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
 	},
 };
 
@@ -41,6 +42,9 @@ local unique = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			extraArgs: [
+				'--increase-future-pool',
+			],
 		},
 		for name in ['alice', 'bob']
 	},
@@ -87,7 +91,7 @@ local moonbeam = {
 
 local statemint = {
 	name: 'statemint',
-	bin: 'bin/cumulus',
+	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
 		chain: 'statemint-local',
@@ -97,6 +101,7 @@ local statemint = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-ed',
+			expectedDataPath: '/parity',			
 		},
 		for name in ['alice', 'bob']
 	},
@@ -136,9 +141,28 @@ local polkadex = {
 	},
 };
 
+local hydraDx = {
+	name: 'hydraDx',
+	bin: 'bin/hydradx',
+	paraId: 1007,
+	spec: {Genesis:{
+		chain: 'local',
+		modify:: m.genericPara($),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+			legacyRpc: true,
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, polkadex]
+		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
 	},
 }

@@ -1,6 +1,6 @@
-import {EthUniqueHelper} from '@unique/tests/eth/util/playgrounds/unique.dev.js';
-import {UniqueNFTCollection, UniqueRFTCollection} from '@unique/playgrounds/unique.js';
-import type {ITokenPropertyPermission, TCollectionMode} from '@unique/playgrounds/types.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
+import type {ITokenPropertyPermission, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 export const PROPERTIES = Array(40)

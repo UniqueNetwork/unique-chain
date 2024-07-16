@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 <!-- bureaucrate goes here -->
 
+## [0.2.2] - 2024-03-21
+
+### Changed
+
+- Unstake of skipped blocks is now available to `Signed` origin.
+
 ## [0.2.1] - 2023-06-23
 
 ### Changed

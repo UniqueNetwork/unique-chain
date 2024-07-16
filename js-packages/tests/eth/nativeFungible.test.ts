@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itEth, usingEthPlaygrounds} from './util/index.js';
-import {UniqueHelper} from '@unique/playgrounds/unique.js';
+import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
 
 describe('NativeFungible: ERC20 calls', () => {
   let donor: IKeyringPair;

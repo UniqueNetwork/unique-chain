@@ -24,10 +24,6 @@ jobs:
     uses: ./.github/workflows/unit-test.yml
     secrets: inherit    
 
-  # canary:
-  #   uses: ./.github/workflows/canary.yml
-  #   secrets: inherit # pass all secrets from initial workflow to nested
-
   xcm:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested

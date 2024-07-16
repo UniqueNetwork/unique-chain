@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds} from './util/index.js';
+import {itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {expect} from 'chai';
 
 describe('Send value to contract', () => {

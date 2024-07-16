@@ -25,25 +25,24 @@
 
 use core::ops::Deref;
 
-use frame_support::{dispatch::DispatchResult, pallet_prelude::*, traits::EnsureOrigin, PalletId};
+use derivative::Derivative;
+use frame_support::{
+	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::EnsureOrigin, PalletId,
+};
 use frame_system::pallet_prelude::*;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
-use staging_xcm::{
-	opaque::latest::{prelude::XcmError, Weight},
-	v3::{prelude::*, MultiAsset, XcmContext},
-	VersionedAssetId,
-};
+use staging_xcm::{v4::prelude::*, VersionedAssetId};
 use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
-	Assets,
+	AssetsInHolding,
 };
 use up_data_structs::{
-	budget::ZeroBudget, CollectionId, CollectionMode, CollectionName, CollectionTokenPrefix,
-	CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
+	budget::ZeroBudget, CollectionFlags, CollectionId, CollectionMode, CollectionName,
+	CollectionTokenPrefix, CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
 };
 
 pub mod weights;
@@ -54,8 +53,44 @@ mod benchmarking;
 pub use module::*;
 pub use weights::WeightInfo;
 
+/// Status of storage migration from an old XCM version to a new one.
+#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub enum MigrationStatus {
+	V3ToV4(MigrationStatusV3ToV4),
+}
+
+/// Status of storage migration from XCMv3 to XCMv4.
+#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub enum MigrationStatusV3ToV4 {
+	/// The migration is completed.
+	Done,
+
+	/// An asset is skipped during the migration
+	/// due to its inconsistent state.
+	SkippedInconsistentAssetData(staging_xcm::v3::AssetId),
+
+	/// An asset instance is skipped during the migration
+	/// due to its inconsistent state.
+	SkippedInconsistentAssetInstanceData {
+		asset_id: staging_xcm::v3::AssetId,
+		asset_instance: staging_xcm::v3::AssetInstance,
+	},
+
+	/// An asset is skipped during the migration
+	/// because it couldn't be converted to the new XCM version.
+	SkippedNotConvertibleAssetId(staging_xcm::v3::AssetId),
+
+	/// An asset instance is skipped during the migration
+	/// because it couldn't be converted to the new XCM version.
+	SkippedNotConvertibleAssetInstance {
+		asset_id: staging_xcm::v3::AssetId,
+		asset_instance: staging_xcm::v3::AssetInstance,
+	},
+}
+
 #[frame_support::pallet]
 pub mod module {
+	use frame_support::traits::BuildGenesisConfig;
 	use pallet_common::CollectionIssuer;
 	use up_data_structs::CollectionDescription;
 
@@ -72,15 +107,15 @@ pub mod module {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// Origin for force registering of a foreign asset.
-		type ForceRegisterOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+		type ManagerOrigin: EnsureOrigin<Self::RuntimeOrigin>;
 
 		/// The ID of the foreign assets pallet.
 		type PalletId: Get<PalletId>;
 
 		/// Self-location of this parachain.
-		type SelfLocation: Get<MultiLocation>;
+		type SelfLocation: Get<Location>;
 
-		/// The converter from a MultiLocation to a CrossAccountId.
+		/// The converter from a Location to a CrossAccountId.
 		type LocationToAccountId: ConvertLocation<Self::CrossAccountId>;
 
 		/// Weight information for the extrinsics in this module.
@@ -97,35 +132,38 @@ pub mod module {
 	}
 
 	#[pallet::event]
-	#[pallet::generate_deposit(fn deposit_event)]
+	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
 	pub enum Event<T: Config> {
 		/// The foreign asset registered.
 		ForeignAssetRegistered {
 			collection_id: CollectionId,
 			asset_id: Box<VersionedAssetId>,
 		},
+
+		/// The migration status.
+		MigrationStatus(MigrationStatus),
 	}
 
 	/// The corresponding collections of foreign assets.
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_to_collection)]
 	pub type ForeignAssetToCollection<T: Config> =
-		StorageMap<_, Twox64Concat, staging_xcm::v3::AssetId, CollectionId, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, staging_xcm::v4::AssetId, CollectionId, OptionQuery>;
 
 	/// The corresponding foreign assets of collections.
 	#[pallet::storage]
 	#[pallet::getter(fn collection_to_foreign_asset)]
 	pub type CollectionToForeignAsset<T: Config> =
-		StorageMap<_, Twox64Concat, CollectionId, staging_xcm::v3::AssetId, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, CollectionId, staging_xcm::v4::AssetId, OptionQuery>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_reserve_asset_instance_to_token_id)]
 	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
-		Hasher1 = Twox64Concat,
+		Hasher1 = Blake2_128Concat,
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
-		Key2 = staging_xcm::v3::AssetInstance,
+		Key2 = staging_xcm::v4::AssetInstance,
 		Value = TokenId,
 		QueryKind = OptionQuery,
 	>;
@@ -134,15 +172,18 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn token_id_to_foreign_reserve_asset_instance)]
 	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
-		Hasher1 = Twox64Concat,
+		Hasher1 = Blake2_128Concat,
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
 		Key2 = TokenId,
-		Value = staging_xcm::v3::AssetInstance,
+		Value = staging_xcm::v4::AssetInstance,
 		QueryKind = OptionQuery,
 	>;
 
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(staging_xcm::v4::VERSION as u16);
+
 	#[pallet::pallet]
+	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
 
 	#[pallet::call]
@@ -156,7 +197,7 @@ pub mod module {
 			token_prefix: CollectionTokenPrefix,
 			mode: ForeignCollectionMode,
 		) -> DispatchResult {
-			T::ForceRegisterOrigin::ensure_origin(origin.clone())?;
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
 
 			let asset_id: AssetId = versioned_asset_id
 				.as_ref()
@@ -165,7 +206,7 @@ pub mod module {
 				.map_err(|()| Error::<T>::BadForeignAssetId)?;
 
 			ensure!(
-				!<ForeignAssetToCollection<T>>::contains_key(asset_id),
+				!<ForeignAssetToCollection<T>>::contains_key(&asset_id),
 				<Error<T>>::ForeignAssetAlreadyRegistered,
 			);
 
@@ -185,11 +226,15 @@ pub mod module {
 					token_prefix,
 					description,
 					mode: mode.into(),
+					flags: CollectionFlags {
+						foreign: true,
+						..Default::default()
+					},
 					..Default::default()
 				},
 			)?;
 
-			<ForeignAssetToCollection<T>>::insert(asset_id, collection_id);
+			<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
 			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
 
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
@@ -200,9 +245,217 @@ pub mod module {
 			Ok(())
 		}
 	}
+
+	#[pallet::genesis_config]
+	#[derive(Derivative)]
+	#[derivative(Default(bound = ""))]
+	pub struct GenesisConfig<T: Config>(PhantomData<T>);
+
+	#[pallet::genesis_build]
+	impl<T: Config> BuildGenesisConfig for GenesisConfig<T> {
+		fn build(&self) {
+			<Pallet<T>>::in_code_storage_version().put::<Pallet<T>>();
+		}
+	}
+
+	#[pallet::hooks]
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+		fn on_runtime_upgrade() -> Weight {
+			if Self::on_chain_storage_version() < staging_xcm::v4::VERSION as u16 {
+				let put_version_weight = T::DbWeight::get().writes(1);
+				let fix_foreign_flag_weight = Self::fix_foreign_flag();
+				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
+
+				Self::in_code_storage_version().put::<Self>();
+
+				put_version_weight
+					.saturating_add(fix_foreign_flag_weight)
+					.saturating_add(weight_v3_to_v4)
+			} else {
+				Weight::zero()
+			}
+		}
+	}
+}
+
+mod v3_storage {
+	use super::*;
+
+	#[storage_alias]
+	pub type ForeignAssetToCollection<T: Config> =
+		StorageMap<Pallet<T>, Twox64Concat, staging_xcm::v3::AssetId, CollectionId, OptionQuery>;
+
+	#[storage_alias]
+	pub type CollectionToForeignAsset<T: Config> =
+		StorageMap<Pallet<T>, Twox64Concat, CollectionId, staging_xcm::v3::AssetId, OptionQuery>;
+
+	#[storage_alias]
+	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
+		Pallet<T>,
+		Twox64Concat,
+		CollectionId,
+		Blake2_128Concat,
+		staging_xcm::v3::AssetInstance,
+		TokenId,
+		OptionQuery,
+	>;
+
+	#[storage_alias]
+	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
+		Pallet<T>,
+		Twox64Concat,
+		CollectionId,
+		Blake2_128Concat,
+		TokenId,
+		staging_xcm::v3::AssetInstance,
+		OptionQuery,
+	>;
 }
 
 impl<T: Config> Pallet<T> {
+	fn fix_foreign_flag() -> Weight {
+		let mut weight = Weight::zero();
+
+		for (_, collection_id) in v3_storage::ForeignAssetToCollection::<T>::iter() {
+			pallet_common::CollectionById::<T>::mutate(collection_id, |collection| {
+				if let Some(collection) = collection {
+					collection.flags.foreign = true;
+				}
+			});
+
+			weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
+		}
+
+		weight
+	}
+
+	fn migrate_v3_to_v4() -> Weight {
+		let event_weight = T::DbWeight::get().writes(1);
+		let collection_migration_weight = Self::migrate_collections();
+
+		Self::deposit_event(Event::<T>::MigrationStatus(MigrationStatus::V3ToV4(
+			MigrationStatusV3ToV4::Done,
+		)));
+
+		collection_migration_weight.saturating_add(event_weight)
+	}
+
+	fn migrate_collections() -> Weight {
+		use MigrationStatus::*;
+		use MigrationStatusV3ToV4::*;
+
+		let mut weight = Weight::zero();
+
+		for (fwd_asset_id, collection_id) in v3_storage::ForeignAssetToCollection::<T>::drain() {
+			let bwd_asset_id = v3_storage::CollectionToForeignAsset::<T>::take(collection_id);
+			weight = weight.saturating_add(T::DbWeight::get().reads(2));
+
+			let Some(bwd_asset_id) = bwd_asset_id else {
+				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+					SkippedInconsistentAssetData(fwd_asset_id),
+				)));
+
+				weight = weight.saturating_add(T::DbWeight::get().writes(1));
+				continue;
+			};
+
+			if fwd_asset_id != bwd_asset_id {
+				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+					SkippedInconsistentAssetData(fwd_asset_id),
+				)));
+
+				weight = weight.saturating_add(T::DbWeight::get().writes(1));
+				continue;
+			}
+
+			let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(fwd_asset_id) else {
+				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+					SkippedNotConvertibleAssetId(fwd_asset_id),
+				)));
+
+				weight = weight.saturating_add(T::DbWeight::get().writes(1));
+				continue;
+			};
+
+			<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
+			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
+			weight = weight.saturating_add(T::DbWeight::get().writes(2));
+
+			let migrate_tokens_weight = Self::migrate_tokens(&fwd_asset_id, collection_id);
+			weight = weight.saturating_add(migrate_tokens_weight);
+		}
+
+		weight
+	}
+
+	fn migrate_tokens(asset_id: &staging_xcm::v3::AssetId, collection_id: CollectionId) -> Weight {
+		use MigrationStatus::*;
+		use MigrationStatusV3ToV4::*;
+
+		let mut weight = Weight::zero();
+
+		for (fwd_asset_instance, token_id) in
+			v3_storage::ForeignReserveAssetInstanceToTokenId::<T>::drain_prefix(collection_id)
+		{
+			let bwd_asset_instance = v3_storage::TokenIdToForeignReserveAssetInstance::<T>::take(
+				collection_id,
+				token_id,
+			);
+			weight = weight.saturating_add(T::DbWeight::get().reads(2));
+
+			let Some(bwd_asset_instance) = bwd_asset_instance else {
+				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+					SkippedInconsistentAssetInstanceData {
+						asset_id: *asset_id,
+						asset_instance: fwd_asset_instance,
+					},
+				)));
+
+				weight = weight.saturating_add(T::DbWeight::get().writes(1));
+				continue;
+			};
+
+			if fwd_asset_instance != bwd_asset_instance {
+				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+					SkippedInconsistentAssetInstanceData {
+						asset_id: *asset_id,
+						asset_instance: fwd_asset_instance,
+					},
+				)));
+
+				weight = weight.saturating_add(T::DbWeight::get().writes(1));
+				continue;
+			}
+
+			let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(fwd_asset_instance)
+			else {
+				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+					SkippedNotConvertibleAssetInstance {
+						asset_id: *asset_id,
+						asset_instance: fwd_asset_instance,
+					},
+				)));
+
+				weight = weight.saturating_add(T::DbWeight::get().writes(1));
+				continue;
+			};
+
+			<ForeignReserveAssetInstanceToTokenId<T>>::insert(
+				collection_id,
+				&asset_instance,
+				token_id,
+			);
+			<TokenIdToForeignReserveAssetInstance<T>>::insert(
+				collection_id,
+				token_id,
+				asset_instance,
+			);
+			weight = weight.saturating_add(T::DbWeight::get().writes(2));
+		}
+
+		weight
+	}
+
 	fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
@@ -221,11 +474,9 @@ impl<T: Config> Pallet<T> {
 	/// If the multilocation doesn't match the patterns listed above,
 	/// or the `<Collection ID>` points to a foreign collection,
 	/// `None` is returned, identifying that the given multilocation doesn't correspond to a local collection.
-	fn local_asset_id_to_collection(asset_id: &AssetId) -> Option<CollectionLocality> {
-		let AssetId::Concrete(asset_location) = asset_id else {
-			return None;
-		};
-
+	fn local_asset_id_to_collection(
+		AssetId(asset_location): &AssetId,
+	) -> Option<CollectionLocality> {
 		let self_location = T::SelfLocation::get();
 
 		if *asset_location == Here.into() || *asset_location == self_location {
@@ -386,32 +637,25 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
+// #[derive()]
+// pub enum Migration {
+
+// }
+
 impl<T: Config> TransactAsset for Pallet<T> {
-	fn can_check_in(
-		_origin: &MultiLocation,
-		_what: &MultiAsset,
-		_context: &XcmContext,
-	) -> XcmResult {
+	fn can_check_in(_origin: &Location, _what: &Asset, _context: &XcmContext) -> XcmResult {
 		Err(XcmError::Unimplemented)
 	}
 
-	fn check_in(_origin: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
+	fn check_in(_origin: &Location, _what: &Asset, _context: &XcmContext) {}
 
-	fn can_check_out(
-		_dest: &MultiLocation,
-		_what: &MultiAsset,
-		_context: &XcmContext,
-	) -> XcmResult {
+	fn can_check_out(_dest: &Location, _what: &Asset, _context: &XcmContext) -> XcmResult {
 		Err(XcmError::Unimplemented)
 	}
 
-	fn check_out(_dest: &MultiLocation, _what: &MultiAsset, _context: &XcmContext) {}
+	fn check_out(_dest: &Location, _what: &Asset, _context: &XcmContext) {}
 
-	fn deposit_asset(
-		what: &MultiAsset,
-		to: &MultiLocation,
-		_context: Option<&XcmContext>,
-	) -> XcmResult {
+	fn deposit_asset(what: &Asset, to: &Location, _context: Option<&XcmContext>) -> XcmResult {
 		let to = T::LocationToAccountId::convert_location(to)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
@@ -440,10 +684,10 @@ impl<T: Config> TransactAsset for Pallet<T> {
 	}
 
 	fn withdraw_asset(
-		what: &MultiAsset,
-		from: &MultiLocation,
+		what: &Asset,
+		from: &Location,
 		_maybe_context: Option<&XcmContext>,
-	) -> Result<staging_xcm_executor::Assets, XcmError> {
+	) -> Result<AssetsInHolding, XcmError> {
 		let from = T::LocationToAccountId::convert_location(from)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
@@ -468,11 +712,11 @@ impl<T: Config> TransactAsset for Pallet<T> {
 	}
 
 	fn internal_transfer_asset(
-		what: &MultiAsset,
-		from: &MultiLocation,
-		to: &MultiLocation,
+		what: &Asset,
+		from: &Location,
+		to: &Location,
 		_context: &XcmContext,
-	) -> Result<staging_xcm_executor::Assets, XcmError> {
+	) -> Result<AssetsInHolding, XcmError> {
 		let from = T::LocationToAccountId::convert_location(from)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
@@ -534,18 +778,15 @@ impl Deref for CollectionLocality {
 }
 
 pub struct CurrencyIdConvert<T: Config>(PhantomData<T>);
-impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<MultiLocation>>
+impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<Location>>
 	for CurrencyIdConvert<T>
 {
-	fn convert(collection_id: CollectionId) -> Option<MultiLocation> {
+	fn convert(collection_id: CollectionId) -> Option<Location> {
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
 			Some(T::SelfLocation::get())
 		} else {
 			<Pallet<T>>::collection_to_foreign_asset(collection_id)
-				.and_then(|asset_id| match asset_id {
-					AssetId::Concrete(location) => Some(location),
-					_ => None,
-				})
+				.map(|AssetId(location)| location)
 				.or_else(|| {
 					T::SelfLocation::get()
 						.pushed_with_interior(GeneralIndex(collection_id.0.into()))
@@ -580,9 +821,9 @@ impl WeightTrader for FreeForAll {
 	fn buy_weight(
 		&mut self,
 		weight: Weight,
-		payment: Assets,
+		payment: AssetsInHolding,
 		_xcm: &XcmContext,
-	) -> Result<Assets, XcmError> {
+	) -> Result<AssetsInHolding, XcmError> {
 		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
 		Ok(payment)
 	}
