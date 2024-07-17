@@ -5,7 +5,9 @@
   "bootNodes": [
     "/dns/p2p-asia-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWLwR4WUEj1AUaqSZcDanpiikS9F8JYZLFotGuVvxkHAvx",
     "/dns/p2p-us-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWPK3CLeaKp5cdxXZts55H2P3jPHnxHaT4KFXwY4hWZ4rq",
-    "/dns/p2p-eu-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWDc1pBNFa4Sc3xeivC9TojdkBRKkSkMFW1VtLCmutq812"
+    "/dns/p2p-eu-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWDc1pBNFa4Sc3xeivC9TojdkBRKkSkMFW1VtLCmutq812",
+    "/dns/unique.boot.stake.plus/tcp/30332/wss/p2p/12D3KooWCUixQV4pdg33h2gPfinhuRn63UCjTkyUjX68cLEvA63M",
+    "/dns/unique.boot.stake.plus/tcp/31332/wss/p2p/12D3KooWMtQ9aiH91voGciASoqrqtbQ2S4CFEH8a5nsEvCukJMmS"
   ],
   "telemetryEndpoints": null,
   "protocolId": "unq",
