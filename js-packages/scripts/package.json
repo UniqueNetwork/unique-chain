@@ -10,13 +10,13 @@
   "version": "1.0.0",
   "main": "",
   "scripts": {
-    "benchMintingFee": "yarn ts-node benchmarks/mintFee/benchmark.ts",
-    "loadTransfer": "yarn ts-node transfer.nload.ts",
+    "benchMintingFee": "node --loader ts-node/esm benchmarks/mintFee/benchmark.ts",
+    "loadTransfer": "node --loader ts-node/esm transfer.nload.ts",
     "generateEnv": "node --loader ts-node/esm ./generateEnv.ts",
-    "proposeUpgrade": "yarn ts-node --esm ./proposeupgrade.ts",
-    "proposeFastTrack": "yarn ts-node --esm ./proposefasttrack.ts",
-    "councilDemocracyProposal": "yarn ts-node --esm ./councilproposal.ts",
-    "hrmpChannel": "yarn ts-node --esm ./hrmpchannel.ts",
+    "proposeUpgrade": "node --loader ts-node/esm ./proposeupgrade.ts",
+    "proposeFastTrack": "node --loader ts-node/esm ./proposefasttrack.ts",
+    "councilDemocracyProposal": "node --loader ts-node/esm ./councilproposal.ts",
+    "hrmpChannel": "node --loader ts-node/esm ./hrmpchannel.ts",
     "leaseStatus": "node --loader ts-node/esm ./leaseStatus.ts"
   }
 }
