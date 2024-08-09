@@ -10,7 +10,7 @@ const TIMESLICE_PERIOD = 80; // In Relay Chain blocks (normal runtime, without t
 (async () => {
   const args = process.argv.slice(2);
   if (args.length != 2) {
-    console.log('USAGE: <SCRIPT_NAME> <CORETIME_CHAIN_ENDPOINT> <TASK_ID>');
+    console.log('USAGE: yarn leaseStatus <CORETIME_CHAIN_ENDPOINT> <TASK_ID>');
     process.exit(-1);
   }
 
