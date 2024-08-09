@@ -16,6 +16,7 @@
     "proposeUpgrade": "yarn ts-node --esm ./proposeupgrade.ts",
     "proposeFastTrack": "yarn ts-node --esm ./proposefasttrack.ts",
     "councilDemocracyProposal": "yarn ts-node --esm ./councilproposal.ts",
-    "hrmpChannel": "yarn ts-node --esm ./hrmpchannel.ts"
+    "hrmpChannel": "yarn ts-node --esm ./hrmpchannel.ts",
+    "leaseStatus": "node --loader ts-node/esm ./leaseStatus.ts"
   }
 }
