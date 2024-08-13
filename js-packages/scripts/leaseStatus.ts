@@ -1,4 +1,4 @@
-import { ApiPromise, WsProvider } from "@polkadot/api";
+import {ApiPromise, WsProvider} from '@polkadot/api';
 
 // [!ATTENTION!] Auto-renew will be available in the future:
 // https://github.com/paritytech/polkadot-sdk/blob/12539e7a931e82a040e74c84e413baa712ecd638/substrate/frame/broker/src/lib.rs#L889-L917
@@ -9,7 +9,7 @@ const TIMESLICE_PERIOD = 80; // In Relay Chain blocks (normal runtime, without t
 
 await (async () => {
   const args = process.argv.slice(2);
-  if (args.length != 2) {
+  if(args.length != 2) {
     console.log('USAGE: yarn leaseStatus <CORETIME_CHAIN_ENDPOINT> <TASK_ID>');
     process.exit(-1);
   }
@@ -17,7 +17,7 @@ await (async () => {
   const wsEndpoint = args[0];
   const taskId = parseInt(args[1]);
 
-  const api = await ApiPromise.create({ provider: new WsProvider(wsEndpoint) });
+  const api = await ApiPromise.create({provider: new WsProvider(wsEndpoint)});
 
   const currentCoreTimeBlock = await api.query.system.number()
     .then(n => n.toJSON() as number);
@@ -33,13 +33,13 @@ await (async () => {
   console.log('='.repeat(120));
   console.log();
 
-  if (taskLease !== undefined) {
+  if(taskLease !== undefined) {
     const endingTimeInfo = futureTimesliceTimeInfo(taskLease.until, lastRelayChainBlock);
 
     console.log(`Task #${taskLease.task} lease expires after ${endingTimeInfo.remaining} on ${endingTimeInfo.date}`);
 
-    if (taskLease.until < saleInfo.regionEnd) {
-      console.warn(`The Lease **WILL END** in the current sale region!`);
+    if(taskLease.until < saleInfo.regionEnd) {
+      console.warn('The Lease **WILL END** in the current sale region!');
       console.warn(`**RENEW the bulk coretime** until CoreTime Parachain Block #${saleInfo.saleStart}!`);
 
       const renewUntilBlock = saleInfo.saleStart - currentCoreTimeBlock;
@@ -71,19 +71,19 @@ function secondsToTime(seconds: number) {
   const day = 24 * hour;
 
   const units = [
-    { name: 'd', seconds: day },
-    { name: 'h', seconds: hour },
-    { name: 'm', seconds: minute },
-    { name: 's', seconds: second },
+    {name: 'd', seconds: day},
+    {name: 'h', seconds: hour},
+    {name: 'm', seconds: minute},
+    {name: 's', seconds: second},
   ];
 
   const time = [];
 
-  for (const unit of units) {
+  for(const unit of units) {
     const value = Math.floor(seconds / unit.seconds);
     time.push(`${value}${unit.name}`);
 
-    if (value > 0) {
+    if(value > 0) {
       seconds %= unit.seconds;
     }
   }
