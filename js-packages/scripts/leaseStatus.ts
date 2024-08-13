@@ -7,7 +7,7 @@ const RELAY_BLOCK_SECONDS = 6;
 const CORETIME_BLOCK_SECONDS = 12;
 const TIMESLICE_PERIOD = 80; // In Relay Chain blocks (normal runtime, without the `fast-runtime` feature).
 
-(async () => {
+await (async () => {
   const args = process.argv.slice(2);
   if (args.length != 2) {
     console.log('USAGE: yarn leaseStatus <CORETIME_CHAIN_ENDPOINT> <TASK_ID>');
