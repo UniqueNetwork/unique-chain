@@ -56,6 +56,7 @@ std = [
 	"rand/std",
 	"scale-info/std",
 	"sp-consensus-aura/std",
+	"sp-io/std",
 	"sp-runtime/std",
 	"sp-staking/std",
 	"sp-std/std",

@@ -24,6 +24,7 @@ std = [
 	'frame-system/std',
 	'pallet-balances/std',
 	'parity-scale-codec/std',
+	'sp-io/std',
 	'sp-runtime/std',
 	'sp-std/std',
 ]

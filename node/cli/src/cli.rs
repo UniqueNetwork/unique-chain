@@ -58,14 +58,6 @@ pub enum Subcommand {
 	#[clap(subcommand)]
 	#[cfg(feature = "runtime-benchmarks")]
 	Benchmark(frame_benchmarking_cli::BenchmarkCmd),
-
-	/// Try runtime
-	#[cfg(feature = "try-runtime")]
-	TryRuntime(try_runtime_cli::TryRuntimeCmd),
-
-	/// Try runtime. Note: `try-runtime` feature must be enabled.
-	#[cfg(not(feature = "try-runtime"))]
-	TryRuntime,
 }
 
 #[derive(Debug, Parser)]
