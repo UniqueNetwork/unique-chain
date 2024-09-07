@@ -82,7 +82,6 @@ sp-timestamp = { workspace = true }
 sp-transaction-pool = { workspace = true }
 substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
-try-runtime-cli = { workspace = true }
 unique-runtime = { workspace = true, optional = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
@@ -141,6 +140,5 @@ session-test-timings = [
 try-runtime = [
 	'opal-runtime?/try-runtime',
 	'quartz-runtime?/try-runtime',
-	'try-runtime-cli/try-runtime',
 	'unique-runtime?/try-runtime',
 ]
