@@ -53,10 +53,10 @@ pallet-refungible = { default-features = false, path = "pallets/refungible" }
 pallet-structure = { default-features = false, path = "pallets/structure" }
 pallet-test-utils = { default-features = false, path = "test-pallets/utils" }
 pallet-unique = { path = "pallets/unique", default-features = false }
-precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }
-struct-versioning = { path = "crates/struct-versioning" }
-uc-rpc = { path = "client/rpc" }
-unique-rpc = { path = "node/rpc" }
+precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro", default-features = false }
+struct-versioning = { path = "crates/struct-versioning", default-features = false }
+uc-rpc = { path = "client/rpc", default-features = false }
+unique-rpc = { path = "node/rpc", default-features = false }
 up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
 up-pov-estimate-rpc = { path = "primitives/pov-estimate-rpc", default-features = false }
@@ -70,9 +70,9 @@ unique-runtime = { path = "runtime/unique" }
 
 # Frontier (Unique patches over the Parity version)
 fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
+fc-consensus = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fc-db = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
+fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
