@@ -192,6 +192,10 @@ where
 	type SafeCallFilter = Nothing;
 	type Aliasers = Nothing;
 	type TransactionalProcessor = FrameTransactionalProcessor;
+	type HrmpNewChannelOpenRequestHandler = ();
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = PolkadotXcm;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -260,6 +264,7 @@ impl pallet_message_queue::Config for Runtime {
 	type HeapSize = ConstU32<{ 64 * 1024 }>;
 	type MaxStale = ConstU32<8>;
 	type ServiceWeight = MessageQueueServiceWeight;
+	type IdleMaxServiceWeight = ();
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {

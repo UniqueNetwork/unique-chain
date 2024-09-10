@@ -252,7 +252,6 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
-	#[cfg(feature = "lookahead")]
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
