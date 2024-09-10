@@ -73,6 +73,7 @@ std = [
 	'cumulus-primitives-utility/std',
 	'parachains-common/std',
 	'frame-executive/std',
+	"frame-metadata-hash-extension/std",
 	'frame-support/std',
 	'frame-system-rpc-runtime-api/std',
 	'frame-system/std',
@@ -230,6 +231,8 @@ governance = []
 preimage = []
 refungible = []
 session-test-timings = []
+metadata-hash = ["substrate-wasm-builder/metadata-hash"]
+on-chain-release-build = ["metadata-hash"]
 
 ################################################################################
 # local dependencies
@@ -245,13 +248,14 @@ cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }
 parachains-common = { workspace = true }
 frame-executive = { workspace = true }
+frame-metadata-hash-extension = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
-orml-traits = { workspace = true }
-orml-vesting = { workspace = true }
-orml-xcm-support = { workspace = true }
-orml-xtokens = { workspace = true }
+orml-traits = { default-features = false, workspace = true }
+orml-vesting = { default-features = false, workspace = true }
+orml-xcm-support = { default-features = false, workspace = true }
+orml-xtokens = { default-features = false, workspace = true }
 pallet-aura = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
@@ -276,7 +280,7 @@ sp-block-builder = { workspace = true }
 sp-consensus-aura = { workspace = true }
 sp-core = { workspace = true }
 sp-inherents = { workspace = true }
-sp-io = { workspace = true }
+sp-io = { default-features = false, workspace = true }
 sp-offchain = { workspace = true }
 sp-runtime = { workspace = true }
 sp-session = { workspace = true }
@@ -354,8 +358,9 @@ pallet-test-utils = { workspace = true }
 ################################################################################
 # Other Dependencies
 
+getrandom = { version = "0.2", features = ["js"] }
 hex-literal = { workspace = true }
 impl-trait-for-tuples = { workspace = true }
 
 [build-dependencies]
-substrate-wasm-builder = { workspace = true }
+substrate-wasm-builder = { workspace = true, default-features = true }

@@ -93,6 +93,7 @@ pub type SignedExtra = (
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 
 /// Executive: handles dispatch to the various modules.
