@@ -424,6 +424,12 @@ pub fn run() -> Result<()> {
 				let is_dev_service = matches![service_id, ServiceId::Dev]
 					|| relay_chain_id == Some("dev-service".into());
 
+				let para_id = extensions
+					.map(|e| e.para_id)
+					.ok_or("Could not find parachain ID in chain-spec.")?;
+
+				let para_id = ParaId::from(para_id);
+
 				if is_dev_service {
 					info!("Running Dev service");
 
@@ -432,13 +438,9 @@ pub fn run() -> Result<()> {
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
+						start_dev_node(config, para_id, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
-
-				let para_id = extensions
-					.map(|e| e.para_id)
-					.ok_or("Could not find parachain ID in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -446,8 +448,6 @@ pub fn run() -> Result<()> {
 						.iter()
 						.chain(cli.relaychain_args.iter()),
 				);
-
-				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(
