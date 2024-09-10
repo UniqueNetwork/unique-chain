@@ -68,6 +68,7 @@ impl RankedConfig for Runtime {
 	type RemoveOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type ExchangeOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type MemberSwappedHandler = ();
+	type MaxMemberCount = ();
 	type PromoteOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type DemoteOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type Polls = FellowshipReferenda;

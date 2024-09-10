@@ -215,7 +215,7 @@ ethereum = { version = "0.15.0", default-features = false, features = ["with-cod
 evm-core = { version = "0.41.0", default-features = false }
 hex-literal = "0.4.1"
 impl-trait-for-tuples = "0.2.2"
-jsonrpsee = { version = "0.22.5", features = ["macros", "server"] }
+jsonrpsee = { version = "0.23.2", features = ["macros", "server"] }
 log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }

@@ -857,6 +857,7 @@ where
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch, Network>(
 	config: Configuration,
+	para_id: ParaId,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
 	disable_autoseal_on_tx: bool,
@@ -1004,6 +1005,7 @@ where
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
+							para_id,
 							current_para_block,
 							current_para_block_head,
 							relay_offset: 1000,
@@ -1012,7 +1014,6 @@ where
 							xcm_config: cumulus_client_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
-								Default::default(),
 								Default::default(),
 							),
 							relay_randomness_config: (),
