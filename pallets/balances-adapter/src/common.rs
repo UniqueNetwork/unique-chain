@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 
 use frame_support::{
 	ensure, fail,
-	traits::tokens::{fungible::Mutate, Fortitude, Precision},
+	traits::tokens::{fungible::Mutate, Fortitude, Precision, Preservation},
 	weights::Weight,
 };
 use pallet_balances::{weights::SubstrateWeight as BalancesWeight, WeightInfo};
@@ -428,6 +428,7 @@ impl<T: Config> pallet_common::XcmExtensions<T> for NativeFungibleHandle<T> {
 			amount
 				.try_into()
 				.map_err(|_| sp_runtime::ArithmeticError::Overflow)?,
+			Preservation::Expendable,
 			Precision::Exact,
 			Fortitude::Polite,
 		)?;

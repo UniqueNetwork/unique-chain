@@ -117,40 +117,11 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 	type BlockNumber = BlockNumber;
 
 	fn current_block_number() -> Self::BlockNumber {
-		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
-			.map(|d| d.relay_parent_number)
-			.unwrap_or_default()
+		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::current_block_number()
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn set_block_number(block: Self::BlockNumber) {
 		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::set_block_number(block)
-	}
-}
-
-#[cfg(not(feature = "lookahead"))]
-pub(crate) struct CheckInherents;
-
-#[cfg(not(feature = "lookahead"))]
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		use crate::InherentDataExt;
-
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-
-		inherent_data.check_extrinsics(block)
 	}
 }
 
@@ -167,7 +138,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 		{
 			use frame_support::{storage::migration, BoundedVec};
 			use pallet_session::SessionManager;
-			use sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic};
+			use sp_runtime::RuntimeAppPublic;
 
 			use crate::config::pallets::MaxCollators;
 
@@ -187,7 +158,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					"Running migration of Aura authorities to Collator Selection invulnerables"
 				);
 
-				let invulnerables = pallet_aura::Pallet::<Runtime>::authorities()
+				let invulnerables = pallet_aura::Authorities::<Runtime>::get()
 					.iter()
 					.cloned()
 					.filter_map(|authority_id| {
@@ -228,6 +199,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					.collect::<Vec<_>>();
 
 				for (account, val, keys) in keys.iter() {
+					use sp_runtime::traits::OpaqueKeys;
 					for id in <Runtime as pallet_session::Config>::Keys::key_ids() {
 						<pallet_session::KeyOwner<Runtime>>::insert((*id, keys.get_raw(*id)), val)
 					}

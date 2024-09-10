@@ -43,7 +43,7 @@ macro_rules! impl_common_runtime_apis {
 			ApplyExtrinsicResult, DispatchError, ExtrinsicInclusionMode,
 		};
 		use frame_support::{
-			genesis_builder_helper::{build_config, create_default_config},
+			genesis_builder_helper::{build_state, get_preset},
 			pallet_prelude::Weight,
 			traits::OnFinalize,
 		};
@@ -497,7 +497,7 @@ macro_rules! impl_common_runtime_apis {
 				}
 
 				fn authorities() -> Vec<AuraId> {
-					Aura::authorities().to_vec()
+					pallet_aura::Authorities::<Runtime>::get().to_vec()
 				}
 			}
 
@@ -703,9 +703,7 @@ macro_rules! impl_common_runtime_apis {
 			/// Should never be used, yet still required because of https://github.com/paritytech/polkadot-sdk/issues/27
 			/// Not allowed to panic, because rpc may be called using native runtime, thus causing thread panic.
 			impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
-				fn convert_transaction(
-					transaction: pallet_ethereum::Transaction
-				) -> <Block as BlockT>::Extrinsic {
+				fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
 					UncheckedExtrinsic::new_unsigned(
 						pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 					)
@@ -713,12 +711,16 @@ macro_rules! impl_common_runtime_apis {
 			}
 
 			impl sp_genesis_builder::GenesisBuilder<Block> for Runtime {
-				fn create_default_config() -> Vec<u8> {
-					create_default_config::<RuntimeGenesisConfig>()
+				fn build_state(config: Vec<u8>) -> sp_genesis_builder::Result {
+					build_state::<RuntimeGenesisConfig>(config)
 				}
-
-				fn build_config(config: Vec<u8>) -> sp_genesis_builder::Result {
-					build_config::<RuntimeGenesisConfig>(config)
+		
+				fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
+					get_preset::<RuntimeGenesisConfig>(id, |_| None)
+				}
+		
+				fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
+					vec![]
 				}
 			}
 		}
