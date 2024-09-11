@@ -53,10 +53,10 @@ pallet-refungible = { default-features = false, path = "pallets/refungible" }
 pallet-structure = { default-features = false, path = "pallets/structure" }
 pallet-test-utils = { default-features = false, path = "test-pallets/utils" }
 pallet-unique = { path = "pallets/unique", default-features = false }
-precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro", default-features = false }
-struct-versioning = { path = "crates/struct-versioning", default-features = false }
-uc-rpc = { path = "client/rpc", default-features = false }
-unique-rpc = { path = "node/rpc", default-features = false }
+precompile-utils-macro = { path = "runtime/common/ethereum/precompiles/utils/macro" }
+struct-versioning = { path = "crates/struct-versioning" }
+uc-rpc = { path = "client/rpc" }
+unique-rpc = { path = "node/rpc" }
 up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
 up-pov-estimate-rpc = { path = "primitives/pov-estimate-rpc", default-features = false }
@@ -70,9 +70,9 @@ unique-runtime = { path = "runtime/unique" }
 
 # Frontier (Unique patches over the Parity version)
 fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-consensus = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
+fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fc-db = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-mapping-sync = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
 fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
@@ -88,14 +88,14 @@ pallet-evm-precompile-simple = { default-features = false, git = "https://github
 
 # Parity
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.6.5" }
-cumulus-client-cli = { default-features = false, version = "0.15.0" }
-cumulus-client-collator = { default-features = false, version = "0.15.0" }
-cumulus-client-consensus-aura = { default-features = false, version = "0.15.0" }
-cumulus-client-consensus-common = { default-features = false, version = "0.15.0" }
-cumulus-client-consensus-proposer = { default-features = false, version = "0.14.0" }
-cumulus-client-network = { default-features = false, version = "0.15.0" }
-cumulus-client-service = { default-features = false, version = "0.15.0" }
-cumulus-client-parachain-inherent = { default-features = false, version = "0.9.0" }
+cumulus-client-cli = "0.15.0"
+cumulus-client-collator = "0.15.0"
+cumulus-client-consensus-aura = "0.15.0"
+cumulus-client-consensus-common = "0.15.0"
+cumulus-client-consensus-proposer = "0.14.0"
+cumulus-client-network = "0.15.0"
+cumulus-client-service = "0.15.0"
+cumulus-client-parachain-inherent = "0.9.0"
 cumulus-pallet-aura-ext = { default-features = false, version = "0.15.0" }
 cumulus-pallet-dmp-queue = { default-features = false, version = "0.15.0" }
 cumulus-pallet-parachain-system = { default-features = false, version = "0.15.0" }
@@ -107,9 +107,9 @@ cumulus-primitives-parachain-inherent = { default-features = false, version = "0
 cumulus-primitives-timestamp = { default-features = false, version = "0.14.0" }
 cumulus-primitives-utility = { default-features = false, version = "0.15.0" }
 cumulus-relay-chain-inprocess-interface = "0.15.0"
-cumulus-relay-chain-interface = { default-features = false, version = "0.15.0" }
-cumulus-relay-chain-minimal-node = { default-features = false, version = "0.15.0" }
-cumulus-test-relay-sproof-builder = { default-features = false, version = "0.14.0" }
+cumulus-relay-chain-interface = "0.15.0"
+cumulus-relay-chain-minimal-node = "0.15.0"
+cumulus-test-relay-sproof-builder = "0.14.0"
 parachains-common = { default-features = false, version = "15.0.0" }
 frame-executive = { default-features = false, version = "36.0.0" }
 frame-metadata-hash-extension = { default-features = false, version = "0.4.0" }
@@ -131,83 +131,84 @@ pallet-state-trie-migration = { default-features = false, version = "37.0.0" }
 pallet-sudo = { default-features = false, version = "36.0.0" }
 pallet-timestamp = { default-features = false, version = "35.0.0" }
 pallet-transaction-payment = { default-features = false, version = "36.0.0" }
-pallet-transaction-payment-rpc = { default-features = false, version = "38.0.0" }
+pallet-transaction-payment-rpc = "38.0.0"
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "36.0.0" }
 pallet-treasury = { default-features = false, version = "35.0.0" }
 pallet-utility = { default-features = false, version = "36.0.0" }
 pallet-xcm = { default-features = false, version = "15.0.0" }
 pallet-message-queue = { default-features = false, version = "39.0.0" }
 parity-scale-codec = { version = "3.6.5", features = ["derive"], default-features = false }
-polkadot-cli = { default-features = false, version = "15.0.0" }
+polkadot-cli = "15.0.0"
 polkadot-parachain-primitives = { default-features = false, version = "13.0.0" }
-polkadot-primitives = { default-features = false, version = "14.0.0" }
+polkadot-primitives = "14.0.0"
 polkadot-runtime-common = { default-features = false, version = "15.0.0" }
-polkadot-service = { default-features = false, version = "15.0.0" }
-sc-basic-authorship = { default-features = false, version = "0.42.0" }
-sc-chain-spec = { default-features = false, version = "35.0.0" }
-sc-cli = { default-features = false, version = "0.44.0" }
-sc-client-api = { default-features = false, version = "35.1.0" }
-sc-consensus = { default-features = false, version = "0.41.0" }
-sc-consensus-manual-seal = { default-features = false, version = "0.43.0" }
-sc-executor = { default-features = false, version = "0.39.0" }
-sc-network = { default-features = false, version = "0.42.0" }
-sc-network-sync = { default-features = false, version = "0.41.0" }
-sc-rpc = { default-features = false, version = "37.0.0" }
-sc-rpc-api = { default-features = false, version = "0.41.0" }
-sc-service = { default-features = false, version = "0.43.0" }
-sc-sysinfo = { default-features = false, version = "35.0.0" }
-sc-telemetry = { default-features = false, version = "22.0.0" }
-sc-tracing = { default-features = false, version = "35.0.0" }
-sc-transaction-pool = { default-features = false, version = "35.0.0" }
+polkadot-service = "15.0.0"
+sc-basic-authorship = "0.42.0"
+sc-chain-spec = "35.0.0"
+sc-cli = "0.44.0"
+sc-client-api = "35.1.0"
+sc-consensus = "0.41.0"
+sc-consensus-manual-seal = "0.43.0"
+sc-executor = "0.39.0"
+sc-network = "0.42.0"
+sc-network-sync = "0.41.0"
+sc-rpc = "37.0.0"
+sc-rpc-api = "0.41.0"
+sc-service = "0.43.0"
+sc-sysinfo = "35.0.0"
+sc-telemetry = "22.0.0"
+sc-tracing = "35.0.0"
+sc-transaction-pool = "35.0.0"
 scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
 sp-api = { default-features = false, version = "33.0.0" }
 sp-arithmetic = { default-features = false, version = "26.0.0" }
 sp-block-builder = { default-features = false, version = "33.0.0" }
-sp-blockchain = { default-features = false, version = "35.1.0" }
+sp-blockchain = "35.1.0"
 sp-consensus-aura = { default-features = false, version = "0.39.0" }
 sp-core = { default-features = false, version = "34.0.0" }
-sp-externalities = { default-features = false, version = "0.29.0" }
+sp-externalities = "0.29.0"
 sp-inherents = { default-features = false, version = "33.0.0" }
 sp-io = { default-features = false, version = "37.0.0" }
-sp-keystore = { default-features = false, version = "0.40.0" }
+sp-keystore = "0.40.0"
 sp-offchain = { default-features = false, version = "33.0.0" }
 sp-runtime = { default-features = false, version = "38.0.0" }
 sp-session = { default-features = false, version = "34.0.0" }
 sp-staking = { default-features = false, version = "33.0.0" }
-sp-state-machine = { default-features = false, version = "0.42.0" }
+sp-state-machine = "0.42.0"
 sp-std = { default-features = false, version = "14.0.0" }
 sp-storage = { default-features = false, version = "21.0.0" }
-sp-timestamp = { default-features = false, version = "33.0.0" }
-sp-tracing = { default-features = false, version = "17.0.0" }
+sp-timestamp = "33.0.0"
+sp-tracing = "17.0.0"
 sp-transaction-pool = { default-features = false, version = "33.0.0" }
 sp-trie = { default-features = false, version = "36.0.0" }
 sp-version = { default-features = false, version = "36.0.0" }
 sp-weights = { default-features = false, version = "31.0.0" }
 sp-genesis-builder = { default-features = false, version = "0.14.0" }
 staging-parachain-info = { default-features = false, version = "0.15.0" }
-staging-xcm = { default-features = false, version = "14.1.0" }
+staging-xcm = { default-features = false, version = "14.0.3" }
 staging-xcm-builder = { default-features = false, version = "15.0.0" }
 staging-xcm-executor = { default-features = false, version = "15.0.0" }
-substrate-frame-rpc-system = { default-features = false, version = "36.0.0" }
-substrate-prometheus-endpoint = { default-features = false, version = "0.17.0" }
+substrate-frame-rpc-system = "36.0.0"
+substrate-prometheus-endpoint = "0.17.0"
 
 # Parity: Build utils
-substrate-build-script-utils = { default-features = false, version = "11.0.0" }
-substrate-wasm-builder = { default-features = false, version = "23.0.0" }
+substrate-build-script-utils = "11.0.0"
+substrate-wasm-builder = "23.0.0"
 
 # Parity: Benchmarking
 frame-benchmarking = { default-features = false, version = "36.0.0" }
-frame-benchmarking-cli = { default-features = false, version = "40.0.0" }
+frame-benchmarking-cli = "40.0.0"
 frame-system-benchmarking = { default-features = false, version = "36.0.0" }
 
 # Parity: Try Runtime
 frame-try-runtime = { default-features = false, version = "0.42.0" }
+try-runtime-cli = "0.41.0"
 
 # ORML
-orml-traits = { default-features = false, version = "0.13.0" }
-orml-vesting = { default-features = false, version = "0.13.0" }
-orml-xcm-support = { default-features = false, version = "0.13.0" }
-orml-xtokens = { default-features = false, version = "0.13.0" }
+orml-traits = { version = "0.13.0", default-features = false }
+orml-vesting = { version = "0.13.0", default-features = false }
+orml-xcm-support = { version = "0.13.0", default-features = false }
+orml-xtokens = { version = "0.13.0", default-features = false }
 
 # Other
 derivative = { version = "2.2.0", features = ["use_core"] }
