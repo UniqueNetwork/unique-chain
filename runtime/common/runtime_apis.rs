@@ -486,11 +486,6 @@ macro_rules! impl_common_runtime_apis {
 
 			impl sp_consensus_aura::AuraApi<Block, AuraId> for Runtime {
 				fn slot_duration() -> sp_consensus_aura::SlotDuration {
-					#[cfg(not(feature = "lookahead"))]
-					{
-						sp_consensus_aura::SlotDuration::from_millis(Aura::slot_duration())
-					}
-					#[cfg(feature = "lookahead")]
 					{
 						sp_consensus_aura::SlotDuration::from_millis(up_common::constants::SLOT_DURATION)
 					}
@@ -690,7 +685,6 @@ macro_rules! impl_common_runtime_apis {
 				}
 			}
 
-			#[cfg(feature = "lookahead")]
 			impl cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> for Runtime {
 				fn can_build_upon(
 					included_hash: <Block as BlockT>::Hash,

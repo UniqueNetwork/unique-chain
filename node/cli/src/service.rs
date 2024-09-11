@@ -25,11 +25,6 @@ use std::{
 
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_collator::service::CollatorService;
-#[cfg(not(feature = "lookahead"))]
-use cumulus_client_consensus_aura::collators::basic::{
-	run as run_aura, Params as BuildAuraConsensusParams,
-};
-#[cfg(feature = "lookahead")]
 use cumulus_client_consensus_aura::collators::lookahead::{
 	run as run_aura, Params as BuildAuraConsensusParams,
 };
@@ -227,11 +222,6 @@ ez_bounds!(
 	{
 	}
 );
-#[cfg(not(feature = "lookahead"))]
-ez_bounds!(
-	pub trait LookaheadApiDep {}
-);
-#[cfg(feature = "lookahead")]
 ez_bounds!(
 	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
 );
@@ -773,7 +763,6 @@ where
 		create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 		block_import,
 		para_client: client.clone(),
-		#[cfg(feature = "lookahead")]
 		para_backend: backend,
 		para_id,
 		relay_client: relay_chain_interface,
@@ -782,12 +771,8 @@ where
 		proposer,
 		collator_service,
 		// With async-baking, we allowed to be both slower (longer authoring) and faster (multiple para blocks per relay block)
-		#[cfg(not(feature = "lookahead"))]
-		authoring_duration: Duration::from_millis(500),
-		#[cfg(feature = "lookahead")]
 		authoring_duration: Duration::from_millis(1500),
 		overseer_handle,
-		#[cfg(feature = "lookahead")]
 		code_hash_provider: move |block_hash| {
 			client
 				.code_at(block_hash)
@@ -797,18 +782,12 @@ where
 		},
 		collator_key,
 		relay_chain_slot_duration,
-		#[cfg(not(feature = "lookahead"))]
-		collation_request_receiver: None,
-		#[cfg(feature = "lookahead")]
 		reinitialize: false,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
 		"aura",
 		None,
-		#[cfg(not(feature = "lookahead"))]
-		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _>(params),
-		#[cfg(feature = "lookahead")]
 		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _, _>(params),
 	);
 	Ok(())
