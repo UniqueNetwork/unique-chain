@@ -231,6 +231,7 @@ fast-inflation = []
 foreign-assets = []
 gov-test-timings = []
 governance = []
+lookahead = ['cumulus-pallet-parachain-system/parameterized-consensus-hook', 'pallet-aura/experimental']
 preimage = []
 refungible = []
 session-test-timings = []
@@ -244,6 +245,7 @@ cumulus-pallet-dmp-queue = { workspace = true }
 cumulus-pallet-parachain-system = { workspace = true }
 cumulus-pallet-xcm = { workspace = true }
 cumulus-pallet-xcmp-queue = { workspace = true }
+cumulus-primitives-aura = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }
