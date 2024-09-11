@@ -22,7 +22,7 @@ targets = ['x86_64-unknown-linux-gnu']
 [dependencies]
 clap = "4.4"
 futures = "0.3.28"
-serde_json = "1.0"
+serde_json = "1.0.117"
 tokio = { version = "1.32", features = ["time"] }
 
 log = { workspace = true }
