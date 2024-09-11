@@ -361,7 +361,6 @@ pallet-test-utils = { workspace = true }
 ################################################################################
 # Other Dependencies
 
-getrandom = { version = "0.2", features = ["js"] }
 hex-literal = { workspace = true }
 impl-trait-for-tuples = { workspace = true }
 
