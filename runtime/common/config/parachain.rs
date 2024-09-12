@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+use cumulus_pallet_parachain_system::{consensus_hook::UnincludedSegmentCapacity, RelayChainStateProof};
 use cumulus_primitives_core::AggregateMessageOrigin;
 use frame_support::{parameter_types, traits::EnqueueWithOrigin, weights::Weight};
 use up_common::constants::*;
@@ -42,7 +43,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type CheckAssociatedRelayNumber =
 		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 	#[cfg(feature = "lookahead")]
-	type ConsensusHook = ConsensusHook;
+	type ConsensusHook = ConsensusHookWrapper;
 }
 
 impl staging_parachain_info::Config for Runtime {}
@@ -64,3 +65,16 @@ pub type ConsensusHook = cumulus_pallet_aura_ext::FixedVelocityConsensusHook<
 	BLOCK_PROCESSING_VELOCITY,
 	UNINCLUDED_SEGMENT_CAPACITY,
 >;
+
+pub struct ConsensusHookWrapper;
+
+impl cumulus_pallet_parachain_system::ConsensusHook for ConsensusHookWrapper {
+	fn on_state_proof(state_proof: &RelayChainStateProof) -> (Weight, UnincludedSegmentCapacity) {
+		let slot = pallet_aura::Pallet::<Runtime>::current_slot();
+		if *slot == 0 {
+			cumulus_pallet_parachain_system::ExpectParentIncluded::on_state_proof(state_proof)
+		} else {
+			ConsensusHook::on_state_proof(state_proof)
+		}
+	}
+}
