@@ -835,11 +835,11 @@ export class ArrangeGroup {
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
     const findCreationDate = (block: any) => {
-      const humanBlock = block.toHuman();
+      const methods = block.block.extrinsics.map((ext: any) => ext.method.toHuman());
       let date;
-      humanBlock.block.extrinsics.forEach((ext: any) => {
-        if(ext.method.section === 'timestamp') {
-          date = Number(ext.method.args.now.replaceAll(',', ''));
+      methods.forEach((method: any) => {
+        if(method.section === 'timestamp') {
+          date = Number(method.args.now.replaceAll(',', ''));
         }
       });
       return date;

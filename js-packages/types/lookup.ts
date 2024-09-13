@@ -525,14 +525,14 @@ export default {
   StagingXcmV4Junctions: {
     _enum: {
       Here: 'Null',
-      X1: '[StagingXcmV4Junction;1]',
-      X2: '[StagingXcmV4Junction;2]',
-      X3: '[StagingXcmV4Junction;3]',
-      X4: '[StagingXcmV4Junction;4]',
-      X5: '[StagingXcmV4Junction;5]',
-      X6: '[StagingXcmV4Junction;6]',
-      X7: '[StagingXcmV4Junction;7]',
-      X8: '[StagingXcmV4Junction;8]'
+      X1: '[Lookup57;1]',
+      X2: '[Lookup57;2]',
+      X3: '[Lookup57;3]',
+      X4: '[Lookup57;4]',
+      X5: '[Lookup57;5]',
+      X6: '[Lookup57;6]',
+      X7: '[Lookup57;7]',
+      X8: '[Lookup57;8]'
     }
   },
   /**

@@ -45,7 +45,6 @@
     ]
   },
   "scripts": {
-    "postinstall": "npx patch-package",
     "prepublish": "yarn tsc",
     "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
