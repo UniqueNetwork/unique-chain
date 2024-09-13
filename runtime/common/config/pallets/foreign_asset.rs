@@ -11,29 +11,13 @@ use crate::runtime_common::config::governance;
 use crate::{
 	runtime_common::config::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,
-		xcm::{LocationToAccountId, SelfLocation},
+		xcm::{LocationToCrossAccountId, SelfLocation},
 	},
 	RelayNetwork, Runtime, RuntimeEvent,
 };
 
 parameter_types! {
 	pub ForeignAssetPalletId: PalletId = PalletId(*b"frgnasts");
-}
-
-pub struct LocationToCrossAccountId;
-impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
-	for LocationToCrossAccountId
-{
-	fn convert_location(location: &Location) -> Option<ConfigCrossAccountId> {
-		LocationToAccountId::convert_location(location)
-			.map(ConfigCrossAccountId::from_sub)
-			.or_else(|| {
-				let eth_address =
-					AccountKey20Aliases::<RelayNetwork, H160>::convert_location(location)?;
-
-				Some(ConfigCrossAccountId::from_eth(eth_address))
-			})
-	}
 }
 
 impl pallet_foreign_assets::Config for Runtime {

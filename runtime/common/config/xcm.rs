@@ -24,30 +24,44 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
+use pallet_evm::account::CrossAccountId;
 use pallet_foreign_assets::FreeForAll;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
+use sp_core::H160;
+use sp_runtime::traits::MaybeEquivalence;
 use sp_std::marker::PhantomData;
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
-	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor,
-	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
+	unique_instances::{
+		RestoreOnCreate, SimpleStash, StashOnDestroy, UniqueInstancesAdapter, UniqueInstancesOps,
+	},
+	AccountId32Aliases, AccountKey20Aliases, AsPrefixedGeneralIndex, EnsureXcmOrigin,
+	FixedWeightBounds, FrameTransactionalProcessor, MatchInClassInstances,
+	MatchedConvertedConcreteId, ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative,
+	SiblingParachainConvertsVia, SignedAccountId32AsNative, SignedToAccountId32,
+	SovereignSignedViaLocation,
 };
 use staging_xcm_executor::{
 	traits::{Properties, ShouldExecute},
 	XcmExecutor,
 };
 use up_common::{constants::MAXIMUM_BLOCK_WEIGHT, types::AccountId};
+use up_data_structs::{CollectionId, TokenId};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	runtime_common::config::parachain::RelayMsgOrigin, xcm_barrier::Barrier, AllPalletsWithSystem,
-	Balances, ForeignAssets, MessageQueue, ParachainInfo, ParachainSystem, PolkadotXcm,
-	RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
+	runtime_common::config::{
+		ethereum::CrossAccountId as ConfigCrossAccountId, parachain::RelayMsgOrigin,
+		substrate::TreasuryCrossAccount,
+	},
+	xcm_barrier::Barrier,
+	AllPalletsWithSystem, Balances, ForeignAssets, MessageQueue, Nonfungible, ParachainInfo,
+	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
+	XcmpQueue,
 };
 
 parameter_types! {
@@ -58,6 +72,7 @@ parameter_types! {
 		Parachain(ParachainInfo::get().into()),
 	).into();
 	pub SelfLocation: Location = Location::new(1, Parachain(ParachainInfo::get().into()));
+	pub HereLocation: Location = Location::here();
 
 	// One XCM operation is 1_000_000 weight - almost certainly a conservative estimate.
 	pub UnitWeightCost: Weight = Weight::from_parts(1_000_000, 1000); // ?
@@ -76,6 +91,22 @@ pub type LocationToAccountId = (
 	// Straight up local `AccountId32` origins just alias directly to `AccountId`.
 	AccountId32Aliases<RelayNetwork, AccountId>,
 );
+
+pub struct LocationToCrossAccountId;
+impl staging_xcm_executor::traits::ConvertLocation<ConfigCrossAccountId>
+	for LocationToCrossAccountId
+{
+	fn convert_location(location: &Location) -> Option<ConfigCrossAccountId> {
+		LocationToAccountId::convert_location(location)
+			.map(ConfigCrossAccountId::from_sub)
+			.or_else(|| {
+				let eth_address =
+					AccountKey20Aliases::<RelayNetwork, H160>::convert_location(location)?;
+
+				Some(ConfigCrossAccountId::from_eth(eth_address))
+			})
+	}
+}
 
 /// No local origins on this chain are allowed to dispatch XCM sends/executions.
 pub type LocalOriginToLocation = (SignedToAccountId32<RuntimeOrigin, AccountId, RelayNetwork>,);
@@ -164,6 +195,52 @@ pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 
 pub type Trader = FreeForAll;
 
+pub type TreasuryNftStash = SimpleStash<TreasuryCrossAccount, Nonfungible>;
+
+pub struct GeneralIndexAsCollectionId;
+impl MaybeEquivalence<u128, CollectionId> for GeneralIndexAsCollectionId {
+	fn convert(&a: &u128) -> Option<CollectionId> {
+		Some(CollectionId(a.try_into().ok()?))
+	}
+
+	fn convert_back(_: &CollectionId) -> Option<u128> {
+		None
+	}
+}
+
+pub struct AssetInstanceAsTokenId;
+impl MaybeEquivalence<AssetInstance, TokenId> for AssetInstanceAsTokenId {
+	fn convert(a: &AssetInstance) -> Option<TokenId> {
+		match a {
+			AssetInstance::Index(index) => Some(TokenId((*index).try_into().ok()?)),
+			_ => None,
+		}
+	}
+
+	fn convert_back(_: &TokenId) -> Option<AssetInstance> {
+		None
+	}
+}
+
+pub type OriginalNftsMatcher = MatchedConvertedConcreteId<
+	CollectionId,
+	TokenId,
+	Everything,
+	AsPrefixedGeneralIndex<HereLocation, CollectionId, GeneralIndexAsCollectionId>,
+	AssetInstanceAsTokenId,
+>;
+
+pub type OriginalNftsTransactor = UniqueInstancesAdapter<
+	ConfigCrossAccountId,
+	LocationToCrossAccountId,
+	MatchInClassInstances<OriginalNftsMatcher>,
+	UniqueInstancesOps<
+		RestoreOnCreate<TreasuryNftStash>,
+		Nonfungible,
+		StashOnDestroy<TreasuryNftStash>,
+	>,
+>;
+
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
 impl<T> staging_xcm_executor::Config for XcmExecutorConfig<T>
 where
@@ -172,7 +249,7 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = ForeignAssets;
+	type AssetTransactor = (ForeignAssets, OriginalNftsTransactor);
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
