@@ -31,7 +31,7 @@ use frame_support::{
 };
 use frame_system::pallet_prelude::*;
 use pallet_common::{
-	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
+	dispatch::CollectionDispatch, erc::CrossAccountId, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
@@ -52,41 +52,6 @@ mod benchmarking;
 
 pub use module::*;
 pub use weights::WeightInfo;
-
-/// Status of storage migration from an old XCM version to a new one.
-#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub enum MigrationStatus {
-	V3ToV4(MigrationStatusV3ToV4),
-}
-
-/// Status of storage migration from XCMv3 to XCMv4.
-#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub enum MigrationStatusV3ToV4 {
-	/// The migration is completed.
-	Done,
-
-	/// An asset is skipped during the migration
-	/// due to its inconsistent state.
-	SkippedInconsistentAssetData(staging_xcm::v3::AssetId),
-
-	/// An asset instance is skipped during the migration
-	/// due to its inconsistent state.
-	SkippedInconsistentAssetInstanceData {
-		asset_id: staging_xcm::v3::AssetId,
-		asset_instance: staging_xcm::v3::AssetInstance,
-	},
-
-	/// An asset is skipped during the migration
-	/// because it couldn't be converted to the new XCM version.
-	SkippedNotConvertibleAssetId(staging_xcm::v3::AssetId),
-
-	/// An asset instance is skipped during the migration
-	/// because it couldn't be converted to the new XCM version.
-	SkippedNotConvertibleAssetInstance {
-		asset_id: staging_xcm::v3::AssetId,
-		asset_instance: staging_xcm::v3::AssetInstance,
-	},
-}
 
 #[frame_support::pallet]
 pub mod module {
@@ -139,9 +104,6 @@ pub mod module {
 			collection_id: CollectionId,
 			asset_id: Box<VersionedAssetId>,
 		},
-
-		/// The migration status.
-		MigrationStatus(MigrationStatus),
 	}
 
 	/// The corresponding collections of foreign assets.
@@ -155,30 +117,6 @@ pub mod module {
 	#[pallet::getter(fn collection_to_foreign_asset)]
 	pub type CollectionToForeignAsset<T: Config> =
 		StorageMap<_, Blake2_128Concat, CollectionId, staging_xcm::v4::AssetId, OptionQuery>;
-
-	/// The correponding NFT token id of reserve NFTs
-	#[pallet::storage]
-	#[pallet::getter(fn foreign_reserve_asset_instance_to_token_id)]
-	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
-		Hasher1 = Blake2_128Concat,
-		Key1 = CollectionId,
-		Hasher2 = Blake2_128Concat,
-		Key2 = staging_xcm::v4::AssetInstance,
-		Value = TokenId,
-		QueryKind = OptionQuery,
-	>;
-
-	/// The correponding reserve NFT of a token ID
-	#[pallet::storage]
-	#[pallet::getter(fn token_id_to_foreign_reserve_asset_instance)]
-	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
-		Hasher1 = Blake2_128Concat,
-		Key1 = CollectionId,
-		Hasher2 = Blake2_128Concat,
-		Key2 = TokenId,
-		Value = staging_xcm::v4::AssetInstance,
-		QueryKind = OptionQuery,
-	>;
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(staging_xcm::v4::VERSION as u16);
 
@@ -257,25 +195,6 @@ pub mod module {
 			<Pallet<T>>::in_code_storage_version().put::<Pallet<T>>();
 		}
 	}
-
-	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
-		fn on_runtime_upgrade() -> Weight {
-			if Self::on_chain_storage_version() < staging_xcm::v4::VERSION as u16 {
-				let put_version_weight = T::DbWeight::get().writes(1);
-				let fix_foreign_flag_weight = Self::fix_foreign_flag();
-				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
-
-				Self::in_code_storage_version().put::<Self>();
-
-				put_version_weight
-					.saturating_add(fix_foreign_flag_weight)
-					.saturating_add(weight_v3_to_v4)
-			} else {
-				Weight::zero()
-			}
-		}
-	}
 }
 
 mod v3_storage {
@@ -313,149 +232,6 @@ mod v3_storage {
 }
 
 impl<T: Config> Pallet<T> {
-	fn fix_foreign_flag() -> Weight {
-		let mut weight = Weight::zero();
-
-		for (_, collection_id) in v3_storage::ForeignAssetToCollection::<T>::iter() {
-			pallet_common::CollectionById::<T>::mutate(collection_id, |collection| {
-				if let Some(collection) = collection {
-					collection.flags.foreign = true;
-				}
-			});
-
-			weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
-		}
-
-		weight
-	}
-
-	fn migrate_v3_to_v4() -> Weight {
-		let event_weight = T::DbWeight::get().writes(1);
-		let collection_migration_weight = Self::migrate_collections();
-
-		Self::deposit_event(Event::<T>::MigrationStatus(MigrationStatus::V3ToV4(
-			MigrationStatusV3ToV4::Done,
-		)));
-
-		collection_migration_weight.saturating_add(event_weight)
-	}
-
-	fn migrate_collections() -> Weight {
-		use MigrationStatus::*;
-		use MigrationStatusV3ToV4::*;
-
-		let mut weight = Weight::zero();
-
-		for (fwd_asset_id, collection_id) in v3_storage::ForeignAssetToCollection::<T>::drain() {
-			let bwd_asset_id = v3_storage::CollectionToForeignAsset::<T>::take(collection_id);
-			weight = weight.saturating_add(T::DbWeight::get().reads(2));
-
-			let Some(bwd_asset_id) = bwd_asset_id else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetData(fwd_asset_id),
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			};
-
-			if fwd_asset_id != bwd_asset_id {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetData(fwd_asset_id),
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			}
-
-			let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(fwd_asset_id) else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedNotConvertibleAssetId(fwd_asset_id),
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			};
-
-			<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
-			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
-			weight = weight.saturating_add(T::DbWeight::get().writes(2));
-
-			let migrate_tokens_weight = Self::migrate_tokens(&fwd_asset_id, collection_id);
-			weight = weight.saturating_add(migrate_tokens_weight);
-		}
-
-		weight
-	}
-
-	fn migrate_tokens(asset_id: &staging_xcm::v3::AssetId, collection_id: CollectionId) -> Weight {
-		use MigrationStatus::*;
-		use MigrationStatusV3ToV4::*;
-
-		let mut weight = Weight::zero();
-
-		for (fwd_asset_instance, token_id) in
-			v3_storage::ForeignReserveAssetInstanceToTokenId::<T>::drain_prefix(collection_id)
-		{
-			let bwd_asset_instance = v3_storage::TokenIdToForeignReserveAssetInstance::<T>::take(
-				collection_id,
-				token_id,
-			);
-			weight = weight.saturating_add(T::DbWeight::get().reads(2));
-
-			let Some(bwd_asset_instance) = bwd_asset_instance else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetInstanceData {
-						asset_id: *asset_id,
-						asset_instance: fwd_asset_instance,
-					},
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			};
-
-			if fwd_asset_instance != bwd_asset_instance {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetInstanceData {
-						asset_id: *asset_id,
-						asset_instance: fwd_asset_instance,
-					},
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			}
-
-			let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(fwd_asset_instance)
-			else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedNotConvertibleAssetInstance {
-						asset_id: *asset_id,
-						asset_instance: fwd_asset_instance,
-					},
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			};
-
-			<ForeignReserveAssetInstanceToTokenId<T>>::insert(
-				collection_id,
-				&asset_instance,
-				token_id,
-			);
-			<TokenIdToForeignReserveAssetInstance<T>>::insert(
-				collection_id,
-				token_id,
-				asset_instance,
-			);
-			weight = weight.saturating_add(T::DbWeight::get().writes(2));
-		}
-
-		weight
-	}
-
 	fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
@@ -519,122 +295,6 @@ impl<T: Config> Pallet<T> {
 			.or_else(|| Self::local_asset_id_to_collection(asset_id))
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
-
-	/// Converts an XCM asset instance of local collection to the Unique Network's token ID.
-	///
-	/// The asset instance corresponds to the Unique Network's token ID if it is in the following format:
-	/// `AssetInstance::Index(<token ID>)`.
-	///
-	/// If the asset instance is not in the valid format or the `<token ID>` can't fit into the valid token ID,
-	/// `None` will be returned.
-	///
-	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
-	/// It returns `None` when it failed to convert the `asset_instance` to a local ID.
-	fn local_asset_instance_to_token_id(asset_instance: &AssetInstance) -> Option<TokenId> {
-		match asset_instance {
-			AssetInstance::Index(token_id) => Some(TokenId((*token_id).try_into().ok()?)),
-			_ => None,
-		}
-	}
-
-	/// Obtains the token ID of the `asset_instance` in the collection.
-	///
-	/// Note: this function can return `Some` containing the token ID of a non-existing NFT.
-	/// It returns `None` when it failed to convert the `asset_instance` to a local ID.
-	fn asset_instance_to_token_id(
-		collection_locality: CollectionLocality,
-		asset_instance: &AssetInstance,
-	) -> Option<TokenId> {
-		match collection_locality {
-			CollectionLocality::Local(_) => Self::local_asset_instance_to_token_id(asset_instance),
-			CollectionLocality::Foreign(collection_id) => {
-				Self::foreign_reserve_asset_instance_to_token_id(collection_id, asset_instance)
-			}
-		}
-	}
-
-	/// Creates a foreign item in the the collection.
-	fn create_foreign_asset_instance(
-		xcm_ext: &dyn XcmExtensions<T>,
-		collection_id: CollectionId,
-		asset_instance: &AssetInstance,
-		to: T::CrossAccountId,
-	) -> DispatchResult {
-		let derivative_token_id = xcm_ext.create_item(
-			&Self::pallet_account(),
-			to,
-			CreateItemData::NFT(Default::default()),
-			&ZeroBudget,
-		)?;
-
-		<ForeignReserveAssetInstanceToTokenId<T>>::insert(
-			collection_id,
-			asset_instance,
-			derivative_token_id,
-		);
-
-		<TokenIdToForeignReserveAssetInstance<T>>::insert(
-			collection_id,
-			derivative_token_id,
-			asset_instance,
-		);
-
-		Ok(())
-	}
-
-	/// Deposits an asset instance to the `to` account.
-	///
-	/// Either transfers an existing item from the pallet's account
-	/// or creates a foreign item.
-	fn deposit_asset_instance(
-		xcm_ext: &dyn XcmExtensions<T>,
-		collection_locality: CollectionLocality,
-		asset_instance: &AssetInstance,
-		to: T::CrossAccountId,
-	) -> XcmResult {
-		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance);
-
-		let deposit_result = match (collection_locality, token_id) {
-			(_, Some(token_id)) => {
-				let depositor = &Self::pallet_account();
-				let from = depositor;
-				let amount = 1;
-
-				xcm_ext.transfer_item(depositor, from, &to, token_id, amount, &ZeroBudget)
-			}
-			(CollectionLocality::Foreign(collection_id), None) => {
-				Self::create_foreign_asset_instance(xcm_ext, collection_id, asset_instance, to)
-			}
-			(CollectionLocality::Local(_), None) => {
-				return Err(XcmExecutorError::InstanceConversionFailed.into());
-			}
-		};
-
-		deposit_result
-			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item deposit failed"))
-	}
-
-	/// Withdraws an asset instance from the `from` account.
-	///
-	/// Transfers the asset instance to the pallet's account.
-	fn withdraw_asset_instance(
-		xcm_ext: &dyn XcmExtensions<T>,
-		collection_locality: CollectionLocality,
-		asset_instance: &AssetInstance,
-		from: T::CrossAccountId,
-	) -> XcmResult {
-		let token_id = Self::asset_instance_to_token_id(collection_locality, asset_instance)
-			.ok_or(XcmExecutorError::InstanceConversionFailed)?;
-
-		let depositor = &from;
-		let to = Self::pallet_account();
-		let amount = 1;
-		xcm_ext
-			.transfer_item(depositor, &from, &to, token_id, amount, &ZeroBudget)
-			.map_err(|_| XcmError::FailedToTransactAsset("non-fungible item withdraw failed"))?;
-
-		Ok(())
-	}
 }
 
 // #[derive()]
@@ -677,9 +337,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				.map(|_| ())
 				.map_err(|_| XcmError::FailedToTransactAsset("fungible item deposit failed")),
 
-			Fungibility::NonFungible(asset_instance) => {
-				Self::deposit_asset_instance(xcm_ext, collection_locality, &asset_instance, to)
-			}
+			Fungibility::NonFungible(_) => Err(XcmError::Unimplemented),
 		}
 	}
 
@@ -703,9 +361,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				.burn_item(from, TokenId::default(), amount)
 				.map_err(|_| XcmError::FailedToTransactAsset("fungible item withdraw failed"))?,
 
-			Fungibility::NonFungible(asset_instance) => {
-				Self::withdraw_asset_instance(xcm_ext, collection_locality, &asset_instance, from)?;
-			}
+			Fungibility::NonFungible(_) => return Err(XcmError::Unimplemented),
 		}
 
 		Ok(what.clone().into())
@@ -743,13 +399,7 @@ impl<T: Config> TransactAsset for Pallet<T> {
 				map_error = |_| XcmError::FailedToTransactAsset("fungible item transfer failed");
 			}
 
-			Fungibility::NonFungible(asset_instance) => {
-				token_id = Self::asset_instance_to_token_id(collection_locality, &asset_instance)
-					.ok_or(XcmExecutorError::InstanceConversionFailed)?;
-
-				amount = 1;
-				map_error = |_| XcmError::FailedToTransactAsset("non-fungible item transfer failed")
-			}
+			Fungibility::NonFungible(_) => return Err(XcmError::Unimplemented),
 		}
 
 		xcm_ext

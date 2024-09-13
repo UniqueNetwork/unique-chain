@@ -128,6 +128,8 @@ pub mod common;
 pub mod erc;
 pub mod weights;
 
+pub mod asset_ops;
+
 pub type CreateItemData<T> = CreateNftExData<<T as pallet_evm::Config>::CrossAccountId>;
 pub(crate) type SelfWeightOf<T> = <T as Config>::WeightInfo;
 
