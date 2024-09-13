@@ -38,11 +38,12 @@ use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, IdentityLookup},
 	Perbill, Percent, Permill,
 };
+use pallet_evm::account::CrossAccountId as CrossAccountIdT;
 use sp_std::vec;
 use up_common::{constants::*, types::*};
 
 use crate::{
-	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
+	runtime_common::{DealWithFees, config::ethereum::CrossAccountId}, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
 	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, SS58Prefix,
 	System, Treasury, Version,
 };
@@ -197,6 +198,7 @@ parameter_types! {
 	pub const BountyDepositPayoutDelay: BlockNumber = 1 * DAYS;
 	pub const TreasuryModuleId: PalletId = PalletId(*b"py/trsry");
 	pub TreasuryAccount: AccountId = Treasury::account_id();
+	pub TreasuryCrossAccount: CrossAccountId = CrossAccountId::from_sub(TreasuryAccount::get());
 	pub const BountyUpdatePeriod: BlockNumber = 14 * DAYS;
 	pub const MaximumReasonLength: u32 = 16384;
 	pub const BountyCuratorDeposit: Permill = Permill::from_percent(50);
