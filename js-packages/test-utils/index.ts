@@ -14,7 +14,7 @@ import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
 import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
-import type {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
+import type {FrameSystemEventRecord, XcmV2TraitsError, StagingXcmV4TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
 import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
@@ -279,13 +279,13 @@ export class Event {
 
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
-      outcome: eventData<StagingXcmV2TraitsError>(data, 2),
+      outcome: eventData<XcmV2TraitsError>(data, 2),
     }));
   };
 
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<StagingXcmV3TraitsOutcome>(data, 2),
+      outcome: eventData<StagingXcmV4TraitsOutcome>(data, 2),
     }));
   };
 }
