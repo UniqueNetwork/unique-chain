@@ -45,6 +45,19 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    aura: {
+      /**
+       * The slot duration Aura should run with, expressed in milliseconds.
+       * The effective value of this type should not change while the chain is running.
+       * 
+       * For backwards compatibility either use [`MinimumPeriodTimesTwo`] or a const.
+       **/
+      slotDuration: u64 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     balances: {
       /**
        * The minimum amount required to keep an account open. MUST BE GREATER THAN ZERO!
@@ -64,10 +77,14 @@ declare module '@polkadot/api-base/types/consts' {
       /**
        * The maximum number of locks that should exist on an account.
        * Not strictly enforced, but used for weight estimation.
+       * 
+       * Use of locks is deprecated in favour of freezes. See `https://github.com/paritytech/substrate/pull/12951/`
        **/
       maxLocks: u32 & AugmentedConst<ApiType>;
       /**
        * The maximum number of named reserves that can exist on an account.
+       * 
+       * Use of reserves is deprecated in favour of holds. See `https://github.com/paritytech/substrate/pull/12951/`
        **/
       maxReserves: u32 & AugmentedConst<ApiType>;
       /**
@@ -286,6 +303,14 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       heapSize: u32 & AugmentedConst<ApiType>;
       /**
+       * The maximum amount of weight (if any) to be used from remaining weight `on_idle` which
+       * should be provided to the message queue for servicing enqueued items `on_idle`.
+       * Useful for parachains to process messages at the same block they are received.
+       * 
+       * If `None`, it will not call `ServiceQueues::service_queues` in `on_idle`.
+       **/
+      idleMaxServiceWeight: Option<SpWeightsWeightV2Weight> & AugmentedConst<ApiType>;
+      /**
        * The maximum number of stale pages (i.e. of overweight messages) allowed before culling
        * can happen. Once there are more stale pages than this, then historical pages may be
        * dropped, even if they contain unprocessed overweight messages.
@@ -293,10 +318,11 @@ declare module '@polkadot/api-base/types/consts' {
       maxStale: u32 & AugmentedConst<ApiType>;
       /**
        * The amount of weight (if any) which should be provided to the message queue for
-       * servicing enqueued items.
+       * servicing enqueued items `on_initialize`.
        * 
        * This may be legitimately `None` in the case that you will call
-       * `ServiceQueues::service_queues` manually.
+       * `ServiceQueues::service_queues` manually or set [`Self::IdleMaxServiceWeight`] to have
+       * it run in `on_idle`.
        **/
       serviceWeight: Option<SpWeightsWeightV2Weight> & AugmentedConst<ApiType>;
       /**
@@ -471,19 +497,6 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       payoutPeriod: u32 & AugmentedConst<ApiType>;
       /**
-       * Fraction of a proposal's value that should be bonded in order to place the proposal.
-       * An accepted proposal gets these back. A rejected proposal does not.
-       **/
-      proposalBond: Permill & AugmentedConst<ApiType>;
-      /**
-       * Maximum amount of funds that should be placed in a deposit for making a proposal.
-       **/
-      proposalBondMaximum: Option<u128> & AugmentedConst<ApiType>;
-      /**
-       * Minimum amount of funds that should be placed in a deposit for making a proposal.
-       **/
-      proposalBondMinimum: u128 & AugmentedConst<ApiType>;
-      /**
        * Period between successive spends.
        **/
       spendPeriod: u32 & AugmentedConst<ApiType>;
@@ -572,6 +585,17 @@ declare module '@polkadot/api-base/types/consts' {
     };
     xcmpQueue: {
       /**
+       * Maximal number of outbound XCMP channels that can have messages queued at the same time.
+       * 
+       * If this is reached, then no further messages can be sent to channels that do not yet
+       * have a message queued. This should be set to the expected maximum of outbound channels
+       * which is determined by [`Self::ChannelInfo`]. It is important to set this large enough,
+       * since otherwise the congestion control protocol will not work as intended and messages
+       * may be dropped. This value increases the PoV and should therefore not be picked too
+       * high. Governance needs to pay attention to not open more channels than this value.
+       **/
+      maxActiveOutboundChannels: u32 & AugmentedConst<ApiType>;
+      /**
        * The maximum number of inbound XCMP channels that can be suspended simultaneously.
        * 
        * Any further channel suspensions will fail and messages may get dropped without further
@@ -579,6 +603,14 @@ declare module '@polkadot/api-base/types/consts' {
        * [`InboundXcmpSuspended`] still applies at that scale.
        **/
       maxInboundSuspended: u32 & AugmentedConst<ApiType>;
+      /**
+       * The maximal page size for HRMP message pages.
+       * 
+       * A lower limit can be set dynamically, but this is the hard-limit for the PoV worst case
+       * benchmarking. The limit for the size of a message is slightly below this, since some
+       * overhead is incurred for encoding the format.
+       **/
+      maxPageSize: u32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

@@ -655,6 +655,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       SameMember: AugmentedError<ApiType>;
       /**
+       * The max member count for the rank has been reached.
+       **/
+      TooManyMembers: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
@@ -704,6 +708,10 @@ declare module '@polkadot/api-base/types/errors' {
        * The preimage does not exist.
        **/
       PreimageNotExist: AugmentedError<ApiType>;
+      /**
+       * The preimage is stored with a different length than the one provided.
+       **/
+      PreimageStoredWithDifferentLength: AugmentedError<ApiType>;
       /**
        * The queue of the track is empty.
        **/
@@ -1061,10 +1069,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       InUse: AugmentedError<ApiType>;
       /**
-       * Invalid non-concrete asset.
-       **/
-      InvalidAssetNotConcrete: AugmentedError<ApiType>;
-      /**
        * Invalid asset, reserve chain could not be determined for it.
        **/
       InvalidAssetUnknownReserve: AugmentedError<ApiType>;
@@ -1128,6 +1132,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Preimage has already been noted on-chain.
        **/
       AlreadyNoted: AugmentedError<ApiType>;
+      /**
+       * No ticket with a cost was returned by [`Config::Consideration`] to store the preimage.
+       **/
+      NoCost: AugmentedError<ApiType>;
       /**
        * The user is not authorized to perform this action.
        **/
@@ -1456,10 +1464,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       InsufficientPermission: AugmentedError<ApiType>;
       /**
-       * Proposer's balance is too low.
-       **/
-      InsufficientProposersBalance: AugmentedError<ApiType>;
-      /**
        * No proposal, bounty or spend at that index.
        **/
       InvalidIndex: AugmentedError<ApiType>;
@@ -1559,6 +1563,14 @@ declare module '@polkadot/api-base/types/errors' {
        * Setting the queue config failed since one of its values was invalid.
        **/
       BadQueueConfig: AugmentedError<ApiType>;
+      /**
+       * The message is too big.
+       **/
+      TooBig: AugmentedError<ApiType>;
+      /**
+       * There are too many active outbound channels.
+       **/
+      TooManyActiveOutboundChannels: AugmentedError<ApiType>;
       /**
        * Generic error
        **/

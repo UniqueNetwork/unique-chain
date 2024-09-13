@@ -10,9 +10,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "dependencies": {
-    "@polkadot/api": "11.0.1",
-    "@polkadot/util": "^12.6.2",
-    "@polkadot/util-crypto": "^12.6.2",
+    "@polkadot/api": "12.4.2",
+    "@polkadot/util": "^13.0.2",
+    "@polkadot/util-crypto": "^13.0.2",
     "@unique-nft/opal-testnet-types": "workspace:*"
   }
 }
