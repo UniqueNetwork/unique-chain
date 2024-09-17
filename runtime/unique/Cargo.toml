@@ -132,6 +132,7 @@ std = [
 	'pallet-unique/std',
 	'pallet-utility/std',
 	'pallet-xcm/std',
+	'pallet-derivatives/std',
 	'pallet-message-queue/std',
 	'polkadot-runtime-common/std',
 	'sp-api/std',
@@ -275,6 +276,7 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
+pallet-derivatives = { workspace = true }
 pallet-message-queue = { workspace = true }
 parity-scale-codec = { workspace = true }
 polkadot-parachain-primitives = { workspace = true }
