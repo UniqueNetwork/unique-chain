@@ -19,6 +19,7 @@ use frame_support::{
 	parameter_types,
 	traits::{
 		ConstU32, EnqueueWithOrigin, Everything, Get, Nothing, ProcessMessageError, TransformOrigin,
+		tokens::asset_ops::{*, common_asset_kinds::Instance, common_strategies::{Owned, DeriveAndReportId}},
 	},
 };
 use frame_system::EnsureRoot;
@@ -31,12 +32,14 @@ use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
 use sp_core::H160;
-use sp_runtime::traits::MaybeEquivalence;
+use sp_runtime::{DispatchError, traits::MaybeEquivalence};
 use sp_std::marker::PhantomData;
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	unique_instances::{
-		RestoreOnCreate, SimpleStash, StashOnDestroy, UniqueInstancesAdapter, UniqueInstancesOps,
+		RestoreOnCreate, SimpleStash, StashOnDestroy, UniqueInstancesAdapter, UniqueInstancesDepositAdapter, UniqueInstancesOps,
+		EnsureNotDerivativeInstance, MatchDerivativeInstances, NonFungibleAsset,
+		DerivativesRegistry,
 	},
 	AccountId32Aliases, AccountKey20Aliases, AsPrefixedGeneralIndex, EnsureXcmOrigin,
 	FixedWeightBounds, FrameTransactionalProcessor, MatchInClassInstances,
@@ -61,7 +64,7 @@ use crate::{
 	xcm_barrier::Barrier,
 	AllPalletsWithSystem, Balances, ForeignAssets, MessageQueue, Nonfungible, ParachainInfo,
 	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	XcmpQueue,
+	XcmpQueue, DerivativeCollections, DerivativeNfts,
 };
 
 parameter_types! {
@@ -191,8 +194,6 @@ pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 
 pub type Trader = FreeForAll;
 
-pub type TreasuryNftStash = SimpleStash<TreasuryCrossAccount, Nonfungible>;
-
 pub struct GeneralIndexAsCollectionId;
 impl MaybeEquivalence<u128, CollectionId> for GeneralIndexAsCollectionId {
 	fn convert(&a: &u128) -> Option<CollectionId> {
@@ -218,23 +219,74 @@ impl MaybeEquivalence<AssetInstance, TokenId> for AssetInstanceAsTokenId {
 	}
 }
 
-pub type OriginalNftsMatcher = MatchedConvertedConcreteId<
+pub type TreasuryNftStash = SimpleStash<TreasuryCrossAccount, Nonfungible>;
+
+pub type HerePrefixedCollection = AsPrefixedGeneralIndex<HereLocation, CollectionId, GeneralIndexAsCollectionId>;
+
+/// For XTokens. It works only with self-location relative locations.
+/// For example, `../Parachain(<SelfId>)/GeneralIndex(<CollectionIdx>)`
+pub type SelfPrefixedCollection = AsPrefixedGeneralIndex<SelfLocation, CollectionId, GeneralIndexAsCollectionId>;
+
+pub type NftsMatcher = MatchedConvertedConcreteId<
 	CollectionId,
 	TokenId,
 	Everything,
-	AsPrefixedGeneralIndex<HereLocation, CollectionId, GeneralIndexAsCollectionId>,
+	(HerePrefixedCollection, SelfPrefixedCollection),
 	AssetInstanceAsTokenId,
 >;
+
+pub type OriginalNftsMatcher = EnsureNotDerivativeInstance<
+	DerivativeNfts,
+	MatchInClassInstances<NftsMatcher>,
+>;
+
+pub type DerivativeNftsMatcher = MatchDerivativeInstances<DerivativeNfts>;
 
 pub type OriginalNftsTransactor = UniqueInstancesAdapter<
 	ConfigCrossAccountId,
 	LocationToCrossAccountId,
-	MatchInClassInstances<OriginalNftsMatcher>,
+	(OriginalNftsMatcher, DerivativeNftsMatcher),
 	UniqueInstancesOps<
 		RestoreOnCreate<TreasuryNftStash>,
 		Nonfungible,
 		StashOnDestroy<TreasuryNftStash>,
 	>,
+>;
+
+pub struct CreateDerivativeNft;
+impl AssetDefinition<Instance> for CreateDerivativeNft {
+	type Id = AssetIdOf<Instance, Nonfungible>;
+}
+impl Create<
+	Instance,
+	Owned<
+		ConfigCrossAccountId,
+		DeriveAndReportId<NonFungibleAsset, AssetIdOf<Instance, Nonfungible>>
+	>,
+> for CreateDerivativeNft {
+	fn create(strategy: Owned<
+		ConfigCrossAccountId,
+		DeriveAndReportId<NonFungibleAsset, AssetIdOf<Instance, Nonfungible>>
+	>) -> Result<AssetIdOf<Instance, Nonfungible>, DispatchError> {
+		let Owned { owner, id_assignment, .. } = strategy;
+		let ref asset @ (ref asset_id, _) = id_assignment.params;
+
+		let collection_id = DerivativeCollections::get_derivative(asset_id)
+			.ok_or(DerivativeCollectionsError::DerivativeNotFound)?;
+		let token_id = Nonfungible::create(
+			Owned::new(owner, DeriveAndReportId::from(collection_id))
+		)?;
+
+		DerivativeNfts::try_register_derivative(asset, &token_id)?;
+
+		Ok(token_id)
+	}
+}
+
+pub type DerivativeNftsRegistrar = UniqueInstancesDepositAdapter<
+	ConfigCrossAccountId,
+	LocationToCrossAccountId,
+	CreateDerivativeNft,
 >;
 
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
@@ -245,7 +297,7 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = (ForeignAssets, OriginalNftsTransactor);
+	type AssetTransactor = (ForeignAssets, OriginalNftsTransactor, DerivativeNftsRegistrar);
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
@@ -299,6 +351,21 @@ impl pallet_xcm::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
+}
+
+pub type DerivativeCollectionsError = pallet_derivatives::Error::<Runtime, pallet_derivatives::Instance1>;
+impl pallet_derivatives::Config<pallet_derivatives::Instance1> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+
+	type Original = AssetId;
+	type Derivative = CollectionId;
+}
+
+impl pallet_derivatives::Config<pallet_derivatives::Instance2> for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+
+	type Original = NonFungibleAsset;
+	type Derivative = (CollectionId, TokenId);
 }
 
 #[cfg(feature = "runtime-benchmarks")]

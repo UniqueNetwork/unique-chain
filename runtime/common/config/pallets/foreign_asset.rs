@@ -13,7 +13,7 @@ use crate::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,
 		xcm::{LocationToCrossAccountId, SelfLocation},
 	},
-	RelayNetwork, Runtime, RuntimeEvent,
+	RelayNetwork, Runtime, RuntimeEvent, DerivativeCollections,
 };
 
 parameter_types! {
@@ -32,5 +32,6 @@ impl pallet_foreign_assets::Config for Runtime {
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
 	type LocationToAccountId = LocationToCrossAccountId;
+	type DerivativeCollectionsRegistry = DerivativeCollections;
 	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
 }

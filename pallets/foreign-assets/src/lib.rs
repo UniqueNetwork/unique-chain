@@ -27,15 +27,17 @@ use core::ops::Deref;
 
 use derivative::Derivative;
 use frame_support::{
-	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::EnsureOrigin, PalletId,
+	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::{EnsureOrigin, BuildGenesisConfig}, PalletId,
 };
 use frame_system::pallet_prelude::*;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, NATIVE_FUNGIBLE_COLLECTION_ID,
+	CollectionIssuer,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{v4::prelude::*, VersionedAssetId};
+use staging_xcm_builder::unique_instances::derivatives::DerivativesRegistry;
 use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
 	AssetsInHolding,
@@ -43,6 +45,7 @@ use staging_xcm_executor::{
 use up_data_structs::{
 	budget::ZeroBudget, CollectionFlags, CollectionId, CollectionMode, CollectionName,
 	CollectionTokenPrefix, CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
+	CollectionDescription,
 };
 
 pub mod weights;
@@ -55,10 +58,6 @@ pub use weights::WeightInfo;
 
 #[frame_support::pallet]
 pub mod module {
-	use frame_support::traits::BuildGenesisConfig;
-	use pallet_common::CollectionIssuer;
-	use up_data_structs::CollectionDescription;
-
 	use super::*;
 
 	#[pallet::config]
@@ -83,40 +82,21 @@ pub mod module {
 		/// The converter from a Location to a CrossAccountId.
 		type LocationToAccountId: ConvertLocation<Self::CrossAccountId>;
 
+		type DerivativeCollectionsRegistry: DerivativesRegistry<AssetId, CollectionId>;
+
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
 	}
 
 	#[pallet::error]
 	pub enum Error<T> {
-		/// The foreign asset is already registered.
-		ForeignAssetAlreadyRegistered,
-
 		/// The given asset ID could not be converted into the current XCM version.
 		BadForeignAssetId,
 	}
 
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(crate) fn deposit_event)]
-	pub enum Event<T: Config> {
-		/// The foreign asset registered.
-		ForeignAssetRegistered {
-			collection_id: CollectionId,
-			asset_id: Box<VersionedAssetId>,
-		},
-	}
-
-	/// The corresponding collections of foreign assets.
-	#[pallet::storage]
-	#[pallet::getter(fn foreign_asset_to_collection)]
-	pub type ForeignAssetToCollection<T: Config> =
-		StorageMap<_, Blake2_128Concat, staging_xcm::v4::AssetId, CollectionId, OptionQuery>;
-
-	/// The corresponding foreign assets of collections.
-	#[pallet::storage]
-	#[pallet::getter(fn collection_to_foreign_asset)]
-	pub type CollectionToForeignAsset<T: Config> =
-		StorageMap<_, Blake2_128Concat, CollectionId, staging_xcm::v4::AssetId, OptionQuery>;
+	pub enum Event<T: Config> {}
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(staging_xcm::v4::VERSION as u16);
 
@@ -143,11 +123,6 @@ pub mod module {
 				.try_into()
 				.map_err(|()| Error::<T>::BadForeignAssetId)?;
 
-			ensure!(
-				!<ForeignAssetToCollection<T>>::contains_key(&asset_id),
-				<Error<T>>::ForeignAssetAlreadyRegistered,
-			);
-
 			let foreign_collection_owner = Self::pallet_account();
 
 			let description: CollectionDescription = "Foreign Assets Collection"
@@ -172,13 +147,7 @@ pub mod module {
 				},
 			)?;
 
-			<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
-			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
-
-			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
-				collection_id,
-				asset_id: versioned_asset_id,
-			});
+			T::DerivativeCollectionsRegistry::try_register_derivative(&asset_id, &collection_id)?;
 
 			Ok(())
 		}
@@ -195,40 +164,6 @@ pub mod module {
 			<Pallet<T>>::in_code_storage_version().put::<Pallet<T>>();
 		}
 	}
-}
-
-mod v3_storage {
-	use super::*;
-
-	#[storage_alias]
-	pub type ForeignAssetToCollection<T: Config> =
-		StorageMap<Pallet<T>, Twox64Concat, staging_xcm::v3::AssetId, CollectionId, OptionQuery>;
-
-	#[storage_alias]
-	pub type CollectionToForeignAsset<T: Config> =
-		StorageMap<Pallet<T>, Twox64Concat, CollectionId, staging_xcm::v3::AssetId, OptionQuery>;
-
-	#[storage_alias]
-	pub type ForeignReserveAssetInstanceToTokenId<T: Config> = StorageDoubleMap<
-		Pallet<T>,
-		Twox64Concat,
-		CollectionId,
-		Blake2_128Concat,
-		staging_xcm::v3::AssetInstance,
-		TokenId,
-		OptionQuery,
-	>;
-
-	#[storage_alias]
-	pub type TokenIdToForeignReserveAssetInstance<T: Config> = StorageDoubleMap<
-		Pallet<T>,
-		Twox64Concat,
-		CollectionId,
-		Blake2_128Concat,
-		TokenId,
-		staging_xcm::v3::AssetInstance,
-		OptionQuery,
-	>;
 }
 
 impl<T: Config> Pallet<T> {
@@ -273,7 +208,7 @@ impl<T: Config> Pallet<T> {
 
 		let collection_id = CollectionId((*collection_id).try_into().ok()?);
 
-		Self::collection_to_foreign_asset(collection_id)
+		T::DerivativeCollectionsRegistry::get_original(&collection_id)
 			.is_none()
 			.then_some(CollectionLocality::Local(collection_id))
 	}
@@ -290,17 +225,12 @@ impl<T: Config> Pallet<T> {
 	///
 	/// If all of the above have failed, the `AssetIdConversionFailed` error will be returned.
 	fn asset_to_collection(asset_id: &AssetId) -> Result<CollectionLocality, XcmError> {
-		Self::foreign_asset_to_collection(asset_id)
+		T::DerivativeCollectionsRegistry::get_derivative(asset_id)
 			.map(CollectionLocality::Foreign)
 			.or_else(|| Self::local_asset_id_to_collection(asset_id))
 			.ok_or_else(|| XcmExecutorError::AssetIdConversionFailed.into())
 	}
 }
-
-// #[derive()]
-// pub enum Migration {
-
-// }
 
 impl<T: Config> TransactAsset for Pallet<T> {
 	fn can_check_in(_origin: &Location, _what: &Asset, _context: &XcmContext) -> XcmResult {
@@ -435,7 +365,7 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<Location>>
 		if collection_id == NATIVE_FUNGIBLE_COLLECTION_ID {
 			Some(T::SelfLocation::get())
 		} else {
-			<Pallet<T>>::collection_to_foreign_asset(collection_id)
+			T::DerivativeCollectionsRegistry::get_original(&collection_id)
 				.map(|AssetId(location)| location)
 				.or_else(|| {
 					T::SelfLocation::get()
