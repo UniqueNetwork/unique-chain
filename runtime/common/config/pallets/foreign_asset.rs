@@ -5,6 +5,7 @@ use pallet_evm::account::CrossAccountId;
 use sp_core::H160;
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
+use pallet_xnft::DerivativeIdParamsRegistry;
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
@@ -13,7 +14,7 @@ use crate::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,
 		xcm::{LocationToCrossAccountId, SelfLocation},
 	},
-	RelayNetwork, Runtime, RuntimeEvent,
+	RelayNetwork, Runtime, RuntimeEvent, Xnft,
 };
 
 parameter_types! {
@@ -32,5 +33,6 @@ impl pallet_foreign_assets::Config for Runtime {
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
 	type LocationToAccountId = LocationToCrossAccountId;
+	type DerivativeCollectionsRegistry = DerivativeIdParamsRegistry<Xnft>;
 	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
 }

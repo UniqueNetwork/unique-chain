@@ -36,7 +36,11 @@ use sp_std::marker::PhantomData;
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	unique_instances::{
-		RestoreOnCreate, SimpleStash, StashOnDestroy, UniqueInstancesAdapter, UniqueInstancesOps,
+		RestoreOnCreate, SimpleStash, StashOnDestroy, UniqueInstancesAdapter, UniqueInstancesDepositAdapter, UniqueInstancesOps,
+		derivatives::{
+			EnsureNotDerivativeInstance, MatchDerivativeInstances, DerivativeRegisterParams, MatchDerivativeRegisterParams,
+			RegisterOnCreate,
+		},
 	},
 	AccountId32Aliases, AccountKey20Aliases, AsPrefixedGeneralIndex, EnsureXcmOrigin,
 	FixedWeightBounds, FrameTransactionalProcessor, MatchInClassInstances,
@@ -50,6 +54,7 @@ use staging_xcm_executor::{
 };
 use up_common::{constants::MAXIMUM_BLOCK_WEIGHT, types::AccountId};
 use up_data_structs::{CollectionId, TokenId};
+use pallet_xnft::{DerivativeIdParamsRegistry, DerivativeInstancesRegistry};
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
@@ -61,7 +66,7 @@ use crate::{
 	xcm_barrier::Barrier,
 	AllPalletsWithSystem, Balances, ForeignAssets, MessageQueue, Nonfungible, ParachainInfo,
 	ParachainSystem, PolkadotXcm, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin,
-	XcmpQueue,
+	XcmpQueue, Xnft,
 };
 
 parameter_types! {
@@ -191,8 +196,6 @@ pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
 
 pub type Trader = FreeForAll;
 
-pub type TreasuryNftStash = SimpleStash<TreasuryCrossAccount, Nonfungible>;
-
 pub struct GeneralIndexAsCollectionId;
 impl MaybeEquivalence<u128, CollectionId> for GeneralIndexAsCollectionId {
 	fn convert(&a: &u128) -> Option<CollectionId> {
@@ -218,7 +221,9 @@ impl MaybeEquivalence<AssetInstance, TokenId> for AssetInstanceAsTokenId {
 	}
 }
 
-pub type OriginalNftsMatcher = MatchedConvertedConcreteId<
+pub type TreasuryNftStash = SimpleStash<TreasuryCrossAccount, Nonfungible>;
+
+pub type NftsMatcher = MatchedConvertedConcreteId<
 	CollectionId,
 	TokenId,
 	Everything,
@@ -226,15 +231,33 @@ pub type OriginalNftsMatcher = MatchedConvertedConcreteId<
 	AssetInstanceAsTokenId,
 >;
 
+pub type ParamsRegitry = DerivativeIdParamsRegistry<Xnft>;
+pub type DerivativeNftsRegistry = DerivativeInstancesRegistry<Xnft>;
+
+pub type OriginalNftsMatcher = EnsureNotDerivativeInstance<
+	DerivativeNftsRegistry,
+	MatchInClassInstances<NftsMatcher>,
+>;
+
+pub type DerivativeNftsMatcher = MatchDerivativeInstances<DerivativeNftsRegistry>;
+
 pub type OriginalNftsTransactor = UniqueInstancesAdapter<
 	ConfigCrossAccountId,
 	LocationToCrossAccountId,
-	MatchInClassInstances<OriginalNftsMatcher>,
+	(OriginalNftsMatcher, DerivativeNftsMatcher),
 	UniqueInstancesOps<
 		RestoreOnCreate<TreasuryNftStash>,
 		Nonfungible,
 		StashOnDestroy<TreasuryNftStash>,
 	>,
+>;
+
+pub type DerivativeNftsRegistrar = UniqueInstancesDepositAdapter<
+	ConfigCrossAccountId,
+	LocationToCrossAccountId,
+	DerivativeRegisterParams<CollectionId>,
+	MatchDerivativeRegisterParams<ParamsRegitry>,
+	RegisterOnCreate<DerivativeNftsRegistry, Nonfungible>,
 >;
 
 pub struct XcmExecutorConfig<T>(PhantomData<T>);
@@ -245,7 +268,7 @@ where
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
 	// How to withdraw and deposit an asset.
-	type AssetTransactor = (ForeignAssets, OriginalNftsTransactor);
+	type AssetTransactor = (ForeignAssets, OriginalNftsTransactor, DerivativeNftsRegistrar);
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
 	type IsReserve = IsReserve;
 	type IsTeleporter = (); // Teleportation is disabled
@@ -295,6 +318,13 @@ impl pallet_xcm::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
+}
+
+impl pallet_xnft::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+
+	type DerivativeIdParams = CollectionId;
+	type DerivativeId = (CollectionId, TokenId);
 }
 
 #[cfg(feature = "runtime-benchmarks")]

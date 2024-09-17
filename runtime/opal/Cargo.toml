@@ -277,6 +277,7 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
+pallet-xnft = { workspace = true }
 pallet-message-queue = { workspace = true }
 parity-scale-codec = { workspace = true }
 polkadot-parachain-primitives = { workspace = true }

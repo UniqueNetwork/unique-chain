@@ -95,6 +95,7 @@ macro_rules! construct_runtime {
 				CumulusXcm: cumulus_pallet_xcm = 52,
 				DmpQueue: cumulus_pallet_dmp_queue = 53,
 				MessageQueue: pallet_message_queue = 54,
+				Xnft: pallet_xnft = 55,
 
 				// Unique Pallets
 				Inflation: pallet_inflation = 60,
