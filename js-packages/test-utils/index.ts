@@ -14,7 +14,7 @@ import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
 import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
-import type {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
+import type {FrameSystemEventRecord, XcmV2TraitsError, StagingXcmV4TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
 import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
@@ -279,13 +279,13 @@ export class Event {
 
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
-      outcome: eventData<StagingXcmV2TraitsError>(data, 2),
+      outcome: eventData<XcmV2TraitsError>(data, 2),
     }));
   };
 
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<StagingXcmV3TraitsOutcome>(data, 2),
+      outcome: eventData<StagingXcmV4TraitsOutcome>(data, 2),
     }));
   };
 }
@@ -835,11 +835,11 @@ export class ArrangeGroup {
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
     const findCreationDate = (block: any) => {
-      const humanBlock = block.toHuman();
+      const methods = block.block.extrinsics.map((ext: any) => ext.method.toHuman());
       let date;
-      humanBlock.block.extrinsics.forEach((ext: any) => {
-        if(ext.method.section === 'timestamp') {
-          date = Number(ext.method.args.now.replaceAll(',', ''));
+      methods.forEach((method: any) => {
+        if(method.section === 'timestamp') {
+          date = Number(method.args.now.replaceAll(',', ''));
         }
       });
       return date;
