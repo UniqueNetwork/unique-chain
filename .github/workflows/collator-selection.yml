@@ -112,7 +112,8 @@ jobs:
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
         with:
-          useCache: false        
+          version: "v0.1.4"
+          useCache: false
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
