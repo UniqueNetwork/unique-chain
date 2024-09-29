@@ -14,7 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use cumulus_pallet_parachain_system::{consensus_hook::UnincludedSegmentCapacity, RelayChainStateProof};
+use cumulus_pallet_parachain_system::{
+	consensus_hook::UnincludedSegmentCapacity, RelayChainStateProof,
+};
 use cumulus_primitives_core::AggregateMessageOrigin;
 use frame_support::{parameter_types, traits::EnqueueWithOrigin, weights::Weight};
 use up_common::constants::*;

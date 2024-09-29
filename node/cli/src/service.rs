@@ -56,7 +56,7 @@ use polkadot_service::CollatorPair;
 use sc_client_api::{AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider};
 use sc_consensus::ImportQueue;
 use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
-use sc_network::{NetworkBlock, NetworkBackend};
+use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
@@ -401,7 +401,11 @@ where
 		eth_filter_pool,
 		eth_backend,
 	} = params.other;
-	let net_config = sc_network::config::FullNetworkConfiguration::<Block, <Block as BlockT>::Hash, Network>::new(&parachain_config.network);
+	let net_config = sc_network::config::FullNetworkConfiguration::<
+		Block,
+		<Block as BlockT>::Hash,
+		Network,
+	>::new(&parachain_config.network);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -882,7 +886,11 @@ where
 		&config,
 		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
 	)?;
-	let net_config = sc_network::config::FullNetworkConfiguration::<Block, <Block as BlockT>::Hash, Network>::new(&config.network);
+	let net_config = sc_network::config::FullNetworkConfiguration::<
+		Block,
+		<Block as BlockT>::Hash,
+		Network,
+	>::new(&config.network);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
@@ -972,12 +980,15 @@ where
 				select_chain: select_chain.clone(),
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |block: Hash, ()| {
-					let header = client_set_aside_for_cidp.header(block)
+					let header = client_set_aside_for_cidp
+						.header(block)
 						.expect("Header lookup should succeed")
 						.expect("Header passed in as parent should be present in backend.");
 
 					let current_para_block = header.number;
-					let current_para_block_head = Some(cumulus_primitives_core::relay_chain::HeadData(header.encode()));
+					let current_para_block_head = Some(
+						cumulus_primitives_core::relay_chain::HeadData(header.encode()),
+					);
 
 					let client_for_xcm = client_set_aside_for_cidp.clone();
 					async move {
