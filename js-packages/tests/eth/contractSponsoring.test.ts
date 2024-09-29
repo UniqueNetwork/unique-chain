@@ -395,12 +395,12 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   // TODO: Find a way to calculate default rate limit
-  itEth('Default rate limit equal 7200', async ({helper}) => {
+  itEth('Default rate limit equal 14400', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(await helpers.methods.sponsoringRateLimit(flipper.options.address).call()).to.be.equal('7200');
+    expect(await helpers.methods.sponsoringRateLimit(flipper.options.address).call()).to.be.equal('14400');
   });
 
   itEth('Gas price boundaries', async ({helper}) => {
