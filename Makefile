@@ -143,4 +143,3 @@ init:
 	make git-hooks
 	cd tests
 	yarn install
-
