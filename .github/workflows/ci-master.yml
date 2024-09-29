@@ -62,6 +62,3 @@ jobs:
 
   polkadot-types:
     uses: ./.github/workflows/polkadot-types.yml
-
-
-    
