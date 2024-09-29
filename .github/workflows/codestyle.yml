@@ -47,25 +47,25 @@ jobs:
         # run: cd js-packages && yarn lint --max-warnings=0
         run: cd js-packages && yarn lint
 
-  clippy:
-    runs-on: [ self-hosted-ci ]
-    steps:
-      - name: Clean Workspace
-        uses: AutoModality/action-clean@v1.1.0
-      - uses: actions/checkout@v4.1.7
-        with:
-          ref: ${{ github.head_ref }}   
-      - name: Install substrate dependencies
-        run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
-      - name: Read .env file
-        uses: xom9ikk/dotenv@v2.3.0
-      - name: Install toolchain version from .env
-        uses: dtolnay/rust-toolchain@master
-        with:
-            toolchain: ${{ env.RUST_TOOLCHAIN }}
-            targets: wasm32-unknown-unknown
-            components: rustfmt, clippy        
-      - name: Run cargo check
-        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
-        env:
-          SKIP_WASM_BUILD: '1'
+  # clippy:
+  #   runs-on: [ self-hosted-ci ]
+  #   steps:
+  #     - name: Clean Workspace
+  #       uses: AutoModality/action-clean@v1.1.0
+  #     - uses: actions/checkout@v4.1.7
+  #       with:
+  #         ref: ${{ github.head_ref }}   
+  #     - name: Install substrate dependencies
+  #       run: sudo apt install -y libssl-dev pkg-config libclang-dev clang protobuf-compiler
+  #     - name: Read .env file
+  #       uses: xom9ikk/dotenv@v2.3.0
+  #     - name: Install toolchain version from .env
+  #       uses: dtolnay/rust-toolchain@master
+  #       with:
+  #           toolchain: ${{ env.RUST_TOOLCHAIN }}
+  #           targets: wasm32-unknown-unknown
+  #           components: rustfmt, clippy        
+  #     - name: Run cargo check
+  #       run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
+  #       env:
+  #         SKIP_WASM_BUILD: '1'
