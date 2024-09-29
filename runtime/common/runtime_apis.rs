@@ -708,11 +708,11 @@ macro_rules! impl_common_runtime_apis {
 				fn build_state(config: Vec<u8>) -> sp_genesis_builder::Result {
 					build_state::<RuntimeGenesisConfig>(config)
 				}
-		
+
 				fn get_preset(id: &Option<sp_genesis_builder::PresetId>) -> Option<Vec<u8>> {
 					get_preset::<RuntimeGenesisConfig>(id, |_| None)
 				}
-		
+
 				fn preset_names() -> Vec<sp_genesis_builder::PresetId> {
 					vec![]
 				}

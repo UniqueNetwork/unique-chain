@@ -412,7 +412,7 @@ pub fn run() -> Result<()> {
 				} else {
 					None
 				};
-				
+
 				if cli.increase_future_pool {
 					config.transaction_pool.future = config.transaction_pool.ready.clone();
 				}
