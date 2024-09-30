@@ -1494,12 +1494,13 @@ class SessionGroup {
     return (this.helper as DevUniqueHelper).wait.newSessions(sessionCount, blockTimeout);
   }
 
+  // TODO: Add nonce
   setOwnKeys(signer: TSigner, key: string) {
     return this.helper.executeExtrinsic(
       signer,
       'api.tx.session.setKeys',
       [key, '0x0'],
-      true,
+      true
     );
   }
 

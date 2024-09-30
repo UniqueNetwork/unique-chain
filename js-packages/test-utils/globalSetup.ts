@@ -39,8 +39,7 @@ const globalSetup = async (): Promise<void> => {
             pendingInterval: UNLOCKING_PERIOD})], true);
       }
     } catch (error) {
-      console.error(error);
-      throw Error('Error during globalSetup');
+      throw Error(`Error during globalSetup`, {cause: error});
     }
   });
 };
