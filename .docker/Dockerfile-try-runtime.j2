@@ -14,8 +14,6 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
-RUN cargo install --git https://github.com/paritytech/try-runtime-cli --locked
-
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
