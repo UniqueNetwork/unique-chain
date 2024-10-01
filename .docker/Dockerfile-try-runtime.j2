@@ -14,6 +14,8 @@ RUN apt-get update && \
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
 
+RUN cargo install --git https://github.com/paritytech/try-runtime-cli --locked
+
 RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
@@ -30,4 +32,4 @@ RUN echo "Requested features: {{ NETWORK }}-runtime\n" && \
     echo "Fork from: {{ REPLICA_FROM }}\n" && \
     cargo build --features=try-runtime,{{ NETWORK }}-runtime --release
 
-CMD cargo run --release --features {{ NETWORK }}-runtime,try-runtime -- try-runtime --runtime target/release/wbuild/{{ NETWORK }}-runtime/{{ NETWORK }}_runtime.compact.compressed.wasm -lruntime=debug -ltry-runtime::cli=debug on-runtime-upgrade --checks live --uri {{ REPLICA_FROM }}
+CMD try-runtime --runtime target/release/wbuild/{{ NETWORK }}-runtime/{{ NETWORK }}_runtime.compact.compressed.wasm -lruntime=debug -ltry-runtime::cli=debug on-runtime-upgrade --checks live --uri {{ REPLICA_FROM }}
