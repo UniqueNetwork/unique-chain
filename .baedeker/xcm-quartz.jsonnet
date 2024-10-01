@@ -93,7 +93,7 @@ local statemine = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'statemine-local',
+		chain: 'statemine',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
