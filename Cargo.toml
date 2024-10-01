@@ -202,7 +202,6 @@ frame-system-benchmarking = { default-features = false, version = "36.0.0" }
 
 # Parity: Try Runtime
 frame-try-runtime = { default-features = false, version = "0.42.0" }
-try-runtime-cli = "0.41.0"
 
 # ORML
 orml-traits = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "polkadot-v1.14.0" }
