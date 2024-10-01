@@ -140,7 +140,7 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        for (const acc of crowd) {
+        for(const acc of crowd) {
           await helper.session.setOwnKeysFromAddress(acc);
         }
       });
@@ -223,7 +223,7 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        for (const acc of crowd) {
+        for(const acc of crowd) {
           await helper.session.setOwnKeysFromAddress(acc);
         }
       });
@@ -366,7 +366,7 @@ describe('Integration Test: Collator Selection', () => {
         const newInvulnerables = await helper.arrange.createAccounts(Array(invulnerablesUntilLimit).fill(10n), superuser);
         const [lastInvulnerable] = await helper.arrange.createAccounts([10n], superuser);
 
-        for (const i of newInvulnerables) {
+        for(const i of newInvulnerables) {
           await helper.session.setOwnKeysFromAddress(i);
         }
 

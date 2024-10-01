@@ -1500,7 +1500,7 @@ class SessionGroup {
       signer,
       'api.tx.session.setKeys',
       [key, '0x0'],
-      true
+      true,
     );
   }
 
