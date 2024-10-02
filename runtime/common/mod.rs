@@ -32,14 +32,15 @@ pub mod tests;
 
 use frame_support::{
 	pallet_prelude::{GetStorageVersion, PalletInfoAccess},
-	traits::{Currency, Imbalance, OnUnbalanced, PalletInfo},
-	weights::Weight,
+	traits::{Currency, Imbalance, OnUnbalanced, PalletInfo, StorageVersion},
+	weights::{RuntimeDbWeight, Weight},
 };
+use sp_core::Get;
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
 };
-use sp_std::vec::Vec;
+use sp_std::{marker::PhantomData, vec::Vec};
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
@@ -139,7 +140,7 @@ pub type Migrations = (Unreleased, AuraToCollatorSelection);
 /// All migrations that will need to be removed after the current release.
 pub type Unreleased = (
 	pallet_balances::migration::MigrateManyToTrackInactive<Runtime, ()>,
-	pallet_preimage::migration::v1::Migration<Runtime>,
+	// PreimageWorkaroundMigration<Runtime>,
 	pallet_democracy::migrations::v1::v1::Migration<Runtime>,
 	pallet_referenda::migration::v1::MigrateV0ToV1<Runtime>,
 	cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
@@ -151,6 +152,34 @@ pub type Unreleased = (
 	PalletMembershipV0ToV4<Runtime, crate::TechnicalCommitteeMembership>,
 );
 
+/// This is a workaround to fix the version mismatch of the pallet with what
+/// is stored on the chain.
+///
+/// Preimage pallet was added when we used Polkadot SDK v0.9.37, but
+/// the migration provided by the pallet_preimage hasn't been applied.
+///
+/// However, the migration provided by the pallet_preimage is unnecessary since
+/// we used the actual v1 types from the beginning. We only need to align
+/// the reported storage version with the actual format on the chain (already v1).
+pub struct PreimageWorkaroundMigration<T>(PhantomData<T>);
+
+impl<T> frame_support::traits::OnRuntimeUpgrade for PreimageWorkaroundMigration<T>
+where
+	T: pallet_preimage::Config,
+{
+	fn on_runtime_upgrade() -> Weight {
+		let mut weight = T::DbWeight::get().reads(1);
+
+		if StorageVersion::get::<pallet_preimage::Pallet<T>>() == StorageVersion::new(0) {
+			StorageVersion::new(1).put::<pallet_preimage::Pallet<T>>();
+			weight += T::DbWeight::get().writes(1);
+		}
+
+		weight
+	}
+}
+
+/// Wrapper for migrations of pallet_collective created before OnRuntimeUpgrade trait introduction.
 pub struct PalletCollectiveV0ToV4<T, P>(core::marker::PhantomData<T>, core::marker::PhantomData<P>);
 
 impl<T, P> frame_support::traits::OnRuntimeUpgrade for PalletCollectiveV0ToV4<T, P>
@@ -178,6 +207,7 @@ where
 	}
 }
 
+/// Wrapper for migrations of pallet_membership created before OnRuntimeUpgrade trait introduction.
 pub struct PalletMembershipV0ToV4<T, P>(core::marker::PhantomData<T>, core::marker::PhantomData<P>);
 
 impl<T, P> frame_support::traits::OnRuntimeUpgrade for PalletMembershipV0ToV4<T, P>
