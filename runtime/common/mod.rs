@@ -140,7 +140,7 @@ pub type Migrations = (Unreleased, AuraToCollatorSelection);
 /// All migrations that will need to be removed after the current release.
 pub type Unreleased = (
 	pallet_balances::migration::MigrateManyToTrackInactive<Runtime, ()>,
-	// PreimageWorkaroundMigration<Runtime>,
+	PreimageWorkaroundMigration<Runtime>,
 	pallet_democracy::migrations::v1::v1::Migration<Runtime>,
 	pallet_referenda::migration::v1::MigrateV0ToV1<Runtime>,
 	cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
