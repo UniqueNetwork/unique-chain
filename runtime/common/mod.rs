@@ -31,7 +31,8 @@ pub mod weights;
 pub mod tests;
 
 use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced},
+	pallet_prelude::{GetStorageVersion, PalletInfoAccess},
+	traits::{Currency, Imbalance, OnUnbalanced, PalletInfo},
 	weights::Weight,
 };
 use sp_runtime::{
@@ -103,7 +104,7 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	AuraToCollatorSelection,
+	Migrations,
 >;
 
 type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
@@ -130,6 +131,78 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 pub enum XCMPMessage<XAccountId, XBalance> {
 	/// Transfer tokens to the given account from the Parachain account.
 	TransferToken(XAccountId, XBalance),
+}
+
+/// All migrations that will run on the next runtime upgrade.
+pub type Migrations = (Unreleased, AuraToCollatorSelection);
+
+/// All migrations that will need to be removed after the current release.
+pub type Unreleased = (
+	pallet_balances::migration::MigrateManyToTrackInactive<Runtime, ()>,
+	pallet_preimage::migration::v1::Migration<Runtime>,
+	pallet_democracy::migrations::v1::v1::Migration<Runtime>,
+	pallet_referenda::migration::v1::MigrateV0ToV1<Runtime>,
+	cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
+	cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
+	pallet_xcm::migration::v1::MigrateToV1<Runtime>,
+	PalletCollectiveV0ToV4<Runtime, crate::Council>,
+	PalletMembershipV0ToV4<Runtime, crate::CouncilMembership>,
+	PalletCollectiveV0ToV4<Runtime, crate::TechnicalCommittee>,
+	PalletMembershipV0ToV4<Runtime, crate::TechnicalCommitteeMembership>,
+);
+
+pub struct PalletCollectiveV0ToV4<T, P>(core::marker::PhantomData<T>, core::marker::PhantomData<P>);
+
+impl<T, P> frame_support::traits::OnRuntimeUpgrade for PalletCollectiveV0ToV4<T, P>
+where
+	T: frame_system::Config,
+	P: GetStorageVersion + PalletInfoAccess + 'static,
+{
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::TryRuntimeError> {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		pallet_collective::migrations::v4::pre_migrate::<P, &str>(pallet_name);
+		Ok(Vec::new())
+	}
+
+	fn on_runtime_upgrade() -> Weight {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		pallet_collective::migrations::v4::migrate::<T, P, &str>(pallet_name)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade(_state: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		pallet_collective::migrations::v4::post_migrate::<P, &str>(pallet_name);
+		Ok(())
+	}
+}
+
+pub struct PalletMembershipV0ToV4<T, P>(core::marker::PhantomData<T>, core::marker::PhantomData<P>);
+
+impl<T, P> frame_support::traits::OnRuntimeUpgrade for PalletMembershipV0ToV4<T, P>
+where
+	T: frame_system::Config,
+	P: GetStorageVersion + PalletInfoAccess + 'static,
+{
+	#[cfg(feature = "try-runtime")]
+	fn pre_upgrade() -> Result<Vec<u8>, sp_runtime::TryRuntimeError> {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		pallet_membership::migrations::v4::pre_migrate::<P, &str>(pallet_name, pallet_name);
+		Ok(Vec::new())
+	}
+
+	fn on_runtime_upgrade() -> Weight {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		pallet_membership::migrations::v4::migrate::<T, P, &str>(pallet_name, pallet_name)
+	}
+
+	#[cfg(feature = "try-runtime")]
+	fn post_upgrade(_state: Vec<u8>) -> Result<(), sp_runtime::TryRuntimeError> {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		pallet_membership::migrations::v4::post_migrate::<P, &str>(pallet_name, pallet_name);
+		Ok(())
+	}
 }
 
 pub struct AuraToCollatorSelection;

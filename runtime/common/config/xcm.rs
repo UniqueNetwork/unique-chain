@@ -288,6 +288,11 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 }
 
+impl cumulus_pallet_xcmp_queue::migration::v5::V5Config for Runtime {
+	// https://github.com/polkadot-fellows/runtimes/blob/afc36ca73146d7e22887fb11c6631a7129d68dd2/system-parachains/asset-hubs/asset-hub-polkadot/src/lib.rs#L700-L703.
+	type ChannelList = <Runtime as cumulus_pallet_xcmp_queue::Config>::ChannelInfo;
+}
+
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = cumulus_pallet_dmp_queue::weights::SubstrateWeight<Self>;
