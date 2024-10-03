@@ -139,6 +139,9 @@ pub enum XCMPMessage<XAccountId, XBalance> {
 pub type Migrations = (Unreleased, AuraToCollatorSelection);
 
 parameter_types! {
+	pub const PalletRefungibleBaseStorageVersion: StorageVersion = StorageVersion::new(1);
+	pub const PalletRefungibleTargetStorageVersion: StorageVersion = StorageVersion::new(2);
+
 	pub const PalletXcmBaseStorageVersion: StorageVersion = StorageVersion::new(0);
 	pub const PalletXcmTargetStorageVersion: StorageVersion = StorageVersion::new(1);
 
@@ -212,6 +215,15 @@ pub type Unreleased = (
 		crate::TechnicalCommitteeMembership,
 		PalletMembershipBaseStorageVersion,
 		PalletMembershipTargetStorageVersion,
+	>,
+	// Fix pallet_refungible version for Unique.
+	// There was a discrepancy between the versions between Quartz and Unique
+	// for some historical reasons.
+	PalletVersionMigration<
+		Runtime,
+		crate::Refungible,
+		PalletRefungibleBaseStorageVersion,
+		PalletRefungibleTargetStorageVersion,
 	>,
 	// Xcm migration
 	PalletVersionMigration<
