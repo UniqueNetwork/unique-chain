@@ -142,6 +142,9 @@ parameter_types! {
 	pub const PalletPreimageBaseStorageVersion: StorageVersion = StorageVersion::new(0);
 	pub const PalletPreimageTargetStorageVersion: StorageVersion = StorageVersion::new(1);
 
+	pub const PalletDemocracyBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletDemocracyTargetStorageVersion: StorageVersion = StorageVersion::new(1);
+
 	pub const PalletCollectiveBaseStorageVersion: StorageVersion = StorageVersion::new(0);
 	pub const PalletCollectiveTargetStorageVersion: StorageVersion = StorageVersion::new(4);
 
@@ -166,6 +169,14 @@ pub type Unreleased = (
 		PalletPreimageBaseStorageVersion,
 		PalletPreimageTargetStorageVersion,
 	>,
+	// Workaround for pallet_democracy.
+	// The same situation as with the pallet_preimage.
+	PalletVersionMigration<
+		Runtime,
+		crate::Democracy,
+		PalletDemocracyBaseStorageVersion,
+		PalletDemocracyTargetStorageVersion,
+	>,
 	// Workaround for pallet_collective.
 	//
 	// Migrations in this pallet are only needed for renaming
@@ -186,12 +197,7 @@ pub type Unreleased = (
 		PalletCollectiveTargetStorageVersion,
 	>,
 	// Workaround for pallet_membership.
-	//
-	// Migrations in this pallet are only needed for renaming
-	// (moving from the old name to the new) and bumping the version from 0 to 4.
-	// The storage remains unchanged.
-	//
-	// In our case, we only need to bump the version, without renaming.
+	// The same situation as with the pallet_collective.
 	PalletVersionMigration<
 		Runtime,
 		crate::CouncilMembership,
@@ -206,7 +212,6 @@ pub type Unreleased = (
 	>,
 	// Parity migrations
 	pallet_balances::migration::MigrateManyToTrackInactive<Runtime, ()>,
-	pallet_democracy::migrations::v1::v1::Migration<Runtime>,
 	pallet_referenda::migration::v1::MigrateV0ToV1<Runtime>,
 	cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
 	cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
