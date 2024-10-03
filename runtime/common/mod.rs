@@ -139,6 +139,9 @@ pub enum XCMPMessage<XAccountId, XBalance> {
 pub type Migrations = (Unreleased, AuraToCollatorSelection);
 
 parameter_types! {
+	pub const PalletXcmBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletXcmTargetStorageVersion: StorageVersion = StorageVersion::new(1);
+
 	pub const PalletPreimageBaseStorageVersion: StorageVersion = StorageVersion::new(0);
 	pub const PalletPreimageTargetStorageVersion: StorageVersion = StorageVersion::new(1);
 
@@ -210,12 +213,19 @@ pub type Unreleased = (
 		PalletMembershipBaseStorageVersion,
 		PalletMembershipTargetStorageVersion,
 	>,
-	// Parity migrations
+	// Xcm migration
+	PalletVersionMigration<
+		Runtime,
+		crate::PolkadotXcm,
+		PalletXcmBaseStorageVersion,
+		PalletXcmTargetStorageVersion,
+	>,
+	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
+	// Good migrations
 	pallet_balances::migration::MigrateManyToTrackInactive<Runtime, ()>,
 	pallet_referenda::migration::v1::MigrateV0ToV1<Runtime>,
 	cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
 	cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
-	pallet_xcm::migration::v1::MigrateToV1<Runtime>,
 );
 
 pub struct PalletVersionMigration<T, P, Base, Target>(PhantomData<(T, P, Base, Target)>);
