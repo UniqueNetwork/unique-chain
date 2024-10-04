@@ -66,24 +66,13 @@ pub enum MigrationStatusV3ToV4 {
 	Done,
 
 	/// An asset is skipped during the migration
-	/// due to its inconsistent state.
-	SkippedInconsistentAssetData(staging_xcm::v3::AssetId),
-
-	/// An asset instance is skipped during the migration
-	/// due to its inconsistent state.
-	SkippedInconsistentAssetInstanceData {
-		asset_id: staging_xcm::v3::AssetId,
-		asset_instance: staging_xcm::v3::AssetInstance,
-	},
-
-	/// An asset is skipped during the migration
 	/// because it couldn't be converted to the new XCM version.
 	SkippedNotConvertibleAssetId(staging_xcm::v3::AssetId),
 
 	/// An asset instance is skipped during the migration
 	/// because it couldn't be converted to the new XCM version.
 	SkippedNotConvertibleAssetInstance {
-		asset_id: staging_xcm::v3::AssetId,
+		collection_id: CollectionId,
 		asset_instance: staging_xcm::v3::AssetInstance,
 	},
 }
@@ -314,6 +303,8 @@ mod v3_storage {
 
 impl<T: Config> Pallet<T> {
 	fn fix_foreign_flag() -> Weight {
+		log::info!("fixing foreign flags...");
+
 		let mut weight = Weight::zero();
 
 		for (_, collection_id) in v3_storage::ForeignAssetToCollection::<T>::iter() {
@@ -322,9 +313,12 @@ impl<T: Config> Pallet<T> {
 					collection.flags.foreign = true;
 				}
 			});
+			log::info!("\t- fixed foreign flag in the foreign collection #{}", collection_id.0);
 
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 		}
+
+		log::info!("DONE fixing foreign flags");
 
 		weight
 	}
@@ -344,113 +338,80 @@ impl<T: Config> Pallet<T> {
 		use MigrationStatus::*;
 		use MigrationStatusV3ToV4::*;
 
+		log::info!("migrating foreign collections' XCM versions...");
+
 		let mut weight = Weight::zero();
 
-		for (fwd_asset_id, collection_id) in v3_storage::ForeignAssetToCollection::<T>::drain() {
-			let bwd_asset_id = v3_storage::CollectionToForeignAsset::<T>::take(collection_id);
-			weight = weight.saturating_add(T::DbWeight::get().reads(2));
+		// IMPORTANT! It is ok to collect all the key-values into the vector
+		// if the prod chain contains only few entries.
+		let foreign_asset_to_collection = v3_storage::ForeignAssetToCollection::<T>::drain()
+			.collect::<Vec<_>>();
+		let removed_bwd_mapping = v3_storage::CollectionToForeignAsset::<T>::drain().count();
 
-			let Some(bwd_asset_id) = bwd_asset_id else {
+		let r = (foreign_asset_to_collection.len() + removed_bwd_mapping) as u64;
+		let w = r;
+		weight = weight.saturating_add(T::DbWeight::get().reads_writes(r, w));
+
+		for (asset_id, collection_id) in foreign_asset_to_collection.into_iter() {
+			if let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(asset_id) {
+				<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
+				<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
+				weight = weight.saturating_add(T::DbWeight::get().writes(2));
+
+				log::info!("\t- migrated the foreign collection #{}", collection_id.0);
+			} else {
 				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetData(fwd_asset_id),
+					SkippedNotConvertibleAssetId(asset_id),
 				)));
-
 				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
+
+				log::error!("\t- inconsistent foreign collection #{}: failed to convert to the new XCM version", collection_id.0);
 			};
-
-			if fwd_asset_id != bwd_asset_id {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetData(fwd_asset_id),
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			}
-
-			let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(fwd_asset_id) else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedNotConvertibleAssetId(fwd_asset_id),
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			};
-
-			<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
-			<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
-			weight = weight.saturating_add(T::DbWeight::get().writes(2));
-
-			let migrate_tokens_weight = Self::migrate_tokens(&fwd_asset_id, collection_id);
-			weight = weight.saturating_add(migrate_tokens_weight);
 		}
+
+		let token_migration_weight = Self::migrate_tokens();
+		weight = weight.saturating_add(token_migration_weight);
+
+		log::info!("DONE migrating foreign collections' XCM versions");
 
 		weight
 	}
 
-	fn migrate_tokens(asset_id: &staging_xcm::v3::AssetId, collection_id: CollectionId) -> Weight {
+	fn migrate_tokens() -> Weight {
 		use MigrationStatus::*;
 		use MigrationStatusV3ToV4::*;
 
 		let mut weight = Weight::zero();
 
-		for (fwd_asset_instance, token_id) in
-			v3_storage::ForeignReserveAssetInstanceToTokenId::<T>::drain_prefix(collection_id)
-		{
-			let bwd_asset_instance = v3_storage::TokenIdToForeignReserveAssetInstance::<T>::take(
-				collection_id,
-				token_id,
-			);
-			weight = weight.saturating_add(T::DbWeight::get().reads(2));
+		// IMPORTANT! It is ok to collect all the key-values into the vector
+		// if the prod chain contains only few entries.
+		let foreign_reserve_asset_instance_to_token_id = v3_storage::ForeignReserveAssetInstanceToTokenId::<T>::drain()
+			.collect::<Vec<_>>();
+		let removed_bwd_mapping = v3_storage::TokenIdToForeignReserveAssetInstance::<T>::drain().count();
 
-			let Some(bwd_asset_instance) = bwd_asset_instance else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetInstanceData {
-						asset_id: *asset_id,
-						asset_instance: fwd_asset_instance,
-					},
-				)));
+		let r = (foreign_reserve_asset_instance_to_token_id.len() + removed_bwd_mapping) as u64;
+		let w = r;
+		weight = weight.saturating_add(T::DbWeight::get().reads_writes(r, w));
 
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			};
+		for (collection_id, asset_instance, token_id) in foreign_reserve_asset_instance_to_token_id.into_iter() {
+			if let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(asset_instance) {
+				<ForeignReserveAssetInstanceToTokenId<T>>::insert(collection_id, asset_instance, token_id);
+				<TokenIdToForeignReserveAssetInstance<T>>::insert(collection_id, token_id, asset_instance);
+				weight = weight.saturating_add(T::DbWeight::get().writes(2));
 
-			if fwd_asset_instance != bwd_asset_instance {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedInconsistentAssetInstanceData {
-						asset_id: *asset_id,
-						asset_instance: fwd_asset_instance,
-					},
-				)));
-
-				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
-			}
-
-			let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(fwd_asset_instance)
-			else {
+				log::info!("\t- migrated the foreign token #{}/#{}", collection_id.0, token_id.0);
+			} else {
 				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
 					SkippedNotConvertibleAssetInstance {
-						asset_id: *asset_id,
-						asset_instance: fwd_asset_instance,
+						collection_id,
+						asset_instance,
 					},
 				)));
-
 				weight = weight.saturating_add(T::DbWeight::get().writes(1));
-				continue;
+
+				log::error!("\t- inconsistent foreign token #{}/#{}: failed to convert to the new XCM version", collection_id.0, token_id.0);
 			};
 
-			<ForeignReserveAssetInstanceToTokenId<T>>::insert(
-				collection_id,
-				&asset_instance,
-				token_id,
-			);
-			<TokenIdToForeignReserveAssetInstance<T>>::insert(
-				collection_id,
-				token_id,
-				asset_instance,
-			);
-			weight = weight.saturating_add(T::DbWeight::get().writes(2));
 		}
 
 		weight
