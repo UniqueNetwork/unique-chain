@@ -169,7 +169,7 @@ pub mod module {
 		QueryKind = OptionQuery,
 	>;
 
-	const STORAGE_VERSION: StorageVersion = StorageVersion::new(staging_xcm::v4::VERSION as u16);
+	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
@@ -250,7 +250,7 @@ pub mod module {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if Self::on_chain_storage_version() < staging_xcm::v4::VERSION as u16 {
+			if Self::on_chain_storage_version() < 1 as u16 {
 				let put_version_weight = T::DbWeight::get().writes(1);
 				let fix_foreign_flag_weight = Self::fix_foreign_flag();
 				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
