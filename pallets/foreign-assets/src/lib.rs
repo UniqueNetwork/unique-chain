@@ -313,7 +313,10 @@ impl<T: Config> Pallet<T> {
 					collection.flags.foreign = true;
 				}
 			});
-			log::info!("\t- fixed foreign flag in the foreign collection #{}", collection_id.0);
+			log::info!(
+				"\t- fixed foreign flag in the foreign collection #{}",
+				collection_id.0
+			);
 
 			weight = weight.saturating_add(T::DbWeight::get().reads_writes(2, 1));
 		}
@@ -344,8 +347,8 @@ impl<T: Config> Pallet<T> {
 
 		// IMPORTANT! It is ok to collect all the key-values into the vector
 		// if the prod chain contains only few entries.
-		let foreign_asset_to_collection = v3_storage::ForeignAssetToCollection::<T>::drain()
-			.collect::<Vec<_>>();
+		let foreign_asset_to_collection =
+			v3_storage::ForeignAssetToCollection::<T>::drain().collect::<Vec<_>>();
 		let removed_bwd_mapping = v3_storage::CollectionToForeignAsset::<T>::drain().count();
 
 		let r = (foreign_asset_to_collection.len() + removed_bwd_mapping) as u64;
@@ -385,21 +388,36 @@ impl<T: Config> Pallet<T> {
 
 		// IMPORTANT! It is ok to collect all the key-values into the vector
 		// if the prod chain contains only few entries.
-		let foreign_reserve_asset_instance_to_token_id = v3_storage::ForeignReserveAssetInstanceToTokenId::<T>::drain()
-			.collect::<Vec<_>>();
-		let removed_bwd_mapping = v3_storage::TokenIdToForeignReserveAssetInstance::<T>::drain().count();
+		let foreign_reserve_asset_instance_to_token_id =
+			v3_storage::ForeignReserveAssetInstanceToTokenId::<T>::drain().collect::<Vec<_>>();
+		let removed_bwd_mapping =
+			v3_storage::TokenIdToForeignReserveAssetInstance::<T>::drain().count();
 
 		let r = (foreign_reserve_asset_instance_to_token_id.len() + removed_bwd_mapping) as u64;
 		let w = r;
 		weight = weight.saturating_add(T::DbWeight::get().reads_writes(r, w));
 
-		for (collection_id, asset_instance, token_id) in foreign_reserve_asset_instance_to_token_id.into_iter() {
+		for (collection_id, asset_instance, token_id) in
+			foreign_reserve_asset_instance_to_token_id.into_iter()
+		{
 			if let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(asset_instance) {
-				<ForeignReserveAssetInstanceToTokenId<T>>::insert(collection_id, asset_instance, token_id);
-				<TokenIdToForeignReserveAssetInstance<T>>::insert(collection_id, token_id, asset_instance);
+				<ForeignReserveAssetInstanceToTokenId<T>>::insert(
+					collection_id,
+					asset_instance,
+					token_id,
+				);
+				<TokenIdToForeignReserveAssetInstance<T>>::insert(
+					collection_id,
+					token_id,
+					asset_instance,
+				);
 				weight = weight.saturating_add(T::DbWeight::get().writes(2));
 
-				log::info!("\t- migrated the foreign token #{}/#{}", collection_id.0, token_id.0);
+				log::info!(
+					"\t- migrated the foreign token #{}/#{}",
+					collection_id.0,
+					token_id.0
+				);
 			} else {
 				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
 					SkippedNotConvertibleAssetInstance {
@@ -411,7 +429,6 @@ impl<T: Config> Pallet<T> {
 
 				log::error!("\t- inconsistent foreign token #{}/#{}: failed to convert to the new XCM version", collection_id.0, token_id.0);
 			};
-
 		}
 
 		weight
