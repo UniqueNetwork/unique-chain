@@ -198,31 +198,24 @@ jobs:
                 docker inspect -f {{.State.Running}} try-runtime
           }
           function do_docker_success_logs {
-                docker logs --details try-runtime 2>&1 | grep -i 'TryRuntime_on_runtime_upgrade executed without errors. Consumed'
+                docker logs --details try-runtime 2>&1 | grep -i 'No weight safety issues detected'
           }
           function is_started {
+                echo "Checking Docker logs..."
+
                 ERROR=$(do_docker_error_logs)
                 if [[ -n "${ERROR}" ]]; then
                         echo "Try runtime failed! See \"Show docker logs\" for details"
                         exit 1
                 fi
                 
-                if [ "$(check_container_status)" == "true" ]; then
-                        echo "Container: try-runtime RUNNING";
-                        echo "Check Docker logs"
-                        
-                        DOCKER_LOGS=$(do_docker_success_logs)
-                        if [[ -n "${DOCKER_LOGS}" ]]; then
-                                echo "TryRuntime_on_runtime_upgrade executed without errors."
-                                return 0
-                        else
-                                echo "Message not found in logs output, repeating..."
-                                return 1
-                        fi
+                DOCKER_LOGS=$(do_docker_success_logs)
+                if [[ -n "${DOCKER_LOGS}" ]]; then
+                        echo "TryRuntime_on_runtime_upgrade executed without errors."
+                        return 0
                 else
-                    (( counter_life++ ))
-                    echo "Container try-runtime not RUNNING" $counter_life "time"
-                    return 1
+                        echo "Message not found in logs output, repeating..."
+                        return 1
                 fi
           }
 
