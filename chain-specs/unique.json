@@ -5,7 +5,9 @@
   "bootNodes": [
     "/dns/p2p-asia-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWLwR4WUEj1AUaqSZcDanpiikS9F8JYZLFotGuVvxkHAvx",
     "/dns/p2p-us-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWPK3CLeaKp5cdxXZts55H2P3jPHnxHaT4KFXwY4hWZ4rq",
-    "/dns/p2p-eu-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWDc1pBNFa4Sc3xeivC9TojdkBRKkSkMFW1VtLCmutq812"
+    "/dns/p2p-eu-gateway.unique.network/tcp/30333/ws/p2p/12D3KooWDc1pBNFa4Sc3xeivC9TojdkBRKkSkMFW1VtLCmutq812",
+    "/dns/unique-boot-ng.dwellir.com/tcp/443/wss/p2p/12D3KooWJcKTGRDBPNuEuhKbs5gbkJRYK5Wd1Gt2NYxGrNB9ndgr",
+    "/dns/unique-boot-ng.dwellir.com/tcp/30369/p2p/12D3KooWJcKTGRDBPNuEuhKbs5gbkJRYK5Wd1Gt2NYxGrNB9ndgr"
   ],
   "telemetryEndpoints": null,
   "protocolId": "unq",
