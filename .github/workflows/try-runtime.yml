@@ -87,8 +87,8 @@ jobs:
         with:
           container: uniquenetwork/ci-tryruntime-local
           tag: ${{ matrix.network }}-${{ steps.branchname.outputs.value }}-$BUILD_SHA
-          context: .docker
-          dockerfile: Dockerfile-try-runtime
+          context: .
+          dockerfile: .docker/Dockerfile-try-runtime
           args: |
             --build-arg NETWORK=${{ matrix.network }}
             --build-arg REPLICA_FROM=${{ matrix.replica_from_address }}
