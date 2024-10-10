@@ -35,4 +35,4 @@ RUN echo "Requested features: ${NETWORK}-runtime\n" && \
     echo "Fork from: ${REPLICA_FROM}\n" && \
     cargo build --features=try-runtime,${NETWORK}-runtime --profile=production
 
-CMD try-runtime --runtime target/release/wbuild/${NETWORK}-runtime/${NETWORK}_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6000 --checks all live --uri ${REPLICA_FROM}
+CMD try-runtime --runtime target/production/wbuild/${NETWORK}-runtime/${NETWORK}_runtime.compact.compressed.wasm on-runtime-upgrade --blocktime 6000 --checks all live --uri ${REPLICA_FROM}
