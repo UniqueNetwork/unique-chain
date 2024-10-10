@@ -1,5 +1,5 @@
 # ===== Rust builder =====
-FROM ubuntu:22.04 as rust-builder
+FROM ubuntu:22.04 AS rust-builder
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
@@ -20,10 +20,13 @@ RUN mkdir /unique_parachain
 WORKDIR /unique_parachain
 
 # ===== BUILD ======
-FROM rust-builder as builder-unique
+FROM rust-builder AS builder-unique
 
 ARG NETWORK
 ARG REPLICA_FROM
+
+ENV NETWORK=${NETWORK}
+ENV REPLICA_FROM=${REPLICA_FROM}
 
 COPY . /unique_parachain
 WORKDIR /unique_parachain
