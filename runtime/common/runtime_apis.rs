@@ -55,10 +55,16 @@ macro_rules! impl_common_runtime_apis {
 			Runner, account::CrossAccountId as _,
 			Account as EVMAccount, FeeCalculator,
 		};
+		use staging_xcm::{prelude::*, Version as XcmVersion};
+		use xcm_runtime_apis::{
+			dry_run::{CallDryRunEffects, Error as XcmDryRunApiError, XcmDryRunEffects},
+			fees::Error as XcmPaymentApiError,
+			conversions::Error as XcmConversionApiError,
+		};
 		use runtime_common::{
 			sponsoring::{SponsorshipPredict, UniqueSponsorshipPredict},
 			dispatch::CollectionDispatch,
-			config::ethereum::CrossAccountId,
+			config::{ethereum::CrossAccountId, xcm::{LocationToAccountId, XcmRouter, XcmExecutorConfig}},
 		};
 		use up_data_structs::*;
 
@@ -520,6 +526,59 @@ macro_rules! impl_common_runtime_apis {
 				}
 				fn query_length_to_fee(length: u32) -> Balance {
 					TransactionPayment::length_to_fee(length)
+				}
+			}
+
+			impl xcm_runtime_apis::conversions::LocationToAccountApi<Block, AccountId> for Runtime {
+				fn convert_location(location: VersionedLocation) -> Result<
+					AccountId,
+					XcmConversionApiError
+				> {
+					xcm_runtime_apis::conversions::LocationToAccountHelper::<
+						AccountId,
+						LocationToAccountId,
+					>::convert_location(location)
+				}
+			}
+
+			impl xcm_runtime_apis::fees::XcmPaymentApi<Block> for Runtime {
+				fn query_acceptable_payment_assets(xcm_version: XcmVersion) -> Result<Vec<VersionedAssetId>, XcmPaymentApiError> {
+					let mut acceptable_assets = ForeignAssets::payment_assets().collect::<Vec<_>>();
+					acceptable_assets.push(Here.into());
+
+					PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable_assets)
+				}
+
+				fn query_weight_to_asset_fee(_free_weight: Weight, asset: VersionedAssetId) -> Result<u128, XcmPaymentApiError> {
+					match asset.try_as::<AssetId>() {
+						Ok(asset_id) if *asset_id == Here.into() || ForeignAssets::is_payment_asset(&asset_id) => Ok(0),
+						Ok(asset_id) => {
+							log::trace!(target: "xcm::xcm_runtime_apis", "query_weight_to_asset_fee - unhandled asset_id: {asset_id:?}!");
+							Err(XcmPaymentApiError::AssetNotFound)
+						},
+						Err(_) => {
+							log::trace!(target: "xcm::xcm_runtime_apis", "query_weight_to_asset_fee - failed to convert asset: {asset:?}!");
+							Err(XcmPaymentApiError::VersionedConversionFailed)
+						}
+					}
+				}
+
+				fn query_xcm_weight(message: VersionedXcm<()>) -> Result<Weight, XcmPaymentApiError> {
+					PolkadotXcm::query_xcm_weight(message)
+				}
+
+				fn query_delivery_fees(destination: VersionedLocation, message: VersionedXcm<()>) -> Result<VersionedAssets, XcmPaymentApiError> {
+					PolkadotXcm::query_delivery_fees(destination, message)
+				}
+			}
+
+			impl xcm_runtime_apis::dry_run::DryRunApi<Block, RuntimeCall, RuntimeEvent, OriginCaller> for Runtime {
+				fn dry_run_call(origin: OriginCaller, call: RuntimeCall) -> Result<CallDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
+					PolkadotXcm::dry_run_call::<Runtime, XcmRouter, OriginCaller, RuntimeCall>(origin, call)
+				}
+
+				fn dry_run_xcm(origin_location: VersionedLocation, xcm: VersionedXcm<RuntimeCall>) -> Result<XcmDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
+					PolkadotXcm::dry_run_xcm::<Runtime, XcmRouter, RuntimeCall, XcmExecutorConfig<Runtime>>(origin_location, xcm)
 				}
 			}
 
