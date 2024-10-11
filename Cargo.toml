@@ -136,6 +136,7 @@ pallet-transaction-payment-rpc-runtime-api = { default-features = false, version
 pallet-treasury = { default-features = false, version = "35.0.0" }
 pallet-utility = { default-features = false, version = "36.0.0" }
 pallet-xcm = { default-features = false, version = "15.0.0" }
+xcm-runtime-apis = { default-features = false, version = "0.2.0" }
 pallet-derivatives = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "asset-ops-xcm-v1.14.0" }
 pallet-message-queue = { default-features = false, version = "39.0.0" }
 parity-scale-codec = { version = "3.6.5", features = ["derive"], default-features = false }

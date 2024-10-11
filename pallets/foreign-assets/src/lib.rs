@@ -407,6 +407,14 @@ impl<T: Config> Pallet<T> {
 		weight
 	}
 
+	pub fn payment_assets() -> impl Iterator<Item = AssetId> {
+		<ForeignAssetToCollection<T>>::iter_keys()
+	}
+
+	pub fn is_payment_asset(asset_id: &AssetId) -> bool {
+		<ForeignAssetToCollection<T>>::contains_key(asset_id)
+	}
+
 	pub fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
