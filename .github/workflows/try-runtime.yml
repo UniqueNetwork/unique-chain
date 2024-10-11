@@ -167,7 +167,7 @@ jobs:
 
       - name: Stop running containers
         if: always()                   # run this step always
-        run: docker compose -f ".docker/docker-compose.try-runtime.${{ matrix.network }}.yml" down
+        run: docker compose -f ".docker/docker-compose.try-runtime.yml" down
 
       - name: Remove builder cache
         if: always()                   # run this step always
