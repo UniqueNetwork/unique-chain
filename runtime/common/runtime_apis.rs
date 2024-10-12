@@ -56,6 +56,7 @@ macro_rules! impl_common_runtime_apis {
 			Account as EVMAccount, FeeCalculator,
 		};
 		use staging_xcm::{prelude::*, Version as XcmVersion};
+		use staging_xcm_builder::unique_instances::{DerivativesRegistry, IterDerivativesRegistry};
 		use xcm_runtime_apis::{
 			dry_run::{CallDryRunEffects, Error as XcmDryRunApiError, XcmDryRunEffects},
 			fees::Error as XcmPaymentApiError,
@@ -543,7 +544,7 @@ macro_rules! impl_common_runtime_apis {
 
 			impl xcm_runtime_apis::fees::XcmPaymentApi<Block> for Runtime {
 				fn query_acceptable_payment_assets(xcm_version: XcmVersion) -> Result<Vec<VersionedAssetId>, XcmPaymentApiError> {
-					let mut acceptable_assets = ForeignAssets::payment_assets().collect::<Vec<_>>();
+					let mut acceptable_assets = DerivativeCollections::iter_originals().collect::<Vec<_>>();
 					acceptable_assets.push(Here.into());
 
 					PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable_assets)
@@ -551,7 +552,7 @@ macro_rules! impl_common_runtime_apis {
 
 				fn query_weight_to_asset_fee(_free_weight: Weight, asset: VersionedAssetId) -> Result<u128, XcmPaymentApiError> {
 					match asset.try_as::<AssetId>() {
-						Ok(asset_id) if *asset_id == Here.into() || ForeignAssets::is_payment_asset(&asset_id) => Ok(0),
+						Ok(asset_id) if *asset_id == Here.into() || DerivativeCollections::get_derivative(&asset_id).is_some() => Ok(0),
 						Ok(asset_id) => {
 							log::trace!(target: "xcm::xcm_runtime_apis", "query_weight_to_asset_fee - unhandled asset_id: {asset_id:?}!");
 							Err(XcmPaymentApiError::AssetNotFound)

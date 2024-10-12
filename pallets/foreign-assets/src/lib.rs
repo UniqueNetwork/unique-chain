@@ -27,12 +27,16 @@ use core::ops::Deref;
 
 use derivative::Derivative;
 use frame_support::{
-	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::{EnsureOrigin, BuildGenesisConfig}, PalletId,
+	dispatch::DispatchResult,
+	pallet_prelude::*,
+	storage_alias,
+	traits::{BuildGenesisConfig, EnsureOrigin},
+	PalletId,
 };
 use frame_system::pallet_prelude::*;
 use pallet_common::{
-	dispatch::CollectionDispatch, erc::CrossAccountId, NATIVE_FUNGIBLE_COLLECTION_ID,
-	CollectionIssuer,
+	dispatch::CollectionDispatch, erc::CrossAccountId, CollectionIssuer,
+	NATIVE_FUNGIBLE_COLLECTION_ID,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
@@ -43,9 +47,9 @@ use staging_xcm_executor::{
 	AssetsInHolding,
 };
 use up_data_structs::{
-	budget::ZeroBudget, CollectionFlags, CollectionId, CollectionMode, CollectionName,
-	CollectionTokenPrefix, CreateCollectionData, CreateFungibleData, CreateItemData, TokenId,
-	CollectionDescription,
+	budget::ZeroBudget, CollectionDescription, CollectionFlags, CollectionId, CollectionMode,
+	CollectionName, CollectionTokenPrefix, CreateCollectionData, CreateFungibleData,
+	CreateItemData, TokenId,
 };
 
 pub mod weights;

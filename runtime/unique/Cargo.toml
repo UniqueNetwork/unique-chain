@@ -57,6 +57,7 @@ runtime-benchmarks = [
 	'pallet-unique/runtime-benchmarks',
 	'pallet-utility/runtime-benchmarks',
 	'pallet-xcm/runtime-benchmarks',
+	'xcm-runtime-apis/runtime-benchmarks',
 	'pallet-message-queue/runtime-benchmarks',
 	'polkadot-runtime-common/runtime-benchmarks',
 	'sp-runtime/runtime-benchmarks',
@@ -132,6 +133,7 @@ std = [
 	'pallet-unique/std',
 	'pallet-utility/std',
 	'pallet-xcm/std',
+	'xcm-runtime-apis/std',
 	'pallet-derivatives/std',
 	'pallet-message-queue/std',
 	'polkadot-runtime-common/std',
@@ -276,6 +278,7 @@ pallet-transaction-payment-rpc-runtime-api = { workspace = true }
 pallet-treasury = { workspace = true }
 pallet-utility = { workspace = true }
 pallet-xcm = { workspace = true }
+xcm-runtime-apis = { workspace = true }
 pallet-derivatives = { workspace = true }
 pallet-message-queue = { workspace = true }
 parity-scale-codec = { workspace = true }

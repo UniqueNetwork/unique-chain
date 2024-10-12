@@ -13,7 +13,7 @@ use crate::{
 		ethereum::CrossAccountId as ConfigCrossAccountId,
 		xcm::{LocationToCrossAccountId, SelfLocation},
 	},
-	RelayNetwork, Runtime, RuntimeEvent, DerivativeCollections,
+	DerivativeCollections, RelayNetwork, Runtime, RuntimeEvent,
 };
 
 parameter_types! {
