@@ -583,6 +583,11 @@ export class ChainHelperBase {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
+    options = options || { nonce: 0};
+    if (!options.nonce) {
+      let nonce = await this.chain.getNonce(sender.address);
+      options.nonce = nonce++;
+    }
     return new Promise(async (resolve, reject) => {
       try {
         let inBlockResult;
