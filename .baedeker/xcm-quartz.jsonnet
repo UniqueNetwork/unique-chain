@@ -88,12 +88,12 @@ local moonriver = {
 	},
 };
 
-local statemine = {
-	name: 'statemine',
+local assethub = {
+	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'statemine-local',
+		chain: 'asset-hub-kusama-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
@@ -126,6 +126,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, karura, moonriver, statemine, shiden]
+		for para in [unique, karura, moonriver, assethub, shiden]
 	},
 }
