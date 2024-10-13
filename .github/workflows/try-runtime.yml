@@ -40,7 +40,7 @@ jobs:
             network {quartz}, replica_from_address {${{ env.QUARTZ_REPLICA_FROM }}}
             network {unique}, replica_from_address {${{ env.UNIQUE_REPLICA_FROM }}}
 
-  try-runtime-build:
+  try-runtime:
     needs: prepare-execution-marix
 
     # The type of runner that the job will run on

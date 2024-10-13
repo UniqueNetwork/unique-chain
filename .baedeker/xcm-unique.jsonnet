@@ -89,12 +89,12 @@ local moonbeam = {
 	},
 };
 
-local statemint = {
-	name: 'statemint',
+local assethub = {
+	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'statemint-local',
+		chain: 'asset-hub-polkadot-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
@@ -163,6 +163,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
+		for para in [unique, acala, moonbeam, assethub, astar, polkadex, hydraDx]
 	},
 }
