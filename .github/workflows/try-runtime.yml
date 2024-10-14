@@ -47,7 +47,7 @@ jobs:
     runs-on: [ self-hosted-ci ]
     continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
-    name: ${{ matrix.network }}-try-runtime-build
+    name: ${{ matrix.network }}-try-runtime
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
