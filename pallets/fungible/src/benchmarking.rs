@@ -22,7 +22,7 @@ use sp_std::prelude::*;
 use up_data_structs::{budget::Unlimited, CollectionMode, MAX_ITEMS_PER_BATCH};
 
 use super::*;
-use crate::{Config, FungibleHandle, Pallet};
+use crate::{Config, Pallet};
 
 const SEED: u32 = 1;
 

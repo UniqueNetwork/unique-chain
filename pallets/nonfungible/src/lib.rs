@@ -95,11 +95,8 @@ use core::ops::Deref;
 use erc::ERC721Events;
 use evm_coder::ToLog;
 use frame_support::{
-	dispatch::{Pays, PostDispatchInfo},
-	ensure, fail,
-	pallet_prelude::*,
-	storage::with_transaction,
-	transactional, BoundedVec,
+	dispatch::PostDispatchInfo, ensure, fail, pallet_prelude::*, storage::with_transaction,
+	transactional,
 };
 pub use pallet::*;
 use pallet_common::{
@@ -112,9 +109,11 @@ use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use pallet_structure::Pallet as PalletStructure;
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
-use sp_core::{Get, H160};
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+use sp_core::H160;
+use sp_runtime::{ArithmeticError, DispatchResult, TransactionOutcome};
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
+use sp_std::{collections::btree_map::BTreeMap, vec};
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
 	CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property, PropertyKey,

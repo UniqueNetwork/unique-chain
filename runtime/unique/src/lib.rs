@@ -21,6 +21,8 @@
 #![recursion_limit = "1024"]
 #![allow(clippy::from_over_into, clippy::identity_op)]
 #![allow(clippy::fn_to_numeric_cast_with_truncation)]
+// For `cumulus_pallet_dmp_queue`.
+#![allow(deprecated)]
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));

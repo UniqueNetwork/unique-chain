@@ -42,14 +42,10 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
-#[cfg(feature = "quartz-runtime")]
-use crate::service::QuartzRuntimeExecutor;
-#[cfg(feature = "unique-runtime")]
-use crate::service::UniqueRuntimeExecutor;
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, start_dev_node, start_node, OpalRuntimeExecutor},
+	service::{new_partial, start_dev_node, start_node, ParachainHostFunctions},
 };
 
 macro_rules! no_runtime_err {
@@ -188,18 +184,18 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => async_run_with_runtime!(
-				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::Runtime, unique_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => async_run_with_runtime!(
-				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => async_run_with_runtime!(
-				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::Runtime, opal_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -234,18 +230,18 @@ macro_rules! construct_sync_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => sync_run_with_runtime!(
-				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::Runtime, unique_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => sync_run_with_runtime!(
-				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => sync_run_with_runtime!(
-				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::Runtime, opal_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -261,7 +257,7 @@ macro_rules! start_node_using_chain_runtime {
 			RuntimeId::Unique => $start_node_fn::<
 				unique_runtime::Runtime,
 				unique_runtime::RuntimeApi,
-				UniqueRuntimeExecutor,
+				ParachainHostFunctions,
 				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
@@ -269,14 +265,14 @@ macro_rules! start_node_using_chain_runtime {
 			RuntimeId::Quartz => $start_node_fn::<
 				quartz_runtime::Runtime,
 				quartz_runtime::RuntimeApi,
-				QuartzRuntimeExecutor,
+				ParachainHostFunctions,
 				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			RuntimeId::Opal => $start_node_fn::<
 				opal_runtime::Runtime,
 				opal_runtime::RuntimeApi,
-				OpalRuntimeExecutor,
+				ParachainHostFunctions,
 				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
@@ -353,22 +349,21 @@ pub fn run() -> Result<()> {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
 
-			use crate::service::ParachainHostFunctions;
-
 			type Header = <Block as sp_runtime::traits::Block>::Header;
 			type Hasher = <Header as sp_runtime::traits::Header>::Hashing;
 
+			let cmd = cmd.as_ref();
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Hasher, ParachainHostFunctions>(config))
-				}
+				BenchmarkCmd::Pallet(cmd) => runner.sync_run(|config| {
+					cmd.run_with_spec::<Hasher, ParachainHostFunctions>(Some(config.chain_spec))
+				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
 						opal_runtime::Runtime,
 						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
+						ParachainHostFunctions,
 						_,
 					>(
 						&config,
@@ -380,7 +375,7 @@ pub fn run() -> Result<()> {
 					let partials = new_partial::<
 						opal_runtime::Runtime,
 						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
+						ParachainHostFunctions,
 						_,
 					>(
 						&config,

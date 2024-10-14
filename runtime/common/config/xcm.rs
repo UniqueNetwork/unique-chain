@@ -293,6 +293,7 @@ impl cumulus_pallet_xcmp_queue::migration::v5::V5Config for Runtime {
 	type ChannelList = <Runtime as cumulus_pallet_xcmp_queue::Config>::ChannelInfo;
 }
 
+#[allow(deprecated)]
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = cumulus_pallet_dmp_queue::weights::SubstrateWeight<Self>;

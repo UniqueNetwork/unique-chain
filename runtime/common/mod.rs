@@ -33,7 +33,7 @@ pub mod tests;
 use frame_support::{
 	pallet_prelude::{GetStorageVersion, PalletInfoAccess},
 	parameter_types,
-	traits::{Currency, OnRuntimeUpgrade, PalletInfo, StorageVersion},
+	traits::{OnRuntimeUpgrade, PalletInfo, StorageVersion},
 	weights::Weight,
 };
 use sp_core::Get;
@@ -41,12 +41,14 @@ use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
 };
-use sp_std::{marker::PhantomData, vec::Vec};
+use sp_std::marker::PhantomData;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
 
-use crate::{AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature, Treasury};
+use crate::{AllPalletsWithSystem, Aura, Runtime, RuntimeCall, Signature, Treasury};
 
 #[macro_export]
 macro_rules! unsupported {
@@ -108,8 +110,6 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 	Migrations,
 >;
-
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub(crate) type DealWithFees = Treasury;
 

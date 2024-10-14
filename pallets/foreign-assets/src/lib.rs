@@ -54,20 +54,20 @@ pub use module::*;
 pub use weights::WeightInfo;
 
 /// Status of storage migration from an old XCM version to a new one.
-#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum MigrationStatus {
 	V3ToV4(MigrationStatusV3ToV4),
 }
 
 /// Status of storage migration from XCMv3 to XCMv4.
-#[derive(Clone, Copy, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum MigrationStatusV3ToV4 {
 	/// The migration is completed.
 	Done,
 
 	/// An asset is skipped during the migration
 	/// because it couldn't be converted to the new XCM version.
-	SkippedNotConvertibleAssetId(staging_xcm::v3::AssetId),
+	SkippedNotConvertibleAssetId(Box<staging_xcm::v3::AssetId>),
 
 	/// An asset instance is skipped during the migration
 	/// because it couldn't be converted to the new XCM version.
@@ -130,7 +130,7 @@ pub mod module {
 		},
 
 		/// The migration status.
-		MigrationStatus(MigrationStatus),
+		MigrationStatus(Box<MigrationStatus>),
 	}
 
 	/// The corresponding collections of foreign assets.
@@ -250,7 +250,7 @@ pub mod module {
 	#[pallet::hooks]
 	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
 		fn on_runtime_upgrade() -> Weight {
-			if Self::on_chain_storage_version() < 1 as u16 {
+			if Self::on_chain_storage_version() < 1_u16 {
 				let put_version_weight = T::DbWeight::get().writes(1);
 				let fix_foreign_flag_weight = Self::fix_foreign_flag();
 				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
@@ -330,8 +330,8 @@ impl<T: Config> Pallet<T> {
 		let event_weight = T::DbWeight::get().writes(1);
 		let collection_migration_weight = Self::migrate_collections();
 
-		Self::deposit_event(Event::<T>::MigrationStatus(MigrationStatus::V3ToV4(
-			MigrationStatusV3ToV4::Done,
+		Self::deposit_event(Event::<T>::MigrationStatus(Box::new(
+			MigrationStatus::V3ToV4(MigrationStatusV3ToV4::Done),
 		)));
 
 		collection_migration_weight.saturating_add(event_weight)
@@ -363,9 +363,9 @@ impl<T: Config> Pallet<T> {
 
 				log::info!("\t- migrated the foreign collection #{}", collection_id.0);
 			} else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
-					SkippedNotConvertibleAssetId(asset_id),
-				)));
+				Self::deposit_event(Event::<T>::MigrationStatus(Box::new(V3ToV4(
+					SkippedNotConvertibleAssetId(Box::new(asset_id)),
+				))));
 				weight = weight.saturating_add(T::DbWeight::get().writes(1));
 
 				log::error!("\t- inconsistent foreign collection #{}: failed to convert to the new XCM version", collection_id.0);
@@ -419,12 +419,12 @@ impl<T: Config> Pallet<T> {
 					token_id.0
 				);
 			} else {
-				Self::deposit_event(Event::<T>::MigrationStatus(V3ToV4(
+				Self::deposit_event(Event::<T>::MigrationStatus(Box::new(V3ToV4(
 					SkippedNotConvertibleAssetInstance {
 						collection_id,
 						asset_instance,
 					},
-				)));
+				))));
 				weight = weight.saturating_add(T::DbWeight::get().writes(1));
 
 				log::error!("\t- inconsistent foreign token #{}/#{}: failed to convert to the new XCM version", collection_id.0, token_id.0);

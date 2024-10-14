@@ -92,8 +92,10 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::WithRecorder;
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::H160;
-use sp_runtime::{ArithmeticError, DispatchError, DispatchResult};
-use sp_std::{collections::btree_map::BTreeMap, vec::Vec};
+use sp_runtime::{ArithmeticError, DispatchResult};
+use sp_std::collections::btree_map::BTreeMap;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId, Property, PropertyKey,
 	TokenId,

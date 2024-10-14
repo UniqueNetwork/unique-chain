@@ -166,8 +166,6 @@ pub fn test_config(chain_id: &str, relay_chain: &str) -> DefaultChainSpec {
 }
 
 fn genesis_patch() -> serde_json::Value {
-	use default_runtime::*;
-
 	let invulnerables = ["Alice", "Bob"];
 
 	#[allow(unused_mut)]

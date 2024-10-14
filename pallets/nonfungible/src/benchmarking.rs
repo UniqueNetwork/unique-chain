@@ -27,7 +27,7 @@ use up_data_structs::{
 };
 
 use super::*;
-use crate::{Config, NonfungibleHandle, Pallet};
+use crate::{Config, Pallet};
 
 const SEED: u32 = 1;
 
