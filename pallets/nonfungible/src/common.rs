@@ -24,7 +24,9 @@ use pallet_common::{
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 use up_data_structs::{
 	budget::Budget, CollectionId, CreateItemExData, Property, PropertyKey, PropertyKeyPermission,
 	PropertyValue, TokenId, TokenOwnerError,

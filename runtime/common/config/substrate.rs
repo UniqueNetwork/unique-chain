@@ -20,7 +20,7 @@ use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
-		ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin,
+		ConstBool, ConstU32, ConstU64, NeverEnsureOrigin,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -179,6 +179,7 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	#[allow(deprecated)]
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;

@@ -16,7 +16,7 @@
 
 //! Implements EVM sponsoring logic via TransactionValidityHack
 
-use core::{convert::TryInto, marker::PhantomData};
+use core::marker::PhantomData;
 
 use evm_coder::Call;
 use pallet_common::{eth::map_eth_to_id, CollectionHandle};

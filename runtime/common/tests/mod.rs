@@ -19,7 +19,7 @@ pub use sp_runtime::AccountId32 as AccountId;
 use sp_runtime::{BuildStorage, Storage};
 use up_common::types::AuraId;
 
-use crate::{ParachainInfoConfig, Runtime, RuntimeEvent, RuntimeGenesisConfig, System};
+use crate::{ParachainInfoConfig, Runtime, RuntimeGenesisConfig, System};
 pub type Balance = u128;
 
 pub mod xcm;
@@ -36,16 +36,6 @@ fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
 	TPublic::Pair::from_string(&format!("//{seed}"), None)
 		.expect("static values are valid; qed")
 		.public()
-}
-
-fn last_events(n: usize) -> Vec<RuntimeEvent> {
-	System::events()
-		.into_iter()
-		.map(|e| e.event)
-		.rev()
-		.take(n)
-		.rev()
-		.collect()
 }
 
 fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
@@ -126,5 +116,5 @@ fn make_basic_storage() -> Storage {
 		..Default::default()
 	};
 
-	cfg.build_storage().unwrap().into()
+	cfg.build_storage().unwrap()
 }

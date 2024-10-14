@@ -1,4 +1,6 @@
-use alloc::{vec, vec::Vec};
+use alloc::vec;
+#[cfg(not(feature = "std"))]
+use alloc::vec::Vec;
 use core::marker::PhantomData;
 
 use frame_support::{

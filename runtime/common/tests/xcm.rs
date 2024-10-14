@@ -14,18 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::pallet_prelude::Weight;
 use parity_scale_codec::Encode;
-use staging_xcm::{
-	latest::{prelude::*, Error},
-	VersionedXcm,
-};
+use staging_xcm::latest::{prelude::*, Error};
 
-use super::{last_events, new_test_ext, AccountId};
-use crate::{
-	runtime_common::config::xcm::XcmExecutorConfig, PolkadotXcm, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeOrigin,
-};
+use super::{new_test_ext, AccountId};
+use crate::{runtime_common::config::xcm::XcmExecutorConfig, Runtime, RuntimeCall};
 
 type XcmExecutor = staging_xcm_executor::XcmExecutor<XcmExecutorConfig<Runtime>>;
 

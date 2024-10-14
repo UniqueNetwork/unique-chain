@@ -29,6 +29,7 @@ use pallet_refungible::{
 };
 use sp_core::H160;
 use sp_runtime::DispatchError;
+#[cfg(not(feature = "std"))]
 use sp_std::{borrow::ToOwned, vec::Vec};
 use up_data_structs::{
 	mapping::TokenAddressMapping, CollectionId, CollectionMode, CreateCollectionData,

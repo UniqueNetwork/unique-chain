@@ -45,7 +45,6 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
-use sp_std::convert::TryInto;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;

@@ -34,7 +34,9 @@ use pallet_evm::{
 };
 use parity_scale_codec::Decode;
 use sp_core::{Get, H160};
-use sp_std::{cell::RefCell, vec::Vec};
+use sp_std::cell::RefCell;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 use sp_weights::Weight;
 use up_data_structs::budget;
 // #[cfg(feature = "runtime-benchmarks")]
