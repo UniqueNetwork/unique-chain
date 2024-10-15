@@ -49,7 +49,7 @@ local assethub = {
 	bin: 'bin/assethub',
 	paraId: 1002,
 	spec: {Genesis:{
-		chain: 'asset-hub-westend-local',
+		chain: 'asset-hub-westend',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
