@@ -93,14 +93,15 @@ local assethub = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'asset-hub-kusama-local',
+		chain: 'asset-hub-rococo-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
