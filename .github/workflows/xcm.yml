@@ -37,14 +37,14 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.WESTMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINE_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.WESTMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}, runs_on {medium}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINE_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runs_on {large}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runs_on {XL}
 
   xcm:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [XL]
+    runs-on: ${{ matrix.runs_on }}
 
     timeout-minutes: 600
 
