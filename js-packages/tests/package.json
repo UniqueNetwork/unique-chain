@@ -17,7 +17,7 @@
         "setIdentities": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/identitySetter.ts",
         "checkRelayIdentities": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/relayIdentitiesChecker.ts",
         "_test": "yarn setup && yarn mocha --timeout 9999999 --loader=ts-node/esm.mjs",
-        "_testParallel": "yarn setup && yarn mocha --timeout 9999999 --parallel --loader=ts-node/esm.mjs",
+        "_testParallel": "yarn setup && yarn mocha --timeout 9999999 --parallel --jobs=8 --loader=ts-node/esm.mjs",
         "test": "yarn _test './**/*.*test.ts'",
         "testParallel": "yarn _testParallel './**/*.test.ts'",
         "testSequential": "yarn _test './**/*.seqtest.ts'",
