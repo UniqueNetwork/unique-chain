@@ -94,7 +94,7 @@ local assethub = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'asset-hub-polkadot',
+		chain: 'asset-hub-polkadot-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
