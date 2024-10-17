@@ -88,19 +88,20 @@ local moonriver = {
 	},
 };
 
-local statemine = {
-	name: 'statemine',
+local assethub = {
+	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {Genesis:{
-		chain: 'statemine-local',
+		chain: 'asset-hub-rococo-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
@@ -126,6 +127,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, karura, moonriver, statemine, shiden]
+		for para in [unique, karura, moonriver, assethub, shiden]
 	},
 }

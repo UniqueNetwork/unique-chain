@@ -21,7 +21,6 @@
 
 use core::{
 	char::{decode_utf16, REPLACEMENT_CHARACTER},
-	convert::TryInto,
 	ops::Deref,
 };
 
@@ -38,7 +37,6 @@ use pallet_evm_coder_substrate::{
 	frontier_contract, WithRecorder,
 };
 use sp_core::U256;
-use sp_std::vec::Vec;
 use up_data_structs::TokenId;
 
 use crate::{

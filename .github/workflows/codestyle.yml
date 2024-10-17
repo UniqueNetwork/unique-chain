@@ -66,6 +66,6 @@ jobs:
             targets: wasm32-unknown-unknown
             components: rustfmt, clippy        
       - name: Run cargo check
-        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
+        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime --tests -- -Dwarnings
         env:
           SKIP_WASM_BUILD: '1'

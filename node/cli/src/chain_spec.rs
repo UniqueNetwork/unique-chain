@@ -31,17 +31,14 @@ use up_common::types::opaque::*;
 
 /// The `ChainSpec` parameterized for the unique runtime.
 #[cfg(feature = "unique-runtime")]
-pub type UniqueChainSpec =
-	sc_service::GenericChainSpec<unique_runtime::RuntimeGenesisConfig, Extensions>;
+pub type UniqueChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// The `ChainSpec` parameterized for the quartz runtime.
 #[cfg(feature = "quartz-runtime")]
-pub type QuartzChainSpec =
-	sc_service::GenericChainSpec<quartz_runtime::RuntimeGenesisConfig, Extensions>;
+pub type QuartzChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 /// The `ChainSpec` parameterized for the opal runtime.
-pub type OpalChainSpec =
-	sc_service::GenericChainSpec<opal_runtime::RuntimeGenesisConfig, Extensions>;
+pub type OpalChainSpec = sc_service::GenericChainSpec<Extensions>;
 
 #[cfg(feature = "unique-runtime")]
 pub type DefaultChainSpec = UniqueChainSpec;
@@ -169,8 +166,6 @@ pub fn test_config(chain_id: &str, relay_chain: &str) -> DefaultChainSpec {
 }
 
 fn genesis_patch() -> serde_json::Value {
-	use default_runtime::*;
-
 	let invulnerables = ["Alice", "Bob"];
 
 	#[allow(unused_mut)]

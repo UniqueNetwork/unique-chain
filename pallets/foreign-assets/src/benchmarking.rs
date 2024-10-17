@@ -19,7 +19,7 @@
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 use pallet_common::benchmarking::{create_data, create_u16_data};
-use sp_std::{boxed::Box, vec};
+use sp_std::boxed::Box;
 use staging_xcm::prelude::*;
 use up_data_structs::{MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH};
 

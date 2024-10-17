@@ -15,10 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
-use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
+use frame_support::traits::{fungible::Balanced, tokens::Precision};
 use pallet_common::{CollectionIssuer, Config as CommonConfig};
-use pallet_evm::account::CrossAccountId;
-use sp_std::vec;
 use up_data_structs::{
 	budget::Unlimited, CollectionMode, CreateCollectionData, CreateItemData, CreateNftData,
 };

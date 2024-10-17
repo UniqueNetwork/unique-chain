@@ -19,7 +19,7 @@ import {ApiPromise} from '@polkadot/api';
 import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
 import {itEth} from '@unique/test-utils/eth/util.js';
 import {main as correctState} from '@unique/scripts/correctStateAfterMaintenance.js';
-import type {PalletBalancesIdAmount} from '@polkadot/types/lookup';
+import type {FrameSupportTokensMiscIdAmount} from '@polkadot/types/lookup';
 import type {Vec} from '@polkadot/types-codec';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
@@ -321,7 +321,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
         expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([[superuser.address, '0x00000000000000056bc75e2d63100000']]);
         expect((await api.query.appPromotion.pendingUnstake(2)).toJSON()).to.be.deep.equal([[superuser.address, '0x00000000000000056bc75e2d63100000']]);
-        expect((await api.query.balances.freezes(superuser.address) as Vec<PalletBalancesIdAmount>)
+        expect((await api.query.balances.freezes(superuser.address) as Vec<FrameSupportTokensMiscIdAmount>)
           .map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()})))
           .to.be.deep.equal([{id: 'appstakeappstake', amount: 200000000000000000000n}]);
         await correctState();

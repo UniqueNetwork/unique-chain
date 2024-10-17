@@ -18,8 +18,8 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {usingPlaygrounds, expect, itSub} from '@unique/test-utils/util.js';
 import type {u32} from '@polkadot/types-codec';
-import { itEth } from '@unique/test-utils/eth/util.js';
-import { ITransactionResult } from '@unique-nft/playgrounds/types';
+import {itEth} from '@unique/test-utils/eth/util.js';
+import {ITransactionResult} from '@unique-nft/playgrounds/types';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;
@@ -165,12 +165,12 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
     expect(Math.abs(fee - expectedTransferFee)).to.be.lessThan(tolerance);
   });
-   
+
   itEth('Evm Transactions send fees to Treasury', async ({helper}) => {
     const value = helper.balance.getOneTokenNominal();
     const gasPrice = await helper.getWeb3().eth.getGasPrice();
     let result = null;
-    
+
     const lambda = async () => {
       result = await helper.executeExtrinsic(alice, 'api.tx.evm.call', [
         helper.address.substrateToEth(alice.address),
@@ -184,17 +184,17 @@ describe('integration test: Fees must be credited to Treasury:', () => {
         [],
       ]);
     };
-    
-    const totalPaid = await helper.arrange.calculcateFee({ Substrate: alice.address }, lambda);
+
+    const totalPaid = await helper.arrange.calculcateFee({Substrate: alice.address}, lambda);
     const evmFees = totalPaid - value;
-    
+
     const treasuryDepoosited = (result as unknown as ITransactionResult).result.events
-      .filter(({ event: { method, section } }) => section == 'treasury' && method == 'Deposit')
-      .map(({ event: { data } }) => data[0].toJSON());
-    
+      .filter(({event: {method, section}}) => section == 'treasury' && method == 'Deposit')
+      .map(({event: {data}}) => data[0].toJSON());
+
     const deposit = BigInt(treasuryDepoosited[0]);
-  
+
     expect(deposit).to.be.equal(evmFees);
   });
-  
+
 });

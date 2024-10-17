@@ -17,7 +17,6 @@
 use frame_benchmarking::v2::*;
 use frame_support::ensure;
 use frame_system::RawOrigin;
-use sp_std::vec;
 
 use super::*;
 use crate::{Config, Pallet as Maintenance};

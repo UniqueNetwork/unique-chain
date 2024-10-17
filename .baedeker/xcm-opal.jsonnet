@@ -44,19 +44,20 @@ local unique = {
 	},
 };
 
-local westmint = {
-	name: 'westmint',
+local assethub = {
+	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1002,
 	spec: {Genesis:{
-		chain: 'westmint-local',
+		chain: 'asset-hub-westend-local',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
@@ -65,6 +66,6 @@ local westmint = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, westmint]
+		for para in [unique, assethub]
 	},
 }

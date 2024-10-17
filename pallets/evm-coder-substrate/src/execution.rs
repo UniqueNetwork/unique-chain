@@ -18,8 +18,6 @@
 
 #[cfg(not(feature = "std"))]
 use alloc::string::{String, ToString};
-#[cfg(feature = "std")]
-use std::string::{String, ToString};
 
 use evm_coder::ERC165Call;
 pub use evm_coder_substrate_procedural::PreDispatch;

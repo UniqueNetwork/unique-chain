@@ -77,6 +77,7 @@ std = [
 	'cumulus-primitives-utility/std',
 	'parachains-common/std',
 	'frame-executive/std',
+	"frame-metadata-hash-extension/std",
 	'frame-support/std',
 	'frame-system-rpc-runtime-api/std',
 	'frame-system/std',
@@ -237,10 +238,11 @@ fast-inflation = []
 foreign-assets = []
 gov-test-timings = []
 governance = []
-lookahead = ['cumulus-pallet-parachain-system/parameterized-consensus-hook', 'pallet-aura/experimental']
 preimage = []
 refungible = []
 session-test-timings = []
+metadata-hash = ["substrate-wasm-builder/metadata-hash"]
+on-chain-release-build = ["metadata-hash"]
 
 ################################################################################
 # local dependencies
@@ -257,6 +259,7 @@ cumulus-primitives-timestamp = { workspace = true }
 cumulus-primitives-utility = { workspace = true }
 parachains-common = { workspace = true }
 frame-executive = { workspace = true }
+frame-metadata-hash-extension = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }

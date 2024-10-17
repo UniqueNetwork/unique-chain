@@ -30,7 +30,7 @@ use sp_runtime::{
 	traits::{BlockNumberProvider, Bounded},
 	Perbill,
 };
-use sp_std::{iter::Sum, vec, vec::Vec};
+use sp_std::{iter::Sum, vec::Vec};
 
 use super::{BalanceOf, Call, Config, Pallet, Staked, PENDING_LIMIT_PER_BLOCK};
 use crate::{pallet, Pallet as PromototionPallet};
@@ -58,6 +58,7 @@ where
 	Ok(pallet_admin)
 }
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(
 	where T:  Config + pallet_unique::Config + pallet_evm_migration::Config ,
 		BlockNumberFor<T>: From<u32> + Into<u32>,

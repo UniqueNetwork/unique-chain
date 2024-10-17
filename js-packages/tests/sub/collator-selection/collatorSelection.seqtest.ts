@@ -140,8 +140,9 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        // set session keys for everyone
-        await Promise.all(crowd.map(acc => helper.session.setOwnKeysFromAddress(acc)));
+        for(const acc of crowd) {
+          await helper.session.setOwnKeysFromAddress(acc);
+        }
       });
     });
 
@@ -222,8 +223,9 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper) => {
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        // set session keys for everyone
-        await Promise.all(crowd.map(acc => helper.session.setOwnKeysFromAddress(acc)));
+        for(const acc of crowd) {
+          await helper.session.setOwnKeysFromAddress(acc);
+        }
       });
     });
 
@@ -364,8 +366,10 @@ describe('Integration Test: Collator Selection', () => {
         const newInvulnerables = await helper.arrange.createAccounts(Array(invulnerablesUntilLimit).fill(10n), superuser);
         const [lastInvulnerable] = await helper.arrange.createAccounts([10n], superuser);
 
-        await Promise.all(newInvulnerables.map((i: IKeyringPair) =>
-          helper.session.setOwnKeysFromAddress(i)));
+        for(const i of newInvulnerables) {
+          await helper.session.setOwnKeysFromAddress(i);
+        }
+
         await helper.session.setOwnKeysFromAddress(lastInvulnerable);
 
         let nonce = await helper.chain.getNonce(superuser.address);

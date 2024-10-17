@@ -32,7 +32,7 @@
 
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU32, FindAuthor, ValidatorRegistration},
+	traits::{ConstU32, ConstU64, FindAuthor, ValidatorRegistration},
 	PalletId,
 };
 use frame_system as system;
@@ -46,6 +46,9 @@ use sp_runtime::{
 
 use super::*;
 use crate as collator_selection;
+
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 type Block = frame_system::mocking::MockBlockU32<Test>;
 
@@ -153,6 +156,7 @@ impl pallet_aura::Config for Test {
 	type MaxAuthorities = MaxAuthorities;
 	type DisabledValidators = ();
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
 sp_runtime::impl_opaque_keys! {

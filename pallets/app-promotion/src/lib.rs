@@ -75,7 +75,9 @@ use sp_runtime::{
 	traits::{AccountIdConversion, BlockNumberProvider, CheckedAdd, CheckedSub, Zero},
 	ArithmeticError, DispatchError, Perbill,
 };
-use sp_std::{borrow::ToOwned, cell::RefCell, iter::Sum, vec, vec::Vec};
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
+use sp_std::{cell::RefCell, iter::Sum, vec, vec::Vec};
 pub use types::*;
 use up_data_structs::CollectionId;
 use weights::WeightInfo;

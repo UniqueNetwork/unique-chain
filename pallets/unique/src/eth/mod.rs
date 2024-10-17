@@ -34,7 +34,6 @@ use pallet_evm_coder_substrate::{
 	execution::{Error, PreDispatch, Result},
 	frontier_contract, SubstrateRecorder, WithRecorder,
 };
-use sp_std::vec::Vec;
 use up_data_structs::{
 	CollectionDescription, CollectionMode, CollectionName, CollectionPermissions,
 	CollectionTokenPrefix, CreateCollectionData, NestingPermissions,

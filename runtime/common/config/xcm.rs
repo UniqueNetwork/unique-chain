@@ -192,6 +192,10 @@ where
 	type SafeCallFilter = Nothing;
 	type Aliasers = Nothing;
 	type TransactionalProcessor = FrameTransactionalProcessor;
+	type HrmpNewChannelOpenRequestHandler = ();
+	type HrmpChannelAcceptedHandler = ();
+	type HrmpChannelClosingHandler = ();
+	type XcmRecorder = PolkadotXcm;
 }
 
 impl pallet_xcm::Config for Runtime {
@@ -257,9 +261,10 @@ impl pallet_message_queue::Config for Runtime {
 	// The XCMP queue pallet is only ever able to handle the `Sibling(ParaId)` origin:
 	type QueueChangeHandler = NarrowOriginToSibling<XcmpQueue>;
 	type QueuePausedQuery = NarrowOriginToSibling<XcmpQueue>;
-	type HeapSize = ConstU32<{ 64 * 1024 }>;
+	type HeapSize = ConstU32<{ 103 * 1024 }>;
 	type MaxStale = ConstU32<8>;
 	type ServiceWeight = MessageQueueServiceWeight;
+	type IdleMaxServiceWeight = ();
 }
 
 impl cumulus_pallet_xcmp_queue::Config for Runtime {
@@ -267,6 +272,8 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type XcmpQueue = TransformOrigin<MessageQueue, AggregateMessageOrigin, ParaId, ParaIdToSibling>;
 	type MaxInboundSuspended = ConstU32<1000>;
+	type MaxActiveOutboundChannels = ConstU32<128>;
+	type MaxPageSize = ConstU32<{ 103 * 1024 }>;
 
 	type ChannelInfo = ParachainSystem;
 	type VersionWrapper = PolkadotXcm;
@@ -281,6 +288,12 @@ impl cumulus_pallet_xcmp_queue::Config for Runtime {
 	type PriceForSiblingDelivery = NoPriceForMessageDelivery<ParaId>;
 }
 
+impl cumulus_pallet_xcmp_queue::migration::v5::V5Config for Runtime {
+	// https://github.com/polkadot-fellows/runtimes/blob/afc36ca73146d7e22887fb11c6631a7129d68dd2/system-parachains/asset-hubs/asset-hub-polkadot/src/lib.rs#L700-L703.
+	type ChannelList = <Runtime as cumulus_pallet_xcmp_queue::Config>::ChannelInfo;
+}
+
+#[allow(deprecated)]
 impl cumulus_pallet_dmp_queue::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = cumulus_pallet_dmp_queue::weights::SubstrateWeight<Self>;

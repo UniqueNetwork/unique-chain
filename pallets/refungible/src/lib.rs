@@ -101,7 +101,9 @@ use pallet_evm_coder_substrate::WithRecorder;
 use pallet_structure::Pallet as PalletStructure;
 use sp_core::{Get, H160};
 use sp_runtime::{ArithmeticError, DispatchError, DispatchResult, TransactionOutcome};
-use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
+use sp_std::{collections::btree_map::BTreeMap, vec};
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, CollectionId,
 	CreateRefungibleExMultipleOwners, PropertiesPermissionMap, Property, PropertyKey,
