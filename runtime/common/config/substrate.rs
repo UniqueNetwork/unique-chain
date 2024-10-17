@@ -18,9 +18,11 @@ use frame_support::{
 	derive_impl,
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
+	pallet_prelude::*,
 	traits::{
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
 		ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin,
+		OnRuntimeUpgrade,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -74,6 +76,114 @@ parameter_types! {
 		.build_or_panic();
 }
 
+pub struct FixDerivatives;
+impl OnRuntimeUpgrade for FixDerivatives {
+	fn on_runtime_upgrade() -> Weight {
+		use frame_system::Config;
+		use staging_xcm::v4::prelude::*;
+		use staging_xcm_builder::unique_instances::NonFungibleAsset;
+		use up_data_structs::{CollectionId, TokenId};
+
+		type NftId = (CollectionId, TokenId);
+
+		type DerivativeCollections = pallet_derivatives::Instance1;
+		type DerivativeNfts = pallet_derivatives::Instance2;
+
+		let mut weight = Weight::zero();
+
+		let maybe_cursor = None;
+
+		let collections_num = 2;
+		let _ = pallet_derivatives::OriginalToDerivative::<Runtime, DerivativeCollections>::clear(collections_num, maybe_cursor);
+		let _ = pallet_derivatives::DerivativeToOriginal::<Runtime, DerivativeCollections>::clear(collections_num, maybe_cursor);
+
+		let nfts_num = 3;
+		let _ = pallet_derivatives::OriginalToDerivative::<Runtime, DerivativeNfts>::clear(nfts_num, maybe_cursor);
+		let _ = pallet_derivatives::DerivativeToOriginal::<Runtime, DerivativeNfts>::clear(nfts_num, maybe_cursor);
+
+		weight = weight
+			.saturating_add(<Runtime as Config>::DbWeight::get().reads_writes(collections_num as _, collections_num as _))
+			.saturating_add(<Runtime as Config>::DbWeight::get().reads_writes(nfts_num as _, nfts_num as _))
+			.saturating_mul(2);
+
+		let xusd_asset_id: AssetId = (
+			Parent,
+			Parachain(1000),
+			PalletInstance(50),
+			GeneralIndex(32),
+		).into();
+		let xusd_derivative = CollectionId(2);
+
+		let ahnf_asset_id: AssetId = (
+			Parent,
+			Parachain(1000),
+			PalletInstance(51),
+			GeneralIndex(21),
+		).into();
+		let ahnf_derivative = CollectionId(3);
+
+		let fixed_collections: &[(AssetId, CollectionId)] = &[	
+			(
+				xusd_asset_id,
+				xusd_derivative
+			),
+			(
+				ahnf_asset_id.clone(),
+				ahnf_derivative,
+			)
+		];
+
+		let fixed_nfts: &[(NonFungibleAsset, NftId)] = &[
+			(
+				(ahnf_asset_id.clone(), Index(111)),
+				(ahnf_derivative, TokenId(1)),
+			),
+			(
+				(ahnf_asset_id.clone(), Index(112)),
+				(ahnf_derivative, TokenId(2)),
+			),
+			(
+				(ahnf_asset_id, Index(113)),
+				(ahnf_derivative, TokenId(3)),
+			),
+		];
+
+		for (original, derivative) in fixed_collections.iter() {
+			pallet_derivatives::OriginalToDerivative::<Runtime, DerivativeCollections>::insert(
+				original,
+				derivative,
+			);
+
+			pallet_derivatives::DerivativeToOriginal::<Runtime, DerivativeCollections>::insert(
+				derivative,
+				original,
+			);
+
+			weight = weight.saturating_add(
+				<Runtime as Config>::DbWeight::get().writes(2)
+			);
+		}
+
+		for (original, derivative) in fixed_nfts.iter() {
+			pallet_derivatives::OriginalToDerivative::<Runtime, DerivativeNfts>::insert(
+				original,
+				derivative,
+			);
+
+			pallet_derivatives::DerivativeToOriginal::<Runtime, DerivativeNfts>::insert(
+				derivative,
+				original,
+			);
+
+			weight = weight.saturating_add(
+				<Runtime as Config>::DbWeight::get().writes(2)
+			);
+		}
+
+		weight
+	}
+}
+
 #[derive_impl(frame_system::config_preludes::ParaChainDefaultConfig as frame_system::DefaultConfig)]
 impl frame_system::Config for Runtime {
 	/// The data to be stored in an account.
@@ -110,6 +220,8 @@ impl frame_system::Config for Runtime {
 	/// Version of the runtime.
 	type Version = Version;
 	type MaxConsumers = ConstU32<16>;
+
+	type SingleBlockMigrations = FixDerivatives;
 }
 
 parameter_types! {
