@@ -100,7 +100,8 @@ local assethub = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
