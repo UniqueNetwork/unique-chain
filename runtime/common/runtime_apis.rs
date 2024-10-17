@@ -544,8 +544,9 @@ macro_rules! impl_common_runtime_apis {
 
 			impl xcm_runtime_apis::fees::XcmPaymentApi<Block> for Runtime {
 				fn query_acceptable_payment_assets(xcm_version: XcmVersion) -> Result<Vec<VersionedAssetId>, XcmPaymentApiError> {
-					let mut acceptable_assets = DerivativeCollections::iter_originals().collect::<Vec<_>>();
-					acceptable_assets.push(Here.into());
+					let acceptable_assets = core::iter::once(Here.into())
+						.chain(ForeignAssets::payment_assets())
+						.collect::<Vec<_>>();
 
 					PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable_assets)
 				}
