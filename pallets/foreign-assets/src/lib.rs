@@ -29,19 +29,18 @@ use derivative::Derivative;
 use frame_support::{
 	dispatch::DispatchResult,
 	pallet_prelude::*,
-	storage_alias,
 	traits::{BuildGenesisConfig, EnsureOrigin},
 	PalletId,
 };
 use frame_system::pallet_prelude::*;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, CollectionIssuer,
-	NATIVE_FUNGIBLE_COLLECTION_ID,
+	NATIVE_FUNGIBLE_COLLECTION_ID, CollectionById,
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{v4::prelude::*, VersionedAssetId};
-use staging_xcm_builder::unique_instances::derivatives::DerivativesRegistry;
+use staging_xcm_builder::unique_instances::derivatives::{DerivativesRegistry, IterDerivativesRegistry};
 use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
 	AssetsInHolding,
@@ -110,7 +109,9 @@ pub mod module {
 		/// The converter from a Location to a CrossAccountId.
 		type LocationToAccountId: ConvertLocation<Self::CrossAccountId>;
 
-		type DerivativeCollectionsRegistry: DerivativesRegistry<AssetId, CollectionId>;
+		type DerivativeCollectionsRegistry: 
+			DerivativesRegistry<AssetId, CollectionId>
+			+ IterDerivativesRegistry<AssetId, CollectionId>;
 
 		/// Weight information for the extrinsics in this module.
 		type WeightInfo: WeightInfo;
@@ -417,6 +418,16 @@ impl<T: Config> Pallet<T> {
 
 	pub fn is_payment_asset(asset_id: &AssetId) -> bool {
 		<ForeignAssetToCollection<T>>::contains_key(asset_id)
+	}
+
+	pub fn payment_assets() -> impl Iterator<Item = AssetId> {
+		T::DerivativeCollectionsRegistry::iter()
+			.filter_map(|(asset_id, collection_id)| {
+				let collection = <CollectionById<T>>::get(collection_id)?;
+
+				matches![collection.mode, CollectionMode::Fungible(_)]
+					.then_some(asset_id)
+			})
 	}
 
 	pub fn pallet_account() -> T::CrossAccountId {
