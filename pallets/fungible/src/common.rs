@@ -22,7 +22,9 @@ use pallet_common::{
 	Error as CommonError, SelfWeightOf as PalletCommonWeightOf, XcmExtensions,
 };
 use sp_runtime::{ArithmeticError, DispatchError};
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 use up_data_structs::{
 	budget::Budget, CollectionId, CreateItemData, CreateItemExData, Property, PropertyKey,
 	PropertyKeyPermission, PropertyValue, TokenId, TokenOwnerError,

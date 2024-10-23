@@ -17,7 +17,7 @@
 use std::sync::Arc;
 
 use fc_mapping_sync::{EthereumBlockNotification, EthereumBlockNotificationSinks};
-use fc_rpc::{EthBlockDataCacheTask, EthConfig, OverrideHandle};
+use fc_rpc::{EthBlockDataCacheTask, EthConfig, StorageOverride};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::NoTransactionConverter;
 use jsonrpsee::RpcModule;
@@ -26,7 +26,7 @@ use sc_client_api::{
 	client::BlockchainEvents,
 	UsageProvider,
 };
-use sc_network::NetworkService;
+use sc_network::service::traits::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 pub use sc_rpc_api::DenyUnsafe;
@@ -131,7 +131,7 @@ pub struct EthDeps<C, P, CA: ChainApi, CIDP> {
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
+	pub network: Arc<dyn NetworkService>,
 
 	/// Ethereum Backend.
 	pub eth_backend: Arc<dyn fc_api::Backend<Block> + Send + Sync>,
@@ -149,7 +149,7 @@ pub struct EthDeps<C, P, CA: ChainApi, CIDP> {
 	/// Whether to enable eth dev signer
 	pub enable_dev_signer: bool,
 
-	pub overrides: Arc<OverrideHandle<Block>>,
+	pub overrides: Arc<dyn StorageOverride<Block>>,
 	pub pending_create_inherent_data_providers: CIDP,
 }
 

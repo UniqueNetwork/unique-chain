@@ -13,7 +13,7 @@ jobs:
   
   unit_tests:
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci,medium ]
+    runs-on: [ ci ]
     timeout-minutes: 1380
 
     name: ${{ github.base_ref }}

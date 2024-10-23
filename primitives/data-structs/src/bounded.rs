@@ -22,20 +22,18 @@ use frame_support::{
 	storage::{bounded_btree_map::BoundedBTreeMap, bounded_btree_set::BoundedBTreeSet},
 	BoundedVec,
 };
-use sp_std::{
-	collections::{btree_map::BTreeMap, btree_set::BTreeSet},
-	vec::Vec,
-};
+use sp_std::collections::{btree_map::BTreeMap, btree_set::BTreeSet};
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 
 /// [`serde`] implementations for [`BoundedVec`].
 pub mod vec_serde {
-	use core::convert::TryFrom;
-
 	use frame_support::{traits::Get, BoundedVec};
 	use serde::{
 		de::{self, Deserialize, Error},
 		ser::{self, Serialize},
 	};
+	#[cfg(not(feature = "std"))]
 	use sp_std::vec::Vec;
 
 	pub fn serialize<D, V, S>(value: &BoundedVec<V, S>, serializer: D) -> Result<D::Ok, D::Error>
@@ -71,14 +69,13 @@ where
 #[allow(dead_code)]
 /// [`serde`] implementations for [`BoundedBTreeMap`].
 pub mod map_serde {
-	use core::convert::TryFrom;
-
 	use frame_support::{storage::bounded_btree_map::BoundedBTreeMap, traits::Get};
 	use serde::{
 		de::{self, Deserialize, Error},
 		ser::{self, Serialize},
 	};
 	use sp_std::collections::btree_map::BTreeMap;
+
 	pub fn serialize<D, K, V, S>(
 		value: &BoundedBTreeMap<K, V, S>,
 		serializer: D,
@@ -122,14 +119,13 @@ where
 #[allow(dead_code)]
 /// [`serde`] implementations for [`BoundedBTreeSet`].
 pub mod set_serde {
-	use core::convert::TryFrom;
-
 	use frame_support::{storage::bounded_btree_set::BoundedBTreeSet, traits::Get};
 	use serde::{
 		de::{self, Deserialize, Error},
 		ser::{self, Serialize},
 	};
 	use sp_std::collections::btree_set::BTreeSet;
+
 	pub fn serialize<D, K, S>(
 		value: &BoundedBTreeSet<K, S>,
 		serializer: D,

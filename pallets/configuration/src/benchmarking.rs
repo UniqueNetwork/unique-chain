@@ -19,6 +19,7 @@
 use frame_benchmarking::v2::*;
 use frame_support::assert_ok;
 use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
+#[cfg(not(feature = "std"))]
 use sp_std::vec;
 
 use super::*;
@@ -31,6 +32,7 @@ fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	assert_eq!(event, &system_event);
 }
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(
 	where
 		T: Config,

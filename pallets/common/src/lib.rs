@@ -53,6 +53,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
+#[cfg(not(feature = "std"))]
 use alloc::boxed::Box;
 use core::{
 	marker::PhantomData,
@@ -77,6 +78,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, DispatchResult};
+#[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
 use sp_weights::Weight;
 use up_data_structs::{

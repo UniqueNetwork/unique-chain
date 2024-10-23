@@ -18,7 +18,6 @@
 
 use frame_benchmarking::v2::*;
 use frame_support::traits::Hooks;
-use sp_std::vec;
 
 use super::*;
 use crate::Pallet as Inflation;

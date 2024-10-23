@@ -10,6 +10,6 @@
     "version": "1.0.0",
     "main": "index.js",
     "devDependencies": {
-        "@polkadot/typegen": "^10.10.1"
+        "@polkadot/typegen": "12.4.2"
     }
 }

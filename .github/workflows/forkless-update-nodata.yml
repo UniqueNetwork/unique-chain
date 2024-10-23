@@ -16,7 +16,7 @@ jobs:
 
     name: execution matrix
 
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -46,7 +46,7 @@ jobs:
 
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci,large ]
+    runs-on: [ ci ]
 
     timeout-minutes: 1380
 
@@ -133,7 +133,8 @@ jobs:
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
         with:
-          useCache: false        
+          version: "v0.1.4"
+          useCache: false
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library

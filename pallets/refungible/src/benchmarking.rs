@@ -14,8 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use core::{convert::TryInto, iter::IntoIterator};
-
 use frame_benchmarking::v2::*;
 use pallet_common::{
 	bench_init,
@@ -29,7 +27,7 @@ use up_data_structs::{
 };
 
 use super::*;
-use crate::{Config, Pallet, RefungibleHandle};
+use crate::{Config, Pallet};
 
 const SEED: u32 = 1;
 

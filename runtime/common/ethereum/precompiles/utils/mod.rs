@@ -18,7 +18,8 @@
 
 use fp_evm::{Context, ExitRevert, PrecompileFailure};
 use sp_core::U256;
-use sp_std::{borrow::ToOwned, marker::PhantomData};
+#[cfg(not(feature = "std"))]
+use sp_std::borrow::ToOwned;
 
 mod data;
 
@@ -26,11 +27,6 @@ pub use data::{Bytes, EvmDataReader, EvmDataWriter};
 
 /// Alias for Result returning an EVM precompile error.
 pub type EvmResult<T = ()> = Result<T, PrecompileFailure>;
-
-/// Helper functions requiring a Runtime.
-/// This runtime must of course implement `pallet_evm::Config`.
-#[derive(Clone, Copy, Debug)]
-pub struct RuntimeHelper<Runtime>(PhantomData<Runtime>);
 
 /// Represents modifiers a Solidity function can be annotated with.
 #[derive(Copy, Clone, PartialEq, Eq)]

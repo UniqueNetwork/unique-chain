@@ -19,7 +19,9 @@
 use core::{any::type_name, ops::Range};
 
 use sp_core::{H160, H256, U256};
-use sp_std::{borrow::ToOwned, convert::TryInto, vec, vec::Vec};
+use sp_std::vec;
+#[cfg(not(feature = "std"))]
+use sp_std::{borrow::ToOwned, vec::Vec};
 
 use super::{EvmResult, Gasometer};
 
