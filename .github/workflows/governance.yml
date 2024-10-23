@@ -11,7 +11,7 @@ jobs:
   prepare-execution-marix:
     name: Prepare execution matrix
 
-    runs-on: [ self-hosted ]
+    runs-on: [ ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -39,7 +39,7 @@ jobs:
   dev_build_int_tests:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci, medium ]
+    runs-on: [ ci ]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
