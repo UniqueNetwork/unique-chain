@@ -19,7 +19,7 @@ jobs:
   
   polkadot_generate_types:
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci,medium ]
+    runs-on: [ ci ]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}

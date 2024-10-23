@@ -16,7 +16,7 @@ jobs:
 
   prepare-execution-marix:
     name: Prepare execution matrix
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -43,7 +43,7 @@ jobs:
   collator-selection:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
 
     timeout-minutes: 1380
 
