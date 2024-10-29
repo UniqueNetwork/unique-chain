@@ -1,5 +1,8 @@
 local
 m = import 'baedeker-library/mixin/spec.libsonnet',
+;
+
+local
 assethubSpec = import 'assethub-spec.json',
 ;
 

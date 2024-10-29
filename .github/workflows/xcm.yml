@@ -189,10 +189,12 @@ jobs:
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Pull chain-spec-generator-latest image
+        if: ${{ matrix.network == 'unique' }} || ${{ matrix.network == 'quartz' }}
         run: |
           docker pull uniquenetwork/services:chain-spec-generator-latest
 
       - name: Build chain-spec file for assethub 
+        if: ${{ matrix.network == 'unique' }} || ${{ matrix.network == 'quartz' }}
         run: |
           docker run --rm uniquenetwork/services:chain-spec-generator-latest asset-hub-${{ matrix.relay_name }}-local > .baedeker/vendor/assethub-spec.json
 
