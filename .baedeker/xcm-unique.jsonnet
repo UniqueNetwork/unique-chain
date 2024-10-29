@@ -2,11 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-local 
-assethubSpec = import 'assethub-spec.json',
-;
-
-function(relay_spec)
+function(relay_spec, assethub_spec)
 
 local relay = {
 	name: 'relay',
@@ -99,7 +95,7 @@ local assethub = {
 	paraId: 1004,
 	spec: {
 		FromScratchGenesis: {
-			spec: assethubSpec,
+			spec: assethub_spec,
 			modify:: m.genericPara($),
 		}
 	},
