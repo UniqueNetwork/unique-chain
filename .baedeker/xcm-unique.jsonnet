@@ -2,7 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-function(relay_spec)
+function(relay_spec, assethub_spec)
 
 local relay = {
 	name: 'relay',
@@ -93,10 +93,12 @@ local assethub = {
 	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
-	spec: {Genesis:{
-		chain: 'asset-hub-polkadot-local',
-		modify:: m.genericPara($),
-	}},
+	spec: {
+		FromScratchGenesis: {
+			spec: assethub_spec,
+			modify:: m.genericPara($),
+		}
+	},
 	nodes: {
 		[name]: {
 			bin: $.bin,
