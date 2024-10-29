@@ -1,5 +1,6 @@
 local
 m = import 'baedeker-library/mixin/spec.libsonnet',
+assethubSpec = import 'assethub-spec.json',
 ;
 
 function(relay_spec)
@@ -92,8 +93,8 @@ local assethub = {
 	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
-	spec: {Genesis:{
-		chain: 'asset-hub-rococo-local',
+	spec: {FromScratchGenesis:{
+		spec: 'assethubSpec',
 		modify:: m.genericPara($),
 	}},
 	nodes: {
