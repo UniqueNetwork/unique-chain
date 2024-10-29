@@ -34,7 +34,7 @@ app-promotion-rpc = { path = "primitives/app_promotion_rpc", default-features = 
 evm-coder = { version = "0.4.3", default-features = false, features = ['bondrewd'] }
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
 pallet-balances-adapter = { default-features = false, path = "pallets/balances-adapter" }
-pallet-charge-transaction = { package = "pallet-template-transaction-payment", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v1.14.0" }
+pallet-charge-transaction = { package = "pallet-template-transaction-payment", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "v20241023" }
 pallet-collator-selection = { default-features = false, path = "pallets/collator-selection" }
 pallet-common = { default-features = false, path = "pallets/common" }
 pallet-configuration = { default-features = false, path = "pallets/configuration" }
@@ -45,7 +45,7 @@ pallet-evm-transaction-payment = { path = "pallets/evm-transaction-payment", def
 pallet-foreign-assets = { default-features = false, path = "pallets/foreign-assets" }
 pallet-fungible = { default-features = false, path = "pallets/fungible" }
 pallet-gov-origins = { default-features = false, path = "pallets/gov-origins" }
-pallet-identity = { default-features = false, path = "pallets/identity" }
+pallet-identity = { path = "pallets/identity" }
 pallet-inflation = { path = "pallets/inflation", default-features = false }
 pallet-maintenance = { default-features = false, path = "pallets/maintenance" }
 pallet-nonfungible = { default-features = false, path = "pallets/nonfungible" }
@@ -61,7 +61,7 @@ up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
 up-pov-estimate-rpc = { path = "primitives/pov-estimate-rpc", default-features = false }
 up-rpc = { path = "primitives/rpc", default-features = false }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "polkadot-v1.14.0" }
+up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "v20241023" }
 
 # Unique: Runtimes
 opal-runtime = { path = "runtime/opal" }
@@ -69,145 +69,145 @@ quartz-runtime = { path = "runtime/quartz" }
 unique-runtime = { path = "runtime/unique" }
 
 # Frontier (Unique patches over the Parity version)
-fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-db = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-mapping-sync = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
+fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fc-db = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fc-mapping-sync = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
 fp-self-contained = { default-features = false, features = [
 	"serde",
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
-pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-v1.14.0" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "v20241023" }
 
 # Parity
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.6.5" }
-cumulus-client-cli = "0.15.0"
-cumulus-client-collator = "0.15.0"
-cumulus-client-consensus-aura = "0.15.0"
-cumulus-client-consensus-common = "0.15.0"
-cumulus-client-consensus-proposer = "0.14.0"
-cumulus-client-network = "0.15.0"
-cumulus-client-service = "0.15.0"
-cumulus-client-parachain-inherent = "0.9.0"
-cumulus-pallet-aura-ext = { default-features = false, version = "0.15.0" }
-cumulus-pallet-dmp-queue = { default-features = false, version = "0.15.0" }
-cumulus-pallet-parachain-system = { default-features = false, version = "0.15.0" }
-cumulus-pallet-xcm = { default-features = false, version = "0.15.0" }
-cumulus-pallet-xcmp-queue = { default-features = false, version = "0.15.0" }
-cumulus-primitives-aura = { default-features = false, version = "0.14.0" }
-cumulus-primitives-core = { default-features = false, version = "0.14.0" }
-cumulus-primitives-parachain-inherent = { default-features = false, version = "0.14.0" }
-cumulus-primitives-timestamp = { default-features = false, version = "0.14.0" }
-cumulus-primitives-utility = { default-features = false, version = "0.15.0" }
-cumulus-relay-chain-inprocess-interface = "0.15.0"
-cumulus-relay-chain-interface = "0.15.0"
-cumulus-relay-chain-minimal-node = "0.15.0"
-cumulus-test-relay-sproof-builder = "0.14.0"
-parachains-common = { default-features = false, version = "15.0.0" }
-frame-executive = { default-features = false, version = "36.0.0" }
-frame-metadata-hash-extension = { default-features = false, version = "0.4.0" }
-frame-support = { default-features = false, version = "36.0.0" }
-frame-system = { default-features = false, version = "36.1.0" }
-frame-system-rpc-runtime-api = { default-features = false, version = "33.0.0" }
-pallet-aura = { default-features = false, version = "35.0.0" }
-pallet-authorship = { default-features = false, version = "36.0.0" }
-pallet-balances = { default-features = false, version = "37.0.0" }
-pallet-collective = { default-features = false, version = "36.0.0" }
-pallet-democracy = { default-features = false, version = "36.0.0" }
-pallet-membership = { default-features = false, version = "36.0.0" }
-pallet-preimage = { default-features = false, version = "36.0.0" }
-pallet-ranked-collective = { default-features = false, version = "36.0.0" }
-pallet-referenda = { default-features = false, version = "36.0.0" }
-pallet-scheduler = { default-features = false, version = "37.0.0" }
-pallet-session = { default-features = false, version = "36.0.0" }
-pallet-state-trie-migration = { default-features = false, version = "37.0.0" }
-pallet-sudo = { default-features = false, version = "36.0.0" }
-pallet-timestamp = { default-features = false, version = "35.0.0" }
-pallet-transaction-payment = { default-features = false, version = "36.0.0" }
-pallet-transaction-payment-rpc = "38.0.0"
-pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "36.0.0" }
-pallet-treasury = { default-features = false, version = "35.0.0" }
-pallet-utility = { default-features = false, version = "36.0.0" }
-pallet-xcm = { default-features = false, version = "15.0.0" }
-pallet-message-queue = { default-features = false, version = "39.0.0" }
+cumulus-client-cli = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-collator = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-consensus-aura = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-consensus-common = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-consensus-proposer = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-network = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-service = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-client-parachain-inherent = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-pallet-aura-ext = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-pallet-dmp-queue = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-pallet-parachain-system = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-pallet-xcm = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-pallet-xcmp-queue = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-primitives-aura = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-primitives-core = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-primitives-parachain-inherent = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-primitives-timestamp = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-primitives-utility = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-relay-chain-inprocess-interface = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-relay-chain-interface = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-relay-chain-minimal-node = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+cumulus-test-relay-sproof-builder = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+parachains-common = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-executive = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-metadata-hash-extension = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-support = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-system = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-system-rpc-runtime-api = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-aura = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-authorship = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-balances = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-collective = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-democracy = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-membership = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-preimage = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-ranked-collective = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-referenda = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-scheduler = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-session = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-state-trie-migration = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-sudo = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-timestamp = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-transaction-payment = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-transaction-payment-rpc = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-transaction-payment-rpc-runtime-api = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-treasury = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-utility = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-xcm = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+pallet-message-queue = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
 parity-scale-codec = { version = "3.6.5", features = ["derive"], default-features = false }
-polkadot-cli = "15.0.0"
-polkadot-parachain-primitives = { default-features = false, version = "13.0.0" }
-polkadot-primitives = "14.0.0"
-polkadot-runtime-common = { default-features = false, version = "15.0.0" }
-polkadot-service = "15.0.0"
-sc-basic-authorship = "0.42.0"
-sc-chain-spec = "35.0.0"
-sc-cli = "0.44.0"
-sc-client-api = "35.1.0"
-sc-consensus = "0.41.0"
-sc-consensus-manual-seal = "0.43.0"
-sc-executor = "0.39.0"
-sc-network = "0.42.0"
-sc-network-sync = "0.41.0"
-sc-rpc = "37.0.0"
-sc-rpc-api = "0.41.0"
-sc-service = "0.43.0"
-sc-sysinfo = "35.0.0"
-sc-telemetry = "22.0.0"
-sc-tracing = "35.0.0"
-sc-transaction-pool = "35.0.0"
+polkadot-cli = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+polkadot-parachain-primitives = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+polkadot-primitives = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+polkadot-runtime-common = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+polkadot-service = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-basic-authorship = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-chain-spec = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-cli = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-client-api = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-consensus = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-consensus-manual-seal = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-executor = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-network = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-network-sync = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-rpc = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-rpc-api = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-service = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-sysinfo = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-telemetry = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-tracing = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sc-transaction-pool = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
 scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
-sp-api = { default-features = false, version = "33.0.0" }
-sp-arithmetic = { default-features = false, version = "26.0.0" }
-sp-block-builder = { default-features = false, version = "33.0.0" }
-sp-blockchain = "35.1.0"
-sp-consensus-aura = { default-features = false, version = "0.39.0" }
-sp-core = { default-features = false, version = "34.0.0" }
-sp-externalities = "0.29.0"
-sp-inherents = { default-features = false, version = "33.0.0" }
-sp-io = { default-features = false, version = "37.0.0" }
-sp-keystore = "0.40.0"
-sp-offchain = { default-features = false, version = "33.0.0" }
-sp-runtime = { default-features = false, version = "38.0.0" }
-sp-session = { default-features = false, version = "34.0.0" }
-sp-staking = { default-features = false, version = "33.0.0" }
-sp-state-machine = "0.42.0"
-sp-std = { default-features = false, version = "14.0.0" }
-sp-storage = { default-features = false, version = "21.0.0" }
-sp-timestamp = "33.0.0"
-sp-tracing = "17.0.0"
-sp-transaction-pool = { default-features = false, version = "33.0.0" }
-sp-trie = { default-features = false, version = "36.0.0" }
-sp-version = { default-features = false, version = "36.0.0" }
-sp-weights = { default-features = false, version = "31.0.0" }
-sp-genesis-builder = { default-features = false, version = "0.14.0" }
-staging-parachain-info = { default-features = false, version = "0.15.0" }
-staging-xcm = { default-features = false, version = "14.0.3" }
-staging-xcm-builder = { default-features = false, version = "15.0.0" }
-staging-xcm-executor = { default-features = false, version = "15.0.0" }
-substrate-frame-rpc-system = "36.0.0"
-substrate-prometheus-endpoint = "0.17.0"
+sp-api = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-arithmetic = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-block-builder = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-blockchain = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-consensus-aura = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-core = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-externalities = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-inherents = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-io = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-keystore = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-offchain = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-runtime = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-session = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-staking = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-state-machine = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-std = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-storage = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-timestamp = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-tracing = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-transaction-pool = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-trie = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-version = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-weights = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+sp-genesis-builder = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+staging-parachain-info = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+staging-xcm = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+staging-xcm-builder = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+staging-xcm-executor = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+substrate-frame-rpc-system = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+substrate-prometheus-endpoint = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
 
 # Parity: Build utils
-substrate-build-script-utils = "11.0.0"
-substrate-wasm-builder = "23.0.0"
+substrate-build-script-utils = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+substrate-wasm-builder = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
 
 # Parity: Benchmarking
-frame-benchmarking = { default-features = false, version = "36.0.0" }
-frame-benchmarking-cli = "40.0.0"
-frame-system-benchmarking = { default-features = false, version = "36.0.0" }
+frame-benchmarking = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-benchmarking-cli = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
+frame-system-benchmarking = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
 
 # Parity: Try Runtime
-frame-try-runtime = { default-features = false, version = "0.42.0" }
+frame-try-runtime = { default-features = false, git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "v20241023" }
 
 # ORML
-orml-traits = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "polkadot-v1.14.0" }
-orml-vesting = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "polkadot-v1.14.0" }
-orml-xcm-support = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "polkadot-v1.14.0" }
-orml-xtokens = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "polkadot-v1.14.0" }
+orml-traits = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "v20241023" }
+orml-vesting = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "v20241023" }
+orml-xcm-support = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "v20241023" }
+orml-xtokens = { default-features = false, git = "https://github.com/UniqueNetwork/open-runtime-module-library.git", branch = "v20241023" }
 
 # Other
 derivative = { version = "2.2.0", features = ["use_core"] }
@@ -215,10 +215,118 @@ ethereum = { version = "0.15.0", default-features = false, features = ["with-cod
 evm-core = { version = "0.41.0", default-features = false }
 hex-literal = "0.4.1"
 impl-trait-for-tuples = "0.2.2"
-jsonrpsee = { version = "0.23.2", features = ["macros", "server"] }
+jsonrpsee = { version = "0.24.7", features = ["macros", "server"] }
 log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }
 serde_json = "1"
 smallvec = "1.11.1"
+
+[workspace.metadata.deppatcher.originals.workspace.dependencies]
+cumulus-pallet-aura-ext = { version = "0.15.0" }
+cumulus-pallet-dmp-queue = { version = "0.15.0" }
+cumulus-pallet-parachain-system = { version = "0.15.0" }
+cumulus-pallet-xcm = { version = "0.15.0" }
+cumulus-pallet-xcmp-queue = { version = "0.15.0" }
+cumulus-primitives-aura = { version = "0.14.0" }
+cumulus-primitives-core = { version = "0.14.0" }
+cumulus-primitives-parachain-inherent = { version = "0.14.0" }
+cumulus-primitives-timestamp = { version = "0.14.0" }
+cumulus-primitives-utility = { version = "0.15.0" }
+parachains-common = { version = "15.0.0" }
+frame-executive = { version = "36.0.0" }
+frame-metadata-hash-extension = { version = "0.4.0" }
+frame-support = { version = "36.0.0" }
+frame-system = { version = "36.1.0" }
+frame-system-rpc-runtime-api = { version = "33.0.0" }
+pallet-aura = { version = "35.0.0" }
+pallet-authorship = { version = "36.0.0" }
+pallet-balances = { version = "37.0.0" }
+pallet-collective = { version = "36.0.0" }
+pallet-democracy = { version = "36.0.0" }
+pallet-membership = { version = "36.0.0" }
+pallet-preimage = { version = "36.0.0" }
+pallet-ranked-collective = { version = "36.0.0" }
+pallet-referenda = { version = "36.0.0" }
+pallet-scheduler = { version = "37.0.0" }
+pallet-session = { version = "36.0.0" }
+pallet-state-trie-migration = { version = "37.0.0" }
+pallet-sudo = { version = "36.0.0" }
+pallet-timestamp = { version = "35.0.0" }
+pallet-transaction-payment = { version = "36.0.0" }
+pallet-transaction-payment-rpc-runtime-api = { version = "36.0.0" }
+pallet-treasury = { version = "35.0.0" }
+pallet-utility = { version = "36.0.0" }
+pallet-xcm = { version = "15.0.0" }
+pallet-message-queue = { version = "39.0.0" }
+polkadot-parachain-primitives = { version = "13.0.0" }
+polkadot-runtime-common = { version = "15.0.0" }
+sp-api = { version = "33.0.0" }
+sp-arithmetic = { version = "26.0.0" }
+sp-block-builder = { version = "33.0.0" }
+sp-consensus-aura = { version = "0.39.0" }
+sp-core = { version = "34.0.0" }
+sp-inherents = { version = "33.0.0" }
+sp-io = { version = "37.0.0" }
+sp-offchain = { version = "33.0.0" }
+sp-runtime = { version = "38.0.0" }
+sp-session = { version = "34.0.0" }
+sp-staking = { version = "33.0.0" }
+sp-std = { version = "14.0.0" }
+sp-storage = { version = "21.0.0" }
+sp-transaction-pool = { version = "33.0.0" }
+sp-trie = { version = "36.0.0" }
+sp-version = { version = "36.0.0" }
+sp-weights = { version = "31.0.0" }
+sp-genesis-builder = { version = "0.14.0" }
+staging-parachain-info = { version = "0.15.0" }
+staging-xcm = { version = "14.0.3" }
+staging-xcm-builder = { version = "15.0.0" }
+staging-xcm-executor = { version = "15.0.0" }
+frame-benchmarking = { version = "36.0.0" }
+frame-system-benchmarking = { version = "36.0.0" }
+frame-try-runtime = { version = "0.42.0" }
+cumulus-client-cli = { version = "0.15.0" }
+cumulus-client-collator = { version = "0.15.0" }
+cumulus-client-consensus-aura = { version = "0.15.0" }
+cumulus-client-consensus-common = { version = "0.15.0" }
+cumulus-client-consensus-proposer = { version = "0.14.0" }
+cumulus-client-network = { version = "0.15.0" }
+cumulus-client-service = { version = "0.15.0" }
+cumulus-client-parachain-inherent = { version = "0.9.0" }
+cumulus-relay-chain-inprocess-interface = { version = "0.15.0" }
+cumulus-relay-chain-interface = { version = "0.15.0" }
+cumulus-relay-chain-minimal-node = { version = "0.15.0" }
+cumulus-test-relay-sproof-builder = { version = "0.14.0" }
+pallet-transaction-payment-rpc = { version = "38.0.0" }
+polkadot-cli = { version = "15.0.0" }
+polkadot-primitives = { version = "14.0.0" }
+polkadot-service = { version = "15.0.0" }
+sc-basic-authorship = { version = "0.42.0" }
+sc-chain-spec = { version = "35.0.0" }
+sc-cli = { version = "0.44.0" }
+sc-client-api = { version = "35.1.0" }
+sc-consensus = { version = "0.41.0" }
+sc-consensus-manual-seal = { version = "0.43.0" }
+sc-executor = { version = "0.39.0" }
+sc-network = { version = "0.42.0" }
+sc-network-sync = { version = "0.41.0" }
+sc-rpc = { version = "37.0.0" }
+sc-rpc-api = { version = "0.41.0" }
+sc-service = { version = "0.43.0" }
+sc-sysinfo = { version = "35.0.0" }
+sc-telemetry = { version = "22.0.0" }
+sc-tracing = { version = "35.0.0" }
+sc-transaction-pool = { version = "35.0.0" }
+sp-blockchain = { version = "35.1.0" }
+sp-externalities = { version = "0.29.0" }
+sp-keystore = { version = "0.40.0" }
+sp-state-machine = { version = "0.42.0" }
+sp-timestamp = { version = "33.0.0" }
+sp-tracing = { version = "17.0.0" }
+substrate-frame-rpc-system = { version = "36.0.0" }
+substrate-prometheus-endpoint = { version = "0.17.0" }
+substrate-build-script-utils = { version = "11.0.0" }
+substrate-wasm-builder = { version = "23.0.0" }
+frame-benchmarking-cli = { version = "40.0.0" }
 

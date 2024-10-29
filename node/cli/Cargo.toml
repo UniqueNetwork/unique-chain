@@ -94,13 +94,13 @@ fc-rpc.workspace = true
 fp-rpc = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
-fc-api.workspace = true
-fp-storage.workspace = true
-jsonrpsee.workspace = true
-pallet-transaction-payment-rpc.workspace = true
-sc-rpc-api.workspace = true
-sc-rpc.workspace = true
-sp-inherents.workspace = true
+fc-api = { workspace = true }
+fp-storage = { workspace = true }
+jsonrpsee = { workspace = true }
+pallet-transaction-payment-rpc = { workspace = true }
+sc-rpc-api = { workspace = true }
+sc-rpc = { workspace = true }
+sp-inherents = { workspace = true }
 uc-rpc = { workspace = true }
 up-pov-estimate-rpc = { workspace = true }
 up-rpc = { workspace = true }
