@@ -27,7 +27,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt', 'larry', 'mike', 'norman', 'osvald']
 	},
 };
 
@@ -65,6 +65,8 @@ local acala = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -84,6 +86,8 @@ local moonbeam = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
 	},
@@ -122,6 +126,8 @@ local astar = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -139,6 +145,9 @@ local polkadex = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',
+
 		},
 		for name in ['alice', 'bob']
 	},
@@ -157,6 +166,8 @@ local hydraDx = {
 			bin: $.bin,
 			wantedKeys: 'para',
 			legacyRpc: true,
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/hydra',			
 		},
 		for name in ['alice', 'bob']
 	},

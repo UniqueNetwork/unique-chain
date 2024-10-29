@@ -148,19 +148,16 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ env.POLKADEX_BUILD_BRANCH }}
 
-      - name: Prepare Hydradx
-        uses: ./.github/actions/buildContainer
+      - name: Check and pull HYDRADX image
         id: hydradx
+        uses: cloudposse/github-action-docker-image-exists@main
         with:
-          container: uniquenetwork/builder-hydradx
+          registry: registry.hub.docker.com
+          organization: galacticcouncil
+          repository: hydra-dx
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ env.HYDRADX_BUILD_BRANCH }}
-          context: .
-          dockerfile: .docker/Dockerfile-hydradx
-          args: |
-            --build-arg HYDRADX_BUILD_BRANCH=${{ env.HYDRADX_BUILD_BRANCH }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - name: Prepare latest
         uses: ./.github/actions/buildContainer
@@ -262,11 +259,7 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
-
-      - name: Remove builder cache
-        if: always()
-        run: |
-          docker system prune -a -f
+      # - name: Remove builder cache
+      #   if: always()
+      #   run: |
+      #     docker system prune -a -f
