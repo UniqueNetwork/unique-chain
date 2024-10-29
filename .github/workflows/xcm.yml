@@ -205,7 +205,7 @@ jobs:
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           tla-code: |
-            assethub_spec=assethub-spec.json
+            assethub_spec=import 'assethub-spec.json'
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
