@@ -93,7 +93,7 @@ local assethub = {
 	bin: 'bin/assethub',
 	paraId: 1004,
 	spec: {
-		local assethubSpec = import 'assethub-spec.json'б
+		local assethubSpec = import 'assethub-spec.json',
 		FromScratchGenesis: {
 			spec: assethubSpec,
 			modify:: m.genericPara($),
