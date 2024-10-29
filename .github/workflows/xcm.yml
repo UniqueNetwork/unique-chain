@@ -37,8 +37,6 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_name {polkadot}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.WESTMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}, runs_on {ci}
-            network {quartz}, relay_name {kusama}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINE_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runs_on {L}
             network {unique}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runs_on {XL}
 
   xcm:
@@ -93,28 +91,6 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
-      - name: Check and pull acala image
-        id: acala
-        uses: cloudposse/github-action-docker-image-exists@main
-        with:
-          registry: registry.hub.docker.com
-          organization: acala
-          repository: ${{ matrix.acala_repository }}
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ matrix.acala_version }}
-
-      - name: Check and pull MOONBEAM image
-        id: moonbeam
-        uses: cloudposse/github-action-docker-image-exists@main
-        with:
-          registry: registry.hub.docker.com
-          organization: moonbeamfoundation
-          repository: moonbeam
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ matrix.moonbeam_version }}
-
       - name: Check and pull ASSETHUB image
         id: assethub
         uses: cloudposse/github-action-docker-image-exists@main
@@ -125,55 +101,6 @@ jobs:
           login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.assethub_version }}
-
-      - name: Check and pull ASTAR image
-        id: astar
-        uses: cloudposse/github-action-docker-image-exists@main
-        with:
-          registry: registry.hub.docker.com
-          organization: staketechnologies
-          repository: astar-collator
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ matrix.astar_version }}
-
-      - name: Check and pull POLKADEX image
-        id: polkadex
-        uses: cloudposse/github-action-docker-image-exists@main
-        with:
-          registry: registry.hub.docker.com
-          organization: polkadex
-          repository: parachain
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ env.POLKADEX_BUILD_BRANCH }}
-
-      - name: Prepare Hydradx
-        uses: ./.github/actions/buildContainer
-        id: hydradx
-        with:
-          container: uniquenetwork/builder-hydradx
-          tag: ${{ env.HYDRADX_BUILD_BRANCH }}
-          context: .
-          dockerfile: .docker/Dockerfile-hydradx
-          args: |
-            --build-arg HYDRADX_BUILD_BRANCH=${{ env.HYDRADX_BUILD_BRANCH }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
-      - name: Prepare latest
-        uses: ./.github/actions/buildContainer
-        id: latest
-        with:
-          container: uniquenetwork/ci-xcm-local
-          tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
-          context: .
-          dockerfile: .docker/Dockerfile-unique
-          args: |
-            --build-arg FEATURES=${{ matrix.network }}-runtime
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
       - uses: actions/setup-node@v4.0.2
         with:
@@ -207,13 +134,7 @@ jobs:
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}', docker:'/usr/local/bin/astar-collator'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'${{ steps.polkadex.outputs.image }}:${{ steps.polkadex.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.latest.outputs.name }}'}})
 
       - name: Upload network config
         uses: actions/upload-artifact@v3
