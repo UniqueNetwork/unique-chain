@@ -262,11 +262,11 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
+      # - name: Clean Workspace
+      #   if: always()
+      #   uses: AutoModality/action-clean@v1.1.0
 
-      - name: Remove builder cache
-        if: always()
-        run: |
-          docker system prune -a -f
+      # - name: Remove builder cache
+      #   if: always()
+      #   run: |
+      #     docker system prune -a -f
