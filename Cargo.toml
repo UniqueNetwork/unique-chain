@@ -219,7 +219,7 @@ jsonrpsee = { version = "0.24.7", features = ["macros", "server"] }
 log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }
-serde_json = "1"
+serde_json = "1.0.117"
 smallvec = "1.11.1"
 
 [workspace.metadata.deppatcher.originals.workspace.dependencies]
