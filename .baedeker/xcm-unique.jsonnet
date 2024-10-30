@@ -166,6 +166,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, assethub, astar, polkadex]
+		for para in [unique, moonbeam, assethub]
 	},
 }
