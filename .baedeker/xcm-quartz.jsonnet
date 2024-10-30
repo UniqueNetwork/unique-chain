@@ -129,6 +129,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, karura, moonriver, assethub, shiden]
+		for para in [unique, karura, moonriver, assethub]
 	},
 }
