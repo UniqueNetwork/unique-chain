@@ -24,7 +24,7 @@ up-data-structs = { workspace = true }
 derivative = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
 	"frame-support/std",

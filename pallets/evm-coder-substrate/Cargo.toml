@@ -24,7 +24,7 @@ evm-coder-substrate-procedural = { path = "./procedural" }
 spez = "0.1.2"
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = ['frame-benchmarking']
 std = [
 	"evm-coder/std",

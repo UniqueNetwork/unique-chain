@@ -23,7 +23,7 @@ sp-std = { workspace = true }
 struct-versioning = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 limit-testing = []
 runtime-benchmarks = []
 serde1 = ["serde/alloc"]

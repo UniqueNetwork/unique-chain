@@ -18,7 +18,7 @@ sp-std = { workspace = true }
 up-sponsorship = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 std = [
 	"fp-evm/std",
 	"frame-support/std",

@@ -167,6 +167,7 @@ impl pallet_balances::Config for Runtime {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = [u8; 16];
 	type MaxFreezes = MaxFreezes;
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -185,6 +186,7 @@ impl pallet_transaction_payment::Config for Runtime {
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = pallet_configuration::WeightToFee<Self, Balance>;
 	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
+	type WeightInfo = pallet_transaction_payment::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {

@@ -15,7 +15,7 @@ sp-std = { workspace = true }
 up-data-structs = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 std = [
 	"pallet-common/std",
 	"parity-scale-codec/std",

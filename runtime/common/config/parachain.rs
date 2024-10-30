@@ -42,6 +42,7 @@ impl cumulus_pallet_parachain_system::Config for Runtime {
 	type CheckAssociatedRelayNumber =
 		cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases;
 	type ConsensusHook = ConsensusHookWrapper;
+	type SelectCore = cumulus_pallet_parachain_system::DefaultCoreSelector<Self>;
 }
 
 impl staging_parachain_info::Config for Runtime {}
