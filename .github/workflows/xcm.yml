@@ -25,11 +25,6 @@ jobs:
         if: always()
         uses: AutoModality/action-clean@v1.1.0
 
-      - name: Remove builder cache
-        if: always()
-        run: |
-          docker system prune -a -f
-
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
@@ -268,3 +263,7 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
+      # - name: Remove builder cache
+      #   if: always()
+      #   run: |
+      #     docker system prune -a -f
