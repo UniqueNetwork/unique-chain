@@ -27,7 +27,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt', 'larry', 'mike', 'norman', 'osvald']
 	},
 };
 
@@ -166,6 +166,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, assethub]
+		for para in [unique, acala, moonbeam, assethub, astar, polkadex, hydraDx]
 	},
 }

@@ -26,7 +26,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt']
 	},
 };
 
@@ -129,6 +129,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, assethub]
+		for para in [unique, karura, moonriver, assethub, shiden]
 	},
 }
