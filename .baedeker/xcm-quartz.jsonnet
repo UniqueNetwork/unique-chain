@@ -125,6 +125,8 @@ local shiden = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',				
 		},
 		for name in ['alice', 'bob']
 	},
