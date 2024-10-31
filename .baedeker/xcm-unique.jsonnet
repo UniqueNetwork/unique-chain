@@ -165,7 +165,6 @@ local hydraDx = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			legacyRpc: true,
 			parentConnection: 'internal-samedir',
             expectedDataPath: '/hydra',			
 		},
