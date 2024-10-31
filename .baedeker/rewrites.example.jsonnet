@@ -10,11 +10,11 @@ function(prev, repoDir)
     {
       'bin/unique': '%s/target/release/unique-collator' % repoDir,
       'bin/polkadot': { dockerImage: 'parity/polkadot:%s' % dotenv.POLKADOT_MAINNET_BRANCH },
-      'bin/acala': { dockerImage: 'uniquenetwork/builder-acala:%s' % dotenv.ACALA_BUILD_BRANCH },
-      'bin/moonbeam': { dockerImage: 'uniquenetwork/builder-moonbeam:%s' % dotenv.MOONBEAM_BUILD_BRANCH },
-      'bin/cumulus': { dockerImage: 'uniquenetwork/builder-cumulus:%s' % dotenv.STATEMINE_BUILD_BRANCH },
-      'bin/astar': { dockerImage: 'uniquenetwork/builder-astar:%s' % dotenv.ASTAR_BUILD_BRANCH },
-      'bin/polkadex': { dockerImage: 'uniquenetwork/builder-polkadex:%s' % dotenv.POLKADEX_BUILD_BRANCH },
+      'bin/acala': { dockerImage: 'acala/acala-node:%s' % dotenv.ACALA_BUILD_BRANCH },
+      'bin/moonbeam': { dockerImage: 'moonbeamfoundation/moonbeam:%s' % dotenv.MOONBEAM_BUILD_BRANCH },
+      'bin/assethub': { dockerImage: 'parity/polkadot-parachain:%s' % dotenv.STATEMINE_BUILD_BRANCH },
+      'bin/astar': { dockerImage: 'staketechnologies/astar-collator:%s' % dotenv.ASTAR_BUILD_BRANCH },
+      'bin/polkadex': { dockerImage: 'polkadex/mainnet:%s' % dotenv.POLKADEX_BUILD_BRANCH },
       'bin/hydradx': { dockerImage: 'uniquenetwork/builder-hydraDx:%s' % dotenv.HYDRADX_BUILD_BRANCH },
     },
     extra_node_mixin={
