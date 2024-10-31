@@ -65,6 +65,8 @@ local acala = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -84,6 +86,8 @@ local moonbeam = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
 	},
@@ -139,6 +143,9 @@ local polkadex = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',
+
 		},
 		for name in ['alice', 'bob']
 	},
@@ -166,6 +173,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, moonbeam, assethub]
+		for para in [unique, acala, moonbeam, assethub, astar, polkadex, hydraDx]
 	},
 }

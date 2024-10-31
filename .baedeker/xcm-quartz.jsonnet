@@ -26,7 +26,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt']
 	},
 };
 
@@ -64,6 +64,8 @@ local karura = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -83,6 +85,8 @@ local moonriver = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
 	},
@@ -105,7 +109,7 @@ local assethub = {
 			parentConnection: 'internal-samedir',
             expectedDataPath: '/parity',
 		},
-		for name in ['alice']
+		for name in ['alice', 'bob']
 	},
 };
 
@@ -129,6 +133,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, assethub]
+		for para in [unique, karura, moonriver, assethub, shiden]
 	},
 }
