@@ -63,7 +63,7 @@ pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// Frontier wrapped extrinsic
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtensions>;
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type.
@@ -86,7 +86,7 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-pub type SignedExtra = (
+pub type TxExtensions = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
