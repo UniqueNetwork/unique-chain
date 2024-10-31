@@ -21,11 +21,9 @@
 
 extern crate alloc;
 
+#[cfg(not(feature = "std"))]
 use alloc::string::ToString;
-use core::{
-	char::{decode_utf16, REPLACEMENT_CHARACTER},
-	convert::TryInto,
-};
+use core::char::{decode_utf16, REPLACEMENT_CHARACTER};
 
 use evm_coder::{abi::AbiType, generate_stubgen, solidity_interface, types::*, AbiCoder, ToLog};
 use frame_support::BoundedVec;
@@ -42,7 +40,7 @@ use pallet_evm_coder_substrate::{
 };
 use pallet_structure::{weights::WeightInfo as _, SelfWeightOf as StructureWeight};
 use sp_core::{Get, U256};
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
 use up_data_structs::{
 	budget::Budget, CollectionId, CollectionPropertiesVec, Property, PropertyKey,
 	PropertyKeyPermission, PropertyPermission, TokenId,

@@ -13,6 +13,7 @@
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
     "lossless-json": "^3.0.1",
+    "patch-package": "8.0.0",
     "solc": "^0.8.22",
     "typechain": "^8.3.2",
     "web3": "1.10.0"

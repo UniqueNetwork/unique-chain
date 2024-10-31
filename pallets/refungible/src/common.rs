@@ -23,7 +23,9 @@ use pallet_common::{
 };
 use pallet_structure::Pallet as PalletStructure;
 use sp_runtime::DispatchError;
-use sp_std::{collections::btree_map::BTreeMap, vec, vec::Vec};
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
+use sp_std::{collections::btree_map::BTreeMap, vec};
 use up_data_structs::{
 	budget::Budget, CollectionId, CreateItemExData, CreateRefungibleExMultipleOwners,
 	CreateRefungibleExSingleOwner, Property, PropertyKey, PropertyKeyPermission, PropertyValue,

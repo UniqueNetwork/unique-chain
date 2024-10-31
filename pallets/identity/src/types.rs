@@ -35,14 +35,14 @@
 use enumflags2::{bitflags, BitFlags};
 use frame_support::{
 	traits::{ConstU32, Get},
-	BoundedVec, CloneNoBound, PartialEqNoBound, RuntimeDebugNoBound,
+	CloneNoBound, PartialEqNoBound, RuntimeDebugNoBound,
 };
 use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
 use scale_info::{
 	build::{Fields, Variants},
 	meta_type, Path, Type, TypeInfo, TypeParameter,
 };
-use sp_runtime::{traits::Zero, RuntimeDebug};
+use sp_runtime::RuntimeDebug;
 use sp_std::{fmt::Debug, iter::once, ops::Add, prelude::*};
 
 use super::*;
@@ -504,7 +504,7 @@ mod tests {
 					.variants
 					.iter()
 					.find(|v| v.name == variant_name)
-					.expect(&format!("Expected to find variant {}", variant_name));
+					.unwrap_or_else(|| panic!("Expected to find variant {}", variant_name));
 
 				let field_arr_len = variant
 					.fields

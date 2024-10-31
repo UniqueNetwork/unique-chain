@@ -25,11 +25,6 @@ use std::{
 
 use cumulus_client_cli::CollatorOptions;
 use cumulus_client_collator::service::CollatorService;
-#[cfg(not(feature = "lookahead"))]
-use cumulus_client_consensus_aura::collators::basic::{
-	run as run_aura, Params as BuildAuraConsensusParams,
-};
-#[cfg(feature = "lookahead")]
 use cumulus_client_consensus_aura::collators::lookahead::{
 	run as run_aura, Params as BuildAuraConsensusParams,
 };
@@ -39,18 +34,17 @@ use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
 	CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
 };
-use cumulus_primitives_core::ParaId;
+use cumulus_primitives_core::{ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
+use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
 use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
 use fc_rpc::{
 	frontier_backend_client::SystemAccountId32StorageOverride, EthBlockDataCacheTask, EthConfig,
-	EthTask, OverrideHandle, RuntimeApiStorageOverride, SchemaV1Override, SchemaV2Override,
-	SchemaV3Override, StorageOverride,
+	EthTask, StorageOverride, StorageOverrideHandler,
 };
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::EthereumRuntimeRPCApi;
-use fp_storage::EthereumStorageSchema;
 use futures::{
 	stream::select,
 	task::{Context, Poll},
@@ -58,10 +52,10 @@ use futures::{
 };
 use jsonrpsee::RpcModule;
 use polkadot_service::CollatorPair;
-use sc_client_api::{AuxStore, Backend, BlockOf, BlockchainEvents, StorageProvider};
+use sc_client_api::{Backend, BlockOf, BlockchainEvents, StorageProvider};
 use sc_consensus::ImportQueue;
-use sc_executor::{NativeElseWasmExecutor, NativeExecutionDispatch};
-use sc_network::NetworkBlock;
+use sc_executor::{HostFunctions, WasmExecutor};
+use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::{Configuration, PartialComponents, TaskManager};
@@ -71,85 +65,25 @@ use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_consensus_aura::sr25519::AuthorityPair as AuraAuthorityPair;
+use sp_core::Encode;
 use sp_keystore::KeystorePtr;
+use sp_runtime::traits::Block as BlockT;
 use sp_state_machine::Backend as StateBackend;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
 
+use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
+
+/// Only enable the benchmarking host functions when we actually want to benchmark.
+#[cfg(feature = "runtime-benchmarks")]
+pub type ParachainHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+/// Otherwise we only use the default Substrate host functions.
+#[cfg(not(feature = "runtime-benchmarks"))]
 pub type ParachainHostFunctions = (
 	sp_io::SubstrateHostFunctions,
 	cumulus_client_service::storage_proof_size::HostFunctions,
 );
-
-use cumulus_primitives_core::PersistedValidationData;
-use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-
-use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
-
-/// Unique native executor instance.
-#[cfg(feature = "unique-runtime")]
-pub struct UniqueRuntimeExecutor;
-
-#[cfg(feature = "quartz-runtime")]
-/// Quartz native executor instance.
-pub struct QuartzRuntimeExecutor;
-
-/// Opal native executor instance.
-pub struct OpalRuntimeExecutor;
-
-#[cfg(feature = "unique-runtime")]
-impl NativeExecutionDispatch for UniqueRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ParachainHostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		unique_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		unique_runtime::native_version()
-	}
-}
-
-#[cfg(feature = "quartz-runtime")]
-impl NativeExecutionDispatch for QuartzRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ParachainHostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		quartz_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		quartz_runtime::native_version()
-	}
-}
-
-impl NativeExecutionDispatch for OpalRuntimeExecutor {
-	/// Only enable the benchmarking host functions when we actually want to benchmark.
-	#[cfg(feature = "runtime-benchmarks")]
-	type ExtendHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
-	/// Otherwise we only use the default Substrate host functions.
-	#[cfg(not(feature = "runtime-benchmarks"))]
-	type ExtendHostFunctions = ParachainHostFunctions;
-
-	fn dispatch(method: &str, data: &[u8]) -> Option<Vec<u8>> {
-		opal_runtime::api::dispatch(method, data)
-	}
-
-	fn native_version() -> sc_executor::NativeVersion {
-		opal_runtime::native_version()
-	}
-}
 
 pub struct AutosealInterval {
 	interval: Interval,
@@ -175,11 +109,11 @@ impl Stream for AutosealInterval {
 pub fn open_frontier_backend<C: HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
-) -> Result<Arc<fc_db::kv::Backend<Block>>, String> {
+) -> Result<Arc<fc_db::kv::Backend<Block, C>>, String> {
 	let config_dir = config.base_path.config_dir(config.chain_spec.id());
 	let database_dir = config_dir.join("frontier").join("db");
 
-	Ok(Arc::new(fc_db::kv::Backend::<Block>::new(
+	Ok(Arc::new(fc_db::kv::Backend::<Block, C>::new(
 		client,
 		&fc_db::kv::DatabaseSettings {
 			source: fc_db::DatabaseSource::RocksDb {
@@ -191,7 +125,7 @@ pub fn open_frontier_backend<C: HeaderBackend<Block>>(
 }
 
 type FullClient<RuntimeApi, ExecutorDispatch> =
-	sc_service::TFullClient<Block, RuntimeApi, NativeElseWasmExecutor<ExecutorDispatch>>;
+	sc_service::TFullClient<Block, RuntimeApi, WasmExecutor<ExecutorDispatch>>;
 type FullBackend = sc_service::TFullBackend<Block>;
 type FullSelectChain = sc_consensus::LongestChain<FullBackend, Block>;
 type ParachainBlockImport<RuntimeApi, ExecutorDispatch> =
@@ -226,11 +160,6 @@ ez_bounds!(
 	{
 	}
 );
-#[cfg(not(feature = "lookahead"))]
-ez_bounds!(
-	pub trait LookaheadApiDep {}
-);
-#[cfg(feature = "lookahead")]
 ez_bounds!(
 	pub trait LookaheadApiDep: cumulus_primitives_aura::AuraUnincludedSegmentApi<Block> {}
 );
@@ -262,31 +191,29 @@ fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, Paracha
 /// Use this macro if you don't actually need the full service, but just the builder in order to
 /// be able to perform chain operations.
 #[allow(clippy::type_complexity)]
-pub fn new_partial<Runtime, RuntimeApi, ExecutorDispatch, BIQ>(
+pub fn new_partial<Runtime, RuntimeApi, HF, BIQ>(
 	config: &Configuration,
 	build_import_queue: BIQ,
 ) -> Result<
 	PartialComponents<
-		FullClient<RuntimeApi, ExecutorDispatch>,
+		FullClient<RuntimeApi, HF>,
 		FullBackend,
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
-		OtherPartial,
+		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>,
+		OtherPartial<FullClient<RuntimeApi, HF>>,
 	>,
 	sc_service::Error,
 >
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: StateBackend<BlakeTwo256>,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	RuntimeApi:
+		sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 	BIQ: FnOnce(
-		Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+		Arc<FullClient<RuntimeApi, HF>>,
 		Arc<FullBackend>,
 		&Configuration,
 		Option<TelemetryHandle>,
@@ -304,7 +231,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_native_or_wasm_executor(config);
+	let executor = sc_service::new_wasm_executor(config);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -376,40 +303,41 @@ macro_rules! clone {
 ///
 /// This is the actual implementation that is abstract over the executor and the runtime api.
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
-pub async fn start_node<Runtime, RuntimeApi, ExecutorDispatch>(
+pub async fn start_node<Runtime, RuntimeApi, HF, Network>(
 	parachain_config: Configuration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
 	hwbench: Option<sc_sysinfo::HwBench>,
-) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, ExecutorDispatch>>)>
+) -> sc_service::error::Result<(TaskManager, Arc<FullClient<RuntimeApi, HF>>)>
 where
 	sc_client_api::StateBackendFor<FullBackend, Block>: StateBackend<BlakeTwo256>,
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
 	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	RuntimeApi:
+		sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	RuntimeApi::RuntimeApi: LookaheadApiDep,
 	Runtime: RuntimeInstance,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
+	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
-		&parachain_config,
-		parachain_build_import_queue,
-	)?;
+	let params =
+		new_partial::<Runtime, RuntimeApi, HF, _>(&parachain_config, parachain_build_import_queue)?;
 	let OtherPartial {
 		mut telemetry,
 		telemetry_worker_handle,
 		eth_filter_pool,
 		eth_backend,
 	} = params.other;
-	let net_config = sc_network::config::FullNetworkConfiguration::new(&parachain_config.network);
+	let net_config = sc_network::config::FullNetworkConfiguration::<
+		Block,
+		<Block as BlockT>::Hash,
+		Network,
+	>::new(&parachain_config.network);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -454,7 +382,7 @@ where
 		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<Block>>,
 	> = Default::default();
 
-	let overrides = overrides_handle(client.clone());
+	let overrides = Arc::new(StorageOverrideHandler::new(client.clone()));
 	let eth_block_data_cache = spawn_frontier_tasks(
 		FrontierTaskParams {
 			client: client.clone(),
@@ -549,15 +477,7 @@ where
 				},
 			};
 
-			create_eth::<
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>,
-			>(
+			create_eth::<_, _, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
 				&mut rpc_handle,
 				eth_deps,
 				subscription_task_executor.clone(),
@@ -652,21 +572,19 @@ where
 }
 
 /// Build the import queue for the the parachain runtime.
-pub fn parachain_build_import_queue<Runtime, RuntimeApi, ExecutorDispatch>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+pub fn parachain_build_import_queue<Runtime, RuntimeApi, HF>(
+	client: Arc<FullClient<RuntimeApi, HF>>,
 	backend: Arc<FullBackend>,
 	config: &Configuration,
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	RuntimeApi:
+		sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	Runtime: RuntimeInstance,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 {
 	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
@@ -717,19 +635,15 @@ pub struct StartConsensusParameters<'a> {
 
 // Clones ignored for optional lookahead collator
 #[allow(clippy::redundant_clone)]
-pub fn start_consensus<ExecutorDispatch, RuntimeApi, Runtime>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
-	transaction_pool: Arc<
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, ExecutorDispatch>>,
-	>,
+pub fn start_consensus<HF, RuntimeApi, Runtime>(
+	client: Arc<FullClient<RuntimeApi, HF>>,
+	transaction_pool: Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>>,
 	parameters: StartConsensusParameters<'_>,
 ) -> Result<(), sc_service::Error>
 where
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	HF: HostFunctions + 'static,
+	RuntimeApi:
+		sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
 	RuntimeApi::RuntimeApi: LookaheadApiDep,
 	Runtime: RuntimeInstance,
@@ -748,7 +662,6 @@ where
 		collator_key,
 		announce_block,
 	} = parameters;
-	let slot_duration = cumulus_client_consensus_aura::slot_duration(&*client)?;
 
 	let proposer_factory = sc_basic_authorship::ProposerFactory::with_proof_recording(
 		task_manager.spawn_handle(),
@@ -772,23 +685,16 @@ where
 		create_inherent_data_providers: move |_, ()| async move { Ok(()) },
 		block_import,
 		para_client: client.clone(),
-		#[cfg(feature = "lookahead")]
 		para_backend: backend,
 		para_id,
 		relay_client: relay_chain_interface,
 		sync_oracle,
 		keystore,
-		#[cfg(not(feature = "lookahead"))]
-		slot_duration,
 		proposer,
 		collator_service,
 		// With async-baking, we allowed to be both slower (longer authoring) and faster (multiple para blocks per relay block)
-		#[cfg(not(feature = "lookahead"))]
-		authoring_duration: Duration::from_millis(500),
-		#[cfg(feature = "lookahead")]
 		authoring_duration: Duration::from_millis(1500),
 		overseer_handle,
-		#[cfg(feature = "lookahead")]
 		code_hash_provider: move |block_hash| {
 			client
 				.code_at(block_hash)
@@ -798,38 +704,30 @@ where
 		},
 		collator_key,
 		relay_chain_slot_duration,
-		#[cfg(not(feature = "lookahead"))]
-		collation_request_receiver: None,
-		#[cfg(feature = "lookahead")]
 		reinitialize: false,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
 		"aura",
 		None,
-		#[cfg(not(feature = "lookahead"))]
-		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _>(params),
-		#[cfg(feature = "lookahead")]
 		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _, _>(params),
 	);
 	Ok(())
 }
 
-fn dev_build_import_queue<RuntimeApi, ExecutorDispatch>(
-	client: Arc<FullClient<RuntimeApi, ExecutorDispatch>>,
+fn dev_build_import_queue<RuntimeApi, HF>(
+	client: Arc<FullClient<RuntimeApi, HF>>,
 	_: Arc<FullBackend>,
 	config: &Configuration,
 	_: Option<TelemetryHandle>,
 	task_manager: &TaskManager,
 ) -> Result<sc_consensus::DefaultImportQueue<Block>, sc_service::Error>
 where
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	RuntimeApi:
+		sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi:
 		sp_transaction_pool::runtime_api::TaggedTransactionQueue<Block> + sp_api::ApiExt<Block>,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
 {
 	Ok(sc_consensus_manual_seal::import_queue(
 		Box::new(client),
@@ -838,11 +736,11 @@ where
 	))
 }
 
-pub struct OtherPartial {
+pub struct OtherPartial<C: HeaderBackend<Block>> {
 	pub telemetry: Option<Telemetry>,
 	pub telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	pub eth_filter_pool: Option<FilterPool>,
-	pub eth_backend: Arc<fc_db::kv::Backend<Block>>,
+	pub eth_backend: Arc<fc_db::kv::Backend<Block, C>>,
 }
 
 struct DefaultEthConfig<C>(PhantomData<C>);
@@ -856,8 +754,9 @@ where
 
 /// Builds a new development service. This service uses instant seal, and mocks
 /// the parachain inherent
-pub fn start_dev_node<Runtime, RuntimeApi, ExecutorDispatch>(
+pub fn start_dev_node<Runtime, RuntimeApi, HF, Network>(
 	config: Configuration,
+	para_id: ParaId,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
 	disable_autoseal_on_tx: bool,
@@ -866,18 +765,21 @@ where
 	Runtime: RuntimeInstance + Send + Sync + 'static,
 	<Runtime as RuntimeInstance>::CrossAccountId: Serialize,
 	for<'de> <Runtime as RuntimeInstance>::CrossAccountId: Deserialize<'de>,
-	RuntimeApi: sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, ExecutorDispatch>>
-		+ Send
-		+ Sync
-		+ 'static,
+	RuntimeApi:
+		sp_api::ConstructRuntimeApi<Block, FullClient<RuntimeApi, HF>> + Send + Sync + 'static,
 	RuntimeApi::RuntimeApi: RuntimeApiDep<Runtime> + 'static,
-	ExecutorDispatch: NativeExecutionDispatch + 'static,
+	HF: HostFunctions + 'static,
+	Network: NetworkBackend<Block, <Block as BlockT>::Hash>,
 {
 	use fc_consensus::FrontierBlockImport;
 	use sc_consensus_manual_seal::{
 		run_delayed_finalize, run_manual_seal, DelayedFinalizeParams, EngineCommand,
 		ManualSealParams,
 	};
+
+	let metrics = Network::register_notification_metrics(
+		config.prometheus_config.as_ref().map(|cfg| &cfg.registry),
+	);
 
 	let sc_service::PartialComponents {
 		client,
@@ -894,11 +796,12 @@ where
 				eth_backend,
 				telemetry_worker_handle: _,
 			},
-	} = new_partial::<Runtime, RuntimeApi, ExecutorDispatch, _>(
-		&config,
-		dev_build_import_queue::<RuntimeApi, ExecutorDispatch>,
-	)?;
-	let net_config = sc_network::config::FullNetworkConfiguration::new(&config.network);
+	} = new_partial::<Runtime, RuntimeApi, HF, _>(&config, dev_build_import_queue::<RuntimeApi, HF>)?;
+	let net_config = sc_network::config::FullNetworkConfiguration::<
+		Block,
+		<Block as BlockT>::Hash,
+		Network,
+	>::new(&config.network);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
@@ -912,6 +815,7 @@ where
 			block_announce_validator_builder: None,
 			warp_sync_params: None,
 			block_relay: None,
+			metrics,
 		})?;
 
 	let collator = config.role.is_authority();
@@ -987,24 +891,30 @@ where
 				select_chain: select_chain.clone(),
 				consensus_data_provider: None,
 				create_inherent_data_providers: move |block: Hash, ()| {
-					let current_para_block = client_set_aside_for_cidp
-						.number(block)
+					let header = client_set_aside_for_cidp
+						.header(block)
 						.expect("Header lookup should succeed")
 						.expect("Header passed in as parent should be present in backend.");
+
+					let current_para_block = header.number;
+					let current_para_block_head = Some(
+						cumulus_primitives_core::relay_chain::HeadData(header.encode()),
+					);
 
 					let client_for_xcm = client_set_aside_for_cidp.clone();
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
 						let mocked_parachain = cumulus_client_parachain_inherent::MockValidationDataInherentDataProvider {
+							para_id,
 							current_para_block,
+							current_para_block_head,
 							relay_offset: 1000,
 							relay_blocks_per_para_block: 2,
 							para_blocks_per_relay_epoch: 0,
 							xcm_config: cumulus_client_parachain_inherent::MockXcmConfig::new(
 								&*client_for_xcm,
 								block,
-								Default::default(),
 								Default::default(),
 							),
 							relay_randomness_config: (),
@@ -1037,7 +947,7 @@ where
 		EthereumBlockNotificationSinks<fc_mapping_sync::EthereumBlockNotification<Block>>,
 	> = Default::default();
 
-	let overrides = overrides_handle(client.clone());
+	let overrides = Arc::new(StorageOverrideHandler::new(client.clone()));
 	let eth_block_data_cache = spawn_frontier_tasks(
 		FrontierTaskParams {
 			client: client.clone(),
@@ -1132,15 +1042,7 @@ where
 				},
 			};
 
-			create_eth::<
-				_,
-				_,
-				_,
-				_,
-				_,
-				_,
-				DefaultEthConfig<FullClient<RuntimeApi, ExecutorDispatch>>,
-			>(
+			create_eth::<_, _, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
 				&mut rpc_module,
 				eth_deps,
 				subscription_task_executor.clone(),
@@ -1169,42 +1071,13 @@ where
 	Ok(task_manager)
 }
 
-fn overrides_handle<C, BE>(client: Arc<C>) -> Arc<OverrideHandle<Block>>
-where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
-	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
-	C: Send + Sync + 'static,
-	C::Api: fp_rpc::EthereumRuntimeRPCApi<Block>,
-	BE: Backend<Block> + 'static,
-	BE::State: StateBackend<BlakeTwo256>,
-{
-	let mut overrides_map = BTreeMap::new();
-	overrides_map.insert(
-		EthereumStorageSchema::V1,
-		Box::new(SchemaV1Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V2,
-		Box::new(SchemaV2Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-	overrides_map.insert(
-		EthereumStorageSchema::V3,
-		Box::new(SchemaV3Override::new(client.clone())) as Box<dyn StorageOverride<_> + 'static>,
-	);
-
-	Arc::new(OverrideHandle {
-		schemas: overrides_map,
-		fallback: Box::new(RuntimeApiStorageOverride::new(client)),
-	})
-}
-
-pub struct FrontierTaskParams<'a, C, B> {
+pub struct FrontierTaskParams<'a, C: HeaderBackend<Block>, B> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<B>,
-	pub eth_backend: Arc<fc_db::kv::Backend<Block>>,
+	pub eth_backend: Arc<fc_db::kv::Backend<Block, C>>,
 	pub eth_filter_pool: Option<FilterPool>,
-	pub overrides: Arc<OverrideHandle<Block>>,
+	pub overrides: Arc<dyn StorageOverride<Block>>,
 	pub fee_history_limit: u64,
 	pub fee_history_cache: FeeHistoryCache,
 	pub sync_strategy: SyncStrategy,

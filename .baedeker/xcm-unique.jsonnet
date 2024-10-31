@@ -2,7 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-function(relay_spec)
+function(relay_spec, assethub_spec)
 
 local relay = {
 	name: 'relay',
@@ -27,7 +27,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt', 'larry', 'mike', 'norman', 'osvald']
 	},
 };
 
@@ -65,6 +65,8 @@ local acala = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -84,24 +86,29 @@ local moonbeam = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
 	},
 };
 
-local statemint = {
-	name: 'statemint',
+local assethub = {
+	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
-	spec: {Genesis:{
-		chain: 'statemint-local',
-		modify:: m.genericPara($),
-	}},
+	spec: {
+		FromScratchGenesis: {
+			spec: assethub_spec,
+			modify:: m.genericPara($),
+		}
+	},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-ed',
-			expectedDataPath: '/parity',			
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
@@ -119,6 +126,8 @@ local astar = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -136,6 +145,9 @@ local polkadex = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',
+
 		},
 		for name in ['alice', 'bob']
 	},
@@ -154,6 +166,8 @@ local hydraDx = {
 			bin: $.bin,
 			wantedKeys: 'para',
 			legacyRpc: true,
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/hydra',			
 		},
 		for name in ['alice', 'bob']
 	},
@@ -163,6 +177,6 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
+		for para in [unique, acala, moonbeam, assethub, astar, polkadex, hydraDx]
 	},
 }

@@ -16,7 +16,7 @@ jobs:
 
     name: execution matrix
 
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -46,7 +46,7 @@ jobs:
 
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
 
     timeout-minutes: 2880           # 48 hours for execution jobs.
 
@@ -137,7 +137,8 @@ jobs:
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
         with:
-          useCache: false        
+          version: "v0.1.4"
+          useCache: false
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
@@ -154,7 +155,7 @@ jobs:
           inputs: |
             .baedeker/node-only.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
 
       - name: Ensure network is alive
         working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests

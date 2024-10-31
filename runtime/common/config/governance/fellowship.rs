@@ -3,9 +3,7 @@ use pallet_ranked_collective::{Config as RankedConfig, Rank, TallyOf};
 use sp_runtime::traits::ReplaceWithDefault;
 
 use super::*;
-use crate::{
-	FellowshipReferenda, Preimage, Runtime, RuntimeCall, RuntimeEvent, Scheduler, Treasury,
-};
+use crate::FellowshipReferenda;
 
 pub const FELLOWSHIP_MODULE_ID: PalletId = PalletId(*b"flowship");
 pub const DEMOCRACY_TRACK_ID: u16 = 10;
@@ -68,6 +66,7 @@ impl RankedConfig for Runtime {
 	type RemoveOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type ExchangeOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type MemberSwappedHandler = ();
+	type MaxMemberCount = ();
 	type PromoteOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type DemoteOrigin = FellowshipPromoteDemoteOrigin<Self::AccountId>;
 	type Polls = FellowshipReferenda;

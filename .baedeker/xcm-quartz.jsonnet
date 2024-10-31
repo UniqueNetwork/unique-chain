@@ -2,7 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-function(relay_spec)
+function(relay_spec, assethub_spec)
 
 local relay = {
 	name: 'relay',
@@ -26,7 +26,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt']
 	},
 };
 
@@ -64,6 +64,8 @@ local karura = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -83,24 +85,29 @@ local moonriver = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
 	},
 };
 
-local statemine = {
-	name: 'statemine',
+local assethub = {
+	name: 'assethub',
 	bin: 'bin/assethub',
 	paraId: 1004,
-	spec: {Genesis:{
-		chain: 'statemine-local',
-		modify:: m.genericPara($),
-	}},
+	spec: {
+		FromScratchGenesis: {
+			spec: assethub_spec,
+			modify:: m.genericPara($),
+		}
+	},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
@@ -118,6 +125,8 @@ local shiden = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -126,6 +135,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, karura, moonriver, statemine, shiden]
+		for para in [unique, karura, moonriver, assethub, shiden]
 	},
 }

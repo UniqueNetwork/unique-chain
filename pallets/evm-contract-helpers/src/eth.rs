@@ -39,7 +39,6 @@ use pallet_evm_coder_substrate::{
 };
 use pallet_evm_transaction_payment::CallContext;
 use sp_core::{H160, U256};
-use sp_std::vec::Vec;
 use up_data_structs::SponsorshipState;
 use up_sponsorship::SponsorshipHandler;
 

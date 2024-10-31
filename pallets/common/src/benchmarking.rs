@@ -16,6 +16,7 @@
 
 #![allow(missing_docs)]
 
+#[cfg(not(feature = "std"))]
 use core::convert::TryInto;
 
 use frame_benchmarking::{account, v2::*};
@@ -26,7 +27,8 @@ use frame_support::{
 };
 use pallet_evm::account::CrossAccountId;
 use sp_runtime::{traits::Zero, DispatchError};
-use sp_std::{vec, vec::Vec};
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 use up_data_structs::{
 	AccessMode, CollectionId, CollectionMode, CollectionPermissions, CreateCollectionData,
 	NestingPermissions, Property, PropertyKey, PropertyValue, MAX_COLLECTION_DESCRIPTION_LENGTH,

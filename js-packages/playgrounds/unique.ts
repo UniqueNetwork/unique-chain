@@ -192,7 +192,8 @@ class UniqueUtil {
 
   static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
     if(creationResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error('Unable to create collection!');
+      const status = JSON.stringify((creationResult.result as any).status.toHuman());
+      throw Error(`Unable to create collection! Status: ${status}`);
     }
 
     let collectionId = null;
@@ -558,6 +559,12 @@ export class ChainHelperBase {
     if(status.isBroadcast) {
       return this.transactionStatus.NOT_READY;
     }
+    if(status.isFuture) {
+      return this.transactionStatus.NOT_READY;
+    }
+    if(status.isRetracted) {
+      return this.transactionStatus.NOT_READY;
+    }
     if(status.isInBlock || status.isFinalized) {
       const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
       if(errors.length > 0) {
@@ -571,21 +578,30 @@ export class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
+  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
-    // eslint-disable-next-line no-async-promise-executor
+    options = options || { nonce: 0};
+    if (!options.nonce) {
+      let nonce = await this.chain.getNonce(sender.address);
+      options.nonce = nonce++;
+    }
     return new Promise(async (resolve, reject) => {
       try {
+        let inBlockResult;
         const unsub = await sign((result: any) => {
           const status = this.getTransactionStatus(result);
 
           if(status === this.transactionStatus.SUCCESS) {
+            if (!result.status.isFinalized) {
+              inBlockResult = result;
+              return;
+            }
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+            resolve({result: inBlockResult!, status, blockHash: inBlockResult!.status.asInBlock.toHuman()});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
