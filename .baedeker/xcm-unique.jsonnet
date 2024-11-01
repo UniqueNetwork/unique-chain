@@ -99,8 +99,7 @@ local assethub = {
 	paraId: 1004,
 	spec: {
 		FromScratchGenesis: {
-			spec: assethub_spec,
-			modify:: m.genericPara($),
+			spec: m.genericPara($)(assethub_spec),
 		}
 	},
 	nodes: {
