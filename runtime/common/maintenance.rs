@@ -23,7 +23,6 @@ use sp_runtime::{
 	},
 	Weight,
 };
-use up_common::types::AccountId;
 
 use crate::{Maintenance, RuntimeCall};
 

@@ -3279,7 +3279,7 @@ dependencies = [
 [[package]]
 name = "fc-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "async-trait",
  "fp-storage",
@@ -3291,7 +3291,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "async-trait",
  "fp-consensus",
@@ -3307,7 +3307,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "async-trait",
  "fc-api",
@@ -3328,7 +3328,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "fc-db",
  "fc-storage",
@@ -3349,7 +3349,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3403,7 +3403,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3418,7 +3418,7 @@ dependencies = [
 [[package]]
 name = "fc-storage"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3588,7 +3588,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "hex",
  "impl-serde 0.4.0",
@@ -3606,7 +3606,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3617,7 +3617,7 @@ dependencies = [
 [[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3629,7 +3629,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "evm",
  "frame-support",
@@ -3644,7 +3644,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3660,7 +3660,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3672,7 +3672,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -7246,7 +7246,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -7564,7 +7564,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -7586,7 +7586,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "environmental",
  "evm",
@@ -7667,7 +7667,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#f3ff014137958f1fba058fbef8726d3574726c40"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=v20241023#dbbd45bcb9e4deabcf30c4895a8f5952701a054f"
 dependencies = [
  "fp-evm",
  "ripemd",

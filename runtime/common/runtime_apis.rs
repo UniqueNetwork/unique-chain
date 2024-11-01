@@ -698,7 +698,7 @@ macro_rules! impl_common_runtime_apis {
 			/// Not allowed to panic, because rpc may be called using native runtime, thus causing thread panic.
 			impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
 				fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
-					UncheckedExtrinsic::new_unsigned(
+					UncheckedExtrinsic::new_bare(
 						pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 					)
 				}
