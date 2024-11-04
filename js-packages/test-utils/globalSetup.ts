@@ -63,7 +63,7 @@ const fundFilenames = async () => {
     const oneToken = helper.balance.getOneTokenNominal();
     const alice = await privateKey('//Alice');
     const nonce = await helper.chain.getNonce(alice.address);
-    const filenames = await getFiles(path.resolve(dirname, '..'));
+    const filenames = await getFiles(path.resolve(dirname, '../tests'));
 
     // batching is actually undesireable, it takes away the time while all the transactions actually succeed
     const batchSize = 300;
@@ -71,7 +71,7 @@ const fundFilenames = async () => {
     for(let b = 0; b < filenames.length; b += batchSize) {
       const tx: Promise<boolean>[] = [];
       let batchBalanceGrantedCounter = 0;
-      for(let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filenames.length; i++) {
+      for(let i = 0; i < batchSize && b + i < filenames.length; i++) {
         const f = filenames[b + i];
         if(!f.endsWith('.test.ts') && !f.endsWith('seqtest.ts') || f.includes('.outdated')) continue;
         const account = await privateKey({filename: f, ignoreFundsPresence: true});
@@ -95,7 +95,6 @@ const fundFilenames = async () => {
         if(result && result.lastIndexOf(false) > -1) throw new Error('The transactions actually probably succeeded, should check the balances.');
       }
     }
-
     if(balanceGrantedCounter == 0) console.log('No account needs additional funding.');
   });
 };
