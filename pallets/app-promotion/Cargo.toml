@@ -15,7 +15,6 @@ version = '0.2.2'
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
-default = ['std']
 runtime-benchmarks = [
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',

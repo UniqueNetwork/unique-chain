@@ -9,7 +9,6 @@ repository = 'https://github.com/UniqueNetwork/unique-chain'
 version.workspace = true
 
 [features]
-default = ['std']
 std = [
 	'cumulus-primitives-core/std',
 	'fp-rpc/std',

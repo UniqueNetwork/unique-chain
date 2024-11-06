@@ -15,7 +15,6 @@ version = "0.2.1"
 targets = ['x86_64-unknown-linux-gnu']
 
 [features]
-default = ['std']
 limit-testing = ["up-data-structs/limit-testing"]
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
