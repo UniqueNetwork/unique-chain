@@ -74,3 +74,19 @@ pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
 parameter_types! {
 	pub const TransactionByteFee: Balance = 501 * MICROUNIQUE / 2;
 }
+
+pub mod currency {
+	use crate::types::Balance;
+
+	/// The existential deposit.
+	pub const EXISTENTIAL_DEPOSIT: Balance = 1 * CENTS;
+
+	pub const UNITS: Balance = 1_000_000_000_000;
+	pub const CENTS: Balance = UNITS / 100;
+	pub const MILLICENTS: Balance = CENTS / 1_000;
+	pub const GRAND: Balance = CENTS * 100_000;
+
+	pub const fn deposit(items: u32, bytes: u32) -> Balance {
+		items as Balance * 100 * CENTS + (bytes as Balance) * 5 * MILLICENTS
+	}
+}

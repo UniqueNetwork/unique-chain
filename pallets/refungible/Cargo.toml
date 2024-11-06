@@ -23,7 +23,7 @@ sp-std = { workspace = true }
 up-data-structs = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = [
 	'frame-benchmarking',
 	'frame-support/runtime-benchmarks',

@@ -29,7 +29,7 @@ pallet-evm-transaction-payment = { workspace = true }
 up-data-structs = { workspace = true, features = ['serde1'] }
 
 [features]
-default = ["std"]
+default = []
 std = [
 	"evm-coder/std",
 	"frame-support/std",

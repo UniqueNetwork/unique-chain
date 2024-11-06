@@ -24,7 +24,7 @@ hex-literal = { workspace = true }
 log = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = ["frame-benchmarking"]
 std = [
 	"fp-evm/std",

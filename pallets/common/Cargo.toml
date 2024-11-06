@@ -24,7 +24,7 @@ up-data-structs = { workspace = true }
 up-pov-estimate-rpc = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = ["frame-benchmarking/runtime-benchmarks", "up-data-structs/runtime-benchmarks"]
 std = [
 	"evm-coder/std",

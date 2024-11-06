@@ -29,7 +29,7 @@ pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 sp-core = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",

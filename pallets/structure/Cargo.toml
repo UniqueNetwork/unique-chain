@@ -18,7 +18,7 @@ sp-std = { workspace = true }
 up-data-structs = { workspace = true }
 
 [features]
-default = ["std"]
+default = []
 runtime-benchmarks = ['frame-benchmarking', 'pallet-common/runtime-benchmarks']
 std = [
 	"frame-benchmarking/std",
