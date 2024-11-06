@@ -231,7 +231,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_wasm_executor(config);
+	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -337,7 +337,10 @@ where
 		Block,
 		<Block as BlockT>::Hash,
 		Network,
-	>::new(&parachain_config.network);
+	>::new(
+		&parachain_config.network,
+		parachain_config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+	);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -414,7 +417,7 @@ where
 			network,
 			sync_service,
 		);
-		move |deny_unsafe, subscription_task_executor: SubscriptionTaskExecutor| {
+		move |subscription_task_executor: SubscriptionTaskExecutor| {
 			clone!(
 				backend,
 				eth_block_data_cache,
@@ -448,7 +451,6 @@ where
 				#[cfg(feature = "pov-estimate")]
 				backend,
 
-				deny_unsafe,
 				pool: transaction_pool.clone(),
 			};
 
@@ -688,7 +690,6 @@ where
 		para_backend: backend,
 		para_id,
 		relay_client: relay_chain_interface,
-		sync_oracle,
 		keystore,
 		proposer,
 		collator_service,
@@ -710,7 +711,7 @@ where
 	task_manager.spawn_essential_handle().spawn(
 		"aura",
 		None,
-		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _, _>(params),
+		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _>(params),
 	);
 	Ok(())
 }
@@ -797,11 +798,14 @@ where
 				telemetry_worker_handle: _,
 			},
 	} = new_partial::<Runtime, RuntimeApi, HF, _>(&config, dev_build_import_queue::<RuntimeApi, HF>)?;
-	let net_config = sc_network::config::FullNetworkConfiguration::<
+	let mut net_config = sc_network::config::FullNetworkConfiguration::<
 		Block,
 		<Block as BlockT>::Hash,
 		Network,
-	>::new(&config.network);
+	>::new(
+		&config.network,
+		config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+	);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
@@ -813,7 +817,7 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync_params: None,
+			warp_sync_config: None,
 			block_relay: None,
 			metrics,
 		})?;
@@ -979,7 +983,7 @@ where
 			network,
 			sync_service,
 		);
-		move |deny_unsafe, subscription_task_executor: SubscriptionTaskExecutor| {
+		move |subscription_task_executor: SubscriptionTaskExecutor| {
 			clone!(
 				backend,
 				eth_block_data_cache,
@@ -1011,7 +1015,6 @@ where
 				#[cfg(feature = "pov-estimate")]
 				backend,
 				// eth_backend,
-				deny_unsafe,
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 			};

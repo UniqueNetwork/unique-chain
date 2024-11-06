@@ -33,6 +33,7 @@
 // limitations under the License.
 
 use cumulus_primitives_core::ParaId;
+use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -402,7 +403,7 @@ pub fn run() -> Result<()> {
 				let hwbench = if !cli.no_hardware_benchmarks {
 					config.database.path().map(|database_path| {
 						let _ = std::fs::create_dir_all(database_path);
-						sc_sysinfo::gather_hwbench(Some(database_path))
+						sc_sysinfo::gather_hwbench(Some(database_path), &SUBSTRATE_REFERENCE_HARDWARE)
 					})
 				} else {
 					None
@@ -531,7 +532,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 		_support_url: &String,
 		_impl_version: &String,
 		_logger_hook: F,
-		_config: &sc_service::Configuration,
 	) -> Result<()> {
 		unreachable!("PolkadotCli is never initialized; qed");
 	}

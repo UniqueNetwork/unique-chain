@@ -71,6 +71,7 @@ parameter_types! {
 
 impl pallet_collator_selection::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type RuntimeHoldReason = RuntimeHoldReason;
 	type Currency = Balances;
 	// We allow root only to execute privileged collator selection operations.
 
@@ -84,14 +85,15 @@ impl pallet_collator_selection::Config for Runtime {
 	#[cfg(not(feature = "governance"))]
 	type UpdateOrigin = EnsureRoot<<Self as frame_system::Config>::AccountId>;
 
+	type TreasuryAccountId = TreasuryAccountId;
 	type PotId = PotId;
+	type MaxCollators = MaxCollators;
+	type SlashRatio = SlashRatio;
 	type ValidatorId = <Self as frame_system::Config>::AccountId;
 	type ValidatorIdOf = pallet_collator_selection::IdentityCollator;
 	type ValidatorRegistration = Session;
 	type WeightInfo = pallet_collator_selection::weights::SubstrateWeight<Runtime>;
+	type DesiredCollators = DesiredCollators;
+	type LicenseBond = LicenseBond;
 	type KickThreshold = KickThreshold;
-
-	type MaxCandidates = ConstU32<100>;
-	type MinEligibleCollators = ConstU32<4>;
-	type MaxInvulnerables = ConstU32<20>;
 }

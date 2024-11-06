@@ -1,4 +1,4 @@
 [toolchain]
-channel = "nightly-2024-04-10"
+channel = "nightly-2024-06-10"
 components = ["clippy", "rust-analyzer", "rust-src", "rustfmt"]
 targets = ["wasm32-unknown-unknown"]

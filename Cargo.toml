@@ -35,7 +35,7 @@ evm-coder = { version = "0.4.3", default-features = false, features = ['bondrewd
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
 pallet-balances-adapter = { default-features = false, path = "pallets/balances-adapter" }
 pallet-charge-transaction = { package = "pallet-template-transaction-payment", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "unique-polkadot-v1.16.1" }
-pallet-collator-selection = { default-features = false, git="https://github.com/paritytech/polkadot-sdk", branch="stable2409" }
+pallet-collator-selection = { default-features = false, path = "pallets/collator-selection" }
 pallet-common = { default-features = false, path = "pallets/common" }
 pallet-configuration = { default-features = false, path = "pallets/configuration" }
 pallet-evm-coder-substrate = { default-features = false, path = "pallets/evm-coder-substrate" }
@@ -45,7 +45,7 @@ pallet-evm-transaction-payment = { path = "pallets/evm-transaction-payment", def
 pallet-foreign-assets = { default-features = false, path = "pallets/foreign-assets" }
 pallet-fungible = { default-features = false, path = "pallets/fungible" }
 pallet-gov-origins = { default-features = false, path = "pallets/gov-origins" }
-pallet-identity = { default-features = false, git="https://github.com/paritytech/polkadot-sdk", branch="stable2409" }
+pallet-identity = { default-features = false, path = "pallets/identity" }
 pallet-inflation = { path = "pallets/inflation", default-features = false }
 pallet-maintenance = { default-features = false, path = "pallets/maintenance" }
 pallet-nonfungible = { default-features = false, path = "pallets/nonfungible" }
