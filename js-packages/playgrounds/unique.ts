@@ -595,10 +595,10 @@ export class ChainHelperBase {
           const status = this.getTransactionStatus(result);
 
           if(status === this.transactionStatus.SUCCESS) {
-            //if (!result.status.isFinalized) {
+            if (!result.status.isFinalized) {
               inBlockResult = result;
-            //   return;
-            // }
+              return;
+            }
             this.logger.log(`${label} successful`);
             unsub();
             resolve({result: inBlockResult!, status, blockHash: inBlockResult!.status.asInBlock.toHuman()});

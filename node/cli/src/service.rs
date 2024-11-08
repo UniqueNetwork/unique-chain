@@ -58,7 +58,7 @@ use sc_executor::{HostFunctions, WasmExecutor};
 use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_service::{build_polkadot_syncing_strategy, Configuration, PartialComponents, TaskManager};
+use sc_service::{build_polkadot_syncing_strategy, Configuration, PartialComponents, TaskManager, TransactionPool};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -200,7 +200,7 @@ pub fn new_partial<Runtime, RuntimeApi, HF, BIQ>(
 		FullBackend,
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>,
+		sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi, HF>>,
 		OtherPartial<FullClient<RuntimeApi, HF>>,
 	>,
 	sc_service::Error,
@@ -252,12 +252,15 @@ where
 
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.role.is_authority().into(),
-		config.prometheus_registry(),
-		task_manager.spawn_essential_handle(),
-		client.clone(),
+	let transaction_pool = Arc::from(
+		sc_transaction_pool::Builder::new(
+			task_manager.spawn_essential_handle(),
+			client.clone(),
+			config.role.is_authority().into(),
+		)
+		.with_options(config.transaction_pool.clone())
+		.with_prometheus(config.prometheus_registry())
+		.build(),
 	);
 
 	let eth_filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
@@ -458,7 +461,6 @@ where
 
 			let eth_deps = EthDeps {
 				client,
-				graph: transaction_pool.pool().clone(),
 				pool: transaction_pool,
 				is_authority: validator,
 				network,
@@ -479,7 +481,7 @@ where
 				},
 			};
 
-			create_eth::<_, _, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
+			create_eth::<_, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
 				&mut rpc_handle,
 				eth_deps,
 				subscription_task_executor.clone(),
@@ -637,7 +639,7 @@ pub struct StartConsensusParameters<'a> {
 #[allow(clippy::redundant_clone)]
 pub fn start_consensus<HF, RuntimeApi, Runtime>(
 	client: Arc<FullClient<RuntimeApi, HF>>,
-	transaction_pool: Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>>,
+	transaction_pool: Arc<sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi, HF>>>,
 	parameters: StartConsensusParameters<'_>,
 ) -> Result<(), sc_service::Error>
 where
@@ -848,8 +850,6 @@ where
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
 		> = Box::new(
 			transaction_pool
-				.pool()
-				.validated_pool()
 				.import_notification_stream()
 				.filter(move |_| futures::future::ready(!disable_autoseal_on_tx))
 				.map(|_| EngineCommand::SealNewBlock {
@@ -1030,7 +1030,6 @@ where
 
 			let eth_deps = EthDeps {
 				client,
-				graph: transaction_pool.pool().clone(),
 				pool: transaction_pool,
 				is_authority: true,
 				network,
@@ -1052,7 +1051,7 @@ where
 				},
 			};
 
-			create_eth::<_, _, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
+			create_eth::<_, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
 				&mut rpc_module,
 				eth_deps,
 				subscription_task_executor.clone(),
