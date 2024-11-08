@@ -167,6 +167,7 @@ impl pallet_balances::Config for Runtime {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = [u8; 16];
 	type MaxFreezes = MaxFreezes;
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {

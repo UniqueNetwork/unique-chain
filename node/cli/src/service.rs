@@ -58,7 +58,7 @@ use sc_executor::{HostFunctions, WasmExecutor};
 use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_service::{Configuration, PartialComponents, TaskManager};
+use sc_service::{build_polkadot_syncing_strategy, Configuration, PartialComponents, TaskManager};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -544,7 +544,7 @@ where
 		import_queue: import_queue_service,
 		relay_chain_slot_duration,
 		recovery_handle: Box::new(overseer_handle.clone()),
-		sync_service: sync_service.clone(),
+		sync_service,
 	})?;
 
 	if validator {
@@ -557,7 +557,6 @@ where
 				telemetry: telemetry.as_ref().map(|t| t.handle()),
 				task_manager: &task_manager,
 				relay_chain_interface: relay_chain_interface.clone(),
-				sync_oracle: sync_service,
 				keystore: params.keystore_container.keystore(),
 				overseer_handle,
 				relay_chain_slot_duration,
@@ -626,7 +625,6 @@ pub struct StartConsensusParameters<'a> {
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &'a TaskManager,
 	relay_chain_interface: Arc<dyn RelayChainInterface>,
-	sync_oracle: Arc<SyncingService<Block>>,
 	keystore: KeystorePtr,
 	overseer_handle: OverseerHandle,
 	relay_chain_slot_duration: Duration,
@@ -656,7 +654,6 @@ where
 		telemetry,
 		task_manager,
 		relay_chain_interface,
-		sync_oracle,
 		keystore,
 		overseer_handle,
 		relay_chain_slot_duration,
@@ -808,6 +805,16 @@ where
 	);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
+	let syncing_strategy = build_polkadot_syncing_strategy(
+		config.protocol_id(),
+		config.chain_spec.fork_id(),
+		&mut net_config,
+		None,
+		client.clone(),
+		&task_manager.spawn_handle(),
+		config.prometheus_config.as_ref().map(|config| &config.registry),
+	)?;
+
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
@@ -817,7 +824,7 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync_config: None,
+			syncing_strategy,
 			block_relay: None,
 			metrics,
 		})?;
