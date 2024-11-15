@@ -590,18 +590,17 @@ export class ChainHelperBase {
     }
     return new Promise(async (resolve, reject) => {
       try {
-        let inBlockResult;
         const unsub = await sign((result: any) => {
           const status = this.getTransactionStatus(result);
 
+          if (result.status.isInBlock) {
+            return;
+          }
+
           if(status === this.transactionStatus.SUCCESS) {
-            if (!result.status.isFinalized) {
-              inBlockResult = result;
-              return;
-            }
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result: inBlockResult!, status, blockHash: inBlockResult!.status.asInBlock.toHuman()});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
@@ -621,17 +620,17 @@ export class ChainHelperBase {
                   moduleError = `Misc: ${dispatchError.toHuman()}`;
                 }
               } else {
-                this.logger.log(result, this.logger.level.ERROR);
+                this.logger.log(result.toHuman(), this.logger.level.ERROR);
               }
             }
 
-            this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
+            this.logger.log(`Something went wrong with ${label}. Status: ${status}. Error ${moduleError}.}`, this.logger.level.ERROR);
             unsub();
             reject({status, moduleError, result});
           }
         });
       } catch (e) {
-        this.logger.log(e, this.logger.level.ERROR);
+        this.logger.log([label, e], this.logger.level.ERROR);
         reject(e);
       }
     });

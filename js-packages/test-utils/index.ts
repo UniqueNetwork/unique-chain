@@ -497,7 +497,7 @@ export class DevUniqueHelper extends UniqueHelper {
   fellowship: IFellowshipGroup;
   democracy: DemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
 
     super(logger, options);
@@ -586,7 +586,7 @@ export class DevUniqueHelper extends UniqueHelper {
 export class DevRelayHelper extends RelayHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevRelayHelper;
 
     super(logger, options);
@@ -603,7 +603,7 @@ export class DevRelayHelper extends RelayHelper {
 export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevWestmintHelper;
 
     super(logger, options);
@@ -620,7 +620,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
   wait: WaitGroup;
   fastDemocracy: MoonbeamFastDemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
 
@@ -632,7 +632,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
 }
 
 export class DevMoonriverHelper extends DevMoonbeamHelper {
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
     super(logger, options);
   }
@@ -641,7 +641,7 @@ export class DevMoonriverHelper extends DevMoonbeamHelper {
 export class DevAstarHelper extends AstarHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAstarHelper;
 
     super(logger, options);
@@ -660,7 +660,7 @@ export class DevShidenHelper extends DevAstarHelper { }
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAcalaHelper;
 
     super(logger, options);
@@ -675,7 +675,7 @@ export class DevAcalaHelper extends AcalaHelper {
 
 export class DevPolkadexHelper extends PolkadexHelper {
   wait: WaitGroup;
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? PolkadexHelper;
 
     super(logger, options);
@@ -693,7 +693,7 @@ export class DevHydraDxHelper extends HydraDxHelper {
   wait: WaitGroup;
   fastDemocracy: HydraFastDemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevHydraDxHelper;
 
     super(logger, options);

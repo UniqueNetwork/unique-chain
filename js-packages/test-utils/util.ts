@@ -25,7 +25,7 @@ const getTestHash = (filename: string) => crypto.createHash('md5').update(filena
 export const getTestSeed = (filename: string) => `//Alice+${getTestHash(filename)}`;
 
 async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
-  helperType: new (logger: ILogger) => T,
+  helperType: new (logger?: ILogger) => T,
   url: string,
   code: (helper: T, privateKey: (seed: string | { filename?: string, url?: string, ignoreFundsPresence?: boolean }) => Promise<IKeyringPair>) => Promise<R>,
 ): Promise<R> {
