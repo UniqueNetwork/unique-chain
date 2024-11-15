@@ -13,8 +13,9 @@ const {dirname} = makeNames(import.meta.url);
 const globalSetup = async (): Promise<void> => {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
-      // 1. Wait node producing blocks
-      await helper.wait.newBlocks(1, 600_000);
+       // 1. Wait node producing blocks
+       console.log('Wait node producing blocks...')
+       await helper.wait.newBlocks(1, 600_000);
 
       // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
@@ -63,17 +64,22 @@ const fundFilenames = async () => {
     const oneToken = helper.balance.getOneTokenNominal();
     const alice = await privateKey('//Alice');
     const nonce = await helper.chain.getNonce(alice.address);
-    const filenames = await getFiles(path.resolve(dirname, '../tests'));
+
+     const filenames = await getFiles(path.resolve(dirname, '..'));
+     const filteredFilenames = filenames.filter((f) => {
+       return f.endsWith('.test.ts') || f.endsWith('seqtest.ts') || f.includes('.outdated');
+     });
 
     // batching is actually undesireable, it takes away the time while all the transactions actually succeed
     const batchSize = 300;
     let balanceGrantedCounter = 0;
-    for(let b = 0; b < filenames.length; b += batchSize) {
+    for(let b = 0; b < filteredFilenames.length; b += batchSize) {
       const tx: Promise<boolean>[] = [];
       let batchBalanceGrantedCounter = 0;
-      for(let i = 0; i < batchSize && b + i < filenames.length; i++) {
-        const f = filenames[b + i];
-        if(!f.endsWith('.test.ts') && !f.endsWith('seqtest.ts') || f.includes('.outdated')) continue;
+
+      for(let i = 0; batchBalanceGrantedCounter < batchSize && b + i < filteredFilenames.length; i++) {
+        const f = filteredFilenames[b + i];
+
         const account = await privateKey({filename: f, ignoreFundsPresence: true});
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 
