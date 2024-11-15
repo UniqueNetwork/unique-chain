@@ -15,9 +15,10 @@ import type { CollationInfo } from '@polkadot/types/interfaces/cumulus';
 import type { BlockV2, EthReceiptV3, EthTransactionStatus, TransactionV2 } from '@polkadot/types/interfaces/eth';
 import type { EvmAccount, EvmCallInfoV2, EvmCreateInfoV2 } from '@polkadot/types/interfaces/evm';
 import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
+import type { GenesisBuildErr } from '@polkadot/types/interfaces/genesisBuilder';
 import type { OpaqueMetadata } from '@polkadot/types/interfaces/metadata';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
-import type { AccountId, Balance, Block, H160, H256, Header, Index, KeyTypeId, Permill, SlotDuration, Weight } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, Balance, Block, ExtrinsicInclusionMode, H160, H256, Header, Index, KeyTypeId, Permill, Slot, SlotDuration, Weight } from '@polkadot/types/interfaces/runtime';
 import type { RuntimeVersion } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult, DispatchError } from '@polkadot/types/interfaces/system';
 import type { TransactionSource, TransactionValidity } from '@polkadot/types/interfaces/txqueue';
@@ -49,6 +50,17 @@ declare module '@polkadot/api-base/types/calls' {
        * Returns the slot duration for Aura.
        **/
       slotDuration: AugmentedCall<ApiType, () => Observable<SlotDuration>>;
+      /**
+       * Generic call
+       **/
+      [key: string]: DecoratedCallBase<ApiType>;
+    };
+    /** 0xd7bdd8a272ca0d65/1 */
+    auraUnincludedSegmentApi: {
+      /**
+       * Whether it is legal to extend the chain
+       **/
+      canBuildUpon: AugmentedCall<ApiType, (includedHash: BlockHash | string | Uint8Array, slot: Slot | AnyNumber | Uint8Array) => Observable<bool>>;
       /**
        * Generic call
        **/
@@ -99,7 +111,7 @@ declare module '@polkadot/api-base/types/calls' {
        **/
       [key: string]: DecoratedCallBase<ApiType>;
     };
-    /** 0xdf6acb689907609b/4 */
+    /** 0xdf6acb689907609b/5 */
     core: {
       /**
        * Execute the given block.
@@ -108,7 +120,7 @@ declare module '@polkadot/api-base/types/calls' {
       /**
        * Initialize a block with the given header.
        **/
-      initializeBlock: AugmentedCall<ApiType, (header: Header | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any } | string | Uint8Array) => Observable<Null>>;
+      initializeBlock: AugmentedCall<ApiType, (header: Header | { parentHash?: any; number?: any; stateRoot?: any; extrinsicsRoot?: any; digest?: any } | string | Uint8Array) => Observable<ExtrinsicInclusionMode>>;
       /**
        * Returns the version of the runtime.
        **/
@@ -176,6 +188,21 @@ declare module '@polkadot/api-base/types/calls' {
        * For a given account address and index, returns pallet_evm::AccountStorages.
        **/
       storageAt: AugmentedCall<ApiType, (address: H160 | string | Uint8Array, index: u256 | AnyNumber | Uint8Array) => Observable<H256>>;
+      /**
+       * Generic call
+       **/
+      [key: string]: DecoratedCallBase<ApiType>;
+    };
+    /** 0xfbc577b9d747efd6/1 */
+    genesisBuilder: {
+      /**
+       * Build `RuntimeGenesisConfig` from a JSON blob not using any defaults and store it in the storage.
+       **/
+      buildConfig: AugmentedCall<ApiType, (json: Bytes | string | Uint8Array) => Observable<Result<ITuple<[]>, GenesisBuildErr>>>;
+      /**
+       * Creates the default `RuntimeGenesisConfig` and returns it as a JSON blob.
+       **/
+      createDefaultConfig: AugmentedCall<ApiType, () => Observable<Bytes>>;
       /**
        * Generic call
        **/
