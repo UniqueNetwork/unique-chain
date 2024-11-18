@@ -1,26 +1,7 @@
-# ===== Rust builder =====
-FROM ubuntu:22.04 as rust-builder
-LABEL maintainer="Unique.Network"
-
-ENV CARGO_HOME="/cargo-home"
-ENV PATH="/cargo-home/bin:$PATH"
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN apt-get update && \
-    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
-    apt-get clean && \
-    rm -r /var/lib/apt/lists/*
-
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
-
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
-
 # ===== BUILD UNIQUE =====
-FROM rust-builder as builder-polkadot-bin
+FROM uniquenetwork/services:base-stable-1.77.0 AS builder
 
-WORKDIR /unique_parachain
+WORKDIR /workdir
 
 COPY . unique-chain/
 
@@ -36,17 +17,18 @@ ARG FEATURES
 #   Cargo.lock, which can't be updated because of the --locked flag.
 RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/cargo-home/git \
-    --mount=type=cache,target=/unique_parachain/unique-chain/target \
+    --mount=type=cache,target=/workdir/unique-chain/target \
     cd unique-chain && \
     echo "Using runtime features ${FEATURES}" && \
     CARGO_INCREMENTAL=0 cargo build --profile integration-tests --features=fast-inflation,"${FEATURES}" --locked && \
-    mv ./target/integration-tests/unique-collator /unique_parachain/unique-chain/ && \
+    mv ./target/integration-tests/unique-collator /workdir/unique-chain/ && \
     cd target/integration-tests/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "../../../wasm/$(dirname {})"; cp {} "../../../wasm/{}"' \;
 
 # ===== BIN ======
 
-FROM ubuntu:22.04 as builder-polkadot
+FROM ubuntu:24.04 
+LABEL maintainer="Unique.Network"
 
-COPY --from=builder-polkadot-bin /unique_parachain/unique-chain/unique-collator /bin/unique-collator
-COPY --from=builder-polkadot-bin /unique_parachain/unique-chain/wasm /wasm
+COPY --from=builder /workdir/unique-chain/unique-collator /bin/unique-collator
+COPY --from=builder /workdir/unique-chain/wasm /wasm
 ENTRYPOINT ["/bin/unique-collator"]

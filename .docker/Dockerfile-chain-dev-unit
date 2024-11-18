@@ -1,14 +1,9 @@
-FROM uniquenetwork/services:latest
-
-ENV DEBIAN_FRONTEND=noninteractive
-ENV CARGO_HOME="/cargo-home"
-ENV PATH="/cargo-home/bin:$PATH"
+FROM uniquenetwork/services:base-stable-1.77.0
 
 ARG NETWORK
 
-RUN mkdir /dev_chain
-COPY . /dev_chain
+COPY . /workdir
 
-WORKDIR /dev_chain
+WORKDIR /workdir
 
 CMD cargo test --features=limit-testing,tests --workspace

@@ -1,26 +1,7 @@
-# ===== Rust builder =====
-FROM ubuntu:22.04 as rust-builder
-LABEL maintainer="Unique.Network"
-
-ENV CARGO_HOME="/cargo-home"
-ENV PATH="/cargo-home/bin:$PATH"
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN apt-get update && \
-    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
-    apt-get clean && \
-    rm -r /var/lib/apt/lists/*
-
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
-
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
-
 # ===== BUILD POLKADOT =====
-FROM rust-builder as builder-polkadot-bin
+FROM uniquenetwork/services:base-stable-1.77.0 as builder
 
-WORKDIR /unique_parachain
+WORKDIR /workdir
 
 ARG UNIQUE_VERSION
 RUN git clone -b "$UNIQUE_VERSION" --depth 1 https://github.com/uniquenetwork/unique-chain.git
@@ -28,14 +9,14 @@ RUN git clone -b "$UNIQUE_VERSION" --depth 1 https://github.com/uniquenetwork/un
 ARG FEATURES
 RUN --mount=type=cache,target=/cargo-home/registry \
     --mount=type=cache,target=/cargo-home/git \
-    --mount=type=cache,target=/unique_parachain/polkadot/target \
+    --mount=type=cache,target=/workdir/unique-chain/target \
     cd unique-chain && \
     CARGO_INCREMENTAL=0 cargo build --release --features="${FEATURES}" --locked && \
-    mv ./target/release/unique-collator /unique_parachain/unique-chain/
+    mv ./target/release/unique-collator /workdir/unique-chain/
 
 # ===== BIN ======
 
-FROM ubuntu:22.04 as builder-polkadot
+FROM ubuntu:24.04 as builder-polkadot
 
-COPY --from=builder-polkadot-bin /unique_parachain/unique-chain/unique-collator /bin/unique-collator
+COPY --from=builder-polkadot-bin /workdir/unique-chain/unique-collator /bin/unique-collator
 ENTRYPOINT ["/bin/unique-collator"]
