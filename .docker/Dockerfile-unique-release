@@ -16,7 +16,7 @@ RUN --mount=type=cache,target=/cargo-home/registry \
 
 # ===== BIN ======
 
-FROM ubuntu:24.04 as builder-polkadot
+FROM ubuntu:24.04
 
-COPY --from=builder-polkadot-bin /workdir/unique-chain/unique-collator /bin/unique-collator
+COPY --from=builder /workdir/unique-chain/unique-collator /bin/unique-collator
 ENTRYPOINT ["/bin/unique-collator"]
