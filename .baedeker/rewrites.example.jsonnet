@@ -15,7 +15,7 @@ function(prev, repoDir)
       'bin/assethub': { dockerImage: 'parity/polkadot-parachain:%s' % dotenv.STATEMINE_BUILD_BRANCH },
       'bin/astar': { dockerImage: 'staketechnologies/astar-collator:%s' % dotenv.ASTAR_BUILD_BRANCH },
       'bin/polkadex': { dockerImage: 'polkadex/mainnet:%s' % dotenv.POLKADEX_BUILD_BRANCH },
-      'bin/hydradx': { dockerImage: 'uniquenetwork/builder-hydraDx:%s' % dotenv.HYDRADX_BUILD_BRANCH },
+      'bin/hydradx': { dockerImage: 'galacticcouncil/hydra-dx:%s' % dotenv.HYDRADX_BUILD_BRANCH },
     },
     extra_node_mixin={
       extraArgs+: [
