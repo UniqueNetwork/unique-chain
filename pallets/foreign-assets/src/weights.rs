@@ -34,6 +34,8 @@ use sp_std::marker::PhantomData;
 /// Weight functions needed for pallet_foreign_assets.
 pub trait WeightInfo {
 	fn force_register_foreign_asset() -> Weight;
+
+	fn force_reset_foreign_asset_location() -> Weight;
 }
 
 /// Weights for pallet_foreign_assets using the Substrate node and recommended hardware.
@@ -64,6 +66,17 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 			.saturating_add(T::DbWeight::get().reads(3_u64))
 			.saturating_add(T::DbWeight::get().writes(7_u64))
 	}
+
+	// FIXME run the benchmarks
+	fn force_reset_foreign_asset_location() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `146`
+		//  Estimated: `4080`
+		// Minimum execution time: 26_678_000 picoseconds.
+		Weight::from_parts(27_177_000, 4080)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(7_u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -85,6 +98,17 @@ impl WeightInfo for () {
 	/// Storage: `Common::CollectionById` (r:0 w:1)
 	/// Proof: `Common::CollectionById` (`max_values`: None, `max_size`: Some(860), added: 3335, mode: `MaxEncodedLen`)
 	fn force_register_foreign_asset() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `146`
+		//  Estimated: `4080`
+		// Minimum execution time: 26_678_000 picoseconds.
+		Weight::from_parts(27_177_000, 4080)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
+			.saturating_add(RocksDbWeight::get().writes(7_u64))
+	}
+
+	// FIXME run the benchmarks
+	fn force_reset_foreign_asset_location() -> Weight {
 		// Proof Size summary in bytes:
 		//  Measured:  `146`
 		//  Estimated: `4080`

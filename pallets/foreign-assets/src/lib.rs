@@ -118,6 +118,9 @@ pub mod module {
 
 		/// The given asset ID could not be converted into the current XCM version.
 		BadForeignAssetId,
+
+		/// The specified foreign asset is not found.
+		ForeignAssetNotFound,
 	}
 
 	#[pallet::event]
@@ -131,6 +134,11 @@ pub mod module {
 
 		/// The migration status.
 		MigrationStatus(Box<MigrationStatus>),
+
+		ForeignAssetMoved {
+			old_asset_id: Box<VersionedAssetId>,
+			new_asset_id: Box<VersionedAssetId>,
+		}
 	}
 
 	/// The corresponding collections of foreign assets.
@@ -229,6 +237,44 @@ pub mod module {
 			Self::deposit_event(Event::<T>::ForeignAssetRegistered {
 				collection_id,
 				asset_id: versioned_asset_id,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(1)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_reset_foreign_asset_location())]
+		pub fn force_reset_foreign_asset_location(
+			origin: OriginFor<T>,
+			existing_versioned_asset_id: Box<VersionedAssetId>,
+			new_versioned_asset_id: Box<VersionedAssetId>,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+
+			let existing_asset_id: AssetId = existing_versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
+			let new_asset_id: AssetId = new_versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
+			let collection_id = <ForeignAssetToCollection<T>>::get(&existing_asset_id)
+				.ok_or(Error::<T>::ForeignAssetNotFound)?;
+
+			<ForeignAssetToCollection<T>>::remove(&existing_asset_id);
+			<CollectionToForeignAsset<T>>::remove(collection_id);
+
+			<ForeignAssetToCollection<T>>::insert(&new_asset_id, collection_id);
+			<CollectionToForeignAsset<T>>::insert(collection_id, new_asset_id);
+
+			Self::deposit_event(Event::<T>::ForeignAssetMoved {
+				old_asset_id: existing_versioned_asset_id,
+				new_asset_id: new_versioned_asset_id,
 			});
 
 			Ok(())

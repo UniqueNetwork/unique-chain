@@ -48,4 +48,30 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	#[benchmark]
+	fn force_reset_foreign_asset_location() -> Result<(), BenchmarkError> {
+		let old_asset_id: AssetId = (Parachain(1000), PalletInstance(42), GeneralIndex(1)).into();
+		let new_asset_id: AssetId = (Parachain(2000), PalletInstance(42), GeneralIndex(1)).into();
+		let name = create_u16_data::<MAX_COLLECTION_NAME_LENGTH>();
+		let token_prefix = create_data::<MAX_TOKEN_PREFIX_LENGTH>();
+		let mode = ForeignCollectionMode::NFT;
+
+		<Pallet<T>>::force_register_foreign_asset(
+			RawOrigin::Root.into(),
+			Box::new(old_asset_id.clone().into()),
+			name,
+			token_prefix,
+			mode,
+		)?;
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			Box::new(old_asset_id.into()),
+			Box::new(new_asset_id.into()),
+		);
+
+		Ok(())
+	}
 }
