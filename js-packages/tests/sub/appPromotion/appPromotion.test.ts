@@ -16,7 +16,8 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {
-  itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD, UNLOCKING_PERIOD,
+  itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD,
+  CALCULATION_PERIOD,
 } from '@unique/test-utils/util.js';
 import {DevUniqueHelper} from '@unique/test-utils';
 import {itEth, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
@@ -42,7 +43,7 @@ async function getAccounts(accountsNumber: number, balance?: bigint) {
 }
 // App promotion periods:
 // LOCKING_PERIOD = 12 blocks of relay
-// UNLOCKING_PERIOD = 6 blocks of parachain
+// UNLOCKING_PERIOD = 12 blocks of parachain
 
 describe('App promotion', () => {
   before(async function () {
@@ -61,6 +62,8 @@ describe('App promotion', () => {
 
   afterEach(async () => {
     await usingPlaygrounds(async (helper) => {
+      const totalStakedBefore = await helper.staking.getTotalStaked();
+      let stakedByUsedAccs = 0n;
       let unstakeTxs = [];
       for(const account of usedAccounts) {
         if(unstakeTxs.length === 3) {
@@ -68,10 +71,12 @@ describe('App promotion', () => {
           unstakeTxs = [];
         }
         unstakeTxs.push(helper.staking.unstakeAll(account));
+        stakedByUsedAccs += await helper.staking.getTotalStaked({ Substrate: account.address });
       }
       await Promise.all(unstakeTxs);
       usedAccounts = [];
-      expect(await helper.staking.getTotalStaked()).to.eq(0n); // there are no active stakes after each test
+      const stakedAfterUnstake = totalStakedBefore - stakedByUsedAccs;
+      expect(await helper.staking.getTotalStaked()).to.eq(stakedAfterUnstake); // there are no active stakes (for test accs) after each test
       // Make sure previousCalculatedRecord is None to avoid problem with payout stakers;
       await helper.admin.payoutStakers(palletAdmin, 100);
       expect((await helper.getApi().query.appPromotion.previousCalculatedRecord() as any).isNone).to.be.true;
@@ -980,11 +985,11 @@ async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
   throw Error(`Cannot find payout for ${account}`);
 }
 
-function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = UNLOCKING_PERIOD): bigint {
-  const DAY = 7200n;
+function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = CALCULATION_PERIOD): bigint {
+  const BLOCKS_DAY = 14400n; // blocks per day
   const ACCURACY = 1_000_000_000n;
   // 453_256n / 1_000_000_000n = 0.0453256% /day
-  const income = base + base * (ACCURACY * (calcPeriod * 453_256n) / (1_000_000_000n * DAY)) / ACCURACY ;
+  const income = base + base * (ACCURACY * (calcPeriod * 453_256n) / (1_000_000_000n * BLOCKS_DAY)) / ACCURACY;
 
   if(iter > 1) {
     return calculateIncome(income, iter - 1, calcPeriod);
