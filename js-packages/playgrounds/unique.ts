@@ -590,18 +590,16 @@ export class ChainHelperBase {
     }
     return new Promise(async (resolve, reject) => {
       try {
-        let inBlockResult;
         const unsub = await sign((result: any) => {
           const status = this.getTransactionStatus(result);
 
           if(status === this.transactionStatus.SUCCESS) {
             if (!result.status.isFinalized) {
-              inBlockResult = result;
               return;
             }
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result: inBlockResult!, status, blockHash: inBlockResult!.status.asInBlock.toHuman()});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
