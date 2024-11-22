@@ -38,9 +38,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, mainnet_branch {${{ env.OPAL_MAINNET_BRANCH }}}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
-            network {quartz}, mainnet_branch {${{ env.QUARTZ_MAINNET_BRANCH }}}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
-            network {unique}, mainnet_branch {${{ env.UNIQUE_MAINNET_BRANCH }}}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
+            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}
+            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}
+            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
   node-only-update:
 
@@ -101,12 +101,12 @@ jobs:
         id: mainnet
         with:
           container: uniquenetwork/ci-node-only-${{ matrix.network }}
-          tag: ${{ matrix.mainnet_branch }}
+          tag: ${{ matrix.network }}-${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
           context: .docker
           dockerfile: Dockerfile-unique-release
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
-            --build-arg UNIQUE_VERSION=${{ matrix.mainnet_branch }}
+            --build-arg UNIQUE_VERSION=${{ env.MAINNET_BRANCH }}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
@@ -123,12 +123,12 @@ jobs:
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Checkout at '${{ matrix.mainnet_branch }}' branch
+      - name: Checkout at '${{ env.MAINNET_BRANCH }}' branch
         uses: actions/checkout@v4.1.7
         with:
           #ref: ${{ github.head_ref }}
-          ref: ${{ matrix.mainnet_branch }}  #Checking out head commit
-          path: ${{ matrix.mainnet_branch }}
+          ref: ${{ env.MAINNET_BRANCH }}  #Checking out head commit
+          path: ${{ env.MAINNET_BRANCH }}
 
       - uses: actions/setup-node@v4.0.2
         with:
@@ -158,7 +158,7 @@ jobs:
             ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
 
       - name: Ensure network is alive
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         id: alive1
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
@@ -169,7 +169,7 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Parallel tests before Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
@@ -179,7 +179,7 @@ jobs:
 
       - name: Run Sequential tests before Node Parachain upgrade
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -197,7 +197,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         id: alive2
         if: ${{ !cancelled() && steps.reconcile1.outcome == 'success' }}
         run: |
@@ -217,7 +217,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         id: alive3
         if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
         run: |
@@ -226,7 +226,7 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run Parallel tests after Node Parachain upgrade
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
@@ -236,7 +236,7 @@ jobs:
 
       - name: Run Sequential tests after Node Parachain upgrade
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
-        working-directory: ${{ matrix.mainnet_branch }}/js-packages/tests
+        working-directory: ${{ env.MAINNET_BRANCH }}/js-packages/tests
         run: NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
