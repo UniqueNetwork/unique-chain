@@ -97,7 +97,7 @@ jobs:
         id: mainnet
         with:
           container: uniquenetwork/ci-nodata-${{ matrix.network }}
-          tag: ${{ matrix.network }}-${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
+          tag: ${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
           context: .docker
           dockerfile: Dockerfile-unique-release
           args: |
@@ -112,7 +112,7 @@ jobs:
         id: runtime
         with:
           container: uniquenetwork/ci-nodata-${{ matrix.network }}
-          tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
           context: .
           dockerfile: .docker/Dockerfile-unique
           args: |
@@ -131,8 +131,8 @@ jobs:
         uses: ./.github/actions/buildContainer
         id: node
         with:
-          container: uniquenetwork/ci-data-${{ matrix.network }}
-          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+          container: uniquenetwork/ci-nodata-${{ matrix.network }}
+          tag: ${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
           context: .docker
           dockerfile: Dockerfile-unique-release
           args: |
