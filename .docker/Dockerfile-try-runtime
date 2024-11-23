@@ -1,26 +1,5 @@
-# ===== Rust builder =====
-FROM ubuntu:22.04 AS rust-builder
-LABEL maintainer="Unique.Network"
-
-ENV CARGO_HOME="/cargo-home"
-ENV PATH="/cargo-home/bin:$PATH"
-ENV TZ=UTC
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
-
-RUN apt-get update && \
-    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
-    apt-get clean && \
-    rm -r /var/lib/apt/lists/*
-
-RUN curl https://sh.rustup.rs -sSf | sh -s -- -y
-
-RUN cargo install --git https://github.com/paritytech/try-runtime-cli --tag v0.8.0 --locked
-
-RUN mkdir /unique_parachain
-WORKDIR /unique_parachain
-
 # ===== BUILD ======
-FROM rust-builder AS builder-unique
+FROM "uniquenetwork/services:base-nightly-2024-10-15" as builder
 
 ARG NETWORK
 ARG REPLICA_FROM

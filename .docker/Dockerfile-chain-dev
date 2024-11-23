@@ -1,4 +1,4 @@
-FROM uniquenetwork/services:base-stable-1.77.0
+FROM uniquenetwork/services:base-nightly-1.67.0
 
 ARG NETWORK
 
