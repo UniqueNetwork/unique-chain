@@ -7,8 +7,8 @@ ARG UNIQUE_VERSION
 ARG UNIQUE_HASH
 ARG FEATURES
 
-RUN git clone -b "$UNIQUE_VERSION" --depth 1 https://github.com/uniquenetwork/unique-chain.git && \
-    cd unique-chain && git checkout "$UNIQUE_HASH" && \
+RUN git clone -b "${UNIQUE_VERSION}" https://github.com/uniquenetwork/unique-chain.git && \
+    cd unique-chain && git switch "${UNIQUE_HASH}" --detach && \
     CARGO_INCREMENTAL=0 cargo build --release --features="${FEATURES}" --locked && \
     mv ./target/release/unique-collator /workdir/unique-chain/ && \
     cd target/release/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "../../../wasm/$(dirname {})"; cp {} "../../../wasm/{}"' \;
