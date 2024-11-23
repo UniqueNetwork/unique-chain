@@ -15,8 +15,8 @@ ARG FEATURES
 #   of it to this day (Ignoring incremental compilation, which is explicitly disabled by CARGO_INCREMENTAL=0). Only the
 #   fully built crates will be cached depending on the crate source, version and feature set, which are locked by
 #   Cargo.lock, which can't be updated because of the --locked flag.
-RUN --mount=type=cache,target=/cargo-home/registry \
-    --mount=type=cache,target=/cargo-home/git \
+RUN --mount=type=cache,target=/usr/local/cargo/registry \
+    --mount=type=cache,target=/usr/local/cargo/git \
     --mount=type=cache,target=/workdir/unique-chain/target \
     cd unique-chain && \
     echo "Using runtime features ${FEATURES}" && \
