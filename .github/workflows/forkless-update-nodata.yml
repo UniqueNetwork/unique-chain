@@ -164,6 +164,7 @@ jobs:
             .baedeker/vendor
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
+            para_spec=${{ matrix.network }}-local
           inputs: |
             .baedeker/node-only.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})

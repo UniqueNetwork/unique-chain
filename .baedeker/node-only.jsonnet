@@ -2,7 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-function(relay_spec)
+function(relay_spec, para_spec)
 
 local relay = {
 	name: 'relay',
@@ -27,6 +27,7 @@ local unique = {
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
+		chain: para_spec,
 		modify:: m.genericPara($),
 	}},
 	nodes: {
