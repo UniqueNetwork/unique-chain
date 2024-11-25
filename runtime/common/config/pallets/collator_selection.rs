@@ -21,7 +21,6 @@ use pallet_configuration::{
 	CollatorSelectionDesiredCollatorsOverride, CollatorSelectionKickThresholdOverride,
 	CollatorSelectionLicenseBondOverride,
 };
-use sp_core::ConstU32;
 use sp_runtime::Perbill;
 
 #[cfg(feature = "governance")]

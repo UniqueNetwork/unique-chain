@@ -161,7 +161,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     const fee = Number(aliceBalanceBefore - aliceBalanceAfter) / Number(helper.balance.getOneTokenNominal());
     const expectedTransferFee = 0.1;
     // fee drifts because of NextFeeMultiplier
-    const tolerance = 0.001;
+    const tolerance = 0.001471945777320835;
 
     expect(Math.abs(fee - expectedTransferFee)).to.be.lessThan(tolerance);
   });

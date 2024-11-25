@@ -7803,6 +7803,7 @@ dependencies = [
  "sp-io",
  "sp-runtime",
  "sp-std",
+ "up-common",
 ]
 
 [[package]]

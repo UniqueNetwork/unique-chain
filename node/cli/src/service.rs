@@ -544,7 +544,7 @@ where
 		import_queue: import_queue_service,
 		relay_chain_slot_duration,
 		recovery_handle: Box::new(overseer_handle.clone()),
-		sync_service: sync_service.clone(),
+		sync_service,
 	})?;
 
 	if validator {
@@ -557,7 +557,6 @@ where
 				telemetry: telemetry.as_ref().map(|t| t.handle()),
 				task_manager: &task_manager,
 				relay_chain_interface: relay_chain_interface.clone(),
-				sync_oracle: sync_service,
 				keystore: params.keystore_container.keystore(),
 				overseer_handle,
 				relay_chain_slot_duration,
@@ -626,7 +625,6 @@ pub struct StartConsensusParameters<'a> {
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &'a TaskManager,
 	relay_chain_interface: Arc<dyn RelayChainInterface>,
-	sync_oracle: Arc<SyncingService<Block>>,
 	keystore: KeystorePtr,
 	overseer_handle: OverseerHandle,
 	relay_chain_slot_duration: Duration,
@@ -656,7 +654,6 @@ where
 		telemetry,
 		task_manager,
 		relay_chain_interface,
-		sync_oracle,
 		keystore,
 		overseer_handle,
 		relay_chain_slot_duration,
@@ -798,7 +795,7 @@ where
 				telemetry_worker_handle: _,
 			},
 	} = new_partial::<Runtime, RuntimeApi, HF, _>(&config, dev_build_import_queue::<RuntimeApi, HF>)?;
-	let mut net_config = sc_network::config::FullNetworkConfiguration::<
+	let net_config = sc_network::config::FullNetworkConfiguration::<
 		Block,
 		<Block as BlockT>::Hash,
 		Network,
