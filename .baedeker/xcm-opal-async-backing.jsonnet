@@ -50,7 +50,14 @@ local unique = {
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
-		modify:: m.genericPara($),
+		modify:: bdk.mixer([
+			m.genericPara($),
+			m.simplifyGenesisName(),
+			{
+				_code: cql.toHex(importbin '../runtime.compact.compressed.wasm'),
+			},
+			m.unsimplifyGenesisName(),
+		]),
 	}},
 	nodes: {
 		[name]: {
