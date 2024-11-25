@@ -240,7 +240,7 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: sleep
-        if: always()                   # run this step always      
+        if: ${{ !cancelled() }}
         run: |
           sleep 3600
 
