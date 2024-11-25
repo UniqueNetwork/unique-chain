@@ -170,7 +170,7 @@ jobs:
             .baedeker/forkless-data.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
             # with data build uses old runtime, but new node, thus we use mainnet image for spec generation, and then latest image for nodes.
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
+            # snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
 
       - name: Ensure network is alive
@@ -183,15 +183,16 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: "Reconcile: runtime is upgraded"
-        working-directory: js-packages/tests
-        id: reconcile1
+      - name: "Reconcile: all nodes are updated"
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
-        run: |
-          echo "Executing upgrade"
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
-        env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+        id: reconcile1
+        uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
+        with:
+          baedeker: ${{ steps.bdk.outputs.baedeker }}
+          # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
+          inputs: |
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
         working-directory: js-packages/tests
@@ -203,9 +204,29 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
+      - name: "Reconcile: runtime is upgraded"
+        working-directory: js-packages/tests
+        id: reconcile2
+        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
+        run: |
+          echo "Executing upgrade"
+          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Ensure network is alive
+        working-directory: js-packages/tests
+        id: alive3
+        if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
+        run: |
+          yarn        
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
       - name: Run Parallel tests after forkless upgrade
         working-directory: js-packages/tests
-        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
@@ -214,11 +235,16 @@ jobs:
 
       - name: Run Sequential tests after forkless upgrade
         working-directory: js-packages/tests
-        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: sleep
+        if: ${{ !cancelled() }}
+        run: |
+          sleep 3600
 
       - name: Remove builder cache
         if: always()                   # run this step always
