@@ -6,18 +6,10 @@ WORKDIR /workdir
 COPY . unique-chain/
 
 ARG FEATURES
-# registry for Updating registry. It is safe to cache it, because it only contains references to the dependency files,
-#   and the caches for the files themselves are set in Cargo.lock, which won't be updated because of --locked flag
-# git for Updating git repository. It is safe to cache it, because git dependencies are cached by revision,
-#   revision is locked in Cargo.lock, and it is forbidden to update the Cargo.lock, because of --locked flag
-#   passed to cargo build
-# target for built dependencies. Technically, it may be unsafe to cache it, but there was no bugs in the caching logic
-#   of it to this day (Ignoring incremental compilation, which is explicitly disabled by CARGO_INCREMENTAL=0). Only the
-#   fully built crates will be cached depending on the crate source, version and feature set, which are locked by
-#   Cargo.lock, which can't be updated because of the --locked flag.
+
 RUN cd unique-chain && \
     echo "Using runtime features ${FEATURES}" && \
-    CARGO_INCREMENTAL=0 cargo build --profile integration-tests --features=fast-inflation,"${FEATURES}" --locked && \
+    CARGO_INCREMENTAL=0; WASM_BUILD_TYPE=integration-tests; cargo build --profile integration-tests --features=fast-inflation,"${FEATURES}" --locked && \
     mv ./target/integration-tests/unique-collator /workdir/unique-chain/ && \
     cd target/integration-tests/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "../../../wasm/$(dirname {})"; cp {} "../../../wasm/{}"' \;
 
