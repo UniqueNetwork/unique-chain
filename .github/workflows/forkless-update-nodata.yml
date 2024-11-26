@@ -185,7 +185,7 @@ jobs:
       - name: "Reconcile: runtime is upgraded"
         working-directory: js-packages/tests
         id: reconcile1
-        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Executing upgrade"
           yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
