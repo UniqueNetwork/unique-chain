@@ -41,13 +41,13 @@ runs:
         echo "Available tags:"
         echo "$TAGS"
 
-        # Check correct version POLKADOT and build it if it doesn't exist in POLKADOT TAGS
+        # Check correct version and build it if it doesn't exist in TAGS
         if [[ ${TAGS[*]} =~ (^|[[:space:]])"${{ inputs.tag }}"($|[[:space:]]) ]]; then
           echo "Repository has needed version, pulling";
           docker pull ${{ inputs.container }}:${{ inputs.tag }}
         else
           echo "Repository had no needed version, so build it";
-          cd "${{ inputs.context }}" && docker build --file "${{ inputs.dockerfile }}" \
+          cd "${{ inputs.context }}" && docker build --no-cache --file "${{ inputs.dockerfile }}" \
             $BUILD_ARGS --tag ${{ inputs.container }}:${{ inputs.tag }} \
             .
           echo "Push built version to the repository";
