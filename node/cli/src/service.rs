@@ -77,13 +77,13 @@ use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 /// Only enable the benchmarking host functions when we actually want to benchmark.
 #[cfg(feature = "runtime-benchmarks")]
-pub type ParachainHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
+pub type ParachainHostFunctions = (
+	frame_benchmarking::benchmarking::HostFunctions,
+	cumulus_client_service::ParachainHostFunctions
+);
 /// Otherwise we only use the default Substrate host functions.
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub type ParachainHostFunctions = (
-	sp_io::SubstrateHostFunctions,
-	cumulus_client_service::storage_proof_size::HostFunctions,
-);
+pub type ParachainHostFunctions = cumulus_client_service::ParachainHostFunctions;
 
 pub struct AutosealInterval {
 	interval: Interval,
