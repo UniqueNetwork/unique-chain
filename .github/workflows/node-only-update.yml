@@ -96,30 +96,33 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
-      - name: Prepare mainnet
+      - name: Prepare mainnet node
         uses: ./.github/actions/buildContainer
         id: mainnet
         with:
-          container: uniquenetwork/ci-node-only-${{ matrix.network }}
+          container: uniquenetwork/ci-node-only
           tag: ${{ matrix.network }}-${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
           context: .docker
           dockerfile: Dockerfile-unique-release
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
-            --build-arg UNIQUE_VERSION=${{ env.MAINNET_BRANCH }}
+            --build-arg CODE_VERSION=${{ env.MAINNET_BRANCH}}
+            --build-arg CODE_HASH=${{ env.MAINNET_HASH}}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Prepare latest
+      - name: Prepare target node
         uses: ./.github/actions/buildContainer
-        id: latest
+        id: target
         with:
-          container: uniquenetwork/ci-node-only-${{ matrix.network }}
-          tag: ${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
-          context: .
-          dockerfile: .docker/Dockerfile-unique
+          container: uniquenetwork/ci-node-only
+          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
+            --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
+            --build-arg CODE_HASH=${{ env.NODE_HASH}}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
@@ -192,8 +195,8 @@ jobs:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes expect one, then set mainnet binary for the last node, and then force chainspec to be still generated from mainnet
           inputs: |
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, leave = 1, for_chain = false)
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, for_chain = false)
+            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.target.outputs.name }}'}}, leave = 1, for_chain = false)
+            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, for_chain = false)
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
@@ -213,7 +216,7 @@ jobs:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
           inputs: |
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.target.outputs.name }}'}}, for_chain = false)
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}})
 
       - name: Ensure network is alive
