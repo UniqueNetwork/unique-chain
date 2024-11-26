@@ -38,7 +38,7 @@ local unique = {
 				'--pool-type=fork-aware',
 			],
 		},
-		for name in ['alice', 'bob']
+		for name in ['alice', 'bob', 'charlie']
 	},
 };
 
