@@ -12,6 +12,8 @@ const code = await readFile(codePath);
 await usingPlaygrounds(async (helper, privateKey) => {
   const alice = await privateKey('//Alice');
   const hex = blake2AsHex(code);
+  const balance = await helper.balance.getSubstrate(alice.address);
+  console.log("Balance:", balance);  
   await helper.getSudo().executeExtrinsic(alice, 'api.tx.parachainSystem.authorizeUpgrade', [hex, true]);
   await helper.getSudo().executeExtrinsicUncheckedWeight(alice, 'api.tx.parachainSystem.enactAuthorizedUpgrade', [u8aToHex(code)]);
 });
