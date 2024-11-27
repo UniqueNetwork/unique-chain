@@ -29,7 +29,7 @@ use pallet_xcm::XcmPassthrough;
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
 use polkadot_parachain_primitives::primitives::Sibling;
 use polkadot_runtime_common::xcm_sender::NoPriceForMessageDelivery;
-use sp_std::marker::PhantomData;
+use sp_std::{prelude::*, marker::PhantomData};
 use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor,
@@ -41,14 +41,20 @@ use staging_xcm_executor::{
 	XcmExecutor,
 };
 use up_common::{constants::MAXIMUM_BLOCK_WEIGHT, types::AccountId};
+use up_data_structs::TokenId;
+use pallet_common::CommonCollectionOperations;
 
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
-	runtime_common::config::parachain::RelayMsgOrigin, xcm_barrier::Barrier, AllPalletsWithSystem,
+	runtime_common::config::{
+		ethereum::CrossAccountId as ConfigCrossAccountId,
+		parachain::RelayMsgOrigin,
+	}, xcm_barrier::Barrier, AllPalletsWithSystem,
 	Balances, ForeignAssets, MessageQueue, ParachainInfo, ParachainSystem, PolkadotXcm,
 	RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, RuntimeOrigin, XcmpQueue,
 };
+use pallet_evm::account::CrossAccountId;
 
 parameter_types! {
 	pub const RelayLocation: Location = Location::parent();
@@ -84,7 +90,7 @@ pub type LocalOriginToLocation = (SignedToAccountId32<RuntimeOrigin, AccountId, 
 /// queues.
 pub type XcmRouter = (
 	// Two routers - use UMP to communicate with the relay chain:
-	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, ()>,
+	cumulus_primitives_utility::ParentAsUmp<ParachainSystem, PolkadotXcm, NoPriceForMessageDelivery<()>>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
 );
@@ -225,8 +231,28 @@ impl pallet_xcm::Config for Runtime {
 }
 
 #[cfg(feature = "runtime-benchmarks")]
+parameter_types! {
+	pub NoExistentialDepositAsset: Option<Asset> = None;
+	pub const RandomParaId: ParaId = ParaId::new(43211234);
+}
+
+
+#[cfg(feature = "runtime-benchmarks")]
 impl pallet_xcm::benchmarking::Config for Runtime {
-	type DeliveryHelper = ();
+	type DeliveryHelper = (
+		cumulus_primitives_utility::ToParentDeliveryHelper<
+			XcmExecutorConfig<Self>,
+			NoExistentialDepositAsset,
+			NoPriceForMessageDelivery<()>,
+		>,
+		polkadot_runtime_common::xcm_sender::ToParachainDeliveryHelper<
+			XcmExecutorConfig<Self>,
+			NoExistentialDepositAsset,
+			NoPriceForMessageDelivery<ParaId>,
+			RandomParaId,
+			ParachainSystem,
+		>,
+	);
 
 	fn reachable_dest() -> Option<Location> {
 		Some(Parent.into())
@@ -235,6 +261,100 @@ impl pallet_xcm::benchmarking::Config for Runtime {
 	fn get_asset() -> Asset {
 		(Location::here(), 1_000_000_000_000_000_000u128).into()
 	}
+
+	fn reserve_transferable_asset_and_dest() -> Option<(Asset, Location)> {
+		let owner: AccountId = frame_benchmarking::whitelisted_caller();
+		let owner = ConfigCrossAccountId::from_sub(owner);
+
+		let collection = pallet_nonfungible::benchmarking::create_collection::<Self>(
+			owner.clone()
+		).unwrap();
+
+		let stash_account = ForeignAssets::pallet_account();
+
+		let token_id = pallet_nonfungible::benchmarking::create_max_item(
+			&collection,
+			&owner,
+			stash_account,
+		).unwrap();
+
+		Some((
+			Asset {
+				id: Location::new(0, [GeneralIndex(collection.id.0.into())]).into(),
+				fun: NonFungible(AssetInstance::Index(token_id.0.into())),
+			},
+			ParentThen(Parachain(RandomParaId::get().into()).into()).into(),
+		))
+	}
+
+	fn set_up_complex_asset_transfer() -> Option<(Assets, u32, Location, Box<dyn FnOnce()>)> {
+		// transfer a fungible and a non-fungible
+
+		let owner: AccountId = frame_benchmarking::whitelisted_caller();
+		let owner = ConfigCrossAccountId::from_sub(owner);
+
+		let collection_ft = pallet_fungible::benchmarking::create_collection::<Self>(
+			owner.clone()
+		).unwrap();
+
+		let collection_nft = pallet_nonfungible::benchmarking::create_collection::<Self>(
+			owner.clone()
+		).unwrap();
+
+		// let stash_account = ForeignAssets::pallet_account();
+
+		let fungible_amount = 100_000_000_000_000_000_000u128;
+		let transfer_amount = fungible_amount / 4;
+
+		pallet_fungible::benchmarking::create_item(
+			&collection_ft,
+			&owner,
+			owner.clone(),
+			fungible_amount,
+		).unwrap();
+
+		let nft = pallet_nonfungible::benchmarking::create_max_item(
+			&collection_nft,
+			&owner,
+			owner.clone(),
+		).unwrap();
+
+		let ft_location = Location::new(0, [GeneralIndex(collection_ft.id.0.into())]);
+		let nft_location = Location::new(0, [GeneralIndex(collection_nft.id.0.into())]);
+
+		let fee_asset = Asset {
+			id: ft_location.into(),
+			fun: Fungible(transfer_amount),
+		};
+
+		let nft_asset = Asset {
+			id: nft_location.into(),
+			fun: NonFungible(AssetInstance::Index(nft.0.into())),
+		};
+
+		let assets: Assets = vec![
+			fee_asset,
+			nft_asset,
+		].into();
+
+		let fee_asset_index = 0;
+
+		let verify = Box::new(move || {
+			let ft_remaining = collection_ft.balance(owner.clone(), TokenId(0));
+			assert_eq!(ft_remaining, fungible_amount - transfer_amount);
+
+			let nft_remaining = collection_nft.balance(owner, nft);
+			assert_eq!(nft_remaining, 0);
+		});
+
+		Some((
+			assets,
+			fee_asset_index,
+			Parent.into(),
+			verify,
+		))
+	}
+
 }
 
 impl cumulus_pallet_xcm::Config for Runtime {
