@@ -48,7 +48,7 @@ while ! had_new_block ; do
     counter=$((counter+1))
     echo "counter="$counter
     sleep 6
-    if [ $counter -gt 10 ]; then
+    if [ $counter -gt 400 ]; then
         exit 1;
     fi
 done
