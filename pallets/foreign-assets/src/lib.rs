@@ -480,7 +480,7 @@ impl<T: Config> Pallet<T> {
 		weight
 	}
 
-	fn pallet_account() -> T::CrossAccountId {
+	pub fn pallet_account() -> T::CrossAccountId {
 		let owner: T::AccountId = T::PalletId::get().into_account_truncating();
 		T::CrossAccountId::from_sub(owner)
 	}
