@@ -40,7 +40,9 @@ jobs:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-collator-selection')
     uses: ./.github/workflows/collator-selection.yml
     secrets: inherit    
-    
+
+#### should be removed ####
+
   forkless-update-data:
     if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-forkless-data') || contains(github.event.pull_request.labels.*.name, 'CI-forkless-update-data'))
     uses: ./.github/workflows/forkless-update-data.yml
@@ -51,14 +53,21 @@ jobs:
     uses: ./.github/workflows/forkless-update-nodata.yml
     secrets: inherit
 
-  try-runtime:
-    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-try-runtime') || contains(github.event.pull_request.labels.*.name, 'CI-try-runtime'))
-    uses: ./.github/workflows/try-runtime.yml
-    secrets: inherit
-
   node-only-update:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-node-only-update')
     uses: ./.github/workflows/node-only-update.yml
+    secrets: inherit
+
+#### end ####
+
+  main-process:
+    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-main-process') || contains(github.event.pull_request.labels.*.name, 'CI-main-process'))
+    uses: ./.github/workflows/main-process-update.yml
+    secrets: inherit
+
+  try-runtime:
+    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-try-runtime') || contains(github.event.pull_request.labels.*.name, 'CI-try-runtime'))
+    uses: ./.github/workflows/try-runtime.yml
     secrets: inherit
 
   governance:
