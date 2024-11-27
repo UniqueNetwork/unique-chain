@@ -37,7 +37,7 @@ fn create_max_item_data<T: Config>(owner: T::CrossAccountId) -> CreateItemData<T
 		properties: Default::default(),
 	}
 }
-fn create_max_item<T: Config>(
+pub fn create_max_item<T: Config>(
 	collection: &NonfungibleHandle<T>,
 	sender: &T::CrossAccountId,
 	owner: T::CrossAccountId,
@@ -51,7 +51,7 @@ fn create_max_item<T: Config>(
 	Ok(TokenId(<TokensMinted<T>>::get(collection.id)))
 }
 
-fn create_collection<T: Config>(
+pub fn create_collection<T: Config>(
 	owner: T::CrossAccountId,
 ) -> Result<NonfungibleHandle<T>, DispatchError> {
 	create_collection_raw(
