@@ -153,6 +153,7 @@ jobs:
 
       - name: Get state from production
         run: |
+          . "$HOME/.cargo/env"
           chainql -e "cql.chain(\"${{ matrix.fork_source }}\").latest._preloadKeys._raw" > .baedeker/vendor/dump.json
 
       - name: Start network
