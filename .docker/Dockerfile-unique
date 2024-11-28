@@ -9,7 +9,7 @@ ARG FEATURES
 
 RUN cd unique-chain && \
     echo "Using runtime features ${FEATURES}" && \
-    CARGO_INCREMENTAL=0; WASM_BUILD_TYPE=integration-tests; cargo build --profile integration-tests --features=fast-inflation,"${FEATURES}" --locked && \
+    CARGO_INCREMENTAL=0 WASM_BUILD_TYPE=integration-tests cargo build --profile integration-tests --features=fast-inflation,"${FEATURES}" --locked && \
     mv ./target/integration-tests/unique-collator /workdir/unique-chain/ && \
     cd target/integration-tests/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "../../../wasm/$(dirname {})"; cp {} "../../../wasm/{}"' \;
 

@@ -259,7 +259,7 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      # - name: Remove builder cache
-      #   if: always()
-      #   run: |
-      #     docker system prune -a -f
+      - name: Remove builder cache
+        if: always()
+        run: |
+          docker system prune -a -f
