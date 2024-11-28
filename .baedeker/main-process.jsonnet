@@ -45,7 +45,7 @@ local unique = {
 			relay_chain: "unused",
 			genesis: {
 				raw: {
-					top: cql.fullDump(dump_spec),
+					top: import "dump.json",
 					childrenDefault: {},
 				},
 			},
