@@ -187,7 +187,7 @@ jobs:
 
       - name: "Reconcile: 1 node updating"
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
-        id: reconcile1
+        id: reconcile0
         uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
         with:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
