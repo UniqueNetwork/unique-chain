@@ -180,7 +180,8 @@ jobs:
         id: alive1
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
-          yarn        
+          yarn
+          yarn install        
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -199,6 +200,8 @@ jobs:
 
       - name: Ensure network is alive
         working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.reconcile0.outcome == 'success' }}
+        id: alive1_1        
         run: |
           yarn        
           ../scripts/wait_for_first_block.sh
@@ -206,7 +209,7 @@ jobs:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: "Reconcile: nodes updating"
-        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.alive1_1.outcome == 'success' }}
         id: reconcile1
         uses: UniqueNetwork/baedeker-action/reconcile@v1-no-debug-output
         with:
@@ -246,19 +249,22 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Run Parallel tests after forkless upgrade
+      - name: Run Parallel tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          echo "Ready to start tests"
+          echo "adding mochawesome"
+          yarn add mochawesome
+          echo "Ready to start Parallel tests"
           NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Run Sequential tests after forkless upgrade
+      - name: Run Sequential tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
+          echo "Ready to start Sequential tests"
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -266,4 +272,4 @@ jobs:
       - name: Remove builder cache
         if: always()                   # run this step always
         run: |
-          docker system prune -f
+          docker system prune -f -a
