@@ -159,9 +159,9 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ env.HYDRADX_BUILD_BRANCH }}
 
-      - name: Prepare latest
+      - name: Prepare target runtime
         uses: ./.github/actions/buildContainer
-        id: latest
+        id: runtime
         with:
           container: uniquenetwork/ci-xcm-local
           tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
@@ -169,6 +169,21 @@ jobs:
           dockerfile: .docker/Dockerfile-unique
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Prepare target node
+        uses: ./.github/actions/buildContainer
+        id: node
+        with:
+          container: uniquenetwork/ci-xcm-local
+          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
+          args: |
+            --build-arg FEATURES=${{ matrix.network }}-runtime
+            --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
+            --build-arg CODE_HASH=${{ env.NODE_HASH}}
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
@@ -206,7 +221,8 @@ jobs:
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
