@@ -10,7 +10,30 @@ local relay = {
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: relay_spec,
-		modify:: m.genericRelay($),
+		modify:: bdk.mixer([
+			m.genericRelay($),
+			{
+				genesis+: {
+					runtimeGenesis+: {
+						runtime+: {
+							configuration+: {
+								config+: {
+									async_backing_params+: {
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+									scheduling_lookahead:5,
+									max_validators_per_core:1,
+									minimum_backing_votes:1,
+									needed_approvals:1,
+									on_demand_cores:5,
+								},
+							},
+						},
+					},
+				},
+			},
+		]),
 	}},
 	nodes: {
 		[name]: {
@@ -35,9 +58,10 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],			
 		},
-		for name in ['alpha', 'beta', 'gamma', 'delta']
+		for name in ['alpha', 'beta', 'gamma']
 	},
 };
 
