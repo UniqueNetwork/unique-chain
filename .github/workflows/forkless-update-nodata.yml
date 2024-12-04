@@ -147,7 +147,7 @@ jobs:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action/setup@v1.1
         with:
           version: "v0.1.4"
           useCache: false
@@ -156,7 +156,7 @@ jobs:
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action@v1.1
         id: bdk
         if: success()
         with:
