@@ -192,7 +192,7 @@ jobs:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action/setup@v1.1
         with:
           version: "v0.1.4"
           useCache: false
@@ -209,7 +209,7 @@ jobs:
           docker run --rm uniquenetwork/services:chain-spec-generator-latest asset-hub-${{ matrix.relay_name }}-local > .baedeker/vendor/assethub-spec.json
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action@v1.1
         id: bdk
         with:
           jpath: |

@@ -50,7 +50,6 @@ local unique = {
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
-		modify:: m.genericPara($),
 		modify:: bdk.mixer([
 			m.genericPara($),
 		    m.simplifyGenesisName(),

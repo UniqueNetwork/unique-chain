@@ -81,6 +81,7 @@ local unique = {
 			extraArgs: [
 				'--increase-future-pool',
 				'--pool-type=fork-aware',
+				'-laura=debug',
 			],
 		},
 		for name in ['alice', 'bob', 'charlie']
