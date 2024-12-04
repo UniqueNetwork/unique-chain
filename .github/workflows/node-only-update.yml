@@ -138,7 +138,7 @@ jobs:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@v1.1
+        uses: UniqueNetwork/baedeker-action/setup@v1.2
         with:
           version: "v0.1.4"
           useCache: false
@@ -147,7 +147,7 @@ jobs:
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@v1.1
+        uses: UniqueNetwork/baedeker-action@v1.2
         if: success()
         id: bdk
         with:
@@ -190,7 +190,7 @@ jobs:
       - name: "Reconcile: only one old node"
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         id: reconcile1
-        uses: UniqueNetwork/baedeker-action/reconcile@v1.1
+        uses: UniqueNetwork/baedeker-action/reconcile@v1.2
         with:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes expect one, then set mainnet binary for the last node, and then force chainspec to be still generated from mainnet
@@ -211,7 +211,7 @@ jobs:
       - name: "Reconcile: all nodes are updated"
         if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         id: reconcile2
-        uses: UniqueNetwork/baedeker-action/reconcile@v1.1
+        uses: UniqueNetwork/baedeker-action/reconcile@v1.2
         with:
           baedeker: ${{ steps.bdk.outputs.baedeker }}
           # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
