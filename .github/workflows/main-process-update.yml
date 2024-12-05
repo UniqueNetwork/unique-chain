@@ -183,7 +183,7 @@ jobs:
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
           yarn
-          yarn install        
+          yarn install
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -270,6 +270,11 @@ jobs:
           NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Remove all containers
+        if: always()                   # run this step always
+        run: |
+          docker ps -aq | xargs docker rm -f
 
       - name: Remove builder cache
         if: always()                   # run this step always
