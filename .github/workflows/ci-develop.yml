@@ -65,6 +65,11 @@ jobs:
     uses: ./.github/workflows/main-process-update.yml
     secrets: inherit
 
+  just-tests:
+    if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-just-tests') || contains(github.event.pull_request.labels.*.name, 'CI-just-tests'))
+    uses: ./.github/workflows/just-tests-without-update.yml
+    secrets: inherit
+
   try-runtime:
     if: github.event.pull_request.draft == false && (contains(github.event.pull_request.labels.*.name, 'CI-try-runtime') || contains(github.event.pull_request.labels.*.name, 'CI-try-runtime'))
     uses: ./.github/workflows/try-runtime.yml

@@ -88,21 +88,6 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.relay_branch }}
 
-      - name: Prepare mainnet
-        uses: ./.github/actions/buildContainer
-        id: mainnet
-        with:
-          container: uniquenetwork/ci-main-process
-          tag: ${{ matrix.network }}-${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
-          context: .docker
-          dockerfile: Dockerfile-unique-release
-          args: |
-            --build-arg FEATURES=${{ matrix.network }}-runtime
-            --build-arg CODE_VERSION=${{ env.MAINNET_BRANCH}}
-            --build-arg CODE_HASH=${{ env.MAINNET_HASH}}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-
       - name: Prepare target runtime
         uses: ./.github/actions/buildContainer
         id: runtime
@@ -156,6 +141,10 @@ jobs:
           . "$HOME/.cargo/env"
           chainql -e "cql.chain(\"${{ matrix.fork_source }}\").latest._preloadKeys._raw" > .baedeker/vendor/dump.json
 
+      - name: Copy runtime file
+        run: |
+          cp ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm .baedeker/vendor/runtime.compact.compressed.wasm
+
       - name: Start network
         uses: UniqueNetwork/baedeker-action@v1.2
         if: success()
@@ -171,75 +160,9 @@ jobs:
           tla-code: |
             dump_spec=import 'dump.json'            
           inputs: |
-            .baedeker/main-process.jsonnet
+            .baedeker/just-tests.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            # with data build uses old runtime, but new node, thus we use mainnet image for spec generation, and then target image for nodes.
-            # snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
-
-      - name: Ensure network is alive
-        working-directory: js-packages/tests
-        id: alive1
-        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
-        run: |
-          yarn
-          yarn install
-          ../scripts/wait_for_first_block.sh
-        env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: "Reconcile: 1 node updating"
-        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
-        id: reconcile0
-        uses: UniqueNetwork/baedeker-action/reconcile@v1.2
-        with:
-          baedeker: ${{ steps.bdk.outputs.baedeker }}
-          # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
-          inputs: |
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, leave = 1, for_chain = false)
-            ephemeral:snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
-
-      - name: Ensure network is alive
-        working-directory: js-packages/tests
-        if: ${{ !cancelled() && steps.reconcile0.outcome == 'success' }}
-        id: alive1_1        
-        run: |
-          yarn        
-          ../scripts/wait_for_first_block.sh
-        env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: "Reconcile: nodes updating"
-        if: ${{ !cancelled() && steps.alive1_1.outcome == 'success' }}
-        id: reconcile1
-        uses: UniqueNetwork/baedeker-action/reconcile@v1.2
-        with:
-          baedeker: ${{ steps.bdk.outputs.baedeker }}
-          # Chain should always be built with the mainnet spec, this we first set binary for all nodes, and then force chainspec to be still generated from mainnet
-          inputs: |
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.mainnet.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
-
-      - name: Ensure network is alive
-        working-directory: js-packages/tests
-        id: alive2
-        if: ${{ !cancelled() && steps.reconcile1.outcome == 'success' }}
-        run: |
-          yarn        
-          ../scripts/wait_for_first_block.sh
-        env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: "Reconcile: runtime updating"
-        working-directory: js-packages/tests
-        id: reconcile2
-        if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
-        run: |
-          echo "Executing upgrade"
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
-        env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
 
       - name: Ensure network is alive
         working-directory: js-packages/tests
