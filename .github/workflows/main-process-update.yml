@@ -165,6 +165,7 @@ jobs:
             .baedeker/vendor
           input-modules: |
             lib:baedeker-library/ops/nginx-dev.libsonnet
+            lib:baedeker-library/ops/devtools.libsonnet
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
             forked_spec=${{ matrix.network }}
