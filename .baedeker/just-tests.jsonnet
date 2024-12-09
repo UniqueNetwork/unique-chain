@@ -25,8 +25,8 @@ local relay = {
 									},
 									scheduling_lookahead:5,
 									max_validators_per_core:1,
-									minimum_backing_votes:2,
-									needed_approvals:2,
+									minimum_backing_votes:1,
+									needed_approvals:1,
 									on_demand_cores:5,
 							    	validation_upgrade_cooldown:400,
                                     validation_upgrade_delay:200,
@@ -45,7 +45,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
 	},
 };
 
@@ -58,7 +58,7 @@ local unique = {
 			m.genericPara($),
 		    m.simplifyGenesisName(),
 		    {
-			    _code: cql.toHex(importbin '../runtime.compact.compressed.wasm'),
+			    _code: cql.toHex(importbin 'runtime.compact.compressed.wasm'),
 		    },
 		    m.unsimplifyGenesisName(),
 		]),
