@@ -53,7 +53,17 @@ local unique = {
 	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 1001,
-	spec: {Raw:{
+	spec: {Genesis:{
+		modify:: bdk.mixer([
+			m.genericPara($),
+		    m.simplifyGenesisName(),
+		    {
+			    _code: cql.toHex(importbin '../runtime.compact.compressed.wasm'),
+		    },
+		    m.unsimplifyGenesisName(),
+		]),
+	},
+		Raw:{
 		local modifyRaw = bdk.mixer([
 			rm.resetNetworking($),
 			rm.decodeSpec(),
