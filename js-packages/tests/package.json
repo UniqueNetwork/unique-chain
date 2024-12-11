@@ -24,9 +24,8 @@
         "testEth": "yarn _test ./**/eth/*.*test.ts",
         "testGovernance": "RUN_GOV_TESTS=1 yarn _test ./**/sub/governance/*.*test.ts",
         "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/sub/collator-selection/**.*test.ts --timeout 49999999",
-        "testFullXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Unique.test.ts",
-        "testFullXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/*Quartz.test.ts",
-        "testXcmOpal": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/xcmOpal.test.ts",
+        "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/unique.test.ts",
+        "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/quartz.test.ts",
         "load": "yarn _test './**/*.load.ts'"
     }
 }
