@@ -1,10 +1,11 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
 import {DevUniqueHelper, Event} from '@unique/test-utils';
-import config from '../config.js';
+import { AcalaHelper, AstarHelper } from '@unique/test-utils/xcm/index.js';
+import { IEvent } from '@unique-nft/playgrounds/types.js';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
-export const STATEMINT_CHAIN = +(process.env.RELAY_STATEMINT_ID || 1000);
+export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_URL || 1000);
 export const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
 export const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
 export const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
@@ -12,63 +13,22 @@ export const POLKADEX_CHAIN = +(process.env.RELAY_POLKADEX_ID || 2040);
 export const HYDRADX_CHAIN = +(process.env.RELAY_HYDRADX_ID || 2034);
 
 export const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
-export const STATEMINE_CHAIN = +(process.env.RELAY_STATEMINE_ID || 1000);
+export const KUSAMA_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_URL || 1000);
 export const KARURA_CHAIN = +(process.env.RELAY_KARURA_ID || 2000);
 export const MOONRIVER_CHAIN = +(process.env.RELAY_MOONRIVER_ID || 2023);
 export const SHIDEN_CHAIN = +(process.env.RELAY_SHIDEN_ID || 2007);
 
-export const relayUrl = config.relayUrl;
-export const statemintUrl = config.statemintUrl;
-export const statemineUrl = config.statemineUrl;
-
-export const acalaUrl = config.acalaUrl;
-export const moonbeamUrl = config.moonbeamUrl;
-export const astarUrl = config.astarUrl;
-export const polkadexUrl = config.polkadexUrl;
-export const hydraDxUrl = config.hydraDxUrl;
-
-export const karuraUrl = config.karuraUrl;
-export const moonriverUrl = config.moonriverUrl;
-export const shidenUrl = config.shidenUrl;
-
-export const SAFE_XCM_VERSION = 3;
-
+export const SAFE_XCM_VERSION = 4;
 
 export const RELAY_DECIMALS = 12;
-export const STATEMINE_DECIMALS = 12;
+export const KUSAMA_ASSETHUB_DECIMALS = 12;
 export const KARURA_DECIMALS = 12;
 export const SHIDEN_DECIMALS = 18n;
-export const QTZ_DECIMALS = 18n;
 
 export const ASTAR_DECIMALS = 18n;
 export const UNQ_DECIMALS = 18n;
 
-export const maxWaitBlocks = 6;
-
-export const uniqueMultilocation = {
-  parents: 1,
-  interior: {
-    X1: {
-      Parachain: UNIQUE_CHAIN,
-    },
-  },
-};
-export const uniqueVersionedMultilocation = {
-  V3: uniqueMultilocation,
-};
-
-export const uniqueAssetId = {
-  Concrete: uniqueMultilocation,
-};
-
-export const expectFailedToTransact = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-        && event.outcome.isFailedToTransactAsset);
-};
-export const expectUntrustedReserveLocationFail = async (helper: DevUniqueHelper, messageSent: any) => {
-  await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash
-         && event.outcome.isUntrustedReserveLocation);
-};
+export const maxWaitBlocks = 50;
 
 export const expectDownwardXcmNoPermission = async (helper: DevUniqueHelper) => {
   // The correct messageHash for downward messages can't be reliably obtained
@@ -81,6 +41,9 @@ export const expectDownwardXcmComplete = async (helper: DevUniqueHelper) => {
 };
 
 export const NETWORKS = {
+  unique: usingPlaygrounds,
+  quartz: usingPlaygrounds,
+  relay: usingRelayPlaygrounds,
   acala: usingAcalaPlaygrounds,
   astar: usingAstarPlaygrounds,
   polkadex: usingPolkadexPlaygrounds,
@@ -92,10 +55,16 @@ export const NETWORKS = {
 } as const;
 type NetworkNames = keyof typeof NETWORKS;
 
-type NativeRuntime = 'opal' | 'quartz' | 'unique';
+type UniqueChain = 'quartz' | 'unique';
 
 export function mapToChainId(networkName: keyof typeof NETWORKS): number {
   switch (networkName) {
+    case 'unique':
+      return UNIQUE_CHAIN;
+    case 'quartz':
+      return QUARTZ_CHAIN;
+    case 'relay':
+      throw new Error('Relay chain has no para ID');
     case 'acala':
       return ACALA_CHAIN;
     case 'astar':
@@ -115,60 +84,27 @@ export function mapToChainId(networkName: keyof typeof NETWORKS): number {
   }
 }
 
-export function mapToChainUrl(networkName: NetworkNames): string {
-  switch (networkName) {
-    case 'acala':
-      return acalaUrl;
-    case 'astar':
-      return astarUrl;
-    case 'moonbeam':
-      return moonbeamUrl;
-    case 'polkadex':
-      return polkadexUrl;
-    case 'moonriver':
-      return moonriverUrl;
-    case 'karura':
-      return karuraUrl;
-    case 'shiden':
-      return shidenUrl;
-    case 'hydraDx':
-      return hydraDxUrl;
-  }
+export function mapToChainLocation(networkName: keyof typeof NETWORKS) {
+  return {
+    parents: 1,
+    interior: networkName === 'relay'
+      ? 'here'
+      : {X1: [{Parachain: mapToChainId(networkName)}]},
+  };
 }
 
 export function getDevPlayground(name: NetworkNames) {
   return NETWORKS[name];
 }
 
-export const TRANSFER_AMOUNT = 2000000_000_000_000_000_000_000n;
+export const TRANSFER_AMOUNT = 2000000n * 10n ** UNQ_DECIMALS;
 export const SENDER_BUDGET = 2n * TRANSFER_AMOUNT;
+export const SENDTO_AMOUNT = TRANSFER_AMOUNT;
 export const SENDBACK_AMOUNT = TRANSFER_AMOUNT / 2n;
 export const STAYED_ON_TARGET_CHAIN = TRANSFER_AMOUNT - SENDBACK_AMOUNT;
-export const TARGET_CHAIN_TOKEN_TRANSFER_AMOUNT = 100_000_000_000n;
+export const OTHER_CHAIN_TOKEN_TRANSFER_AMOUNT = 100_000_000_000n;
 
 export class XcmTestHelper {
-  private _balanceUniqueTokenInit: bigint = 0n;
-  private _balanceUniqueTokenMiddle: bigint = 0n;
-  private _balanceUniqueTokenFinal: bigint = 0n;
-  private _unqFees: bigint = 0n;
-  private _nativeRuntime: NativeRuntime;
-
-  constructor(runtime: NativeRuntime) {
-    this._nativeRuntime = runtime;
-  }
-
-  private _getNativeId() {
-    switch (this._nativeRuntime) {
-      case 'opal':
-        // To-Do
-        return 1001;
-      case 'quartz':
-        return QUARTZ_CHAIN;
-      case 'unique':
-        return UNIQUE_CHAIN;
-    }
-  }
-
   private _isAddress20FormatFor(network: NetworkNames) {
     switch (network) {
       case 'moonbeam':
@@ -179,337 +115,517 @@ export class XcmTestHelper {
     }
   }
 
-  private _runtimeVersionedMultilocation() {
-    return {
-      V3: {
-        parents: 1,
-        interior: {
-          X1: {
-            Parachain: this._getNativeId(),
-          },
-        },
-      },
-    };
-  }
-
-  private _uniqueChainMultilocationForRelay() {
-    return {
-      V3: {
-        parents: 0,
-        interior: {
-          X1: {Parachain: this._getNativeId()},
-        },
-      },
-    };
-  }
-
-  async sendUnqTo(
-    networkName: keyof typeof NETWORKS,
-    randomAccount: IKeyringPair,
-    randomAccountOnTargetChain = randomAccount,
+  async #collectProcessedMsgsEvents(
+    helper: any,
+    whileCondition: () => boolean
   ) {
-    const networkUrl = mapToChainUrl(networkName);
-    const targetPlayground = getDevPlayground(networkName);
+    const {unsubscribe, collectedEvents} = await helper.subscribeEvents([
+      {
+        section: Event.MessageQueue.Processed.section(),
+        names: [Event.MessageQueue.Processed.method()],
+      }
+    ]);
+
+    let blocksSkipped = 0;
+
+    while (whileCondition()) {
+      await helper.wait.newBlocks(1);
+
+      blocksSkipped += 1;
+
+      if (blocksSkipped >= maxWaitBlocks) {
+        throw new Error(
+          `max number of blocks (${maxWaitBlocks}) were skipped while waiting for the message hash to find`,
+        );
+      }
+    }
+
+    // After the block with XCM transfer from the `from` network
+    // is finalized, we will receive the XCM message on the `to` network
+    // in some near block via the `setValidationData`.
+    //
+    // When we see that `messageHash` isn't null, we need to wait several more blocks
+    // to make sure we didn't skip the one where the XCM message arrived.
+    //
+    // Yet, it could also arrive immediately, that is why we are collecting events.
+    await helper.wait.newBlocks(10);
+
+    unsubscribe();
+    return (collectedEvents as IEvent[]).map(e => e.data);
+  }
+
+  async #sendXcmProgram(
+    sudoer: IKeyringPair,
+    sendFrom: keyof typeof NETWORKS,
+    sendTo: UniqueChain,
+    program: any,
+  ) {
+    const otherChainPlayground = getDevPlayground(sendFrom);
+
+    return await otherChainPlayground(async (helper) => {
+      const destination = {V4: mapToChainLocation(sendTo)};
+      const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [destination, program]);
+
+      if('getSudo' in helper) {
+        // can't use `getSudo` here because of types issues.
+        // The `helper` has a union type,
+        // the signatures of `getSudo` aren't compatible with each other.
+        //
+        // But we do know here that the chain has the `sudo` pallet.
+        const sendResult = await helper.executeExtrinsic(
+          sudoer,
+          'api.tx.sudo.sudo',
+          [xcmSend],
+        );
+        const messageSent = Event.XcmpQueue.XcmpMessageSent.expect(sendResult);
+        return messageSent.messageHash;
+      } else if ('fastDemocracy' in helper) {
+        // Needed to bypass the call filter.
+        const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
+
+        const [, messageSent] = await Promise.all([
+          helper.fastDemocracy.executeProposal(`sending ${sendFrom} -> ${sendTo} via XCM program`, batchCall),
+          helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent)
+        ]);
+
+        return messageSent.messageHash;
+      } else {
+        throw new Error(`unknown governance in ${sendFrom}`)
+      }
+    });
+  }
+
+  async #awaitMaliciousProgramRejection(getMessageHash: () => any) {
     await usingPlaygrounds(async (helper) => {
-      this._balanceUniqueTokenInit = await helper.balance.getSubstrate(randomAccount.address);
-      const destination = {
-        V2: {
-          parents: 1,
-          interior: {
-            X1: {
-              Parachain: mapToChainId(networkName),
-            },
-          },
-        },
+      const collectedEventData = await this.#collectProcessedMsgsEvents(
+        helper,
+        () => getMessageHash() === null,
+      );
+
+      const processedMsgEvent = collectedEventData.find(data => {
+        const processedMessageHash = data[0];
+        return processedMessageHash === getMessageHash();
+      });
+
+      expect(processedMsgEvent).to.be.not.undefined;
+
+      const msgProcResult = processedMsgEvent![3];
+      expect(msgProcResult).to.be.false;
+    });
+  }
+
+  async #sendTokens(
+    from: keyof typeof NETWORKS,
+    to: keyof typeof NETWORKS,
+    fromAccount: IKeyringPair,
+    toAccount: IKeyringPair,
+    amount: bigint,
+    setMessageHash: (messageHash: any) => void,
+  ) {
+    let isFromUnique = from === 'unique' || from === 'quartz';
+    let isToUnique = to === 'unique' || to === 'quartz';
+
+    const fromPlayground = getDevPlayground(from);
+
+    await fromPlayground(async (helper) => {
+      let assetId: any;
+      if (isFromUnique) {
+        assetId = {
+          parents: 0,
+          interior: 'here',
+        };
+      } else if (isToUnique) {
+        assetId = mapToChainLocation(to);
+      } else {
+        throw new Error('sendUnqFromTo: either `from` or `to` MUST point to a Unique chain');
+      }
+
+      const getRandomAccountBalance = async (): Promise<bigint> => {
+        if (!isFromUnique) {
+          return 0n;
+        }
+
+        if ('getSubstrate' in helper.balance) {
+          return await helper.balance.getSubstrate(fromAccount.address);
+        } else {
+          return await helper.balance.getEthereum(fromAccount.address);
+        }
       };
 
-      const beneficiary = {
-        V2: {
-          parents: 0,
-          interior: {
-            X1: (
-              this._isAddress20FormatFor(networkName) ?
-                {
-                  AccountKey20: {
-                    network: 'Any',
-                    key: randomAccountOnTargetChain.address,
-                  },
-                }
-                :
-                {
-                  AccountId32: {
-                    network: 'Any',
-                    id: randomAccountOnTargetChain.addressRaw,
-                  },
-                }
-            ),
+      const unqBalanceBefore = await getRandomAccountBalance();
+
+      let beneficiaryAccount: any;
+      if (this._isAddress20FormatFor(to)) {
+        beneficiaryAccount = {
+          AccountKey20: {
+            key: toAccount.address,
           },
-        },
-      };
+        };
+      } else {
+        beneficiaryAccount = {
+          AccountId32: {
+            id: toAccount.addressRaw,
+          },
+        };
+      }
 
       const assets = {
-        V2: [
+        V4: [
           {
-            id: {
-              Concrete: {
-                parents: 0,
-                interior: 'Here',
-              },
-            },
+            id: assetId,
             fun: {
-              Fungible: TRANSFER_AMOUNT,
+              Fungible: amount,
             },
           },
         ],
       };
       const feeAssetItem = 0;
 
-      await helper.xcm.limitedReserveTransferAssets(randomAccount, destination, beneficiary, assets, feeAssetItem, 'Unlimited');
-      const messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-      this._balanceUniqueTokenMiddle = await helper.balance.getSubstrate(randomAccount.address);
+      let transferResult: any;
 
-      this._unqFees = this._balanceUniqueTokenInit - this._balanceUniqueTokenMiddle - TRANSFER_AMOUNT;
-      console.log('[%s -> %s] transaction fees: %s', this._nativeRuntime, networkName, helper.util.bigIntToDecimals(this._unqFees));
-      expect(this._unqFees > 0n, 'Negative fees, looks like nothing was transferred').to.be.true;
+      if (
+        from === 'acala' || from === 'karura'
+        || from === 'astar' || from === 'shiden'
+      ) {
+        // `polkadotXcm.transferAssets` is filtered on Acala chains.
+        // Astar chains have prohibitive weights for it.
+        // using xTokens instead
 
-      await targetPlayground(networkUrl, async (helper) => {
-      /*
-        Since only the parachain part of the Polkadex
-        infrastructure is launched (without their
-        solochain validators), processing incoming
-        assets will lead to an error.
-        This error indicates that the Polkadex chain
-        received a message from the Unique network,
-        since the hash is being checked to ensure
-        it matches what was sent.
-      */
-        if(networkName == 'polkadex' || networkName =='hydraDx') {
-          await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Fail, event => event.messageHash == messageSent.messageHash);
-        } else {
-          await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == messageSent.messageHash);
-        }
-      });
+        const acalaHelper = helper as AcalaHelper | AstarHelper;
 
+        const destination = {
+          V4: {
+            parents: 1,
+            interior: {
+              X2: [
+                {
+                  Parachain: mapToChainId(to),
+                },
+                beneficiaryAccount,
+              ],
+            },
+          },
+        };
+
+        transferResult = await acalaHelper.xTokens.transferMultiassets(
+          fromAccount,
+          assets,
+          feeAssetItem,
+          destination,
+          'Unlimited',
+        );
+      } else {
+        const destination = {V4: mapToChainLocation(to)};
+
+        const beneficiary = {
+          V4: {
+            parents: 0,
+            interior: {
+              X1: [beneficiaryAccount],
+            },
+          },
+        };
+
+        transferResult = await helper.xcm.transferAssets(
+          fromAccount,
+          destination,
+          beneficiary,
+          assets,
+          feeAssetItem,
+          'Unlimited',
+        );
+      }
+
+      const messageSent = Event.XcmpQueue.XcmpMessageSent.expect(transferResult);
+
+      const unqBalanceAfter = await getRandomAccountBalance();
+      if (isFromUnique) {
+        const unqBalanceDiff = unqBalanceBefore - unqBalanceAfter;
+        const unqFees = unqBalanceDiff - amount;
+        const unqMinFees = 0n;
+        const unqMaxFees = 2n * 10n ** UNQ_DECIMALS;
+
+        console.log('[%s -> %s] transaction fees: %s UNQ/QTZ', from, to, helper.util.bigIntToDecimals(unqFees));
+
+        expect(
+          unqMinFees < unqFees && unqFees <= unqMaxFees,
+          `invalid UNQ/QTZ fees when transferring from Unique/Quartz: ${unqFees}`
+        ).to.be.true;
+      }
+
+      setMessageHash(messageSent.messageHash);
     });
   }
 
-  async sendUnqBack(
-    networkName: keyof typeof NETWORKS,
-    sudoer: IKeyringPair,
-    randomAccountOnUnq: IKeyringPair,
+  async #awaitTokens(
+    from: keyof typeof NETWORKS,
+    to: keyof typeof NETWORKS,
+    getMessageHash: () => any,
+    account: string,
+    amount: bigint,
   ) {
-    const networkUrl = mapToChainUrl(networkName);
+    const toPlayground = getDevPlayground(to);
+    let isToUnique = to === 'unique' || to === 'quartz';
 
-    const targetPlayground = getDevPlayground(networkName);
-    await usingPlaygrounds(async (helper) => {
+    await toPlayground(async (helper) => {
+      const getRandomAccountBalance = async (): Promise<bigint> => {
+        if (!isToUnique) {
+          return 0n;
+        }
 
-      const xcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
-        randomAccountOnUnq.addressRaw,
-        {
-          Concrete: {
-            parents: 1,
-            interior: {
-              X1: {Parachain: this._getNativeId()},
-            },
-          },
-        },
-        SENDBACK_AMOUNT,
+        if ('getSubstrate' in helper.balance) {
+          return await helper.balance.getSubstrate(account);
+        } else {
+          return await helper.balance.getEthereum(account);
+        }
+      };
+
+      const unqBalanceBefore = await getRandomAccountBalance();
+
+      const collectedEventData = await this.#collectProcessedMsgsEvents(
+        helper,
+        getMessageHash,
       );
 
-      let xcmProgramSent: any;
-
-
-      await targetPlayground(networkUrl, async (helper) => {
-        if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), xcmProgram);
-          xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), xcmProgram]);
-          // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
-          xcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
+      const validEventIndex = collectedEventData.findIndex(data => {
+        const processedMessageHash = data[0];
+        return processedMessageHash === getMessageHash();
       });
 
-      await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.Success, event => event.messageHash == xcmProgramSent.messageHash);
+      expect(
+        validEventIndex >= 0,
+        `no 'MessageQueue.Processed' event was found on ${to}`,
+      ).to.be.true;
 
-      this._balanceUniqueTokenFinal = await helper.balance.getSubstrate(randomAccountOnUnq.address);
+      const unqBalanceAfter = await getRandomAccountBalance();
 
-      expect(this._balanceUniqueTokenFinal).to.be.equal(this._balanceUniqueTokenInit - this._unqFees - STAYED_ON_TARGET_CHAIN);
+      if (isToUnique) {
+        const unqBalanceDiff = unqBalanceAfter - unqBalanceBefore;
+        const unqFees = unqBalanceDiff - amount;
 
+        console.log('[%s -> %s] transaction fees: %s UNQ/QTZ', from, to, helper.util.bigIntToDecimals(unqFees));
+
+        expect(
+          unqFees === 0n,
+          `invalid UNQ/QTZ fees when receiving to ${to}: ${unqFees}`
+        ).to.be.true;
+      }
     });
+  }
+
+  async sendUnqFromTo(
+    from: keyof typeof NETWORKS,
+    to: keyof typeof NETWORKS,
+    randomAccountOnFrom: IKeyringPair,
+    randomAccountOnTo: IKeyringPair,
+    amount: bigint,
+  ) {
+    let messageHash: any = null;
+
+    await Promise.all([
+      this.#sendTokens(
+        from,
+        to,
+        randomAccountOnFrom,
+        randomAccountOnTo,
+        amount,
+        (hash) => messageHash = hash,
+      ),
+      this.#awaitTokens(
+        from,
+        to,
+        () => messageHash,
+        randomAccountOnTo.address,
+        amount,
+      ),
+    ]);
   }
 
   async sendOnlyOwnedBalance(
-    networkName: keyof typeof NETWORKS,
     sudoer: IKeyringPair,
+    otherChain: keyof typeof NETWORKS,
+    uniqueChain: UniqueChain,
   ) {
-    const networkUrl = mapToChainUrl(networkName);
-    const targetPlayground = getDevPlayground(networkName);
+    const otherChainBalance = 10000n * (10n ** UNQ_DECIMALS);
 
-    const targetChainBalance = 10000n * (10n ** UNQ_DECIMALS);
+    let randomAccount: IKeyringPair;
+    let maliciousXcmProgram: any;
+    let messageHash: any = null;
 
     await usingPlaygrounds(async (helper) => {
-      const targetChainSovereignAccount = helper.address.paraSiblingSovereignAccount(mapToChainId(networkName));
-      await helper.getSudo().balance.setBalanceSubstrate(sudoer, targetChainSovereignAccount, targetChainBalance);
-      const moreThanTargetChainHas = 2n * targetChainBalance;
+      const otherChainSovereignAccount = helper.address.paraSiblingSovereignAccount(mapToChainId(otherChain));
+      await helper.getSudo().balance.setBalanceSubstrate(sudoer, otherChainSovereignAccount, otherChainBalance);
 
-      const targetAccount = helper.arrange.createEmptyAccount();
+      randomAccount = helper.arrange.createEmptyAccount();
+    });
 
-      const maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
-        targetAccount.addressRaw,
-        {
-          Concrete: {
+    const sendMaliciousProgram = async () => {
+      await usingPlaygrounds(async (helper) => {
+        const moreThanOtherChainHas = 2n * otherChainBalance;
+
+        maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+          randomAccount.addressRaw,
+          {
             parents: 0,
             interior: 'Here',
           },
-        },
-        moreThanTargetChainHas,
-      );
-
-      let maliciousXcmProgramSent: any;
-
-
-      await targetPlayground(networkUrl, async (helper) => {
-        if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgram);
-          maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgram]);
-          // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`sending ${networkName} -> Unique via XCM program`, batchCall);
-          maliciousXcmProgramSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
+          moreThanOtherChainHas,
+        );
       });
 
-      await expectFailedToTransact(helper, maliciousXcmProgramSent);
+      messageHash = await this.#sendXcmProgram(
+        sudoer,
+        otherChain,
+        uniqueChain,
+        maliciousXcmProgram,
+      );
+    };
 
-      const targetAccountBalance = await helper.balance.getSubstrate(targetAccount.address);
-      expect(targetAccountBalance).to.be.equal(0n);
-    });
-  }
-
-  async rejectReserveTransferUNQfrom(networkName: keyof typeof NETWORKS, sudoer: IKeyringPair) {
-    const networkUrl = mapToChainUrl(networkName);
-    const targetPlayground = getDevPlayground(networkName);
+    await Promise.all([
+      sendMaliciousProgram(),
+      this.#awaitMaliciousProgramRejection(() => messageHash),
+    ]);
 
     await usingPlaygrounds(async (helper) => {
-      const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
-      const targetAccount = helper.arrange.createEmptyAccount();
+      const randomAccountBalance = await helper.balance.getSubstrate(randomAccount.address);
+      expect(randomAccountBalance).to.be.equal(0n);
+    });
 
-      const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
-        targetAccount.addressRaw,
-        {
-          Concrete: {
-            parents: 1,
-            interior: {
-              X1: {
-                Parachain: this._getNativeId(),
-              },
-            },
-          },
-        },
-        testAmount,
-      );
+    messageHash = null;
+    const sendGoodProgram = async () => {
+      await usingPlaygrounds(async (helper) => {
 
-      const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
-        targetAccount.addressRaw,
-        {
-          Concrete: {
+        maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(
+          randomAccount.addressRaw,
+          {
             parents: 0,
             interior: 'Here',
           },
-        },
-        testAmount,
+          otherChainBalance,
+        );
+      });
+
+      messageHash = await this.#sendXcmProgram(
+        sudoer,
+        otherChain,
+        uniqueChain,
+        maliciousXcmProgram,
       );
+    };
 
-      let maliciousXcmProgramFullIdSent: any;
-      let maliciousXcmProgramHereIdSent: any;
-      const maxWaitBlocks = 3;
+    await Promise.all([
+      sendGoodProgram(),
+      this.#awaitTokens(
+        otherChain,
+        uniqueChain,
+        () => messageHash,
+        randomAccount!.address,
+        otherChainBalance,
+      )
+    ]);
 
-      // Try to trick Unique using full UNQ identification
-      await targetPlayground(networkUrl, async (helper) => {
-        if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
-          maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
-        // Moonbeam case
-        else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
-          // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using path asset identification`,batchCall);
-
-          maliciousXcmProgramFullIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
-      });
-
-
-      await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramFullIdSent);
-
-      let accountBalance = await helper.balance.getSubstrate(targetAccount.address);
-      expect(accountBalance).to.be.equal(0n);
-
-      // Try to trick Unique using shortened UNQ identification
-      await targetPlayground(networkUrl, async (helper) => {
-        if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoer, this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId);
-          maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
-        else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramHereId]);
-          // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${networkName} try to act like a reserve location for UNQ using "here" asset identification`, batchCall);
-
-          maliciousXcmProgramHereIdSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
-      });
-
-      await expectUntrustedReserveLocationFail(helper, maliciousXcmProgramHereIdSent);
-
-      accountBalance = await helper.balance.getSubstrate(targetAccount.address);
-      expect(accountBalance).to.be.equal(0n);
+    await usingPlaygrounds(async (helper) => {
+      const randomAccountBalance = await helper.balance.getSubstrate(randomAccount.address);
+      expect(randomAccountBalance).to.be.equal(otherChainBalance);
     });
   }
 
-  async rejectNativeTokensFrom(networkName: keyof typeof NETWORKS, sudoerOnTargetChain: IKeyringPair) {
-    const networkUrl = mapToChainUrl(networkName);
-    const targetPlayground = getDevPlayground(networkName);
-    let messageSent: any;
+  async rejectReserveTransferUNQfrom(
+    sudoer: IKeyringPair,
+    otherChain: keyof typeof NETWORKS,
+    uniqueChain: UniqueChain,
+  ) {
+    const testAmount = 10_000n * (10n ** UNQ_DECIMALS);
+
+    let randomAccount: IKeyringPair;
+    let messageHash: any = null;
+
+    const sendMaliciousXcmProgramFullId = async () => {
+      await usingPlaygrounds(async (helper) => {
+        randomAccount = helper.arrange.createEmptyAccount();
+
+        const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+          randomAccount.addressRaw,
+          mapToChainLocation(uniqueChain),
+          testAmount,
+        );
+
+        // Try to trick Unique using full UNQ identification
+        messageHash = await this.#sendXcmProgram(
+          sudoer,
+          otherChain,
+          uniqueChain,
+          maliciousXcmProgramFullId,
+        );
+      });
+    };
+
+    await Promise.all([
+      sendMaliciousXcmProgramFullId(),
+      this.#awaitMaliciousProgramRejection(() => messageHash),
+    ]);
+
+    messageHash = null;
+    const sendMaliciousXcmProgramHereId = async () => {
+      await usingPlaygrounds(async (helper) => {
+        const maliciousXcmProgramHereId = helper.arrange.makeXcmProgramReserveAssetDeposited(
+          randomAccount.addressRaw,
+          {
+            parents: 0,
+            interior: 'Here',
+          },
+          testAmount,
+        );
+  
+        // Try to trick Unique using shortened UNQ identification
+        messageHash = await this.#sendXcmProgram(
+          sudoer,
+          otherChain,
+          uniqueChain,
+          maliciousXcmProgramHereId,
+        );
+      });
+    };
+
+    await Promise.all([
+      sendMaliciousXcmProgramHereId(),
+      this.#awaitMaliciousProgramRejection(() => messageHash),
+    ]);
 
     await usingPlaygrounds(async (helper) => {
-      const maliciousXcmProgramFullId = helper.arrange.makeXcmProgramReserveAssetDeposited(
-        helper.arrange.createEmptyAccount().addressRaw,
-        {
-          Concrete: {
-            parents: 1,
-            interior: {
-              X1: {
-                Parachain: mapToChainId(networkName),
-              },
-            },
-          },
-        },
-        TARGET_CHAIN_TOKEN_TRANSFER_AMOUNT,
-      );
-      await targetPlayground(networkUrl, async (helper) => {
-        if('getSudo' in helper) {
-          await helper.getSudo().xcm.send(sudoerOnTargetChain, this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId);
-          messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        } else if('fastDemocracy' in helper) {
-          const xcmSend = helper.constructApiCall('api.tx.polkadotXcm.send', [this._runtimeVersionedMultilocation(), maliciousXcmProgramFullId]);
-          // Needed to bypass the call filter.
-          const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
-          await helper.fastDemocracy.executeProposal(`${networkName} sending native tokens to the Unique via fast democracy`, batchCall);
-
-          messageSent = await helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent);
-        }
-      });
-      await expectFailedToTransact(helper, messageSent);
+      const randomAccountBalance = await helper.balance.getSubstrate(randomAccount.address);
+      expect(randomAccountBalance).to.be.equal(0n);
     });
+  }
+
+  async rejectNativeTokensFrom(
+    sudoer: IKeyringPair,
+    otherChain: keyof typeof NETWORKS,
+    uniqueChain: UniqueChain,
+  ) {
+    let messageHash: any = null;
+
+    const sendMaliciousProgram = async () => {
+      await usingPlaygrounds(async (helper) => {
+        const maliciousXcmProgram = helper.arrange.makeXcmProgramReserveAssetDeposited(
+          helper.arrange.createEmptyAccount().addressRaw,
+          mapToChainLocation(otherChain),
+          OTHER_CHAIN_TOKEN_TRANSFER_AMOUNT,
+        );
+  
+        messageHash = await this.#sendXcmProgram(
+          sudoer,
+          otherChain,
+          uniqueChain,
+          maliciousXcmProgram,
+        );
+      });
+    };
+
+    await Promise.all([
+      sendMaliciousProgram(),
+      this.#awaitMaliciousProgramRejection(() => messageHash),
+    ]);
   }
 
   async registerRelayNativeTokenOnUnique(alice: IKeyringPair) {
@@ -518,16 +634,15 @@ export class XcmTestHelper {
         parents: 1,
         interior: 'Here',
       };
-      const relayAssetId = {Concrete: relayLocation};
 
-      const relayCollectionId = await helper.foreignAssets.foreignCollectionId(relayAssetId);
+      const relayCollectionId = await helper.foreignAssets.foreignCollectionId(relayLocation);
       if(relayCollectionId == null) {
-        const name = 'Relay Tokens';
-        const tokenPrefix = 'xDOT';
+        const name = 'DOT';
+        const tokenPrefix = 'DOT';
         const decimals = 10;
-        await helper.getSudo().foreignAssets.register(alice, relayAssetId, name, tokenPrefix, {Fungible: decimals});
+        await helper.getSudo().foreignAssets.register(alice, relayLocation, name, tokenPrefix, {Fungible: decimals});
 
-        return await helper.foreignAssets.foreignCollectionId(relayAssetId);
+        return await helper.foreignAssets.foreignCollectionId(relayLocation);
       } else {
         console.log('Relay foreign collection is already registered');
         return relayCollectionId;

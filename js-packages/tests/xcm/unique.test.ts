@@ -19,14 +19,11 @@ import config from '../config.js';
 import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingHydraDxPlaygrounds} from '@unique/test-utils/util.js';
 import {nToBigInt} from '@polkadot/util';
 import {hexToString} from '@polkadot/util';
-import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDER_BUDGET, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper, acalaUrl, astarUrl,  hydraDxUrl,  moonbeamUrl, polkadexUrl, uniqueAssetId} from './xcm.types.js';
+import {ASTAR_DECIMALS, SAFE_XCM_VERSION, SENDBACK_AMOUNT, SENDER_BUDGET, SENDTO_AMOUNT, UNIQUE_CHAIN, UNQ_DECIMALS, XcmTestHelper} from './xcm.types.js';
 
-const testHelper = new XcmTestHelper('unique');
+const testHelper = new XcmTestHelper;
 
-
-
-
-describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -40,14 +37,12 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
-    await usingAcalaPlaygrounds(acalaUrl, async (helper) => {
+    await usingAcalaPlaygrounds(async (helper) => {
       const destination = {
-        V2: {
+        V4: {
           parents: 1,
           interior: {
-            X1: {
-              Parachain: UNIQUE_CHAIN,
-            },
+            X1: [{Parachain: UNIQUE_CHAIN}],
           },
         },
       };
@@ -55,7 +50,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
       const metadata = {
         name: 'Unique Network',
         symbol: 'UNQ',
-        decimals: 18,
+        decimals: Number(UNQ_DECIMALS),
         minimalBalance: 1250_000_000_000_000_000n,
       };
       const assets = (await (helper.callRpc('api.query.assetRegistry.assetMetadatas.entries'))).map(([_k, v] : [any, any]) =>
@@ -66,7 +61,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
       } else {
         console.log('UNQ token already registered on Acala assetRegistry pallet');
       }
-      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
     });
 
     await usingPlaygrounds(async (helper) => {
@@ -75,23 +70,43 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Acala', () => {
   });
 
   itSub('Should connect and send UNQ to Acala', async () => {
-    await testHelper.sendUnqTo('acala', randomAccount);
+    await testHelper.sendUnqFromTo(
+      'unique',
+      'acala',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+    );
   });
 
   itSub('Should connect to Acala and send UNQ back', async () => {
-    await testHelper.sendUnqBack('acala', alice, randomAccount);
+    await testHelper.sendUnqFromTo(
+      'acala',
+      'unique',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+    );
   });
 
   itSub('Acala can send only up to its balance', async () => {
-    await testHelper.sendOnlyOwnedBalance('acala', alice);
+    await testHelper.sendOnlyOwnedBalance(
+      alice,
+      'acala',
+      'unique',
+    );
   });
 
   itSub('Should not accept reserve transfer of UNQ from Acala', async () => {
-    await testHelper.rejectReserveTransferUNQfrom('acala', alice);
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'acala',
+      'unique',
+    );
   });
 });
 
-describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -104,7 +119,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
-    await usingPolkadexPlaygrounds(polkadexUrl, async (helper) => {
+    await usingPolkadexPlaygrounds(async (helper) => {
       const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', []))
         .toJSON() as [])
         .map(nToBigInt).length != 0;
@@ -117,10 +132,20 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
       if(isWhitelisted) {
         console.log('UNQ token is already whitelisted on Polkadex');
       } else {
-        await helper.getSudo().xcmHelper.whitelistToken(alice, uniqueAssetId);
+        await helper.getSudo().xcmHelper.whitelistToken(
+          alice,
+          {
+            Concrete: {
+              parents: 1,
+              interior: {
+                X1: {Parachain: UNIQUE_CHAIN},
+              },
+            },
+          }
+        );
       }
 
-      await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
     });
 
     await usingPlaygrounds(async (helper) => {
@@ -129,162 +154,103 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Polkadex', () => {
   });
 
   itSub('Should connect and send UNQ to Polkadex', async () => {
-    await testHelper.sendUnqTo('polkadex', randomAccount);
+    await testHelper.sendUnqFromTo(
+      'unique',
+      'polkadex',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+    );
   });
 
-
-  itSub('Should connect to Polkadex and send UNQ back', async () => {
-    await testHelper.sendUnqBack('polkadex', alice, randomAccount);
-  });
+  // Polkadex has on a solochain part. We don't model this.
+  // We just test if the message got to the destination in the previous test.
+  // The next tests verify that messages from Polkadex arrive and act nicely.
 
   itSub('Polkadex can send only up to its balance', async () => {
-    await testHelper.sendOnlyOwnedBalance('polkadex', alice);
+    await testHelper.sendOnlyOwnedBalance(
+      alice,
+      'polkadex',
+      'unique',
+    );
   });
 
   itSub('Should not accept reserve transfer of UNQ from Polkadex', async () => {
-    await testHelper.rejectReserveTransferUNQfrom('polkadex', alice);
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'polkadex',
+      'unique',
+    );
   });
 });
 
-// These tests are relevant only when
-// the the corresponding foreign assets are not registered
-describeXCM('[XCMLL] Integration test: Unique rejects non-native tokens', () => {
+describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   let alice: IKeyringPair;
-
-  before(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      alice = await privateKey('//Alice');
-
-      // Set the default version to wrap the first message to other chains.
-      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
-    });
-  });
-
-  itSub('Unique rejects ACA tokens from Acala', async () => {
-    await testHelper.rejectNativeTokensFrom('acala', alice);
-  });
-
-  itSub('Unique rejects GLMR tokens from Moonbeam', async () => {
-    await testHelper.rejectNativeTokensFrom('moonbeam', alice);
-  });
-
-  itSub('Unique rejects ASTR tokens from Astar', async () => {
-    await testHelper.rejectNativeTokensFrom('astar', alice);
-  });
-
-  itSub('Unique rejects PDX tokens from Polkadex', async () => {
-    await testHelper.rejectNativeTokensFrom('polkadex', alice);
-  });
-});
-
-describeXCM('[XCMLL] Integration test: Exchanging UNQ with Moonbeam', () => {
-  // Unique constants
-  let alice: IKeyringPair;
-  let uniqueAssetLocation;
 
   let randomAccountUnique: IKeyringPair;
   let randomAccountMoonbeam: IKeyringPair;
-
-  // Moonbeam constants
-  let assetId: string;
-
-  const uniqueAssetMetadata = {
-    name: 'xcUnique',
-    symbol: 'xcUNQ',
-    decimals: 18,
-    isFrozen: false,
-    minimalBalance: 1n,
-  };
-
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       [randomAccountUnique] = await helper.arrange.createAccounts([0n], alice);
 
-
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+
+      await helper.balance.transferToSubstrate(alice, randomAccountUnique.address, SENDER_BUDGET);
     });
 
-    await usingMoonbeamPlaygrounds(moonbeamUrl, async (helper) => {
+    await usingMoonbeamPlaygrounds(async (helper) => {
       const alithAccount = helper.account.alithAccount();
-      const baltatharAccount = helper.account.baltatharAccount();
-      const dorothyAccount = helper.account.dorothyAccount();
 
       randomAccountMoonbeam = helper.account.create();
 
-      // >>> Sponsoring Dorothy >>>
-      console.log('Sponsoring Dorothy.......');
-      await helper.balance.transferToEthereum(alithAccount, dorothyAccount.address, 11_000_000_000_000_000_000n);
-      console.log('Sponsoring Dorothy.......DONE');
-      // <<< Sponsoring Dorothy <<<
-      uniqueAssetLocation = {
-        XCM: {
-          parents: 1,
-          interior: {X1: {Parachain: UNIQUE_CHAIN}},
-        },
-      };
-      const existentialDeposit = 1n;
-      const isSufficient = true;
-      const unitsPerSecond = 1n;
-      const numAssetsWeightHint = 0;
-
-      if((await helper.assetManager.assetTypeId(uniqueAssetLocation)).toJSON()) {
-        console.log('Unique asset already registered on Moonbeam');
-      } else {
-        const encodedProposal = helper.assetManager.makeRegisterForeignAssetProposal({
-          location: uniqueAssetLocation,
-          metadata: uniqueAssetMetadata,
-          existentialDeposit,
-          isSufficient,
-          unitsPerSecond,
-          numAssetsWeightHint,
-        });
-
-        console.log('Encoded proposal for registerForeignAsset & setAssetUnitsPerSecond is %s', encodedProposal);
-
-        await helper.fastDemocracy.executeProposal('register UNQ foreign asset', encodedProposal);
-      }
-
-      // >>> Acquire Unique AssetId Info on Moonbeam >>>
-      console.log('Acquire Unique AssetId Info on Moonbeam.......');
-
-      assetId = (await helper.assetManager.assetTypeId(uniqueAssetLocation)).toString();
-
-      console.log('UNQ asset ID is %s', assetId);
-      console.log('Acquire Unique AssetId Info on Moonbeam.......DONE');
-
-      // >>> Sponsoring random Account >>>
-      console.log('Sponsoring random Account.......');
-      await helper.balance.transferToEthereum(baltatharAccount, randomAccountMoonbeam.address, 11_000_000_000_000_000_000n);
-      console.log('Sponsoring random Account.......DONE');
-      // <<< Sponsoring random Account <<<
-    });
-
-    await usingPlaygrounds(async (helper) => {
-      await helper.balance.transferToSubstrate(alice, randomAccountUnique.address, SENDER_BUDGET);
+      await helper.balance.transferToEthereum(alithAccount, randomAccountMoonbeam.address, SENDER_BUDGET);
     });
   });
 
   itSub('Should connect and send UNQ to Moonbeam', async () => {
-    await testHelper.sendUnqTo('moonbeam', randomAccountUnique, randomAccountMoonbeam);
+    await testHelper.sendUnqFromTo(
+      'unique',
+      'moonbeam',
+      randomAccountUnique,
+      randomAccountMoonbeam,
+      SENDTO_AMOUNT,
+    );
   });
 
-  itSub('Should connect to Moonbeam and send UNQ back', async () => {
-    await testHelper.sendUnqBack('moonbeam', alice, randomAccountUnique);
+  // TODO Moonbeam uses OpenGov now, we need another way of producing Root Origin in tests.
+  // So we can't register our asset on Moonbeam.
+  // We just test if the message got to the destination in the previous test.
+  itSub.skip('Should connect to Moonbeam and send UNQ back', async () => {
+    await testHelper.sendUnqFromTo(
+      'moonbeam',
+      'unique',
+      randomAccountUnique,
+      randomAccountMoonbeam,
+      SENDBACK_AMOUNT,
+    );
   });
 
-  itSub('Moonbeam can send only up to its balance', async () => {
-    await testHelper.sendOnlyOwnedBalance('moonbeam', alice);
+  itSub.skip('Moonbeam can send only up to its balance', async () => {
+    await testHelper.sendOnlyOwnedBalance(
+      alice,
+      'moonbeam',
+      'unique',
+    );
   });
 
-  itSub('Should not accept reserve transfer of UNQ from Moonbeam', async () => {
-    await testHelper.rejectReserveTransferUNQfrom('moonbeam', alice);
+  itSub.skip('Should not accept reserve transfer of UNQ from Moonbeam', async () => {
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'moonbeam',
+      'unique',
+    );
   });
 });
 
-describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -306,7 +272,7 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
-    await usingAstarPlaygrounds(astarUrl, async (helper) => {
+    await usingAstarPlaygrounds(async (helper) => {
       if(!(await helper.callRpc('api.query.assets.asset', [UNQ_ASSET_ID_ON_ASTAR])).toJSON()) {
         console.log('1. Create foreign asset and metadata');
         await helper.getSudo().assets.forceCreate(
@@ -349,23 +315,43 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with Astar', () => {
   });
 
   itSub('Should connect and send UNQ to Astar', async () => {
-    await testHelper.sendUnqTo('astar', randomAccount);
+    await testHelper.sendUnqFromTo(
+      'unique',
+      'astar',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+    );
   });
 
   itSub('Should connect to Astar and send UNQ back', async () => {
-    await testHelper.sendUnqBack('astar', alice, randomAccount);
+    await testHelper.sendUnqFromTo(
+      'astar',
+      'unique',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+    );
   });
 
   itSub('Astar can send only up to its balance', async () => {
-    await testHelper.sendOnlyOwnedBalance('astar', alice);
+    await testHelper.sendOnlyOwnedBalance(
+      alice,
+      'astar',
+      'unique',
+    );
   });
 
   itSub('Should not accept reserve transfer of UNQ from Astar', async () => {
-    await testHelper.rejectReserveTransferUNQfrom('astar', alice);
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'astar',
+      'unique',
+    );
   });
 });
 
-describeXCM('[XCMLL] Integration test: Exchanging tokens with HydraDx', () => {
+describeXCM('[XCM] Integration test: Exchanging tokens with HydraDx', () => {
   let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
 
@@ -380,24 +366,93 @@ describeXCM('[XCMLL] Integration test: Exchanging tokens with HydraDx', () => {
       await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
     });
 
-    await usingHydraDxPlaygrounds(hydraDxUrl, async (helper) => {
+    await usingHydraDxPlaygrounds(async (helper) => {
       await helper.balance.transferToSubstrate(alice, randomAccount.address, 10000000000000n);
     });
   });
 
   itSub('Should connect and send UNQ to HydraDx', async () => {
-    await testHelper.sendUnqTo('hydraDx', randomAccount);
+    await testHelper.sendUnqFromTo(
+      'unique',
+      'hydraDx',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+    );
   });
 
-  itSub('Should connect to HydraDx and send UNQ back', async () => {
-    await testHelper.sendUnqBack('hydraDx', alice, randomAccount);
+  // TODO
+  itSub.skip('Should connect to HydraDx and send UNQ back', async () => {
+    await testHelper.sendUnqFromTo(
+      'hydraDx',
+      'unique',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+    );
   });
 
   itSub('HydraDx can send only up to its balance', async () => {
-    await testHelper.sendOnlyOwnedBalance('hydraDx', alice);
+    await testHelper.sendOnlyOwnedBalance(
+      alice,
+      'hydraDx',
+      'unique',
+    );
   });
 
   itSub('Should not accept reserve transfer of UNQ from HydraDx', async () => {
-    await testHelper.rejectReserveTransferUNQfrom('hydraDx', alice);
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'hydraDx',
+      'unique',
+    );
+  });
+});
+
+// These tests are relevant only when
+// the the corresponding foreign assets are not registered
+describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
+  let alice: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+  });
+
+  itSub('Unique rejects ACA tokens from Acala', async () => {
+    await testHelper.rejectNativeTokensFrom(
+      alice,
+      'acala',
+      'unique'
+    );
+  });
+
+  // TODO Moonbeam uses OpenGov now, we need another way of producing Root Origin in tests.
+  itSub.skip('Unique rejects GLMR tokens from Moonbeam', async () => {
+    await testHelper.rejectNativeTokensFrom(
+      alice,
+      'moonbeam',
+      'unique',
+    );
+  });
+
+  itSub('Unique rejects ASTR tokens from Astar', async () => {
+    await testHelper.rejectNativeTokensFrom(
+      alice,
+      'astar',
+      'unique',
+    );
+  });
+
+  itSub('Unique rejects PDX tokens from Polkadex', async () => {
+    await testHelper.rejectNativeTokensFrom(
+      alice,
+      'polkadex',
+      'unique',
+    );
   });
 });

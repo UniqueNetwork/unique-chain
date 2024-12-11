@@ -12,22 +12,19 @@ await usingPlaygrounds(async (helper, privateKey) => {
   };
   const alice = await privateKey('//Alice');
   switch (profile) {
-    case 'opal':
-      await bidirOpen(1001, 1002);
-      break;
     case 'quartz':
-      await bidirOpen(1001, 1002);
-      await bidirOpen(1001, 1003);
-      await bidirOpen(1001, 1004);
-      await bidirOpen(1001, 1005);
+      await bidirOpen(2095, 1000);
+      await bidirOpen(2095, 2000);
+      await bidirOpen(2095, 2023);
+      await bidirOpen(2095, 2007);
       break;
     case 'unique':
-      await bidirOpen(1001, 1002);
-      await bidirOpen(1001, 1003);
-      await bidirOpen(1001, 1004);
-      await bidirOpen(1001, 1005);
-      await bidirOpen(1001, 1006);
-      await bidirOpen(1001, 1007);
+      await bidirOpen(2037, 1000);
+      await bidirOpen(2037, 2000);
+      await bidirOpen(2037, 2004);
+      await bidirOpen(2037, 2006);
+      await bidirOpen(2037, 2040);
+      await bidirOpen(2037, 2034);
       break;
     default:
       throw new Error(`unknown hrmp config profile: ${profile}`);

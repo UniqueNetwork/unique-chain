@@ -11,7 +11,7 @@ import {Context} from 'mocha';
 import config from '../tests/config.js';
 import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
 import type {ILogger} from '@unique-nft/playgrounds/types.js';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestendAssetHubHelper, DevKusamaAssetHubHelper, DevPolkadotAssetHubHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -69,29 +69,29 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
 
 export const usingPlaygrounds = <R = void>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<R>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper, R>(DevUniqueHelper, url, code);
 
-export const usingWestmintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
+export const usingWestendAssetHubPlaygrounds = (code: (helper: DevWestendAssetHubHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.westendAssetHubUrl) => usingPlaygroundsGeneral<DevWestendAssetHubHelper>(DevWestendAssetHubHelper, url, code);
 
-export const usingStateminePlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
+export const usingKusamaAssetHubPlaygrounds = (code: (helper: DevWestendAssetHubHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.kusamaAssetHubUrl) => usingPlaygroundsGeneral<DevKusamaAssetHubHelper>(DevWestendAssetHubHelper, url, code);
 
-export const usingStatemintPlaygrounds = (url: string, code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
+export const usingPolkadotAssetHubPlaygrounds = (code: (helper: DevWestendAssetHubHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.polkadotAssetHubUrl) => usingPlaygroundsGeneral<DevPolkadotAssetHubHelper>(DevWestendAssetHubHelper, url, code);
 
-export const usingRelayPlaygrounds = (url: string, code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
+export const usingRelayPlaygrounds = (code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.relayUrl) => usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
 
-export const usingAcalaPlaygrounds = (url: string, code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
+export const usingAcalaPlaygrounds = (code: (helper: DevAcalaHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.acalaUrl) => usingPlaygroundsGeneral<DevAcalaHelper>(DevAcalaHelper, url, code);
 
-export const usingKaruraPlaygrounds = (url: string, code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
+export const usingKaruraPlaygrounds = (code: (helper: DevKaruraHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.karuraUrl) => usingPlaygroundsGeneral<DevKaruraHelper>(DevAcalaHelper, url, code);
 
-export const usingMoonbeamPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
+export const usingMoonbeamPlaygrounds = (code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.moonbeamUrl) => usingPlaygroundsGeneral<DevMoonbeamHelper>(DevMoonbeamHelper, url, code);
 
-export const usingMoonriverPlaygrounds = (url: string, code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
+export const usingMoonriverPlaygrounds = (code: (helper: DevMoonbeamHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.moonriverUrl) => usingPlaygroundsGeneral<DevMoonriverHelper>(DevMoonriverHelper, url, code);
 
-export const usingAstarPlaygrounds = (url: string, code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
+export const usingAstarPlaygrounds = (code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.astarUrl) => usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
 
-export const usingShidenPlaygrounds = (url: string, code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
+export const usingShidenPlaygrounds = (code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.shidenUrl) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
 
-export const usingPolkadexPlaygrounds = (url: string, code: (helper: DevPolkadexHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevPolkadexHelper>(DevPolkadexHelper, url, code);
+export const usingPolkadexPlaygrounds = (code: (helper: DevPolkadexHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.polkadexUrl) => usingPlaygroundsGeneral<DevPolkadexHelper>(DevPolkadexHelper, url, code);
 
-export const usingHydraDxPlaygrounds = (url: string, code: (helper: DevHydraDxHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>) => usingPlaygroundsGeneral<DevHydraDxHelper>(DevHydraDxHelper, url, code);
+export const usingHydraDxPlaygrounds = (code: (helper: DevHydraDxHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.hydraDxUrl) => usingPlaygroundsGeneral<DevHydraDxHelper>(DevHydraDxHelper, url, code);
 
 export const MINIMUM_DONOR_FUND = 4_000_000n;
 export const DONOR_FUNDING = 4_000_000n;

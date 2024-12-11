@@ -17,8 +17,8 @@ export class XcmChainHelper extends ChainHelperBase {
 }
 
 class AcalaAssetRegistryGroup extends HelperGroup<AcalaHelper> {
-  async registerForeignAsset(signer: TSigner, destination: any, metadata: AcalaAssetMetadata) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.assetRegistry.registerForeignAsset', [destination, metadata], true);
+  async registerForeignAsset(signer: TSigner, location: any, metadata: AcalaAssetMetadata) {
+    await this.helper.executeExtrinsic(signer, 'api.tx.assetRegistry.registerForeignAsset', [location, metadata], true);
   }
 }
 
@@ -158,7 +158,7 @@ export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
     await this.helper.executeExtrinsic(
       signer,
       'api.tx.foreignAssets.forceRegisterForeignAsset',
-      [{V3: assetId}, this.helper.util.str2vec(name), tokenPrefix, mode],
+      [{V4: assetId}, this.helper.util.str2vec(name), tokenPrefix, mode],
       true,
     );
   }
@@ -177,8 +177,12 @@ export class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     this.palletName = palletName;
   }
 
+  async transferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
+    return await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.transferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+  }
+
   async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+    return await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.limitedReserveTransferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
   }
 
   async setSafeXcmVersion(signer: TSigner, version: number) {
@@ -189,6 +193,7 @@ export class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.teleportAssets`, [destination, beneficiary, assets, feeAssetItem], true);
   }
 
+  // TODO
   async teleportNativeAsset(signer: TSigner, destinationParaId: number, targetAccount: Uint8Array, amount: bigint, xcmVersion = 3) {
     const destinationContent = {
       parents: 0,
@@ -270,6 +275,10 @@ export class XTokensGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiasset', [asset, destination, destWeight], true);
   }
 
+  async transferMultiassets(signer: TSigner, assets: any, feeItem: number, destination: any, destWeight: any) {
+    return await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMultiassets', [assets, feeItem, destination, destWeight], true);
+  }
+
   async transferMulticurrencies(signer: TSigner, currencies: any[], feeItem: number, destLocation: any, destWeight: any) {
     await this.helper.executeExtrinsic(signer, 'api.tx.xTokens.transferMulticurrencies', [currencies, feeItem, destLocation, destWeight], true);
   }
@@ -330,14 +339,14 @@ export class RelayHelper extends XcmChainHelper {
   }
 }
 
-export class WestmintHelper extends XcmChainHelper {
-  balance: SubstrateBalanceGroup<WestmintHelper>;
-  xcm: XcmGroup<WestmintHelper>;
-  assets: AssetsGroup<WestmintHelper>;
-  xTokens: XTokensGroup<WestmintHelper>;
+export class WestendAssetHubHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<WestendAssetHubHelper>;
+  xcm: XcmGroup<WestendAssetHubHelper>;
+  assets: AssetsGroup<WestendAssetHubHelper>;
+  xTokens: XTokensGroup<WestendAssetHubHelper>;
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
-    super(logger, options.helperBase ?? WestmintHelper);
+    super(logger, options.helperBase ?? WestendAssetHubHelper);
 
     this.balance = new SubstrateBalanceGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
@@ -351,6 +360,7 @@ export class MoonbeamHelper extends XcmChainHelper {
   assetManager: MoonbeamAssetManagerGroup;
   assets: AssetsGroup<MoonbeamHelper>;
   xTokens: XTokensGroup<MoonbeamHelper>;
+  xcm: XcmGroup<MoonbeamHelper>;
   democracy: MoonbeamDemocracyGroup;
   collective: {
     council: MoonbeamCollectiveGroup,
@@ -364,6 +374,7 @@ export class MoonbeamHelper extends XcmChainHelper {
     this.assetManager = new MoonbeamAssetManagerGroup(this);
     this.assets = new AssetsGroup(this);
     this.xTokens = new XTokensGroup(this);
+    this.xcm = new XcmGroup(this, 'polkadotXcm');
     this.democracy = new MoonbeamDemocracyGroup(this, options);
     this.collective = {
       council: new MoonbeamCollectiveGroup(this, 'councilCollective'),
@@ -376,12 +387,14 @@ export class AstarHelper extends XcmChainHelper {
   balance: SubstrateBalanceGroup<AstarHelper>;
   assets: AssetsGroup<AstarHelper>;
   xcm: XcmGroup<AstarHelper>;
+  xTokens: XTokensGroup<AstarHelper>;
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
     super(logger, options.helperBase ?? AstarHelper);
 
     this.balance = new SubstrateBalanceGroup(this);
     this.assets = new AssetsGroup(this);
+    this.xTokens = new XTokensGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
   }
 }
