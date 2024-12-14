@@ -45,8 +45,8 @@ local relay = {
     },
 };
 
-local quartz = {
-	name: 'quartz',
+local unique = {
+	name: 'unique',
 	bin: 'bin/unique',
 	paraId: 2095,
 	spec: {Genesis:{
@@ -150,6 +150,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [quartz, assethub, karura, moonriver, shiden]
+		for para in [unique, assethub, karura, moonriver, shiden]
 	},
 }
