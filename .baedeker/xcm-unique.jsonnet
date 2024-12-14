@@ -167,8 +167,8 @@ local polkadex = {
 	},
 };
 
-local hydration = {
-	name: 'hydration',
+local hydradx = {
+	name: 'hydradx',
 	bin: 'bin/hydradx',
 	paraId: 2034,
 	spec: {Genesis:{
@@ -197,7 +197,7 @@ relay + {
 			assethub,
 			astar,
 			polkadex,
-			hydration,
+			hydradx,
 		]
 	},
 }

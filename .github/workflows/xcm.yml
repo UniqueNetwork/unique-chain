@@ -213,6 +213,9 @@ jobs:
         with:
           jpath: |
             .baedeker/vendor
+          input-modules: |
+            lib:baedeker-library/ops/nginx-dev.libsonnet
+            lib:baedeker-library/ops/devtools.libsonnet            
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           tla-code: |
@@ -220,8 +223,8 @@ jobs:
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, extra_node_mixin={extraArgs: []}, for_chain = false)
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
@@ -273,6 +276,11 @@ jobs:
           path: js-packages/tests/mochawesome-report/test-*.json
           reporter: mochawesome-json
           fail-on-error: 'false'
+
+      - name: Remove all containers
+        if: always()                   # run this step always
+        run: |
+          docker ps -aq | xargs docker rm -f
 
       - name: Remove builder cache
         if: always()
