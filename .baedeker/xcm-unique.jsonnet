@@ -58,6 +58,7 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
 		},
 		for name in ['alice', 'bob']
@@ -166,8 +167,8 @@ local polkadex = {
 	},
 };
 
-local hydration = {
-	name: 'hydration',
+local hydradx = {
+	name: 'hydradx',
 	bin: 'bin/hydradx',
 	paraId: 2034,
 	spec: {Genesis:{
@@ -196,7 +197,7 @@ relay + {
 			assethub,
 			astar,
 			polkadex,
-			hydration,
+			hydradx,
 		]
 	},
 }
