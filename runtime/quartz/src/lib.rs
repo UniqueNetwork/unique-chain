@@ -53,7 +53,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("quartz"),
 
 	authoring_version: 1,
-	spec_version: 10140080,
+	spec_version: 10140081,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
