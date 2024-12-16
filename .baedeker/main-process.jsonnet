@@ -25,9 +25,8 @@ local relay = {
                                     validation_upgrade_cooldown: 400,
                                     validation_upgrade_delay: 200,
                                     minimum_validation_upgrade_delay: 15,
-                                    minimum_backing_votes: 1,
-                                    needed_approvals: 1,
-									code_retention_period: 2400,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
                                     scheduler_params+: {
                                       lookahead: 1,
                                     },
