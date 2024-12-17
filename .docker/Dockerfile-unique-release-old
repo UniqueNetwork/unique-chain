@@ -1,0 +1,38 @@
+# ===== Rust builder =====
+FROM ubuntu:22.04 AS rust
+LABEL maintainer="Unique.Network"
+
+ENV CARGO_HOME="/cargo-home"
+ENV PATH="/cargo-home/bin:$PATH"
+ENV TZ=UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+    apt-get install -y curl cmake pkg-config libssl-dev git clang llvm libudev-dev protobuf-compiler && \
+    apt-get clean && \
+    rm -r /var/lib/apt/lists/*
+
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+# ===== BUILD POLKADOT =====
+FROM rust AS builder
+
+WORKDIR /workdir
+
+ARG CODE_VERSION
+ARG CODE_HASH
+ARG FEATURES
+
+RUN git clone -b "${CODE_VERSION}" https://github.com/uniquenetwork/unique-chain.git && \
+    cd unique-chain && git switch "${CODE_HASH}" --detach && \
+    CARGO_INCREMENTAL=0 cargo build --release --features="${FEATURES}" --locked && \
+    mv ./target/release/unique-collator /workdir/unique-chain/ && \
+    cd target/release/wbuild && find . -name "*.wasm" -exec sh -c 'mkdir -p "/workdir/unique-chain/wasm/$(dirname {})"; cp {} "/workdir/unique-chain/wasm/{}"' \;
+
+# ===== BIN ======
+
+FROM ubuntu:22.04 
+
+COPY --from=builder /workdir/unique-chain/unique-collator /bin/unique-collator
+COPY --from=builder /workdir/unique-chain/wasm /wasm
+ENTRYPOINT ["/bin/unique-collator"]
