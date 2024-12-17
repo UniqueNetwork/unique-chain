@@ -95,7 +95,7 @@ jobs:
           container: uniquenetwork/ci-main-process
           tag: ${{ matrix.network }}-${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
           context: .docker
-          dockerfile: Dockerfile-unique-release
+          dockerfile: Dockerfile-unique-release-old
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
             --build-arg CODE_VERSION=${{ env.MAINNET_BRANCH}}
