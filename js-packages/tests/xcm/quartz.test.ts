@@ -15,11 +15,228 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingShidenPlaygrounds, usingMoonriverPlaygrounds} from '@unique/test-utils/util.js';
-import {QUARTZ_CHAIN, SAFE_XCM_VERSION, XcmTestHelper, SENDER_BUDGET, SENDTO_AMOUNT, SENDBACK_AMOUNT, SHIDEN_DECIMALS, UNQ_DECIMALS} from './xcm.types.js';
+import {itSub, describeXCM, usingPlaygrounds, usingKaruraPlaygrounds, usingShidenPlaygrounds, usingMoonriverPlaygrounds, usingRelayPlaygrounds, usingKusamaAssetHubPlaygrounds} from '@unique/test-utils/util.js';
+import {QUARTZ_CHAIN, SAFE_XCM_VERSION, XcmTestHelper, SENDER_BUDGET, SENDTO_AMOUNT, SENDBACK_AMOUNT, SHIDEN_DECIMALS, UNQ_DECIMALS, POLKADOT_ASSETHUB_CHAIN, USDT_ASSET_ID, USDT_DECIMALS, ASSET_HUB_PALLET_ASSETS} from './xcm.types.js';
 import {hexToString} from '@polkadot/util';
 
 const testHelper = new XcmTestHelper;
+
+describeXCM('[XCM] Integration test: Exchanging tokens with Relay', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+  let dotDerivativeCollectionId: number;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      randomAccount = helper.arrange.createEmptyAccount();
+
+      const relayLocation = {
+        parents: 1,
+        interior: 'Here',
+      };
+
+      dotDerivativeCollectionId = await helper.foreignAssets.foreignCollectionId(relayLocation);
+      if(dotDerivativeCollectionId == null) {
+        const name = 'DOT';
+        const tokenPrefix = 'DOT';
+        const decimals = 10;
+        await helper.getSudo().foreignAssets.register(alice, relayLocation, name, tokenPrefix, {Fungible: decimals});
+
+        dotDerivativeCollectionId = await helper.foreignAssets.foreignCollectionId(relayLocation);
+      } else {
+        console.log('Relay foreign collection is already registered');
+      }
+
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingRelayPlaygrounds(async (helper) => {
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+  });
+
+  itSub('Should connect and send DOT to Quartz', async () => {
+    await testHelper.sendDotFromTo(
+      'relay',
+      'quartz',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+      dotDerivativeCollectionId,
+    );
+  });
+
+  itSub('Should connect to Quartz and send DOT back', async () => {
+    await testHelper.sendDotFromTo(
+      'quartz',
+      'relay',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+      dotDerivativeCollectionId,
+    );
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Relay', async () => {
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'relay',
+      'quartz',
+    );
+  });
+});
+
+describeXCM('[XCM] Integration test: Exchanging tokens with AssetHub', () => {
+  let alice: IKeyringPair;
+  let randomAccount: IKeyringPair;
+  let usdtDerivativeCollectionId: number;
+
+  const USDT_NAME = 'USDT';
+  const USDT_SYM = 'USDT';
+
+  let setupAssetHubCall: any;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+      randomAccount = helper.arrange.createEmptyAccount();
+
+      const usdtLocation = {
+        parents: 1,
+        interior: {
+          X3: [
+            {
+              Parachain: POLKADOT_ASSETHUB_CHAIN,
+            },
+            {
+              PalletInstance: ASSET_HUB_PALLET_ASSETS,
+            },
+            {
+              GeneralIndex: USDT_ASSET_ID,
+            },
+          ],
+        },
+      };
+
+      usdtDerivativeCollectionId = await helper.foreignAssets.foreignCollectionId(usdtLocation);
+      if(usdtDerivativeCollectionId == null) {
+        await helper.getSudo().foreignAssets.register(alice, usdtLocation, USDT_NAME, USDT_SYM, {Fungible: USDT_DECIMALS});
+
+        usdtDerivativeCollectionId = await helper.foreignAssets.foreignCollectionId(usdtLocation);
+      } else {
+        console.log('USDT collection is already registered');
+      }
+
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingKusamaAssetHubPlaygrounds(async (helper) => {
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
+  
+      const setSafeXcmVersion = helper.constructApiCall(`api.tx.${helper.xcm.palletName}.forceDefaultXcmVersion`, [SAFE_XCM_VERSION]);
+
+      const isSufficient = true;
+      const minBalance = 10000;
+      const isFrozen = false;
+
+      const createUsdtCall = helper.constructApiCall(
+        'api.tx.assets.forceCreate', [
+          USDT_ASSET_ID,
+          alice.address,
+          isSufficient,
+          minBalance,
+        ],
+      );
+  
+      const setUsdtMetadata = helper.constructApiCall(
+        'api.tx.assets.forceSetMetadata', [
+          USDT_ASSET_ID,
+          USDT_NAME,
+          USDT_SYM,
+          USDT_DECIMALS,
+          isFrozen,
+        ],
+      );
+
+      setupAssetHubCall = helper.constructApiCall('api.tx.utility.batchAll', [[
+        setSafeXcmVersion,
+        createUsdtCall,
+        setUsdtMetadata,
+      ]]);
+    });
+
+    await usingRelayPlaygrounds(async (helper) => {
+      await helper.getSudo().xcm.send(
+        alice,
+        {
+          V4: {
+            parents: 0,
+            interior: {
+              X1: [{Parachain: POLKADOT_ASSETHUB_CHAIN}],
+            },
+          },
+        },
+        {
+          V4: [
+            {
+              UnpaidExecution: {
+                weightLimit: 'Unlimited',
+              },
+            },
+            {
+              Transact: {
+                originKind: 'Superuser',
+                requireWeightAtMost: {
+                  refTime: 8000000000,
+                  proofSize: 8000,
+                },
+                call: {
+                  encoded: setupAssetHubCall.method.toHex(),
+                },
+              }
+            }
+          ],
+        },
+      );
+    });
+
+    await usingKusamaAssetHubPlaygrounds(async (helper) => {
+      await helper.assets.mint(alice, USDT_ASSET_ID, randomAccount.address, SENDER_BUDGET);
+    });
+  });
+
+  itSub('Should connect and send USDT to Quartz', async () => {
+    await testHelper.sendUsdtFromTo(
+      'kusamaAssetHub',
+      'quartz',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+      usdtDerivativeCollectionId,
+    );
+  });
+
+  itSub('Should connect to Quartz and send USDT back', async () => {
+    await testHelper.sendUsdtFromTo(
+      'quartz',
+      'kusamaAssetHub',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+      usdtDerivativeCollectionId,
+    );
+  });
+});
 
 describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   let alice: IKeyringPair;
@@ -28,7 +245,9 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
-      [randomAccount] = await helper.arrange.createAccounts([0n], alice);
+      randomAccount = helper.arrange.createEmptyAccount();
+
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
 
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
@@ -47,8 +266,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       const metadata = {
         name: 'Quartz',
         symbol: 'QTZ',
-        decimals: Number(UNQ_DECIMALS),
-        minimalBalance: 1000000000000000000n,
+        decimals: UNQ_DECIMALS,
+        minimalBalance: 1n * 10n ** BigInt(UNQ_DECIMALS),
       };
 
       const assets = (await (helper.callRpc('api.query.assetRegistry.assetMetadatas.entries'))).map(([_k, v]: [any, any]) =>
@@ -59,10 +278,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       } else {
         console.log('QTZ token already registered on Karura assetRegistry pallet');
       }
-      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
-    });
-
-    await usingPlaygrounds(async (helper) => {
       await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
     });
   });
@@ -113,12 +328,12 @@ describeXCM('[XCM] Integration test: Exchanging QTZ with Moonriver', () => {
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
-      [randomAccountQuartz] = await helper.arrange.createAccounts([0n], alice);
-
-      // Set the default version to wrap the first message to other chains.
-      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+      randomAccountQuartz = helper.arrange.createEmptyAccount();
 
       await helper.balance.transferToSubstrate(alice, randomAccountQuartz.address, SENDER_BUDGET);
+      
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
 
     await usingMoonriverPlaygrounds(async (helper) => {
@@ -207,7 +422,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Shiden', () => {
           QTZ_ASSET_ID_ON_SHIDEN,
           'Quartz',
           'QTZ',
-          Number(UNQ_DECIMALS),
+          UNQ_DECIMALS,
         );
 
         console.log('2. Register asset location on Shiden');

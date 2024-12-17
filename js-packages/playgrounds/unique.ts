@@ -38,6 +38,7 @@ import type {
   TSubstrateAccount,
   TNetworks,
   IEthCrossAccountId,
+  IPhasicEvent,
 } from './types.js';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 
@@ -364,6 +365,32 @@ class UniqueEventHelper {
       });
 
       parsedEvents.push(eventData);
+    });
+
+    return parsedEvents;
+  }
+
+  public static extractPhasicEvents(events: { event: any, phase: any }[]): IPhasicEvent[] {
+    const parsedEvents: IPhasicEvent[] = [];
+
+    events.forEach((record) => {
+      const {event, phase} = record;
+
+      const eventData: IEvent = {
+        section: event.section.toString(),
+        method: event.method.toString(),
+        index: this.extractIndex(event.index),
+
+        // assigned without any transformation for compatibility with the `ITransactionResult` events
+        data: event.data,
+
+        phase: phase.toJSON(),
+      };
+
+      parsedEvents.push({
+        phase,
+        event: eventData,
+      });
     });
 
     return parsedEvents;
