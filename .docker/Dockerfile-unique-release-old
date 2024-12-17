@@ -1,10 +1,11 @@
 # ===== Rust builder =====
-FROM ubuntu:22.04 AS rust
+FROM ubuntu:22.04 as rust
 LABEL maintainer="Unique.Network"
 
 ENV CARGO_HOME="/cargo-home"
 ENV PATH="/cargo-home/bin:$PATH"
 ENV TZ=UTC
+ENV RUST_TOOLCHAIN=nightly-2024-02-04
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 RUN apt-get update && \
@@ -13,6 +14,14 @@ RUN apt-get update && \
     rm -r /var/lib/apt/lists/*
 
 RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain none
+
+ARG RUST_TOOLCHAIN
+RUN echo "Using Rust '$RUST_TOOLCHAIN'" && \
+    rustup toolchain install $RUST_TOOLCHAIN && \
+    rustup target add wasm32-unknown-unknown --toolchain $RUST_TOOLCHAIN && \
+    rustup default $RUST_TOOLCHAIN && \
+    rustup target list --installed && \
+    rustup show
 
 # ===== BUILD POLKADOT =====
 FROM rust AS builder
