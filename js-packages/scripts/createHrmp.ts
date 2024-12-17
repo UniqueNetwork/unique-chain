@@ -29,6 +29,8 @@ await usingPlaygrounds(async (helper, privateKey) => {
     default:
       throw new Error(`unknown hrmp config profile: ${profile}`);
   }
+
+  await helper.wait.newSessions(1);
 }, config.relayUrl);
 // We miss disconnect/unref somewhere.
 process.exit(0);

@@ -13,7 +13,7 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
-import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
+import type {ICrossAccountId, ILogger, IPhasicEvent, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
 import type {FrameSystemEventRecord, XcmV2TraitsError, StagingXcmV4TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
@@ -102,13 +102,13 @@ function EventHelper(section: string, method: string, wrapEvent: (data: any[]) =
         .map(e => this.wrapEvent(e.event.data));
     }
 
-    find(txres: ITransactionResult) {
-      const e = txres.result.events.find(e => e.event.section === section && e.event.method === method);
+    find(events: IPhasicEvent[]) {
+      const e = events.find(e => e.event.section === section && e.event.method === method);
       return e ? this.wrapEvent(e.event.data) : null;
     }
 
-    expect(txres: ITransactionResult) {
-      const e = this.find(txres);
+    expect(events: IPhasicEvent[]) {
+      const e = this.find(events);
       if(e) {
         return e;
       } else {
@@ -271,6 +271,18 @@ export class Event {
   static XcmpQueue = class extends EventSection('xcmpQueue') {
     static XcmpMessageSent = this.Method('XcmpMessageSent', data => ({
       messageHash: eventJsonData(data, 0),
+    }));
+  };
+
+  static XcmPallet = class extends EventSection('xcmPallet') {
+    static Sent = this.Method('Sent', data => ({
+      messageHash: eventJsonData(data, 3),
+    }));
+  };
+
+  static PolkadotXcm = class extends EventSection('polkadotXcm') {
+    static Sent = this.Method('Sent', data => ({
+      messageHash: eventJsonData(data, 3),
     }));
   };
 
