@@ -95,6 +95,7 @@ jobs:
           container: uniquenetwork/ci-main-process
           tag: ${{ matrix.network }}-${{ env.MAINNET_BRANCH }}-${{ env.MAINNET_HASH}}
           context: .docker
+          #  TODO: return to Dockerfile-unique-release after release v10140080
           dockerfile: Dockerfile-unique-release-old
           args: |
             --build-arg FEATURES=${{ matrix.network }}-runtime
@@ -189,7 +190,7 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: "Reconcile: 1 node updating"
+      - name: "Reconcile: update all nodes except one"
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         id: reconcile0
         uses: UniqueNetwork/baedeker-action/reconcile@v1.2
@@ -211,7 +212,7 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: "Reconcile: nodes updating"
+      - name: "Reconcile: update the remaining node"
         if: ${{ !cancelled() && steps.alive1_1.outcome == 'success' }}
         id: reconcile1
         uses: UniqueNetwork/baedeker-action/reconcile@v1.2
@@ -241,6 +242,15 @@ jobs:
           yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      ### temporary solution!!!!!!! ###
+      ### TODO: delete this step after release v10140080 or put it into a nicer script
+      - name: wait 100 blocks for runtime and restart all parachain nodes
+        if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
+        run: |
+          sleep 660
+          echo "Restarting parachain nodes"
+          for i in `docker ps -f name=relay-unique-node -q`; do docker restart $i; done
 
       - name: Ensure network is alive
         working-directory: js-packages/tests
