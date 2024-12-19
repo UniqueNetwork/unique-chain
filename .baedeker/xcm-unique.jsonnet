@@ -10,17 +10,41 @@ local relay = {
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: relay_spec,
-		modify:: m.genericRelay($, hrmp = std.join([], [
-			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
-			// for [a, b] in [
-				// ['unique', 'acala'],
-				// ['unique', 'moonbeam'],
-				// ['unique', 'statemint'],
-				// ['unique', 'astar'],
-				// ['unique', 'polkadex'],
-			// ]
-		])),
-	}},
+		modify:: bdk.mixer([
+			m.genericRelay($, hrmp = std.join([], [
+				// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+				// for [a, b] in [
+					// ['unique', 'acala'],
+					// ['unique', 'moonbeam'],
+					// ['unique', 'statemint'],
+					// ['unique', 'astar'],
+					// ['unique', 'polkadex'],
+				]
+			])),
+            m.simplifyGenesisName(),
+            {
+                _genesis+: {
+                            configuration+: {
+                                config+: {
+                                    async_backing_params+: {
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+                                    validation_upgrade_cooldown: 200,
+                                    validation_upgrade_delay: 100,
+                                    minimum_validation_upgrade_delay: 15,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
+                                    scheduler_params+: {
+                                      lookahead: 1,
+                                    },
+								},
+							},
+				},
+			},
+            m.unsimplifyGenesisName(),
+		]),
+	}},	
 	nodes: {
 		[name]: {
 			bin: $.bin,
