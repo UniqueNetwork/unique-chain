@@ -5,44 +5,30 @@ m = import 'baedeker-library/mixin/spec.libsonnet',
 function(relay_spec, assethub_spec)
 
 local relay = {
-    name: 'relay',
-    bin: 'bin/polkadot',
-    validatorIdAssignment: 'staking',
-    spec: {Genesis:{
-        chain: relay_spec,
-        modify:: bdk.mixer([
-            m.genericRelay($),
-            {
-                genesis+: {
-                    runtimeGenesis+: {
-                        runtime+: {
-                            configuration+: {
-                                config+: {
-                                    async_backing_params+: {
-                                        allowed_ancestry_len: 3,
-                                        max_candidate_depth: 4,
-                                    },
-                                    scheduling_lookahead:5,
-                                    max_validators_per_core:2,
-                                    minimum_backing_votes:2,
-                                    needed_approvals:2,
-                                    on_demand_cores:5,
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        ]),
-    }},
-    nodes: {
-        [name]: {
-            bin: $.bin,
-            wantedKeys: 'relay',
-            expectedDataPath: '/parity',
-        },
-        for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
-    },
+	name: 'relay',
+	bin: 'bin/polkadot',
+	validatorIdAssignment: 'staking',
+	spec: {Genesis:{
+		chain: relay_spec,
+		modify:: m.genericRelay($, hrmp = std.join([], [
+			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+			// for [a, b] in [
+				// ['unique', 'acala'],
+				// ['unique', 'moonbeam'],
+				// ['unique', 'statemint'],
+				// ['unique', 'astar'],
+				// ['unique', 'polkadex'],
+			// ]
+		])),
+	}},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'relay',
+			expectedDataPath: '/parity',
+		},
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
+	},
 };
 
 local unique = {
