@@ -37,9 +37,9 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_name {polkadot}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.WESTMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}, runs_on {ci}
-            network {quartz}, relay_name {kusama}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINE_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runs_on {L}
-            network {unique}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runs_on {XL}
+            network {opal}, relay_name {polkadot}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.ASSET_HUB_POLKADOT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}, runs_on {ci}
+            network {quartz}, relay_name {kusama}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.ASSET_HUB_KUSAMA_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}, runs_on {L}
+            network {unique}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.ASSET_HUB_POLKADOT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}, runs_on {XL}
 
   xcm:
     needs: prepare-execution-marix
