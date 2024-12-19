@@ -86,7 +86,7 @@ jobs:
           yarn add mochawesome
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn testGovernance --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn testGovernance --reporter mochawesome --reporter-options reportDir=js-packages/tests/mochawesome-report/,reportFilename=test-${NOW}
         env:
           RPC_URL: http://127.0.0.1:9944/
 

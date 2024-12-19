@@ -19,4 +19,4 @@ services:
       options:
         max-size: "1m"
         max-file: "3"
-    command: cargo run --profile integration-tests --features={{ NETWORK }}-runtime,gov-test-timings,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external
+    command: WASM_BUILD_TYPE=integration-tests && cargo run --profile integration-tests --features={{ NETWORK }}-runtime,gov-test-timings,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external
