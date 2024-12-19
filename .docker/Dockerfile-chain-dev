@@ -7,4 +7,4 @@ WORKDIR /workdir
 
 RUN cargo build --profile integration-tests --features=${NETWORK}-runtime,fast-inflation
 
-CMD WASM_BUILD_TYPE=integration-tests && cargo run --profile integration-tests --features=${NETWORK}-runtime,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external
+CMD WASM_BUILD_TYPE=integration-tests && cargo run --profile integration-tests --features=${NETWORK}-runtime,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external --idle-autoseal-interval 1000 --autoseal-finalization-delay 1
