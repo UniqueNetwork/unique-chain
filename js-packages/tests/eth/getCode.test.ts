@@ -50,4 +50,28 @@ describe('RPC eth_getCode', () => {
     expect(contractCodeSub).to.has.length.greaterThan(4);
     expect(contractCodeEth).to.has.length.greaterThan(4);
   });
+  
+  itEth(`returns notning for unknown collection: u32::MAX`, async ({helper}) => {
+    const address = helper.ethAddress.fromCollectionId(4_294_967_294);
+    const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [address])).toJSON();
+    const contractCodeEth = (await helper.getWeb3().eth.getCode(address));
+
+    expect(contractCodeSub).to.has.length.lessThan(3);
+    expect(contractCodeEth).to.has.length.lessThan(3);
+  });
+
+  itEth('returns value for collection, created from substrate side', async ({helper}) => {
+    const collectionNFT = await helper.nft.mintCollection(donor, {name: 'nft', description: 'nft', tokenPrefix: 'NFT'});
+    const collectionRFT = await helper.rft.mintCollection(donor, {name: 'rft', description: 'rft', tokenPrefix: 'RFT'});
+    const collectionFT = await helper.ft.mintCollection(donor, {name: 'ft', description: 'ft', tokenPrefix: 'FT'});
+
+    for(const collection of [collectionNFT, collectionRFT, collectionFT]) {
+      const address = helper.ethAddress.fromCollectionId(collection.collectionId);
+      const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [address])).toJSON();
+      const contractCodeEth = (await helper.getWeb3().eth.getCode(address));
+  
+      expect(contractCodeSub).to.has.length.greaterThan(4);
+      expect(contractCodeEth).to.has.length.greaterThan(4);
+    }
+  });
 });
