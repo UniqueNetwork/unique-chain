@@ -8,33 +8,34 @@ local relay = {
     name: 'relay',
     bin: 'bin/polkadot',
     validatorIdAssignment: 'staking',
-    spec: {Genesis:{
-        chain: relay_spec,
-        modify:: bdk.mixer([
-            m.genericRelay($),
+	spec: {Genesis:{
+		chain: relay_spec,
+		modify:: bdk.mixer([
+			m.genericRelay($, hrmp = std.join([], []])),
+            m.simplifyGenesisName(),
             {
-                genesis+: {
-                    runtimeGenesis+: {
-                        runtime+: {
+                _genesis+: {
                             configuration+: {
                                 config+: {
                                     async_backing_params+: {
-                                        allowed_ancestry_len: 3,
-                                        max_candidate_depth: 4,
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+                                    validation_upgrade_cooldown: 200,
+                                    validation_upgrade_delay: 100,
+                                    minimum_validation_upgrade_delay: 15,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
+                                    scheduler_params+: {
+                                      lookahead: 1,
                                     },
-                                    scheduling_lookahead:5,
-                                    max_validators_per_core:2,
-                                    minimum_backing_votes:2,
-                                    needed_approvals:2,
-                                    on_demand_cores:5,
-                                },
-                            },
-                        },
-                    },
-                },
-            },
-        ]),
-    }},
+								},
+							},
+				},
+			},
+            m.unsimplifyGenesisName(),
+		]),
+	}},	
     nodes: {
         [name]: {
             bin: $.bin,
