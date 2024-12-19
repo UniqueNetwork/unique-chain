@@ -38,6 +38,7 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
 		},
 		for name in ['alice', 'bob']

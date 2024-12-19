@@ -26,7 +26,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly', 'iggy', 'john', 'kurt']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
 	},
 };
 
@@ -43,6 +43,7 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
 		},
 		for name in ['alice', 'bob']
