@@ -18,7 +18,7 @@ local relay = {
 					// ['quartz', 'moonriver'],
 					// ['quartz', 'statemine'],
 					// ['quartz', 'shiden'],
-				]
+				// ]
 			])),
             m.simplifyGenesisName(),
             {

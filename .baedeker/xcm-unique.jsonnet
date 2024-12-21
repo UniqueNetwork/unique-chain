@@ -19,7 +19,7 @@ local relay = {
 					// ['unique', 'statemint'],
 					// ['unique', 'astar'],
 					// ['unique', 'polkadex'],
-				]
+				// ]
 			])),
             m.simplifyGenesisName(),
             {
