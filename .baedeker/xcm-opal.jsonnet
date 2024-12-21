@@ -11,7 +11,7 @@ local relay = {
 	spec: {Genesis:{
 		chain: relay_spec,
 		modify:: bdk.mixer([
-			m.genericRelay($, hrmp = std.join([], []])),
+			m.genericRelay($, hrmp = std.join([], [])),
             m.simplifyGenesisName(),
             {
                 _genesis+: {
