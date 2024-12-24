@@ -144,31 +144,27 @@ describeXCM('[XCM] Integration test: Exchanging tokens with AssetHub', () => {
 
     await usingPolkadotAssetHubPlaygrounds(async (helper) => {
       await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
-  
+
       const setSafeXcmVersion = helper.constructApiCall(`api.tx.${helper.xcm.palletName}.forceDefaultXcmVersion`, [SAFE_XCM_VERSION]);
 
       const isSufficient = true;
       const minBalance = 10000;
       const isFrozen = false;
 
-      const createUsdtCall = helper.constructApiCall(
-        'api.tx.assets.forceCreate', [
-          USDT_ASSET_ID,
-          alice.address,
-          isSufficient,
-          minBalance,
-        ],
-      );
-  
-      const setUsdtMetadata = helper.constructApiCall(
-        'api.tx.assets.forceSetMetadata', [
-          USDT_ASSET_ID,
-          USDT_NAME,
-          USDT_SYM,
-          USDT_DECIMALS,
-          isFrozen,
-        ],
-      );
+      const createUsdtCall = helper.constructApiCall('api.tx.assets.forceCreate', [
+        USDT_ASSET_ID,
+        alice.address,
+        isSufficient,
+        minBalance,
+      ]);
+
+      const setUsdtMetadata = helper.constructApiCall('api.tx.assets.forceSetMetadata', [
+        USDT_ASSET_ID,
+        USDT_NAME,
+        USDT_SYM,
+        USDT_DECIMALS,
+        isFrozen,
+      ]);
 
       setupAssetHubCall = helper.constructApiCall('api.tx.utility.batchAll', [[
         setSafeXcmVersion,
@@ -205,8 +201,8 @@ describeXCM('[XCM] Integration test: Exchanging tokens with AssetHub', () => {
                 call: {
                   encoded: setupAssetHubCall.method.toHex(),
                 },
-              }
-            }
+              },
+            },
           ],
         },
       );
@@ -356,7 +352,7 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
                 X1: {Parachain: UNIQUE_CHAIN},
               },
             },
-          }
+          },
         );
       }
 
@@ -411,7 +407,7 @@ describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
       randomAccountUnique = helper.arrange.createEmptyAccount();
 
       await helper.balance.transferToSubstrate(alice, randomAccountUnique.address, SENDER_BUDGET);
-      
+
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
@@ -642,7 +638,7 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     await testHelper.rejectNativeTokensFrom(
       alice,
       'acala',
-      'unique'
+      'unique',
     );
   });
 

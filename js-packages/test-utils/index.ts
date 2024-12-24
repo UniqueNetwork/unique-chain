@@ -1334,7 +1334,7 @@ class WaitGroup {
         }
       });
     });
-    
+
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {
@@ -1405,7 +1405,7 @@ class WaitGroup {
         }
       });
     });
-    
+
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {

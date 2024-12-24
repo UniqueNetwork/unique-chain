@@ -1,9 +1,9 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
 import {DevUniqueHelper, Event} from '@unique/test-utils';
-import { AcalaHelper, AstarHelper } from '@unique/test-utils/xcm/index.js';
-import { IEvent, ITransactionResult } from '@unique-nft/playgrounds/types.js';
-import { ChainHelperBase } from '@unique-nft/playgrounds';
+import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm/index.js';
+import {IEvent, ITransactionResult} from '@unique-nft/playgrounds/types.js';
+import {ChainHelperBase} from '@unique-nft/playgrounds';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);
@@ -113,7 +113,7 @@ export function mapToUsdtLocation(networkName: keyof typeof NETWORKS) {
     },
   ];
 
-  if (networkName === 'kusamaAssetHub' || networkName === 'polkadotAssetHub') {
+  if(networkName === 'kusamaAssetHub' || networkName === 'polkadotAssetHub') {
     return {
       parents: 0,
       interior: {
@@ -159,26 +159,24 @@ export class XcmTestHelper {
 
   async #collectProcessedMsgsEvents(
     helper: any,
-    whileCondition: () => boolean
+    whileCondition: () => boolean,
   ) {
     const {unsubscribe, collectedEvents} = await helper.subscribeEvents([
       {
         section: Event.MessageQueue.Processed.section(),
         names: [Event.MessageQueue.Processed.method()],
-      }
+      },
     ]);
 
     let blocksSkipped = 0;
 
-    while (whileCondition()) {
+    while(whileCondition()) {
       await helper.wait.newBlocks(1);
 
       blocksSkipped += 1;
 
-      if (blocksSkipped >= maxWaitBlocks) {
-        throw new Error(
-          `max number of blocks (${maxWaitBlocks}) were skipped while waiting for the message hash to find`,
-        );
+      if(blocksSkipped >= maxWaitBlocks) {
+        throw new Error(`max number of blocks (${maxWaitBlocks}) were skipped while waiting for the message hash to find`);
       }
     }
 
@@ -228,18 +226,18 @@ export class XcmTestHelper {
         );
         const messageSent = await this.#expectSentEvent(helper, sendFrom, sendTo, sendResult);
         return messageSent.messageHash;
-      } else if ('fastDemocracy' in helper) {
+      } else if('fastDemocracy' in helper) {
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
 
         const [, messageSent] = await Promise.all([
           helper.fastDemocracy.executeProposal(`sending ${sendFrom} -> ${sendTo} via XCM program`, batchCall),
-          helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent)
+          helper.wait.expectEvent(maxWaitBlocks, Event.XcmpQueue.XcmpMessageSent),
         ]);
 
         return messageSent.messageHash;
       } else {
-        throw new Error(`unknown governance in ${sendFrom}`)
+        throw new Error(`unknown governance in ${sendFrom}`);
       }
     });
   }
@@ -276,9 +274,9 @@ export class XcmTestHelper {
     const eventRecords = (await apiAt.query.system.events()).toArray();
     const events = fromHelper.eventHelper.extractPhasicEvents(eventRecords);
 
-    if (from === 'relay') {
+    if(from === 'relay') {
       return Event.XcmPallet.Sent.expect(events);
-    } else if (to === 'relay' || from === 'kusamaAssetHub' || from === 'polkadotAssetHub') {
+    } else if(to === 'relay' || from === 'kusamaAssetHub' || from === 'polkadotAssetHub') {
       return Event.PolkadotXcm.Sent.expect(events);
     } else {
       return Event.XcmpQueue.XcmpMessageSent.expect(events);
@@ -306,13 +304,13 @@ export class XcmTestHelper {
     getAssetBalanceOnUnique: (helper: DevUniqueHelper) => Promise<bigint>,
     setMessageHash: (messageHash: any) => void,
   }) {
-    let isFromUnique = from === 'unique' || from === 'quartz';
+    const isFromUnique = from === 'unique' || from === 'quartz';
 
     const fromPlayground = getDevPlayground(from);
 
     await fromPlayground(async (helper) => {
       const getRandomAccountBalance = async (): Promise<bigint> => {
-        if (!isFromUnique) {
+        if(!isFromUnique) {
           return 0n;
         }
 
@@ -322,7 +320,7 @@ export class XcmTestHelper {
       const balanceBefore = await getRandomAccountBalance();
 
       let beneficiaryAccount: any;
-      if (this._isAddress20FormatFor(to)) {
+      if(this._isAddress20FormatFor(to)) {
         beneficiaryAccount = {
           AccountKey20: {
             key: toAccount.address,
@@ -350,7 +348,7 @@ export class XcmTestHelper {
 
       let transferResult: any;
 
-      if (
+      if(
         from === 'acala' || from === 'karura'
         || from === 'astar' || from === 'shiden'
       ) {
@@ -408,7 +406,7 @@ export class XcmTestHelper {
       const messageSent = await this.#expectSentEvent(helper, from, to, transferResult);
 
       const balanceAfter = await getRandomAccountBalance();
-      if (isFromUnique) {
+      if(isFromUnique) {
         const balanceDiff = balanceBefore - balanceAfter;
         const fees = balanceDiff - amount;
         const minFees = 0n;
@@ -418,7 +416,7 @@ export class XcmTestHelper {
 
         expect(
           minFees <= fees && fees <= maxFees,
-          `invalid asset fees when transferring from ${from}: ${fees}`
+          `invalid asset fees when transferring from ${from}: ${fees}`,
         ).to.be.true;
       }
 
@@ -442,11 +440,11 @@ export class XcmTestHelper {
     getMessageHash: () => any,
   }) {
     const toPlayground = getDevPlayground(to);
-    let isToUnique = to === 'unique' || to === 'quartz';
+    const isToUnique = to === 'unique' || to === 'quartz';
 
     await toPlayground(async (helper) => {
       const getRandomAccountBalance = async (): Promise<bigint> => {
-        if (!isToUnique) {
+        if(!isToUnique) {
           return 0n;
         }
 
@@ -472,7 +470,7 @@ export class XcmTestHelper {
 
       const balanceAfter = await getRandomAccountBalance();
 
-      if (isToUnique) {
+      if(isToUnique) {
         const balanceDiff = balanceAfter - balanceBefore;
         const fees = balanceDiff - amount;
 
@@ -480,7 +478,7 @@ export class XcmTestHelper {
 
         expect(
           fees === 0n,
-          `invalid asset fees when receiving to ${to}: ${fees}`
+          `invalid asset fees when receiving to ${to}: ${fees}`,
         ).to.be.true;
       }
     });
@@ -496,10 +494,10 @@ export class XcmTestHelper {
   ) {
     let messageHash: any = null;
 
-    let isFromUnique = from === 'unique' || from === 'quartz';
+    const isFromUnique = from === 'unique' || from === 'quartz';
 
     let assetId: any;
-    if (isFromUnique) {
+    if(isFromUnique) {
       assetId = {
         parents: 1,
         interior: 'here',
@@ -509,7 +507,7 @@ export class XcmTestHelper {
         parents: 0,
         interior: 'here',
       };
-    };
+    }
 
     await Promise.all([
       this.#sendTokens({
@@ -520,12 +518,10 @@ export class XcmTestHelper {
         assetId,
         amount,
         decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => {
-          return await helper.ft.getBalance(
-            dotDerivativeCollectionId,
-            {Substrate: randomAccountOnFrom.address},
-          );
-        },
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+          dotDerivativeCollectionId,
+          {Substrate: randomAccountOnFrom.address},
+        ),
         setMessageHash: (hash) => messageHash = hash,
       }),
       this.#awaitTokens({
@@ -533,12 +529,10 @@ export class XcmTestHelper {
         to,
         amount,
         decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => {
-          return await helper.ft.getBalance(
-            dotDerivativeCollectionId,
-            {Substrate: randomAccountOnTo.address},
-          );
-        },
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+          dotDerivativeCollectionId,
+          {Substrate: randomAccountOnTo.address},
+        ),
         getMessageHash: () => messageHash,
       }),
     ]);
@@ -553,7 +547,7 @@ export class XcmTestHelper {
     usdtDerivativeCollectionId: number,
   ) {
     let messageHash: any = null;
-    let assetId = mapToUsdtLocation(from);
+    const assetId = mapToUsdtLocation(from);
 
     await Promise.all([
       this.#sendTokens({
@@ -564,12 +558,10 @@ export class XcmTestHelper {
         assetId,
         amount,
         decimals: USDT_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => {
-          return await helper.ft.getBalance(
-            usdtDerivativeCollectionId,
-            {Substrate: randomAccountOnFrom.address},
-          );
-        },
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+          usdtDerivativeCollectionId,
+          {Substrate: randomAccountOnFrom.address},
+        ),
         setMessageHash: (hash) => messageHash = hash,
       }),
       this.#awaitTokens({
@@ -577,12 +569,10 @@ export class XcmTestHelper {
         to,
         amount,
         decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => {
-          return await helper.ft.getBalance(
-            usdtDerivativeCollectionId,
-            {Substrate: randomAccountOnTo.address},
-          );
-        },
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+          usdtDerivativeCollectionId,
+          {Substrate: randomAccountOnTo.address},
+        ),
         getMessageHash: () => messageHash,
       }),
     ]);
@@ -597,17 +587,17 @@ export class XcmTestHelper {
   ) {
     let messageHash: any = null;
 
-    let isFromUnique = from === 'unique' || from === 'quartz';
+    const isFromUnique = from === 'unique' || from === 'quartz';
 
     let assetId: any;
-    if (isFromUnique) {
+    if(isFromUnique) {
       assetId = {
         parents: 0,
         interior: 'here',
       };
     } else {
       assetId = mapToChainLocation(to);
-    };
+    }
 
     await Promise.all([
       this.#sendTokens({
@@ -618,9 +608,7 @@ export class XcmTestHelper {
         assetId,
         amount,
         decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => {
-          return await helper.balance.getSubstrate(randomAccountOnFrom.address);
-        },
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.balance.getSubstrate(randomAccountOnFrom.address),
         setMessageHash: (hash) => messageHash = hash,
       }),
       this.#awaitTokens({
@@ -628,9 +616,7 @@ export class XcmTestHelper {
         to,
         amount,
         decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => {
-          return await helper.balance.getSubstrate(randomAccountOnTo.address);
-        },
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.balance.getSubstrate(randomAccountOnTo.address),
         getMessageHash: () => messageHash,
       }),
     ]);
@@ -715,11 +701,9 @@ export class XcmTestHelper {
         to: uniqueChain,
         amount: otherChainBalance,
         decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper) => {
-          return await helper.balance.getSubstrate(randomAccount!.address);
-        },
+        getAssetBalanceOnUnique: async (helper) => await helper.balance.getSubstrate(randomAccount!.address),
         getMessageHash: () => messageHash,
-      })
+      }),
     ]);
 
     await usingPlaygrounds(async (helper) => {
@@ -774,7 +758,7 @@ export class XcmTestHelper {
           },
           testAmount,
         );
-  
+
         // Try to trick Unique using shortened UNQ identification
         messageHash = await this.#sendXcmProgram(
           sudoer,
@@ -810,7 +794,7 @@ export class XcmTestHelper {
           mapToChainLocation(otherChain),
           OTHER_CHAIN_TOKEN_TRANSFER_AMOUNT,
         );
-  
+
         messageHash = await this.#sendXcmProgram(
           sudoer,
           otherChain,
