@@ -13,9 +13,9 @@ const {dirname} = makeNames(import.meta.url);
 const globalSetup = async (): Promise<void> => {
   await usingPlaygrounds(async (helper, privateKey) => {
     try {
-       // 1. Wait node producing blocks
-       console.log('Wait node producing blocks...')
-       await helper.wait.newBlocks(1, 600_000);
+      // 1. Wait node producing blocks
+      console.log('Wait node producing blocks...');
+      await helper.wait.newBlocks(1, 600_000);
 
       // 2. Create donors for test files
       await fundFilenamesWithRetries(3)
@@ -65,10 +65,8 @@ const fundFilenames = async () => {
     const alice = await privateKey('//Alice');
     const nonce = await helper.chain.getNonce(alice.address);
 
-     const filenames = await getFiles(path.resolve(dirname, '..'));
-     const filteredFilenames = filenames.filter((f) => {
-       return f.endsWith('.test.ts') || f.endsWith('seqtest.ts') || f.includes('.outdated');
-     });
+    const filenames = await getFiles(path.resolve(dirname, '..'));
+    const filteredFilenames = filenames.filter((f) => f.endsWith('.test.ts') || f.endsWith('seqtest.ts') || f.includes('.outdated'));
 
     // batching is actually undesireable, it takes away the time while all the transactions actually succeed
     const batchSize = 300;
@@ -118,9 +116,9 @@ const fundFilenamesWithRetries = (retriesLeft: number): Promise<boolean> => {
 
 globalSetup().catch(e => {
   console.error('Setup error');
-  if (e.result) {
-    console.error("Status:", e.status);
-    console.error("Result:", JSON.stringify(e.result.toHuman()));
+  if(e.result) {
+    console.error('Status:', e.status);
+    console.error('Result:', JSON.stringify(e.result.toHuman()));
   } else
     console.error(e);
   process.exit(1);

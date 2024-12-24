@@ -71,7 +71,7 @@ describe('App promotion', () => {
           unstakeTxs = [];
         }
         unstakeTxs.push(helper.staking.unstakeAll(account));
-        stakedByUsedAccs += await helper.staking.getTotalStaked({ Substrate: account.address });
+        stakedByUsedAccs += await helper.staking.getTotalStaked({Substrate: account.address});
       }
       await Promise.all(unstakeTxs);
       usedAccounts = [];

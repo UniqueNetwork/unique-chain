@@ -610,8 +610,8 @@ export class ChainHelperBase {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
-    options = options || { nonce: 0};
-    if (!options.nonce) {
+    options = options || {nonce: 0};
+    if(!options.nonce) {
       let nonce = await this.chain.getNonce(sender.address);
       options.nonce = nonce++;
     }
@@ -621,7 +621,7 @@ export class ChainHelperBase {
           const status = this.getTransactionStatus(result);
 
           if(status === this.transactionStatus.SUCCESS) {
-            if (!result.status.isFinalized) {
+            if(!result.status.isFinalized) {
               return;
             }
             this.logger.log(`${label} successful`);

@@ -50,8 +50,8 @@ describe('RPC eth_getCode', () => {
     expect(contractCodeSub).to.has.length.greaterThan(4);
     expect(contractCodeEth).to.has.length.greaterThan(4);
   });
-  
-  itEth(`returns notning for unknown collection: u32::MAX`, async ({helper}) => {
+
+  itEth('returns notning for unknown collection: u32::MAX', async ({helper}) => {
     const address = helper.ethAddress.fromCollectionId(4_294_967_294);
     const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [address])).toJSON();
     const contractCodeEth = (await helper.getWeb3().eth.getCode(address));
@@ -69,7 +69,7 @@ describe('RPC eth_getCode', () => {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [address])).toJSON();
       const contractCodeEth = (await helper.getWeb3().eth.getCode(address));
-  
+
       expect(contractCodeSub).to.has.length.greaterThan(4);
       expect(contractCodeEth).to.has.length.greaterThan(4);
     }
