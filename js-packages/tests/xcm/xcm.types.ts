@@ -641,6 +641,7 @@ export class XcmTestHelper {
     });
 
     const sendMaliciousProgram = async () => {
+      // eslint-disable-next-line require-await
       await usingPlaygrounds(async (helper) => {
         const moreThanOtherChainHas = 2n * otherChainBalance;
 
@@ -674,6 +675,7 @@ export class XcmTestHelper {
 
     messageHash = null;
     const sendGoodProgram = async () => {
+      // eslint-disable-next-line require-await
       await usingPlaygrounds(async (helper) => {
 
         maliciousXcmProgram = helper.arrange.makeXcmProgramWithdrawDeposit(

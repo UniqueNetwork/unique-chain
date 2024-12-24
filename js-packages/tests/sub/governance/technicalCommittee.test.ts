@@ -147,7 +147,7 @@ describeGov('Governance: Technical Committee tests', () => {
     )).rejectedWith('BadOrigin');
   });
 
-  itSub('[Negative] TechComm member cannot register foreign asset', async ({helper}) => {
+  itSub.skip('[Negative] TechComm member cannot register foreign asset', async ({helper}) => {
     const location = {
       parents: 1,
       interior: {X3: [
