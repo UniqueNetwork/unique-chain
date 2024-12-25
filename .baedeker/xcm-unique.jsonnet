@@ -51,7 +51,7 @@ local relay = {
 			wantedKeys: 'relay',
 			expectedDataPath: '/parity',
 		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie']
+		for name in ['alice', 'bob', 'charlie', 'dave', 'eve', 'ferdie', 'gregory', 'holly']
 	},
 };
 
