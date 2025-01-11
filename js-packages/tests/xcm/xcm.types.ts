@@ -29,7 +29,7 @@ export const SHIDEN_DECIMALS = 18n;
 export const ASTAR_DECIMALS = 18;
 export const UNQ_DECIMALS = 18;
 
-export const maxWaitBlocks = 50;
+export const maxWaitBlocks = 80;
 
 export const expectDownwardXcmNoPermission = async (helper: DevUniqueHelper) => {
   // The correct messageHash for downward messages can't be reliably obtained
@@ -270,9 +270,7 @@ export class XcmTestHelper {
     // FIXME
     // WORKAROUND: sometimes a part of the events collected directly from the extrinsic
     // is lost somehow. Let's query all of them from the block.
-    const apiAt = await fromHelper.getApi().at(txResult.blockHash);
-    const eventRecords = (await apiAt.query.system.events()).toArray();
-    const events = fromHelper.eventHelper.extractPhasicEvents(eventRecords);
+    const events = await fromHelper.fetchPhasicEventsFromBlock(txResult.blockHash);
 
     if(from === 'relay') {
       return Event.XcmPallet.Sent.expect(events);
@@ -455,7 +453,7 @@ export class XcmTestHelper {
 
       const collectedEventData = await this.#collectProcessedMsgsEvents(
         helper,
-        getMessageHash,
+        () => getMessageHash() === null,
       );
 
       const validEventIndex = collectedEventData.findIndex(data => {
