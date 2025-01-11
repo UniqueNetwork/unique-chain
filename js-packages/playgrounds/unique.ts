@@ -860,6 +860,12 @@ export class ChainHelperBase {
     const palletNames = this.fetchAllPalletNames();
     return requiredPallets.filter(p => !palletNames.includes(p));
   }
+
+  async fetchPhasicEventsFromBlock(blockHash: string) {
+    const apiAt = await this.getApi().at(blockHash);
+    const eventRecords = (await apiAt.query.system.events()).toArray();
+    return this.eventHelper.extractPhasicEvents(eventRecords);
+  }
 }
 
 

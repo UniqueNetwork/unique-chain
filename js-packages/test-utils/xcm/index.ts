@@ -92,7 +92,7 @@ class DemocracyGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 
   async referendumVote(signer: TSigner, referendumIndex: number, accountVote: DemocracyStandardAccountVote) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
+    return await this.helper.executeExtrinsic(signer, 'api.tx.democracy.vote', [referendumIndex, {Standard: accountVote}], true);
   }
 }
 
@@ -114,7 +114,7 @@ class MoonbeamCollectiveGroup extends HelperGroup<MoonbeamHelper> {
   }
 
   async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
+    return await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
   }
 
   async proposalCount() {
@@ -140,7 +140,7 @@ class CollectiveGroup<T extends ChainHelperBase> extends HelperGroup<T> {
   }
 
   async close(signer: TSigner, proposalHash: string, proposalIndex: number, weightBound: any, lengthBound: number) {
-    await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
+    return await this.helper.executeExtrinsic(signer, `api.tx.${this.collective}.close`, [proposalHash, proposalIndex, weightBound, lengthBound], true);
   }
 
   async proposalCount() {

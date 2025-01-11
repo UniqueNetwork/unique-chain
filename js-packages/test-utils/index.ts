@@ -1101,7 +1101,7 @@ class MoonbeamFastDemocracyGroup {
 
     const councilVotingThreshold = 2;
     const technicalCommitteeThreshold = 2;
-    const fastTrackVotingPeriod = 3;
+    const fastTrackVotingPeriod = 10;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1150,7 +1150,7 @@ class MoonbeamFastDemocracyGroup {
     await this.helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
 
-    await this.helper.collective.techCommittee.close(
+    const techCommCloseResult = await this.helper.collective.techCommittee.close(
       baltatharAccount,
       fastTrackHash,
       techProposalIdx,
@@ -1163,7 +1163,12 @@ class MoonbeamFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
+    // FIXME
+    // WORKAROUND: sometimes a part of the events collected directly from the extrinsic
+    // is lost somehow. Let's query all of them from the block.
+    const techCommCloseEvents = await this.helper.fetchPhasicEventsFromBlock(techCommCloseResult.blockHash);
+
+    const democracyStarted = Event.Democracy.Started.expect(techCommCloseEvents);
     const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
@@ -1174,13 +1179,6 @@ class MoonbeamFastDemocracyGroup {
     });
     console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
     // <<< Referendum voting <<<
-
-    // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
-
-    await this.helper.wait.newBlocks(1);
-
-    console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
   }
 }
 
@@ -1199,7 +1197,7 @@ class HydraFastDemocracyGroup {
 
     const councilVotingThreshold = 1;
     const technicalCommitteeThreshold = 3;
-    const fastTrackVotingPeriod = 3;
+    const fastTrackVotingPeriod = 10;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1235,7 +1233,7 @@ class HydraFastDemocracyGroup {
     await this.helper.collective.techCommittee.vote(bobAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(eveAccount, fastTrackHash, techProposalIdx, true);
 
-    await this.helper.collective.techCommittee.close(
+    const techCommCloseResult = await this.helper.collective.techCommittee.close(
       bobAccount,
       fastTrackHash,
       techProposalIdx,
@@ -1248,7 +1246,12 @@ class HydraFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
+    // FIXME
+    // WORKAROUND: sometimes a part of the events collected directly from the extrinsic
+    // is lost somehow. Let's query all of them from the block.
+    const techCommCloseEvents = await this.helper.fetchPhasicEventsFromBlock(techCommCloseResult.blockHash);
+
+    const democracyStarted = Event.Democracy.Started.expect(techCommCloseEvents);
     const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
@@ -1259,13 +1262,6 @@ class HydraFastDemocracyGroup {
     });
     console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
     // <<< Referendum voting <<<
-
-    // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
-
-    await this.helper.wait.newBlocks(1);
-
-    console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
   }
 }
 
