@@ -79,7 +79,7 @@ use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 #[cfg(feature = "runtime-benchmarks")]
 pub type ParachainHostFunctions = (
 	frame_benchmarking::benchmarking::HostFunctions,
-	cumulus_client_service::ParachainHostFunctions
+	cumulus_client_service::ParachainHostFunctions,
 );
 /// Otherwise we only use the default Substrate host functions.
 #[cfg(not(feature = "runtime-benchmarks"))]

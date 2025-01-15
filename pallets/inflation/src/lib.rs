@@ -45,14 +45,13 @@ use frame_support::traits::{
 use frame_system::pallet_prelude::BlockNumberFor;
 pub use pallet::*;
 use sp_runtime::{traits::BlockNumberProvider, Perbill};
-
 use up_common::constants::RELAY_DAYS;
 
 type BalanceOf<T> =
 	<<T as Config>::Currency as Inspect<<T as frame_system::Config>::AccountId>>::Balance;
 
 pub const YEAR: u32 = RELAY_DAYS * 365 + RELAY_DAYS / 4; // 365 days plus quater of a day as average for leap year
-								 // pub const YEAR: u32 = 2_629_800; // 12-second block
+														 // pub const YEAR: u32 = 2_629_800; // 12-second block
 pub const TOTAL_YEARS_UNTIL_FLAT: u32 = 9;
 pub const START_INFLATION_PERCENT: u32 = 10;
 pub const END_INFLATION_PERCENT: u32 = 4;
