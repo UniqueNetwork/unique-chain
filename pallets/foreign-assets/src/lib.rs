@@ -138,7 +138,7 @@ pub mod module {
 		ForeignAssetMoved {
 			old_asset_id: Box<VersionedAssetId>,
 			new_asset_id: Box<VersionedAssetId>,
-		}
+		},
 	}
 
 	/// The corresponding collections of foreign assets.

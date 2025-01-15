@@ -1,4 +1,4 @@
-use frame_support::{traits::EitherOfDiverse, parameter_types, PalletId};
+use frame_support::{parameter_types, traits::EitherOfDiverse, PalletId};
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
 use pallet_evm::account::CrossAccountId;
