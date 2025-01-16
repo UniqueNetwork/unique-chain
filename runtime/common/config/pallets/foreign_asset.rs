@@ -1,6 +1,10 @@
 use frame_support::{parameter_types, PalletId};
+
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
+#[cfg(feature = "governance")]
+use frame_system::EnsureSigned;
+
 use pallet_evm::account::CrossAccountId;
 use sp_core::H160;
 use staging_xcm::prelude::*;
@@ -24,10 +28,16 @@ impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 
 	#[cfg(feature = "governance")]
-	type ManagerOrigin = governance::RootOrFinancialCouncilMember;
+	type FungibleManagerOrigin = governance::RootOrFinancialCouncilMember;
+
+	#[cfg(feature = "governance")]
+	type NonfungibleManagerOrigin = EnsureSigned<Self::AccountId>;
 
 	#[cfg(not(feature = "governance"))]
-	type ManagerOrigin = EnsureRoot<Self::AccountId>;
+	type FungibleManagerOrigin = EnsureRoot<Self::AccountId>;
+
+	#[cfg(not(feature = "governance"))]
+	type NonfungibleManagerOrigin = EnsureRoot<Self::AccountId>;
 
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
