@@ -16,7 +16,7 @@ jobs:
   prepare-execution-marix:
     name: Prepare execution matrix
 
-    runs-on: [ ci ]
+    runs-on: [ci]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -136,17 +136,6 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.astar_version }}
 
-      - name: Check and pull POLKADEX image
-        id: polkadex
-        uses: cloudposse/github-action-docker-image-exists@main
-        with:
-          registry: registry.hub.docker.com
-          organization: polkadex
-          repository: parachain
-          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ env.POLKADEX_BUILD_BRANCH }}
-
       - name: Check and pull HYDRADX image
         id: hydradx
         uses: cloudposse/github-action-docker-image-exists@main
@@ -193,7 +182,7 @@ jobs:
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1.2
         with:
-          version: "v0.1.4"
+          version: 'v0.1.4'
           useCache: false
 
       - name: Setup library
@@ -203,7 +192,7 @@ jobs:
         run: |
           docker pull uniquenetwork/services:chain-spec-generator-latest
 
-      - name: Build chain-spec file for assethub 
+      - name: Build chain-spec file for assethub
         run: |
           docker run --rm uniquenetwork/services:chain-spec-generator-latest asset-hub-${{ matrix.relay_name }}-local > .baedeker/vendor/assethub-spec.json
 
@@ -215,7 +204,7 @@ jobs:
             .baedeker/vendor
           input-modules: |
             lib:baedeker-library/ops/nginx-dev.libsonnet
-            lib:baedeker-library/ops/devtools.libsonnet            
+            lib:baedeker-library/ops/devtools.libsonnet
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
           tla-code: |
@@ -229,7 +218,6 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}', docker:'/usr/local/bin/astar-collator'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'${{ steps.polkadex.outputs.image }}:${{ steps.polkadex.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.hydradx.outputs.image }}:${{ steps.hydradx.outputs.tag }}'}})
 
       - name: Upload network config
@@ -265,7 +253,7 @@ jobs:
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: XCM Test Report
         uses: phoenix-actions/test-reporting@v15
@@ -278,7 +266,7 @@ jobs:
           fail-on-error: 'false'
 
       - name: Remove all containers
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: |
           docker ps -aq | xargs docker rm -f
 

@@ -157,26 +157,6 @@ local astar = {
 	},
 };
 
-local polkadex = {
-	name: 'polkadex',
-	bin: 'bin/polkadex',
-	paraId: 2040,
-	spec: {Genesis:{
-		chain: 'mainnet',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-			parentConnection: 'internal-samedir',
-            expectedDataPath: '/data',
-
-		},
-		for name in ['alice', 'bob']
-	},
-};
-
 local hydradx = {
 	name: 'hydradx',
 	bin: 'bin/hydradx',
@@ -206,7 +186,6 @@ relay + {
 			moonbeam,
 			assethub,
 			astar,
-			polkadex,
 			hydradx,
 		]
 	},
