@@ -13,8 +13,4 @@ services:
       - 9944
     ports:
       - 127.0.0.1:9944:9944
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "3"
     command: cargo run --release --features={{ NETWORK }}-runtime -- --dev -linfo --rpc-cors=all --unsafe-rpc-external --idle-autoseal-interval 1000 --autoseal-finalization-delay 1

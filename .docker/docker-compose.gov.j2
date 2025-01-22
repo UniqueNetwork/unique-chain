@@ -15,8 +15,4 @@ services:
     ports:
       - 127.0.0.1:9944:9944
       - 127.0.0.1:9933:9933
-    logging:
-      options:
-        max-size: "1m"
-        max-file: "3"
     command: cargo run --profile integration-tests --features={{ NETWORK }}-runtime,gov-test-timings,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external --idle-autoseal-interval 1000 --autoseal-finalization-delay 1
