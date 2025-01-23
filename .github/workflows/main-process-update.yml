@@ -7,24 +7,21 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   prepare-execution-matrix:
-
     name: execution matrix
 
-    runs-on: [ ci ]
+    runs-on: [ci]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
@@ -39,32 +36,30 @@ jobs:
             network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, fork_source {${{ env.UNIQUE_REPLICA_FROM }}}
 
   main-process:
-
     needs: prepare-execution-matrix
     # The type of runner that the job will run on
-    runs-on: [ ci ]
+    runs-on: [ci]
 
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}-update
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
         include: ${{fromJson(needs.prepare-execution-matrix.outputs.matrix)}}
 
     steps:
-
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
 
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
-      # Prepare SHA  
+      # Prepare SHA
       - name: Prepare SHA
         uses: ./.github/actions/prepare
 
@@ -146,7 +141,7 @@ jobs:
       - name: Install baedeker
         uses: UniqueNetwork/baedeker-action/setup@v1.2
         with:
-          version: "v0.1.4"
+          version: 'v0.1.4'
           useCache: false
 
       - name: Setup library
@@ -171,7 +166,7 @@ jobs:
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
             forked_spec=${{ matrix.network }}
           tla-code: |
-            dump_spec=import 'dump.json'            
+            dump_spec=import 'dump.json'
           inputs: |
             .baedeker/main-process.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
@@ -190,7 +185,7 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: "Reconcile: update all nodes except one"
+      - name: 'Reconcile: update all nodes except one'
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         id: reconcile0
         uses: UniqueNetwork/baedeker-action/reconcile@v1.2
@@ -205,14 +200,14 @@ jobs:
       - name: Ensure network is alive
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.reconcile0.outcome == 'success' }}
-        id: alive1_1        
+        id: alive1_1
         run: |
           yarn        
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: "Reconcile: update the remaining node"
+      - name: 'Reconcile: update the remaining node'
         if: ${{ !cancelled() && steps.alive1_1.outcome == 'success' }}
         id: reconcile1
         uses: UniqueNetwork/baedeker-action/reconcile@v1.2
@@ -233,7 +228,7 @@ jobs:
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: "Reconcile: runtime updating"
+      - name: 'Reconcile: runtime updating'
         working-directory: js-packages/tests
         id: reconcile2
         if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
@@ -261,6 +256,22 @@ jobs:
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      # - name: "Debug: Tmate session"
+      #   uses: mxschmitt/action-tmate@v3
+
+      - name: 'Debug: Run several tests after upgrade'
+        working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
+        run: |
+          yarn testParallel --grep 'decimals' || true
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: 'Debug: wait 10 blocks for runtime'
+        if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
+        run: |
+          sleep 60
 
       - name: Run Parallel tests after upgrade
         working-directory: js-packages/tests
@@ -302,12 +313,26 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
+      - name: echo containers logs
+        if: always() # run this step always
+        run: |
+          mkdir -p ${{ steps.bdk.outputs.composeProject }}/logs
+          for i in `docker ps -a --format {{.Names}} | grep baedeker`; do docker logs $i >& ${{ steps.bdk.outputs.composeProject }}/logs/$i.log; done
+
+      - name: Upload containers logs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.network }}-main-baedeker-logs
+          path: ${{ steps.bdk.outputs.composeProject }}/logs
+          retention-days: 7
+          compression-level: 9
+
       - name: Remove all containers
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: |
           docker ps -aq | xargs docker rm -f
 
       - name: Remove builder cache
-        if: always()                   # run this step always
+        if: always() # run this step always
         run: |
           docker system prune -f -a
