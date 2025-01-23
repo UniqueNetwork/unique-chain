@@ -1,9 +1,5 @@
-<<<<<<< HEAD
-use frame_support::{parameter_types, traits::EitherOfDiverse, PalletId};
-=======
 use frame_support::{parameter_types, PalletId};
 
->>>>>>> 832c164e7 (feat: anyone can create derivative NFT collection)
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
 #[cfg(feature = "governance")]

@@ -442,3 +442,4 @@ staging-parachain-info = { git = "https://github.com/UniqueNetwork/polkadot-sdk"
 staging-xcm = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "asset-ops-xcm-v1.14.0" }
 staging-xcm-builder = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "asset-ops-xcm-v1.14.0" }
 staging-xcm-executor = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "asset-ops-xcm-v1.14.0" }
+pallet-derivatives = { git = "https://github.com/UniqueNetwork/polkadot-sdk", branch = "asset-ops-xcm-v1.14.0" }
