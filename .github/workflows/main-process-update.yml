@@ -313,7 +313,7 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: echo containers logs
+      - name: Echo containers logs
         if: always() # run this step always
         run: |
           mkdir -p ${{ steps.bdk.outputs.composeProject }}/logs
@@ -321,6 +321,7 @@ jobs:
 
       - name: Upload containers logs
         uses: actions/upload-artifact@v4
+        if: always() # run this step always
         with:
           name: ${{ matrix.network }}-main-baedeker-logs
           path: ${{ steps.bdk.outputs.composeProject }}/logs
