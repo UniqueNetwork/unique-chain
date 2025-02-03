@@ -63,7 +63,7 @@ pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// Frontier wrapped extrinsic
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type.
@@ -86,7 +86,7 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-pub type SignedExtra = (
+pub type TxExtension = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -110,6 +110,24 @@ pub type Executive = frame_executive::Executive<
 	AllPalletsWithSystem,
 	Migrations,
 >;
+
+pub fn check_types() -> bool {
+	   check_trait(PhantomData::<frame_system::CheckSpecVersion<Runtime>>::default())
+	&& check_trait(PhantomData::<frame_system::CheckTxVersion<Runtime>>::default())
+	&& check_trait(PhantomData::<frame_system::CheckGenesis<Runtime>>::default())
+	&& check_trait(PhantomData::<frame_system::CheckEra<Runtime>>::default())
+	&& check_trait(PhantomData::<pallet_charge_transaction::CheckNonce<Runtime>>::default())
+	&& check_trait(PhantomData::<frame_system::CheckWeight<Runtime>>::default())
+	&& check_trait(PhantomData::<maintenance::CheckMaintenance>::default())
+	&& check_trait(PhantomData::<identity::DisableIdentityCalls>::default())
+	&& check_trait(PhantomData::<pallet_charge_transaction::ChargeTransactionPayment<Runtime>>::default())
+	&& check_trait(PhantomData::<pallet_ethereum::FakeTransactionFinalizer<Runtime>>::default())
+	&& check_trait(PhantomData::<frame_metadata_hash_extension::CheckMetadataHash<Runtime>>::default())
+}
+
+fn check_trait<C: sp_runtime::traits::Dispatchable, T: sp_runtime::traits::TransactionExtension<C>>(t: PhantomData<T>) -> bool {
+	return true;
+}
 
 pub(crate) type DealWithFees = Treasury;
 

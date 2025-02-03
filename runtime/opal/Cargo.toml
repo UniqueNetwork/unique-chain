@@ -263,7 +263,7 @@ frame-metadata-hash-extension = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
-orml-traits = { workspace = true }
+orml-traits = { workspace = true, package = "orml-traits"}
 orml-vesting = { workspace = true }
 orml-xcm-support = { workspace = true }
 orml-xtokens = { workspace = true }

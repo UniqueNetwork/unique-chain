@@ -34,7 +34,7 @@ use cumulus_client_service::{
 	build_relay_chain_interface, prepare_node_config, start_relay_chain_tasks,
 	CollatorSybilResistance, DARecoveryProfile, StartRelayChainTasksParams,
 };
-use cumulus_primitives_core::{ParaId, PersistedValidationData};
+use cumulus_primitives_core::{CollectCollationInfo, ParaId, PersistedValidationData};
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
@@ -51,6 +51,7 @@ use futures::{
 	Stream, StreamExt,
 };
 use jsonrpsee::RpcModule;
+use polkadot_primitives::UpgradeGoAhead;
 use polkadot_service::CollatorPair;
 use sc_client_api::{Backend, BlockOf, BlockchainEvents, StorageProvider};
 use sc_consensus::ImportQueue;
@@ -58,7 +59,7 @@ use sc_executor::{HostFunctions, WasmExecutor};
 use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_service::{Configuration, PartialComponents, TaskManager};
+use sc_service::{build_polkadot_syncing_strategy, Configuration, PartialComponents, TaskManager, TransactionPool};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;
@@ -77,13 +78,13 @@ use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
 
 /// Only enable the benchmarking host functions when we actually want to benchmark.
 #[cfg(feature = "runtime-benchmarks")]
-pub type ParachainHostFunctions = (
-	frame_benchmarking::benchmarking::HostFunctions,
-	cumulus_client_service::ParachainHostFunctions,
-);
+pub type ParachainHostFunctions = frame_benchmarking::benchmarking::HostFunctions;
 /// Otherwise we only use the default Substrate host functions.
 #[cfg(not(feature = "runtime-benchmarks"))]
-pub type ParachainHostFunctions = cumulus_client_service::ParachainHostFunctions;
+pub type ParachainHostFunctions = (
+	sp_io::SubstrateHostFunctions,
+	cumulus_client_service::storage_proof_size::HostFunctions,
+);
 
 pub struct AutosealInterval {
 	interval: Interval,
@@ -200,7 +201,7 @@ pub fn new_partial<Runtime, RuntimeApi, HF, BIQ>(
 		FullBackend,
 		FullSelectChain,
 		sc_consensus::DefaultImportQueue<Block>,
-		sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>,
+		sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi, HF>>,
 		OtherPartial<FullClient<RuntimeApi, HF>>,
 	>,
 	sc_service::Error,
@@ -231,7 +232,7 @@ where
 		})
 		.transpose()?;
 
-	let executor = sc_service::new_wasm_executor(config);
+	let executor = sc_service::new_wasm_executor(&config.executor);
 
 	let (client, backend, keystore_container, task_manager) =
 		sc_service::new_full_parts::<Block, RuntimeApi, _>(
@@ -252,12 +253,15 @@ where
 
 	let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-	let transaction_pool = sc_transaction_pool::BasicPool::new_full(
-		config.transaction_pool.clone(),
-		config.role.is_authority().into(),
-		config.prometheus_registry(),
-		task_manager.spawn_essential_handle(),
-		client.clone(),
+	let transaction_pool = Arc::from(
+		sc_transaction_pool::Builder::new(
+			task_manager.spawn_essential_handle(),
+			client.clone(),
+			config.role.is_authority().into(),
+		)
+		.with_options(config.transaction_pool.clone())
+		.with_prometheus(config.prometheus_registry())
+		.build(),
 	);
 
 	let eth_filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
@@ -337,7 +341,10 @@ where
 		Block,
 		<Block as BlockT>::Hash,
 		Network,
-	>::new(&parachain_config.network);
+	>::new(
+		&parachain_config.network,
+		parachain_config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+	);
 
 	let client = params.client.clone();
 	let backend = params.backend.clone();
@@ -414,7 +421,7 @@ where
 			network,
 			sync_service,
 		);
-		move |deny_unsafe, subscription_task_executor: SubscriptionTaskExecutor| {
+		move |subscription_task_executor: SubscriptionTaskExecutor| {
 			clone!(
 				backend,
 				eth_block_data_cache,
@@ -448,7 +455,6 @@ where
 				#[cfg(feature = "pov-estimate")]
 				backend,
 
-				deny_unsafe,
 				pool: transaction_pool.clone(),
 			};
 
@@ -456,7 +462,6 @@ where
 
 			let eth_deps = EthDeps {
 				client,
-				graph: transaction_pool.pool().clone(),
 				pool: transaction_pool,
 				is_authority: validator,
 				network,
@@ -477,7 +482,7 @@ where
 				},
 			};
 
-			create_eth::<_, _, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
+			create_eth::<_, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
 				&mut rpc_handle,
 				eth_deps,
 				subscription_task_executor.clone(),
@@ -542,7 +547,7 @@ where
 		import_queue: import_queue_service,
 		relay_chain_slot_duration,
 		recovery_handle: Box::new(overseer_handle.clone()),
-		sync_service: sync_service.clone(),
+		sync_service,
 	})?;
 
 	if validator {
@@ -555,7 +560,6 @@ where
 				telemetry: telemetry.as_ref().map(|t| t.handle()),
 				task_manager: &task_manager,
 				relay_chain_interface: relay_chain_interface.clone(),
-				sync_oracle: sync_service,
 				keystore: params.keystore_container.keystore(),
 				overseer_handle,
 				relay_chain_slot_duration,
@@ -624,7 +628,6 @@ pub struct StartConsensusParameters<'a> {
 	telemetry: Option<TelemetryHandle>,
 	task_manager: &'a TaskManager,
 	relay_chain_interface: Arc<dyn RelayChainInterface>,
-	sync_oracle: Arc<SyncingService<Block>>,
 	keystore: KeystorePtr,
 	overseer_handle: OverseerHandle,
 	relay_chain_slot_duration: Duration,
@@ -637,7 +640,7 @@ pub struct StartConsensusParameters<'a> {
 #[allow(clippy::redundant_clone)]
 pub fn start_consensus<HF, RuntimeApi, Runtime>(
 	client: Arc<FullClient<RuntimeApi, HF>>,
-	transaction_pool: Arc<sc_transaction_pool::FullPool<Block, FullClient<RuntimeApi, HF>>>,
+	transaction_pool: Arc<sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi, HF>>>,
 	parameters: StartConsensusParameters<'_>,
 ) -> Result<(), sc_service::Error>
 where
@@ -654,7 +657,6 @@ where
 		telemetry,
 		task_manager,
 		relay_chain_interface,
-		sync_oracle,
 		keystore,
 		overseer_handle,
 		relay_chain_slot_duration,
@@ -688,7 +690,6 @@ where
 		para_backend: backend,
 		para_id,
 		relay_client: relay_chain_interface,
-		sync_oracle,
 		keystore,
 		proposer,
 		collator_service,
@@ -710,7 +711,7 @@ where
 	task_manager.spawn_essential_handle().spawn(
 		"aura",
 		None,
-		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _, _>(params),
+		run_aura::<_, AuraAuthorityPair, _, _, _, _, _, _, _, _>(params),
 	);
 	Ok(())
 }
@@ -801,7 +802,10 @@ where
 		Block,
 		<Block as BlockT>::Hash,
 		Network,
-	>::new(&config.network);
+	>::new(
+		&config.network,
+		config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+	);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
 	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
@@ -813,7 +817,7 @@ where
 			spawn_handle: task_manager.spawn_handle(),
 			import_queue,
 			block_announce_validator_builder: None,
-			warp_sync_params: None,
+			warp_sync_config: None,
 			block_relay: None,
 			metrics,
 		})?;
@@ -837,8 +841,6 @@ where
 			dyn Stream<Item = EngineCommand<Hash>> + Send + Sync + Unpin,
 		> = Box::new(
 			transaction_pool
-				.pool()
-				.validated_pool()
 				.import_notification_stream()
 				.filter(move |_| futures::future::ready(!disable_autoseal_on_tx))
 				.map(|_| EngineCommand::SealNewBlock {
@@ -879,6 +881,7 @@ where
 			);
 		}
 
+		let client_for_cidp = client.clone();
 		task_manager.spawn_essential_handle().spawn_blocking(
 			"authorship_task",
 			Some("block-authoring"),
@@ -902,6 +905,16 @@ where
 					);
 
 					let client_for_xcm = client_set_aside_for_cidp.clone();
+					let should_send_go_ahead = match client_for_cidp
+						.runtime_api()
+						.collect_collation_info(block, &header)
+					{
+						Ok(info) => info.new_validation_code.is_some(),
+						Err(e) => {
+							log::error!("Failed to collect collation info: {:?}", e);
+							false
+						},
+					};
 					async move {
 						let time = sp_timestamp::InherentDataProvider::from_system_time();
 
@@ -921,6 +934,12 @@ where
 							raw_downward_messages: vec![],
 							raw_horizontal_messages: vec![],
 							additional_key_values: None,
+							upgrade_go_ahead: should_send_go_ahead.then(|| {
+								log::info!(
+									"Detected pending validation code, sending go-ahead signal."
+								);
+								UpgradeGoAhead::GoAhead
+							}),
 						};
 
 						let slot =
@@ -979,7 +998,7 @@ where
 			network,
 			sync_service,
 		);
-		move |deny_unsafe, subscription_task_executor: SubscriptionTaskExecutor| {
+		move |subscription_task_executor: SubscriptionTaskExecutor| {
 			clone!(
 				backend,
 				eth_block_data_cache,
@@ -1011,7 +1030,6 @@ where
 				#[cfg(feature = "pov-estimate")]
 				backend,
 				// eth_backend,
-				deny_unsafe,
 				client: client.clone(),
 				pool: transaction_pool.clone(),
 			};
@@ -1020,7 +1038,6 @@ where
 
 			let eth_deps = EthDeps {
 				client,
-				graph: transaction_pool.pool().clone(),
 				pool: transaction_pool,
 				is_authority: true,
 				network,
@@ -1042,7 +1059,7 @@ where
 				},
 			};
 
-			create_eth::<_, _, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
+			create_eth::<_, _, _, _, _, DefaultEthConfig<FullClient<RuntimeApi, HF>>>(
 				&mut rpc_module,
 				eth_deps,
 				subscription_task_executor.clone(),

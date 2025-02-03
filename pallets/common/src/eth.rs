@@ -64,8 +64,7 @@ pub fn convert_uint256_to_cross_account<T: Config>(from: U256) -> T::CrossAccoun
 where
 	T::AccountId: From<[u8; 32]>,
 {
-	let mut new_admin_arr = [0_u8; 32];
-	from.to_big_endian(&mut new_admin_arr);
+	let new_admin_arr = from.to_big_endian();
 	let account_id = T::AccountId::from(new_admin_arr);
 	T::CrossAccountId::from_sub(account_id)
 }

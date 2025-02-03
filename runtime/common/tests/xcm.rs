@@ -39,7 +39,7 @@ pub fn xcm_transact_is_forbidden() {
 		.into();
 		let message = Xcm(vec![Transact {
 			origin_kind: OriginKind::Native,
-			require_weight_at_most: Weight::from_parts(1000, 1000),
+			fallback_max_weight: Some(Weight::from_parts(1000, 1000)),
 			call: RuntimeCall::Balances(pallet_balances::Call::<Runtime>::transfer_keep_alive {
 				dest: BOB.into(),
 				value: INITIAL_BALANCE / 2,

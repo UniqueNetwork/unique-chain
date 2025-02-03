@@ -35,7 +35,7 @@ use pallet_common::{
 };
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
-use staging_xcm::{v4::prelude::*, VersionedAssetId};
+use staging_xcm::{v5::prelude::*, VersionedAssetId};
 use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
 	AssetsInHolding,
@@ -56,12 +56,12 @@ pub use weights::WeightInfo;
 /// Status of storage migration from an old XCM version to a new one.
 #[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
 pub enum MigrationStatus {
-	V3ToV4(MigrationStatusV3ToV4),
+	V3ToV5(MigrationStatusV3ToV5),
 }
 
-/// Status of storage migration from XCMv3 to XCMv4.
+/// Status of storage migration from XCMv3 to XCMv5.
 #[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
-pub enum MigrationStatusV3ToV4 {
+pub enum MigrationStatusV3ToV5 {
 	/// The migration is completed.
 	Done,
 
@@ -145,13 +145,13 @@ pub mod module {
 	#[pallet::storage]
 	#[pallet::getter(fn foreign_asset_to_collection)]
 	pub type ForeignAssetToCollection<T: Config> =
-		StorageMap<_, Blake2_128Concat, staging_xcm::v4::AssetId, CollectionId, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, CollectionId, OptionQuery>;
 
 	/// The corresponding foreign assets of collections.
 	#[pallet::storage]
 	#[pallet::getter(fn collection_to_foreign_asset)]
 	pub type CollectionToForeignAsset<T: Config> =
-		StorageMap<_, Blake2_128Concat, CollectionId, staging_xcm::v4::AssetId, OptionQuery>;
+		StorageMap<_, Blake2_128Concat, CollectionId, staging_xcm::v5::AssetId, OptionQuery>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
@@ -160,7 +160,7 @@ pub mod module {
 		Hasher1 = Blake2_128Concat,
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
-		Key2 = staging_xcm::v4::AssetInstance,
+		Key2 = staging_xcm::v5::AssetInstance,
 		Value = TokenId,
 		QueryKind = OptionQuery,
 	>;
@@ -173,7 +173,7 @@ pub mod module {
 		Key1 = CollectionId,
 		Hasher2 = Blake2_128Concat,
 		Key2 = TokenId,
-		Value = staging_xcm::v4::AssetInstance,
+		Value = staging_xcm::v5::AssetInstance,
 		QueryKind = OptionQuery,
 	>;
 
@@ -299,13 +299,13 @@ pub mod module {
 			if Self::on_chain_storage_version() < 1_u16 {
 				let put_version_weight = T::DbWeight::get().writes(1);
 				let fix_foreign_flag_weight = Self::fix_foreign_flag();
-				let weight_v3_to_v4 = Self::migrate_v3_to_v4();
+				let weight_v3_to_v5 = Self::migrate_v3_to_v5();
 
 				Self::in_code_storage_version().put::<Self>();
 
 				put_version_weight
 					.saturating_add(fix_foreign_flag_weight)
-					.saturating_add(weight_v3_to_v4)
+					.saturating_add(weight_v3_to_v5)
 			} else {
 				Weight::zero()
 			}
@@ -372,12 +372,12 @@ impl<T: Config> Pallet<T> {
 		weight
 	}
 
-	fn migrate_v3_to_v4() -> Weight {
+	fn migrate_v3_to_v5() -> Weight {
 		let event_weight = T::DbWeight::get().writes(1);
 		let collection_migration_weight = Self::migrate_collections();
 
 		Self::deposit_event(Event::<T>::MigrationStatus(Box::new(
-			MigrationStatus::V3ToV4(MigrationStatusV3ToV4::Done),
+			MigrationStatus::V3ToV5(MigrationStatusV3ToV5::Done),
 		)));
 
 		collection_migration_weight.saturating_add(event_weight)
@@ -385,7 +385,7 @@ impl<T: Config> Pallet<T> {
 
 	fn migrate_collections() -> Weight {
 		use MigrationStatus::*;
-		use MigrationStatusV3ToV4::*;
+		use MigrationStatusV3ToV5::*;
 
 		log::info!("migrating foreign collections' XCM versions...");
 
@@ -402,14 +402,14 @@ impl<T: Config> Pallet<T> {
 		weight = weight.saturating_add(T::DbWeight::get().reads_writes(r, w));
 
 		for (asset_id, collection_id) in foreign_asset_to_collection.into_iter() {
-			if let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(asset_id) {
+			if let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(asset_id).and_then(staging_xcm::v5::AssetId::try_from) {
 				<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
 				<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
 				weight = weight.saturating_add(T::DbWeight::get().writes(2));
 
 				log::info!("\t- migrated the foreign collection #{}", collection_id.0);
 			} else {
-				Self::deposit_event(Event::<T>::MigrationStatus(Box::new(V3ToV4(
+				Self::deposit_event(Event::<T>::MigrationStatus(Box::new(V3ToV5(
 					SkippedNotConvertibleAssetId(Box::new(asset_id)),
 				))));
 				weight = weight.saturating_add(T::DbWeight::get().writes(1));
@@ -428,7 +428,7 @@ impl<T: Config> Pallet<T> {
 
 	fn migrate_tokens() -> Weight {
 		use MigrationStatus::*;
-		use MigrationStatusV3ToV4::*;
+		use MigrationStatusV3ToV5::*;
 
 		let mut weight = Weight::zero();
 
@@ -446,7 +446,7 @@ impl<T: Config> Pallet<T> {
 		for (collection_id, asset_instance, token_id) in
 			foreign_reserve_asset_instance_to_token_id.into_iter()
 		{
-			if let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(asset_instance) {
+			if let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(asset_instance).and_then(staging_xcm::v5::AssetInstance::try_from) {
 				<ForeignReserveAssetInstanceToTokenId<T>>::insert(
 					collection_id,
 					asset_instance,
@@ -465,7 +465,7 @@ impl<T: Config> Pallet<T> {
 					token_id.0
 				);
 			} else {
-				Self::deposit_event(Event::<T>::MigrationStatus(Box::new(V3ToV4(
+				Self::deposit_event(Event::<T>::MigrationStatus(Box::new(V3ToV5(
 					SkippedNotConvertibleAssetInstance {
 						collection_id,
 						asset_instance,

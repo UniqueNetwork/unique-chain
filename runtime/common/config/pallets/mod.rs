@@ -89,7 +89,7 @@ impl pallet_nonfungible::Config for Runtime {
 
 parameter_types! {
 	pub const Decimals: u8 = DECIMALS;
-	pub Name: String = String::from_utf8_lossy(VERSION.impl_name.as_ref()).to_string();
+	pub Name: String = VERSION.impl_name.to_string();
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 impl pallet_balances_adapter::Config for Runtime {

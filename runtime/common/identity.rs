@@ -19,49 +19,52 @@ use scale_info::TypeInfo;
 #[cfg(feature = "governance")]
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::{
-	traits::{DispatchInfoOf, SignedExtension},
-	transaction_validity::{TransactionValidity, TransactionValidityError, ValidTransaction},
+	traits::{DispatchInfoOf, DispatchOriginOf, TransactionExtension, ValidateResult},
+	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError, ValidTransaction},
+	Weight,
 };
-use up_common::types::AccountId;
 
 use crate::RuntimeCall;
 
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
 pub struct DisableIdentityCalls;
 
-impl SignedExtension for DisableIdentityCalls {
-	type AccountId = AccountId;
-	type Call = RuntimeCall;
-	type AdditionalSigned = ();
-	type Pre = ();
-
+impl TransactionExtension<RuntimeCall> for DisableIdentityCalls {
 	const IDENTIFIER: &'static str = "DisableIdentityCalls";
 
-	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
-		Ok(())
-	}
+	type Pre = ();
+	type Val = ();
+	type Implicit = ();
 
-	fn pre_dispatch(
-		self,
-		who: &Self::AccountId,
-		call: &Self::Call,
-		info: &DispatchInfoOf<Self::Call>,
-		len: usize,
-	) -> Result<Self::Pre, TransactionValidityError> {
-		self.validate(who, call, info, len).map(|_| ())
+	fn weight(&self, _call: &RuntimeCall) -> Weight {
+		Weight::zero()
 	}
 
 	fn validate(
 		&self,
-		_who: &Self::AccountId,
-		call: &Self::Call,
-		_info: &DispatchInfoOf<Self::Call>,
+		origin: DispatchOriginOf<RuntimeCall>,
+		call: &RuntimeCall,
+		_info: &DispatchInfoOf<RuntimeCall>,
 		_len: usize,
-	) -> TransactionValidity {
+		_self_implicit: Self::Implicit,
+		_inherited_implication: &impl Encode,
+		_source: TransactionSource,
+	) -> ValidateResult<Self::Val, RuntimeCall> {
 		match call {
 			#[cfg(feature = "governance")]
 			RuntimeCall::Identity(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
-			_ => Ok(ValidTransaction::default()),
+			_ => Ok((ValidTransaction::default(), (), origin)),
 		}
+	}
+
+	fn prepare(
+		self,
+		_val: Self::Val,
+		origin: &DispatchOriginOf<RuntimeCall>,
+		call: &RuntimeCall,
+		info: &DispatchInfoOf<RuntimeCall>,
+		len: usize,
+	) -> Result<Self::Pre, TransactionValidityError> {
+		Ok(())
 	}
 }
