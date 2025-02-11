@@ -24,7 +24,7 @@ import {ApiPromise} from '@polkadot/api';
 import {Contract} from 'ethers';
 
 const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, event: string, fields: any) => {
-  const palletIndex = api.runtimeMetadata.asV14.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
+  const palletIndex = api.runtimeMetadata.asV15.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
   const eventMeta = api.events[palletEvents][event].meta;
   const eventIndex = eventMeta.index.toNumber();
   const data = [

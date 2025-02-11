@@ -13,11 +13,11 @@ import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
-import type {ICrossAccountId, ILogger, IPhasicEvent, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
-import type {FrameSystemEventRecord, XcmV2TraitsError, StagingXcmV4TraitsOutcome} from '@polkadot/types/lookup';
+import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
+import type {FrameSystemEventRecord, XcmV3TraitsError, StagingXcmV5TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestendAssetHubHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
 import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
 import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
 
@@ -102,17 +102,17 @@ function EventHelper(section: string, method: string, wrapEvent: (data: any[]) =
         .map(e => this.wrapEvent(e.event.data));
     }
 
-    find(events: IPhasicEvent[]) {
-      const e = events.find(e => e.event.section === section && e.event.method === method);
+    find(txres: ITransactionResult) {
+      const e = txres.result.events.find(e => e.event.section === section && e.event.method === method);
       return e ? this.wrapEvent(e.event.data) : null;
     }
 
-    expect(events: IPhasicEvent[]) {
-      const e = this.find(events);
+    expect(txres: ITransactionResult) {
+      const e = this.find(txres);
       if(e) {
         return e;
       } else {
-        throw new Error(`Expected event ${section}.${method}`);
+        throw Error(`Expected event ${section}.${method}`);
       }
     }
   };
@@ -272,30 +272,20 @@ export class Event {
     static XcmpMessageSent = this.Method('XcmpMessageSent', data => ({
       messageHash: eventJsonData(data, 0),
     }));
-  };
 
-  static XcmPallet = class extends EventSection('xcmPallet') {
-    static Sent = this.Method('Sent', data => ({
-      messageHash: eventJsonData(data, 3),
-    }));
-  };
-
-  static PolkadotXcm = class extends EventSection('polkadotXcm') {
-    static Sent = this.Method('Sent', data => ({
-      messageHash: eventJsonData(data, 3),
-    }));
-  };
-
-  static MessageQueue = class extends EventSection('messageQueue') {
-    static Processed = this.Method('Processed', data => ({
+    static Success = this.Method('Success', data => ({
       messageHash: eventJsonData(data, 0),
-      success: eventJsonData(data, 3),
+    }));
+
+    static Fail = this.Method('Fail', data => ({
+      messageHash: eventJsonData(data, 0),
+      outcome: eventData<XcmV3TraitsError>(data, 2),
     }));
   };
 
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<StagingXcmV4TraitsOutcome>(data, 2),
+      outcome: eventData<StagingXcmV5TraitsOutcome>(data, 2),
     }));
   };
 }
@@ -507,7 +497,7 @@ export class DevUniqueHelper extends UniqueHelper {
   fellowship: IFellowshipGroup;
   democracy: DemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
 
     super(logger, options);
@@ -596,7 +586,7 @@ export class DevUniqueHelper extends UniqueHelper {
 export class DevRelayHelper extends RelayHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevRelayHelper;
 
     super(logger, options);
@@ -610,27 +600,27 @@ export class DevRelayHelper extends RelayHelper {
   }
 }
 
-export class DevWestendAssetHubHelper extends WestendAssetHubHelper {
+export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
-    options.helperBase = options.helperBase ?? DevWestendAssetHubHelper;
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
+    options.helperBase = options.helperBase ?? DevWestmintHelper;
 
     super(logger, options);
     this.wait = new WaitGroup(this);
   }
 }
 
-export class DevKusamaAssetHubHelper extends DevWestendAssetHubHelper {}
+export class DevStatemineHelper extends DevWestmintHelper {}
 
-export class DevPolkadotAssetHubHelper extends DevWestendAssetHubHelper {}
+export class DevStatemintHelper extends DevWestmintHelper {}
 
 export class DevMoonbeamHelper extends MoonbeamHelper {
   account: MoonbeamAccountGroup;
   wait: WaitGroup;
   fastDemocracy: MoonbeamFastDemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
 
@@ -642,7 +632,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
 }
 
 export class DevMoonriverHelper extends DevMoonbeamHelper {
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
     super(logger, options);
   }
@@ -651,7 +641,7 @@ export class DevMoonriverHelper extends DevMoonbeamHelper {
 export class DevAstarHelper extends AstarHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAstarHelper;
 
     super(logger, options);
@@ -670,7 +660,7 @@ export class DevShidenHelper extends DevAstarHelper { }
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAcalaHelper;
 
     super(logger, options);
@@ -685,7 +675,7 @@ export class DevAcalaHelper extends AcalaHelper {
 
 export class DevPolkadexHelper extends PolkadexHelper {
   wait: WaitGroup;
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? PolkadexHelper;
 
     super(logger, options);
@@ -703,7 +693,7 @@ export class DevHydraDxHelper extends HydraDxHelper {
   wait: WaitGroup;
   fastDemocracy: HydraFastDemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevHydraDxHelper;
 
     super(logger, options);
@@ -941,7 +931,7 @@ export class ArrangeGroup {
 
   makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
-      V4: [
+      V2: [
         {
           WithdrawAsset: [
             {
@@ -968,10 +958,16 @@ export class ArrangeGroup {
             assets: {
               Wild: 'All',
             },
+            maxAssets: 1,
             beneficiary: {
               parents: 0,
               interior: {
-                X1: [{AccountId32: {id: beneficiary}}],
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary,
+                  },
+                },
               },
             },
           },
@@ -982,7 +978,7 @@ export class ArrangeGroup {
 
   makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
-      V4: [
+      V2: [
         {
           ReserveAssetDeposited: [
             {
@@ -1009,10 +1005,16 @@ export class ArrangeGroup {
             assets: {
               Wild: 'All',
             },
+            maxAssets: 1,
             beneficiary: {
               parents: 0,
               interior: {
-                X1: [{AccountId32: {id: beneficiary}}],
+                X1: {
+                  AccountId32: {
+                    network: 'Any',
+                    id: beneficiary,
+                  },
+                },
               },
             },
           },
@@ -1023,7 +1025,7 @@ export class ArrangeGroup {
 
   makeUnpaidSudoTransactProgram(info: {weightMultiplier: number, call: string}) {
     return {
-      V4: [
+      V3: [
         {
           UnpaidExecution: {
             weightLimit: 'Unlimited',
@@ -1101,7 +1103,7 @@ class MoonbeamFastDemocracyGroup {
 
     const councilVotingThreshold = 2;
     const technicalCommitteeThreshold = 2;
-    const fastTrackVotingPeriod = 10;
+    const fastTrackVotingPeriod = 3;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1150,7 +1152,7 @@ class MoonbeamFastDemocracyGroup {
     await this.helper.collective.techCommittee.vote(baltatharAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(alithAccount, fastTrackHash, techProposalIdx, true);
 
-    const techCommCloseResult = await this.helper.collective.techCommittee.close(
+    await this.helper.collective.techCommittee.close(
       baltatharAccount,
       fastTrackHash,
       techProposalIdx,
@@ -1163,12 +1165,7 @@ class MoonbeamFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    // FIXME
-    // WORKAROUND: sometimes a part of the events collected directly from the extrinsic
-    // is lost somehow. Let's query all of them from the block.
-    const techCommCloseEvents = await this.helper.fetchPhasicEventsFromBlock(techCommCloseResult.blockHash);
-
-    const democracyStarted = Event.Democracy.Started.expect(techCommCloseEvents);
+    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
     const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
@@ -1179,6 +1176,13 @@ class MoonbeamFastDemocracyGroup {
     });
     console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
     // <<< Referendum voting <<<
+
+    // Wait the proposal to pass
+    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+
+    await this.helper.wait.newBlocks(1);
+
+    console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
   }
 }
 
@@ -1197,7 +1201,7 @@ class HydraFastDemocracyGroup {
 
     const councilVotingThreshold = 1;
     const technicalCommitteeThreshold = 3;
-    const fastTrackVotingPeriod = 10;
+    const fastTrackVotingPeriod = 3;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1233,7 +1237,7 @@ class HydraFastDemocracyGroup {
     await this.helper.collective.techCommittee.vote(bobAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(eveAccount, fastTrackHash, techProposalIdx, true);
 
-    const techCommCloseResult = await this.helper.collective.techCommittee.close(
+    await this.helper.collective.techCommittee.close(
       bobAccount,
       fastTrackHash,
       techProposalIdx,
@@ -1246,12 +1250,7 @@ class HydraFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    // FIXME
-    // WORKAROUND: sometimes a part of the events collected directly from the extrinsic
-    // is lost somehow. Let's query all of them from the block.
-    const techCommCloseEvents = await this.helper.fetchPhasicEventsFromBlock(techCommCloseResult.blockHash);
-
-    const democracyStarted = Event.Democracy.Started.expect(techCommCloseEvents);
+    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
     const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
@@ -1262,6 +1261,13 @@ class HydraFastDemocracyGroup {
     });
     console.log(`\t* Referendum #${referendumIndex} voting.......DONE`);
     // <<< Referendum voting <<<
+
+    // Wait the proposal to pass
+    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+
+    await this.helper.wait.newBlocks(1);
+
+    console.log(`[democracy] executing '${proposalDesciption}' proposal.......DONE`);
   }
 }
 
@@ -1330,7 +1336,7 @@ class WaitGroup {
         }
       });
     });
-
+    
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {
@@ -1401,7 +1407,7 @@ class WaitGroup {
         }
       });
     });
-
+    
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {

@@ -30,7 +30,7 @@ const INITIAL_BALANCE: u128 = 10_000_000_000_000_000_000_000; // 10_000 UNQ
 #[test]
 pub fn xcm_transact_is_forbidden() {
 	new_test_ext(vec![(ALICE, INITIAL_BALANCE)]).execute_with(|| {
-		let max_weight = Weight::from_parts(1001000, 2000);
+		let max_weight = Weight::from_parts(200000000, 5000);
 
 		let origin: Location = AccountId32 {
 			network: None,

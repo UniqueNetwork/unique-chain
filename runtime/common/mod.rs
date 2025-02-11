@@ -111,24 +111,6 @@ pub type Executive = frame_executive::Executive<
 	Migrations,
 >;
 
-pub fn check_types() -> bool {
-	   check_trait(PhantomData::<frame_system::CheckSpecVersion<Runtime>>::default())
-	&& check_trait(PhantomData::<frame_system::CheckTxVersion<Runtime>>::default())
-	&& check_trait(PhantomData::<frame_system::CheckGenesis<Runtime>>::default())
-	&& check_trait(PhantomData::<frame_system::CheckEra<Runtime>>::default())
-	&& check_trait(PhantomData::<pallet_charge_transaction::CheckNonce<Runtime>>::default())
-	&& check_trait(PhantomData::<frame_system::CheckWeight<Runtime>>::default())
-	&& check_trait(PhantomData::<maintenance::CheckMaintenance>::default())
-	&& check_trait(PhantomData::<identity::DisableIdentityCalls>::default())
-	&& check_trait(PhantomData::<pallet_charge_transaction::ChargeTransactionPayment<Runtime>>::default())
-	&& check_trait(PhantomData::<pallet_ethereum::FakeTransactionFinalizer<Runtime>>::default())
-	&& check_trait(PhantomData::<frame_metadata_hash_extension::CheckMetadataHash<Runtime>>::default())
-}
-
-fn check_trait<C: sp_runtime::traits::Dispatchable, T: sp_runtime::traits::TransactionExtension<C>>(t: PhantomData<T>) -> bool {
-	return true;
-}
-
 pub(crate) type DealWithFees = Treasury;
 
 pub struct RelayChainBlockNumberProvider<T>(sp_std::marker::PhantomData<T>);

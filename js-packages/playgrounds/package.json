@@ -10,8 +10,8 @@
   "version": "1.0.0",
   "main": "unique.js",
   "dependencies": {
-    "@polkadot/api": "12.4.2",
-    "@polkadot/util": "^13.0.2",
-    "@polkadot/util-crypto": "^13.0.2"
+    "@polkadot/api": "15.5.2",
+    "@polkadot/util": "^13.3.1",
+    "@polkadot/util-crypto": "^13.3.1"
   }
 }

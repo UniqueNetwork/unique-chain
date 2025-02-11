@@ -348,6 +348,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       PrimeAccountNotMember: AugmentedError<ApiType>;
       /**
+       * Proposal is still active.
+       **/
+      ProposalActive: AugmentedError<ApiType>;
+      /**
        * Proposal must exist
        **/
       ProposalMissing: AugmentedError<ApiType>;
@@ -747,6 +751,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       PrimeAccountNotMember: AugmentedError<ApiType>;
       /**
+       * Proposal is still active.
+       **/
+      ProposalActive: AugmentedError<ApiType>;
+      /**
        * Proposal must exist
        **/
       ProposalMissing: AugmentedError<ApiType>;
@@ -1133,10 +1141,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       AlreadyNoted: AugmentedError<ApiType>;
       /**
-       * No ticket with a cost was returned by [`Config::Consideration`] to store the preimage.
-       **/
-      NoCost: AugmentedError<ApiType>;
-      /**
        * The user is not authorized to perform this action.
        **/
       NotAuthorized: AugmentedError<ApiType>;
@@ -1386,6 +1390,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Prime account is not a member
        **/
       PrimeAccountNotMember: AugmentedError<ApiType>;
+      /**
+       * Proposal is still active.
+       **/
+      ProposalActive: AugmentedError<ApiType>;
       /**
        * Proposal must exist
        **/
