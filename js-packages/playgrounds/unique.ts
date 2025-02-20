@@ -628,7 +628,7 @@ export class ChainHelperBase {
             }
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 

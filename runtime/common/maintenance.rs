@@ -91,10 +91,10 @@ impl TransactionExtension<RuntimeCall> for CheckMaintenance {
 	fn prepare(
 		self,
 		_val: Self::Val,
-		origin: &DispatchOriginOf<RuntimeCall>,
-		call: &RuntimeCall,
-		info: &DispatchInfoOf<RuntimeCall>,
-		len: usize,
+		_origin: &DispatchOriginOf<RuntimeCall>,
+		_call: &RuntimeCall,
+		_info: &DispatchInfoOf<RuntimeCall>,
+		_len: usize,
 	) -> Result<Self::Pre, TransactionValidityError> {
 		Ok(())
 	}
