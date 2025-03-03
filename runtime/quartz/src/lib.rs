@@ -53,11 +53,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("quartz"),
 
 	authoring_version: 1,
-	spec_version: 10140081,
+	spec_version: 10170080,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
-	state_version: 1,
+	system_version: 1,
 };
 #[cfg(feature = "become-sapphire")]
 #[sp_version::runtime_version]
@@ -66,11 +66,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("sapphire"),
 
 	authoring_version: 1,
-	spec_version: 10140080,
+	spec_version: 10170080,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
-	state_version: 1,
+	system_version: 1,
 };
 
 parameter_types! {

@@ -257,6 +257,9 @@ export interface CumulusPrimitivesParachainInherentParachainInherentData extends
   readonly horizontalMessages: BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>;
 }
 
+/** @name CumulusPrimitivesStorageWeightReclaimStorageWeightReclaim */
+export interface CumulusPrimitivesStorageWeightReclaimStorageWeightReclaim extends Null {}
+
 /** @name EthbloomBloom */
 export interface EthbloomBloom extends U8aFixed {}
 
@@ -748,8 +751,6 @@ export interface FrameSystemPhase extends Enum {
 export interface OpalRuntimeOriginCaller extends Enum {
   readonly isSystem: boolean;
   readonly asSystem: FrameSupportDispatchRawOrigin;
-  readonly isVoid: boolean;
-  readonly asVoid: SpCoreVoid;
   readonly isCouncil: boolean;
   readonly asCouncil: PalletCollectiveRawOrigin;
   readonly isTechnicalCommittee: boolean;
@@ -764,7 +765,7 @@ export interface OpalRuntimeOriginCaller extends Enum {
   readonly asOrigins: PalletGovOriginsOrigin;
   readonly isEthereum: boolean;
   readonly asEthereum: PalletEthereumRawOrigin;
-  readonly type: 'System' | 'Void' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'FinancialCouncil' | 'Origins' | 'Ethereum';
+  readonly type: 'System' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'CumulusXcm' | 'FinancialCouncil' | 'Origins' | 'Ethereum';
 }
 
 /** @name OpalRuntimeRuntime */
@@ -4253,9 +4254,6 @@ export interface SpConsensusAuraSr25519AppSr25519Public extends U8aFixed {}
 /** @name SpCoreCryptoKeyTypeId */
 export interface SpCoreCryptoKeyTypeId extends U8aFixed {}
 
-/** @name SpCoreVoid */
-export interface SpCoreVoid extends Null {}
-
 /** @name SpRuntimeBlakeTwo256 */
 export interface SpRuntimeBlakeTwo256 extends Null {}
 
@@ -4767,21 +4765,21 @@ export interface StagingXcmV4JunctionNetworkId extends Enum {
 export interface StagingXcmV4Junctions extends Enum {
   readonly isHere: boolean;
   readonly isX1: boolean;
-  readonly asX1: Vec<StagingXcmV4Junction>;
+  readonly asX1: Vec<Lookup145>;
   readonly isX2: boolean;
-  readonly asX2: Vec<StagingXcmV4Junction>;
+  readonly asX2: Vec<Lookup145>;
   readonly isX3: boolean;
-  readonly asX3: Vec<StagingXcmV4Junction>;
+  readonly asX3: Vec<Lookup145>;
   readonly isX4: boolean;
-  readonly asX4: Vec<StagingXcmV4Junction>;
+  readonly asX4: Vec<Lookup145>;
   readonly isX5: boolean;
-  readonly asX5: Vec<StagingXcmV4Junction>;
+  readonly asX5: Vec<Lookup145>;
   readonly isX6: boolean;
-  readonly asX6: Vec<StagingXcmV4Junction>;
+  readonly asX6: Vec<Lookup145>;
   readonly isX7: boolean;
-  readonly asX7: Vec<StagingXcmV4Junction>;
+  readonly asX7: Vec<Lookup145>;
   readonly isX8: boolean;
-  readonly asX8: Vec<StagingXcmV4Junction>;
+  readonly asX8: Vec<Lookup145>;
   readonly type: 'Here' | 'X1' | 'X2' | 'X3' | 'X4' | 'X5' | 'X6' | 'X7' | 'X8';
 }
 
@@ -5186,21 +5184,21 @@ export interface StagingXcmV5JunctionNetworkId extends Enum {
 export interface StagingXcmV5Junctions extends Enum {
   readonly isHere: boolean;
   readonly isX1: boolean;
-  readonly asX1: Vec<StagingXcmV5Junction>;
+  readonly asX1: Vec<Lookup58>;
   readonly isX2: boolean;
-  readonly asX2: Vec<StagingXcmV5Junction>;
+  readonly asX2: Vec<Lookup58>;
   readonly isX3: boolean;
-  readonly asX3: Vec<StagingXcmV5Junction>;
+  readonly asX3: Vec<Lookup58>;
   readonly isX4: boolean;
-  readonly asX4: Vec<StagingXcmV5Junction>;
+  readonly asX4: Vec<Lookup58>;
   readonly isX5: boolean;
-  readonly asX5: Vec<StagingXcmV5Junction>;
+  readonly asX5: Vec<Lookup58>;
   readonly isX6: boolean;
-  readonly asX6: Vec<StagingXcmV5Junction>;
+  readonly asX6: Vec<Lookup58>;
   readonly isX7: boolean;
-  readonly asX7: Vec<StagingXcmV5Junction>;
+  readonly asX7: Vec<Lookup58>;
   readonly isX8: boolean;
-  readonly asX8: Vec<StagingXcmV5Junction>;
+  readonly asX8: Vec<Lookup58>;
   readonly type: 'Here' | 'X1' | 'X2' | 'X3' | 'X4' | 'X5' | 'X6' | 'X7' | 'X8';
 }
 

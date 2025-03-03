@@ -31,13 +31,13 @@ const globalSetup = async (): Promise<void> => {
         const palletAdmin = await privateKey('//PromotionAdmin');
         const api = helper.getApi();
         await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
-        const nominal = helper.balance.getOneTokenNominal();;
-        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);;
-        await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);;
+        const nominal = helper.balance.getOneTokenNominal();
+        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);
+        await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);
         await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
           .setAppPromotionConfigurationOverride({
             recalculationInterval: LOCKING_PERIOD,
-            pendingInterval: UNLOCKING_PERIOD})], true);;
+            pendingInterval: UNLOCKING_PERIOD})], true);
       }
     } catch (error) {
       throw Error('Error during globalSetup', {cause: error});
@@ -82,24 +82,22 @@ const fundFilenames = async () => {
         const aliceBalance = await helper.balance.getSubstrate(account.address);
 
         if(aliceBalance < MINIMUM_DONOR_FUND * oneToken) {
-          await helper.executeExtrinsic(
+          tx.push(helper.executeExtrinsic(
             alice,
             'api.tx.balances.transferKeepAlive',
             [account.address, DONOR_FUNDING * oneToken],
             true,
             {nonce: nonce + balanceGrantedCounter++},
-          ).then(() => true).catch(() => {console.error(`Transaction to ${path.basename(f)} registered as failed. Strange.`); return false;});
+          ).then(() => true).catch(() => {console.error(`Transaction to ${path.basename(f)} registered as failed. Strange.`); return false;}));
           batchBalanceGrantedCounter++;
         }
       }
 
-      // if(tx.length > 0) {
-      //   console.log(`Granting funds to ${batchBalanceGrantedCounter} filename accounts.`);
-      //   const result = await Promise.all(tx);
-      //   console.log(18);
-      //   if(result && result.lastIndexOf(false) > -1) throw new Error('The transactions actually probably succeeded, should check the balances.');
-      // }
-      console.log(19);
+      if(tx.length > 0) {
+        console.log(`Granting funds to ${batchBalanceGrantedCounter} filename accounts.`);
+        const result = await Promise.all(tx);
+        if(result && result.lastIndexOf(false) > -1) throw new Error('The transactions actually probably succeeded, should check the balances.');
+      }
     }
     if(balanceGrantedCounter == 0) console.log('No account needs additional funding.');
   });

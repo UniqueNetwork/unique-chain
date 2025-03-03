@@ -20,7 +20,7 @@ use scale_info::TypeInfo;
 use sp_runtime::transaction_validity::InvalidTransaction;
 use sp_runtime::{
 	traits::{DispatchInfoOf, DispatchOriginOf, TransactionExtension, ValidateResult},
-	transaction_validity::{TransactionSource, TransactionValidity, TransactionValidityError, ValidTransaction},
+	transaction_validity::{TransactionSource, TransactionValidityError, ValidTransaction},
 	Weight,
 };
 

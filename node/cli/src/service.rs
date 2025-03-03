@@ -59,7 +59,7 @@ use sc_executor::{HostFunctions, WasmExecutor};
 use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_service::{build_polkadot_syncing_strategy, Configuration, PartialComponents, TaskManager, TransactionPool};
+use sc_service::{Configuration, PartialComponents, TaskManager, TransactionPool};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use serde::{Deserialize, Serialize};
 use sp_api::ProvideRuntimeApi;

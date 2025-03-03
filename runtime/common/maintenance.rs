@@ -17,7 +17,6 @@
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	impl_tx_ext_default,
 	traits::{DispatchInfoOf, DispatchOriginOf, TransactionExtension, ValidateResult},
 	transaction_validity::{
 		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError, ValidTransaction,
@@ -25,7 +24,7 @@ use sp_runtime::{
 	Weight,
 };
 
-use crate::{Maintenance, RuntimeCall, RuntimeOrigin};
+use crate::{Maintenance, RuntimeCall};
 
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
 pub struct CheckMaintenance;
