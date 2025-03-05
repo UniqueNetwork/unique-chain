@@ -33,7 +33,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
     const {collectionAddress: nftCollectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
     const nftCollection = await helper.ethNativeContract.collection(nftCollectionAddress, 'nft', owner);
 
-    expect((await nftCollection.methods.collectionHelperAddress().call())
+    expect((await nftCollection.collectionHelperAddress.staticCall())
       .toString().toLowerCase()).to.be.equal(COLLECTION_HELPER);
   });
 
@@ -43,7 +43,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
     const {collectionAddress: rftCollectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
 
     const rftCollection = await helper.ethNativeContract.collection(rftCollectionAddress, 'rft', owner);
-    expect((await rftCollection.methods.collectionHelperAddress().call())
+    expect((await rftCollection.collectionHelperAddress.staticCall())
       .toString().toLowerCase()).to.be.equal(COLLECTION_HELPER);
   });
 
@@ -53,7 +53,7 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
     const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', 18, 'absolutely anything', 'ROC');
     const collection = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    expect((await collection.methods.collectionHelperAddress().call())
+    expect((await collection.collectionHelperAddress.staticCall())
       .toString().toLowerCase()).to.be.equal(COLLECTION_HELPER);
   });
 
@@ -63,8 +63,8 @@ describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collectionId);
     const helperContract = await helper.ethNativeContract.collectionHelpers(owner);
 
-    expect(await helperContract.methods.collectionAddress(collectionId).call()).to.be.equal(collectionAddress);
-    expect(parseInt(await helperContract.methods.collectionId(collectionAddress).call())).to.be.equal(collectionId);
+    expect(await helperContract.collectionAddress.staticCall(collectionId)).to.be.equal(collectionAddress);
+    expect(parseInt(await helperContract.collectionId.staticCall(collectionAddress))).to.be.equal(collectionId);
   });
 
 });

@@ -33,7 +33,7 @@ describe('RPC eth_getCode', () => {
   ].map(testCase => {
     itEth(`returns value for native contract: ${testCase.address}`, async ({helper}) => {
       const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [testCase.address])).toJSON();
-      const contractCodeEth = (await helper.getWeb3().eth.getCode(testCase.address));
+      const contractCodeEth = (await helper.getWeb3().getCode(testCase.address));
 
       expect(contractCodeSub).to.has.length.greaterThan(4);
       expect(contractCodeEth).to.has.length.greaterThan(4);
@@ -44,8 +44,8 @@ describe('RPC eth_getCode', () => {
     const signer = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(signer);
 
-    const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [flipper.options.address])).toJSON();
-    const contractCodeEth = (await helper.getWeb3().eth.getCode(flipper.options.address));
+    const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [await flipper.getAddress()])).toJSON();
+    const contractCodeEth = (await helper.getWeb3().getCode(await flipper.getAddress()));
 
     expect(contractCodeSub).to.has.length.greaterThan(4);
     expect(contractCodeEth).to.has.length.greaterThan(4);
@@ -54,7 +54,7 @@ describe('RPC eth_getCode', () => {
   itEth('returns notning for unknown collection: u32::MAX', async ({helper}) => {
     const address = helper.ethAddress.fromCollectionId(4_294_967_294);
     const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [address])).toJSON();
-    const contractCodeEth = (await helper.getWeb3().eth.getCode(address));
+    const contractCodeEth = (await helper.getWeb3().getCode(address));
 
     expect(contractCodeSub).to.has.length.lessThan(3);
     expect(contractCodeEth).to.has.length.lessThan(3);
@@ -68,7 +68,7 @@ describe('RPC eth_getCode', () => {
     for(const collection of [collectionNFT, collectionRFT, collectionFT]) {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contractCodeSub = (await helper.callRpc('api.rpc.eth.getCode', [address])).toJSON();
-      const contractCodeEth = (await helper.getWeb3().eth.getCode(address));
+      const contractCodeEth = (await helper.getWeb3().getCode(address));
 
       expect(contractCodeSub).to.has.length.greaterThan(4);
       expect(contractCodeEth).to.has.length.greaterThan(4);

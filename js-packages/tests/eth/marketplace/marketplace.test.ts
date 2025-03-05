@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'fs/promises';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode, confirmations} from '@unique/test-utils/eth/util.js';
 import {makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
@@ -51,15 +51,15 @@ describe('Matcher contract usage', () => {
 
   itEth('With UNQ', async ({helper}) => {
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS_LIMIT * 2n);
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
-    await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
-    await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
+    await (await helpers.setSponsoringMode.send(await matcher.getAddress(), SponsoringMode.Allowlisted, {from: matcherOwner})).wait(confirmations);
+    await (await helpers.setSponsoringRateLimit.send(await matcher.getAddress(), 1, {from: matcherOwner})).wait(confirmations);
 
-    await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
-    await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
+    await (await helpers.setSponsor.send(await matcher.getAddress(), sponsor, {from: matcherOwner})).wait(confirmations);
+    await (await helpers.confirmSponsorship.send(await matcher.getAddress(), {from: sponsor})).wait(confirmations);
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: {Substrate: alice.address}});
     await collection.confirmSponsorship(alice);
@@ -67,8 +67,8 @@ describe('Matcher contract usage', () => {
     const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
     await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
-    await helpers.methods.toggleAllowed(matcher.options.address, aliceMirror, true).send({from: matcherOwner});
-    await helpers.methods.toggleAllowed(matcher.options.address, sellerMirror, true).send({from: matcherOwner});
+    await (await helpers.toggleAllowed.send(await matcher.getAddress(), aliceMirror, true, {from: matcherOwner})).wait(confirmations);
+    await (await helpers.toggleAllowed.send(await matcher.getAddress(), sellerMirror, true, {from: matcherOwner})).wait(confirmations);
 
     const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
@@ -77,17 +77,17 @@ describe('Matcher contract usage', () => {
 
     // Ask
     {
-      await helper.eth.sendEVM(seller, evmCollection.options.address, evmCollection.methods.approve(matcher.options.address, token.tokenId).encodeABI(), '0');
-      await helper.eth.sendEVM(seller, matcher.options.address, matcher.methods.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, token.tokenId).encodeABI(), '0');
+      await helper.eth.sendEVM(seller, await evmCollection.getAddress(), (await evmCollection.approve.populateTransaction(await matcher.getAddress(), token.tokenId)).data, '0');
+      await helper.eth.sendEVM(seller, await matcher.getAddress(), (await matcher.addAsk.populateTransaction(PRICE, '0x0000000000000000000000000000000000000001', await evmCollection.getAddress(), token.tokenId)).data, '0');
     }
 
     // Token is transferred to matcher
-    expect(await token.getOwner()).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: (await matcher.getAddress()).toLowerCase()});
 
     // Buy
     {
       const sellerBalanceBeforePurchase = await helper.balance.getSubstrate(seller.address);
-      await helper.eth.sendEVM(alice, matcher.options.address, matcher.methods.buy(evmCollection.options.address, token.tokenId).encodeABI(), PRICE.toString());
+      await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buy.populateTransaction(await evmCollection.getAddress(), token.tokenId)).data, PRICE.toString());
       expect(await helper.balance.getSubstrate(seller.address) - sellerBalanceBeforePurchase === PRICE);
     }
 
@@ -103,17 +103,17 @@ describe('Matcher contract usage', () => {
 
   itEth('With escrow', async ({helper}) => {
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS_LIMIT * 2n);
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const escrow = await helper.eth.createAccountWithBalance(donor);
-    await matcher.methods.setEscrow(escrow, true).send({from: matcherOwner});
+    await (await matcher.setEscrow.send(escrow, true, {from: matcherOwner})).wait(confirmations);
     const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
-    await helpers.methods.setSponsoringMode(matcher.options.address, SponsoringMode.Allowlisted).send({from: matcherOwner});
-    await helpers.methods.setSponsoringRateLimit(matcher.options.address, 1).send({from: matcherOwner});
+    await (await helpers.setSponsoringMode.send(await matcher.getAddress(), SponsoringMode.Allowlisted, {from: matcherOwner})).wait(confirmations);
+    await (await helpers.setSponsoringRateLimit.send(await matcher.getAddress(), 1, {from: matcherOwner})).wait(confirmations);
 
-    await helpers.methods.setSponsor(matcher.options.address, sponsor).send({from: matcherOwner});
-    await helpers.methods.confirmSponsorship(matcher.options.address).send({from: sponsor});
+    await (await helpers.setSponsor.send(await matcher.getAddress(), sponsor, {from: matcherOwner})).wait(confirmations);
+    await (await helpers.confirmSponsorship.send(await matcher.getAddress(), {from: sponsor})).wait(confirmations);
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: {Substrate: alice.address}});
     await collection.confirmSponsorship(alice);
@@ -122,37 +122,37 @@ describe('Matcher contract usage', () => {
     await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
 
-    await helpers.methods.toggleAllowed(matcher.options.address, aliceMirror, true).send({from: matcherOwner});
+    await (await helpers.toggleAllowed.send(await matcher.getAddress(), aliceMirror, true, {from: matcherOwner})).wait(confirmations);
 
-    await helpers.methods.toggleAllowed(matcher.options.address, sellerMirror, true).send({from: matcherOwner});
+    await (await helpers.toggleAllowed.send(await matcher.getAddress(), sellerMirror, true, {from: matcherOwner})).wait(confirmations);
 
     const token = await collection.mintToken(alice, {Ethereum: sellerMirror});
 
     // Token is owned by seller initially
     expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
 
-    // Ask
+    // Ask  
     {
-      await helper.eth.sendEVM(seller, evmCollection.options.address, evmCollection.methods.approve(matcher.options.address, token.tokenId).encodeABI(), '0');
-      await helper.eth.sendEVM(seller, matcher.options.address, matcher.methods.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, token.tokenId).encodeABI(), '0');
+      await helper.eth.sendEVM(seller, await evmCollection.getAddress(), (await evmCollection.approve.populateTransaction(await matcher.getAddress(), token.tokenId)).data, '0');
+      await helper.eth.sendEVM(seller, await matcher.getAddress(), (await matcher.addAsk.populateTransaction(PRICE, '0x0000000000000000000000000000000000000001', await evmCollection.getAddress(), token.tokenId)).data, '0');
     }
 
     // Token is transferred to matcher
-    expect(await token.getOwner()).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: (await matcher.getAddress()).toLowerCase()});
 
     // Give buyer KSM
-    await matcher.methods.depositKSM(PRICE, aliceMirror).send({from: escrow});
+    await (await matcher.depositKSM.send(PRICE, aliceMirror, {from: escrow})).wait(confirmations);
 
     // Buy
     {
-      expect(await matcher.methods.balanceKSM(sellerMirror).call()).to.be.equal('0');
-      expect(await matcher.methods.balanceKSM(aliceMirror).call()).to.be.equal(PRICE.toString());
+      expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal('0');
+      expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal(PRICE.toString());
 
-      await helper.eth.sendEVM(alice, matcher.options.address, matcher.methods.buyKSM(evmCollection.options.address, token.tokenId, aliceMirror, aliceMirror).encodeABI(), '0');
+      await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buyKSM.populateTransaction(await evmCollection.getAddress(), token.tokenId, aliceMirror, aliceMirror)).data, '0');
 
       // Price is removed from buyer balance, and added to seller
-      expect(await matcher.methods.balanceKSM(aliceMirror).call()).to.be.equal('0');
-      expect(await matcher.methods.balanceKSM(sellerMirror).call()).to.be.equal(PRICE.toString());
+      expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal('0');
+      expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal(PRICE.toString());
     }
 
     // Token is transferred to evm account of alice
@@ -167,9 +167,9 @@ describe('Matcher contract usage', () => {
 
   itEth('Sell tokens from substrate user via EVM contract', async ({helper}) => {
     const matcherOwner = await helper.eth.createAccountWithBalance(donor);
-    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS * 2);
+    const matcher = await helper.ethContract.deployByCode(matcherOwner, 'MarketPlace', (await readFile(`${dirname}/MarketPlace.sol`)).toString(), [{solPath: 'api/UniqueNFT.sol', fsPath: `${EVM_ABI_DIR}/api/UniqueNFT.sol`}], helper.eth.DEFAULT_GAS_LIMIT * 2n);
 
-    await helper.eth.transferBalanceFromSubstrate(donor, matcher.options.address);
+    await helper.eth.transferBalanceFromSubstrate(donor, await matcher.getAddress());
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}});
     const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
@@ -183,17 +183,17 @@ describe('Matcher contract usage', () => {
 
     // Ask
     {
-      await helper.eth.sendEVM(seller, evmCollection.options.address, evmCollection.methods.approve(matcher.options.address, token.tokenId).encodeABI(), '0');
-      await helper.eth.sendEVM(seller, matcher.options.address, matcher.methods.addAsk(PRICE, '0x0000000000000000000000000000000000000001', evmCollection.options.address, token.tokenId).encodeABI(), '0');
+      await helper.eth.sendEVM(seller, await evmCollection.getAddress(), (await evmCollection.approve.populateTransaction(await matcher.getAddress(), token.tokenId)).data, '0');
+      await helper.eth.sendEVM(seller, await matcher.getAddress(), (await matcher.addAsk.populateTransaction(PRICE, '0x0000000000000000000000000000000000000001', await evmCollection.getAddress(), token.tokenId)).data, '0');
     }
 
     // Token is transferred to matcher
-    expect(await token.getOwner()).to.be.deep.equal({Ethereum: matcher.options.address.toLowerCase()});
+    expect(await token.getOwner()).to.be.deep.equal({Ethereum: (await matcher.getAddress()).toLowerCase()});
 
     // Buy
     {
       const sellerBalanceBeforePurchase = await helper.balance.getSubstrate(seller.address);
-      await helper.eth.sendEVM(alice, matcher.options.address, matcher.methods.buy(evmCollection.options.address, token.tokenId).encodeABI(), PRICE.toString());
+      await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buy.populateTransaction(await evmCollection.getAddress(), token.tokenId)).data, PRICE.toString());
       expect(await helper.balance.getSubstrate(seller.address) - sellerBalanceBeforePurchase === PRICE);
     }
 

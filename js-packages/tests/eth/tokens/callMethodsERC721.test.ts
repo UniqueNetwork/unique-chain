@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Pallets} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
@@ -39,18 +39,18 @@ describe('ERC-721 call methods', () => {
       const [name, description, tokenPrefix] = ['Name', 'Description', 'Symbol'];
 
       const {collection: collectionEth} = await helper.eth.createCollection(callerEth, new CreateCollectionData(name, description, tokenPrefix, testCase.mode)).send();
-      await collectionEth.methods.mint(callerEth).send({from: callerEth});
+      await collectionEth.mint.send(callerEth, {from: callerEth});
       const {collectionId} = await helper[testCase.mode].mintCollection(callerSub, {name, description, tokenPrefix});
       const collectionSub = await helper.ethNativeContract.collectionById(collectionId, testCase.mode, callerEth);
 
       // Can get name/symbol/description for Eth collection
-      expect(await collectionEth.methods.name().call()).to.eq(name);
-      expect(await collectionEth.methods.symbol().call()).to.eq(tokenPrefix);
-      expect(await collectionEth.methods.description().call()).to.eq(description);
+      expect(await collectionEth.name.staticCall()).to.eq(name);
+      expect(await collectionEth.symbol.staticCall()).to.eq(tokenPrefix);
+      expect(await collectionEth.description.staticCall()).to.eq(description);
       // Can get name/symbol/description for Sub collection
-      expect(await collectionSub.methods.name().call()).to.eq(name);
-      expect(await collectionSub.methods.symbol().call()).to.eq(tokenPrefix);
-      expect(await collectionSub.methods.description().call()).to.eq(description);
+      expect(await collectionSub.name.staticCall()).to.eq(name);
+      expect(await collectionSub.symbol.staticCall()).to.eq(tokenPrefix);
+      expect(await collectionSub.description.staticCall()).to.eq(description);
     });
   });
 
@@ -62,9 +62,9 @@ describe('ERC-721 call methods', () => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const {collection} = await helper.eth.createCollection(caller, new CreateCollectionData('TotalSupply', '6', '6', testCase.mode)).send();
-      await collection.methods.mint(caller).send({from: caller});
+      await (await collection.mint.send(caller)).wait(confirmations);
 
-      const totalSupply = await collection.methods.totalSupply().call();
+      const totalSupply = await collection.totalSupply.staticCall();
       expect(totalSupply).to.equal('1');
     });
   });
@@ -77,11 +77,11 @@ describe('ERC-721 call methods', () => {
       const caller = await helper.eth.createAccountWithBalance(donor);
 
       const {collection} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
-      await collection.methods.mint(caller).send({from: caller});
-      await collection.methods.mint(caller).send({from: caller});
-      await collection.methods.mint(caller).send({from: caller});
+      await (await collection.mint.send(caller)).wait(confirmations);
+      await (await collection.mint.send(caller)).wait(confirmations);
+      await (await collection.mint.send(caller)).wait(confirmations);
 
-      const balance = await collection.methods.balanceOf(caller).call();
+      const balance = await collection.balanceOf.staticCall(caller);
       expect(balance).to.equal('3');
     });
   });
@@ -94,10 +94,13 @@ describe('ERC-721 call methods', () => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const {collection} = await helper.eth.createCollection(caller, new CreateCollectionData('OwnerOf', '6', '6', testCase.mode)).send();
 
-      const result = await collection.methods.mint(caller).send();
-      const tokenId = result.events.Transfer.returnValues.tokenId;
+      const mintTx = await collection.mint.send(caller);
+      const mintReceipt = await mintTx.wait(confirmations);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
-      const owner = await collection.methods.ownerOf(tokenId).call();
+      const tokenId = mintEvents.Transfer.args.tokenId;
+      
+      const owner = await collection.ownerOf.staticCall(tokenId);
       expect(owner).to.equal(caller);
     });
   });
@@ -111,16 +114,19 @@ describe('ERC-721 call methods', () => {
       const receiver = helper.eth.createAccount();
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('OwnerOf-AfterBurn', '6', '6', testCase.mode)).send();
 
-      const result = await collection.methods.mint(caller).send();
-      const tokenId = result.events.Transfer.returnValues.tokenId;
-      const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller, true);
+      const mintTx = await collection.mint.send(caller);
+      const mintReceipt = await mintTx.wait(confirmations);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
-      await tokenContract.methods.repartition(2).send();
-      await tokenContract.methods.transfer(receiver, 1).send();
+      const tokenId = mintEvents.Transfer.args.tokenId;
+      const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, +tokenId, caller, true);
 
-      await tokenContract.methods.burnFrom(caller, 1).send();
+      await (await tokenContract.repartition.send(2)).wait(confirmations);
+      await (await tokenContract.transfer.send(receiver, 1)).wait(confirmations);
 
-      const owner = await collection.methods.ownerOf(tokenId).call();
+      await (await tokenContract.burnFrom.send(caller, 1)).wait(confirmations);
+
+      const owner = await collection.ownerOf.staticCall(tokenId);
       expect(owner).to.equal(receiver);
     });
   });
@@ -131,14 +137,17 @@ describe('ERC-721 call methods', () => {
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Partial-OwnerOf', '6', '6');
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    const result = await contract.methods.mint(caller).send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
-    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, tokenId, caller);
+    const mintTx = await contract.mint.send(caller);
+    const mintReceipt = await mintTx.wait(confirmations);
+    const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
-    await tokenContract.methods.repartition(2).send();
-    await tokenContract.methods.transfer(receiver, 1).send();
+    const tokenId = mintEvents.Transfer.args.tokenId;
+    const tokenContract = await helper.ethNativeContract.rftTokenById(collectionId, +tokenId, caller);
 
-    const owner = await contract.methods.ownerOf(tokenId).call();
+    await (await tokenContract.repartition.send(2)).wait(confirmations);
+    await (await tokenContract.transfer.send(receiver, 1)).wait(confirmations);
+
+    const owner = await contract.ownerOf.staticCall(tokenId);
     expect(owner).to.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
   });
 });

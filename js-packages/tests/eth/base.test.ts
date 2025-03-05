@@ -15,8 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import { HDNodeWallet } from 'ethers';
 
 
 describe('Contract calls', () => {
@@ -32,19 +33,25 @@ describe('Contract calls', () => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(deployer);
 
-    const cost = await helper.eth.calculateFee({Ethereum: deployer}, () => flipper.methods.flip().send({from: deployer}));
+    const cost = await helper.eth.calculateFee(
+      {Ethereum: deployer.address},
+      async () => await (await flipper.flip.send({from: deployer})).wait(confirmations),
+    );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
 
   itEth('Balance transfer fee is less than 0.2 UNQ', async ({helper}) => {
     const userA = await helper.eth.createAccountWithBalance(donor);
     const userB = helper.eth.createAccount();
-    const cost = await helper.eth.calculateFee({Ethereum: userA}, () => helper.getWeb3().eth.sendTransaction({
-      from: userA,
-      to: userB,
-      value: '1000000',
-      gas: helper.eth.DEFAULT_GAS,
-    }));
+    const cost = await helper.eth.calculateFee(
+      {Ethereum: userA.address},
+      async () => await (await userA.sendTransaction({
+        from: userA,
+        to: userB,
+        value: '1000000',
+        gasLimit: helper.eth.DEFAULT_GAS_LIMIT,
+      })).wait(confirmations)
+    );
     const balanceB = await helper.balance.getEthereum(userB);
     expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
@@ -55,12 +62,15 @@ describe('Contract calls', () => {
 
     const [alice] = await helper.arrange.createAccounts([10n], donor);
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    const {tokenId} = await collection.mintToken(alice, {Ethereum: caller});
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: caller.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, tokenId).send(caller));
+    const cost = await helper.eth.calculateFee(
+      {Ethereum: caller.address},
+      async () => await (await contract.transfer.send(receiver, tokenId)).wait(confirmations)
+    );
 
     const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());
     const expectedFee = 0.15;
@@ -75,7 +85,7 @@ describe('ERC165 tests', () => {
 
   let erc721MetadataCompatibleNftCollectionId: number;
   let simpleNftCollectionId: number;
-  let minter: string;
+  let minter: HDNodeWallet;
 
   const BASE_URI = 'base/';
 
@@ -83,8 +93,8 @@ describe('ERC165 tests', () => {
     const simple = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(simpleNftCollectionId), 'nft', minter);
     const compatible = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(erc721MetadataCompatibleNftCollectionId), 'nft', minter);
 
-    expect(await simple.methods.supportsInterface(interfaceId).call()).to.equal(simpleResult, `empty (not ERC721Metadata compatible) NFT collection returns not ${simpleResult}`);
-    expect(await compatible.methods.supportsInterface(interfaceId).call()).to.equal(compatibleResult, `ERC721Metadata compatible NFT collection returns not ${compatibleResult}`);
+    expect(await simple.supportsInterface.staticCall(interfaceId)).to.equal(simpleResult, `empty (not ERC721Metadata compatible) NFT collection returns not ${simpleResult}`);
+    expect(await compatible.supportsInterface.staticCall(interfaceId)).to.equal(compatibleResult, `ERC721Metadata compatible NFT collection returns not ${compatibleResult}`);
   }
 
   before(async () => {

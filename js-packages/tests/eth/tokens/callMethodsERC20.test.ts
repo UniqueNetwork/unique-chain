@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
@@ -38,7 +38,7 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
       const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
 
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('TotalSupply', '6', '6', testCase.mode)).send();
-      if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
+      if(testCase.mode === 'rft') await (await collection.mint.send(caller)).wait(confirmations);
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -47,10 +47,10 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
       // Mint tokens:
       testCase.mode === 'ft'
-        ? await contract.methods.mint(...mintingParams).send({from: caller})
-        : await contract.methods.repartition(200).send({from: caller});
+        ? await (await contract.mint.send(...mintingParams)).wait(confirmations)
+        : await (await contract.repartition.send(200)).wait(confirmations);
 
-      const totalSupply = await contract.methods.totalSupply().call();
+      const totalSupply = await contract.totalSupply.staticCall();
       expect(totalSupply).to.equal('200');
     });
 
@@ -59,7 +59,7 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
       const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
 
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
-      if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
+      if(testCase.mode === 'rft') await (await collection.mint.send(caller)).wait(confirmations);
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -68,24 +68,24 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
       // Mint tokens:
       testCase.mode === 'ft'
-        ? await contract.methods.mint(...mintingParams).send({from: caller})
-        : await contract.methods.repartition(200).send({from: caller});
+        ? await (await contract.mint.send(...mintingParams)).wait(confirmations)
+        : await (await contract.repartition.send(200)).wait(confirmations);
 
-      const balance = await contract.methods.balanceOf(caller).call();
+      const balance = await contract.balanceOf.staticCall(caller);
       expect(balance).to.equal('200');
     });
 
     itEth('decimals', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
-      if(testCase.mode === 'rft') await collection.methods.mint(caller).send({from: caller});
+      if(testCase.mode === 'rft') await (await collection.mint.send(caller)).wait(confirmations);
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
         ? collection
         : await helper.ethNativeContract.rftTokenById(collectionId, 1, caller);
 
-      const decimals = await contract.methods.decimals().call();
+      const decimals = await contract.decimals.staticCall();
       expect(decimals).to.equal(testCase.mode === 'rft' ? '0' : '18');
     });
   });

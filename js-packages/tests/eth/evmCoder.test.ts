@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, usingEthPlaygrounds, confirmations} from '@unique/test-utils/eth/util.js';
 
 const getContractSource = (collectionAddress: string, contractAddress: string): string => `
   // SPDX-License-Identifier: MIT
@@ -65,23 +65,27 @@ describe('Evm Coder tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.eth.createNFTCollection(owner, 'EVMCODER', '', 'TEST');
     const contract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, '0x1bfed5D614b886b9Ab2eA4CBAc22A96B7EC29c9c'));
-    const testContract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, contract.options.address));
+    const testContract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, await contract.getAddress()));
     {
-      const result = await testContract.methods.test1().send();
-      expect(result.events.Result.returnValues).to.deep.equal({
+      const testTx = await testContract.test1.send()
+      const testReceipt = await testTx.wait(confirmations);
+      const testEvents = helper.eth.normalizeEvents(testReceipt!);
+      expect(testEvents.Result.args).to.deep.equal({
+        '0': false,
+        '1': '0',
+      });
+    }
+    { 
+      const testTx = await testContract.test2.send()
+      const testReceipt = await testTx.wait(confirmations);
+      const testEvents = helper.eth.normalizeEvents(testReceipt!);
+      expect(testEvents.Result.args).to.deep.equal({
         '0': false,
         '1': '0',
       });
     }
     {
-      const result = await testContract.methods.test2().send();
-      expect(result.events.Result.returnValues).to.deep.equal({
-        '0': false,
-        '1': '0',
-      });
-    }
-    {
-      await expect(testContract.methods.test3().call())
+      await expect(testContract.test3.staticCall())
         .to.be.rejectedWith(/unrecognized selector: 0xd9f02b36$/g);
     }
   });

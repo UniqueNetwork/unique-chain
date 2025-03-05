@@ -29,34 +29,36 @@ describe('Ethereum native RPC calls', () => {
   });
 
   itEth('estimate gas', async ({helper}) => {
-    const BALANCE = 100n;
-    const BALANCE_TO_TRANSFER = 90n;
+    throw new Error('unimplemented');
+    
+    // const BALANCE = 100n;
+    // const BALANCE_TO_TRANSFER = 90n;
 
-    const owner = await helper.eth.createAccountWithBalance(donor, BALANCE);
-    const recepient = helper.eth.createAccount();
+    // const owner = await helper.eth.createAccountWithBalance(donor, BALANCE);
+    // const recepient = helper.eth.createAccount();
 
-    const web3 = helper.getWeb3();
-    // data: transfer(recepient, 90);
-    const data = web3.eth.abi.encodeFunctionCall({
-      name: 'transfer',
-      type: 'function',
-      inputs: [{
-        type: 'address',
-        name: 'to',
-      },{
-        type: 'uint256',
-        name: 'amount',
-      }],
-    }, [recepient, (BALANCE_TO_TRANSFER * (10n ** 18n)).toString()]);
+    // const web3 = helper.getWeb3();
+    // // data: transfer(recepient, 90);
+    // const data = web3.eth.abi.encodeFunctionCall({
+    //   name: 'transfer',
+    //   type: 'function',
+    //   inputs: [{
+    //     type: 'address',
+    //     name: 'to',
+    //   },{
+    //     type: 'uint256',
+    //     name: 'amount',
+    //   }],
+    // }, [recepient, (BALANCE_TO_TRANSFER * (10n ** 18n)).toString()]);
 
-    const estimateGas = await web3.eth.estimateGas({
-      to: NATIVE_TOKEN_ADDRESS,
-      value: '0x0',
-      data,
-      from: owner,
-      maxFeePerGas: '0x14c9338c61d',
-    });
+    // const estimateGas = await web3.eth.estimateGas({
+    //   to: NATIVE_TOKEN_ADDRESS,
+    //   value: '0x0',
+    //   data,
+    //   from: owner,
+    //   maxFeePerGas: '0x14c9338c61d',
+    // });
 
-    expect(estimateGas).to.be.greaterThan(35000).and.to.be.lessThan(50000);
+    // expect(estimateGas).to.be.greaterThan(35000).and.to.be.lessThan(50000);
   });
 });

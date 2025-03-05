@@ -41,6 +41,7 @@ import type {
   IPhasicEvent,
 } from './types.js';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import { HDNodeWallet } from 'ethers';
 
 export class CrossAccountId {
   account: ICrossAccountId;
@@ -2595,12 +2596,16 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
   /**
    * Get ethereum address balance
-   * @param address ethereum address
+   * @param ethAccount ethereum address or ethers wallet
    * @example getEthereum("0x9F0583DbB855d...")
    * @returns amount of tokens on address
    */
-  getEthereum(address: TEthereumAccount): Promise<bigint> {
-    return this.ethBalanceGroup.getEthereum(address);
+  getEthereum(ethAccount: TEthereumAccount | HDNodeWallet): Promise<bigint> {
+    if(ethAccount instanceof HDNodeWallet) {
+      return this.ethBalanceGroup.getEthereum(ethAccount.address);
+    } else {
+      return this.ethBalanceGroup.getEthereum(ethAccount);
+    }
   }
 
   async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint) {
@@ -2707,13 +2712,16 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
 
   /**
    * Get substrate mirror of an ethereum address
-   * @param ethAddress ethereum address
+   * @param ethAccount ethereum address or ethers wallet
    * @param toChainFormat false for normalized account
    * @example ethToSubstrate('0x9F0583DbB855d...')
    * @returns substrate mirror of a provided ethereum address
    */
-  ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat = false): TSubstrateAccount {
-    return CrossAccountId.translateEthToSub(ethAddress, toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined);
+  ethToSubstrate(ethAccount: TEthereumAccount | HDNodeWallet, toChainFormat = false): TSubstrateAccount {
+    return CrossAccountId.translateEthToSub(
+      ethAccount instanceof HDNodeWallet ? ethAccount.address : ethAccount,
+      toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined
+    );
   }
 
   /**

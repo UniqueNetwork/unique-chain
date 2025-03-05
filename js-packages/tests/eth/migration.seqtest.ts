@@ -21,6 +21,7 @@ import {Struct} from '@polkadot/types';
 import type {IEvent} from '@unique-nft/playgrounds/types.js';
 import type {InterfaceTypes} from '@polkadot/types/types/registry';
 import {ApiPromise} from '@polkadot/api';
+import { Contract } from 'ethers';
 
 const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, event: string, fields: any) => {
   const palletIndex = api.runtimeMetadata.asV14.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
@@ -93,38 +94,42 @@ describe('EVM Migrations', () => {
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txFinish])).to.be.fulfilled;
 
     const web3 = helper.getWeb3();
-    const contract = new web3.eth.Contract([
-      {
-        inputs: [],
-        name: 'counterValue',
-        outputs: [{
-          internalType: 'uint256',
-          name: '',
-          type: 'uint256',
-        }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-      {
-        inputs: [{
-          internalType: 'uint256',
-          name: 'key',
-          type: 'uint256',
-        }],
-        name: 'get',
-        outputs: [{
-          internalType: 'uint256',
-          name: '',
-          type: 'uint256',
-        }],
-        stateMutability: 'view',
-        type: 'function',
-      },
-    ], ADDRESS, {from: caller, gas: helper.eth.DEFAULT_GAS});
+    const contract = new Contract(
+      ADDRESS,
+      [
+        {
+          inputs: [],
+          name: 'counterValue',
+          outputs: [{
+            internalType: 'uint256',
+            name: '',
+            type: 'uint256',
+          }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+        {
+          inputs: [{
+            internalType: 'uint256',
+            name: 'key',
+            type: 'uint256',
+          }],
+          name: 'get',
+          outputs: [{
+            internalType: 'uint256',
+            name: '',
+            type: 'uint256',
+          }],
+          stateMutability: 'view',
+          type: 'function',
+        },
+      ],
+      caller,
+    );
 
-    expect(await contract.methods.counterValue().call()).to.be.equal('10');
+    expect(await contract.counterValue.staticCall()).to.be.equal('10');
     for(let i = 1; i <= 4; i++) {
-      expect(await contract.methods.get(i).call()).to.be.equal(i.toString());
+      expect(await contract.get.staticCall(i)).to.be.equal(i.toString());
     }
   });
   itEth('Fake collection creation on substrate side', async ({helper}) => {
@@ -164,46 +169,48 @@ describe('EVM Migrations', () => {
     expect(eventStrings).to.contain('common.ItemCreated');
   });
   itEth('Fake token creation on ethereum side', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(superuser);
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const caller = await helper.eth.createAccountWithBalance(superuser);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
+    throw new Error('unimplemented');
+    
+    // const collection = await helper.nft.mintCollection(superuser);
+    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    // const caller = await helper.eth.createAccountWithBalance(superuser);
+    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
 
-    const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
-      events.push(event);
-    });
+    // const events: any = [];
+    // contract.events.allEvents((_: any, event: any) => {
+    //   events.push(event);
+    // });
 
-    {
-      const txInsertEthLogs = helper.constructApiCall('api.tx.evmMigration.insertEthLogs', [[
-        {
-        // Contract, which has emitted this log
-          address: collectionAddress,
+    // {
+    //   const txInsertEthLogs = helper.constructApiCall('api.tx.evmMigration.insertEthLogs', [[
+    //     {
+    //     // Contract, which has emitted this log
+    //       address: collectionAddress,
 
-          topics: [
-            // First topic - event signature
-            helper.getWeb3().eth.abi.encodeEventSignature('Transfer(address,address,uint256)'),
-            // Rest of topics - indexed event fields in definition order
-            helper.getWeb3().eth.abi.encodeParameter('address', '0x' + '00'.repeat(20)),
-            helper.getWeb3().eth.abi.encodeParameter('address', caller),
-            helper.getWeb3().eth.abi.encodeParameter('uint256', 9999),
-          ],
+    //       topics: [
+    //         // First topic - event signature
+    //         helper.getWeb3().eth.abi.encodeEventSignature('Transfer(address,address,uint256)'),
+    //         // Rest of topics - indexed event fields in definition order
+    //         helper.getWeb3().eth.abi.encodeParameter('address', '0x' + '00'.repeat(20)),
+    //         helper.getWeb3().eth.abi.encodeParameter('address', caller),
+    //         helper.getWeb3().eth.abi.encodeParameter('uint256', 9999),
+    //       ],
 
-          // Every field coming from event, which is not marked as indexed, should be encoded here
-          // NFT transfer has no such fields, but here is an example for some other possible event:
-          // data: helper.getWeb3().eth.abi.encodeParameters(['uint256', 'address'], [22, collectionAddress])
-          data: [],
-        },
-      ]]);
-      await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEthLogs]);
-    }
+    //       // Every field coming from event, which is not marked as indexed, should be encoded here
+    //       // NFT transfer has no such fields, but here is an example for some other possible event:
+    //       // data: helper.getWeb3().eth.abi.encodeParameters(['uint256', 'address'], [22, collectionAddress])
+    //       data: [],
+    //     },
+    //   ]]);
+    //   await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEthLogs]);
+    // }
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    const event = events[0];
+    // if(events.length == 0) await helper.wait.newBlocks(1);
+    // const event = events[0];
 
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x' + '00'.repeat(20));
-    expect(event.returnValues.to).to.be.equal(caller);
-    expect(event.returnValues.tokenId).to.be.equal('9999');
+    // expect(event.address).to.be.equal(collectionAddress);
+    // expect(event.args.from).to.be.equal('0x' + '00'.repeat(20));
+    // expect(event.args.to).to.be.equal(caller);
+    // expect(event.args.tokenId).to.be.equal('9999');
   });
 });

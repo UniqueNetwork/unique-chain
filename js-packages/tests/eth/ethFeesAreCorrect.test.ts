@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://witww.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
 
 describe('Eth fees are correct', () => {
   let donor: IKeyringPair;
@@ -37,20 +37,19 @@ describe('Eth fees are correct', () => {
     const receiver = await helper.eth.createAccountWithBalance(donor);
     const aliceEth = helper.address.substrateToEth(alice.address);
 
-    const {tokenId: tokenA} = await collection.mintToken(minter, {Ethereum: owner});
+    const {tokenId: tokenA} = await collection.mintToken(minter, {Ethereum: owner.address});
     const {tokenId: tokenB} = await collection.mintToken(minter, {Ethereum: aliceEth});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const balanceBeforeWeb3Transfer = await helper.balance.getEthereum(owner);
-    await contract.methods.transfer(receiver, tokenA).send({from: owner, maxFeePerGas: ((await helper.eth.getGasPrice())!).toString()});
+    await (await contract.transfer.send(receiver, tokenA, {from: owner, maxFeePerGas: await helper.eth.getGasPrice()}))
+      .wait(confirmations);
     const balanceAfterWeb3Transfer = await helper.balance.getEthereum(owner);
     const web3Diff = balanceBeforeWeb3Transfer - balanceAfterWeb3Transfer;
 
-    const encodedCall = contract.methods.transfer(receiver, tokenB)
-      .encodeABI();
-
+    const encodedCall = (await contract.transfer.populateTransaction(receiver, tokenB)).data;
     const balanceBeforeEvmCall = await helper.balance.getSubstrate(alice.address);
     await helper.eth.sendEVM(
       alice,

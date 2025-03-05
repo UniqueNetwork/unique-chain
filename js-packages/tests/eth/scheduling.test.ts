@@ -36,7 +36,7 @@ describe('Scheduing EVM smart contracts', () => {
     const deployer = await helper.eth.createAccountWithBalance(alice);
     const flipper = await helper.eth.deployFlipper(deployer);
 
-    const initialValue = await flipper.methods.getValue().call();
+    const initialValue = await flipper.getValue.staticCall();
     await helper.eth.transferBalanceFromSubstrate(alice, helper.address.substrateToEth(alice.address));
 
     const waitForBlocks = 4;
@@ -48,17 +48,17 @@ describe('Scheduing EVM smart contracts', () => {
     await helper.scheduler.scheduleAfter<EthUniqueHelper>(waitForBlocks, {scheduledId, periodic})
       .eth.sendEVM(
         alice,
-        flipper.options.address,
-        flipper.methods.flip().encodeABI(),
+        await flipper.getAddress(),
+        (await flipper.flip.populateTransaction()).data,
         '0',
       );
 
-    expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
+    expect(await flipper.getValue.staticCall()).to.be.equal(initialValue);
 
     await helper.wait.newBlocks(waitForBlocks + 1);
-    expect(await flipper.methods.getValue().call()).to.be.not.equal(initialValue);
+    expect(await flipper.getValue.staticCall()).to.be.not.equal(initialValue);
 
     await helper.wait.newBlocks(periodic.period);
-    expect(await flipper.methods.getValue().call()).to.be.equal(initialValue);
+    expect(await flipper.getValue.staticCall()).to.be.equal(initialValue);
   });
 });
