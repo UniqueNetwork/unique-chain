@@ -1927,7 +1927,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ethers@npm:6":
+"ethers@npm:6.13.5":
   version: 6.13.5
   resolution: "ethers@npm:6.13.5"
   dependencies:
@@ -4018,7 +4018,7 @@ __metadata:
     csv-writer: ^1.6.0
     eslint: ^8.53.0
     eslint-plugin-mocha: ^10.2.0
-    ethers: 6
+    ethers: 6.13.5
     lossless-json: ^3.0.1
     patch-package: 8.0.0
     solc: ^0.8.22
