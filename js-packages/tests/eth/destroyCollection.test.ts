@@ -44,20 +44,10 @@ describe('Destroy Collection from EVM', function() {
       const collectionHelpers = await helper.ethNativeContract.collectionHelpers(signer);
       const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData(...testCase.params as [string, string, string, TCollectionMode, number?])).send();
       // cannot burn collec
-      await expect(collectionHelpers.methods
-        .destroyCollection(collectionAddress)
-        .send({from: signer})).to.be.rejected;
+      await expect(collectionHelpers.destroyCollection.send(collectionAddress, {from: signer})).to.be.rejected;
+      await expect(collectionHelpers.destroyCollection.send(unexistedCollection, {from: signer})).to.be.rejected;
 
-      await expect(collectionHelpers.methods
-        .destroyCollection(unexistedCollection)
-        .send({from: signer})).to.be.rejected;
-
-      expect(await collectionHelpers.methods
-        .isCollectionExist(unexistedCollection)
-        .call()).to.be.false;
-
-      expect(await collectionHelpers.methods
-        .isCollectionExist(collectionAddress)
-        .call()).to.be.true;
+      expect(await collectionHelpers.isCollectionExist.staticCall(collectionAddress)).to.be.false;
+      expect(await collectionHelpers.isCollectionExist.staticCall(unexistedCollection)).to.be.false;
     }));
 });

@@ -17,7 +17,7 @@
 import {expect} from 'chai';
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {confirmations, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
 
@@ -26,13 +26,14 @@ const {dirname} = makeNames(import.meta.url);
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
   const owner = await helper.eth.createAccountWithBalance(donor);
-  const web3 = helper.getWeb3();
-  const proxyContract = new web3.eth.Contract(JSON.parse((await readFile(`${dirname}/UniqueFungibleProxy.abi`)).toString()), undefined, {
-    from: owner,
-    gas: helper.eth.DEFAULT_GAS,
-  });
-  const proxy = await proxyContract.deploy({data: (await readFile(`${dirname}/UniqueFungibleProxy.bin`)).toString(), arguments: [wrapped.options.address]}).send({from: owner});
-  return proxy;
+  
+  const abiFileContent = await readFile(`${dirname}/UniqueFungibleProxy.abi`);
+  const abi = JSON.parse(abiFileContent.toString());
+
+  const bytecodeFileContent = await readFile(`${dirname}/UniqueFungibleProxy.bin`);
+  const bytecode = bytecodeFileContent.toString();
+
+  return await helper.ethContract.deployByAbi(owner, abi, bytecode, undefined, [wrapped.options.address]);
 }
 
 describe('Fungible (Via EVM proxy): Information getting', () => {
@@ -54,7 +55,7 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
-    const totalSupply = await contract.methods.totalSupply().call();
+    const totalSupply = await contract.totalSupply.staticCall();
 
     expect(totalSupply).to.equal('200');
   });
@@ -63,12 +64,12 @@ describe('Fungible (Via EVM proxy): Information getting', () => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
     const caller = await helper.eth.createAccountWithBalance(donor);
 
-    await collection.mint(alice, 200n, {Ethereum: caller});
+    await collection.mint(alice, 200n, {Ethereum: caller.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
-    const balance = await contract.methods.balanceOf(caller).call();
+    const balance = await contract.balanceOf.staticCall(caller);
 
     expect(balance).to.equal('200');
   });
@@ -93,27 +94,28 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
-    await collection.mint(alice, 200n, {Ethereum: contract.options.address});
+    await collection.mint(alice, 200n, {Ethereum: await contract.getAddress()});
 
     {
-      const result = await contract.methods.approve(spender, 100).send({from: caller});
-      const events = helper.eth.normalizeEvents(result.events);
+      const approveTx = await contract.approve.send(spender, 100, {from: caller});
+      const approveReceipt = await approveTx.wait(confirmations);
+      const events = helper.eth.normalizeEvents(approveReceipt!);
 
-      expect(events).to.be.deep.equal([
-        {
+      expect(events).to.be.deep.equal({
+        Approval: {
           address,
           event: 'Approval',
           args: {
-            owner: contract.options.address,
+            owner: await contract.getAddress(),
             spender,
             value: '100',
           },
         },
-      ]);
+      });
     }
 
     {
-      const allowance = await contract.methods.allowance(contract.options.address, spender).call();
+      const allowance = await contract.allowance.staticCall(await contract.getAddress(), spender)
       expect(+allowance).to.equal(100);
     }
   });
@@ -123,20 +125,22 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const owner = await helper.eth.createAccountWithBalance(donor);
 
-    await collection.mint(alice, 200n, {Ethereum: owner});
+    await collection.mint(alice, 200n, {Ethereum: owner.address});
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
 
-    await evmCollection.methods.approve(contract.options.address, 100).send({from: owner});
+    await (await evmCollection.approve.send(await contract.getAddress(), 100)).wait(confirmations);
 
     {
-      const result = await contract.methods.transferFrom(owner, receiver, 49).send({from: caller});
-      const events = helper.eth.normalizeEvents(result.events);
-      expect(events).to.be.deep.equal([
-        {
+      const transferTx = await contract.transferFrom.send(owner, receiver, 49, {from: caller});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const events = helper.eth.normalizeEvents(transferReceipt!);
+      
+      expect(events).to.be.deep.equal({
+        Transfer: {
           address,
           event: 'Transfer',
           args: {
@@ -145,25 +149,25 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
             value: '49',
           },
         },
-        {
+        Approval: {
           address,
           event: 'Approval',
           args: {
             owner,
-            spender: contract.options.address,
+            spender: await contract.getAddress(),
             value: '51',
           },
         },
-      ]);
+      });
     }
 
     {
-      const balance = await contract.methods.balanceOf(receiver).call();
+      const balance = await contract.balanceOf.staticCall(receiver)
       expect(+balance).to.equal(49);
     }
 
     {
-      const balance = await contract.methods.balanceOf(owner).call();
+      const balance = await contract.balanceOf.staticCall(owner)
       expect(+balance).to.equal(151);
     }
   });
@@ -176,31 +180,33 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
-    await collection.mint(alice, 200n, {Ethereum: contract.options.address});
+    await collection.mint(alice, 200n, {Ethereum: await contract.getAddress()});
 
     {
-      const result = await contract.methods.transfer(receiver, 50).send({from: caller});
-      const events = helper.eth.normalizeEvents(result.events);
-      expect(events).to.be.deep.equal([
-        {
+      const transferTx = await contract.transfer.send(receiver, 50, {from: caller});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const events = helper.eth.normalizeEvents(transferReceipt!);
+
+      expect(events).to.be.deep.equal({
+        Transfer: {
           address,
           event: 'Transfer',
           args: {
-            from: contract.options.address,
+            from: await contract.getAddress(),
             to: receiver,
             value: '50',
           },
         },
-      ]);
+      });
     }
 
     {
-      const balance = await contract.methods.balanceOf(contract.options.address).call();
+      const balance = await contract.balanceOf.staticCall(await contract.getAddress())
       expect(+balance).to.equal(150);
     }
 
     {
-      const balance = await contract.methods.balanceOf(receiver).call();
+      const balance = await contract.balanceOf.staticCall(receiver)
       expect(+balance).to.equal(50);
     }
   });

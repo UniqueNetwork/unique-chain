@@ -14,12 +14,12 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Contract} from 'web3-eth-contract';
+import {Contract, hexlify} from 'ethers';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
-import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
 
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;
@@ -37,43 +37,46 @@ describe('Check ERC721 token URI for NFT', () => {
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', 'a', 'b', baseUri);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    const result = await contract.methods.mint(receiver).send();
-    const tokenId = result.events.Transfer.returnValues.tokenId;
+    const mintTx = await contract.mint.send(receiver);
+    const mintReceipt = await mintTx.wait(confirmations);
+    const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
+
+    const tokenId = mintEvents.Transfer.args.tokenId;
     expect(tokenId).to.be.equal('1');
 
     if(propertyKey && propertyValue) {
       // Set URL or suffix
-      await contract.methods.setProperties(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}]).send();
+      await (await contract.setProperties.send(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}])).wait(confirmations);
     }
 
-    const event = result.events.Transfer;
+    const event = mintEvents.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(tokenId);
+    expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
+    expect(event.args.to).to.be.equal(receiver);
+    expect(event.args.tokenId).to.be.equal(tokenId);
 
     return {contract, nextTokenId: tokenId};
   }
 
   itEth('Empty tokenURI', async ({helper}) => {
     const {contract, nextTokenId} = await setup(helper, '');
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('');
+    expect(await contract.tokenURI.staticCall(nextTokenId)).to.be.equal('');
   });
 
   itEth('TokenURI from url', async ({helper}) => {
     const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'URI', 'Token URI');
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('Token URI');
+    expect(await contract.tokenURI.staticCall(nextTokenId)).to.be.equal('Token URI');
   });
 
   itEth('TokenURI from baseURI', async ({helper}) => {
     const {contract, nextTokenId} = await setup(helper, 'BaseURI_');
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_');
+    expect(await contract.tokenURI.staticCall(nextTokenId)).to.be.equal('BaseURI_');
   });
 
   itEth('TokenURI from baseURI + suffix', async ({helper}) => {
     const suffix = '/some/suffix';
     const {contract, nextTokenId} = await setup(helper, 'BaseURI_', 'URISuffix', suffix);
-    expect(await contract.methods.tokenURI(nextTokenId).call()).to.be.equal('BaseURI_' + suffix);
+    expect(await contract.tokenURI.staticCall(nextTokenId)).to.be.equal('BaseURI_' + suffix);
   });
 });
 
@@ -118,38 +121,45 @@ describe('NFT: Plain calls', () => {
         tokenPrefix: 'ethp',
         tokenPropertyPermissions: permissions,
       });
-      await collection.addAdmin(minter, {Ethereum: collectionAdmin});
+      await collection.addAdmin(minter, {Ethereum: collectionAdmin.address});
 
       const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', collectionAdmin, true);
-      let expectedTokenId = await contract.methods.nextTokenId().call();
-      let result = await contract.methods.mintCross(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, []).send();
-      let tokenId = result.events.Transfer.returnValues.tokenId;
+      let expectedTokenId = await contract.nextTokenId.staticCall();
+      
+      const mintTx = await contract.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, []);
+      const mintReceipt = await mintTx.wait(confirmations);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
+
+      let tokenId = mintEvents.Transfer.args.tokenId;
       expect(tokenId).to.be.equal(expectedTokenId);
 
-      let event = result.events.Transfer;
+      let event = mintEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
-      expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
+      expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
+      expect(await contract.properties.staticCall(tokenId, [])).to.be.like([]);
 
-      expectedTokenId = await contract.methods.nextTokenId().call();
-      result = await contract.methods.mintCross(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, properties).send();
-      event = result.events.Transfer;
+      expectedTokenId = await contract.nextTokenId.staticCall();
+      const mintTx2 = await contract.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, properties);
+      const mintReceipt2 = await mintTx2.wait(confirmations);
+      const mintEvents2 = helper.eth.normalizeEvents(mintReceipt2!);
+      
+      event = mintEvents2.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
-      expect(await contract.methods.properties(tokenId, []).call()).to.be.like([]);
+      expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
+      expect(await contract.properties.staticCall(tokenId, [])).to.be.like([]);
 
-      tokenId = result.events.Transfer.returnValues.tokenId;
+      tokenId = mintEvents2.Transfer.args.tokenId;
 
       expect(tokenId).to.be.equal(expectedTokenId);
 
-      expect(await contract.methods.properties(tokenId, []).call()).to.be.like(properties
+      expect(await contract.properties.staticCall(tokenId, [])).to.be.like(properties
         .map(p => helper.ethProperty.property(p.key, p.value.toString())));
 
-      expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
-        .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.toLowerCase()} : {Substrate: receiverSub.address});
+      expect(await helper.nft.getTokenOwner(collection.collectionId, +tokenId))
+        .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.address.toLowerCase()} : {Substrate: receiverSub.address});
     });
   });
 
@@ -161,7 +171,7 @@ describe('NFT: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    await expect(collectionEvm.methods.mintCross(nonOwnerCross, []).call({from: nonOwner}))
+    await expect(collectionEvm.mintCross.staticCall(nonOwnerCross, [], {from: nonOwner}))
       .to.be.rejectedWith('PublicMintingNotAllowed');
   });
 
@@ -171,30 +181,38 @@ describe('NFT: Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const collection = await helper.nft.mintCollection(minter);
-    await collection.addAdmin(minter, {Ethereum: caller});
+    await collection.addAdmin(minter, {Ethereum: caller.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     {
       const bulkSize = 3;
-      const nextTokenId = await contract.methods.nextTokenId().call();
+      
+      const nextTokenId = await contract.nextTokenId.staticCall();
       expect(nextTokenId).to.be.equal('1');
-      const result = await contract.methods.mintBulkWithTokenURI(
+      
+      const mintTx = await contract.mintBulkWithTokenURI.send(
         receiver,
         Array.from({length: bulkSize}, (_, i) => (
           [+nextTokenId + i, `Test URI ${i}`]
         )),
-      ).send({from: caller});
+        {from: caller}
+      );
+      const mintReceipt = await mintTx.wait(confirmations);
+      const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
 
-      const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
+      const events = mintEvents
+        .filter((event) => event.event === 'Transfer')
+        .sort((a, b) => +a.args.tokenId - +b.args.tokenId);
+
       for(let i = 0; i < bulkSize; i++) {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
-        expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-        expect(event.returnValues.to).to.equal(receiver);
-        expect(event.returnValues.tokenId).to.equal(`${+nextTokenId + i}`);
+        expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
+        expect(event.args.to).to.equal(receiver);
+        expect(event.args.tokenId).to.equal(`${+nextTokenId + i}`);
 
-        expect(await contract.methods.tokenURI(+nextTokenId + i).call()).to.be.equal(`Test URI ${i}`);
+        expect(await contract.tokenURI.staticCall(+nextTokenId + i)).to.be.equal(`Test URI ${i}`);
       }
     }
   });
@@ -232,58 +250,69 @@ describe('NFT: Plain calls', () => {
 
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     {
-      const nextTokenId = await contract.methods.nextTokenId().call();
+      const nextTokenId = await contract.nextTokenId.staticCall();
       expect(nextTokenId).to.be.equal('1');
-      const result = await contract.methods.mintBulkCross([
-        {
-          owner: receiverCross,
-          properties: [
-            {key: 'key_0_0', value: Buffer.from('value_0_0')},
-          ],
-        },
-        {
-          owner: receiverCross,
-          properties: [
-            {key: 'key_1_0', value: Buffer.from('value_1_0')},
-            {key: 'key_1_1', value: Buffer.from('value_1_1')},
-          ],
-        },
-        {
-          owner: receiverCross,
-          properties: [
-            {key: 'key_2_0', value: Buffer.from('value_2_0')},
-            {key: 'key_2_1', value: Buffer.from('value_2_1')},
-            {key: 'key_2_2', value: Buffer.from('value_2_2')},
-          ],
-        },
-      ]).send({from: caller});
-      const events = result.events.Transfer.sort((a: any, b: any) => +a.returnValues.tokenId - b.returnValues.tokenId);
+
+      const mintTx = await contract.mintBulkCross.send(
+        [
+          {
+            owner: receiverCross,
+            properties: [
+              {key: 'key_0_0', value: Buffer.from('value_0_0')},
+            ],
+          },
+          {
+            owner: receiverCross,
+            properties: [
+              {key: 'key_1_0', value: Buffer.from('value_1_0')},
+              {key: 'key_1_1', value: Buffer.from('value_1_1')},
+            ],
+          },
+          {
+            owner: receiverCross,
+            properties: [
+              {key: 'key_2_0', value: Buffer.from('value_2_0')},
+              {key: 'key_2_1', value: Buffer.from('value_2_1')},
+              {key: 'key_2_2', value: Buffer.from('value_2_2')},
+            ],
+          },
+        ],
+        {from: caller}
+      );
+      const mintReceipt = await mintTx.wait(confirmations);
+      const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
+
+      const events = mintEvents
+        .filter((event) => event.event === 'Transfer')
+        .sort((a, b) => +a.args.tokenId - +b.args.tokenId);
+      
       const bulkSize = 3;
       for(let i = 0; i < bulkSize; i++) {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
-        expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-        expect(event.returnValues.to).to.equal(receiver);
-        expect(event.returnValues.tokenId).to.equal(`${+nextTokenId + i}`);
+        expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
+        expect(event.args.to).to.equal(receiver);
+        expect(event.args.tokenId).to.equal(`${+nextTokenId + i}`);
       }
 
       const properties = [
-        await contract.methods.properties(+nextTokenId, []).call(),
-        await contract.methods.properties(+nextTokenId + 1, []).call(),
-        await contract.methods.properties(+nextTokenId + 2, []).call(),
+        await contract.properties.staticCall(+nextTokenId, []),
+        await contract.properties.staticCall(+nextTokenId + 1, []),
+        await contract.properties.staticCall(+nextTokenId + 2, []),
       ];
+
       expect(properties).to.be.deep.equal([
         [
-          ['key_0_0', helper.getWeb3().utils.toHex('value_0_0')],
+          ['key_0_0', hexlify('value_0_0')],
         ],
         [
-          ['key_1_0', helper.getWeb3().utils.toHex('value_1_0')],
-          ['key_1_1', helper.getWeb3().utils.toHex('value_1_1')],
+          ['key_1_0', hexlify('value_1_0')],
+          ['key_1_1', hexlify('value_1_1')],
         ],
         [
-          ['key_2_0', helper.getWeb3().utils.toHex('value_2_0')],
-          ['key_2_1', helper.getWeb3().utils.toHex('value_2_1')],
-          ['key_2_2', helper.getWeb3().utils.toHex('value_2_2')],
+          ['key_2_0', hexlify('value_2_0')],
+          ['key_2_1', hexlify('value_2_1')],
+          ['key_2_2', hexlify('value_2_2')],
         ],
       ]);
     }
@@ -293,19 +322,21 @@ describe('NFT: Plain calls', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.nft.mintCollection(minter, {});
-    const {tokenId} = await collection.mintToken(minter, {Ethereum: caller});
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: caller.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
 
     {
-      const result = await contract.methods.burn(tokenId).send({from: caller});
+      const burnTx = await contract.burn.send(tokenId, {from: caller});
+      const burnReceipt = await burnTx.wait(confirmations);
+      const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
 
-      const event = result.events.Transfer;
+      const event = burnEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal(caller);
-      expect(event.returnValues.to).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+      expect(event.args.from).to.be.equal(caller);
+      expect(event.args.to).to.be.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
   });
 
@@ -314,30 +345,32 @@ describe('NFT: Plain calls', () => {
     const spender = helper.eth.createAccount();
 
     const collection = await helper.nft.mintCollection(minter, {});
-    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner});
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
-      const badTokenId = await contract.methods.nextTokenId().call() + 1;
-      await expect(contract.methods.getApproved(badTokenId).call()).to.be.rejectedWith('revert TokenNotFound');
+      const badTokenId = await contract.nextTokenId.staticCall() + 1;
+      await expect(contract.getApproved.staticCall(badTokenId)).to.be.rejectedWith('revert TokenNotFound');
     }
     {
-      const approved = await contract.methods.getApproved(tokenId).call();
+      const approved = await contract.getApproved.staticCall(tokenId);
       expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
     }
     {
-      const result = await contract.methods.approve(spender, tokenId).send({from: owner});
+      const approveTx = await contract.approve.send(spender, tokenId);
+      const approveReceipt = await approveTx.wait(confirmations);
+      const approveEvents = helper.eth.normalizeEvents(approveReceipt!);
 
-      const event = result.events.Approval;
+      const event = approveEvents.Approval;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.owner).to.be.equal(owner);
-      expect(event.returnValues.approved).to.be.equal(spender);
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+      expect(event.args.owner).to.be.equal(owner);
+      expect(event.args.approved).to.be.equal(spender);
+      expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
     {
-      const approved = await contract.methods.getApproved(tokenId).call();
+      const approved = await contract.getApproved.staticCall(tokenId);
       expect(approved).to.be.equal(spender);
     }
   });
@@ -351,40 +384,44 @@ describe('NFT: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    const approvedBefore = await contract.methods.isApprovedForAll(owner, operator).call();
+    const approvedBefore = await contract.isApprovedForAll.staticCall(owner, operator);
     expect(approvedBefore).to.be.equal(false);
 
     {
-      const result = await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      const approvalTx = await contract.setApprovalForAll.send(operator, true);
+      const approvalReceipt = await approvalTx.wait(confirmations);
+      const approvalEvents = helper.eth.normalizeEvents(approvalReceipt!);
 
-      expect(result.events.ApprovalForAll).to.be.like({
+      expect(approvalEvents.ApprovalForAll).to.be.like({
         address: collectionAddress,
         event: 'ApprovalForAll',
-        returnValues: {
+        args: {
           owner,
           operator,
           approved: true,
         },
       });
 
-      const approvedAfter = await contract.methods.isApprovedForAll(owner, operator).call();
+      const approvedAfter = await contract.isApprovedForAll.staticCall(owner, operator);
       expect(approvedAfter).to.be.equal(true);
     }
 
     {
-      const result = await contract.methods.setApprovalForAll(operator, false).send({from: owner});
+      const approvalTx = await contract.setApprovalForAll.send(operator, false);
+      const approvalReceipt = await approvalTx.wait(confirmations);
+      const approvalEvents = helper.eth.normalizeEvents(approvalReceipt!);
 
-      expect(result.events.ApprovalForAll).to.be.like({
+      expect(approvalEvents.ApprovalForAll).to.be.like({
         address: collectionAddress,
         event: 'ApprovalForAll',
-        returnValues: {
+        args: {
           owner,
           operator,
           approved: false,
         },
       });
 
-      const approvedAfter = await contract.methods.isApprovedForAll(owner, operator).call();
+      const approvedAfter = await contract.isApprovedForAll.staticCall(owner, operator);
       expect(approvedAfter).to.be.equal(false);
     }
   });
@@ -395,21 +432,23 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const operator = await helper.eth.createAccountWithBalance(donor);
 
-    const token = await collection.mintToken(minter, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
     {
-      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      await (await contract.setApprovalForAll.send(operator, true)).wait(confirmations);
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
-      const result = await contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: operator});
-      const events = result.events.Transfer;
 
-      expect(events).to.be.like({
+      const burnTx = await contract.burnFromCross.send(ownerCross, token.tokenId, {from: operator});
+      const burnReceipt = await burnTx.wait(confirmations);
+      const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
+
+      expect(burnEvents.Transfer).to.be.like({
         address,
         event: 'Transfer',
-        returnValues: {
+        args: {
           from: owner,
           to: '0x0000000000000000000000000000000000000000',
           tokenId: token.tokenId.toString(),
@@ -427,21 +466,25 @@ describe('NFT: Plain calls', () => {
     const operator = await helper.eth.createAccountWithBalance(donor);
     const receiver = charlie;
 
-    const token = await collection.mintToken(minter, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
     {
-      await contract.methods.setApprovalForAll(operator, true).send({from: owner});
+      await (await contract.setApprovalForAll.send(operator, true)).wait(confirmations);
+      
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: operator});
-      const event = result.events.Transfer;
-      expect(event).to.be.like({
+
+      const transferTx = await contract.burnFromCross.send(ownerCross, recieverCross, token.tokenId, {from: operator});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
+
+      expect(transferEvents.Transfer).to.be.like({
         address: helper.ethAddress.fromCollectionId(collection.collectionId),
         event: 'Transfer',
-        returnValues: {
+        args: {
           from: owner,
           to: helper.address.substrateToEth(receiver.address),
           tokenId: token.tokenId.toString(),
@@ -463,33 +506,36 @@ describe('NFT: Plain calls', () => {
     const burnerCrossEth = helper.ethCrossAccount.fromAddress(burnerEth);
 
     const token1 = await collection.mintToken(minter, {Substrate: ownerSub.address});
-    const token2 = await collection.mintToken(minter, {Ethereum: ownerEth});
+    const token2 = await collection.mintToken(minter, {Ethereum: ownerEth.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
     // Approve tokens from substrate and ethereum:
-    await token1.approve(ownerSub, {Ethereum: burnerEth});
-    await collectionEvm.methods.approveCross(burnerCrossEth, token2.tokenId).send({from: ownerEth});
+    await token1.approve(ownerSub, {Ethereum: burnerEth.address});
+    await (await collectionEvm.approveCross.send(burnerCrossEth, token2.tokenId, {from: ownerEth})).wait(confirmations);
 
     // can burnFromCross:
-    const result1 = await collectionEvm.methods.burnFromCross(ownerCrossSub, token1.tokenId).send({from: burnerEth});
-    const result2 = await collectionEvm.methods.burnFromCross(ownerCrossEth, token2.tokenId).send({from: burnerEth});
-    const events1 = result1.events.Transfer;
-    const events2 = result2.events.Transfer;
+    const burnTx1 = await collectionEvm.burnFromCross.send(ownerCrossSub, token1.tokenId, {from: burnerEth});
+    const burnReceipt1 = await burnTx1.wait(confirmations);
+    const burnEvents1 = helper.eth.normalizeEvents(burnReceipt1!);
+
+    const burnTx2 = await collectionEvm.burnFromCross.send(ownerCrossEth, token2.tokenId, {from: burnerEth});
+    const burnReceipt2 = await burnTx2.wait(confirmations);
+    const burnEvents2 = helper.eth.normalizeEvents(burnReceipt2!);
 
     // Check events for burnFromCross (substrate and ethereum):
     [
-      [events1, token1, helper.address.substrateToEth(ownerSub.address)],
-      [events2, token2, ownerEth],
+      [burnEvents1, token1, helper.address.substrateToEth(ownerSub.address)],
+      [burnEvents2, token2, ownerEth],
     ].map(burnData => {
       expect(burnData[0]).to.be.like({
         address: collectionAddress,
         event: 'Transfer',
-        returnValues: {
+        args: {
           from: burnData[2],
           to: '0x0000000000000000000000000000000000000000',
-          tokenId: burnData[1].tokenId.toString(),
+          tokenId: (<any>burnData[1]).tokenId.toString(),
         },
       });
     });
@@ -504,35 +550,40 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const ownerCross = helper.ethCrossAccount.fromAddress(owner);
     const receiverSub = charlie;
-    const recieverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
+    const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(receiverSub);
     const receiverEth = await helper.eth.createAccountWithBalance(donor);
     const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
 
     // arrange: create collection and tokens:
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
-    const token1 = await collection.mintToken(minter, {Ethereum: owner});
-    const token2 = await collection.mintToken(minter, {Ethereum: owner});
+    const token1 = await collection.mintToken(minter, {Ethereum: owner.address});
+    const token2 = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
 
     // Can approveCross substrate and ethereum address:
-    const resultSub = await collectionEvm.methods.approveCross(recieverCrossSub, token1.tokenId).send({from: owner});
-    const resultEth = await collectionEvm.methods.approveCross(receiverCrossEth, token2.tokenId).send({from: owner});
-    const eventSub = resultSub.events.Approval;
-    const eventEth = resultEth.events.Approval;
-    expect(eventSub).to.be.like({
+    const approveTxSub = await collectionEvm.approveCross.send(receiverCrossSub, token1.tokenId);
+    const approveReceiptSub = await approveTxSub.wait(confirmations);
+    const approveEventsSub = helper.eth.normalizeEvents(approveReceiptSub!);
+
+    const approveTxEth = await collectionEvm.approveCross.send(receiverCrossEth, token2.tokenId);
+    const approveReceiptEth = await approveTxEth.wait(confirmations);
+    const approveEventsEth = helper.eth.normalizeEvents(approveReceiptEth!);
+
+    expect(approveEventsSub.Approval).to.be.like({
       address: helper.ethAddress.fromCollectionId(collection.collectionId),
       event: 'Approval',
-      returnValues: {
+      args: {
         owner,
         approved: helper.address.substrateToEth(receiverSub.address),
         tokenId: token1.tokenId.toString(),
       },
     });
-    expect(eventEth).to.be.like({
+
+    expect(approveEventsEth.Approval).to.be.like({
       address: helper.ethAddress.fromCollectionId(collection.collectionId),
       event: 'Approval',
-      returnValues: {
+      args: {
         owner,
         approved: receiverEth,
         tokenId: token2.tokenId.toString(),
@@ -540,11 +591,12 @@ describe('NFT: Plain calls', () => {
     });
 
     // Substrate address can transferFrom approved tokens:
-    await helper.nft.transferTokenFrom(receiverSub, collection.collectionId, token1.tokenId, {Ethereum: owner}, {Substrate: receiverSub.address});
+    await helper.nft.transferTokenFrom(receiverSub, collection.collectionId, token1.tokenId, {Ethereum: owner.address}, {Substrate: receiverSub.address});
     expect(await helper.nft.getTokenOwner(collection.collectionId, token1.tokenId)).to.deep.eq({Substrate: receiverSub.address});
+    
     // Ethereum address can transferFromCross approved tokens:
-    await collectionEvm.methods.transferFromCross(ownerCross, receiverCrossEth, token2.tokenId).send({from: receiverEth});
-    expect(await helper.nft.getTokenOwner(collection.collectionId, token2.tokenId)).to.deep.eq({Ethereum: receiverEth.toLowerCase()});
+    await (await collectionEvm.transferFromCross.send(ownerCross, receiverCrossEth, token2.tokenId, {from: receiverEth})).wait(confirmations);
+    expect(await helper.nft.getTokenOwner(collection.collectionId, token2.tokenId)).to.deep.eq({Ethereum: receiverEth.address.toLowerCase()});
   });
 
   itEth('Non-owner and non admin cannot approveCross', async ({helper}) => {
@@ -553,9 +605,11 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
     const collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
-    const token = await collection.mintToken(minter, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
-    await expect(collectionEvm.methods.approveCross(nonOwnerCross, token.tokenId).call({from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
+    await expect(
+      collectionEvm.approveCross.staticCall(nonOwnerCross, token.tokenId, {from: nonOwner})
+    ).to.be.rejectedWith('CantApproveMoreThanOwned');
   });
 
   itEth('Can reaffirm approved address', async ({helper}) => {
@@ -565,25 +619,25 @@ describe('NFT: Plain calls', () => {
     const receiver1Cross = helper.ethCrossAccount.fromKeyringPair(receiver1);
     const receiver2Cross = helper.ethCrossAccount.fromKeyringPair(receiver2);
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
-    const token1 = await collection.mintToken(minter, {Ethereum: owner});
-    const token2 = await collection.mintToken(minter, {Ethereum: owner});
+    const token1 = await collection.mintToken(minter, {Ethereum: owner.address});
+    const token2 = await collection.mintToken(minter, {Ethereum: owner.address});
     const collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
 
     // Can approve and reaffirm approved address:
-    await collectionEvm.methods.approveCross(receiver1Cross, token1.tokenId).send({from: owner});
-    await collectionEvm.methods.approveCross(receiver2Cross, token1.tokenId).send({from: owner});
+    await (await collectionEvm.approveCross.send(receiver1Cross, token1.tokenId)).wait(confirmations);
+    await (await collectionEvm.approveCross.send(receiver2Cross, token1.tokenId)).wait(confirmations);
 
     // receiver1 cannot transferFrom:
-    await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token1.tokenId, {Ethereum: owner}, {Substrate: receiver1.address})).to.be.rejected;
+    await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token1.tokenId, {Ethereum: owner.address}, {Substrate: receiver1.address})).to.be.rejected;
     // receiver2 can transferFrom:
-    await helper.nft.transferTokenFrom(receiver2, collection.collectionId, token1.tokenId, {Ethereum: owner}, {Substrate: receiver2.address});
+    await helper.nft.transferTokenFrom(receiver2, collection.collectionId, token1.tokenId, {Ethereum: owner.address}, {Substrate: receiver2.address});
 
     // can set approved address to self address to remove approval:
-    await collectionEvm.methods.approveCross(receiver1Cross, token2.tokenId).send({from: owner});
-    await collectionEvm.methods.approveCross(ownerCrossEth, token2.tokenId).send({from: owner});
+    await (await collectionEvm.approveCross.send(receiver1Cross, token2.tokenId)).wait(confirmations);
+    await (await collectionEvm.approveCross.send(ownerCrossEth, token2.tokenId)).wait(confirmations);
 
     // receiver1 cannot transfer token anymore:
-    await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token2.tokenId, {Ethereum: owner}, {Substrate: receiver1.address})).to.be.rejected;
+    await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token2.tokenId, {Ethereum: owner.address}, {Substrate: receiver1.address})).to.be.rejected;
   });
 
   itEth('Can perform transferFrom()', async ({helper}) => {
@@ -592,30 +646,32 @@ describe('NFT: Plain calls', () => {
     const receiver = helper.eth.createAccount();
 
     const collection = await helper.nft.mintCollection(minter, {});
-    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner});
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await contract.methods.approve(spender, tokenId).send({from: owner});
+    await (await contract.approve.send(spender, tokenId)).wait(confirmations);
 
     {
-      const result = await contract.methods.transferFrom(owner, receiver, tokenId).send({from: spender});
+      const transferTx = await contract.transferFrom.send(owner, receiver, tokenId, {from: spender});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
-      const event = result.events.Transfer;
+      const event = transferEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal(owner);
-      expect(event.returnValues.to).to.be.equal(receiver);
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+      expect(event.args.from).to.be.equal(owner);
+      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
 
     {
-      const balance = await contract.methods.balanceOf(receiver).call();
+      const balance = await contract.balanceOf.staticCall(receiver);
       expect(+balance).to.equal(1);
     }
 
     {
-      const balance = await contract.methods.balanceOf(owner).call();
+      const balance = await contract.balanceOf.staticCall(owner);
       expect(+balance).to.equal(0);
     }
   });
@@ -631,17 +687,20 @@ describe('NFT: Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
-    await token.approve(owner, {Ethereum: spender});
+    await token.approve(owner, {Ethereum: spender.address});
 
     {
       const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender});
-      const event = result.events.Transfer;
-      expect(event).to.be.like({
+      
+      const transferTx = await contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
+      
+      expect(transferEvents.Transfer).to.be.like({
         address: helper.ethAddress.fromCollectionId(collection.collectionId),
         event: 'Transfer',
-        returnValues: {
+        args: {
           from: helper.address.substrateToEth(owner.address),
           to: helper.address.substrateToEth(receiver.address),
           tokenId: token.tokenId.toString(),
@@ -657,28 +716,30 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
 
-    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner});
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
-      const result = await contract.methods.transfer(receiver, tokenId).send({from: owner});
+      const transferTx = await contract.transfer.send(receiver, tokenId);
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
-      const event = result.events.Transfer;
+      const event = transferEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal(owner);
-      expect(event.returnValues.to).to.be.equal(receiver);
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+      expect(event.args.from).to.be.equal(owner);
+      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
 
     {
-      const balance = await contract.methods.balanceOf(owner).call();
+      const balance = await contract.balanceOf.staticCall(owner);
       expect(+balance).to.equal(0);
     }
 
     {
-      const balance = await contract.methods.balanceOf(receiver).call();
+      const balance = await contract.balanceOf.staticCall(receiver);
       expect(+balance).to.equal(1);
     }
   });
@@ -690,44 +751,46 @@ describe('NFT: Plain calls', () => {
     const receiverCrossEth = helper.ethCrossAccount.fromAddress(receiverEth);
     const receiverCrossSub = helper.ethCrossAccount.fromKeyringPair(minter);
 
-    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner});
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
-      // Can transferCross to ethereum address:
-      const result = await collectionEvm.methods.transferCross(receiverCrossEth, tokenId).send({from: owner});
-      // Check events:
-      const event = result.events.Transfer;
-      expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal(owner);
-      expect(event.returnValues.to).to.be.equal(receiverEth);
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+      const transferTx = await collectionEvm.transferCross.send(receiverCrossEth, tokenId);
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
-      // owner has balance = 0:
-      const ownerBalance = await collectionEvm.methods.balanceOf(owner).call();
+      const event = transferEvents.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.args.from).to.be.equal(owner);
+      expect(event.args.to).to.be.equal(receiverEth);
+      expect(event.args.tokenId).to.be.equal(`${tokenId}`);
+
+      const ownerBalance = await collectionEvm.balanceOf.staticCall(owner);
       expect(+ownerBalance).to.equal(0);
-      // receiver owns token:
-      const receiverBalance = await collectionEvm.methods.balanceOf(receiverEth).call();
+
+      const receiverBalance = await collectionEvm.balanceOf.staticCall(receiverEth);
       expect(+receiverBalance).to.equal(1);
-      expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId)).to.deep.eq({Ethereum: receiverEth.toLowerCase()});
+      expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
+        .to.deep
+        .eq({Ethereum: receiverEth.address.toLowerCase()});
     }
 
     {
-      // Can transferCross to substrate address:
-      const substrateResult = await collectionEvm.methods.transferCross(receiverCrossSub, tokenId).send({from: receiverEth});
-      // Check events:
-      const event = substrateResult.events.Transfer;
-      expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal(receiverEth);
-      expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(minter.address));
-      expect(event.returnValues.tokenId).to.be.equal(`${tokenId}`);
+      const transferTx = await collectionEvm.transferCross.send(receiverCrossSub, tokenId, {from: receiverEth});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
-      // owner has balance = 0:
-      const ownerBalance = await collectionEvm.methods.balanceOf(receiverEth).call();
+      const event = transferEvents.Transfer;
+      expect(event.address).to.be.equal(collectionAddress);
+      expect(event.args.from).to.be.equal(receiverEth);
+      expect(event.args.to).to.be.equal(helper.address.substrateToEth(minter.address));
+      expect(event.args.tokenId).to.be.equal(`${tokenId}`);
+
+      const ownerBalance = await collectionEvm.balanceOf.staticCall(receiverEth);
       expect(+ownerBalance).to.equal(0);
-      // receiver owns token:
+
       const receiverBalance = await helper.nft.getTokensByAddress(collection.collectionId, {Substrate: minter.address});
       expect(receiverBalance).to.contain(tokenId);
     }
@@ -743,44 +806,52 @@ describe('NFT: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', sender);
 
-    await collection.mintToken(minter, {Ethereum: sender});
-    const nonSendersToken = await collection.mintToken(minter, {Ethereum: tokenOwner});
+    await collection.mintToken(minter, {Ethereum: sender.address});
+    const nonSendersToken = await collection.mintToken(minter, {Ethereum: tokenOwner.address});
 
     // Cannot transferCross someone else's token:
     const receiver = testCase === 'transfer' ? helper.address.substrateToEth(receiverSub.address) : receiverCrossSub;
-    await expect(collectionEvm.methods[testCase](receiver, nonSendersToken.tokenId).send({from: sender})).to.be.rejected;
+    await expect(collectionEvm[testCase].send(receiver, nonSendersToken.tokenId, {from: sender})).to.be.rejected;
     // Cannot transfer token if it does not exist:
-    await expect(collectionEvm.methods[testCase](receiver, 999999).send({from: sender})).to.be.rejected;
+    await expect(collectionEvm[testCase].send(receiver, 999999, {from: sender})).to.be.rejected;
   }));
 
   itEth('Check balanceOfCross()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {});
-    const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq('0');
+    expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('0');
 
     for(let i = 1; i < 10; i++) {
-      await collection.mintToken(minter, {Ethereum: owner.eth});
-      expect(await collectionEvm.methods.balanceOfCross(owner).call({from: owner.eth})).to.be.eq(i.toString());
+      await collection.mintToken(minter, {Ethereum: owner.address});
+      expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq(i.toString());
     }
   });
 
   itEth('Check ownerOfCross()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {});
-    let owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
+    let owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner.eth);
-    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.eth});
+    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     for(let i = 1n; i < 10n; i++) {
-      const ownerCross = await collectionEvm.methods.ownerOfCross(tokenId).call({from: owner.eth});
-      expect(ownerCross.eth).to.be.eq(owner.eth);
-      expect(ownerCross.sub).to.be.eq(owner.sub);
+      const ownerCross = await collectionEvm.ownerOfCross.staticCall(tokenId, {from: owner.address});
+      expect(ownerCross.eth).to.be.eq(owner.address);
+      expect(ownerCross.sub).to.be.eq('0');
 
-      const newOwner = await helper.ethCrossAccount.createAccountWithBalance(donor);
-      await collectionEvm.methods.transferCross(newOwner, tokenId).send({from: owner.eth});
+      const newOwner = await helper.eth.createAccountWithBalance(donor, 100n);
+      
+      await (
+        await collectionEvm.transferCross.send(
+          helper.ethCrossAccount.fromAddress(newOwner),
+          tokenId,
+          {from: owner.address},
+        )
+      ).wait(confirmations);
+
       owner = newOwner;
     }
   });
@@ -804,11 +875,11 @@ describe('NFT: Fees', () => {
     const spender = helper.eth.createAccount();
 
     const collection = await helper.nft.mintCollection(alice, {});
-    const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: owner.address});
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    const cost = await helper.eth.recordCallFee(owner, () => contract.methods.approve(spender, tokenId).send({from: owner}));
+    const cost = await helper.eth.recordCallFee(owner.address, async () => await (await contract.approve.send(spender, tokenId)).wait(confirmations));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
@@ -817,13 +888,16 @@ describe('NFT: Fees', () => {
     const spender = await helper.eth.createAccountWithBalance(donor);
 
     const collection = await helper.nft.mintCollection(alice, {});
-    const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
+    const {tokenId} = await collection.mintToken(alice, {Ethereum: owner.address});
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    await contract.methods.approve(spender, tokenId).send({from: owner});
+    await (await contract.approve.send(spender, tokenId)).wait(confirmations);
 
-    const cost = await helper.eth.recordCallFee(spender, () => contract.methods.transferFrom(owner, spender, tokenId).send({from: spender}));
+    const cost = await helper.eth.recordCallFee(
+      spender.address,
+      async () => await (await contract.transferFrom.send(owner, spender, tokenId, {from: spender})).wait(confirmations),
+    );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
@@ -840,17 +914,20 @@ describe('NFT: Fees', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
-    await token.approve(owner, {Ethereum: spender});
+    await token.approve(owner, {Ethereum: spender.address});
 
     {
       const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      const result = await contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender});
-      const event = result.events.Transfer;
-      expect(event).to.be.like({
+      
+      const transferTx = await contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender});
+      const transferReceipt = await transferTx.wait(confirmations);
+      const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
+
+      expect(transferEvents.Transfer).to.be.like({
         address: helper.ethAddress.fromCollectionId(collection.collectionId),
         event: 'Transfer',
-        returnValues: {
+        args: {
           from: helper.address.substrateToEth(owner.address),
           to: helper.address.substrateToEth(receiver.address),
           tokenId: token.tokenId.toString(),
@@ -862,16 +939,17 @@ describe('NFT: Fees', () => {
   });
 
   itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
-    const owner = await helper.eth.createAccountWithBalance(donor);
-    const receiver = helper.eth.createAccount();
+    throw new Error('unimplemented');
+    // const owner = await helper.eth.createAccountWithBalance(donor);
+    // const receiver = helper.eth.createAccount();
 
-    const collection = await helper.nft.mintCollection(alice, {});
-    const {tokenId} = await collection.mintToken(alice, {Ethereum: owner});
+    // const collection = await helper.nft.mintCollection(alice, {});
+    // const {tokenId} = await collection.mintToken(alice, {Ethereum: owner.address});
 
-    const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
+    // const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    const cost = await helper.eth.recordCallFee(owner, () => contract.methods.transfer(receiver, tokenId).send({from: owner}));
-    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
+    // const cost = await helper.eth.recordCallFee(owner, () => contract.transfer(receiver, tokenId).send());
+    // expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 });
 
@@ -887,124 +965,129 @@ describe('NFT: Substrate calls', () => {
   });
 
   itEth('Events emitted for mint()', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    throw new Error('unimplemented');
+    // const collection = await helper.nft.mintCollection(alice, {});
+    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
-      events.push(event);
-    });
+    // const events: any = [];
+    // contract.events.allEvents((_: any, event: any) => {
+    //   events.push(event);
+    // });
 
-    const {tokenId} = await collection.mintToken(alice);
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    const event = events[0];
+    // const {tokenId} = await collection.mintToken(alice);
+    // if(events.length == 0) await helper.wait.newBlocks(1);
+    // const event = events[0];
 
-    expect(event.event).to.be.equal('Transfer');
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.to).to.be.equal(helper.address.substrateToEth(alice.address));
-    expect(event.returnValues.tokenId).to.be.equal(tokenId.toString());
+    // expect(event.event).to.be.equal('Transfer');
+    // expect(event.address).to.be.equal(collectionAddress);
+    // expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
+    // expect(event.args.to).to.be.equal(helper.address.substrateToEth(alice.address));
+    // expect(event.args.tokenId).to.be.equal(tokenId.toString());
   });
 
   itEth('Events emitted for burn()', async ({helper}) => {
-    const collection = await helper.nft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice);
+    throw new Error('unimplemented');
+    // const collection = await helper.nft.mintCollection(alice, {});
+    // const token = await collection.mintToken(alice);
 
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
-      events.push(event);
-    });
+    // const events: any = [];
+    // contract.events.allEvents((_: any, event: any) => {
+    //   events.push(event);
+    // });
 
-    await token.burn(alice);
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    const event = events[0];
+    // await token.burn(alice);
+    // if(events.length == 0) await helper.wait.newBlocks(1);
+    // const event = events[0];
 
-    expect(event.event).to.be.equal('Transfer');
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    expect(event.returnValues.to).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.returnValues.tokenId).to.be.equal(token.tokenId.toString());
+    // expect(event.event).to.be.equal('Transfer');
+    // expect(event.address).to.be.equal(collectionAddress);
+    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
+    // expect(event.args.to).to.be.equal('0x0000000000000000000000000000000000000000');
+    // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
   });
 
   itEth('Events emitted for approve()', async ({helper}) => {
-    const receiver = helper.eth.createAccount();
+    throw new Error('unimplemented');
+    // const receiver = helper.eth.createAccount();
 
-    const collection = await helper.nft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice);
+    // const collection = await helper.nft.mintCollection(alice, {});
+    // const token = await collection.mintToken(alice);
 
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
-      events.push(event);
-    });
+    // const events: any = [];
+    // contract.events.allEvents((_: any, event: any) => {
+    //   events.push(event);
+    // });
 
-    await token.approve(alice, {Ethereum: receiver});
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    const event = events[0];
+    // await token.approve(alice, {Ethereum: receiver.address});
+    // if(events.length == 0) await helper.wait.newBlocks(1);
+    // const event = events[0];
 
-    expect(event.event).to.be.equal('Approval');
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.owner).to.be.equal(helper.address.substrateToEth(alice.address));
-    expect(event.returnValues.approved).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(token.tokenId.toString());
+    // expect(event.event).to.be.equal('Approval');
+    // expect(event.address).to.be.equal(collectionAddress);
+    // expect(event.args.owner).to.be.equal(helper.address.substrateToEth(alice.address));
+    // expect(event.args.approved).to.be.equal(receiver);
+    // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
   });
 
   itEth('Events emitted for transferFrom()', async ({helper}) => {
-    const [bob] = await helper.arrange.createAccounts([10n], donor);
-    const receiver = helper.eth.createAccount();
+    throw new Error('unimplemented');
+    // const [bob] = await helper.arrange.createAccounts([10n], donor);
+    // const receiver = helper.eth.createAccount();
 
-    const collection = await helper.nft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice);
-    await token.approve(alice, {Substrate: bob.address});
+    // const collection = await helper.nft.mintCollection(alice, {});
+    // const token = await collection.mintToken(alice);
+    // await token.approve(alice, {Substrate: bob.address});
 
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
-      events.push(event);
-    });
+    // const events: any = [];
+    // contract.events.allEvents((_: any, event: any) => {
+    //   events.push(event);
+    // });
 
-    await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver});
+    // await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address});
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    const event = events[0];
+    // if(events.length == 0) await helper.wait.newBlocks(1);
+    // const event = events[0];
 
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(`${token.tokenId}`);
+    // expect(event.address).to.be.equal(collectionAddress);
+    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
+    // expect(event.args.to).to.be.equal(receiver);
+    // expect(event.args.tokenId).to.be.equal(`${token.tokenId}`);
   });
 
   itEth('Events emitted for transfer()', async ({helper}) => {
-    const receiver = helper.eth.createAccount();
+    throw new Error('unimplemented');
+    // const receiver = helper.eth.createAccount();
 
-    const collection = await helper.nft.mintCollection(alice, {});
-    const token = await collection.mintToken(alice);
+    // const collection = await helper.nft.mintCollection(alice, {});
+    // const token = await collection.mintToken(alice);
 
-    const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
+    // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
+    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
 
-    const events: any = [];
-    contract.events.allEvents((_: any, event: any) => {
-      events.push(event);
-    });
+    // const events: any = [];
+    // contract.events.allEvents((_: any, event: any) => {
+    //   events.push(event);
+    // });
 
-    await token.transfer(alice, {Ethereum: receiver});
+    // await token.transfer(alice, {Ethereum: receiver.address});
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
-    const event = events[0];
+    // if(events.length == 0) await helper.wait.newBlocks(1);
+    // const event = events[0];
 
-    expect(event.address).to.be.equal(collectionAddress);
-    expect(event.returnValues.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    expect(event.returnValues.to).to.be.equal(receiver);
-    expect(event.returnValues.tokenId).to.be.equal(`${token.tokenId}`);
+    // expect(event.address).to.be.equal(collectionAddress);
+    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
+    // expect(event.args.to).to.be.equal(receiver);
+    // expect(event.args.tokenId).to.be.equal(`${token.tokenId}`);
   });
 });
 
@@ -1040,7 +1123,7 @@ describe('Common metadata', () => {
     );
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-    const name = await contract.methods.name().call();
+    const name = await contract.name.staticCall();
     expect(name).to.equal('oh River');
   });
 
@@ -1065,7 +1148,7 @@ describe('Common metadata', () => {
     );
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', caller);
-    const symbol = await contract.methods.symbol().call();
+    const symbol = await contract.symbol.staticCall();
     expect(symbol).to.equal('CHANGE');
   });
 });
@@ -1088,18 +1171,18 @@ describe('Negative tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = await helper.eth.createAccountWithBalance(donor);
 
-    const token = await collection.mintToken(minter, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
     const ownerCross = helper.ethCrossAccount.fromAddress(owner);
-    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+    await expect(contract.burnFromCross.send(ownerCross, token.tokenId, {from: spender})).to.be.rejected;
 
-    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
-    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+    await (await contract.setApprovalForAll.send(spender, true)).wait(confirmations);
+    await (await contract.setApprovalForAll.send(spender, false)).wait(confirmations);
 
-    await expect(contract.methods.burnFromCross(ownerCross, token.tokenId).send({from: spender})).to.be.rejected;
+    await expect(contract.burnFromCross.send(ownerCross, token.tokenId, {from: spender})).to.be.rejected;
   });
 
   itEth('[negative] Cant perform transfer without approval', async ({helper}) => {
@@ -1109,7 +1192,7 @@ describe('Negative tests', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const spender = await helper.eth.createAccountWithBalance(donor);
 
-    const token = await collection.mintToken(minter, {Ethereum: owner});
+    const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft');
@@ -1117,11 +1200,11 @@ describe('Negative tests', () => {
     const ownerCross = helper.ethCrossAccount.fromAddress(owner);
     const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
 
-    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+    await expect(contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender})).to.be.rejected;
 
-    await contract.methods.setApprovalForAll(spender, true).send({from: owner});
-    await contract.methods.setApprovalForAll(spender, false).send({from: owner});
+    await (await contract.setApprovalForAll.send(spender, true)).wait(confirmations);
+    await (await contract.setApprovalForAll.send(spender, false)).wait(confirmations);
 
-    await expect(contract.methods.transferFromCross(ownerCross, recieverCross, token.tokenId).send({from: spender})).to.be.rejected;
+    await expect(contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender})).to.be.rejected;
   });
 });

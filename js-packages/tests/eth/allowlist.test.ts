@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '@unique/test-utils/util.js';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode, confirmations} from '@unique/test-utils/eth/util.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
 describe('EVM contract allowlist', () => {
@@ -34,15 +34,15 @@ describe('EVM contract allowlist', () => {
     const helpers = helper.ethNativeContract.contractHelpers(owner);
 
     // Any user is allowed by default
-    expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
+    expect(await helpers.allowlistEnabled.staticCall(await flipper.getAddress())).to.be.false;
 
     // Enable
-    await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
-    expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.true;
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(confirmations);
+    expect(await helpers.allowlistEnabled.staticCall(await flipper.getAddress())).to.be.true;
 
     // Disable
-    await helpers.methods.toggleAllowlist(flipper.options.address, false).send({from: owner});
-    expect(await helpers.methods.allowlistEnabled(flipper.options.address).call()).to.be.false;
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), false)).wait(confirmations);
+    expect(await helpers.allowlistEnabled.staticCall(await flipper.getAddress())).to.be.false;
   });
 
   itEth('Non-allowlisted user can\'t call contract with allowlist enabled', async ({helper}) => {
@@ -52,18 +52,18 @@ describe('EVM contract allowlist', () => {
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     // User can flip with allowlist disabled
-    await flipper.methods.flip().send({from: caller});
-    expect(await flipper.methods.getValue().call()).to.be.true;
+    await (await flipper.flip.send({from: caller})).wait(confirmations);
+    expect(await flipper.getValue.staticCall()).to.be.true;
 
     // Tx will be reverted if user is not in allowlist
-    await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
-    await expect(flipper.methods.flip().send({from: caller})).to.rejected;
-    expect(await flipper.methods.getValue().call()).to.be.true;
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(confirmations);
+    await expect(await (await flipper.flip.send({from: caller})).wait(confirmations)).to.rejected;
+    expect(await flipper.getValue.staticCall()).to.be.true;
 
     // Adding caller to allowlist will make contract callable again
-    await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
-    await flipper.methods.flip().send({from: caller});
-    expect(await flipper.methods.getValue().call()).to.be.false;
+    await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(confirmations);
+    await (await flipper.flip.send({from: caller})).wait(confirmations);
+    expect(await flipper.getValue.staticCall()).to.be.false;
   });
 });
 
@@ -80,17 +80,17 @@ describe('EVM collection allowlist', () => {
   itEth('Collection allowlist can be added and removed by [eth] address', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const user = helper.eth.createAccount();
-    const crossUser = helper.ethCrossAccount.fromAddress(user);
+    const crossUser = helper.ethCrossAccount.fromAddress(user.address);
 
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
-    await collectionEvm.methods.addToCollectionAllowList(user).send({from: owner});
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.true;
+    expect(await collectionEvm.allowlistedCross.staticCall(crossUser)).to.be.false;
+    await (await collectionEvm.addToCollectionAllowList.send(user)).wait(confirmations);
+    expect(await collectionEvm.allowlistedCross.staticCall(crossUser)).to.be.true;
 
-    await collectionEvm.methods.removeFromCollectionAllowList(user).send({from: owner});
-    expect(await collectionEvm.methods.allowlistedCross(crossUser).call({from: owner})).to.be.false;
+    await (await collectionEvm.removeFromCollectionAllowList.send(user)).wait(confirmations);
+    expect(await collectionEvm.allowlistedCross.staticCall(crossUser)).to.be.false;
   });
 
 
@@ -100,7 +100,7 @@ describe('EVM collection allowlist', () => {
     {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase =>
     itEth.ifWithPallets(`Collection allowlist can be added and removed by [cross] address for ${testCase.mode}`, testCase.requiredPallets, async ({helper}) => {
-      const owner = (await helper.eth.createAccountWithBalance(donor)).toLowerCase();
+      const owner = await helper.eth.createAccountWithBalance(donor);
       const [userSub] = await helper.arrange.createAccounts([10n], donor);
       const userEth = await helper.eth.createAccountWithBalance(donor);
       const mintParams = testCase.mode === 'ft' ? [userEth, 100] : [userEth];
@@ -108,31 +108,31 @@ describe('EVM collection allowlist', () => {
       const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
       const userCrossSub = helper.ethCrossAccount.fromKeyringPair(userSub);
-      const userCrossEth = helper.ethCrossAccount.fromAddress(userEth);
-      const ownerCrossEth = helper.ethCrossAccount.fromAddress(owner);
+      const userCrossEth = helper.ethCrossAccount.fromAddress(userEth.address);
+      const ownerCrossEth = helper.ethCrossAccount.fromAddress(owner.address);
 
       // Can addToCollectionAllowListCross:
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;
-      await collectionEvm.methods.addToCollectionAllowListCross(userCrossSub).send({from: owner});
-      await collectionEvm.methods.addToCollectionAllowListCross(userCrossEth).send({from: owner});
-      await collectionEvm.methods.addToCollectionAllowListCross(ownerCrossEth).send({from: owner});
+      await (await collectionEvm.addToCollectionAllowListCross.send(userCrossSub)).wait(confirmations);
+      await (await collectionEvm.addToCollectionAllowListCross.send(userCrossEth)).wait(confirmations);
+      await (await collectionEvm.addToCollectionAllowListCross.send(ownerCrossEth)).wait(confirmations);
 
       // Accounts are in allowed list:
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.true;
-      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth})).to.be.true;
-      expect(await collectionEvm.methods.allowlistedCross(userCrossSub).call({from: owner})).to.be.true;
-      expect(await collectionEvm.methods.allowlistedCross(userCrossEth).call({from: owner})).to.be.true;
+      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.true;
+      expect(await collectionEvm.allowlistedCross.staticCall(userCrossSub)).to.be.true;
+      expect(await collectionEvm.allowlistedCross.staticCall(userCrossEth)).to.be.true;
 
-      await collectionEvm.methods.mint(...mintParams).send({from: owner}); // token #1
-      await collectionEvm.methods.mint(...mintParams).send({from: owner}); // token #2
-      await collectionEvm.methods.setCollectionAccess(SponsoringMode.Allowlisted).send({from: owner});
+      await (await collectionEvm.mint.send(...mintParams)).wait(confirmations); // token #1
+      await (await collectionEvm.mint.send(...mintParams)).wait(confirmations); // token #2
+      await (await collectionEvm.setCollectionAccess.send(SponsoringMode.Allowlisted)).wait(confirmations);
 
       // allowlisted account can transfer and transferCross from eth:
-      await collectionEvm.methods.transfer(owner, 1).send({from: userEth});
-      await collectionEvm.methods.transferCross(userCrossSub, 2).send({from: userEth});
+      await (await collectionEvm.transfer.send(owner, 1, {from: userEth})).wait(confirmations);
+      await (await collectionEvm.transferCross.send(userCrossSub, 2, {from: userEth})).wait(confirmations);
 
       if(testCase.mode === 'ft') {
-        expect(await helper.ft.getBalance(collectionId, {Ethereum: owner})).to.eq(1n);
+        expect(await helper.ft.getBalance(collectionId, {Ethereum: owner.address})).to.eq(1n);
         expect(await helper.ft.getBalance(collectionId, {Substrate: userSub.address})).to.eq(2n);
       } else {
         expect(await helper.nft.getTokenOwner(collectionId, 1)).to.deep.eq({Ethereum: owner});
@@ -141,20 +141,20 @@ describe('EVM collection allowlist', () => {
 
       // allowlisted cross substrate accounts can transfer from Substrate:
       testCase.mode === 'ft'
-        ? await helper.ft.transfer(userSub, collectionId, {Ethereum: userEth}, 2n)
-        : await helper.collection.transferToken(userSub, collectionId, 2, {Ethereum: userEth});
+        ? await helper.ft.transfer(userSub, collectionId, {Ethereum: userEth.address}, 2n)
+        : await helper.collection.transferToken(userSub, collectionId, 2, {Ethereum: userEth.address});
 
       // can removeFromCollectionAllowListCross:
-      await collectionEvm.methods.removeFromCollectionAllowListCross(userCrossSub).send({from: owner});
-      await collectionEvm.methods.removeFromCollectionAllowListCross(userCrossEth).send({from: owner});
+      await (await collectionEvm.removeFromCollectionAllowListCross.send(userCrossSub)).wait(confirmations);
+      await (await collectionEvm.removeFromCollectionAllowListCross.send(userCrossEth)).wait(confirmations);
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;
-      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth})).to.be.false;
-      expect(await collectionEvm.methods.allowlistedCross(userCrossSub).call({from: owner})).to.be.false;
-      expect(await collectionEvm.methods.allowlistedCross(userCrossEth).call({from: owner})).to.be.false;
+      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.false;
+      expect(await collectionEvm.allowlistedCross.staticCall(userCrossSub)).to.be.false;
+      expect(await collectionEvm.allowlistedCross.staticCall(userCrossEth)).to.be.false;
 
       // cannot transfer anymore
-      await collectionEvm.methods.mint(...mintParams).send({from: owner});
-      await expect(collectionEvm.methods.transfer(owner, 2).send({from: userEth})).to.be.rejectedWith(/Transaction has been reverted/);
+      await (await collectionEvm.mint.send(...mintParams)).wait(confirmations);
+      await expect(await (await collectionEvm.transfer.send(owner, 2, {from: userEth})).wait(confirmations)).to.be.rejectedWith(/Transaction has been reverted/);
     }));
 
   [
@@ -177,36 +177,36 @@ describe('EVM collection allowlist', () => {
       const userSub = donor;
       const userCrossSub = helper.ethCrossAccount.fromKeyringPair(userSub);
       const userEth = helper.eth.createAccount();
-      const userCrossEth = helper.ethCrossAccount.fromAddress(userEth);
+      const userCrossEth = helper.ethCrossAccount.fromAddress(userEth.address);
 
       const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, !testCase.cross);
 
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;
-      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth})).to.be.false;
+      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.false;
 
       // 1. notOwner cannot add to allow list:
       // 1.1 plain ethereum or cross address:
-      await expect(collectionEvm.methods[addToAllowList](testCase.cross ? userCrossEth : userEth).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+      await expect(collectionEvm[addToAllowList].staticCall(testCase.cross ? userCrossEth : userEth, {from: notOwner})).to.be.rejectedWith('NoPermission');
       // 1.2 cross-substrate address:
       if(testCase.cross)
-        await expect(collectionEvm.methods[addToAllowList](userCrossSub).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+        await expect(collectionEvm[addToAllowList].staticCall(userCrossSub, {from: notOwner})).to.be.rejectedWith('NoPermission');
 
       // 2. owner can add to allow list:
       // 2.1 plain ethereum or cross address:
-      await collectionEvm.methods[addToAllowList](testCase.cross ? userCrossEth : userEth).send({from: owner});
+      await (await collectionEvm[addToAllowList].send(testCase.cross ? userCrossEth : userEth)).wait(confirmations);
       // 2.2 cross-substrate address:
       if(testCase.cross) {
-        await collectionEvm.methods[addToAllowList](userCrossSub).send({from: owner});
+        await (await collectionEvm[addToAllowList].send(userCrossSub)).wait(confirmations);
         expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.true;
       }
-      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth})).to.be.true;
+      expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.true;
 
       // 3. notOwner cannot remove from allow list:
       // 3.1 plain ethereum or cross address:
-      await expect(collectionEvm.methods[removeFromAllowList](testCase.cross ? userCrossEth : userEth).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+      await expect(collectionEvm[removeFromAllowList].staticCall(testCase.cross ? userCrossEth : userEth, {from: notOwner})).to.be.rejectedWith('NoPermission');
       // 3.2 cross-substrate address:
       if(testCase.cross)
-        await expect(collectionEvm.methods[removeFromAllowList](userCrossSub).call({from: notOwner})).to.be.rejectedWith('NoPermission');
+        await expect(collectionEvm[removeFromAllowList].staticCall(userCrossSub, {from: notOwner})).to.be.rejectedWith('NoPermission');
     }));
 });

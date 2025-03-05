@@ -16,8 +16,10 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, usingEthPlaygrounds, confirmations} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import { HDNodeWallet } from 'ethers';
+import { Contract } from 'ethers';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;
@@ -34,32 +36,32 @@ describe('EVM payable contracts', () => {
     const proxyContract = await deployProxyContract(helper, deployer);
 
     const realContractV1 = await deployRealContractV1(helper, deployer);
-    const realContractV1proxy = new helper.web3!.eth.Contract(realContractV1.options.jsonInterface, proxyContract.options.address, {from: caller, gas: helper.eth.DEFAULT_GAS});
-    await proxyContract.methods.updateVersion(realContractV1.options.address).send();
+    const realContractV1proxy = new Contract(await proxyContract.getAddress(), realContractV1.interface, caller);
+    await (await proxyContract.updateVersion.send(await realContractV1.getAddress())).wait(confirmations);
 
-    await realContractV1proxy.methods.flip().send();
-    await realContractV1proxy.methods.flip().send();
-    await realContractV1proxy.methods.flip().send();
-    const value1 = await realContractV1proxy.methods.getValue().call();
-    const flipCount1 = await realContractV1proxy.methods.getFlipCount().call();
+    await (await realContractV1proxy.flip.send()).wait(confirmations);
+    await (await realContractV1proxy.flip.send()).wait(confirmations);
+    await (await realContractV1proxy.flip.send()).wait(confirmations);
+    const value1 = await realContractV1proxy.getValue.staticCall();
+    const flipCount1 = await realContractV1proxy.getFlipCount.staticCall();
     expect(flipCount1).to.be.equal('3');
     expect(value1).to.be.equal(true);
 
     const realContractV2 = await deployRealContractV2(helper, deployer);
-    const realContractV2proxy = new helper.web3!.eth.Contract(realContractV2.options.jsonInterface, proxyContract.options.address, {from: caller, gas: helper.eth.DEFAULT_GAS});
-    await proxyContract.methods.updateVersion(realContractV2.options.address).send();
+    const realContractV2proxy = new Contract(await proxyContract.getAddress(), realContractV2.interface, caller);
+    await (await proxyContract.updateVersion.send(await realContractV2.getAddress())).wait(confirmations);
 
-    await realContractV2proxy.methods.flip().send();
-    await realContractV2proxy.methods.flip().send();
-    await realContractV2proxy.methods.setStep(5).send();
-    await realContractV2proxy.methods.increaseFlipCount().send();
-    const value2 = await realContractV2proxy.methods.getValue().call();
-    const flipCount2 = await realContractV2proxy.methods.getFlipCount().call();
+    await (await realContractV2proxy.flip.send()).wait(confirmations);
+    await (await realContractV2proxy.flip.send()).wait(confirmations);
+    await (await realContractV2proxy.setStep.send(5)).wait(confirmations);
+    await (await realContractV2proxy.increaseFlipCount.send()).wait(confirmations);
+    const value2 = await realContractV2proxy.getValue.staticCall();
+    const flipCount2 = await realContractV2proxy.getFlipCount.staticCall();
     expect(value2).to.be.equal(true);
     expect(flipCount2).to.be.equal('6');
   });
 
-  async function deployProxyContract(helper: EthUniqueHelper, deployer: string) {
+  async function deployProxyContract(helper: EthUniqueHelper, deployer: HDNodeWallet) {
     return await helper.ethContract.deployByCode(deployer, 'ProxyContract', `
       // SPDX-License-Identifier: UNLICENSED
       pragma solidity ^0.8.6;
@@ -102,7 +104,7 @@ describe('EVM payable contracts', () => {
       }`);
   }
 
-  async function deployRealContractV1(helper: EthUniqueHelper, deployer: string) {
+  async function deployRealContractV1(helper: EthUniqueHelper, deployer: HDNodeWallet) {
     return await helper.ethContract.deployByCode(deployer, 'RealContractV1', `
       // SPDX-License-Identifier: UNLICENSED
       pragma solidity ^0.8.6;
@@ -123,7 +125,7 @@ describe('EVM payable contracts', () => {
       }`);
   }
 
-  async function deployRealContractV2(helper: EthUniqueHelper, deployer: string) {
+  async function deployRealContractV2(helper: EthUniqueHelper, deployer: HDNodeWallet) {
     return await helper.ethContract.deployByCode(deployer, 'RealContractV2', `
       // SPDX-License-Identifier: UNLICENSED
       pragma solidity ^0.8.6;

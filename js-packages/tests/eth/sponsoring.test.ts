@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, SponsoringMode, confirmations} from '@unique/test-utils/eth/util.js';
 import {usingPlaygrounds} from '@unique/test-utils/util.js';
 
 describe('EVM sponsoring', () => {
@@ -39,22 +39,23 @@ describe('EVM sponsoring', () => {
 
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
-    await helpers.methods.toggleAllowlist(flipper.options.address, true).send({from: owner});
-    await helpers.methods.toggleAllowed(flipper.options.address, caller, true).send({from: owner});
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(confirmations);
+    await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(confirmations);
 
-    await helpers.methods.setSponsor(flipper.options.address, sponsor).send({from: owner});
-    await helpers.methods.confirmSponsorship(flipper.options.address).send({from: sponsor});
+    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(confirmations);
+    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(confirmations);
 
-    expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.false;
-    await helpers.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Allowlisted).send({from: owner});
-    await helpers.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: owner});
-    expect(await helpers.methods.sponsoringEnabled(flipper.options.address).call()).to.be.true;
+    expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.false;
+    await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Allowlisted)).wait(confirmations);
+    await (await helpers.setSponsoringRateLimit.send(await flipper.getAddress(), 0)).wait(confirmations);
+    expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.true;
 
     const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
     expect(originalSponsorBalance).to.be.not.equal(0n);
 
-    await flipper.methods.flip().send({from: caller});
-    expect(await flipper.methods.getValue().call()).to.be.true;
+    await (await flipper.flip.send({from: caller})).wait(confirmations);
+    expect(await flipper.getValue.staticCall
+      ()).to.be.true;
 
     // Balance should be taken from flipper instead of caller
     expect(await helper.balance.getEthereum(caller)).to.be.equal(originalCallerBalance);
@@ -73,25 +74,25 @@ describe('EVM sponsoring', () => {
 
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
-    await helpers.methods.toggleAllowlist(collector.options.address, true).send({from: owner});
-    await helpers.methods.toggleAllowed(collector.options.address, caller, true).send({from: owner});
+    await (await helpers.toggleAllowlist.send(await collector.getAddress(), true)).wait(confirmations);
+    await (await helpers.toggleAllowed.send(await collector.getAddress(), caller, true)).wait(confirmations);
 
-    expect(await helpers.methods.sponsoringEnabled(collector.options.address).call()).to.be.false;
-    await helpers.methods.setSponsoringMode(collector.options.address, SponsoringMode.Allowlisted).send({from: owner});
-    await helpers.methods.setSponsoringRateLimit(collector.options.address, 0).send({from: owner});
-    expect(await helpers.methods.sponsoringEnabled(collector.options.address).call()).to.be.true;
+    expect(await helpers.sponsoringEnabled.staticCall(await collector.getAddress())).to.be.false;
+    await (await helpers.setSponsoringMode.send(await collector.getAddress(), SponsoringMode.Allowlisted)).wait(confirmations);
+    await (await helpers.setSponsoringRateLimit.send(await collector.getAddress(), 0)).wait(confirmations);
+    expect(await helpers.sponsoringEnabled.staticCall(await collector.getAddress())).to.be.true;
 
-    await helpers.methods.setSponsor(collector.options.address, sponsor).send({from: owner});
-    await helpers.methods.confirmSponsorship(collector.options.address).send({from: sponsor});
+    await (await helpers.setSponsor.send(await collector.getAddress(), sponsor)).wait(confirmations);
+    await (await helpers.confirmSponsorship.send(await collector.getAddress(), {from: sponsor})).wait(confirmations);
 
     const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
     expect(originalSponsorBalance).to.be.not.equal(0n);
 
-    await collector.methods.giveMoney().send({from: caller, value: '10000'});
+    await (await collector.giveMoney.send({from: caller, value: '10000'})).wait(confirmations);
 
     // Balance will be taken from both caller (value) and from collector (fee)
     expect(await helper.balance.getEthereum(caller)).to.be.equals((originalCallerBalance - 10000n));
     expect(await helper.balance.getEthereum(sponsor)).to.be.not.equals(originalSponsorBalance);
-    expect(await collector.methods.getCollected().call()).to.be.equal('10000');
+    expect(await collector.getCollected.staticCall()).to.be.equal('10000');
   });
 });

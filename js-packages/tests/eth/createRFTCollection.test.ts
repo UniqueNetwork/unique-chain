@@ -17,7 +17,7 @@
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
 
 
@@ -73,7 +73,7 @@ describe('Create RFT collection from EVM', () => {
     expect(data.raw.tokenPrefix).to.be.eq(prefix);
     expect(data.raw.mode).to.be.eq('ReFungible');
 
-    expect(await contract.methods.description().call()).to.deep.equal(description);
+    expect(await contract.description.staticCall()).to.deep.equal(description);
 
     const options = await collection.getOptions();
     expect(options.tokenPropertyPermissions).to.be.deep.equal([
@@ -96,18 +96,18 @@ describe('Create RFT collection from EVM', () => {
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sponsor', 'absolutely anything', 'ENVY');
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner, true);
-    await collection.methods.setCollectionSponsor(sponsor).send();
+    await (await collection.setCollectionSponsor.send(sponsor)).wait(confirmations);
 
     let data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+    await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
-    await sponsorCollection.methods.confirmCollectionSponsorship().send();
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
 
     data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
   });
 
   itEth('[cross] Set sponsorship', async ({helper}) => {
@@ -118,18 +118,18 @@ describe('Create RFT collection from EVM', () => {
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-    await collection.methods.setCollectionSponsorCross(sponsorCross).send();
+    await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(confirmations);
 
     let data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+    await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
-    await sponsorCollection.methods.confirmCollectionSponsorship().send();
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
 
     data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
   });
 
   itEth('Collection address exist', async ({helper}) => {
@@ -138,18 +138,18 @@ describe('Create RFT collection from EVM', () => {
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
     expect(await collectionHelpers
-      .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
+      .isCollectionExist.staticCall(collectionAddressForNonexistentCollection))
       .to.be.false;
 
     const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Exister', 'absolutely anything', 'WIWT');
     expect(await collectionHelpers
-      .methods.isCollectionExist(collectionAddress).call())
+      .isCollectionExist.staticCall(collectionAddress))
       .to.be.true;
 
     // check collectionOwner:
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
-    const collectionOwner = await collectionEvm.methods.collectionOwner().call();
-    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
+    const collectionOwner = await collectionEvm.collectionOwner.staticCall();
+    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner.address, true));
   });
 });
 
@@ -174,36 +174,36 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A';
 
-      await expect(collectionHelper.methods
-        .createRFTCollection(collectionName, description, tokenPrefix)
-        .call({value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+      await expect(
+        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})
+      ).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
     {
       const MAX_DESCRIPTION_LENGTH = 256;
       const collectionName = 'A';
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
-      await expect(collectionHelper.methods
-        .createRFTCollection(collectionName, description, tokenPrefix)
-        .call({value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+      await expect(
+        collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})
+      ).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
     {
       const MAX_TOKEN_PREFIX_LENGTH = 16;
       const collectionName = 'A';
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
-      await expect(collectionHelper.methods
-        .createRFTCollection(collectionName, description, tokenPrefix)
-        .call({value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+      await expect(
+        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})
+      ).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
 
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    await expect(collectionHelper.methods
-      .createRFTCollection('Peasantry', 'absolutely anything', 'TWIW')
-      .call({value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(
+      collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: Number(1n * nominal)})
+    ).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   // Soft-deprecated
@@ -215,19 +215,19 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
-      await expect(peasantCollection.methods
-        .setCollectionSponsor(sponsor)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(
+        peasantCollection.setCollectionSponsor.staticCall(sponsor)
+      ).to.be.rejectedWith(EXPECTED_ERROR);
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
-      await expect(sponsorCollection.methods
-        .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(
+        sponsorCollection.confirmCollectionSponsorship.staticCall()
+      ).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
-      await expect(peasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(
+        peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
+      ).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
 
@@ -240,19 +240,19 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      await expect(peasantCollection.methods
-        .setCollectionSponsorCross(sponsorCross)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(
+        peasantCollection.setCollectionSponsorCross.staticCall(sponsorCross)
+      ).to.be.rejectedWith(EXPECTED_ERROR);
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
-      await expect(sponsorCollection.methods
-        .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(
+        sponsorCollection.confirmCollectionSponsorship.staticCall()
+      ).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
-      await expect(peasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(
+        peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
+      ).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
 
@@ -261,13 +261,16 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const {collectionAddress, collectionId} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
-    await expect(collectionHelper.methods
-      .destroyCollection(collectionAddress)
-      .send({from: owner})).to.be.fulfilled;
+    await expect(
+      collectionHelper.destroyCollection.send(collectionAddress)
+    ).to.be.fulfilled;
 
-    expect(await collectionHelper.methods
-      .isCollectionExist(collectionAddress)
-      .call()).to.be.false;
-    expect(await helper.collection.getData(collectionId)).to.be.null;
+    expect(
+      collectionHelper.isCollectionExist.staticCall(collectionAddress)
+    ).to.be.false;
+
+    expect(
+      await helper.collection.getData(collectionId)
+    ).to.be.null;
   });
 });

@@ -57,9 +57,9 @@ describe('Precompiles', () => {
       `,
     );
 
-    const ecrecoverСontract = await helper.ethContract.deployByAbi(owner, ecrecoverCompiledСontract.abi, ecrecoverCompiledСontract.object);
-    expect(await ecrecoverСontract.methods.verifyValid().call({from: owner})).to.be.true;
-    expect(await ecrecoverСontract.methods.verifyInvalid().call({from: owner})).to.be.false;
+    const ecrecoverСontract = await helper.ethContract.deployByAbi(owner, ecrecoverCompiledСontract.abi, ecrecoverCompiledСontract.bytecode);
+    expect(await ecrecoverСontract.verifyValid.staticCall()).to.be.true;
+    expect(await ecrecoverСontract.verifyInvalid.staticCall()).to.be.false;
   });
 
   itEth('sr25519 is supported', async ({helper}) => {
@@ -105,8 +105,8 @@ describe('Precompiles', () => {
       `,
     );
 
-    const sr25519Сontract = await helper.ethContract.deployByAbi(owner, sr25519CompiledСontract.abi, sr25519CompiledСontract.object);
-    expect(await sr25519Сontract.methods.verifyValid().call({from: owner})).to.be.true;
-    expect(await sr25519Сontract.methods.verifyInvalid().call({from: owner})).to.be.false;
+    const sr25519Сontract = await helper.ethContract.deployByAbi(owner, sr25519CompiledСontract.abi, sr25519CompiledСontract.bytecode);
+    expect(await sr25519Сontract.verifyValid.staticCall()).to.be.true;
+    expect(await sr25519Сontract.verifyInvalid.staticCall()).to.be.false;
   });
 });

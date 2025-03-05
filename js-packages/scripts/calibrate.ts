@@ -249,7 +249,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT}));
 
     console.log(`\t[ETH NFT transfer] Original price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
@@ -269,7 +269,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const transferPrice = new Fract(await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS})));
+    const transferPrice = new Fract(await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS_LIMIT})));
 
     dataPoints.push({x: transferPrice, y: coefficient});
   }
@@ -290,7 +290,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS}));
+    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT}));
 
     console.log(`\t[ETH NFT transfer] Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }

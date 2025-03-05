@@ -19,6 +19,9 @@ chai.use(chaiAsPromised);
 chai.use(chaiLike);
 export const expect = chai.expect;
 
+// FIXME: 4? 12? 24? How to select confirmations count?
+export const confirmations = 4;
+
 export enum SponsoringMode {
   Disabled = 0,
   Allowlisted = 1,
