@@ -15,11 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds, hexlifyString} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
-import {hexlify} from 'ethers';
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
@@ -215,16 +214,16 @@ describe('Refungible: Plain calls', () => {
     ];
     expect(properties).to.be.deep.equal([
       [
-        ['key_0_0', hexlify('value_0_0')],
+        ['key_0_0', hexlifyString('value_0_0')],
       ],
       [
-        ['key_1_0', hexlify('value_1_0')],
-        ['key_1_1', hexlify('value_1_1')],
+        ['key_1_0', hexlifyString('value_1_0')],
+        ['key_1_1', hexlifyString('value_1_1')],
       ],
       [
-        ['key_2_0', hexlify('value_2_0')],
-        ['key_2_1', hexlify('value_2_1')],
-        ['key_2_2', hexlify('value_2_2')],
+        ['key_2_0', hexlifyString('value_2_0')],
+        ['key_2_1', hexlifyString('value_2_1')],
+        ['key_2_2', hexlifyString('value_2_2')],
       ],
     ]);
   });
@@ -289,9 +288,9 @@ describe('Refungible: Plain calls', () => {
       await contract.properties.staticCall(+nextTokenId, []),
     ];
     expect(properties).to.be.deep.equal([[
-      ['key_2_0', hexlify('value_2_0')],
-      ['key_2_1', hexlify('value_2_1')],
-      ['key_2_2', hexlify('value_2_2')],
+      ['key_2_0', hexlifyString('value_2_0')],
+      ['key_2_1', hexlifyString('value_2_1')],
+      ['key_2_2', hexlifyString('value_2_2')],
     ]]);
   });
 

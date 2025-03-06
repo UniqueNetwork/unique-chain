@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Contract, hexlify} from 'ethers';
-import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
+import {Contract} from 'ethers';
+import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util.js';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {Pallets} from '@unique/test-utils/util.js';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
@@ -364,7 +364,7 @@ describe('EVM token properties', () => {
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const value = await contract.property.staticCall(token.tokenId, 'testKey');
-    expect(value).to.equal(hexlify('testValue'));
+    expect(value).to.equal(hexlifyString('testValue'));
   });
 });
 
@@ -480,6 +480,7 @@ describe('EVM token properties negative', () => {
       caller = await helper.eth.createAccountWithBalance(donor);
       collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(aliceCollection.collectionId), 'nft', caller, testCase.method == 'deleteProperty');
       await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller.address});
+      
       // Caller cannot delete non-existing properties:
       await expect(collectionEvm[testCase.method].staticCall(token.tokenId, ...testCase.methodParams, {from: caller})).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams, {from: caller})).to.be.rejected;
