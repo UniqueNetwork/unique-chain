@@ -55,7 +55,7 @@ describe('Minting tokens', () => {
       const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
       expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.equal(receiver);
+      expect(event.args.to).to.equal(receiver.address);
       if(testCase.mode === 'ft')
         expect(event.args.value).to.equal('100');
 
@@ -66,7 +66,7 @@ describe('Minting tokens', () => {
         const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collection.collectionId)).to.eq(1);
-        expect(await contract.ownerOfCross.staticCall(tokenId)).to.be.like([receiver, '0']);
+        expect(await contract.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, '0']);
       }
     });
   });
@@ -91,7 +91,7 @@ describe('Minting tokens', () => {
       const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
       expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.equal(receiver);
+      expect(event.args.to).to.equal(receiver.address);
       if(testCase.mode === 'ft')
         expect(event.args.value).to.equal('100');
 
@@ -102,7 +102,7 @@ describe('Minting tokens', () => {
         const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
-        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver, '0']);
+        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, '0']);
       }
     });
   });
@@ -127,7 +127,7 @@ describe('Minting tokens', () => {
       const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
       expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.equal(receiver);
+      expect(event.args.to).to.equal(receiver.address);
       if(testCase.mode === 'ft')
         expect(event.args.value).to.equal('100');
 
@@ -138,7 +138,7 @@ describe('Minting tokens', () => {
         const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
-        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver, '0']);
+        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, '0']);
       }
     });
   });
@@ -162,14 +162,10 @@ describe('Minting tokens', () => {
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.args.tokenId).to.be.equal('1');
       expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.to).to.be.equal(receiver.address);
 
       expect(await contract.tokenURI.staticCall(event.args.tokenId)).to.be.equal('Test URI');
-      expect(await contract.ownerOfCross.staticCall(event.args.tokenId)).to.be.like([receiver, '0']);
-      // TODO: this wont work right now, need release 919000 first
-      // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
-      // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
-      // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
+      expect(await contract.ownerOfCross.staticCall(event.args.tokenId)).to.be.like([receiver.address, '0']);
     });
   });
 });
