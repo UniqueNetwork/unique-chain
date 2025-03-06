@@ -108,7 +108,6 @@ describe('Market V2 Contract', () => {
   }
 
   itEth('Put + Buy [eth]', async ({helper}) => {
-    console.log('1', new Date());
     const ONE_TOKEN = helper.balance.getOneTokenNominal();
     const PRICE = 2n * ONE_TOKEN;  // 2 UNQ
     const marketOwner = await helper.eth.createAccountWithBalance(donor, 60000n);
@@ -116,44 +115,36 @@ describe('Market V2 Contract', () => {
     const contractHelpers = helper.ethNativeContract.contractHelpers(marketOwner);
 
     // Set external sponsoring
-    await (await contractHelpers.setSponsor.send(await market.getAddress(), marketOwner, {from: marketOwner})).wait(...waitParams);
-    await (await contractHelpers.confirmSponsorship.send(await market.getAddress(), {from: marketOwner})).wait(...waitParams);
+    await (await contractHelpers.setSponsor.send(await market.getAddress(), marketOwner)).wait(...waitParams);
+    await (await contractHelpers.confirmSponsorship.send(await market.getAddress())).wait(...waitParams);
 
     // Configure sponsoring
-    await (await contractHelpers.setSponsoringMode.send(await market.getAddress(), SponsoringMode.Generous, {from: marketOwner})).wait(...waitParams);
-    await (await contractHelpers.setSponsoringRateLimit.send(await market.getAddress(), 0, {from: marketOwner})).wait(...waitParams);
+    await (await contractHelpers.setSponsoringMode.send(await market.getAddress(), SponsoringMode.Generous)).wait(...waitParams);
+    await (await contractHelpers.setSponsoringRateLimit.send(await market.getAddress(), 0)).wait(...waitParams);
 
     const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(marketOwner, 'Sponsor', 'absolutely anything', 'ROC');
     const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', marketOwner, true);
 
     // Set collection sponsoring
-    console.log('111');
-    await (await collection.setCollectionSponsor.send(marketOwner, {from: marketOwner})).wait(...waitParams);
-    console.log('222');
-    await (await collection.confirmCollectionSponsorship.send({from: marketOwner})).wait(...waitParams);
+    await (await collection.setCollectionSponsor.send(marketOwner)).wait(...waitParams);
+    await (await collection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
-    const sellerCross = helper.ethCrossAccount.createAccount();
+    const seller = helper.eth.createAccount();
+    const sellerCross = helper.ethCrossAccount.fromAddress(seller.address);
     const mintCrossTx = await collection.mintCross.send(sellerCross, []);
     const mintCrossReceipt = await mintCrossTx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(mintCrossReceipt!);
     
     const tokenId = events.Transfer.args.tokenId;
-    console.log('333', sellerCross.eth);
     await (await collection.approve.send(await market.getAddress(), tokenId, {})).wait(...waitParams);
-
-    console.log('444');
 
     // Seller has no funds at all, his transactions are sponsored
     const sellerBalance = await helper.balance.getEthereum(sellerCross.eth);
-    console.log('555');
     expect(sellerBalance).to.be.eq(0n);
 
-    const putTx = await market.put.send(collectionId, tokenId, PRICE.toString(), 1, sellerCross, {
-      from: sellerCross.eth, gasLimit: 1_000_000,
-    });
-    console.log('666');
+    const putTx = await helper.eth.changeContractCaller(market, seller)
+      .put.send(collectionId, tokenId, PRICE.toString(), 1, sellerCross, {gasLimit: 1_000_000n});
     const putReceipt = await putTx.wait(...waitParams);
-    console.log('777');
     const putEvents = helper.eth.normalizeEvents(putReceipt!);
     expect(putEvents.TokenIsUpForSale).is.not.undefined;
 
@@ -165,25 +156,22 @@ describe('Market V2 Contract', () => {
     expect(ownerCross.eth).to.be.eq(sellerCross.eth);
     expect(ownerCross.sub).to.be.eq(sellerCross.sub);
 
-    console.log('uuu');
-    const buyerCross = await helper.ethCrossAccount.createAccountWithBalance(donor, 10n);
-
-    console.log('yyy');
+    const buyer = await helper.eth.createAccountWithBalance(donor, 10n);
+    const buyerCross = helper.ethCrossAccount.fromAddress(buyer);
 
     // Buyer has only 10 UNQ
-    const buyerBalance = await helper.balance.getEthereum(buyerCross.eth);
+    const buyerBalance = await helper.balance.getEthereum(buyer.address);
     expect(buyerBalance).to.be.eq(10n * ONE_TOKEN);
 
-    const buyTx = await market.buy.send(collectionId, tokenId, 1, buyerCross, {from: buyerCross.eth, value: PRICE, gasLimit: 1_000_000n});
+    const buyTx = await helper.eth.changeContractCaller(market, buyer)
+      .buy.send(collectionId, tokenId, 1, buyerCross, {value: PRICE, gasLimit: 1_000_000n});
     
-    console.log('ggg');
     const buyReceipt = await buyTx.wait(...waitParams);
-    console.log('hhh');
     const buyEvents = helper.eth.normalizeEvents(buyReceipt!);
     expect(buyEvents.TokenIsPurchased).is.not.undefined;
 
     // Buyer pays only value, transaction use sponsoring
-    const buyerBalanceAfter = await helper.balance.getEthereum(buyerCross.eth);
+    const buyerBalanceAfter = await helper.balance.getEthereum(buyer.address);
     expect(buyerBalanceAfter).to.be.eq(10n * ONE_TOKEN - PRICE);
 
     ownerCross = await collection.ownerOfCross(tokenId);
@@ -200,19 +188,19 @@ describe('Market V2 Contract', () => {
     const contractHelpers = helper.ethNativeContract.contractHelpers(marketOwner);
 
     // Set self sponsoring from contract balance
-    await (await contractHelpers.selfSponsoredEnable.send(await market.getAddress(), {from: marketOwner})).wait(...waitParams);
+    await (await contractHelpers.selfSponsoredEnable.send(await market.getAddress())).wait(...waitParams);
     await helper.eth.transferBalanceFromSubstrate(donor, await market.getAddress(), 10n);
 
     // Configure sponsoring
-    await (await contractHelpers.setSponsoringMode.send(await market.getAddress(), SponsoringMode.Generous, {from: marketOwner})).wait(...waitParams);
-    await (await contractHelpers.setSponsoringRateLimit.send(await market.getAddress(), 0, {from: marketOwner})).wait(...waitParams);
+    await (await contractHelpers.setSponsoringMode.send(await market.getAddress(), SponsoringMode.Generous)).wait(...waitParams);
+    await (await contractHelpers.setSponsoringRateLimit.send(await market.getAddress(), 0)).wait(...waitParams);
 
     const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(marketOwner, 'Sponsor', 'absolutely anything', 'ROC');
     const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', marketOwner, true);
 
     // Set collection sponsoring
-    await (await collection.setCollectionSponsor.send(marketOwner, {from: marketOwner})).wait(...waitParams);
-    await (await collection.confirmCollectionSponsorship.send({from: marketOwner})).wait(...waitParams);
+    await (await collection.setCollectionSponsor.send(marketOwner)).wait(...waitParams);
+    await (await collection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     const seller = helper.util.fromSeed(`//Market-seller-${(new Date()).getTime()}`);
     const sellerCross = helper.ethCrossAccount.fromKeyringPair(seller);

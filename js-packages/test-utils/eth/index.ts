@@ -259,6 +259,10 @@ class EthGroup extends EthGroupBase {
     return wallet;
   }
 
+  changeContractCaller(contract: Contract, from: HDNodeWallet): Contract {
+    return new Contract(contract.target, contract.interface, from)
+  }
+
   async createAccountWithBalance(donor: IKeyringPair, amount = 600n): Promise<ethers.HDNodeWallet> {
     const account = this.createAccount();
     await this.transferBalanceFromSubstrate(donor, account.address, amount);

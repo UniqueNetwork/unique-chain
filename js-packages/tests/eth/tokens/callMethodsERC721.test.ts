@@ -101,7 +101,7 @@ describe('ERC-721 call methods', () => {
       const tokenId = mintEvents.Transfer.args.tokenId;
       
       const owner = await collection.ownerOf.staticCall(tokenId);
-      expect(owner).to.equal(caller);
+      expect(owner).to.equal(caller.address);
     });
   });
 
@@ -127,7 +127,7 @@ describe('ERC-721 call methods', () => {
       await (await tokenContract.burnFrom.send(caller, 1)).wait(...waitParams);
 
       const owner = await collection.ownerOf.staticCall(tokenId);
-      expect(owner).to.equal(receiver);
+      expect(owner).to.equal(receiver.address);
     });
   });
 
