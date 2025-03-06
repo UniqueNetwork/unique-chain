@@ -503,13 +503,12 @@ describe('EVM token properties negative', () => {
       const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
       await expect(
-        collection.setTokenPropertyPermissions.staticCall(
+        helper.eth.changeContractCaller(collection, caller).setTokenPropertyPermissions.staticCall(
           [['testKey_0', [
             [TokenPermissionField.Mutable, true],
             [TokenPermissionField.TokenOwner, true],
             [TokenPermissionField.CollectionAdmin, true]],
           ]],
-          {from: caller}
         )
       ).to.be.rejectedWith('NoPermission');
     }));
