@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Contract, hexlify} from 'ethers';
+import {Contract} from 'ethers';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
 
@@ -303,16 +303,16 @@ describe('NFT: Plain calls', () => {
 
       expect(properties).to.be.deep.equal([
         [
-          ['key_0_0', hexlify('value_0_0')],
+          ['key_0_0', hexlifyString('value_0_0')],
         ],
         [
-          ['key_1_0', hexlify('value_1_0')],
-          ['key_1_1', hexlify('value_1_1')],
+          ['key_1_0', hexlifyString('value_1_0')],
+          ['key_1_1', hexlifyString('value_1_1')],
         ],
         [
-          ['key_2_0', hexlify('value_2_0')],
-          ['key_2_1', hexlify('value_2_1')],
-          ['key_2_2', hexlify('value_2_2')],
+          ['key_2_0', hexlifyString('value_2_0')],
+          ['key_2_1', hexlifyString('value_2_1')],
+          ['key_2_2', hexlifyString('value_2_2')],
         ],
       ]);
     }

@@ -14,11 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util.js';
 import {Pallets} from '@unique/test-utils/util.js';
 import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import { hexlify } from 'ethers';
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;
@@ -132,7 +131,7 @@ describe('EVM collection properties', () => {
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const value = await contract.collectionProperty.staticCall('testKey');
-    expect(value).to.equal(hexlify('testValue'));
+    expect(value).to.equal(hexlifyString('testValue'));
   });
 });
 

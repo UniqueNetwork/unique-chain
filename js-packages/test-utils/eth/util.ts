@@ -14,6 +14,7 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
 import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames} from '@unique/test-utils/util.js';
+import {hexlify, toUtf8Bytes} from 'ethers';
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);
@@ -24,6 +25,8 @@ const confirmations = 4;
 // Confirmation blocks + 1 for safety * 6 seconds per block
 const timeout = (confirmations + 1) * 6000;
 export const waitParams = [confirmations, timeout];
+
+export const hexlifyString = (value: string): string => hexlify(toUtf8Bytes(value));
 
 export enum SponsoringMode {
   Disabled = 0,
