@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
 import { HDNodeWallet } from 'ethers';
@@ -41,7 +41,7 @@ describe('EVM payable contracts', () => {
       to: await contract.getAddress(),
       value: 10000n,
       gasLimit: helper.eth.DEFAULT_GAS_LIMIT
-    })).wait(confirmations);
+    })).wait(...waitParams);
 
     expect(await contract.getCollected.staticCall()).to.be.equal('10000');
   });
@@ -95,7 +95,7 @@ describe('EVM payable contracts', () => {
       to: await contract.getAddress(),
       value: CONTRACT_BALANCE,
       gasLimit: helper.eth.DEFAULT_GAS_LIMIT
-    })).wait(confirmations);
+    })).wait(...waitParams);
 
     const [receiver] = await helper.arrange.createAccounts([0n], donor);
 
@@ -103,7 +103,7 @@ describe('EVM payable contracts', () => {
     {
       const ethReceiver = helper.address.substrateToEth(receiver.address);
       expect(await helper.getWeb3().getBalance(ethReceiver)).to.be.equal('0');
-      await (await contract.withdraw.send(ethReceiver, {from: deployer})).wait(confirmations);
+      await (await contract.withdraw.send(ethReceiver, {from: deployer})).wait(...waitParams);
       expect(await helper.getWeb3().getBalance(ethReceiver)).to.be.equal(CONTRACT_BALANCE.toString());
     }
 
@@ -137,7 +137,7 @@ describe('EVM transaction fees', () => {
     const contract = await helper.eth.deployFlipper(deployer);
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
-    await (await contract.flip.send({from: caller})).wait(confirmations);
+    await (await contract.flip.send({from: caller})).wait(...waitParams);
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
   });
@@ -149,7 +149,7 @@ describe('EVM transaction fees', () => {
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(await contract.getAddress());
-    await (await contract.flip.send({from: caller})).wait(confirmations);
+    await (await contract.flip.send({from: caller})).wait(...waitParams);
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     const finalContractBalance = await helper.balance.getEthereum(await contract.getAddress());
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
@@ -164,13 +164,13 @@ describe('EVM transaction fees', () => {
     const contract = await deployProxyContract(helper, deployer);
 
     const createCollectionTx = await contract.createNFTCollection.send({from: caller, value: CONTRACT_BALANCE});
-    const createCollectionReceipt = await createCollectionTx.wait(confirmations);
+    const createCollectionReceipt = await createCollectionTx.wait(...waitParams);
     const createCollectionEvents = helper.eth.normalizeEvents(createCollectionReceipt!);
     const collectionAddress = createCollectionEvents.CollectionCreated.args.collection;
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(await contract.getAddress());
-    await (await contract.mintNftToken.send(collectionAddress, {from: caller})).wait(confirmations);
+    await (await contract.mintNftToken.send(collectionAddress, {from: caller})).wait(...waitParams);
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     const finalContractBalance = await helper.balance.getEthereum(await contract.getAddress());
     expect(finalCallerBalance < initialCallerBalance).to.be.true;
@@ -185,7 +185,7 @@ describe('EVM transaction fees', () => {
 
     const initialCallerBalance = await helper.balance.getEthereum(caller);
     const initialContractBalance = await helper.balance.getEthereum(await contract.getAddress());
-    await (await contract.createNFTCollection.send({from: caller, value: CONTRACT_BALANCE})).wait(confirmations);
+    await (await contract.createNFTCollection.send({from: caller, value: CONTRACT_BALANCE})).wait(...waitParams);
     const finalCallerBalance = await helper.balance.getEthereum(caller);
     const finalContractBalance = await helper.balance.getEthereum(await contract.getAddress());
     expect(finalCallerBalance < initialCallerBalance).to.be.true;

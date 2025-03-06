@@ -17,7 +17,7 @@
 import {expect} from 'chai';
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {confirmations, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
 
@@ -98,7 +98,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     {
       const approveTx = await contract.approve.send(spender, 100, {from: caller});
-      const approveReceipt = await approveTx.wait(confirmations);
+      const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(approveReceipt!);
 
       expect(events).to.be.deep.equal({
@@ -132,11 +132,11 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
 
-    await (await evmCollection.approve.send(await contract.getAddress(), 100)).wait(confirmations);
+    await (await evmCollection.approve.send(await contract.getAddress(), 100)).wait(...waitParams);
 
     {
       const transferTx = await contract.transferFrom.send(owner, receiver, 49, {from: caller});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(transferReceipt!);
       
       expect(events).to.be.deep.equal({
@@ -184,7 +184,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     {
       const transferTx = await contract.transfer.send(receiver, 50, {from: caller});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(transferReceipt!);
 
       expect(events).to.be.deep.equal({

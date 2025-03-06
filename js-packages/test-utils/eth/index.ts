@@ -32,7 +32,7 @@ import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleToke
 import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' assert {type: 'json'};
 import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 import { Contract } from 'ethers';
-import { confirmations } from './util.js';
+import { waitParams } from './util.js';
 import { eth } from '@polkadot/types/interfaces/definitions';
 
 class EthGroupBase {
@@ -113,7 +113,7 @@ class ContractGroup extends EthGroupBase {
     });
 
     const deployTx = contract.deploymentTransaction()!;
-    await deployTx.wait(confirmations);
+    await deployTx.wait(...waitParams);
 
     return new Contract(contract.target, contract.interface, contract.runner);
   }
@@ -135,7 +135,7 @@ class NativeContractGroup extends EthGroupBase {
     if(address === this.helper.ethAddress.fromCollectionId(0)) {
       abi = nativeFungibleAbi;
     } else {
-      abi ={
+      abi = {
         'nft': nonFungibleAbi,
         'rft': refungibleAbi,
         'ft': fungibleAbi,
@@ -244,7 +244,7 @@ class CreateCollectionTransaction {
       { ...options, value: value.toString() }
     );
 
-    const receipt = await response.wait(confirmations);
+    const receipt = await response.wait(...waitParams);
 
     return receipt!;
   }
@@ -317,7 +317,7 @@ class EthGroup extends EthGroupBase {
     const createCollectionResult = await this.createCollection(signer, data).send();
 
     const tx = await collectionHelper.makeCollectionERC721MetadataCompatible.send(createCollectionResult.collectionAddress, baseUri);
-    await tx.wait(confirmations);
+    await tx.wait(...waitParams);
 
     return createCollectionResult;
   }
@@ -329,7 +329,7 @@ class EthGroup extends EthGroupBase {
     const createCollectionResult = await this.createCollection(signer, collectionData).send();
 
     const tx = await collectionHelper.makeCollectionERC721MetadataCompatible.send(createCollectionResult.collectionAddress, baseUri);
-    await tx.wait(confirmations);
+    await tx.wait(...waitParams);
 
     return createCollectionResult;
   }
@@ -349,7 +349,7 @@ class EthGroup extends EthGroupBase {
     const createCollectionResult = await this.createCollection(signer, collectionData).send();
 
     const tx = await collectionHelper.makeCollectionERC721MetadataCompatible.send(createCollectionResult.collectionAddress, baseUri);
-    await tx.wait(confirmations);
+    await tx.wait(...waitParams);
     
     return createCollectionResult;
   }

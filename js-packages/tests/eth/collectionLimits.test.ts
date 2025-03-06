@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '@unique/test-utils/util.js';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CollectionLimitField, CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
 
@@ -46,15 +46,15 @@ describe('Can set collection limits', () => {
       };
 
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: limits.accountTokenOwnershipLimit}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: limits.sponsoredDataSize}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataRateLimit, value: {status: true, value: limits.sponsoredDataRateLimit}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.TokenLimit, value: {status: true, value: limits.tokenLimit}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsorTransferTimeout, value: {status: true, value: limits.sponsorTransferTimeout}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsorApproveTimeout, value: {status: true, value: limits.sponsorApproveTimeout}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.OwnerCanTransfer, value: {status: true, value: limits.ownerCanTransfer}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.OwnerCanDestroy, value: {status: true, value: limits.ownerCanDestroy}})).wait(confirmations);
-      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.TransferEnabled, value: {status: true, value: limits.transfersEnabled}})).wait(confirmations);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: limits.accountTokenOwnershipLimit}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: limits.sponsoredDataSize}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataRateLimit, value: {status: true, value: limits.sponsoredDataRateLimit}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.TokenLimit, value: {status: true, value: limits.tokenLimit}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsorTransferTimeout, value: {status: true, value: limits.sponsorTransferTimeout}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsorApproveTimeout, value: {status: true, value: limits.sponsorApproveTimeout}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.OwnerCanTransfer, value: {status: true, value: limits.ownerCanTransfer}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.OwnerCanDestroy, value: {status: true, value: limits.ownerCanDestroy}})).wait(...waitParams);
+      await (await collectionEvm.setCollectionLimit.send({field: CollectionLimitField.TransferEnabled, value: {status: true, value: limits.transfersEnabled}})).wait(...waitParams);
 
       // Check limits from sub:
       const data = (await helper.rft.getData(collectionId))!;

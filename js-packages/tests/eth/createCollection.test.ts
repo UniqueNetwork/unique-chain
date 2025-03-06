@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from '@unique/test-utils/eth/types.js';
 import {CollectionFlag} from '@unique-nft/playgrounds/types.js';
 import type {IEthCrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
@@ -86,7 +86,7 @@ describe('Create collection from EVM', () => {
       const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Exister', 'absolutely anything', 'WIWT', 'ft', DECIMALS)).send();
       const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
-      const receipt = await (await collectionHelper.destroyCollection.send(collectionAddress)).wait(confirmations);
+      const receipt = await (await collectionHelper.destroyCollection.send(collectionAddress)).wait(...waitParams);
       const events = helper.eth.rebuildEvents(receipt!);
 
       expect(events).to.be.deep.equal([
@@ -258,7 +258,7 @@ describe('Create collection from EVM', () => {
           ],
           {value: (2n * helper.balance.getOneTokenNominal())}
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
       
       expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress))
         .to.be.true;
@@ -336,7 +336,7 @@ describe('Create collection from EVM', () => {
 
       const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(confirmations);
+      await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(...waitParams);
 
       let data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -344,7 +344,7 @@ describe('Create collection from EVM', () => {
       await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
-      await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
+      await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
       data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -485,12 +485,12 @@ describe('Create collection from EVM', () => {
 
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.true;
 
-      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsor})).wait(confirmations);
+      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsor})).wait(...waitParams);
       let sponsorStruct = await collectionEvm.collectionSponsor.staticCall();
       expect(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorStruct.sub))).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.false;
 
-      await (await collectionEvm.removeCollectionSponsor.send()).wait(confirmations);
+      await (await collectionEvm.removeCollectionSponsor.send()).wait(...waitParams);
 
       sponsorStruct = await collectionEvm.collectionSponsor.staticCall();
       expect(sponsorStruct.eth).to.be.eq('0x0000000000000000000000000000000000000000');
@@ -526,7 +526,7 @@ describe('Create collection from EVM', () => {
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       // Sponsor can confirm sponsorship:
-      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsorEth})).wait(confirmations);
+      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsorEth})).wait(...waitParams);
       sponsorship = (await collectionSub.getData())!.raw.sponsorship;
       expect(sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
 
@@ -540,9 +540,9 @@ describe('Create collection from EVM', () => {
       expect(oldPermissions.mintMode).to.be.false;
       expect(oldPermissions.access).to.be.equal('Normal');
 
-      await (await collectionEvm.setCollectionAccess.send(1 /*'AllowList'*/)).wait(confirmations);
-      await (await collectionEvm.addToCollectionAllowListCross.send(user)).wait(confirmations);
-      await (await collectionEvm.setCollectionMintMode.send(true)).wait(confirmations);
+      await (await collectionEvm.setCollectionAccess.send(1 /*'AllowList'*/)).wait(...waitParams);
+      await (await collectionEvm.addToCollectionAllowListCross.send(user)).wait(...waitParams);
+      await (await collectionEvm.setCollectionMintMode.send(true)).wait(...waitParams);
 
       const newPermissions = (await collectionSub.getData())!.raw.permissions;
       expect(newPermissions.mintMode).to.be.true;
@@ -555,7 +555,7 @@ describe('Create collection from EVM', () => {
       // User can mint token without balance:
       {
         const tx = await collectionEvm.mintCross.send(user, [{key: 'key', value: Buffer.from('Value')}], {from: user.eth});
-        const receipt = await tx.wait(confirmations);
+        const receipt = await tx.wait(...waitParams);
         const event = helper.eth.normalizeEvents(receipt!);
 
         expect(event.Transfer).to.be.deep.equal({
@@ -614,7 +614,7 @@ describe('Create collection from EVM', () => {
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
-      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsor})).wait(confirmations);
+      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsor})).wait(...waitParams);
       collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
 
@@ -622,7 +622,7 @@ describe('Create collection from EVM', () => {
       const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
 
       const mintingTx = await collectionEvm.mintWithTokenURI.send(user, 'Test URI', {from: user})
-      const mintingReceipt = await mintingTx.wait(confirmations);
+      const mintingReceipt = await mintingTx.wait(...waitParams);
       const mintingEvents = helper.eth.normalizeEvents(mintingReceipt!);
 
       expect(mintingEvents.Transfer).to.be.deep.equal({
@@ -668,10 +668,10 @@ describe('Create collection from EVM', () => {
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       // Set and confirm sponsor:
-      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsorEth})).wait(confirmations);
+      await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsorEth})).wait(...waitParams);
 
       // Can reassign sponsor:
-      await (await collectionEvm.setCollectionSponsorCross.send(sponsorCrossSub)).wait(confirmations);
+      await (await collectionEvm.setCollectionSponsorCross.send(sponsorCrossSub)).wait(...waitParams);
       const collectionSponsor = (await collectionSub.getData())?.raw.sponsorship;
       expect(collectionSponsor).to.deep.eq({Unconfirmed: sponsorSub.address});
     });
@@ -705,10 +705,10 @@ describe('Create collection from EVM', () => {
         const receiver = await helper.eth.createAccountWithBalance(donor);
         const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
-        await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsor})).wait(confirmations);
+        await (await collectionEvm.confirmCollectionSponsorship.send({from: sponsor})).wait(...waitParams);
 
         const tx = await collectionEvm.mintWithTokenURI.send(user, 'Test URI', {from: user});
-        const receipt = await tx.wait(confirmations);
+        const receipt = await tx.wait(...waitParams);
         const events = helper.eth.normalizeEvents(receipt!);
 
         const tokenId = events.Transfer.args.tokenId;
@@ -719,16 +719,16 @@ describe('Create collection from EVM', () => {
 
         switch (testCase) {
           case 'transfer':
-            await (await collectionEvm.transfer.send(receiver, tokenId, {from: user})).wait(confirmations);
+            await (await collectionEvm.transfer.send(receiver, tokenId, {from: user})).wait(...waitParams);
             break;
           case 'transferCross':
-            await (await collectionEvm.transferCross.send(helper.ethCrossAccount.fromAddress(receiver), tokenId, {from: user})).wait(confirmations);
+            await (await collectionEvm.transferCross.send(helper.ethCrossAccount.fromAddress(receiver), tokenId, {from: user})).wait(...waitParams);
             break;
           case 'transferFrom':
-            await (await collectionEvm.transferFrom.send(user, receiver, tokenId, {from: user})).wait(confirmations);
+            await (await collectionEvm.transferFrom.send(user, receiver, tokenId, {from: user})).wait(...waitParams);
             break;
           case 'transferFromCross':
-            await (await collectionEvm.transferFromCross.send(helper.ethCrossAccount.fromAddress(user), helper.ethCrossAccount.fromAddress(receiver), tokenId, {from: user})).wait(confirmations);
+            await (await collectionEvm.transferFromCross.send(helper.ethCrossAccount.fromAddress(user), helper.ethCrossAccount.fromAddress(receiver), tokenId, {from: user})).wait(...waitParams);
             break;
         }
 
@@ -817,7 +817,7 @@ describe('Create collection from EVM', () => {
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
       // admin (sub and eth) can mint token:
-      await (await collectionEvm.mint.send(owner, {from: adminEth})).wait(confirmations);
+      await (await collectionEvm.mint.send(owner, {from: adminEth})).wait(...waitParams);
       await helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner.address}});
 
       expect(await helper.collection.getLastTokenId(collectionId)).to.eq(2);
@@ -873,8 +873,8 @@ describe('Create collection from EVM', () => {
         expect(adminList).to.deep.include({Ethereum: adminEth.address});
       }
 
-      await (await collectionEvm.removeCollectionAdminCross.send(adminCrossSub)).wait(confirmations);
-      await (await collectionEvm.removeCollectionAdminCross.send(adminCrossEth)).wait(confirmations);
+      await (await collectionEvm.removeCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
+      await (await collectionEvm.removeCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
       const adminList = await helper.collection.getAdmins(collectionId);
       expect(adminList.length).to.be.eq(0);
 
@@ -1079,7 +1079,7 @@ describe('Create collection from EVM', () => {
 
         const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
 
-        await (await collectionEvm.deleteCollectionProperties.send(['testKey1', 'testKey2'], {from: caller})).wait(confirmations);
+        await (await collectionEvm.deleteCollectionProperties.send(['testKey1', 'testKey2'], {from: caller})).wait(...waitParams);
 
         const raw = (await helper[testCase.mode].getData(collectionId))?.raw;
 
@@ -1305,14 +1305,14 @@ describe('Create collection from EVM', () => {
         const collection = helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
         
         const mintTx = await collection.mintCross.send(receiver, [{key: 'testKey', value: Buffer.from('testValue')}, {key: 'testKey_1', value: Buffer.from('testValue_1')}]);
-        const mintReceipt = await mintTx.wait(confirmations);
+        const mintReceipt = await mintTx.wait(...waitParams);
         const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
         const tokenId = mintEvents.Transfer.args.tokenId;
 
         expect(await collection.properties.staticCall(tokenId, ['testKey', 'testKey_1'])).to.has.length(2);
 
-        await (await collection.deleteProperties.send(tokenId, ['testKey', 'testKey_1'], {from: caller})).wait(confirmations);
+        await (await collection.deleteProperties.send(tokenId, ['testKey', 'testKey_1'], {from: caller})).wait(...waitParams);
         expect(await collection.properties.staticCall(tokenId, ['testKey', 'testKey_1'])).to.has.length(0);
       }));
   });
@@ -1335,24 +1335,24 @@ describe('Create collection from EVM', () => {
       const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       // Create a token to be nested to
-      const mintingTargetNFTTokenIdResult = await (await contract.mint.send(owner)).wait(confirmations);
+      const mintingTargetNFTTokenIdResult = await (await contract.mint.send(owner)).wait(...waitParams);
       const targetNFTTokenId = +(helper.eth.normalizeEvents(mintingTargetNFTTokenIdResult!).Transfer.args.tokenId);
       const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, targetNFTTokenId);
 
       // Create a nested token
-      const mintingFirstTokenIdResult = await (await contract.mint.send(targetNftTokenAddress)).wait(confirmations);
+      const mintingFirstTokenIdResult = await (await contract.mint.send(targetNftTokenAddress)).wait(...waitParams);
       const firstTokenId = +(helper.eth.normalizeEvents(mintingFirstTokenIdResult!).Transfer.args.tokenId);
       expect(await contract.ownerOf.staticCall(firstTokenId)).to.be.equal(targetNftTokenAddress);
 
       // Create a token to be nested and nest
-      const mintingSecondTokenIdResult = await (await contract.mint.send(owner)).wait(confirmations);
+      const mintingSecondTokenIdResult = await (await contract.mint.send(owner)).wait(...waitParams);
       const secondTokenId = helper.eth.normalizeEvents(mintingSecondTokenIdResult!).Transfer.args.tokenId;
 
-      await (await contract.transfer.send(targetNftTokenAddress, secondTokenId)).wait(confirmations);
+      await (await contract.transfer.send(targetNftTokenAddress, secondTokenId)).wait(...waitParams);
       expect(await contract.ownerOf.staticCall(secondTokenId)).to.be.equal(targetNftTokenAddress);
 
       // Unnest token back
-      await (await contract.transferFrom.send(targetNftTokenAddress, owner, secondTokenId)).wait(confirmations);
+      await (await contract.transferFrom.send(targetNftTokenAddress, owner, secondTokenId)).wait(...waitParams);
       expect(await contract.ownerOf.staticCall(secondTokenId)).to.be.equal(owner);
     });
 
@@ -1381,7 +1381,7 @@ describe('Create collection from EVM', () => {
       const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
       expect(await contract.collectionNesting.staticCall()).to.be.like([true, false, [unnestedCollectionAddress.toString()]]);
       
-      await (await contract.setCollectionNesting.send([false, false, []])).wait(confirmations);
+      await (await contract.setCollectionNesting.send([false, false, []])).wait(...waitParams);
       expect(await contract.collectionNesting.staticCall()).to.be.like([false, false, []]);
     });
 
@@ -1403,12 +1403,12 @@ describe('Create collection from EVM', () => {
       const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
       // Create a token to nest into
-      const mintingTargetTokenIdResult = await (await contract.mint.send(owner)).wait(confirmations);
+      const mintingTargetTokenIdResult = await (await contract.mint.send(owner)).wait(...waitParams);
       const targetTokenId = +(helper.eth.normalizeEvents(mintingTargetTokenIdResult!).Transfer.args.tokenId);
       const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, targetTokenId);
 
       // Create a token to nest
-      const mintingNftTokenIdResult = await (await contract.mint.send(owner)).wait(confirmations);
+      const mintingNftTokenIdResult = await (await contract.mint.send(owner)).wait(...waitParams);
       const nftTokenId = +(helper.eth.normalizeEvents(mintingNftTokenIdResult!).Transfer.args.tokenId);
 
       // Try to nest

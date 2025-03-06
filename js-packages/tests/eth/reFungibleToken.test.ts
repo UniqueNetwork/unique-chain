@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
@@ -40,7 +40,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     const mintTx = await contract.mint.send(receiver);
-    const mintReceipt = await mintTx.wait(confirmations);
+    const mintReceipt = await mintTx.wait(...waitParams);
     const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
     const event = mintEvents.Transfer;
@@ -57,7 +57,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
           tokenId,
           [{key: propertyKey, value: Buffer.from(propertyValue)}]
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
     }
 
     return {contract, nextTokenId: tokenId};
@@ -109,7 +109,7 @@ describe('Refungible: Plain calls', () => {
 
     {
       const approveTx = await contract.approve.send(spender, 100);
-      const approveReceipt = await approveTx.wait(confirmations);
+      const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(approveReceipt!);
 
       const event = events.Approval;
@@ -141,7 +141,7 @@ describe('Refungible: Plain calls', () => {
 
     {
       const approveTx = await contract.approveCross.send(spenderCrossEth, 100);
-      const approveReceipt = await approveTx.wait(confirmations);
+      const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(approveReceipt!);
 
       const event = events.Approval;
@@ -159,7 +159,7 @@ describe('Refungible: Plain calls', () => {
 
     {
       const approveTx = await contract.approveCross.send(spenderCrossSub, 100);
-      const approveReceipt = await approveTx.wait(confirmations);
+      const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(approveReceipt!);
 
       const event = events.Approval;
@@ -212,7 +212,7 @@ describe('Refungible: Plain calls', () => {
       const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
       const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-      await (await contract.approve.send(spender, 100)).wait(confirmations);
+      await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
       // 1. Can transfer from
       // 1.1 Plain ethereum or cross address:
@@ -223,7 +223,7 @@ describe('Refungible: Plain calls', () => {
           49,
           {from: spender}
         );
-        const testCaseReceipt = await testCaseTx.wait(confirmations);
+        const testCaseReceipt = await testCaseTx.wait(...waitParams);
         const testCaseEvents = helper.eth.normalizeEvents(testCaseReceipt!);
 
         // Check events:
@@ -250,7 +250,7 @@ describe('Refungible: Plain calls', () => {
       // 1.2 Cross substrate address:
       if(testCase === 'transferFromCross') {
         const transferTx = await contract.transferFromCross(ownerCross, receiverCrossSub, 51, {from: spender});
-        const transferReceipt = await transferTx.wait(confirmations);
+        const transferReceipt = await transferTx.wait(...waitParams);
         const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
         
         // Check events:
@@ -294,7 +294,7 @@ describe('Refungible: Plain calls', () => {
       // 1. Can transfer to plain ethereum or cross-ethereum account:
       {
         const testCaseTx = await await contract[testCase].send(isCross ? receiverCrossEth : receiverEth, 50);
-        const testCaseReceipt = await testCaseTx.wait(confirmations);
+        const testCaseReceipt = await testCaseTx.wait(...waitParams);
         const testCaseEvents = helper.eth.normalizeEvents(testCaseReceipt!);
 
         // Check events
@@ -314,7 +314,7 @@ describe('Refungible: Plain calls', () => {
       // 2. Can transfer to cross-substrate account:
       if(isCross) {
         const transferTx = await contract.transferCross(receiverCrossSub, 50);
-        const transferReceipt = await transferTx.wait(confirmations);
+        const transferReceipt = await transferTx.wait(...waitParams);
         const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
         // Check events:
@@ -369,8 +369,8 @@ describe('Refungible: Plain calls', () => {
       expect(await helper.rft.getTokenTop10Owners(collection.collectionId, tokenIdNonExist)).to.deep.eq([]);
 
       // 4.1 Tokens can be transferred:
-      await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth, 10, {from: owner})).wait(confirmations);
-      await (await tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 10, {from: receiverEth})).wait(confirmations);
+      await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth, 10, {from: owner})).wait(...waitParams);
+      await (await tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 10, {from: receiverEth})).wait(...waitParams);
       expect(await rftOwner.getTop10Owners()).to.deep.eq([{Ethereum: receiverEth.address.toLowerCase()}]);
       expect(await rftReceiver.getTop10Owners()).to.deep.eq([{Ethereum: owner.address.toLowerCase()}]);
     }));
@@ -384,19 +384,19 @@ describe('Refungible: Plain calls', () => {
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    await (await contract.repartition.send(200)).wait(confirmations);
+    await (await contract.repartition.send(200)).wait(...waitParams);
     expect(+await contract.balanceOf.staticCall(owner)).to.be.equal(200);
-    await (await contract.transfer.send(receiver, 110)).wait(confirmations);
+    await (await contract.transfer.send(receiver, 110)).wait(...waitParams);
     expect(+await contract.balanceOf.staticCall(owner)).to.be.equal(90);
     expect(+await contract.balanceOf.staticCall(receiver)).to.be.equal(110);
 
     await expect(contract.repartition.send(80)).to.eventually.be.rejected;
 
-    await (await contract.transfer.send(receiver, 90)).wait(confirmations);
+    await (await contract.transfer.send(receiver, 90)).wait(...waitParams);
     expect(+await contract.balanceOf.staticCall(owner)).to.be.equal(0);
     expect(+await contract.balanceOf.staticCall(receiver)).to.be.equal(200);
 
-    await (await contract.repartition.send(150, {from: receiver})).wait(confirmations);
+    await (await contract.repartition.send(150, {from: receiver})).wait(...waitParams);
     await expect(contract.transfer.send(owner, 160, {from: receiver})).to.eventually.be.rejected;
     expect(+await contract.balanceOf.staticCall(receiver)).to.be.equal(150);
   });
@@ -410,7 +410,7 @@ describe('Refungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const repartitionTx = await contract.repartition.send(200);
-    const repartitionReceipt = await repartitionTx.wait(confirmations);
+    const repartitionReceipt = await repartitionTx.wait(...waitParams);
     const repartitionEvents = helper.eth.normalizeEvents(repartitionReceipt!);
 
     const event = repartitionEvents.Transfer;
@@ -429,7 +429,7 @@ describe('Refungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const repartitionTx = await contract.repartition.send(50);
-    const repartitionReceipt = await repartitionTx.wait(confirmations);
+    const repartitionReceipt = await repartitionTx.wait(...waitParams);
     const repartitionEvents = helper.eth.normalizeEvents(repartitionReceipt!);
     const event = repartitionEvents.Transfer;
     expect(event.address).to.be.equal(tokenAddress);
@@ -446,15 +446,15 @@ describe('Refungible: Plain calls', () => {
     // const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
     // const mintTx = await contract.mint.send(caller);
-    // const mintReceipt = await mintTx.wait(confirmations);
+    // const mintReceipt = await mintTx.wait(...waitParams);
     // const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
     // const tokenId = +mintEvents.Transfer.args.tokenId;
     // const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
     // const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, caller, true);
 
-    // await (await tokenContract.repartition.send(2)).wait(confirmations);
-    // await (await tokenContract.transfer.send(receiver, 1)).wait(confirmations);
+    // await (await tokenContract.repartition.send(2)).wait(...waitParams);
+    // await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
 
     // const events: any = [];
     // contract.events.allEvents((_: any, event: any) => {
@@ -487,7 +487,7 @@ describe('Refungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     {
-      await (await contract.approveCross.send(spenderCrossEth, 100)).wait(confirmations);
+      await (await contract.approveCross.send(spenderCrossEth, 100)).wait(...waitParams);
 
       await expect(contract.burnFromCross.send(ownerCross, 50, {from: spender})).to.be.fulfilled;
       await expect(contract.burnFromCross.send(ownerCross, 100, {from: spender})).to.be.rejected;
@@ -516,20 +516,20 @@ describe('Refungible: Plain calls', () => {
     expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('200');
     expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('0');
 
-    await (await tokenContract.repartition.send(100n, {from: owner.address})).wait(confirmations);
+    await (await tokenContract.repartition.send(100n, {from: owner.address})).wait(...waitParams);
     expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('100');
     expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('0');
 
-    await (await tokenContract.transferCross.send(other, 50n, {from: owner.address})).wait(confirmations);
+    await (await tokenContract.transferCross.send(other, 50n, {from: owner.address})).wait(...waitParams);
     expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('50');
     expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('50');
 
-    await (await tokenContract.transferCross.send(other, 50n, {from: owner.address})).wait(confirmations);
+    await (await tokenContract.transferCross.send(other, 50n, {from: owner.address})).wait(...waitParams);
     expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('0');
     expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('100');
 
-    await (await tokenContract.repartition.send(1000n, {from: other.address})).wait(confirmations);
-    await (await tokenContract.transferCross.send(owner, 500n, {from: other.address})).wait(confirmations);
+    await (await tokenContract.repartition.send(1000n, {from: other.address})).wait(...waitParams);
+    await (await tokenContract.transferCross.send(owner, 500n, {from: other.address})).wait(...waitParams);
     expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('500');
     expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('500');
   });
@@ -559,7 +559,7 @@ describe('Refungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.approve.send(spender, 100)).wait(confirmations),
+      async () => await (await contract.approve.send(spender, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -573,11 +573,11 @@ describe('Refungible: Fees', () => {
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    await (await contract.approve.send(spender, 100)).wait(confirmations);
+    await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await contract.transferFrom(owner, spender, 100, {from: spender})).wait(confirmations),
+      async () => await (await contract.transferFrom(owner, spender, 100, {from: spender})).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -593,7 +593,7 @@ describe('Refungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address, 
-      async () => await (await contract.transfer.send(receiver, 100)).wait(confirmations),
+      async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -715,7 +715,7 @@ describe('ERC 1633 implementation', () => {
     const collectionContract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
     const mintTx = await collectionContract.mint.send(owner);
-    const mintReceipt = await mintTx.wait(confirmations);
+    const mintReceipt = await mintTx.wait(...waitParams);
     const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
     const tokenId = +mintEvents.Transfer.args.tokenId;

@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '@unique/test-utils/util.js';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
 describe('EVM contract allowlist', () => {
@@ -37,11 +37,11 @@ describe('EVM contract allowlist', () => {
     expect(await helpers.allowlistEnabled.staticCall(await flipper.getAddress())).to.be.false;
 
     // Enable
-    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(confirmations);
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(...waitParams);
     expect(await helpers.allowlistEnabled.staticCall(await flipper.getAddress())).to.be.true;
 
     // Disable
-    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), false)).wait(confirmations);
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), false)).wait(...waitParams);
     expect(await helpers.allowlistEnabled.staticCall(await flipper.getAddress())).to.be.false;
   });
 
@@ -52,17 +52,17 @@ describe('EVM contract allowlist', () => {
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     // User can flip with allowlist disabled
-    await (await flipper.flip.send({from: caller})).wait(confirmations);
+    await (await flipper.flip.send({from: caller})).wait(...waitParams);
     expect(await flipper.getValue.staticCall()).to.be.true;
 
     // Tx will be reverted if user is not in allowlist
-    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(confirmations);
-    await expect(await (await flipper.flip.send({from: caller})).wait(confirmations)).to.rejected;
+    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(...waitParams);
+    await expect(await (await flipper.flip.send({from: caller})).wait(...waitParams)).to.rejected;
     expect(await flipper.getValue.staticCall()).to.be.true;
 
     // Adding caller to allowlist will make contract callable again
-    await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(confirmations);
-    await (await flipper.flip.send({from: caller})).wait(confirmations);
+    await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(...waitParams);
+    await (await flipper.flip.send({from: caller})).wait(...waitParams);
     expect(await flipper.getValue.staticCall()).to.be.false;
   });
 });
@@ -86,10 +86,10 @@ describe('EVM collection allowlist', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     expect(await collectionEvm.allowlistedCross.staticCall(crossUser)).to.be.false;
-    await (await collectionEvm.addToCollectionAllowList.send(user)).wait(confirmations);
+    await (await collectionEvm.addToCollectionAllowList.send(user)).wait(...waitParams);
     expect(await collectionEvm.allowlistedCross.staticCall(crossUser)).to.be.true;
 
-    await (await collectionEvm.removeFromCollectionAllowList.send(user)).wait(confirmations);
+    await (await collectionEvm.removeFromCollectionAllowList.send(user)).wait(...waitParams);
     expect(await collectionEvm.allowlistedCross.staticCall(crossUser)).to.be.false;
   });
 
@@ -113,9 +113,9 @@ describe('EVM collection allowlist', () => {
 
       // Can addToCollectionAllowListCross:
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;
-      await (await collectionEvm.addToCollectionAllowListCross.send(userCrossSub)).wait(confirmations);
-      await (await collectionEvm.addToCollectionAllowListCross.send(userCrossEth)).wait(confirmations);
-      await (await collectionEvm.addToCollectionAllowListCross.send(ownerCrossEth)).wait(confirmations);
+      await (await collectionEvm.addToCollectionAllowListCross.send(userCrossSub)).wait(...waitParams);
+      await (await collectionEvm.addToCollectionAllowListCross.send(userCrossEth)).wait(...waitParams);
+      await (await collectionEvm.addToCollectionAllowListCross.send(ownerCrossEth)).wait(...waitParams);
 
       // Accounts are in allowed list:
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.true;
@@ -123,13 +123,13 @@ describe('EVM collection allowlist', () => {
       expect(await collectionEvm.allowlistedCross.staticCall(userCrossSub)).to.be.true;
       expect(await collectionEvm.allowlistedCross.staticCall(userCrossEth)).to.be.true;
 
-      await (await collectionEvm.mint.send(...mintParams)).wait(confirmations); // token #1
-      await (await collectionEvm.mint.send(...mintParams)).wait(confirmations); // token #2
-      await (await collectionEvm.setCollectionAccess.send(SponsoringMode.Allowlisted)).wait(confirmations);
+      await (await collectionEvm.mint.send(...mintParams)).wait(...waitParams); // token #1
+      await (await collectionEvm.mint.send(...mintParams)).wait(...waitParams); // token #2
+      await (await collectionEvm.setCollectionAccess.send(SponsoringMode.Allowlisted)).wait(...waitParams);
 
       // allowlisted account can transfer and transferCross from eth:
-      await (await collectionEvm.transfer.send(owner, 1, {from: userEth})).wait(confirmations);
-      await (await collectionEvm.transferCross.send(userCrossSub, 2, {from: userEth})).wait(confirmations);
+      await (await collectionEvm.transfer.send(owner, 1, {from: userEth})).wait(...waitParams);
+      await (await collectionEvm.transferCross.send(userCrossSub, 2, {from: userEth})).wait(...waitParams);
 
       if(testCase.mode === 'ft') {
         expect(await helper.ft.getBalance(collectionId, {Ethereum: owner.address})).to.eq(1n);
@@ -145,16 +145,16 @@ describe('EVM collection allowlist', () => {
         : await helper.collection.transferToken(userSub, collectionId, 2, {Ethereum: userEth.address});
 
       // can removeFromCollectionAllowListCross:
-      await (await collectionEvm.removeFromCollectionAllowListCross.send(userCrossSub)).wait(confirmations);
-      await (await collectionEvm.removeFromCollectionAllowListCross.send(userCrossEth)).wait(confirmations);
+      await (await collectionEvm.removeFromCollectionAllowListCross.send(userCrossSub)).wait(...waitParams);
+      await (await collectionEvm.removeFromCollectionAllowListCross.send(userCrossEth)).wait(...waitParams);
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;
       expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.false;
       expect(await collectionEvm.allowlistedCross.staticCall(userCrossSub)).to.be.false;
       expect(await collectionEvm.allowlistedCross.staticCall(userCrossEth)).to.be.false;
 
       // cannot transfer anymore
-      await (await collectionEvm.mint.send(...mintParams)).wait(confirmations);
-      await expect(await (await collectionEvm.transfer.send(owner, 2, {from: userEth})).wait(confirmations)).to.be.rejectedWith(/Transaction has been reverted/);
+      await (await collectionEvm.mint.send(...mintParams)).wait(...waitParams);
+      await expect(await (await collectionEvm.transfer.send(owner, 2, {from: userEth})).wait(...waitParams)).to.be.rejectedWith(/Transaction has been reverted/);
     }));
 
   [
@@ -194,10 +194,10 @@ describe('EVM collection allowlist', () => {
 
       // 2. owner can add to allow list:
       // 2.1 plain ethereum or cross address:
-      await (await collectionEvm[addToAllowList].send(testCase.cross ? userCrossEth : userEth)).wait(confirmations);
+      await (await collectionEvm[addToAllowList].send(testCase.cross ? userCrossEth : userEth)).wait(...waitParams);
       // 2.2 cross-substrate address:
       if(testCase.cross) {
-        await (await collectionEvm[addToAllowList].send(userCrossSub)).wait(confirmations);
+        await (await collectionEvm[addToAllowList].send(userCrossSub)).wait(...waitParams);
         expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.true;
       }
       expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.true;

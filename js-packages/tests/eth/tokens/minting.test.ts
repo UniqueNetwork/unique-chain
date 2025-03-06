@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '@unique/test-utils/util.js';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
 
@@ -48,7 +48,7 @@ describe('Minting tokens', () => {
       const contract = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
       const mintTx = await contract.mint.send(...mintingParams);
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       // Check events:
@@ -84,7 +84,7 @@ describe('Minting tokens', () => {
       const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Name', 'Desc', 'Prefix', testCase.mode)).send();
 
       const mintTx = await collection.mint.send(...mintingParams);
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       // Check events:
@@ -120,7 +120,7 @@ describe('Minting tokens', () => {
       const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Name', 'Desc', 'Prefix', testCase.mode)).send();
 
       const mintTx = await collection.mint.send(...mintingParams);
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       // Check events:
@@ -155,7 +155,7 @@ describe('Minting tokens', () => {
       const contract = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
       const mintTx = await contract.mintWithTokenURI.send(receiver, 'Test URI');
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       const event = mintEvents.Transfer;

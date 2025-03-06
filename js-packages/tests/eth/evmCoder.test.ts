@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, expect, usingEthPlaygrounds, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 
 const getContractSource = (collectionAddress: string, contractAddress: string): string => `
   // SPDX-License-Identifier: MIT
@@ -68,7 +68,7 @@ describe('Evm Coder tests', () => {
     const testContract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, await contract.getAddress()));
     {
       const testTx = await testContract.test1.send()
-      const testReceipt = await testTx.wait(confirmations);
+      const testReceipt = await testTx.wait(...waitParams);
       const testEvents = helper.eth.normalizeEvents(testReceipt!);
       expect(testEvents.Result.args).to.deep.equal({
         '0': false,
@@ -77,7 +77,7 @@ describe('Evm Coder tests', () => {
     }
     { 
       const testTx = await testContract.test2.send()
-      const testReceipt = await testTx.wait(confirmations);
+      const testReceipt = await testTx.wait(...waitParams);
       const testEvents = helper.eth.normalizeEvents(testReceipt!);
       expect(testEvents.Result.args).to.deep.equal({
         '0': false,

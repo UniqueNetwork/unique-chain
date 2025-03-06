@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {Pallets} from '@unique/test-utils/util.js';
 import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
@@ -50,7 +50,7 @@ describe('EVM collection properties', () => {
       expect(await collectionEvm.collectionProperties.staticCall([])).to.be.like([]);
       expect(await collectionEvm.collectionProperties.staticCall(['NonExistingKey'])).to.be.like([]);
 
-      await (await collectionEvm[testCase.method].send(...testCase.methodParams, {from: caller})).wait(confirmations);
+      await (await collectionEvm[testCase.method].send(...testCase.methodParams, {from: caller})).wait(...waitParams);
 
       const raw = (await collection.getData())?.raw;
       expect(raw.properties).to.deep.equal(testCase.expectedProps);
@@ -97,7 +97,7 @@ describe('EVM collection properties', () => {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = await helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'deleteCollectionProperty');
 
-      await (await contract[testCase.method].send(...testCase.methodParams, {from: caller})).wait(confirmations);
+      await (await contract[testCase.method].send(...testCase.methodParams, {from: caller})).wait(...waitParams);
 
       const raw = (await collection.getData())?.raw;
 
@@ -164,7 +164,7 @@ describe('Supports ERC721Metadata', () => {
       const bruhCross = helper.ethCrossAccount.fromAddress(bruh);
 
       const contract = await helper.ethNativeContract.collectionById(collectionId, testCase.case, caller);
-      await (await contract.addCollectionAdminCross.send(bruhCross)).wait(confirmations); // to check that admin will work too
+      await (await contract.addCollectionAdminCross.send(bruhCross)).wait(...waitParams); // to check that admin will work too
 
       const collection1 = helper.nft.getCollectionObject(collectionId);
       const data1 = await collection1.getData();
@@ -177,7 +177,7 @@ describe('Supports ERC721Metadata', () => {
           BASE_URI,
           {from: bruh}
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       expect(await contract.supportsInterface.staticCall('0x5b5e139f')).to.be.true;
 
@@ -195,30 +195,30 @@ describe('Supports ERC721Metadata', () => {
       expect(data2?.raw.properties?.find((property: IProperty) => property.key === 'baseURI' && property.value === BASE_URI)).to.be.not.null;
 
       const token1tx = await contract.mint.send(bruh);
-      const token1Receipt = await token1tx.wait(confirmations);
+      const token1Receipt = await token1tx.wait(...waitParams);
       const tokenId1 = helper.eth.normalizeEvents(token1Receipt!).Transfer.args.tokenId;
 
       expect(await contract.tokenURI.staticCall(tokenId1)).to.equal(BASE_URI);
 
-      await (await contract.setProperties(tokenId1, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}])).wait(confirmations);
+      await (await contract.setProperties(tokenId1, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}])).wait(...waitParams);
       expect(await contract.tokenURI.staticCall(tokenId1)).to.equal(BASE_URI + SUFFIX);
 
-      await (await contract.setProperties(tokenId1, [{key: 'URI', value: Buffer.from(URI)}])).wait(confirmations);
+      await (await contract.setProperties(tokenId1, [{key: 'URI', value: Buffer.from(URI)}])).wait(...waitParams);
       expect(await contract.tokenURI.staticCall(tokenId1)).to.equal(URI);
 
-      await (await contract.deleteProperties(tokenId1, ['URI'])).wait(confirmations);
+      await (await contract.deleteProperties(tokenId1, ['URI'])).wait(...waitParams);
       expect(await contract.tokenURI.staticCall(tokenId1)).to.equal(BASE_URI + SUFFIX);
 
       const token2tx = await contract.mintWithTokenURI.send(bruh, URI);
-      const token2Receipt = await token2tx.wait(confirmations);
+      const token2Receipt = await token2tx.wait(...waitParams);
       const tokenId2 = helper.eth.normalizeEvents(token2Receipt!).Transfer.args.tokenId;
 
       expect(await contract.tokenURI.staticCall(tokenId2)).to.equal(URI);
 
-      await (await contract.deleteProperties(tokenId2, ['URI'])).wait(confirmations);
+      await (await contract.deleteProperties(tokenId2, ['URI'])).wait(...waitParams);
       expect(await contract.tokenURI.staticCall(tokenId2)).to.equal(BASE_URI);
 
-      await (await contract.setProperties(tokenId2, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}])).wait(confirmations);
+      await (await contract.setProperties(tokenId2, [{key: 'URISuffix', value: Buffer.from(SUFFIX)}])).wait(...waitParams);
       expect(await contract.tokenURI.staticCall(tokenId2)).to.equal(BASE_URI + SUFFIX);
     }));
 });

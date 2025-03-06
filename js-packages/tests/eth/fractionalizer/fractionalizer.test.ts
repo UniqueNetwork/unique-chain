@@ -22,7 +22,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 
 import {Contract, HDNodeWallet} from 'ethers';
 
-import {usingEthPlaygrounds, expect, itEth, confirmations} from '@unique/test-utils/eth/util.js';
+import {usingEthPlaygrounds, expect, itEth, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {CompiledContract} from '@unique/test-utils/eth/types.js';
 import {requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util.js';
@@ -58,11 +58,11 @@ const initContract = async (helper: EthUniqueHelper, owner: HDNodeWallet): Promi
 
   const amount = 10n * helper.balance.getOneTokenNominal();
   const sendTx = await owner.sendTransaction({to: await fractionalizer.getAddress(), value: amount, gasLimit: helper.eth.DEFAULT_GAS_LIMIT});
-  await sendTx.wait(confirmations);
+  await sendTx.wait(...waitParams);
 
   const createCollectionValue = 2n * helper.balance.getOneTokenNominal();
   const createCollectionTx = await fractionalizer.createAndSetRFTCollection.send('A', 'B', 'C', {value: createCollectionValue});
-  const createCollectionReceipt = await createCollectionTx.wait(confirmations);
+  const createCollectionReceipt = await createCollectionTx.wait(...waitParams);
 
   const events = helper.eth.normalizeEvents(createCollectionReceipt!);
   const rftCollectionAddress = events.RFTCollectionSet.args._collection;
@@ -110,10 +110,10 @@ describe('Fractionalizer contract usage', () => {
     const fractionalizerAddressCross = helper.ethCrossAccount.fromAddress(await fractionalizer.getAddress());
     
     const addCollectionTx = await rftContract.addCollectionAdminCross.send(fractionalizerAddressCross, );
-    await addCollectionTx.wait(confirmations);
+    await addCollectionTx.wait(...waitParams);
 
     const setRFTCollectionTx = await fractionalizer.setRFTCollection.send(rftCollection.collectionAddress, );
-    const setRFTCollectionReceipt = await setRFTCollectionTx.wait(confirmations);
+    const setRFTCollectionReceipt = await setRFTCollectionTx.wait(...waitParams);
     
     const events = helper.eth.normalizeEvents(setRFTCollectionReceipt!);
 
@@ -132,7 +132,7 @@ describe('Fractionalizer contract usage', () => {
     await helper.balance.transferToSubstrate(donor, evmToAddress(await fractionalizer.getAddress()), 10n * helper.balance.getOneTokenNominal());
 
     const tx = await fractionalizer.createAndSetRFTCollection.send('A', 'B', 'C', {value: 2n * helper.balance.getOneTokenNominal()});
-    const receipt = await tx.wait(confirmations);
+    const receipt = await tx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(receipt!);
 
     expect(events.events).to.be.like({ RFTCollectionSet: {} });
@@ -146,7 +146,7 @@ describe('Fractionalizer contract usage', () => {
 
     for(const isAllowed of [true, false]) {
       const tx = await fractionalizer.setNftCollectionIsAllowed.send(nftCollection.collectionAddress, isAllowed);
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       expect(events).to.be.like({
@@ -167,7 +167,7 @@ describe('Fractionalizer contract usage', () => {
     const nftContract = await helper.ethNativeContract.collection(nftCollection.collectionAddress, 'nft', owner);
 
     const mintTx = await nftContract.mint.send(owner);
-    const mintReceipt = await mintTx.wait(confirmations);
+    const mintReceipt = await mintTx.wait(...waitParams);
     const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
     const nftTokenId = mintEvents.Transfer.args.tokenId;
@@ -175,12 +175,12 @@ describe('Fractionalizer contract usage', () => {
     const {contract: fractionalizer} = await initContract(helper, owner);
 
     const isAllowedTx = await fractionalizer.setNftCollectionIsAllowed.send(nftCollection.collectionAddress, true);
-    await isAllowedTx.wait(confirmations);
+    await isAllowedTx.wait(...waitParams);
 
     await nftContract.approve.send(await fractionalizer.getAddress(), nftTokenId);
     
     const sendTx = await fractionalizer.nft2rft.send(nftCollection.collectionAddress, nftTokenId, 100);
-    const sendReceipt = await sendTx.wait(confirmations);
+    const sendReceipt = await sendTx.wait(...waitParams);
     const sendEvents = helper.eth.normalizeEvents(sendReceipt!);
 
     expect(sendEvents).to.be.like({

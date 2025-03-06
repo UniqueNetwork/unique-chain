@@ -20,7 +20,10 @@ chai.use(chaiLike);
 export const expect = chai.expect;
 
 // FIXME: 4? 12? 24? How to select confirmations count?
-export const confirmations = 4;
+const confirmations = 4;
+// Confirmation blocks + 1 for safety * 6 seconds per block
+const timeout = (confirmations + 1) * 6000;
+export const waitParams = [confirmations, timeout];
 
 export enum SponsoringMode {
   Disabled = 0,

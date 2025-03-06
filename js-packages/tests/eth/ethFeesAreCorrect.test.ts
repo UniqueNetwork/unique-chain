@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://witww.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 
 describe('Eth fees are correct', () => {
   let donor: IKeyringPair;
@@ -45,7 +45,7 @@ describe('Eth fees are correct', () => {
 
     const balanceBeforeWeb3Transfer = await helper.balance.getEthereum(owner);
     await (await contract.transfer.send(receiver, tokenA, {from: owner, maxFeePerGas: await helper.eth.getGasPrice()}))
-      .wait(confirmations);
+      .wait(...waitParams);
     const balanceAfterWeb3Transfer = await helper.balance.getEthereum(owner);
     const web3Diff = balanceBeforeWeb3Transfer - balanceAfterWeb3Transfer;
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {confirmations, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CrossAccountId} from '@unique-nft/playgrounds/unique.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
@@ -56,7 +56,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     const contract = await helper.ethNativeContract.collection(address, 'ft', aliceProxy);
 
     await collection.mint(alice, 200n, {Ethereum: aliceProxy.address});
-    await (await contract.transfer.send(bobProxy, 50, {from: aliceProxy})).wait(confirmations);
+    await (await contract.transfer.send(bobProxy, 50, {from: aliceProxy})).wait(...waitParams);
     await collection.transferFrom(alice, {Ethereum: bobProxy.address}, CrossAccountId.fromKeyring(bob).toICrossAccountId(), 50n);
     await collection.transfer(bob, CrossAccountId.fromKeyring(alice).toICrossAccountId(), 50n);
   });
@@ -98,7 +98,7 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
 
     const token = await collection.mintToken(alice);
     await token.transfer(alice, {Ethereum: aliceProxy.address});
-    await (await contract.transfer.send(bobProxy, 1, {from: aliceProxy})).wait(confirmations);
+    await (await contract.transfer.send(bobProxy, 1, {from: aliceProxy})).wait(...waitParams);
     await token.transferFrom(alice, {Ethereum: bobProxy.address}, {Substrate: bob.address});
     await token.transfer(bob, {Substrate: charlie.address});
   });
