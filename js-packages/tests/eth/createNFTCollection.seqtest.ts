@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 
 
 describe('Create NFT collection from EVM', () => {
@@ -80,7 +80,7 @@ describe('Create NFT collection from EVM', () => {
       await collectionHelpers
         .createNFTCollection
         .send('A', 'A', 'A', {value: Number(2n * helper.balance.getOneTokenNominal())})
-    ).wait(confirmations);
+    ).wait(...waitParams);
 
     expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress)).to.be.true;
   });

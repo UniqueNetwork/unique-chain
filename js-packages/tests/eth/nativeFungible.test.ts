@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
 
 describe('NativeFungible: ERC20 calls', () => {
@@ -94,7 +94,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
-    await (await contract.transfer.send(receiver, 50)).wait(confirmations);
+    await (await contract.transfer.send(receiver, 50)).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
@@ -112,7 +112,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
-    await (await contract.transferFrom(owner, receiver, 50)).wait(confirmations);
+    await (await contract.transferFrom(owner, receiver, 50)).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
@@ -142,7 +142,7 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver.eth);
 
-    await (await contract.transferCross.send(receiver, 50)).wait(confirmations);
+    await (await contract.transferCross.send(receiver, 50)).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver.eth);
@@ -160,7 +160,7 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
-    await (await contract.transferFromCross.send(owner, receiver, 50, {from: owner.address})).wait(confirmations);
+    await (await contract.transferFromCross.send(owner, receiver, 50, {from: owner.address})).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);

@@ -16,7 +16,7 @@
 
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
 
 
@@ -90,7 +90,7 @@ describe('Create NFT collection from EVM', () => {
     await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor, true);
-    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -105,7 +105,7 @@ describe('Create NFT collection from EVM', () => {
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-    await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(confirmations);
+    await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(...waitParams);
 
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -113,7 +113,7 @@ describe('Create NFT collection from EVM', () => {
     await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = await helper.ethNativeContract.collection(collectionAddress, 'nft', sponsor);
-    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -250,7 +250,7 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
     const destroyTx = await collectionHelper.destroyCollection.send(collectionAddress);
-    const destroyReceipt = await destroyTx.wait(confirmations);
+    const destroyReceipt = await destroyTx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(destroyReceipt!);
 
     expect(events).to.be.deep.equal([

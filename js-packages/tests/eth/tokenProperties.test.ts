@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract, hexlify} from 'ethers';
-import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {Pallets} from '@unique/test-utils/util.js';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
@@ -44,7 +44,7 @@ describe('EVM token properties', () => {
       for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
         const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
         const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
-        await (await collection.addCollectionAdminCross.send(caller)).wait(confirmations);
+        await (await collection.addCollectionAdminCross.send(caller)).wait(...waitParams);
 
         await (
           await collection.setTokenPropertyPermissions.send(
@@ -58,7 +58,7 @@ describe('EVM token properties', () => {
             ]],
             {from: caller.eth}
           )
-        ).wait(confirmations);
+        ).wait(...waitParams);
 
         expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
           key: 'testKey',
@@ -103,7 +103,7 @@ describe('EVM token properties', () => {
             [TokenPermissionField.CollectionAdmin, false]],
           ],
         ])
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([
         {
@@ -149,7 +149,7 @@ describe('EVM token properties', () => {
 
       const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
-      await (await collection.addCollectionAdminCross.send(caller)).wait(confirmations);
+      await (await collection.addCollectionAdminCross.send(caller)).wait(...waitParams);
 
       await (
         await collection.setTokenPropertyPermissions.send(
@@ -172,7 +172,7 @@ describe('EVM token properties', () => {
           ],
           {from: caller.eth}
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([
         {
@@ -248,7 +248,7 @@ describe('EVM token properties', () => {
           ...testCase.methodParams,
           {from: caller}
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       const properties = await token.getProperties();
       expect(properties).to.deep.equal(testCase.expectedProps);
@@ -290,7 +290,7 @@ describe('EVM token properties', () => {
           properties,
           {from: caller}
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       const values = await token.getProperties(properties.map(p => p.key));
       expect(values).to.be.deep.equal(properties.map(p => ({key: p.key, value: p.value.toString()})));
@@ -340,7 +340,7 @@ describe('EVM token properties', () => {
           ['testKey', 'testKey_1'],
           {from: caller}
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       const result = await token.getProperties(['testKey', 'testKey_1']);
       expect(result.length).to.equal(0);
@@ -552,7 +552,7 @@ describe('EVM token properties negative', () => {
             [TokenPermissionField.CollectionAdmin, true]],
           ],
         ])
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       // 2. Owner can set stricter property-permissions:
       for(const values of [[true, true, false], [true, false, false], [false, false, false]]) {
@@ -564,7 +564,7 @@ describe('EVM token properties negative', () => {
               [TokenPermissionField.CollectionAdmin, values[2]]],
             ],
           ])
-        ).wait(confirmations);
+        ).wait(...waitParams);
       }
 
       expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
@@ -592,7 +592,7 @@ describe('EVM token properties negative', () => {
             [TokenPermissionField.CollectionAdmin, false]],
           ],
         ])
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       // 2. Owner cannot set less strict property-permissions:
       for(const values of [[true, false, false], [false, true, false], [false, false, true]]) {

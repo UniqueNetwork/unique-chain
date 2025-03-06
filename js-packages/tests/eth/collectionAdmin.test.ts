@@ -17,7 +17,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
 import {Pallets} from '@unique/test-utils/util.js';
 import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.js';
-import {usingEthPlaygrounds, itEth, confirmations} from '@unique/test-utils/eth/util.js';
+import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
@@ -65,10 +65,10 @@ describe('Add collection admins', () => {
       expect(await collectionEvm.isOwnerOrAdminCross.staticCall(helper.ethCrossAccount.fromAddress(adminDeprecated))).to.be.false;
 
       // Soft-deprecated: can addCollectionAdmin
-      await (await collectionEvm.addCollectionAdmin.send(adminDeprecated)).wait(confirmations);
+      await (await collectionEvm.addCollectionAdmin.send(adminDeprecated)).wait(...waitParams);
       // Can addCollectionAdminCross for substrate and ethereum address
-      await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(confirmations);
-      await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(confirmations);
+      await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
+      await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
 
       // 1. Expect api.rpc.unique.adminlist returns admins:
       const adminListRpc = await helper.collection.getAdmins(collectionId);
@@ -102,9 +102,9 @@ describe('Add collection admins', () => {
     await expect(helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner.address}})).to.be.rejectedWith(/common.PublicMintingNotAllowed/);
 
     // admin (sub and eth) can mint token:
-    await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(confirmations);
-    await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(confirmations);
-    await (await collectionEvm.mint.send(owner, {from: adminEth})).wait(confirmations);
+    await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
+    await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
+    await (await collectionEvm.mint.send(owner, {from: adminEth})).wait(...waitParams);
     await helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner.address}});
 
     expect(await helper.collection.getLastTokenId(collectionId)).to.eq(2);
@@ -138,9 +138,9 @@ describe('Add collection admins', () => {
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(admin1Cross)).to.be.false;
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(admin2Cross)).to.be.false;
 
-    await (await collectionEvm.addCollectionAdmin.send(adminDeprecated)).wait(confirmations);
-    await (await collectionEvm.addCollectionAdminCross.send(admin1Cross)).wait(confirmations);
-    await (await collectionEvm.addCollectionAdminCross.send(admin2Cross)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdmin.send(adminDeprecated)).wait(...waitParams);
+    await (await collectionEvm.addCollectionAdminCross.send(admin1Cross)).wait(...waitParams);
+    await (await collectionEvm.addCollectionAdminCross.send(admin2Cross)).wait(...waitParams);
 
     // Soft-deprecated: isOwnerOrAdmin returns true
     expect(await collectionEvm.isOwnerOrAdmin.staticCall(adminDeprecated)).to.be.true;
@@ -156,7 +156,7 @@ describe('Add collection admins', () => {
 
     const admin = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
-    await (await collectionEvm.addCollectionAdmin.send(admin)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdmin.send(admin)).wait(...waitParams);
 
     const user = helper.eth.createAccount();
     await expect(collectionEvm.addCollectionAdmin.staticCall(user, {from: admin}))
@@ -191,7 +191,7 @@ describe('Add collection admins', () => {
     const [admin, notAdmin] = await helper.arrange.createAccounts([10n, 10n], donor);
     const adminCross = helper.ethCrossAccount.fromKeyringPair(admin);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await (await collectionEvm.addCollectionAdminCross.send(adminCross)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdminCross.send(adminCross)).wait(...waitParams);
 
     const notAdminCross = helper.ethCrossAccount.fromKeyringPair(notAdmin);
     await expect(collectionEvm.addCollectionAdminCross.staticCall(notAdminCross, {from: adminCross.eth}))
@@ -237,7 +237,7 @@ describe('Remove collection admins', () => {
 
     const newAdmin = helper.eth.createAccount();
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
-    await (await collectionEvm.addCollectionAdmin.send(newAdmin)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdmin.send(newAdmin)).wait(...waitParams);
 
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -246,7 +246,7 @@ describe('Remove collection admins', () => {
         .to.be.eq(newAdmin.address.toLocaleLowerCase());
     }
 
-    await (await collectionEvm.removeCollectionAdmin.send(newAdmin)).wait(confirmations);
+    await (await collectionEvm.removeCollectionAdmin.send(newAdmin)).wait(...waitParams);
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(0);
   });
@@ -261,8 +261,8 @@ describe('Remove collection admins', () => {
     const adminCrossEth = helper.ethCrossAccount.fromAddress(adminEth);
 
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(confirmations);
-    await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
+    await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
 
     {
       const adminList = await helper.collection.getAdmins(collectionId);
@@ -270,8 +270,8 @@ describe('Remove collection admins', () => {
       expect(adminList).to.deep.include({Ethereum: adminEth.address});
     }
 
-    await (await collectionEvm.removeCollectionAdminCross.send(adminCrossSub)).wait(confirmations);
-    await (await collectionEvm.removeCollectionAdminCross.send(adminCrossEth)).wait(confirmations);
+    await (await collectionEvm.removeCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
+    await (await collectionEvm.removeCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
     const adminList = await helper.collection.getAdmins(collectionId);
     expect(adminList.length).to.be.eq(0);
 
@@ -288,10 +288,10 @@ describe('Remove collection admins', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     const admin0 = await helper.eth.createAccountWithBalance(donor);
-    await (await collectionEvm.addCollectionAdmin.send(admin0)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdmin.send(admin0)).wait(...waitParams);
 
     const admin1 = await helper.eth.createAccountWithBalance(donor);
-    await (await collectionEvm.addCollectionAdmin.send(admin1)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdmin.send(admin1)).wait(...waitParams);
 
     await expect(collectionEvm.removeCollectionAdmin.staticCall(admin1, {from: admin0}))
       .to.be.rejectedWith('NoPermission');
@@ -312,7 +312,7 @@ describe('Remove collection admins', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     const admin = await helper.eth.createAccountWithBalance(donor);
-    await (await collectionEvm.addCollectionAdmin.send(admin)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdmin.send(admin)).wait(...waitParams);
     
     const notAdmin = helper.eth.createAccount();
 
@@ -333,11 +333,11 @@ describe('Remove collection admins', () => {
     const [admin1] = await helper.arrange.createAccounts([10n], donor);
     const admin1Cross = helper.ethCrossAccount.fromKeyringPair(admin1);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    await (await collectionEvm.addCollectionAdminCross.send(admin1Cross)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdminCross.send(admin1Cross)).wait(...waitParams);
 
     const [admin2] = await helper.arrange.createAccounts([10n], donor);
     const admin2Cross = helper.ethCrossAccount.fromKeyringPair(admin2);
-    await (await collectionEvm.addCollectionAdminCross.send(admin2Cross)).wait(confirmations);
+    await (await collectionEvm.addCollectionAdminCross.send(admin2Cross)).wait(...waitParams);
 
     await expect(collectionEvm.removeCollectionAdminCross.staticCall(admin1Cross, {from: admin2Cross.eth}))
       .to.be.rejectedWith('NoPermission');
@@ -385,7 +385,7 @@ describe('Change owner tests', () => {
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
-    await (await collectionEvm.changeCollectionOwner.send(newOwner)).wait(confirmations);
+    await (await collectionEvm.changeCollectionOwner.send(newOwner)).wait(...waitParams);
 
     expect(await collectionEvm.isOwnerOrAdmin.staticCall(owner)).to.be.false;
     expect(await collectionEvm.isOwnerOrAdmin.staticCall(newOwner)).to.be.true;
@@ -399,7 +399,7 @@ describe('Change owner tests', () => {
     const cost = await recordEthFee(
       helper,
       owner.address,
-      async () => await (await collectionEvm.changeCollectionOwner.send(newOwner)).wait(confirmations)
+      async () => await (await collectionEvm.changeCollectionOwner.send(newOwner)).wait(...waitParams)
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);
@@ -438,13 +438,13 @@ describe('Change substrate owner tests', () => {
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossSub)).to.be.false;
 
     // Can set ethereum owner:
-    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossEth, {from: owner})).wait(confirmations);
+    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossEth, {from: owner})).wait(...waitParams);
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossEth)).to.be.true;
     expect(await helper.collection.getData(collectionId))
       .to.have.property('normalizedOwner').that.is.eq(helper.address.ethToSubstrate(ownerEth));
 
     // Can set Substrate owner:
-    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossSub, {from: ownerEth})).wait(confirmations);
+    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossSub, {from: ownerEth})).wait(...waitParams);
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossSub)).to.be.true;
     expect(await helper.collection.getData(collectionId))
       .to.have.property('normalizedOwner').that.is.eq(helper.address.normalizeSubstrate(ownerSub.address));
@@ -459,7 +459,7 @@ describe('Change substrate owner tests', () => {
     const cost = await recordEthFee(
       helper,
       owner.address,
-      async () => await (await collectionEvm.setOwnerSubstrate.send(newOwner.addressRaw)).wait(confirmations),
+      async () => await (await collectionEvm.setOwnerSubstrate.send(newOwner.addressRaw)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);

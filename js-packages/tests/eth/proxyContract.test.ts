@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import { HDNodeWallet } from 'ethers';
 import { Contract } from 'ethers';
@@ -37,11 +37,11 @@ describe('EVM payable contracts', () => {
 
     const realContractV1 = await deployRealContractV1(helper, deployer);
     const realContractV1proxy = new Contract(await proxyContract.getAddress(), realContractV1.interface, caller);
-    await (await proxyContract.updateVersion.send(await realContractV1.getAddress())).wait(confirmations);
+    await (await proxyContract.updateVersion.send(await realContractV1.getAddress())).wait(...waitParams);
 
-    await (await realContractV1proxy.flip.send()).wait(confirmations);
-    await (await realContractV1proxy.flip.send()).wait(confirmations);
-    await (await realContractV1proxy.flip.send()).wait(confirmations);
+    await (await realContractV1proxy.flip.send()).wait(...waitParams);
+    await (await realContractV1proxy.flip.send()).wait(...waitParams);
+    await (await realContractV1proxy.flip.send()).wait(...waitParams);
     const value1 = await realContractV1proxy.getValue.staticCall();
     const flipCount1 = await realContractV1proxy.getFlipCount.staticCall();
     expect(flipCount1).to.be.equal('3');
@@ -49,12 +49,12 @@ describe('EVM payable contracts', () => {
 
     const realContractV2 = await deployRealContractV2(helper, deployer);
     const realContractV2proxy = new Contract(await proxyContract.getAddress(), realContractV2.interface, caller);
-    await (await proxyContract.updateVersion.send(await realContractV2.getAddress())).wait(confirmations);
+    await (await proxyContract.updateVersion.send(await realContractV2.getAddress())).wait(...waitParams);
 
-    await (await realContractV2proxy.flip.send()).wait(confirmations);
-    await (await realContractV2proxy.flip.send()).wait(confirmations);
-    await (await realContractV2proxy.setStep.send(5)).wait(confirmations);
-    await (await realContractV2proxy.increaseFlipCount.send()).wait(confirmations);
+    await (await realContractV2proxy.flip.send()).wait(...waitParams);
+    await (await realContractV2proxy.flip.send()).wait(...waitParams);
+    await (await realContractV2proxy.setStep.send(5)).wait(...waitParams);
+    await (await realContractV2proxy.increaseFlipCount.send()).wait(...waitParams);
     const value2 = await realContractV2proxy.getValue.staticCall();
     const flipCount2 = await realContractV2proxy.getFlipCount.staticCall();
     expect(value2).to.be.equal(true);

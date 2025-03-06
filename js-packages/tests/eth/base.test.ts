@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import { HDNodeWallet } from 'ethers';
 
@@ -35,7 +35,7 @@ describe('Contract calls', () => {
 
     const cost = await helper.eth.calculateFee(
       {Ethereum: deployer.address},
-      async () => await (await flipper.flip.send({from: deployer})).wait(confirmations),
+      async () => await (await flipper.flip.send({from: deployer})).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
   });
@@ -50,7 +50,7 @@ describe('Contract calls', () => {
         to: userB,
         value: '1000000',
         gasLimit: helper.eth.DEFAULT_GAS_LIMIT,
-      })).wait(confirmations)
+      })).wait(...waitParams)
     );
     const balanceB = await helper.balance.getEthereum(userB);
     expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
@@ -69,7 +69,7 @@ describe('Contract calls', () => {
 
     const cost = await helper.eth.calculateFee(
       {Ethereum: caller.address},
-      async () => await (await contract.transfer.send(receiver, tokenId)).wait(confirmations)
+      async () => await (await contract.transfer.send(receiver, tokenId)).wait(...waitParams)
     );
 
     const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());

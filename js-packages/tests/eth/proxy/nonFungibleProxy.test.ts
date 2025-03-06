@@ -16,7 +16,7 @@
 
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
 
@@ -114,13 +114,13 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const collectionEvmOwned = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller, true);
     const contract = await proxyWrap(helper, collectionEvm, donor);
-    await (await collectionEvmOwned.addCollectionAdmin.send(await contract.getAddress())).wait(confirmations);
+    await (await collectionEvmOwned.addCollectionAdmin.send(await contract.getAddress())).wait(...waitParams);
 
     {
       const nextTokenId = await contract.nextTokenId.staticCall();
 
       const mintTx = await contract.mintWithTokenURI.send(receiver, nextTokenId, 'Test URI', {from: caller});
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
       
       const tokenId = mintEvents.Transfer.args.tokenId;
@@ -153,13 +153,13 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     const contract = await proxyWrap(helper, collectionEvm, donor);
     const contractAddressCross = helper.ethCrossAccount.fromAddress(await contract.getAddress());
-    await (await collectionEvmOwned.addCollectionAdminCross.send(contractAddressCross)).wait(confirmations);
+    await (await collectionEvmOwned.addCollectionAdminCross.send(contractAddressCross)).wait(...waitParams);
 
     {
       const nextTokenId = await contract.nextTokenId.staticCall();
 
       const mintTx = await contract.mintWithTokenURI.send(receiver, nextTokenId, 'Test URI', {from: caller});
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
       
       const tokenId = mintEvents.Transfer.args.tokenId;
@@ -207,7 +207,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
         ],
         {from: caller}
       );
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const events = helper.eth.rebuildEvents(mintReceipt!);
 
       expect(events).to.be.deep.equal([
@@ -258,7 +258,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
     {
       const burnTx = await contract.burn.send(tokenId, {from: caller});
-      const burnReceipt = await burnTx.wait(confirmations);
+      const burnReceipt = await burnTx.wait(...waitParams);
       const events = helper.eth.rebuildEvents(burnReceipt!);
 
       expect(events).to.be.deep.equal([
@@ -287,7 +287,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
     {
       const approveTx = await contract.approve(spender, tokenId, {from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT});
-      const approveReceipt = await approveTx.wait(confirmations);
+      const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.rebuildEvents(approveReceipt!);
 
       expect(events).to.be.deep.equal([
@@ -316,11 +316,11 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const contract = await proxyWrap(helper, evmCollection, donor);
     const {tokenId} = await collection.mintToken(alice, {Ethereum: owner.address});
 
-    await (await evmCollection.approve.send(await contract.getAddress(), tokenId)).wait(confirmations);
+    await (await evmCollection.approve.send(await contract.getAddress(), tokenId)).wait(...waitParams);
 
     {
       const transferTx = await contract.transferFrom.send(owner, receiver, tokenId, {from: caller});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const events = helper.eth.rebuildEvents(transferReceipt!);
 
       expect(events).to.be.deep.equal([
@@ -359,7 +359,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
     {
       const transferTx = await contract.transfer.send(receiver, tokenId, {from: caller});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const events = helper.eth.rebuildEvents(transferReceipt!);
       
       expect(events).to.be.deep.equal([

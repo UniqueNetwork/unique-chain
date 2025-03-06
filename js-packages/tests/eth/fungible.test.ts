@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('Fungible: Plain calls', () => {
@@ -49,7 +49,7 @@ describe('Fungible: Plain calls', () => {
 
       // 2. Mint tokens:
       const mintTx = await collectionEvm.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, 100);
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       const event = mintEvents.Transfer;
@@ -80,7 +80,7 @@ describe('Fungible: Plain calls', () => {
     const mintTx = await contract.mintBulk.send(Array.from({length: bulkSize}, (_, i) => (
       [receivers[i], (i + 1) * 10]
     )));
-    const mintReceipt = await mintTx.wait(confirmations);
+    const mintReceipt = await mintTx.wait(...waitParams);
     const mintEvents = helper.eth.rebuildEvents(mintReceipt!)
       .filter((event) => event.event === 'Transfer')
       .sort((a, b) => +a.args.value - +b.args.value);
@@ -103,10 +103,10 @@ describe('Fungible: Plain calls', () => {
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
-    await (await contract.mint.send(receiver, 100)).wait(confirmations);
+    await (await contract.mint.send(receiver, 100)).wait(...waitParams);
 
     const burnTx = await contract.burnFrom.send(receiver, 49, {from: receiver});
-    const burnReceipt = await burnTx.wait(confirmations);
+    const burnReceipt = await burnTx.wait(...waitParams);
     const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
 
     const event = burnEvents.Transfer;
@@ -130,7 +130,7 @@ describe('Fungible: Plain calls', () => {
 
     {
       const tx = await contract.approve.send(spender, 100);
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       const event = events.Approval;
@@ -168,7 +168,7 @@ describe('Fungible: Plain calls', () => {
 
     {
       const tx = await contract.approveCross.send(spenderCrossEth, 100);
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       const event = events.Approval;
@@ -185,7 +185,7 @@ describe('Fungible: Plain calls', () => {
 
     {
       const tx = await contract.approveCross.send(spenderCrossSub, 100);
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       const event = events.Approval;
@@ -237,7 +237,7 @@ describe('Fungible: Plain calls', () => {
     const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
 
     const tx = await contract.burnFromCross.send(ownerCross, 49, {from: sender});
-    const receipt = await tx.wait(confirmations);
+    const receipt = await tx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(receipt!);
 
     expect(events).to.be.equal({
@@ -275,11 +275,11 @@ describe('Fungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await (await contract.approve.send(spender, 100)).wait(confirmations);
+    await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
     {
       const tx = await contract.transferFrom.send(owner, receiver, 49, {from: spender});
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       let event = events.Transfer;
@@ -320,7 +320,7 @@ describe('Fungible: Plain calls', () => {
     {
       // Can transferCross to ethereum address:
       const tx = await collectionEvm.transferCross.send(receiverCrossEth, 50, {from: sender});
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
       
       // Check events:
@@ -342,7 +342,7 @@ describe('Fungible: Plain calls', () => {
     {
       // Can transferCross to substrate address:
       const tx = await collectionEvm.transferCross.send(receiverCrossSub, 50, {from: sender});
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
       
       // Check events:
@@ -379,7 +379,7 @@ describe('Fungible: Plain calls', () => {
     await expect(collectionEvm[testCase].send(receiver, BALANCE_TO_TRANSFER, {from: sender})).to.be.rejected;
     
     // 2. Zero transfer allowed (EIP-20):
-    await (await collectionEvm[testCase].send(receiver, 0n, {from: sender})).wait(confirmations);
+    await (await collectionEvm[testCase].send(receiver, 0n, {from: sender})).wait(...waitParams);
   }));
 
 
@@ -394,7 +394,7 @@ describe('Fungible: Plain calls', () => {
 
     {
       const tx = await contract.transfer.send(receiver, 50);
-      const receipt = await tx.wait(confirmations);
+      const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       const event = events.Transfer;
@@ -435,7 +435,7 @@ describe('Fungible: Plain calls', () => {
     const toBalanceBefore = await collection.getBalance({Ethereum: receiver.address});
 
     const tx = await contract.transferFromCross.send(from, to, 51, {from: sender});
-    const receipt = await tx.wait(confirmations);
+    const receipt = await tx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(receipt!);
 
     expect(events).to.be.like({
@@ -514,7 +514,7 @@ describe('Fungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.approve.send(spender, 100)).wait(confirmations),
+      async () => await (await contract.approve.send(spender, 100)).wait(...waitParams),
     );
     expect(cost < (BigInt(0.2) * helper.balance.getOneTokenNominal()));
   });
@@ -528,11 +528,11 @@ describe('Fungible: Fees', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await (await contract.approve.send(spender, 100)).wait(confirmations);
+    await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await contract.transferFrom.send(owner, spender, 100, {from: spender})).wait(confirmations),
+      async () => await (await contract.transferFrom.send(owner, spender, 100, {from: spender})).wait(...waitParams),
     );
     expect(cost < (BigInt(0.2) * helper.balance.getOneTokenNominal()));
   });
@@ -548,7 +548,7 @@ describe('Fungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.transfer.send(receiver, 100)).wait(confirmations)
+      async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams)
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -670,7 +670,7 @@ describe('Fungible: Substrate calls', () => {
     const to = helper.ethCrossAccount.fromAddress(receiver);
 
     const transferTx = await contract.transferFromCross.send(from, to, 51, {from: sender});
-    const transferReceipt = await transferTx.wait(confirmations);
+    const transferReceipt = await transferTx.wait(...waitParams);
     const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
     expect(transferEvents).to.be.like({

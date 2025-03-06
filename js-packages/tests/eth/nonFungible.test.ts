@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds, expect, confirmations} from '@unique/test-utils/eth/util.js';
+import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract, hexlify} from 'ethers';
@@ -38,7 +38,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const mintTx = await contract.mint.send(receiver);
-    const mintReceipt = await mintTx.wait(confirmations);
+    const mintReceipt = await mintTx.wait(...waitParams);
     const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
     const tokenId = mintEvents.Transfer.args.tokenId;
@@ -46,7 +46,7 @@ describe('Check ERC721 token URI for NFT', () => {
 
     if(propertyKey && propertyValue) {
       // Set URL or suffix
-      await (await contract.setProperties.send(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}])).wait(confirmations);
+      await (await contract.setProperties.send(tokenId, [{key: propertyKey, value: Buffer.from(propertyValue)}])).wait(...waitParams);
     }
 
     const event = mintEvents.Transfer;
@@ -128,7 +128,7 @@ describe('NFT: Plain calls', () => {
       let expectedTokenId = await contract.nextTokenId.staticCall();
       
       const mintTx = await contract.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, []);
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       let tokenId = mintEvents.Transfer.args.tokenId;
@@ -142,7 +142,7 @@ describe('NFT: Plain calls', () => {
 
       expectedTokenId = await contract.nextTokenId.staticCall();
       const mintTx2 = await contract.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, properties);
-      const mintReceipt2 = await mintTx2.wait(confirmations);
+      const mintReceipt2 = await mintTx2.wait(...waitParams);
       const mintEvents2 = helper.eth.normalizeEvents(mintReceipt2!);
       
       event = mintEvents2.Transfer;
@@ -198,7 +198,7 @@ describe('NFT: Plain calls', () => {
         )),
         {from: caller}
       );
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
 
       const events = mintEvents
@@ -279,7 +279,7 @@ describe('NFT: Plain calls', () => {
         ],
         {from: caller}
       );
-      const mintReceipt = await mintTx.wait(confirmations);
+      const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
 
       const events = mintEvents
@@ -329,7 +329,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const burnTx = await contract.burn.send(tokenId, {from: caller});
-      const burnReceipt = await burnTx.wait(confirmations);
+      const burnReceipt = await burnTx.wait(...waitParams);
       const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
 
       const event = burnEvents.Transfer;
@@ -360,7 +360,7 @@ describe('NFT: Plain calls', () => {
     }
     {
       const approveTx = await contract.approve.send(spender, tokenId);
-      const approveReceipt = await approveTx.wait(confirmations);
+      const approveReceipt = await approveTx.wait(...waitParams);
       const approveEvents = helper.eth.normalizeEvents(approveReceipt!);
 
       const event = approveEvents.Approval;
@@ -389,7 +389,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const approvalTx = await contract.setApprovalForAll.send(operator, true);
-      const approvalReceipt = await approvalTx.wait(confirmations);
+      const approvalReceipt = await approvalTx.wait(...waitParams);
       const approvalEvents = helper.eth.normalizeEvents(approvalReceipt!);
 
       expect(approvalEvents.ApprovalForAll).to.be.like({
@@ -408,7 +408,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const approvalTx = await contract.setApprovalForAll.send(operator, false);
-      const approvalReceipt = await approvalTx.wait(confirmations);
+      const approvalReceipt = await approvalTx.wait(...waitParams);
       const approvalEvents = helper.eth.normalizeEvents(approvalReceipt!);
 
       expect(approvalEvents.ApprovalForAll).to.be.like({
@@ -438,11 +438,11 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
     {
-      await (await contract.setApprovalForAll.send(operator, true)).wait(confirmations);
+      await (await contract.setApprovalForAll.send(operator, true)).wait(...waitParams);
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
 
       const burnTx = await contract.burnFromCross.send(ownerCross, token.tokenId, {from: operator});
-      const burnReceipt = await burnTx.wait(confirmations);
+      const burnReceipt = await burnTx.wait(...waitParams);
       const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
 
       expect(burnEvents.Transfer).to.be.like({
@@ -472,13 +472,13 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(address, 'nft');
 
     {
-      await (await contract.setApprovalForAll.send(operator, true)).wait(confirmations);
+      await (await contract.setApprovalForAll.send(operator, true)).wait(...waitParams);
       
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
 
       const transferTx = await contract.burnFromCross.send(ownerCross, recieverCross, token.tokenId, {from: operator});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
       expect(transferEvents.Transfer).to.be.like({
@@ -513,15 +513,15 @@ describe('NFT: Plain calls', () => {
 
     // Approve tokens from substrate and ethereum:
     await token1.approve(ownerSub, {Ethereum: burnerEth.address});
-    await (await collectionEvm.approveCross.send(burnerCrossEth, token2.tokenId, {from: ownerEth})).wait(confirmations);
+    await (await collectionEvm.approveCross.send(burnerCrossEth, token2.tokenId, {from: ownerEth})).wait(...waitParams);
 
     // can burnFromCross:
     const burnTx1 = await collectionEvm.burnFromCross.send(ownerCrossSub, token1.tokenId, {from: burnerEth});
-    const burnReceipt1 = await burnTx1.wait(confirmations);
+    const burnReceipt1 = await burnTx1.wait(...waitParams);
     const burnEvents1 = helper.eth.normalizeEvents(burnReceipt1!);
 
     const burnTx2 = await collectionEvm.burnFromCross.send(ownerCrossEth, token2.tokenId, {from: burnerEth});
-    const burnReceipt2 = await burnTx2.wait(confirmations);
+    const burnReceipt2 = await burnTx2.wait(...waitParams);
     const burnEvents2 = helper.eth.normalizeEvents(burnReceipt2!);
 
     // Check events for burnFromCross (substrate and ethereum):
@@ -563,11 +563,11 @@ describe('NFT: Plain calls', () => {
 
     // Can approveCross substrate and ethereum address:
     const approveTxSub = await collectionEvm.approveCross.send(receiverCrossSub, token1.tokenId);
-    const approveReceiptSub = await approveTxSub.wait(confirmations);
+    const approveReceiptSub = await approveTxSub.wait(...waitParams);
     const approveEventsSub = helper.eth.normalizeEvents(approveReceiptSub!);
 
     const approveTxEth = await collectionEvm.approveCross.send(receiverCrossEth, token2.tokenId);
-    const approveReceiptEth = await approveTxEth.wait(confirmations);
+    const approveReceiptEth = await approveTxEth.wait(...waitParams);
     const approveEventsEth = helper.eth.normalizeEvents(approveReceiptEth!);
 
     expect(approveEventsSub.Approval).to.be.like({
@@ -595,7 +595,7 @@ describe('NFT: Plain calls', () => {
     expect(await helper.nft.getTokenOwner(collection.collectionId, token1.tokenId)).to.deep.eq({Substrate: receiverSub.address});
     
     // Ethereum address can transferFromCross approved tokens:
-    await (await collectionEvm.transferFromCross.send(ownerCross, receiverCrossEth, token2.tokenId, {from: receiverEth})).wait(confirmations);
+    await (await collectionEvm.transferFromCross.send(ownerCross, receiverCrossEth, token2.tokenId, {from: receiverEth})).wait(...waitParams);
     expect(await helper.nft.getTokenOwner(collection.collectionId, token2.tokenId)).to.deep.eq({Ethereum: receiverEth.address.toLowerCase()});
   });
 
@@ -624,8 +624,8 @@ describe('NFT: Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
 
     // Can approve and reaffirm approved address:
-    await (await collectionEvm.approveCross.send(receiver1Cross, token1.tokenId)).wait(confirmations);
-    await (await collectionEvm.approveCross.send(receiver2Cross, token1.tokenId)).wait(confirmations);
+    await (await collectionEvm.approveCross.send(receiver1Cross, token1.tokenId)).wait(...waitParams);
+    await (await collectionEvm.approveCross.send(receiver2Cross, token1.tokenId)).wait(...waitParams);
 
     // receiver1 cannot transferFrom:
     await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token1.tokenId, {Ethereum: owner.address}, {Substrate: receiver1.address})).to.be.rejected;
@@ -633,8 +633,8 @@ describe('NFT: Plain calls', () => {
     await helper.nft.transferTokenFrom(receiver2, collection.collectionId, token1.tokenId, {Ethereum: owner.address}, {Substrate: receiver2.address});
 
     // can set approved address to self address to remove approval:
-    await (await collectionEvm.approveCross.send(receiver1Cross, token2.tokenId)).wait(confirmations);
-    await (await collectionEvm.approveCross.send(ownerCrossEth, token2.tokenId)).wait(confirmations);
+    await (await collectionEvm.approveCross.send(receiver1Cross, token2.tokenId)).wait(...waitParams);
+    await (await collectionEvm.approveCross.send(ownerCrossEth, token2.tokenId)).wait(...waitParams);
 
     // receiver1 cannot transfer token anymore:
     await expect(helper.nft.transferTokenFrom(receiver1, collection.collectionId, token2.tokenId, {Ethereum: owner.address}, {Substrate: receiver1.address})).to.be.rejected;
@@ -651,11 +651,11 @@ describe('NFT: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await (await contract.approve.send(spender, tokenId)).wait(confirmations);
+    await (await contract.approve.send(spender, tokenId)).wait(...waitParams);
 
     {
       const transferTx = await contract.transferFrom.send(owner, receiver, tokenId, {from: spender});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
       const event = transferEvents.Transfer;
@@ -694,7 +694,7 @@ describe('NFT: Plain calls', () => {
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
       
       const transferTx = await contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
       
       expect(transferEvents.Transfer).to.be.like({
@@ -723,7 +723,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const transferTx = await contract.transfer.send(receiver, tokenId);
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
       const event = transferEvents.Transfer;
@@ -758,7 +758,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const transferTx = await collectionEvm.transferCross.send(receiverCrossEth, tokenId);
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
       const event = transferEvents.Transfer;
@@ -779,7 +779,7 @@ describe('NFT: Plain calls', () => {
 
     {
       const transferTx = await collectionEvm.transferCross.send(receiverCrossSub, tokenId, {from: receiverEth});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
       const event = transferEvents.Transfer;
@@ -850,7 +850,7 @@ describe('NFT: Plain calls', () => {
           tokenId,
           {from: owner.address},
         )
-      ).wait(confirmations);
+      ).wait(...waitParams);
 
       owner = newOwner;
     }
@@ -879,7 +879,7 @@ describe('NFT: Fees', () => {
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    const cost = await helper.eth.recordCallFee(owner.address, async () => await (await contract.approve.send(spender, tokenId)).wait(confirmations));
+    const cost = await helper.eth.recordCallFee(owner.address, async () => await (await contract.approve.send(spender, tokenId)).wait(...waitParams));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
@@ -892,11 +892,11 @@ describe('NFT: Fees', () => {
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    await (await contract.approve.send(spender, tokenId)).wait(confirmations);
+    await (await contract.approve.send(spender, tokenId)).wait(...waitParams);
 
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await contract.transferFrom.send(owner, spender, tokenId, {from: spender})).wait(confirmations),
+      async () => await (await contract.transferFrom.send(owner, spender, tokenId, {from: spender})).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -921,7 +921,7 @@ describe('NFT: Fees', () => {
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
       
       const transferTx = await contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender});
-      const transferReceipt = await transferTx.wait(confirmations);
+      const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
       expect(transferEvents.Transfer).to.be.like({
@@ -1179,8 +1179,8 @@ describe('Negative tests', () => {
     const ownerCross = helper.ethCrossAccount.fromAddress(owner);
     await expect(contract.burnFromCross.send(ownerCross, token.tokenId, {from: spender})).to.be.rejected;
 
-    await (await contract.setApprovalForAll.send(spender, true)).wait(confirmations);
-    await (await contract.setApprovalForAll.send(spender, false)).wait(confirmations);
+    await (await contract.setApprovalForAll.send(spender, true)).wait(...waitParams);
+    await (await contract.setApprovalForAll.send(spender, false)).wait(...waitParams);
 
     await expect(contract.burnFromCross.send(ownerCross, token.tokenId, {from: spender})).to.be.rejected;
   });
@@ -1202,8 +1202,8 @@ describe('Negative tests', () => {
 
     await expect(contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender})).to.be.rejected;
 
-    await (await contract.setApprovalForAll.send(spender, true)).wait(confirmations);
-    await (await contract.setApprovalForAll.send(spender, false)).wait(confirmations);
+    await (await contract.setApprovalForAll.send(spender, true)).wait(...waitParams);
+    await (await contract.setApprovalForAll.send(spender, false)).wait(...waitParams);
 
     await expect(contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender})).to.be.rejected;
   });

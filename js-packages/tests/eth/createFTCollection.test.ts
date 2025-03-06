@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
 
 const DECIMALS = 18;
@@ -43,7 +43,7 @@ describe('Create FT collection from EVM', () => {
     const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, description, 'ENVY');
 
     const collection = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
-    await (await collection.setCollectionSponsor.send(sponsor)).wait(confirmations);
+    await (await collection.setCollectionSponsor.send(sponsor)).wait(...waitParams);
 
     let data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -51,7 +51,7 @@ describe('Create FT collection from EVM', () => {
     await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
-    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -66,7 +66,7 @@ describe('Create FT collection from EVM', () => {
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-    await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(confirmations);
+    await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(...waitParams);
 
     let data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -74,7 +74,7 @@ describe('Create FT collection from EVM', () => {
     await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
-    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(confirmations);
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     data = (await helper.rft.getData(collectionId))!;
     expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
@@ -103,7 +103,7 @@ describe('Create FT collection from EVM', () => {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
     const destroyTx = await collectionHelper.destroyCollection.send(collectionAddress);
-    const destroyReceipt = await destroyTx.wait(confirmations);
+    const destroyReceipt = await destroyTx.wait(...waitParams);
     const events = helper.eth.rebuildEvents(destroyReceipt!);
 
     expect(events).to.be.deep.equal([

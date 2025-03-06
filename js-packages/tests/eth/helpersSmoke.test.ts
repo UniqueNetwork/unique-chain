@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {confirmations, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('Helpers sanity check', () => {
@@ -40,7 +40,7 @@ describe('Helpers sanity check', () => {
     const flipper = await helper.eth.deployFlipper(owner);
 
     expect(await flipper.getValue.staticCall()).to.be.false;
-    await (await flipper.flip.send()).wait(confirmations);
+    await (await flipper.flip.send()).wait(...waitParams);
     expect(await flipper.getValue.staticCall()).to.be.true;
   });
 });
