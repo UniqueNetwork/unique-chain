@@ -46,15 +46,13 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
   const {collectionAddress, events: ethEvents} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', mode, 18)).send();
   
   await helper.wait.newBlocks(10);
-  expect(ethEvents).to.containSubset([
-    {
-      event: 'CollectionCreated',
-      args: {
-        owner: owner,
-        collectionId: collectionAddress,
-      },
+  expect(ethEvents.CollectionCreated).to.be.like({
+    args: {
+      owner: owner.address,
+      collectionId: collectionAddress,
     },
-  ]);
+  });
+  
   expect(subEvents).to.containSubset([{method: 'CollectionCreated'}]);
 
   {
@@ -64,11 +62,9 @@ async function testCollectionCreatedAndDestroy(helper: EthUniqueHelper, mode: TC
     const events = helper.eth.normalizeEvents(receipt!);
 
     await helper.wait.newBlocks(10);
-    expect(events).to.containSubset({
-      CollectionDestroyed: {
-        args: {
-          collectionId: collectionAddress,
-        },
+    expect(events.CollectionDestroyed).to.be.like({
+      args: {
+        collectionId: collectionAddress,
       },
     });
     expect(subEvents).to.containSubset([{method: 'CollectionDestroyed'}]);
@@ -91,16 +87,12 @@ async function testCollectionPropertySetAndDeleted(helper: EthUniqueHelper, mode
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['CollectionPropertySet', 'CollectionPropertyDeleted']}]);
   
   {
-    await (await collection.setCollectionProperties.send([{key: 'A', value: [0, 1, 2, 3]}])).wait(...waitParams);
+    await (
+      await collection.setCollectionProperties.send([{key: 'A', value: new Uint8Array([0, 1, 2, 3])}])
+    ).wait(...waitParams);
     
     await helper.wait.newBlocks(10);
-    expect(ethEvents).to.containSubset([
-      {
-        args: {
-          collectionId: collectionAddress,
-        },
-      },
-    ]);
+    expect(ethEvents).to.containSubset([{args: {collectionId: collectionAddress}}]);
     expect(subEvents).to.containSubset([{method: 'CollectionPropertySet'}]);
     
     clearEvents(ethEvents, subEvents);
@@ -440,7 +432,7 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
   
   const mintReceipt = await (await collection.mint.send(owner)).wait(...waitParams);
   const tokenId = helper.eth.normalizeEvents(mintReceipt!).Transfer.args.tokenId;
-  
+
   await (
     await collection.setTokenPropertyPermissions.send([
       ['A', [
@@ -452,10 +444,12 @@ async function testTokenPropertySetAndDeleted(helper: EthUniqueHelper, mode: TCo
   ).wait(...waitParams);
 
   const {unsubscribe, collectedEvents: subEvents} = await helper.subscribeEvents([{section: 'common', names: ['TokenPropertySet', 'TokenPropertyDeleted']}]);
-  
+
   {
-    const tx = await collection.setProperties.send(tokenId, [{key: 'A', value: [1,2,3]}]);
+    const tx = await collection.setProperties.send(tokenId, [{key: 'A', value: new Uint8Array([1, 2, 3])}]);
+
     const receipt = await tx.wait(...waitParams);
+    
     const ethEvents = helper.eth.normalizeEvents(receipt!);
     
     await helper.wait.newBlocks(10);
