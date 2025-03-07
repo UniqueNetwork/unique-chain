@@ -982,37 +982,45 @@ describe('Create collection from EVM', () => {
           };
 
           const owner = await helper.eth.createAccountWithBalance(donor);
-          await expect(helper.eth.createCollection(
-            owner,
-            {
-              ...createCollectionData,
-              limits: [{field: 9 as CollectionLimitField, value: 1n}],
-            },
-          ).send()).to.be.rejectedWith('value not convertible into enum "CollectionLimitField"');
+          await expect(
+            helper.eth.createCollection(
+              owner,
+              {
+                ...createCollectionData,
+                limits: [{field: 9 as CollectionLimitField, value: 1n}],
+              },
+            ).send()
+          ).to.be.rejectedWith('execution reverted: "value not convertible into enum \\"CollectionLimitField\\""');
 
-          await expect(helper.eth.createCollection(
-            owner,
-            {
-              ...createCollectionData,
-              limits: [{field: CollectionLimitField.AccountTokenOwnership, value: invalidLimits.accountTokenOwnershipLimit}],
-            },
-          ).send()).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
+          await expect(
+            helper.eth.createCollection(
+              owner,
+              {
+                ...createCollectionData,
+                limits: [{field: CollectionLimitField.AccountTokenOwnership, value: invalidLimits.accountTokenOwnershipLimit}],
+              },
+            ).send()
+          ).to.be.rejectedWith(`execution reverted: "can't convert value to u32 \\"${invalidLimits.accountTokenOwnershipLimit}\\"`);
 
-          await expect(helper.eth.createCollection(
-            owner,
-            {
-              ...createCollectionData,
-              limits: [{field: CollectionLimitField.TransferEnabled, value: 3n}],
-            },
-          ).send()).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
+          await expect(
+            helper.eth.createCollection(
+              owner,
+              {
+                ...createCollectionData,
+                limits: [{field: CollectionLimitField.TransferEnabled, value: 3n}],
+              },
+            ).send()
+          ).to.be.rejectedWith(`execution reverted: "can't convert value to boolean \\"${invalidLimits.transfersEnabled}\\"`);
 
-          await expect(helper.eth.createCollection(
-            owner,
-            {
-              ...createCollectionData,
-              limits: [{field: CollectionLimitField.SponsoredDataSize, value: -1n}],
-            },
-          ).send()).to.be.rejectedWith('value out-of-bounds');
+          await expect(
+            helper.eth.createCollection(
+              owner,
+              {
+                ...createCollectionData,
+                limits: [{field: CollectionLimitField.SponsoredDataSize, value: -1n}],
+              },
+            ).send()
+          ).to.be.rejectedWith('value out-of-bounds');
         }));
     });
   });
@@ -1154,7 +1162,8 @@ describe('Create collection from EVM', () => {
     ].map(testCase =>
       itEth.ifWithPallets(`[${testCase.mode}] Can set all possible token property permissions`, testCase.requiredPallets, async({helper}) => {
         const owner = await helper.eth.createAccountWithBalance(donor);
-        const caller = await helper.ethCrossAccount.createAccountWithBalance(donor);
+        const caller = await helper.eth.createAccountWithBalance(donor);
+
         for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
           const {collectionId, collectionAddress} = await helper.eth.createCollection(
             owner,
@@ -1164,7 +1173,7 @@ describe('Create collection from EVM', () => {
               description: 'B',
               tokenPrefix: 'C',
               collectionMode: testCase.mode,
-              adminList: [caller],
+              adminList: [helper.ethCrossAccount.fromAddress(caller.address)],
               tokenPropertyPermissions: [
                 {
                   key: 'testKey',
@@ -1177,18 +1186,20 @@ describe('Create collection from EVM', () => {
               ],
             },
           ).send();
+
           const collection = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
+          const callerCollection = helper.eth.changeContractCaller(collection, caller)
 
           expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
             key: 'testKey',
             permission: {mutable, collectionAdmin, tokenOwner},
           }]);
 
-          expect(await collection.tokenPropertyPermissions.staticCall({from: caller.eth})).to.be.like([
+          expect(await callerCollection.tokenPropertyPermissions.staticCall()).to.be.like([
             ['testKey', [
-              [TokenPermissionField.Mutable.toString(), mutable],
-              [TokenPermissionField.TokenOwner.toString(), tokenOwner],
-              [TokenPermissionField.CollectionAdmin.toString(), collectionAdmin]],
+              [BigInt(TokenPermissionField.Mutable), mutable],
+              [BigInt(TokenPermissionField.TokenOwner), tokenOwner],
+              [BigInt(TokenPermissionField.CollectionAdmin), collectionAdmin]],
             ],
           ]);
         }
@@ -1252,19 +1263,19 @@ describe('Create collection from EVM', () => {
 
         expect(await collection.tokenPropertyPermissions.staticCall()).to.be.like([
           ['testKey_0', [
-            [TokenPermissionField.Mutable.toString(), true],
-            [TokenPermissionField.TokenOwner.toString(), true],
-            [TokenPermissionField.CollectionAdmin.toString(), true]],
+            [BigInt(TokenPermissionField.Mutable), true],
+            [BigInt(TokenPermissionField.TokenOwner), true],
+            [BigInt(TokenPermissionField.CollectionAdmin), true]],
           ],
           ['testKey_1', [
-            [TokenPermissionField.Mutable.toString(), true],
-            [TokenPermissionField.TokenOwner.toString(), false],
-            [TokenPermissionField.CollectionAdmin.toString(), true]],
+            [BigInt(TokenPermissionField.Mutable), true],
+            [BigInt(TokenPermissionField.TokenOwner), false],
+            [BigInt(TokenPermissionField.CollectionAdmin), true]],
           ],
           ['testKey_2', [
-            [TokenPermissionField.Mutable.toString(), false],
-            [TokenPermissionField.TokenOwner.toString(), true],
-            [TokenPermissionField.CollectionAdmin.toString(), false]],
+            [BigInt(TokenPermissionField.Mutable), false],
+            [BigInt(TokenPermissionField.TokenOwner), true],
+            [BigInt(TokenPermissionField.CollectionAdmin), false]],
           ],
         ]);
       }));
