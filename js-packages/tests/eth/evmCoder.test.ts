@@ -71,7 +71,7 @@ describe('Evm Coder tests', () => {
       const testReceipt = await testTx.wait(...waitParams);
       const testEvents = helper.eth.normalizeEvents(testReceipt!);
       expect(testEvents.Result.args).to.deep.equal({
-        '0': false,
+        '0': 'false',
         '1': '0',
       });
     }
@@ -80,7 +80,7 @@ describe('Evm Coder tests', () => {
       const testReceipt = await testTx.wait(...waitParams);
       const testEvents = helper.eth.normalizeEvents(testReceipt!);
       expect(testEvents.Result.args).to.deep.equal({
-        '0': false,
+        '0': 'false',
         '1': '0',
       });
     }
