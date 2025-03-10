@@ -26,7 +26,7 @@ const {dirname} = makeNames(import.meta.url);
 async function proxyWrap(helper: EthUniqueHelper, wrapped: any, donor: IKeyringPair) {
   // Proxy owner has no special privilegies, we don't need to reuse them
   const owner = await helper.eth.createAccountWithBalance(donor);
-  
+
   const abiFileContent = await readFile(`${dirname}/UniqueFungibleProxy.abi`);
   const abi = JSON.parse(abiFileContent.toString());
 
@@ -115,7 +115,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
 
     {
-      const allowance = await contract.allowance.staticCall(await contract.getAddress(), spender)
+      const allowance = await contract.allowance.staticCall(await contract.getAddress(), spender);
       expect(+allowance).to.equal(100);
     }
   });
@@ -138,7 +138,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
       const transferTx = await contract.transferFrom.send(owner, receiver, 49, {from: caller});
       const transferReceipt = await transferTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(transferReceipt!);
-      
+
       expect(events).to.be.deep.equal({
         Transfer: {
           address,
@@ -162,12 +162,12 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(receiver)
+      const balance = await contract.balanceOf.staticCall(receiver);
       expect(+balance).to.equal(49);
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(owner)
+      const balance = await contract.balanceOf.staticCall(owner);
       expect(+balance).to.equal(151);
     }
   });
@@ -201,12 +201,12 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(await contract.getAddress())
+      const balance = await contract.balanceOf.staticCall(await contract.getAddress());
       expect(+balance).to.equal(150);
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(receiver)
+      const balance = await contract.balanceOf.staticCall(receiver);
       expect(+balance).to.equal(50);
     }
   });

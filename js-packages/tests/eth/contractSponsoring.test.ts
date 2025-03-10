@@ -19,7 +19,7 @@ import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {itEth, expect, SponsoringMode, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {CompiledContract} from '@unique/test-utils/eth/types.js';
-import { HDNodeWallet } from 'ethers';
+import {HDNodeWallet} from 'ethers';
 
 describe('Sponsoring EVM contracts', () => {
   let donor: IKeyringPair;
@@ -81,7 +81,7 @@ describe('Sponsoring EVM contracts', () => {
 
     await expect(helpers.selfSponsoredEnable.staticCall(await flipper.getAddress(), {from: notOwner}))
       .to.be.rejectedWith('NoPermission');
-    
+
     expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
   });
 
@@ -332,7 +332,7 @@ describe('Sponsoring EVM contracts', () => {
       // Balance should be taken from flipper instead of caller
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
-      
+
       // Caller's balance does not change:
       const callerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(caller));
       expect(callerBalanceAfter).to.eq(testCase.balance * nominal);

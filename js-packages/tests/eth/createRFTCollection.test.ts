@@ -174,36 +174,28 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const description = 'A';
       const tokenPrefix = 'A';
 
-      await expect(
-        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})
-      ).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+      await expect(collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
     {
       const MAX_DESCRIPTION_LENGTH = 256;
       const collectionName = 'A';
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
-      await expect(
-        collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})
-      ).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+      await expect(collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
     {
       const MAX_TOKEN_PREFIX_LENGTH = 16;
       const collectionName = 'A';
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
-      await expect(
-        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})
-      ).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+      await expect(collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
 
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    await expect(
-      collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: Number(1n * nominal)})
-    ).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   // Soft-deprecated
@@ -215,19 +207,13 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
-      await expect(
-        peasantCollection.setCollectionSponsor.staticCall(sponsor)
-      ).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionSponsor.staticCall(sponsor)).to.be.rejectedWith(EXPECTED_ERROR);
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
-      await expect(
-        sponsorCollection.confirmCollectionSponsorship.staticCall()
-      ).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(sponsorCollection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
-      await expect(
-        peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
-      ).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
 
@@ -240,19 +226,13 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      await expect(
-        peasantCollection.setCollectionSponsorCross.staticCall(sponsorCross)
-      ).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionSponsorCross.staticCall(sponsorCross)).to.be.rejectedWith(EXPECTED_ERROR);
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
-      await expect(
-        sponsorCollection.confirmCollectionSponsorship.staticCall()
-      ).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(sponsorCollection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
-      await expect(
-        peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
-      ).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
 
@@ -261,16 +241,10 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const {collectionAddress, collectionId} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
-    await expect(
-      collectionHelper.destroyCollection.send(collectionAddress)
-    ).to.be.fulfilled;
+    await expect(collectionHelper.destroyCollection.send(collectionAddress)).to.be.fulfilled;
 
-    expect(
-      collectionHelper.isCollectionExist.staticCall(collectionAddress)
-    ).to.be.false;
+    expect(collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
 
-    expect(
-      await helper.collection.getData(collectionId)
-    ).to.be.null;
+    expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });

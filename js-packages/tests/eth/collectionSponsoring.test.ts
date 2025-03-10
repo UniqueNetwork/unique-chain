@@ -92,8 +92,8 @@ describe('evm nft collection sponsoring', () => {
       const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
 
       let result = await (await collectionHelpers.createNFTCollection.send('Sponsor collection', '1', '1', {value: (2n * nominal)})).wait(...waitParams);
-      let events = helper.eth.normalizeEvents(result!);
-      
+      const events = helper.eth.normalizeEvents(result!);
+
       const collectionIdAddress = helper.ethAddress.normalizeAddress(events.CollectionCreated.args.collectionId);
       const collectionEvm = await helper.ethNativeContract.collection(collectionIdAddress, 'nft', owner, testCase === 'setCollectionSponsor');
 
@@ -137,7 +137,7 @@ describe('evm nft collection sponsoring', () => {
       await (await collectionEvm[testCase].send(testCase === 'setCollectionSponsor' ? sponsor : sponsorCross)).wait(...waitParams);
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
       expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor.address, true));
-      
+
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -191,7 +191,7 @@ describe('evm nft collection sponsoring', () => {
             tokenId: '1',
           },
         });
-        
+
         const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
         const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
         const userBalanceAfter =  await helper.balance.getSubstrate(helper.address.ethToSubstrate(user.eth));
@@ -211,7 +211,7 @@ describe('evm nft collection sponsoring', () => {
 
   itEth('Can sponsor [set token properties] via access list', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    
+
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
 
@@ -348,7 +348,7 @@ describe('evm nft collection sponsoring', () => {
   ].map(testCase =>
     itEth(`[${testCase}] Check that transaction via EVM spend money from sponsor address`, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      
+
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
 
@@ -366,7 +366,7 @@ describe('evm nft collection sponsoring', () => {
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
       await (await sponsorCollectionEvm.confirmCollectionSponsorship.send()).wait(...waitParams);
-      
+
       collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor.address, true));
 
@@ -382,7 +382,7 @@ describe('evm nft collection sponsoring', () => {
       const mintingTx = await sponsorCollectionEvm.mintWithTokenURI.send(user, 'Test URI');
       const mintingReceipt = await mintingTx.wait(...waitParams);
       const mintingEvents = helper.eth.normalizeEvents(mintingReceipt!);
-      
+
       const tokenId = +mintingEvents.Transfer.args.tokenId;
       const address = helper.ethAddress.fromCollectionId(collectionId);
 
@@ -395,22 +395,22 @@ describe('evm nft collection sponsoring', () => {
           tokenId: '1',
         },
       });
-      
+
       expect(await userCollectionEvm.tokenURI.staticCall(tokenId)).to.be.equal('Test URI');
 
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-      
+
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
     }));
 
   itEth('Can reassign collection sponsor', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    
+
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-    
+
     const [sponsorSub] = await helper.arrange.createAccounts([100n], donor);
     const sponsorCrossSub = helper.ethCrossAccount.fromKeyringPair(sponsorSub);
 
@@ -502,16 +502,16 @@ describe('evm RFT collection sponsoring', () => {
   ].map(testCase =>
     itEth(`[${testCase}] can remove collection sponsor`, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      
+
       const collectionHelpers = await helper.ethNativeContract.collectionHelpers(owner);
 
       const result = await (await collectionHelpers.createRFTCollection.send('Sponsor collection', '1', '1', {value: (2n * nominal)})).wait(...waitParams);
       const events = helper.eth.normalizeEvents(result!);
       const collectionIdAddress = helper.ethAddress.normalizeAddress(events.CollectionCreated.args.collectionId);
-      
+
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      
+
       const collectionEvm = await helper.ethNativeContract.collection(collectionIdAddress, 'rft', owner, testCase === 'setCollectionSponsor');
       const sponsorCollectionEvm = helper.eth.changeContractCaller(collectionEvm, sponsor);
 
@@ -534,7 +534,7 @@ describe('evm RFT collection sponsoring', () => {
   ].map(testCase =>
     itEth(`[${testCase}] Can sponsor from evm address via access list`, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
-      
+
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
 
@@ -548,7 +548,7 @@ describe('evm RFT collection sponsoring', () => {
       await (await collectionEvm[testCase].send(testCase === 'setCollectionSponsor' ? sponsor : sponsorCross)).wait(...waitParams);
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
       expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
-      
+
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -636,10 +636,10 @@ describe('evm RFT collection sponsoring', () => {
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.false;
       await (await collectionEvm[testCase].send(testCase === 'setCollectionSponsor' ? sponsor : sponsorCross)).wait(...waitParams);
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.true;
-      
+
       let collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
-      
+
       expect(await collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.true;
 
@@ -647,9 +647,9 @@ describe('evm RFT collection sponsoring', () => {
 
       collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
-      
+
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.false;
-      
+
       const sponsorStruct = await collectionEvm.collectionSponsor.staticCall();
       const sponsorSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.ethToSubstrate(sponsor));
       const actualSubAddress = helper.address.normalizeSubstrateToChainFormat(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorStruct.sub)));
@@ -682,7 +682,7 @@ describe('evm RFT collection sponsoring', () => {
 
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-      
+
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
     }));
@@ -696,12 +696,12 @@ describe('evm RFT collection sponsoring', () => {
 
     const collectionSub = helper.rft.getCollectionObject(collectionId);
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'rft', owner, false);
-    
+
     // Set collection sponsor:
     expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.false;
     await (await collectionEvm.setCollectionSponsorCross.send(sponsorCross)).wait(...waitParams);
     expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.true;
-    
+
     let collectionData = (await collectionSub.getData())!;
     expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(sponsor.address);
     await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
@@ -724,7 +724,7 @@ describe('evm RFT collection sponsoring', () => {
 
     const mintingReceipt = await (await userCollectionEvm.mintWithTokenURI.send(user, 'Test URI')).wait(...waitParams);
     const mintingEvents = helper.eth.normalizeEvents(mintingReceipt!);
-    
+
     const tokenId = mintingEvents.Transfer.args.tokenId;
 
     expect(mintingEvents.Transfer).to.deep.equal({
@@ -741,20 +741,20 @@ describe('evm RFT collection sponsoring', () => {
 
     const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
     expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-    
+
     const sponsorBalanceAfter = await helper.balance.getSubstrate(sponsor.address);
     expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
   });
 
   itEth('Sponsoring collection from substrate address via access list', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-    
+
     const sponsor = alice;
     const sponsorCross = helper.ethCrossAccount.fromKeyringPair(sponsor);
 
     const user = helper.eth.createAccount();
     const userCross =  helper.ethCrossAccount.fromAddress(user);
-    
+
     const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner, false);
     const userCollectionEvm = helper.eth.changeContractCaller(collectionEvm, user);
@@ -789,7 +789,7 @@ describe('evm RFT collection sponsoring', () => {
     {
       const nextTokenId = await collectionEvm.nextTokenId.staticCall();
       expect(nextTokenId).to.be.equal('1');
-      
+
       const mintingReceipt = await (await userCollectionEvm.mintWithTokenURI.send(
         user,
         'Test URI',
@@ -830,7 +830,7 @@ describe('evm RFT collection sponsoring', () => {
     const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
     const collectionSub = helper.rft.getCollectionObject(collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
-    
+
     const sponsorCollectionEvm = helper.eth.changeContractCaller(collectionEvm, sponsorEth);
 
     // Set and confirm sponsor:
@@ -853,10 +853,10 @@ describe('evm RFT collection sponsoring', () => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
-      
+
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      
+
       const receiver = await helper.eth.createAccountWithBalance(donor);
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
@@ -896,10 +896,10 @@ describe('evm RFT collection sponsoring', () => {
 
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-      
+
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
-      
+
       const userBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(user));
       expect(userBalanceAfter).to.be.eq(userBalanceBefore);
     }));
@@ -926,9 +926,9 @@ describe('evm RFT token sponsoring', () => {
 
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      
+
       const receiver = await helper.eth.createAccountWithBalance(donor);
-      
+
       const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
@@ -971,10 +971,10 @@ describe('evm RFT token sponsoring', () => {
 
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-      
+
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
-      
+
       const userBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(user));
       expect(userBalanceAfter).to.be.eq(userBalanceBefore);
     }));
@@ -987,7 +987,7 @@ describe('evm RFT token sponsoring', () => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       const {collectionAddress, collectionId} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner,'Sponsor collection', '1', '1', '');
-      
+
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
 
@@ -1027,10 +1027,10 @@ describe('evm RFT token sponsoring', () => {
 
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-      
+
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
-      
+
       const userBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(user));
       expect(userBalanceAfter).to.be.eq(userBalanceBefore);
     }));

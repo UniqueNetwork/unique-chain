@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import { HDNodeWallet } from 'ethers';
+import {HDNodeWallet} from 'ethers';
 
 
 describe('Contract calls', () => {
@@ -50,7 +50,7 @@ describe('Contract calls', () => {
         to: userB,
         value: '1000000',
         gasLimit: helper.eth.DEFAULT_GAS_LIMIT,
-      })).wait(...waitParams)
+      })).wait(...waitParams),
     );
     const balanceB = await helper.balance.getEthereum(userB);
     expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
@@ -69,7 +69,7 @@ describe('Contract calls', () => {
 
     const cost = await helper.eth.calculateFee(
       {Ethereum: caller.address},
-      async () => await (await contract.transfer.send(receiver, tokenId)).wait(...waitParams)
+      async () => await (await contract.transfer.send(receiver, tokenId)).wait(...waitParams),
     );
 
     const fee = Number(cost) / Number(helper.balance.getOneTokenNominal());

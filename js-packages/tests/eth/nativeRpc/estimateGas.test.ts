@@ -30,7 +30,7 @@ describe('Ethereum native RPC calls', () => {
 
   itEth('estimate gas', async ({helper}) => {
     throw new Error('unimplemented');
-    
+
     // const BALANCE = 100n;
     // const BALANCE_TO_TRANSFER = 90n;
 

@@ -69,7 +69,7 @@ describe('EVM collection properties', () => {
     await expect(contract.setCollectionProperties.send([{key: '', value: Buffer.from('val1')}], {from: caller})).to.be.rejected;
     await expect(contract.setCollectionProperties.send([{key: 'déjà vu', value: Buffer.from('hmm...')}], {from: caller})).to.be.rejected;
     await expect(contract.setCollectionProperties.send([{key: 'a'.repeat(257), value: Buffer.from('val3')}], {from: caller})).to.be.rejected;
-    
+
     // TODO add more expects
     const raw = (await collection.getData())?.raw;
     expect(raw.properties).to.deep.equal([]);
@@ -174,7 +174,7 @@ describe('Supports ERC721Metadata', () => {
         await collectionHelpers.makeCollectionERC721MetadataCompatible.send(
           collectionAddress,
           BASE_URI,
-          {from: bruh}
+          {from: bruh},
         )
       ).wait(...waitParams);
 

@@ -313,7 +313,7 @@ describe('Remove collection admins', () => {
 
     const admin = await helper.eth.createAccountWithBalance(donor);
     await (await collectionEvm.addCollectionAdmin.send(admin)).wait(...waitParams);
-    
+
     const notAdmin = helper.eth.createAccount();
 
     await expect(collectionEvm.removeCollectionAdmin.staticCall(admin, {from: notAdmin}))
@@ -399,7 +399,7 @@ describe('Change owner tests', () => {
     const cost = await recordEthFee(
       helper,
       owner.address,
-      async () => await (await collectionEvm.changeCollectionOwner.send(newOwner)).wait(...waitParams)
+      async () => await (await collectionEvm.changeCollectionOwner.send(newOwner)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
     expect(cost > 0);

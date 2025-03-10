@@ -126,7 +126,7 @@ describe('NFT: Plain calls', () => {
       const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', collectionAdmin, true);
       let expectedTokenId = await contract.nextTokenId.staticCall();
-      
+
       const mintTx = await contract.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, []);
       const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
@@ -144,7 +144,7 @@ describe('NFT: Plain calls', () => {
       const mintTx2 = await contract.mintCross.send(testCase === 'ethereum' ? receiverCrossEth : receiverCrossSub, properties);
       const mintReceipt2 = await mintTx2.wait(...waitParams);
       const mintEvents2 = helper.eth.normalizeEvents(mintReceipt2!);
-      
+
       event = mintEvents2.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
@@ -187,16 +187,16 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     {
       const bulkSize = 3;
-      
+
       const nextTokenId = await contract.nextTokenId.staticCall();
       expect(nextTokenId).to.be.equal('1');
-      
+
       const mintTx = await contract.mintBulkWithTokenURI.send(
         receiver,
         Array.from({length: bulkSize}, (_, i) => (
           [+nextTokenId + i, `Test URI ${i}`]
         )),
-        {from: caller}
+        {from: caller},
       );
       const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
@@ -277,7 +277,7 @@ describe('NFT: Plain calls', () => {
             ],
           },
         ],
-        {from: caller}
+        {from: caller},
       );
       const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
@@ -285,7 +285,7 @@ describe('NFT: Plain calls', () => {
       const events = mintEvents
         .filter((event) => event.event === 'Transfer')
         .sort((a, b) => +a.args.tokenId - +b.args.tokenId);
-      
+
       const bulkSize = 3;
       for(let i = 0; i < bulkSize; i++) {
         const event = events[i];
@@ -473,7 +473,7 @@ describe('NFT: Plain calls', () => {
 
     {
       await (await contract.setApprovalForAll.send(operator, true)).wait(...waitParams);
-      
+
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
 
@@ -593,7 +593,7 @@ describe('NFT: Plain calls', () => {
     // Substrate address can transferFrom approved tokens:
     await helper.nft.transferTokenFrom(receiverSub, collection.collectionId, token1.tokenId, {Ethereum: owner.address}, {Substrate: receiverSub.address});
     expect(await helper.nft.getTokenOwner(collection.collectionId, token1.tokenId)).to.deep.eq({Substrate: receiverSub.address});
-    
+
     // Ethereum address can transferFromCross approved tokens:
     await (await collectionEvm.transferFromCross.send(ownerCross, receiverCrossEth, token2.tokenId, {from: receiverEth})).wait(...waitParams);
     expect(await helper.nft.getTokenOwner(collection.collectionId, token2.tokenId)).to.deep.eq({Ethereum: receiverEth.address.toLowerCase()});
@@ -607,9 +607,7 @@ describe('NFT: Plain calls', () => {
     const collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
     const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
-    await expect(
-      collectionEvm.approveCross.staticCall(nonOwnerCross, token.tokenId, {from: nonOwner})
-    ).to.be.rejectedWith('CantApproveMoreThanOwned');
+    await expect(collectionEvm.approveCross.staticCall(nonOwnerCross, token.tokenId, {from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
   });
 
   itEth('Can reaffirm approved address', async ({helper}) => {
@@ -692,11 +690,11 @@ describe('NFT: Plain calls', () => {
     {
       const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      
+
       const transferTx = await contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender});
       const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
-      
+
       expect(transferEvents.Transfer).to.be.like({
         address: helper.ethAddress.fromCollectionId(collection.collectionId),
         event: 'Transfer',
@@ -843,7 +841,7 @@ describe('NFT: Plain calls', () => {
       expect(ownerCross.sub).to.be.eq('0');
 
       const newOwner = await helper.eth.createAccountWithBalance(donor, 100n);
-      
+
       await (
         await collectionEvm.transferCross.send(
           helper.ethCrossAccount.fromAddress(newOwner),
@@ -919,7 +917,7 @@ describe('NFT: Fees', () => {
     {
       const ownerCross = helper.ethCrossAccount.fromKeyringPair(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
-      
+
       const transferTx = await contract.transferFromCross.send(ownerCross, recieverCross, token.tokenId, {from: spender});
       const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
