@@ -43,7 +43,9 @@ describe('EVM sponsoring', () => {
     await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(...waitParams);
 
     await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
+    
+    const sponsorHelpers = helper.eth.changeContractCaller(helpers, sponsor);
+    await (await sponsorHelpers.confirmSponsorship.send(await flipper.getAddress())).wait(...waitParams);
 
     expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.false;
     await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
@@ -83,16 +85,19 @@ describe('EVM sponsoring', () => {
     expect(await helpers.sponsoringEnabled.staticCall(await collector.getAddress())).to.be.true;
 
     await (await helpers.setSponsor.send(await collector.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await collector.getAddress(), {from: sponsor})).wait(...waitParams);
+
+    const sponsorHelpers = helper.eth.changeContractCaller(helpers, sponsor);
+    await (await sponsorHelpers.confirmSponsorship.send(await collector.getAddress())).wait(...waitParams);
 
     const originalSponsorBalance = await helper.balance.getEthereum(sponsor);
     expect(originalSponsorBalance).to.be.not.equal(0n);
 
-    await (await collector.giveMoney.send({from: caller, value: '10000'})).wait(...waitParams);
+    const callerCollector = helper.eth.changeContractCaller(collector, caller);
+    await (await callerCollector.giveMoney.send({value: 10000n})).wait(...waitParams);
 
     // Balance will be taken from both caller (value) and from collector (fee)
     expect(await helper.balance.getEthereum(caller)).to.be.equals((originalCallerBalance - 10000n));
     expect(await helper.balance.getEthereum(sponsor)).to.be.not.equals(originalSponsorBalance);
-    expect(await collector.getCollected.staticCall()).to.be.equal('10000');
+    expect(await collector.getCollected.staticCall()).to.be.equal(10000n);
   });
 });
