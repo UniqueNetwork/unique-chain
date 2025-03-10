@@ -38,18 +38,18 @@ describe('Create NFT collection from EVM', () => {
     const baseUri = 'BaseURI';
 
     const {collectionId, collectionAddress, events} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, name, description, prefix, baseUri);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    expect(events).to.be.deep.equal([
-      {
+    expect(events).to.be.deep.equal({
+      'CollectionCreated': {
         address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
         event: 'CollectionCreated',
         args: {
-          owner: owner,
+          owner: owner.address,
           collectionId: collectionAddress,
         },
       },
-    ]);
+    });
 
     const collection = helper.nft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
@@ -82,7 +82,7 @@ describe('Create NFT collection from EVM', () => {
     const {collectionId, collectionAddress} = await helper.eth.createNFTCollection(owner, 'Sponsor', 'absolutely anything', 'ROC');
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
-    await collection.setCollectionSponsor.staticCall(sponsor);
+    await (await collection.setCollectionSponsor.send(sponsor.address)).wait(...waitParams);
 
     let data = (await helper.nft.getData(collectionId))!;
     expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));

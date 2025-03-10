@@ -86,7 +86,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     });
   });
 
-  itEth('PAM Can perform approve()', async ({helper}) => {
+  itEth('Can perform approve()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const spender = helper.eth.createAccount();
@@ -94,12 +94,13 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
+    
     await collection.mint(alice, 200n, {Ethereum: await contract.getAddress()});
 
     {
       const callerContract = helper.eth.changeContractCaller(contract, caller);
 
-      const approveTx = await contract.approve.send(spender.address, 100n);
+      const approveTx = await callerContract.approve.send(spender.address, 100n);
       const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(approveReceipt!);
 
@@ -110,7 +111,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
           args: {
             owner: await contract.getAddress(),
             spender: spender.address,
-            value: 100n,
+            value: '100',
           },
         },
       });
@@ -122,19 +123,20 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itEth('PAM Can perform transferFrom()', async ({helper}) => {
+  itEth('Can perform transferFrom()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
+    
     const caller = await helper.eth.createAccountWithBalance(donor);
     const owner = await helper.eth.createAccountWithBalance(donor);
-
-    await collection.mint(alice, 200n, {Ethereum: owner.address});
     const receiver = helper.eth.createAccount();
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
 
-    await (await evmCollection.approve.send(await contract.getAddress(), 100)).wait(...waitParams);
+    await collection.mint(alice, 200n, {Ethereum: await contract.getAddress()});
+
+    await (await evmCollection.approve.send(await contract.getAddress(), 50n)).wait(...waitParams);
 
     {
       const callerContract = helper.eth.changeContractCaller(contract, caller);
@@ -150,7 +152,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
           args: {
             from: owner.address,
             to: receiver.address,
-            value: 49n,
+            value: '49',
           },
         },
         Approval: {
@@ -159,7 +161,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
           args: {
             owner: owner.address,
             spender: await contract.getAddress(),
-            value: 51n,
+            value: '51',
           },
         },
       });
@@ -176,7 +178,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     }
   });
 
-  itEth('PAM Can perform transfer()', async ({helper}) => {
+  itEth('Can perform transfer()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
     const caller = await helper.eth.createAccountWithBalance(donor);
     const receiver = await helper.eth.createAccountWithBalance(donor);
@@ -200,7 +202,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
           args: {
             from: await contract.getAddress(),
             to: receiver.address,
-            value: 50n,
+            value: '50',
           },
         },
       });
@@ -208,12 +210,12 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     {
       const balance = await contract.balanceOf.staticCall(await contract.getAddress());
-      expect(+balance).to.equal(150);
+      expect(balance).to.equal(150n);
     }
 
     {
       const balance = await contract.balanceOf.staticCall(receiver);
-      expect(+balance).to.equal(50);
+      expect(balance).to.equal(50n);
     }
   });
 });
