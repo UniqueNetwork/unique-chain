@@ -5,7 +5,7 @@
 
 import {readFile} from 'fs/promises';
 
-import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, Log, Wallet, WebSocketProvider} from 'ethers'
+import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, Log, Wallet, WebSocketProvider} from 'ethers';
 
 // @ts-ignore
 import solc from 'solc';
@@ -31,9 +31,9 @@ import refungibleTokenAbi from '@unique-nft/evm-abi/abi/reFungibleToken.json' as
 import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleTokenDeprecated.json' assert {type: 'json'};
 import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' assert {type: 'json'};
 import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
-import { Contract } from 'ethers';
-import { waitParams } from './util.js';
-import { eth } from '@polkadot/types/interfaces/definitions';
+import {Contract} from 'ethers';
+import {waitParams} from './util.js';
+import {eth} from '@polkadot/types/interfaces/definitions';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -100,16 +100,16 @@ class ContractGroup extends EthGroupBase {
     };
   }
 
-  async deployByCode(signer: HDNodeWallet, name: string, src: string, imports?: ContractImports[], gasLimit?: BigInt, args?: any[]): Promise<Contract> {
+  async deployByCode(signer: HDNodeWallet, name: string, src: string, imports?: ContractImports[], gasLimit?: bigint, args?: any[]): Promise<Contract> {
     const compiledContract = await this.compile(name, src, imports);
     return await this.deployByAbi(signer, compiledContract.abi, compiledContract.bytecode, gasLimit, args);
   }
 
-  async deployByAbi(signer: HDNodeWallet, abi: any, bytecode: string, gasLimit?: BigInt, args?: any[]): Promise<Contract> {
+  async deployByAbi(signer: HDNodeWallet, abi: any, bytecode: string, gasLimit?: bigint, args?: any[]): Promise<Contract> {
     const contractFactory = new ethers.ContractFactory(abi, bytecode, signer);
-    
+
     const contract = await contractFactory.deploy(...(args || []), {
-      gasLimit: gasLimit ?? this.helper.eth.DEFAULT_GAS_LIMIT
+      gasLimit: gasLimit ?? this.helper.eth.DEFAULT_GAS_LIMIT,
     });
 
     const deployTx = contract.deploymentTransaction()!;
@@ -204,7 +204,7 @@ class CreateCollectionTransaction {
   async send(options?: any): Promise<CreateCollectionResult> {
     const receipt = await this.createCollection(
       this.helper.balance.getCollectionCreationPrice(),
-      options
+      options,
     );
 
     const events = this.helper.eth.normalizeEvents(receipt);
@@ -215,8 +215,8 @@ class CreateCollectionTransaction {
 
     return {collection, collectionId, collectionAddress, events};
   }
-  
-  private async createCollection(value: BigInt, options?: any) {
+
+  private async createCollection(value: bigint, options?: any) {
     const collectionHelper = this.helper.ethNativeContract.collectionHelpers(this.signer);
 
     let collectionMode;
@@ -239,9 +239,9 @@ class CreateCollectionTransaction {
         this.data.nestingSettings,
         this.data.limits,
         this.data.pendingSponsor,
-        this.data.flags
+        this.data.flags,
       ],
-      { ...options, value: value.toString() }
+      {...options, value: value.toString()},
     );
 
     const receipt = await response.wait(...waitParams);
@@ -260,7 +260,7 @@ class EthGroup extends EthGroupBase {
   }
 
   changeContractCaller(contract: Contract, from: HDNodeWallet): Contract {
-    return new Contract(contract.target, contract.interface, from)
+    return new Contract(contract.target, contract.interface, from);
   }
 
   async createAccountWithBalance(donor: IKeyringPair, amount = 600n): Promise<ethers.HDNodeWallet> {
@@ -282,7 +282,7 @@ class EthGroup extends EthGroupBase {
     if(!gasLimit) gasLimit = Number(this.DEFAULT_GAS_LIMIT);
 
     const gasPrice = await this.helper.getGasPrice();
-   
+
     // FIXME: can't send legacy transaction using tx.evm.call
     // TODO: check execution status
     await this.helper.executeExtrinsic(
@@ -354,7 +354,7 @@ class EthGroup extends EthGroupBase {
 
     const tx = await collectionHelper.makeCollectionERC721MetadataCompatible.send(createCollectionResult.collectionAddress, baseUri);
     await tx.wait(...waitParams);
-    
+
     return createCollectionResult;
   }
 
@@ -386,7 +386,7 @@ class EthGroup extends EthGroupBase {
           collected = 0;
         }
       }
-      `
+      `,
     );
   }
 
@@ -407,7 +407,7 @@ class EthGroup extends EthGroupBase {
           return value;
         }
       }
-      `
+      `,
     );
   }
 
@@ -429,7 +429,7 @@ class EthGroup extends EthGroupBase {
       const normalized = this.rebuildLog(log);
 
       if(!normalized) continue;
-      
+
       events.push(normalized);
     }
 
@@ -442,9 +442,9 @@ class EthGroup extends EthGroupBase {
     const logs = receipt.logs;
     for(const log of logs) {
       const normalized = this.rebuildLog(log);
-      
+
       if(!normalized) continue;
-      
+
       if(normalized.event in events) continue;
 
       events[normalized.event] = normalized;
@@ -456,7 +456,7 @@ class EthGroup extends EthGroupBase {
   rebuildLog(log: EventLog | Log): NormalizedEvent | undefined {
     if(!(log instanceof EventLog)) return undefined;
 
-    let args: {[key: string]: string} = {}
+    const args: {[key: string]: string} = {};
     for(let i = 0; i < log.args.length; i += 1) {
       const argName = log.fragment.inputs[i].name;
       const argValue = log.args[i];
@@ -537,9 +537,9 @@ export class EthCrossAccountGroup extends EthGroupBase {
 
   fromAddress(eth: string | HDNodeWallet): CrossAddress {
     if(eth instanceof HDNodeWallet) {
-      return { eth: eth.address, sub: '0' };
+      return {eth: eth.address, sub: '0'};
     } else {
-      return { eth: eth, sub: '0' };
+      return {eth: eth, sub: '0'};
     }
   }
 
@@ -627,17 +627,17 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   connectWeb3(wsEndpoint: string) {
     if(this.web3 !== null) return;
-    this.web3 = new WebSocketProvider(wsEndpoint, undefined, { polling: true });
+    this.web3 = new WebSocketProvider(wsEndpoint, undefined, {polling: true});
   }
 
   async getGasPrice(): Promise<bigint> {
     const feeData = await this.getWeb3().getFeeData();
-    
+
     const gasPrice = feeData.gasPrice;
     if(gasPrice === null)
       throw new Error('Gas price can not be null. Are you running test on Unique/Quartz/Opal Network?');
 
-    return gasPrice
+    return gasPrice;
   }
 
   override async disconnect() {

@@ -30,10 +30,8 @@ describe('Helpers sanity check', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(
-      await helper.ethNativeContract.contractHelpers(owner)
-        .contractOwner.staticCall(await flipper.getAddress())
-    ).to.be.equal(owner.address);
+    expect(await helper.ethNativeContract.contractHelpers(owner)
+      .contractOwner.staticCall(await flipper.getAddress())).to.be.equal(owner.address);
   });
 
   itEth('Flipper is working', async ({helper}) => {

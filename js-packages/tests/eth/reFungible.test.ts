@@ -730,7 +730,7 @@ describe('Refungible: Plain calls', () => {
     // expect(event.args.tokenId).to.equal(tokenId.toString());
   });
 
-  itEth('transfer event on transfer from full ownership to partial ownership', async ({helper}) => {  
+  itEth('transfer event on transfer from full ownership to partial ownership', async ({helper}) => {
     throw new Error('unimplemented');
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();

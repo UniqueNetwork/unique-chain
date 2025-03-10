@@ -51,7 +51,7 @@ describe('EVM contract allowlist', () => {
 
     const caller = await helper.eth.createAccountWithBalance(donor);
     const nonOwnerFlipper = helper.eth.changeContractCaller(flipper, caller);
-    
+
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     // User can flip with allowlist disabled
@@ -185,7 +185,7 @@ describe('EVM collection allowlist', () => {
 
       const {collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, !testCase.cross);
-      const nonOwnerCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notOwner)
+      const nonOwnerCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notOwner);
 
       expect(await helper.collection.allowed(collectionId, {Substrate: userSub.address})).to.be.false;
       expect(await helper.collection.allowed(collectionId, {Ethereum: userEth.address})).to.be.false;
@@ -211,7 +211,7 @@ describe('EVM collection allowlist', () => {
       // 3.1 plain ethereum or cross address:
       await expect(nonOwnerCollectionEvm[removeFromAllowList].staticCall(testCase.cross ? userCrossEth : userEth.address))
         .to.be.rejectedWith('NoPermission');
-      
+
       // 3.2 cross-substrate address:
       if(testCase.cross)
         await expect(nonOwnerCollectionEvm[removeFromAllowList].staticCall(userCrossSub)).to.be.rejectedWith('NoPermission');

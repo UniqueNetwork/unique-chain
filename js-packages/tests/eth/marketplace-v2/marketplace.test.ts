@@ -19,7 +19,7 @@ import {readFile} from 'fs/promises';
 import {SponsoringMode, waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames, expect} from '@unique/test-utils/util.js';
-import { HDNodeWallet, toBeHex, zeroPadBytes } from 'ethers';
+import {HDNodeWallet, toBeHex, zeroPadBytes} from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -134,7 +134,7 @@ describe('Market V2 Contract', () => {
     const mintCrossTx = await collection.mintCross.send(sellerCross, []);
     const mintCrossReceipt = await mintCrossTx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(mintCrossReceipt!);
-    
+
     const tokenId = events.Transfer.args.tokenId;
     await (await collection.approve.send(await market.getAddress(), tokenId, {})).wait(...waitParams);
 
@@ -165,7 +165,7 @@ describe('Market V2 Contract', () => {
 
     const buyTx = await helper.eth.changeContractCaller(market, buyer)
       .buy.send(collectionId, tokenId, 1, buyerCross, {value: PRICE, gasLimit: 1_000_000n});
-    
+
     const buyReceipt = await buyTx.wait(...waitParams);
     const buyEvents = helper.eth.normalizeEvents(buyReceipt!);
     expect(buyEvents.TokenIsPurchased).is.not.undefined;

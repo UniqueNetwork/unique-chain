@@ -112,57 +112,51 @@ describe('Create collection from EVM', () => {
         const description = 'A';
         const tokenPrefix = 'A';
 
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              collectionName,
-              description,
-              tokenPrefix,
-              CollectionMode.Fungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: (2n * nominal)}
-          )
-        ).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            collectionName,
+            description,
+            tokenPrefix,
+            CollectionMode.Fungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: (2n * nominal)},
+        )).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
       }
       {
         const MAX_DESCRIPTION_LENGTH = 256;
         const collectionName = 'A';
         const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
         const tokenPrefix = 'A';
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              collectionName,
-              description,
-              tokenPrefix,
-              CollectionMode.Fungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: (2n * nominal)}
-          )
-        ).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            collectionName,
+            description,
+            tokenPrefix,
+            CollectionMode.Fungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: (2n * nominal)},
+        )).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
       }
       {
         const MAX_TOKEN_PREFIX_LENGTH = 16;
         const collectionName = 'A';
         const description = 'A';
         const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              collectionName,
-              description,
-              tokenPrefix,
-              CollectionMode.Fungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: (2n * nominal)}
-          )
-        ).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            collectionName,
+            description,
+            tokenPrefix,
+            CollectionMode.Fungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: (2n * nominal)},
+        )).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
       }
     });
 
@@ -170,19 +164,17 @@ describe('Create collection from EVM', () => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
       const expects = [0n, 1n, 30n].map(async value => {
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              'Peasantry',
-              'absolutely anything',
-              'TWIW',
-              CollectionMode.Fungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: Number(value * nominal)}
-          )
-        ).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            'Peasantry',
+            'absolutely anything',
+            'TWIW',
+            CollectionMode.Fungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: Number(value * nominal)},
+        )).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
       });
       await Promise.all(expects);
     });
@@ -256,10 +248,10 @@ describe('Create collection from EVM', () => {
             0,
             ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
           ],
-          {value: (2n * helper.balance.getOneTokenNominal())}
+          {value: (2n * helper.balance.getOneTokenNominal())},
         )
       ).wait(...waitParams);
-      
+
       expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress))
         .to.be.true;
     });
@@ -387,19 +379,17 @@ describe('Create collection from EVM', () => {
         const description = 'A';
         const tokenPrefix = 'A';
 
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              collectionName,
-              description,
-              tokenPrefix,
-              CollectionMode.Refungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: (2n * nominal)}
-          )
-        ).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            collectionName,
+            description,
+            tokenPrefix,
+            CollectionMode.Refungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: (2n * nominal)},
+        )).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
       }
 
       {
@@ -408,19 +398,17 @@ describe('Create collection from EVM', () => {
         const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
         const tokenPrefix = 'A';
 
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              collectionName,
-              description,
-              tokenPrefix,
-              CollectionMode.Refungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: (2n * nominal)}
-          )
-        ).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            collectionName,
+            description,
+            tokenPrefix,
+            CollectionMode.Refungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: (2n * nominal)},
+        )).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
       }
 
       {
@@ -429,38 +417,34 @@ describe('Create collection from EVM', () => {
         const description = 'A';
         const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
 
-        await expect(
-          collectionHelper.createCollection.staticCall(
-            [
-              collectionName,
-              description,
-              tokenPrefix,
-              CollectionMode.Refungible,
-              DECIMALS,
-              ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-            ],
-            {value: (2n * nominal)}
-          )
-        ).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+        await expect(collectionHelper.createCollection.staticCall(
+          [
+            collectionName,
+            description,
+            tokenPrefix,
+            CollectionMode.Refungible,
+            DECIMALS,
+            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+          ],
+          {value: (2n * nominal)},
+        )).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
       }
     });
 
     itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-      await expect(
-        collectionHelper.createCollection.staticCall(
-          [
-            'Peasantry',
-            'absolutely anything',
-            'TWIW',
-            CollectionMode.Refungible,
-            0,
-            ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
-          ],
-          {value: (1n * nominal)}
-        )
-      ).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+      await expect(collectionHelper.createCollection.staticCall(
+        [
+          'Peasantry',
+          'absolutely anything',
+          'TWIW',
+          CollectionMode.Refungible,
+          0,
+          ...CREATE_COLLECTION_DATA_DEFAULTS_ARRAY,
+        ],
+        {value: (1n * nominal)},
+      )).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
     });
   });
 
@@ -521,7 +505,7 @@ describe('Create collection from EVM', () => {
 
       let sponsorship = (await collectionSub.getData())!.raw.sponsorship;
       expect(sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsorEth, true));
-      
+
       // Account cannot confirm sponsorship if it is not set as a sponsor
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
@@ -608,7 +592,7 @@ describe('Create collection from EVM', () => {
 
       const collectionSub = helper.nft.getCollectionObject(collectionId);
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-      
+
       // Set collection sponsor:
       let collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
@@ -621,7 +605,7 @@ describe('Create collection from EVM', () => {
       const ownerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
 
-      const mintingTx = await collectionEvm.mintWithTokenURI.send(user, 'Test URI', {from: user})
+      const mintingTx = await collectionEvm.mintWithTokenURI.send(user, 'Test URI', {from: user});
       const mintingReceipt = await mintingTx.wait(...waitParams);
       const mintingEvents = helper.eth.normalizeEvents(mintingReceipt!);
 
@@ -640,7 +624,7 @@ describe('Create collection from EVM', () => {
 
       const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
       expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-      
+
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
     });
@@ -734,10 +718,10 @@ describe('Create collection from EVM', () => {
 
         const ownerBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(owner));
         expect(ownerBalanceAfter).to.be.eq(ownerBalanceBefore);
-        
+
         const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
         expect(sponsorBalanceAfter < sponsorBalanceBefore).to.be.true;
-        
+
         const userBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(user));
         expect(userBalanceAfter).to.be.eq(userBalanceBefore);
       }));
@@ -982,45 +966,37 @@ describe('Create collection from EVM', () => {
           };
 
           const owner = await helper.eth.createAccountWithBalance(donor);
-          await expect(
-            helper.eth.createCollection(
-              owner,
-              {
-                ...createCollectionData,
-                limits: [{field: 9 as CollectionLimitField, value: 1n}],
-              },
-            ).send()
-          ).to.be.rejectedWith('execution reverted: "value not convertible into enum \\"CollectionLimitField\\""');
+          await expect(helper.eth.createCollection(
+            owner,
+            {
+              ...createCollectionData,
+              limits: [{field: 9 as CollectionLimitField, value: 1n}],
+            },
+          ).send()).to.be.rejectedWith('execution reverted: "value not convertible into enum \\"CollectionLimitField\\""');
 
-          await expect(
-            helper.eth.createCollection(
-              owner,
-              {
-                ...createCollectionData,
-                limits: [{field: CollectionLimitField.AccountTokenOwnership, value: invalidLimits.accountTokenOwnershipLimit}],
-              },
-            ).send()
-          ).to.be.rejectedWith(`execution reverted: "can't convert value to u32 \\"${invalidLimits.accountTokenOwnershipLimit}\\"`);
+          await expect(helper.eth.createCollection(
+            owner,
+            {
+              ...createCollectionData,
+              limits: [{field: CollectionLimitField.AccountTokenOwnership, value: invalidLimits.accountTokenOwnershipLimit}],
+            },
+          ).send()).to.be.rejectedWith(`execution reverted: "can't convert value to u32 \\"${invalidLimits.accountTokenOwnershipLimit}\\"`);
 
-          await expect(
-            helper.eth.createCollection(
-              owner,
-              {
-                ...createCollectionData,
-                limits: [{field: CollectionLimitField.TransferEnabled, value: 3n}],
-              },
-            ).send()
-          ).to.be.rejectedWith(`execution reverted: "can't convert value to boolean \\"${invalidLimits.transfersEnabled}\\"`);
+          await expect(helper.eth.createCollection(
+            owner,
+            {
+              ...createCollectionData,
+              limits: [{field: CollectionLimitField.TransferEnabled, value: 3n}],
+            },
+          ).send()).to.be.rejectedWith(`execution reverted: "can't convert value to boolean \\"${invalidLimits.transfersEnabled}\\"`);
 
-          await expect(
-            helper.eth.createCollection(
-              owner,
-              {
-                ...createCollectionData,
-                limits: [{field: CollectionLimitField.SponsoredDataSize, value: -1n}],
-              },
-            ).send()
-          ).to.be.rejectedWith('value out-of-bounds');
+          await expect(helper.eth.createCollection(
+            owner,
+            {
+              ...createCollectionData,
+              limits: [{field: CollectionLimitField.SponsoredDataSize, value: -1n}],
+            },
+          ).send()).to.be.rejectedWith('value out-of-bounds');
         }));
     });
   });
@@ -1055,9 +1031,7 @@ describe('Create collection from EVM', () => {
         expect(raw.properties).to.deep.equal(testCase.expectedProps);
 
         // collectionProperties returns properties:
-        expect(
-          await collectionEvm.collectionProperties.staticCall([])
-        ).to.be.like(testCase.expectedProps.map(prop => helper.ethProperty.property(prop.key, prop.value)));
+        expect(await collectionEvm.collectionProperties.staticCall([])).to.be.like(testCase.expectedProps.map(prop => helper.ethProperty.property(prop.key, prop.value)));
       }));
 
     [
@@ -1188,7 +1162,7 @@ describe('Create collection from EVM', () => {
           ).send();
 
           const collection = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
-          const callerCollection = helper.eth.changeContractCaller(collection, caller)
+          const callerCollection = helper.eth.changeContractCaller(collection, caller);
 
           expect(await helper[testCase.mode].getPropertyPermissions(collectionId)).to.be.deep.equal([{
             key: 'testKey',
@@ -1314,7 +1288,7 @@ describe('Create collection from EVM', () => {
         ).send();
 
         const collection = helper.ethNativeContract.collection(collectionAddress, testCase.mode, caller);
-        
+
         const mintTx = await collection.mintCross.send(receiver, [{key: 'testKey', value: Buffer.from('testValue')}, {key: 'testKey_1', value: Buffer.from('testValue_1')}]);
         const mintReceipt = await mintTx.wait(...waitParams);
         const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
@@ -1391,7 +1365,7 @@ describe('Create collection from EVM', () => {
 
       const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
       expect(await contract.collectionNesting.staticCall()).to.be.like([true, false, [unnestedCollectionAddress.toString()]]);
-      
+
       await (await contract.setCollectionNesting.send([false, false, []])).wait(...waitParams);
       expect(await contract.collectionNesting.staticCall()).to.be.like([false, false, []]);
     });
@@ -1423,9 +1397,7 @@ describe('Create collection from EVM', () => {
       const nftTokenId = +(helper.eth.normalizeEvents(mintingNftTokenIdResult!).Transfer.args.tokenId);
 
       // Try to nest
-      await expect(
-        contract.transfer.staticCall(targetNftTokenAddress, nftTokenId)
-      ).to.be.rejectedWith('UserIsNotAllowedToNest');
+      await expect(contract.transfer.staticCall(targetNftTokenAddress, nftTokenId)).to.be.rejectedWith('UserIsNotAllowedToNest');
     });
   });
 

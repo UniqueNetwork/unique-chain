@@ -21,8 +21,8 @@ import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {Pallets} from '@unique/test-utils/util.js';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
 import {CreateCollectionData, TokenPermissionField} from '@unique/test-utils/eth/types.js';
-import { HDNodeWallet } from 'ethers';
-import { Result } from 'ethers';
+import {HDNodeWallet} from 'ethers';
+import {Result} from 'ethers';
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;
@@ -44,28 +44,26 @@ describe('EVM token properties', () => {
 
       const caller = await helper.eth.createAccountWithBalance(donor);
       const crossCaller = helper.ethCrossAccount.fromAddress(caller);
-      
+
       for(const [mutable,collectionAdmin, tokenOwner] of cartesian([], [false, true], [false, true], [false, true])) {
         const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
         const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
-        
+
         await (await collection.addCollectionAdminCross.send(crossCaller)).wait(...waitParams);
         const callerCollection = helper.eth.changeContractCaller(collection, caller);
 
         await (
-          await callerCollection.setTokenPropertyPermissions.send(
-            [[
-              'testKey',
-              [
-                [TokenPermissionField.Mutable, mutable],
-                [TokenPermissionField.TokenOwner, tokenOwner],
-                [TokenPermissionField.CollectionAdmin, collectionAdmin]
-              ],
-            ]]
-          )
+          await callerCollection.setTokenPropertyPermissions.send([[
+            'testKey',
+            [
+              [TokenPermissionField.Mutable, mutable],
+              [TokenPermissionField.TokenOwner, tokenOwner],
+              [TokenPermissionField.CollectionAdmin, collectionAdmin],
+            ],
+          ]])
         ).wait(...waitParams);
 
-        const subPermissions = await helper[testCase.mode].getPropertyPermissions(collectionId)
+        const subPermissions = await helper[testCase.mode].getPropertyPermissions(collectionId);
         expect(subPermissions).to.be.deep.equal([{
           key: 'testKey',
           permission: {mutable, collectionAdmin, tokenOwner},
@@ -158,30 +156,28 @@ describe('EVM token properties', () => {
 
       const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
-      
+
       await (await collection.addCollectionAdminCross.send(caller)).wait(...waitParams);
       const callerCollection = helper.eth.changeContractCaller(collection, caller);
 
       await (
-        await callerCollection.setTokenPropertyPermissions.send(
-          [
-            ['testKey_0', [
-              [TokenPermissionField.Mutable, true],
-              [TokenPermissionField.TokenOwner, true],
-              [TokenPermissionField.CollectionAdmin, true]],
-            ],
-            ['testKey_1', [
-              [TokenPermissionField.Mutable, true],
-              [TokenPermissionField.TokenOwner, false],
-              [TokenPermissionField.CollectionAdmin, true]],
-            ],
-            ['testKey_2', [
-              [TokenPermissionField.Mutable, false],
-              [TokenPermissionField.TokenOwner, true],
-              [TokenPermissionField.CollectionAdmin, false]],
-            ],
+        await callerCollection.setTokenPropertyPermissions.send([
+          ['testKey_0', [
+            [TokenPermissionField.Mutable, true],
+            [TokenPermissionField.TokenOwner, true],
+            [TokenPermissionField.CollectionAdmin, true]],
           ],
-        )
+          ['testKey_1', [
+            [TokenPermissionField.Mutable, true],
+            [TokenPermissionField.TokenOwner, false],
+            [TokenPermissionField.CollectionAdmin, true]],
+          ],
+          ['testKey_2', [
+            [TokenPermissionField.Mutable, false],
+            [TokenPermissionField.TokenOwner, true],
+            [TokenPermissionField.CollectionAdmin, false]],
+          ],
+        ])
       ).wait(...waitParams);
 
       const subPermissions = await helper[testCase.mode].getPropertyPermissions(collectionId);
@@ -273,7 +269,7 @@ describe('EVM token properties', () => {
       const properties = Array(5).fill(0).map((_, i) => ({key: `key_${i}`, value: Buffer.from(`value_${i}`)}));
       const permissions: ITokenPropertyPermission[] = properties.map(p => ({
         key: p.key,
-        permission: {tokenOwner: true, collectionAdmin: true, mutable: true}
+        permission: {tokenOwner: true, collectionAdmin: true, mutable: true},
       }));
 
       const collection = await helper[testCase.mode].mintCollection(alice, {
@@ -421,17 +417,13 @@ describe('EVM token properties negative', () => {
         helper.ethAddress.fromCollectionId(aliceCollection.collectionId),
         'nft',
         caller,
-        /* mergeDeprecated */ true
+        /* mergeDeprecated */ true,
       );
-      
-      // Caller not an owner and not an admin, so he cannot set properties:
-      await expect(
-        collectionEvm[testCase.method].staticCall(token.tokenId, ...testCase.methodParams)
-      ).to.be.rejectedWith('NoPermission');
 
-      await expect(
-        await collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams)
-      ).to.be.rejected;
+      // Caller not an owner and not an admin, so he cannot set properties:
+      await expect(collectionEvm[testCase.method].staticCall(token.tokenId, ...testCase.methodParams)).to.be.rejectedWith('NoPermission');
+
+      await expect(await collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams)).to.be.rejected;
 
       // Props have not changed:
       const expectedProps = tokenProps.map(p => helper.ethProperty.property(p.key, p.value.toString()));
@@ -449,7 +441,7 @@ describe('EVM token properties negative', () => {
         helper.ethAddress.fromCollectionId(aliceCollection.collectionId),
         'nft',
         caller,
-        /* mergeDeprecated */ true
+        /* mergeDeprecated */ true,
       );
 
       await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller.address});
@@ -475,7 +467,7 @@ describe('EVM token properties negative', () => {
         caller,
         /* mergeDeprecated */ testCase.method == 'deleteProperty',
       );
-      
+
       // Caller not an owner and not an admin, so he cannot set properties:
       await expect(collectionEvm[testCase.method].staticCall(token.tokenId, ...testCase.methodParams)).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams)).to.be.rejected;
@@ -498,9 +490,9 @@ describe('EVM token properties negative', () => {
         caller,
         /* mergeDeprecated */ testCase.method == 'deleteProperty',
       );
-      
+
       await helper.collection.addAdmin(alice, aliceCollection.collectionId, {Ethereum: caller.address});
-      
+
       // Caller cannot delete non-existing properties:
       await expect(collectionEvm[testCase.method].staticCall(token.tokenId, ...testCase.methodParams)).to.be.rejectedWith('NoPermission');
       await expect(collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams)).to.be.rejected;
@@ -522,15 +514,11 @@ describe('EVM token properties negative', () => {
       const {collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
-      await expect(
-        helper.eth.changeContractCaller(collection, caller).setTokenPropertyPermissions.staticCall(
-          [['testKey_0', [
-            [TokenPermissionField.Mutable, true],
-            [TokenPermissionField.TokenOwner, true],
-            [TokenPermissionField.CollectionAdmin, true]],
-          ]],
-        )
-      ).to.be.rejectedWith('NoPermission');
+      await expect(helper.eth.changeContractCaller(collection, caller).setTokenPropertyPermissions.staticCall([['testKey_0', [
+        [TokenPermissionField.Mutable, true],
+        [TokenPermissionField.TokenOwner, true],
+        [TokenPermissionField.CollectionAdmin, true]],
+      ]])).to.be.rejectedWith('NoPermission');
     }));
 
   [
@@ -679,9 +667,7 @@ describe('EVM token properties negative', () => {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = await helper.ethNativeContract.collection(address, testCase.mode, caller);
 
-      await expect(
-        contract.deleteProperties.staticCall(1, ['testKey', 'testKey_1'])
-      ).to.be.rejectedWith('TokenNotFound');
+      await expect(contract.deleteProperties.staticCall(1, ['testKey', 'testKey_1'])).to.be.rejectedWith('TokenNotFound');
     }));
 });
 

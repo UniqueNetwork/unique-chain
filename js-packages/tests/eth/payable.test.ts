@@ -19,7 +19,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
-import { HDNodeWallet } from 'ethers';
+import {HDNodeWallet} from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -40,7 +40,7 @@ describe('EVM payable contracts', () => {
       from: deployer,
       to: await contract.getAddress(),
       value: 10000n,
-      gasLimit: helper.eth.DEFAULT_GAS_LIMIT
+      gasLimit: helper.eth.DEFAULT_GAS_LIMIT,
     })).wait(...waitParams);
 
     expect(await contract.getCollected.staticCall()).to.be.equal('10000');
@@ -61,7 +61,7 @@ describe('EVM payable contracts', () => {
       alice,
       await contract.getAddress(),
       (await contract.giveMoney.populateTransaction()).data,
-      weiCount
+      weiCount,
     );
 
     expect(await contract.getCollected.staticCall()).to.be.equal(weiCount);
@@ -94,7 +94,7 @@ describe('EVM payable contracts', () => {
       from: deployer,
       to: await contract.getAddress(),
       value: CONTRACT_BALANCE,
-      gasLimit: helper.eth.DEFAULT_GAS_LIMIT
+      gasLimit: helper.eth.DEFAULT_GAS_LIMIT,
     })).wait(...waitParams);
 
     const [receiver] = await helper.arrange.createAccounts([0n], donor);

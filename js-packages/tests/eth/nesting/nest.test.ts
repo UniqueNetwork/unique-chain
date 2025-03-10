@@ -140,9 +140,7 @@ describe('EVM nesting tests group', () => {
       const nftTokenId = mintingNftTokenIdEvents.Transfer.args.tokenId;
 
       // Try to nest
-      await expect(
-        contract.transfer.staticCall(targetNftTokenAddress, nftTokenId)
-      ).to.be.rejectedWith('UserIsNotAllowedToNest');
+      await expect(contract.transfer.staticCall(targetNftTokenAddress, nftTokenId)).to.be.rejectedWith('UserIsNotAllowedToNest');
     });
 
     itEth('NFT: disallows a non-Owner to nest someone else\'s token', async ({helper}) => {
@@ -163,9 +161,7 @@ describe('EVM nesting tests group', () => {
       const tokenId = +mintingTokenIdEvents.Transfer.args.tokenId;
 
       // Try to nest one token in another as a non-owner account
-      await expect(
-        contract.transfer.staticCall(targetTokenAddress, tokenId, {from: malignant})
-      ).to.be.rejectedWith('UserIsNotAllowedToNest');
+      await expect(contract.transfer.staticCall(targetTokenAddress, tokenId, {from: malignant})).to.be.rejectedWith('UserIsNotAllowedToNest');
     });
 
     itEth('NFT: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async ({helper}) => {
@@ -189,9 +185,7 @@ describe('EVM nesting tests group', () => {
       const nftTokenIdB = +mintingTokenIdBEvents.Transfer.args.tokenId;
 
       // Try to drag someone else's token into the other collection and nest
-      await expect(
-        contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB, {from: malignant})
-      ).to.be.rejectedWith('UserIsNotAllowedToNest');
+      await expect(contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB, {from: malignant})).to.be.rejectedWith('UserIsNotAllowedToNest');
     });
 
     itEth('NFT: disallows to nest token in an unlisted collection', async ({helper}) => {
@@ -214,9 +208,7 @@ describe('EVM nesting tests group', () => {
       const nftTokenIdB = +mintingTokenIdBEvents.Transfer.args.tokenId;
 
       // Try to nest into a token in the other collection, disallowed in the first
-      await expect(
-        contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB)
-      ).to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
+      await expect(contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB)).to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
     });
   });
 

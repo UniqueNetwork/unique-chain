@@ -67,7 +67,7 @@ describe('Evm Coder tests', () => {
     const contract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, '0x1bfed5D614b886b9Ab2eA4CBAc22A96B7EC29c9c'));
     const testContract = await helper.ethContract.deployByCode(owner, 'Test', getContractSource(collection.collectionAddress, await contract.getAddress()));
     {
-      const testTx = await testContract.test1.send()
+      const testTx = await testContract.test1.send();
       const testReceipt = await testTx.wait(...waitParams);
       const testEvents = helper.eth.normalizeEvents(testReceipt!);
       expect(testEvents.Result.args).to.deep.equal({
@@ -75,8 +75,8 @@ describe('Evm Coder tests', () => {
         '1': '0',
       });
     }
-    { 
-      const testTx = await testContract.test2.send()
+    {
+      const testTx = await testContract.test2.send();
       const testReceipt = await testTx.wait(...waitParams);
       const testEvents = helper.eth.normalizeEvents(testReceipt!);
       expect(testEvents.Result.args).to.deep.equal({

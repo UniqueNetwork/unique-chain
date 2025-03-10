@@ -18,8 +18,8 @@ import type {IKeyringPair} from '@polkadot/types/types';
 
 import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import { HDNodeWallet } from 'ethers';
-import { Contract } from 'ethers';
+import {HDNodeWallet} from 'ethers';
+import {Contract} from 'ethers';
 
 describe('EVM payable contracts', () => {
   let donor: IKeyringPair;

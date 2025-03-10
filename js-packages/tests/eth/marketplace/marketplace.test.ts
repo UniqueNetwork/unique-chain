@@ -131,7 +131,7 @@ describe('Matcher contract usage', () => {
     // Token is owned by seller initially
     expect(await token.getOwner()).to.be.deep.equal({Ethereum: sellerMirror});
 
-    // Ask  
+    // Ask
     {
       await helper.eth.sendEVM(seller, await evmCollection.getAddress(), (await evmCollection.approve.populateTransaction(await matcher.getAddress(), token.tokenId)).data, '0');
       await helper.eth.sendEVM(seller, await matcher.getAddress(), (await matcher.addAsk.populateTransaction(PRICE, '0x0000000000000000000000000000000000000001', await evmCollection.getAddress(), token.tokenId)).data, '0');

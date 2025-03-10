@@ -99,7 +99,7 @@ describe('ERC-721 call methods', () => {
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       const tokenId = mintEvents.Transfer.args.tokenId;
-      
+
       const owner = await collection.ownerOf.staticCall(tokenId);
       expect(owner).to.equal(caller.address);
     });

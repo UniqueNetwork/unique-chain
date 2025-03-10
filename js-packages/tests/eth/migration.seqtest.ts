@@ -21,7 +21,7 @@ import {Struct} from '@polkadot/types';
 import type {IEvent} from '@unique-nft/playgrounds/types.js';
 import type {InterfaceTypes} from '@polkadot/types/types/registry';
 import {ApiPromise} from '@polkadot/api';
-import { Contract } from 'ethers';
+import {Contract} from 'ethers';
 
 const encodeEvent = (api: ApiPromise, pallet: string, palletEvents: string, event: string, fields: any) => {
   const palletIndex = api.runtimeMetadata.asV14.pallets.find(p => p.name.toString() == pallet)!.index.toNumber();
@@ -170,7 +170,7 @@ describe('EVM Migrations', () => {
   });
   itEth('Fake token creation on ethereum side', async ({helper}) => {
     throw new Error('unimplemented');
-    
+
     // const collection = await helper.nft.mintCollection(superuser);
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     // const caller = await helper.eth.createAccountWithBalance(superuser);

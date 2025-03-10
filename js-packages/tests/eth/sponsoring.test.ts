@@ -43,7 +43,7 @@ describe('EVM sponsoring', () => {
     await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(...waitParams);
 
     await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    
+
     const sponsorHelpers = helper.eth.changeContractCaller(helpers, sponsor);
     await (await sponsorHelpers.confirmSponsorship.send(await flipper.getAddress())).wait(...waitParams);
 
@@ -57,7 +57,7 @@ describe('EVM sponsoring', () => {
 
     await (await flipper.flip.send({from: caller})).wait(...waitParams);
     expect(await flipper.getValue.staticCall
-      ()).to.be.true;
+    ()).to.be.true;
 
     // Balance should be taken from flipper instead of caller
     expect(await helper.balance.getEthereum(caller)).to.be.equal(originalCallerBalance);

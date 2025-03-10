@@ -55,7 +55,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
       await (
         await contract.setProperties.send(
           tokenId,
-          [{key: propertyKey, value: Buffer.from(propertyValue)}]
+          [{key: propertyKey, value: Buffer.from(propertyValue)}],
         )
       ).wait(...waitParams);
     }
@@ -221,7 +221,7 @@ describe('Refungible: Plain calls', () => {
           isCross ? ownerCross : owner,
           isCross ? receiverCrossEth : receiverEth,
           49,
-          {from: spender}
+          {from: spender},
         );
         const testCaseReceipt = await testCaseTx.wait(...waitParams);
         const testCaseEvents = helper.eth.normalizeEvents(testCaseReceipt!);
@@ -252,7 +252,7 @@ describe('Refungible: Plain calls', () => {
         const transferTx = await contract.transferFromCross(ownerCross, receiverCrossSub, 51, {from: spender});
         const transferReceipt = await transferTx.wait(...waitParams);
         const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
-        
+
         // Check events:
         const transferEvent = transferEvents.Transfer;
         expect(transferEvent.address).to.be.equal(tokenAddress);
@@ -592,7 +592,7 @@ describe('Refungible: Fees', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     const cost = await helper.eth.recordCallFee(
-      owner.address, 
+      owner.address,
       async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));

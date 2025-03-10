@@ -41,7 +41,7 @@ import type {
   IPhasicEvent,
 } from './types.js';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
-import { HDNodeWallet } from 'ethers';
+import {HDNodeWallet} from 'ethers';
 
 export class CrossAccountId {
   account: ICrossAccountId;
@@ -2720,7 +2720,7 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
   ethToSubstrate(ethAccount: TEthereumAccount | HDNodeWallet, toChainFormat = false): TSubstrateAccount {
     return CrossAccountId.translateEthToSub(
       ethAccount instanceof HDNodeWallet ? ethAccount.address : ethAccount,
-      toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined
+      toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined,
     );
   }
 

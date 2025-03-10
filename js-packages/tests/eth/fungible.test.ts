@@ -215,9 +215,7 @@ describe('Fungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await expect(
-      collectionEvm.approveCross.staticCall(nonOwnerCross, 20, {from: nonOwner})
-    ).to.be.rejectedWith('CantApproveMoreThanOwned');
+    await expect(collectionEvm.approveCross.staticCall(nonOwnerCross, 20, {from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
   });
 
 
@@ -322,7 +320,7 @@ describe('Fungible: Plain calls', () => {
       const tx = await collectionEvm.transferCross.send(receiverCrossEth, 50, {from: sender});
       const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
-      
+
       // Check events:
       const event = events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
@@ -344,18 +342,18 @@ describe('Fungible: Plain calls', () => {
       const tx = await collectionEvm.transferCross.send(receiverCrossSub, 50, {from: sender});
       const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
-      
+
       // Check events:
       const event = events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.args.from).to.be.equal(sender);
       expect(event.args.to).to.be.equal(helper.address.substrateToEth(donor.address));
       expect(event.args.value).to.be.equal('50');
-      
+
       // Sender's balance decreased:
       const senderBalance = await collection.getBalance({Ethereum: sender.address});
       expect(senderBalance).to.equal(100n);
-      
+
       // Receiver's balance increased:
       const balance = await collection.getBalance({Substrate: donor.address});
       expect(balance).to.equal(50n);
@@ -377,7 +375,7 @@ describe('Fungible: Plain calls', () => {
     // 1. Cannot transfer more than have
     const receiver = testCase === 'transfer' ? receiverEth : receiverCrossEth;
     await expect(collectionEvm[testCase].send(receiver, BALANCE_TO_TRANSFER, {from: sender})).to.be.rejected;
-    
+
     // 2. Zero transfer allowed (EIP-20):
     await (await collectionEvm[testCase].send(receiver, 0n, {from: sender})).wait(...waitParams);
   }));
@@ -548,7 +546,7 @@ describe('Fungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams)
+      async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -568,7 +566,7 @@ describe('Fungible: Substrate calls', () => {
 
   itEth('Events emitted for approve()', async ({helper}) => {
     throw new Error('unimplemented');
-    
+
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
     // await collection.mint(alice, 200n);
@@ -629,7 +627,7 @@ describe('Fungible: Substrate calls', () => {
 
   itEth('Events emitted for transfer()', async ({helper}) => {
     throw new Error('unimplemented');
-    
+
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
     // await collection.mint(alice, 200n);
