@@ -157,6 +157,8 @@ describe('Supports ERC721Metadata', () => {
       const URI = 'uri1';
 
       const collectionHelpers = await helper.ethNativeContract.collectionHelpers(caller);
+      const bruhCollectionHelpers = helper.eth.changeContractCaller(collectionHelpers, bruh);
+
       const creatorMethod = testCase.case === 'rft' ? 'createRFTCollection' : 'createNFTCollection';
 
       const {collectionId, collectionAddress} = await helper.eth[creatorMethod](caller, 'n', 'd', 'p');
@@ -171,10 +173,9 @@ describe('Supports ERC721Metadata', () => {
       expect(await contract.supportsInterface.staticCall('0x5b5e139f')).to.be.false;
 
       await (
-        await collectionHelpers.makeCollectionERC721MetadataCompatible.send(
+        await bruhCollectionHelpers.makeCollectionERC721MetadataCompatible.send(
           collectionAddress,
           BASE_URI,
-          {from: bruh},
         )
       ).wait(...waitParams);
 

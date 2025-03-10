@@ -761,16 +761,22 @@ describe('Create collection from EVM', () => {
             adminList: [adminCrossSub, adminCrossEth],
           },
         ).send();
+        
         const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, true);
 
         // 1. Expect api.rpc.unique.adminlist returns admins:
         const adminListRpc = await helper.collection.getAdmins(collectionId);
         expect(adminListRpc).to.has.length(2);
-        expect(adminListRpc).to.be.deep.contain.members([{Substrate: adminSub.address}, {Ethereum: adminEth.address}]);
+        expect(adminListRpc).to.be.deep.contain.members([
+          {Substrate: adminSub.address},
+          {Ethereum: adminEth.address.toLowerCase()},
+        ]);
 
         // 2. Expect collectionAdmins == api.rpc.unique.adminlist
-        let adminListEth = await collectionEvm.collectionAdmins.staticCall();
-        adminListEth = adminListEth.map((element: IEthCrossAccountId) => helper.address.convertCrossAccountFromEthCrossAccount(element));
+        const adminListEth = (await collectionEvm.collectionAdmins.staticCall())
+          .toArray(/* deep */ true)
+          .map((element: IEthCrossAccountId) => helper.address.convertCrossAccountFromEthCrossAccount(element));
+
         expect(adminListRpc).to.be.like(adminListEth);
 
         // 3. check isOwnerOrAdminCross returns true:
@@ -930,18 +936,19 @@ describe('Create collection from EVM', () => {
           const data = (await helper.rft.getData(collectionId))!;
           expect(data.raw.limits).to.deep.eq(expectedLimits);
           expect(await helper.collection.getEffectiveLimits(collectionId)).to.deep.eq(expectedLimits);
+          
           // Check limits from eth:
           const limitsEvm = await collectionEvm.collectionLimits.staticCall();
           expect(limitsEvm).to.have.length(9);
-          expect(limitsEvm[0]).to.deep.eq([CollectionLimitField.AccountTokenOwnership.toString(), [true, limits.accountTokenOwnershipLimit.toString()]]);
-          expect(limitsEvm[1]).to.deep.eq([CollectionLimitField.SponsoredDataSize.toString(), [true, limits.sponsoredDataSize.toString()]]);
-          expect(limitsEvm[2]).to.deep.eq([CollectionLimitField.SponsoredDataRateLimit.toString(), [true, limits.sponsoredDataRateLimit.toString()]]);
-          expect(limitsEvm[3]).to.deep.eq([CollectionLimitField.TokenLimit.toString(), [true, limits.tokenLimit.toString()]]);
-          expect(limitsEvm[4]).to.deep.eq([CollectionLimitField.SponsorTransferTimeout.toString(), [true, limits.sponsorTransferTimeout.toString()]]);
-          expect(limitsEvm[5]).to.deep.eq([CollectionLimitField.SponsorApproveTimeout.toString(), [true, limits.sponsorApproveTimeout.toString()]]);
-          expect(limitsEvm[6]).to.deep.eq([CollectionLimitField.OwnerCanTransfer.toString(), [true, limits.ownerCanTransfer.toString()]]);
-          expect(limitsEvm[7]).to.deep.eq([CollectionLimitField.OwnerCanDestroy.toString(), [true, limits.ownerCanDestroy.toString()]]);
-          expect(limitsEvm[8]).to.deep.eq([CollectionLimitField.TransferEnabled.toString(), [true, limits.transfersEnabled.toString()]]);
+          expect(limitsEvm[0]).to.deep.eq([BigInt(CollectionLimitField.AccountTokenOwnership), [true, BigInt(limits.accountTokenOwnershipLimit)]]);
+          expect(limitsEvm[1]).to.deep.eq([BigInt(CollectionLimitField.SponsoredDataSize), [true, BigInt(limits.sponsoredDataSize)]]);
+          expect(limitsEvm[2]).to.deep.eq([BigInt(CollectionLimitField.SponsoredDataRateLimit), [true, BigInt(limits.sponsoredDataRateLimit)]]);
+          expect(limitsEvm[3]).to.deep.eq([BigInt(CollectionLimitField.TokenLimit), [true, BigInt(limits.tokenLimit)]]);
+          expect(limitsEvm[4]).to.deep.eq([BigInt(CollectionLimitField.SponsorTransferTimeout), [true, BigInt(limits.sponsorTransferTimeout)]]);
+          expect(limitsEvm[5]).to.deep.eq([BigInt(CollectionLimitField.SponsorApproveTimeout), [true, BigInt(limits.sponsorApproveTimeout)]]);
+          expect(limitsEvm[6]).to.deep.eq([BigInt(CollectionLimitField.OwnerCanTransfer), [true, BigInt(limits.ownerCanTransfer)]]);
+          expect(limitsEvm[7]).to.deep.eq([BigInt(CollectionLimitField.OwnerCanDestroy), [true, BigInt(limits.ownerCanDestroy)]]);
+          expect(limitsEvm[8]).to.deep.eq([BigInt(CollectionLimitField.TransferEnabled), [true, BigInt(limits.transfersEnabled)]]);
         }));
     });
 

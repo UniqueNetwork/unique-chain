@@ -52,8 +52,6 @@ describe('Create RFT collection from EVM', () => {
     expect(options.tokenPropertyPermissions).to.be.empty;
   });
 
-
-
   itEth('Create collection with properties & get description', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
@@ -63,7 +61,7 @@ describe('Create RFT collection from EVM', () => {
     const baseUri = 'BaseURI';
 
     const {collectionId, collectionAddress} = await helper.eth.createERC721MetadataCompatibleRFTCollection(owner, name, description, prefix, baseUri);
-    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft');
+    const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const collection = helper.rft.getCollectionObject(collectionId);
     const data = (await collection.getData())!;
@@ -168,27 +166,36 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+    
     {
       const MAX_NAME_LENGTH = 64;
       const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
       const description = 'A';
       const tokenPrefix = 'A';
 
-      await expect(collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+      await expect(
+        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: 2n * nominal})
+      ).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
+
     {
       const MAX_DESCRIPTION_LENGTH = 256;
       const collectionName = 'A';
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
-      await expect(collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+      await expect(
+        collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: 2n * nominal})
+      ).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
+
     {
       const MAX_TOKEN_PREFIX_LENGTH = 16;
       const collectionName = 'A';
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
-      await expect(collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+      await expect(
+        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: 2n * nominal})
+      ).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
 
@@ -205,6 +212,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Transgressed', 'absolutely anything', 'YVNE');
     const peasantCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', peasant, true);
     const EXPECTED_ERROR = 'NoPermission';
+    
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       await expect(peasantCollection.setCollectionSponsor.staticCall(sponsor)).to.be.rejectedWith(EXPECTED_ERROR);
@@ -212,6 +220,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
       await expect(sponsorCollection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
+
     {
       await expect(peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})).to.be.rejectedWith(EXPECTED_ERROR);
     }
@@ -241,9 +250,9 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const {collectionAddress, collectionId} = await helper.eth.createRFTCollection(owner, 'Limits', 'absolutely anything', 'OLF');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
-    await expect(collectionHelper.destroyCollection.send(collectionAddress)).to.be.fulfilled;
+    await (await (collectionHelper.destroyCollection.send(collectionAddress))).wait(...waitParams);
 
-    expect(collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
+    expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
 
     expect(await helper.collection.getData(collectionId)).to.be.null;
   });

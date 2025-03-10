@@ -55,7 +55,7 @@ describe('Fungible: Plain calls', () => {
       const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
       expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(receiverSub.address));
+      expect(event.args.to).to.equal(testCase === 'ethereum' ? receiverEth.address : helper.address.substrateToEth(receiverSub.address));
       expect(event.args.value).to.equal('100');
 
       // 3. Get balance depending on the test case:
@@ -105,17 +105,18 @@ describe('Fungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
     await (await contract.mint.send(receiver, 100)).wait(...waitParams);
 
-    const burnTx = await contract.burnFrom.send(receiver, 49, {from: receiver});
+    const receiverContract = helper.eth.changeContractCaller(contract, receiver);
+    const burnTx = await receiverContract.burnFrom.send(receiver, 49);
     const burnReceipt = await burnTx.wait(...waitParams);
     const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
 
     const event = burnEvents.Transfer;
     expect(event.address).to.equal(collectionAddress);
-    expect(event.args.from).to.equal(receiver);
+    expect(event.args.from).to.equal(receiver.address);
     expect(event.args.to).to.equal('0x0000000000000000000000000000000000000000');
     expect(event.args.value).to.equal('49');
 
-    const balance = await contract.balanceOf.staticCall(receiver);
+    const balance = await contract.balanceOf.staticCall(receiver.address);
     expect(balance).to.equal('51');
   });
 
@@ -135,21 +136,21 @@ describe('Fungible: Plain calls', () => {
 
       const event = events.Approval;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.owner).to.be.equal(owner);
-      expect(event.args.spender).to.be.equal(spender);
+      expect(event.args.owner).to.be.equal(owner.address);
+      expect(event.args.spender).to.be.equal(spender.address);
       expect(event.args.value).to.be.equal('100');
     }
 
     {
-      const allowance = await contract.allowance.staticCall(owner, spender);
-      expect(+allowance).to.equal(100);
+      const allowance = await contract.allowance.staticCall(owner.address, spender.address);
+      expect(allowance).to.equal(100n);
     }
 
     {
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
       const spenderCross = helper.ethCrossAccount.fromAddress(spender);
       const allowance = await contract.allowanceCross.staticCall(ownerCross, spenderCross);
-      expect(+allowance).to.equal(100);
+      expect(allowance).to.equal(100n);
     }
   });
 
@@ -173,14 +174,14 @@ describe('Fungible: Plain calls', () => {
 
       const event = events.Approval;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.owner).to.be.equal(owner);
-      expect(event.args.spender).to.be.equal(spender);
+      expect(event.args.owner).to.be.equal(owner.address);
+      expect(event.args.spender).to.be.equal(spender.address);
       expect(event.args.value).to.be.equal('100');
     }
 
     {
-      const allowance = await contract.allowance.staticCall(owner, spender);
-      expect(+allowance).to.equal(100);
+      const allowance = await contract.allowance.staticCall(owner.address, spender.address);
+      expect(allowance).to.equal(100n);
     }
 
     {
@@ -190,7 +191,7 @@ describe('Fungible: Plain calls', () => {
 
       const event = events.Approval;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.owner).to.be.equal(owner);
+      expect(event.args.owner).to.be.equal(owner.address);
       expect(event.args.spender).to.be.equal(helper.address.substrateToEth(spenderSub.address));
       expect(event.args.value).to.be.equal('100');
     }
@@ -215,7 +216,8 @@ describe('Fungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await expect(collectionEvm.approveCross.staticCall(nonOwnerCross, 20, {from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
+    const nonOwnerCollectionEvm = helper.eth.changeContractCaller(collectionEvm, nonOwner);
+    await expect(nonOwnerCollectionEvm.approveCross.staticCall(nonOwnerCross, 20n)).to.be.rejectedWith('CantApproveMoreThanOwned');
   });
 
 
@@ -276,31 +278,33 @@ describe('Fungible: Plain calls', () => {
     await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
     {
-      const tx = await contract.transferFrom.send(owner, receiver, 49, {from: spender});
+      const spenderContract = helper.eth.changeContractCaller(contract, spender);
+
+      const tx = await spenderContract.transferFrom.send(owner, receiver, 49n);
       const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
       let event = events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(owner);
-      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.from).to.be.equal(owner.address);
+      expect(event.args.to).to.be.equal(receiver.address);
       expect(event.args.value).to.be.equal('49');
 
       event = events.Approval;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.owner).to.be.equal(owner);
-      expect(event.args.spender).to.be.equal(spender);
+      expect(event.args.owner).to.be.equal(owner.address);
+      expect(event.args.spender).to.be.equal(spender.address);
       expect(event.args.value).to.be.equal('51');
     }
 
     {
       const balance = await contract.balanceOf.staticCall(receiver);
-      expect(+balance).to.equal(49);
+      expect(balance).to.equal(49n);
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(owner);
-      expect(+balance).to.equal(151);
+      const balance = await contract.balanceOf.staticCall(owner.address);
+      expect(balance).to.equal(151n);
     }
   });
 
@@ -324,17 +328,17 @@ describe('Fungible: Plain calls', () => {
       // Check events:
       const event = events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(sender);
-      expect(event.args.to).to.be.equal(receiverEth);
+      expect(event.args.from).to.be.equal(sender.address);
+      expect(event.args.to).to.be.equal(receiverEth.address);
       expect(event.args.value).to.be.equal('50');
 
       // Sender's balance decreased:
       const ownerBalance = await collectionEvm.balanceOf.staticCall(sender);
-      expect(+ownerBalance).to.equal(150);
+      expect(ownerBalance).to.equal(150n);
 
       // Receiver's balance increased:
       const receiverBalance = await collectionEvm.balanceOf.staticCall(receiverEth);
-      expect(+receiverBalance).to.equal(50);
+      expect(receiverBalance).to.equal(50n);
     }
 
     {
@@ -346,7 +350,7 @@ describe('Fungible: Plain calls', () => {
       // Check events:
       const event = events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(sender);
+      expect(event.args.from).to.be.equal(sender.address);
       expect(event.args.to).to.be.equal(helper.address.substrateToEth(donor.address));
       expect(event.args.value).to.be.equal('50');
 
@@ -397,19 +401,19 @@ describe('Fungible: Plain calls', () => {
 
       const event = events.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(owner);
-      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.from).to.be.equal(owner.address);
+      expect(event.args.to).to.be.equal(receiver.address);
       expect(event.args.value).to.be.equal('50');
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(owner);
-      expect(+balance).to.equal(150);
+      const balance = await contract.balanceOf.staticCall(owner.address);
+      expect(balance).to.equal(150n);
     }
 
     {
       const balance = await contract.balanceOf.staticCall(receiver);
-      expect(+balance).to.equal(50);
+      expect(balance).to.equal(50n);
     }
   });
 
@@ -442,7 +446,7 @@ describe('Fungible: Plain calls', () => {
         event: 'Transfer',
         args: {
           from: helper.address.substrateToEth(owner.address),
-          to: receiver,
+          to: receiver.address,
           value: '51',
         },
       },
@@ -451,7 +455,7 @@ describe('Fungible: Plain calls', () => {
         event: 'Approval',
         args: {
           owner: helper.address.substrateToEth(owner.address),
-          spender: sender,
+          spender: sender.address,
           value: '49',
         },
       }});
@@ -469,24 +473,24 @@ describe('Fungible: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner})).to.be.eq('0');
-    expect(await collectionEvm.balanceOfCross.staticCall(other, {from: owner})).to.be.eq('0');
+    expect(await collectionEvm.balanceOfCross.staticCall(owner.address)).to.be.eq(0n);
+    expect(await collectionEvm.balanceOfCross.staticCall(other.address)).to.be.eq(0n);
 
     await collection.mint(alice, 100n, {Ethereum: owner.address});
-    expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner})).to.be.eq('100');
-    expect(await collectionEvm.balanceOfCross.staticCall(other, {from: owner})).to.be.eq('0');
+    expect(await collectionEvm.balanceOfCross.staticCall(owner.address)).to.be.eq(100n);
+    expect(await collectionEvm.balanceOfCross.staticCall(other.address)).to.be.eq(0n);
 
-    await collectionEvm.transferCross(other, 50n, {from: owner});
-    expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner})).to.be.eq('50');
-    expect(await collectionEvm.balanceOfCross.staticCall(other, {from: owner})).to.be.eq('50');
+    await collectionEvm.transferCross(other.address, 50n, {from: owner});
+    expect(await collectionEvm.balanceOfCross.staticCall(owner.address)).to.be.eq(50n);
+    expect(await collectionEvm.balanceOfCross.staticCall(other.address)).to.be.eq(50n);
 
-    await collectionEvm.transferCross(other, 50n, {from: owner});
-    expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner})).to.be.eq('0');
-    expect(await collectionEvm.balanceOfCross.staticCall(other, {from: owner})).to.be.eq('100');
+    await collectionEvm.transferCross(other.address, 50n, {from: owner});
+    expect(await collectionEvm.balanceOfCross.staticCall(owner.address)).to.be.eq(0n);
+    expect(await collectionEvm.balanceOfCross.staticCall(other.address)).to.be.eq(100n);
 
-    await collectionEvm.transferCross(owner, 100n, {from: other});
-    expect(await collectionEvm.balanceOfCross.staticCall(owner, {from: owner})).to.be.eq('100');
-    expect(await collectionEvm.balanceOfCross.staticCall(other, {from: owner})).to.be.eq('0');
+    await collectionEvm.transferCross(owner.address, 100n, {from: other});
+    expect(await collectionEvm.balanceOfCross.staticCall(owner.address)).to.be.eq(100n);
+    expect(await collectionEvm.balanceOfCross.staticCall(other.address)).to.be.eq(0n);
   });
 });
 
@@ -528,11 +532,12 @@ describe('Fungible: Fees', () => {
 
     await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
+    const contractContract = helper.eth.changeContractCaller(contract, spender);
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await contract.transferFrom.send(owner, spender, 100, {from: spender})).wait(...waitParams),
+      async () => await (await contractContract.transferFrom.send(owner, spender, 100n)).wait(...waitParams),
     );
-    expect(cost < (BigInt(0.2) * helper.balance.getOneTokenNominal()));
+    expect(cost < (helper.balance.getOneTokenNominal() / 5n));
   });
 
   itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
@@ -565,8 +570,7 @@ describe('Fungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for approve()', async ({helper}) => {
-    throw new Error('unimplemented');
-
+    // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
     // await collection.mint(alice, 200n);
@@ -591,8 +595,7 @@ describe('Fungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transferFrom()', async ({helper}) => {
-    throw new Error('unimplemented');
-
+    // TODO: Refactor this
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
@@ -626,8 +629,7 @@ describe('Fungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transfer()', async ({helper}) => {
-    throw new Error('unimplemented');
-
+    // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
     // await collection.mint(alice, 200n);
@@ -662,12 +664,12 @@ describe('Fungible: Substrate calls', () => {
     await collection.approveTokens(owner, {Ethereum: sender.address}, 100n);
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(address, 'ft');
+    const contract = await helper.ethNativeContract.collection(address, 'ft', sender);
 
     const from = helper.ethCrossAccount.fromKeyringPair(owner);
     const to = helper.ethCrossAccount.fromAddress(receiver);
 
-    const transferTx = await contract.transferFromCross.send(from, to, 51, {from: sender});
+    const transferTx = await contract.transferFromCross.send(from, to, 51);
     const transferReceipt = await transferTx.wait(...waitParams);
     const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 

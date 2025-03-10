@@ -153,11 +153,12 @@ describe('EVM token properties', () => {
     itEth.ifWithPallets(`[${testCase.mode}] Can set multiple token property permissions as admin`, testCase.requiredPallets, async({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const caller = await await helper.eth.createAccountWithBalance(donor);
+      const callerCross = await await helper.ethCrossAccount.fromAddress(caller);
 
       const {collectionId, collectionAddress} = await helper.eth.createCollection(owner, new CreateCollectionData('A', 'B', 'C', testCase.mode)).send();
       const collection = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
-      await (await collection.addCollectionAdminCross.send(caller)).wait(...waitParams);
+      await (await collection.addCollectionAdminCross.send(callerCross)).wait(...waitParams);
       const callerCollection = helper.eth.changeContractCaller(collection, caller);
 
       await (
@@ -422,8 +423,7 @@ describe('EVM token properties negative', () => {
 
       // Caller not an owner and not an admin, so he cannot set properties:
       await expect(collectionEvm[testCase.method].staticCall(token.tokenId, ...testCase.methodParams)).to.be.rejectedWith('NoPermission');
-
-      await expect(await collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams)).to.be.rejected;
+      await expect(collectionEvm[testCase.method].send(token.tokenId, ...testCase.methodParams)).to.be.rejected;
 
       // Props have not changed:
       const expectedProps = tokenProps.map(p => helper.ethProperty.property(p.key, p.value.toString()));
