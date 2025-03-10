@@ -460,7 +460,12 @@ class EthGroup extends EthGroupBase {
     for(let i = 0; i < log.args.length; i += 1) {
       const argName = log.fragment.inputs[i].name;
       const argValue = log.args[i];
-      args[argName] = argValue.toString();
+
+      if(argName.length === 0) {
+        args[i.toString()] = argValue.toString();
+      } else {
+        args[argName] = argValue.toString();
+      }
     }
 
     return {
