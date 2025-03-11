@@ -5,7 +5,7 @@
 
 import {readFile} from 'fs/promises';
 
-import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, Log, Wallet, WebSocketProvider} from 'ethers';
+import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, WebSocketProvider} from 'ethers';
 
 // @ts-ignore
 import solc from 'solc';
@@ -241,7 +241,7 @@ class CreateCollectionTransaction {
         this.data.pendingSponsor,
         this.data.flags,
       ],
-      {...options, value: value.toString()},
+      {...options, value},
     );
 
     const receipt = await response.wait(...waitParams);
@@ -554,7 +554,7 @@ export class EthCrossAccountGroup extends EthGroupBase {
   fromKeyringPair(keyring: IKeyringPair): CrossAddress {
     return {
       eth: '0x0000000000000000000000000000000000000000',
-      sub: keyring.addressRaw,
+      sub: hexlify(keyring.addressRaw),
     };
   }
 }
