@@ -82,6 +82,7 @@ export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privat
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
+      console.log(`Start test "${this.test?.title}" at ${new Date()}`)
       await cb({helper, privateKey});
     });
   });
