@@ -5,7 +5,7 @@
 
 import {readFile} from 'fs/promises';
 
-import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, WebSocketProvider} from 'ethers';
+import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider} from 'ethers';
 
 // @ts-ignore
 import solc from 'solc';
@@ -33,8 +33,6 @@ import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' as
 import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 import {Contract} from 'ethers';
 import {waitParams} from './util.js';
-import {eth} from '@polkadot/types/interfaces/definitions';
-import { JsonRpcProvider } from 'ethers';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
