@@ -153,7 +153,7 @@ describe('Fractionalizer contract usage', () => {
         AllowListSet: {
           args: {
             _collection: nftCollection.collectionAddress,
-            _status: isAllowed,
+            _status: isAllowed.toString(),
           },
         },
       });

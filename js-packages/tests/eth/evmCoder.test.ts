@@ -86,7 +86,7 @@ describe('Evm Coder tests', () => {
     }
     {
       await expect(testContract.test3.staticCall())
-        .to.be.rejectedWith(/unrecognized selector: 0xd9f02b36$/g);
+        .to.be.rejectedWith('execution reverted: "unrecognized selector: 0xd9f02b36"');
     }
   });
 });
