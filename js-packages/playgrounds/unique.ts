@@ -397,6 +397,7 @@ class UniqueEventHelper {
     return parsedEvents;
   }
 }
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const InvalidTypeSymbol = Symbol('Invalid type');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type Invalid =
@@ -2793,12 +2794,14 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    * @returns substrate cross account id
    */
   convertCrossAccountFromEthCrossAccount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
-    if(ethCrossAccount.sub === '0') {
-      return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
-    }
+    const eth = ethCrossAccount.eth ?? ethCrossAccount[0]
+    const sub = ethCrossAccount.sub ?? ethCrossAccount[1]
 
-    const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.sub));
-    return {Substrate: ss58};
+    if(sub == '0') {
+      return {Ethereum: eth.toLocaleLowerCase()};
+    } else {
+      return {Substrate: this.restoreCrossAccountFromBigInt(BigInt(sub))};
+    }
   }
 
   paraSiblingSovereignAccount(paraid: number) {

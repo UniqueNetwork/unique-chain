@@ -105,7 +105,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
   });
 
   // Soft-deprecated
-  itEth('PAM [eth] Can perform mint()', async ({helper}) => {
+  itEth('[eth] Can perform mint()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'A', 'A', 'A', '');
     const caller = await helper.eth.createAccountWithBalance(donor);

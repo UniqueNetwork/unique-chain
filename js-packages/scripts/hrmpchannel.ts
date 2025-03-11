@@ -1,5 +1,5 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
-import {blake2AsHex, encodeAddress} from '@polkadot/util-crypto';
+import {blake2AsHex} from '@polkadot/util-crypto';
 
 export const paraChildSovereignAccount = (relayApi: ApiPromise, paraid: number) => {
   // We are getting a *child* parachain sovereign account,
