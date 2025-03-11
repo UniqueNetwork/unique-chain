@@ -34,6 +34,7 @@ import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/typ
 import {Contract} from 'ethers';
 import {waitParams} from './util.js';
 import {eth} from '@polkadot/types/interfaces/definitions';
+import { JsonRpcProvider } from 'ethers';
 
 class EthGroupBase {
   helper: EthUniqueHelper;
@@ -596,7 +597,7 @@ class EthArrangeGroup extends ArrangeGroup {
   }
 }
 export class EthUniqueHelper extends DevUniqueHelper {
-  web3: WebSocketProvider | null = null;
+  web3: JsonRpcProvider | null = null;
 
   eth: EthGroup;
   ethAddress: EthAddressGroup;
@@ -620,14 +621,14 @@ export class EthUniqueHelper extends DevUniqueHelper {
     super.arrange = this.arrange;
   }
 
-  getWeb3(): WebSocketProvider {
+  getWeb3(): JsonRpcProvider {
     if(this.web3 === null) throw Error('Web3 not connected');
     return this.web3;
   }
 
-  connectWeb3(wsEndpoint: string) {
+  connectWeb3(httpEndpoint: string) {
     if(this.web3 !== null) return;
-    this.web3 = new WebSocketProvider(wsEndpoint, undefined, {polling: true});
+    this.web3 = new JsonRpcProvider(httpEndpoint.replace("ws://", "http://"), undefined);
   }
 
   async getGasPrice(): Promise<bigint> {
@@ -642,8 +643,6 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   override async disconnect() {
     if(this.web3 === null) return;
-    this.web3.websocket.close();
-
     await super.disconnect();
   }
 
