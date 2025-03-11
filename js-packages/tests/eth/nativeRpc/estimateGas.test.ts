@@ -16,7 +16,7 @@
 
 import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-
+import {Contract} from 'ethers';
 
 describe('Ethereum native RPC calls', () => {
   let donor: IKeyringPair;
@@ -29,36 +29,21 @@ describe('Ethereum native RPC calls', () => {
   });
 
   itEth('estimate gas', async ({helper}) => {
-    throw new Error('unimplemented');
+    const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const recepient = helper.eth.createAccount();
 
-    // const BALANCE = 100n;
-    // const BALANCE_TO_TRANSFER = 90n;
+    // Create a contract
+    const demoAbi = ["function transfer(address to, uint256 amount)"];
+    const demoContract = new Contract(NATIVE_TOKEN_ADDRESS, demoAbi, owner);
 
-    // const owner = await helper.eth.createAccountWithBalance(donor, BALANCE);
-    // const recepient = helper.eth.createAccount();
+    const estimatedGas = await demoContract.transfer.estimateGas(
+      recepient,
+      90n * helper.balance.getOneTokenNominal(),
+      {value: 0n, maxFeePerGas: 1_500_000_000_000n}
+    );
 
-    // const web3 = helper.getWeb3();
-    // // data: transfer(recepient, 90);
-    // const data = web3.eth.abi.encodeFunctionCall({
-    //   name: 'transfer',
-    //   type: 'function',
-    //   inputs: [{
-    //     type: 'address',
-    //     name: 'to',
-    //   },{
-    //     type: 'uint256',
-    //     name: 'amount',
-    //   }],
-    // }, [recepient, (BALANCE_TO_TRANSFER * (10n ** 18n)).toString()]);
-
-    // const estimateGas = await web3.eth.estimateGas({
-    //   to: NATIVE_TOKEN_ADDRESS,
-    //   value: '0x0',
-    //   data,
-    //   from: owner,
-    //   maxFeePerGas: '0x14c9338c61d',
-    // });
-
-    // expect(estimateGas).to.be.greaterThan(35000).and.to.be.lessThan(50000);
+    expect(Number(estimatedGas))
+      .to.be.greaterThan(35000).and
+      .to.be.lessThan(50000);
   });
 });
