@@ -626,7 +626,11 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   connectWeb3(httpEndpoint: string) {
     if(this.web3 !== null) return;
-    this.web3 = new JsonRpcProvider(httpEndpoint.replace("ws://", "http://"), undefined);
+    this.web3 = new JsonRpcProvider(
+      httpEndpoint.replace("ws://", "http://"), 
+      undefined,
+      {polling: true, staticNetwork: true, batchMaxCount: 1}
+    );
   }
 
   async getGasPrice(): Promise<bigint> {
