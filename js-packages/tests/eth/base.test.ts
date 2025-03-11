@@ -37,7 +37,8 @@ describe('Contract calls', () => {
       {Ethereum: deployer.address},
       async () => await (await flipper.flip.send({from: deployer})).wait(...waitParams),
     );
-    expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
+
+    expect(cost < (helper.balance.getOneTokenNominal() / 5n)).to.be.true;
   });
 
   itEth('Balance transfer fee is less than 0.2 UNQ', async ({helper}) => {
@@ -53,7 +54,7 @@ describe('Contract calls', () => {
       })).wait(...waitParams),
     );
     const balanceB = await helper.balance.getEthereum(userB);
-    expect(cost - balanceB < BigInt(0.2 * Number(helper.balance.getOneTokenNominal()))).to.be.true;
+    expect(cost - balanceB < (helper.balance.getOneTokenNominal() / 5n)).to.be.true;
   });
 
   itEth('NFT transfer is close to 0.15 UNQ', async ({helper}) => {
@@ -91,10 +92,16 @@ describe('ERC165 tests', () => {
 
   async function checkInterface(helper: EthUniqueHelper, interfaceId: string, simpleResult: boolean, compatibleResult: boolean) {
     const simple = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(simpleNftCollectionId), 'nft', minter);
+    
+    expect(
+      await simple.supportsInterface.staticCall(interfaceId)
+    ).to.equal(simpleResult, `empty (not ERC721Metadata compatible) NFT collection returns not ${simpleResult}`);
+    
     const compatible = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(erc721MetadataCompatibleNftCollectionId), 'nft', minter);
-
-    expect(await simple.supportsInterface.staticCall(interfaceId)).to.equal(simpleResult, `empty (not ERC721Metadata compatible) NFT collection returns not ${simpleResult}`);
-    expect(await compatible.supportsInterface.staticCall(interfaceId)).to.equal(compatibleResult, `ERC721Metadata compatible NFT collection returns not ${compatibleResult}`);
+    
+    expect(
+      await compatible.supportsInterface.staticCall(interfaceId)
+    ).to.equal(compatibleResult, `ERC721Metadata compatible NFT collection returns not ${compatibleResult}`);
   }
 
   before(async () => {
