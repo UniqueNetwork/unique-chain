@@ -101,14 +101,22 @@ describe('Cannot set invalid collection limits', () => {
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
 
       // Cannot set non-existing limit
-      await expect(collectionEvm.setCollectionLimit.staticCall({field: 9, value: {status: true, value: 1}})).to.be.rejectedWith('Returned error: VM Exception while processing transaction: revert value not convertible into enum "CollectionLimitField"');
+      await expect(
+        collectionEvm.setCollectionLimit.staticCall({field: 9, value: {status: true, value: 1}})
+      ).to.be.rejectedWith('execution reverted: "value not convertible into enum \\"CollectionLimitField\\"');
 
       // Cannot disable limits
-      await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 0}})).to.be.rejectedWith('user can\'t disable limits');
+      await expect(
+        collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 0}})
+      ).to.be.rejectedWith('user can\'t disable limits');
 
-      await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: invalidLimits.accountTokenOwnershipLimit}})).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
+      await expect(
+        collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: invalidLimits.accountTokenOwnershipLimit}})
+      ).to.be.rejectedWith(`can't convert value to u32 "${invalidLimits.accountTokenOwnershipLimit}"`);
 
-      await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.TransferEnabled, value: {status: true, value: 3}})).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
+      await expect(
+        collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.TransferEnabled, value: {status: true, value: 3}})
+      ).to.be.rejectedWith(`can't convert value to boolean "${invalidLimits.transfersEnabled}"`);
 
       expect(async () => {
         collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: -1}});

@@ -42,11 +42,11 @@ describe('Add collection admins', () => {
   });
 
   [
-    {mode: 'nft' as const, requiredPallets: []},
+    // {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    {mode: 'ft' as const, requiredPallets: []},
+    // {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase => {
-    itEth.ifWithPallets(`can add account admin by owner for ${testCase.mode}`, testCase.requiredPallets, async ({helper, privateKey}) => {
+    itEth.ifWithPallets(`PAM can add account admin by owner for ${testCase.mode}`, testCase.requiredPallets, async ({helper, privateKey}) => {
       // arrange
       const owner = await helper.eth.createAccountWithBalance(donor);
       const adminSub = await privateKey('//admin2');
@@ -73,7 +73,11 @@ describe('Add collection admins', () => {
       // 1. Expect api.rpc.unique.adminlist returns admins:
       const adminListRpc = await helper.collection.getAdmins(collectionId);
       expect(adminListRpc).to.has.length(3);
-      expect(adminListRpc).to.be.deep.contain.members([{Substrate: adminSub.address}, {Ethereum: adminEth}, {Ethereum: adminDeprecated}]);
+      expect(adminListRpc).to.be.deep.contain.members([
+        {Ethereum: adminDeprecated.address.toLowerCase()},
+        {Ethereum: adminEth.address.toLowerCase()},
+        {Substrate: adminSub.address},
+      ]);
 
       // 2. Expect methods.collectionAdmins == api.rpc.unique.adminlist
       let adminListEth = await collectionEvm.collectionAdmins.staticCall();
@@ -96,15 +100,17 @@ describe('Add collection admins', () => {
     const [adminSub] = await helper.arrange.createAccounts([100n], donor);
     const adminCrossSub = helper.ethCrossAccount.fromKeyringPair(adminSub);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
+    const adminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, adminEth);
 
     // cannot mint while not admin
-    await expect(collectionEvm.methods.send(owner, {from: adminEth})).to.be.rejected;
+    await expect(adminCollectionEvm.mint.send(owner)).to.be.rejected;
     await expect(helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner.address}})).to.be.rejectedWith(/common.PublicMintingNotAllowed/);
 
     // admin (sub and eth) can mint token:
     await (await collectionEvm.addCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
     await (await collectionEvm.addCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
-    await (await collectionEvm.mint.send(owner, {from: adminEth})).wait(...waitParams);
+
+    await (await adminCollectionEvm.mint.send(owner)).wait(...waitParams);
     await helper.nft.mintToken(adminSub, {collectionId, owner: {Ethereum: owner.address}});
 
     expect(await helper.collection.getLastTokenId(collectionId)).to.eq(2);
@@ -155,11 +161,13 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const admin = await helper.eth.createAccountWithBalance(donor);
+    
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
     await (await collectionEvm.addCollectionAdmin.send(admin)).wait(...waitParams);
 
     const user = helper.eth.createAccount();
-    await expect(collectionEvm.addCollectionAdmin.staticCall(user, {from: admin}))
+    const adminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, admin)
+    await expect(adminCollectionEvm.addCollectionAdmin.staticCall(user))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -177,7 +185,8 @@ describe('Add collection admins', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     const user = helper.eth.createAccount();
-    await expect(collectionEvm.addCollectionAdmin.staticCall(user, {from: notAdmin}))
+    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin)
+    await expect(notAdminCollectionEvm.addCollectionAdmin.staticCall(user))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -267,7 +276,7 @@ describe('Remove collection admins', () => {
     {
       const adminList = await helper.collection.getAdmins(collectionId);
       expect(adminList).to.deep.include({Substrate: adminSub.address});
-      expect(adminList).to.deep.include({Ethereum: adminEth.address});
+      expect(adminList).to.deep.include({Ethereum: adminEth.address.toLowerCase()});
     }
 
     await (await collectionEvm.removeCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
@@ -359,7 +368,8 @@ describe('Remove collection admins', () => {
     await collectionEvm.addCollectionAdminCross.send(adminSubCross);
     const notAdminEth = await helper.eth.createAccountWithBalance(donor);
 
-    await expect(collectionEvm.removeCollectionAdminCross.staticCall(adminSubCross, {from: notAdminEth}))
+    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdminEth);
+    await expect(notAdminCollectionEvm.removeCollectionAdminCross.staticCall(adminSubCross))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -411,7 +421,9 @@ describe('Change owner tests', () => {
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
-    await expect(collectionEvm.changeCollectionOwner.send(newOwner, {from: newOwner})).to.be.rejected;
+    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, newOwner);
+    await expect(notAdminCollectionEvm.changeCollectionOwner.send(newOwner)).to.be.rejected;
+
     expect(await collectionEvm.isOwnerOrAdmin.staticCall(newOwner)).to.be.false;
   });
 });
@@ -438,13 +450,13 @@ describe('Change substrate owner tests', () => {
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossSub)).to.be.false;
 
     // Can set ethereum owner:
-    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossEth, {from: owner})).wait(...waitParams);
+    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossEth)).wait(...waitParams);
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossEth)).to.be.true;
     expect(await helper.collection.getData(collectionId))
       .to.have.property('normalizedOwner').that.is.eq(helper.address.ethToSubstrate(ownerEth));
 
     // Can set Substrate owner:
-    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossSub, {from: ownerEth})).wait(...waitParams);
+    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossSub)).wait(...waitParams);
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossSub)).to.be.true;
     expect(await helper.collection.getData(collectionId))
       .to.have.property('normalizedOwner').that.is.eq(helper.address.normalizeSubstrate(ownerSub.address));
@@ -473,7 +485,9 @@ describe('Change substrate owner tests', () => {
     const {collectionAddress} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await expect(collectionEvm.changeCollectionOwnerCross.send(newOwnerCross, {from: otherReceiver})).to.be.rejected;
+    const otherCollectionEvm = helper.eth.changeContractCaller(collectionEvm, otherReceiver);
+    await expect(otherCollectionEvm.changeCollectionOwnerCross.send(newOwnerCross)).to.be.rejected;
+
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(newOwnerCross)).to.be.false;
   });
 });

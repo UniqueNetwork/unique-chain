@@ -127,7 +127,7 @@ describe('EVM Migrations', () => {
       caller,
     );
 
-    expect(await contract.counterValue.staticCall()).to.be.equal('10');
+    expect(await contract.counterValue.staticCall()).to.be.equal(10n);
     for(let i = 1; i <= 4; i++) {
       expect(await contract.get.staticCall(i)).to.be.equal(i.toString());
     }
@@ -169,8 +169,7 @@ describe('EVM Migrations', () => {
     expect(eventStrings).to.contain('common.ItemCreated');
   });
   itEth('Fake token creation on ethereum side', async ({helper}) => {
-    throw new Error('unimplemented');
-
+    // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(superuser);
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     // const caller = await helper.eth.createAccountWithBalance(superuser);

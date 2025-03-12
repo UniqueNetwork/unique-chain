@@ -66,7 +66,7 @@ describe('Minting tokens', () => {
         const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collection.collectionId)).to.eq(1);
-        expect(await contract.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, '0']);
+        expect(await contract.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, 0n]);
       }
     });
   });
@@ -102,7 +102,7 @@ describe('Minting tokens', () => {
         const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
-        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, '0']);
+        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, 0n]);
       }
     });
   });
@@ -138,7 +138,7 @@ describe('Minting tokens', () => {
         const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
-        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, '0']);
+        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, 0n]);
       }
     });
   });
@@ -165,7 +165,7 @@ describe('Minting tokens', () => {
       expect(event.args.to).to.be.equal(receiver.address);
 
       expect(await contract.tokenURI.staticCall(event.args.tokenId)).to.be.equal('Test URI');
-      expect(await contract.ownerOfCross.staticCall(event.args.tokenId)).to.be.like([receiver.address, '0']);
+      expect(await contract.ownerOfCross.staticCall(event.args.tokenId)).to.be.like([receiver.address, 0n]);
     });
   });
 });

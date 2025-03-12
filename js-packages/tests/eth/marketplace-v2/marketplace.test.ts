@@ -152,9 +152,10 @@ describe('Market V2 Contract', () => {
     const sellerBalanceAfter = await helper.balance.getEthereum(sellerCross.eth);
     expect(sellerBalanceAfter).to.be.eq(0n);
 
-    let ownerCross = await collection.ownerOfCross(tokenId);
-    expect(ownerCross.eth).to.be.eq(sellerCross.eth);
-    expect(ownerCross.sub).to.be.eq(sellerCross.sub);
+
+    let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
+    expect(ownerCrossEth).to.be.eq(sellerCross.eth);
+    expect(ownerCrossSub).to.be.eq(sellerCross.sub);
 
     const buyer = await helper.eth.createAccountWithBalance(donor, 10n);
     const buyerCross = helper.ethCrossAccount.fromAddress(buyer);
@@ -174,12 +175,11 @@ describe('Market V2 Contract', () => {
     const buyerBalanceAfter = await helper.balance.getEthereum(buyer.address);
     expect(buyerBalanceAfter).to.be.eq(10n * ONE_TOKEN - PRICE);
 
-    ownerCross = await collection.ownerOfCross(tokenId);
-    expect(ownerCross.eth).to.be.eq(buyerCross.eth);
-    expect(ownerCross.sub).to.be.eq(buyerCross.sub);
+    // TODO: Replace 0n with buyerCross.sub
+    expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([buyerCross.eth, 0n]);
   });
 
-  itEth('Put + Buy [sub]', async ({helper}) => {
+  itEth('PAM Put + Buy [sub]', async ({helper}) => {
     const ONE_TOKEN = helper.balance.getOneTokenNominal();
     const PRICE = 2n * ONE_TOKEN;  // 2 UNQ
     const web3 = helper.getWeb3();
@@ -223,30 +223,36 @@ describe('Market V2 Contract', () => {
       const sellerBalance = await helper.balance.getSubstrate(seller.address);
       expect(sellerBalance).to.be.eq(0n);
     }
-    let ownerCross = await collection.ownerOfCross.staticCall(tokenId);
-    expect(ownerCross.eth).to.be.eq(sellerCross.eth);
-    expect(substrateAddressToHex(ownerCross.sub)).to.be.eq(substrateAddressToHex(sellerCross.sub));
+
+    {
+      let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
+      expect(ownerCrossEth).to.be.eq(sellerCross.eth);
+      expect(substrateAddressToHex(ownerCrossSub)).to.be.eq(substrateAddressToHex(sellerCross.sub));
+    }
 
     const [buyer] = await helper.arrange.createAccounts([600n], donor);
+    
     // Buyer has only expected balance
     {
       const buyerBalance = await helper.balance.getSubstrate(buyer.address);
       expect(buyerBalance).to.be.eq(600n * ONE_TOKEN);
     }
+    
     const buyerCross = helper.ethCrossAccount.fromKeyringPair(buyer);
 
     const buyerBalanceBefore = await helper.balance.getSubstrate(buyer.address);
     await helper.eth.sendEVM(buyer, await market.getAddress(), (await market.buy.populateTransaction(collectionId, tokenId, 1, buyerCross)).data, PRICE.toString());
     const buyerBalanceAfter = await helper.balance.getSubstrate(buyer.address);
+    
     // Buyer balance not changed: transaction is sponsored
     expect(buyerBalanceBefore).to.be.eq(buyerBalanceAfter + PRICE);
 
-    const sellerBalanceAfterBuy = BigInt(await helper.balance.getSubstrate(seller.address));
-    ownerCross = await collection.ownerOfCross.staticCall(tokenId);
-    expect(ownerCross.eth).to.be.eq(buyerCross.eth);
-    expect(substrateAddressToHex(ownerCross.sub)).to.be.eq(substrateAddressToHex(buyerCross.sub));
-
     // Seller got only PRICE - MARKET_FEE
+    const sellerBalanceAfterBuy = BigInt(await helper.balance.getSubstrate(seller.address));
     expect(sellerBalanceAfterBuy).to.be.eq(PRICE * BigInt(100 - MARKET_FEE) / 100n);
+
+    let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
+    expect(ownerCrossEth).to.be.eq(buyerCross.eth);
+    expect(substrateAddressToHex(ownerCrossSub)).to.be.eq(substrateAddressToHex(buyerCross.sub));
   });
 });

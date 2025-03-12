@@ -104,17 +104,15 @@ describe('Create FT collection from EVM', () => {
 
     const destroyTx = await collectionHelper.destroyCollection.send(collectionAddress);
     const destroyReceipt = await destroyTx.wait(...waitParams);
-    const events = helper.eth.rebuildEvents(destroyReceipt!);
+    const events = helper.eth.normalizeEvents(destroyReceipt!);
 
-    expect(events).to.be.deep.equal([
-      {
-        address: await collectionHelper.getAddress(),
-        event: 'CollectionDestroyed',
+    expect(events).to.be.like({
+      'CollectionDestroyed': {
         args: {
           collectionId: collectionAddress,
         },
       },
-    ]);
+    });
 
     expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
     expect(await helper.collection.getData(collectionId)).to.be.null;
@@ -123,13 +121,11 @@ describe('Create FT collection from EVM', () => {
 
 describe('(!negative tests!) Create FT collection from EVM', () => {
   let donor: IKeyringPair;
-  let nominal: bigint;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
       donor = await privateKey({url: import.meta.url});
-      nominal = helper.balance.getOneTokenNominal();
     });
   });
 
@@ -148,7 +144,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
         DECIMALS,
         description,
         tokenPrefix,
-        {value: (2n * nominal)},
+        {value: (2n * helper.balance.getOneTokenNominal())},
       )).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
 
@@ -162,7 +158,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
         DECIMALS,
         description,
         tokenPrefix,
-        {value: (2n * nominal)},
+        {value: (2n * helper.balance.getOneTokenNominal())},
       )).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
 
@@ -176,7 +172,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
         DECIMALS,
         description,
         tokenPrefix,
-        {value: (2n * nominal)},
+        {value: (2n * helper.balance.getOneTokenNominal())},
       )).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
@@ -190,7 +186,7 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
         DECIMALS,
         'absolutely anything',
         'TWIW',
-        {value: (value * nominal)},
+        {value: (value * helper.balance.getOneTokenNominal())},
       )).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
     });
     await Promise.all(expects);
