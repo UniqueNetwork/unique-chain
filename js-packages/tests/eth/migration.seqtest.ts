@@ -128,8 +128,8 @@ describe('EVM Migrations', () => {
     );
 
     expect(await contract.counterValue.staticCall()).to.be.equal(10n);
-    for(let i = 1; i <= 4; i++) {
-      expect(await contract.get.staticCall(i)).to.be.equal(i.toString());
+    for(let i = 1n; i <= 4n; i++) {
+      expect(await contract.get.staticCall(i)).to.be.equal(i);
     }
   });
   itEth('Fake collection creation on substrate side', async ({helper}) => {

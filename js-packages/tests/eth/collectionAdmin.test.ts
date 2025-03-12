@@ -42,11 +42,11 @@ describe('Add collection admins', () => {
   });
 
   [
-    // {mode: 'nft' as const, requiredPallets: []},
+    {mode: 'nft' as const, requiredPallets: []},
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    // {mode: 'ft' as const, requiredPallets: []},
+    {mode: 'ft' as const, requiredPallets: []},
   ].map(testCase => {
-    itEth.ifWithPallets(`PAM can add account admin by owner for ${testCase.mode}`, testCase.requiredPallets, async ({helper, privateKey}) => {
+    itEth.ifWithPallets(`can add account admin by owner for ${testCase.mode}`, testCase.requiredPallets, async ({helper, privateKey}) => {
       // arrange
       const owner = await helper.eth.createAccountWithBalance(donor);
       const adminSub = await privateKey('//admin2');
@@ -197,13 +197,18 @@ describe('Add collection admins', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const [admin, notAdmin] = await helper.arrange.createAccounts([10n, 10n], donor);
-    const adminCross = helper.ethCrossAccount.fromKeyringPair(admin);
+    const admin = await helper.eth.createAccountWithBalance(donor, 10n);
+    const adminCross = helper.ethCrossAccount.fromAddress(admin);
+
+    const notAdmin = await helper.eth.createAccountWithBalance(donor, 10n);
+    const notAdminCross = helper.ethCrossAccount.fromAddress(notAdmin);
+
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    
     await (await collectionEvm.addCollectionAdminCross.send(adminCross)).wait(...waitParams);
 
-    const notAdminCross = helper.ethCrossAccount.fromKeyringPair(notAdmin);
-    await expect(collectionEvm.addCollectionAdminCross.staticCall(notAdminCross, {from: adminCross.eth}))
+    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin);
+    await expect(notAdminCollectionEvm.addCollectionAdminCross.staticCall(notAdminCross))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -218,11 +223,14 @@ describe('Add collection admins', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const notAdmin0 = await helper.eth.createAccountWithBalance(donor);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    
     const [notAdmin1] = await helper.arrange.createAccounts([10n], donor);
     const notAdmin1Cross = helper.ethCrossAccount.fromKeyringPair(notAdmin1);
-    await expect(collectionEvm.addCollectionAdminCross.staticCall(notAdmin1Cross, {from: notAdmin0}))
+
+    const notAdmin0 = await helper.eth.createAccountWithBalance(donor);
+    const notAdmin0CollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin0);
+    await expect(notAdmin0CollectionEvm.addCollectionAdminCross.staticCall(notAdmin1Cross))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
@@ -302,8 +310,10 @@ describe('Remove collection admins', () => {
     const admin1 = await helper.eth.createAccountWithBalance(donor);
     await (await collectionEvm.addCollectionAdmin.send(admin1)).wait(...waitParams);
 
-    await expect(collectionEvm.removeCollectionAdmin.staticCall(admin1, {from: admin0}))
+    const admin0CollectionEvm = helper.eth.changeContractCaller(collectionEvm, admin0);
+    await expect(admin0CollectionEvm.removeCollectionAdmin.send(admin1))
       .to.be.rejectedWith('NoPermission');
+
     {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList.length).to.be.eq(2);
@@ -324,10 +334,11 @@ describe('Remove collection admins', () => {
     await (await collectionEvm.addCollectionAdmin.send(admin)).wait(...waitParams);
 
     const notAdmin = helper.eth.createAccount();
-
-    await expect(collectionEvm.removeCollectionAdmin.staticCall(admin, {from: notAdmin}))
+    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin);
+    await expect(notAdminCollectionEvm.removeCollectionAdmin.send(admin))
       .to.be.rejectedWith('NoPermission');
-    {
+    
+      {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
         .to.be.eq(admin.address.toLocaleLowerCase());
@@ -339,16 +350,17 @@ describe('Remove collection admins', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
-    const [admin1] = await helper.arrange.createAccounts([10n], donor);
-    const admin1Cross = helper.ethCrossAccount.fromKeyringPair(admin1);
+    const admin1 = await helper.eth.createAccountWithBalance(donor, 10n);
+    const admin1Cross = helper.ethCrossAccount.fromAddress(admin1);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
     await (await collectionEvm.addCollectionAdminCross.send(admin1Cross)).wait(...waitParams);
 
-    const [admin2] = await helper.arrange.createAccounts([10n], donor);
-    const admin2Cross = helper.ethCrossAccount.fromKeyringPair(admin2);
+    const admin2 = await helper.eth.createAccountWithBalance(donor, 10n);
+    const admin2Cross = helper.ethCrossAccount.fromAddress(admin2);
     await (await collectionEvm.addCollectionAdminCross.send(admin2Cross)).wait(...waitParams);
 
-    await expect(collectionEvm.removeCollectionAdminCross.staticCall(admin1Cross, {from: admin2Cross.eth}))
+    const admin2CollectionEvm = helper.eth.changeContractCaller(collectionEvm, admin2);
+    await expect(admin2CollectionEvm.removeCollectionAdminCross.send(admin1Cross))
       .to.be.rejectedWith('NoPermission');
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
