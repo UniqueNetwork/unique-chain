@@ -126,7 +126,7 @@ describe('Fractionalizer contract usage', () => {
     });
   });
 
-  itEth('PAM Mint RFT collection', async ({helper}) => {
+  itEth('Mint RFT collection', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const fractionalizer = await deployContract(helper, owner);
     await helper.balance.transferToSubstrate(donor, evmToAddress(await fractionalizer.getAddress()), 10n * helper.balance.getOneTokenNominal());
@@ -160,7 +160,7 @@ describe('Fractionalizer contract usage', () => {
     }
   });
 
-  itEth('PAM NFT to RFT', async ({helper}) => {
+  itEth('NFT to RFT', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
 
     const nftCollection = await helper.eth.createNFTCollection(owner, 'nft', 'NFT collection', 'NFT');

@@ -23,7 +23,7 @@ import {HDNodeWallet, toBeHex, zeroPadBytes} from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);
 
-const MARKET_FEE = 1;
+const MARKET_FEE = 1n;
 
 describe('Market V2 Contract', () => {
   let donor: IKeyringPair;
@@ -100,11 +100,13 @@ describe('Market V2 Contract', () => {
     );
   }
 
-  function substrateAddressToHex(sub: Uint8Array| string) {
-    if(typeof sub === 'string')
+  function substrateAddressToHex(sub: Uint8Array | string | bigint) {
+    if(typeof sub === 'string' || typeof sub === 'bigint')
       return toBeHex(sub, 64);
     else if(sub instanceof Uint8Array)
       return zeroPadBytes(sub, 64);
+    else
+      throw `invalid substrate address type: ${typeof(sub)}`
   }
 
   itEth('Put + Buy [eth]', async ({helper}) => {
@@ -179,10 +181,10 @@ describe('Market V2 Contract', () => {
     expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([buyerCross.eth, 0n]);
   });
 
-  itEth('PAM Put + Buy [sub]', async ({helper}) => {
+  itEth('Put + Buy [sub]', async ({helper}) => {
     const ONE_TOKEN = helper.balance.getOneTokenNominal();
     const PRICE = 2n * ONE_TOKEN;  // 2 UNQ
-    const web3 = helper.getWeb3();
+
     const marketOwner = await helper.eth.createAccountWithBalance(donor, 600n);
     const market = await deployMarket(helper, marketOwner);
     const contractHelpers = helper.ethNativeContract.contractHelpers(marketOwner);
@@ -218,6 +220,7 @@ describe('Market V2 Contract', () => {
     await helper.nft.approveToken(seller, collectionId, +tokenId, {Ethereum: await market.getAddress()});
 
     await helper.eth.sendEVM(seller, await market.getAddress(), (await market.put.populateTransaction(collectionId, tokenId, PRICE, 1, sellerCross)).data, '0');
+    
     // Seller balance is still zero
     {
       const sellerBalance = await helper.balance.getSubstrate(seller.address);
@@ -225,6 +228,7 @@ describe('Market V2 Contract', () => {
     }
 
     {
+
       let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
       expect(ownerCrossEth).to.be.eq(sellerCross.eth);
       expect(substrateAddressToHex(ownerCrossSub)).to.be.eq(substrateAddressToHex(sellerCross.sub));
@@ -249,7 +253,7 @@ describe('Market V2 Contract', () => {
 
     // Seller got only PRICE - MARKET_FEE
     const sellerBalanceAfterBuy = BigInt(await helper.balance.getSubstrate(seller.address));
-    expect(sellerBalanceAfterBuy).to.be.eq(PRICE * BigInt(100 - MARKET_FEE) / 100n);
+    expect(sellerBalanceAfterBuy).to.be.eq(PRICE * (100n - MARKET_FEE) / 100n);
 
     let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
     expect(ownerCrossEth).to.be.eq(buyerCross.eth);
