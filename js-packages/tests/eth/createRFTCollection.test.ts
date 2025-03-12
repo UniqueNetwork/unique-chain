@@ -48,7 +48,6 @@ describe('Create RFT collection from EVM', () => {
     expect(data.raw.mode).to.be.eq('ReFungible');
 
     const options = await collection.getOptions();
-
     expect(options.tokenPropertyPermissions).to.be.empty;
   });
 
@@ -202,7 +201,9 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    await expect(collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: Number(1n * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(
+      collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: 1n * nominal})
+    ).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   // Soft-deprecated
@@ -251,9 +252,8 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
     await (await (collectionHelper.destroyCollection.send(collectionAddress))).wait(...waitParams);
-
+    
     expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
-
     expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });

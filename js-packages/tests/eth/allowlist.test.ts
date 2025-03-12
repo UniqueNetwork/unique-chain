@@ -136,10 +136,10 @@ describe('EVM collection allowlist', () => {
       await (await userCollectionEvm.transferCross.send(userCrossSub, 2)).wait(...waitParams);
 
       if(testCase.mode === 'ft') {
-        expect(await helper.ft.getBalance(collectionId, {Ethereum: owner.address})).to.eq(1n);
+        expect(await helper.ft.getBalance(collectionId, {Ethereum: owner.address.toLowerCase()})).to.eq(1n);
         expect(await helper.ft.getBalance(collectionId, {Substrate: userSub.address})).to.eq(2n);
       } else {
-        expect(await helper.nft.getTokenOwner(collectionId, 1)).to.deep.eq({Ethereum: owner.address});
+        expect(await helper.nft.getTokenOwner(collectionId, 1)).to.deep.eq({Ethereum: owner.address.toLowerCase()});
         expect(await helper.nft.getTokenOwner(collectionId, 2)).to.deep.eq({Substrate: userSub.address});
       }
 

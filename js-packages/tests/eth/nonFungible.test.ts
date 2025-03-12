@@ -836,9 +836,9 @@ describe('NFT: Plain calls', () => {
     const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     for(let i = 1n; i < 10n; i++) {
-      const ownerCross = await collectionEvm.ownerOfCross.staticCall(tokenId, {from: owner.address});
-      expect(ownerCross.eth).to.be.eq(owner.address);
-      expect(ownerCross.sub).to.be.eq('0');
+      const [ownerCrossEth, ownerCrossSub] = (await collectionEvm.ownerOfCross.staticCall(tokenId)).toArray();
+      expect(ownerCrossEth).to.be.eq(owner.address);
+      expect(ownerCrossSub).to.be.eq(0n);
 
       const newOwner = await helper.eth.createAccountWithBalance(donor, 100n);
 

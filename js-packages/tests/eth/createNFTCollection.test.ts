@@ -233,15 +233,13 @@ describe('(!negative tests!) Create NFT collection from EVM', () => {
     const destroyReceipt = await destroyTx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(destroyReceipt!);
 
-    expect(events).to.be.deep.equal([
-      {
-        address: await collectionHelper.getAddress(),
-        event: 'CollectionDestroyed',
+    expect(events).to.be.deep.equal({
+      'CollectionDestroyed': {
         args: {
           collectionId: collectionAddress,
         },
       },
-    ]);
+    });
 
     expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
 
