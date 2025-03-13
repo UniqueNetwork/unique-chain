@@ -22,8 +22,8 @@ export const expect = chai.expect;
 
 // FIXME: 4? 12? 24? How to select confirmations count?
 const confirmations = 4;
-// Confirmation blocks * 2 for safety * 12 seconds per block
-const timeout = (confirmations * 2) * (12 * 1000);
+// 2 min timeout, ~30 blocks
+const timeout = 2 * 60 * 1000;
 export const waitParams = [confirmations, timeout];
 
 export const hexlifyString = (value: string): string => hexlify(toUtf8Bytes(value));
