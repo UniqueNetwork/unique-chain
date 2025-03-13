@@ -280,7 +280,7 @@ jobs:
           echo "adding mochawesome"
           yarn add mochawesome
           echo "Ready to start Parallel tests"
-          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportDir=js-packages/tests/mochawesome-report/,reportFilename=test-parallel-${NOW}
+          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportDir=mochawesome-report/,reportFilename=test-parallel-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
