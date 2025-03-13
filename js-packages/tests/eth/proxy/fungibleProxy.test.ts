@@ -94,7 +94,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
-    
+
     await collection.mint(alice, 200n, {Ethereum: await contract.getAddress()});
 
     {
@@ -125,7 +125,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
   itEth('Can perform transferFrom()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
-    
+
     const caller = await helper.eth.createAccountWithBalance(donor);
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();

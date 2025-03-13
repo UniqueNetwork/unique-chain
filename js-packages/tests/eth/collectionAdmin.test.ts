@@ -161,12 +161,12 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const admin = await helper.eth.createAccountWithBalance(donor);
-    
+
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
     await (await collectionEvm.addCollectionAdmin.send(admin)).wait(...waitParams);
 
     const user = helper.eth.createAccount();
-    const adminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, admin)
+    const adminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, admin);
     await expect(adminCollectionEvm.addCollectionAdmin.staticCall(user))
       .to.be.rejectedWith('NoPermission');
 
@@ -185,7 +185,7 @@ describe('Add collection admins', () => {
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, true);
 
     const user = helper.eth.createAccount();
-    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin)
+    const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin);
     await expect(notAdminCollectionEvm.addCollectionAdmin.staticCall(user))
       .to.be.rejectedWith('NoPermission');
 
@@ -204,7 +204,7 @@ describe('Add collection admins', () => {
     const notAdminCross = helper.ethCrossAccount.fromAddress(notAdmin);
 
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
+
     await (await collectionEvm.addCollectionAdminCross.send(adminCross)).wait(...waitParams);
 
     const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin);
@@ -213,9 +213,7 @@ describe('Add collection admins', () => {
 
     const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
     expect(adminList.length).to.be.eq(1);
-
-    const admin0Cross = helper.ethCrossAccount.fromKeyringPair(adminList[0]);
-    expect(admin0Cross.eth.toLocaleLowerCase())
+    expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
       .to.be.eq(adminCross.eth.toLocaleLowerCase());
   });
 
@@ -224,7 +222,7 @@ describe('Add collection admins', () => {
     const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
+
     const [notAdmin1] = await helper.arrange.createAccounts([10n], donor);
     const notAdmin1Cross = helper.ethCrossAccount.fromKeyringPair(notAdmin1);
 
@@ -337,8 +335,8 @@ describe('Remove collection admins', () => {
     const notAdminCollectionEvm = helper.eth.changeContractCaller(collectionEvm, notAdmin);
     await expect(notAdminCollectionEvm.removeCollectionAdmin.send(admin))
       .to.be.rejectedWith('NoPermission');
-    
-      {
+
+    {
       const adminList = await helper.callRpc('api.rpc.unique.adminlist', [collectionId]);
       expect(adminList[0].asEthereum.toString().toLocaleLowerCase())
         .to.be.eq(admin.address.toLocaleLowerCase());

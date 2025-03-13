@@ -33,13 +33,13 @@ describe('Ethereum native RPC calls', () => {
     const recepient = helper.eth.createAccount();
 
     // Create a contract
-    const demoAbi = ["function transfer(address to, uint256 amount)"];
+    const demoAbi = ['function transfer(address to, uint256 amount)'];
     const demoContract = new Contract(NATIVE_TOKEN_ADDRESS, demoAbi, owner);
 
     const estimatedGas = await demoContract.transfer.estimateGas(
       recepient,
       90n * helper.balance.getOneTokenNominal(),
-      {value: 0n, maxFeePerGas: 1_500_000_000_000n}
+      {value: 0n, maxFeePerGas: 1_500_000_000_000n},
     );
 
     expect(Number(estimatedGas))

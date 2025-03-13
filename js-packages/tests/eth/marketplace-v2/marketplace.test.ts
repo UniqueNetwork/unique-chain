@@ -106,7 +106,7 @@ describe('Market V2 Contract', () => {
     else if(sub instanceof Uint8Array)
       return zeroPadBytes(sub, 64);
     else
-      throw `invalid substrate address type: ${typeof(sub)}`
+      throw `invalid substrate address type: ${typeof(sub)}`;
   }
 
   itEth('Put + Buy [eth]', async ({helper}) => {
@@ -155,7 +155,7 @@ describe('Market V2 Contract', () => {
     expect(sellerBalanceAfter).to.be.eq(0n);
 
 
-    let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
+    const [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
     expect(ownerCrossEth).to.be.eq(sellerCross.eth);
     expect(ownerCrossSub).to.be.eq(sellerCross.sub);
 
@@ -220,7 +220,7 @@ describe('Market V2 Contract', () => {
     await helper.nft.approveToken(seller, collectionId, +tokenId, {Ethereum: await market.getAddress()});
 
     await helper.eth.sendEVM(seller, await market.getAddress(), (await market.put.populateTransaction(collectionId, tokenId, PRICE, 1, sellerCross)).data, '0');
-    
+
     // Seller balance is still zero
     {
       const sellerBalance = await helper.balance.getSubstrate(seller.address);
@@ -229,25 +229,25 @@ describe('Market V2 Contract', () => {
 
     {
 
-      let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
+      const [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
       expect(ownerCrossEth).to.be.eq(sellerCross.eth);
       expect(substrateAddressToHex(ownerCrossSub)).to.be.eq(substrateAddressToHex(sellerCross.sub));
     }
 
     const [buyer] = await helper.arrange.createAccounts([600n], donor);
-    
+
     // Buyer has only expected balance
     {
       const buyerBalance = await helper.balance.getSubstrate(buyer.address);
       expect(buyerBalance).to.be.eq(600n * ONE_TOKEN);
     }
-    
+
     const buyerCross = helper.ethCrossAccount.fromKeyringPair(buyer);
 
     const buyerBalanceBefore = await helper.balance.getSubstrate(buyer.address);
     await helper.eth.sendEVM(buyer, await market.getAddress(), (await market.buy.populateTransaction(collectionId, tokenId, 1, buyerCross)).data, PRICE.toString());
     const buyerBalanceAfter = await helper.balance.getSubstrate(buyer.address);
-    
+
     // Buyer balance not changed: transaction is sponsored
     expect(buyerBalanceBefore).to.be.eq(buyerBalanceAfter + PRICE);
 
@@ -255,7 +255,7 @@ describe('Market V2 Contract', () => {
     const sellerBalanceAfterBuy = BigInt(await helper.balance.getSubstrate(seller.address));
     expect(sellerBalanceAfterBuy).to.be.eq(PRICE * (100n - MARKET_FEE) / 100n);
 
-    let [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
+    const [ownerCrossEth, ownerCrossSub] = (await collection.ownerOfCross.staticCall(tokenId)).toArray();
     expect(ownerCrossEth).to.be.eq(buyerCross.eth);
     expect(substrateAddressToHex(ownerCrossSub)).to.be.eq(substrateAddressToHex(buyerCross.sub));
   });
