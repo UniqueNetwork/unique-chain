@@ -16,6 +16,14 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
+  yarn-dev:
+    uses: ./.github/workflows/yarn-dev.yml
+    secrets: inherit    
+
+  unit-test:
+    uses: ./.github/workflows/unit-test.yml
+    secrets: inherit    
+
   xcm:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested
