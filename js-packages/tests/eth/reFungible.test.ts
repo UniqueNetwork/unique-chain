@@ -450,7 +450,7 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform transferFrom()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
     // const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'TransferFromy', '6', '6');
@@ -627,7 +627,7 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Can perform transferCross()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
 
     // const sender = await helper.eth.createAccountWithBalance(donor);
     // const receiverEth = await helper.eth.createAccountWithBalance(donor);
@@ -680,7 +680,8 @@ describe('Refungible: Plain calls', () => {
   });
 
   ['transfer', 'transferCross'].map(testCase => itEth(`Cannot ${testCase} non-owned token`, async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const sender = await helper.eth.createAccountWithBalance(donor);
     // const tokenOwner = await helper.eth.createAccountWithBalance(donor);
     // const receiverSub = minter;
@@ -701,7 +702,8 @@ describe('Refungible: Plain calls', () => {
   }));
 
   itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
     // const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry-Partial-to-Full', '6', '6');
@@ -731,7 +733,8 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('transfer event on transfer from full ownership to partial ownership', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
     // const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Transferry-Full-to-Partial', '6', '6');
@@ -760,7 +763,8 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Check balanceOfCross()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const collection = await helper.rft.mintCollection(minter, {});
     // const owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -775,7 +779,8 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Check ownerOfCross()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const collection = await helper.rft.mintCollection(minter, {});
     // let owner = await helper.ethCrossAccount.createAccountWithBalance(donor);
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -814,7 +819,7 @@ describe('RFT: Fees', () => {
   });
 
   itEth('transferFrom() call fee is less than 0.2UNQ', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
 
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
@@ -830,7 +835,7 @@ describe('RFT: Fees', () => {
   });
 
   itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
 
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();

@@ -285,12 +285,12 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Ethereum: caller});
+    const token = await collection.mintToken(alice, {Ethereum: caller.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT}));
+    const cost = await helper.eth.calculateFee({Ethereum: caller.address}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT}));
 
     console.log(`\t[ETH NFT transfer] Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }

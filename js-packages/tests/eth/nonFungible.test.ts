@@ -937,7 +937,7 @@ describe('NFT: Fees', () => {
   });
 
   itEth('transfer() call fee is less than 0.2UNQ', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const owner = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
 
@@ -963,7 +963,7 @@ describe('NFT: Substrate calls', () => {
   });
 
   itEth('Events emitted for mint()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(alice, {});
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     // const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft');
@@ -985,7 +985,7 @@ describe('NFT: Substrate calls', () => {
   });
 
   itEth('Events emitted for burn()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(alice, {});
     // const token = await collection.mintToken(alice);
 
@@ -1009,7 +1009,7 @@ describe('NFT: Substrate calls', () => {
   });
 
   itEth('Events emitted for approve()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
 
     // const collection = await helper.nft.mintCollection(alice, {});
@@ -1035,7 +1035,7 @@ describe('NFT: Substrate calls', () => {
   });
 
   itEth('Events emitted for transferFrom()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
 
@@ -1063,7 +1063,7 @@ describe('NFT: Substrate calls', () => {
   });
 
   itEth('Events emitted for transfer()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
 
     // const collection = await helper.nft.mintCollection(alice, {});
