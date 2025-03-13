@@ -20,7 +20,7 @@ import {
   CALCULATION_PERIOD,
 } from '@unique/test-utils/util.js';
 import {DevUniqueHelper} from '@unique/test-utils';
-import {itEth, expect, SponsoringMode} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
 
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;
@@ -607,17 +607,20 @@ describe('App promotion', () => {
     });
   });
 
-  describe('contract sponsoring', () => {
+  describe('eth contract sponsoring', () => {
     itEth('should set palletes address as a sponsor', async ({helper}) => {
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner); // await deployFlipper(web3, contractOwner);
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
 
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address]);
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress]);
 
-      expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
+      expect(await contractHelper.hasSponsor.staticCall(flipperAddress)).to.be.true;
+      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipperAddress])).toJSON()).to.be.equal(contractOwner.address.toLowerCase());
+      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipperAddress])).toJSON()).to.deep.equal({
         confirmed: {
           substrate: palletAddress,
         },
@@ -625,26 +628,29 @@ describe('App promotion', () => {
     });
 
     itEth('should overwrite sponsoring mode and existed sponsor', async ({helper}) => {
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner); // await deployFlipper(web3, contractOwner);
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
 
-      await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.fulfilled;
+      await (await contractHelper.selfSponsoredEnable.send(flipperAddress)).wait(...waitParams);
 
       // Contract is self sponsored
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.be.deep.equal({
+      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipperAddress])).toJSON()).to.be.deep.equal({
         confirmed: {
-          ethereum: flipper.options.address.toLowerCase(),
+          ethereum: flipperAddress.toLowerCase(),
         },
       });
 
       // set promotion sponsoring
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true);
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress], true);
 
       // new sponsor is pallet address
-      expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
+      expect(await contractHelper.hasSponsor.staticCall(flipperAddress)).to.be.true;
+      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipperAddress])).toJSON()).to.be.equal(contractOwner.address.toLowerCase());
+      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipperAddress])).toJSON()).to.deep.equal({
         confirmed: {
           substrate: palletAddress,
         },
@@ -652,40 +658,46 @@ describe('App promotion', () => {
     });
 
     itEth('can be overwritten by contract owner', async ({helper}) => {
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner); // await deployFlipper(web3, contractOwner);
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
 
       // contract sponsored by pallet
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true);
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress], true);
 
       // owner sets self sponsoring
-      await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.not.rejected;
+      await (await contractHelper.selfSponsoredEnable.send(flipperAddress)).wait(...waitParams);
 
-      expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.true;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
+      expect(await contractHelper.hasSponsor.staticCall(flipperAddress)).to.be.true;
+      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipperAddress])).toJSON()).to.be.equal(contractOwner.address.toLowerCase());
+      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipperAddress])).toJSON()).to.deep.equal({
         confirmed: {
-          ethereum: flipper.options.address.toLowerCase(),
+          ethereum: flipperAddress.toLowerCase(),
         },
       });
     });
 
     itEth('can not be set by non admin', async ({helper}) => {
       const [nonAdmin] = await getAccounts(1);
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner); // await deployFlipper(web3, contractOwner);
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
 
-      await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.fulfilled;
+      await (await contractHelper.selfSponsoredEnable.send(flipperAddress)).wait(...waitParams);
 
       // nonAdmin calls sponsorContract
-      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true)).to.be.rejectedWith('appPromotion.NoPermission');
+      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress], true)).to.be.rejectedWith('appPromotion.NoPermission');
 
       // contract still self-sponsored
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
+      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipperAddress])).toJSON()).to.deep.equal({
         confirmed: {
-          ethereum: flipper.options.address.toLowerCase(),
+          ethereum: flipperAddress.toLowerCase(),
         },
       });
     });
@@ -696,25 +708,29 @@ describe('App promotion', () => {
       const palletBalanceBefore = await helper.balance.getSubstrate(palletAddress);
 
       // Deploy flipper
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner); // await deployFlipper(web3, contractOwner);
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
 
       // Owner sets to sponsor every tx
-      await contractHelper.methods.setSponsoringRateLimit(flipper.options.address, 0).send({from: contractOwner});
-      await contractHelper.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: contractOwner});
-      await helper.eth.transferBalanceFromSubstrate(donor, flipper.options.address, 1000n); // transferBalanceToEth(api, alice, flipper.options.address, 1000n);
+      await (await contractHelper.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
+      await (await contractHelper.setSponsoringMode.send(flipperAddress, SponsoringMode.Generous)).wait(...waitParams);
+      await helper.eth.transferBalanceFromSubstrate(donor, flipperAddress, 1000n);
 
       // Set promotion to the Flipper
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true);
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress], true);
 
       // Caller calls Flipper
-      await flipper.methods.flip().send({from: caller});
-      expect(await flipper.methods.getValue().call()).to.be.true;
+      const callerFlipper = helper.eth.changeContractCaller(flipper, caller);
+      await (await callerFlipper.flip.send()).wait(...waitParams);
+      expect(await flipper.getValue.staticCall()).to.be.true;
 
       // The contracts and caller balances have not changed
       const callerBalance = await helper.balance.getEthereum(caller);
-      const contractBalanceAfter = await helper.balance.getEthereum(flipper.options.address);
+      const contractBalanceAfter = await helper.balance.getEthereum(flipperAddress);
       expect(callerBalance).to.be.equal(1000n * nominal);
       expect(1000n * nominal === contractBalanceAfter).to.be.true;
 
@@ -724,29 +740,33 @@ describe('App promotion', () => {
     });
   });
 
-  describe('stopSponsoringContract', () => {
+  describe('stop eth contract sponsoring', () => {
     itEth('should remove pallet address from contract sponsors', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor, 1000n);
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
       const flipper = await helper.eth.deployFlipper(contractOwner);
-      await helper.eth.transferBalanceFromSubstrate(donor, flipper.options.address);
+      const flipperAddress = await flipper.getAddress();
+
+      await helper.eth.transferBalanceFromSubstrate(donor, flipperAddress);
       const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
 
-      await contractHelper.methods.setSponsoringMode(flipper.options.address, SponsoringMode.Generous).send({from: contractOwner});
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address], true);
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address], true);
+      await (await contractHelper.setSponsoringMode.send(flipperAddress, SponsoringMode.Generous)).wait(...waitParams);
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress], true);
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipperAddress], true);
 
-      expect(await contractHelper.methods.hasSponsor(flipper.options.address).call()).to.be.false;
-      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipper.options.address])).toJSON()).to.be.equal(contractOwner);
-      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipper.options.address])).toJSON()).to.deep.equal({
+      expect(await contractHelper.hasSponsor.staticCall(flipperAddress)).to.be.false;
+      expect((await helper.callRpc('api.query.evmContractHelpers.owner', [flipperAddress])).toJSON()).to.be.equal(contractOwner.address.toLowerCase());
+      expect((await helper.callRpc('api.query.evmContractHelpers.sponsoring', [flipperAddress])).toJSON()).to.deep.equal({
         disabled: null,
       });
 
-      await flipper.methods.flip().send({from: caller});
-      expect(await flipper.methods.getValue().call()).to.be.true;
+      const callerFlipper = helper.eth.changeContractCaller(flipper, caller);
+      await (await callerFlipper.flip.send()).wait(...waitParams);
+      expect(await flipper.getValue.staticCall()).to.be.true;
 
       const callerBalance = await helper.balance.getEthereum(caller);
-      const contractBalanceAfter = await helper.balance.getEthereum(flipper.options.address);
+      const contractBalanceAfter = await helper.balance.getEthereum(flipperAddress);
 
       // caller payed for call
       expect(1000n * nominal > callerBalance).to.be.true;
@@ -755,22 +775,28 @@ describe('App promotion', () => {
 
     itEth('can not be called by non-admin', async ({helper}) => {
       const [nonAdmin] = await getAccounts(1);
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
 
-      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipper.options.address]);
-      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address]))
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
+      await helper.executeExtrinsic(palletAdmin, 'api.tx.appPromotion.sponsorContract', [flipperAddress]);
+      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipperAddress]))
         .to.be.rejectedWith(/appPromotion\.NoPermission/);
     });
 
     itEth('should not affect a contract which is not sponsored by pallete', async ({helper}) => {
       const [nonAdmin] = await getAccounts(1);
-      const contractOwner = (await helper.eth.createAccountWithBalance(donor, 1000n)).toLowerCase();
-      const flipper = await helper.eth.deployFlipper(contractOwner);
-      const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
-      await expect(contractHelper.methods.selfSponsoredEnable(flipper.options.address).send()).to.be.fulfilled;
 
-      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipper.options.address], true)).to.be.rejectedWith('appPromotion.NoPermission');
+      const contractOwner = await helper.eth.createAccountWithBalance(donor, 1000n);
+
+      const flipper = await helper.eth.deployFlipper(contractOwner);
+      const flipperAddress = await flipper.getAddress();
+
+      const contractHelper = await helper.ethNativeContract.contractHelpers(contractOwner);
+      await (await contractHelper.selfSponsoredEnable.send(flipperAddress)).wait(...waitParams);
+
+      await expect(helper.executeExtrinsic(nonAdmin, 'api.tx.appPromotion.stopSponsoringContract', [flipperAddress], true)).to.be.rejectedWith('appPromotion.NoPermission');
     });
   });
 
