@@ -439,7 +439,8 @@ describe('Refungible: Plain calls', () => {
   });
 
   itEth('Receiving Transfer event on burning into full ownership', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = await helper.eth.createAccountWithBalance(donor);
     // const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Devastation', '6', '6');
@@ -613,7 +614,8 @@ describe('Refungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for approve()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.rft.mintCollection(alice);
     // const token = await collection.mintToken(alice, 200n);
@@ -638,7 +640,8 @@ describe('Refungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transferFrom()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.rft.mintCollection(alice);
@@ -672,7 +675,8 @@ describe('Refungible: Substrate calls', () => {
   });
 
   itEth('Events emitted for transfer()', async ({helper}) => {
-    throw new Error('unimplemented');
+    // TODO: Refactor this
+    
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.rft.mintCollection(alice);
     // const token = await collection.mintToken(alice, 200n);

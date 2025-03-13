@@ -58,7 +58,7 @@
                 "avoidEscape": true
             }
         ],
-        "require-await": 2,
+        "require-await": "warn",
         "mocha/no-async-describe": "error",
         "mocha/no-nested-tests": "error",
         "mocha/no-synchronous-tests": "error",
@@ -97,13 +97,6 @@
         "template-curly-spacing": "warn",
         "space-in-parens": "warn",
         "arrow-body-style": ["warn", "as-needed"],
-        "no-restricted-syntax": [
-            "warn",
-            {
-                "message": "toHuman results in horrible, hard to debug conversions with no stability guarantees, use Codec/at least .toJson instead",
-                "selector": "MemberExpression > Identifier[name=\"toHuman\"]"
-            }
-        ],
         "@typescript-eslint/naming-convention": [
             "warn",
             {

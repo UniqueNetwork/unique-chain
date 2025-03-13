@@ -93,7 +93,6 @@ describe('EVM Migrations', () => {
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txSetData])).to.be.fulfilled;
     await expect(helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txFinish])).to.be.fulfilled;
 
-    const web3 = helper.getWeb3();
     const contract = new Contract(
       ADDRESS,
       [
