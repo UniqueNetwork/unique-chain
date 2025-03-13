@@ -60,7 +60,7 @@ describe('Can set collection limits', () => {
       const data = (await helper.rft.getData(collectionId))!;
       expect(data.raw.limits).to.deep.eq(expectedLimits);
       expect(await helper.collection.getEffectiveLimits(collectionId)).to.deep.eq(expectedLimits);
-      
+
       // Check limits from eth:
       const limitsEvm = await collectionEvm.collectionLimits.staticCall();
       expect(limitsEvm).to.have.length(9);
@@ -101,26 +101,16 @@ describe('Cannot set invalid collection limits', () => {
       const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.case, owner);
 
       // Cannot set non-existing limit
-      await expect(
-        collectionEvm.setCollectionLimit.staticCall({field: 9, value: {status: true, value: 1}})
-      ).to.be.rejectedWith('execution reverted: "value not convertible into enum \\"CollectionLimitField\\"');
+      await expect(collectionEvm.setCollectionLimit.staticCall({field: 9, value: {status: true, value: 1}})).to.be.rejectedWith('execution reverted: "value not convertible into enum \\"CollectionLimitField\\"');
 
       // Cannot disable limits
-      await expect(
-        collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 0}})
-      ).to.be.rejectedWith('execution reverted: "user can\'t disable limits');
+      await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: false, value: 0}})).to.be.rejectedWith('execution reverted: "user can\'t disable limits');
 
-      await expect(
-        collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: invalidLimits.accountTokenOwnershipLimit}})
-      ).to.be.rejectedWith(`execution reverted: "can't convert value to u32 \\"${invalidLimits.accountTokenOwnershipLimit}\\"`);
+      await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: invalidLimits.accountTokenOwnershipLimit}})).to.be.rejectedWith(`execution reverted: "can't convert value to u32 \\"${invalidLimits.accountTokenOwnershipLimit}\\"`);
 
-      await expect(
-        collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.TransferEnabled, value: {status: true, value: 3}})
-      ).to.be.rejectedWith(`execution reverted: "can't convert value to boolean \\"${invalidLimits.transfersEnabled}\\"`);
+      await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.TransferEnabled, value: {status: true, value: 3}})).to.be.rejectedWith(`execution reverted: "can't convert value to boolean \\"${invalidLimits.transfersEnabled}\\"`);
 
-      expect(
-        collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: -1}})
-      ).to.be.rejectedWith('value out-of-bounds');
+      expect(collectionEvm.setCollectionLimit.send({field: CollectionLimitField.SponsoredDataSize, value: {status: true, value: -1}})).to.be.rejectedWith('value out-of-bounds');
     }));
 
   [
@@ -135,18 +125,14 @@ describe('Cannot set invalid collection limits', () => {
 
       const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, testCase.case, nonOwner);
 
-      await expect(
-        collectionEvm.setCollectionLimit.staticCall({
-          field: CollectionLimitField.AccountTokenOwnership,
-          value: {status: true, value: 1000n}
-        })
-      ).to.be.rejectedWith('NoPermission');
+      await expect(collectionEvm.setCollectionLimit.staticCall({
+        field: CollectionLimitField.AccountTokenOwnership,
+        value: {status: true, value: 1000n},
+      })).to.be.rejectedWith('NoPermission');
 
-      await expect(
-        collectionEvm.setCollectionLimit.send({
-          field: CollectionLimitField.AccountTokenOwnership,
-          value: {status: true, value: 1000n}
-        })
-      ).to.be.rejected;
+      await expect(collectionEvm.setCollectionLimit.send({
+        field: CollectionLimitField.AccountTokenOwnership,
+        value: {status: true, value: 1000n},
+      })).to.be.rejected;
     }));
 });

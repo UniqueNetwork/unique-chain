@@ -135,7 +135,7 @@ describe('Fractionalizer contract usage', () => {
     const receipt = await tx.wait(...waitParams);
     const events = helper.eth.normalizeEvents(receipt!);
 
-    expect(events.events).to.be.like({RFTCollectionSet: {}});
+    expect(events).to.be.like({RFTCollectionSet: {}});
     expect(events.RFTCollectionSet.args._collection).to.be.ok;
   });
 

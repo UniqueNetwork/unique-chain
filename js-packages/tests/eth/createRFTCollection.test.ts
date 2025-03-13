@@ -165,16 +165,14 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
   itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    
+
     {
       const MAX_NAME_LENGTH = 64;
       const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
       const description = 'A';
       const tokenPrefix = 'A';
 
-      await expect(
-        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: 2n * nominal})
-      ).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+      await expect(collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: 2n * nominal})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
 
     {
@@ -182,9 +180,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const collectionName = 'A';
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
-      await expect(
-        collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: 2n * nominal})
-      ).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+      await expect(collectionHelper.createRFTCollection(collectionName, description, tokenPrefix, {value: 2n * nominal})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
 
     {
@@ -192,18 +188,14 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
       const collectionName = 'A';
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
-      await expect(
-        collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: 2n * nominal})
-      ).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+      await expect(collectionHelper.createRFTCollection.staticCall(collectionName, description, tokenPrefix, {value: 2n * nominal})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
 
   itEth('(!negative test!) Create collection (no funds)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
-    await expect(
-      collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: 1n * nominal})
-    ).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+    await expect(collectionHelper.createRFTCollection.staticCall('Peasantry', 'absolutely anything', 'TWIW', {value: 1n * nominal})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
   });
 
   // Soft-deprecated
@@ -213,7 +205,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const {collectionAddress} = await helper.eth.createRFTCollection(owner, 'Transgressed', 'absolutely anything', 'YVNE');
     const peasantCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', peasant, true);
     const EXPECTED_ERROR = 'NoPermission';
-    
+
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       await expect(peasantCollection.setCollectionSponsor.staticCall(sponsor)).to.be.rejectedWith(EXPECTED_ERROR);
@@ -252,7 +244,7 @@ describe('(!negative tests!) Create RFT collection from EVM', () => {
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
     await (await (collectionHelper.destroyCollection.send(collectionAddress))).wait(...waitParams);
-    
+
     expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
     expect(await helper.collection.getData(collectionId)).to.be.null;
   });

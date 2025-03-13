@@ -362,7 +362,7 @@ describe('Create collection from EVM', () => {
       const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
       await (await collectionHelper.destroyCollection.send(collectionAddress)).wait(...waitParams);
-      
+
       expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
       expect(await helper.collection.getData(collectionId)).to.be.null;
     });
@@ -468,7 +468,7 @@ describe('Create collection from EVM', () => {
 
       const sponsorCollectionEvm = helper.eth.changeContractCaller(collectionEvm, sponsor);
       await (await sponsorCollectionEvm.confirmCollectionSponsorship.send()).wait(...waitParams);
-      
+
       let sponsorStruct = await collectionEvm.collectionSponsor.staticCall();
       expect(helper.address.restoreCrossAccountFromBigInt(BigInt(sponsorStruct.sub))).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.false;
@@ -605,7 +605,7 @@ describe('Create collection from EVM', () => {
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
       await expect(collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
-      await (await sponsorCollectionEvm.confirmCollectionSponsorship.send()).wait(...waitParams);      
+      await (await sponsorCollectionEvm.confirmCollectionSponsorship.send()).wait(...waitParams);
       collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Confirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
 
@@ -772,7 +772,7 @@ describe('Create collection from EVM', () => {
             adminList: [adminCrossSub, adminCrossEth],
           },
         ).send();
-        
+
         const collectionEvm = helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner, true);
 
         // 1. Expect api.rpc.unique.adminlist returns admins:
@@ -878,18 +878,14 @@ describe('Create collection from EVM', () => {
 
       await (await collectionEvm.removeCollectionAdminCross.send(adminCrossSub)).wait(...waitParams);
       await (await collectionEvm.removeCollectionAdminCross.send(adminCrossEth)).wait(...waitParams);
-      
+
       const adminList = await helper.collection.getAdmins(collectionId);
       expect(adminList.length).to.be.eq(0);
 
       // Non admin cannot mint:
-      await expect(
-        helper.nft.mintToken(adminSub, {collectionId, owner: {Substrate: adminSub.address}})
-      ).to.be.rejectedWith(/common.PublicMintingNotAllowed/);
-      
-      await expect(
-        helper.eth.changeContractCaller(collectionEvm, adminEth).mint.send(adminEth.address)
-      ).to.be.rejected;
+      await expect(helper.nft.mintToken(adminSub, {collectionId, owner: {Substrate: adminSub.address}})).to.be.rejectedWith(/common.PublicMintingNotAllowed/);
+
+      await expect(helper.eth.changeContractCaller(collectionEvm, adminEth).mint.send(adminEth.address)).to.be.rejected;
     });
   });
 
@@ -955,7 +951,7 @@ describe('Create collection from EVM', () => {
           const data = (await helper.rft.getData(collectionId))!;
           expect(data.raw.limits).to.deep.eq(expectedLimits);
           expect(await helper.collection.getEffectiveLimits(collectionId)).to.deep.eq(expectedLimits);
-          
+
           // Check limits from eth:
           const limitsEvm = await collectionEvm.collectionLimits.staticCall();
           expect(limitsEvm).to.have.length(9);
@@ -1453,13 +1449,9 @@ describe('Create collection from EVM', () => {
     itEth('NFT: can\'t set foreign flag number', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
-      await expect(
-        helper.eth.createCollection(owner, {...createCollectionData, flags: 128}).send()
-      ).to.be.rejectedWith(/internal flags were used/);
-      
-      await expect(
-        helper.eth.createCollection(owner, {...createCollectionData, flags: 192}).send()
-      ).to.be.rejectedWith(/internal flags were used/);
+      await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: 128}).send()).to.be.rejectedWith(/internal flags were used/);
+
+      await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: 192}).send()).to.be.rejectedWith(/internal flags were used/);
     });
 
     itEth('NFT: use enum for flags', async ({helper}) => {
@@ -1474,13 +1466,9 @@ describe('Create collection from EVM', () => {
     itEth('NFT: foreign flag enum is ignored', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
-      await expect(
-        helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Foreign]}).send()
-      ).to.be.rejectedWith(/internal flags were used/);
+      await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Foreign]}).send()).to.be.rejectedWith(/internal flags were used/);
 
-      await expect(
-        helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Erc721metadata | CollectionFlag.Foreign]}).send()
-      ).to.be.rejectedWith(/internal flags were used/);
+      await expect(helper.eth.createCollection(owner, {...createCollectionData, flags: [CollectionFlag.Erc721metadata | CollectionFlag.Foreign]}).send()).to.be.rejectedWith(/internal flags were used/);
     });
   });
 });
