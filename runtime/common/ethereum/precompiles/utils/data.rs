@@ -215,8 +215,7 @@ impl EvmDataWriter {
 			let free_space_offset = output.len() - offset_datum.offset_shift;
 
 			// Override dummy offset to the offset it will be in the final output.
-			let offset_bytes = U256::from(free_space_offset)
-				.to_big_endian();
+			let offset_bytes = U256::from(free_space_offset).to_big_endian();
 			output[offset_position..offset_position_end].copy_from_slice(&offset_bytes);
 
 			// Append this data at the end of the current output.
@@ -314,7 +313,7 @@ impl EvmData for U256 {
 	}
 
 	fn write(writer: &mut EvmDataWriter, value: Self) {
-		let buffer =  value.to_big_endian();
+		let buffer = value.to_big_endian();
 		writer.data.extend_from_slice(&buffer);
 	}
 }

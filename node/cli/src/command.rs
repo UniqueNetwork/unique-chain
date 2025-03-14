@@ -33,6 +33,7 @@
 // limitations under the License.
 
 use cumulus_primitives_core::ParaId;
+use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -398,19 +399,19 @@ pub fn run() -> Result<()> {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
 
-			runner.run_node_until_exit(|mut config| async move {
+			runner.run_node_until_exit(|config| async move {
 				let hwbench = if !cli.no_hardware_benchmarks {
 					config.database.path().map(|database_path| {
 						let _ = std::fs::create_dir_all(database_path);
-						sc_sysinfo::gather_hwbench(Some(database_path))
+						sc_sysinfo::gather_hwbench(Some(database_path), &SUBSTRATE_REFERENCE_HARDWARE)
 					})
 				} else {
 					None
 				};
 
-				if cli.increase_future_pool {
-					config.transaction_pool.future = config.transaction_pool.ready.clone();
-				}
+				// if cli.increase_future_pool {
+				// 	config.transaction_pool.future = config.transaction_pool.ready.clone();
+				// }
 
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
 
@@ -531,7 +532,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 		_support_url: &String,
 		_impl_version: &String,
 		_logger_hook: F,
-		_config: &sc_service::Configuration,
 	) -> Result<()> {
 		unreachable!("PolkadotCli is never initialized; qed");
 	}

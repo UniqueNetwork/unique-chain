@@ -402,7 +402,9 @@ impl<T: Config> Pallet<T> {
 		weight = weight.saturating_add(T::DbWeight::get().reads_writes(r, w));
 
 		for (asset_id, collection_id) in foreign_asset_to_collection.into_iter() {
-			if let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(asset_id).and_then(staging_xcm::v5::AssetId::try_from) {
+			if let Ok(asset_id) = staging_xcm::v4::AssetId::try_from(asset_id)
+				.and_then(staging_xcm::v5::AssetId::try_from)
+			{
 				<ForeignAssetToCollection<T>>::insert(&asset_id, collection_id);
 				<CollectionToForeignAsset<T>>::insert(collection_id, asset_id);
 				weight = weight.saturating_add(T::DbWeight::get().writes(2));
@@ -446,7 +448,9 @@ impl<T: Config> Pallet<T> {
 		for (collection_id, asset_instance, token_id) in
 			foreign_reserve_asset_instance_to_token_id.into_iter()
 		{
-			if let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(asset_instance).and_then(staging_xcm::v5::AssetInstance::try_from) {
+			if let Ok(asset_instance) = staging_xcm::v4::AssetInstance::try_from(asset_instance)
+				.and_then(staging_xcm::v5::AssetInstance::try_from)
+			{
 				<ForeignReserveAssetInstanceToTokenId<T>>::insert(
 					collection_id,
 					asset_instance,

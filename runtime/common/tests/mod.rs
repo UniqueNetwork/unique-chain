@@ -87,7 +87,10 @@ fn make_basic_storage() -> Storage {
 
 	let cfg = RuntimeGenesisConfig {
 		collator_selection: CollatorSelectionConfig { invulnerables },
-		session: SessionConfig { keys, ..Default::default() },
+		session: SessionConfig {
+			keys,
+			..Default::default()
+		},
 		parachain_info: ParachainInfoConfig {
 			parachain_id: PARA_ID.into(),
 			..Default::default()

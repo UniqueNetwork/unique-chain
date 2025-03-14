@@ -344,7 +344,10 @@ where
 		Network,
 	>::new(
 		&parachain_config.network,
-		parachain_config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+		parachain_config
+			.prometheus_config
+			.as_ref()
+			.map(|cfg| cfg.registry.clone()),
 	);
 
 	let client = params.client.clone();
@@ -641,7 +644,9 @@ pub struct StartConsensusParameters<'a> {
 #[allow(clippy::redundant_clone)]
 pub fn start_consensus<HF, RuntimeApi, Runtime>(
 	client: Arc<FullClient<RuntimeApi, HF>>,
-	transaction_pool: Arc<sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi, HF>>>,
+	transaction_pool: Arc<
+		sc_transaction_pool::TransactionPoolHandle<Block, FullClient<RuntimeApi, HF>>,
+	>,
 	parameters: StartConsensusParameters<'_>,
 ) -> Result<(), sc_service::Error>
 where
@@ -805,7 +810,10 @@ where
 		Network,
 	>::new(
 		&config.network,
-		config.prometheus_config.as_ref().map(|cfg| cfg.registry.clone()),
+		config
+			.prometheus_config
+			.as_ref()
+			.map(|cfg| cfg.registry.clone()),
 	);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
