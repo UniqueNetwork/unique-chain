@@ -41,8 +41,8 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    const balance = await contract.balanceOf.staticCall(owner);
-    expect(balance).to.be.eq('123000000000000000000');
+    const balance = await contract.balanceOf.staticCall(owner.address);
+    expect(balance).to.be.eq(123000000000000000000n);
   });
 
   itEth('decimals()', async ({helper}) => {
@@ -50,7 +50,13 @@ describe('NativeFungible: ERC20 calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    const realDecimals = (await helper.chain.getChainProperties().tokenDecimals)[0].toString();
+    const chainProperties = await helper.chain.getChainProperties();
+    if(!chainProperties.tokenDecimals) {
+      console.log('bad chain properties (token decimals)', chainProperties);
+      throw new Error('Chain return bad chainProperties');
+    }
+
+    const realDecimals = BigInt(chainProperties.tokenDecimals[0]);
     const decimals = await contract.decimals.staticCall();
     expect(decimals).to.be.eq(realDecimals);
   });
@@ -69,8 +75,14 @@ describe('NativeFungible: ERC20 calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
+    
+    const chainProperties = await helper.chain.getChainProperties();
+    if(!chainProperties.tokenSymbol) {
+      console.log('bad chain properties (token symbol)', chainProperties);
+      throw new Error('Chain return bad chainProperties');
+    }
 
-    const realName = (await helper.chain.getChainProperties().tokenSymbol)[0];
+    const realName = chainProperties.tokenSymbol[0];
     const name = await contract.symbol.staticCall();
     expect(name).to.be.eq(realName);
   });
@@ -94,7 +106,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
-    await (await contract.transfer.send(receiver, 50)).wait(...waitParams);
+    await (await contract.transfer.send(receiver.address, 50)).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
@@ -112,7 +124,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
-    await (await contract.transferFrom(owner, receiver, 50)).wait(...waitParams);
+    await (await contract.transferFrom(owner.address, receiver.address, 50)).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
@@ -120,7 +132,8 @@ describe('NativeFungible: ERC20 calls', () => {
     expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
     expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
 
-    await expect(contract.transferFrom.staticCall(receiver, receiver, 50)).to.be.rejectedWith('ApprovedValueTooLow');
+    await expect(contract.transferFrom.staticCall(receiver.address, receiver.address, 50))
+      .to.be.rejectedWith('ApprovedValueTooLow');
   });
 });
 
@@ -160,7 +173,9 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
     const balanceOwnerBefore = await helper.balance.getEthereum(owner);
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
-    await (await contract.transferFromCross.send(owner, receiver, 50, {from: owner.address})).wait(...waitParams);
+    await (
+      await contract.transferFromCross.send(owner.address, receiver.address, 50)
+    ).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
     const balanceReceiverAfter = await helper.balance.getEthereum(receiver);
@@ -168,7 +183,7 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
     expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
     expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
 
-    await expect(contract.transferFromCross.staticCall(receiver, receiver, 50, {from: owner.address}))
+    await expect(contract.transferFromCross.staticCall(receiver.address, receiver.address, 50))
       .to.be.rejectedWith('no permission');
   });
 });
