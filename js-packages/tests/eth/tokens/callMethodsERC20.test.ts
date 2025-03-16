@@ -35,10 +35,10 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
     itEth('totalSupply', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
-      const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
+      const mintingParams = testCase.mode === 'ft' ? [caller.address, 200n] : [caller.address];
 
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('TotalSupply', '6', '6', testCase.mode)).send();
-      if(testCase.mode === 'rft') await (await collection.mint.send(caller)).wait(...waitParams);
+      if(testCase.mode === 'rft') await (await collection.mint.send(caller.address)).wait(...waitParams);
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -51,15 +51,15 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
         : await (await contract.repartition.send(200)).wait(...waitParams);
 
       const totalSupply = await contract.totalSupply.staticCall();
-      expect(totalSupply).to.equal('200');
+      expect(totalSupply).to.equal(200n);
     });
 
     itEth('balanceOf', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
-      const mintingParams = testCase.mode === 'ft' ? [caller, 200n] : [caller];
+      const mintingParams = testCase.mode === 'ft' ? [caller.address, 200n] : [caller.address];
 
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
-      if(testCase.mode === 'rft') await (await collection.mint.send(caller)).wait(...waitParams);
+      if(testCase.mode === 'rft') await (await collection.mint.send(caller.address)).wait(...waitParams);
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -71,14 +71,14 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
         ? await (await contract.mint.send(...mintingParams)).wait(...waitParams)
         : await (await contract.repartition.send(200)).wait(...waitParams);
 
-      const balance = await contract.balanceOf.staticCall(caller);
-      expect(balance).to.equal('200');
+      const balance = await contract.balanceOf.staticCall(caller.address);
+      expect(balance).to.equal(200n);
     });
 
     itEth('decimals', async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);
       const {collection, collectionId} = await helper.eth.createCollection(caller, new CreateCollectionData('BalanceOf', 'Descroption', 'Prefix', testCase.mode)).send();
-      if(testCase.mode === 'rft') await (await collection.mint.send(caller)).wait(...waitParams);
+      if(testCase.mode === 'rft') await (await collection.mint.send(caller.address)).wait(...waitParams);
 
       // Use collection contract for FT or token contract for RFT:
       const contract = testCase.mode === 'ft'
@@ -86,7 +86,7 @@ import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
         : await helper.ethNativeContract.rftTokenById(collectionId, 1, caller);
 
       const decimals = await contract.decimals.staticCall();
-      expect(decimals).to.equal(testCase.mode === 'rft' ? '0' : '18');
+      expect(decimals).to.equal(testCase.mode === 'rft' ? 0n : 18n);
     });
   });
 });
