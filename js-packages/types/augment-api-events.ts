@@ -725,6 +725,7 @@ declare module '@polkadot/api-base/types/events' {
       [key: string]: AugmentedEvent<ApiType>;
     };
     foreignAssets: {
+      ForeignAssetMoved: AugmentedEvent<ApiType, [oldAssetId: XcmVersionedAssetId, newAssetId: XcmVersionedAssetId], { oldAssetId: XcmVersionedAssetId, newAssetId: XcmVersionedAssetId }>;
       /**
        * The foreign asset registered.
        **/

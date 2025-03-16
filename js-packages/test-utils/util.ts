@@ -11,7 +11,7 @@ import {Context} from 'mocha';
 import config from '../tests/config.js';
 import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
 import type {ILogger} from '@unique-nft/playgrounds/types.js';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestendAssetHubHelper, DevKusamaAssetHubHelper, DevPolkadotAssetHubHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -69,11 +69,11 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
 
 export const usingPlaygrounds = <R = void>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<R>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper, R>(DevUniqueHelper, url, code);
 
-export const usingWestendAssetHubPlaygrounds = (code: (helper: DevWestendAssetHubHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.westendAssetHubUrl) => usingPlaygroundsGeneral<DevWestendAssetHubHelper>(DevWestendAssetHubHelper, url, code);
+export const usingWestendAssetHubPlaygrounds = (code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.westendAssetHubUrl) => usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 
-export const usingKusamaAssetHubPlaygrounds = (code: (helper: DevWestendAssetHubHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.kusamaAssetHubUrl) => usingPlaygroundsGeneral<DevKusamaAssetHubHelper>(DevWestendAssetHubHelper, url, code);
+export const usingKusamaAssetHubPlaygrounds = (code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.kusamaAssetHubUrl) => usingPlaygroundsGeneral<DevStatemineHelper>(DevWestmintHelper, url, code);
 
-export const usingPolkadotAssetHubPlaygrounds = (code: (helper: DevWestendAssetHubHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.polkadotAssetHubUrl) => usingPlaygroundsGeneral<DevPolkadotAssetHubHelper>(DevWestendAssetHubHelper, url, code);
+export const usingPolkadotAssetHubPlaygrounds = (code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.polkadotAssetHubUrl) => usingPlaygroundsGeneral<DevStatemintHelper>(DevWestmintHelper, url, code);
 
 export const usingRelayPlaygrounds = (code: (helper: DevRelayHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.relayUrl) => usingPlaygroundsGeneral<DevRelayHelper>(DevRelayHelper, url, code);
 

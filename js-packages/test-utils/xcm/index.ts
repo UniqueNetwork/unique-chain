@@ -339,14 +339,14 @@ export class RelayHelper extends XcmChainHelper {
   }
 }
 
-export class WestendAssetHubHelper extends XcmChainHelper {
-  balance: SubstrateBalanceGroup<WestendAssetHubHelper>;
-  xcm: XcmGroup<WestendAssetHubHelper>;
-  assets: AssetsGroup<WestendAssetHubHelper>;
-  xTokens: XTokensGroup<WestendAssetHubHelper>;
+export class WestmintHelper extends XcmChainHelper {
+  balance: SubstrateBalanceGroup<WestmintHelper>;
+  xcm: XcmGroup<WestmintHelper>;
+  assets: AssetsGroup<WestmintHelper>;
+  xTokens: XTokensGroup<WestmintHelper>;
 
   constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
-    super(logger, options.helperBase ?? WestendAssetHubHelper);
+    super(logger, options.helperBase ?? WestmintHelper);
 
     this.balance = new SubstrateBalanceGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');

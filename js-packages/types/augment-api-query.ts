@@ -254,7 +254,7 @@ declare module '@polkadot/api-base/types/storage' {
        * Determined by [Config::Consideration] and may be not present for certain proposals (e.g. if
        * the proposal count at the time of creation was below threshold N).
        **/
-      costOf: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, Null]>>>, [H256]> & QueryableStorageEntry<ApiType, [H256]>;
+      costOf: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, u128]>>>, [H256]> & QueryableStorageEntry<ApiType, [H256]>;
       /**
        * The current members of the collective. This is stored sorted (just by value).
        **/
@@ -570,7 +570,7 @@ declare module '@polkadot/api-base/types/storage' {
        * Determined by [Config::Consideration] and may be not present for certain proposals (e.g. if
        * the proposal count at the time of creation was below threshold N).
        **/
-      costOf: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, Null]>>>, [H256]> & QueryableStorageEntry<ApiType, [H256]>;
+      costOf: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, u128]>>>, [H256]> & QueryableStorageEntry<ApiType, [H256]>;
       /**
        * The current members of the collective. This is stored sorted (just by value).
        **/
@@ -1300,7 +1300,7 @@ declare module '@polkadot/api-base/types/storage' {
        * Determined by [Config::Consideration] and may be not present for certain proposals (e.g. if
        * the proposal count at the time of creation was below threshold N).
        **/
-      costOf: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, Null]>>>, [H256]> & QueryableStorageEntry<ApiType, [H256]>;
+      costOf: AugmentedQuery<ApiType, (arg: H256 | string | Uint8Array) => Observable<Option<ITuple<[AccountId32, u128]>>>, [H256]> & QueryableStorageEntry<ApiType, [H256]>;
       /**
        * The current members of the collective. This is stored sorted (just by value).
        **/

@@ -1209,6 +1209,7 @@ declare module '@polkadot/api-base/types/submittable' {
     };
     foreignAssets: {
       forceRegisterForeignAsset: AugmentedSubmittable<(versionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array, name: Vec<u16> | (u16 | AnyNumber | Uint8Array)[], tokenPrefix: Bytes | string | Uint8Array, mode: PalletForeignAssetsForeignCollectionMode | { NFT: any } | { Fungible: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedAssetId, Vec<u16>, Bytes, PalletForeignAssetsForeignCollectionMode]>;
+      forceResetForeignAssetLocation: AugmentedSubmittable<(existingVersionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array, newVersionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedAssetId, XcmVersionedAssetId]>;
       /**
        * Generic tx
        **/

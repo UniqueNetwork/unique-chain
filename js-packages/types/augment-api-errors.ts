@@ -811,6 +811,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ForeignAssetAlreadyRegistered: AugmentedError<ApiType>;
       /**
+       * The specified foreign asset is not found.
+       **/
+      ForeignAssetNotFound: AugmentedError<ApiType>;
+      /**
        * Generic error
        **/
       [key: string]: AugmentedError<ApiType>;
