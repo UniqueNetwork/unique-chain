@@ -1,10 +1,10 @@
-import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {readFile} from 'fs/promises';
 import type {ICrossAccountId} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
-import {Contract} from 'web3-eth-contract';
+import {Contract} from 'ethers';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.js';
 import {makeNames} from '@unique/test-utils/util.js';
@@ -138,7 +138,7 @@ async function benchMintFee(
 
   await helper.eth.transferBalanceFromSubstrate(
     donor,
-    proxyContract.options.address,
+    await proxyContract.getAddress(),
     100n,
   );
 
@@ -146,8 +146,8 @@ async function benchMintFee(
     'nft',
     helper,
     privateKey,
-    ethSigner,
-    proxyContract.options.address,
+    ethSigner.address,
+    await proxyContract.getAddress(),
     PERMISSIONS,
   )) as UniqueNFTCollection;
 
@@ -164,16 +164,14 @@ async function benchMintFee(
 
   const receiverEthAddress = helper.address.substrateToEth(substrateReceiver.address);
 
-  const encodedCall = collectionContract.methods
-    .mint(receiverEthAddress)
-    .encodeABI();
+  const encodedCall = (await collectionContract.mint.populateTransaction(receiverEthAddress)).data;
 
   const ethFee = await helper.arrange.calculcateFee(
     {Substrate: donor.address},
     async () => {
       await helper.eth.sendEVM(
         donor,
-        collectionContract.options.address,
+        await collectionContract.getAddress(),
         encodedCall,
         '0',
       );
@@ -181,14 +179,12 @@ async function benchMintFee(
   );
 
   const evmProxyContractFee = await helper.arrange.calculcateFee(
-    {Ethereum: ethSigner},
+    {Ethereum: ethSigner.address},
     async () => {
-      await proxyContract.methods
-        .mintToSubstrate(
-          helper.ethAddress.fromCollectionId(collection.collectionId),
-          substrateReceiver.addressRaw,
-        )
-        .send({from: ethSigner});
+      await (await proxyContract.mintToSubstrate.send(
+        helper.ethAddress.fromCollectionId(collection.collectionId),
+        substrateReceiver.addressRaw,
+      )).wait(...waitParams);
     },
   );
 
@@ -217,8 +213,8 @@ async function benchMintWithProperties(
     helper,
     privateKey,
     {Substrate: donor.address},
-    ethSigner,
-    proxyContract.options.address,
+    ethSigner.address,
+    await proxyContract.getAddress(),
     async (collection) => {
       await collection.mintToken(
         donor,
@@ -232,8 +228,8 @@ async function benchMintWithProperties(
     helper,
     privateKey,
     {Substrate: donor.address},
-    ethSigner,
-    proxyContract.options.address,
+    ethSigner.address,
+    await proxyContract.getAddress(),
     async (collection) => {
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
@@ -242,27 +238,25 @@ async function benchMintWithProperties(
         true,
       );
 
-      const subTokenId = await evmContract.methods.nextTokenId().call();
+      const subTokenId = await evmContract.nextTokenId.staticCall();
 
-      let encodedCall = evmContract.methods
-        .mint(receiverEthAddress)
-        .encodeABI();
+      let encodedCall = (await evmContract.mint.populateTransaction(receiverEthAddress)).data;
 
       await helper.eth.sendEVM(
         donor,
-        evmContract.options.address,
+        await evmContract.getAddress(),
         encodedCall,
         '0',
       );
 
       for(const val of PROPERTIES.slice(0, setup.propertiesNumber)) {
-        encodedCall = await evmContract.methods
-          .setProperty(subTokenId, val.key, Buffer.from(val.value))
-          .encodeABI();
+        encodedCall = (await evmContract.setProperty.populateTransaction(
+          subTokenId, val.key, Buffer.from(val.value)
+        )).data;
 
         await helper.eth.sendEVM(
           donor,
-          evmContract.options.address,
+          await evmContract.getAddress(),
           encodedCall,
           '0',
         );
@@ -274,37 +268,32 @@ async function benchMintWithProperties(
     helper,
     privateKey,
     {Substrate: donor.address},
-    ethSigner,
-    proxyContract.options.address,
+    ethSigner.address,
+    await proxyContract.getAddress(),
     async (collection) => {
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
       );
 
-      const subTokenId = await evmContract.methods.nextTokenId().call();
+      const subTokenId = await evmContract.nextTokenId.staticCall();
 
-      let encodedCall = evmContract.methods
-        .mint(receiverEthAddress)
-        .encodeABI();
+      let encodedCall = (await evmContract.mint.populateTransaction(receiverEthAddress)).data;
 
       await helper.eth.sendEVM(
         donor,
-        evmContract.options.address,
+        await evmContract.getAddress(),
         encodedCall,
         '0',
       );
 
-      encodedCall = await evmContract.methods
-        .setProperties(
-          subTokenId,
-          PROPERTIES.slice(0, setup.propertiesNumber),
-        )
-        .encodeABI();
+      encodedCall = (await evmContract.setProperties.populateTransaction(
+        subTokenId, PROPERTIES.slice(0, setup.propertiesNumber)
+      )).data;
 
       await helper.eth.sendEVM(
         donor,
-        evmContract.options.address,
+        await evmContract.getAddress(),
         encodedCall,
         '0',
       );
@@ -314,54 +303,50 @@ async function benchMintWithProperties(
   const ethMintCrossFee = await calculateFeeNftMintWithProperties(
     helper,
     privateKey,
-    {Ethereum: ethSigner},
-    ethSigner,
-    proxyContract.options.address,
+    {Ethereum: ethSigner.address},
+    ethSigner.address,
+    await proxyContract.getAddress(),
     async (collection) => {
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
+        ethSigner,
       );
 
-      await evmContract.methods.mintCross(
+      await (await evmContract.mintCross.send(
         helper.ethCrossAccount.fromAddress(receiverEthAddress),
         PROPERTIES.slice(0, setup.propertiesNumber),
-      )
-        .send({from: ethSigner});
+      )).wait(...waitParams);
     },
   );
 
   const proxyContractFee = await calculateFeeNftMintWithProperties(
     helper,
     privateKey,
-    {Ethereum: ethSigner},
-    ethSigner,
-    proxyContract.options.address,
+    {Ethereum: ethSigner.address},
+    ethSigner.address,
+    await proxyContract.getAddress(),
     async (collection) => {
-      await proxyContract.methods
-        .mintToSubstrateWithProperty(
-          helper.ethAddress.fromCollectionId(collection.collectionId),
-          susbstrateReceiver.addressRaw,
-          PROPERTIES.slice(0, setup.propertiesNumber),
-        )
-        .send({from: ethSigner});
+      await (await proxyContract.mintToSubstrateWithProperty(
+        helper.ethAddress.fromCollectionId(collection.collectionId),
+        susbstrateReceiver.addressRaw,
+        PROPERTIES.slice(0, setup.propertiesNumber),
+      )).wait(...waitParams);
     },
   );
 
   const proxyContractBulkFee = await calculateFeeNftMintWithProperties(
     helper,
     privateKey,
-    {Ethereum: ethSigner},
-    ethSigner,
-    proxyContract.options.address,
+    {Ethereum: ethSigner.address},
+    ethSigner.address,
+    await proxyContract.getAddress(),
     async (collection) => {
-      await proxyContract.methods
-        .mintToSubstrateBulkProperty(
-          helper.ethAddress.fromCollectionId(collection.collectionId),
-          susbstrateReceiver.addressRaw,
-          PROPERTIES.slice(0, setup.propertiesNumber),
-        )
-        .send({from: ethSigner});
+      await (await proxyContract.mintToSubstrateBulkProperty.send(
+        helper.ethAddress.fromCollectionId(collection.collectionId),
+        susbstrateReceiver.addressRaw,
+        PROPERTIES.slice(0, setup.propertiesNumber),
+      )).wait(...waitParams);
     },
   );
 
