@@ -1,6 +1,5 @@
 import {runTypeChain, glob, DEFAULT_FLAGS} from 'typechain';
 
-
 async function main() {
   const cwd = process.cwd();
 
@@ -12,7 +11,7 @@ async function main() {
     filesToProcess: allFiles,
     allFiles,
     outDir: 'ABIGEN',
-    target: 'web3-v1',
+    target: 'ethers-6',
     flags: {...DEFAULT_FLAGS, alwaysGenerateOverloads: true, tsNocheck: false},
   });
 }

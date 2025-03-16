@@ -1,8 +1,8 @@
-import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Contract} from 'web3-eth-contract';
+import {Contract, HDNodeWallet} from 'ethers';
 import {convertToTokens} from '../utils/common.js';
 import {makeNames} from '@unique/test-utils/util.js';
 import type {ContractImports} from '@unique/test-utils/eth/types.js';
@@ -90,7 +90,7 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
     'RMRKNestableMintable',
     CONTRACT_SOURCE,
     CONTRACT_IMPORT,
-    5000000,
+    5000000n,
   );
 
   const relayer = await helper.ethContract.deployByCode(
@@ -98,7 +98,7 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
     'Relayer',
     RELAYER_SOURCE,
     CONTRACT_IMPORT,
-    5000000,
+    5000000n,
     [contract.options.address],
   );
 
@@ -116,7 +116,7 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
   const contractOwnedNestId = await createTokenFor(relayerAddress);
   const nextTokenId = contractOwnedNestId + 1;
 
-  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
+  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
     const addChildData = rmrk.methods.addChild(nestId, outerCollectionNestedId, []).encodeABI();
     await relayer.methods.relay(addChildData).send({from: ethSigner});
     await rmrk.methods.acceptChild(nestId, 0, relayerAddress, outerCollectionNestedId).send({from: ethSigner});
@@ -149,7 +149,7 @@ async function measureEth(helper: EthUniqueHelper, donor: IKeyringPair) {
   const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, targetNFTTokenId);
 
   // Create a nested token
-  const nestMint = await helper.arrange.calculcateFee({Ethereum: owner}, async () => {
+  const nestMint = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
     await contract.methods.mint(targetNftTokenAddress).send({from: owner});
   });
 
@@ -157,11 +157,11 @@ async function measureEth(helper: EthUniqueHelper, donor: IKeyringPair) {
   const mintingSecondTokenIdResult = await contract.methods.mint(owner).send({from: owner});
   const nestedTokenId = mintingSecondTokenIdResult.events.Transfer.returnValues.tokenId;
 
-  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: owner}, async () => {
+  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
     await contract.methods.transfer(targetNftTokenAddress, nestedTokenId).send({from: owner});
   });
 
-  const unnestToken = await helper.arrange.calculcateFee({Ethereum: owner}, async () => {
+  const unnestToken = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
     await contract.methods.transferFrom(targetNftTokenAddress, owner, nestedTokenId).send({from: owner});
   });
   return {mint: convertToTokens(nestMint), transfer: convertToTokens(nestTransfer), unnest: convertToTokens(unnestToken)};
@@ -200,12 +200,12 @@ async function measureSub(helper: EthUniqueHelper, donor: IKeyringPair) {
 
 const createNestingCollection = async (
   helper: EthUniqueHelper,
-  owner: string,
+  owner: HDNodeWallet,
 ): Promise<{ collectionId: number, collectionAddress: string, contract: Contract }> => {
   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
   const contract =  helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-  await contract.methods.setCollectionNesting(true).send({from: owner});
+  await (await contract.setCollectionNesting.send(true)).wait(...waitParams);
 
   return {collectionId, collectionAddress, contract};
 };
