@@ -3,7 +3,7 @@
   "license": "Apache 2.0",
   "description": "Helpers for Unique Network chain",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "name": "@unique-nft/playgrounds",
   "type": "module",

@@ -9,6 +9,7 @@
   "private": true,
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.2",
+    "@typechain/ethers-v6": "0.5.1",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
@@ -16,7 +17,7 @@
     "lossless-json": "^3.0.1",
     "patch-package": "8.0.0",
     "solc": "^0.8.22",
-    "typechain": "^8.3.2"
+    "typechain": "8.3.2"
   },
   "devDependencies": {
     "@types/chai": "^4.3.20",
@@ -35,22 +36,17 @@
     "chai-subset": "^1.6.0",
     "eslint": "^8.53.0",
     "eslint-plugin-mocha": "^10.2.0",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  },
-  "mocha": {
-    "timeout": 9999999,
-    "require": [
-      "ts-node/register"
-    ]
+    "tsx": "4.19.3",
+    "typescript": "5.8.2"
   },
   "scripts": {
     "prepublish": "yarn tsc",
+    "ts-check": "yarn tsc --noEmit true",
     "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
-    "polkadot-types-fetch-metadata": "yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm scripts/fetchMetadata.ts",
-    "polkadot-types-from-defs": "node --no-warnings=ExperimentalWarning --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
-    "polkadot-types-from-chain": "node --no-warnings=ExperimentalWarning --loader ts-node/esm ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types-fetch-metadata": "yarn tsx scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "yarn tsx ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "yarn tsx ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
     "polkadot-types": "echo \"export default {}\" > types/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain && rm types/registry.ts"
   },
   "resolutions": {

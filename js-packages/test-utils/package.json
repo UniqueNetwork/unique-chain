@@ -3,7 +3,7 @@
   "license": "SEE LICENSE IN ../../../LICENSE",
   "description": "Playground scripts",
   "engines": {
-    "node": ">=16"
+    "node": ">=20"
   },
   "name": "@unique/test-utils",
   "type": "module",

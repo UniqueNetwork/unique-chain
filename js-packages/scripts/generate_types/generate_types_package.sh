@@ -120,7 +120,7 @@ package_version=${package_version}$last_patch
 echo "New package version: $new_package_version"
 
 pjsapi_ver=^$(cat "$DIR/../../playgrounds/package.json" | jq -r '.dependencies."@polkadot/api"' | sed -e "s/^\^//")
-tsnode_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."ts-node"' | sed -e "s/^\^//")
+tsx_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."tsx"' | sed -e "s/^\^//")
 ts_ver=^$(cat "$DIR/../../package.json" | jq -r '.devDependencies."typescript"' | sed -e "s/^\^//")
 
 gen=$(mktemp -d)
@@ -142,7 +142,7 @@ cat "$TEMPLATE/package.json" \
 | jq ".peerDependencies.\"@polkadot/types\" = \"$pjsapi_ver\"" - \
 | jq ".devDependencies.\"@polkadot/api\" = \"$pjsapi_ver\"" - \
 | jq ".devDependencies.\"@polkadot/types\" = \"$pjsapi_ver\"" - \
-| jq ".devDependencies.\"ts-node\" = \"$tsnode_ver\"" - \
+| jq ".devDependencies.\"tsx\" = \"$tsx_ver\"" - \
 | jq ".devDependencies.\"typescript\" = \"$ts_ver\"" - \
 > "$gen/package.json"
 for file in .gitignore .npmignore README.md tsconfig.json; do

@@ -4,8 +4,8 @@
 		"RUN_XCM_TESTS": "1"
 	},
 	"mochaExplorer.files": "tests/**/*.test.ts",
-  "mochaExplorer.esmLoader": true,
-  "mochaExplorer.nodeArgv": ["--loader", "ts-node/esm"],
+	"mochaExplorer.esmLoader": true,
+	"mochaExplorer.nodeArgv": ["--import", "tsx"],
 	"eslint.format.enable": true,
 	"[javascript]": {
 		"editor.defaultFormatter": "dbaeumer.vscode-eslint"

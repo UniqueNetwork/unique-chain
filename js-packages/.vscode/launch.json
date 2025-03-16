@@ -14,8 +14,8 @@
         "9999999",
         "--colors",
         "--recursive",
-        "--require",
-        "ts-node/register",
+        "--import",
+        "tsx",
         "${file}"
       ],
       "console": "integratedTerminal",
@@ -31,8 +31,8 @@
         "9999999",
         "--colors",
         "--recursive",
-        "--require",
-        "ts-node/register",
+        "--import",
+        "tsx",
         "./**/*.test.ts"
       ],
       "console": "integratedTerminal",

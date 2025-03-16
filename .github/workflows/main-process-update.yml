@@ -234,7 +234,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
           echo "Executing upgrade"
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
+          yarn tsx ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 

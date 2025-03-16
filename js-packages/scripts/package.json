@@ -3,20 +3,23 @@
   "license": "SEE LICENSE IN ../../../LICENSE",
   "description": "Interfaces for interacting with contracts and contract ABIs",
   "engines": {
-    "node": ">=16"
+    "node": ">=20"
   },
   "name": "@unique/scripts",
   "type": "module",
   "version": "1.0.0",
   "main": "",
+  "devDependencies": {
+    "tsx": "4.19.3"
+  },
   "scripts": {
-    "benchMintingFee": "node --loader ts-node/esm benchmarks/mintFee/benchmark.ts",
-    "loadTransfer": "node --loader ts-node/esm transfer.nload.ts",
-    "generateEnv": "node --loader ts-node/esm ./generateEnv.ts",
-    "proposeUpgrade": "node --loader ts-node/esm ./proposeupgrade.ts",
-    "proposeFastTrack": "node --loader ts-node/esm ./proposefasttrack.ts",
-    "councilDemocracyProposal": "node --loader ts-node/esm ./councilproposal.ts",
-    "hrmpChannel": "node --loader ts-node/esm ./hrmpchannel.ts",
-    "leaseStatus": "node --loader ts-node/esm ./leaseStatus.ts"
+    "benchMintingFee": "yarn tsx benchmarks/mintFee/benchmark.ts",
+    "loadTransfer": "yarn tsx transfer.nload.ts",
+    "generateEnv": "yarn tsx ./generateEnv.ts",
+    "proposeUpgrade": "yarn tsx ./proposeupgrade.ts",
+    "proposeFastTrack": "yarn tsx ./proposefasttrack.ts",
+    "councilDemocracyProposal": "yarn tsx ./councilproposal.ts",
+    "hrmpChannel": "yarn tsx ./hrmpchannel.ts",
+    "leaseStatus": "yarn tsx ./leaseStatus.ts"
   }
 }
