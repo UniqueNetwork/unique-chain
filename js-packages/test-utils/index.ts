@@ -553,6 +553,10 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
+        StorageWeightReclaim: {
+          extrinsic: {},
+          payload: {},
+        },
       },
       rpc: {
         unique: defs.unique.rpc,
