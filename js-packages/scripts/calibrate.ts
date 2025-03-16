@@ -1,5 +1,5 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 
 class Fract {
@@ -244,12 +244,14 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
 
   {
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Ethereum: caller});
+    const token = await collection.mintToken(alice, {Ethereum: caller.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT}));
+    const cost = await helper.eth.calculateFee({Ethereum: caller.address}, async () => {
+      await (await contract.transfer.send(receiver, token.tokenId, {gas: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
+    });
 
     console.log(`\t[ETH NFT transfer] Original price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
@@ -259,17 +261,18 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
   const base = (await api.query.configuration.minGasPriceOverride() as any).toBigInt();
   for(let i = -8; i < 8; i++) {
     const gasPrice = base + base / 100000n * BigInt(i);
-    const gasPriceStr = '0x' + gasPrice.toString(16);
     await helper.signTransaction(alice, api.tx.sudo.sudo(api.tx.configuration.setMinGasPriceOverride(gasPrice)));
 
     const coefficient = new Fract((await api.query.configuration.minGasPriceOverride() as any).toBigInt());
     const collection = await helper.nft.mintCollection(alice, {name: 'New', description: 'New collection', tokenPrefix: 'NEW'});
-    const token = await collection.mintToken(alice, {Ethereum: caller});
+    const token = await collection.mintToken(alice, {Ethereum: caller.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const transferPrice = new Fract(await helper.eth.calculateFee({Ethereum: caller}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gasPrice: gasPriceStr, gas: helper.eth.DEFAULT_GAS_LIMIT})));
+    const transferPrice = new Fract(await helper.eth.calculateFee({Ethereum: caller.address}, async () => {
+      await (await contract.transfer.send(receiver, token.tokenId, {gasPrice, gas: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
+    }));
 
     dataPoints.push({x: transferPrice, y: coefficient});
   }
@@ -290,7 +293,9 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    const cost = await helper.eth.calculateFee({Ethereum: caller.address}, () => contract.methods.transfer(receiver, token.tokenId).send({from: caller, gas: helper.eth.DEFAULT_GAS_LIMIT}));
+    const cost = await helper.eth.calculateFee({Ethereum: caller.address}, async () => {
+      await (await contract.transfer.send(receiver, token.tokenId, {gas: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
+    });
 
     console.log(`\t[ETH NFT transfer] Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
   }
