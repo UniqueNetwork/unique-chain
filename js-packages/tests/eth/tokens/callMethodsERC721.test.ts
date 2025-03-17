@@ -39,7 +39,7 @@ describe('ERC-721 call methods', () => {
       const [name, description, tokenPrefix] = ['Name', 'Description', 'Symbol'];
 
       const {collection: collectionEth} = await helper.eth.createCollection(callerEth, new CreateCollectionData(name, description, tokenPrefix, testCase.mode)).send();
-      await collectionEth.mint.send(callerEth, {from: callerEth});
+      await collectionEth.mint.send(callerEth);
       const {collectionId} = await helper[testCase.mode].mintCollection(callerSub, {name, description, tokenPrefix});
       const collectionSub = await helper.ethNativeContract.collectionById(collectionId, testCase.mode, callerEth);
 
@@ -65,7 +65,7 @@ describe('ERC-721 call methods', () => {
       await (await collection.mint.send(caller)).wait(...waitParams);
 
       const totalSupply = await collection.totalSupply.staticCall();
-      expect(totalSupply).to.equal('1');
+      expect(totalSupply).to.equal(1n);
     });
   });
 
@@ -82,7 +82,7 @@ describe('ERC-721 call methods', () => {
       await (await collection.mint.send(caller)).wait(...waitParams);
 
       const balance = await collection.balanceOf.staticCall(caller);
-      expect(balance).to.equal('3');
+      expect(balance).to.equal(3n);
     });
   });
 
@@ -107,7 +107,7 @@ describe('ERC-721 call methods', () => {
 
   [
     {mode: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
-    // TODO {mode: 'nft' as const, requiredPallets: []},
+    // {mode: 'nft' as const, requiredPallets: []},
   ].map(testCase => {
     itEth.ifWithPallets(`${testCase.mode.toUpperCase()}: ownerOf after burn`, testCase.requiredPallets, async ({helper}) => {
       const caller = await helper.eth.createAccountWithBalance(donor);

@@ -58,13 +58,13 @@ describe('Matcher contract usage', () => {
     await (await helpers.setSponsoringMode.send(await matcher.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
     await (await helpers.setSponsoringRateLimit.send(await matcher.getAddress(), 1)).wait(...waitParams);
 
-    await (await helpers.setSponsor.send(await matcher.getAddress(), sponsor)).wait(...waitParams);
+    await (await helpers.setSponsor.send(await matcher.getAddress(), sponsor.address)).wait(...waitParams);
     await (await helper.eth.changeContractCaller(helpers, sponsor).confirmSponsorship.send(await matcher.getAddress())).wait(...waitParams);
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: {Substrate: alice.address}});
     await collection.confirmSponsorship(alice);
     await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
-    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft', matcherOwner);
     await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
 
     await (await helpers.toggleAllowed.send(await matcher.getAddress(), aliceMirror, true)).wait(...waitParams);
@@ -107,20 +107,19 @@ describe('Matcher contract usage', () => {
 
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const escrow = await helper.eth.createAccountWithBalance(donor);
-    await (await matcher.setEscrow.send(escrow, true)).wait(...waitParams);
+    await (await matcher.setEscrow.send(escrow.address, true)).wait(...waitParams);
     const helpers = await helper.ethNativeContract.contractHelpers(matcherOwner);
     await (await helpers.setSponsoringMode.send(await matcher.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
     await (await helpers.setSponsoringRateLimit.send(await matcher.getAddress(), 1)).wait(...waitParams);
 
-    await (await helpers.setSponsor.send(await matcher.getAddress(), sponsor)).wait(...waitParams);
+    await (await helpers.setSponsor.send(await matcher.getAddress(), sponsor.address)).wait(...waitParams);
     await (await helper.eth.changeContractCaller(helpers, sponsor).confirmSponsorship.send(await matcher.getAddress())).wait(...waitParams);
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}, pendingSponsor: {Substrate: alice.address}});
     await collection.confirmSponsorship(alice);
     await collection.addToAllowList(alice, {Substrate: aliceDoubleMirror});
-    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft', matcherOwner);
     await helper.eth.transferBalanceFromSubstrate(donor, aliceMirror);
-
 
     await (await helpers.toggleAllowed.send(await matcher.getAddress(), aliceMirror, true)).wait(...waitParams);
 
@@ -145,14 +144,14 @@ describe('Matcher contract usage', () => {
 
     // Buy
     {
-      expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal('0');
-      expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal(PRICE.toString());
-
+      expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal(0n);
+      expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal(PRICE);
+      
       await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buyKSM.populateTransaction(await evmCollection.getAddress(), token.tokenId, aliceMirror, aliceMirror)).data, '0');
 
       // Price is removed from buyer balance, and added to seller
-      expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal('0');
-      expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal(PRICE.toString());
+      expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal(0n);
+      expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal(PRICE);
     }
 
     // Token is transferred to evm account of alice
@@ -172,7 +171,7 @@ describe('Matcher contract usage', () => {
     await helper.eth.transferBalanceFromSubstrate(donor, await matcher.getAddress());
 
     const collection = await helper.nft.mintCollection(alice, {limits: {sponsorApproveTimeout: 1}});
-    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft');
+    const evmCollection = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft', matcherOwner);
 
     await helper.balance.transferToSubstrate(donor, seller.address, 100_000_000_000_000_000_000n);
 

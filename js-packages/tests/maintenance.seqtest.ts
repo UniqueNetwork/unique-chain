@@ -248,13 +248,13 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
 
       const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-      const tokenId = await contract.methods.nextTokenId().call();
+      const tokenId = await contract.nextTokenId.staticCall();
       expect(tokenId).to.be.equal('1');
 
-      await expect(contract.methods.mintWithTokenURI(receiver, 'Test URI').send())
+      await expect(contract.mintWithTokenURI.send(receiver, 'Test URI'))
         .to.be.rejectedWith(/Returned error: unknown error/);
 
-      await expect(contract.methods.ownerOf(tokenId).call()).rejectedWith(/token not found/);
+      await expect(contract.ownerOf.staticCall(tokenId)).rejectedWith(/token not found/);
 
       // Disable maintenance mode
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);

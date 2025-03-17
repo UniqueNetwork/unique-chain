@@ -168,7 +168,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
 
   itEth('Evm Transactions send fees to Treasury', async ({helper}) => {
     const value = helper.balance.getOneTokenNominal();
-    const gasPrice = await helper.getWeb3().eth.getGasPrice();
+    const gasPrice = await helper.getGasPrice();
     let result = null;
 
     const lambda = async () => {

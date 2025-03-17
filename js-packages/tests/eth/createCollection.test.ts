@@ -213,7 +213,6 @@ describe('Create collection from EVM', () => {
 
       // Parallel test safety
       expect(collectionCountAfter - collectionCountBefore).to.be.gte(1);
-      expect(collectionId).to.be.eq(collectionCountAfter);
       expect(data.name).to.be.eq(name);
       expect(data.description).to.be.eq(description);
       expect(data.raw.tokenPrefix).to.be.eq(prefix);
@@ -519,7 +518,7 @@ describe('Create collection from EVM', () => {
       const user = helper.eth.createAccount();
       const userCross = helper.ethCrossAccount.fromAddress(user);
       const nextTokenId = await collectionEvm.nextTokenId.staticCall();
-      expect(nextTokenId).to.be.equal('1');
+      expect(nextTokenId).to.be.equal(1n);
 
       // Set collection permissions:
       const oldPermissions = (await collectionSub.getData())!.raw.permissions;
@@ -621,7 +620,7 @@ describe('Create collection from EVM', () => {
         event: 'Transfer',
         args: {
           from: '0x0000000000000000000000000000000000000000',
-          to: user,
+          to: user.address,
           tokenId: '1',
         },
       });

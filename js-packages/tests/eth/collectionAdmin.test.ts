@@ -20,6 +20,7 @@ import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.js';
 import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
+import { Contract } from 'ethers';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));
@@ -292,7 +293,7 @@ describe('Remove collection admins', () => {
 
     // Non admin cannot mint:
     await expect(helper.nft.mintToken(adminSub, {collectionId, owner: {Substrate: adminSub.address}})).to.be.rejectedWith(/common.PublicMintingNotAllowed/);
-    await expect(collectionEvm.mint.send(adminEth, {from: adminEth})).to.be.rejected;
+    await expect((<Contract>collectionEvm.connect(adminEth)).mint.send(adminEth)).to.be.rejected;
   });
 
   // Soft-deprecated
@@ -466,12 +467,13 @@ describe('Change substrate owner tests', () => {
       .to.have.property('normalizedOwner').that.is.eq(helper.address.ethToSubstrate(ownerEth));
 
     // Can set Substrate owner:
-    await (await collectionEvm.changeCollectionOwnerCross.send(ownerCrossSub)).wait(...waitParams);
+    await (await (<Contract>collectionEvm.connect(ownerEth)).changeCollectionOwnerCross.send(ownerCrossSub)).wait(...waitParams);
     expect(await collectionEvm.isOwnerOrAdminCross.staticCall(ownerCrossSub)).to.be.true;
     expect(await helper.collection.getData(collectionId))
       .to.have.property('normalizedOwner').that.is.eq(helper.address.normalizeSubstrate(ownerSub.address));
   });
 
+  // TODO: implement setOwnerSubstrate or drop this test
   itEth.skip('change owner call fee', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const [newOwner] = await helper.arrange.createAccounts([10n], donor);

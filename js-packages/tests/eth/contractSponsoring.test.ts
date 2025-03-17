@@ -20,6 +20,7 @@ import {itEth, expect, SponsoringMode, usingEthPlaygrounds, waitParams} from '@u
 import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {CompiledContract} from '@unique/test-utils/eth/types.js';
 import {HDNodeWallet} from 'ethers';
+import { Contract } from 'ethers';
 
 describe('Sponsoring EVM contracts', () => {
   let donor: IKeyringPair;
@@ -35,37 +36,38 @@ describe('Sponsoring EVM contracts', () => {
   itEth('Self sponsoring can be set by the address that deployed the contract', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
 
     // 1. owner can set selfSponsoring:
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    const result = await (await helpers.selfSponsoredEnable.send(await flipper.getAddress())).wait(...waitParams);
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.true;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
+    const result = await (await helpers.selfSponsoredEnable.send(flipperAddress)).wait(...waitParams);
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.true;
 
     // 1.1 Can get sponsor using sponsor:
-    const actualSponsorOpt = await helpers.sponsor.staticCall(await flipper.getAddress());
+    const actualSponsorOpt = await helpers.sponsor.staticCall(flipperAddress);
     expect(actualSponsorOpt.status).to.be.true;
     const actualSponsor = actualSponsorOpt.value;
-    expect(actualSponsor.eth).to.eq(await flipper.getAddress());
-    expect(actualSponsor.sub).to.eq('0');
+    expect(actualSponsor.eth).to.eq(flipperAddress);
+    expect(actualSponsor.sub).to.eq(0n);
 
     // 2. Events should be:
     const ethEvents = helper.eth.helper.eth.normalizeEvents(result!);
     expect(ethEvents).to.be.deep.equal([
       {
-        address: await flipper.getAddress(),
+        address: flipperAddress,
         event: 'ContractSponsorSet',
         args: {
-          contractAddress: await flipper.getAddress(),
-          sponsor: await flipper.getAddress(),
+          contractAddress: flipperAddress,
+          sponsor: flipperAddress,
         },
       },
       {
-        address: await flipper.getAddress(),
+        address: flipperAddress,
         event: 'ContractSponsorshipConfirmed',
         args: {
-          contractAddress: await flipper.getAddress(),
-          sponsor: await flipper.getAddress(),
+          contractAddress: flipperAddress,
+          sponsor: flipperAddress,
         },
       },
     ]);
@@ -76,23 +78,25 @@ describe('Sponsoring EVM contracts', () => {
     const notOwner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
 
-    await expect(helpers.selfSponsoredEnable.staticCall(await flipper.getAddress(), {from: notOwner}))
+    await expect((<Contract>helpers.connect(notOwner)).selfSponsoredEnable.staticCall(flipperAddress))
       .to.be.rejectedWith('NoPermission');
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
   });
 
   itEth('Sponsoring can be set by the address that has deployed the contract', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.false;
-    await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
-    expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.true;
+    expect(await helpers.sponsoringEnabled.staticCall(flipperAddress)).to.be.false;
+    await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted)).wait(...waitParams);
+    expect(await helpers.sponsoringEnabled.staticCall(flipperAddress)).to.be.true;
   });
 
   itEth('Sponsoring cannot be set by the address that did not deployed the contract', async ({helper}) => {
@@ -100,10 +104,11 @@ describe('Sponsoring EVM contracts', () => {
     const notOwner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.false;
-    await expect(helpers.setSponsoringMode.staticCall(notOwner, SponsoringMode.Allowlisted, {from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await helpers.sponsoringEnabled.staticCall(await flipper.getAddress())).to.be.false;
+    expect(await helpers.sponsoringEnabled.staticCall(flipperAddress)).to.be.false;
+    await expect((<Contract>helpers.connect(notOwner)).setSponsoringMode.staticCall(notOwner, SponsoringMode.Allowlisted)).to.be.rejectedWith('NoPermission');
+    expect(await helpers.sponsoringEnabled.staticCall(flipperAddress)).to.be.false;
   });
 
   itEth('Sponsor can be set by the address that deployed the contract', async ({helper}) => {
@@ -111,21 +116,22 @@ describe('Sponsoring EVM contracts', () => {
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
     // 1. owner can set a sponsor:
-    expect(await helpers.hasPendingSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    const result = await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    expect(await helpers.hasPendingSponsor.staticCall(await flipper.getAddress())).to.be.true;
+    expect(await helpers.hasPendingSponsor.staticCall(flipperAddress)).to.be.false;
+    const result = await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+    expect(await helpers.hasPendingSponsor.staticCall(flipperAddress)).to.be.true;
 
     // 2. Events should be:
-    const events = helper.eth.normalizeEvents(result!);
+    const events = helper.eth.rebuildEvents(result!);
     expect(events).to.be.deep.equal([
       {
-        address: await flipper.getAddress(),
+        address: flipperAddress,
         event: 'ContractSponsorSet',
         args: {
-          contractAddress: await flipper.getAddress(),
-          sponsor: sponsor,
+          contractAddress: flipperAddress,
+          sponsor: sponsor.address,
         },
       },
     ]);
@@ -137,10 +143,11 @@ describe('Sponsoring EVM contracts', () => {
     const notOwner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasPendingSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    await expect(helpers.setSponsor.staticCall(await flipper.getAddress(), sponsor, {from: notOwner})).to.be.rejectedWith('NoPermission');
-    expect(await helpers.hasPendingSponsor.staticCall(await flipper.getAddress())).to.be.false;
+    expect(await helpers.hasPendingSponsor.staticCall(flipperAddress)).to.be.false;
+    await expect((<Contract>helpers.connect(notOwner)).setSponsor.staticCall(flipperAddress, sponsor)).to.be.rejectedWith('NoPermission');
+    expect(await helpers.hasPendingSponsor.staticCall(flipperAddress)).to.be.false;
   });
 
   itEth('Sponsorship can be confirmed by the address that pending as sponsor', async ({helper}) => {
@@ -148,29 +155,30 @@ describe('Sponsoring EVM contracts', () => {
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
 
     // 1. sponsor can confirm sponsorship:
-    const result = await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.true;
+    const result = await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.true;
 
     // 1.1 Can get sponsor using sponsor:
-    const actualSponsorOpt = await helpers.sponsor.staticCall(await flipper.getAddress());
+    const actualSponsorOpt = await helpers.sponsor.staticCall(flipperAddress);
     expect(actualSponsorOpt.status).to.be.true;
     const actualSponsor = actualSponsorOpt.value;
-    expect(actualSponsor.eth).to.eq(sponsor);
+    expect(actualSponsor.eth).to.eq(sponsor.address);
     expect(actualSponsor.sub).to.eq('0');
 
     // 2. Events should be:
     const events = helper.eth.normalizeEvents(result!);
     expect(events).to.be.deep.equal([
       {
-        address: await flipper.getAddress(),
+        address: flipperAddress,
         event: 'ContractSponsorshipConfirmed',
         args: {
-          contractAddress: await flipper.getAddress(),
+          contractAddress: flipperAddress,
           sponsor: sponsor,
         },
       },
@@ -183,11 +191,12 @@ describe('Sponsoring EVM contracts', () => {
     const notSponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    await expect(helpers.setSponsor.send(await flipper.getAddress(), sponsor)).to.be.not.rejected;
-    await expect(helpers.confirmSponsorship.staticCall(await flipper.getAddress(), {from: notSponsor})).to.be.rejectedWith('NoPermission');
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
+    await expect(helpers.setSponsor.send(flipperAddress, sponsor)).to.be.not.rejected;
+    await expect((<Contract>helpers.connect(notSponsor)).confirmSponsorship.staticCall(flipperAddress)).to.be.rejectedWith('NoPermission');
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
   });
 
   itEth('Sponsorship can not be confirmed by the address that not set as sponsor', async ({helper}) => {
@@ -195,10 +204,11 @@ describe('Sponsoring EVM contracts', () => {
     const notSponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    await expect(helpers.confirmSponsorship.staticCall(await flipper.getAddress(), {from: notSponsor})).to.be.rejectedWith('NoPendingSponsor');
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
+    await expect((<Contract>helpers.connect(notSponsor)).confirmSponsorship.staticCall(flipperAddress)).to.be.rejectedWith('NoPendingSponsor');
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
   });
 
   itEth('Sponsor can be removed by the address that deployed the contract', async ({helper}) => {
@@ -206,29 +216,30 @@ describe('Sponsoring EVM contracts', () => {
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.true;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.true;
     // 1. Can remove sponsor:
-    const result = await (await helpers.removeSponsor.send(await flipper.getAddress())).wait(...waitParams);
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
+    const result = await (await helpers.removeSponsor.send(flipperAddress)).wait(...waitParams);
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
 
     // 2. Events should be:
-    const events = helper.eth.normalizeEvents(result!);
+    const events = helper.eth.rebuildEvents(result!);
     expect(events).to.be.deep.equal([
       {
-        address: await flipper.getAddress(),
+        address: flipperAddress,
         event: 'ContractSponsorRemoved',
         args: {
-          contractAddress: await flipper.getAddress(),
+          contractAddress: flipperAddress,
         },
       },
     ]);
 
     // TODO: why call method reverts?
-    // const actualSponsor = await helpers.sponsor(await flipper.getAddress()).call();
+    // const actualSponsor = await helpers.sponsor(flipperAddress).call();
     // expect(actualSponsor.eth).to.eq(sponsor);
     // expect(actualSponsor.sub).to.eq('0');
   });
@@ -239,15 +250,16 @@ describe('Sponsoring EVM contracts', () => {
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.false;
-    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.true;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.true;
 
-    await expect(helpers.removeSponsor.staticCall(await flipper.getAddress(), {from: notOwner})).to.be.rejectedWith('NoPermission');
-    await expect(helpers.removeSponsor.send(await flipper.getAddress(), {from: notOwner})).to.be.rejected;
-    expect(await helpers.hasSponsor.staticCall(await flipper.getAddress())).to.be.true;
+    await expect((<Contract>helpers.connect(notOwner)).removeSponsor.staticCall(flipperAddress)).to.be.rejectedWith('NoPermission');
+    await expect((<Contract>helpers.connect(notOwner)).removeSponsor.send(flipperAddress)).to.be.rejected;
+    expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.true;
   });
 
   itEth('In generous mode, non-allowlisted user transaction will be sponsored', async ({helper}) => {
@@ -256,17 +268,18 @@ describe('Sponsoring EVM contracts', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
 
-    await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Generous)).wait(...waitParams);
-    await (await helpers.setSponsoringRateLimit.send(await flipper.getAddress(), 0)).wait(...waitParams);
+    await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Generous)).wait(...waitParams);
+    await (await helpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
 
     const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
     const callerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(caller));
 
-    await (await flipper.flip.send({from: caller})).wait(...waitParams);
+    await (await (<Contract>flipper.connect(caller)).flip.send()).wait(...waitParams);
     expect(await flipper.getValue.staticCall()).to.be.true;
 
     // Balance should be taken from sponsor instead of caller
@@ -281,22 +294,23 @@ describe('Sponsoring EVM contracts', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    await (await helpers.selfSponsoredEnable.send(await flipper.getAddress())).wait(...waitParams);
+    await (await helpers.selfSponsoredEnable.send(flipperAddress)).wait(...waitParams);
 
-    await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Generous)).wait(...waitParams);
-    await (await helpers.setSponsoringRateLimit.send(await flipper.getAddress(), 0)).wait(...waitParams);
+    await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Generous)).wait(...waitParams);
+    await (await helpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
 
-    await helper.eth.transferBalanceFromSubstrate(donor, await flipper.getAddress());
+    await helper.eth.transferBalanceFromSubstrate(donor, flipperAddress);
 
-    const contractBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(await flipper.getAddress()));
+    const contractBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(flipperAddress));
     const callerBalanceBefore = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
 
-    await (await flipper.flip.send({from: caller})).wait(...waitParams);
+    await (await (<Contract>flipper.connect(caller)).flip.send()).wait(...waitParams);
     expect(await flipper.getValue.staticCall()).to.be.true;
 
     // Balance should be taken from sponsor instead of caller
-    const contractBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(await flipper.getAddress()));
+    const contractBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(flipperAddress));
     const callerBalanceAfter = await helper.balance.getSubstrate(await helper.address.ethToSubstrate(caller));
     expect(contractBalanceAfter < contractBalanceBefore).to.be.true;
     expect(callerBalanceAfter).to.be.eq(callerBalanceBefore);
@@ -313,20 +327,21 @@ describe('Sponsoring EVM contracts', () => {
       await helper.eth.transferBalanceFromSubstrate(donor, caller.address, testCase.balance);
       const helpers = await helper.ethNativeContract.contractHelpers(owner);
       const flipper = await helper.eth.deployFlipper(owner);
+      const flipperAddress = await flipper.getAddress();
 
-      await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(...waitParams);
-      await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(...waitParams);
+      await (await helpers.toggleAllowlist.send(flipperAddress, true)).wait(...waitParams);
+      await (await helpers.toggleAllowed.send(flipperAddress, caller, true)).wait(...waitParams);
 
-      await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
-      await (await helpers.setSponsoringRateLimit.send(await flipper.getAddress(), 0)).wait(...waitParams);
+      await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted)).wait(...waitParams);
+      await (await helpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
 
-      await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-      await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
+      await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+      await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
 
       const sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
       expect(sponsorBalanceBefore > 0n).to.be.true;
 
-      await (await flipper.flip.send({from: caller})).wait(...waitParams);
+      await (await (<Contract>flipper.connect(caller)).flip.send()).wait(...waitParams);
       expect(await flipper.getValue.staticCall()).to.be.true;
 
       // Balance should be taken from flipper instead of caller
@@ -346,24 +361,26 @@ describe('Sponsoring EVM contracts', () => {
 
     // Deploy flipper and send some tokens:
     const flipper = await helper.eth.deployFlipper(owner);
-    await helper.eth.transferBalanceFromSubstrate(donor, await flipper.getAddress());
+    const flipperAddress = await flipper.getAddress();
+
+    await helper.eth.transferBalanceFromSubstrate(donor, flipperAddress);
     expect(await flipper.getValue.staticCall()).to.be.false;
 
     // flipper address has some tokens:
-    const originalFlipperBalance = await helper.balance.getEthereum(await flipper.getAddress());
+    const originalFlipperBalance = await helper.balance.getEthereum(flipperAddress);
     expect(originalFlipperBalance > 0n).to.be.true;
 
     // Set Allowlisted sponsoring mode. caller is not in allow list:
-    await (await contractHelpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(...waitParams);
-    await (await contractHelpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
-    await (await contractHelpers.setSponsoringRateLimit.send(await flipper.getAddress(), 0)).wait(...waitParams);
+    await (await contractHelpers.toggleAllowlist.send(flipperAddress, true)).wait(...waitParams);
+    await (await contractHelpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted)).wait(...waitParams);
+    await (await contractHelpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
 
     // 1. Caller has no UNQ and is not in allow list. So he cannot flip:
-    await expect(flipper.flip.send({from: caller})).to.be.rejectedWith(/Returned error: insufficient funds for gas \* price \+ value/);
+    await expect((<Contract>flipper.connect(caller)).flip.send()).to.be.rejectedWith(/Returned error: insufficient funds for gas \* price \+ value/);
     expect(await flipper.getValue.staticCall()).to.be.false;
 
     // Flipper's balance does not change:
-    const balanceAfter = await helper.balance.getEthereum(await flipper.getAddress());
+    const balanceAfter = await helper.balance.getEthereum(flipperAddress);
     expect(balanceAfter).to.be.equal(originalFlipperBalance);
   });
 
@@ -373,28 +390,29 @@ describe('Sponsoring EVM contracts', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
     const originalCallerBalance = await helper.balance.getEthereum(caller);
-    await (await helpers.toggleAllowlist.send(await flipper.getAddress(), true)).wait(...waitParams);
-    await (await helpers.toggleAllowed.send(await flipper.getAddress(), caller, true)).wait(...waitParams);
+    await (await helpers.toggleAllowlist.send(flipperAddress, true)).wait(...waitParams);
+    await (await helpers.toggleAllowed.send(flipperAddress, caller, true)).wait(...waitParams);
 
-    await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Allowlisted)).wait(...waitParams);
-    await (await helpers.setSponsoringRateLimit.send(await flipper.getAddress(), 10)).wait(...waitParams);
+    await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Allowlisted)).wait(...waitParams);
+    await (await helpers.setSponsoringRateLimit.send(flipperAddress, 10)).wait(...waitParams);
 
-    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
 
     const originalFlipperBalance = await helper.balance.getEthereum(sponsor);
     expect(originalFlipperBalance > 0n).to.be.true;
 
-    await (await flipper.flip.send({from: caller})).wait(...waitParams);
+    await (await (<Contract>flipper.connect(caller)).flip.send()).wait(...waitParams);
     expect(await flipper.getValue.staticCall()).to.be.true;
     expect(await helper.balance.getEthereum(caller)).to.be.equal(originalCallerBalance);
 
     const newFlipperBalance = await helper.balance.getEthereum(sponsor);
     expect(newFlipperBalance).to.be.not.equal(originalFlipperBalance);
 
-    await (await flipper.flip.send({from: caller})).wait(...waitParams);
+    await (await (<Contract>flipper.connect(caller)).flip.send()).wait(...waitParams);
     // todo:playgrounds fails rarely (expected 99893341659775672580n to equal 99912598679356033129n) (again, 99893341659775672580n)
     expect(await helper.balance.getEthereum(sponsor)).to.be.equal(newFlipperBalance);
     expect(await helper.balance.getEthereum(caller)).to.be.not.equal(originalCallerBalance);
@@ -405,8 +423,9 @@ describe('Sponsoring EVM contracts', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.sponsoringRateLimit.staticCall(await flipper.getAddress())).to.be.equal('14400');
+    expect(await helpers.sponsoringRateLimit.staticCall(flipperAddress)).to.be.equal(14400n);
   });
 
   itEth('Gas price boundaries', async ({helper}) => {
@@ -415,12 +434,13 @@ describe('Sponsoring EVM contracts', () => {
     const caller = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    await (await helpers.setSponsor.send(await flipper.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await flipper.getAddress(), {from: sponsor})).wait(...waitParams);
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(flipperAddress)).wait(...waitParams);
 
-    await (await helpers.setSponsoringMode.send(await flipper.getAddress(), SponsoringMode.Generous)).wait(...waitParams);
-    await (await helpers.setSponsoringRateLimit.send(await flipper.getAddress(), 0)).wait(...waitParams);
+    await (await helpers.setSponsoringMode.send(flipperAddress, SponsoringMode.Generous)).wait(...waitParams);
+    await (await helpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
 
     let sponsorBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
     let callerBalanceBefore = await helper.balance.getSubstrate(helper.address.ethToSubstrate(caller));
@@ -428,7 +448,7 @@ describe('Sponsoring EVM contracts', () => {
     let expectValue = await flipper.getValue.staticCall();
 
     const flip = async (gasPrice: bigint, shouldPass = true) => {
-      await (await flipper.flip.send({from: caller, gasPrice: gasPrice})).wait(...waitParams);
+      await (await (<Contract>flipper.connect(caller)).flip.send({gasPrice: gasPrice})).wait(...waitParams);
       expectValue = !expectValue;
       expect(await flipper.getValue.staticCall()).to.be.eq(expectValue);
       const sponsorBalanceAfter = await helper.balance.getSubstrate(helper.address.ethToSubstrate(sponsor));
@@ -496,17 +516,20 @@ describe('Sponsoring Fee Limit', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    expect(await helpers.sponsoringFeeLimit.staticCall(await flipper.getAddress())).to.be.equal('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+    expect(await helpers.sponsoringFeeLimit.staticCall(flipperAddress))
+      .to.be.equal(115792089237316195423570985008687907853269984665640564039457584007913129639935n);
   });
 
   itEth('Set fee limit', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    await (await helpers.setSponsoringFeeLimit.send(await flipper.getAddress(), 100)).wait(...waitParams);
-    expect(await helpers.sponsoringFeeLimit.staticCall(await flipper.getAddress())).to.be.equal('100');
+    await (await helpers.setSponsoringFeeLimit.send(flipperAddress, 100)).wait(...waitParams);
+    expect(await helpers.sponsoringFeeLimit.staticCall(flipperAddress)).to.be.equal(100n);
   });
 
   itEth('Negative test - set fee limit by non-owner', async ({helper}) => {
@@ -514,8 +537,9 @@ describe('Sponsoring Fee Limit', () => {
     const stranger = await helper.eth.createAccountWithBalance(donor);
     const helpers = await helper.ethNativeContract.contractHelpers(owner);
     const flipper = await helper.eth.deployFlipper(owner);
+    const flipperAddress = await flipper.getAddress();
 
-    await expect(helpers.setSponsoringFeeLimit.send(await flipper.getAddress(), 100, {from: stranger})).to.be.rejected;
+    await expect((<Contract>helpers.connect(stranger)).setSponsoringFeeLimit.send(flipperAddress, 100)).to.be.rejected;
   });
 
   itEth('Negative test - check that eth transactions exceeding fee limit are not executed', async ({helper}) => {
@@ -530,17 +554,17 @@ describe('Sponsoring Fee Limit', () => {
     await (await helpers.setSponsoringRateLimit.send(await testContract.getAddress(), 0)).wait(...waitParams);
 
     await (await helpers.setSponsor.send(await testContract.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship(await testContract.getAddress(), {from: sponsor})).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship(await testContract.getAddress())).wait(...waitParams);
 
     const gasPrice = BigInt(await helper.eth.getGasPrice());
 
     await (await helpers.setSponsoringFeeLimit.send(await testContract.getAddress(), 2_000_000n * gasPrice)).wait(...waitParams);
 
     const originalUserBalance = await helper.balance.getEthereum(user);
-    await (await testContract.test.send(100, {from: user, gas: 2_000_000, maxFeePerGas: gasPrice})).wait(...waitParams);
+    await (await (<Contract>testContract.connect(user)).test.send(100, {gas: 2_000_000, maxFeePerGas: gasPrice})).wait(...waitParams);
     expect(await helper.balance.getEthereum(user)).to.be.equal(originalUserBalance);
 
-    await (await testContract.test.send(100, {from: user, gas: 2_100_000, maxFeePerGas: gasPrice})).wait(...waitParams);
+    await (await (<Contract>testContract.connect(user)).test.send(100, {gas: 2_100_000, maxFeePerGas: gasPrice})).wait(...waitParams);
     expect(await helper.balance.getEthereum(user)).to.not.be.equal(originalUserBalance);
   });
 
@@ -555,7 +579,7 @@ describe('Sponsoring Fee Limit', () => {
     await (await helpers.setSponsoringRateLimit.send(await testContract.getAddress(), 0)).wait(...waitParams);
 
     await (await helpers.setSponsor.send(await testContract.getAddress(), sponsor)).wait(...waitParams);
-    await (await helpers.confirmSponsorship.send(await testContract.getAddress(), {from: sponsor})).wait(...waitParams);
+    await (await (<Contract>helpers.connect(sponsor)).confirmSponsorship.send(await testContract.getAddress())).wait(...waitParams);
 
     const gasPrice = BigInt(await helper.eth.getGasPrice());
 

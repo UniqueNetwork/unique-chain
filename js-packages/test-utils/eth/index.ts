@@ -129,7 +129,7 @@ class NativeContractGroup extends EthGroupBase {
     return new Contract(address, collectionHelpersAbi, signer);
   }
 
-  collection(address: string, mode: TCollectionMode, signer?: HDNodeWallet, mergeDeprecated = false): Contract {
+  collection(address: string, mode: TCollectionMode, signer: HDNodeWallet, mergeDeprecated = false): Contract {
     let abi;
     if(address === this.helper.ethAddress.fromCollectionId(0)) {
       abi = nativeFungibleAbi;
@@ -151,7 +151,7 @@ class NativeContractGroup extends EthGroupBase {
     return new Contract(address, abi, signer);
   }
 
-  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', signer?: HDNodeWallet, mergeDeprecated = false) {
+  collectionById(collectionId: number, mode: 'nft' | 'rft' | 'ft', signer: HDNodeWallet, mergeDeprecated = false) {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, signer, mergeDeprecated);
   }
 

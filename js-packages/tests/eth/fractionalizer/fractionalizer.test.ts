@@ -177,7 +177,7 @@ describe('Fractionalizer contract usage', () => {
     const isAllowedTx = await fractionalizer.setNftCollectionIsAllowed.send(nftCollection.collectionAddress, true);
     await isAllowedTx.wait(...waitParams);
 
-    await nftContract.approve.send(await fractionalizer.getAddress(), nftTokenId);
+    await (await nftContract.approve.send(await fractionalizer.getAddress(), nftTokenId)).wait(...waitParams);
 
     const sendTx = await fractionalizer.nft2rft.send(nftCollection.collectionAddress, nftTokenId, 100);
     const sendReceipt = await sendTx.wait(...waitParams);
@@ -194,8 +194,8 @@ describe('Fractionalizer contract usage', () => {
     });
 
     const rftTokenAddress = sendEvents.Fractionalized.args._rftToken;
-    const rftTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress);
-    expect(await rftTokenContract.balanceOf(owner)).to.equal('100');
+    const rftTokenContract = helper.ethNativeContract.rftToken(rftTokenAddress, owner);
+    expect(await rftTokenContract.balanceOf(owner)).to.equal(100n);
   });
 
   //   itEth('RFT to NFT', async ({helper}) => {

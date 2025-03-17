@@ -35,7 +35,7 @@ describe('Contract calls', () => {
 
     const cost = await helper.eth.calculateFee(
       {Ethereum: deployer.address},
-      async () => await (await flipper.flip.send({from: deployer})).wait(...waitParams),
+      async () => await (await flipper.flip.send()).wait(...waitParams),
     );
 
     expect(cost < (helper.balance.getOneTokenNominal() / 5n)).to.be.true;
@@ -49,7 +49,7 @@ describe('Contract calls', () => {
       async () => await (await userA.sendTransaction({
         from: userA,
         to: userB,
-        value: '1000000',
+        value: 1000000n,
         gasLimit: helper.eth.DEFAULT_GAS_LIMIT,
       })).wait(...waitParams),
     );

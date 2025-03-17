@@ -20,6 +20,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
+import { Contract } from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -125,7 +126,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
   itEth('Can perform transferFrom()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
-
+    
     const caller = await helper.eth.createAccountWithBalance(donor);
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
@@ -134,20 +135,21 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
     const evmCollection = await helper.ethNativeContract.collection(address, 'ft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
 
-    await collection.mint(alice, 200n, {Ethereum: await contract.getAddress()});
+    await collection.mint(alice, 200n, {Ethereum: owner.address});
 
-    await (await evmCollection.approve.send(await contract.getAddress(), 50n)).wait(...waitParams);
+    await (await (<Contract>evmCollection.connect(owner)).approve.send(
+      await contract.getAddress(),
+      100
+    )).wait(...waitParams);
 
     {
-      const callerContract = helper.eth.changeContractCaller(contract, caller);
-
-      const transferTx = await callerContract.transferFrom.send(owner.address, receiver.address, 49n);
+      const transferTx = await (<Contract>contract.connect(caller)).transferFrom.send(owner.address, receiver.address, 49n);
       const transferReceipt = await transferTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(transferReceipt!);
 
       expect(events).to.be.deep.equal({
         Transfer: {
-          address,
+          address: address,
           event: 'Transfer',
           args: {
             from: owner.address,
@@ -156,7 +158,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
           },
         },
         Approval: {
-          address,
+          address: address,
           event: 'Approval',
           args: {
             owner: owner.address,

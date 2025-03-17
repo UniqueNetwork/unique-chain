@@ -49,7 +49,7 @@ describe('EVM collection properties', () => {
       expect(await collectionEvm.collectionProperties.staticCall([])).to.be.like([]);
       expect(await collectionEvm.collectionProperties.staticCall(['NonExistingKey'])).to.be.like([]);
 
-      await (await collectionEvm[testCase.method].send(...testCase.methodParams, {from: caller})).wait(...waitParams);
+      await (await collectionEvm[testCase.method].send(...testCase.methodParams)).wait(...waitParams);
 
       const raw = (await collection.getData())?.raw;
       expect(raw.properties).to.deep.equal(testCase.expectedProps);
@@ -66,9 +66,9 @@ describe('EVM collection properties', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
-    await expect(contract.setCollectionProperties.send([{key: '', value: Buffer.from('val1')}], {from: caller})).to.be.rejected;
-    await expect(contract.setCollectionProperties.send([{key: 'déjà vu', value: Buffer.from('hmm...')}], {from: caller})).to.be.rejected;
-    await expect(contract.setCollectionProperties.send([{key: 'a'.repeat(257), value: Buffer.from('val3')}], {from: caller})).to.be.rejected;
+    await expect(contract.setCollectionProperties.send([{key: '', value: Buffer.from('val1')}])).to.be.rejected;
+    await expect(contract.setCollectionProperties.send([{key: 'déjà vu', value: Buffer.from('hmm...')}])).to.be.rejected;
+    await expect(contract.setCollectionProperties.send([{key: 'a'.repeat(257), value: Buffer.from('val3')}])).to.be.rejected;
 
     // TODO add more expects
     const raw = (await collection.getData())?.raw;
@@ -96,7 +96,7 @@ describe('EVM collection properties', () => {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = await helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'deleteCollectionProperty');
 
-      await (await contract[testCase.method].send(...testCase.methodParams, {from: caller})).wait(...waitParams);
+      await (await contract[testCase.method].send(...testCase.methodParams)).wait(...waitParams);
 
       const raw = (await collection.getData())?.raw;
 
@@ -119,7 +119,7 @@ describe('EVM collection properties', () => {
       const address = helper.ethAddress.fromCollectionId(collection.collectionId);
       const collectionEvm = await helper.ethNativeContract.collection(address, 'nft', caller, testCase.method === 'deleteCollectionProperty');
 
-      await expect(collectionEvm[testCase.method].send(...testCase.methodParams, {from: caller})).to.be.rejected;
+      await expect(collectionEvm[testCase.method].send(...testCase.methodParams)).to.be.rejected;
       expect(await collection.getProperties()).to.deep.eq(properties);
     }));
 

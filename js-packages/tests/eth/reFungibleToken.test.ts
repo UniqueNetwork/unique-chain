@@ -189,7 +189,8 @@ describe('Refungible: Plain calls', () => {
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
     const tokenEvm = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    await expect(tokenEvm.approveCross.staticCall(nonOwnerCross, 20, {from: nonOwner})).to.be.rejectedWith('CantApproveMoreThanOwned');
+    await expect((<Contract>tokenEvm.connect(nonOwner)).approveCross.staticCall(nonOwnerCross, 20))
+      .to.be.rejectedWith('CantApproveMoreThanOwned');
   });
 
   [
@@ -214,14 +215,15 @@ describe('Refungible: Plain calls', () => {
 
       await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
+      const spenderContract = helper.eth.changeContractCaller(contract, spender);
+
       // 1. Can transfer from
       // 1.1 Plain ethereum or cross address:
       {
-        const testCaseTx = await contract[testCase].send(
+        const testCaseTx = await spenderContract[testCase].send(
           isCross ? ownerCross : owner,
           isCross ? receiverCrossEth : receiverEth,
           49,
-          {from: spender},
         );
         const testCaseReceipt = await testCaseTx.wait(...waitParams);
         const testCaseEvents = helper.eth.normalizeEvents(testCaseReceipt!);
@@ -229,14 +231,14 @@ describe('Refungible: Plain calls', () => {
         // Check events:
         const transferEvent = testCaseEvents.Transfer;
         expect(transferEvent.address).to.be.equal(tokenAddress);
-        expect(transferEvent.args.from).to.be.equal(owner);
-        expect(transferEvent.args.to).to.be.equal(receiverEth);
+        expect(transferEvent.args.from).to.be.equal(owner.address);
+        expect(transferEvent.args.to).to.be.equal(receiverEth.address);
         expect(transferEvent.args.value).to.be.equal('49');
 
         const approvalEvent = testCaseEvents.Approval;
         expect(approvalEvent.address).to.be.equal(tokenAddress);
-        expect(approvalEvent.args.owner).to.be.equal(owner);
-        expect(approvalEvent.args.spender).to.be.equal(spender);
+        expect(approvalEvent.args.owner).to.be.equal(owner.address);
+        expect(approvalEvent.args.spender).to.be.equal(spender.address);
         expect(approvalEvent.args.value).to.be.equal('51');
 
         // Check balances:
@@ -249,14 +251,14 @@ describe('Refungible: Plain calls', () => {
 
       // 1.2 Cross substrate address:
       if(testCase === 'transferFromCross') {
-        const transferTx = await contract.transferFromCross(ownerCross, receiverCrossSub, 51, {from: spender});
+        const transferTx = await spenderContract.transferFromCross(ownerCross, receiverCrossSub, 51);
         const transferReceipt = await transferTx.wait(...waitParams);
         const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
         // Check events:
         const transferEvent = transferEvents.Transfer;
         expect(transferEvent.address).to.be.equal(tokenAddress);
-        expect(transferEvent.args.from).to.be.equal(owner);
+        expect(transferEvent.args.from).to.be.equal(owner.address);
         expect(transferEvent.args.to).to.be.equal(helper.address.substrateToEth(receiverSub.address));
         expect(transferEvent.args.value).to.be.equal('51');
 
@@ -369,8 +371,8 @@ describe('Refungible: Plain calls', () => {
       expect(await helper.rft.getTokenTop10Owners(collection.collectionId, tokenIdNonExist)).to.deep.eq([]);
 
       // 4.1 Tokens can be transferred:
-      await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth, 10, {from: owner})).wait(...waitParams);
-      await (await tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 10, {from: receiverEth})).wait(...waitParams);
+      await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth, 10)).wait(...waitParams);
+      await (await (<Contract>tokenEvmReceiver.connect(receiverEth))[testCase].send(isCross ? ownerCross : owner, 10)).wait(...waitParams);
       expect(await rftOwner.getTop10Owners()).to.deep.eq([{Ethereum: receiverEth.address.toLowerCase()}]);
       expect(await rftReceiver.getTop10Owners()).to.deep.eq([{Ethereum: owner.address.toLowerCase()}]);
     }));
@@ -396,8 +398,8 @@ describe('Refungible: Plain calls', () => {
     expect(+await contract.balanceOf.staticCall(owner)).to.be.equal(0);
     expect(+await contract.balanceOf.staticCall(receiver)).to.be.equal(200);
 
-    await (await contract.repartition.send(150, {from: receiver})).wait(...waitParams);
-    await expect(contract.transfer.send(owner, 160, {from: receiver})).to.eventually.be.rejected;
+    await (await (<Contract>contract.connect(receiver)).repartition.send(150)).wait(...waitParams);
+    await expect((<Contract>contract.connect(receiver)).transfer.send(owner, 160)).to.eventually.be.rejected;
     expect(+await contract.balanceOf.staticCall(receiver)).to.be.equal(150);
   });
 
@@ -486,12 +488,13 @@ describe('Refungible: Plain calls', () => {
 
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
+    const spenderContract = helper.eth.changeContractCaller(contract, spender);
 
     {
       await (await contract.approveCross.send(spenderCrossEth, 100)).wait(...waitParams);
 
-      await expect(contract.burnFromCross.send(ownerCross, 50, {from: spender})).to.be.fulfilled;
-      await expect(contract.burnFromCross.send(ownerCross, 100, {from: spender})).to.be.rejected;
+      await expect(spenderContract.burnFromCross.send(ownerCross, 50)).to.be.fulfilled;
+      await expect(spenderContract.burnFromCross.send(ownerCross, 100)).to.be.rejected;
       expect(await contract.balanceOf.staticCall(owner)).to.be.equal('150');
     }
     {
@@ -500,8 +503,8 @@ describe('Refungible: Plain calls', () => {
       const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
       const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-      await expect(contract.burnFromCross(ownerSubCross, 50, {from: spender})).to.be.fulfilled;
-      await expect(contract.burnFromCross(ownerSubCross, 100, {from: spender})).to.be.rejected;
+      await expect(spenderContract.burnFromCross(ownerSubCross, 50)).to.be.fulfilled;
+      await expect(spenderContract.burnFromCross(ownerSubCross, 100)).to.be.rejected;
       expect(await collection.getTokenBalance(tokenId, {Substrate: ownerSub.address})).to.be.equal(150n);
     }
   });
@@ -514,25 +517,27 @@ describe('Refungible: Plain calls', () => {
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
     const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('200');
-    expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('0');
+    expect(await tokenContract.balanceOfCross.staticCall(owner)).to.be.eq(200n);
+    expect(await tokenContract.balanceOfCross.staticCall(other)).to.be.eq(0n);
 
-    await (await tokenContract.repartition.send(100n, {from: owner.address})).wait(...waitParams);
-    expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('100');
-    expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('0');
+    await (await tokenContract.repartition.send(100n)).wait(...waitParams);
+    expect(await tokenContract.balanceOfCross.staticCall(owner)).to.be.eq(100n);
+    expect(await tokenContract.balanceOfCross.staticCall(other)).to.be.eq(0n);
 
-    await (await tokenContract.transferCross.send(other, 50n, {from: owner.address})).wait(...waitParams);
-    expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('50');
-    expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('50');
+    await (await tokenContract.transferCross.send(other, 50n)).wait(...waitParams);
+    expect(await tokenContract.balanceOfCross.staticCall(owner)).to.be.eq(50n);
+    expect(await tokenContract.balanceOfCross.staticCall(other)).to.be.eq(50n);
 
-    await (await tokenContract.transferCross.send(other, 50n, {from: owner.address})).wait(...waitParams);
-    expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('0');
-    expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('100');
+    await (await tokenContract.transferCross.send(other, 50n)).wait(...waitParams);
+    expect(await tokenContract.balanceOfCross.staticCall(owner)).to.be.eq(0n);
+    expect(await tokenContract.balanceOfCross.staticCall(other)).to.be.eq(100n);
 
-    await (await tokenContract.repartition.send(1000n, {from: other.address})).wait(...waitParams);
-    await (await tokenContract.transferCross.send(owner, 500n, {from: other.address})).wait(...waitParams);
-    expect(await tokenContract.balanceOfCross.staticCall(owner, {from: owner.address})).to.be.eq('500');
-    expect(await tokenContract.balanceOfCross.staticCall(other, {from: owner.address})).to.be.eq('500');
+    const otherTokenContract = helper.eth.changeContractCaller(tokenContract, other);
+    await (await otherTokenContract.repartition.send(1000n)).wait(...waitParams);
+    await (await otherTokenContract.transferCross.send(owner, 500n)).wait(...waitParams);
+
+    expect(await tokenContract.balanceOfCross.staticCall(owner)).to.be.eq(500n);
+    expect(await tokenContract.balanceOfCross.staticCall(other)).to.be.eq(500n);
   });
 });
 
@@ -576,9 +581,10 @@ describe('Refungible: Fees', () => {
 
     await (await contract.approve.send(spender, 100)).wait(...waitParams);
 
+    const spenderContract = helper.eth.changeContractCaller(contract, spender);
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await contract.transferFrom(owner, spender, 100, {from: spender})).wait(...waitParams),
+      async () => await (await spenderContract.transferFrom(owner, spender, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });

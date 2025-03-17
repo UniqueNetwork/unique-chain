@@ -12,7 +12,7 @@ const createNestingCollection = async (
   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
   const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner, mergeDeprecated);
-  await (await contract.setCollectionNesting.send([true, false, []])).wait(...waitParams);
+  await (await contract['setCollectionNesting((bool,bool,address[]))'].send([true, false, []])).wait(...waitParams);
 
   return {collectionId, collectionAddress, contract};
 };
@@ -33,7 +33,7 @@ describe('EVM nesting tests group', () => {
       const {collectionId, contract} = await createNestingCollection(helper, owner);
 
       // Create a token to be nested to
-      const mintingTargetNFTTokenIdReceipt = await (await contract.mint.send(owner)).wait(...waitParams);
+      const mintingTargetNFTTokenIdReceipt = await (await contract.mint.send(owner.address)).wait(...waitParams);
       const mintingTargetNFTTokenIdEvents = helper.eth.normalizeEvents(mintingTargetNFTTokenIdReceipt!);
       const targetNFTTokenId = +mintingTargetNFTTokenIdEvents.Transfer.args.tokenId;
       const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, targetNFTTokenId);
@@ -45,7 +45,7 @@ describe('EVM nesting tests group', () => {
       expect(await contract.ownerOf.staticCall(firstTokenId)).to.be.equal(targetNftTokenAddress);
 
       // Create a token to be nested and nest
-      const mintingSecondTokenIdReceipt = await (await contract.mint.send(owner)).wait(...waitParams);
+      const mintingSecondTokenIdReceipt = await (await contract.mint.send(owner.address)).wait(...waitParams);
       const mintingSecondTokenIdEvents = helper.eth.normalizeEvents(mintingSecondTokenIdReceipt!);
       const secondTokenId = mintingSecondTokenIdEvents.Transfer.args.tokenId;
 
@@ -53,8 +53,8 @@ describe('EVM nesting tests group', () => {
       expect(await contract.ownerOf.staticCall(secondTokenId)).to.be.equal(targetNftTokenAddress);
 
       // Unnest token back
-      await (await contract.transferFrom.send(targetNftTokenAddress, owner, secondTokenId)).wait(...waitParams);
-      expect(await contract.ownerOf.staticCall(secondTokenId)).to.be.equal(owner);
+      await (await contract.transferFrom.send(targetNftTokenAddress, owner.address, secondTokenId)).wait(...waitParams);
+      expect(await contract.ownerOf.staticCall(secondTokenId)).to.be.equal(owner.address);
     });
 
     itEth('NFT: collectionNesting()', async ({helper}) => {
@@ -82,11 +82,11 @@ describe('EVM nesting tests group', () => {
 
       const {contract} = await createNestingCollection(helper, owner, true);
       expect(await contract.collectionNestingRestrictedCollectionIds.staticCall()).to.be.like([true, []]);
-      await (await contract.setCollectionNesting.send(true, [unnsetedCollectionAddress])).wait(...waitParams);
-      expect(await contract.collectionNestingRestrictedCollectionIds.staticCall()).to.be.like([true, [unnestedCollsectionId.toString()]]);
-      expect(await contract.collectionNestingPermissions.staticCall()).to.be.like([['1', false], ['0', true]]);
-      await (await contract.setCollectionNesting.send(false)).wait(...waitParams);
-      expect(await contract.collectionNestingPermissions.staticCall()).to.be.like([['1', false], ['0', false]]);
+      await (await contract['setCollectionNesting(bool,address[])'].send(true, [unnsetedCollectionAddress])).wait(...waitParams);
+      expect(await contract.collectionNestingRestrictedCollectionIds.staticCall()).to.be.like([true, [BigInt(unnestedCollsectionId)]]);
+      expect(await contract.collectionNestingPermissions.staticCall()).to.be.like([[1n, false], [0n, true]]);
+      await (await contract['setCollectionNesting(bool)'].send(false)).wait(...waitParams);
+      expect(await contract.collectionNestingPermissions.staticCall()).to.be.like([[1n, false], [0n, false]]);
     });
 
     itEth('NFT: allows an Owner to nest/unnest their token (Restricted nesting)', async ({helper}) => {
@@ -97,18 +97,18 @@ describe('EVM nesting tests group', () => {
       await (await contractA.setCollectionNesting.send([true, false, [await contractA.getAddress(), await contractB.getAddress()]])).wait(...waitParams);
 
       // Create a token to nest into
-      const mintingtargetNftTokenIdReceipt = await (await contractA.mint.send(owner)).wait(...waitParams);
+      const mintingtargetNftTokenIdReceipt = await (await contractA.mint.send(owner.address)).wait(...waitParams);
       const mintingtargetNftTokenIdEvents = helper.eth.normalizeEvents(mintingtargetNftTokenIdReceipt!);
       const targetNftTokenId = +mintingtargetNftTokenIdEvents.Transfer.args.tokenId;
       const nftTokenAddressA1 = helper.ethAddress.fromTokenId(collectionIdA, targetNftTokenId);
 
       // Create a token for nesting in the same collection as the target
-      const mintingTokenIdAReceipt = await (await contractA.mint.send(owner)).wait(...waitParams);
+      const mintingTokenIdAReceipt = await (await contractA.mint.send(owner.address)).wait(...waitParams);
       const mintingTokenIdAEvents = helper.eth.normalizeEvents(mintingTokenIdAReceipt!);
       const nftTokenIdA = +mintingTokenIdAEvents.Transfer.args.tokenId;
 
       // Create a token for nesting in a different collection
-      const mintingTokenIdBReceipt = await (await contractB.mint.send(owner)).wait(...waitParams);
+      const mintingTokenIdBReceipt = await (await contractB.mint.send(owner.address)).wait(...waitParams);
       const mintingTokenIdBEvents = helper.eth.normalizeEvents(mintingTokenIdBReceipt!);
       const nftTokenIdB = +mintingTokenIdBEvents.Transfer.args.tokenId;
 
@@ -150,7 +150,7 @@ describe('EVM nesting tests group', () => {
       const {collectionId, contract} = await createNestingCollection(helper, owner);
 
       // Mint a token
-      const mintingTargetTokenIdReceipt = await (await contract.mint.send(owner)).wait(...waitParams);
+      const mintingTargetTokenIdReceipt = await (await contract.mint.send(owner.address)).wait(...waitParams);
       const mintingTargetTokenIdEvents = helper.eth.normalizeEvents(mintingTargetTokenIdReceipt!);
       const targetTokenId = +mintingTargetTokenIdEvents.Transfer.args.tokenId;
       const targetTokenAddress = helper.ethAddress.fromTokenId(collectionId, targetTokenId);
@@ -161,7 +161,9 @@ describe('EVM nesting tests group', () => {
       const tokenId = +mintingTokenIdEvents.Transfer.args.tokenId;
 
       // Try to nest one token in another as a non-owner account
-      await expect(contract.transfer.staticCall(targetTokenAddress, tokenId, {from: malignant})).to.be.rejectedWith('UserIsNotAllowedToNest');
+      const malignantContract = helper.eth.changeContractCaller(contract, malignant);
+      await expect(malignantContract.transfer.staticCall(targetTokenAddress, tokenId))
+        .to.be.rejectedWith('UserIsNotAllowedToNest');
     });
 
     itEth('NFT: disallows a non-Owner to nest someone else\'s token (Restricted nesting)', async ({helper}) => {
@@ -174,18 +176,20 @@ describe('EVM nesting tests group', () => {
       await (await contractA.setCollectionNesting.send([true, false, [await contractA.getAddress(), await contractB.getAddress()]])).wait(...waitParams);
 
       // Create a token in one collection
-      const mintingTokenIdAReceipt = await (await contractA.mint.send(owner)).wait(...waitParams);
+      const mintingTokenIdAReceipt = await (await contractA.mint.send(owner.address)).wait(...waitParams);
       const mintingTokenIdAEvents = helper.eth.normalizeEvents(mintingTokenIdAReceipt!);
       const nftTokenIdA = +mintingTokenIdAEvents.Transfer.args.tokenId;
       const nftTokenAddressA = helper.ethAddress.fromTokenId(collectionIdA, nftTokenIdA);
 
       // Create a token in another collection
-      const mintingTokenIdBReceipt = await (await contractB.mint.send(owner)).wait(...waitParams);
+      const mintingTokenIdBReceipt = await (await contractB.mint.send(malignant.address)).wait(...waitParams);
       const mintingTokenIdBEvents = helper.eth.normalizeEvents(mintingTokenIdBReceipt!);
       const nftTokenIdB = +mintingTokenIdBEvents.Transfer.args.tokenId;
 
       // Try to drag someone else's token into the other collection and nest
-      await expect(contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB, {from: malignant})).to.be.rejectedWith('UserIsNotAllowedToNest');
+      const malignantContractB = helper.eth.changeContractCaller(contractB, malignant);
+      await expect(malignantContractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB))
+        .to.be.rejectedWith('UserIsNotAllowedToNest');
     });
 
     itEth('NFT: disallows to nest token in an unlisted collection', async ({helper}) => {
@@ -197,18 +201,17 @@ describe('EVM nesting tests group', () => {
       await (await contractA.setCollectionNesting.send([true, false, [await contractA.getAddress()]])).wait(...waitParams);
 
       // Create a token in one collection
-      const mintingTokenIdAReceipt = await (await contractA.mint.send(owner)).wait(...waitParams);
-      const mintingTokenIdAEvents = helper.eth.normalizeEvents(mintingTokenIdAReceipt!);
-      const nftTokenIdA = +mintingTokenIdAEvents.Transfer.args.tokenId;
-      const nftTokenAddressA = helper.ethAddress.fromTokenId(collectionIdA, nftTokenIdA);
+      const mintingTokenIdAReceipt = await (await contractA.mint.send(owner.address)).wait(...waitParams);
+      const nftTokenIdA = helper.eth.normalizeEvents(mintingTokenIdAReceipt!).Transfer.args.tokenId;
+      const nftTokenAddressA = helper.ethAddress.fromTokenId(collectionIdA, +nftTokenIdA);
 
       // Create a token in another collection
-      const mintingTokenIdBReceipt = await (await contractA.mint.send(owner)).wait(...waitParams);
-      const mintingTokenIdBEvents = helper.eth.normalizeEvents(mintingTokenIdBReceipt!);
-      const nftTokenIdB = +mintingTokenIdBEvents.Transfer.args.tokenId;
+      const mintingTokenIdBReceipt = await (await contractB.mint.send(owner.address)).wait(...waitParams);
+      const nftTokenIdB = helper.eth.normalizeEvents(mintingTokenIdBReceipt!).Transfer.args.tokenId;
 
       // Try to nest into a token in the other collection, disallowed in the first
-      await expect(contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB)).to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
+      await expect(contractB.transfer.staticCall(nftTokenAddressA, nftTokenIdB))
+        .to.be.rejectedWith('SourceCollectionIsNotAllowedToNest');
     });
   });
 
@@ -217,7 +220,7 @@ describe('EVM nesting tests group', () => {
       if(mode === 'ft') {
         const {collectionAddress} = await helper.eth.createFungibleCollection(owner, '', 18, '', '');
         const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
-        await (await contract.mint.send(owner, 100n)).wait(...waitParams);
+        await (await contract.mint.send(owner.address, 100n)).wait(...waitParams);
         return {collectionAddress, contract};
       }
 
@@ -236,13 +239,13 @@ describe('EVM nesting tests group', () => {
         const {collectionId: targetCollectionId, contract: targetContract} = await createNestingCollection(helper, owner);
         const {contract: ftContract} = await createFungibleCollection(helper, owner, testCase.mode);
 
-        const mintingTargetTokenIdReceipt = await (await targetContract.mint.send(owner)).wait(...waitParams);
+        const mintingTargetTokenIdReceipt = await (await targetContract.mint.send(owner.address)).wait(...waitParams);
         const mintingTargetTokenIdEvents = helper.eth.normalizeEvents(mintingTargetTokenIdReceipt!);
         const targetTokenId = +mintingTargetTokenIdEvents.Transfer.args.tokenId;
         const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
 
         await (await ftContract.transfer.send(targetTokenAddress, 10n)).wait(...waitParams);
-        expect(await ftContract.balanceOf.staticCall(targetTokenAddress)).to.be.equal('10');
+        expect(await ftContract.balanceOf.staticCall(targetTokenAddress)).to.be.equal(10n);
       });
     });
 
@@ -255,18 +258,18 @@ describe('EVM nesting tests group', () => {
         const {collectionId: targetCollectionId, contract: targetContract} = await createNestingCollection(helper, owner);
         const {contract: ftContract} = await createFungibleCollection(helper, owner, testCase.mode);
 
-        const mintingTargetTokenIdReceipt = await (await targetContract.mint.send(owner)).wait(...waitParams);
+        const mintingTargetTokenIdReceipt = await (await targetContract.mint.send(owner.address)).wait(...waitParams);
         const mintingTargetTokenIdEvents = helper.eth.normalizeEvents(mintingTargetTokenIdReceipt!);
         const targetTokenId = +mintingTargetTokenIdEvents.Transfer.args.tokenId;
         const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);
 
         await (await ftContract.transfer.send(targetTokenAddress, 10n)).wait(...waitParams);
 
-        await (await ftContract.transferFrom.send(targetTokenAddress, owner, 5n)).wait(...waitParams);
-        expect(await ftContract.balanceOf.staticCall(targetTokenAddress)).to.be.equal('5');
+        await (await ftContract.transferFrom.send(targetTokenAddress, owner.address, 5n)).wait(...waitParams);
+        expect(await ftContract.balanceOf.staticCall(targetTokenAddress)).to.be.equal(5n);
 
-        await (await ftContract.transferFrom.send(targetTokenAddress, owner, 5n)).wait(...waitParams);
-        expect(await ftContract.balanceOf.staticCall(targetTokenAddress)).to.be.equal('0');
+        await (await ftContract.transferFrom.send(targetTokenAddress, owner.address, 5n)).wait(...waitParams);
+        expect(await ftContract.balanceOf.staticCall(targetTokenAddress)).to.be.equal(0n);
       });
     });
 
@@ -281,7 +284,7 @@ describe('EVM nesting tests group', () => {
 
         const {contract: ftContract} = await createFungibleCollection(helper, owner, testCase.mode);
 
-        const mintingTargetTokenIdReceipt = await (await targetContract.mint.send(owner)).wait(...waitParams);
+        const mintingTargetTokenIdReceipt = await (await targetContract.mint.send(owner.address)).wait(...waitParams);
         const mintingTargetTokenIdEvents = helper.eth.normalizeEvents(mintingTargetTokenIdReceipt!);
         const targetTokenId = +mintingTargetTokenIdEvents.Transfer.args.tokenId;
         const targetTokenAddress = helper.ethAddress.fromTokenId(targetCollectionId, targetTokenId);

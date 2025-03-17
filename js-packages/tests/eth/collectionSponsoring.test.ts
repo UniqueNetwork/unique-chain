@@ -48,7 +48,7 @@ describe('evm nft collection sponsoring', () => {
 
     const result = await (await contract.mint.send(minter)).wait(...waitParams);
 
-    const events = helper.eth.normalizeEvents(result!);
+    const events = helper.eth.rebuildEvents(result!);
     expect(events).to.be.deep.equal([
       {
         address: collectionAddress,
@@ -149,7 +149,7 @@ describe('evm nft collection sponsoring', () => {
       // Create user with no balance:
       const user = helper.ethCrossAccount.createAccount();
       const nextTokenId = await collectionEvm.nextTokenId.staticCall();
-      expect(nextTokenId).to.be.equal('1');
+      expect(nextTokenId).to.be.equal(1n);
 
       // Set collection permissions:
       const oldPermissions = (await collectionSub.getData())!.raw.permissions;
@@ -229,7 +229,7 @@ describe('evm nft collection sponsoring', () => {
     // Create user with no balance:
     const user = helper.ethCrossAccount.createAccount();
     const nextTokenId = await collectionEvm.nextTokenId.staticCall();
-    expect(nextTokenId).to.be.equal('1');
+    expect(nextTokenId).to.be.equal(1n);
 
     // Set collection permissions:
     await (await collectionEvm.setCollectionAccess.send(1 /*'AllowList'*/)).wait(...waitParams);
@@ -561,7 +561,7 @@ describe('evm RFT collection sponsoring', () => {
       const user = helper.eth.createAccount();
       const userCross = helper.ethCrossAccount.fromAddress(user);
       const nextTokenId = await collectionEvm.nextTokenId.staticCall();
-      expect(nextTokenId).to.be.equal('1');
+      expect(nextTokenId).to.be.equal(1n);
 
       // Set collection permissions:
       const oldPermissions = (await collectionSub.getData())!.raw.permissions;
@@ -765,7 +765,7 @@ describe('evm RFT collection sponsoring', () => {
     await collectionSub.confirmSponsorship(sponsor);
 
     const nextTokenId = await collectionEvm.nextTokenId.staticCall();
-    expect(nextTokenId).to.be.equal('1');
+    expect(nextTokenId).to.be.equal(1n);
 
     await (await collectionEvm.setCollectionAccess.send(1 /*'AllowList'*/)).wait(...waitParams);
 

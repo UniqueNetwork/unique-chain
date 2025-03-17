@@ -44,8 +44,7 @@ describe('Eth fees are correct', () => {
     const contract = helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     const balanceBeforeWeb3Transfer = await helper.balance.getEthereum(owner);
-    await (await contract.transfer.send(receiver, tokenA, {from: owner, maxFeePerGas: await helper.eth.getGasPrice()}))
-      .wait(...waitParams);
+    await (await contract.transfer.send(receiver, tokenA, {maxFeePerGas: await helper.eth.getGasPrice()})).wait(...waitParams);
     const balanceAfterWeb3Transfer = await helper.balance.getEthereum(owner);
     const web3Diff = balanceBeforeWeb3Transfer - balanceAfterWeb3Transfer;
 

@@ -160,6 +160,7 @@ async function benchMintFee(
   const collectionContract = await helper.ethNativeContract.collection(
     collectionEthAddress,
     'nft',
+    ethSigner,
   );
 
   const receiverEthAddress = helper.address.substrateToEth(substrateReceiver.address);
@@ -234,7 +235,7 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
-        undefined,
+        undefined as any,
         true,
       );
 
@@ -274,6 +275,7 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
+        undefined as any,
       );
 
       const subTokenId = await evmContract.nextTokenId.staticCall();
@@ -310,7 +312,7 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
-        ethSigner,
+        undefined as any,
       );
 
       await (await evmContract.mintCross.send(

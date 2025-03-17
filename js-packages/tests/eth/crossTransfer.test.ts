@@ -56,7 +56,7 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     const contract = await helper.ethNativeContract.collection(address, 'ft', aliceProxy);
 
     await collection.mint(alice, 200n, {Ethereum: aliceProxy.address});
-    await (await contract.transfer.send(bobProxy, 50, {from: aliceProxy})).wait(...waitParams);
+    await (await contract.transfer.send(bobProxy, 50)).wait(...waitParams);
     await collection.transferFrom(alice, {Ethereum: bobProxy.address}, CrossAccountId.fromKeyring(bob).toICrossAccountId(), 50n);
     await collection.transfer(bob, CrossAccountId.fromKeyring(alice).toICrossAccountId(), 50n);
   });
@@ -98,7 +98,7 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
 
     const token = await collection.mintToken(alice);
     await token.transfer(alice, {Ethereum: aliceProxy.address});
-    await (await contract.transfer.send(bobProxy, 1, {from: aliceProxy})).wait(...waitParams);
+    await (await contract.transfer.send(bobProxy, 1)).wait(...waitParams);
     await token.transferFrom(alice, {Ethereum: bobProxy.address}, {Substrate: bob.address});
     await token.transfer(bob, {Substrate: charlie.address});
   });

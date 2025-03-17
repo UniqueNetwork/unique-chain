@@ -110,7 +110,7 @@ describe('Cannot set invalid collection limits', () => {
 
       await expect(collectionEvm.setCollectionLimit.staticCall({field: CollectionLimitField.TransferEnabled, value: {status: true, value: 3}})).to.be.rejectedWith(`execution reverted: "can't convert value to boolean \\"${invalidLimits.transfersEnabled}\\"`);
 
-      expect(await collectionEvm.setCollectionLimit.send({
+      await expect(collectionEvm.setCollectionLimit.send({
         field: CollectionLimitField.SponsoredDataSize,
         value: {status: true, value: -1},
       })).to.be.rejectedWith('value out-of-bounds');

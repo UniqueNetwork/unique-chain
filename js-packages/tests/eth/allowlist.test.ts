@@ -158,7 +158,7 @@ describe('EVM collection allowlist', () => {
 
       // cannot transfer anymore
       await (await collectionEvm.mint.send(...mintParams)).wait(...waitParams);
-      await expect(await (await userCollectionEvm.transfer.send(owner, 2)).wait(...waitParams)).to.be.rejectedWith(/Transaction has been reverted/);
+      await expect(userCollectionEvm.transfer.send(owner, 2)).to.be.rejectedWith('execution reverted: "AddressNotInAllowlist"');
     }));
 
   [
