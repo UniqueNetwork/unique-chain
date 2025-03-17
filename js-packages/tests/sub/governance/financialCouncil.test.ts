@@ -36,7 +36,7 @@ describeGov('Governance: Financial Council tests', () => {
         moreThanHalfCouncilThreshold,
       );
 
-      const councilProposedEvent = Event.FinCouncil.Proposed.expect(proposeResult.result.events);
+      const councilProposedEvent = Event.FinCouncil.Proposed.expect(proposeResult);
       const proposalIndex = councilProposedEvent.proposalIndex;
       const proposalHash = councilProposedEvent.proposalHash;
 
@@ -56,7 +56,7 @@ describeGov('Governance: Financial Council tests', () => {
         moreThanHalfCouncilThreshold,
       );
 
-      const councilProposedEvent = Event.FinCouncil.Proposed.expect(proposeResult.result.events);
+      const councilProposedEvent = Event.FinCouncil.Proposed.expect(proposeResult);
       const proposalIndex = councilProposedEvent.proposalIndex;
       const proposalHash = councilProposedEvent.proposalHash;
 
@@ -118,7 +118,7 @@ describeGov('Governance: Financial Council tests', () => {
 
   itSub('[Negative] FinCouncil can\'t cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
-    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult.result.events).proposalIndex;
+    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
     await expect(proposalFromAllFinCouncil(helper.democracy.cancelProposalCall(proposalIndex)))
       .rejectedWith('BadOrigin');
@@ -126,7 +126,7 @@ describeGov('Governance: Financial Council tests', () => {
 
   itSub('[Negative] FinCouncil member cannot cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
-    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult.result.events).proposalIndex;
+    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
     await expect(helper.finCouncil.collective.execute(
       finCounselors.andy,
@@ -201,7 +201,7 @@ describeGov('Governance: Financial Council tests', () => {
       proposal,
       defaultEnactmentMoment,
     );
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
     await expect(proposalFromAllFinCouncil(helper.fellowship.referenda.cancelCall(referendumIndex)))
       .rejectedWith('BadOrigin');
   });
@@ -218,7 +218,7 @@ describeGov('Governance: Financial Council tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
     await expect(helper.finCouncil.collective.execute(
       finCounselors.andy,

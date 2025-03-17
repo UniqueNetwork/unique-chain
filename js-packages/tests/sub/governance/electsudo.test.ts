@@ -62,7 +62,7 @@ describeGov('Governance: Elect Sudo', () => {
       moreThanHalfCouncilThreshold,
     );
 
-    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult.result.events);
+    const councilProposedEvent = Event.Council.Proposed.expect(proposeResult);
     const proposalIndex = councilProposedEvent.proposalIndex;
     const proposalHash = councilProposedEvent.proposalHash;
 

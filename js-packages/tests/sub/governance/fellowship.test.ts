@@ -30,7 +30,7 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
     await voteUnanimouslyInFellowship(helper, members, democracyTrackMinRank, referendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, referendumIndex);
 
@@ -85,7 +85,7 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const fellowshipReferendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
     await voteUnanimouslyInFellowship(helper, members, democracyTrackMinRank, fellowshipReferendumIndex);
     await helper.fellowship.referenda.placeDecisionDeposit(donor, fellowshipReferendumIndex);
 
@@ -116,7 +116,7 @@ describeGov('Governance: Fellowship tests', () => {
           defaultEnactmentMoment,
         );
 
-        const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+        const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
         const referendumInfo = await helper.fellowship.referenda.referendumInfo(referendumIndex);
         expect(referendumInfo.ongoing.track, `${memberIdx}-th member of rank #${rank}: proposal #${referendumIndex} is on invalid track`)
           .to.be.equal(democracyTrackId);
@@ -134,7 +134,7 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
     let expectedAyes = 0;
     for(let rank = democracyTrackMinRank; rank < fellowshipRankLimit; rank++) {
@@ -171,7 +171,7 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
     for(let rank = democracyTrackMinRank; rank < fellowshipRankLimit; rank++) {
       const rankMembers = members[rank];
@@ -253,7 +253,7 @@ describeGov('Governance: Fellowship tests', () => {
       defaultEnactmentMoment,
     );
 
-    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult.result.events).referendumIndex;
+    const referendumIndex = Event.FellowshipReferenda.Submitted.expect(submitResult).referendumIndex;
 
     for(let rank = 0; rank < democracyTrackMinRank; rank++) {
       for(const member of members[rank]) {
@@ -304,7 +304,7 @@ describeGov('Governance: Fellowship tests', () => {
 
   itSub('[Negative] FellowshipProposition cannot cancel Democracy proposals', async ({helper}) => {
     const proposeResult = await helper.getSudo().democracy.propose(sudoer, dummyProposalCall(helper), 0n);
-    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult.result.events).proposalIndex;
+    const proposalIndex = Event.Democracy.Proposed.expect(proposeResult).proposalIndex;
 
     await testBadFellowshipProposal(helper, helper.democracy.cancelProposalCall(proposalIndex));
   });
