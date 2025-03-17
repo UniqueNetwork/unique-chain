@@ -3,6 +3,7 @@
 
 import {
   usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD, makeNames,
+  INTERVAL_INCOME,
 } from './util.js';
 import * as path from 'path';
 import {promises as fs} from 'fs';
@@ -37,7 +38,9 @@ const globalSetup = async (): Promise<void> => {
         await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
           .setAppPromotionConfigurationOverride({
             recalculationInterval: LOCKING_PERIOD,
-            pendingInterval: UNLOCKING_PERIOD})], true);
+            pendingInterval: UNLOCKING_PERIOD,
+            intervalIncome: INTERVAL_INCOME
+          })], true);
       }
     } catch (error) {
       throw Error('Error during globalSetup', {cause: error});

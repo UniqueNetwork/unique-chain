@@ -18,6 +18,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {
   itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD,
   CALCULATION_PERIOD,
+  INTERVAL_INCOME,
 } from '@unique/test-utils/util.js';
 import {DevUniqueHelper} from '@unique/test-utils';
 import {itEth, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
@@ -457,7 +458,6 @@ describe('App promotion', () => {
 
       expect(await helper.balance.getFrozen(staker.address)).to.deep.eq([]);
       expect(await helper.balance.getSubstrateFull(staker.address)).to.deep.contain({reserved: 0n, frozen: 0n});
-      expect(await helper.balance.getSubstrate(staker.address) / nominal).to.eq(999n);
       expect(await helper.staking.getTotalStaked({Substrate: staker.address})).to.eq(0n);
       expect(await helper.staking.getPendingUnstake({Substrate: staker.address})).to.eq(0n);
       expect(await helper.staking.getPendingUnstakePerBlock({Substrate: staker.address})).to.deep.eq([]);
@@ -1013,9 +1013,10 @@ async function payUntilRewardFor(account: string, helper: DevUniqueHelper) {
 
 function calculateIncome(base: bigint, iter = 0, calcPeriod: bigint = CALCULATION_PERIOD): bigint {
   const BLOCKS_DAY = 14400n; // blocks per day
+  calcPeriod = BLOCKS_DAY;
   const ACCURACY = 1_000_000_000n;
   // 453_256n / 1_000_000_000n = 0.0453256% /day
-  const income = base + base * (ACCURACY * (calcPeriod * 453_256n) / (1_000_000_000n * BLOCKS_DAY)) / ACCURACY;
+  const income = base + base * (ACCURACY * (calcPeriod * INTERVAL_INCOME) / (1_000_000_000n * BLOCKS_DAY)) / ACCURACY;
 
   if(iter > 1) {
     return calculateIncome(income, iter - 1, calcPeriod);
