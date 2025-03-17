@@ -61,6 +61,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type DoneSlashHandler = ();
 }
 
 frame_support::construct_runtime!(
@@ -108,6 +109,7 @@ impl frame_system::Config for Test {
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
+	type ExtensionsWeightInfo = ();
 }
 
 parameter_types! {

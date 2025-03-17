@@ -93,6 +93,7 @@ impl frame_system::Config for Test {
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
+	type ExtensionsWeightInfo = ();
 }
 
 impl pallet_balances::Config for Test {
@@ -109,6 +110,7 @@ impl pallet_balances::Config for Test {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {

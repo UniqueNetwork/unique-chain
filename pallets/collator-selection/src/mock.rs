@@ -100,6 +100,7 @@ impl system::Config for Test {
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
+	type ExtensionsWeightInfo = ();
 }
 
 parameter_types! {
@@ -123,6 +124,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = MaxFreezes;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type DoneSlashHandler = ();
 }
 
 pub struct Author4;
@@ -285,7 +287,7 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		})
 		.collect::<Vec<_>>();
 	let collator_selection = collator_selection::GenesisConfig::<Test> { invulnerables };
-	let session = pallet_session::GenesisConfig::<Test> { keys };
+	let session = pallet_session::GenesisConfig::<Test> { keys, ..Default::default() };
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut t)
 		.unwrap();
