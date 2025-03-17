@@ -623,13 +623,13 @@ export class ChainHelperBase {
           const status = this.getTransactionStatus(result);
 
           if(status === this.transactionStatus.SUCCESS) {
-            // if(!result.status.isFinalized) {
-            //   return;
-            // }
+            if(!result.status.isFinalized) {
+              return;
+            }
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
-            //resolve({result, status, blockHash: result.status.toHuman().Finalized});
+            //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
