@@ -224,17 +224,9 @@ mod pallet {
 		#[pallet::weight(T::WeightInfo::set_app_promotion_configuration_override())]
 		pub fn set_app_promotion_configuration_override(
 			origin: OriginFor<T>,
-			mut configuration: AppPromotionConfiguration<BlockNumberFor<T>>,
+			configuration: AppPromotionConfiguration<BlockNumberFor<T>>,
 		) -> DispatchResult {
 			ensure_root(origin)?;
-			if configuration.interval_income.is_some() {
-				return Err(<Error<T>>::InconsistentConfiguration.into());
-			}
-
-			configuration.interval_income = configuration.recalculation_interval.map(|b| {
-				Perbill::from_rational(b, T::DayRelayBlocks::get())
-					* T::AppPromotionDailyRate::get()
-			});
 
 			<AppPromomotionConfigurationOverride<T>>::set(configuration);
 

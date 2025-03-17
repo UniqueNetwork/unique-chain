@@ -152,7 +152,7 @@ impl pallet_unique::Config for Runtime {
 }
 
 parameter_types! {
-	pub AppPromotionDailyRate: Perbill = Perbill::from_parts(453_256);
+	pub AppPromotionDailyRate: Perbill = Perbill::from_parts(406_712);
 	pub const MaxCollators: u32 = MAX_COLLATORS;
 	pub const LicenseBond: Balance = GENESIS_LICENSE_BOND;
 
