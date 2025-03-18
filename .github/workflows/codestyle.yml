@@ -47,6 +47,22 @@ jobs:
         # run: cd js-packages && yarn lint --max-warnings=0
         run: cd js-packages && yarn lint
 
+  yarn_types_check:
+    runs-on: [ ci ]
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+      - uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.head_ref }}            
+      - uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+      - name: Install modules
+        run: cd js-packages && yarn
+      - name: Run tsc
+        run: cd js-packages && yarn ts-check
+
   clippy:
     runs-on: [ ci ]
     steps:
