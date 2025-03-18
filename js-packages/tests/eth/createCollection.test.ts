@@ -30,7 +30,7 @@ const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [
   [false, false, []],  // nestingSettings
   [],  // limits
   emptyAddress,  // pendingSponsor
-  [0],  // flags
+  0,  // flags
 ];
 
 type ElementOf<A> = A extends readonly (infer T)[] ? T : never;

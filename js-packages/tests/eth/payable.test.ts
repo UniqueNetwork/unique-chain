@@ -51,7 +51,7 @@ describe('EVM payable contracts', () => {
     const contract = await helper.eth.deployCollectorContract(deployer);
     const [alice] = await helper.arrange.createAccounts([40n], donor);
 
-    const weiCount = '10000';
+    const weiCount = 10000n;
 
     // Transaction fee/value will be payed from subToEth(sender) evm balance,
     // which is backed by evmToAddress(subToEth(sender)) substrate balance
@@ -61,7 +61,7 @@ describe('EVM payable contracts', () => {
       alice,
       await contract.getAddress(),
       (await contract.giveMoney.populateTransaction()).data,
-      weiCount,
+      weiCount.toString(),
     );
 
     expect(await contract.getCollected.staticCall()).to.be.equal(weiCount);
@@ -77,7 +77,7 @@ describe('EVM payable contracts', () => {
 
     await helper.eth.transferBalanceFromSubstrate(alice, await contract.getAddress(), weiCount, false);
 
-    expect(await contract.getUnaccounted.staticCall()).to.be.equal(weiCount.toString());
+    expect(await contract.getUnaccounted.staticCall()).to.be.equal(weiCount);
   });
 
   itEth('Balance can be retrieved from evm contract', async({helper}) => {
@@ -214,7 +214,7 @@ describe('EVM transaction fees', () => {
 
   itEth('Get collection creation fee', async({helper}) => {
     const deployer = await helper.eth.createAccountWithBalance(donor);
-    expect(await helper.eth.getCollectionCreationFee(deployer)).to.be.equal(String(2n * helper.balance.getOneTokenNominal()));
+    expect(await helper.eth.getCollectionCreationFee(deployer)).to.be.equal(2n * helper.balance.getOneTokenNominal());
   });
 
   async function deployProxyContract(helper: EthUniqueHelper, deployer: HDNodeWallet) {

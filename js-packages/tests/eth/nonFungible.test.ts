@@ -52,7 +52,7 @@ describe('Check ERC721 token URI for NFT', () => {
     const event = mintEvents.Transfer;
     expect(event.address).to.be.equal(collectionAddress);
     expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
-    expect(event.args.to).to.be.equal(receiver);
+    expect(event.args.to).to.be.equal(receiver.address);
     expect(event.args.tokenId).to.be.equal(tokenId);
 
     return {contract, nextTokenId: tokenId};
@@ -132,12 +132,12 @@ describe('NFT: Plain calls', () => {
       const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       let tokenId = mintEvents.Transfer.args.tokenId;
-      expect(tokenId).to.be.equal(expectedTokenId);
+      expect(BigInt(tokenId)).to.be.equal(expectedTokenId);
 
       let event = mintEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
+      expect(event.args.to).to.be.equal(testCase === 'ethereum' ? receiverCrossEth.eth : helper.address.substrateToEth(receiverSub.address));
       expect(await contract.properties.staticCall(tokenId, [])).to.be.like([]);
 
       expectedTokenId = await contract.nextTokenId.staticCall();
@@ -148,17 +148,17 @@ describe('NFT: Plain calls', () => {
       event = mintEvents2.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
       expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.args.to).to.be.equal(testCase === 'ethereum' ? receiverEth : helper.address.substrateToEth(bob.address));
+      expect(event.args.to).to.be.equal(testCase === 'ethereum' ? receiverEth.address : helper.address.substrateToEth(receiverSub.address));
       expect(await contract.properties.staticCall(tokenId, [])).to.be.like([]);
 
       tokenId = mintEvents2.Transfer.args.tokenId;
 
-      expect(tokenId).to.be.equal(expectedTokenId);
+      expect(BigInt(tokenId)).to.be.equal(expectedTokenId);
 
       expect(await contract.properties.staticCall(tokenId, [])).to.be.like(properties
         .map(p => helper.ethProperty.property(p.key, p.value.toString())));
 
-      expect(await helper.nft.getTokenOwner(collection.collectionId, +tokenId))
+      expect(await helper.nft.getTokenOwner(collection.collectionId, Number(tokenId)))
         .to.deep.eq(testCase === 'ethereum' ? {Ethereum: receiverEth.address.toLowerCase()} : {Substrate: receiverSub.address});
     });
   });
@@ -189,11 +189,11 @@ describe('NFT: Plain calls', () => {
       const bulkSize = 3;
 
       const nextTokenId = await contract.nextTokenId.staticCall();
-      expect(nextTokenId).to.be.equal('1');
+      expect(nextTokenId).to.be.equal(1n);
 
       const mintTx = await contract.mintBulkWithTokenURI.send(
         receiver,
-        Array.from({length: bulkSize}, (_, i) => [+nextTokenId + i, `Test URI ${i}`]),
+        Array.from({length: bulkSize}, (_, i) => [nextTokenId + BigInt(i), `Test URI ${i}`]),
       );
       const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
@@ -207,9 +207,9 @@ describe('NFT: Plain calls', () => {
         expect(event.address).to.equal(collectionAddress);
         expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
         expect(event.args.to).to.equal(receiver);
-        expect(event.args.tokenId).to.equal(`${+nextTokenId + i}`);
+        expect(event.args.tokenId).to.equal(`${nextTokenId + BigInt(i)}`);
 
-        expect(await contract.tokenURI.staticCall(+nextTokenId + i)).to.be.equal(`Test URI ${i}`);
+        expect(await contract.tokenURI.staticCall(nextTokenId + BigInt(i))).to.be.equal(`Test URI ${i}`);
       }
     }
   });
@@ -248,7 +248,7 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', caller);
     {
       const nextTokenId = await contract.nextTokenId.staticCall();
-      expect(nextTokenId).to.be.equal('1');
+      expect(nextTokenId).to.be.equal(1n);
 
       const mintTx = await contract.mintBulkCross.send(
         [
@@ -287,14 +287,14 @@ describe('NFT: Plain calls', () => {
         const event = events[i];
         expect(event.address).to.equal(collectionAddress);
         expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
-        expect(event.args.to).to.equal(receiver);
-        expect(event.args.tokenId).to.equal(`${+nextTokenId + i}`);
+        expect(event.args.to).to.equal(receiver.address);
+        expect(event.args.tokenId).to.equal(`${nextTokenId + BigInt(i)}`);
       }
 
       const properties = [
-        await contract.properties.staticCall(+nextTokenId, []),
-        await contract.properties.staticCall(+nextTokenId + 1, []),
-        await contract.properties.staticCall(+nextTokenId + 2, []),
+        await contract.properties.staticCall(nextTokenId, []),
+        await contract.properties.staticCall(nextTokenId + 1n, []),
+        await contract.properties.staticCall(nextTokenId + 2n, []),
       ];
 
       expect(properties).to.be.deep.equal([
@@ -330,7 +330,7 @@ describe('NFT: Plain calls', () => {
 
       const event = burnEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(caller);
+      expect(event.args.from).to.be.equal(caller.address);
       expect(event.args.to).to.be.equal('0x0000000000000000000000000000000000000000');
       expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
@@ -347,8 +347,9 @@ describe('NFT: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
     {
-      const badTokenId = await contract.nextTokenId.staticCall() + 1;
-      await expect(contract.getApproved.staticCall(badTokenId)).to.be.rejectedWith('revert TokenNotFound');
+      const badTokenId = await contract.nextTokenId.staticCall() + 1n;
+      await expect(contract.getApproved.staticCall(badTokenId))
+        .to.be.rejectedWith('execution reverted: "TokenNotFound"');
     }
     {
       const approved = await contract.getApproved.staticCall(tokenId);
@@ -361,13 +362,13 @@ describe('NFT: Plain calls', () => {
 
       const event = approveEvents.Approval;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.owner).to.be.equal(owner);
-      expect(event.args.approved).to.be.equal(spender);
+      expect(event.args.owner).to.be.equal(owner.address);
+      expect(event.args.approved).to.be.equal(spender.address);
       expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
     {
       const approved = await contract.getApproved.staticCall(tokenId);
-      expect(approved).to.be.equal(spender);
+      expect(approved).to.be.equal(spender.address);
     }
   });
 
@@ -392,9 +393,9 @@ describe('NFT: Plain calls', () => {
         address: collectionAddress,
         event: 'ApprovalForAll',
         args: {
-          owner,
-          operator,
-          approved: true,
+          owner: owner.address,
+          operator: operator.address,
+          approved: 'true',
         },
       });
 
@@ -411,9 +412,9 @@ describe('NFT: Plain calls', () => {
         address: collectionAddress,
         event: 'ApprovalForAll',
         args: {
-          owner,
-          operator,
-          approved: false,
+          owner: owner.address,
+          operator: operator.address,
+          approved: 'false',
         },
       });
 
@@ -431,13 +432,13 @@ describe('NFT: Plain calls', () => {
     const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(address, 'nft', operator);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', owner);
 
     {
       await (await contract.setApprovalForAll.send(operator, true)).wait(...waitParams);
+      
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
-
-      const burnTx = await contract.burnFromCross.send(ownerCross, token.tokenId);
+      const burnTx = await (<Contract>contract.connect(operator)).burnFromCross.send(ownerCross, token.tokenId);
       const burnReceipt = await burnTx.wait(...waitParams);
       const burnEvents = helper.eth.normalizeEvents(burnReceipt!);
 
@@ -465,7 +466,7 @@ describe('NFT: Plain calls', () => {
     const token = await collection.mintToken(minter, {Ethereum: owner.address});
 
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const contract = await helper.ethNativeContract.collection(address, 'nft', operator);
+    const contract = await helper.ethNativeContract.collection(address, 'nft', owner);
 
     {
       await (await contract.setApprovalForAll.send(operator.address, true)).wait(...waitParams);
@@ -473,7 +474,7 @@ describe('NFT: Plain calls', () => {
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
       const recieverCross = helper.ethCrossAccount.fromKeyringPair(receiver);
 
-      const transferTx = await contract.burnFromCross.send(ownerCross, recieverCross, token.tokenId);
+      const transferTx = await (<Contract>contract.connect(operator)).transferFromCross.send(ownerCross, recieverCross, token.tokenId);
       const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
@@ -523,16 +524,18 @@ describe('NFT: Plain calls', () => {
     // Check events for burnFromCross (substrate and ethereum):
     [
       [burnEvents1, token1, helper.address.substrateToEth(ownerSub.address)],
-      [burnEvents2, token2, ownerEth],
+      [burnEvents2, token2, ownerEth.address],
     ].map(burnData => {
       expect(burnData[0]).to.be.like({
-        address: collectionAddress,
-        event: 'Transfer',
-        args: {
-          from: burnData[2],
-          to: '0x0000000000000000000000000000000000000000',
-          tokenId: (<any>burnData[1]).tokenId.toString(),
-        },
+        'Transfer': {
+          address: collectionAddress,
+          event: 'Transfer',
+          args: {
+            from: burnData[2],
+            to: '0x0000000000000000000000000000000000000000',
+            tokenId: (<any>burnData[1]).tokenId.toString(),
+          },
+        }
       });
     });
 
@@ -655,19 +658,19 @@ describe('NFT: Plain calls', () => {
 
       const event = transferEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(owner);
-      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.from).to.be.equal(owner.address);
+      expect(event.args.to).to.be.equal(receiver.address);
       expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(receiver);
-      expect(+balance).to.equal(1);
+      const balance = await contract.balanceOf.staticCall(receiver.address);
+      expect(balance).to.equal(1n);
     }
 
     {
-      const balance = await contract.balanceOf.staticCall(owner);
-      expect(+balance).to.equal(0);
+      const balance = await contract.balanceOf.staticCall(owner.address);
+      expect(balance).to.equal(0n);
     }
   });
 
@@ -723,19 +726,19 @@ describe('NFT: Plain calls', () => {
 
       const event = transferEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(owner);
-      expect(event.args.to).to.be.equal(receiver);
+      expect(event.args.from).to.be.equal(owner.address);
+      expect(event.args.to).to.be.equal(receiver.address);
       expect(event.args.tokenId).to.be.equal(`${tokenId}`);
     }
 
     {
       const balance = await contract.balanceOf.staticCall(owner);
-      expect(+balance).to.equal(0);
+      expect(balance).to.equal(0n);
     }
 
     {
       const balance = await contract.balanceOf.staticCall(receiver);
-      expect(+balance).to.equal(1);
+      expect(balance).to.equal(1n);
     }
   });
 
@@ -758,18 +761,17 @@ describe('NFT: Plain calls', () => {
 
       const event = transferEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.args.from).to.be.equal(owner);
-      expect(event.args.to).to.be.equal(receiverEth);
+      expect(event.args.from).to.be.equal(owner.address);
+      expect(event.args.to).to.be.equal(receiverEth.address);
       expect(event.args.tokenId).to.be.equal(`${tokenId}`);
 
-      const ownerBalance = await collectionEvm.balanceOf.staticCall(owner);
-      expect(+ownerBalance).to.equal(0);
+      const ownerBalance = await collectionEvm.balanceOf.staticCall(owner.address);
+      expect(ownerBalance).to.equal(0n);
 
-      const receiverBalance = await collectionEvm.balanceOf.staticCall(receiverEth);
-      expect(+receiverBalance).to.equal(1);
+      const receiverBalance = await collectionEvm.balanceOf.staticCall(receiverEth.address);
+      expect(receiverBalance).to.equal(1n);
       expect(await helper.nft.getTokenOwner(collection.collectionId, tokenId))
-        .to.deep
-        .eq({Ethereum: receiverEth.address.toLowerCase()});
+        .to.deep.eq({Ethereum: receiverEth.address.toLowerCase()});
     }
 
     {
@@ -784,7 +786,7 @@ describe('NFT: Plain calls', () => {
       expect(event.args.tokenId).to.be.equal(`${tokenId}`);
 
       const ownerBalance = await collectionEvm.balanceOf.staticCall(receiverEth.address);
-      expect(+ownerBalance).to.equal(0);
+      expect(ownerBalance).to.equal(0n);
 
       const receiverBalance = await helper.nft.getTokensByAddress(collection.collectionId, {Substrate: minter.address});
       expect(receiverBalance).to.contain(tokenId);
@@ -813,40 +815,45 @@ describe('NFT: Plain calls', () => {
 
   itEth('Check balanceOfCross()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {});
+
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const ownerCross = helper.ethCrossAccount.fromAddr(owner);
+
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    expect(await collectionEvm.balanceOfCross.staticCall(owner)).to.be.eq(0n);
+    expect(await collectionEvm.balanceOfCross.staticCall(ownerCross)).to.be.eq(0n);
 
     for(let i = 1n; i < 10n; i++) {
       await collection.mintToken(minter, {Ethereum: owner.address});
-      expect(await collectionEvm.balanceOfCross.staticCall(owner)).to.be.eq(i);
+      expect(await collectionEvm.balanceOfCross.staticCall(ownerCross)).to.be.eq(i);
     }
   });
 
   itEth('Check ownerOfCross()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(minter, {});
+
     let owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    let ownerCross = helper.ethCrossAccount.fromAddress(owner);
+    
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
-    const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    let collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
+    
     const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     for(let i = 1n; i < 10n; i++) {
-      const [ownerCrossEth, ownerCrossSub] = (await collectionEvm.ownerOfCross.staticCall(tokenId)).toArray();
-      expect(ownerCrossEth).to.be.eq(owner.address);
-      expect(ownerCrossSub).to.be.eq(0n);
+      const ownerOfCross = await collectionEvm.ownerOfCross.staticCall(tokenId);
+      expect(ownerCross.eth).to.be.eq(ownerOfCross.eth);
+      expect(ownerCross.sub).to.be.eq(ownerOfCross.sub.toString());
 
       const newOwner = await helper.eth.createAccountWithBalance(donor, 100n);
+      const newOwnerCross = helper.ethCrossAccount.fromAddress(newOwner.address);
 
-      await (
-        await collectionEvm.transferCross.send(
-          helper.ethCrossAccount.fromAddress(newOwner),
-          tokenId,
-        )
-      ).wait(...waitParams);
+      await (await collectionEvm.transferCross.send(newOwnerCross, tokenId)).wait(...waitParams);
+      collectionEvm = helper.eth.changeContractCaller(collectionEvm, newOwner);
 
       owner = newOwner;
+      ownerCross = newOwnerCross;
     }
   });
 });

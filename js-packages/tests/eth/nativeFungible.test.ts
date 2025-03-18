@@ -166,7 +166,11 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
 
   itEth('transferFromCross()', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
+    const ownerCross = helper.ethCrossAccount.fromAddr(owner);
+
     const receiver = await helper.eth.createAccountWithBalance(donor, 100n);
+    const receiverCross = helper.ethCrossAccount.fromAddr(receiver);
+
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
@@ -174,7 +178,7 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
     const balanceReceiverBefore = await helper.balance.getEthereum(receiver);
 
     await (
-      await contract.transferFromCross.send(owner.address, receiver.address, 50)
+      await contract.transferFromCross.send(ownerCross, receiverCross, 50)
     ).wait(...waitParams);
 
     const balanceOwnerAfter = await helper.balance.getEthereum(owner);
@@ -183,7 +187,7 @@ describe('NativeFungible: ERC20UniqueExtensions calls', () => {
     expect(balanceOwnerBefore - 50n > balanceOwnerAfter).to.be.true;
     expect(balanceReceiverBefore === balanceReceiverAfter - 50n).to.be.true;
 
-    await expect(contract.transferFromCross.staticCall(receiver.address, receiver.address, 50))
+    await expect(contract.transferFromCross.staticCall(receiverCross, receiverCross, 50))
       .to.be.rejectedWith('no permission');
   });
 });

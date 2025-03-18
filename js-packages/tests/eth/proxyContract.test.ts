@@ -44,7 +44,7 @@ describe('EVM payable contracts', () => {
     await (await realContractV1proxy.flip.send()).wait(...waitParams);
     const value1 = await realContractV1proxy.getValue.staticCall();
     const flipCount1 = await realContractV1proxy.getFlipCount.staticCall();
-    expect(flipCount1).to.be.equal('3');
+    expect(flipCount1).to.be.equal(3n);
     expect(value1).to.be.equal(true);
 
     const realContractV2 = await deployRealContractV2(helper, deployer);
@@ -58,7 +58,7 @@ describe('EVM payable contracts', () => {
     const value2 = await realContractV2proxy.getValue.staticCall();
     const flipCount2 = await realContractV2proxy.getFlipCount.staticCall();
     expect(value2).to.be.equal(true);
-    expect(flipCount2).to.be.equal('6');
+    expect(flipCount2).to.be.equal(6n);
   });
 
   async function deployProxyContract(helper: EthUniqueHelper, deployer: HDNodeWallet) {
