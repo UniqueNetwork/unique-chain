@@ -188,7 +188,7 @@ describe('Market V2 Contract', () => {
   itEth('Put + Buy [sub]', async ({helper}) => {
     const ONE_TOKEN = helper.balance.getOneTokenNominal();
     const PRICE = 2n * ONE_TOKEN;  // 2 UNQ
-    
+
     const marketOwner = await helper.eth.createAccountWithBalance(donor, 600n);
     const market = await deployMarket(helper, marketOwner);
     const marketAddress = await market.getAddress();

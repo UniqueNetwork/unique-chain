@@ -19,7 +19,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
-import { Contract } from 'ethers';
+import {Contract} from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -197,7 +197,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const evmCollection = await helper.ethNativeContract.collection(address, 'nft', caller);
     const contract = await proxyWrap(helper, evmCollection, donor);
-    
+
     await collection.addAdmin(donor, {Ethereum: await contract.getAddress()});
 
     {
@@ -205,7 +205,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
       const nextTokenId = await callerContract.nextTokenId.staticCall();
       expect(nextTokenId).to.be.equal(1n);
-      
+
       const mintTx = await callerContract.mintBulkWithTokenURI.send(
         receiver.address,
         [
@@ -317,7 +317,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
   itEth('Can perform transferFrom()', async ({helper}) => {
     const collection = await helper.nft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'});
-    
+
     const caller = await helper.eth.createAccountWithBalance(donor);
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
@@ -329,7 +329,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
 
     await (await (<Contract>evmCollection.connect(owner)).approve.send(
       await contract.getAddress(),
-      tokenId
+      tokenId,
     )).wait(...waitParams);
 
     {

@@ -735,9 +735,7 @@ impl CollectionLimits {
 
 	/// Get effective value for [`token_limit`](self.token_limit).
 	pub fn token_limit(&self) -> u32 {
-		self.token_limit
-			.unwrap_or(COLLECTION_TOKEN_LIMIT)
-			.min(COLLECTION_TOKEN_LIMIT)
+		self.token_limit.unwrap_or(COLLECTION_TOKEN_LIMIT)
 	}
 
 	// TODO: may be replace u32 to mode?

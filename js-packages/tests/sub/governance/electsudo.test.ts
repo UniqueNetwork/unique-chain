@@ -8,7 +8,6 @@ describeGov('Governance: Elect Sudo', () => {
   let sudoer: IKeyringPair;
   let donor: IKeyringPair;
   let counselors: ICounselors;
-  let techComm: ITechComms;
 
   const moreThanHalfCouncilThreshold = 3;
 

@@ -16,7 +16,7 @@
 
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import { Contract } from 'ethers';
+import {Contract} from 'ethers';
 
 describe('Fungible: Plain calls', () => {
   let donor: IKeyringPair;
@@ -469,13 +469,13 @@ describe('Fungible: Plain calls', () => {
 
   itEth('Check balanceOfCross()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {});
-    
+
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const ownerCross = helper.ethCrossAccount.fromAddr(owner);
-    
+
     const other = await helper.eth.createAccountWithBalance(donor, 100n);
     const otherCross = helper.ethCrossAccount.fromAddr(other);
-    
+
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 

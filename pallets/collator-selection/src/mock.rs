@@ -287,7 +287,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		})
 		.collect::<Vec<_>>();
 	let collator_selection = collator_selection::GenesisConfig::<Test> { invulnerables };
-	let session = pallet_session::GenesisConfig::<Test> { keys, ..Default::default() };
+	let session = pallet_session::GenesisConfig::<Test> {
+		keys,
+		..Default::default()
+	};
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut t)
 		.unwrap();

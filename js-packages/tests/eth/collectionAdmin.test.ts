@@ -20,7 +20,7 @@ import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.js';
 import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
-import { Contract } from 'ethers';
+import {Contract} from 'ethers';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {
   const before = await helper.balance.getSubstrate(helper.address.ethToSubstrate(userAddress));

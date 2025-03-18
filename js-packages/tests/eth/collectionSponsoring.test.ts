@@ -640,7 +640,7 @@ describe('evm RFT collection sponsoring', () => {
       let collectionData = (await collectionSub.getData())!;
       expect(collectionData.raw.sponsorship.Unconfirmed).to.be.eq(helper.address.ethToSubstrate(sponsor, true));
 
-      expect(await collectionEvm.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(collectionEvm.confirmCollectionSponsorship.send()).to.be.rejectedWith('ConfirmSponsorshipFail');
       expect(await collectionEvm.hasCollectionPendingSponsor.staticCall()).to.be.true;
 
       await (await sponsorCollectionEvm.confirmCollectionSponsorship.send()).wait(...waitParams);

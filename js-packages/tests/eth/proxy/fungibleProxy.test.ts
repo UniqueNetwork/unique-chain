@@ -20,7 +20,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {makeNames} from '@unique/test-utils/util.js';
-import { Contract } from 'ethers';
+import {Contract} from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -126,7 +126,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
   itEth('Can perform transferFrom()', async ({helper}) => {
     const collection = await helper.ft.mintCollection(alice, {name: 'test', description: 'test', tokenPrefix: 'test'}, 0);
-    
+
     const caller = await helper.eth.createAccountWithBalance(donor);
     const owner = await helper.eth.createAccountWithBalance(donor);
     const receiver = helper.eth.createAccount();
@@ -139,7 +139,7 @@ describe('Fungible (Via EVM proxy): Plain calls', () => {
 
     await (await (<Contract>evmCollection.connect(owner)).approve.send(
       await contract.getAddress(),
-      100
+      100,
     )).wait(...waitParams);
 
     {

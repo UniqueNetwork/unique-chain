@@ -495,8 +495,8 @@ impl<T: Config> Pallet<T> {
 	/// * It is `Here` location that corresponds to the native token of this parachain.
 	/// * It is `../Parachain(<Unique Network Para ID>)` that also corresponds to the native token of this parachain.
 	/// * It is `../Parachain(<Unique Network Para ID>)/GeneralIndex(<Collection ID>)` that corresponds
-	/// to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
-	/// otherwise `None` is returned.
+	///   to the collection with the ID equal to `<Collection ID>`. The `<Collection ID>` must be in the valid range,
+	///   otherwise `None` is returned.
 	/// * It is `GeneralIndex(<Collection ID>)`. Same as the last one above.
 	///
 	/// If the multilocation doesn't match the patterns listed above,

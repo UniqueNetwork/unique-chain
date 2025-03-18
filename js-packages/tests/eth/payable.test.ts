@@ -88,8 +88,6 @@ describe('EVM payable contracts', () => {
     const contract = await helper.eth.deployCollectorContract(deployer);
     const [alice] = await helper.arrange.createAccounts([20n], donor);
 
-    const web3 = helper.getWeb3();
-
     await (await deployer.sendTransaction({
       from: deployer.address,
       to: await contract.getAddress(),

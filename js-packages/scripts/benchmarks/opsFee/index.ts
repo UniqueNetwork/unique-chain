@@ -90,8 +90,7 @@ async function erc721CalculateFeeGas(
 
   res['createCollection'] = await helper.arrange.calculcateFeeGas(
     {Ethereum: ethSigner.address},
-    async () => await (await helperContract.createNFTCollection.send(
-      'test','test','test', {from: ethSigner, value: (2n * helper.balance.getOneTokenNominal())})
+    async () => await (await helperContract.createNFTCollection.send('test','test','test', {from: ethSigner, value: (2n * helper.balance.getOneTokenNominal())})
     ).wait(...waitParams),
   );
 
@@ -584,7 +583,7 @@ async function erc20CalculateFeeGas(
   res['mint'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.mint.send(ethSigner, 1, )).wait(...waitParams),
+      async () => await (await zeppelelinContract!.mint.send(ethSigner, 1)).wait(...waitParams),
     );
 
   res['mintCross'] =
@@ -626,7 +625,7 @@ async function erc20CalculateFeeGas(
   res['transfer*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.transfer.send(ethReceiver, 1, )).wait(...waitParams),
+      async () => await (await zeppelelinContract!.transfer.send(ethReceiver, 1)).wait(...waitParams),
     );
 
   res['transferCross'] =
@@ -687,7 +686,7 @@ async function erc20CalculateFeeGas(
   res['approve*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.approve.send(ethReceiver, 10, )).wait(...waitParams),
+      async () => await (await zeppelelinContract!.approve.send(ethReceiver, 10)).wait(...waitParams),
     );
 
   res['approveCross'] =

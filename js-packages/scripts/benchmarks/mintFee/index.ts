@@ -251,9 +251,7 @@ async function benchMintWithProperties(
       );
 
       for(const val of PROPERTIES.slice(0, setup.propertiesNumber)) {
-        encodedCall = (await evmContract.setProperty.populateTransaction(
-          subTokenId, val.key, Buffer.from(val.value)
-        )).data;
+        encodedCall = (await evmContract.setProperty.populateTransaction(subTokenId, val.key, Buffer.from(val.value))).data;
 
         await helper.eth.sendEVM(
           donor,
@@ -289,9 +287,7 @@ async function benchMintWithProperties(
         '0',
       );
 
-      encodedCall = (await evmContract.setProperties.populateTransaction(
-        subTokenId, PROPERTIES.slice(0, setup.propertiesNumber)
-      )).data;
+      encodedCall = (await evmContract.setProperties.populateTransaction(subTokenId, PROPERTIES.slice(0, setup.propertiesNumber))).data;
 
       await helper.eth.sendEVM(
         donor,

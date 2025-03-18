@@ -75,7 +75,7 @@ describe('NativeFungible: ERC20 calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionAddress = helper.ethAddress.fromCollectionId(0);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
-    
+
     const chainProperties = await helper.chain.getChainProperties();
     if(!chainProperties.tokenSymbol) {
       console.log('bad chain properties (token symbol)', chainProperties);

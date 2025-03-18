@@ -20,7 +20,7 @@ import {itEth, expect, SponsoringMode, usingEthPlaygrounds, waitParams} from '@u
 import {usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {CompiledContract} from '@unique/test-utils/eth/types.js';
 import {HDNodeWallet} from 'ethers';
-import { Contract } from 'ethers';
+import {Contract} from 'ethers';
 
 describe('Sponsoring EVM contracts', () => {
   let donor: IKeyringPair;

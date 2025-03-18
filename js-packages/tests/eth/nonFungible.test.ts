@@ -250,31 +250,29 @@ describe('NFT: Plain calls', () => {
       const nextTokenId = await contract.nextTokenId.staticCall();
       expect(nextTokenId).to.be.equal(1n);
 
-      const mintTx = await contract.mintBulkCross.send(
-        [
-          {
-            owner: receiverCross,
-            properties: [
-              {key: 'key_0_0', value: Buffer.from('value_0_0')},
-            ],
-          },
-          {
-            owner: receiverCross,
-            properties: [
-              {key: 'key_1_0', value: Buffer.from('value_1_0')},
-              {key: 'key_1_1', value: Buffer.from('value_1_1')},
-            ],
-          },
-          {
-            owner: receiverCross,
-            properties: [
-              {key: 'key_2_0', value: Buffer.from('value_2_0')},
-              {key: 'key_2_1', value: Buffer.from('value_2_1')},
-              {key: 'key_2_2', value: Buffer.from('value_2_2')},
-            ],
-          },
-        ],
-      );
+      const mintTx = await contract.mintBulkCross.send([
+        {
+          owner: receiverCross,
+          properties: [
+            {key: 'key_0_0', value: Buffer.from('value_0_0')},
+          ],
+        },
+        {
+          owner: receiverCross,
+          properties: [
+            {key: 'key_1_0', value: Buffer.from('value_1_0')},
+            {key: 'key_1_1', value: Buffer.from('value_1_1')},
+          ],
+        },
+        {
+          owner: receiverCross,
+          properties: [
+            {key: 'key_2_0', value: Buffer.from('value_2_0')},
+            {key: 'key_2_1', value: Buffer.from('value_2_1')},
+            {key: 'key_2_2', value: Buffer.from('value_2_2')},
+          ],
+        },
+      ]);
       const mintReceipt = await mintTx.wait(...waitParams);
       const mintEvents = helper.eth.rebuildEvents(mintReceipt!);
 
@@ -436,7 +434,7 @@ describe('NFT: Plain calls', () => {
 
     {
       await (await contract.setApprovalForAll.send(operator, true)).wait(...waitParams);
-      
+
       const ownerCross = helper.ethCrossAccount.fromAddress(owner);
       const burnTx = await (<Contract>contract.connect(operator)).burnFromCross.send(ownerCross, token.tokenId);
       const burnReceipt = await burnTx.wait(...waitParams);
@@ -535,7 +533,7 @@ describe('NFT: Plain calls', () => {
             to: '0x0000000000000000000000000000000000000000',
             tokenId: (<any>burnData[1]).tokenId.toString(),
           },
-        }
+        },
       });
     });
 
@@ -604,7 +602,7 @@ describe('NFT: Plain calls', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collection = await helper.nft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
     const token = await collection.mintToken(minter, {Ethereum: owner.address});
-    
+
     const collectionEvm = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(collection.collectionId), 'nft', nonOwner);
     await expect(collectionEvm.approveCross.staticCall(nonOwnerCross, token.tokenId))
       .to.be.rejectedWith('CantApproveMoreThanOwned');
@@ -835,10 +833,10 @@ describe('NFT: Plain calls', () => {
 
     let owner = await helper.eth.createAccountWithBalance(donor, 100n);
     let ownerCross = helper.ethCrossAccount.fromAddress(owner);
-    
+
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     let collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
+
     const {tokenId} = await collection.mintToken(minter, {Ethereum: owner.address});
 
     for(let i = 1n; i < 10n; i++) {

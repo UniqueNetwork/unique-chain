@@ -146,7 +146,7 @@ describe('Matcher contract usage', () => {
     {
       expect(await matcher.balanceKSM.staticCall(sellerMirror)).to.be.equal(0n);
       expect(await matcher.balanceKSM.staticCall(aliceMirror)).to.be.equal(PRICE);
-      
+
       await helper.eth.sendEVM(alice, await matcher.getAddress(), (await matcher.buyKSM.populateTransaction(await evmCollection.getAddress(), token.tokenId, aliceMirror, aliceMirror)).data, '0');
 
       // Price is removed from buyer balance, and added to seller

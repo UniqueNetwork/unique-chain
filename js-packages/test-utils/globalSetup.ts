@@ -39,7 +39,7 @@ const globalSetup = async (): Promise<void> => {
           .setAppPromotionConfigurationOverride({
             recalculationInterval: LOCKING_PERIOD,
             pendingInterval: UNLOCKING_PERIOD,
-            intervalIncome: INTERVAL_INCOME
+            intervalIncome: INTERVAL_INCOME,
           })], true);
       }
     } catch (error) {

@@ -19,8 +19,8 @@ import {waitParams, expect, itEth, usingEthPlaygrounds, hexlifyString} from '@un
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
-import { Contract } from 'ethers';
-import { HDNodeWallet } from 'ethers';
+import {Contract} from 'ethers';
+import {HDNodeWallet} from 'ethers';
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
@@ -700,7 +700,7 @@ describe('Refungible: Plain calls', () => {
     // Cannot transferCross someone else's token:
     const receiver = testCase === 'transfer' ? helper.address.substrateToEth(receiverSub.address) : receiverCrossSub;
     await expect(collectionEvm[testCase].staticCall(receiver, nonSendersToken.tokenId)).to.be.rejected;
-    
+
     // Cannot transfer token if it does not exist:
     await expect(collectionEvm[testCase].staticCall(receiver, 999999)).to.be.rejected;
   }));
@@ -783,13 +783,13 @@ describe('Refungible: Plain calls', () => {
 
   itEth('Check ownerOfCross()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(minter, {});
-    
+
     let owner = await helper.eth.createAccountWithBalance(donor, 100n);
     let ownerCross = await helper.ethCrossAccount.fromAddress(owner);
 
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     let collectionEvm = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-    
+
     const {tokenId} = await collection.mintToken(minter, 100n, {Ethereum: owner.address});
 
     for(let i = 1n; i < 10n; i++) {
@@ -838,7 +838,7 @@ describe('RFT: Fees', () => {
     const tokenId = helper.eth.normalizeEvents(result!).Transfer.args.tokenId;
 
     const cost = await helper.eth.recordCallFee(
-      caller.address, 
+      caller.address,
       async () => await (await contract.transferFrom.send(caller.address, receiver.address, tokenId)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
@@ -855,7 +855,7 @@ describe('RFT: Fees', () => {
     const tokenId = helper.eth.normalizeEvents(result!).Transfer.args.tokenId;
 
     const cost = await helper.eth.recordCallFee(
-      caller.address, 
+      caller.address,
       async () => await (await contract.transfer.send(receiver.address, tokenId)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));

@@ -100,7 +100,7 @@ export const DONOR_FUNDING = 4_000_000n;
 export const LOCKING_PERIOD = 12n; // 12 blocks of relay
 export const CALCULATION_PERIOD = 12n; // 12 blocks of parachain
 export const UNLOCKING_PERIOD = 24n; // 24 blocks of parachain
-export const INTERVAL_INCOME = 453_256n; // perbill 
+export const INTERVAL_INCOME = 453_256n; // perbill
 
 // Native contracts
 export const COLLECTION_HELPER = '0x6c4e9fe1ae37a41e93cee429e8e1881abdcbb54f';

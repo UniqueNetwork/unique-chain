@@ -353,11 +353,11 @@ describe('Refungible: Plain calls', () => {
 
       // 1. Can transfer zero amount (EIP-20):
       await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth, 0)).wait(...waitParams);
-      
+
       // 2. Cannot transfer non-owned token:
       await expect(tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 0)).to.be.rejected;
       await expect(tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 5)).to.be.rejected;
-      
+
       // 3. Cannot transfer non-existing token:
       await expect(tokenEvmNonExist[testCase].send(isCross ? ownerCross : owner, 0)).to.be.rejected;
       await expect(tokenEvmNonExist[testCase].send(isCross ? ownerCross : owner, 5)).to.be.rejected;
@@ -508,7 +508,7 @@ describe('Refungible: Plain calls', () => {
 
   itEth('Check balanceOfCross()', async ({helper}) => {
     const collection = await helper.rft.mintCollection(alice, {});
-    
+
     const owner = await helper.eth.createAccountWithBalance(donor, 100n);
     const ownerCross = await helper.ethCrossAccount.fromAddr(owner);
 
@@ -684,7 +684,7 @@ describe('Refungible: Substrate calls', () => {
 
   itEth('Events emitted for transfer()', async ({helper}) => {
     // TODO: Refactor this
-    
+
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.rft.mintCollection(alice);
     // const token = await collection.mintToken(alice, 200n);
