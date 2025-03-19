@@ -221,7 +221,7 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.hydradx.outputs.image }}:${{ steps.hydradx.outputs.tag }}'}})
 
       - name: Upload network config
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.network }}-network-config
           path: ${{ steps.bdk.outputs.composeProject }}
