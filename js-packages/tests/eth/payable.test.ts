@@ -89,7 +89,6 @@ describe('EVM payable contracts', () => {
     const [alice] = await helper.arrange.createAccounts([20n], donor);
 
     await (await deployer.sendTransaction({
-      from: deployer.address,
       to: await contract.getAddress(),
       value: CONTRACT_BALANCE,
       gasLimit: helper.eth.DEFAULT_GAS_LIMIT,

@@ -249,7 +249,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
       const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
       const tokenId = await contract.nextTokenId.staticCall();
-      expect(tokenId).to.be.equal('1');
+      expect(tokenId).to.be.equal(1n);
 
       await expect(contract.mintWithTokenURI.send(receiver, 'Test URI'))
         .to.be.rejectedWith(/Returned error: unknown error/);

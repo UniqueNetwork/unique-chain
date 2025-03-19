@@ -52,7 +52,7 @@ describe('Sponsoring EVM contracts', () => {
     expect(actualSponsor.sub).to.eq(0n);
 
     // 2. Events should be:
-    const ethEvents = helper.eth.helper.eth.normalizeEvents(result!);
+    const ethEvents = helper.eth.helper.eth.rebuildEvents(result!);
     expect(ethEvents).to.be.deep.equal([
       {
         address: flipperAddress,
@@ -169,17 +169,17 @@ describe('Sponsoring EVM contracts', () => {
     expect(actualSponsorOpt.status).to.be.true;
     const actualSponsor = actualSponsorOpt.value;
     expect(actualSponsor.eth).to.eq(sponsor.address);
-    expect(actualSponsor.sub).to.eq('0');
+    expect(actualSponsor.sub).to.eq(0n);
 
     // 2. Events should be:
-    const events = helper.eth.normalizeEvents(result!);
+    const events = helper.eth.rebuildEvents(result!);
     expect(events).to.be.deep.equal([
       {
         address: flipperAddress,
         event: 'ContractSponsorshipConfirmed',
         args: {
           contractAddress: flipperAddress,
-          sponsor: sponsor,
+          sponsor: sponsor.address,
         },
       },
     ]);
@@ -376,7 +376,7 @@ describe('Sponsoring EVM contracts', () => {
     await (await contractHelpers.setSponsoringRateLimit.send(flipperAddress, 0)).wait(...waitParams);
 
     // 1. Caller has no UNQ and is not in allow list. So he cannot flip:
-    await expect((<Contract>flipper.connect(caller)).flip.send()).to.be.rejectedWith(/Returned error: insufficient funds for gas \* price \+ value/);
+    await expect((<Contract>flipper.connect(caller)).flip.send()).to.be.rejectedWith('execution reverted: "target contract is allowlisted"');
     expect(await flipper.getValue.staticCall()).to.be.false;
 
     // Flipper's balance does not change:
