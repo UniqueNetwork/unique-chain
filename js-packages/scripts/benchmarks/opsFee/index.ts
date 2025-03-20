@@ -90,7 +90,7 @@ async function erc721CalculateFeeGas(
 
   res['createCollection'] = await helper.arrange.calculcateFeeGas(
     {Ethereum: ethSigner.address},
-    async () => await (await helperContract.createNFTCollection.send('test','test','test', {from: ethSigner, value: (2n * helper.balance.getOneTokenNominal())})
+    async () => await (await helperContract.createNFTCollection.send('test','test','test', {value: (2n * helper.balance.getOneTokenNominal())})
     ).wait(...waitParams),
   );
 
@@ -122,7 +122,7 @@ async function erc721CalculateFeeGas(
   res['mint'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.safeMint.send(ethSigner, '', {from: ethSigner})).wait(...waitParams),
+      async () => await (await zeppelelinContract!.safeMint.send(ethSigner, '')).wait(...waitParams),
     );
 
   res['mintCross'] =
@@ -164,7 +164,7 @@ async function erc721CalculateFeeGas(
   res['mintWithTokenURI'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.safeMint.send(ethSigner, 'Test URI', {from: ethSigner})).wait(...waitParams),
+      async () => await (await zeppelelinContract!.safeMint.send(ethSigner, 'Test URI')).wait(...waitParams),
     );
 
   res['setProperties'] =
@@ -208,14 +208,14 @@ async function erc721CalculateFeeGas(
     zeppelin:
       await helper.arrange.calculcateFeeGas(
         {Ethereum: ethSigner.address},
-        async () => await (await zeppelelinContract!.safeTransferFrom.send(ethSigner, ethReceiver, 0, {from: ethSigner})).wait(...waitParams),
+        async () => await (await zeppelelinContract!.safeTransferFrom.send(ethSigner, ethReceiver, 0)).wait(...waitParams),
       ),
   };
 
   res['transferCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.transferCross.send(crossSigner, 1, {from: ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).transferCross.send(crossSigner, 1)).wait(...waitParams),
     );
 
   res['transferCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -237,14 +237,14 @@ async function erc721CalculateFeeGas(
   res['transferFrom*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await zeppelelinContract!.transferFrom.send(ethReceiver, ethSigner, 0, {from: ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>zeppelelinContract!.connect(ethReceiver)).transferFrom.send(ethReceiver, ethSigner, 0)).wait(...waitParams),
     );
 
 
   res['transferFromCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.transferFromCross.send(crossReceiver, crossSigner, 1, {from:ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).transferFromCross.send(crossReceiver, crossSigner, 1)).wait(...waitParams),
     );
 
   res['transferFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -272,7 +272,7 @@ async function erc721CalculateFeeGas(
   res['approve*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.approve.send(ethReceiver, 0, {from: ethSigner})).wait(...waitParams),
+      async () => await (await zeppelelinContract!.approve.send(ethReceiver, 0)).wait(...waitParams),
     );
 
   res['approveCross'] =
@@ -295,7 +295,7 @@ async function erc721CalculateFeeGas(
   res['setApprovalForAll*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.setApprovalForAll.send(ethReceiver, true, {from: ethSigner})).wait(...waitParams),
+      async () => await (await zeppelelinContract!.setApprovalForAll.send(ethReceiver, true)).wait(...waitParams),
     );
 
   res['setApprovalForAll*'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -306,7 +306,7 @@ async function erc721CalculateFeeGas(
   res['burnFromCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.burnFromCross.send(crossSigner, 2, {from:ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).burnFromCross.send(crossSigner, 2)).wait(...waitParams),
     );
 
   res['burnFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -344,7 +344,7 @@ async function erc721CalculateFeeGas(
   res['confirmCollectionSponsorship'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.confirmCollectionSponsorship.send({from: ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).confirmCollectionSponsorship.send()).wait(...waitParams),
     );
 
   res['removeCollectionSponsor'] =
@@ -431,13 +431,13 @@ async function erc721CalculateFeeGas(
   res['setCollectionNesting'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await evmContract.setCollectionNesting.send(true)).wait(...waitParams),
+      async () => await (await evmContract['setCollectionNesting(bool)'].send(true)).wait(...waitParams),
     );
 
   res['setCollectionNesting[]'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await evmContract.setCollectionNesting.send(true, [collectionAddress])).wait(...waitParams),
+      async () => await (await evmContract['setCollectionNesting(bool)'].send([true, false, [collectionAddress]])).wait(...waitParams),
     );
 
   res['setCollectionNesting'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -551,7 +551,7 @@ async function erc20CalculateFeeGas(
 
   res['createCollection'] = await helper.arrange.calculcateFeeGas(
     {Ethereum: ethSigner.address},
-    async () => await (await helperContract.createFTCollection.send('test', 18,'test','test', {from: ethSigner, value: Number(2n * helper.balance.getOneTokenNominal())})).wait(...waitParams),
+    async () => await (await helperContract.createFTCollection.send('test', 18,'test','test', {value: (2n * helper.balance.getOneTokenNominal())})).wait(...waitParams),
   );
 
   res['createCollection'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -631,7 +631,7 @@ async function erc20CalculateFeeGas(
   res['transferCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.transferCross.send(crossSigner, 1, {from: ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).transferCross.send(crossSigner, 1)).wait(...waitParams),
     );
 
   res['transferCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -650,18 +650,18 @@ async function erc20CalculateFeeGas(
       async () => await (await evmContract.transferFrom.send(ethSigner, ethReceiver, 1)).wait(...waitParams),
     );
 
-  await (await zeppelelinContract!.approve.send(ethSigner, 10, {from: ethReceiver})).wait(...waitParams);
+  await (await (<Contract>zeppelelinContract!.connect(ethReceiver)).approve.send(ethSigner, 10)).wait(...waitParams);
 
   res['transferFrom*'].zeppelin =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await zeppelelinContract!.transferFrom.send(ethReceiver, ethSigner, 1, {from: ethSigner})).wait(...waitParams),
+      async () => await (await zeppelelinContract!.transferFrom.send(ethReceiver, ethSigner, 1)).wait(...waitParams),
     );
 
   res['transferFromCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.transferFromCross.send(crossReceiver, crossSigner, 1, {from:ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).transferFromCross.send(crossReceiver, crossSigner, 1)).wait(...waitParams),
     );
 
   res['transferFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -703,7 +703,7 @@ async function erc20CalculateFeeGas(
   res['burnFromCross'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.burnFromCross.send(crossSigner, 1, {from:ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).burnFromCross.send(crossSigner, 1)).wait(...waitParams),
     );
 
   res['burnFromCross'].substrate = convertToTokens((await helper.arrange.calculcateFee(
@@ -720,7 +720,7 @@ async function erc20CalculateFeeGas(
   res['confirmCollectionSponsorship'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethReceiver.address},
-      async () => await (await evmContract.confirmCollectionSponsorship.send({from: ethReceiver})).wait(...waitParams),
+      async () => await (await (<Contract>evmContract.connect(ethReceiver)).confirmCollectionSponsorship.send()).wait(...waitParams),
     );
 
   res['removeCollectionSponsor'] =
@@ -807,13 +807,13 @@ async function erc20CalculateFeeGas(
   res['setCollectionNesting'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await evmContract.setCollectionNesting.send(true)).wait(...waitParams),
+      async () => await (await evmContract['setCollectionNesting(bool)'].send(true)).wait(...waitParams),
     );
 
   res['setCollectionNesting[]'] =
     await helper.arrange.calculcateFeeGas(
       {Ethereum: ethSigner.address},
-      async () => await (await evmContract.setCollectionNesting.send(true, [collectionAddress])).wait(...waitParams),
+      async () => await (await evmContract['setCollectionNesting(bool)'].send(true)).wait(...waitParams),
     );
 
   res['setCollectionNesting'].substrate = convertToTokens((await helper.arrange.calculcateFee(
