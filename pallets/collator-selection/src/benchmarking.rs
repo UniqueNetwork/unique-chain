@@ -209,7 +209,7 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn remove_invulnerable(b: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+	fn remove_invulnerable(b: Linear<2, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 
