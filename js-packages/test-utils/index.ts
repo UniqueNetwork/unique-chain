@@ -265,7 +265,6 @@ export class Event {
     }));
   };
 
-  static UniqueScheduler = schedulerSection('uniqueScheduler');
   static Scheduler = schedulerSection('scheduler');
 
   static XcmpQueue = class extends EventSection('xcmpQueue') {

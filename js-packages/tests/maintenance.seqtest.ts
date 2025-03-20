@@ -174,69 +174,6 @@ describe('Integration Test: Maintenance Functionality', () => {
       await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
     });
 
-    itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.UniqueScheduler], async (scheduleKind, {helper}) => {
-      const collection = await helper.nft.mintCollection(bob);
-
-      const nftBeforeMM = await collection.mintToken(bob);
-      const nftDuringMM = await collection.mintToken(bob);
-      const nftAfterMM = await collection.mintToken(bob);
-
-      const [
-        scheduledIdBeforeMM,
-        scheduledIdDuringMM,
-        scheduledIdBunkerThroughMM,
-        scheduledIdAttemptDuringMM,
-        scheduledIdAfterMM,
-      ] = scheduleKind == 'named'
-        ? helper.arrange.makeScheduledIds(5)
-        : new Array(5);
-
-      const blocksToWait = 6;
-
-      // Scheduling works before the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdBeforeMM})
-        .nft.transferToken(bob, collection.collectionId, nftBeforeMM.tokenId, {Substrate: superuser.address});
-
-
-      await helper.wait.newBlocks(blocksToWait + 1);
-      expect(await nftBeforeMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
-
-      // Schedule a transaction that should occur *during* the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdDuringMM})
-        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address});
-
-
-      // Schedule a transaction that should occur *after* the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait * 2, {scheduledId: scheduledIdBunkerThroughMM})
-        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address});
-
-
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.enable', []);
-      expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
-
-      await helper.wait.newBlocks(blocksToWait + 1);
-      // The owner should NOT change since the scheduled transaction should be rejected
-      expect(await nftDuringMM.getOwner()).to.be.deep.equal({Substrate: bob.address});
-
-      // Any attempts to schedule a tx during the MM should be rejected
-      await expect(helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAttemptDuringMM})
-        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address}))
-        .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
-
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
-      expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
-
-      // Scheduling works after the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAfterMM})
-        .nft.transferToken(bob, collection.collectionId, nftAfterMM.tokenId, {Substrate: superuser.address});
-
-      await helper.wait.newBlocks(blocksToWait + 1);
-
-      expect(await nftAfterMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
-      // The owner of the token scheduled for transaction *before* maintenance should now change *after* maintenance
-      expect(await nftDuringMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
-    });
-
     itEth('Disallows Ethereum transactions to execute while in maintenance', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
