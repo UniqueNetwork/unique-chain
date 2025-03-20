@@ -288,6 +288,15 @@ export class Event {
       outcome: eventData<StagingXcmV5TraitsOutcome>(data, 2),
     }));
   };
+
+  static MessageQueue = class extends EventSection('messageQueue') {
+    static Processed = this.Method('Processed', data => ({
+      id: eventJsonData(data, 0),
+      origin: eventJsonData(data, 1),
+      weightUsed: eventJsonData(data, 2),
+      success: eventJsonData<boolean>(data, 3),
+    }));
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

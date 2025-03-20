@@ -1,9 +1,8 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
-import {DevUniqueHelper, Event} from '@unique/test-utils';
+import {DevAcalaHelper, DevAstarHelper, DevHydraDxHelper, DevMoonbeamHelper, DevRelayHelper, DevUniqueHelper, DevWestmintHelper, Event} from '@unique/test-utils';
 import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm/index.js';
-import {IEvent, ITransactionResult} from '@unique-nft/playgrounds/types.js';
-import {ChainHelperBase} from '@unique-nft/playgrounds';
+import {IEvent} from '@unique-nft/playgrounds/types.js';
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);
@@ -154,7 +153,7 @@ export class XcmTestHelper {
   }
 
   async #collectProcessedMsgsEvents(
-    helper: any,
+    helper: DevUniqueHelper | DevRelayHelper | DevWestmintHelper | DevAcalaHelper | DevAstarHelper | DevMoonbeamHelper | DevHydraDxHelper,
     whileCondition: () => boolean,
   ) {
     const {unsubscribe, collectedEvents} = await helper.subscribeEvents([
@@ -220,7 +219,7 @@ export class XcmTestHelper {
           'api.tx.sudo.sudo',
           [xcmSend],
         );
-        const messageSent = await this.#expectSentEvent(helper, sendFrom, sendTo, sendResult);
+        const messageSent = Event.XcmpQueue.XcmpMessageSent.expect(sendResult);
         return messageSent.messageHash;
       } else if('fastDemocracy' in helper) {
         // Needed to bypass the call filter.
@@ -255,26 +254,6 @@ export class XcmTestHelper {
       const msgProcResult = processedMsgEvent![3];
       expect(msgProcResult).to.be.false;
     });
-  }
-
-  async #expectSentEvent(
-    fromHelper: ChainHelperBase,
-    from: keyof typeof NETWORKS,
-    to: keyof typeof NETWORKS,
-    txResult: ITransactionResult,
-  ) {
-    // FIXME
-    // WORKAROUND: sometimes a part of the events collected directly from the extrinsic
-    // is lost somehow. Let's query all of them from the block.
-    const events = await fromHelper.fetchPhasicEventsFromBlock(txResult.blockHash);
-
-    if(from === 'relay') {
-      return Event.XcmPallet.Sent.expect(events);
-    } else if(to === 'relay' || from === 'kusamaAssetHub' || from === 'polkadotAssetHub') {
-      return Event.PolkadotXcm.Sent.expect(events);
-    } else {
-      return Event.XcmpQueue.XcmpMessageSent.expect(events);
-    }
   }
 
   async #sendTokens({
@@ -397,7 +376,7 @@ export class XcmTestHelper {
         );
       }
 
-      const messageSent = await this.#expectSentEvent(helper, from, to, transferResult);
+      const messageSent = Event.XcmpQueue.XcmpMessageSent.expect(transferResult);
 
       const balanceAfter = await getRandomAccountBalance();
       if(isFromUnique) {
