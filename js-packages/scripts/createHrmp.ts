@@ -23,7 +23,6 @@ await usingPlaygrounds(async (helper, privateKey) => {
       await bidirOpen(2037, 2000);
       await bidirOpen(2037, 2004);
       await bidirOpen(2037, 2006);
-      await bidirOpen(2037, 2040);
       await bidirOpen(2037, 2034);
       break;
     default:

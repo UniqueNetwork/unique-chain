@@ -28,7 +28,6 @@ const config = {
   westendAssetHubUrl: process.env.RELAY_ASSETHUB_URL || 'ws://127.0.0.1:9948',
   kusamaAssetHubUrl: process.env.RELAY_ASSETHUB_URL || 'ws://127.0.0.1:9948',
   polkadotAssetHubUrl: process.env.RELAY_ASSETHUB_URL || 'ws://127.0.0.1:9948',
-  polkadexUrl: process.env.RELAY_POLKADEX_URL || 'ws://127.0.0.1:9950',
   hydraDxUrl: process.env.RELAY_HYDRADX_URL || 'ws://127.0.0.1:9951',
 };
 

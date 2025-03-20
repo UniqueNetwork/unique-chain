@@ -17,7 +17,7 @@ import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransaction
 import type {FrameSystemEventRecord, XcmV3TraitsError, StagingXcmV5TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
 import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
 import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
 
@@ -674,22 +674,6 @@ export class DevAcalaHelper extends AcalaHelper {
     // eslint-disable-next-line @typescript-eslint/naming-convention
     const SudoHelperType = SudoHelper(this.helperBase);
     return this.clone(SudoHelperType) as DevAcalaHelper;
-  }
-}
-
-export class DevPolkadexHelper extends PolkadexHelper {
-  wait: WaitGroup;
-  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
-    options.helperBase = options.helperBase ?? PolkadexHelper;
-
-    super(logger, options);
-    this.wait = new WaitGroup(this);
-  }
-
-  getSudo() {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const SudoHelperType = SudoHelper(this.helperBase);
-    return this.clone(SudoHelperType) as DevPolkadexHelper;
   }
 }
 

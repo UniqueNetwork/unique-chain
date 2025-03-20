@@ -1,5 +1,5 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadexPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
+import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util.js';
 import {DevUniqueHelper, Event} from '@unique/test-utils';
 import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm/index.js';
 import {IEvent, ITransactionResult} from '@unique-nft/playgrounds/types.js';
@@ -10,7 +10,6 @@ export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);
 export const ACALA_CHAIN = +(process.env.RELAY_ACALA_ID || 2000);
 export const MOONBEAM_CHAIN = +(process.env.RELAY_MOONBEAM_ID || 2004);
 export const ASTAR_CHAIN = +(process.env.RELAY_ASTAR_ID || 2006);
-export const POLKADEX_CHAIN = +(process.env.RELAY_POLKADEX_ID || 2040);
 export const HYDRADX_CHAIN = +(process.env.RELAY_HYDRADX_ID || 2034);
 
 export const QUARTZ_CHAIN = +(process.env.RELAY_QUARTZ_ID || 2095);
@@ -49,7 +48,6 @@ export const NETWORKS = {
   polkadotAssetHub: usingPolkadotAssetHubPlaygrounds,
   acala: usingAcalaPlaygrounds,
   astar: usingAstarPlaygrounds,
-  polkadex: usingPolkadexPlaygrounds,
   moonbeam: usingMoonbeamPlaygrounds,
   moonriver: usingMoonriverPlaygrounds,
   karura: usingKaruraPlaygrounds,
@@ -77,8 +75,6 @@ export function mapToChainId(networkName: keyof typeof NETWORKS): number {
       return ASTAR_CHAIN;
     case 'moonbeam':
       return MOONBEAM_CHAIN;
-    case 'polkadex':
-      return POLKADEX_CHAIN;
     case 'moonriver':
       return MOONRIVER_CHAIN;
     case 'karura':

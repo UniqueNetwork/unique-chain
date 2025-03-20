@@ -16,8 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import config from '../config.js';
-import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingPolkadexPlaygrounds, usingHydraDxPlaygrounds, usingRelayPlaygrounds, usingPolkadotAssetHubPlaygrounds} from '@unique/test-utils/util.js';
-import {nToBigInt} from '@polkadot/util';
+import {itSub, describeXCM, usingPlaygrounds, usingAcalaPlaygrounds, usingMoonbeamPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingRelayPlaygrounds, usingPolkadotAssetHubPlaygrounds} from '@unique/test-utils/util.js';
 import {hexToString} from '@polkadot/util';
 import {ASSET_HUB_PALLET_ASSETS, ASTAR_DECIMALS, POLKADOT_ASSETHUB_CHAIN, SAFE_XCM_VERSION, SENDBACK_AMOUNT, SENDER_BUDGET, SENDTO_AMOUNT, UNIQUE_CHAIN, UNQ_DECIMALS, USDT_ASSET_ID, USDT_DECIMALS, XcmTestHelper} from './xcm.types.js';
 
@@ -317,84 +316,6 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
   });
 });
 
-describeXCM('[XCM] Integration test: Exchanging tokens with Polkadex', () => {
-  let alice: IKeyringPair;
-  let randomAccount: IKeyringPair;
-
-  before(async () => {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      alice = await privateKey('//Alice');
-      randomAccount = helper.arrange.createEmptyAccount();
-
-      // Set the default version to wrap the first message to other chains.
-      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
-    });
-
-    await usingPolkadexPlaygrounds(async (helper) => {
-      const isWhitelisted = ((await helper.callRpc('api.query.xcmHelper.whitelistedTokens', []))
-        .toJSON() as [])
-        .map(nToBigInt).length != 0;
-      /*
-      Check whether the Unique token has been added
-      to the whitelist, since an error will occur
-      if it is added again. Needed for debugging
-      when this test is run multiple times.
-      */
-      if(isWhitelisted) {
-        console.log('UNQ token is already whitelisted on Polkadex');
-      } else {
-        await helper.getSudo().xcmHelper.whitelistToken(
-          alice,
-          {
-            Concrete: {
-              parents: 1,
-              interior: {
-                X1: {Parachain: UNIQUE_CHAIN},
-              },
-            },
-          },
-        );
-      }
-
-      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
-    });
-
-    await usingPlaygrounds(async (helper) => {
-      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
-    });
-  });
-
-  itSub('Should connect and send UNQ to Polkadex', async () => {
-    await testHelper.sendUnqFromTo(
-      'unique',
-      'polkadex',
-      randomAccount,
-      randomAccount,
-      SENDTO_AMOUNT,
-    );
-  });
-
-  // Polkadex has on a solochain part. We don't model this.
-  // We just test if the message got to the destination in the previous test.
-  // The next tests verify that messages from Polkadex arrive and act nicely.
-
-  itSub('Polkadex can send only up to its balance', async () => {
-    await testHelper.sendOnlyOwnedBalance(
-      alice,
-      'polkadex',
-      'unique',
-    );
-  });
-
-  itSub('Should not accept reserve transfer of UNQ from Polkadex', async () => {
-    await testHelper.rejectReserveTransferUNQfrom(
-      alice,
-      'polkadex',
-      'unique',
-    );
-  });
-});
-
 describeXCM('[XCM] Integration test: Exchanging UNQ with Moonbeam', () => {
   let alice: IKeyringPair;
 
@@ -655,14 +576,6 @@ describeXCM('[XCM] Integration test: Unique rejects non-native tokens', () => {
     await testHelper.rejectNativeTokensFrom(
       alice,
       'astar',
-      'unique',
-    );
-  });
-
-  itSub('Unique rejects PDX tokens from Polkadex', async () => {
-    await testHelper.rejectNativeTokensFrom(
-      alice,
-      'polkadex',
       'unique',
     );
   });

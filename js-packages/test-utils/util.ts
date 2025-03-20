@@ -11,7 +11,7 @@ import {Context} from 'mocha';
 import config from '../tests/config.js';
 import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
 import type {ILogger} from '@unique-nft/playgrounds/types.js';
-import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevPolkadexHelper, DevHydraDxHelper} from '@unique/test-utils';
+import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevHydraDxHelper} from '@unique/test-utils';
 import {dirname} from 'path';
 import {fileURLToPath} from 'url';
 
@@ -88,8 +88,6 @@ export const usingMoonriverPlaygrounds = (code: (helper: DevMoonbeamHelper, priv
 export const usingAstarPlaygrounds = (code: (helper: DevAstarHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.astarUrl) => usingPlaygroundsGeneral<DevAstarHelper>(DevAstarHelper, url, code);
 
 export const usingShidenPlaygrounds = (code: (helper: DevShidenHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.shidenUrl) => usingPlaygroundsGeneral<DevShidenHelper>(DevShidenHelper, url, code);
-
-export const usingPolkadexPlaygrounds = (code: (helper: DevPolkadexHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.polkadexUrl) => usingPlaygroundsGeneral<DevPolkadexHelper>(DevPolkadexHelper, url, code);
 
 export const usingHydraDxPlaygrounds = (code: (helper: DevHydraDxHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.hydraDxUrl) => usingPlaygroundsGeneral<DevHydraDxHelper>(DevHydraDxHelper, url, code);
 

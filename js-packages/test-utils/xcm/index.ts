@@ -147,11 +147,6 @@ class CollectiveGroup<T extends ChainHelperBase> extends HelperGroup<T> {
     return Number(await this.helper.callRpc(`api.query.${this.collective}.proposalCount`, []));
   }
 }
-class PolkadexXcmHelperGroup<T extends ChainHelperBase> extends HelperGroup<T> {
-  async whitelistToken(signer: TSigner, assetId: any) {
-    await this.helper.executeExtrinsic(signer, 'api.tx.xcmHelper.whitelistToken', [assetId], true);
-  }
-}
 
 export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
   async register(signer: TSigner, assetId: any, name: string, tokenPrefix: string, mode: 'NFT' | { Fungible: number }) {
@@ -414,24 +409,6 @@ export class AcalaHelper extends XcmChainHelper {
     this.xTokens = new XTokensGroup(this);
     this.tokens = new TokensGroup(this);
     this.xcm = new XcmGroup(this, 'polkadotXcm');
-  }
-}
-
-export class PolkadexHelper extends XcmChainHelper {
-  assets: AssetsGroup<PolkadexHelper>;
-  balance: SubstrateBalanceGroup<PolkadexHelper>;
-  xTokens: XTokensGroup<PolkadexHelper>;
-  xcm: XcmGroup<PolkadexHelper>;
-  xcmHelper: PolkadexXcmHelperGroup<PolkadexHelper>;
-
-  constructor(logger?: ILogger, options: { [key: string]: any } = {}) {
-    super(logger, options.helperBase ?? PolkadexHelper);
-
-    this.assets = new AssetsGroup(this);
-    this.balance = new SubstrateBalanceGroup(this);
-    this.xTokens = new XTokensGroup(this);
-    this.xcm = new XcmGroup(this, 'polkadotXcm');
-    this.xcmHelper = new PolkadexXcmHelperGroup(this);
   }
 }
 
