@@ -4,7 +4,7 @@ import {readFile} from 'fs/promises';
 import type {ICrossAccountId} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
-import {Contract} from 'ethers';
+import {Contract, hexlify} from 'ethers';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.js';
 import {makeNames} from '@unique/test-utils/util.js';
@@ -124,7 +124,7 @@ main()
 async function benchMintFee(
   helper: EthUniqueHelper,
   privateKey: (seed: string) => Promise<IKeyringPair>,
-  proxyContract: Contract,
+  contract: Contract,
 ): Promise<{
 	substrateFee: number;
 	ethFee: number;
@@ -133,6 +133,8 @@ async function benchMintFee(
   const donor = await privateKey('//Alice');
   const substrateReceiver = await privateKey('//Bob');
   const ethSigner = await helper.eth.createAccountWithBalance(donor);
+
+  const proxyContract = helper.eth.changeContractCaller(contract, ethSigner);
 
   const nominal = helper.balance.getOneTokenNominal();
 
@@ -184,7 +186,7 @@ async function benchMintFee(
     async () => {
       await (await proxyContract.mintToSubstrate.send(
         helper.ethAddress.fromCollectionId(collection.collectionId),
-        substrateReceiver.addressRaw,
+        hexlify(substrateReceiver.addressRaw),
       )).wait(...waitParams);
     },
   );
@@ -199,14 +201,16 @@ async function benchMintFee(
 async function benchMintWithProperties(
   helper: EthUniqueHelper,
   privateKey: (seed: string) => Promise<IKeyringPair>,
-  proxyContract: Contract,
+  contract: Contract,
   setup: { propertiesNumber: number },
 ): Promise<IBenchmarkResultForProp> {
   const donor = await privateKey('//Alice'); // Seed from account with balance on this network
   const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
-  const susbstrateReceiver = await privateKey('//Bob');
-  const receiverEthAddress = helper.address.substrateToEth(susbstrateReceiver.address);
+  const proxyContract = helper.eth.changeContractCaller(contract, ethSigner);
+
+  const substrateReceiver = await privateKey('//Bob');
+  const receiverEthAddress = helper.address.substrateToEth(substrateReceiver.address);
 
   const nominal = helper.balance.getOneTokenNominal();
 
@@ -219,7 +223,7 @@ async function benchMintWithProperties(
     async (collection) => {
       await collection.mintToken(
         donor,
-        {Substrate: susbstrateReceiver.address},
+        {Substrate: substrateReceiver.address},
         PROPERTIES.slice(0, setup.propertiesNumber).map((p) => ({key: p.key, value: Buffer.from(p.value).toString()})),
       );
     },
@@ -235,7 +239,7 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
-        undefined as any,
+        ethSigner,
         true,
       );
 
@@ -273,7 +277,7 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
-        undefined as any,
+        ethSigner,
       );
 
       const subTokenId = await evmContract.nextTokenId.staticCall();
@@ -308,7 +312,7 @@ async function benchMintWithProperties(
       const evmContract = await helper.ethNativeContract.collection(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         'nft',
-        undefined as any,
+        ethSigner,
       );
 
       await (await evmContract.mintCross.send(
@@ -325,9 +329,9 @@ async function benchMintWithProperties(
     ethSigner.address,
     await proxyContract.getAddress(),
     async (collection) => {
-      await (await proxyContract.mintToSubstrateWithProperty(
+      await (await proxyContract.mintToSubstrateWithProperty.send(
         helper.ethAddress.fromCollectionId(collection.collectionId),
-        susbstrateReceiver.addressRaw,
+        hexlify(substrateReceiver.addressRaw),
         PROPERTIES.slice(0, setup.propertiesNumber),
       )).wait(...waitParams);
     },
@@ -342,7 +346,7 @@ async function benchMintWithProperties(
     async (collection) => {
       await (await proxyContract.mintToSubstrateBulkProperty.send(
         helper.ethAddress.fromCollectionId(collection.collectionId),
-        susbstrateReceiver.addressRaw,
+        hexlify(substrateReceiver.addressRaw),
         PROPERTIES.slice(0, setup.propertiesNumber),
       )).wait(...waitParams);
     },
