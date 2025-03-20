@@ -9,13 +9,11 @@
   "private": true,
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.2",
-    "@typechain/ethers-v6": "0.5.1",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
     "ethers": "6.13.5",
-    "solc": "^0.8.22",
-    "typechain": "8.3.2"
+    "solc": "^0.8.22"
   },
   "devDependencies": {
     "@types/chai": "^4.3.20",
