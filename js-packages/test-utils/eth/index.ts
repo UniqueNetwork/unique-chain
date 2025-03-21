@@ -645,6 +645,7 @@ export class EthUniqueHelper extends DevUniqueHelper {
 
   override async disconnect() {
     if(this.web3 === null) return;
+    this.web3.destroy();
     await super.disconnect();
   }
 
