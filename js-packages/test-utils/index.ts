@@ -295,7 +295,7 @@ export class Event {
       weightUsed: eventJsonData(data, 2),
       success: eventJsonData<boolean>(data, 3),
     }));
-  }
+  };
 }
 
 // eslint-disable-next-line @typescript-eslint/naming-convention

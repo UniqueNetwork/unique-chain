@@ -6,8 +6,8 @@ use crate::{config::substrate::ExistentialDeposit, RuntimeHoldReason};
 parameter_types! {
 	pub CouncilMaxProposals: u32 = 100;
 	pub CouncilMaxMembers: u32 = 100;
-	pub const ProposalDepositOffset: Balance = ExistentialDeposit::get() + ExistentialDeposit::get();
-	pub const ProposalHoldReason: RuntimeHoldReason =
+	pub const CouncilProposalDepositOffset: Balance = ExistentialDeposit::get() + ExistentialDeposit::get();
+	pub const CouncilProposalHoldReason: RuntimeHoldReason =
 		RuntimeHoldReason::Council(pallet_collective::HoldReason::ProposalSubmission);
 }
 
@@ -40,10 +40,10 @@ impl pallet_collective::Config<CouncilCollective> for Runtime {
 	type Consideration = HoldConsideration<
 		AccountId,
 		Balances,
-		ProposalHoldReason,
+		CouncilProposalHoldReason,
 		pallet_collective::deposit::Delayed<
 			ConstU32<2>,
-			pallet_collective::deposit::Linear<ConstU32<2>, ProposalDepositOffset>,
+			pallet_collective::deposit::Linear<ConstU32<2>, CouncilProposalDepositOffset>,
 		>,
 		u32,
 	>;
