@@ -82,7 +82,21 @@ export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privat
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
-      await cb({helper, privateKey});
+      // HACK: Retry if we got "TypeError: non-canonical s"
+      // https://github.com/ethers-io/ethers.js/issues/4223
+      while(true) {
+        try {
+          await cb({helper, privateKey});
+          break;
+        } catch (error: any) {
+          if(error.message.startsWith('non-canonical s')) {
+            console.warn(`Catch error "non-canonical signature" in test "${this.test?.title}" (issue https://github.com/ethers-io/ethers.js/issues/4223). Retry after 1 second`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            throw error;
+          }
+        }
+      }
     });
   });
 }
