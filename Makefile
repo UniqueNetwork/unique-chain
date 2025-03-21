@@ -118,9 +118,10 @@ $(eval $(call _bench,identity))
 $(eval $(call _bench,app-promotion))
 $(eval $(call _bench,maintenance))
 $(eval $(call _bench,xcm,,./runtime/common/weights/xcm.rs,"--template=.maintain/external-weight-template.hbs"))
+$(eval $(call _bench,scheduler,,./runtime/common/weights/scheduler.rs,"--template=.maintain/external-weight-template.hbs"))
 
 .PHONY: bench
-bench: bench-app-promotion bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm bench-collator-selection bench-identity
+bench: bench-app-promotion bench-common bench-evm-migration bench-unique bench-structure bench-fungible bench-refungible bench-nonfungible bench-configuration bench-foreign-assets bench-maintenance bench-xcm bench-collator-selection bench-identity bench-scheduler
 
 .PHONY: check
 check:

@@ -31,6 +31,7 @@ use pallet_refungible::{
 };
 use up_data_structs::{CreateItemData, CreateItemExData};
 
+pub mod scheduler;
 pub mod xcm;
 
 macro_rules! max_weight_of {

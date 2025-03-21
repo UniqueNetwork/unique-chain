@@ -561,6 +561,7 @@ macro_rules! impl_common_runtime_apis {
 					list_benchmark!(list, extra, pallet_foreign_assets, ForeignAssets);
 
 					list_benchmark!(list, extra, pallet_maintenance, Maintenance);
+					list_benchmark!(list, extra, pallet_scheduler, Scheduler);
 
 					// list_benchmark!(list, extra, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
@@ -627,6 +628,7 @@ macro_rules! impl_common_runtime_apis {
 					add_benchmark!(params, batches, pallet_foreign_assets, ForeignAssets);
 
 					add_benchmark!(params, batches, pallet_maintenance, Maintenance);
+					add_benchmark!(params, batches, pallet_scheduler, Scheduler);
 
 					// add_benchmark!(params, batches, pallet_evm_coder_substrate, EvmCoderSubstrate);
 
