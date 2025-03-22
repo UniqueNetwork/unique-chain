@@ -189,7 +189,7 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(tokenId).to.be.equal(1n);
 
       await expect(contract.mintWithTokenURI.send(receiver, 'Test URI'))
-        .to.be.rejectedWith(/Returned error: unknown error/);
+        .to.be.rejectedWith(/could not coalesce error/);
 
       await expect(contract.ownerOf.staticCall(tokenId)).rejectedWith(/token not found/);
 
