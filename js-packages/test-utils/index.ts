@@ -323,17 +323,19 @@ export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
 
       if(result.status === 'Fail') return result;
 
-      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
-      if(data.isErr) {
-        if(data.asErr.isModule) {
-          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+      const event = result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')!;
+      const eventData = (event.event.data as any).sudoResult;
+
+      if(eventData.isErr) {
+        if(eventData.asErr.isModule) {
+          const error = eventData.asErr.asModule;
           const metaError = super.getApi()?.registry.findMetaError(error);
           throw new Error(`${metaError.section}.${metaError.name}`);
-        } else if(data.asErr.isToken) {
-          throw new Error(`Token: ${data.asErr.asToken}`);
+        } else if(eventData.asErr.isToken) {
+          throw new Error(`Token: ${eventData.asErr.asToken}`);
         }
         // May be [object Object] in case of unhandled non-unit enum
-        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+        throw new Error(`Misc: ${eventData.asErr.toHuman()}`);
       }
       return result;
     }
