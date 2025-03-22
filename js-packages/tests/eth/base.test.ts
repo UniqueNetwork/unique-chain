@@ -91,11 +91,15 @@ describe('ERC165 tests', () => {
   const BASE_URI = 'base/';
 
   async function checkInterface(helper: EthUniqueHelper, interfaceId: string, simpleResult: boolean, compatibleResult: boolean) {
-    const simple = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(simpleNftCollectionId), 'nft', minter);
+    // Minter is connected to a provider that was destroyed in the "before" block
+    // Reconnect it to provider from current test
+    const signer = minter.connect(helper.getWeb3());
+
+    const simple = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(simpleNftCollectionId), 'nft', signer);
 
     expect(await simple.supportsInterface.staticCall(interfaceId)).to.equal(simpleResult, `empty (not ERC721Metadata compatible) NFT collection returns not ${simpleResult}`);
 
-    const compatible = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(erc721MetadataCompatibleNftCollectionId), 'nft', minter);
+    const compatible = await helper.ethNativeContract.collection(helper.ethAddress.fromCollectionId(erc721MetadataCompatibleNftCollectionId), 'nft', signer);
 
     expect(await compatible.supportsInterface.staticCall(interfaceId)).to.equal(compatibleResult, `ERC721Metadata compatible NFT collection returns not ${compatibleResult}`);
   }
