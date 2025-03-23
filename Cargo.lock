@@ -15775,6 +15775,7 @@ dependencies = [
  "pallet-fungible",
  "pallet-nonfungible",
  "pallet-refungible",
+ "pallet-scheduler",
  "pallet-structure",
  "pallet-timestamp",
  "pallet-transaction-payment",
