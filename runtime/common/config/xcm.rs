@@ -16,6 +16,9 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
+#[cfg(feature = "runtime-benchmarks")]
+use alloc::{boxed::Box, vec};
+
 use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
@@ -26,6 +29,8 @@ use frame_support::{
 use frame_system::EnsureRoot;
 use orml_traits::location::AbsoluteReserveProvider;
 use orml_xcm_support::MultiNativeAsset;
+#[cfg(feature = "runtime-benchmarks")]
+use pallet_common::{eth::CrossAccountId, CommonCollectionOperations};
 use pallet_foreign_assets::FreeForAll;
 use pallet_xcm::XcmPassthrough;
 use parachains_common::message_queue::{NarrowOriginToSibling, ParaIdToSibling};
@@ -43,20 +48,11 @@ use staging_xcm_executor::{
 	XcmExecutor,
 };
 use up_common::{constants::MAXIMUM_BLOCK_WEIGHT, types::AccountId};
-
-
-#[cfg(feature = "runtime-benchmarks")]
-use alloc::{boxed::Box, vec};
-
-#[cfg(feature = "runtime-benchmarks")]
-use pallet_common::{eth::CrossAccountId, CommonCollectionOperations};
-
 #[cfg(feature = "runtime-benchmarks")]
 use up_data_structs::TokenId;
 
 #[cfg(feature = "runtime-benchmarks")]
 use super::ethereum::CrossAccountId as ConfigCrossAccountId;
-
 #[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
