@@ -14,7 +14,6 @@ function(prev, repoDir)
       'bin/moonbeam': { dockerImage: 'moonbeamfoundation/moonbeam:%s' % dotenv.MOONBEAM_BUILD_BRANCH },
       'bin/assethub': { dockerImage: 'parity/polkadot-parachain:%s' % dotenv.KUSAMA_ASSETHUB_BUILD_BRANCH },
       'bin/astar': { dockerImage: 'staketechnologies/astar-collator:%s' % dotenv.ASTAR_BUILD_BRANCH, docker: '/usr/local/bin/astar-collator' },
-      'bin/polkadex': { dockerImage: 'polkadex/mainnet:%s' % dotenv.POLKADEX_BUILD_BRANCH },
       'bin/hydradx': { dockerImage: 'galacticcouncil/hydra-dx:%s' % dotenv.HYDRADX_BUILD_BRANCH },
     },
     extra_node_mixin={
