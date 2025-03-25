@@ -12,40 +12,52 @@ const {dirname} = makeNames(import.meta.url);
 
 // This function should be called before running test suites.
 const globalSetup = async (): Promise<void> => {
-  await usingPlaygrounds(async (helper, privateKey) => {
+  let attempt = 1;
+  const maxAttemps = 3;
+
+  while (attempt <= maxAttemps) {
     try {
-      // 1. Wait node producing blocks
-      console.log('Wait node producing blocks...');
-      await helper.wait.newBlocks(1, 600_000);
+      await usingPlaygrounds(async (helper, privateKey) => {
+        try {
+          // 1. Wait node producing blocks
+          console.log('Wait node producing blocks...');
+          await helper.wait.newBlocks(1, 600_000);
 
-      // 2. Create donors for test files
-      await fundFilenamesWithRetries(3)
-        .then((result) => {
-          if(!result) throw Error('Some problems with fundFilenamesWithRetries');
-        });
+          // 2. Create donors for test files
+          await fundFilenamesWithRetries(3)
+            .then((result) => {
+              if(!result) throw Error('Some problems with fundFilenamesWithRetries');
+            });
 
-      // 3. Configure App Promotion
-      const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
-      if(missingPallets.length === 0) {
-        const superuser = await privateKey('//Alice');
-        const palletAddress = helper.arrange.calculatePalletAddress('appstake');
-        const palletAdmin = await privateKey('//PromotionAdmin');
-        const api = helper.getApi();
-        await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
-        const nominal = helper.balance.getOneTokenNominal();
-        await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);
-        await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);
-        await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
-          .setAppPromotionConfigurationOverride({
-            recalculationInterval: LOCKING_PERIOD,
-            pendingInterval: UNLOCKING_PERIOD,
-            intervalIncome: INTERVAL_INCOME,
-          })], true);
-      }
-    } catch (error) {
-      throw Error('Error during globalSetup', {cause: error});
+          // 3. Configure App Promotion
+          const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
+          if(missingPallets.length === 0) {
+            const superuser = await privateKey('//Alice');
+            const palletAddress = helper.arrange.calculatePalletAddress('appstake');
+            const palletAdmin = await privateKey('//PromotionAdmin');
+            const api = helper.getApi();
+            await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+            const nominal = helper.balance.getOneTokenNominal();
+            await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);
+            await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);
+            await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
+              .setAppPromotionConfigurationOverride({
+                recalculationInterval: LOCKING_PERIOD,
+                pendingInterval: UNLOCKING_PERIOD,
+                intervalIncome: INTERVAL_INCOME,
+              })], true);
+          }
+        } catch (error) {
+          throw Error('Error during globalSetup', {cause: error});
+        }
+      });
+      break;
+    } catch (e) {
+      console.log('Global setup error', e, `retry after 10 blocks, attempt ${attempt}/${maxAttemps}`);
+      await new Promise((resolve) => setTimeout(resolve, 10 * 6000));
+      attempt += 1;
     }
-  });
+  }
 };
 
 async function getFiles(rootPath: string): Promise<string[]> {
