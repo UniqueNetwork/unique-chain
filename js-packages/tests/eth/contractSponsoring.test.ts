@@ -561,10 +561,10 @@ describe('Sponsoring Fee Limit', () => {
     await (await helpers.setSponsoringFeeLimit.send(await testContract.getAddress(), 2_000_000n * gasPrice)).wait(...waitParams);
 
     const originalUserBalance = await helper.balance.getEthereum(user);
-    await (await (<Contract>testContract.connect(user)).test.send(100, {gas: 2_000_000, maxFeePerGas: gasPrice})).wait(...waitParams);
+    await (await (<Contract>testContract.connect(user)).test(100, {gasLimit: 2_000_000, maxFeePerGas: gasPrice})).wait(...waitParams);
     expect(await helper.balance.getEthereum(user)).to.be.equal(originalUserBalance);
 
-    await (await (<Contract>testContract.connect(user)).test.send(100, {gas: 2_100_000, maxFeePerGas: gasPrice})).wait(...waitParams);
+    await (await (<Contract>testContract.connect(user)).test(100, {gasLimit: 2_100_000, maxFeePerGas: gasPrice})).wait(...waitParams);
     expect(await helper.balance.getEthereum(user)).to.not.be.equal(originalUserBalance);
   });
 
