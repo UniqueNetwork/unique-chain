@@ -223,7 +223,7 @@ jobs:
       - name: Upload network config
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.network }}-network-config
+          name: ${{ matrix.network }}-network-config-xcm
           path: ${{ steps.bdk.outputs.composeProject }}
           retention-days: 2
 
