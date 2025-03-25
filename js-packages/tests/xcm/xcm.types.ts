@@ -383,7 +383,7 @@ export class XcmTestHelper {
 
         if(from === 'relay') {
           messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
-        } else if(to === 'relay' || from === 'polkadotAssetHub') {
+        } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub') {
           messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
         } else {
           messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;

@@ -274,6 +274,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Karura', () => {
       } else {
         console.log('QTZ token already registered on Karura assetRegistry pallet');
       }
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+
       await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
     });
   });
