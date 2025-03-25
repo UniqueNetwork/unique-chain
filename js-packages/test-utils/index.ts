@@ -282,6 +282,18 @@ export class Event {
     }));
   };
 
+  static XcmPallet = class extends EventSection('xcmPallet') {
+    static Sent = this.Method('Sent', data => ({
+      messageId: eventJsonData(data, 3),
+    }));
+  };
+
+  static PolkadotXcm = class extends EventSection('polkadotXcm') {
+    static Sent = this.Method('Sent', data => ({
+      messageId: eventJsonData(data, 3),
+    }));
+  };
+
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
       outcome: eventData<StagingXcmV5TraitsOutcome>(data, 2),
@@ -929,7 +941,7 @@ export class ArrangeGroup {
 
   makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
-      V2: [
+      V4: [
         {
           WithdrawAsset: [
             {
@@ -956,16 +968,15 @@ export class ArrangeGroup {
             assets: {
               Wild: 'All',
             },
-            maxAssets: 1,
             beneficiary: {
               parents: 0,
               interior: {
-                X1: {
+                X1: [{
                   AccountId32: {
-                    network: 'Any',
+                    network: null,
                     id: beneficiary,
                   },
-                },
+                }],
               },
             },
           },
@@ -976,7 +987,7 @@ export class ArrangeGroup {
 
   makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
-      V2: [
+      V4: [
         {
           ReserveAssetDeposited: [
             {
@@ -1003,16 +1014,15 @@ export class ArrangeGroup {
             assets: {
               Wild: 'All',
             },
-            maxAssets: 1,
             beneficiary: {
               parents: 0,
               interior: {
-                X1: {
+                X1: [{
                   AccountId32: {
-                    network: 'Any',
+                    network: null,
                     id: beneficiary,
                   },
-                },
+                }],
               },
             },
           },
@@ -1023,7 +1033,7 @@ export class ArrangeGroup {
 
   makeUnpaidSudoTransactProgram(info: {weightMultiplier: number, call: string}) {
     return {
-      V3: [
+      V4: [
         {
           UnpaidExecution: {
             weightLimit: 'Unlimited',
@@ -1199,7 +1209,7 @@ class HydraFastDemocracyGroup {
 
     const councilVotingThreshold = 1;
     const technicalCommitteeThreshold = 3;
-    const fastTrackVotingPeriod = 3;
+    const fastTrackVotingPeriod = 10;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1235,7 +1245,7 @@ class HydraFastDemocracyGroup {
     await this.helper.collective.techCommittee.vote(bobAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(eveAccount, fastTrackHash, techProposalIdx, true);
 
-    await this.helper.collective.techCommittee.close(
+    const closeResult = await this.helper.collective.techCommittee.close(
       bobAccount,
       fastTrackHash,
       techProposalIdx,
@@ -1248,7 +1258,7 @@ class HydraFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
+    const democracyStarted = Event.Democracy.Started.expect(closeResult);
     const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
@@ -1261,7 +1271,7 @@ class HydraFastDemocracyGroup {
     // <<< Referendum voting <<<
 
     // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+    await this.helper.wait.expectEvent(10, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
 
     await this.helper.wait.newBlocks(1);
 

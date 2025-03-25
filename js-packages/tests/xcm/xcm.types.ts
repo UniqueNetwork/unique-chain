@@ -219,8 +219,12 @@ export class XcmTestHelper {
           'api.tx.sudo.sudo',
           [xcmSend],
         );
-        const messageSent = Event.XcmpQueue.XcmpMessageSent.expect(sendResult);
-        return messageSent.messageHash;
+
+        if (sendFrom === 'relay') {
+          return Event.XcmPallet.Sent.expect(sendResult).messageId;
+        } else {
+          return Event.XcmpQueue.XcmpMessageSent.expect(sendResult).messageHash;
+        }
       } else if('fastDemocracy' in helper) {
         // Needed to bypass the call filter.
         const batchCall = helper.encodeApiCall('api.tx.utility.batch', [[xcmSend]]);
@@ -319,7 +323,7 @@ export class XcmTestHelper {
       };
       const feeAssetItem = 0;
 
-      let transferResult: any;
+      let messageHash: any;
 
       if(
         from === 'acala' || from === 'karura'
@@ -345,13 +349,15 @@ export class XcmTestHelper {
           },
         };
 
-        transferResult = await acalaHelper.xTokens.transferMultiassets(
+        const transferResult = await acalaHelper.xTokens.transferMultiassets(
           fromAccount,
           assets,
           feeAssetItem,
           destination,
           'Unlimited',
         );
+
+        messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
       } else {
         const destination = from === 'relay'
           ? {V4: {parents: 0, interior: {X1: [{Parachain: mapToChainId(to)}]}}}
@@ -366,7 +372,7 @@ export class XcmTestHelper {
           },
         };
 
-        transferResult = await helper.xcm.transferAssets(
+        const transferResult = await helper.xcm.transferAssets(
           fromAccount,
           destination,
           beneficiary,
@@ -374,9 +380,15 @@ export class XcmTestHelper {
           feeAssetItem,
           'Unlimited',
         );
-      }
 
-      const messageSent = Event.XcmpQueue.XcmpMessageSent.expect(transferResult);
+        if (from === 'relay') {
+          messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
+        } else if (to === 'relay' || from === 'polkadotAssetHub') {
+          messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
+        } else {
+          messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
+        }
+      }
 
       const balanceAfter = await getRandomAccountBalance();
       if(isFromUnique) {
@@ -393,7 +405,7 @@ export class XcmTestHelper {
         ).to.be.true;
       }
 
-      setMessageHash(messageSent.messageHash);
+      setMessageHash(messageHash);
     });
   }
 

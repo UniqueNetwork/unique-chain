@@ -275,6 +275,10 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Acala', () => {
       } else {
         console.log('UNQ token already registered on Acala assetRegistry pallet');
       }
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+
       await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
     });
   });
@@ -424,12 +428,12 @@ describeXCM('[XCM] Integration test: Exchanging tokens with Astar', () => {
 
         console.log('2. Register asset location on Astar');
         const assetLocation = {
-          V2: {
+          V4: {
             parents: 1,
             interior: {
-              X1: {
+              X1: [{
                 Parachain: UNIQUE_CHAIN,
-              },
+              }],
             },
           },
         };
