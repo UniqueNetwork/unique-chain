@@ -62,7 +62,7 @@ local unique = {
 				'--pool-type=fork-aware',
 			],			
 		},
-		for name in ['alpha', 'beta', 'gamma']
+		for name in ['alpha', 'beta', 'gamma', 'delta', 'epsilon', 'zeta']
 	},
 };
 
