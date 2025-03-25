@@ -129,6 +129,7 @@ describe('Integration Test: Collator Selection', () => {
     });
 
     after(async () => {
+      console.log('Reset invulnerables');
       await resetInvulnerables();
     });
   });
@@ -138,10 +139,12 @@ describe('Integration Test: Collator Selection', () => {
 
     before(async function() {
       await usingPlaygrounds(async (helper) => {
+        console.log('Create 20 crowd account...');
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        for(const acc of crowd) {
-          await helper.session.setOwnKeysFromAddress(acc);
+        for(let i = 0; i < crowd.length; i += 1) {
+          console.log(`${i + 1}) setOwnKeysFromAddress(${crowd[i].address})`);
+          await helper.session.setOwnKeysFromAddress(crowd[i]);
         }
       });
     });
@@ -221,10 +224,12 @@ describe('Integration Test: Collator Selection', () => {
 
     before(async function() {
       await usingPlaygrounds(async (helper) => {
+        console.log('Create 20 crowd account...');
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        for(const acc of crowd) {
-          await helper.session.setOwnKeysFromAddress(acc);
+        for(let i = 0; i < crowd.length; i += 1) {
+          console.log(`${i + 1}) setOwnKeysFromAddress(${crowd[i].address})`);
+          await helper.session.setOwnKeysFromAddress(crowd[i]);
         }
       });
     });
@@ -366,8 +371,9 @@ describe('Integration Test: Collator Selection', () => {
         const newInvulnerables = await helper.arrange.createAccounts(Array(invulnerablesUntilLimit).fill(10n), superuser);
         const [lastInvulnerable] = await helper.arrange.createAccounts([10n], superuser);
 
-        for(const i of newInvulnerables) {
-          await helper.session.setOwnKeysFromAddress(i);
+        for(let i = 0; i < newInvulnerables.length; i += 1) {
+          console.log(`${i + 1}) setOwnKeysFromAddress(${newInvulnerables[i].address})`);
+          await helper.session.setOwnKeysFromAddress(newInvulnerables[i]);
         }
 
         await helper.session.setOwnKeysFromAddress(lastInvulnerable);
@@ -405,6 +411,7 @@ describe('Integration Test: Collator Selection', () => {
       });
 
       after(async function() {
+        console.log('Reset invulnerables');
         await resetInvulnerables();
       });
     });
