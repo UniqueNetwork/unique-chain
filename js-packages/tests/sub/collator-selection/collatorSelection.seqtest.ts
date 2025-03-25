@@ -142,10 +142,8 @@ describe('Integration Test: Collator Selection', () => {
         console.log('Create 20 crowd account...');
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        for(let i = 0; i < crowd.length; i += 1) {
-          console.log(`${i + 1}) setOwnKeysFromAddress(${crowd[i].address})`);
-          await helper.session.setOwnKeysFromAddress(crowd[i]);
-        }
+        console.log('Concurrently setOwnKeysFromAddress for accounts...');
+        await Promise.all(crowd.map((account) => helper.session.setOwnKeysFromAddress(account)));
       });
     });
 
@@ -227,10 +225,8 @@ describe('Integration Test: Collator Selection', () => {
         console.log('Create 20 crowd account...');
         crowd = await helper.arrange.createCrowd(20, 100n, superuser);
 
-        for(let i = 0; i < crowd.length; i += 1) {
-          console.log(`${i + 1}) setOwnKeysFromAddress(${crowd[i].address})`);
-          await helper.session.setOwnKeysFromAddress(crowd[i]);
-        }
+        console.log('Concurrently setOwnKeysFromAddress for accounts...');
+        await Promise.all(crowd.map((account) => helper.session.setOwnKeysFromAddress(account)));
       });
     });
 
@@ -371,10 +367,7 @@ describe('Integration Test: Collator Selection', () => {
         const newInvulnerables = await helper.arrange.createAccounts(Array(invulnerablesUntilLimit).fill(10n), superuser);
         const [lastInvulnerable] = await helper.arrange.createAccounts([10n], superuser);
 
-        for(let i = 0; i < newInvulnerables.length; i += 1) {
-          console.log(`${i + 1}) setOwnKeysFromAddress(${newInvulnerables[i].address})`);
-          await helper.session.setOwnKeysFromAddress(newInvulnerables[i]);
-        }
+        await Promise.all(newInvulnerables.map((account) => helper.session.setOwnKeysFromAddress(account)));
 
         await helper.session.setOwnKeysFromAddress(lastInvulnerable);
 
