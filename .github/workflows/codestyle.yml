@@ -82,6 +82,9 @@ jobs:
             targets: wasm32-unknown-unknown
             components: rustfmt, clippy        
       - name: Run cargo check
-        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime --tests -- -Dwarnings
+        # unreachable_patterns emitted from polkadot sdk crates
+        # const_evaluatable_unchecked emitted from evm-coder after compiler upgrade
+        # unexpected_cfgs used to silent warning for feature "pallet-test-utils"
+        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime --tests -- -Dwarnings -Aunreachable_patterns -Aconst_evaluatable_unchecked -Aunexpected_cfgs
         env:
           SKIP_WASM_BUILD: '1'
