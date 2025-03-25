@@ -432,7 +432,7 @@ describe('Fractionalizer contract usage', () => {
   //     const fractionalizer = await deployContract(helper, owner);
   //     const amount = 10n * helper.balance.getOneTokenNominal();
   //     const web3 = helper.getWeb3();
-  //     await expect(web3.eth.sendTransaction({from: payer, to: fractionalizer.options.address, value: `${amount}`, gas: helper.eth.DEFAULT_GAS})).to.be.rejected;
+  //     await expect(web3.eth.sendTransaction({from: payer, to: fractionalizer.options.address, value: `${amount}`, gasLimit: helper.eth.DEFAULT_GAS_LIMIT})).to.be.rejected;
   //   });
 
   //   itEth('fractionalize NFT with NFT transfers disallowed', async ({helper}) => {

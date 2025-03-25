@@ -250,7 +250,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const cost = await helper.eth.calculateFee({Ethereum: caller.address}, async () => {
-      await (await contract.transfer.send(receiver, token.tokenId, {gas: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
+      await (await contract.transfer.send(receiver, token.tokenId, {gasLimit: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
     });
 
     console.log(`\t[ETH NFT transfer] Original price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
@@ -271,7 +271,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const transferPrice = new Fract(await helper.eth.calculateFee({Ethereum: caller.address}, async () => {
-      await (await contract.transfer.send(receiver, token.tokenId, {gasPrice, gas: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
+      await (await contract.transfer.send(receiver, token.tokenId, {gasPrice, gasLimit: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
     }));
 
     dataPoints.push({x: transferPrice, y: coefficient});
@@ -294,7 +294,7 @@ async function calibrateMinGasPrice(helper: EthUniqueHelper, privateKey: (accoun
     const contract = await helper.ethNativeContract.collection(address, 'nft', caller);
 
     const cost = await helper.eth.calculateFee({Ethereum: caller.address}, async () => {
-      await (await contract.transfer.send(receiver, token.tokenId, {gas: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
+      await (await contract.transfer.send(receiver, token.tokenId, {gasLimit: helper.eth.DEFAULT_GAS_LIMIT})).wait(...waitParams);
     });
 
     console.log(`\t[ETH NFT transfer] Calibrated price: ${Number(cost) / Number(helper.balance.getOneTokenNominal())} UNQ`);
