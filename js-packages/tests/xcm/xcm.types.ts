@@ -220,7 +220,7 @@ export class XcmTestHelper {
           [xcmSend],
         );
 
-        if (sendFrom === 'relay') {
+        if(sendFrom === 'relay') {
           return Event.XcmPallet.Sent.expect(sendResult).messageId;
         } else {
           return Event.XcmpQueue.XcmpMessageSent.expect(sendResult).messageHash;
@@ -381,9 +381,9 @@ export class XcmTestHelper {
           'Unlimited',
         );
 
-        if (from === 'relay') {
+        if(from === 'relay') {
           messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
-        } else if (to === 'relay' || from === 'polkadotAssetHub') {
+        } else if(to === 'relay' || from === 'polkadotAssetHub') {
           messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
         } else {
           messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
