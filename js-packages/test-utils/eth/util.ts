@@ -84,6 +84,7 @@ export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privat
 
       // HACK: Retry if we got "TypeError: non-canonical s"
       // https://github.com/ethers-io/ethers.js/issues/4223
+      // eslint-disable-next-line no-constant-condition
       while(true) {
         try {
           await cb({helper, privateKey});

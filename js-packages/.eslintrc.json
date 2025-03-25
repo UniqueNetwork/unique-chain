@@ -66,12 +66,14 @@
             "error",
             "always"
         ],
+        "@typescript-eslint/no-require-imports": "warn",
         "@typescript-eslint/explicit-module-boundary-types": "off",
         "comma-dangle": [
             "error",
             "always-multiline"
         ],
         "no-unused-vars": "off",
+        "@typescript-eslint/no-unused-expressions": "off",
         "@typescript-eslint/no-empty-function": "off",
         "@typescript-eslint/no-non-null-assertion": "off",
         "@typescript-eslint/no-explicit-any": "off",

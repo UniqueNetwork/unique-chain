@@ -1348,7 +1348,7 @@ class WaitGroup {
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {
-      throw Error(`Failed to wait for ${initialBlocksCount} new blocks within ${timeout} ms. ${blocksCount} blocks left`);
+      throw Error(`Failed to wait for ${initialBlocksCount} new blocks within ${timeout} ms. ${blocksCount} blocks left`, {cause: error});
     }
 
     return promise;
@@ -1395,7 +1395,7 @@ class WaitGroup {
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {
-      throw Error(`Failed to wait for block ${blockNumber} on parachain within ${timeout} ms. Last block from parachain is ${lastBlock}`);
+      throw Error(`Failed to wait for block ${blockNumber} on parachain within ${timeout} ms. Last block from parachain is ${lastBlock}`, {cause: error});
     }
 
     return promise;
@@ -1419,7 +1419,7 @@ class WaitGroup {
     try {
       await this.waitWithTimeout(promise, timeout);
     } catch (error) {
-      throw Error(`Failed to wait for block ${blockNumber} on relay within ${timeout} ms. Last block from relay is ${lastBlock}`);
+      throw Error(`Failed to wait for block ${blockNumber} on relay within ${timeout} ms. Last block from relay is ${lastBlock}`, {cause: error});
     }
 
     return promise;

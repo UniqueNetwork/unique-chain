@@ -617,6 +617,7 @@ export class ChainHelperBase {
       let nonce = await this.chain.getNonce(sender.address);
       options.nonce = nonce++;
     }
+    // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       try {
         const unsub = await sign((result: any) => {
