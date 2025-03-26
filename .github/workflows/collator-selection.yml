@@ -143,6 +143,7 @@ jobs:
         id: alive1
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
+          yarn
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}

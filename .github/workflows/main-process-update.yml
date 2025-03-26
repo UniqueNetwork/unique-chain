@@ -252,7 +252,7 @@ jobs:
         id: alive3
         if: ${{ !cancelled() && steps.reconcile2.outcome == 'success' }}
         run: |
-          yarn        
+          yarn
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -278,7 +278,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start Parallel Substrate tests"
-          NOW=$(date +%s) && yarn testSubParallel --reporter mochawesome --reporter-options
+          NOW=$(date +%s) && yarn testSubParallel --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -287,7 +287,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start Sequential tests"
-          NOW=$(date +%s) && yarn testSubSequential --reporter mochawesome
+          NOW=$(date +%s) && yarn testSubSequential --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
