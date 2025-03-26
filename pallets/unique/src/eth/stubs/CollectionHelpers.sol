@@ -8,7 +8,6 @@ contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
 }
-
 contract ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
@@ -37,7 +36,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	/// Create an NFT collection
 	/// @param name Name of the collection
 	/// @param description Informative description of the collection
@@ -45,11 +43,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 	/// @return address Address of the newly created collection
 	/// @dev EVM selector for this function is: 0x844af658,
 	///  or in textual repr: createNFTCollection(string,string,string)
-	function createNFTCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix
-	) public payable returns (address) {
+	function createNFTCollection(string memory name, string memory description, string memory tokenPrefix) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -57,7 +51,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	// /// Create an NFT collection
 	// /// @param name Name of the collection
 	// /// @param description Informative description of the collection
@@ -76,11 +69,7 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 
 	/// @dev EVM selector for this function is: 0xab173450,
 	///  or in textual repr: createRFTCollection(string,string,string)
-	function createRFTCollection(
-		string memory name,
-		string memory description,
-		string memory tokenPrefix
-	) public payable returns (address) {
+	function createRFTCollection(string memory name, string memory description, string memory tokenPrefix) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		description;
@@ -88,15 +77,9 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	/// @dev EVM selector for this function is: 0x7335b79f,
 	///  or in textual repr: createFTCollection(string,uint8,string,string)
-	function createFTCollection(
-		string memory name,
-		uint8 decimals,
-		string memory description,
-		string memory tokenPrefix
-	) public payable returns (address) {
+	function createFTCollection(string memory name, uint8 decimals, string memory description, string memory tokenPrefix) public payable returns (address) {
 		require(false, stub_error);
 		name;
 		decimals;
@@ -105,7 +88,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy = 0;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	/// @dev EVM selector for this function is: 0x85624258,
 	///  or in textual repr: makeCollectionERC721MetadataCompatible(address,string)
 	function makeCollectionERC721MetadataCompatible(address collection, string memory baseUri) public {
@@ -114,7 +96,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		baseUri;
 		dummy = 0;
 	}
-
 	/// @dev EVM selector for this function is: 0x564e321f,
 	///  or in textual repr: destroyCollection(address)
 	function destroyCollection(address collectionAddress) public {
@@ -122,7 +103,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		collectionAddress;
 		dummy = 0;
 	}
-
 	/// Check if a collection exists
 	/// @param collectionAddress Address of the collection in question
 	/// @return bool Does the collection exist?
@@ -134,7 +114,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy;
 		return false;
 	}
-
 	/// @dev EVM selector for this function is: 0xd23a7ab1,
 	///  or in textual repr: collectionCreationFee()
 	function collectionCreationFee() public view returns (uint256) {
@@ -142,7 +121,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy;
 		return 0;
 	}
-
 	/// Returns address of a collection.
 	/// @param collectionId  - CollectionId  of the collection
 	/// @return eth mirror address of the collection
@@ -154,7 +132,6 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	/// Returns collectionId of a collection.
 	/// @param collectionAddress  - Eth address of the collection
 	/// @return collectionId of the collection
@@ -170,43 +147,41 @@ contract CollectionHelpers is Dummy, ERC165, CollectionHelpersEvents {
 
 /// Collection properties
 struct CreateCollectionData {
-	/// Collection name
+/// Collection name
 	string name;
-	/// Collection description
+/// Collection description
 	string description;
-	/// Token prefix
+/// Token prefix
 	string token_prefix;
-	/// Token type (NFT, FT or RFT)
+/// Token type (NFT, FT or RFT)
 	CollectionMode mode;
-	/// Fungible token precision
+/// Fungible token precision
 	uint8 decimals;
-	/// Custom Properties
+/// Custom Properties
 	Property[] properties;
-	/// Permissions for token properties
+/// Permissions for token properties
 	TokenPropertyPermission[] token_property_permissions;
-	/// Collection admins
+/// Collection admins
 	CrossAddress[] admin_list;
-	/// Nesting settings
+/// Nesting settings
 	CollectionNestingAndPermission nesting_settings;
-	/// Collection limits
+/// Collection limits
 	CollectionLimitValue[] limits;
-	/// Collection sponsor
+/// Collection sponsor
 	CrossAddress pending_sponsor;
-	/// Extra collection flags
+/// Extra collection flags
 	CollectionFlags flags;
 }
 
 type CollectionFlags is uint8;
-
 library CollectionFlagsLib {
-	/// A collection of foreign assets
+/// A collection of foreign assets
 	CollectionFlags constant foreignField = CollectionFlags.wrap(128);
-	/// Supports ERC721Metadata
+/// Supports ERC721Metadata
 	CollectionFlags constant erc721metadataField = CollectionFlags.wrap(64);
-	/// External collections can't be managed using `unique` api
+/// External collections can't be managed using `unique` api
 	CollectionFlags constant externalField = CollectionFlags.wrap(1);
-
-	/// Reserved flags
+/// Reserved flags
 	function reservedField(uint8 value) public pure returns (CollectionFlags) {
 		require(value < 1 << 5, "out of bound value");
 		return CollectionFlags.wrap(value << 1);
@@ -227,59 +202,59 @@ struct CollectionLimitValue {
 
 /// [`CollectionLimits`](up_data_structs::CollectionLimits) fields representation for EVM.
 enum CollectionLimitField {
-	/// How many tokens can a user have on one account.
+/// How many tokens can a user have on one account.
 	AccountTokenOwnership,
-	/// How many bytes of data are available for sponsorship.
+/// How many bytes of data are available for sponsorship.
 	SponsoredDataSize,
-	/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
+/// In any case, chain default: [`SponsoringRateLimit::SponsoringDisabled`]
 	SponsoredDataRateLimit,
-	/// How many tokens can be mined into this collection.
+/// How many tokens can be mined into this collection.
 	TokenLimit,
-	/// Timeouts for transfer sponsoring.
+/// Timeouts for transfer sponsoring.
 	SponsorTransferTimeout,
-	/// Timeout for sponsoring an approval in passed blocks.
+/// Timeout for sponsoring an approval in passed blocks.
 	SponsorApproveTimeout,
-	/// Whether the collection owner of the collection can send tokens (which belong to other users).
+/// Whether the collection owner of the collection can send tokens (which belong to other users).
 	OwnerCanTransfer,
-	/// Can the collection owner burn other people's tokens.
+/// Can the collection owner burn other people's tokens.
 	OwnerCanDestroy,
-	/// Is it possible to send tokens from this collection between users.
+/// Is it possible to send tokens from this collection between users.
 	TransferEnabled
 }
 
 /// Nested collections and permissions
 struct CollectionNestingAndPermission {
-	/// Owner of token can nest tokens under it.
+/// Owner of token can nest tokens under it.
 	bool token_owner;
-	/// Admin of token collection can nest tokens under token.
+/// Admin of token collection can nest tokens under token.
 	bool collection_admin;
-	/// If set - only tokens from specified collections can be nested.
+/// If set - only tokens from specified collections can be nested.
 	address[] restricted;
 }
 
 /// Ethereum representation of Token Property Permissions.
 struct TokenPropertyPermission {
-	/// Token property key.
+/// Token property key.
 	string key;
-	/// Token property permissions.
+/// Token property permissions.
 	PropertyPermission[] permissions;
 }
 
 /// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) as an key and value.
 struct PropertyPermission {
-	/// TokenPermission field.
+/// TokenPermission field.
 	TokenPermissionField code;
-	/// TokenPermission value.
+/// TokenPermission value.
 	bool value;
 }
 
 /// Ethereum representation of TokenPermissions (see [`up_data_structs::PropertyPermission`]) fields as an enumeration.
 enum TokenPermissionField {
-	/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
+/// Permission to change the property and property permission. See [`up_data_structs::PropertyPermission::mutable`]
 	Mutable,
-	/// Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
+/// Change permission for the collection administrator. See [`up_data_structs::PropertyPermission::token_owner`]
 	TokenOwner,
-	/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
+/// Permission to change the property for the owner of the token. See [`up_data_structs::PropertyPermission::collection_admin`]
 	CollectionAdmin
 }
 
@@ -291,10 +266,11 @@ struct Property {
 
 /// Type of tokens in collection
 enum CollectionMode {
-	/// Nonfungible
+/// Nonfungible
 	Nonfungible,
-	/// Fungible
+/// Fungible
 	Fungible,
-	/// Refungible
+/// Refungible
 	Refungible
 }
+
