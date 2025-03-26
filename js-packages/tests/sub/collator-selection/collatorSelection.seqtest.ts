@@ -41,26 +41,31 @@ async function getInitialInvulnerables() {
 }
 
 async function resetInvulnerables() {
-  await usingPlaygrounds(async (helper, privateKey) => {
-    const superuser = await privateKey('//Alice');
-    const initialInvulnerables = await getInitialInvulnerables();
-
-    const invulnerables = await helper.collatorSelection.getInvulnerables();
-
-    // Remove all invulnerables but the first one
-    const firstInvulnerable = invulnerables[0];
-
-    let nonce = await helper.chain.getNonce(superuser.address);
-    await Promise.all(invulnerables.slice(1).map(invulnerable => helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerable], true, {nonce: nonce++})));
-
-    // Add the initial invulnerables
-    await Promise.all(initialInvulnerables.map(invulnerable => helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [invulnerable], true, {nonce: nonce++})));
-
-    // Remove the first invulnerable if it's not an initial one
-    if(!initialInvulnerables.includes(firstInvulnerable)) {
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [firstInvulnerable]);
-    }
-  });
+  try {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      const superuser = await privateKey('//Alice');
+      const initialInvulnerables = await getInitialInvulnerables();
+  
+      const invulnerables = await helper.collatorSelection.getInvulnerables();
+  
+      // Remove all invulnerables but the first one
+      const firstInvulnerable = invulnerables[0];
+  
+      let nonce = await helper.chain.getNonce(superuser.address);
+      await Promise.all(invulnerables.slice(1).map(invulnerable => helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [invulnerable], true, {nonce: nonce++})));
+  
+      // Add the initial invulnerables
+      await Promise.all(initialInvulnerables.map(invulnerable => helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [invulnerable], true, {nonce: nonce++})));
+  
+      // Remove the first invulnerable if it's not an initial one
+      if(!initialInvulnerables.includes(firstInvulnerable)) {
+        await helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [firstInvulnerable]);
+      }
+    });
+  } catch (error) {
+    console.log('resetInvulnerables fail', error);
+    throw error;
+  }
 }
 
 // todo:collator Most preferable to launch this test in parallel somehow -- or change the session period (1 hr).
@@ -129,7 +134,6 @@ describe('Integration Test: Collator Selection', () => {
     });
 
     after(async () => {
-      console.log('Reset invulnerables');
       await resetInvulnerables();
     });
   });

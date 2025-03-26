@@ -19,7 +19,7 @@
         "checkRelayIdentities": "yarn tsx ../scripts/relayIdentitiesChecker.ts",
         
         "_test": "yarn setup && yarn mocha",
-        "_testParallel": "yarn setup && yarn mocha --parallel",
+        "_testParallel": "yarn setup && yarn mocha --parallel --jobs 64",
 
         "test": "yarn _test './**/*.*test.ts'",
         "testParallel": "yarn _testParallel './**/*.test.ts'",
@@ -37,6 +37,7 @@
     },
     "mocha": {
         "timeout": 9999999,
+        "slow": 0,
         "node-option": [
             "import=tsx"
         ]

@@ -277,60 +277,28 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          echo "adding mochawesome"
-          yarn add mochawesome
           echo "Ready to start Parallel Substrate tests"
-          NOW=$(date +%s) && yarn testSubParallel --reporter mochawesome --reporter-options reportDir=mochawesome-report/,reportFilename=test-sub-parallel-${NOW}
+          NOW=$(date +%s) && yarn testSubParallel --reporter mochawesome --reporter-options
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: Parallel Test Report
-        uses: phoenix-actions/test-reporting@v15
-        id: parallel-sub-report
-        if: success() || failure()
-        with:
-          name: Main Substrate Parallel Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-sub-parallel-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
 
       - name: Run Sequential Substrate tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start Sequential tests"
-          NOW=$(date +%s) && yarn testSubSequential --reporter mochawesome --reporter-options reportFilename=test-sub-sequential-${NOW}
+          NOW=$(date +%s) && yarn testSubSequential --reporter mochawesome
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: Sequential Substrate tests Report
-        uses: phoenix-actions/test-reporting@v15
-        id: sequential-sub-report
-        if: success() || failure()
-        with:
-          name: Main Substrate Sequential Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-sub-sequential-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
 
       - name: Run Ethereum tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start Ethereum tests"
-          NOW=$(date +%s) && yarn testEth --reporter mochawesome --reporter-options reportFilename=test-eth-${NOW}
+          NOW=$(date +%s) && yarn testEth --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: Ethereum tests Report
-        uses: phoenix-actions/test-reporting@v15
-        id: eth-report
-        if: success() || failure()
-        with:
-          name: Main Ethereum Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-eth-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
 
       - name: Echo containers logs
         if: always() # run this step always

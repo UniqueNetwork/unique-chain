@@ -143,8 +143,6 @@ jobs:
         id: alive1
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
-          yarn
-          yarn add mochawesome
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -154,19 +152,9 @@ jobs:
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
+          NOW=$(date +%s) && yarn testCollators --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v15
-        id: test-report
-        if: success() || failure()
-        with:
-          name: Collator Selection Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-collators-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
 
       - name: Clean Workspace
         if: always()
