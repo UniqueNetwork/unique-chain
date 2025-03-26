@@ -1366,8 +1366,8 @@ class WaitGroup {
       + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
 
     const expectedSessionIndex = await (this.helper as DevUniqueHelper).session.getIndex() + sessionCount;
-    let currentSessionIndex = -1;
 
+    let currentSessionIndex = -1;
     while(currentSessionIndex < expectedSessionIndex) {
       // eslint-disable-next-line no-async-promise-executor
       currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
@@ -1376,6 +1376,8 @@ class WaitGroup {
         resolve(res);
       }), blockTimeout, 'The chain has stopped producing blocks!');
     }
+
+    console.log('Waiting done');
   }
 
   async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {

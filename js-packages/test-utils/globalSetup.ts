@@ -15,7 +15,7 @@ const globalSetup = async (): Promise<void> => {
   let attempt = 1;
   const maxAttemps = 3;
 
-  while (attempt <= maxAttemps) {
+  while(attempt <= maxAttemps) {
     try {
       await usingPlaygrounds(async (helper, privateKey) => {
         try {

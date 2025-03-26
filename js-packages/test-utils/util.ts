@@ -142,8 +142,13 @@ export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privat
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
-      console.log(`Starting sub test ${name}...`);
-      await cb({helper, privateKey});
+      console.log(`Starting sub test "${name}"...`);
+      try {
+        await cb({helper, privateKey});
+      } catch (error) {
+        console.log(`Test "${name}" failed with error`, error);
+        throw error;
+      }
     });
   });
 }
