@@ -273,14 +273,14 @@ jobs:
         run: |
           sleep 60
 
-      - name: Run Parallel tests after upgrade
+      - name: Run Parallel Substrate tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "adding mochawesome"
           yarn add mochawesome
-          echo "Ready to start Parallel tests"
-          NOW=$(date +%s) && yarn testParallel --reporter mochawesome --reporter-options reportDir=mochawesome-report/,reportFilename=test-parallel-${NOW}
+          echo "Ready to start Parallel Substrate tests"
+          NOW=$(date +%s) && yarn testSubParallel --reporter mochawesome --reporter-options reportDir=mochawesome-report/,reportFilename=test-sub-parallel-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
@@ -289,27 +289,46 @@ jobs:
         id: parallel-report
         if: success() || failure()
         with:
-          name: Main Parallel Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-parallel-*.json
+          name: Main Substrate Parallel Tests ${{ matrix.network }}
+          path: js-packages/tests/mochawesome-report/test-sub-parallel-*.json
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Run Sequential tests after upgrade
+      - name: Run Sequential Substrate tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
           echo "Ready to start Sequential tests"
-          NOW=$(date +%s) && yarn testSequential --reporter mochawesome --reporter-options reportFilename=test-sequential-${NOW}
+          NOW=$(date +%s) && yarn testSubSequential --reporter mochawesome --reporter-options reportFilename=test-sub-sequential-${NOW}
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Sequential Tests Report
+      - name: Sequential Substrate tests Report
         uses: phoenix-actions/test-reporting@v15
         id: sequential-report
         if: success() || failure()
         with:
-          name: Main Sequential Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-sequential-*.json
+          name: Main Substrate Sequential Tests ${{ matrix.network }}
+          path: js-packages/tests/mochawesome-report/test-sub-sequential-*.json
+          reporter: mochawesome-json
+          fail-on-error: 'false'
+
+      - name: Run Ethereum tests after upgrade
+        working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
+        run: |
+          echo "Ready to start Ethereum tests"
+          NOW=$(date +%s) && yarn testEth --reporter mochawesome --reporter-options reportFilename=test-eth-${NOW}
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Ethereum tests Report
+        uses: phoenix-actions/test-reporting@v15
+        id: sequential-report
+        if: success() || failure()
+        with:
+          name: Main Ethereum Tests ${{ matrix.network }}
+          path: js-packages/tests/mochawesome-report/test-eth-*.json
           reporter: mochawesome-json
           fail-on-error: 'false'
 

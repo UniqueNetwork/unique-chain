@@ -17,12 +17,18 @@
         "setup": "yarn tsx ../test-utils/globalSetup.ts",
         "setIdentities": "yarn tsx ../scripts/identitySetter.ts",
         "checkRelayIdentities": "yarn tsx ../scripts/relayIdentitiesChecker.ts",
+        
         "_test": "yarn setup && yarn mocha",
         "_testParallel": "yarn setup && yarn mocha --parallel",
+
         "test": "yarn _test './**/*.*test.ts'",
         "testParallel": "yarn _testParallel './**/*.test.ts'",
         "testSequential": "yarn _test './**/*.seqtest.ts'",
+
+        "testSubParallel": "yarn _testParallel './*.test.ts' './sub/**/*.test.ts'",
+        "testSubSequential": "yarn _test './*.seqtest.ts' './sub/**/*.seqtest.ts'",
         "testEth": "yarn _test ./**/eth/*.*test.ts",
+
         "testGovernance": "RUN_GOV_TESTS=1 && yarn _test ./**/sub/governance/*.*test.ts",
         "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/sub/collator-selection/**.*test.ts --timeout 49999999",
         "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/unique.test.ts",
