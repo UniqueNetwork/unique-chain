@@ -286,7 +286,7 @@ jobs:
 
       - name: Parallel Test Report
         uses: phoenix-actions/test-reporting@v15
-        id: parallel-report
+        id: parallel-sub-report
         if: success() || failure()
         with:
           name: Main Substrate Parallel Tests ${{ matrix.network }}
@@ -305,7 +305,7 @@ jobs:
 
       - name: Sequential Substrate tests Report
         uses: phoenix-actions/test-reporting@v15
-        id: sequential-report
+        id: sequential-sub-report
         if: success() || failure()
         with:
           name: Main Substrate Sequential Tests ${{ matrix.network }}
@@ -324,7 +324,7 @@ jobs:
 
       - name: Ethereum tests Report
         uses: phoenix-actions/test-reporting@v15
-        id: sequential-report
+        id: eth-report
         if: success() || failure()
         with:
           name: Main Ethereum Tests ${{ matrix.network }}
