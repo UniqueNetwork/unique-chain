@@ -6,6 +6,8 @@ _help:
 	@echo "  bench-evm-migration"
 	@echo "  bench-unique"
 
+MAKEFLAGS := --jobs=$(shell nproc) --output-sync=target
+
 NATIVE_FUNGIBLE_EVM_STUBS=./pallets/balances-adapter/src/stubs
 NATIVE_FUNGIBLE_EVM_ABI=./js-packages/evm-abi/abi/nativeFungible.json
 
