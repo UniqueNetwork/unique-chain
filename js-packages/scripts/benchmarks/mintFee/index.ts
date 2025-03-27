@@ -291,7 +291,10 @@ async function benchMintWithProperties(
         '0',
       );
 
-      encodedCall = (await evmContract.setProperties.populateTransaction(subTokenId, PROPERTIES.slice(0, setup.propertiesNumber))).data;
+      encodedCall = (await evmContract.setProperties.populateTransaction(
+        subTokenId,
+        PROPERTIES.slice(0, setup.propertiesNumber))
+      ).data;
 
       await helper.eth.sendEVM(
         donor,
@@ -318,6 +321,7 @@ async function benchMintWithProperties(
       await (await evmContract.mintCross.send(
         helper.ethCrossAccount.fromAddress(receiverEthAddress),
         PROPERTIES.slice(0, setup.propertiesNumber),
+        { gasLimit: helper.eth.DEFAULT_GAS_LIMIT },
       )).wait(...waitParams);
     },
   );
@@ -333,6 +337,7 @@ async function benchMintWithProperties(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         hexlify(substrateReceiver.addressRaw),
         PROPERTIES.slice(0, setup.propertiesNumber),
+        { gasLimit: helper.eth.DEFAULT_GAS_LIMIT },
       )).wait(...waitParams);
     },
   );
@@ -348,6 +353,7 @@ async function benchMintWithProperties(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         hexlify(substrateReceiver.addressRaw),
         PROPERTIES.slice(0, setup.propertiesNumber),
+        { gasLimit: helper.eth.DEFAULT_GAS_LIMIT },
       )).wait(...waitParams);
     },
   );
