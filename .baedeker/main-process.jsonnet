@@ -59,7 +59,7 @@ local unique = {
 			{
 				properties: {
 					tokenDecimals: 18,
-					tokenSymbol: "DEV",
+					tokenSymbol: "UNQ",
 				},
 			},
 			rm.reencodeSpec(),
