@@ -293,7 +293,8 @@ async function benchMintWithProperties(
 
       encodedCall = (await evmContract.setProperties.populateTransaction(
         subTokenId,
-        PROPERTIES.slice(0, setup.propertiesNumber))
+        PROPERTIES.slice(0, setup.propertiesNumber),
+      )
       ).data;
 
       await helper.eth.sendEVM(
@@ -321,7 +322,7 @@ async function benchMintWithProperties(
       await (await evmContract.mintCross.send(
         helper.ethCrossAccount.fromAddress(receiverEthAddress),
         PROPERTIES.slice(0, setup.propertiesNumber),
-        { gasLimit: helper.eth.DEFAULT_GAS_LIMIT },
+        {gasLimit: helper.eth.DEFAULT_GAS_LIMIT},
       )).wait(...waitParams);
     },
   );
@@ -337,7 +338,7 @@ async function benchMintWithProperties(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         hexlify(substrateReceiver.addressRaw),
         PROPERTIES.slice(0, setup.propertiesNumber),
-        { gasLimit: helper.eth.DEFAULT_GAS_LIMIT },
+        {gasLimit: helper.eth.DEFAULT_GAS_LIMIT},
       )).wait(...waitParams);
     },
   );
@@ -353,7 +354,7 @@ async function benchMintWithProperties(
         helper.ethAddress.fromCollectionId(collection.collectionId),
         hexlify(substrateReceiver.addressRaw),
         PROPERTIES.slice(0, setup.propertiesNumber),
-        { gasLimit: helper.eth.DEFAULT_GAS_LIMIT },
+        {gasLimit: helper.eth.DEFAULT_GAS_LIMIT},
       )).wait(...waitParams);
     },
   );

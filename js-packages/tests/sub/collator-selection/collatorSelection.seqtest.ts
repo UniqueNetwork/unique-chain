@@ -27,7 +27,7 @@ async function nodeAddress(name: string) {
       return helper.address.normalizeSubstrateToChainFormat(nodeStash);
     } else {
       console.error(`"${envNodeStash}" env var is not set`);
-      console.info('If you run this script locally, you can setup this env var using `export $(cat ../../.baedeker/.bdk-env/discover.env | xargs)`')
+      console.info('If you run this script locally, you can setup this env var using `export $(cat ../../.baedeker/.bdk-env/discover.env | xargs)`');
       process.exit(1);
     }
   });
@@ -57,17 +57,11 @@ async function resetInvulnerables() {
 
     let nonce = await helper.chain.getNonce(superuser.address);
 
-    await Promise.all(
-      add.map((account) => {
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [account], true, {nonce: nonce++});
-      })
-    );
+    await Promise.all(add.map((account) =>
+      helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.addInvulnerable', [account], true, {nonce: nonce++})));
 
-    await Promise.all(
-      remove.map((account) => {
-        helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [account], true, {nonce: nonce++})
-      })
-    );
+    await Promise.all(remove.map((account) =>
+      helper.getSudo().executeExtrinsic(superuser, 'api.tx.collatorSelection.removeInvulnerable', [account], true, {nonce: nonce++})));
   });
 }
 

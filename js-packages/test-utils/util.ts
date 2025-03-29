@@ -141,8 +141,8 @@ export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privat
       if(opts.requiredPallets) {
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
-      
-      await cb({helper, privateKey})
+
+      await cb({helper, privateKey});
     });
   });
 }
