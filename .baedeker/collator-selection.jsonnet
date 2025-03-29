@@ -51,14 +51,35 @@ local unique = {
 	bin: 'bin/unique',
 	paraId: 1001,
 	spec: {Genesis:{
-		modify:: m.genericPara($),
+		modify:: bdk.mixer([
+			m.simplifyGenesisName(),
+			// HACK: Baedeker checks pallets session and collatorSelection
+			// by checking for keys with the name of the pallet in the genesis.
+			// However, new versions of the Polkadot SDK do not add these pallets
+			// to the genesis when generating the spec.
+			//
+			// This will be fixed in Baedeker one day, but for now we will add empty entries
+			// so that Baedeker correctly initializes storages for this pallets.
+			// Without hack the tests will fail in method resetInvulnerables
+			// with the error ValidatorNotRegistered.
+			//
+			// Link to the discussions:
+			// https://chat.uniquenetwork.dev/unique/pl/r81k3pdrp7d15nzem78jj8ndpc
+			{
+				_genesis+: {
+					session+: {},
+					collatorSelection+: {},
+				},
+			},
+			m.unsimplifyGenesisName(),
+			m.genericPara($),
+		]),
 	}},
 	nodes: {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
 			extraArgs: [
-				'--increase-future-pool',
 				'--pool-type=fork-aware',
 			],			
 		},
