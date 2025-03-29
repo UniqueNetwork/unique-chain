@@ -80,7 +80,9 @@ describe('App promotion', () => {
       expect(await helper.staking.getTotalStaked()).to.eq(stakedAfterUnstake); // there are no active stakes (for test accs) after each test
       // Make sure previousCalculatedRecord is None to avoid problem with payout stakers;
       await helper.admin.payoutStakers(palletAdmin, 100);
-      expect((await helper.getApi().query.appPromotion.previousCalculatedRecord() as any).isNone).to.be.true;
+      const pcr = await helper.getApi().query.appPromotion.previousCalculatedRecord();
+      console.log('app promotion previousCalculatedRecord bug', pcr);
+      expect((pcr as any).isNone).to.be.true;
     });
   });
 
