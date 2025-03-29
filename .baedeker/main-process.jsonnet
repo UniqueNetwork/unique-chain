@@ -13,28 +13,28 @@ local relay = {
 		chain: relay_spec,
 		modify:: bdk.mixer([
 			m.genericRelay($),
-            m.simplifyGenesisName(),
-            {
-                _genesis+: {
-                            configuration+: {
-                                config+: {
-                                    async_backing_params+: {
-										allowed_ancestry_len: 3,
-										max_candidate_depth: 4,
-									},
-                                    validation_upgrade_cooldown: 200,
-                                    validation_upgrade_delay: 100,
-                                    minimum_validation_upgrade_delay: 15,
-                                    minimum_backing_votes: 2,
-                                    needed_approvals: 2,
-                                    scheduler_params+: {
-                                      lookahead: 1,
-                                    },
-								},
+			m.simplifyGenesisName(),
+			{
+				_genesis+: {
+					configuration+: {
+						config+: {
+							async_backing_params+: {
+								allowed_ancestry_len: 3,
+								max_candidate_depth: 4,
 							},
+							validation_upgrade_cooldown: 200,
+							validation_upgrade_delay: 100,
+							minimum_validation_upgrade_delay: 15,
+							minimum_backing_votes: 2,
+							needed_approvals: 2,
+							scheduler_params+: {
+								lookahead: 1,
+							},
+						},
+					},
 				},
 			},
-            m.unsimplifyGenesisName(),
+			m.unsimplifyGenesisName(),
 		]),
 	}},
 	nodes: {
@@ -56,6 +56,12 @@ local unique = {
 			rm.resetNetworking($),
 			rm.decodeSpec(),
 			rm.polkaLaunchPara($),
+			{
+				properties: {
+					tokenDecimals: 18,
+					tokenSymbol: "DEV",
+				},
+			},
 			rm.reencodeSpec(),
 		]),
 		raw_spec: modifyRaw({
