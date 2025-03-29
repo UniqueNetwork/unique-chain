@@ -27,7 +27,7 @@
 
         "testSubParallel": "yarn _testParallel './*.test.ts' './sub/**/*.test.ts'",
         "testSubSequential": "yarn _test './*.seqtest.ts' './sub/**/*.seqtest.ts'",
-        "testEth": "yarn _testParallel ./**/eth/*.*test.ts",
+        "testEth": "yarn _test ./**/eth/*.*test.ts",
 
         "testGovernance": "RUN_GOV_TESTS=1 && yarn _test ./**/sub/governance/*.*test.ts",
         "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./sub/collator-selection/collatorSelection.seqtest.ts ./sub/collator-selection/identity.seqtest.ts",
