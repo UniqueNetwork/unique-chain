@@ -26,17 +26,22 @@ async function nodeAddress(name: string) {
     if(nodeStash) {
       return helper.address.normalizeSubstrateToChainFormat(nodeStash);
     } else {
-      throw Error(`"${envNodeStash}" env var is not set`);
+      console.error(`"${envNodeStash}" env var is not set`);
+      console.info('If you run this script locally, you can setup this env var using `export $(cat ../../.baedeker/.bdk-env/discover.env | xargs)`')
+      process.exit(1);
     }
   });
 }
 
 async function getInitialInvulnerables() {
+  // See list of nodes in .baedeker/collator-selection.jsonnet
   return await Promise.all([
     nodeAddress('alpha'),
     nodeAddress('beta'),
     nodeAddress('gamma'),
     nodeAddress('delta'),
+    nodeAddress('epsilon'),
+    nodeAddress('zeta'),
   ]);
 }
 
@@ -77,6 +82,9 @@ describe('Integration Test: Collator Selection', () => {
   before(async function() {
     if(!process.env.RUN_COLLATOR_TESTS) this.skip();
 
+    // Check env vars
+    await getInitialInvulnerables();
+
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
       superuser = await privateKey('//Alice');
@@ -96,6 +104,9 @@ describe('Integration Test: Collator Selection', () => {
     let deltaNode: string;
 
     before(async function() {
+      // Check env vars
+      await getInitialInvulnerables();
+
       await usingPlaygrounds(async (helper) => {
         // todo:collator see again if blocks start to be finalized in dev mode
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
@@ -142,11 +153,11 @@ describe('Integration Test: Collator Selection', () => {
     let crowd: IKeyringPair[];
 
     before(async function() {
-      await usingPlaygrounds(async (helper) => {
-        console.log('Create 20 crowd account...');
-        crowd = await helper.arrange.createCrowd(20, 100n, superuser);
+      // Check env vars
+      await getInitialInvulnerables();
 
-        console.log('Concurrently setOwnKeysFromAddress for accounts...');
+      await usingPlaygrounds(async (helper) => {
+        crowd = await helper.arrange.createCrowd(20, 100n, superuser);
         await Promise.all(crowd.map((account) => helper.session.setOwnKeysFromAddress(account)));
       });
     });
@@ -225,11 +236,11 @@ describe('Integration Test: Collator Selection', () => {
     let crowd: IKeyringPair[];
 
     before(async function() {
-      await usingPlaygrounds(async (helper) => {
-        console.log('Create 20 crowd account...');
-        crowd = await helper.arrange.createCrowd(20, 100n, superuser);
+      // Check env vars
+      await getInitialInvulnerables();
 
-        console.log('Concurrently setOwnKeysFromAddress for accounts...');
+      await usingPlaygrounds(async (helper) => {
+        crowd = await helper.arrange.createCrowd(20, 100n, superuser);
         await Promise.all(crowd.map((account) => helper.session.setOwnKeysFromAddress(account)));
       });
     });
@@ -408,7 +419,6 @@ describe('Integration Test: Collator Selection', () => {
       });
 
       after(async function() {
-        console.log('Reset invulnerables');
         await resetInvulnerables();
       });
     });
