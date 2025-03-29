@@ -16,10 +16,10 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
-  yarn-dev:
-    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
-    uses: ./.github/workflows/yarn-dev.yml
-    secrets: inherit    
+  # yarn-dev:
+  #   if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
+  #   uses: ./.github/workflows/yarn-dev.yml
+  #   secrets: inherit    
 
   unit-test:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')

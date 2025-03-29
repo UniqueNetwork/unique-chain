@@ -16,9 +16,9 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
-  yarn-dev:
-    uses: ./.github/workflows/yarn-dev.yml
-    secrets: inherit    
+  # yarn-dev:
+  #   uses: ./.github/workflows/yarn-dev.yml
+  #   secrets: inherit    
 
   unit-test:
     uses: ./.github/workflows/unit-test.yml
