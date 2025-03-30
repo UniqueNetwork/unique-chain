@@ -3,7 +3,7 @@ m = import 'baedeker-library/mixin/spec.libsonnet',
 rm = import 'baedeker-library/mixin/raw-spec.libsonnet',
 ;
 
-function(relay_spec, forked_spec, dump_spec)
+function(relay_spec, forked_spec, dump_spec, token_symbol)
 
 local relay = {
 	name: 'relay',
@@ -59,7 +59,7 @@ local unique = {
 			{
 				properties: {
 					tokenDecimals: 18,
-					tokenSymbol: "UNQ",
+					tokenSymbol: token_symbol,
 				},
 			},
 			rm.reencodeSpec(),
@@ -75,7 +75,7 @@ local unique = {
 			relay_chain: "unused",
 			genesis: {
 				raw: {
-					top: import "dump.json",
+					top: dump_spec,
 					childrenDefault: {},
 				},
 			},
