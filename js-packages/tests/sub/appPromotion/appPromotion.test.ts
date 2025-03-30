@@ -81,7 +81,6 @@ describe('App promotion', () => {
       // Make sure previousCalculatedRecord is None to avoid problem with payout stakers;
       await helper.admin.payoutStakers(palletAdmin, 100);
       const pcr = await helper.getApi().query.appPromotion.previousCalculatedRecord();
-      console.log('app promotion previousCalculatedRecord bug', pcr);
       expect((pcr as any).isNone).to.be.true;
     });
   });
