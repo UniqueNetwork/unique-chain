@@ -277,7 +277,6 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          echo "Ready to start Parallel Substrate tests"
           NOW=$(date +%s) && yarn testSubParallel --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -286,17 +285,23 @@ jobs:
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          echo "Ready to start Sequential tests"
           NOW=$(date +%s) && yarn testSubSequential --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
-      - name: Run Ethereum tests after upgrade
+      - name: Run Parallel Ethereum tests after upgrade
         working-directory: js-packages/tests
         if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
         run: |
-          echo "Ready to start Ethereum tests"
-          NOW=$(date +%s) && yarn testEth --reporter tap
+          NOW=$(date +%s) && yarn testEthParallel --reporter tap
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Sequential Ethereum tests after upgrade
+        working-directory: js-packages/tests
+        if: ${{ !cancelled() && steps.alive3.outcome == 'success' }}
+        run: |
+          NOW=$(date +%s) && yarn testEthSequential --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
