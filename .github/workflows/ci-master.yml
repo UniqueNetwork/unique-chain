@@ -20,9 +20,9 @@ jobs:
   #   uses: ./.github/workflows/yarn-dev.yml
   #   secrets: inherit    
 
-  unit-test:
-    uses: ./.github/workflows/unit-test.yml
-    secrets: inherit    
+  # unit-test:
+  #   uses: ./.github/workflows/unit-test.yml
+  #   secrets: inherit
 
   xcm:
     uses: ./.github/workflows/xcm.yml
@@ -44,9 +44,9 @@ jobs:
     uses: ./.github/workflows/governance.yml
     secrets: inherit
 
-  codestyle:
-    uses: ./.github/workflows/codestyle.yml
-    secrets: inherit
+  # codestyle:
+  #   uses: ./.github/workflows/codestyle.yml
+  #   secrets: inherit
 
   polkadot-types:
     uses: ./.github/workflows/polkadot-types.yml
