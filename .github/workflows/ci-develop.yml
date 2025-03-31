@@ -21,10 +21,10 @@ jobs:
   #   uses: ./.github/workflows/yarn-dev.yml
   #   secrets: inherit    
 
-  # unit-test:
-  #   if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
-  #   uses: ./.github/workflows/unit-test.yml
-  #   secrets: inherit    
+  unit-test:
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
+    uses: ./.github/workflows/unit-test.yml
+    secrets: inherit    
 
   xcm:
     if: github.event.pull_request.draft == false && contains(github.event.pull_request.labels.*.name, 'CI-xcm')
@@ -51,10 +51,10 @@ jobs:
     uses: ./.github/workflows/governance.yml
     secrets: inherit
 
-  # codestyle:
-  #   if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
-  #   uses: ./.github/workflows/codestyle.yml
-  #   secrets: inherit
+  codestyle:
+    if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
+    uses: ./.github/workflows/codestyle.yml
+    secrets: inherit
 
   polkadot-types:
     if: contains(github.event.pull_request.labels.*.name, 'CI-hotfix-types')
