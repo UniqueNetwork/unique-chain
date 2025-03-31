@@ -194,7 +194,7 @@ describe('Sponsoring EVM contracts', () => {
     const flipperAddress = await flipper.getAddress();
 
     expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
-    await expect(helpers.setSponsor.send(flipperAddress, sponsor)).to.be.not.rejected;
+    await (await helpers.setSponsor.send(flipperAddress, sponsor)).wait(...waitParams);
     await expect((<Contract>helpers.connect(notSponsor)).confirmSponsorship.staticCall(flipperAddress)).to.be.rejectedWith('NoPermission');
     expect(await helpers.hasSponsor.staticCall(flipperAddress)).to.be.false;
   });
