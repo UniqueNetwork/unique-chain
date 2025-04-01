@@ -108,7 +108,7 @@ describe('Refungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     {
-      const approveTx = await contract.approve.send(spender, 100);
+      const approveTx = await contract.approve.send(spender.address, 100);
       const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(approveReceipt!);
 
@@ -352,15 +352,15 @@ describe('Refungible: Plain calls', () => {
       const tokenEvmNonExist = await helper.ethNativeContract.rftToken(tokenAddressNonExist, owner);
 
       // 1. Can transfer zero amount (EIP-20):
-      await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth, 0)).wait(...waitParams);
+      await (await tokenEvmOwner[testCase].send(isCross ? receiverCrossEth : receiverEth.address, 0)).wait(...waitParams);
 
       // 2. Cannot transfer non-owned token:
-      await expect(tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 0)).to.be.rejected;
-      await expect(tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner, 5)).to.be.rejected;
+      await expect(tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner.address, 0)).to.be.rejected;
+      await expect(tokenEvmReceiver[testCase].send(isCross ? ownerCross : owner.address, 5)).to.be.rejected;
 
       // 3. Cannot transfer non-existing token:
-      await expect(tokenEvmNonExist[testCase].send(isCross ? ownerCross : owner, 0)).to.be.rejected;
-      await expect(tokenEvmNonExist[testCase].send(isCross ? ownerCross : owner, 5)).to.be.rejected;
+      await expect(tokenEvmNonExist[testCase].send(isCross ? ownerCross : owner.address, 0)).to.be.rejected;
+      await expect(tokenEvmNonExist[testCase].send(isCross ? ownerCross : owner.address, 5)).to.be.rejected;
 
       // 4. Storage is not corrupted:
       expect(await rftOwner.getTop10Owners()).to.deep.eq([{Ethereum: owner.address.toLowerCase()}]);
@@ -384,20 +384,20 @@ describe('Refungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
     await (await contract.repartition.send(200)).wait(...waitParams);
-    expect(await contract.balanceOf.staticCall(owner)).to.be.equal(200n);
-    await (await contract.transfer.send(receiver, 110)).wait(...waitParams);
-    expect(await contract.balanceOf.staticCall(owner)).to.be.equal(90n);
-    expect(await contract.balanceOf.staticCall(receiver)).to.be.equal(110n);
+    expect(await contract.balanceOf.staticCall(owner.address)).to.be.equal(200n);
+    await (await contract.transfer.send(receiver.address, 110)).wait(...waitParams);
+    expect(await contract.balanceOf.staticCall(owner.address)).to.be.equal(90n);
+    expect(await contract.balanceOf.staticCall(receiver.address)).to.be.equal(110n);
 
     await expect(contract.repartition.send(80)).to.eventually.be.rejected;
 
-    await (await contract.transfer.send(receiver, 90)).wait(...waitParams);
-    expect(await contract.balanceOf.staticCall(owner)).to.be.equal(0n);
-    expect(await contract.balanceOf.staticCall(receiver)).to.be.equal(200n);
+    await (await contract.transfer.send(receiver.address, 90)).wait(...waitParams);
+    expect(await contract.balanceOf.staticCall(owner.address)).to.be.equal(0n);
+    expect(await contract.balanceOf.staticCall(receiver.address)).to.be.equal(200n);
 
     await (await (<Contract>contract.connect(receiver)).repartition.send(150)).wait(...waitParams);
-    await expect((<Contract>contract.connect(receiver)).transfer.send(owner, 160)).to.eventually.be.rejected;
-    expect(await contract.balanceOf.staticCall(receiver)).to.be.equal(150n);
+    await expect((<Contract>contract.connect(receiver)).transfer.send(owner.address, 160)).to.eventually.be.rejected;
+    expect(await contract.balanceOf.staticCall(receiver.address)).to.be.equal(150n);
   });
 
   itEth('Can repartition with increased amount', async ({helper}) => {
@@ -437,7 +437,7 @@ describe('Refungible: Plain calls', () => {
     expect(event.args.value).to.be.equal('50');
   });
 
-  itEth('Receiving Transfer event on burning into full ownership', async ({helper}) => {
+  itEth.skip('Receiving Transfer event on burning into full ownership', async ({helper}) => {
     // TODO: Refactor this
 
     // const caller = await helper.eth.createAccountWithBalance(donor);
@@ -567,7 +567,7 @@ describe('Refungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.approve.send(spender, 100)).wait(...waitParams),
+      async () => await (await contract.approve.send(spender.address, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -581,12 +581,12 @@ describe('Refungible: Fees', () => {
     const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, tokenId);
     const contract = await helper.ethNativeContract.rftToken(tokenAddress, owner);
 
-    await (await contract.approve.send(spender, 100)).wait(...waitParams);
+    await (await contract.approve.send(spender.address, 100)).wait(...waitParams);
 
     const spenderContract = helper.eth.changeContractCaller(contract, spender);
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await spenderContract.transferFrom(owner, spender, 100)).wait(...waitParams),
+      async () => await (await spenderContract.transferFrom(owner.address, spender.address, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -602,7 +602,7 @@ describe('Refungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams),
+      async () => await (await contract.transfer.send(receiver.address, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -621,7 +621,7 @@ describe('Refungible: Substrate calls', () => {
     });
   });
 
-  itEth('Events emitted for approve()', async ({helper}) => {
+  itEth.skip('Events emitted for approve()', async ({helper}) => {
     // TODO: Refactor this
 
     // const receiver = helper.eth.createAccount();
@@ -647,7 +647,7 @@ describe('Refungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('100');
   });
 
-  itEth('Events emitted for transferFrom()', async ({helper}) => {
+  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
     // TODO: Refactor this
 
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
@@ -682,7 +682,7 @@ describe('Refungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('49');
   });
 
-  itEth('Events emitted for transfer()', async ({helper}) => {
+  itEth.skip('Events emitted for transfer()', async ({helper}) => {
     // TODO: Refactor this
 
     // const receiver = helper.eth.createAccount();
@@ -726,7 +726,7 @@ describe('ERC 1633 implementation', () => {
     const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(owner, 'Sands', '', 'GRAIN');
     const collectionContract = await helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
 
-    const mintTx = await collectionContract.mint.send(owner);
+    const mintTx = await collectionContract.mint.send(owner.address);
     const mintReceipt = await mintTx.wait(...waitParams);
     const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
