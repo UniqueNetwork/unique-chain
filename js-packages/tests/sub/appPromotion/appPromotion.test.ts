@@ -78,7 +78,7 @@ describe('App promotion', () => {
       usedAccounts = [];
       const stakedAfterUnstake = totalStakedBefore - stakedByUsedAccs;
       expect(await helper.staking.getTotalStaked()).to.eq(stakedAfterUnstake); // there are no active stakes (for test accs) after each test
-      
+
       await helper.admin.payoutStakers(palletAdmin, 100);
     });
   });
