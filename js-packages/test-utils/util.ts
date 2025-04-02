@@ -142,7 +142,9 @@ export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privat
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
+      console.log(`# /// run test ${this.test?.fullTitle()}`);
       await cb({helper, privateKey});
+      console.log(`# +++ complete ${this.test?.fullTitle()}`);
     });
   });
 }
