@@ -34,7 +34,7 @@ inherits = "release"
 [workspace.dependencies]
 # Unique
 app-promotion-rpc = { path = "primitives/app_promotion_rpc", default-features = false }
-evm-coder = { git = "https://github.com/UniqueNetwork/evm-coder.git", branch = "update-primitive-types", default-features = false, features = ['bondrewd'] }
+evm-coder = { git = "https://github.com/UniqueNetwork/evm-coder.git", branch = "fix-generic-const-warning", default-features = false, features = ['bondrewd'] }
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
 pallet-balances-adapter = { default-features = false, path = "pallets/balances-adapter" }
 pallet-charge-transaction = { package = "pallet-template-transaction-payment", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "unique-polkadot-2412" }
