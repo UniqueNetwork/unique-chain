@@ -14,10 +14,10 @@ import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
 import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
-import type {FrameSystemEventRecord, StagingXcmV2TraitsError, StagingXcmV3TraitsOutcome} from '@polkadot/types/lookup';
+import type {FrameSystemEventRecord, XcmV3TraitsError, StagingXcmV5TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
 import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, PolkadexHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
 import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
 import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
 
@@ -265,7 +265,6 @@ export class Event {
     }));
   };
 
-  static UniqueScheduler = schedulerSection('uniqueScheduler');
   static Scheduler = schedulerSection('scheduler');
 
   static XcmpQueue = class extends EventSection('xcmpQueue') {
@@ -279,13 +278,34 @@ export class Event {
 
     static Fail = this.Method('Fail', data => ({
       messageHash: eventJsonData(data, 0),
-      outcome: eventData<StagingXcmV2TraitsError>(data, 2),
+      outcome: eventData<XcmV3TraitsError>(data, 2),
+    }));
+  };
+
+  static XcmPallet = class extends EventSection('xcmPallet') {
+    static Sent = this.Method('Sent', data => ({
+      messageId: eventJsonData(data, 3),
+    }));
+  };
+
+  static PolkadotXcm = class extends EventSection('polkadotXcm') {
+    static Sent = this.Method('Sent', data => ({
+      messageId: eventJsonData(data, 3),
     }));
   };
 
   static DmpQueue = class extends EventSection('dmpQueue') {
     static ExecutedDownward = this.Method('ExecutedDownward', data => ({
-      outcome: eventData<StagingXcmV3TraitsOutcome>(data, 2),
+      outcome: eventData<StagingXcmV5TraitsOutcome>(data, 2),
+    }));
+  };
+
+  static MessageQueue = class extends EventSection('messageQueue') {
+    static Processed = this.Method('Processed', data => ({
+      id: eventJsonData(data, 0),
+      origin: eventJsonData(data, 1),
+      weightUsed: eventJsonData(data, 2),
+      success: eventJsonData<boolean>(data, 3),
     }));
   };
 }
@@ -315,17 +335,19 @@ export function SudoHelper<T extends ChainHelperBaseConstructor>(Base: T) {
 
       if(result.status === 'Fail') return result;
 
-      const data = (result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')?.event.data as any).sudoResult;
-      if(data.isErr) {
-        if(data.asErr.isModule) {
-          const error = (result.result.events[1].event.data as any).sudoResult.asErr.asModule;
+      const event = result.result.events.find(x => x.event.section == 'sudo' && x.event.method == 'Sudid')!;
+      const eventData = (event.event.data as any).sudoResult;
+
+      if(eventData.isErr) {
+        if(eventData.asErr.isModule) {
+          const error = eventData.asErr.asModule;
           const metaError = super.getApi()?.registry.findMetaError(error);
           throw new Error(`${metaError.section}.${metaError.name}`);
-        } else if(data.asErr.isToken) {
-          throw new Error(`Token: ${data.asErr.asToken}`);
+        } else if(eventData.asErr.isToken) {
+          throw new Error(`Token: ${eventData.asErr.asToken}`);
         }
         // May be [object Object] in case of unhandled non-unit enum
-        throw new Error(`Misc: ${data.asErr.toHuman()}`);
+        throw new Error(`Misc: ${eventData.asErr.toHuman()}`);
       }
       return result;
     }
@@ -497,7 +519,7 @@ export class DevUniqueHelper extends UniqueHelper {
   fellowship: IFellowshipGroup;
   democracy: DemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevUniqueHelper;
 
     super(logger, options);
@@ -553,6 +575,10 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
+        StorageWeightReclaim: {
+          extrinsic: {},
+          payload: {},
+        },
       },
       rpc: {
         unique: defs.unique.rpc,
@@ -586,7 +612,7 @@ export class DevUniqueHelper extends UniqueHelper {
 export class DevRelayHelper extends RelayHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevRelayHelper;
 
     super(logger, options);
@@ -603,7 +629,7 @@ export class DevRelayHelper extends RelayHelper {
 export class DevWestmintHelper extends WestmintHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevWestmintHelper;
 
     super(logger, options);
@@ -620,7 +646,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
   wait: WaitGroup;
   fastDemocracy: MoonbeamFastDemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevMoonbeamHelper;
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
 
@@ -632,7 +658,7 @@ export class DevMoonbeamHelper extends MoonbeamHelper {
 }
 
 export class DevMoonriverHelper extends DevMoonbeamHelper {
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.notePreimagePallet = options.notePreimagePallet ?? 'preimage';
     super(logger, options);
   }
@@ -641,7 +667,7 @@ export class DevMoonriverHelper extends DevMoonbeamHelper {
 export class DevAstarHelper extends AstarHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAstarHelper;
 
     super(logger, options);
@@ -660,7 +686,7 @@ export class DevShidenHelper extends DevAstarHelper { }
 export class DevAcalaHelper extends AcalaHelper {
   wait: WaitGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevAcalaHelper;
 
     super(logger, options);
@@ -673,27 +699,11 @@ export class DevAcalaHelper extends AcalaHelper {
   }
 }
 
-export class DevPolkadexHelper extends PolkadexHelper {
-  wait: WaitGroup;
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
-    options.helperBase = options.helperBase ?? PolkadexHelper;
-
-    super(logger, options);
-    this.wait = new WaitGroup(this);
-  }
-
-  getSudo() {
-    // eslint-disable-next-line @typescript-eslint/naming-convention
-    const SudoHelperType = SudoHelper(this.helperBase);
-    return this.clone(SudoHelperType) as DevPolkadexHelper;
-  }
-}
-
 export class DevHydraDxHelper extends HydraDxHelper {
   wait: WaitGroup;
   fastDemocracy: HydraFastDemocracyGroup;
 
-  constructor(logger: { log: (msg: any, level: any) => void, level: any }, options: {[key: string]: any} = {}) {
+  constructor(logger?: ILogger, options: {[key: string]: any} = {}) {
     options.helperBase = options.helperBase ?? DevHydraDxHelper;
 
     super(logger, options);
@@ -835,11 +845,11 @@ export class ArrangeGroup {
     const block2 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber])]);
     const block1 = await this.helper.callRpc('api.rpc.chain.getBlock', [await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockNumber - 1])]);
     const findCreationDate = (block: any) => {
-      const humanBlock = block.toHuman();
+      const methods = block.block.extrinsics.map((ext: any) => ext.method.toHuman());
       let date;
-      humanBlock.block.extrinsics.forEach((ext: any) => {
-        if(ext.method.section === 'timestamp') {
-          date = Number(ext.method.args.now.replaceAll(',', ''));
+      methods.forEach((method: any) => {
+        if(method.section === 'timestamp') {
+          date = Number(method.args.now.replaceAll(',', ''));
         }
       });
       return date;
@@ -931,7 +941,7 @@ export class ArrangeGroup {
 
   makeXcmProgramWithdrawDeposit(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
-      V2: [
+      V4: [
         {
           WithdrawAsset: [
             {
@@ -958,16 +968,15 @@ export class ArrangeGroup {
             assets: {
               Wild: 'All',
             },
-            maxAssets: 1,
             beneficiary: {
               parents: 0,
               interior: {
-                X1: {
+                X1: [{
                   AccountId32: {
-                    network: 'Any',
+                    network: null,
                     id: beneficiary,
                   },
-                },
+                }],
               },
             },
           },
@@ -978,7 +987,7 @@ export class ArrangeGroup {
 
   makeXcmProgramReserveAssetDeposited(beneficiary: Uint8Array, id: any, amount: bigint) {
     return {
-      V2: [
+      V4: [
         {
           ReserveAssetDeposited: [
             {
@@ -1005,16 +1014,15 @@ export class ArrangeGroup {
             assets: {
               Wild: 'All',
             },
-            maxAssets: 1,
             beneficiary: {
               parents: 0,
               interior: {
-                X1: {
+                X1: [{
                   AccountId32: {
-                    network: 'Any',
+                    network: null,
                     id: beneficiary,
                   },
-                },
+                }],
               },
             },
           },
@@ -1025,7 +1033,7 @@ export class ArrangeGroup {
 
   makeUnpaidSudoTransactProgram(info: {weightMultiplier: number, call: string}) {
     return {
-      V3: [
+      V4: [
         {
           UnpaidExecution: {
             weightLimit: 'Unlimited',
@@ -1201,7 +1209,7 @@ class HydraFastDemocracyGroup {
 
     const councilVotingThreshold = 1;
     const technicalCommitteeThreshold = 3;
-    const fastTrackVotingPeriod = 3;
+    const fastTrackVotingPeriod = 10;
     const fastTrackDelayPeriod = 0;
 
     console.log(`[democracy] executing '${proposalDesciption}' proposal`);
@@ -1237,7 +1245,7 @@ class HydraFastDemocracyGroup {
     await this.helper.collective.techCommittee.vote(bobAccount, fastTrackHash, techProposalIdx, true);
     await this.helper.collective.techCommittee.vote(eveAccount, fastTrackHash, techProposalIdx, true);
 
-    await this.helper.collective.techCommittee.close(
+    const closeResult = await this.helper.collective.techCommittee.close(
       bobAccount,
       fastTrackHash,
       techProposalIdx,
@@ -1250,7 +1258,7 @@ class HydraFastDemocracyGroup {
     console.log('\t* Fast track proposal through technical committee.......DONE');
     // <<< Fast track proposal through technical committee <<<
 
-    const democracyStarted = await this.helper.wait.expectEvent(3, Event.Democracy.Started);
+    const democracyStarted = Event.Democracy.Started.expect(closeResult);
     const referendumIndex = democracyStarted.referendumIndex;
 
     // >>> Referendum voting >>>
@@ -1263,7 +1271,7 @@ class HydraFastDemocracyGroup {
     // <<< Referendum voting <<<
 
     // Wait the proposal to pass
-    await this.helper.wait.expectEvent(3, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
+    await this.helper.wait.expectEvent(10, Event.Democracy.Passed, event => event.referendumIndex == referendumIndex);
 
     await this.helper.wait.newBlocks(1);
 
@@ -1290,7 +1298,7 @@ class WaitGroup {
     while(!isBlock) {
       await this.sleep(step);
       totalTime += step;
-      if(totalTime >= timeout) throw Error('Blocks production failed');
+      if(totalTime >= timeout) throw Error(`Timeout ${timeout} ms`);
     }
     return promise;
   }
@@ -1322,6 +1330,8 @@ class WaitGroup {
    * @returns
    */
   async newBlocks(blocksCount = 1, timeout?: number): Promise<void> {
+    const initialBlocksCount = blocksCount;
+
     timeout = timeout ?? blocksCount * 60_000;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
@@ -1334,7 +1344,13 @@ class WaitGroup {
         }
       });
     });
-    await this.waitWithTimeout(promise, timeout);
+
+    try {
+      await this.waitWithTimeout(promise, timeout);
+    } catch (error) {
+      throw Error(`Failed to wait for ${initialBlocksCount} new blocks within ${timeout} ms. ${blocksCount} blocks left`, {cause: error});
+    }
+
     return promise;
   }
 
@@ -1350,8 +1366,8 @@ class WaitGroup {
       + ' This might take a while -- check SessionPeriod in pallet_session::Config for session time.');
 
     const expectedSessionIndex = await (this.helper as DevUniqueHelper).session.getIndex() + sessionCount;
-    let currentSessionIndex = -1;
 
+    let currentSessionIndex = -1;
     while(currentSessionIndex < expectedSessionIndex) {
       // eslint-disable-next-line no-async-promise-executor
       currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
@@ -1360,36 +1376,54 @@ class WaitGroup {
         resolve(res);
       }), blockTimeout, 'The chain has stopped producing blocks!');
     }
+
+    console.log('Waiting done');
   }
 
   async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
+    let lastBlock = null;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
-        if(data.number.toNumber() >= blockNumber) {
+        lastBlock = data.number.toNumber();
+        if(lastBlock >= blockNumber) {
           unsubscribe();
           resolve();
         }
       });
     });
-    await this.waitWithTimeout(promise, timeout);
+
+    try {
+      await this.waitWithTimeout(promise, timeout);
+    } catch (error) {
+      throw Error(`Failed to wait for block ${blockNumber} on parachain within ${timeout} ms. Last block from parachain is ${lastBlock}`, {cause: error});
+    }
+
     return promise;
   }
 
   async forRelayBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
+    let lastBlock = null;
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
-        if(data.value.relayParentNumber.toNumber() >= blockNumber) {
+        lastBlock = data.value.relayParentNumber.toNumber();
+        if(lastBlock >= blockNumber) {
           // @ts-ignore
           unsubscribe();
           resolve();
         }
       });
     });
-    await this.waitWithTimeout(promise, timeout);
+
+    try {
+      await this.waitWithTimeout(promise, timeout);
+    } catch (error) {
+      throw Error(`Failed to wait for block ${blockNumber} on relay within ${timeout} ms. Last block from relay is ${lastBlock}`, {cause: error});
+    }
+
     return promise;
   }
 
@@ -1494,6 +1528,7 @@ class SessionGroup {
     return (this.helper as DevUniqueHelper).wait.newSessions(sessionCount, blockTimeout);
   }
 
+  // TODO: Add nonce
   setOwnKeys(signer: TSigner, key: string) {
     return this.helper.executeExtrinsic(
       signer,

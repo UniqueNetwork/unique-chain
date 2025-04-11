@@ -1,19 +1,10 @@
-FROM uniquenetwork/services:latest
+FROM uniquenetwork/services:base-nightly-1.67.0
 
 ARG NETWORK
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=Etc/UTC
-ENV NETWORK=$NETWORK
-ENV CARGO_HOME="/cargo-home"
-ENV PATH="/cargo-home/bin:$PATH"
-
-RUN mkdir /dev_chain
-COPY . /dev_chain
-
-WORKDIR /dev_chain
+COPY . /workdir
+WORKDIR /workdir
 
 RUN cargo build --profile integration-tests --features=${NETWORK}-runtime,fast-inflation
-RUN echo "$NETWORK"
 
-CMD cargo run --profile integration-tests --features=${NETWORK}-runtime,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external
+CMD WASM_BUILD_TYPE=integration-tests && cargo run --profile integration-tests --features=${NETWORK}-runtime,fast-inflation -- --dev -linfo --rpc-cors=all --unsafe-rpc-external --idle-autoseal-interval 1000 --autoseal-finalization-delay 1

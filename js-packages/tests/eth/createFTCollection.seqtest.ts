@@ -61,16 +61,10 @@ describe('Create FT collection from EVM', () => {
     const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.false;
-
+    expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress)).to.be.false;
 
     await helper.eth.createFungibleCollection(owner, 'A', DECIMALS, 'A', 'A');
 
-
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.true;
+    expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress)).to.be.true;
   });
 });

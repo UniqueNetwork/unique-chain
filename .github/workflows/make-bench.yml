@@ -43,8 +43,8 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           yarn
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm calibrate.ts
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm calibrateApply.ts
+          yarn tsx calibrate.ts
+          yarn tsx calibrateApply.ts
           
       - name: show git diff
         run: |

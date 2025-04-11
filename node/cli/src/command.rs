@@ -33,6 +33,7 @@
 // limitations under the License.
 
 use cumulus_primitives_core::ParaId;
+use frame_benchmarking_cli::SUBSTRATE_REFERENCE_HARDWARE;
 use log::info;
 use sc_cli::{
 	ChainSpec, CliConfiguration, DefaultConfigurationValues, ImportParams, KeystoreParams,
@@ -42,14 +43,10 @@ use sc_service::config::{BasePath, PrometheusConfig};
 use sp_runtime::traits::AccountIdConversion;
 use up_common::types::opaque::RuntimeId;
 
-#[cfg(feature = "quartz-runtime")]
-use crate::service::QuartzRuntimeExecutor;
-#[cfg(feature = "unique-runtime")]
-use crate::service::UniqueRuntimeExecutor;
 use crate::{
 	chain_spec::{self, RuntimeIdentification, ServiceId, ServiceIdentification},
 	cli::{Cli, RelayChainCli, Subcommand},
-	service::{new_partial, start_dev_node, start_node, OpalRuntimeExecutor},
+	service::{new_partial, start_dev_node, start_node, ParachainHostFunctions},
 };
 
 macro_rules! no_runtime_err {
@@ -188,18 +185,18 @@ macro_rules! construct_async_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => async_run_with_runtime!(
-				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::Runtime, unique_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => async_run_with_runtime!(
-				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => async_run_with_runtime!(
-				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::Runtime, opal_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -234,18 +231,18 @@ macro_rules! construct_sync_run {
 		match runner.config().chain_spec.runtime_id() {
 			#[cfg(feature = "unique-runtime")]
 			RuntimeId::Unique => sync_run_with_runtime!(
-				unique_runtime::Runtime, unique_runtime::RuntimeApi, UniqueRuntimeExecutor,
+				unique_runtime::Runtime, unique_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => sync_run_with_runtime!(
-				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, QuartzRuntimeExecutor,
+				quartz_runtime::Runtime, quartz_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
 			RuntimeId::Opal => sync_run_with_runtime!(
-				opal_runtime::Runtime, opal_runtime::RuntimeApi, OpalRuntimeExecutor,
+				opal_runtime::Runtime, opal_runtime::RuntimeApi, ParachainHostFunctions,
 				runner, $components, $cli, $cmd, $config, $( $code )*
 			),
 
@@ -261,20 +258,23 @@ macro_rules! start_node_using_chain_runtime {
 			RuntimeId::Unique => $start_node_fn::<
 				unique_runtime::Runtime,
 				unique_runtime::RuntimeApi,
-				UniqueRuntimeExecutor,
+				ParachainHostFunctions,
+				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			#[cfg(feature = "quartz-runtime")]
 			RuntimeId::Quartz => $start_node_fn::<
 				quartz_runtime::Runtime,
 				quartz_runtime::RuntimeApi,
-				QuartzRuntimeExecutor,
+				ParachainHostFunctions,
+				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			RuntimeId::Opal => $start_node_fn::<
 				opal_runtime::Runtime,
 				opal_runtime::RuntimeApi,
-				OpalRuntimeExecutor,
+				ParachainHostFunctions,
+				sc_network::NetworkWorker<polkadot_primitives::Block, polkadot_primitives::Hash>,
 			>($config $(, $($args),+)?) $($code)*,
 
 			runtime_id => Err(no_runtime_err!(runtime_id).into()),
@@ -350,22 +350,21 @@ pub fn run() -> Result<()> {
 			use frame_benchmarking_cli::{BenchmarkCmd, SUBSTRATE_REFERENCE_HARDWARE};
 			use polkadot_cli::Block;
 
-			use crate::service::ParachainHostFunctions;
-
 			type Header = <Block as sp_runtime::traits::Block>::Header;
 			type Hasher = <Header as sp_runtime::traits::Header>::Hashing;
 
+			let cmd = cmd.as_ref();
 			let runner = cli.create_runner(cmd)?;
 			// Switch on the concrete benchmark sub-command-
 			match cmd {
-				BenchmarkCmd::Pallet(cmd) => {
-					runner.sync_run(|config| cmd.run::<Hasher, ParachainHostFunctions>(config))
-				}
+				BenchmarkCmd::Pallet(cmd) => runner.sync_run(|config| {
+					cmd.run_with_spec::<Hasher, ParachainHostFunctions>(Some(config.chain_spec))
+				}),
 				BenchmarkCmd::Block(cmd) => runner.sync_run(|config| {
 					let partials = new_partial::<
 						opal_runtime::Runtime,
 						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
+						ParachainHostFunctions,
 						_,
 					>(
 						&config,
@@ -377,7 +376,7 @@ pub fn run() -> Result<()> {
 					let partials = new_partial::<
 						opal_runtime::Runtime,
 						opal_runtime::RuntimeApi,
-						OpalRuntimeExecutor,
+						ParachainHostFunctions,
 						_,
 					>(
 						&config,
@@ -396,81 +395,23 @@ pub fn run() -> Result<()> {
 				}
 			}
 		}
-		#[cfg(feature = "try-runtime")]
-		// embedded try-runtime cli will be removed soon.
-		#[allow(deprecated)]
-		Some(Subcommand::TryRuntime(cmd)) => {
-			use std::{future::Future, pin::Pin};
-
-			use polkadot_cli::Block;
-			use sc_executor::NativeExecutionDispatch;
-			use try_runtime_cli::block_building_info::timestamp_with_aura_info;
-
-			let runner = cli.create_runner(cmd)?;
-
-			// grab the task manager.
-			let registry = &runner
-				.config()
-				.prometheus_config
-				.as_ref()
-				.map(|cfg| &cfg.registry);
-			let task_manager =
-				sc_service::TaskManager::new(runner.config().tokio_handle.clone(), *registry)
-					.map_err(|e| format!("Error: {e:?}"))?;
-			let info_provider = Some(timestamp_with_aura_info(12000));
-
-			runner.async_run(|config| -> Result<(Pin<Box<dyn Future<Output = _>>>, _)> {
-				Ok((
-					match config.chain_spec.runtime_id() {
-						#[cfg(feature = "unique-runtime")]
-						RuntimeId::Unique => Box::pin(
-							cmd
-								.run::<Block, <UniqueRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
-								info_provider,
-							),
-						),
-
-						#[cfg(feature = "quartz-runtime")]
-						RuntimeId::Quartz => Box::pin(
-							cmd
-								.run::<Block, <QuartzRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
-								info_provider,
-							),
-						),
-
-						RuntimeId::Opal => Box::pin(
-							cmd
-								.run::<Block, <OpalRuntimeExecutor as NativeExecutionDispatch>::ExtendHostFunctions, _>(
-								info_provider,
-							),
-						),
-						runtime_id => return Err(no_runtime_err!(runtime_id).into()),
-					},
-					task_manager,
-				))
-			})
-		}
-		#[cfg(not(feature = "try-runtime"))]
-		Some(Subcommand::TryRuntime) => {
-			Err("Try-runtime must be enabled by `--features try-runtime`.".into())
-		}
 		None => {
 			let runner = cli.create_runner(&cli.run.normalize())?;
 			let collator_options = cli.run.collator_options();
 
-			runner.run_node_until_exit(|mut config| async move {
+			runner.run_node_until_exit(|config| async move {
 				let hwbench = if !cli.no_hardware_benchmarks {
 					config.database.path().map(|database_path| {
 						let _ = std::fs::create_dir_all(database_path);
-						sc_sysinfo::gather_hwbench(Some(database_path))
+						sc_sysinfo::gather_hwbench(Some(database_path), &SUBSTRATE_REFERENCE_HARDWARE)
 					})
 				} else {
 					None
 				};
-				
-				if cli.increase_future_pool {
-					config.transaction_pool.future = config.transaction_pool.ready.clone();
-				}
+
+				// if cli.increase_future_pool {
+				// 	config.transaction_pool.future = config.transaction_pool.ready.clone();
+				// }
 
 				let extensions = chain_spec::Extensions::try_get(&*config.chain_spec);
 
@@ -478,6 +419,12 @@ pub fn run() -> Result<()> {
 				let relay_chain_id = extensions.map(|e| e.relay_chain.clone());
 				let is_dev_service = matches![service_id, ServiceId::Dev]
 					|| relay_chain_id == Some("dev-service".into());
+
+				let para_id = extensions
+					.map(|e| e.para_id)
+					.ok_or("Could not find parachain ID in chain-spec.")?;
+
+				let para_id = ParaId::from(para_id);
 
 				if is_dev_service {
 					info!("Running Dev service");
@@ -487,13 +434,9 @@ pub fn run() -> Result<()> {
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
+						start_dev_node(config, para_id, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
-
-				let para_id = extensions
-					.map(|e| e.para_id)
-					.ok_or("Could not find parachain ID in chain-spec.")?;
 
 				let polkadot_cli = RelayChainCli::new(
 					&config,
@@ -501,8 +444,6 @@ pub fn run() -> Result<()> {
 						.iter()
 						.chain(cli.relaychain_args.iter()),
 				);
-
-				let para_id = ParaId::from(para_id);
 
 				let parachain_account =
 					AccountIdConversion::<polkadot_primitives::AccountId>::into_account_truncating(
@@ -591,7 +532,6 @@ impl CliConfiguration<Self> for RelayChainCli {
 		_support_url: &String,
 		_impl_version: &String,
 		_logger_hook: F,
-		_config: &sc_service::Configuration,
 	) -> Result<()> {
 		unreachable!("PolkadotCli is never initialized; qed");
 	}

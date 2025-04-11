@@ -19,7 +19,9 @@
 use core::{any::type_name, ops::Range};
 
 use sp_core::{H160, H256, U256};
-use sp_std::{borrow::ToOwned, convert::TryInto, vec, vec::Vec};
+use sp_std::vec;
+#[cfg(not(feature = "std"))]
+use sp_std::{borrow::ToOwned, vec::Vec};
 
 use super::{EvmResult, Gasometer};
 
@@ -213,8 +215,8 @@ impl EvmDataWriter {
 			let free_space_offset = output.len() - offset_datum.offset_shift;
 
 			// Override dummy offset to the offset it will be in the final output.
-			U256::from(free_space_offset)
-				.to_big_endian(&mut output[offset_position..offset_position_end]);
+			let offset_bytes = U256::from(free_space_offset).to_big_endian();
+			output[offset_position..offset_position_end].copy_from_slice(&offset_bytes);
 
 			// Append this data at the end of the current output.
 			output.append(&mut offset_datum.data);
@@ -311,8 +313,7 @@ impl EvmData for U256 {
 	}
 
 	fn write(writer: &mut EvmDataWriter, value: Self) {
-		let mut buffer = [0u8; 32];
-		value.to_big_endian(&mut buffer);
+		let buffer = value.to_big_endian();
 		writer.data.extend_from_slice(&buffer);
 	}
 }

@@ -13,10 +13,9 @@ env:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-
   prepare-execution-marix:
     name: Prepare execution matrix
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ci]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -27,7 +26,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       - name: Read .env file
         uses: xom9ikk/dotenv@v2.3.0
@@ -43,13 +42,13 @@ jobs:
   collator-selection:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ci]
 
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
 
-    continue-on-error: true         #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
 
     strategy:
       matrix:
@@ -66,7 +65,7 @@ jobs:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4.1.7
         with:
-          ref: ${{ github.head_ref }}  #Checking out head commit
+          ref: ${{ github.head_ref }} #Checking out head commit
 
       # Prepare SHA
       - name: Prepare SHA
@@ -110,15 +109,16 @@ jobs:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action/setup@v1.2
         with:
-          useCache: false        
+          version: 'v0.1.4'
+          useCache: false
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action@v1.2
         if: success()
         id: bdk
         with:
@@ -132,9 +132,9 @@ jobs:
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
 
       - name: Upload network config
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.network }}-network-config
+          name: ${{ matrix.network }}-network-config-collator-selection
           path: ${{ steps.bdk.outputs.composeProject }}
           retention-days: 2
 
@@ -144,29 +144,18 @@ jobs:
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
           yarn
-          yarn add mochawesome
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Run tests
         working-directory: js-packages/tests
-        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}      
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn testCollators --reporter mochawesome --reporter-options reportFilename=test-collators-${NOW}
+          NOW=$(date +%s) && yarn testCollators --reporter tap
         env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
-
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v15
-        id: test-report
-        if: success() || failure()
-        with:
-          name: Collator Selection Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-collators-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: Clean Workspace
         if: always()

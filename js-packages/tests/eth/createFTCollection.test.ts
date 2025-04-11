@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
 import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
 
 const DECIMALS = 18;
@@ -43,18 +43,18 @@ describe('Create FT collection from EVM', () => {
     const {collectionId, collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Sponsor', DECIMALS, description, 'ENVY');
 
     const collection = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
-    await collection.methods.setCollectionSponsor(sponsor).send();
+    await (await collection.setCollectionSponsor.send(sponsor)).wait(...waitParams);
 
     let data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+    await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor, true);
-    await sponsorCollection.methods.confirmCollectionSponsorship().send();
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
   });
 
   itEth('[cross] Set sponsorship', async ({helper}) => {
@@ -66,19 +66,19 @@ describe('Create FT collection from EVM', () => {
 
     const collection = helper.ethNativeContract.collection(collectionAddress, 'rft', owner);
     const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-    await collection.methods.setCollectionSponsorCross(sponsorCross).send();
+    await (await collection.setCollectionSponsorCross.send(sponsorCross)).wait(...waitParams);
 
     let data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
+    expect(data.raw.sponsorship.Unconfirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
 
-    await expect(collection.methods.confirmCollectionSponsorship().call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+    await expect(collection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
 
     const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'rft', sponsor);
-    await sponsorCollection.methods.confirmCollectionSponsorship().send();
+    await (await sponsorCollection.confirmCollectionSponsorship.send()).wait(...waitParams);
 
     data = (await helper.rft.getData(collectionId))!;
-    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor, Number(ss58Format)));
-    expect(await collection.methods.description().call()).to.deep.equal(description);
+    expect(data.raw.sponsorship.Confirmed).to.be.equal(evmToAddress(sponsor.address, Number(ss58Format)));
+    expect(await collection.description.staticCall()).to.deep.equal(description);
   });
 
   itEth('Collection address exist', async ({helper}) => {
@@ -86,19 +86,15 @@ describe('Create FT collection from EVM', () => {
     const collectionAddressForNonexistentCollection = '0x17C4E6453CC49AAAAEACA894E6D9683E00112233';
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
-    expect(await collectionHelpers
-      .methods.isCollectionExist(collectionAddressForNonexistentCollection).call())
-      .to.be.false;
+    expect(await collectionHelpers.isCollectionExist.staticCall(collectionAddressForNonexistentCollection)).to.be.false;
 
     const {collectionAddress} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
-    expect(await collectionHelpers
-      .methods.isCollectionExist(collectionAddress).call())
-      .to.be.true;
+    expect(await collectionHelpers.isCollectionExist.staticCall(collectionAddress)).to.be.true;
 
     // check collectionOwner:
     const collectionEvm = helper.ethNativeContract.collection(collectionAddress, 'ft', owner, true);
-    const collectionOwner = await collectionEvm.methods.collectionOwner().call();
-    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner, true));
+    const collectionOwner = await collectionEvm.collectionOwner.staticCall();
+    expect(helper.address.restoreCrossAccountFromBigInt(BigInt(collectionOwner.sub))).to.eq(helper.address.ethToSubstrate(owner.address, true));
   });
 
   itEth('destroyCollection', async ({helper}) => {
@@ -106,71 +102,78 @@ describe('Create FT collection from EVM', () => {
     const {collectionAddress, collectionId} = await helper.eth.createFungibleCollection(owner, 'Exister', DECIMALS, 'absolutely anything', 'WIWT');
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
 
-    const result = await collectionHelper.methods
-      .destroyCollection(collectionAddress)
-      .send({from: owner});
+    const destroyTx = await collectionHelper.destroyCollection.send(collectionAddress);
+    const destroyReceipt = await destroyTx.wait(...waitParams);
+    const events = helper.eth.normalizeEvents(destroyReceipt!);
 
-    const events = helper.eth.normalizeEvents(result.events);
-
-    expect(events).to.be.deep.equal([
-      {
-        address: collectionHelper.options.address,
-        event: 'CollectionDestroyed',
+    expect(events).to.be.like({
+      'CollectionDestroyed': {
         args: {
           collectionId: collectionAddress,
         },
       },
-    ]);
+    });
 
-    expect(await collectionHelper.methods
-      .isCollectionExist(collectionAddress)
-      .call()).to.be.false;
+    expect(await collectionHelper.isCollectionExist.staticCall(collectionAddress)).to.be.false;
     expect(await helper.collection.getData(collectionId)).to.be.null;
   });
 });
 
 describe('(!negative tests!) Create FT collection from EVM', () => {
   let donor: IKeyringPair;
-  let nominal: bigint;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
       donor = await privateKey({url: import.meta.url});
-      nominal = helper.balance.getOneTokenNominal();
     });
   });
 
   itEth('(!negative test!) Create collection (bad lengths)', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
+
     {
       const MAX_NAME_LENGTH = 64;
       const collectionName = 'A'.repeat(MAX_NAME_LENGTH + 1);
       const description = 'A';
       const tokenPrefix = 'A';
 
-      await expect(collectionHelper.methods
-        .createFTCollection(collectionName, DECIMALS, description, tokenPrefix)
-        .call({value: Number(2n * nominal)})).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
+      await expect(collectionHelper.createFTCollection(
+        collectionName,
+        DECIMALS,
+        description,
+        tokenPrefix,
+        {value: (2n * helper.balance.getOneTokenNominal())},
+      )).to.be.rejectedWith('name is too long. Max length is ' + MAX_NAME_LENGTH);
     }
+
     {
       const MAX_DESCRIPTION_LENGTH = 256;
       const collectionName = 'A';
       const description = 'A'.repeat(MAX_DESCRIPTION_LENGTH + 1);
       const tokenPrefix = 'A';
-      await expect(collectionHelper.methods
-        .createFTCollection(collectionName, DECIMALS, description, tokenPrefix)
-        .call({value: Number(2n * nominal)})).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
+      await expect(collectionHelper.createFTCollection.staticCall(
+        collectionName,
+        DECIMALS,
+        description,
+        tokenPrefix,
+        {value: (2n * helper.balance.getOneTokenNominal())},
+      )).to.be.rejectedWith('description is too long. Max length is ' + MAX_DESCRIPTION_LENGTH);
     }
+
     {
       const MAX_TOKEN_PREFIX_LENGTH = 16;
       const collectionName = 'A';
       const description = 'A';
       const tokenPrefix = 'A'.repeat(MAX_TOKEN_PREFIX_LENGTH + 1);
-      await expect(collectionHelper.methods
-        .createFTCollection(collectionName, DECIMALS, description, tokenPrefix)
-        .call({value: Number(2n * nominal)})).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
+      await expect(collectionHelper.createFTCollection.staticCall(
+        collectionName,
+        DECIMALS,
+        description,
+        tokenPrefix,
+        {value: (2n * helper.balance.getOneTokenNominal())},
+      )).to.be.rejectedWith('token_prefix is too long. Max length is ' + MAX_TOKEN_PREFIX_LENGTH);
     }
   });
 
@@ -178,9 +181,13 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     const owner = await helper.eth.createAccountWithBalance(donor);
     const collectionHelper = helper.ethNativeContract.collectionHelpers(owner);
     const expects = [0n, 1n, 30n].map(async value => {
-      await expect(collectionHelper.methods
-        .createFTCollection('Peasantry', DECIMALS, 'absolutely anything', 'TWIW')
-        .call({value: Number(value * nominal)})).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
+      await expect(collectionHelper.createFTCollection.staticCall(
+        'Peasantry',
+        DECIMALS,
+        'absolutely anything',
+        'TWIW',
+        {value: (value * helper.balance.getOneTokenNominal())},
+      )).to.be.rejectedWith('Sent amount not equals to collection creation price (2000000000000000000)');
     });
     await Promise.all(expects);
   });
@@ -194,19 +201,13 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     const EXPECTED_ERROR = 'NoPermission';
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
-      await expect(peasantCollection.methods
-        .setCollectionSponsor(sponsor)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionSponsor.staticCall(sponsor)).to.be.rejectedWith(EXPECTED_ERROR);
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'ft', sponsor, true);
-      await expect(sponsorCollection.methods
-        .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(sponsorCollection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
-      await expect(peasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
 
@@ -219,19 +220,13 @@ describe('(!negative tests!) Create FT collection from EVM', () => {
     {
       const sponsor = await helper.eth.createAccountWithBalance(donor);
       const sponsorCross = helper.ethCrossAccount.fromAddress(sponsor);
-      await expect(peasantCollection.methods
-        .setCollectionSponsorCross(sponsorCross)
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionSponsorCross.staticCall(sponsorCross)).to.be.rejectedWith(EXPECTED_ERROR);
 
       const sponsorCollection = helper.ethNativeContract.collection(collectionAddress, 'ft', sponsor);
-      await expect(sponsorCollection.methods
-        .confirmCollectionSponsorship()
-        .call()).to.be.rejectedWith('ConfirmSponsorshipFail');
+      await expect(sponsorCollection.confirmCollectionSponsorship.staticCall()).to.be.rejectedWith('ConfirmSponsorshipFail');
     }
     {
-      await expect(peasantCollection.methods
-        .setCollectionLimit({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})
-        .call()).to.be.rejectedWith(EXPECTED_ERROR);
+      await expect(peasantCollection.setCollectionLimit.staticCall({field: CollectionLimitField.AccountTokenOwnership, value: {status: true, value: 1000}})).to.be.rejectedWith(EXPECTED_ERROR);
     }
   });
 });

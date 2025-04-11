@@ -1,0 +1,50 @@
+# ===== Rust builder =====
+FROM ubuntu:24.04 AS source
+
+ARG TOOLCHAIN=nightly-2024-10-15
+
+ENV SHELL=/bin/bash \
+    DEBIAN_FRONTEND=noninteractive \
+    RUSTUP_HOME=/usr/local/rustup \
+    CARGO_HOME=/usr/local/cargo \
+    PATH=/usr/local/cargo/bin:$PATH 
+
+# install packages
+RUN set -eux; \
+    apt -y update; \
+    apt install -y --no-install-recommends \
+    libssl-dev make cmake graphviz \
+    git pkg-config curl wget time rhash ca-certificates jq lsb-release software-properties-common \
+    python3 python3-pip lsof clang ruby ruby-bundler git-restore-mtime xz-utils zstd unzip gnupg libudev-dev protobuf-compiler && \
+    # install rustup and components
+    curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain ${TOOLCHAIN} && \
+    rustup toolchain install ${TOOLCHAIN} && \
+    rustup target add wasm32-unknown-unknown --toolchain ${TOOLCHAIN} && \
+    rustup default ${TOOLCHAIN} && \
+    rustup component add --toolchain ${TOOLCHAIN} rust-src rustfmt clippy && \
+    rustup target list --installed && \
+    # install llvm & ldd & clang 
+    curl -sL https://apt.llvm.org/llvm.sh | bash - && \
+    # set a link to clang
+    update-alternatives --install /usr/bin/cc cc /usr/bin/clang 100 && \
+    # set a link to ldd
+    update-alternatives --install /usr/bin/ld ld /usr/bin/ld.lld-* 100; \
+    chown -R root:nogroup ${RUSTUP_HOME} ${CARGO_HOME}; \
+    chmod -R g+w ${RUSTUP_HOME} ${CARGO_HOME}; \
+    # install sccache
+    cargo install sccache; \
+    # install try-runtime
+    cargo install --git https://github.com/paritytech/try-runtime-cli --tag v0.8.0 --locked; \
+    # versions
+    rustup show; \
+    cargo --version; \
+    # cargo clean up
+    # removes compilation artifacts cargo install creates (>250M)
+    rm -rf "${CARGO_HOME}/registry" "${CARGO_HOME}/git" /root/.cache/sccache; \
+    # apt clean up
+    apt-get autoremove -y; \
+    apt-get clean; \
+    rm -rf /var/lib/apt/lists/*
+
+# show backtraces
+ENV	RUST_BACKTRACE=1

@@ -16,10 +16,10 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {expect, itSched, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
 import {itEth} from '@unique/test-utils/eth/util.js';
 import {main as correctState} from '@unique/scripts/correctStateAfterMaintenance.js';
-import type {PalletBalancesIdAmount} from '@polkadot/types/lookup';
+import type {FrameSupportTokensMiscIdAmount} from '@polkadot/types/lookup';
 import type {Vec} from '@polkadot/types-codec';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
@@ -174,69 +174,6 @@ describe('Integration Test: Maintenance Functionality', () => {
       await expect(helper.balance.transferToSubstrate(bob, superuser.address, 1n)).to.be.fulfilled;
     });
 
-    itSched.ifWithPallets('MM blocks scheduled calls and the scheduler itself', [Pallets.UniqueScheduler], async (scheduleKind, {helper}) => {
-      const collection = await helper.nft.mintCollection(bob);
-
-      const nftBeforeMM = await collection.mintToken(bob);
-      const nftDuringMM = await collection.mintToken(bob);
-      const nftAfterMM = await collection.mintToken(bob);
-
-      const [
-        scheduledIdBeforeMM,
-        scheduledIdDuringMM,
-        scheduledIdBunkerThroughMM,
-        scheduledIdAttemptDuringMM,
-        scheduledIdAfterMM,
-      ] = scheduleKind == 'named'
-        ? helper.arrange.makeScheduledIds(5)
-        : new Array(5);
-
-      const blocksToWait = 6;
-
-      // Scheduling works before the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdBeforeMM})
-        .nft.transferToken(bob, collection.collectionId, nftBeforeMM.tokenId, {Substrate: superuser.address});
-
-
-      await helper.wait.newBlocks(blocksToWait + 1);
-      expect(await nftBeforeMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
-
-      // Schedule a transaction that should occur *during* the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdDuringMM})
-        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address});
-
-
-      // Schedule a transaction that should occur *after* the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait * 2, {scheduledId: scheduledIdBunkerThroughMM})
-        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address});
-
-
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.enable', []);
-      expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
-
-      await helper.wait.newBlocks(blocksToWait + 1);
-      // The owner should NOT change since the scheduled transaction should be rejected
-      expect(await nftDuringMM.getOwner()).to.be.deep.equal({Substrate: bob.address});
-
-      // Any attempts to schedule a tx during the MM should be rejected
-      await expect(helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAttemptDuringMM})
-        .nft.transferToken(bob, collection.collectionId, nftDuringMM.tokenId, {Substrate: superuser.address}))
-        .to.be.rejectedWith(/Invalid Transaction: Transaction call is not expected/);
-
-      await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
-      expect(await maintenanceEnabled(helper.getApi()), 'MM is ON when it should be OFF').to.be.false;
-
-      // Scheduling works after the maintenance
-      await helper.scheduler.scheduleAfter(blocksToWait, {scheduledId: scheduledIdAfterMM})
-        .nft.transferToken(bob, collection.collectionId, nftAfterMM.tokenId, {Substrate: superuser.address});
-
-      await helper.wait.newBlocks(blocksToWait + 1);
-
-      expect(await nftAfterMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
-      // The owner of the token scheduled for transaction *before* maintenance should now change *after* maintenance
-      expect(await nftDuringMM.getOwner()).to.be.deep.equal({Substrate: superuser.address});
-    });
-
     itEth('Disallows Ethereum transactions to execute while in maintenance', async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
       const receiver = helper.eth.createAccount();
@@ -248,13 +185,13 @@ describe('Integration Test: Maintenance Functionality', () => {
       expect(await maintenanceEnabled(helper.getApi()), 'MM is OFF when it should be ON').to.be.true;
 
       const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-      const tokenId = await contract.methods.nextTokenId().call();
-      expect(tokenId).to.be.equal('1');
+      const tokenId = await contract.nextTokenId.staticCall();
+      expect(tokenId).to.be.equal(1n);
 
-      await expect(contract.methods.mintWithTokenURI(receiver, 'Test URI').send())
-        .to.be.rejectedWith(/Returned error: unknown error/);
+      await expect(contract.mintWithTokenURI.send(receiver, 'Test URI'))
+        .to.be.rejectedWith(/could not coalesce error/);
 
-      await expect(contract.methods.ownerOf(tokenId).call()).rejectedWith(/token not found/);
+      await expect(contract.ownerOf.staticCall(tokenId)).rejectedWith(/token not found/);
 
       // Disable maintenance mode
       await helper.getSudo().executeExtrinsic(superuser, 'api.tx.maintenance.disable', []);
@@ -321,7 +258,7 @@ describe('Integration Test: Maintenance Functionality', () => {
 
         expect((await api.query.appPromotion.pendingUnstake(1)).toJSON()).to.be.deep.equal([[superuser.address, '0x00000000000000056bc75e2d63100000']]);
         expect((await api.query.appPromotion.pendingUnstake(2)).toJSON()).to.be.deep.equal([[superuser.address, '0x00000000000000056bc75e2d63100000']]);
-        expect((await api.query.balances.freezes(superuser.address) as Vec<PalletBalancesIdAmount>)
+        expect((await api.query.balances.freezes(superuser.address) as Vec<FrameSupportTokensMiscIdAmount>)
           .map(lock => ({id: lock.id.toUtf8(), amount: lock.amount.toBigInt()})))
           .to.be.deep.equal([{id: 'appstakeappstake', amount: 200000000000000000000n}]);
         await correctState();

@@ -2,7 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-function(relay_spec)
+function(relay_spec, assethub_spec)
 
 local relay = {
 	name: 'relay',
@@ -10,16 +10,40 @@ local relay = {
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: relay_spec,
-		modify:: m.genericRelay($, hrmp = std.join([], [
-			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
-			// for [a, b] in [
-			// 	['quartz', 'karura'],
-			// 	['quartz', 'moonriver'],
-			// 	['quartz', 'statemine'],
-			// 	['quartz', 'shiden'],
-			// ]
-		])),
-	}},
+		modify:: bdk.mixer([
+			m.genericRelay($, hrmp = std.join([], [
+				// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+				// for [a, b] in [
+					// ['quartz', 'karura'],
+					// ['quartz', 'moonriver'],
+					// ['quartz', 'statemine'],
+					// ['quartz', 'shiden'],
+				// ]
+			])),
+            m.simplifyGenesisName(),
+            {
+                _genesis+: {
+                            configuration+: {
+                                config+: {
+                                    async_backing_params+: {
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+                                    validation_upgrade_cooldown: 200,
+                                    validation_upgrade_delay: 100,
+                                    minimum_validation_upgrade_delay: 15,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
+                                    scheduler_params+: {
+                                      lookahead: 1,
+                                    },
+								},
+							},
+				},
+			},
+            m.unsimplifyGenesisName(),
+		]),
+	}},	
 	nodes: {
 		[name]: {
 			bin: $.bin,
@@ -33,7 +57,7 @@ local relay = {
 local unique = {
 	name: 'unique',
 	bin: 'bin/unique',
-	paraId: 1001,
+	paraId: 2095,
 	spec: {Genesis:{
 		modify:: m.genericPara($),
 	}},
@@ -43,7 +67,28 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+local assethub = {
+	name: 'assethub',
+	bin: 'bin/assethub',
+	paraId: 1000,
+	spec: {
+		FromScratchGenesis: {
+			spec: m.genericPara($)(assethub_spec),
+		}
+	},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
@@ -52,7 +97,7 @@ local unique = {
 local karura = {
 	name: 'karura',
 	bin: 'bin/acala',
-	paraId: 1002,
+	paraId: 2000,
 	spec: {Genesis:{
 		chain: 'karura-dev',
 		modify:: bdk.mixer([
@@ -64,6 +109,8 @@ local karura = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -73,7 +120,7 @@ local moonriver = {
 	name: 'moonriver',
 	bin: 'bin/moonbeam',
 	signatureSchema: 'Ethereum',
-	paraId: 1003,
+	paraId: 2023,
 	spec: {Genesis:{
 		chain: 'moonriver-local',
 		specFilePrefix: 'moonriver-local-',
@@ -83,33 +130,17 @@ local moonriver = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
-	},
-};
-
-local statemine = {
-	name: 'statemine',
-	bin: 'bin/assethub',
-	paraId: 1004,
-	spec: {Genesis:{
-		chain: 'statemine-local',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
-		},
-		for name in ['alice', 'bob']
 	},
 };
 
 local shiden = {
 	name: 'shiden',
 	bin: 'bin/astar',
-	paraId: 1005,
+	paraId: 2007,
 	spec: {Genesis:{
 		chain: 'shiden-dev',
 		modify:: m.genericPara($),
@@ -118,6 +149,8 @@ local shiden = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -126,6 +159,6 @@ local shiden = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, karura, moonriver, statemine, shiden]
+		for para in [unique, assethub, karura, moonriver, shiden]
 	},
 }

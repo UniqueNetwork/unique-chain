@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CrossAccountId} from '@unique-nft/playgrounds/unique.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
@@ -55,9 +55,9 @@ describe('Token transfer between substrate address and EVM address. Fungible', (
     const address = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(address, 'ft', aliceProxy);
 
-    await collection.mint(alice, 200n, {Ethereum: aliceProxy});
-    await contract.methods.transfer(bobProxy, 50).send({from: aliceProxy});
-    await collection.transferFrom(alice, {Ethereum: bobProxy}, CrossAccountId.fromKeyring(bob).toICrossAccountId(), 50n);
+    await collection.mint(alice, 200n, {Ethereum: aliceProxy.address});
+    await (await contract.transfer.send(bobProxy, 50)).wait(...waitParams);
+    await collection.transferFrom(alice, {Ethereum: bobProxy.address}, CrossAccountId.fromKeyring(bob).toICrossAccountId(), 50n);
     await collection.transfer(bob, CrossAccountId.fromKeyring(alice).toICrossAccountId(), 50n);
   });
 });
@@ -97,9 +97,9 @@ describe('Token transfer between substrate address and EVM address. NFT', () => 
     const contract = await helper.ethNativeContract.collection(address, 'nft', aliceProxy);
 
     const token = await collection.mintToken(alice);
-    await token.transfer(alice, {Ethereum: aliceProxy});
-    await contract.methods.transfer(bobProxy, 1).send({from: aliceProxy});
-    await token.transferFrom(alice, {Ethereum: bobProxy}, {Substrate: bob.address});
+    await token.transfer(alice, {Ethereum: aliceProxy.address});
+    await (await contract.transfer.send(bobProxy, 1)).wait(...waitParams);
+    await token.transferFrom(alice, {Ethereum: bobProxy.address}, {Substrate: bob.address});
     await token.transfer(bob, {Substrate: charlie.address});
   });
 });

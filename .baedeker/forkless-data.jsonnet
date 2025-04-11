@@ -11,7 +11,31 @@ local relay = {
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: relay_spec,
-		modify:: m.genericRelay($),
+		modify:: bdk.mixer([
+			m.genericRelay($),
+            m.simplifyGenesisName(),
+            {
+                _genesis+: {
+                            configuration+: {
+                                config+: {
+                                    async_backing_params+: {
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+                                    validation_upgrade_cooldown: 200,
+                                    validation_upgrade_delay: 100,
+                                    minimum_validation_upgrade_delay: 15,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
+                                    scheduler_params+: {
+                                      lookahead: 1,
+                                    },
+								},
+							},
+				},
+			},
+            m.unsimplifyGenesisName(),
+		]),
 	}},
 	nodes: {
 		[name]: {
@@ -57,9 +81,10 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
 		},
-		for name in ['alice', 'bob']
+		for name in ['alice', 'bob', 'charlie']
 	},
 };
 

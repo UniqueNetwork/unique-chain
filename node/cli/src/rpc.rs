@@ -17,7 +17,7 @@
 use std::sync::Arc;
 
 use fc_mapping_sync::{EthereumBlockNotification, EthereumBlockNotificationSinks};
-use fc_rpc::{EthBlockDataCacheTask, EthConfig, OverrideHandle};
+use fc_rpc::{EthBlockDataCacheTask, EthConfig, StorageOverride};
 use fc_rpc_core::types::{FeeHistoryCache, FilterPool};
 use fp_rpc::NoTransactionConverter;
 use jsonrpsee::RpcModule;
@@ -26,12 +26,10 @@ use sc_client_api::{
 	client::BlockchainEvents,
 	UsageProvider,
 };
-use sc_network::NetworkService;
+use sc_network::service::traits::NetworkService;
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-pub use sc_rpc_api::DenyUnsafe;
 use sc_service::TransactionPool;
-use sc_transaction_pool::{ChainApi, Pool};
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
 use sp_inherents::CreateInherentDataProviders;
@@ -48,8 +46,6 @@ pub struct FullDeps<C, P> {
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// Whether to deny unsafe calls
-	pub deny_unsafe: DenyUnsafe,
 	/// Executor params for PoV estimating
 	#[cfg(feature = "pov-estimate")]
 	pub exec_params: uc_rpc::pov_estimate::ExecutorParams,
@@ -88,7 +84,6 @@ where
 	let FullDeps {
 		client,
 		pool,
-		deny_unsafe,
 
 		#[cfg(feature = "pov-estimate")]
 		exec_params,
@@ -97,7 +92,7 @@ where
 		backend,
 	} = deps;
 
-	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool), deny_unsafe).into_rpc())?;
+	io.merge(System::new(Arc::clone(&client), Arc::clone(&pool)).into_rpc())?;
 	io.merge(TransactionPayment::new(Arc::clone(&client)).into_rpc())?;
 
 	io.merge(Unique::new(client.clone()).into_rpc())?;
@@ -119,19 +114,17 @@ where
 	Ok(())
 }
 
-pub struct EthDeps<C, P, CA: ChainApi, CIDP> {
+pub struct EthDeps<C, P, CIDP> {
 	/// The client instance to use.
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
-	/// Graph pool instance.
-	pub graph: Arc<Pool<CA>>,
 	/// Syncing service
 	pub sync: Arc<SyncingService<Block>>,
 	/// The Node authority flag
 	pub is_authority: bool,
 	/// Network service
-	pub network: Arc<NetworkService<Block, Hash>>,
+	pub network: Arc<dyn NetworkService>,
 
 	/// Ethereum Backend.
 	pub eth_backend: Arc<dyn fc_api::Backend<Block> + Send + Sync>,
@@ -149,13 +142,13 @@ pub struct EthDeps<C, P, CA: ChainApi, CIDP> {
 	/// Whether to enable eth dev signer
 	pub enable_dev_signer: bool,
 
-	pub overrides: Arc<OverrideHandle<Block>>,
+	pub overrides: Arc<dyn StorageOverride<Block>>,
 	pub pending_create_inherent_data_providers: CIDP,
 }
 
-pub fn create_eth<C, R, P, CA, B, CIDP, EC>(
+pub fn create_eth<C, R, P, B, CIDP, EC>(
 	io: &mut RpcModule<()>,
-	deps: EthDeps<C, P, CA, CIDP>,
+	deps: EthDeps<C, P, CIDP>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
@@ -166,7 +159,6 @@ where
 	C: UsageProvider<Block>,
 	C::Api: RuntimeApiDep<R>,
 	P: TransactionPool<Block = Block> + 'static,
-	CA: ChainApi<Block = Block> + 'static,
 	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	C: sp_api::CallApiAt<Block>,
 	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
@@ -181,7 +173,6 @@ where
 	let EthDeps {
 		client,
 		pool,
-		graph,
 		eth_backend,
 		max_past_logs,
 		fee_history_limit,
@@ -203,10 +194,9 @@ where
 	}
 	let execute_gas_limit_multiplier = 10;
 	io.merge(
-		Eth::<_, _, _, _, _, _, _, EC>::new(
+		Eth::<_, _, _, _, _, _, EC>::new(
 			client.clone(),
 			pool.clone(),
-			graph.clone(),
 			// We have no runtimes old enough to only accept converted transactions.
 			None::<NoTransactionConverter>,
 			sync.clone(),
@@ -231,7 +221,7 @@ where
 			EthFilter::new(
 				client.clone(),
 				eth_backend,
-				graph,
+				pool.clone(),
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,

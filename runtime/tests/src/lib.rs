@@ -106,6 +106,7 @@ impl system::Config for Test {
 	type PreInherents = ();
 	type PostInherents = ();
 	type PostTransactions = ();
+	type ExtensionsWeightInfo = ();
 }
 
 parameter_types! {
@@ -127,6 +128,7 @@ impl pallet_balances::Config for Test {
 	type FreezeIdentifier = [u8; 8];
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -140,6 +142,7 @@ impl pallet_transaction_payment::Config for Test {
 	type WeightToFee = IdentityFee<u64>;
 	type FeeMultiplierUpdate = ();
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
+	type WeightInfo = ();
 }
 
 parameter_types! {

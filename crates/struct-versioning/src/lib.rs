@@ -108,7 +108,7 @@ struct VersionAttr {
 }
 impl VersionAttr {
 	fn exists_on(&self, version: u32) -> bool {
-		version >= self.since && self.before.map_or(true, |before| version < before)
+		version >= self.since && self.before.is_none_or(|before| version < before)
 	}
 }
 impl Parse for VersionAttr {
@@ -178,7 +178,7 @@ impl Default for VersionAttr {
 /// `#[version([1]..[2][, upper(old)])]`
 /// - *1* - version, on which this field is appeared
 /// - *2* - version, in which this field was removed
-/// (i.e if set to 2, this field was exist on version 1, and no longer exist on version 2)
+///   (i.e if set to 2, this field was exist on version 1, and no longer exist on version 2)
 /// - *upper* - code, which should be executed to transform old value to new/create new value
 #[proc_macro_attribute]
 pub fn versioned(attr: TokenStream, input: TokenStream) -> TokenStream {

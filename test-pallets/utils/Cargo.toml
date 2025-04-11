@@ -1,5 +1,5 @@
 [package]
-edition = "2021"
+edition = { workspace = true }
 license = "GPLv3"
 name = "pallet-test-utils"
 publish = false

@@ -8,7 +8,7 @@ export interface ContractImports {
 
 export interface CompiledContract {
   abi: any;
-  object: string;
+  bytecode: string;
 }
 
 export type NormalizedEvent = {

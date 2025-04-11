@@ -37,7 +37,6 @@
 use frame_support::{
 	assert_noop, assert_ok, ord_parameter_types, parameter_types,
 	traits::{ConstU32, ConstU64, EitherOfDiverse},
-	BoundedVec,
 };
 use frame_system::{EnsureRoot, EnsureSignedBy};
 use parity_scale_codec::{Decode, Encode};
@@ -94,6 +93,7 @@ impl frame_system::Config for Test {
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
+	type ExtensionsWeightInfo = ();
 }
 
 impl pallet_balances::Config for Test {
@@ -110,6 +110,7 @@ impl pallet_balances::Config for Test {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = ();
 	type MaxFreezes = ();
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {

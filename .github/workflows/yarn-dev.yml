@@ -12,7 +12,7 @@ jobs:
   
   dev_build_int_tests:
     # The type of runner that the job will run on
-    runs-on: [ self-hosted-ci,medium ]
+    runs-on: [ ci ]
     timeout-minutes: 1380
 
     name: ${{ matrix.network }}
@@ -60,22 +60,11 @@ jobs:
         working-directory: js-packages/tests
         run: |
           yarn install
-          yarn add mochawesome
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn test --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn test --reporter tap
         env:
           RPC_URL: http://127.0.0.1:9944/
-
-      - name: Test Report
-        uses: phoenix-actions/test-reporting@v15
-        id: test-report
-        if: success() || failure()    # run this step even if previous step failed
-        with:
-          name: int test results - ${{ matrix.network }}            # Name of the check run which will be created
-          path: js-packages/tests/mochawesome-report/test-*.json    # Path to test results
-          reporter: mochawesome-json
-          fail-on-error: 'false'
 
       - name: Read output variables
         run: |
@@ -85,13 +74,13 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           yarn install
-          node --no-warnings=ExperimentalWarning --loader ts-node/esm ./benchmarks/mintFee/index.ts
+          yarn tsx ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
         working-directory: js-packages/scripts
         run: |
           yarn install
-          node --no-warnings=ExperimentalWarning --loader ts-node/esm ./benchmarks/opsFee/index.ts
+          yarn tsx ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
         if: always()                   # run this step always
@@ -106,7 +95,7 @@ jobs:
 
   # check:
   #   if: always()
-  #   runs-on: [self-hosted-ci]
+  #   runs-on: [ ci ]
   #   needs:
   #   - dev_build_int_tests
 

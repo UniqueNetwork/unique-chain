@@ -33,6 +33,7 @@ pallet-fungible = { workspace = true }
 pallet-nonfungible = { workspace = true }
 pallet-refungible = { workspace = true }
 pallet-structure = { workspace = true }
+pallet-scheduler = { workspace = true }
 pallet-unique = { workspace = true }
 
 pallet-evm-coder-substrate = { workspace = true }

@@ -2,7 +2,7 @@ version: "3.5"
 
 services:
   try-runtime:
-    image: uniquenetwork/ci-tryruntime-local:{{ NETWORK }}-{{ BUILD_TAG }}
+    image: uniquenetwork/ci-tryruntime-local:{{ BUILD_TAG }}
     container_name: try-runtime
     expose:
       - 9944

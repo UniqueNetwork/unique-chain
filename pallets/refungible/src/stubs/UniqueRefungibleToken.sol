@@ -8,7 +8,6 @@ contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
 }
-
 contract ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
@@ -26,7 +25,6 @@ contract ERC1633 is Dummy, ERC165 {
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	/// @dev EVM selector for this function is: 0xd7f083f3,
 	///  or in textual repr: parentTokenId()
 	function parentTokenId() public view returns (uint256) {
@@ -51,7 +49,6 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy;
 		return 0;
 	}
-
 	// /// @dev Function that burns an amount of the token of a given account,
 	// /// deducting from the sender's allowance for said account.
 	// /// @param from The account whose tokens will be burnt.
@@ -79,7 +76,6 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
 	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
 	/// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
@@ -96,7 +92,6 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return false;
 	}
-
 	/// @notice Balance of account
 	/// @param owner An cross address for whom to query the balance
 	/// @return The number of fingibles owned by `owner`, possibly zero
@@ -108,7 +103,6 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy;
 		return 0;
 	}
-
 	/// @dev Function that changes total amount of the tokens.
 	///  Throws if `msg.sender` doesn't owns all of the tokens.
 	/// @param amount New total amount of the tokens.
@@ -120,7 +114,6 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev Transfer token for a specified address
 	/// @param to The crossaccount to transfer to.
 	/// @param amount The amount to be transferred.
@@ -133,18 +126,13 @@ contract ERC20UniqueExtensions is Dummy, ERC165 {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev Transfer tokens from one address to another
 	/// @param from The address which you want to send tokens from
 	/// @param to The address which you want to transfer to
 	/// @param amount the amount of tokens to be transferred
 	/// @dev EVM selector for this function is: 0xd5cf430b,
 	///  or in textual repr: transferFromCross((address,uint256),(address,uint256),uint256)
-	function transferFromCross(
-		CrossAddress memory from,
-		CrossAddress memory to,
-		uint256 amount
-	) public returns (bool) {
+	function transferFromCross(CrossAddress memory from, CrossAddress memory to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		to;
@@ -180,7 +168,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
-
 	/// @return the symbol of the token.
 	/// @dev EVM selector for this function is: 0x95d89b41,
 	///  or in textual repr: symbol()
@@ -189,7 +176,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return "";
 	}
-
 	/// @dev Total number of tokens in existence
 	/// @dev EVM selector for this function is: 0x18160ddd,
 	///  or in textual repr: totalSupply()
@@ -198,7 +184,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev Not supported
 	/// @dev EVM selector for this function is: 0x313ce567,
 	///  or in textual repr: decimals()
@@ -207,7 +192,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev Gets the balance of the specified address.
 	/// @param owner The address to query the balance of.
 	/// @return An uint256 representing the amount owned by the passed address.
@@ -219,7 +203,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy;
 		return 0;
 	}
-
 	/// @dev Transfer token for a specified address
 	/// @param to The address to transfer to.
 	/// @param amount The amount to be transferred.
@@ -232,18 +215,13 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev Transfer tokens from one address to another
 	/// @param from address The address which you want to send tokens from
 	/// @param to address The address which you want to transfer to
 	/// @param amount uint256 the amount of tokens to be transferred
 	/// @dev EVM selector for this function is: 0x23b872dd,
 	///  or in textual repr: transferFrom(address,address,uint256)
-	function transferFrom(
-		address from,
-		address to,
-		uint256 amount
-	) public returns (bool) {
+	function transferFrom(address from, address to, uint256 amount) public returns (bool) {
 		require(false, stub_error);
 		from;
 		to;
@@ -251,7 +229,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev Approve the passed address to spend the specified amount of tokens on behalf of `msg.sender`.
 	/// Beware that changing an allowance with this method brings the risk that someone may use both the old
 	/// and the new allowance by unfortunate transaction ordering. One possible solution to mitigate this
@@ -268,7 +245,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 		dummy = 0;
 		return false;
 	}
-
 	/// @dev Function to check the amount of tokens that an owner allowed to a spender.
 	/// @param owner address The address which owns the funds.
 	/// @param spender address The address which will spend the funds.
@@ -284,4 +260,6 @@ contract ERC20 is Dummy, ERC165, ERC20Events {
 	}
 }
 
-contract UniqueRefungibleToken is Dummy, ERC165, ERC20, ERC20UniqueExtensions, ERC1633 {}
+contract UniqueRefungibleToken is Dummy, ERC165, ERC20, ERC20UniqueExtensions, ERC1633 {
+}
+

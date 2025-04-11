@@ -14,11 +14,17 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#[cfg(all(not(feature = "metadata-hash"), feature = "std"))]
 fn main() {
-	#[cfg(feature = "std")]
-	substrate_wasm_builder::WasmBuilder::new()
-		.with_current_project()
-		.import_memory()
-		.export_heap_base()
-		.build()
+	substrate_wasm_builder::WasmBuilder::build_using_defaults();
 }
+
+#[cfg(all(feature = "metadata-hash", feature = "std"))]
+fn main() {
+	substrate_wasm_builder::WasmBuilder::init_with_defaults()
+		.enable_metadata_hash("OPL", 18)
+		.build();
+}
+
+#[cfg(not(feature = "std"))]
+fn main() {}

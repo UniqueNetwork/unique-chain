@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 
 
 describe('Create NFT collection from EVM', () => {
@@ -38,16 +38,16 @@ describe('Create NFT collection from EVM', () => {
     const collectionCountBefore = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
     const {collectionId, collectionAddress, events} = await helper.eth.createNFTCollection(owner, name, description, prefix);
 
-    expect(events).to.be.deep.equal([
-      {
+    expect(events).to.be.deep.equal({
+      'CollectionCreated': {
         address: '0x6C4E9fE1AE37a41E93CEE429e8E1881aBdcbb54F',
         event: 'CollectionCreated',
         args: {
-          owner: owner,
+          owner: owner.address,
           collectionId: collectionAddress,
         },
       },
-    ]);
+    });
 
     const collectionCountAfter = +(await helper.callRpc('api.rpc.unique.collectionStats')).created;
 
@@ -62,7 +62,6 @@ describe('Create NFT collection from EVM', () => {
     expect(data.raw.mode).to.be.eq('NFT');
 
     const options = await collection.getOptions();
-
     expect(options.tokenPropertyPermissions).to.be.empty;
   });
 
@@ -74,16 +73,14 @@ describe('Create NFT collection from EVM', () => {
     const expectedCollectionAddress = helper.ethAddress.fromCollectionId(expectedCollectionId);
     const collectionHelpers = helper.ethNativeContract.collectionHelpers(owner);
 
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.false;
+    expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress)).to.be.false;
 
-    await collectionHelpers.methods
-      .createNFTCollection('A', 'A', 'A')
-      .send({value: Number(2n * helper.balance.getOneTokenNominal())});
+    await (
+      await collectionHelpers
+        .createNFTCollection
+        .send('A', 'A', 'A', {value: 2n * helper.balance.getOneTokenNominal()})
+    ).wait(...waitParams);
 
-    expect(await collectionHelpers.methods
-      .isCollectionExist(expectedCollectionAddress)
-      .call()).to.be.true;
+    expect(await collectionHelpers.isCollectionExist.staticCall(expectedCollectionAddress)).to.be.true;
   });
 });

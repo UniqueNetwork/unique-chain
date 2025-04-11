@@ -1,0 +1,167 @@
+{
+  "nodes": {
+    "baedeker": {
+      "inputs": {
+        "crane": [
+          "crane"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ],
+        "shelly": [
+          "shelly"
+        ]
+      },
+      "locked": {
+        "lastModified": 1736988153,
+        "narHash": "sha256-cyrnGGlRMC50iyEADWwFGUKu472dcVL1zgNJihFaOmc=",
+        "owner": "UniqueNetwork",
+        "repo": "baedeker",
+        "rev": "205e9e7be1eeff911c85755bd6b9b8f343ec7dc2",
+        "type": "github"
+      },
+      "original": {
+        "owner": "UniqueNetwork",
+        "repo": "baedeker",
+        "type": "github"
+      }
+    },
+    "chainql": {
+      "inputs": {
+        "crane": [
+          "crane"
+        ],
+        "flake-parts": [
+          "flake-parts"
+        ],
+        "nixpkgs": [
+          "nixpkgs"
+        ],
+        "rust-overlay": [
+          "rust-overlay"
+        ],
+        "shelly": [
+          "shelly"
+        ]
+      },
+      "locked": {
+        "lastModified": 1736986850,
+        "narHash": "sha256-XRCB0R1UrA2MvGdw/ZaMnJjEvTvtvClubaEF4Z0H+ak=",
+        "owner": "UniqueNetwork",
+        "repo": "chainql",
+        "rev": "d091a944f65eae631cfb7818927a063e2b5cbf1c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "UniqueNetwork",
+        "repo": "chainql",
+        "type": "github"
+      }
+    },
+    "crane": {
+      "locked": {
+        "lastModified": 1742394900,
+        "narHash": "sha256-vVOAp9ahvnU+fQoKd4SEXB2JG2wbENkpqcwlkIXgUC0=",
+        "owner": "ipetkov",
+        "repo": "crane",
+        "rev": "70947c1908108c0c551ddfd73d4f750ff2ea67cd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ipetkov",
+        "repo": "crane",
+        "type": "github"
+      }
+    },
+    "flake-parts": {
+      "inputs": {
+        "nixpkgs-lib": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1741352980,
+        "narHash": "sha256-+u2UunDA4Cl5Fci3m7S643HzKmIDAe+fiXrLqYsR2fs=",
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "rev": "f4330d22f1c5d2ba72d3d22df5597d123fdb60a9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "hercules-ci",
+        "repo": "flake-parts",
+        "type": "github"
+      }
+    },
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1742937945,
+        "narHash": "sha256-lWc+79eZRyvHp/SqMhHTMzZVhpxkRvthsP1Qx6UCq0E=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "d02d88f8de5b882ccdde0465d8fa2db3aa1169f7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "release-24.11",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "baedeker": "baedeker",
+        "chainql": "chainql",
+        "crane": "crane",
+        "flake-parts": "flake-parts",
+        "nixpkgs": "nixpkgs",
+        "rust-overlay": "rust-overlay",
+        "shelly": "shelly"
+      }
+    },
+    "rust-overlay": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1742956365,
+        "narHash": "sha256-Slrqmt6kJ/M7Z/ce4ebQWsz2aeEodrX56CsupOEPoz0=",
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "rev": "a0e3395c63cdbc9c1ec17915f8328c077c79c4a1",
+        "type": "github"
+      },
+      "original": {
+        "owner": "oxalica",
+        "repo": "rust-overlay",
+        "type": "github"
+      }
+    },
+    "shelly": {
+      "locked": {
+        "lastModified": 1737089050,
+        "narHash": "sha256-SQ22z9L7fSC8FWNIlImpKeBGBUPoWpsTy9uc75o7uK0=",
+        "owner": "CertainLach",
+        "repo": "shelly",
+        "rev": "b5fa6bb56dcd1541ec399ceab1e95a74872ecd34",
+        "type": "github"
+      },
+      "original": {
+        "owner": "CertainLach",
+        "repo": "shelly",
+        "type": "github"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

@@ -1,5 +1,5 @@
 const npmBinsToPackageName = {
-  'ts-node': 'ts-node',
+  'tsx': 'tsx',
   'eslint': 'eslint',
   'tsc': 'typescript',
   'mocha': 'mocha',

@@ -3,15 +3,15 @@
   "license": "Apache 2.0",
   "description": "Helpers for Unique Network chain",
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   },
   "name": "@unique-nft/playgrounds",
   "type": "module",
   "version": "1.0.0",
   "main": "unique.js",
   "dependencies": {
-    "@polkadot/api": "10.10.1",
-    "@polkadot/util": "^12.5.1",
-    "@polkadot/util-crypto": "^12.5.1"
+    "@polkadot/api": "15.5.2",
+    "@polkadot/util": "^13.3.1",
+    "@polkadot/util-crypto": "^13.3.1"
   }
 }

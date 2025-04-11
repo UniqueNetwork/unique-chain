@@ -16,7 +16,7 @@ jobs:
   prepare-execution-marix:
     name: Prepare execution matrix
 
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ci]
     outputs:
       matrix: ${{ steps.create_matrix.outputs.matrix }}
 
@@ -37,14 +37,13 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_branch {${{ env.UNIQUEWEST_MAINNET_BRANCH }}}, assethub_version {${{ env.WESTMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmOpal}
-            network {quartz}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINE_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testFullXcmQuartz}
-            network {unique}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.STATEMINT_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testFullXcmUnique}
+            network {quartz}, relay_name {kusama}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.KUSAMA_ASSETHUB_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testXcmQuartz}, runs_on {L}
+            network {unique}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.POLKADOT_ASSETHUB_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmUnique}, runs_on {XL}
 
   xcm:
     needs: prepare-execution-marix
     # The type of runner that the job will run on
-    runs-on: [XL]
+    runs-on: ${{ matrix.runs_on }}
 
     timeout-minutes: 600
 
@@ -137,34 +136,20 @@ jobs:
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
           tag: ${{ matrix.astar_version }}
 
-      - name: Check and pull POLKADEX image
-        id: polkadex
+      - name: Check and pull HYDRADX image
+        id: hydradx
         uses: cloudposse/github-action-docker-image-exists@main
         with:
           registry: registry.hub.docker.com
-          organization: polkadex
-          repository: mainnet
+          organization: galacticcouncil
+          repository: hydra-dx
           login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
-          tag: ${{ env.POLKADEX_BUILD_BRANCH }}
-
-      - name: Prepare Hydradx
-        uses: ./.github/actions/buildContainer
-        id: hydradx
-        with:
-          container: uniquenetwork/builder-hydradx
           tag: ${{ env.HYDRADX_BUILD_BRANCH }}
-          context: .
-          dockerfile: .docker/Dockerfile-hydradx
-          args: |
-            --build-arg HYDRADX_BUILD_BRANCH=${{ env.HYDRADX_BUILD_BRANCH }}
-            --build-arg RUST_TOOLCHAIN=${{ env.RUST_TOOLCHAIN }}
-          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
-          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
-      - name: Prepare latest
+      - name: Prepare target runtime
         uses: ./.github/actions/buildContainer
-        id: latest
+        id: runtime
         with:
           container: uniquenetwork/ci-xcm-local
           tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
@@ -175,41 +160,70 @@ jobs:
           dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
           dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
 
+      - name: Prepare target node
+        uses: ./.github/actions/buildContainer
+        id: node
+        with:
+          container: uniquenetwork/ci-xcm-local
+          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
+          args: |
+            --build-arg FEATURES=${{ matrix.network }}-runtime
+            --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
+            --build-arg CODE_HASH=${{ env.NODE_HASH}}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
       - uses: actions/setup-node@v4.0.2
         with:
           node-version: 20
 
       - name: Install baedeker
-        uses: UniqueNetwork/baedeker-action/setup@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action/setup@v1.2
         with:
-          useCache: false        
+          version: 'v0.1.4'
+          useCache: false
 
       - name: Setup library
         run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
 
+      - name: Pull chain-spec-generator-latest image
+        run: |
+          docker pull uniquenetwork/services:chain-spec-generator-latest
+
+      - name: Build chain-spec file for assethub
+        run: |
+          docker run --rm uniquenetwork/services:chain-spec-generator-latest asset-hub-${{ matrix.relay_name }}-local > .baedeker/vendor/assethub-spec.json
+
       - name: Start network
-        uses: UniqueNetwork/baedeker-action@v1-no-debug-output
+        uses: UniqueNetwork/baedeker-action@v1.2
         id: bdk
         with:
           jpath: |
             .baedeker/vendor
+          input-modules: |
+            lib:baedeker-library/ops/nginx-dev.libsonnet
+            lib:baedeker-library/ops/devtools.libsonnet
           tla-str: |
             relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
+          tla-code: |
+            assethub_spec=import 'assethub-spec.json'
           inputs: |
             .baedeker/xcm-${{ matrix.network }}.jsonnet
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.latest.outputs.name }}'}}, extra_node_mixin={extraArgs: []})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/acala':{dockerImage:'${{ steps.acala.outputs.image }}:${{ steps.acala.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/moonbeam':{dockerImage:'${{ steps.moonbeam.outputs.image }}:${{ steps.moonbeam.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/assethub':{dockerImage:'${{ steps.assethub.outputs.image }}:${{ steps.assethub.outputs.tag }}'}})
             snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/astar':{dockerImage:'${{ steps.astar.outputs.image }}:${{ steps.astar.outputs.tag }}', docker:'/usr/local/bin/astar-collator'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadex':{dockerImage:'${{ steps.polkadex.outputs.image }}:${{ steps.polkadex.outputs.tag }}'}})
-            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.latest.outputs.name }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/hydradx':{dockerImage:'${{ steps.hydradx.outputs.image }}:${{ steps.hydradx.outputs.tag }}'}})
 
       - name: Upload network config
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.network }}-network-config
+          name: ${{ matrix.network }}-network-config-xcm
           path: ${{ steps.bdk.outputs.composeProject }}
           retention-days: 2
 
@@ -229,7 +243,7 @@ jobs:
         id: hrmp
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
-          yarn node --no-warnings=ExperimentalWarning --loader ts-node/esm createHrmp.ts ${{matrix.network}}
+          yarn tsx createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests
@@ -239,7 +253,7 @@ jobs:
           echo "Ready to start tests"
           NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
         env:
-          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}          
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
       - name: XCM Test Report
         uses: phoenix-actions/test-reporting@v15
@@ -251,9 +265,10 @@ jobs:
           reporter: mochawesome-json
           fail-on-error: 'false'
 
-      - name: Clean Workspace
-        if: always()
-        uses: AutoModality/action-clean@v1.1.0
+      - name: Remove all containers
+        if: always() # run this step always
+        run: |
+          docker ps -aq | xargs docker rm -f
 
       - name: Remove builder cache
         if: always()

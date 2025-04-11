@@ -8,7 +8,6 @@ contract Dummy {
 	uint8 dummy;
 	string stub_error = "this contract is implemented in native";
 }
-
 contract ERC165 is Dummy {
 	function supportsInterface(bytes4 interfaceID) external view returns (bool) {
 		require(false, stub_error);
@@ -42,7 +41,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return 0x0000000000000000000000000000000000000000;
 	}
-
 	/// Set sponsor.
 	/// @param contractAddress Contract for which a sponsor is being established.
 	/// @param sponsor User address who set as pending sponsor.
@@ -54,7 +52,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		sponsor;
 		dummy = 0;
 	}
-
 	/// Set contract as self sponsored.
 	///
 	/// @param contractAddress Contract for which a self sponsoring is being enabled.
@@ -65,7 +62,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		contractAddress;
 		dummy = 0;
 	}
-
 	/// Remove sponsor.
 	///
 	/// @param contractAddress Contract for which a sponsorship is being removed.
@@ -76,7 +72,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		contractAddress;
 		dummy = 0;
 	}
-
 	/// Confirm sponsorship.
 	///
 	/// @dev Caller must be same that set via [`setSponsor`].
@@ -89,7 +84,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		contractAddress;
 		dummy = 0;
 	}
-
 	/// Get current sponsor.
 	///
 	/// @param contractAddress The contract for which a sponsor is requested.
@@ -100,9 +94,8 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		require(false, stub_error);
 		contractAddress;
 		dummy;
-		return OptionCrossAddress(false, CrossAddress(0x0000000000000000000000000000000000000000, 0));
+		return OptionCrossAddress(false, CrossAddress(0x0000000000000000000000000000000000000000,0));
 	}
-
 	/// Check tat contract has confirmed sponsor.
 	///
 	/// @param contractAddress The contract for which the presence of a confirmed sponsor is checked.
@@ -115,7 +108,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return false;
 	}
-
 	/// Check tat contract has pending sponsor.
 	///
 	/// @param contractAddress The contract for which the presence of a pending sponsor is checked.
@@ -128,7 +120,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return false;
 	}
-
 	/// @dev EVM selector for this function is: 0x6027dc61,
 	///  or in textual repr: sponsoringEnabled(address)
 	function sponsoringEnabled(address contractAddress) public view returns (bool) {
@@ -137,7 +128,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return false;
 	}
-
 	/// @dev EVM selector for this function is: 0xfde8a560,
 	///  or in textual repr: setSponsoringMode(address,uint8)
 	function setSponsoringMode(address contractAddress, SponsoringModeT mode) public {
@@ -146,7 +136,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		mode;
 		dummy = 0;
 	}
-
 	/// Get current contract sponsoring rate limit
 	/// @param contractAddress Contract to get sponsoring rate limit of
 	/// @return uint32 Amount of blocks between two sponsored transactions
@@ -158,7 +147,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return 0;
 	}
-
 	/// Set contract sponsoring rate limit
 	/// @dev Sponsoring rate limit - is a minimum amount of blocks that should
 	///  pass between two sponsored transactions
@@ -173,7 +161,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		rateLimit;
 		dummy = 0;
 	}
-
 	/// Set contract sponsoring fee limit
 	/// @dev Sponsoring fee limit - is maximum fee that could be spent by
 	///  single transaction
@@ -188,7 +175,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		feeLimit;
 		dummy = 0;
 	}
-
 	/// Get current contract sponsoring fee limit
 	/// @param contractAddress Contract to get sponsoring fee limit of
 	/// @return uint256 Maximum amount of fee that could be spent by single
@@ -201,7 +187,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return 0;
 	}
-
 	/// Is specified user present in contract allow list
 	/// @dev Contract owner always implicitly included
 	/// @param contractAddress Contract to check allowlist of
@@ -216,7 +201,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return false;
 	}
-
 	/// Toggle user presence in contract allowlist
 	/// @param contractAddress Contract to change allowlist of
 	/// @param user Which user presence should be toggled
@@ -225,18 +209,13 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 	/// @dev Only contract owner can change this setting
 	/// @dev EVM selector for this function is: 0x4706cc1c,
 	///  or in textual repr: toggleAllowed(address,address,bool)
-	function toggleAllowed(
-		address contractAddress,
-		address user,
-		bool isAllowed
-	) public {
+	function toggleAllowed(address contractAddress, address user, bool isAllowed) public {
 		require(false, stub_error);
 		contractAddress;
 		user;
 		isAllowed;
 		dummy = 0;
 	}
-
 	/// Is this contract has allowlist access enabled
 	/// @dev Allowlist always can have users, and it is used for two purposes:
 	///  in case of allowlist sponsoring mode, users will be sponsored if they exist in allowlist
@@ -251,7 +230,6 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 		dummy;
 		return false;
 	}
-
 	/// Toggle contract allowlist access
 	/// @param contractAddress Contract to change allowlist access of
 	/// @param enabled Should allowlist access to be enabled?
@@ -267,11 +245,11 @@ contract ContractHelpers is Dummy, ERC165, ContractHelpersEvents {
 
 /// Available contract sponsoring modes
 enum SponsoringModeT {
-	/// Sponsoring is disabled
+/// Sponsoring is disabled
 	Disabled,
-	/// Only users from allowlist will be sponsored
+/// Only users from allowlist will be sponsored
 	Allowlisted,
-	/// All users will be sponsored
+/// All users will be sponsored
 	Generous
 }
 
@@ -283,8 +261,9 @@ struct CrossAddress {
 
 /// Optional value
 struct OptionCrossAddress {
-	/// Shows the status of accessibility of value
+/// Shows the status of accessibility of value
 	bool status;
-	/// Actual value if `status` is true
+/// Actual value if `status` is true
 	CrossAddress value;
 }
+

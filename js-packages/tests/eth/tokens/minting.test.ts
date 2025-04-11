@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
 
 
@@ -42,29 +42,31 @@ describe('Minting tokens', () => {
       const mintingParams = testCase.mode === 'ft' ? [receiver, 100] : [receiver];
 
       const collection = await helper[testCase.mode].mintCollection(alice);
-      await collection.addAdmin(alice, {Ethereum: owner});
+      await collection.addAdmin(alice, {Ethereum: owner.address});
 
       const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
       const contract = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
-      const result = await contract.methods.mint(...mintingParams).send({from: owner});
+      const mintTx = await contract.mint.send(...mintingParams);
+      const mintReceipt = await mintTx.wait(...waitParams);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       // Check events:
-      const event = result.events.Transfer;
+      const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
-      expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.to).to.equal(receiver.address);
       if(testCase.mode === 'ft')
-        expect(event.returnValues.value).to.equal('100');
+        expect(event.args.value).to.equal('100');
 
       // Check token exist:
       if(testCase.mode === 'ft') {
-        expect(await helper.ft.getBalance(collection.collectionId, {Ethereum: receiver})).to.eq(100n);
+        expect(await helper.ft.getBalance(collection.collectionId, {Ethereum: receiver.address})).to.eq(100n);
       } else {
-        const tokenId = event.returnValues.tokenId;
+        const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collection.collectionId)).to.eq(1);
-        expect(await contract.methods.ownerOfCross(tokenId).call()).to.be.like([receiver, '0']);
+        expect(await contract.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, 0n]);
       }
     });
   });
@@ -81,24 +83,26 @@ describe('Minting tokens', () => {
 
       const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Name', 'Desc', 'Prefix', testCase.mode)).send();
 
-      const result = await collection.methods.mint(...mintingParams).send({from: owner});
+      const mintTx = await collection.mint.send(...mintingParams);
+      const mintReceipt = await mintTx.wait(...waitParams);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       // Check events:
-      const event = result.events.Transfer;
+      const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
-      expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.to).to.equal(receiver.address);
       if(testCase.mode === 'ft')
-        expect(event.returnValues.value).to.equal('100');
+        expect(event.args.value).to.equal('100');
 
       // Check token exist:
       if(testCase.mode === 'ft') {
-        expect(await helper.ft.getBalance(collectionId, {Ethereum: receiver})).to.eq(100n);
+        expect(await helper.ft.getBalance(collectionId, {Ethereum: receiver.address})).to.eq(100n);
       } else {
-        const tokenId = event.returnValues.tokenId;
+        const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
-        expect(await collection.methods.ownerOfCross(tokenId).call()).to.be.like([receiver, '0']);
+        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, 0n]);
       }
     });
   });
@@ -115,24 +119,26 @@ describe('Minting tokens', () => {
 
       const {collection, collectionAddress, collectionId} = await helper.eth.createCollection(owner, new CreateCollectionData('Name', 'Desc', 'Prefix', testCase.mode)).send();
 
-      const result = await collection.methods.mint(...mintingParams).send({from: owner});
+      const mintTx = await collection.mint.send(...mintingParams);
+      const mintReceipt = await mintTx.wait(...waitParams);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
       // Check events:
-      const event = result.events.Transfer;
+      const event = mintEvents.Transfer;
       expect(event.address).to.equal(collectionAddress);
-      expect(event.returnValues.from).to.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.to).to.equal(receiver);
+      expect(event.args.from).to.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.to).to.equal(receiver.address);
       if(testCase.mode === 'ft')
-        expect(event.returnValues.value).to.equal('100');
+        expect(event.args.value).to.equal('100');
 
       // Check token exist:
       if(testCase.mode === 'ft') {
-        expect(await helper.ft.getBalance(collectionId, {Ethereum: receiver})).to.eq(100n);
+        expect(await helper.ft.getBalance(collectionId, {Ethereum: receiver.address})).to.eq(100n);
       } else {
-        const tokenId = event.returnValues.tokenId;
+        const tokenId = event.args.tokenId;
         expect(tokenId).to.be.equal('1');
         expect(await helper.collection.getLastTokenId(collectionId)).to.eq(1);
-        expect(await collection.methods.ownerOfCross(tokenId).call()).to.be.like([receiver, '0']);
+        expect(await collection.ownerOfCross.staticCall(tokenId)).to.be.like([receiver.address, 0n]);
       }
     });
   });
@@ -148,21 +154,18 @@ describe('Minting tokens', () => {
       const {collectionAddress} = await helper.eth.createERC721MetadataCompatibleNFTCollection(owner, 'Mint collection', '6', '6', '');
       const contract = await helper.ethNativeContract.collection(collectionAddress, testCase.mode, owner);
 
-      const result = await contract.methods.mintWithTokenURI(receiver, 'Test URI').send();
-      const tokenId = result.events.Transfer.returnValues.tokenId;
-      expect(tokenId).to.be.equal('1');
+      const mintTx = await contract.mintWithTokenURI.send(receiver, 'Test URI');
+      const mintReceipt = await mintTx.wait(...waitParams);
+      const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
-      const event = result.events.Transfer;
+      const event = mintEvents.Transfer;
       expect(event.address).to.be.equal(collectionAddress);
-      expect(event.returnValues.from).to.be.equal('0x0000000000000000000000000000000000000000');
-      expect(event.returnValues.to).to.be.equal(receiver);
+      expect(event.args.tokenId).to.be.equal('1');
+      expect(event.args.from).to.be.equal('0x0000000000000000000000000000000000000000');
+      expect(event.args.to).to.be.equal(receiver.address);
 
-      expect(await contract.methods.tokenURI(tokenId).call()).to.be.equal('Test URI');
-      expect(await contract.methods.ownerOfCross(tokenId).call()).to.be.like([receiver, '0']);
-      // TODO: this wont work right now, need release 919000 first
-      // await helper.methods.setOffchainSchema(collectionIdAddress, 'https://offchain-service.local/token-info/{id}').send();
-      // const tokenUri = await contract.methods.tokenURI(nextTokenId).call();
-      // expect(tokenUri).to.be.equal(`https://offchain-service.local/token-info/${nextTokenId}`);
+      expect(await contract.tokenURI.staticCall(event.args.tokenId)).to.be.equal('Test URI');
+      expect(await contract.ownerOfCross.staticCall(event.args.tokenId)).to.be.like([receiver.address, 0n]);
     });
   });
 });

@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+#[cfg(not(feature = "std"))]
 use alloc::string::{String, ToString};
 
 use frame_support::{
@@ -88,7 +89,7 @@ impl pallet_nonfungible::Config for Runtime {
 
 parameter_types! {
 	pub const Decimals: u8 = DECIMALS;
-	pub Name: String = String::from_utf8_lossy(VERSION.impl_name.as_ref()).to_string();
+	pub Name: String = VERSION.impl_name.to_string();
 	pub Symbol: String = TOKEN_SYMBOL.to_string();
 }
 impl pallet_balances_adapter::Config for Runtime {
@@ -151,7 +152,7 @@ impl pallet_unique::Config for Runtime {
 }
 
 parameter_types! {
-	pub AppPromotionDailyRate: Perbill = Perbill::from_parts(453_256);
+	pub AppPromotionDailyRate: Perbill = Perbill::from_parts(406_712);
 	pub const MaxCollators: u32 = MAX_COLLATORS;
 	pub const LicenseBond: Balance = GENESIS_LICENSE_BOND;
 

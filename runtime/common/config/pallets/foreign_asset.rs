@@ -1,4 +1,4 @@
-use frame_support::{parameter_types, PalletId};
+use frame_support::{parameter_types, traits::EitherOfDiverse, PalletId};
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
 use pallet_evm::account::CrossAccountId;
@@ -40,7 +40,10 @@ impl pallet_foreign_assets::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 
 	#[cfg(feature = "governance")]
-	type ManagerOrigin = governance::RootOrFinancialCouncilMember;
+	type ManagerOrigin = EitherOfDiverse<
+		governance::RootOrFinancialCouncilMember,
+		governance::TechnicalCommitteeMember,
+	>;
 
 	#[cfg(not(feature = "governance"))]
 	type ManagerOrigin = EnsureRoot<Self::AccountId>;

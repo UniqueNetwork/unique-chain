@@ -139,7 +139,7 @@ describe('integration test: ext. confirmSponsorship():', () => {
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
 
     const transferTx = () => collection.transfer(zeroBalance, {Substrate: zeroBalance.address});
-    await expect(transferTx()).to.be.rejected;
+    await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
     expect(bobBalanceAfter === bobBalanceBefore).to.be.true;
@@ -156,8 +156,8 @@ describe('integration test: ext. confirmSponsorship():', () => {
     await token.transfer(zeroBalance, {Substrate: alice.address});
 
     const bobBalanceBefore = await helper.balance.getSubstrate(bob.address);
-    const transferTx = () => token.transfer(zeroBalance, {Substrate: alice.address});
-    await expect(transferTx()).to.be.rejectedWith('Inability to pay some fees');
+    const transferTx = token.transfer(zeroBalance, {Substrate: alice.address});
+    await expect(transferTx).to.be.rejectedWith('Inability to pay some fees');
     const bobBalanceAfter = await helper.balance.getSubstrate(bob.address);
 
     expect(bobBalanceAfter === bobBalanceBefore).to.be.true;

@@ -14,10 +14,19 @@ import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
 import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames} from '@unique/test-utils/util.js';
+import {hexlify, toUtf8Bytes} from 'ethers';
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);
 export const expect = chai.expect;
+
+// FIXME: 4? 12? 24? How to select confirmations count?
+const confirmations = 4;
+// 2 min timeout, ~30 blocks
+const timeout = 2 * 60 * 1000;
+export const waitParams = [confirmations, timeout];
+
+export const hexlifyString = (value: string): string => hexlify(toUtf8Bytes(value));
 
 export enum SponsoringMode {
   Disabled = 0,
@@ -73,7 +82,22 @@ export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privat
         requirePalletsOrSkip(this, helper, opts.requiredPallets);
       }
 
-      await cb({helper, privateKey});
+      // HACK: Retry if we got "TypeError: non-canonical s"
+      // https://github.com/ethers-io/ethers.js/issues/4223
+      // eslint-disable-next-line no-constant-condition
+      while(true) {
+        try {
+          await cb({helper, privateKey});
+          break;
+        } catch (error: any) {
+          if(error.message.startsWith('non-canonical s')) {
+            console.warn(`Catch error "non-canonical signature" in test "${this.test?.title}" (issue https://github.com/ethers-io/ethers.js/issues/4223). Retry after 1 second`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            throw error;
+          }
+        }
+      }
     });
   });
 }

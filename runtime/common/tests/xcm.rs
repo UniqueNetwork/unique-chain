@@ -14,18 +14,11 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use frame_support::pallet_prelude::Weight;
 use parity_scale_codec::Encode;
-use staging_xcm::{
-	latest::{prelude::*, Error},
-	VersionedXcm,
-};
+use staging_xcm::latest::{prelude::*, Error};
 
-use super::{last_events, new_test_ext, AccountId};
-use crate::{
-	runtime_common::config::xcm::XcmExecutorConfig, PolkadotXcm, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeOrigin,
-};
+use super::{new_test_ext, AccountId};
+use crate::{runtime_common::config::xcm::XcmExecutorConfig, Runtime, RuntimeCall};
 
 type XcmExecutor = staging_xcm_executor::XcmExecutor<XcmExecutorConfig<Runtime>>;
 
@@ -37,7 +30,7 @@ const INITIAL_BALANCE: u128 = 10_000_000_000_000_000_000_000; // 10_000 UNQ
 #[test]
 pub fn xcm_transact_is_forbidden() {
 	new_test_ext(vec![(ALICE, INITIAL_BALANCE)]).execute_with(|| {
-		let max_weight = Weight::from_parts(1001000, 2000);
+		let max_weight = Weight::from_parts(200000000, 5000);
 
 		let origin: Location = AccountId32 {
 			network: None,
@@ -46,7 +39,7 @@ pub fn xcm_transact_is_forbidden() {
 		.into();
 		let message = Xcm(vec![Transact {
 			origin_kind: OriginKind::Native,
-			require_weight_at_most: Weight::from_parts(1000, 1000),
+			fallback_max_weight: Some(Weight::from_parts(1000, 1000)),
 			call: RuntimeCall::Balances(pallet_balances::Call::<Runtime>::transfer_keep_alive {
 				dest: BOB.into(),
 				value: INITIAL_BALANCE / 2,

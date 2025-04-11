@@ -17,47 +17,40 @@
 use parity_scale_codec::{Decode, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{
-	traits::{DispatchInfoOf, SignedExtension},
+	traits::{DispatchInfoOf, DispatchOriginOf, TransactionExtension, ValidateResult},
 	transaction_validity::{
-		InvalidTransaction, TransactionValidity, TransactionValidityError, ValidTransaction,
+		InvalidTransaction, TransactionSource, TransactionValidity, TransactionValidityError,
+		ValidTransaction,
 	},
+	Weight,
 };
-use up_common::types::AccountId;
 
 use crate::{Maintenance, RuntimeCall};
 
 #[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
 pub struct CheckMaintenance;
 
-impl SignedExtension for CheckMaintenance {
-	type AccountId = AccountId;
-	type Call = RuntimeCall;
-	type AdditionalSigned = ();
-	type Pre = ();
-
+impl TransactionExtension<RuntimeCall> for CheckMaintenance {
 	const IDENTIFIER: &'static str = "CheckMaintenance";
 
-	fn additional_signed(&self) -> Result<Self::AdditionalSigned, TransactionValidityError> {
-		Ok(())
-	}
+	type Pre = ();
+	type Val = ();
+	type Implicit = ();
 
-	fn pre_dispatch(
-		self,
-		who: &Self::AccountId,
-		call: &Self::Call,
-		info: &DispatchInfoOf<Self::Call>,
-		len: usize,
-	) -> Result<Self::Pre, TransactionValidityError> {
-		self.validate(who, call, info, len).map(|_| ())
+	fn weight(&self, _call: &RuntimeCall) -> Weight {
+		Weight::zero()
 	}
 
 	fn validate(
 		&self,
-		_who: &Self::AccountId,
-		call: &Self::Call,
-		_info: &DispatchInfoOf<Self::Call>,
+		origin: DispatchOriginOf<RuntimeCall>,
+		call: &RuntimeCall,
+		_info: &DispatchInfoOf<RuntimeCall>,
 		_len: usize,
-	) -> TransactionValidity {
+		_self_implicit: Self::Implicit,
+		_inherited_implication: &impl Encode,
+		_source: TransactionSource,
+	) -> ValidateResult<Self::Val, RuntimeCall> {
 		if Maintenance::is_enabled() {
 			match call {
 				RuntimeCall::EvmMigration(_)
@@ -88,24 +81,27 @@ impl SignedExtension for CheckMaintenance {
 				#[cfg(feature = "pallet-test-utils")]
 				RuntimeCall::TestUtils(_) => Err(TransactionValidityError::Invalid(InvalidTransaction::Call)),
 
-				_ => Ok(ValidTransaction::default()),
+				_ => Ok((ValidTransaction::default(), (), origin)),
 			}
 		} else {
-			Ok(ValidTransaction::default())
+			Ok((ValidTransaction::default(), (), origin))
 		}
 	}
 
-	fn pre_dispatch_unsigned(
-		call: &Self::Call,
-		info: &DispatchInfoOf<Self::Call>,
-		len: usize,
-	) -> Result<(), TransactionValidityError> {
-		Self::validate_unsigned(call, info, len).map(|_| ())
+	fn prepare(
+		self,
+		_val: Self::Val,
+		_origin: &DispatchOriginOf<RuntimeCall>,
+		_call: &RuntimeCall,
+		_info: &DispatchInfoOf<RuntimeCall>,
+		_len: usize,
+	) -> Result<Self::Pre, TransactionValidityError> {
+		Ok(())
 	}
 
-	fn validate_unsigned(
-		call: &Self::Call,
-		_info: &DispatchInfoOf<Self::Call>,
+	fn bare_validate(
+		call: &RuntimeCall,
+		_info: &DispatchInfoOf<RuntimeCall>,
 		_len: usize,
 	) -> TransactionValidity {
 		if Maintenance::is_enabled() {
@@ -118,5 +114,13 @@ impl SignedExtension for CheckMaintenance {
 		} else {
 			Ok(ValidTransaction::default())
 		}
+	}
+
+	fn bare_validate_and_prepare(
+		call: &RuntimeCall,
+		info: &DispatchInfoOf<RuntimeCall>,
+		len: usize,
+	) -> Result<(), TransactionValidityError> {
+		Self::bare_validate(call, info, len).map(|_| ())
 	}
 }

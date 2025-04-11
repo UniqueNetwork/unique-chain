@@ -23,3 +23,5 @@ cumulus-parachain/
 tmp/
 
 *.log
+
+/.direnv

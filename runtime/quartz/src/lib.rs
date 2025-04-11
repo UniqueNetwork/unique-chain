@@ -21,6 +21,8 @@
 #![recursion_limit = "1024"]
 #![allow(clippy::from_over_into, clippy::identity_op)]
 #![allow(clippy::fn_to_numeric_cast_with_truncation)]
+// For `cumulus_pallet_dmp_queue`.
+#![allow(deprecated)]
 // Make the WASM binary available.
 #[cfg(feature = "std")]
 include!(concat!(env!("OUT_DIR"), "/wasm_binary.rs"));
@@ -51,11 +53,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("quartz"),
 
 	authoring_version: 1,
-	spec_version: 10090072,
+	spec_version: 10170080,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
-	state_version: 1,
+	system_version: 1,
 };
 #[cfg(feature = "become-sapphire")]
 #[sp_version::runtime_version]
@@ -64,11 +66,11 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 	impl_name: create_runtime_str!("sapphire"),
 
 	authoring_version: 1,
-	spec_version: 10090072,
+	spec_version: 10170080,
 	impl_version: 0,
 	apis: RUNTIME_API_VERSIONS,
 	transaction_version: 3,
-	state_version: 1,
+	system_version: 1,
 };
 
 parameter_types! {
@@ -94,5 +96,4 @@ impl_common_runtime_apis!();
 cumulus_pallet_parachain_system::register_validate_block!(
 	Runtime = Runtime,
 	BlockExecutor = cumulus_pallet_aura_ext::BlockExecutor::<Runtime, Executive>,
-	CheckInherents = CheckInherents,
 );

@@ -33,15 +33,11 @@
 //! Benchmarking setup for pallet-collator-selection
 
 use frame_benchmarking::v2::{
-	account, benchmarks, impl_benchmark_test_suite, impl_test_function, whitelisted_caller,
-	BenchmarkError,
+	account, benchmarks, impl_test_function, whitelisted_caller, BenchmarkError,
 };
 use frame_support::{
 	assert_ok,
-	traits::{
-		fungible::{Inspect, Mutate},
-		EnsureOrigin, Get,
-	},
+	traits::{fungible::Mutate, EnsureOrigin, Get},
 };
 use frame_system::{pallet_prelude::*, EventRecord, RawOrigin};
 use pallet_authorship::EventHandler;
@@ -162,9 +158,11 @@ fn balance_unit<T: Config>() -> BalanceOf<T> {
 /// Our benchmarking environment already has invulnerables registered.
 const INITIAL_INVULNERABLES: u32 = 2;
 
+#[allow(clippy::multiple_bound_locations)]
 #[benchmarks(where T: Config + pallet_authorship::Config + session::Config)]
 mod benchmarks {
 	use super::*;
+
 	const MAX_COLLATORS: u32 = 10;
 	const MAX_INVULNERABLES: u32 = MAX_COLLATORS - INITIAL_INVULNERABLES;
 
@@ -211,7 +209,7 @@ mod benchmarks {
 	}
 
 	#[benchmark]
-	fn remove_invulnerable(b: Linear<1, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
+	fn remove_invulnerable(b: Linear<2, MAX_INVULNERABLES>) -> Result<(), BenchmarkError> {
 		register_validators::<T>(b);
 		register_invulnerables::<T>(b);
 

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 describe('Helpers sanity check', () => {
@@ -28,10 +28,10 @@ describe('Helpers sanity check', () => {
 
   itEth('Contract owner is recorded', async ({helper}) => {
     const owner = await helper.eth.createAccountWithBalance(donor);
-
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(await (await helper.ethNativeContract.contractHelpers(owner)).methods.contractOwner(flipper.options.address).call()).to.be.equal(owner);
+    expect(await helper.ethNativeContract.contractHelpers(owner)
+      .contractOwner.staticCall(await flipper.getAddress())).to.be.equal(owner.address);
   });
 
   itEth('Flipper is working', async ({helper}) => {
@@ -39,8 +39,8 @@ describe('Helpers sanity check', () => {
 
     const flipper = await helper.eth.deployFlipper(owner);
 
-    expect(await flipper.methods.getValue().call()).to.be.false;
-    await flipper.methods.flip().send({from: owner});
-    expect(await flipper.methods.getValue().call()).to.be.true;
+    expect(await flipper.getValue.staticCall()).to.be.false;
+    await (await flipper.flip.send()).wait(...waitParams);
+    expect(await flipper.getValue.staticCall()).to.be.true;
   });
 });

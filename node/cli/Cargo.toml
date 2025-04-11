@@ -21,8 +21,8 @@ targets = ['x86_64-unknown-linux-gnu']
 
 [dependencies]
 clap = "4.4"
-futures = '0.3.28'
-serde_json = "1.0"
+futures = "0.3.28"
+serde_json = "1.0.117"
 tokio = { version = "1.32", features = ["time"] }
 
 log = { workspace = true }
@@ -39,6 +39,7 @@ cumulus-client-service = { workspace = true }
 cumulus-primitives-aura = { workspace = true }
 cumulus-primitives-core = { workspace = true }
 cumulus-primitives-parachain-inherent = { features = ["std"], workspace = true }
+cumulus-primitives-proof-size-hostfunction = { workspace = true }
 cumulus-relay-chain-inprocess-interface = { workspace = true }
 cumulus-relay-chain-interface = { workspace = true }
 cumulus-relay-chain-minimal-node = { workspace = true }
@@ -82,7 +83,6 @@ sp-timestamp = { workspace = true }
 sp-transaction-pool = { workspace = true }
 substrate-frame-rpc-system = { workspace = true }
 substrate-prometheus-endpoint = { workspace = true }
-try-runtime-cli = { workspace = true }
 unique-runtime = { workspace = true, optional = true }
 up-common = { workspace = true }
 up-data-structs = { workspace = true }
@@ -117,7 +117,6 @@ gov-test-timings = [
 	'quartz-runtime?/gov-test-timings',
 	'unique-runtime?/gov-test-timings',
 ]
-lookahead = ['opal-runtime/lookahead']
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',
@@ -141,6 +140,5 @@ session-test-timings = [
 try-runtime = [
 	'opal-runtime?/try-runtime',
 	'quartz-runtime?/try-runtime',
-	'try-runtime-cli/try-runtime',
 	'unique-runtime?/try-runtime',
 ]

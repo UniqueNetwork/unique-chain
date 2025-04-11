@@ -1,8 +1,14 @@
+use frame_support::traits::fungible::HoldConsideration;
+
 use super::*;
+use crate::{config::substrate::ExistentialDeposit, RuntimeHoldReason};
 
 parameter_types! {
 	pub FinancialCouncilMaxProposals: u32 = 100;
 	pub FinancialCouncilMaxMembers: u32 = 100;
+	pub const FinancialCouncilProposalDepositOffset: Balance = ExistentialDeposit::get() + ExistentialDeposit::get();
+	pub const FinancialCouncilProposalHoldReason: RuntimeHoldReason =
+		RuntimeHoldReason::Council(pallet_collective::HoldReason::ProposalSubmission);
 }
 
 #[cfg(not(feature = "gov-test-timings"))]
@@ -29,6 +35,18 @@ impl pallet_collective::Config<FinancialCollective> for Runtime {
 	type WeightInfo = pallet_collective::weights::SubstrateWeight<Runtime>;
 	type SetMembersOrigin = EnsureRoot<AccountId>;
 	type MaxProposalWeight = MaxCollectivesProposalWeight;
+	type DisapproveOrigin = EnsureRoot<Self::AccountId>;
+	type KillOrigin = EnsureRoot<Self::AccountId>;
+	type Consideration = HoldConsideration<
+		AccountId,
+		Balances,
+		FinancialCouncilProposalHoldReason,
+		pallet_collective::deposit::Delayed<
+			ConstU32<2>,
+			pallet_collective::deposit::Linear<ConstU32<2>, FinancialCouncilProposalDepositOffset>,
+		>,
+		u32,
+	>;
 }
 
 pub type FinancialCollectiveMembership = pallet_membership::Instance3;

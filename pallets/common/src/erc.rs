@@ -27,7 +27,7 @@ use pallet_evm_coder_substrate::{
 	types::*,
 	ToLog,
 };
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
 use up_data_structs::{
 	CollectionMode, CollectionPermissions, OwnerRestrictedSet, Property, SponsoringRateLimit,
 	SponsorshipState,

@@ -2,7 +2,7 @@ local
 m = import 'baedeker-library/mixin/spec.libsonnet',
 ;
 
-function(relay_spec)
+function(relay_spec, assethub_spec)
 
 local relay = {
 	name: 'relay',
@@ -10,17 +10,40 @@ local relay = {
 	validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: relay_spec,
-		modify:: m.genericRelay($, hrmp = std.join([], [
-			// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
-			// for [a, b] in [
-				// ['unique', 'acala'],
-				// ['unique', 'moonbeam'],
-				// ['unique', 'statemint'],
-				// ['unique', 'astar'],
-				// ['unique', 'polkadex'],
-			// ]
-		])),
-	}},
+		modify:: bdk.mixer([
+			m.genericRelay($, hrmp = std.join([], [
+				// [[$.parachains[a].paraId, $.parachains[b].paraId, 8, 512], [$.parachains[b].paraId, $.parachains[a].paraId, 8, 512]],
+				// for [a, b] in [
+					// ['unique', 'acala'],
+					// ['unique', 'moonbeam'],
+					// ['unique', 'statemint'],
+					// ['unique', 'astar'],
+				// ]
+			])),
+            m.simplifyGenesisName(),
+            {
+                _genesis+: {
+                            configuration+: {
+                                config+: {
+                                    async_backing_params+: {
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+                                    validation_upgrade_cooldown: 200,
+                                    validation_upgrade_delay: 100,
+                                    minimum_validation_upgrade_delay: 15,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
+                                    scheduler_params+: {
+                                      lookahead: 1,
+                                    },
+								},
+							},
+				},
+			},
+            m.unsimplifyGenesisName(),
+		]),
+	}},	
 	nodes: {
 		[name]: {
 			bin: $.bin,
@@ -34,7 +57,7 @@ local relay = {
 local unique = {
 	name: 'unique',
 	bin: 'bin/unique',
-	paraId: 1001,
+	paraId: 2037,
 	spec: {Genesis:{
 		modify:: m.genericPara($),
 	}},
@@ -44,7 +67,28 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
+		},
+		for name in ['alice', 'bob']
+	},
+};
+
+local assethub = {
+	name: 'assethub',
+	bin: 'bin/assethub',
+	paraId: 1000,
+	spec: {
+		FromScratchGenesis: {
+			spec: m.genericPara($)(assethub_spec),
+		}
+	},
+	nodes: {
+		[name]: {
+			bin: $.bin,
+			wantedKeys: 'para-ed',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
 		},
 		for name in ['alice', 'bob']
 	},
@@ -53,7 +97,7 @@ local unique = {
 local acala = {
 	name: 'acala',
 	bin: 'bin/acala',
-	paraId: 1002,
+	paraId: 2000,
 	spec: {Genesis:{
 		chain: 'acala-dev',
 		modify:: bdk.mixer([
@@ -65,6 +109,8 @@ local acala = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/acala/data',				
 		},
 		for name in ['alice', 'bob']
 	},
@@ -74,7 +120,7 @@ local moonbeam = {
 	name: 'moonbeam',
 	bin: 'bin/moonbeam',
 	signatureSchema: 'Ethereum',
-	paraId: 1003,
+	paraId: 2004,
 	spec: {Genesis:{
 		chain: 'moonbeam-local',
 		specFilePrefix: 'moonbeam-local-',
@@ -84,33 +130,17 @@ local moonbeam = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para-nimbus',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',			
 		},
 		for name in ['alith', 'baltathar']
-	},
-};
-
-local statemint = {
-	name: 'statemint',
-	bin: 'bin/assethub',
-	paraId: 1004,
-	spec: {Genesis:{
-		chain: 'statemint-local',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para-ed',
-			expectedDataPath: '/parity',			
-		},
-		for name in ['alice', 'bob']
 	},
 };
 
 local astar = {
 	name: 'astar',
 	bin: 'bin/astar',
-	paraId: 1005,
+	paraId: 2006,
 	spec: {Genesis:{
 		chain: 'astar-dev',
 		modify:: m.genericPara($),
@@ -119,32 +149,17 @@ local astar = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/data',				
 		},
 		for name in ['alice', 'bob']
 	},
 };
 
-local polkadex = {
-	name: 'polkadex',
-	bin: 'bin/polkadex',
-	paraId: 1006,
-	spec: {Genesis:{
-		chain: 'mainnet',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-		},
-		for name in ['alice', 'bob']
-	},
-};
-
-local hydraDx = {
-	name: 'hydraDx',
+local hydradx = {
+	name: 'hydradx',
 	bin: 'bin/hydradx',
-	paraId: 1007,
+	paraId: 2034,
 	spec: {Genesis:{
 		chain: 'local',
 		modify:: m.genericPara($),
@@ -153,7 +168,8 @@ local hydraDx = {
 		[name]: {
 			bin: $.bin,
 			wantedKeys: 'para',
-			legacyRpc: true,
+			parentConnection: 'internal-samedir',
+            expectedDataPath: '/hydra',			
 		},
 		for name in ['alice', 'bob']
 	},
@@ -163,6 +179,13 @@ local hydraDx = {
 relay + {
 	parachains: {
 		[para.name]: para,
-		for para in [unique, acala, moonbeam, statemint, astar, polkadex, hydraDx]
+		for para in [
+			unique,
+			acala,
+			moonbeam,
+			assethub,
+			astar,
+			hydradx,
+		]
 	},
 }

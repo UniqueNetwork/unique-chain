@@ -32,8 +32,8 @@ while ! had_new_block ; do
     echo "Waiting for another block..."
     counter=$((counter+1))
     echo "counter="$counter
-    sleep 12
-    if [ $counter -gt 400 ]; then
+    sleep 6
+    if [ $counter -gt 700 ]; then
         exit 1;
     fi
 done
@@ -47,7 +47,7 @@ while ! had_new_block ; do
     echo "Waiting for another block..."
     counter=$((counter+1))
     echo "counter="$counter
-    sleep 12
+    sleep 6
     if [ $counter -gt 400 ]; then
         exit 1;
     fi

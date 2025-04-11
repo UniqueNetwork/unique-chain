@@ -61,6 +61,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = ();
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type DoneSlashHandler = ();
 }
 
 frame_support::construct_runtime!(
@@ -108,6 +109,7 @@ impl frame_system::Config for Test {
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
+	type ExtensionsWeightInfo = ();
 }
 
 parameter_types! {
@@ -250,9 +252,9 @@ fn inflation_in_1_year() {
 		Inflation::on_initialize(0);
 		let block_inflation_year_2 = block_inflation!();
 		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR == 1951
-		let expecter_year_2_inflation: u64 = (initial_issuance
-			+ FIRST_YEAR_BLOCK_INFLATION * (YEAR as u64) / 100)
-			* 933 * 100 / (10000 * (YEAR as u64));
+		let expecter_year_2_inflation: u64 =
+			(initial_issuance + FIRST_YEAR_BLOCK_INFLATION * (YEAR as u64) / 100) * 933 * 100
+				/ (10000 * (YEAR as u64));
 		assert_eq!(block_inflation_year_2 / 10, expecter_year_2_inflation / 10); // divide by 10 for approx. equality
 	});
 }
@@ -289,9 +291,9 @@ fn inflation_start_large_kusama_block() {
 		Inflation::on_initialize(0);
 		let block_inflation_year_2 = block_inflation!();
 		// Expected 100-block inflation for year 2: 100 * 9.33% * initial issuance * 110% / YEAR == 1951
-		let expecter_year_2_inflation: u64 = (initial_issuance
-			+ FIRST_YEAR_BLOCK_INFLATION * (YEAR as u64) / 100)
-			* 933 * 100 / (10000 * (YEAR as u64));
+		let expecter_year_2_inflation: u64 =
+			(initial_issuance + FIRST_YEAR_BLOCK_INFLATION * (YEAR as u64) / 100) * 933 * 100
+				/ (10000 * (YEAR as u64));
 		assert_eq!(block_inflation_year_2 / 10, expecter_year_2_inflation / 10); // divide by 10 for approx. equality
 	});
 }

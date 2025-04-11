@@ -32,7 +32,7 @@
 
 use frame_support::{
 	ord_parameter_types, parameter_types,
-	traits::{ConstU32, FindAuthor, ValidatorRegistration},
+	traits::{ConstU32, ConstU64, FindAuthor, ValidatorRegistration},
 	PalletId,
 };
 use frame_system as system;
@@ -46,6 +46,9 @@ use sp_runtime::{
 
 use super::*;
 use crate as collator_selection;
+
+pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const SLOT_DURATION: u64 = MILLISECS_PER_BLOCK;
 
 type Block = frame_system::mocking::MockBlockU32<Test>;
 
@@ -97,6 +100,7 @@ impl system::Config for Test {
 	type PostTransactions = ();
 	type SingleBlockMigrations = ();
 	type MultiBlockMigrator = ();
+	type ExtensionsWeightInfo = ();
 }
 
 parameter_types! {
@@ -120,6 +124,7 @@ impl pallet_balances::Config for Test {
 	type MaxFreezes = MaxFreezes;
 	type RuntimeHoldReason = RuntimeHoldReason;
 	type RuntimeFreezeReason = RuntimeFreezeReason;
+	type DoneSlashHandler = ();
 }
 
 pub struct Author4;
@@ -153,6 +158,7 @@ impl pallet_aura::Config for Test {
 	type MaxAuthorities = MaxAuthorities;
 	type DisabledValidators = ();
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
+	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 
 sp_runtime::impl_opaque_keys! {
@@ -281,7 +287,10 @@ pub fn new_test_ext() -> sp_io::TestExternalities {
 		})
 		.collect::<Vec<_>>();
 	let collator_selection = collator_selection::GenesisConfig::<Test> { invulnerables };
-	let session = pallet_session::GenesisConfig::<Test> { keys };
+	let session = pallet_session::GenesisConfig::<Test> {
+		keys,
+		..Default::default()
+	};
 	pallet_balances::GenesisConfig::<Test> { balances }
 		.assimilate_storage(&mut t)
 		.unwrap();

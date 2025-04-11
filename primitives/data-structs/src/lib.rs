@@ -20,11 +20,7 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::{
-	convert::{TryFrom, TryInto},
-	fmt,
-	ops::Deref,
-};
+use core::{fmt, ops::Deref};
 
 use bondrewd::Bitfields;
 use derivative::Derivative;
@@ -38,8 +34,10 @@ use parity_scale_codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
-use sp_runtime::{sp_std::prelude::Vec, ArithmeticError};
+use sp_runtime::ArithmeticError;
 use sp_std::collections::btree_set::BTreeSet;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 
 mod bondrewd_codec;
 mod bounded;
@@ -737,9 +735,7 @@ impl CollectionLimits {
 
 	/// Get effective value for [`token_limit`](self.token_limit).
 	pub fn token_limit(&self) -> u32 {
-		self.token_limit
-			.unwrap_or(COLLECTION_TOKEN_LIMIT)
-			.min(COLLECTION_TOKEN_LIMIT)
+		self.token_limit.unwrap_or(COLLECTION_TOKEN_LIMIT)
 	}
 
 	// TODO: may be replace u32 to mode?

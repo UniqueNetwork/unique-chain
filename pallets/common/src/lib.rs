@@ -53,6 +53,7 @@
 #![cfg_attr(not(feature = "std"), no_std)]
 extern crate alloc;
 
+#[cfg(not(feature = "std"))]
 use alloc::boxed::Box;
 use core::{
 	marker::PhantomData,
@@ -77,6 +78,7 @@ use pallet_evm::{account::CrossAccountId, Pallet as PalletEvm};
 use pallet_evm_coder_substrate::{SubstrateRecorder, WithRecorder};
 use sp_core::H160;
 use sp_runtime::{traits::Zero, ArithmeticError, DispatchError, DispatchResult};
+#[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
 use sp_weights::Weight;
 use up_data_structs::{
@@ -2264,7 +2266,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	///
 	/// * `token` - Token with the property to get.
 	/// * `keys` - Vector of property keys. If this parameter is [None](sp_std::result::Result),
-	/// then all properties are returned.
+	///   then all properties are returned.
 	fn token_properties(&self, token: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 
 	/// Amount of unique collection tokens
@@ -2827,7 +2829,7 @@ where
 /// Computes the weight of writing properties to tokens.
 /// * `properties_nums` - The properties num of each created token.
 /// * `per_token_weight_weight` - The function to obtain the weight
-/// of writing properties from a token's properties num.
+///   of writing properties from a token's properties num.
 pub fn write_token_properties_total_weight<T: Config, I: Fn(u32) -> Weight>(
 	properties_nums: impl Iterator<Item = u32>,
 	per_token_weight: I,

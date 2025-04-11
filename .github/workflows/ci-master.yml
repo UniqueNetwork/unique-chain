@@ -28,29 +28,17 @@ jobs:
     uses: ./.github/workflows/xcm.yml
     secrets: inherit # pass all secrets from initial workflow to nested
 
-  xnft:
-    uses: ./.github/workflows/xnft.yml
-    secrets: inherit # pass all secrets from initial workflow to nested
-    
   collator-selection:
     uses: ./.github/workflows/collator-selection.yml
     secrets: inherit    
 
-  forkless-update-data:
-    uses: ./.github/workflows/forkless-update-data.yml
-    secrets: inherit # pass all secrets from initial workflow to nested    
-
-  forkless-update-no-data:
-    uses: ./.github/workflows/forkless-update-nodata.yml
-    secrets: inherit # pass all secrets from initial workflow to nested    
+  main-process:
+    uses: ./.github/workflows/main-process-update.yml
+    secrets: inherit
 
   try-runtime:
     uses: ./.github/workflows/try-runtime.yml
     secrets: inherit # pass all secrets from initial workflow to nested    
-
-  node-only-update:
-    uses: ./.github/workflows/node-only-update.yml
-    secrets: inherit
 
   governance:
     uses: ./.github/workflows/governance.yml

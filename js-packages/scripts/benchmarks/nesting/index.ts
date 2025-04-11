@@ -1,12 +1,11 @@
-import {usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {readFile} from 'fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Contract} from 'web3-eth-contract';
+import {Contract, HDNodeWallet} from 'ethers';
 import {convertToTokens} from '../utils/common.js';
 import {makeNames} from '@unique/test-utils/util.js';
 import type {ContractImports} from '@unique/test-utils/eth/types.js';
-import type {RMRKNestableMintable} from './ABIGEN/index.js';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -85,12 +84,12 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
 
   const ethSigner = await helper.eth.createAccountWithBalance(donor);
 
-  const contract = await helper.ethContract.deployByCode(
+  const rmrk = await helper.ethContract.deployByCode(
     ethSigner,
     'RMRKNestableMintable',
     CONTRACT_SOURCE,
     CONTRACT_IMPORT,
-    5000000,
+    5000000n,
   );
 
   const relayer = await helper.ethContract.deployByCode(
@@ -98,42 +97,41 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
     'Relayer',
     RELAYER_SOURCE,
     CONTRACT_IMPORT,
-    5000000,
-    [contract.options.address],
+    5000000n,
+    [await rmrk.getAddress()],
   );
 
-  const relayerAddress = relayer.options.address;
+  const relayerAddress = await relayer.getAddress();
 
-  const rmrk = contract as any as RMRKNestableMintable;
   const createTokenFor = async (receiver: string) => {
-    const tokenReceipt = await rmrk.methods.safeMint(receiver).send({from: ethSigner});
-    return tokenReceipt.events!['Transfer'].returnValues.tokenId as number;
+    const receipt = await (await rmrk.safeMint.send(receiver)).wait(...waitParams);
+    const events = helper.eth.normalizeEvents(receipt!);
+    return +(events['Transfer'].args.tokenId);
   };
 
-
-  const nestId = await createTokenFor(ethSigner);
+  const nestId = await createTokenFor(ethSigner.address);
   const outerCollectionNestedId = 10;
   const contractOwnedNestId = await createTokenFor(relayerAddress);
   const nextTokenId = contractOwnedNestId + 1;
 
-  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-    const addChildData = rmrk.methods.addChild(nestId, outerCollectionNestedId, []).encodeABI();
-    await relayer.methods.relay(addChildData).send({from: ethSigner});
-    await rmrk.methods.acceptChild(nestId, 0, relayerAddress, outerCollectionNestedId).send({from: ethSigner});
+  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
+    const addChildData = (await rmrk.addChild.populateTransaction(nestId, outerCollectionNestedId, [])).data;
+    await (await relayer.relay.send(addChildData)).wait(...waitParams);
+    await (await rmrk.acceptChild.send(nestId, 0, relayerAddress, outerCollectionNestedId)).wait(...waitParams);
   });
 
 
-  const nestMint = await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-    const nestMintData = rmrk.methods.nestMint(rmrk.options.address, nextTokenId, contractOwnedNestId).encodeABI();
-    await relayer.methods.relay(nestMintData).send({from: ethSigner});
-    const acceptNestedToken = rmrk.methods.acceptChild(contractOwnedNestId, 0, rmrk.options.address, nextTokenId).encodeABI();
-    await relayer.methods.relay(acceptNestedToken).send({from: ethSigner});
+  const nestMint = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
+    const nestMintData = (await rmrk.nestMint.populateTransaction(await rmrk.getAddress(), nextTokenId, contractOwnedNestId)).data;
+    await (await relayer.relay.send(nestMintData)).wait(...waitParams);
+    const acceptNestedToken = (await rmrk.acceptChild.populateTransaction(contractOwnedNestId, 0, await rmrk.getAddress(), nextTokenId)).data;
+    await (await relayer.relay.send(acceptNestedToken)).wait(...waitParams);
   });
 
 
-  const unnestToken = await helper.arrange.calculcateFee({Ethereum: ethSigner}, async () => {
-    const unnestData = rmrk.methods.transferChild(contractOwnedNestId, ethSigner, 0, 0, rmrk.options.address, nextTokenId, false, []).encodeABI();
-    await relayer.methods.relay(unnestData).send({from: ethSigner});
+  const unnestToken = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
+    const unnestData = (await rmrk.transferChild.populateTransaction(contractOwnedNestId, ethSigner.address, 0, 0, await rmrk.getAddress(), nextTokenId, false, [])).data;
+    await (await relayer.relay.send(unnestData)).wait(...waitParams);
   });
 
   return {mint: convertToTokens(nestMint), transfer: convertToTokens(nestTransfer), unnest: convertToTokens(unnestToken)};
@@ -144,25 +142,25 @@ async function measureEth(helper: EthUniqueHelper, donor: IKeyringPair) {
   const {collectionId, contract} = await createNestingCollection(helper, owner);
 
   // Create a token to be nested to
-  const mintingTargetNFTTokenIdResult = await contract.methods.mint(owner).send({from: owner});
-  const targetNFTTokenId = mintingTargetNFTTokenIdResult.events.Transfer.returnValues.tokenId;
-  const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, targetNFTTokenId);
+  const mintingTargetNFTTokenIdReceipt = await (await contract.mint.send(owner)).wait(...waitParams);
+  const targetNFTTokenId = helper.eth.normalizeEvents(mintingTargetNFTTokenIdReceipt!).Transfer.args.tokenId;
+  const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, +targetNFTTokenId);
 
   // Create a nested token
-  const nestMint = await helper.arrange.calculcateFee({Ethereum: owner}, async () => {
-    await contract.methods.mint(targetNftTokenAddress).send({from: owner});
+  const nestMint = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
+    await (await contract.mint.send(targetNftTokenAddress)).wait(...waitParams);
   });
 
   // Create a token to be nested and nest
-  const mintingSecondTokenIdResult = await contract.methods.mint(owner).send({from: owner});
-  const nestedTokenId = mintingSecondTokenIdResult.events.Transfer.returnValues.tokenId;
+  const mintingSecondTokenIdReceipt = await (await contract.mint.send(owner)).wait(...waitParams);
+  const nestedTokenId = helper.eth.normalizeEvents(mintingSecondTokenIdReceipt!).Transfer.args.tokenId;
 
-  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: owner}, async () => {
-    await contract.methods.transfer(targetNftTokenAddress, nestedTokenId).send({from: owner});
+  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
+    await (await contract.transfer.send(targetNftTokenAddress, +nestedTokenId)).wait(...waitParams);
   });
 
-  const unnestToken = await helper.arrange.calculcateFee({Ethereum: owner}, async () => {
-    await contract.methods.transferFrom(targetNftTokenAddress, owner, nestedTokenId).send({from: owner});
+  const unnestToken = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
+    await (await contract.transferFrom.send(targetNftTokenAddress, owner.address, +nestedTokenId)).wait(...waitParams);
   });
   return {mint: convertToTokens(nestMint), transfer: convertToTokens(nestTransfer), unnest: convertToTokens(unnestToken)};
 }
@@ -200,12 +198,12 @@ async function measureSub(helper: EthUniqueHelper, donor: IKeyringPair) {
 
 const createNestingCollection = async (
   helper: EthUniqueHelper,
-  owner: string,
+  owner: HDNodeWallet,
 ): Promise<{ collectionId: number, collectionAddress: string, contract: Contract }> => {
   const {collectionAddress, collectionId} = await helper.eth.createNFTCollection(owner, 'A', 'B', 'C');
 
   const contract =  helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
-  await contract.methods.setCollectionNesting(true).send({from: owner});
+  await (await contract.setCollectionNesting.send([true, false, []])).wait(...waitParams);
 
   return {collectionId, collectionAddress, contract};
 };

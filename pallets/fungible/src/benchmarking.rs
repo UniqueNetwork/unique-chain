@@ -22,21 +22,32 @@ use sp_std::prelude::*;
 use up_data_structs::{budget::Unlimited, CollectionMode, MAX_ITEMS_PER_BATCH};
 
 use super::*;
-use crate::{Config, FungibleHandle, Pallet};
+use crate::{Config, Pallet};
 
 const SEED: u32 = 1;
 
-fn create_collection<T: Config>(
+pub fn create_collection<T: Config>(
 	owner: T::CrossAccountId,
 ) -> Result<FungibleHandle<T>, DispatchError> {
 	create_collection_raw(
 		owner,
-		CollectionMode::Fungible(0),
+		CollectionMode::Fungible(18),
 		|owner: T::CrossAccountId, data| {
 			<PalletCommon<T>>::init_collection(owner.clone(), CollectionIssuer::User(owner), data)
 		},
 		FungibleHandle::cast,
 	)
+}
+
+pub fn create_item<T: Config>(
+	collection: &FungibleHandle<T>,
+	sender: &T::CrossAccountId,
+	owner: T::CrossAccountId,
+	amount: u128,
+) -> DispatchResult {
+	<Pallet<T>>::create_item(&collection, &sender, (owner, amount), &Unlimited)?;
+
+	Ok(())
 }
 
 #[benchmarks]

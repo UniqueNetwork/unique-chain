@@ -17,15 +17,13 @@
 #![cfg(feature = "runtime-benchmarks")]
 
 use frame_benchmarking::v2::{account, benchmarks, BenchmarkError};
-use frame_support::traits::{fungible::Balanced, tokens::Precision, Get};
+use frame_support::traits::{fungible::Balanced, tokens::Precision};
 use frame_system::RawOrigin;
 use pallet_common::{
 	benchmarking::{create_data, create_u16_data},
 	erc::CrossAccountId,
 	Config as CommonConfig,
 };
-use sp_runtime::DispatchError;
-use sp_std::vec;
 use up_data_structs::{
 	CollectionId, CollectionLimits, CollectionMode, MAX_COLLECTION_DESCRIPTION_LENGTH,
 	MAX_COLLECTION_NAME_LENGTH, MAX_TOKEN_PREFIX_LENGTH,

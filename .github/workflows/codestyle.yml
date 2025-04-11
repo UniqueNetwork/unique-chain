@@ -9,7 +9,7 @@ on:
 
 jobs:
   rustfmt:
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -31,7 +31,7 @@ jobs:
         run: echo "Nothing to do. Command 'cargo fmt -- --check' returned exit code 0."
 
   yarn_eslint:
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -47,8 +47,24 @@ jobs:
         # run: cd js-packages && yarn lint --max-warnings=0
         run: cd js-packages && yarn lint
 
+  yarn_types_check:
+    runs-on: [ ci ]
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+      - uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.head_ref }}            
+      - uses: actions/setup-node@v4.0.2
+        with:
+          node-version: 20
+      - name: Install modules
+        run: cd js-packages && yarn
+      - name: Run tsc
+        run: cd js-packages && yarn ts-check
+
   clippy:
-    runs-on: [ self-hosted-ci ]
+    runs-on: [ ci ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0
@@ -66,6 +82,9 @@ jobs:
             targets: wasm32-unknown-unknown
             components: rustfmt, clippy        
       - name: Run cargo check
-        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests -- -Dwarnings
+        # unreachable_patterns emitted from polkadot sdk crates
+        # const_evaluatable_unchecked emitted from evm-coder after compiler upgrade
+        # unexpected_cfgs used to silent warning for feature "pallet-test-utils"
+        run: cargo clippy --features=quartz-runtime,unique-runtime,try-runtime --tests -- -Dwarnings -Aunreachable_patterns -Aconst_evaluatable_unchecked -Aunexpected_cfgs
         env:
           SKIP_WASM_BUILD: '1'

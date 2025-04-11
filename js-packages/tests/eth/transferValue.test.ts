@@ -52,13 +52,13 @@ describe('Send value to contract', () => {
     );
 
     const balanceBefore = await helper.balance.getSubstrate(buyer.address);
-    await helper.eth.sendEVM(buyer, contract.options.address, contract.methods.send().encodeABI(), '2000000000000000000');
+    await helper.eth.sendEVM(buyer, await contract.getAddress(), (await contract.send.populateTransaction()).data, '2000000000000000000');
     const balanceAfter = await helper.balance.getSubstrate(buyer.address);
     expect(balanceBefore - balanceAfter > 2000000000000000000n).to.be.true;
-    expect(await helper.balance.getEthereum(contract.options.address)).to.be.equal(2000000000000000000n);
+    expect(await helper.balance.getEthereum(await contract.getAddress())).to.be.equal(2000000000000000000n);
 
-    await helper.eth.sendEVM(buyer, contract.options.address, contract.methods.withdraw(receiverMirror).encodeABI(), '0');
+    await helper.eth.sendEVM(buyer, await contract.getAddress(), (await contract.withdraw.populateTransaction(receiverMirror)).data, '0');
     expect(await helper.balance.getEthereum(receiverMirror)).to.be.equal(1000000000000000000n);
-    expect(await helper.balance.getEthereum(contract.options.address)).to.be.equal(1000000000000000000n);
+    expect(await helper.balance.getEthereum(await contract.getAddress())).to.be.equal(1000000000000000000n);
   });
 });

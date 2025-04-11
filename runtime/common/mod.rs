@@ -31,19 +31,24 @@ pub mod weights;
 pub mod tests;
 
 use frame_support::{
-	traits::{Currency, Imbalance, OnUnbalanced},
+	pallet_prelude::{GetStorageVersion, PalletInfoAccess},
+	parameter_types,
+	traits::{OnRuntimeUpgrade, PalletInfo, StorageVersion},
 	weights::Weight,
 };
+use sp_core::Get;
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
 };
+use sp_std::marker::PhantomData;
+#[cfg(not(feature = "std"))]
 use sp_std::vec::Vec;
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
 use up_common::types::{AccountId, BlockNumber};
 
-use crate::{AllPalletsWithSystem, Aura, Balances, Runtime, RuntimeCall, Signature, Treasury};
+use crate::{AllPalletsWithSystem, Aura, Runtime, RuntimeCall, Signature, Treasury};
 
 #[macro_export]
 macro_rules! unsupported {
@@ -58,7 +63,7 @@ pub type Address = sp_runtime::MultiAddress<AccountId, ()>;
 pub type SignedBlock = generic::SignedBlock<Block>;
 /// Frontier wrapped extrinsic
 pub type UncheckedExtrinsic =
-	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, SignedExtra>;
+	fp_self_contained::UncheckedExtrinsic<Address, RuntimeCall, Signature, TxExtension>;
 /// Header type.
 pub type Header = generic::Header<BlockNumber, BlakeTwo256>;
 /// Block type.
@@ -81,7 +86,7 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
-pub type SignedExtra = (
+pub type TxExtension = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
 	frame_system::CheckGenesis<Runtime>,
@@ -93,6 +98,8 @@ pub type SignedExtra = (
 	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
+	cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim<Runtime>,
+	frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
 );
 
 /// Executive: handles dispatch to the various modules.
@@ -102,10 +109,8 @@ pub type Executive = frame_executive::Executive<
 	frame_system::ChainContext<Runtime>,
 	Runtime,
 	AllPalletsWithSystem,
-	AuraToCollatorSelection,
+	Migrations,
 >;
-
-type NegativeImbalance = <Balances as Currency<AccountId>>::NegativeImbalance;
 
 pub(crate) type DealWithFees = Treasury;
 
@@ -117,40 +122,11 @@ impl<T: cumulus_pallet_parachain_system::Config> BlockNumberProvider
 	type BlockNumber = BlockNumber;
 
 	fn current_block_number() -> Self::BlockNumber {
-		cumulus_pallet_parachain_system::Pallet::<T>::validation_data()
-			.map(|d| d.relay_parent_number)
-			.unwrap_or_default()
+		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::current_block_number()
 	}
 	#[cfg(feature = "runtime-benchmarks")]
 	fn set_block_number(block: Self::BlockNumber) {
 		cumulus_pallet_parachain_system::RelaychainDataProvider::<T>::set_block_number(block)
-	}
-}
-
-#[cfg(not(feature = "lookahead"))]
-pub(crate) struct CheckInherents;
-
-#[cfg(not(feature = "lookahead"))]
-impl cumulus_pallet_parachain_system::CheckInherents<Block> for CheckInherents {
-	fn check_inherents(
-		block: &Block,
-		relay_state_proof: &cumulus_pallet_parachain_system::RelayChainStateProof,
-	) -> sp_inherents::CheckInherentsResult {
-		use crate::InherentDataExt;
-
-		let relay_chain_slot = relay_state_proof
-			.read_slot()
-			.expect("Could not read the relay chain slot from the proof");
-
-		let inherent_data =
-			cumulus_primitives_timestamp::InherentDataProvider::from_relay_chain_slot_and_duration(
-				relay_chain_slot,
-				sp_std::time::Duration::from_secs(6),
-			)
-			.create_inherent_data()
-			.expect("Could not create the timestamp inherent data");
-
-		inherent_data.check_extrinsics(block)
 	}
 }
 
@@ -160,14 +136,146 @@ pub enum XCMPMessage<XAccountId, XBalance> {
 	TransferToken(XAccountId, XBalance),
 }
 
+/// All migrations that will run on the next runtime upgrade.
+pub type Migrations = (Unreleased, AuraToCollatorSelection);
+
+parameter_types! {
+	pub const PalletRefungibleBaseStorageVersion: StorageVersion = StorageVersion::new(1);
+	pub const PalletRefungibleTargetStorageVersion: StorageVersion = StorageVersion::new(2);
+
+	pub const PalletXcmBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletXcmTargetStorageVersion: StorageVersion = StorageVersion::new(1);
+
+	pub const PalletPreimageBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletPreimageTargetStorageVersion: StorageVersion = StorageVersion::new(1);
+
+	pub const PalletDemocracyBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletDemocracyTargetStorageVersion: StorageVersion = StorageVersion::new(1);
+
+	pub const PalletCollectiveBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletCollectiveTargetStorageVersion: StorageVersion = StorageVersion::new(4);
+
+	pub const PalletMembershipBaseStorageVersion: StorageVersion = StorageVersion::new(0);
+	pub const PalletMembershipTargetStorageVersion: StorageVersion = StorageVersion::new(4);
+}
+
+/// All migrations that will need to be removed after the current release.
+pub type Unreleased = (
+	// Workaround to fix the pallet_preimage version mismatch
+	// with what is stored on the chain.
+	//
+	// Preimage pallet was added when we used Polkadot SDK v0.9.37, but
+	// the migration provided by the pallet_preimage hasn't been applied.
+	//
+	// However, the migration provided by the pallet_preimage is unnecessary since
+	// we used the actual v1 types from the beginning. We only need to align
+	// the reported storage version with the actual format on the chain (already v1).
+	PalletVersionMigration<
+		Runtime,
+		crate::Preimage,
+		PalletPreimageBaseStorageVersion,
+		PalletPreimageTargetStorageVersion,
+	>,
+	// Workaround for pallet_democracy.
+	// The same situation as with the pallet_preimage.
+	PalletVersionMigration<
+		Runtime,
+		crate::Democracy,
+		PalletDemocracyBaseStorageVersion,
+		PalletDemocracyTargetStorageVersion,
+	>,
+	// Workaround for pallet_collective.
+	//
+	// Migrations in this pallet are only needed for renaming
+	// (moving from the old name to the new) and bumping the version from 0 to 4.
+	// The storage remains unchanged.
+	//
+	// In our case, we only need to bump the version, without renaming.
+	PalletVersionMigration<
+		Runtime,
+		crate::Council,
+		PalletCollectiveBaseStorageVersion,
+		PalletCollectiveTargetStorageVersion,
+	>,
+	PalletVersionMigration<
+		Runtime,
+		crate::TechnicalCommittee,
+		PalletCollectiveBaseStorageVersion,
+		PalletCollectiveTargetStorageVersion,
+	>,
+	// Workaround for pallet_membership.
+	// The same situation as with the pallet_collective.
+	PalletVersionMigration<
+		Runtime,
+		crate::CouncilMembership,
+		PalletMembershipBaseStorageVersion,
+		PalletMembershipTargetStorageVersion,
+	>,
+	PalletVersionMigration<
+		Runtime,
+		crate::TechnicalCommitteeMembership,
+		PalletMembershipBaseStorageVersion,
+		PalletMembershipTargetStorageVersion,
+	>,
+	// Fix pallet_refungible version for Unique.
+	// There was a discrepancy between the versions between Quartz and Unique
+	// for some historical reasons.
+	PalletVersionMigration<
+		Runtime,
+		crate::Refungible,
+		PalletRefungibleBaseStorageVersion,
+		PalletRefungibleTargetStorageVersion,
+	>,
+	// Xcm migration
+	PalletVersionMigration<
+		Runtime,
+		crate::PolkadotXcm,
+		PalletXcmBaseStorageVersion,
+		PalletXcmTargetStorageVersion,
+	>,
+	pallet_xcm::migration::MigrateToLatestXcmVersion<Runtime>,
+	// Good migrations
+	pallet_balances::migration::MigrateManyToTrackInactive<Runtime, ()>,
+	pallet_referenda::migration::v1::MigrateV0ToV1<Runtime>,
+	cumulus_pallet_xcmp_queue::migration::v4::MigrationToV4<Runtime>,
+	cumulus_pallet_xcmp_queue::migration::v5::MigrateV4ToV5<Runtime>,
+);
+
+pub struct PalletVersionMigration<T, P, Base, Target>(PhantomData<(T, P, Base, Target)>);
+
+impl<T, P, Base, Target> OnRuntimeUpgrade for PalletVersionMigration<T, P, Base, Target>
+where
+	T: frame_system::Config,
+	P: GetStorageVersion + PalletInfoAccess + 'static,
+	Base: Get<StorageVersion>,
+	Target: Get<StorageVersion>,
+{
+	fn on_runtime_upgrade() -> Weight {
+		let pallet_name = T::PalletInfo::name::<P>().unwrap();
+		let base_version = Base::get();
+		let target_version = Target::get();
+
+		let mut weight = T::DbWeight::get().reads(1);
+
+		if StorageVersion::get::<P>() == base_version {
+			log::info!("🚚 Pallet \"{pallet_name}\" migrating version from {base_version:?} to {target_version:?}");
+
+			target_version.put::<P>();
+			weight += T::DbWeight::get().writes(1);
+		}
+
+		weight
+	}
+}
+
 pub struct AuraToCollatorSelection;
-impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
+impl OnRuntimeUpgrade for AuraToCollatorSelection {
 	fn on_runtime_upgrade() -> Weight {
 		#[cfg(feature = "collator-selection")]
 		{
 			use frame_support::{storage::migration, BoundedVec};
 			use pallet_session::SessionManager;
-			use sp_runtime::{traits::OpaqueKeys, RuntimeAppPublic};
+			use sp_runtime::RuntimeAppPublic;
 
 			use crate::config::pallets::MaxCollators;
 
@@ -187,7 +295,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					"Running migration of Aura authorities to Collator Selection invulnerables"
 				);
 
-				let invulnerables = pallet_aura::Pallet::<Runtime>::authorities()
+				let invulnerables = pallet_aura::Authorities::<Runtime>::get()
 					.iter()
 					.cloned()
 					.filter_map(|authority_id| {
@@ -228,6 +336,7 @@ impl frame_support::traits::OnRuntimeUpgrade for AuraToCollatorSelection {
 					.collect::<Vec<_>>();
 
 				for (account, val, keys) in keys.iter() {
+					use sp_runtime::traits::OpaqueKeys;
 					for id in <Runtime as pallet_session::Config>::Keys::key_ids() {
 						<pallet_session::KeyOwner<Runtime>>::insert((*id, keys.get_raw(*id)), val)
 					}

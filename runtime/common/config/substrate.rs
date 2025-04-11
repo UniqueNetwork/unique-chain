@@ -20,7 +20,7 @@ use frame_support::{
 	ord_parameter_types, parameter_types,
 	traits::{
 		tokens::{PayFromAccount, UnityAssetBalanceConversion},
-		ConstBool, ConstU32, ConstU64, Everything, NeverEnsureOrigin,
+		ConstBool, ConstU32, ConstU64, NeverEnsureOrigin,
 	},
 	weights::{
 		constants::{BlockExecutionWeight, ExtrinsicBaseWeight, RocksDbWeight},
@@ -135,9 +135,6 @@ impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
 	type OnTimestampSet = ();
-	#[cfg(not(feature = "lookahead"))]
-	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
-	#[cfg(feature = "lookahead")]
 	type MinimumPeriod = ConstU64<0>;
 	type WeightInfo = ();
 }
@@ -170,6 +167,7 @@ impl pallet_balances::Config for Runtime {
 	type RuntimeFreezeReason = RuntimeFreezeReason;
 	type FreezeIdentifier = [u8; 16];
 	type MaxFreezes = MaxFreezes;
+	type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -182,17 +180,16 @@ parameter_types! {
 
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	#[allow(deprecated)]
 	type OnChargeTransaction = pallet_transaction_payment::CurrencyAdapter<Balances, DealWithFees>;
 	type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
 	type OperationalFeeMultiplier = OperationalFeeMultiplier;
 	type WeightToFee = pallet_configuration::WeightToFee<Self, Balance>;
 	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
+	type WeightInfo = pallet_transaction_payment::weights::SubstrateWeight<Self>;
 }
 
 parameter_types! {
-	pub const ProposalBond: Permill = Permill::from_percent(5);
-	pub const ProposalBondMinimum: Balance = 1 * UNIQUE;
-	pub const ProposalBondMaximum: Balance = 1000 * UNIQUE;
 	pub const SpendPeriod: BlockNumber = 5 * MINUTES;
 	pub const Burn: Permill = Permill::from_percent(0);
 	pub const TipCountdown: BlockNumber = 1 * DAYS;
@@ -213,14 +210,9 @@ parameter_types! {
 impl pallet_treasury::Config for Runtime {
 	type PalletId = TreasuryModuleId;
 	type Currency = Balances;
-	type ApproveOrigin = EnsureRoot<AccountId>;
 	type RejectOrigin = EnsureRoot<AccountId>;
 	type SpendOrigin = NeverEnsureOrigin<u128>;
 	type RuntimeEvent = RuntimeEvent;
-	type OnSlash = ();
-	type ProposalBond = ProposalBond;
-	type ProposalBondMinimum = ProposalBondMinimum;
-	type ProposalBondMaximum = ProposalBondMaximum;
 	type SpendPeriod = SpendPeriod;
 	type Burn = Burn;
 	type BurnDestination = ();
@@ -233,6 +225,7 @@ impl pallet_treasury::Config for Runtime {
 	type Paymaster = PayFromAccount<Balances, TreasuryAccount>;
 	type BalanceConverter = UnityAssetBalanceConversion;
 	type PayoutPeriod = ConstU32<10>;
+	type BlockNumberProvider = System;
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
@@ -252,7 +245,6 @@ impl pallet_aura::Config for Runtime {
 	type DisabledValidators = ();
 	type MaxAuthorities = MaxAuthorities;
 	type AllowMultipleBlocksPerSlot = ConstBool<true>;
-	#[cfg(feature = "lookahead")]
 	type SlotDuration = ConstU64<SLOT_DURATION>;
 }
 

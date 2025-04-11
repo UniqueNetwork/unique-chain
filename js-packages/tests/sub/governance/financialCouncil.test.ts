@@ -27,26 +27,6 @@ describeGov('Governance: Financial Council tests', () => {
     await clearTechComm(sudoer);
   });
 
-  async function proposalFromMoreThanHalfFinCouncil(proposal: any) {
-    return await usingPlaygrounds(async (helper) => {
-      expect((await helper.finCouncil.membership.getMembers()).length).to.be.equal(3);
-      const proposeResult = await helper.finCouncil.collective.propose(
-        finCounselors.ildar,
-        proposal,
-        moreThanHalfCouncilThreshold,
-      );
-
-      const councilProposedEvent = Event.FinCouncil.Proposed.expect(proposeResult);
-      const proposalIndex = councilProposedEvent.proposalIndex;
-      const proposalHash = councilProposedEvent.proposalHash;
-
-      await helper.finCouncil.collective.vote(finCounselors.greg, proposalHash, proposalIndex, true);
-      await helper.finCouncil.collective.vote(finCounselors.ildar, proposalHash, proposalIndex, true);
-
-      return await helper.finCouncil.collective.close(finCounselors.ildar, proposalHash, proposalIndex);
-    });
-  }
-
   async function proposalFromAllFinCouncil(proposal: any) {
     return await usingPlaygrounds(async (helper) => {
       expect((await helper.finCouncil.membership.getMembers()).length).to.be.equal(3);

@@ -25,7 +25,9 @@ use evm_coder::{
 pub use pallet_evm::{account::CrossAccountId, Config};
 use pallet_evm_coder_substrate::execution::Error;
 use sp_core::{H160, U256};
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
+#[cfg(not(feature = "std"))]
+use sp_std::vec::Vec;
 use up_data_structs::{CollectionFlags, CollectionId};
 
 // 0x17c4e6453Cc49AAAaEACA894e6D9683e00000001 - collection 1
@@ -62,8 +64,7 @@ pub fn convert_uint256_to_cross_account<T: Config>(from: U256) -> T::CrossAccoun
 where
 	T::AccountId: From<[u8; 32]>,
 {
-	let mut new_admin_arr = [0_u8; 32];
-	from.to_big_endian(&mut new_admin_arr);
+	let new_admin_arr = from.to_big_endian();
 	let account_id = T::AccountId::from(new_admin_arr);
 	T::CrossAccountId::from_sub(account_id)
 }

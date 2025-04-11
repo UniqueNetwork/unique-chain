@@ -5,30 +5,51 @@ m = import 'baedeker-library/mixin/spec.libsonnet',
 function(relay_spec)
 
 local relay = {
-	name: 'relay',
-	bin: 'bin/polkadot',
-	validatorIdAssignment: 'staking',
+    name: 'relay',
+    bin: 'bin/polkadot',
+    validatorIdAssignment: 'staking',
 	spec: {Genesis:{
 		chain: relay_spec,
-		modify:: m.genericRelay($, hrmp = [
-			// [$.parachains.opal.paraId, $.parachains.westmint.paraId, 8, 512],
-			// [$.parachains.westmint.paraId, $.parachains.opal.paraId, 8, 512],
+		modify:: bdk.mixer([
+			m.genericRelay($, hrmp = std.join([], [])),
+            m.simplifyGenesisName(),
+            {
+                _genesis+: {
+                            configuration+: {
+                                config+: {
+                                    async_backing_params+: {
+										allowed_ancestry_len: 3,
+										max_candidate_depth: 4,
+									},
+                                    validation_upgrade_cooldown: 200,
+                                    validation_upgrade_delay: 100,
+                                    minimum_validation_upgrade_delay: 15,
+                                    minimum_backing_votes: 2,
+                                    needed_approvals: 2,
+                                    scheduler_params+: {
+                                      lookahead: 1,
+                                    },
+								},
+							},
+				},
+			},
+            m.unsimplifyGenesisName(),
 		]),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'relay',
-			expectedDataPath: '/parity',
-		},
-		for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
-	},
+	}},	
+    nodes: {
+        [name]: {
+            bin: $.bin,
+            wantedKeys: 'relay',
+            expectedDataPath: '/parity',
+        },
+        for name in ['alice', 'bob', 'charlie', 'dave', 'eve']
+    },
 };
 
-local unique = {
-	name: 'unique',
+local opal = {
+	name: 'opal',
 	bin: 'bin/unique',
-	paraId: 1001,
+	paraId: 2037,
 	spec: {Genesis:{
 		modify:: m.genericPara($),
 	}},
@@ -38,33 +59,35 @@ local unique = {
 			wantedKeys: 'para',
 			extraArgs: [
 				'--increase-future-pool',
+				'--pool-type=fork-aware',
 			],
 		},
-		for name in ['alice', 'bob']
+		for name in ['alice', 'bob', 'charlie']
 	},
 };
 
-local westmint = {
-	name: 'westmint',
-	bin: 'bin/assethub',
-	paraId: 1002,
-	spec: {Genesis:{
-		chain: 'westmint-local',
-		modify:: m.genericPara($),
-	}},
-	nodes: {
-		[name]: {
-			bin: $.bin,
-			wantedKeys: 'para',
-			expectedDataPath: '/parity',			
-		},
-		for name in ['alice', 'bob']
-	},
+local assethub = {
+    name: 'assethub',
+    bin: 'bin/assethub',
+    paraId: 1000, 
+    spec: {Genesis:{
+        chain: 'asset-hub-westend-local',
+        modify:: m.genericPara($),
+    }},
+    nodes: {
+        [name]: {
+            bin: $.bin,
+            wantedKeys: 'para',
+            parentConnection: 'internal-samedir',
+            expectedDataPath: '/parity',
+        },
+        for name in ['alice', 'bob']
+    },
 };
 
 relay + {
-	parachains: {
-		[para.name]: para,
-		for para in [unique, westmint]
-	},
+    parachains: {
+        [para.name]: para,
+        for para in [opal, assethub]
+    },
 }

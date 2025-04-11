@@ -11,7 +11,7 @@ on:
 
 jobs:
   update:
-    runs-on: medium
+    runs-on: [ ci ]
     steps:
       - name: Clean Workspace
         uses: AutoModality/action-clean@v1.1.0

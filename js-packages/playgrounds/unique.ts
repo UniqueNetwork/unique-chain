@@ -38,8 +38,10 @@ import type {
   TSubstrateAccount,
   TNetworks,
   IEthCrossAccountId,
+  IPhasicEvent,
 } from './types.js';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
+import {HDNodeWallet} from 'ethers';
 
 export class CrossAccountId {
   account: ICrossAccountId;
@@ -192,7 +194,8 @@ class UniqueUtil {
 
   static extractCollectionIdFromCreationResult(creationResult: ITransactionResult): number {
     if(creationResult.status !== this.transactionStatus.SUCCESS) {
-      throw Error('Unable to create collection!');
+      const status = JSON.stringify((creationResult.result as any).status.toHuman());
+      throw Error(`Unable to create collection! Status: ${status}`);
     }
 
     let collectionId = null;
@@ -367,7 +370,34 @@ class UniqueEventHelper {
 
     return parsedEvents;
   }
+
+  public static extractPhasicEvents(events: { event: any, phase: any }[]): IPhasicEvent[] {
+    const parsedEvents: IPhasicEvent[] = [];
+
+    events.forEach((record) => {
+      const {event, phase} = record;
+
+      const eventData: IEvent = {
+        section: event.section.toString(),
+        method: event.method.toString(),
+        index: this.extractIndex(event.index),
+
+        // assigned without any transformation for compatibility with the `ITransactionResult` events
+        data: event.data,
+
+        phase: phase.toJSON(),
+      };
+
+      parsedEvents.push({
+        phase,
+        event: eventData,
+      });
+    });
+
+    return parsedEvents;
+  }
 }
+// eslint-disable-next-line @typescript-eslint/naming-convention
 const InvalidTypeSymbol = Symbol('Invalid type');
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export type Invalid =
@@ -558,6 +588,12 @@ export class ChainHelperBase {
     if(status.isBroadcast) {
       return this.transactionStatus.NOT_READY;
     }
+    if(status.isFuture) {
+      return this.transactionStatus.NOT_READY;
+    }
+    if(status.isRetracted) {
+      return this.transactionStatus.NOT_READY;
+    }
     if(status.isInBlock || status.isFinalized) {
       const errors = events.filter(e => e.event.method === 'ExtrinsicFailed');
       if(errors.length > 0) {
@@ -571,11 +607,16 @@ export class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
-  signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
+  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
     };
+    options = options || {nonce: 0};
+    if(!options.nonce) {
+      let nonce = await this.chain.getNonce(sender.address);
+      options.nonce = nonce++;
+    }
     // eslint-disable-next-line no-async-promise-executor
     return new Promise(async (resolve, reject) => {
       try {
@@ -583,9 +624,13 @@ export class ChainHelperBase {
           const status = this.getTransactionStatus(result);
 
           if(status === this.transactionStatus.SUCCESS) {
+            if(!result.status.isFinalized) {
+              return;
+            }
             this.logger.log(`${label} successful`);
             unsub();
-            resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+            //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
@@ -818,6 +863,12 @@ export class ChainHelperBase {
   fetchMissingPalletNames(requiredPallets: readonly string[]): string[] {
     const palletNames = this.fetchAllPalletNames();
     return requiredPallets.filter(p => !palletNames.includes(p));
+  }
+
+  async fetchPhasicEventsFromBlock(blockHash: string) {
+    const apiAt = await this.getApi().at(blockHash);
+    const eventRecords = (await apiAt.query.system.events()).toArray();
+    return this.eventHelper.extractPhasicEvents(eventRecords);
   }
 }
 
@@ -2548,12 +2599,16 @@ class BalanceGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
   /**
    * Get ethereum address balance
-   * @param address ethereum address
+   * @param ethAccount ethereum address or ethers wallet
    * @example getEthereum("0x9F0583DbB855d...")
    * @returns amount of tokens on address
    */
-  getEthereum(address: TEthereumAccount): Promise<bigint> {
-    return this.ethBalanceGroup.getEthereum(address);
+  getEthereum(ethAccount: TEthereumAccount | HDNodeWallet): Promise<bigint> {
+    if(ethAccount instanceof HDNodeWallet) {
+      return this.ethBalanceGroup.getEthereum(ethAccount.address);
+    } else {
+      return this.ethBalanceGroup.getEthereum(ethAccount);
+    }
   }
 
   async setBalanceSubstrate(signer: TSigner, address: TSubstrateAccount, amount: bigint) {
@@ -2660,13 +2715,16 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
 
   /**
    * Get substrate mirror of an ethereum address
-   * @param ethAddress ethereum address
+   * @param ethAccount ethereum address or ethers wallet
    * @param toChainFormat false for normalized account
    * @example ethToSubstrate('0x9F0583DbB855d...')
    * @returns substrate mirror of a provided ethereum address
    */
-  ethToSubstrate(ethAddress: TEthereumAccount, toChainFormat = false): TSubstrateAccount {
-    return CrossAccountId.translateEthToSub(ethAddress, toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined);
+  ethToSubstrate(ethAccount: TEthereumAccount | HDNodeWallet, toChainFormat = false): TSubstrateAccount {
+    return CrossAccountId.translateEthToSub(
+      ethAccount instanceof HDNodeWallet ? ethAccount.address : ethAccount,
+      toChainFormat ? this.helper.chain.getChainProperties().ss58Format : undefined,
+    );
   }
 
   /**
@@ -2738,12 +2796,14 @@ class AddressGroup extends HelperGroup<ChainHelperBase> {
    * @returns substrate cross account id
    */
   convertCrossAccountFromEthCrossAccount(ethCrossAccount: IEthCrossAccountId): ICrossAccountId {
-    if(ethCrossAccount.sub === '0') {
-      return {Ethereum: ethCrossAccount.eth.toLocaleLowerCase()};
-    }
+    const eth = ethCrossAccount.eth ?? ethCrossAccount[0];
+    const sub = ethCrossAccount.sub ?? ethCrossAccount[1];
 
-    const ss58 = this.restoreCrossAccountFromBigInt(BigInt(ethCrossAccount.sub));
-    return {Substrate: ss58};
+    if(sub == '0') {
+      return {Ethereum: eth.toLocaleLowerCase()};
+    } else {
+      return {Substrate: this.restoreCrossAccountFromBigInt(BigInt(sub))};
+    }
   }
 
   paraSiblingSovereignAccount(paraid: number) {
