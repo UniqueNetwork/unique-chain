@@ -131,7 +131,7 @@ describe('Fungible: Plain calls', () => {
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
     {
-      const tx = await contract.approve.send(spender, 100);
+      const tx = await contract.approve.send(spender.address, 100);
       const receipt = await tx.wait(...waitParams);
       const events = helper.eth.normalizeEvents(receipt!);
 
@@ -334,11 +334,11 @@ describe('Fungible: Plain calls', () => {
       expect(event.args.value).to.be.equal('50');
 
       // Sender's balance decreased:
-      const ownerBalance = await collectionEvm.balanceOf.staticCall(sender);
+      const ownerBalance = await collectionEvm.balanceOf.staticCall(sender.address);
       expect(ownerBalance).to.equal(150n);
 
       // Receiver's balance increased:
-      const receiverBalance = await collectionEvm.balanceOf.staticCall(receiverEth);
+      const receiverBalance = await collectionEvm.balanceOf.staticCall(receiverEth.address);
       expect(receiverBalance).to.equal(50n);
     }
 
@@ -522,7 +522,7 @@ describe('Fungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.approve.send(spender, 100)).wait(...waitParams),
+      async () => await (await contract.approve.send(spender.address, 100)).wait(...waitParams),
     );
     expect(cost < (helper.balance.getOneTokenNominal() / 5n));
   });
@@ -536,12 +536,12 @@ describe('Fungible: Fees', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'ft', owner);
 
-    await (await contract.approve.send(spender, 100)).wait(...waitParams);
+    await (await contract.approve.send(spender.address, 100)).wait(...waitParams);
 
     const contractContract = helper.eth.changeContractCaller(contract, spender);
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await contractContract.transferFrom.send(owner, spender, 100n)).wait(...waitParams),
+      async () => await (await contractContract.transferFrom.send(owner.address, spender.address, 100n)).wait(...waitParams),
     );
     expect(cost < (helper.balance.getOneTokenNominal() / 5n));
   });
@@ -557,7 +557,7 @@ describe('Fungible: Fees', () => {
 
     const cost = await helper.eth.recordCallFee(
       owner.address,
-      async () => await (await contract.transfer.send(receiver, 100)).wait(...waitParams),
+      async () => await (await contract.transfer.send(receiver.address, 100)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -575,7 +575,7 @@ describe('Fungible: Substrate calls', () => {
     });
   });
 
-  itEth('Events emitted for approve()', async ({helper}) => {
+  itEth.skip('Events emitted for approve()', async ({helper}) => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
@@ -600,7 +600,7 @@ describe('Fungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('100');
   });
 
-  itEth('Events emitted for transferFrom()', async ({helper}) => {
+  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
     // TODO: Refactor this
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
@@ -634,7 +634,7 @@ describe('Fungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('49');
   });
 
-  itEth('Events emitted for transfer()', async ({helper}) => {
+  itEth.skip('Events emitted for transfer()', async ({helper}) => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
