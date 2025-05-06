@@ -19,7 +19,8 @@ use frame_support::{
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
 	traits::{
-		tokens::{PayFromAccount, UnityAssetBalanceConversion},
+		fungible, fungibles,
+		tokens::{Fortitude, PayFromAccount, Precision, Preservation, UnityAssetBalanceConversion},
 		ConstBool, ConstU32, ConstU64, NeverEnsureOrigin,
 	},
 	weights::{
@@ -32,19 +33,20 @@ use frame_system::{
 	limits::{BlockLength, BlockWeights},
 	EnsureRoot, EnsureSignedBy,
 };
+use pallet_asset_tx_payment::OnChargeAssetTransaction;
 use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use sp_arithmetic::traits::One;
 use sp_runtime::{
-	traits::{AccountIdLookup, BlakeTwo256, IdentityLookup},
-	Perbill, Percent, Permill,
+	traits::{AccountIdLookup, BlakeTwo256, DispatchInfoOf, IdentityLookup, PostDispatchInfoOf},
+	FixedPointNumber, FixedU128, Perbill, Percent, Permill,
 };
-use sp_std::vec;
+use sp_std::{vec, vec::Vec};
 use up_common::{constants::*, types::*};
 
 use crate::{
-	runtime_common::DealWithFees, Balances, Block, OriginCaller, PalletInfo, Runtime, RuntimeCall,
-	RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask, SS58Prefix,
-	System, Treasury, Version,
+	runtime_common::DealWithFees, Balances, Block, ForeignAssets, OriginCaller, PalletInfo,
+	Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin,
+	RuntimeTask, SS58Prefix, System, Treasury, Version,
 };
 
 parameter_types! {
@@ -253,4 +255,211 @@ impl pallet_utility::Config for Runtime {
 	type RuntimeCall = RuntimeCall;
 	type PalletsOrigin = OriginCaller;
 	type WeightInfo = pallet_utility::weights::SubstrateWeight<Self>;
+}
+
+#[cfg(feature = "runtime-benchmarks")]
+pub struct AssetTxHelper;
+
+#[cfg(feature = "runtime-benchmarks")]
+impl
+	pallet_asset_tx_payment::BenchmarkHelperTrait<
+		AccountId,
+		staging_xcm::v5::AssetId,
+		staging_xcm::v3::MultiLocation,
+	> for AssetTxHelper
+{
+	fn create_asset_id_parameter(
+		_id: u32,
+	) -> (staging_xcm::v5::AssetId, staging_xcm::v3::MultiLocation) {
+		unimplemented!("uses default weights");
+	}
+	fn setup_balances_and_pool(_asset_id: staging_xcm::v5::AssetId, _account: AccountId) {
+		unimplemented!("uses default weights");
+	}
+}
+
+impl pallet_asset_tx_payment::Config for Runtime {
+	type Fungibles = ForeignAssets;
+	type OnChargeAssetTransaction = TxFeeFungiblesAdapter;
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_asset_tx_payment::weights::SubstrateWeight<Runtime>;
+	#[cfg(feature = "runtime-benchmarks")]
+	type BenchmarkHelper = AssetTxHelper;
+}
+
+pub struct TxFeeFungiblesAdapter;
+
+pub(crate) type OnChargeTransactionOf<T> =
+	<T as pallet_transaction_payment::Config>::OnChargeTransaction;
+pub(crate) type BalanceOf<T> =
+	<OnChargeTransactionOf<T> as pallet_transaction_payment::OnChargeTransaction<T>>::Balance;
+/// Liquidity info type alias.
+pub(crate) type LiquidityInfoOf<T> =
+	<OnChargeTransactionOf<T> as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo;
+/// Asset id type alias.
+pub(crate) type AssetIdOf<T> =
+	<<T as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Inspect<
+		<T as frame_system::Config>::AccountId,
+	>>::AssetId;
+pub(crate) type AssetBalanceOf<T> =
+	<<T as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Inspect<
+		<T as frame_system::Config>::AccountId,
+	>>::Balance;
+
+use frame_support::{
+	pallet_prelude::Zero,
+	traits::{fungibles::Inspect, tokens::WithdrawConsequence, Defensive},
+};
+use pallet_configuration::WeightToFee;
+use sp_runtime::{
+	transaction_validity::{InvalidTransaction, TransactionValidityError},
+	Saturating,
+};
+
+impl TxFeeFungiblesAdapter {
+	fn convert_asset_id(
+		asset_id: <Self as OnChargeAssetTransaction<Runtime>>::AssetId,
+	) -> Result<staging_xcm::v5::AssetId, InvalidTransaction> {
+		let location_v5 = staging_xcm::v4::Location::try_from(asset_id)
+			.and_then(staging_xcm::v5::Location::try_from)
+			.map_err(|_| InvalidTransaction::Payment)?;
+		Ok(staging_xcm::v5::AssetId(location_v5))
+	}
+}
+
+impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
+	// Note: We stick to `v3::MultiLocation`` because `v4::Location`` doesn't implement `Copy`.
+	type AssetId = staging_xcm::v3::MultiLocation;
+	type Balance = u128;
+	type LiquidityInfo = fungibles::Credit<
+		<Runtime as frame_system::Config>::AccountId,
+		<Runtime as pallet_asset_tx_payment::Config>::Fungibles,
+	>;
+
+	/// Before the transaction is executed the payment of the transaction fees needs to be secured.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn withdraw_fee(
+		who: &<Runtime as frame_system::Config>::AccountId,
+		_call: &<Runtime as frame_system::Config>::RuntimeCall,
+		_dispatch_info: &sp_runtime::traits::DispatchInfoOf<
+			<Runtime as frame_system::Config>::RuntimeCall,
+		>,
+		asset_id: Self::AssetId,
+		fee: Self::Balance,
+		_tip: Self::Balance,
+	) -> Result<Self::LiquidityInfo, TransactionValidityError> {
+		// We don't know the precision of the underlying asset. Because the converted fee could be
+		// less than one (e.g. 0.5) but gets rounded down by integer division we introduce a minimum
+		// fee.
+		let min_converted_fee: Self::Balance = if fee.is_zero() {
+			Zero::zero()
+		} else {
+			One::one()
+		};
+		let asset_v5 = Self::convert_asset_id(asset_id)?;
+		let converted_fee = ForeignAssets::convert_native_to_asset(&asset_v5, fee)
+			.ok_or(InvalidTransaction::Payment)?
+			.max(min_converted_fee);
+		let can_withdraw =
+			<<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Inspect<
+				<Runtime as frame_system::Config>::AccountId,
+			>>::can_withdraw(asset_v5.clone(), who, converted_fee);
+		if can_withdraw != WithdrawConsequence::Success {
+			return Err(InvalidTransaction::Payment.into());
+		}
+		<<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Balanced<
+			<Runtime as frame_system::Config>::AccountId,
+		>>::withdraw(
+			asset_v5,
+			who,
+			converted_fee,
+			Precision::Exact,
+			Preservation::Protect,
+			Fortitude::Polite,
+		)
+		.map_err(|_| TransactionValidityError::from(InvalidTransaction::Payment))
+	}
+
+	/// Ensure payment of the transaction fees can be withdrawn.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	fn can_withdraw_fee(
+		who: &<Runtime as frame_system::Config>::AccountId,
+		_call: &<Runtime as frame_system::Config>::RuntimeCall,
+		_dispatch_info: &DispatchInfoOf<<Runtime as frame_system::Config>::RuntimeCall>,
+		asset_id: Self::AssetId,
+		fee: Self::Balance,
+		tip: Self::Balance,
+	) -> Result<(), TransactionValidityError> {
+		// We don't know the precision of the underlying asset. Because the converted fee could be
+		// less than one (e.g. 0.5) but gets rounded down by integer division we introduce a minimum
+		// fee.
+		let min_converted_fee = if fee.is_zero() {
+			Zero::zero()
+		} else {
+			One::one()
+		};
+		let asset_v5 = Self::convert_asset_id(asset_id)?;
+		let converted_fee = ForeignAssets::convert_native_to_asset(&asset_v5, fee)
+			.ok_or(InvalidTransaction::Payment)?
+			.max(min_converted_fee);
+		let can_withdraw =
+			<<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Inspect<
+				<Runtime as frame_system::Config>::AccountId,
+			>>::can_withdraw(asset_v5, who, converted_fee);
+		if can_withdraw != WithdrawConsequence::Success {
+			return Err(InvalidTransaction::Payment.into());
+		}
+		Ok(())
+	}
+
+	/// After the transaction was executed the actual fee can be calculated.
+	/// This function should refund any overpaid fees and optionally deposit
+	/// the corrected amount.
+	///
+	/// Note: The `fee` already includes the `tip`.
+	///
+	/// Returns the fee and tip in the asset used for payment as (fee, tip).
+	fn correct_and_deposit_fee(
+		who: &<Runtime as frame_system::Config>::AccountId,
+		_dispatch_info: &DispatchInfoOf<<Runtime as frame_system::Config>::RuntimeCall>,
+		_post_info: &PostDispatchInfoOf<<Runtime as frame_system::Config>::RuntimeCall>,
+		corrected_fee: Self::Balance,
+		tip: Self::Balance,
+		paid: Self::LiquidityInfo,
+	) -> Result<(AssetBalanceOf<Runtime>, AssetBalanceOf<Runtime>), TransactionValidityError> {
+		let min_converted_fee = if corrected_fee.is_zero() {
+			Zero::zero()
+		} else {
+			One::one()
+		};
+		// Convert the corrected fee and tip into the asset used for payment.
+		let converted_fee = ForeignAssets::convert_native_to_asset(&paid.asset(), corrected_fee)
+			.ok_or(InvalidTransaction::Payment)?
+			.max(min_converted_fee);
+		let converted_tip = ForeignAssets::convert_native_to_asset(&paid.asset(), tip)
+			.ok_or(InvalidTransaction::Payment)?
+			.max(min_converted_fee);
+
+		// Calculate how much refund we should return.
+		let (final_fee, refund) = paid.split(converted_fee);
+		// Refund to the account that paid the fees. If this fails, the account might have dropped
+		// below the existential balance. In that case we don't refund anything.
+		let _ = <<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Balanced<
+			<Runtime as frame_system::Config>::AccountId,
+		>>::resolve(who, refund);
+		// Handle the final fee, e.g. by transferring to the block author or burning.
+
+		// HC::handle_credit(final_fee);
+		if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
+			// In case of error: Will drop the result triggering the `OnDrop` of the imbalance.
+			let _ =
+				<<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Balanced<
+					<Runtime as frame_system::Config>::AccountId,
+				>>::resolve(&author, final_fee)
+				.defensive();
+		}
+		Ok((converted_fee, converted_tip))
+	}
 }

@@ -123,6 +123,7 @@ frame-support = { default-features = false, version = "39.0.0" }
 frame-system = { default-features = false, version = "39.1.0" }
 frame-system-rpc-runtime-api = { default-features = false, version = "35.0.0" }
 pallet-aura = { default-features = false, version = "38.0.0" }
+pallet-asset-tx-payment = { default-features = false, version = "39.0.0" }
 pallet-authorship = { default-features = false, version = "39.0.0" }
 pallet-balances = { default-features = false, version = "40.0.1" }
 pallet-collective = { default-features = false, version = "39.0.0" }
@@ -197,6 +198,7 @@ staging-xcm-builder = { default-features = false, version = "18.0.1" }
 staging-xcm-executor = { default-features = false, version = "18.0.1" }
 substrate-frame-rpc-system = { default-features = false, version = "42.0.0" }
 substrate-prometheus-endpoint = { default-features = false, version = "0.17.1" }
+xcm-runtime-apis = { version = "0.5.1", default-features = false }
 
 # Parity: Build utils
 substrate-build-script-utils = "11.0.0"

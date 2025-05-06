@@ -12,6 +12,11 @@ parity-scale-codec = { workspace = true }
 scale-info = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+log = { workspace = true }
+
+pallet-common = { workspace = true }
+pallet-foreign-assets = { workspace = true }
+up-data-structs = { workspace = true }
 
 [features]
 default = ["std"]

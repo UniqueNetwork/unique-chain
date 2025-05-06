@@ -13,6 +13,7 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 log = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
+pallet-balances-adapter = { workspace = true }
 pallet-common = { workspace = true }
 pallet-fungible = { workspace = true }
 serde = { workspace = true }

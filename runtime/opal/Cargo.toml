@@ -269,6 +269,7 @@ orml-vesting = { workspace = true }
 orml-xcm-support = { workspace = true }
 orml-xtokens = { workspace = true }
 pallet-aura = { workspace = true }
+pallet-asset-tx-payment = { workspace = true }
 pallet-authorship = { workspace = true }
 pallet-balances = { features = ["insecure_zero_ed"], workspace = true }
 pallet-preimage = { workspace = true }
@@ -305,6 +306,7 @@ staging-parachain-info = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-builder = { workspace = true }
 staging-xcm-executor = { workspace = true }
+xcm-runtime-apis = { workspace = true }
 
 app-promotion-rpc = { workspace = true }
 derivative = { workspace = true }

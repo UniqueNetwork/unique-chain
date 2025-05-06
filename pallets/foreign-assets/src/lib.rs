@@ -27,13 +27,23 @@ use core::ops::Deref;
 
 use derivative::Derivative;
 use frame_support::{
-	dispatch::DispatchResult, pallet_prelude::*, storage_alias, traits::EnsureOrigin, PalletId,
+	dispatch::DispatchResult,
+	pallet_prelude::*,
+	storage_alias,
+	traits::{
+		fungibles,
+		tokens::{
+			DepositConsequence, Fortitude, Precision, Preservation, Provenance, WithdrawConsequence,
+		},
+		EnsureOrigin,
+	},
+	PalletId,
 };
 use frame_system::pallet_prelude::*;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
-use sp_runtime::traits::AccountIdConversion;
+use sp_runtime::{traits::AccountIdConversion, FixedPointNumber, FixedU128};
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{v5::prelude::*, VersionedAssetId};
 use staging_xcm_executor::{
@@ -121,6 +131,9 @@ pub mod module {
 
 		/// The specified foreign asset is not found.
 		ForeignAssetNotFound,
+
+		/// Only fungible assets could be converted to fee.
+		ForeignAssetIsNotFungible,
 	}
 
 	#[pallet::event]
@@ -138,6 +151,12 @@ pub mod module {
 		ForeignAssetMoved {
 			old_asset_id: Box<VersionedAssetId>,
 			new_asset_id: Box<VersionedAssetId>,
+		},
+
+		ForeignAssetConversionRateSet {
+			asset_id: Box<VersionedAssetId>,
+			old_conversion_rate: FixedU128,
+			new_conversion_rate: FixedU128,
 		},
 	}
 
@@ -177,11 +196,47 @@ pub mod module {
 		QueryKind = OptionQuery,
 	>;
 
+	/// The corresponding collections of foreign assets.
+	#[pallet::storage]
+	#[pallet::getter(fn foreign_asset_conversion_rate)]
+	pub type ForeignAssetConversionRate<T: Config> =
+		StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, FixedU128, OptionQuery>;
+
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
 	#[pallet::pallet]
 	#[pallet::storage_version(STORAGE_VERSION)]
 	pub struct Pallet<T>(_);
+
+	impl<T: Config + pallet_balances_adapter::Config> Pallet<T> {
+		pub fn get_convertible_assets() -> Vec<(staging_xcm::v5::AssetId, FixedU128)> {
+			ForeignAssetConversionRate::<T>::iter().collect()
+		}
+
+		pub fn convert_native_to_asset(
+			asset_id: &staging_xcm::v5::AssetId,
+			amount: u128,
+		) -> Option<u128> {
+			let collection_id = Self::foreign_asset_to_collection(asset_id)?;
+			let conversion_rate =
+				Self::foreign_asset_conversion_rate(asset_id).unwrap_or(Zero::zero());
+			if conversion_rate.is_zero() {
+				return None;
+			}
+			let up_data_structs::CollectionMode::Fungible(asset_decimals) =
+				(*<pallet_common::CollectionHandle<T>>::try_get(collection_id).ok()?).mode
+			else {
+				return None;
+			};
+			let native_decimals = <T as pallet_balances_adapter::Config>::Decimals::get();
+			let asset_cost = conversion_rate.checked_mul_int(amount)?;
+			if asset_decimals >= native_decimals {
+				asset_cost.checked_mul(10u128.pow((asset_decimals - native_decimals) as u32))
+			} else {
+				asset_cost.checked_div(10u128.pow((native_decimals - asset_decimals) as u32))
+			}
+		}
+	}
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
@@ -279,6 +334,49 @@ pub mod module {
 
 			Ok(())
 		}
+
+		#[pallet::call_index(2)]
+		//TODO: add benchmark
+		#[pallet::weight(<T as Config>::WeightInfo::force_reset_foreign_asset_location())]
+		pub fn force_set_foreign_asset_conversion_rate(
+			origin: OriginFor<T>,
+			versioned_asset_id: Box<VersionedAssetId>,
+			conversion_rate: FixedU128,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
+
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
+			let collection_id = <ForeignAssetToCollection<T>>::get(&asset_id)
+				.ok_or(Error::<T>::ForeignAssetNotFound)?;
+
+			let handle = <pallet_common::CollectionHandle<T>>::try_get(collection_id)?;
+			ensure!(
+				matches!(handle.mode, CollectionMode::Fungible(_)),
+				Error::<T>::ForeignAssetIsNotFungible
+			);
+
+			let old_conversion_rate =
+				<ForeignAssetConversionRate<T>>::get(&asset_id).unwrap_or(FixedU128::from(0));
+
+			<ForeignAssetConversionRate<T>>::remove(&asset_id);
+
+			if conversion_rate != 0.into() {
+				<ForeignAssetConversionRate<T>>::insert(&asset_id, conversion_rate);
+			}
+
+			Self::deposit_event(Event::<T>::ForeignAssetConversionRateSet {
+				asset_id: versioned_asset_id,
+				old_conversion_rate,
+				new_conversion_rate: conversion_rate,
+			});
+
+			Ok(())
+		}
 	}
 
 	#[pallet::genesis_config]
@@ -310,6 +408,213 @@ pub mod module {
 				Weight::zero()
 			}
 		}
+	}
+
+	// TODO: check if collection is fungible
+	impl<T: Config> fungibles::Inspect<<T as frame_system::Config>::AccountId> for Pallet<T> {
+		type AssetId = staging_xcm::v5::AssetId;
+		type Balance = u128;
+
+		fn total_issuance(asset: Self::AssetId) -> Self::Balance {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Zero::zero();
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Zero::zero();
+			};
+			let collection = dispatch.as_dyn();
+			collection
+				.total_pieces(TokenId::default())
+				.unwrap_or_else(Zero::zero)
+		}
+
+		fn minimum_balance(_asset: Self::AssetId) -> Self::Balance {
+			Zero::zero()
+		}
+
+		fn balance(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+		) -> Self::Balance {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Zero::zero();
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Zero::zero();
+			};
+			let collection = dispatch.as_dyn();
+			collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
+		}
+
+		fn total_balance(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+		) -> Self::Balance {
+			Pallet::<T>::balance(asset, who)
+		}
+
+		fn reducible_balance(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+			_preservation: Preservation,
+			_: Fortitude,
+		) -> Self::Balance {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Zero::zero();
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Zero::zero();
+			};
+			let collection = dispatch.as_dyn();
+			collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
+		}
+
+		fn can_deposit(
+			asset: Self::AssetId,
+			_who: &<T as frame_system::Config>::AccountId,
+			_amount: Self::Balance,
+			_provenance: Provenance,
+		) -> DepositConsequence {
+			if <ForeignAssetToCollection<T>>::get(asset).is_some() {
+				DepositConsequence::Success
+			} else {
+				DepositConsequence::UnknownAsset
+			}
+		}
+
+		fn can_withdraw(
+			asset: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+			amount: Self::Balance,
+		) -> WithdrawConsequence<Self::Balance> {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return WithdrawConsequence::UnknownAsset;
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return WithdrawConsequence::UnknownAsset;
+			};
+			let collection = dispatch.as_dyn();
+			if collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
+				> amount
+			{
+				WithdrawConsequence::Success
+			} else {
+				WithdrawConsequence::BalanceLow
+			}
+		}
+
+		fn asset_exists(asset: Self::AssetId) -> bool {
+			<ForeignAssetToCollection<T>>::get(asset).is_some()
+		}
+	}
+
+	impl<T: Config> fungibles::Balanced<<T as frame_system::Config>::AccountId> for Pallet<T> {
+		type OnDropCredit = fungibles::DecreaseIssuance<T::AccountId, Self>;
+		type OnDropDebt = fungibles::IncreaseIssuance<T::AccountId, Self>;
+
+		fn done_deposit(
+			asset_id: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+			amount: Self::Balance,
+		) {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset_id) else {
+				return;
+			};
+			pallet_common::Pallet::<T>::deposit_event(pallet_common::Event::<T>::ItemCreated(
+				collection_id,
+				TokenId::default(),
+				T::CrossAccountId::from_sub(who.clone()),
+				amount,
+			))
+		}
+
+		fn done_withdraw(
+			asset_id: Self::AssetId,
+			who: &<T as frame_system::Config>::AccountId,
+			amount: Self::Balance,
+		) {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset_id) else {
+				return;
+			};
+			pallet_common::Pallet::<T>::deposit_event(pallet_common::Event::<T>::ItemDestroyed(
+				collection_id,
+				TokenId::default(),
+				T::CrossAccountId::from_sub(who.clone()),
+				amount,
+			))
+		}
+	}
+
+	impl<T: Config> fungibles::Unbalanced<T::AccountId> for Pallet<T> {
+		fn handle_raw_dust(_: Self::AssetId, _: Self::Balance) {}
+		fn handle_dust(_: fungibles::Dust<T::AccountId, Self>) {
+			defensive!("`decrease_balance` and `increase_balance` have non-default impls; nothing else calls this; qed");
+		}
+		fn write_balance(
+			_: Self::AssetId,
+			_: &T::AccountId,
+			_: Self::Balance,
+		) -> Result<Option<Self::Balance>, DispatchError> {
+			defensive!("write_balance is not used if other functions are impl'd");
+			Err(DispatchError::Unavailable)
+		}
+		fn set_total_issuance(_asset_id: Self::AssetId, _amount: Self::Balance) {
+			defensive!("set_total_issuance shouldn't be used");
+		}
+		fn decrease_balance(
+			asset: Self::AssetId,
+			who: &T::AccountId,
+			amount: Self::Balance,
+			_precision: Precision,
+			_preservation: Preservation,
+			_: Fortitude,
+		) -> Result<Self::Balance, DispatchError> {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Err(DispatchError::Other("Asset is not registered"));
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Err(DispatchError::Other("Failed to dispatch collection"));
+			};
+			let collection = dispatch.as_dyn();
+			let xcm_ext = collection.xcm_extensions().ok_or(DispatchError::Other(
+				"xcm_extensions method not implemented",
+			))?;
+			let from = T::CrossAccountId::from_sub(who.clone());
+
+			xcm_ext
+				.burn_item(from.clone(), TokenId::default(), amount)
+				.map(|_| collection.balance(from, TokenId::default()))
+				.map_err(|_| DispatchError::Other("Fungible item deposit failed"))
+		}
+		fn increase_balance(
+			asset: Self::AssetId,
+			who: &T::AccountId,
+			amount: Self::Balance,
+			_precision: Precision,
+		) -> Result<Self::Balance, DispatchError> {
+			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
+				return Err(DispatchError::Other("Asset is not registered"));
+			};
+			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
+				return Err(DispatchError::Other("Failed to dispatch collection"));
+			};
+			let collection = dispatch.as_dyn();
+			let xcm_ext = collection.xcm_extensions().ok_or(DispatchError::Other(
+				"xcm_extensions method not implemented",
+			))?;
+			let to = T::CrossAccountId::from_sub(who.clone());
+			xcm_ext
+				.create_item(
+					&Self::pallet_account(),
+					to.clone(),
+					CreateItemData::Fungible(CreateFungibleData { value: amount }),
+					&ZeroBudget,
+				)
+				.map(|_| collection.balance(to, TokenId::default()))
+				.map_err(|_| DispatchError::Other("Fungible item deposit failed"))
+		}
+
+		// TODO: #13196 implement deactivate/reactivate once we have inactive balance tracking.
 	}
 }
 

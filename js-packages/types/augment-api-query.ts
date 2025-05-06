@@ -622,6 +622,10 @@ declare module '@polkadot/api-base/types/storage' {
       /**
        * The corresponding collections of foreign assets.
        **/
+      foreignAssetConversionRate: AugmentedQuery<ApiType, (arg: StagingXcmV5AssetAssetId | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u128>>, [StagingXcmV5AssetAssetId]> & QueryableStorageEntry<ApiType, [StagingXcmV5AssetAssetId]>;
+      /**
+       * The corresponding collections of foreign assets.
+       **/
       foreignAssetToCollection: AugmentedQuery<ApiType, (arg: StagingXcmV5AssetAssetId | { parents?: any; interior?: any } | string | Uint8Array) => Observable<Option<u32>>, [StagingXcmV5AssetAssetId]> & QueryableStorageEntry<ApiType, [StagingXcmV5AssetAssetId]>;
       /**
        * The correponding NFT token id of reserve NFTs

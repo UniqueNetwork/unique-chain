@@ -95,7 +95,7 @@ pub type TxExtension = (
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
 	identity::DisableIdentityCalls,
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
+	pallet_asset_tx_payment::ChargeAssetTxPayment<Runtime>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 	cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim<Runtime>,
