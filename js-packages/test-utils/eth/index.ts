@@ -19,17 +19,17 @@ import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, E
 import {CollectionMode, CreateCollectionData} from './types.js';
 
 // Native contracts ABI
-import collectionHelpersAbi from '@unique-nft/evm-abi/abi/collectionHelpers.json' assert {type: 'json'};
-import nativeFungibleAbi from '@unique-nft/evm-abi/abi/nativeFungible.json' assert {type: 'json'};
-import fungibleAbi from '@unique-nft/evm-abi/abi/fungible.json' assert {type: 'json'};
-import fungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/fungibleDeprecated.json' assert {type: 'json'};
-import nonFungibleAbi from '@unique-nft/evm-abi/abi/nonFungible.json' assert {type: 'json'};
-import nonFungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/nonFungibleDeprecated.json' assert {type: 'json'};
-import refungibleAbi from '@unique-nft/evm-abi/abi/reFungible.json' assert {type: 'json'};
-import refungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleDeprecated.json' assert {type: 'json'};
-import refungibleTokenAbi from '@unique-nft/evm-abi/abi/reFungibleToken.json' assert {type: 'json'};
-import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleTokenDeprecated.json' assert {type: 'json'};
-import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' assert {type: 'json'};
+import collectionHelpersAbi from '@unique-nft/evm-abi/abi/collectionHelpers.json' with {type: 'json'};
+import nativeFungibleAbi from '@unique-nft/evm-abi/abi/nativeFungible.json' with {type: 'json'};
+import fungibleAbi from '@unique-nft/evm-abi/abi/fungible.json' with {type: 'json'};
+import fungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/fungibleDeprecated.json' with {type: 'json'};
+import nonFungibleAbi from '@unique-nft/evm-abi/abi/nonFungible.json' with {type: 'json'};
+import nonFungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/nonFungibleDeprecated.json' with {type: 'json'};
+import refungibleAbi from '@unique-nft/evm-abi/abi/reFungible.json' with {type: 'json'};
+import refungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleDeprecated.json' with {type: 'json'};
+import refungibleTokenAbi from '@unique-nft/evm-abi/abi/reFungibleToken.json' with {type: 'json'};
+import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleTokenDeprecated.json' with {type: 'json'};
+import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' with {type: 'json'};
 import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 import {Contract} from 'ethers';
 import {waitParams} from './util.js';

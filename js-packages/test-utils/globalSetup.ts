@@ -7,6 +7,8 @@ import {
 } from './util.js';
 import * as path from 'path';
 import {promises as fs} from 'fs';
+import {DevUniqueHelper} from './index.js';
+import type {IKeyringPair} from '@polkadot/types/types';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -18,39 +20,14 @@ const globalSetup = async (): Promise<void> => {
   while(attempt <= maxAttemps) {
     try {
       await usingPlaygrounds(async (helper, privateKey) => {
-        try {
-          // 1. Wait node producing blocks
-          console.log('Wait node producing blocks...');
-          await helper.wait.newBlocks(1, 600_000);
+        console.log('Wait node producing blocks...');
+        await helper.wait.newBlocks(1, 600_000);
 
-          // 2. Create donors for test files
-          await fundFilenamesWithRetries(3)
-            .then((result) => {
-              if(!result) throw Error('Some problems with fundFilenamesWithRetries');
-            });
-
-          // 3. Configure App Promotion
-          const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
-          if(missingPallets.length === 0) {
-            const superuser = await privateKey('//Alice');
-            const palletAddress = helper.arrange.calculatePalletAddress('appstake');
-            const palletAdmin = await privateKey('//PromotionAdmin');
-            const api = helper.getApi();
-            await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
-            const nominal = helper.balance.getOneTokenNominal();
-            await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);
-            await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);
-            await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
-              .setAppPromotionConfigurationOverride({
-                recalculationInterval: LOCKING_PERIOD,
-                pendingInterval: UNLOCKING_PERIOD,
-                intervalIncome: INTERVAL_INCOME,
-              })], true);
-          }
-        } catch (error) {
-          throw Error('Error during globalSetup', {cause: error});
-        }
+        await mintTokens(helper, privateKey);
+        await fundFilenames();
+        await setupAppPromotion(helper, privateKey);
       });
+
       break;
     } catch (e) {
       console.log('Global setup error', e, `retry after 10 blocks, attempt ${attempt}/${maxAttemps}`);
@@ -58,7 +35,16 @@ const globalSetup = async (): Promise<void> => {
       attempt += 1;
     }
   }
+
+  if(attempt === maxAttemps + 1) {
+    throw new Error(`failed to global setup tests after ${maxAttemps} retries`);
+  }
 };
+
+async function mintTokens(helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair>) {
+  const superuser = await privateKey('//Alice');
+  await helper.getSudo().executeExtrinsic(superuser, 'api.tx.balances.forceSetBalance', [superuser.address, 1000000000000000000000000000000n]);
+}
 
 async function getFiles(rootPath: string): Promise<string[]> {
   const files = await fs.readdir(rootPath, {withFileTypes: true});
@@ -74,7 +60,7 @@ async function getFiles(rootPath: string): Promise<string[]> {
   return filenames;
 }
 
-const fundFilenames = async () => {
+async function fundFilenames() {
   await usingPlaygrounds(async (helper, privateKey) => {
     const oneToken = helper.balance.getOneTokenNominal();
     const alice = await privateKey('//Alice');
@@ -116,25 +102,29 @@ const fundFilenames = async () => {
     }
     if(balanceGrantedCounter == 0) console.log('No account needs additional funding.');
   });
-};
+}
 
-const fundFilenamesWithRetries = (retriesLeft: number): Promise<boolean> => {
-  if(retriesLeft <= 0) return Promise.resolve(false);
-  return fundFilenames()
-    .then(() => Promise.resolve(true))
-    .catch(e => {
-      console.error(e);
-      console.error(`Some transactions might have failed. ${retriesLeft > 1 ? 'Retrying...' : 'Something is wrong.'}\n`);
-      return fundFilenamesWithRetries(--retriesLeft);
-    });
-};
+async function setupAppPromotion(helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair>) {
+  const missingPallets = helper.fetchMissingPalletNames([Pallets.AppPromotion]);
+  if(missingPallets.length === 0) {
+    const superuser = await privateKey('//Alice');
+    const palletAddress = helper.arrange.calculatePalletAddress('appstake');
+    const palletAdmin = await privateKey('//PromotionAdmin');
+    const api = helper.getApi();
+    await helper.signTransaction(superuser, api.tx.sudo.sudo(api.tx.appPromotion.setAdminAddress({Substrate: palletAdmin.address})));
+    const nominal = helper.balance.getOneTokenNominal();
+    await helper.balance.transferToSubstrate(superuser, palletAdmin.address, 10000n * nominal);
+    await helper.balance.transferToSubstrate(superuser, palletAddress, 10000n * nominal);
+    await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [api.tx.configuration
+      .setAppPromotionConfigurationOverride({
+        recalculationInterval: LOCKING_PERIOD,
+        pendingInterval: UNLOCKING_PERIOD,
+        intervalIncome: INTERVAL_INCOME,
+      })], true);
+  }
+}
 
 globalSetup().catch(e => {
-  console.error('Setup error');
-  if(e.result) {
-    console.error('Status:', e.status);
-    console.error('Result:', JSON.stringify(e.result.toHuman()));
-  } else
-    console.error(e);
+  console.error(e);
   process.exit(1);
 });

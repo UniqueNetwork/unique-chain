@@ -297,7 +297,7 @@ describe('NFT (Via EVM proxy): Plain calls', () => {
     {
       const callerContract = helper.eth.changeContractCaller(contract, caller);
 
-      const approveTx = await callerContract.approve(spender, tokenId);
+      const approveTx = await callerContract.approve(spender.address, tokenId);
       const approveReceipt = await approveTx.wait(...waitParams);
       const events = helper.eth.rebuildEvents(approveReceipt!);
 
