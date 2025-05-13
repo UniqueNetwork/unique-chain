@@ -17,7 +17,7 @@ async function main() {
   const wasmFileBytes = readFileSync(wasmFile);
   const wasmFileHash = blake2AsHex(wasmFileBytes, 256);
 
-  const authorizeUpgrade = api.tx.parachainSystem.authorizeUpgrade(wasmFileHash, true);
+  const authorizeUpgrade = api.tx.system.authorizeUpgrade(wasmFileHash);
 
   const councilMembers = (await api.query.council.members()).toJSON() as any[];
   const councilProposalThreshold = Math.floor(councilMembers.length / 2) + 1;
