@@ -5,6 +5,12 @@ _help:
 	@echo "bench - run frame-benchmarking"
 	@echo "  bench-evm-migration"
 	@echo "  bench-unique"
+	@echo "BUILD:"
+	@echo "  make unique - build with unique-runtime feature"
+	@echo "  make quartz - build with quartz-runtime feature"
+	@echo "  make opal  - build with opal-runtime feature"
+
+PROFILE := production
 
 MAKEFLAGS := --jobs=$(shell nproc) --output-sync=target
 
@@ -28,6 +34,18 @@ COLLECTION_HELPER_STUBS=./pallets/unique/src/eth/stubs/
 COLLECTION_HELPER_ABI=./js-packages/evm-abi/abi/collectionHelpers.json
 
 TESTS_API=./js-packages/evm-abi/api/
+
+# BUILDS
+unique:
+	cargo build --profile=$(PROFILE) --features=unique-runtime
+
+quartz:
+	cargo build --profile=$(PROFILE) --features=quartz-runtime
+
+opal:
+	cargo build --profile=$(PROFILE) --features=opal-runtime
+
+.PHONY: unique quartz opal
 
 .PHONY: regenerate_solidity
 regenerate_solidity: UniqueFungible.sol UniqueNFT.sol UniqueRefungible.sol UniqueRefungibleToken.sol ContractHelpers.sol CollectionHelpers.sol
