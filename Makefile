@@ -37,12 +37,15 @@ TESTS_API=./js-packages/evm-abi/api/
 
 # BUILDS
 unique:
+    @echo "Build with unique-runtime feature"
 	cargo build --profile=$(PROFILE) --features=unique-runtime
 
 quartz:
+    @echo "Build with quartz-runtime feature"
 	cargo build --profile=$(PROFILE) --features=quartz-runtime
 
 opal:
+    @echo "Build with opal-runtime feature"
 	cargo build --profile=$(PROFILE) --features=opal-runtime
 
 .PHONY: unique quartz opal
