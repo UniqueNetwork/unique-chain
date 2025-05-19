@@ -12,7 +12,7 @@ _help:
 
 PROFILE := production
 
-MAKEFLAGS := --jobs=$(shell nproc) --output-sync=target
+MAKEFLAGS := --jobs=$(shell nproc) --output-sync=none
 
 NATIVE_FUNGIBLE_EVM_STUBS=./pallets/balances-adapter/src/stubs
 NATIVE_FUNGIBLE_EVM_ABI=./js-packages/evm-abi/abi/nativeFungible.json
