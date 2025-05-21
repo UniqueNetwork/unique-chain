@@ -354,7 +354,7 @@ describe('NFT: Plain calls', () => {
       expect(approved).to.be.equal('0x0000000000000000000000000000000000000000');
     }
     {
-      const approveTx = await contract.approve.send(spender, tokenId);
+      const approveTx = await contract.approve.send(spender.address, tokenId);
       const approveReceipt = await approveTx.wait(...waitParams);
       const approveEvents = helper.eth.normalizeEvents(approveReceipt!);
 
@@ -647,10 +647,10 @@ describe('NFT: Plain calls', () => {
     const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
     const contract = await helper.ethNativeContract.collection(collectionAddress, 'nft', owner);
 
-    await (await contract.approve.send(spender, tokenId)).wait(...waitParams);
+    await (await contract.approve.send(spender.address, tokenId)).wait(...waitParams);
 
     {
-      const transferTx = await (<Contract>contract.connect(spender)).transferFrom.send(owner, receiver, tokenId);
+      const transferTx = await (<Contract>contract.connect(spender)).transferFrom.send(owner.address, receiver.address, tokenId);
       const transferReceipt = await transferTx.wait(...waitParams);
       const transferEvents = helper.eth.normalizeEvents(transferReceipt!);
 
@@ -878,7 +878,7 @@ describe('NFT: Fees', () => {
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    const cost = await helper.eth.recordCallFee(owner.address, async () => await (await contract.approve.send(spender, tokenId)).wait(...waitParams));
+    const cost = await helper.eth.recordCallFee(owner.address, async () => await (await contract.approve.send(spender.address, tokenId)).wait(...waitParams));
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
 
@@ -891,11 +891,11 @@ describe('NFT: Fees', () => {
 
     const contract = await helper.ethNativeContract.collectionById(collection.collectionId, 'nft', owner);
 
-    await (await contract.approve.send(spender, tokenId)).wait(...waitParams);
+    await (await contract.approve.send(spender.address, tokenId)).wait(...waitParams);
 
     const cost = await helper.eth.recordCallFee(
       spender.address,
-      async () => await (await (<Contract>contract.connect(spender)).transferFrom.send(owner, spender, tokenId)).wait(...waitParams),
+      async () => await (await (<Contract>contract.connect(spender)).transferFrom.send(owner.address, spender.address, tokenId)).wait(...waitParams),
     );
     expect(cost < BigInt(0.2 * Number(helper.balance.getOneTokenNominal())));
   });
@@ -965,7 +965,7 @@ describe('NFT: Substrate calls', () => {
     });
   });
 
-  itEth('Events emitted for mint()', async ({helper}) => {
+  itEth.skip('Events emitted for mint()', async ({helper}) => {
     // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(alice, {});
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -987,7 +987,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(tokenId.toString());
   });
 
-  itEth('Events emitted for burn()', async ({helper}) => {
+  itEth.skip('Events emitted for burn()', async ({helper}) => {
     // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(alice, {});
     // const token = await collection.mintToken(alice);
@@ -1011,7 +1011,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
   });
 
-  itEth('Events emitted for approve()', async ({helper}) => {
+  itEth.skip('Events emitted for approve()', async ({helper}) => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
 
@@ -1037,7 +1037,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
   });
 
-  itEth('Events emitted for transferFrom()', async ({helper}) => {
+  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
     // TODO: Refactor this
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
@@ -1065,7 +1065,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(`${token.tokenId}`);
   });
 
-  itEth('Events emitted for transfer()', async ({helper}) => {
+  itEth.skip('Events emitted for transfer()', async ({helper}) => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
 
