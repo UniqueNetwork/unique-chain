@@ -386,11 +386,11 @@ impl<T: Config> CollectionHandle<T> {
 	) -> DispatchResult {
 		self.check_is_internal()?;
 		self.check_is_owner(&caller)?;
-		self.collection.owner = new_owner.as_sub().clone();
+		self.collection.owner = new_owner.as_sub().clone().into();
 
 		<Pallet<T>>::deposit_event(Event::<T>::CollectionOwnerChanged(
 			self.id,
-			new_owner.as_sub().clone(),
+			new_owner.as_sub().clone().into(),
 		));
 		<PalletEvm<T>>::deposit_log(
 			erc::CollectionHelpersEvents::CollectionChanged {
@@ -1158,7 +1158,7 @@ impl<T: Config> Pallet<T> {
 					Precision::Exact,
 				)?);
 				let credit = <T as Config>::Currency::settle(
-					payer.as_sub(),
+					&(payer.as_sub().clone().into()),
 					imbalance,
 					Preservation::Preserve,
 				)
@@ -1192,14 +1192,14 @@ impl<T: Config> Pallet<T> {
 		// =========
 
 		let collection = Collection {
-			owner: owner.as_sub().clone(),
+			owner: owner.as_sub().clone().into(),
 			name: data.name,
 			mode: data.mode.clone(),
 			description: data.description,
 			token_prefix: data.token_prefix,
 			sponsorship: data
 				.pending_sponsor
-				.map(|sponsor| SponsorshipState::Unconfirmed(sponsor.as_sub().clone()))
+				.map(|sponsor| SponsorshipState::Unconfirmed(sponsor.as_sub().clone().into()))
 				.unwrap_or_default(),
 			limits: data
 				.limits
@@ -1247,7 +1247,7 @@ impl<T: Config> Pallet<T> {
 		<Pallet<T>>::deposit_event(Event::CollectionCreated(
 			id,
 			data.mode.id(),
-			owner.as_sub().clone(),
+			owner.as_sub().clone().into(),
 		));
 		<PalletEvm<T>>::deposit_log(
 			erc::CollectionHelpersEvents::CollectionCreated {

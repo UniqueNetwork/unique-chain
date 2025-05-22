@@ -211,7 +211,7 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let sponsor = T::CrossAccountId::from_eth(sponsor);
-		self.set_sponsor(&caller, sponsor.as_sub().clone())
+		self.set_sponsor(&caller, sponsor.as_sub().clone().into())
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -230,7 +230,7 @@ where
 		let caller = T::CrossAccountId::from_eth(caller);
 
 		let sponsor = sponsor.into_sub_cross_account::<T>()?;
-		self.set_sponsor(&caller, sponsor.as_sub().clone())
+		self.set_sponsor(&caller, sponsor.as_sub().clone().into())
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -249,7 +249,7 @@ where
 		self.consume_store_writes(1)?;
 
 		let caller = T::CrossAccountId::from_eth(caller);
-		self.confirm_sponsorship(caller.as_sub())
+		self.confirm_sponsorship(&(caller.as_sub().clone().into()))
 			.map_err(dispatch_to_evm::<T>)
 	}
 
@@ -680,7 +680,7 @@ where
 	/// If address is canonical then substrate mirror is zero and vice versa.
 	fn collection_owner(&self) -> Result<eth::CrossAddress> {
 		Ok(eth::CrossAddress::from_sub_cross_account::<T>(
-			&T::CrossAccountId::from_sub(self.owner.clone()),
+			&T::CrossAccountId::from_sub(self.owner.clone().into()),
 		))
 	}
 

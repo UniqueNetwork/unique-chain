@@ -466,7 +466,8 @@ where
 
 			let eth_deps = EthDeps {
 				client,
-				pool: transaction_pool,
+				pool: transaction_pool.clone(),
+				graph: transaction_pool,
 				is_authority: validator,
 				network,
 				eth_backend,
@@ -1047,7 +1048,8 @@ where
 
 			let eth_deps = EthDeps {
 				client,
-				pool: transaction_pool,
+				pool: transaction_pool.clone(),
+				graph: transaction_pool,
 				is_authority: true,
 				network,
 				eth_backend,

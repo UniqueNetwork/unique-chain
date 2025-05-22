@@ -469,6 +469,10 @@ macro_rules! impl_common_runtime_apis {
 						pallet_ethereum::CurrentTransactionStatuses::<Runtime>::get()
 					)
 				}
+
+				fn initialize_pending_block(header: &<Block as BlockT>::Header) {
+					Executive::initialize_block(header);
+				}
 			}
 
 			impl sp_session::SessionKeys<Block> for Runtime {
@@ -699,7 +703,7 @@ macro_rules! impl_common_runtime_apis {
 			/// Not allowed to panic, because rpc may be called using native runtime, thus causing thread panic.
 			impl fp_rpc::ConvertTransactionRuntimeApi<Block> for Runtime {
 				fn convert_transaction(transaction: pallet_ethereum::Transaction) -> <Block as BlockT>::Extrinsic {
-					UncheckedExtrinsic::new_unsigned(
+					UncheckedExtrinsic::new_bare(
 						pallet_ethereum::Call::<Runtime>::transact { transaction }.into(),
 					)
 				}
