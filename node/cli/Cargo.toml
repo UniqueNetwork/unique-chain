@@ -117,6 +117,7 @@ gov-test-timings = [
 	'quartz-runtime?/gov-test-timings',
 	'unique-runtime?/gov-test-timings',
 ]
+metadata-hash = ['opal-runtime?/metadata-hash', 'quartz-runtime?/metadata-hash', 'unique-runtime?/metadata-hash']
 pov-estimate = [
 	'opal-runtime/pov-estimate',
 	'quartz-runtime?/pov-estimate',
