@@ -30,7 +30,7 @@ use frame_support::{
 	traits::ConstU32,
 	BoundedVec,
 };
-use parity_scale_codec::{Decode, Encode, EncodeLike, MaxEncodedLen};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
@@ -142,6 +142,7 @@ pub type CustomDataLimit = ConstU32<CUSTOM_DATA_LIMIT>;
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	PartialEq,
 	Eq,
 	PartialOrd,
@@ -177,6 +178,7 @@ impl Deref for CollectionId {
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	PartialEq,
 	Eq,
 	PartialOrd,
@@ -252,7 +254,17 @@ pub type DecimalPoints = u8;
 /// Each collection can contain only one type of tokens at a time.
 /// This type helps to understand which tokens the collection contains.
 #[derive(
-	Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Eq,
+	Debug,
+	Clone,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
 )]
 pub enum CollectionMode {
 	/// Non fungible tokens.
@@ -283,6 +295,7 @@ pub trait SponsoringResolve<AccountId, Call> {
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	Eq,
 	Debug,
 	Clone,
@@ -373,7 +386,9 @@ pub type CollectionName = BoundedVec<u16, ConstU32<MAX_COLLECTION_NAME_LENGTH>>;
 pub type CollectionDescription = BoundedVec<u16, ConstU32<MAX_COLLECTION_DESCRIPTION_LENGTH>>;
 pub type CollectionTokenPrefix = BoundedVec<u8, ConstU32<MAX_TOKEN_PREFIX_LENGTH>>;
 
-#[derive(AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, Default)]
+#[derive(
+	AbiCoderFlags, Bitfields, Clone, Copy, PartialEq, Eq, Debug, DecodeWithMemTracking, Default,
+)]
 #[bondrewd(enforce_bytes = 1)]
 pub struct CollectionFlags {
 	/// A collection of foreign assets
@@ -572,7 +587,9 @@ impl Deref for RawEncoded {
 /// Data used for create collection.
 ///
 /// All fields are wrapped in [`Option`], where `None` means chain default.
-#[derive(Encode, Decode, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen)]
+#[derive(
+	Encode, Decode, DecodeWithMemTracking, Clone, PartialEq, TypeInfo, Derivative, MaxEncodedLen,
+)]
 #[derivative(Debug, Default(bound = ""))]
 pub struct CreateCollectionData<CrossAccountId> {
 	/// Collection mode.
@@ -628,6 +645,7 @@ pub type CollectionPropertiesVec = BoundedVec<Property, ConstU32<MAX_PROPERTIES_
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	Debug,
 	Default,
 	Clone,
@@ -793,6 +811,7 @@ impl CollectionLimits {
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	Debug,
 	Default,
 	Clone,
@@ -862,6 +881,8 @@ pub struct OwnerRestrictedSet(
 	pub OwnerRestrictedSetInner,
 );
 
+impl DecodeWithMemTracking for OwnerRestrictedSet {}
+
 impl OwnerRestrictedSet {
 	/// Create new set.
 	pub fn new() -> Self {
@@ -895,7 +916,16 @@ impl TryFrom<BTreeSet<CollectionId>> for OwnerRestrictedSet {
 
 /// Part of collection permissions, if set, defines who is able to nest tokens into other tokens.
 #[derive(
-	Encode, Decode, Clone, PartialEq, TypeInfo, MaxEncodedLen, Derivative, Serialize, Deserialize,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Clone,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Derivative,
+	Serialize,
+	Deserialize,
 )]
 #[derivative(Debug)]
 pub struct NestingPermissions {
@@ -915,7 +945,17 @@ pub struct NestingPermissions {
 ///
 /// Used for [`collection limits`](CollectionLimits).
 #[derive(
-	Encode, Decode, Debug, Clone, Copy, PartialEq, TypeInfo, MaxEncodedLen, Serialize, Deserialize,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Debug,
+	Clone,
+	Copy,
+	PartialEq,
+	TypeInfo,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
 )]
 pub enum SponsoringRateLimit {
 	/// Sponsoring is disabled, and the collection sponsor will not pay for transactions
@@ -928,6 +968,7 @@ pub enum SponsoringRateLimit {
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	MaxEncodedLen,
 	Default,
 	PartialEq,
@@ -950,6 +991,7 @@ pub struct CreateNftData {
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	MaxEncodedLen,
 	Default,
 	Debug,
@@ -968,6 +1010,7 @@ pub struct CreateFungibleData {
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	MaxEncodedLen,
 	Default,
 	PartialEq,
@@ -1001,7 +1044,16 @@ pub enum MetaUpdatePermission {
 /// Enum holding data used for creation of all three item types.
 /// Unified data for create item.
 #[derive(
-	Encode, Decode, MaxEncodedLen, PartialEq, Clone, Debug, TypeInfo, Serialize, Deserialize,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	MaxEncodedLen,
+	PartialEq,
+	Clone,
+	Debug,
+	TypeInfo,
+	Serialize,
+	Deserialize,
 )]
 pub enum CreateItemData {
 	/// Data for create NFT.
@@ -1013,7 +1065,9 @@ pub enum CreateItemData {
 }
 
 /// Extended data for create NFT.
-#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derive(
+	Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative,
+)]
 #[derivative(Debug)]
 pub struct CreateNftExData<CrossAccountId> {
 	/// Properties that wil be assignet to created item.
@@ -1034,8 +1088,17 @@ pub struct CreateRefungibleExMultipleOwners<CrossAccountId> {
 	pub properties: CollectionPropertiesVec,
 }
 
+impl<CrossAccountId: DecodeWithMemTracking> DecodeWithMemTracking
+	for CreateRefungibleExMultipleOwners<CrossAccountId>
+where
+	Self: Decode,
+{
+}
+
 /// Extended data for create ReFungible item.
-#[derive(Encode, Decode, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative)]
+#[derive(
+	Encode, Decode, DecodeWithMemTracking, MaxEncodedLen, PartialEq, Clone, TypeInfo, Derivative,
+)]
 #[derivative(Debug(bound = "CrossAccountId: fmt::Debug"))]
 pub struct CreateRefungibleExSingleOwner<CrossAccountId> {
 	pub user: CrossAccountId,
@@ -1070,6 +1133,13 @@ pub enum CreateItemExData<CrossAccountId> {
 	/// Extended data for create ReFungible item in case of
 	/// single token, which may have many owners
 	RefungibleMultipleOwners(CreateRefungibleExMultipleOwners<CrossAccountId>),
+}
+
+impl<CrossAccountId: DecodeWithMemTracking> DecodeWithMemTracking
+	for CreateItemExData<CrossAccountId>
+where
+	Self: Decode,
+{
 }
 
 impl From<CreateNftData> for CreateItemData {
@@ -1162,6 +1232,7 @@ pub type PropertyValue = BoundedBytes<ConstU32<MAX_PROPERTY_VALUE_LENGTH>>;
 #[derive(
 	Encode,
 	Decode,
+	DecodeWithMemTracking,
 	TypeInfo,
 	Debug,
 	MaxEncodedLen,
@@ -1197,7 +1268,16 @@ impl PropertyPermission {
 
 /// Property is simpl key-value record.
 #[derive(
-	Encode, Decode, Debug, TypeInfo, Clone, PartialEq, MaxEncodedLen, Serialize, Deserialize,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Debug,
+	TypeInfo,
+	Clone,
+	PartialEq,
+	MaxEncodedLen,
+	Serialize,
+	Deserialize,
 )]
 pub struct Property {
 	/// Property key.
@@ -1217,7 +1297,16 @@ impl From<Property> for (PropertyKey, PropertyValue) {
 
 /// Record for proprty key permission.
 #[derive(
-	Encode, Decode, TypeInfo, Debug, MaxEncodedLen, PartialEq, Clone, Serialize, Deserialize,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	TypeInfo,
+	Debug,
+	MaxEncodedLen,
+	PartialEq,
+	Clone,
+	Serialize,
+	Deserialize,
 )]
 pub struct PropertyKeyPermission {
 	/// Key.

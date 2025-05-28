@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode};
 use scale_info::TypeInfo;
 use sp_runtime::{
 	traits::{DispatchInfoOf, DispatchOriginOf, TransactionExtension, ValidateResult},
@@ -27,7 +27,7 @@ use sp_runtime::{
 
 use crate::{Maintenance, RuntimeCall};
 
-#[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
+#[derive(Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, Eq, Clone, TypeInfo)]
 pub struct CheckMaintenance;
 
 impl TransactionExtension<RuntimeCall> for CheckMaintenance {

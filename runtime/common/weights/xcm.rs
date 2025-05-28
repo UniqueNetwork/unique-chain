@@ -35,6 +35,12 @@ use sp_std::marker::PhantomData;
 /// Weights for pallet_xcm using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> pallet_xcm::WeightInfo for SubstrateWeight<T> {
+	fn add_authorized_alias() -> Weight {
+		Weight::default()
+	}
+	fn remove_authorized_alias() -> Weight {
+		Weight::default()
+	}
 	/// Storage: `PolkadotXcm::SupportedVersion` (r:1 w:0)
 	/// Proof: `PolkadotXcm::SupportedVersion` (`max_values`: None, `max_size`: None, mode: `Measured`)
 	/// Storage: `PolkadotXcm::VersionDiscoveryQueue` (r:1 w:1)

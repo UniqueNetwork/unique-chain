@@ -1,6 +1,9 @@
+use alloc::borrow::Cow;
+
 use pallet_gov_origins::Origin as GovOrigins;
 use pallet_ranked_collective::{Config as RankedConfig, Rank, TallyOf};
-use sp_runtime::traits::ReplaceWithDefault;
+use pallet_referenda::Track;
+use sp_runtime::{str_array, traits::ReplaceWithDefault};
 
 use super::*;
 use crate::FellowshipReferenda;
@@ -57,6 +60,7 @@ impl pallet_referenda::Config for Runtime {
 	type AlarmInterval = AlarmInterval;
 	type Tracks = TracksInfo;
 	type Preimages = Preimage;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
 }
 
 impl RankedConfig for Runtime {
@@ -114,11 +118,11 @@ pub struct TracksInfo;
 impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 	type Id = u16;
 	type RuntimeOrigin = <RuntimeOrigin as frame_support::traits::OriginTrait>::PalletsOrigin;
-	fn tracks() -> &'static [(Self::Id, pallet_referenda::TrackInfo<Balance, BlockNumber>)] {
-		static DATA: [(u16, pallet_referenda::TrackInfo<Balance, BlockNumber>); 1] = [(
-			DEMOCRACY_TRACK_ID,
-			pallet_referenda::TrackInfo {
-				name: "democracy_proposals",
+	fn tracks() -> impl Iterator<Item = Cow<'static, Track<Self::Id, Balance, BlockNumber>>> {
+		static DATA: [Track<u16, Balance, BlockNumber>; 1] = [Track {
+			id: DEMOCRACY_TRACK_ID,
+			info: pallet_referenda::TrackInfo {
+				name: str_array("democracy_proposals"),
 				max_deciding: 10,
 				decision_deposit: 10 * UNIQUE,
 				prepare_period: fellowship_timings::track::democracy_proposals::PREPARE_PERIOD,
@@ -137,8 +141,8 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 					ceil: Perbill::from_percent(50),
 				},
 			},
-		)];
-		&DATA[..]
+		}];
+		DATA.iter().map(Cow::Borrowed)
 	}
 	fn track_for(id: &Self::RuntimeOrigin) -> Result<Self::Id, ()> {
 		#[cfg(feature = "runtime-benchmarks")]
@@ -157,8 +161,6 @@ impl pallet_referenda::TracksInfo<Balance, BlockNumber> for TracksInfo {
 		}
 	}
 }
-
-pallet_referenda::impl_tracksinfo_get!(TracksInfo, Balance, BlockNumber);
 
 pub struct ClassToRankMapper<T, I>(PhantomData<(T, I)>);
 

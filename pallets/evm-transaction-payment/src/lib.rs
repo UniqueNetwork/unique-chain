@@ -140,7 +140,7 @@ where
 					<frame_system::RawOrigin<T::AccountId>>::Signed(who.clone()).into(),
 				)
 				.ok()?;
-				let who = T::CrossAccountId::from_sub(who.clone().into());
+				let who = T::CrossAccountId::from_sub(who.clone());
 				let max_fee = max_fee_per_gas.saturating_mul((*gas_limit).into());
 				let call_context = CallContext {
 					contract_address: *target,
@@ -156,7 +156,7 @@ where
 				})
 				// FIXME: it may fail with DispatchError in case of depth limit
 				.ok()??;
-				Some(sponsor.as_sub().clone().into())
+				Some(sponsor.as_sub().clone())
 			}
 			_ => None,
 		}

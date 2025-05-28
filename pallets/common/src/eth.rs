@@ -66,7 +66,7 @@ where
 {
 	let new_admin_arr = from.to_big_endian();
 	let account_id = T::AccountId::from(new_admin_arr);
-	T::CrossAccountId::from_sub(account_id.into())
+	T::CrossAccountId::from_sub(account_id)
 }
 
 /// Cross account struct
@@ -84,7 +84,7 @@ impl CrossAddress {
 		T::AccountId: AsRef<[u8; 32]>,
 	{
 		if cross_account_id.is_canonical_substrate() {
-			Self::from_sub::<T>(&(cross_account_id.as_sub().clone().into()))
+			Self::from_sub::<T>(cross_account_id.as_sub())
 		} else {
 			Self::from_eth(*cross_account_id.as_eth())
 		}

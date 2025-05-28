@@ -29,7 +29,7 @@ use pallet_evm::{
 	SubstrateBlockHashMapping,
 };
 use pallet_transaction_payment::CurrencyAdapter;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use sp_core::{H160, H256, U256};
 use sp_runtime::{
@@ -175,7 +175,19 @@ impl BackwardsAddressMapping<u64> for TestEvmBackwardsAddressMapping {
 	}
 }
 
-#[derive(Encode, Decode, Clone, PartialEq, Eq, PartialOrd, Ord, Debug, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Clone,
+	PartialEq,
+	Eq,
+	PartialOrd,
+	Ord,
+	Debug,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 pub struct TestCrossAccountId(u64, sp_core::H160, bool);
 impl CrossAccountId<u64> for TestCrossAccountId {
 	fn as_sub(&self) -> &u64 {
@@ -213,22 +225,27 @@ parameter_types! {
 	pub BlockGasLimit: U256 = 0u32.into();
 	pub WeightPerGas: Weight = Weight::from_parts(20, 0);
 	pub const PostBlockAndTxnHashes: PostLogContent = PostLogContent::BlockAndTxnHashes;
+	pub GasLimitStorageGrowthRatio: u64 = 0u64;
 }
 
 impl pallet_ethereum::Config for Test {
 	type RuntimeEvent = RuntimeEvent;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	type ExtraDataLength = ConstU32<32>;
 }
 
 impl pallet_evm::Config for Test {
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateOriginFilter = ();
+	type CreateInnerOriginFilter = ();
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type CrossAccountId = TestCrossAccountId;
 	type AddressMapping = TestEvmAddressMapping;
 	type BackwardsAddressMapping = TestEvmBackwardsAddressMapping;
 	type RuntimeEvent = RuntimeEvent;
 	type FeeCalculator = ();
+	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type CallOrigin = EnsureAddressNever<Self>;
@@ -247,7 +264,6 @@ impl pallet_evm::Config for Test {
 	type BlockHashMapping = SubstrateBlockHashMapping<Self>;
 	type Timestamp = Timestamp;
 	type GasLimitPovSizeRatio = ConstU64<0>;
-	type SuicideQuickClearLimit = ConstU32<0>;
 }
 impl pallet_evm_coder_substrate::Config for Test {}
 

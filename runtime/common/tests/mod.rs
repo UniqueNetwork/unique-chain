@@ -41,9 +41,12 @@ fn get_from_seed<TPublic: Public>(seed: &str) -> <TPublic::Pair as Pair>::Public
 fn new_test_ext(balances: Vec<(AccountId, Balance)>) -> sp_io::TestExternalities {
 	let mut storage = make_basic_storage();
 
-	pallet_balances::GenesisConfig::<Runtime> { balances }
-		.assimilate_storage(&mut storage)
-		.unwrap();
+	pallet_balances::GenesisConfig::<Runtime> {
+		balances,
+		..Default::default()
+	}
+	.assimilate_storage(&mut storage)
+	.unwrap();
 
 	let mut ext = sp_io::TestExternalities::new(storage);
 	ext.execute_with(|| System::set_block_number(1));

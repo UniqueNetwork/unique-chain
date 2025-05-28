@@ -21,4 +21,5 @@ impl pallet_scheduler::Config for Runtime {
 	type WeightInfo = crate::weights::scheduler::SubstrateWeight<Runtime>;
 	type OriginPrivilegeCmp = EqualPrivilegeOnly;
 	type Preimages = Preimage;
+	type BlockNumberProvider = frame_system::Pallet<Runtime>;
 }

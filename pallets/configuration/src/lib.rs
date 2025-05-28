@@ -24,7 +24,7 @@ use frame_support::{
 	weights::{Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 };
 pub use pallet::*;
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::TypeInfo;
 use smallvec::smallvec;
 use sp_arithmetic::{
@@ -326,7 +326,18 @@ impl<T: Config> fp_evm::FeeCalculator for FeeCalculator<T> {
 	}
 }
 
-#[derive(Encode, Decode, Clone, Debug, Default, TypeInfo, MaxEncodedLen, PartialEq, PartialOrd)]
+#[derive(
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Clone,
+	Debug,
+	Default,
+	TypeInfo,
+	MaxEncodedLen,
+	PartialEq,
+	PartialOrd,
+)]
 pub struct AppPromotionConfiguration<BlockNumber> {
 	/// In relay blocks.
 	pub recalculation_interval: Option<BlockNumber>,

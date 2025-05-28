@@ -370,7 +370,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
+	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		cumulus_client_service::build_network(cumulus_client_service::BuildNetworkParams {
 			parachain_config: &parachain_config,
 			net_config,
@@ -575,8 +575,6 @@ where
 		)?;
 	}
 
-	start_network.start_network();
-
 	Ok((task_manager, client))
 }
 
@@ -713,6 +711,7 @@ where
 		collator_key,
 		relay_chain_slot_duration,
 		reinitialize: false,
+		max_pov_percentage: None,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
@@ -818,7 +817,7 @@ where
 	);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
-	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
+	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			net_config,
@@ -1095,7 +1094,6 @@ where
 		tx_handler_controller,
 	})?;
 
-	network_starter.start_network();
 	Ok(task_manager)
 }
 

@@ -23,7 +23,8 @@ use cumulus_primitives_core::{AggregateMessageOrigin, ParaId};
 use frame_support::{
 	parameter_types,
 	traits::{
-		ConstU32, EnqueueWithOrigin, Everything, Get, Nothing, ProcessMessageError, TransformOrigin,
+		ConstU32, Disabled, EnqueueWithOrigin, Everything, Get, Nothing, ProcessMessageError,
+		TransformOrigin,
 	},
 };
 use frame_system::EnsureRoot;
@@ -182,6 +183,7 @@ where
 {
 	type RuntimeCall = RuntimeCall;
 	type XcmSender = XcmRouter;
+	type XcmEventEmitter = PolkadotXcm;
 	// How to withdraw and deposit an asset.
 	type AssetTransactor = ForeignAssets;
 	type OriginConverter = XcmOriginToTransactDispatchOrigin;
@@ -237,6 +239,7 @@ impl pallet_xcm::Config for Runtime {
 	type AdminOrigin = EnsureRoot<AccountId>;
 	type MaxRemoteLockConsumers = ConstU32<0>;
 	type RemoteLockConsumerIdentifier = ();
+	type AuthorizedAliasConsideration = Disabled;
 }
 
 #[cfg(feature = "runtime-benchmarks")]
