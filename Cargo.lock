@@ -7187,10 +7187,10 @@ dependencies = [
  "pallet-refungible",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-sponsoring",
  "pallet-state-trie-migration",
  "pallet-structure",
  "pallet-sudo",
- "pallet-template-transaction-payment",
  "pallet-test-utils",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -8698,6 +8698,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "pallet-sponsoring"
+version = "3.0.0"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "pallet-balances",
+ "pallet-transaction-payment",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-core",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
+ "up-sponsorship",
+]
+
+[[package]]
 name = "pallet-staking"
 version = "40.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8789,26 +8808,6 @@ dependencies = [
  "scale-info",
  "sp-io",
  "sp-runtime",
-]
-
-[[package]]
-name = "pallet-template-transaction-payment"
-version = "3.0.0"
-source = "git+https://github.com/uniquenetwork/pallet-sponsoring?branch=unique-polkadot-2503#33465d856819e2aa067bc82fcd6da10ac3008046"
-dependencies = [
- "frame-benchmarking",
- "frame-support",
- "frame-system",
- "pallet-balances",
- "pallet-transaction-payment",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core",
- "sp-io",
- "sp-runtime",
- "sp-std",
- "up-sponsorship",
 ]
 
 [[package]]
@@ -11060,10 +11059,10 @@ dependencies = [
  "pallet-refungible",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-sponsoring",
  "pallet-state-trie-migration",
  "pallet-structure",
  "pallet-sudo",
- "pallet-template-transaction-payment",
  "pallet-test-utils",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -16400,10 +16399,10 @@ dependencies = [
  "pallet-refungible",
  "pallet-scheduler",
  "pallet-session",
+ "pallet-sponsoring",
  "pallet-state-trie-migration",
  "pallet-structure",
  "pallet-sudo",
- "pallet-template-transaction-payment",
  "pallet-test-utils",
  "pallet-timestamp",
  "pallet-transaction-payment",
@@ -16554,7 +16553,6 @@ dependencies = [
 [[package]]
 name = "up-sponsorship"
 version = "0.1.0"
-source = "git+https://github.com/uniquenetwork/pallet-sponsoring?branch=unique-polkadot-2503#33465d856819e2aa067bc82fcd6da10ac3008046"
 dependencies = [
  "impl-trait-for-tuples",
 ]

@@ -39,7 +39,7 @@ evm-coder = { git = "https://github.com/UniqueNetwork/evm-coder.git", branch = "
 ] }
 pallet-app-promotion = { path = "pallets/app-promotion", default-features = false }
 pallet-balances-adapter = { default-features = false, path = "pallets/balances-adapter" }
-pallet-charge-transaction = { package = "pallet-template-transaction-payment", default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "unique-polkadot-2503" }
+pallet-charge-transaction = { default-features = false, package = "pallet-sponsoring", path = "pallets/sponsoring" }
 pallet-collator-selection = { default-features = false, path = "pallets/collator-selection" }
 pallet-common = { default-features = false, path = "pallets/common" }
 pallet-configuration = { default-features = false, path = "pallets/configuration" }
@@ -66,7 +66,7 @@ up-common = { path = "primitives/common", default-features = false }
 up-data-structs = { path = "primitives/data-structs", default-features = false }
 up-pov-estimate-rpc = { path = "primitives/pov-estimate-rpc", default-features = false }
 up-rpc = { path = "primitives/rpc", default-features = false }
-up-sponsorship = { default-features = false, git = "https://github.com/uniquenetwork/pallet-sponsoring", branch = "unique-polkadot-2503" }
+up-sponsorship = { path = "primitives/sponsorship", default-features = false }
 
 # Unique: Runtimes
 opal-runtime = { path = "runtime/opal" }
