@@ -169,6 +169,7 @@ macro_rules! async_run_with_runtime {
 				$runtime, $runtime_api, $executor, _
 			>(
 				&$config,
+				&$cli.eth,
 				crate::service::parachain_build_import_queue::<$runtime, _, _>,
 			)?;
 			let task_manager = $components.task_manager;
@@ -216,6 +217,7 @@ macro_rules! sync_run_with_runtime {
 				$runtime, $runtime_api, $executor, _
 			>(
 				&$config,
+				&$cli.eth,
 				crate::service::parachain_build_import_queue::<$runtime, _, _>,
 			)?;
 
@@ -368,6 +370,7 @@ pub fn run() -> Result<()> {
 						_,
 					>(
 						&config,
+						&cli.eth,
 						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
 					)?;
 					cmd.run(partials.client)
@@ -380,6 +383,7 @@ pub fn run() -> Result<()> {
 						_,
 					>(
 						&config,
+						&cli.eth,
 						crate::service::parachain_build_import_queue::<opal_runtime::Runtime, _, _>,
 					)?;
 					let db = partials.backend.expose_db();
@@ -434,7 +438,7 @@ pub fn run() -> Result<()> {
 					config.state_pruning = Some(sc_service::PruningMode::ArchiveAll);
 
 					return start_node_using_chain_runtime! {
-						start_dev_node(config, para_id, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
+						start_dev_node(config, cli.eth, para_id, cli.idle_autoseal_interval, cli.autoseal_finalization_delay, cli.disable_autoseal_on_tx).map_err(Into::into)
 					};
 				};
 
@@ -469,7 +473,7 @@ pub fn run() -> Result<()> {
 				);
 
 				start_node_using_chain_runtime! {
-					start_node(config, polkadot_config, collator_options, para_id, hwbench)
+					start_node(config, cli.eth, polkadot_config, collator_options, para_id, hwbench)
 						.await
 						.map(|r| r.0)
 						.map_err(Into::into)
