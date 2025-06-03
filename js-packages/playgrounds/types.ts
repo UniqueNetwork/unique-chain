@@ -28,8 +28,9 @@ export interface ITransactionResult {
   result: {
       dispatchError: any,
       events: IPhasicEvent[];
-  },
-  blockHash: string,
+  };
+  blockHash: string;
+  fee: bigint;
   moduleError?: string | object;
 }
 

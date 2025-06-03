@@ -36,6 +36,7 @@ use frame_support::{
 	traits::{OnRuntimeUpgrade, PalletInfo, StorageVersion},
 	weights::Weight,
 };
+use pallet_charge_transaction::ApplyFeeCoefficient;
 use sp_core::Get;
 use sp_runtime::{
 	generic, impl_opaque_keys,
@@ -86,6 +87,28 @@ pub fn native_version() -> NativeVersion {
 	}
 }
 
+type BalanceOf<T> = <<T as pallet_transaction_payment::Config>::OnChargeTransaction as pallet_transaction_payment::OnChargeTransaction<T>>::Balance;
+
+#[derive(Clone, Eq, PartialEq, scale_info::TypeInfo)]
+pub struct FeeCoefficientApplier;
+
+impl ApplyFeeCoefficient<Runtime> for FeeCoefficientApplier {
+	fn apply_calculate_coefficient(
+		call: &RuntimeCall,
+		len: usize,
+		fee: BalanceOf<Runtime>,
+	) -> BalanceOf<Runtime> {
+		let RuntimeCall::Unique(_) = call else {
+			return fee;
+		};
+		if len > 2048 {
+			fee.saturating_mul(179426).saturating_div(100000)
+		} else {
+			fee
+		}
+	}
+}
+
 pub type TxExtension = (
 	frame_system::CheckSpecVersion<Runtime>,
 	frame_system::CheckTxVersion<Runtime>,
@@ -95,7 +118,7 @@ pub type TxExtension = (
 	frame_system::CheckWeight<Runtime>,
 	maintenance::CheckMaintenance,
 	identity::DisableIdentityCalls,
-	pallet_charge_transaction::ChargeTransactionPayment<Runtime>,
+	pallet_charge_transaction::ChargeTransactionPayment<Runtime, FeeCoefficientApplier>,
 	//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 	pallet_ethereum::FakeTransactionFinalizer<Runtime>,
 	cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim<Runtime>,

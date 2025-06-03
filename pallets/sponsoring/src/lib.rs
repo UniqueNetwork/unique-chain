@@ -30,7 +30,7 @@ use sp_runtime::{
 	},
 	DispatchResult, FixedPointOperand, Weight,
 };
-use sp_std::prelude::*;
+use sp_std::{marker::PhantomData, prelude::*};
 use up_sponsorship::SponsorshipHandler;
 
 #[frame_support::pallet]
@@ -51,16 +51,21 @@ type BalanceOf<T> = <<T as pallet_transaction_payment::Config>::OnChargeTransact
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, DecodeWithMemTracking, Clone, Eq, PartialEq, TypeInfo)]
-pub struct ChargeTransactionPayment<T: Config>(#[codec(compact)] BalanceOf<T>);
+pub struct ChargeTransactionPayment<T: Config, U: ApplyFeeCoefficient<T>>(
+	#[codec(compact)] BalanceOf<T>,
+	PhantomData<U>,
+);
 
-impl<T: Config + Send + Sync> ChargeTransactionPayment<T> {
+impl<T: Config + Send + Sync, U: ApplyFeeCoefficient<T>> ChargeTransactionPayment<T, U> {
 	/// Create new `TransactionExtension`
 	pub fn new(tip: BalanceOf<T>) -> Self {
-		Self(tip)
+		Self(tip, PhantomData)
 	}
 }
 
-impl<T: Config + Send + Sync> sp_std::fmt::Debug for ChargeTransactionPayment<T> {
+impl<T: Config + Send + Sync, U: ApplyFeeCoefficient<T>> sp_std::fmt::Debug
+	for ChargeTransactionPayment<T, U>
+{
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
 		write!(f, "ChargeTransactionPayment<{:?}>", self.0)
@@ -71,20 +76,30 @@ impl<T: Config + Send + Sync> sp_std::fmt::Debug for ChargeTransactionPayment<T>
 	}
 }
 
-impl<T: Config> ChargeTransactionPayment<T>
+pub trait ApplyFeeCoefficient<T: Config> {
+	fn apply_calculate_coefficient(
+		call: &T::RuntimeCall,
+		len: usize,
+		fee: BalanceOf<T>,
+	) -> BalanceOf<T>;
+}
+
+impl<T: Config, U: ApplyFeeCoefficient<T>> ChargeTransactionPayment<T, U>
 where
 	T::RuntimeCall: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 	BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
 {
 	pub fn traditional_fee(
 		len: usize,
+		call: &T::RuntimeCall,
 		info: &DispatchInfoOf<T::RuntimeCall>,
 		tip: BalanceOf<T>,
 	) -> BalanceOf<T>
 	where
 		T::RuntimeCall: Dispatchable<Info = DispatchInfo>,
 	{
-		<pallet_transaction_payment::Pallet<T>>::compute_fee(len as u32, info, tip)
+		let fee = <pallet_transaction_payment::Pallet<T>>::compute_fee(len as u32, info, tip);
+		U::apply_calculate_coefficient(call, len, fee)
 	}
 
 	fn get_priority(
@@ -113,7 +128,7 @@ where
 		len: usize,
 	) -> Result<(BalanceOf<T>, T::AccountId), TransactionValidityError> {
 		let tip = self.0;
-		let fee = Self::traditional_fee(len, info, tip);
+		let fee = Self::traditional_fee(len, call, info, tip);
 
 		// Determine who is paying transaction fee based on ecnomic model
 		// Parse call to extract collection ID and access collection sponsor
@@ -147,8 +162,10 @@ where
 	}
 }
 
-impl<T: Config + Send + Sync + TypeInfo> TransactionExtension<T::RuntimeCall>
-	for ChargeTransactionPayment<T>
+impl<
+		T: Config + Send + Sync + TypeInfo,
+		U: ApplyFeeCoefficient<T> + Clone + Eq + Send + Sync + TypeInfo + 'static,
+	> TransactionExtension<T::RuntimeCall> for ChargeTransactionPayment<T, U>
 where
 	BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand,
 	T::RuntimeCall: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,

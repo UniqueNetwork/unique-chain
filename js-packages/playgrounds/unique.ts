@@ -607,6 +607,17 @@ export class ChainHelperBase {
     return this.transactionStatus.FAIL;
   }
 
+  getFeePaid(data: { events: { event: IEvent }[], status: any }) {
+    const {events, status} = data;
+    if(status.isInBlock || status.isFinalized) {
+      const withdrawEvent = events.find(({event: {section, method, data}}) => section === 'balances' && method === 'Withdraw');
+      if(withdrawEvent) {
+        return BigInt(withdrawEvent.event.data[1]);
+      }
+    }
+    return null;
+  }
+
   async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
@@ -622,15 +633,15 @@ export class ChainHelperBase {
       try {
         const unsub = await sign((result: any) => {
           const status = this.getTransactionStatus(result);
-
           if(status === this.transactionStatus.SUCCESS) {
             if(!result.status.isFinalized) {
               return;
             }
+            const fee = this.getFeePaid(result);
             this.logger.log(`${label} successful`);
             unsub();
             //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
-            resolve({result, status, blockHash: result.status.toHuman().Finalized});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized, fee});
           } else if(status === this.transactionStatus.FAIL) {
             let moduleError = null;
 
