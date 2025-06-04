@@ -453,7 +453,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth('Can perform transferFrom()', async ({helper}) => {
+  itEth.skip('Can perform transferFrom()', async ({helper}) => {
     // TODO: Refactor this
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
@@ -631,7 +631,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth('Can perform transferCross()', async ({helper}) => {
+  itEth.skip('Can perform transferCross()', async ({helper}) => {
     // TODO: Refactor this
 
     // const sender = await helper.eth.createAccountWithBalance(donor);
