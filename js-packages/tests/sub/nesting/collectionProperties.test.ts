@@ -228,7 +228,7 @@ describe('Integration Test: Collection Properties', () => {
         biggerPropFee = transactionResult.fee;
       }
 
-      expect(biggerPropFee > smallerPropFee * 179426n / 100000n).to.be.true;
+      expect(biggerPropFee > smallerPropFee * 179426n / 100000n, `bigger price ${biggerPropFee} smaller price ${smallerPropFee}`).to.be.true;
     });
   }));
 });

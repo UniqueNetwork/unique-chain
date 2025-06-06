@@ -41,6 +41,7 @@ use sp_core::Get;
 use sp_runtime::{
 	generic, impl_opaque_keys,
 	traits::{BlakeTwo256, BlockNumberProvider},
+	FixedPointNumber, FixedU128,
 };
 use sp_std::marker::PhantomData;
 #[cfg(not(feature = "std"))]
@@ -98,13 +99,23 @@ impl ApplyFeeCoefficient<Runtime> for FeeCoefficientApplier {
 		len: usize,
 		fee: BalanceOf<Runtime>,
 	) -> BalanceOf<Runtime> {
-		let RuntimeCall::Unique(_) = call else {
+		let RuntimeCall::Unique(runtime_call) = call else {
 			return fee;
 		};
-		if len > 2048 {
-			fee.saturating_mul(179426).saturating_div(100000)
-		} else {
-			fee
+		match runtime_call {
+			pallet_unique::Call::set_token_properties { .. }
+			| pallet_unique::Call::set_token_property_permissions { .. }
+			| pallet_unique::Call::delete_token_properties { .. }
+			| pallet_unique::Call::set_collection_properties { .. }
+			| pallet_unique::Call::delete_collection_properties { .. } => {
+				if len > 2048 {
+					FixedU128::saturating_from_rational(179426u32, 100000u32)
+						.saturating_mul_int(fee)
+				} else {
+					fee
+				}
+			}
+			_ => fee,
 		}
 	}
 }
