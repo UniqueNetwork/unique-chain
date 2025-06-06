@@ -18,15 +18,11 @@ async function main() {
   const wasmFileHash = blake2AsHex(wasmFileBytes, 256);
 
   const authorizeUpgrade = api.tx.system.authorizeUpgrade(wasmFileHash);
-  const enableMaintenance = api.tx.maintenance.enable();
 
   const councilMembers = (await api.query.council.members()).toJSON() as any[];
   const councilProposalThreshold = Math.floor(councilMembers.length / 2) + 1;
 
-  const democracyProposalContent = api.tx.utility.batchAll([
-    authorizeUpgrade.method.toHex(),
-    enableMaintenance.method.toHex(),
-  ]).method.toHex();
+  const democracyProposalContent = authorizeUpgrade.method.toHex();
 
   const democracyProposalHash = blake2AsHex(democracyProposalContent, 256);
   const democracyProposalPreimage = api.tx.preimage.notePreimage(democracyProposalContent).method.toHex();
