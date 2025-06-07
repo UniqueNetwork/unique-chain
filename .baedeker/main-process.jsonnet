@@ -28,7 +28,7 @@ local relay = {
 							minimum_backing_votes: 2,
 							needed_approvals: 2,
 							scheduler_params+: {
-								lookahead: 1,
+								lookahead: 3,
 							},
 						},
 					},
