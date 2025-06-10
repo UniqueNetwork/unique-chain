@@ -15,7 +15,7 @@ resolver = "2"
 
 [workspace.package]
 edition = "2021"
-version = "1.17.0"
+version = "1.18.0"
 
 [profile.release]
 # Runtime requires unwinding
@@ -76,8 +76,12 @@ unique-runtime = { path = "runtime/unique" }
 # Frontier (Unique patches over the Parity version)
 fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
 fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fc-db = { default-features = false, features=['sql'], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fc-mapping-sync = { features=['sql'], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
+fc-db = { default-features = false, features = [
+	'sql',
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
+fc-mapping-sync = { features = [
+	'sql',
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
 fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
 fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
 fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
