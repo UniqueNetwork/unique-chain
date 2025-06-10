@@ -33,6 +33,7 @@ use frame_system::pallet_prelude::*;
 use pallet_common::{
 	dispatch::CollectionDispatch, erc::CrossAccountId, XcmExtensions, NATIVE_FUNGIBLE_COLLECTION_ID,
 };
+use parity_scale_codec::DecodeWithMemTracking;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
 use staging_xcm::{v5::prelude::*, VersionedAssetId};
@@ -54,13 +55,33 @@ pub use module::*;
 pub use weights::WeightInfo;
 
 /// Status of storage migration from an old XCM version to a new one.
-#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone,
+	PartialEq,
+	Eq,
+	RuntimeDebug,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 pub enum MigrationStatus {
 	V3ToV5(MigrationStatusV3ToV5),
 }
 
 /// Status of storage migration from XCMv3 to XCMv5.
-#[derive(Clone, PartialEq, Eq, RuntimeDebug, Encode, Decode, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Clone,
+	PartialEq,
+	Eq,
+	RuntimeDebug,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	TypeInfo,
+	MaxEncodedLen,
+)]
 pub enum MigrationStatusV3ToV5 {
 	/// The migration is completed.
 	Done,
@@ -824,7 +845,9 @@ impl<T: Config> sp_runtime::traits::Convert<CollectionId, Option<Location>>
 	}
 }
 
-#[derive(Encode, Decode, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen)]
+#[derive(
+	Encode, Decode, DecodeWithMemTracking, Eq, Debug, Clone, PartialEq, TypeInfo, MaxEncodedLen,
+)]
 pub enum ForeignCollectionMode {
 	NFT,
 	Fungible(u8),

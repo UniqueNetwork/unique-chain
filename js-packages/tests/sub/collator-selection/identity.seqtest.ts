@@ -50,7 +50,6 @@ describe('Integration Test: Identities Manipulation', () => {
   });
 
   itSub('Normal calls do not work', async ({helper}) => {
-    // console.error = () => {};
     await expect(helper.executeExtrinsic(superuser, 'api.tx.identity.setIdentity', [{info: {display: {Raw: 'Meowser'}}}] as any))
       .to.be.rejectedWith(/Transaction call is not expected/);
   });

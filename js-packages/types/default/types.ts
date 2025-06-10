@@ -87,9 +87,7 @@ export interface CumulusPalletParachainSystemError extends Enum {
   readonly isValidationDataNotAvailable: boolean;
   readonly isHostConfigurationNotAvailable: boolean;
   readonly isNotScheduled: boolean;
-  readonly isNothingAuthorized: boolean;
-  readonly isUnauthorized: boolean;
-  readonly type: 'OverlappingUpgrades' | 'ProhibitedByPolkadot' | 'TooBig' | 'ValidationDataNotAvailable' | 'HostConfigurationNotAvailable' | 'NotScheduled' | 'NothingAuthorized' | 'Unauthorized';
+  readonly type: 'OverlappingUpgrades' | 'ProhibitedByPolkadot' | 'TooBig' | 'ValidationDataNotAvailable' | 'HostConfigurationNotAvailable' | 'NotScheduled';
 }
 
 /** @name CumulusPalletParachainSystemEvent */
@@ -257,8 +255,8 @@ export interface CumulusPrimitivesParachainInherentParachainInherentData extends
   readonly horizontalMessages: BTreeMap<u32, Vec<PolkadotCorePrimitivesInboundHrmpMessage>>;
 }
 
-/** @name CumulusPrimitivesStorageWeightReclaimStorageWeightReclaim */
-export interface CumulusPrimitivesStorageWeightReclaimStorageWeightReclaim extends Null {}
+/** @name CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim */
+export interface CumulusPrimitivesStorageWeightReclaimAllowDeprecatedStorageWeightReclaim extends Null {}
 
 /** @name EthbloomBloom */
 export interface EthbloomBloom extends U8aFixed {}
@@ -561,6 +559,9 @@ export interface FrameSupportScheduleDispatchTime extends Enum {
   readonly type: 'At' | 'After';
 }
 
+/** @name FrameSupportStorageDisabled */
+export interface FrameSupportStorageDisabled extends Null {}
+
 /** @name FrameSupportTokensMiscBalanceStatus */
 export interface FrameSupportTokensMiscBalanceStatus extends Enum {
   readonly isFree: boolean;
@@ -690,7 +691,12 @@ export interface FrameSystemEvent extends Enum {
     readonly codeHash: H256;
     readonly checkVersion: bool;
   } & Struct;
-  readonly type: 'ExtrinsicSuccess' | 'ExtrinsicFailed' | 'CodeUpdated' | 'NewAccount' | 'KilledAccount' | 'Remarked' | 'UpgradeAuthorized';
+  readonly isRejectedInvalidAuthorizedUpgrade: boolean;
+  readonly asRejectedInvalidAuthorizedUpgrade: {
+    readonly codeHash: H256;
+    readonly error: SpRuntimeDispatchError;
+  } & Struct;
+  readonly type: 'ExtrinsicSuccess' | 'ExtrinsicFailed' | 'CodeUpdated' | 'NewAccount' | 'KilledAccount' | 'Remarked' | 'UpgradeAuthorized' | 'RejectedInvalidAuthorizedUpgrade';
 }
 
 /** @name FrameSystemEventRecord */
@@ -771,6 +777,9 @@ export interface OpalRuntimeOriginCaller extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
+/** @name OpalRuntimeRuntimeCommonFeeCoefficientCalculator */
+export interface OpalRuntimeRuntimeCommonFeeCoefficientCalculator extends Null {}
+
 /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
 export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
 
@@ -794,9 +803,11 @@ export interface OpalRuntimeRuntimeHoldReason extends Enum {
   readonly asCouncil: PalletCollectiveHoldReason;
   readonly isTechnicalCommittee: boolean;
   readonly asTechnicalCommittee: PalletCollectiveHoldReason;
+  readonly isPolkadotXcm: boolean;
+  readonly asPolkadotXcm: PalletXcmHoldReason;
   readonly isFinancialCouncil: boolean;
   readonly asFinancialCouncil: PalletCollectiveHoldReason;
-  readonly type: 'StateTrieMigration' | 'CollatorSelection' | 'Preimage' | 'Council' | 'TechnicalCommittee' | 'FinancialCouncil';
+  readonly type: 'StateTrieMigration' | 'CollatorSelection' | 'Preimage' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'FinancialCouncil';
 }
 
 /** @name OrmlVestingModuleCall */
@@ -2057,7 +2068,8 @@ export interface PalletEvmError extends Enum {
   readonly isReentrancy: boolean;
   readonly isTransactionMustComeFromEOA: boolean;
   readonly isUndefined: boolean;
-  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'InvalidChainId' | 'InvalidSignature' | 'Reentrancy' | 'TransactionMustComeFromEOA' | 'Undefined';
+  readonly isCreateOriginNotAllowed: boolean;
+  readonly type: 'BalanceLow' | 'FeeOverflow' | 'PaymentOverflow' | 'WithdrawFailed' | 'GasPriceTooLow' | 'InvalidNonce' | 'GasLimitTooLow' | 'GasLimitTooHigh' | 'InvalidChainId' | 'InvalidSignature' | 'Reentrancy' | 'TransactionMustComeFromEOA' | 'Undefined' | 'CreateOriginNotAllowed';
 }
 
 /** @name PalletEvmEvent */
@@ -3043,8 +3055,8 @@ export interface PalletReferendaReferendumStatus extends Struct {
   readonly alarm: Option<ITuple<[u32, ITuple<[u32, u32]>]>>;
 }
 
-/** @name PalletReferendaTrackInfo */
-export interface PalletReferendaTrackInfo extends Struct {
+/** @name PalletReferendaTrackDetails */
+export interface PalletReferendaTrackDetails extends Struct {
   readonly name: Text;
   readonly maxDeciding: u32;
   readonly decisionDeposit: u128;
@@ -3190,7 +3202,11 @@ export interface PalletSchedulerEvent extends Enum {
     readonly task: ITuple<[u32, u32]>;
     readonly id: Option<U8aFixed>;
   } & Struct;
-  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'RetrySet' | 'RetryCancelled' | 'CallUnavailable' | 'PeriodicFailed' | 'RetryFailed' | 'PermanentlyOverweight';
+  readonly isAgendaIncomplete: boolean;
+  readonly asAgendaIncomplete: {
+    readonly when: u32;
+  } & Struct;
+  readonly type: 'Scheduled' | 'Canceled' | 'Dispatched' | 'RetrySet' | 'RetryCancelled' | 'CallUnavailable' | 'PeriodicFailed' | 'RetryFailed' | 'PermanentlyOverweight' | 'AgendaIncomplete';
 }
 
 /** @name PalletSchedulerRetryConfig */
@@ -3236,8 +3252,22 @@ export interface PalletSessionEvent extends Enum {
   readonly asNewSession: {
     readonly sessionIndex: u32;
   } & Struct;
-  readonly type: 'NewSession';
+  readonly isValidatorDisabled: boolean;
+  readonly asValidatorDisabled: {
+    readonly validator: AccountId32;
+  } & Struct;
+  readonly isValidatorReenabled: boolean;
+  readonly asValidatorReenabled: {
+    readonly validator: AccountId32;
+  } & Struct;
+  readonly type: 'NewSession' | 'ValidatorDisabled' | 'ValidatorReenabled';
 }
+
+/** @name PalletSponsoringChargeTransactionPayment */
+export interface PalletSponsoringChargeTransactionPayment extends Compact<u128> {}
+
+/** @name PalletSponsoringCheckNonce */
+export interface PalletSponsoringCheckNonce extends Compact<u32> {}
 
 /** @name PalletStateTrieMigrationCall */
 export interface PalletStateTrieMigrationCall extends Enum {
@@ -3411,12 +3441,6 @@ export interface PalletSudoEvent extends Enum {
   } & Struct;
   readonly type: 'Sudid' | 'KeyChanged' | 'KeyRemoved' | 'SudoAsDone';
 }
-
-/** @name PalletTemplateTransactionPaymentChargeTransactionPayment */
-export interface PalletTemplateTransactionPaymentChargeTransactionPayment extends Compact<u128> {}
-
-/** @name PalletTemplateTransactionPaymentCheckNonce */
-export interface PalletTemplateTransactionPaymentCheckNonce extends Compact<u32> {}
 
 /** @name PalletTestUtilsCall */
 export interface PalletTestUtilsCall extends Enum {
@@ -3841,7 +3865,17 @@ export interface PalletUtilityCall extends Enum {
     readonly call: Call;
     readonly weight: SpWeightsWeightV2Weight;
   } & Struct;
-  readonly type: 'Batch' | 'AsDerivative' | 'BatchAll' | 'DispatchAs' | 'ForceBatch' | 'WithWeight';
+  readonly isIfElse: boolean;
+  readonly asIfElse: {
+    readonly main: Call;
+    readonly fallback: Call;
+  } & Struct;
+  readonly isDispatchAsFallible: boolean;
+  readonly asDispatchAsFallible: {
+    readonly asOrigin: OpalRuntimeOriginCaller;
+    readonly call: Call;
+  } & Struct;
+  readonly type: 'Batch' | 'AsDerivative' | 'BatchAll' | 'DispatchAs' | 'ForceBatch' | 'WithWeight' | 'IfElse' | 'DispatchAsFallible';
 }
 
 /** @name PalletUtilityError */
@@ -3868,7 +3902,18 @@ export interface PalletUtilityEvent extends Enum {
   readonly asDispatchedAs: {
     readonly result: Result<Null, SpRuntimeDispatchError>;
   } & Struct;
-  readonly type: 'BatchInterrupted' | 'BatchCompleted' | 'BatchCompletedWithErrors' | 'ItemCompleted' | 'ItemFailed' | 'DispatchedAs';
+  readonly isIfElseMainSuccess: boolean;
+  readonly isIfElseFallbackCalled: boolean;
+  readonly asIfElseFallbackCalled: {
+    readonly mainError: SpRuntimeDispatchError;
+  } & Struct;
+  readonly type: 'BatchInterrupted' | 'BatchCompleted' | 'BatchCompletedWithErrors' | 'ItemCompleted' | 'ItemFailed' | 'DispatchedAs' | 'IfElseMainSuccess' | 'IfElseFallbackCalled';
+}
+
+/** @name PalletXcmAuthorizedAliasesEntry */
+export interface PalletXcmAuthorizedAliasesEntry extends Struct {
+  readonly aliasers: Vec<XcmRuntimeApisAuthorizedAliasesOriginAliaser>;
+  readonly ticket: FrameSupportStorageDisabled;
 }
 
 /** @name PalletXcmCall */
@@ -3957,7 +4002,17 @@ export interface PalletXcmCall extends Enum {
     readonly customXcmOnDest: XcmVersionedXcm;
     readonly weightLimit: XcmV3WeightLimit;
   } & Struct;
-  readonly type: 'Send' | 'TeleportAssets' | 'ReserveTransferAssets' | 'Execute' | 'ForceXcmVersion' | 'ForceDefaultXcmVersion' | 'ForceSubscribeVersionNotify' | 'ForceUnsubscribeVersionNotify' | 'LimitedReserveTransferAssets' | 'LimitedTeleportAssets' | 'ForceSuspension' | 'TransferAssets' | 'ClaimAssets' | 'TransferAssetsUsingTypeAndThen';
+  readonly isAddAuthorizedAlias: boolean;
+  readonly asAddAuthorizedAlias: {
+    readonly aliaser: XcmVersionedLocation;
+    readonly expires: Option<u64>;
+  } & Struct;
+  readonly isRemoveAuthorizedAlias: boolean;
+  readonly asRemoveAuthorizedAlias: {
+    readonly aliaser: XcmVersionedLocation;
+  } & Struct;
+  readonly isRemoveAllAuthorizedAliases: boolean;
+  readonly type: 'Send' | 'TeleportAssets' | 'ReserveTransferAssets' | 'Execute' | 'ForceXcmVersion' | 'ForceDefaultXcmVersion' | 'ForceSubscribeVersionNotify' | 'ForceUnsubscribeVersionNotify' | 'LimitedReserveTransferAssets' | 'LimitedTeleportAssets' | 'ForceSuspension' | 'TransferAssets' | 'ClaimAssets' | 'TransferAssetsUsingTypeAndThen' | 'AddAuthorizedAlias' | 'RemoveAuthorizedAlias' | 'RemoveAllAuthorizedAliases';
 }
 
 /** @name PalletXcmError */
@@ -3986,7 +4041,10 @@ export interface PalletXcmError extends Enum {
   readonly isInvalidAssetUnsupportedReserve: boolean;
   readonly isTooManyReserves: boolean;
   readonly isLocalExecutionIncomplete: boolean;
-  readonly type: 'Unreachable' | 'SendFailure' | 'Filtered' | 'UnweighableMessage' | 'DestinationNotInvertible' | 'Empty' | 'CannotReanchor' | 'TooManyAssets' | 'InvalidOrigin' | 'BadVersion' | 'BadLocation' | 'NoSubscription' | 'AlreadySubscribed' | 'CannotCheckOutTeleport' | 'LowBalance' | 'TooManyLocks' | 'AccountNotSovereign' | 'FeesNotMet' | 'LockNotFound' | 'InUse' | 'InvalidAssetUnknownReserve' | 'InvalidAssetUnsupportedReserve' | 'TooManyReserves' | 'LocalExecutionIncomplete';
+  readonly isTooManyAuthorizedAliases: boolean;
+  readonly isExpiresInPast: boolean;
+  readonly isAliasNotFound: boolean;
+  readonly type: 'Unreachable' | 'SendFailure' | 'Filtered' | 'UnweighableMessage' | 'DestinationNotInvertible' | 'Empty' | 'CannotReanchor' | 'TooManyAssets' | 'InvalidOrigin' | 'BadVersion' | 'BadLocation' | 'NoSubscription' | 'AlreadySubscribed' | 'CannotCheckOutTeleport' | 'LowBalance' | 'TooManyLocks' | 'AccountNotSovereign' | 'FeesNotMet' | 'LockNotFound' | 'InUse' | 'InvalidAssetUnknownReserve' | 'InvalidAssetUnsupportedReserve' | 'TooManyReserves' | 'LocalExecutionIncomplete' | 'TooManyAuthorizedAliases' | 'ExpiresInPast' | 'AliasNotFound';
 }
 
 /** @name PalletXcmEvent */
@@ -4000,6 +4058,19 @@ export interface PalletXcmEvent extends Enum {
     readonly origin: StagingXcmV5Location;
     readonly destination: StagingXcmV5Location;
     readonly message: StagingXcmV5Xcm;
+    readonly messageId: U8aFixed;
+  } & Struct;
+  readonly isSendFailed: boolean;
+  readonly asSendFailed: {
+    readonly origin: StagingXcmV5Location;
+    readonly destination: StagingXcmV5Location;
+    readonly error: XcmV3TraitsSendError;
+    readonly messageId: U8aFixed;
+  } & Struct;
+  readonly isProcessXcmError: boolean;
+  readonly asProcessXcmError: {
+    readonly origin: StagingXcmV5Location;
+    readonly error: XcmV5TraitsError;
     readonly messageId: U8aFixed;
   } & Struct;
   readonly isUnexpectedResponse: boolean;
@@ -4127,8 +4198,32 @@ export interface PalletXcmEvent extends Enum {
   readonly asVersionMigrationFinished: {
     readonly version: u32;
   } & Struct;
-  readonly type: 'Attempted' | 'Sent' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail' | 'InvalidQuerierVersion' | 'InvalidQuerier' | 'VersionNotifyStarted' | 'VersionNotifyRequested' | 'VersionNotifyUnrequested' | 'FeesPaid' | 'AssetsClaimed' | 'VersionMigrationFinished';
+  readonly isAliasAuthorized: boolean;
+  readonly asAliasAuthorized: {
+    readonly aliaser: StagingXcmV5Location;
+    readonly target: StagingXcmV5Location;
+    readonly expiry: Option<u64>;
+  } & Struct;
+  readonly isAliasAuthorizationRemoved: boolean;
+  readonly asAliasAuthorizationRemoved: {
+    readonly aliaser: StagingXcmV5Location;
+    readonly target: StagingXcmV5Location;
+  } & Struct;
+  readonly isAliasesAuthorizationsRemoved: boolean;
+  readonly asAliasesAuthorizationsRemoved: {
+    readonly target: StagingXcmV5Location;
+  } & Struct;
+  readonly type: 'Attempted' | 'Sent' | 'SendFailed' | 'ProcessXcmError' | 'UnexpectedResponse' | 'ResponseReady' | 'Notified' | 'NotifyOverweight' | 'NotifyDispatchError' | 'NotifyDecodeFailed' | 'InvalidResponder' | 'InvalidResponderVersion' | 'ResponseTaken' | 'AssetsTrapped' | 'VersionChangeNotified' | 'SupportedVersionChanged' | 'NotifyTargetSendFail' | 'NotifyTargetMigrationFail' | 'InvalidQuerierVersion' | 'InvalidQuerier' | 'VersionNotifyStarted' | 'VersionNotifyRequested' | 'VersionNotifyUnrequested' | 'FeesPaid' | 'AssetsClaimed' | 'VersionMigrationFinished' | 'AliasAuthorized' | 'AliasAuthorizationRemoved' | 'AliasesAuthorizationsRemoved';
 }
+
+/** @name PalletXcmHoldReason */
+export interface PalletXcmHoldReason extends Enum {
+  readonly isAuthorizeAlias: boolean;
+  readonly type: 'AuthorizeAlias';
+}
+
+/** @name PalletXcmMaxAuthorizedAliases */
+export interface PalletXcmMaxAuthorizedAliases extends Null {}
 
 /** @name PalletXcmOrigin */
 export interface PalletXcmOrigin extends Enum {
@@ -5536,6 +5631,12 @@ export interface XcmDoubleEncoded extends Struct {
   readonly encoded: Bytes;
 }
 
+/** @name XcmRuntimeApisAuthorizedAliasesOriginAliaser */
+export interface XcmRuntimeApisAuthorizedAliasesOriginAliaser extends Struct {
+  readonly location: XcmVersionedLocation;
+  readonly expiry: Option<u64>;
+}
+
 /** @name XcmV3Instruction */
 export interface XcmV3Instruction extends Enum {
   readonly isWithdrawAsset: boolean;
@@ -6020,6 +6121,18 @@ export interface XcmV3TraitsError extends Enum {
   readonly isWeightNotComputable: boolean;
   readonly isExceedsStackLimit: boolean;
   readonly type: 'Overflow' | 'Unimplemented' | 'UntrustedReserveLocation' | 'UntrustedTeleportLocation' | 'LocationFull' | 'LocationNotInvertible' | 'BadOrigin' | 'InvalidLocation' | 'AssetNotFound' | 'FailedToTransactAsset' | 'NotWithdrawable' | 'LocationCannotHold' | 'ExceedsMaxMessageSize' | 'DestinationUnsupported' | 'Transport' | 'Unroutable' | 'UnknownClaim' | 'FailedToDecode' | 'MaxWeightInvalid' | 'NotHoldingFees' | 'TooExpensive' | 'Trap' | 'ExpectationFalse' | 'PalletNotFound' | 'NameMismatch' | 'VersionIncompatible' | 'HoldingWouldOverflow' | 'ExportError' | 'ReanchorFailed' | 'NoDeal' | 'FeesNotMet' | 'LockError' | 'NoPermission' | 'Unanchored' | 'NotDepositable' | 'UnhandledXcmVersion' | 'WeightLimitReached' | 'Barrier' | 'WeightNotComputable' | 'ExceedsStackLimit';
+}
+
+/** @name XcmV3TraitsSendError */
+export interface XcmV3TraitsSendError extends Enum {
+  readonly isNotApplicable: boolean;
+  readonly isTransport: boolean;
+  readonly isUnroutable: boolean;
+  readonly isDestinationUnsupported: boolean;
+  readonly isExceedsMaxMessageSize: boolean;
+  readonly isMissingArgument: boolean;
+  readonly isFees: boolean;
+  readonly type: 'NotApplicable' | 'Transport' | 'Unroutable' | 'DestinationUnsupported' | 'ExceedsMaxMessageSize' | 'MissingArgument' | 'Fees';
 }
 
 /** @name XcmV3WeightLimit */

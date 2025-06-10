@@ -32,6 +32,7 @@ use sc_rpc::SubscriptionTaskExecutor;
 use sc_service::TransactionPool;
 use sp_api::ProvideRuntimeApi;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
+use sp_core::H256;
 use sp_inherents::CreateInherentDataProviders;
 use up_common::types::opaque::*;
 
@@ -55,18 +56,18 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all Full RPC extensions.
-pub fn create_full<C, P, R, B>(
+pub fn create_full<C, P, R, BE>(
 	io: &mut RpcModule<()>,
 	deps: FullDeps<C, P>,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError>,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
 	C::Api: RuntimeApiDep<R>,
-	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
-	P: TransactionPool<Block = Block> + 'static,
+	BE: sc_client_api::Backend<Block> + Send + Sync + 'static,
+	P: TransactionPool<Block = Block, Hash = H256> + 'static,
 	R: RuntimeInstance + Send + Sync + 'static,
 	<R as RuntimeInstance>::CrossAccountId: serde::Serialize,
 	C: sp_api::CallApiAt<
@@ -119,6 +120,8 @@ pub struct EthDeps<C, P, CIDP> {
 	pub client: Arc<C>,
 	/// Transaction pool instance.
 	pub pool: Arc<P>,
+	/// Graph pool instance.
+	pub graph: Arc<P>,
 	/// Syncing service
 	pub sync: Arc<SyncingService<Block>>,
 	/// The Node authority flag
@@ -146,20 +149,20 @@ pub struct EthDeps<C, P, CIDP> {
 	pub pending_create_inherent_data_providers: CIDP,
 }
 
-pub fn create_eth<C, R, P, B, CIDP, EC>(
+pub fn create_eth<C, R, P, BE, CIDP, EC>(
 	io: &mut RpcModule<()>,
 	deps: EthDeps<C, P, CIDP>,
 	subscription_task_executor: SubscriptionTaskExecutor,
 ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>
 where
-	C: ProvideRuntimeApi<Block> + StorageProvider<Block, B> + AuxStore,
+	C: ProvideRuntimeApi<Block> + StorageProvider<Block, BE> + AuxStore,
 	C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
 	C: Send + Sync + 'static,
 	C: BlockchainEvents<Block>,
 	C: UsageProvider<Block>,
 	C::Api: RuntimeApiDep<R>,
-	P: TransactionPool<Block = Block> + 'static,
-	B: sc_client_api::Backend<Block> + Send + Sync + 'static,
+	P: TransactionPool<Block = Block, Hash = H256> + 'static,
+	BE: sc_client_api::Backend<Block> + Send + Sync + 'static,
 	C: sp_api::CallApiAt<Block>,
 	CIDP: CreateInherentDataProviders<Block, ()> + Send + 'static,
 	EC: EthConfig<Block, C>,
@@ -173,6 +176,7 @@ where
 	let EthDeps {
 		client,
 		pool,
+		graph,
 		eth_backend,
 		max_past_logs,
 		fee_history_limit,
@@ -197,6 +201,7 @@ where
 		Eth::<_, _, _, _, _, _, EC>::new(
 			client.clone(),
 			pool.clone(),
+			graph.clone(),
 			// We have no runtimes old enough to only accept converted transactions.
 			None::<NoTransactionConverter>,
 			sync.clone(),
@@ -221,7 +226,7 @@ where
 			EthFilter::new(
 				client.clone(),
 				eth_backend,
-				pool.clone(),
+				graph,
 				filter_pool,
 				500_usize, // max stored filters
 				max_past_logs,

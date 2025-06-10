@@ -37,7 +37,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {quartz}, relay_name {kusama}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.KUSAMA_ASSETHUB_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testXcmQuartz}, runs_on {L}
+            network {quartz}, relay_name {kusama}, relay_branch {${{ env.KUSAMA_MAINNET_BRANCH }}}, assethub_version {${{ env.KUSAMA_ASSETHUB_BUILD_BRANCH }}}, acala_version {${{ env.KARURA_BUILD_BRANCH }}}, acala_repository {karura-node}, moonbeam_version {${{ env.MOONRIVER_BUILD_BRANCH }}}, astar_version {${{ env.SHIDEN_BUILD_BRANCH }}}, runtest {testXcmQuartz}, runs_on {ci}
             network {unique}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}, assethub_version {${{ env.POLKADOT_ASSETHUB_BUILD_BRANCH }}}, acala_version {${{ env.ACALA_BUILD_BRANCH }}}, acala_repository {acala-node}, moonbeam_version {${{ env.MOONBEAM_BUILD_BRANCH }}}, astar_version {${{ env.ASTAR_BUILD_BRANCH }}}, runtest {testXcmUnique}, runs_on {XL}
 
   xcm:
@@ -233,7 +233,6 @@ jobs:
         if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
         run: |
           yarn
-          yarn add mochawesome
           ../scripts/wait_for_first_block.sh
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
@@ -251,19 +250,9 @@ jobs:
         if: ${{ !cancelled() && steps.hrmp.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter mochawesome --reporter-options reportFilename=test-${NOW}
+          NOW=$(date +%s) && yarn ${{ matrix.runtest }} --reporter tap
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
-
-      - name: XCM Test Report
-        uses: phoenix-actions/test-reporting@v15
-        id: test-report
-        if: success() || failure()
-        with:
-          name: XCM Tests ${{ matrix.network }}
-          path: js-packages/tests/mochawesome-report/test-*.json
-          reporter: mochawesome-json
-          fail-on-error: 'false'
 
       - name: Remove all containers
         if: always() # run this step always

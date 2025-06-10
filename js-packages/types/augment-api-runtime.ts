@@ -18,7 +18,7 @@ import type { Extrinsic } from '@polkadot/types/interfaces/extrinsics';
 import type { GenesisBuildErr } from '@polkadot/types/interfaces/genesisBuilder';
 import type { OpaqueMetadata } from '@polkadot/types/interfaces/metadata';
 import type { FeeDetails, RuntimeDispatchInfo } from '@polkadot/types/interfaces/payment';
-import type { AccountId, Balance, Block, ExtrinsicInclusionMode, H160, H256, Header, Index, KeyTypeId, Permill, Slot, SlotDuration, Weight } from '@polkadot/types/interfaces/runtime';
+import type { AccountId, Balance, Block, ExtrinsicInclusionMode, H160, H256, Header, Index, KeyTypeId, Permill, SlotDuration, Weight } from '@polkadot/types/interfaces/runtime';
 import type { RuntimeVersion } from '@polkadot/types/interfaces/state';
 import type { ApplyExtrinsicResult, DispatchError } from '@polkadot/types/interfaces/system';
 import type { TransactionSource, TransactionValidity } from '@polkadot/types/interfaces/txqueue';
@@ -50,17 +50,6 @@ declare module '@polkadot/api-base/types/calls' {
        * Returns the slot duration for Aura.
        **/
       slotDuration: AugmentedCall<ApiType, () => Observable<SlotDuration>>;
-      /**
-       * Generic call
-       **/
-      [key: string]: DecoratedCallBase<ApiType>;
-    };
-    /** 0xd7bdd8a272ca0d65/1 */
-    auraUnincludedSegmentApi: {
-      /**
-       * Whether it is legal to extend the chain
-       **/
-      canBuildUpon: AugmentedCall<ApiType, (includedHash: BlockHash | string | Uint8Array, slot: Slot | AnyNumber | Uint8Array) => Observable<bool>>;
       /**
        * Generic call
        **/

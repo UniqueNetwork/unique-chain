@@ -37,7 +37,7 @@ use frame_support::{
 	traits::{ConstU32, Get},
 	CloneNoBound, PartialEqNoBound, RuntimeDebugNoBound,
 };
-use parity_scale_codec::{Decode, Encode, MaxEncodedLen};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
 use scale_info::{
 	build::{Fields, Variants},
 	meta_type, Path, Type, TypeInfo, TypeParameter,
@@ -51,7 +51,7 @@ use super::*;
 /// than 32-bytes then it will be truncated when encoding.
 ///
 /// Can also be `None`.
-#[derive(Clone, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
+#[derive(Clone, DecodeWithMemTracking, Eq, PartialEq, RuntimeDebug, MaxEncodedLen)]
 pub enum Data {
 	/// No data here.
 	None,
@@ -213,8 +213,21 @@ pub type RegistrarIndex = u32;
 ///
 /// NOTE: Registrars may pay little attention to some fields. Registrars may want to make clear
 /// which fields their attestation is relevant for by off-chain means.
-#[derive(Copy, Clone, Encode, Decode, Eq, PartialEq, RuntimeDebug, MaxEncodedLen, TypeInfo)]
-pub enum Judgement<Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq>
+#[derive(
+	Copy,
+	Clone,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Eq,
+	PartialEq,
+	RuntimeDebug,
+	MaxEncodedLen,
+	TypeInfo,
+)]
+pub enum Judgement<Balance>
+where
+	Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq,
 {
 	/// The default value; no opinion is held.
 	Unknown,
@@ -296,6 +309,9 @@ impl Decode for IdentityFields {
 		))
 	}
 }
+
+impl DecodeWithMemTracking for IdentityFields {}
+
 impl TypeInfo for IdentityFields {
 	type Identity = Self;
 
@@ -315,7 +331,15 @@ impl TypeInfo for IdentityFields {
 /// NOTE: This should be stored at the end of the storage item to facilitate the addition of extra
 /// fields in a backwards compatible way through a specialized `Decode` impl.
 #[derive(
-	CloneNoBound, Encode, Decode, Eq, MaxEncodedLen, PartialEqNoBound, RuntimeDebugNoBound, TypeInfo,
+	CloneNoBound,
+	Encode,
+	Decode,
+	DecodeWithMemTracking,
+	Eq,
+	MaxEncodedLen,
+	PartialEqNoBound,
+	RuntimeDebugNoBound,
+	TypeInfo,
 )]
 #[codec(mel_bound())]
 #[cfg_attr(test, derive(frame_support::DefaultNoBound))]
@@ -402,15 +426,21 @@ impl<FieldLimit: Get<u32>> IdentityInfo<FieldLimit> {
 /// NOTE: This is stored separately primarily to facilitate the addition of extra fields in a
 /// backwards compatible way through a specialized `Decode` impl.
 #[derive(
-	CloneNoBound, Encode, Eq, MaxEncodedLen, PartialEqNoBound, RuntimeDebugNoBound, TypeInfo,
+	CloneNoBound,
+	DecodeWithMemTracking,
+	Encode,
+	Eq,
+	MaxEncodedLen,
+	PartialEqNoBound,
+	RuntimeDebugNoBound,
+	TypeInfo,
 )]
 #[codec(mel_bound())]
 #[scale_info(skip_type_params(MaxJudgements, MaxAdditionalFields))]
-pub struct Registration<
+pub struct Registration<Balance, MaxJudgements: Get<u32>, MaxAdditionalFields: Get<u32>>
+where
 	Balance: Encode + Decode + MaxEncodedLen + Copy + Clone + Debug + Eq + PartialEq,
-	MaxJudgements: Get<u32>,
-	MaxAdditionalFields: Get<u32>,
-> {
+{
 	/// Judgements from the registrars on this identity. Stored ordered by `RegistrarIndex`. There
 	/// may be only a single judgement from each registrar.
 	pub judgements: BoundedVec<(RegistrarIndex, Judgement<Balance>), MaxJudgements>,

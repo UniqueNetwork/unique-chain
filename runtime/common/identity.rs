@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-use parity_scale_codec::{Decode, Encode};
+use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode};
 use scale_info::TypeInfo;
 #[cfg(feature = "governance")]
 use sp_runtime::transaction_validity::InvalidTransaction;
@@ -26,7 +26,7 @@ use sp_runtime::{
 
 use crate::RuntimeCall;
 
-#[derive(Debug, Encode, Decode, PartialEq, Eq, Clone, TypeInfo)]
+#[derive(Debug, Encode, Decode, DecodeWithMemTracking, PartialEq, Eq, Clone, TypeInfo)]
 pub struct DisableIdentityCalls;
 
 impl TransactionExtension<RuntimeCall> for DisableIdentityCalls {

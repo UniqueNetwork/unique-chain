@@ -521,6 +521,10 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       BalanceLow: AugmentedError<ApiType>;
       /**
+       * Address not allowed to deploy contracts either via CREATE or CALL(CREATE).
+       **/
+      CreateOriginNotAllowed: AugmentedError<ApiType>;
+      /**
        * Calculating total fee overflowed
        **/
       FeeOverflow: AugmentedError<ApiType>;
@@ -1001,10 +1005,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       HostConfigurationNotAvailable: AugmentedError<ApiType>;
       /**
-       * No code upgrade has been authorized.
-       **/
-      NothingAuthorized: AugmentedError<ApiType>;
-      /**
        * No validation function upgrade is currently scheduled.
        **/
       NotScheduled: AugmentedError<ApiType>;
@@ -1022,10 +1022,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       TooBig: AugmentedError<ApiType>;
       /**
-       * The given code upgrade has not been authorized.
-       **/
-      Unauthorized: AugmentedError<ApiType>;
-      /**
        * The inherent which supplies the validation data did not run this block.
        **/
       ValidationDataNotAvailable: AugmentedError<ApiType>;
@@ -1039,6 +1035,10 @@ declare module '@polkadot/api-base/types/errors' {
        * The given account is not an identifiable sovereign account for any location.
        **/
       AccountNotSovereign: AugmentedError<ApiType>;
+      /**
+       * The alias to remove authorization for was not found.
+       **/
+      AliasNotFound: AugmentedError<ApiType>;
       /**
        * The location is invalid since it already has a subscription from us.
        **/
@@ -1068,6 +1068,10 @@ declare module '@polkadot/api-base/types/errors' {
        * The assets to be sent are empty.
        **/
       Empty: AugmentedError<ApiType>;
+      /**
+       * Expiry block number is in the past.
+       **/
+      ExpiresInPast: AugmentedError<ApiType>;
       /**
        * The operation required fees to be paid which the initiator could not meet.
        **/
@@ -1117,6 +1121,10 @@ declare module '@polkadot/api-base/types/errors' {
        * Too many assets have been attempted for transfer.
        **/
       TooManyAssets: AugmentedError<ApiType>;
+      /**
+       * Too many locations authorized to alias origin.
+       **/
+      TooManyAuthorizedAliases: AugmentedError<ApiType>;
       /**
        * The asset owner has too many locks on the asset.
        **/
@@ -1665,7 +1673,7 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       XcmExecutionFailed: AugmentedError<ApiType>;
       /**
-       * The transfering asset amount is zero.
+       * The transferring asset amount is zero.
        **/
       ZeroAmount: AugmentedError<ApiType>;
       /**

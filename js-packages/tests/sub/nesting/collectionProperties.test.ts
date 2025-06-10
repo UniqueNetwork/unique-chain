@@ -197,6 +197,39 @@ describe('Integration Test: Collection Properties', () => {
       expectedConsumedSpaceDiff = sizeOfProperty(biggerProp) - sizeOfProperty(smallerProp);
       expect(consumedSpace).to.be.equal(sizeOfProperty(biggerProp) - expectedConsumedSpaceDiff);
     });
+
+    itSub('fee should be doubled for transactions size above 2kb', async({helper}) => {
+      const propKey = 'tok-prop';
+
+      const collection = await helper[testSuite.mode].mintCollection(alice);
+
+      const smallerProp = {key: propKey, value: 'a'.repeat(1800)};
+      const biggerProp = {key: propKey, value: 'b'.repeat(2048)};
+
+      let smallerPropFee;
+      {
+        const transactionResult = await helper.executeExtrinsic(
+          alice,
+          'api.tx.unique.setCollectionProperties',
+          [collection.collectionId, [smallerProp]],
+          true,
+        );
+        smallerPropFee = transactionResult.fee;
+      }
+
+      let biggerPropFee;
+      {
+        const transactionResult = await helper.executeExtrinsic(
+          alice,
+          'api.tx.unique.setCollectionProperties',
+          [collection.collectionId, [biggerProp]],
+          true,
+        );
+        biggerPropFee = transactionResult.fee;
+      }
+
+      expect(biggerPropFee > smallerPropFee * 179426n / 100000n, `bigger price ${biggerPropFee} smaller price ${smallerPropFee}`).to.be.true;
+    });
   }));
 });
 

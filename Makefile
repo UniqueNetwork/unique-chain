@@ -154,6 +154,10 @@ check:
 clippy:
 	cargo clippy --features=quartz-runtime,unique-runtime,try-runtime,runtime-benchmarks --tests
 
+.PHONY: dev
+dev:
+	cargo run --release -- --dev --idle-autoseal-interval 1000 --autoseal-finalization-delay 1 --frontier-backend-type sql
+
 .PHONY: git-hooks
 git-hooks:
 	cp .githooks/pre-commit .git/hooks/pre-commit

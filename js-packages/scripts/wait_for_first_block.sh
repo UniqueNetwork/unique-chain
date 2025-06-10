@@ -8,7 +8,11 @@ last_block_id=0
 block_id=0
 counter=0
 function get_block {
-    block_id_hex=$(do_rpc chain_getHeader | jq -r .result.number)
+    chain_header=$(do_rpc chain_getHeader)
+    block_id_hex=$(echo $chain_header | jq -r .result.number)
+    if [ $? -ne 0 ]; then
+        echo "Bad chain_getHeader response: " $chain_header
+    fi
     block_id=$((block_id_hex))
     echo Id = $block_id
 }

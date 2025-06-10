@@ -1,0 +1,11 @@
+[package]
+edition = "2021"
+name = "up-sponsorship"
+version = "0.1.0"
+
+[dependencies]
+impl-trait-for-tuples = "0.2.2"
+
+[features]
+default = ["std"]
+std = []

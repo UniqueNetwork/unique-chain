@@ -18,6 +18,7 @@
 use std::{
 	collections::BTreeMap,
 	marker::PhantomData,
+	path::Path,
 	pin::Pin,
 	sync::{Arc, Mutex},
 	time::Duration,
@@ -38,7 +39,9 @@ use cumulus_primitives_core::{CollectCollationInfo, ParaId, PersistedValidationD
 use cumulus_primitives_parachain_inherent::ParachainInherentData;
 use cumulus_relay_chain_interface::{OverseerHandle, RelayChainInterface};
 use cumulus_test_relay_sproof_builder::RelayStateSproofBuilder;
-use fc_mapping_sync::{kv::MappingSyncWorker, EthereumBlockNotificationSinks, SyncStrategy};
+use fc_mapping_sync::{
+	kv::MappingSyncWorker, sql::SyncWorker, EthereumBlockNotificationSinks, SyncStrategy,
+};
 use fc_rpc::{
 	frontier_backend_client::SystemAccountId32StorageOverride, EthBlockDataCacheTask, EthConfig,
 	EthTask, StorageOverride, StorageOverrideHandler,
@@ -74,7 +77,10 @@ use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
 
-use crate::rpc::{create_eth, create_full, EthDeps, FullDeps};
+use crate::{
+	eth::{BackendType, EthConfiguration},
+	rpc::{create_eth, create_full, EthDeps, FullDeps},
+};
 
 /// Enable the benchmarking host functions only when we want to benchmark.
 #[cfg(feature = "runtime-benchmarks")]
@@ -107,7 +113,7 @@ impl Stream for AutosealInterval {
 	}
 }
 
-pub fn open_frontier_backend<C: HeaderBackend<Block>>(
+pub fn open_frontier_key_value_backend<C: HeaderBackend<Block>>(
 	client: Arc<C>,
 	config: &Configuration,
 ) -> Result<Arc<fc_db::kv::Backend<Block, C>>, String> {
@@ -123,6 +129,45 @@ pub fn open_frontier_backend<C: HeaderBackend<Block>>(
 			},
 		},
 	)?))
+}
+
+pub fn open_frontier_sql_backend<C, B>(
+	client: Arc<C>,
+	config: &Configuration,
+	eth_config: &EthConfiguration,
+) -> Result<Arc<fc_db::sql::Backend<Block>>, String>
+where
+	C: HeaderBackend<Block> + ProvideRuntimeApi<Block> + StorageProvider<Block, B> + 'static,
+	C::Api: EthereumRuntimeRPCApi<Block>,
+	B: Backend<Block> + 'static,
+{
+	let config_dir = config.base_path.config_dir(config.chain_spec.id());
+	let database_dir = config_dir.join("frontier").join("db");
+	let storage_override = Arc::new(StorageOverrideHandler::<Block, _, _>::new(client.clone()));
+	let path = Path::new("sqlite:///")
+		.join(database_dir.clone())
+		.join("frontier.db3");
+	log::info!("Opening Frontier backend at: {}", path.to_str().unwrap());
+
+	std::fs::create_dir_all(&database_dir).expect("failed creating sql db directory");
+	Ok(Arc::new(
+		futures::executor::block_on(fc_db::sql::Backend::new(
+			fc_db::sql::BackendConfig::Sqlite(fc_db::sql::SqliteBackendConfig {
+				path: Path::new("sqlite:///")
+					.join(database_dir)
+					.join("frontier.db3")
+					.to_str()
+					.unwrap(),
+				create_if_missing: true,
+				thread_count: eth_config.frontier_sql_backend_thread_count,
+				cache_size: eth_config.frontier_sql_backend_cache_size,
+			}),
+			eth_config.frontier_sql_backend_pool_size,
+			std::num::NonZeroU32::new(eth_config.frontier_sql_backend_num_ops_timeout),
+			storage_override.clone(),
+		))
+		.map_err(|err| format!("{err}"))?,
+	))
 }
 
 type FullClient<RuntimeApi, ExecutorDispatch> =
@@ -194,6 +239,7 @@ fn ethereum_parachain_inherent() -> (sp_timestamp::InherentDataProvider, Paracha
 #[allow(clippy::type_complexity)]
 pub fn new_partial<Runtime, RuntimeApi, HF, BIQ>(
 	config: &Configuration,
+	eth_config: &EthConfiguration,
 	build_import_queue: BIQ,
 ) -> Result<
 	PartialComponents<
@@ -267,7 +313,17 @@ where
 
 	let eth_filter_pool: Option<FilterPool> = Some(Arc::new(Mutex::new(BTreeMap::new())));
 
-	let eth_backend = open_frontier_backend(client.clone(), config)?;
+	let eth_backend = match eth_config.frontier_backend_type {
+		BackendType::KeyValue => {
+			fc_db::Backend::KeyValue(open_frontier_key_value_backend(client.clone(), config)?)
+		}
+		BackendType::Sql => fc_db::Backend::Sql(open_frontier_sql_backend(
+			client.clone(),
+			config,
+			eth_config,
+		)?),
+	};
+	let eth_backend = Arc::new(eth_backend);
 
 	let import_queue = build_import_queue(
 		client.clone(),
@@ -310,6 +366,7 @@ macro_rules! clone {
 #[sc_tracing::logging::prefix_logs_with("Parachain")]
 pub async fn start_node<Runtime, RuntimeApi, HF, Network>(
 	parachain_config: Configuration,
+	eth_config: EthConfiguration,
 	polkadot_config: Configuration,
 	collator_options: CollatorOptions,
 	para_id: ParaId,
@@ -330,8 +387,11 @@ where
 {
 	let parachain_config = prepare_node_config(parachain_config);
 
-	let params =
-		new_partial::<Runtime, RuntimeApi, HF, _>(&parachain_config, parachain_build_import_queue)?;
+	let params = new_partial::<Runtime, RuntimeApi, HF, _>(
+		&parachain_config,
+		&eth_config,
+		parachain_build_import_queue,
+	)?;
 	let OtherPartial {
 		mut telemetry,
 		telemetry_worker_handle,
@@ -370,7 +430,7 @@ where
 	let transaction_pool = params.transaction_pool.clone();
 	let import_queue_service = params.import_queue.service();
 
-	let (network, system_rpc_tx, tx_handler_controller, start_network, sync_service) =
+	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		cumulus_client_service::build_network(cumulus_client_service::BuildNetworkParams {
 			parachain_config: &parachain_config,
 			net_config,
@@ -464,9 +524,15 @@ where
 
 			create_full::<_, _, Runtime, _>(&mut rpc_handle, full_deps)?;
 
+			let eth_backend: Arc<dyn fc_api::Backend<Block> + Send + Sync> = match &*eth_backend {
+				fc_db::Backend::KeyValue(backend) => backend.clone(),
+				fc_db::Backend::Sql(backend) => backend.clone(),
+			};
+
 			let eth_deps = EthDeps {
 				client,
-				pool: transaction_pool,
+				pool: transaction_pool.clone(),
+				graph: transaction_pool,
 				is_authority: validator,
 				network,
 				eth_backend,
@@ -573,8 +639,6 @@ where
 			},
 		)?;
 	}
-
-	start_network.start_network();
 
 	Ok((task_manager, client))
 }
@@ -712,6 +776,7 @@ where
 		collator_key,
 		relay_chain_slot_duration,
 		reinitialize: false,
+		max_pov_percentage: None,
 	};
 
 	task_manager.spawn_essential_handle().spawn(
@@ -747,7 +812,7 @@ pub struct OtherPartial<C: HeaderBackend<Block>> {
 	pub telemetry: Option<Telemetry>,
 	pub telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	pub eth_filter_pool: Option<FilterPool>,
-	pub eth_backend: Arc<fc_db::kv::Backend<Block, C>>,
+	pub eth_backend: Arc<fc_db::Backend<Block, C>>,
 }
 
 struct DefaultEthConfig<C>(PhantomData<C>);
@@ -763,6 +828,7 @@ where
 /// the parachain inherent
 pub fn start_dev_node<Runtime, RuntimeApi, HF, Network>(
 	config: Configuration,
+	eth_config: EthConfiguration,
 	para_id: ParaId,
 	autoseal_interval: u64,
 	autoseal_finalize_delay: Option<u64>,
@@ -803,7 +869,11 @@ where
 				eth_backend,
 				telemetry_worker_handle: _,
 			},
-	} = new_partial::<Runtime, RuntimeApi, HF, _>(&config, dev_build_import_queue::<RuntimeApi, HF>)?;
+	} = new_partial::<Runtime, RuntimeApi, HF, _>(
+		&config,
+		&eth_config,
+		dev_build_import_queue::<RuntimeApi, HF>,
+	)?;
 	let net_config = sc_network::config::FullNetworkConfiguration::<
 		Block,
 		<Block as BlockT>::Hash,
@@ -817,7 +887,7 @@ where
 	);
 	let prometheus_registry = config.prometheus_registry().cloned();
 
-	let (network, system_rpc_tx, tx_handler_controller, network_starter, sync_service) =
+	let (network, system_rpc_tx, tx_handler_controller, sync_service) =
 		sc_service::build_network(sc_service::BuildNetworkParams {
 			config: &config,
 			net_config,
@@ -1045,9 +1115,15 @@ where
 
 			create_full::<_, _, Runtime, _>(&mut rpc_module, full_deps)?;
 
+			let eth_backend: Arc<dyn fc_api::Backend<Block> + Send + Sync> = match &*eth_backend {
+				fc_db::Backend::KeyValue(backend) => backend.clone(),
+				fc_db::Backend::Sql(backend) => backend.clone(),
+			};
+
 			let eth_deps = EthDeps {
 				client,
-				pool: transaction_pool,
+				pool: transaction_pool.clone(),
+				graph: transaction_pool,
 				is_authority: true,
 				network,
 				eth_backend,
@@ -1093,7 +1169,6 @@ where
 		tx_handler_controller,
 	})?;
 
-	network_starter.start_network();
 	Ok(task_manager)
 }
 
@@ -1101,7 +1176,7 @@ pub struct FrontierTaskParams<'a, C: HeaderBackend<Block>, B> {
 	pub task_manager: &'a TaskManager,
 	pub client: Arc<C>,
 	pub substrate_backend: Arc<B>,
-	pub eth_backend: Arc<fc_db::kv::Backend<Block, C>>,
+	pub eth_backend: Arc<fc_db::Backend<Block, C>>,
 	pub eth_filter_pool: Option<FilterPool>,
 	pub overrides: Arc<dyn StorageOverride<Block>>,
 	pub fee_history_limit: u64,
@@ -1141,24 +1216,47 @@ where
 	} = params;
 	// Frontier offchain DB task. Essential.
 	// Maps emulated ethereum data to substrate native data.
-	params.task_manager.spawn_essential_handle().spawn(
-		"frontier-mapping-sync-worker",
-		Some("frontier"),
-		MappingSyncWorker::new(
-			client.import_notification_stream(),
-			Duration::new(6, 0),
-			client.clone(),
-			substrate_backend,
-			overrides.clone(),
-			eth_backend,
-			3,
-			0,
-			sync_strategy,
-			sync,
-			pubsub_notification_sinks,
-		)
-		.for_each(|()| futures::future::ready(())),
-	);
+	match &*eth_backend {
+		fc_db::Backend::KeyValue(b) => {
+			params.task_manager.spawn_essential_handle().spawn(
+				"frontier-mapping-sync-worker",
+				Some("frontier"),
+				MappingSyncWorker::new(
+					client.import_notification_stream(),
+					Duration::new(6, 0),
+					client.clone(),
+					substrate_backend,
+					overrides.clone(),
+					b.clone(),
+					3,
+					0,
+					sync_strategy,
+					sync,
+					pubsub_notification_sinks,
+				)
+				.for_each(|()| futures::future::ready(())),
+			);
+		}
+		fc_db::Backend::Sql(b) => {
+			params.task_manager.spawn_essential_handle().spawn_blocking(
+				"frontier-mapping-sync-worker",
+				Some("frontier"),
+				SyncWorker::run(
+					client.clone(),
+					substrate_backend,
+					b.clone(),
+					client.import_notification_stream(),
+					fc_mapping_sync::sql::SyncWorkerConfig {
+						read_notification_timeout: Duration::from_secs(30),
+						check_indexed_blocks_interval: Duration::from_secs(60),
+					},
+					fc_mapping_sync::SyncStrategy::Parachain,
+					sync,
+					pubsub_notification_sinks,
+				),
+			);
+		}
+	}
 
 	// Frontier `EthFilterApi` maintenance.
 	// Manages the pool of user-created Filters.

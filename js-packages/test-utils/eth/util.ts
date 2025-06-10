@@ -87,7 +87,10 @@ export function itEth(name: string, cb: (apis: { helper: EthUniqueHelper, privat
       // eslint-disable-next-line no-constant-condition
       while(true) {
         try {
+          console.log(`# /// run test ${this.test?.fullTitle()}`);
           await cb({helper, privateKey});
+          console.log(`# +++ complete ${this.test?.fullTitle()}`);
+
           break;
         } catch (error: any) {
           if(error.message.startsWith('non-canonical s')) {

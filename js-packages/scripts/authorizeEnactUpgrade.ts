@@ -15,8 +15,8 @@ await usingPlaygrounds(async (helper, privateKey) => {
   await helper.getSudo().executeExtrinsic(alice, 'api.tx.balances.forceSetBalance', [alice.address, 1000000000000000000000000000000n]);
   const balance = await helper.balance.getSubstrate(alice.address);
   console.log('Balance:', balance);
-  await helper.getSudo().executeExtrinsic(alice, 'api.tx.parachainSystem.authorizeUpgrade', [hex, true]);
-  await helper.getSudo().executeExtrinsicUncheckedWeight(alice, 'api.tx.parachainSystem.enactAuthorizedUpgrade', [u8aToHex(code)]);
+  await helper.getSudo().executeExtrinsic(alice, 'api.tx.system.authorizeUpgrade', [hex]);
+  await helper.getSudo().executeExtrinsicUncheckedWeight(alice, 'api.tx.system.applyAuthorizedUpgrade', [u8aToHex(code)]);
 });
 // We miss disconnect/unref somewhere.
 process.exit(0);

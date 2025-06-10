@@ -18,7 +18,7 @@ use std::path::PathBuf;
 
 use clap::Parser;
 
-use crate::chain_spec;
+use crate::{chain_spec, eth::EthConfiguration};
 
 /// Sub-commands supported by the collator.
 #[derive(Debug, Parser)]
@@ -111,6 +111,9 @@ pub struct Cli {
 	/// Relaychain arguments
 	#[structopt(raw = true)]
 	pub relaychain_args: Vec<String>,
+
+	#[command(flatten)]
+	pub eth: EthConfiguration,
 }
 
 impl Cli {

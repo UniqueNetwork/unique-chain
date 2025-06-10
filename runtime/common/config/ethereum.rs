@@ -46,9 +46,13 @@ parameter_types! {
 /// EVM transaction consumes more weight than substrate's, so we can't rely on them being
 /// scheduled fairly
 const EVM_DISPATCH_RATIO: Perbill = Perbill::from_percent(50);
+/// The maximum storage growth per block in bytes.
+const MAX_STORAGE_GROWTH: u64 = 400 * 1024;
 parameter_types! {
-	pub BlockGasLimit: U256 = U256::from((NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightTimePerGas::get()).ref_time());
+	pub BlockGasLimitU64: u64 = (NORMAL_DISPATCH_RATIO * EVM_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT / WeightTimePerGas::get()).ref_time();
+	pub BlockGasLimit: U256 = U256::from(BlockGasLimitU64::get());
 	pub PrecompilesValue: UniquePrecompiles<Runtime> = UniquePrecompiles::<_>::new();
+	pub GasLimitStorageGrowthRatio: u64 = BlockGasLimitU64::get() / MAX_STORAGE_GROWTH;
 }
 
 pub struct EthereumFindAuthor<F>(core::marker::PhantomData<F>);
@@ -67,11 +71,15 @@ impl<F: FindAuthor<u32>> FindAuthor<H160> for EthereumFindAuthor<F> {
 }
 
 impl pallet_evm::Config for Runtime {
+	type AccountProvider = pallet_evm::FrameSystemAccountProvider<Self>;
+	type CreateOriginFilter = ();
+	type CreateInnerOriginFilter = ();
 	type CrossAccountId = CrossAccountId;
 	type AddressMapping = HashedAddressMapping<Self::Hashing>;
 	type BackwardsAddressMapping = HashedAddressMapping<Self::Hashing>;
 	type BlockGasLimit = BlockGasLimit;
 	type FeeCalculator = pallet_configuration::FeeCalculator<Self>;
+	type GasLimitStorageGrowthRatio = GasLimitStorageGrowthRatio;
 	type GasWeightMapping = pallet_evm::FixedGasWeightMapping<Self>;
 	type WeightPerGas = WeightPerGas;
 	type BlockHashMapping = pallet_ethereum::EthereumBlockHashMapping<Self>;
@@ -93,7 +101,6 @@ impl pallet_evm::Config for Runtime {
 	type OnChargeTransaction =
 		pallet_evm_transaction_payment::WrappedEVMCurrencyAdapter<Balances, DealWithFees>;
 	type FindAuthor = EthereumFindAuthor<Aura>;
-	type SuicideQuickClearLimit = ConstU32<0>;
 	type Timestamp = crate::Timestamp;
 	type WeightInfo = pallet_evm::weights::SubstrateWeight<Self>;
 	type GasLimitPovSizeRatio = ProofSizePerGas;
@@ -111,7 +118,7 @@ parameter_types! {
 
 impl pallet_ethereum::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self>;
+	type StateRoot = pallet_ethereum::IntermediateStateRoot<Self::Version>;
 	type PostLogContent = PostBlockAndTxnHashes;
 	// Space for revert reason. Ethereum transactions are not cheap, and overall size is much less
 	// than the substrate tx size, so we can afford this

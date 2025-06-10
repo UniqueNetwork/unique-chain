@@ -27,8 +27,8 @@ use frame_support::{
 };
 pub use pallet::*;
 use pallet_evm::{
-	account::CrossAccountId, EnsureAddressOrigin, NegativeImbalanceOf, OnChargeEVMTransaction,
-	OnCheckEvmTransaction,
+	account::CrossAccountId, AccountIdOf, EnsureAddressOrigin, NegativeImbalanceOf,
+	OnChargeEVMTransaction, OnCheckEvmTransaction,
 };
 use sp_core::{H160, U256};
 use sp_runtime::{traits::UniqueSaturatedInto, DispatchError, TransactionOutcome};
@@ -222,17 +222,13 @@ pub struct WrappedEVMCurrencyAdapter<C, OU>(sp_std::marker::PhantomData<(C, OU)>
 impl<T, C, OU> OnChargeEVMTransaction<T> for WrappedEVMCurrencyAdapter<C, OU>
 where
 	T: Config,
-	C: Currency<<T as frame_system::Config>::AccountId>,
-	C::PositiveImbalance: Imbalance<
-		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::NegativeImbalance,
-	>,
-	C::NegativeImbalance: Imbalance<
-		<C as Currency<<T as frame_system::Config>::AccountId>>::Balance,
-		Opposite = C::PositiveImbalance,
-	>,
+	C: Currency<AccountIdOf<T>>,
+	C::PositiveImbalance:
+		Imbalance<<C as Currency<AccountIdOf<T>>>::Balance, Opposite = C::NegativeImbalance>,
+	C::NegativeImbalance:
+		Imbalance<<C as Currency<AccountIdOf<T>>>::Balance, Opposite = C::PositiveImbalance>,
 	OU: OnUnbalanced<NegativeImbalanceOf<C, T>>,
-	U256: UniqueSaturatedInto<<C as Currency<<T as frame_system::Config>::AccountId>>::Balance>,
+	U256: UniqueSaturatedInto<<C as Currency<AccountIdOf<T>>>::Balance>,
 {
 	// Kept type as Option to satisfy bound of Default
 	type LiquidityInfo = (Option<NegativeImbalanceOf<C, T>>, Option<T::CrossAccountId>);

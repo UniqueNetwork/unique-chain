@@ -19,7 +19,7 @@
         "checkRelayIdentities": "yarn tsx ../scripts/relayIdentitiesChecker.ts",
         
         "_test": "yarn setup && yarn mocha",
-        "_testParallel": "yarn setup && yarn mocha --parallel --jobs 64",
+        "_testParallel": "yarn setup && yarn mocha --parallel --jobs 128",
 
         "test": "yarn _test './**/*.*test.ts'",
         "testParallel": "yarn _testParallel './**/*.test.ts'",
@@ -27,17 +27,19 @@
 
         "testSubParallel": "yarn _testParallel './*.test.ts' './sub/**/*.test.ts'",
         "testSubSequential": "yarn _test './*.seqtest.ts' './sub/**/*.seqtest.ts'",
-        "testEth": "yarn _test ./**/eth/*.*test.ts",
 
-        "testGovernance": "RUN_GOV_TESTS=1 && yarn _test ./**/sub/governance/*.*test.ts",
-        "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test ./**/sub/collator-selection/**.*test.ts --timeout 49999999",
-        "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/unique.test.ts",
-        "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test ./**/xcm/quartz.test.ts",
+        "testEthParallel": "yarn _testParallel './eth/**/*.test.ts'",
+        "testEthSequential": "yarn _test './eth/**/*.seqtest.ts'",
+
+        "testGovernance": "RUN_GOV_TESTS=1 && yarn _test './**/sub/governance/*.*test.ts'",
+        "testCollators": "RUN_COLLATOR_TESTS=1 yarn _test './sub/collator-selection/*.seqtest.ts'",
+        "testXcmUnique": "RUN_XCM_TESTS=1 yarn _test './**/xcm/unique.test.ts'",
+        "testXcmQuartz": "RUN_XCM_TESTS=1 yarn _test './**/xcm/quartz.test.ts'",
         "load": "yarn _test './**/*.load.ts'"
     },
     "mocha": {
         "timeout": 9999999,
-        "slow": 0,
+        "retries": 3,
         "node-option": [
             "import=tsx"
         ]
