@@ -1,5 +1,6 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
+import {DAYS} from './blocktimes';
 
 async function main() {
   if(process.argv.length != 4) {
@@ -28,7 +29,7 @@ async function main() {
     proposalHash = proposal;
   }
 
-  const voringPeriod = 7200;
+  const voringPeriod = 1 * DAYS;
   const delay = 10;
 
   const democracyFastTrack = api.tx.democracy.fastTrack(proposalHash, voringPeriod, delay);
