@@ -2,7 +2,7 @@
   description = "Unique Network Node";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/release-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -62,6 +62,9 @@
               # Build
               cargo-edit
               rustPlatform.bindgenHook
+              pkg-config
+              # TODO: OpenSSL seems to be optional, switch usage (fc-db) to rustls, or disable irrelevant database backends (we use sqlite for storage, why do we even bring openssl dependency?)
+              openssl
 
               # Solidity stubs
               solc
@@ -72,8 +75,8 @@
               inputs'.chainql.packages.chainql
 
               # Test
-              nodejs_23
-              (yarn-berry.override { nodejs = nodejs_23; })
+              nodejs_24
+              (yarn-berry.override { nodejs = nodejs_24; })
 
               # Format
               taplo-cli
