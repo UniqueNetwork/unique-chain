@@ -39,6 +39,8 @@ pub trait WeightInfo {
 	fn set_collator_selection_desired_collators() -> Weight;
 	fn set_collator_selection_license_bond() -> Weight;
 	fn set_collator_selection_kick_threshold() -> Weight;
+	// TODO: Stubbed, need to re-run benchmarks
+	fn set_relay_block_number_checks() -> Weight;
 }
 
 /// Weights for pallet_configuration using the Substrate node and recommended hardware.
@@ -108,6 +110,10 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(5_201_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
+	fn set_relay_block_number_checks() -> Weight {
+		Weight::from_parts(5_201_000, 0)
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
 }
 
 // For backwards compatibility and tests
@@ -173,6 +179,10 @@ impl WeightInfo for () {
 		//  Measured:  `0`
 		//  Estimated: `0`
 		// Minimum execution time: 5_002_000 picoseconds.
+		Weight::from_parts(5_201_000, 0)
+			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
+	fn set_relay_block_number_checks() -> Weight {
 		Weight::from_parts(5_201_000, 0)
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
 	}

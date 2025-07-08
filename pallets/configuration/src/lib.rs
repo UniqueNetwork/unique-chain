@@ -20,11 +20,12 @@ use core::marker::PhantomData;
 
 use frame_support::{
 	pallet,
-	traits::Get,
+	traits::{ConstBool, Get},
 	weights::{Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 };
 pub use pallet::*;
 use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, MaxEncodedLen};
+use polkadot_core_primitives::BlockNumber as RelayChainBlockNumber;
 use scale_info::TypeInfo;
 use smallvec::smallvec;
 use sp_arithmetic::{
@@ -185,6 +186,10 @@ mod pallet {
 		OnEmpty = T::DefaultCollatorSelectionKickThreshold,
 	>;
 
+	#[pallet::storage]
+	pub type RelayBlockNumberChecks<T: Config> =
+		StorageValue<Value = bool, QueryKind = ValueQuery, OnEmpty = ConstBool<true>>;
+
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
@@ -288,6 +293,21 @@ mod pallet {
 			});
 			Ok(())
 		}
+
+		#[pallet::call_index(7)]
+		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
+		pub fn set_relay_block_number_checks(
+			origin: OriginFor<T>,
+			enabled: bool,
+		) -> DispatchResult {
+			ensure_root(origin)?;
+			if enabled {
+				<RelayBlockNumberChecks<T>>::kill();
+			} else {
+				<RelayBlockNumberChecks<T>>::set(false);
+			}
+			Ok(())
+		}
 	}
 
 	#[pallet::pallet]
@@ -347,4 +367,18 @@ pub struct AppPromotionConfiguration<BlockNumber> {
 	pub interval_income: Option<Perbill>,
 	/// Maximum allowable number of stakers calculated per call of the `app-promotion::PayoutStakers` extrinsic.
 	pub max_stakers_per_calculation: Option<u8>,
+}
+
+pub struct CheckAssociatedRelayNumber<T>(PhantomData<T>);
+impl<T: Config> cumulus_pallet_parachain_system::CheckAssociatedRelayNumber
+	for CheckAssociatedRelayNumber<T>
+{
+	fn check_associated_relay_number(
+		current: RelayChainBlockNumber,
+		previous: RelayChainBlockNumber,
+	) {
+		if <RelayBlockNumberChecks<T>>::get() {
+			cumulus_pallet_parachain_system::RelayNumberMonotonicallyIncreases::check_associated_relay_number(current, previous)
+		}
+	}
 }

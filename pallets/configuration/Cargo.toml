@@ -20,6 +20,9 @@ sp-std = { workspace = true }
 staging-xcm = { workspace = true }
 up-common = { workspace = true }
 
+cumulus-pallet-parachain-system = { workspace = true }
+polkadot-core-primitives = { workspace = true }
+
 hex-literal = { workspace = true }
 log = { workspace = true }
 
@@ -37,5 +40,7 @@ std = [
 	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
+	"cumulus-pallet-parachain-system/std",
+	"polkadot-core-primitives/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

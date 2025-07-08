@@ -7965,6 +7965,7 @@ dependencies = [
 name = "pallet-configuration"
 version = "0.2.0"
 dependencies = [
+ "cumulus-pallet-parachain-system",
  "fp-evm",
  "frame-benchmarking",
  "frame-support",
@@ -7972,6 +7973,7 @@ dependencies = [
  "hex-literal",
  "log",
  "parity-scale-codec",
+ "polkadot-core-primitives",
  "scale-info",
  "smallvec",
  "sp-arithmetic",
