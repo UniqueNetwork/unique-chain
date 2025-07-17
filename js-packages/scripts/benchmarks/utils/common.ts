@@ -2,6 +2,7 @@ import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
 import type {ITokenPropertyPermission, TCollectionMode} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
+import {Buffer} from "node:buffer";
 
 export const PROPERTIES = Array(40)
   .fill(0)

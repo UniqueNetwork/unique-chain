@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {Metadata} from '@polkadot/types';
-import {itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
+import {itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.ts';
 
 let metadata: Metadata;
 
@@ -27,6 +27,6 @@ describe('TxVersion is present', () => {
   });
 
   itSub('Signed extension CheckTxVersion is present', () => {
-    expect(metadata.asLatest.extrinsic.signedExtensions.map(se => se.identifier.toString())).to.include('CheckTxVersion');
+    expect(metadata.asLatest.extrinsic.transactionExtensions.map(se => se.identifier.toString())).to.include('CheckTxVersion');
   });
 });

@@ -1,25 +1,26 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import '@unique-nft/opal-testnet-types/augment-api.js';
-import '@unique-nft/opal-testnet-types/augment-types.js';
-import '@unique-nft/opal-testnet-types/types-lookup.js';
+import '@unique-nft/opal-testnet-types/augment-api.ts';
+import '@unique-nft/opal-testnet-types/augment-types.ts';
+import '@unique-nft/opal-testnet-types/types-lookup.ts';
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique.js';
-import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique.js';
+import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique.ts';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
-import * as defs from '@unique-nft/opal-testnet-types/definitions.js';
-import type {IKeyringPair} from '@polkadot/types/types';
+import * as defs from '@unique-nft/opal-testnet-types/definitions.ts';
+import type {AnyJson, IKeyringPair} from '@polkadot/types/types';
 import type {EventRecord} from '@polkadot/types/interfaces';
-import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.js';
+import type {ICrossAccountId, ILogger, IPovInfo, ISchedulerOptions, ITransactionResult, TSigner} from '@unique-nft/playgrounds/types.ts';
 import type {FrameSystemEventRecord, XcmV3TraitsError, StagingXcmV5TraitsOutcome} from '@polkadot/types/lookup';
 import type {SignerOptions, VoidFn} from '@polkadot/api/types';
-import {spawnSync} from 'child_process';
-import {AcalaHelper, AstarHelper, MoonbeamHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.js';
-import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.js';
-import type {ICollectiveGroup, IFellowshipGroup} from './governance.js';
+import {Buffer} from "node:buffer";
+import {spawnSync} from 'node:child_process';
+import {AcalaHelper, AstarHelper, MoonbeamHelper, RelayHelper, WestmintHelper, ForeignAssetsGroup, XcmGroup, XTokensGroup, TokensGroup, HydraDxHelper} from './xcm/index.ts';
+import {CollectiveGroup, CollectiveMembershipGroup, DemocracyGroup, RankedCollectiveGroup, ReferendaGroup} from './governance.ts';
+import type {ICollectiveGroup, IFellowshipGroup} from './governance.ts';
 
 export class SilentLogger {
   log(_msg: any, _level: any): void { }
@@ -616,7 +617,7 @@ export class DevRelayHelper extends RelayHelper {
     options.helperBase = options.helperBase ?? DevRelayHelper;
 
     super(logger, options);
-    this.wait = new WaitGroup(this);
+    this.wait = new WaitGroup(this as ChainHelperBase);
   }
 
   getSudo() {
@@ -736,7 +737,7 @@ export class ArrangeGroup {
     const wait = new WaitGroup(this.helper);
     const ss58Format = this.helper.chain.getChainProperties().ss58Format;
     const tokenNominal = this.helper.balance.getOneTokenNominal();
-    const transactions = [];
+    const transactions: Promise<unknown>[] = [];
     const accounts: IKeyringPair[] = [];
     for(const balance of balances) {
       const recipient = this.helper.util.fromSeed(mnemonicGenerate(), ss58Format);
@@ -801,7 +802,7 @@ export class ArrangeGroup {
         }
       }
 
-      const fullfilledAccounts = [];
+      const fullfilledAccounts: IKeyringPair[] = [];
       await Promise.allSettled(transactions);
       for(const account of accounts) {
         const accountBalance = await this.helper.balance.getSubstrate(account.address);
@@ -919,7 +920,7 @@ export class ArrangeGroup {
       return scheduledId;
     }
 
-    const ids = [];
+    const ids: string[] = [];
     for(let i = 0; i < num; i++) {
       ids.push(makeId(this.scheduledIdSlider));
       this.scheduledIdSlider += 1;
@@ -1386,11 +1387,12 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
-        lastBlock = data.number.toNumber();
-        if(lastBlock >= blockNumber) {
+        const newlastBlock = data.number.toNumber();
+        if(newlastBlock >= blockNumber) {
           unsubscribe();
           resolve();
         }
+        lastBlock = newlastBlock;
       });
     });
 
@@ -1409,12 +1411,13 @@ class WaitGroup {
     // eslint-disable-next-line no-async-promise-executor
     const promise = new Promise<void>(async (resolve) => {
       const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
-        lastBlock = data.value.relayParentNumber.toNumber();
-        if(lastBlock >= blockNumber) {
+        const newlastBlock = data.value.relayParentNumber.toNumber();
+        if(newlastBlock >= blockNumber) {
           // @ts-ignore
           unsubscribe();
           resolve();
         }
+        lastBlock = newlastBlock;
       });
     });
 
@@ -1571,7 +1574,7 @@ class TestUtilGroup {
     await this.helper.executeExtrinsic(signer, 'api.tx.testUtils.setTestValueAndRollback', [testVal], true);
   }
 
-  async testValue(blockIdx?: number) {
+  async testValue(blockIdx?: number): Promise<AnyJson> {
     const api = blockIdx
       ? await this.helper.getApi().at(await this.helper.callRpc('api.rpc.chain.getBlockHash', [blockIdx]))
       : this.helper.getApi();

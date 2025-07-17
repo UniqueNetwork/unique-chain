@@ -1,6 +1,6 @@
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {readFile} from 'fs/promises';
+import {readFile} from 'node:fs/promises';
 import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/test-utils/eth/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';

@@ -77,7 +77,7 @@ function secondsToTime(seconds: number) {
     {name: 's', seconds: second},
   ];
 
-  const time = [];
+  const time: string[] = [];
 
   for(const unit of units) {
     const value = Math.floor(seconds / unit.seconds);

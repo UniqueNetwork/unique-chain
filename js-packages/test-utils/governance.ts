@@ -1,7 +1,7 @@
 import {blake2AsHex} from '@polkadot/util-crypto';
 import type {PalletDemocracyConviction} from '@polkadot/types/lookup';
-import type {IPhasicEvent, TSigner} from '@unique-nft/playgrounds/types.js';
-import {HelperGroup, UniqueHelper} from '@unique-nft/playgrounds/unique.js';
+import type {IPhasicEvent, TSigner} from '@unique-nft/playgrounds/types.ts';
+import {HelperGroup, UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
 
 export class CollectiveGroup extends HelperGroup<UniqueHelper> {
   /**

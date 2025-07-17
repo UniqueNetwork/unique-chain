@@ -356,7 +356,7 @@ describe('Negative Integration Test createMultipleItems(collection_id, owner, it
       description: 'descr',
       tokenPrefix: 'COL',
     });
-    const prps = [];
+    const prps: {key: string, value: string}[] = [];
 
     for(let i = 0; i < 65; i++) {
       prps.push({key: `key${i}`, value: `value${i}`});

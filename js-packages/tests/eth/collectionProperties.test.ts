@@ -18,6 +18,7 @@ import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@un
 import {Pallets} from '@unique/test-utils/util.js';
 import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
+import {Buffer} from "node:buffer";
 
 describe('EVM collection properties', () => {
   let donor: IKeyringPair;

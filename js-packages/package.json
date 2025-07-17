@@ -9,6 +9,10 @@
   "private": true,
   "dependencies": {
     "@openzeppelin/contracts": "^4.9.2",
+    "@polkadot/api-base": "^16.4.1",
+    "@polkadot/keyring": "^13.5.3",
+    "@polkadot/rpc-core": "^16.4.1",
+    "@polkadot/types-codec": "^16.4.1",
     "chai-as-promised": "^7.1.1",
     "chai-like": "^1.1.1",
     "csv-writer": "^1.6.0",
@@ -49,7 +53,6 @@
     "decode-uri-component": "^0.2.1"
   },
   "type": "module",
-  "packageManager": "yarn@3.6.1",
   "workspaces": [
     "types",
     "evm-abi",

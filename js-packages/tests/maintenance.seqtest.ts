@@ -18,7 +18,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
 import {expect, itSub, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
 import {itEth} from '@unique/test-utils/eth/util.js';
-import {main as correctState} from '@unique/scripts/correctStateAfterMaintenance.js';
+import {main as correctState} from '../@unique/scripts/correctStateAfterMaintenance.js';
 import type {FrameSupportTokensMiscIdAmount} from '@polkadot/types/lookup';
 import type {Vec} from '@polkadot/types-codec';
 

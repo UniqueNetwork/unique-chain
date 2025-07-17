@@ -65,7 +65,7 @@ describe('App promotion', () => {
     await usingPlaygrounds(async (helper) => {
       const totalStakedBefore = await helper.staking.getTotalStaked();
       let stakedByUsedAccs = 0n;
-      let unstakeTxs = [];
+      let unstakeTxs: Promise<string>[] = [];
       for(const account of usedAccounts) {
         if(unstakeTxs.length === 3) {
           await Promise.all(unstakeTxs);
@@ -923,7 +923,7 @@ describe('App promotion', () => {
       // Create 30 stakes:
       await Promise.all(stakers.map(staker => helper.staking.stake(staker, 100n * nominal)));
 
-      let unstakingTxs = [];
+      let unstakingTxs: Promise<string>[] = [];
       for(const staker of stakers) {
         if(unstakingTxs.length == 3) {
           await Promise.all(unstakingTxs);

@@ -136,7 +136,7 @@ describe('Integration Test: Unnesting', () => {
     const senders = ['owner', 'admin'];
     const ops = ['transfer', 'burn'];
 
-    const cases = [];
+    const cases: any[] = [];
     for(const mode of modes) {
       const requiredPallets = (mode === 'rft')
         ? [Pallets.ReFungible]

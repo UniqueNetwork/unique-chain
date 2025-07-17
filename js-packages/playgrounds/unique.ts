@@ -39,7 +39,8 @@ import type {
   TNetworks,
   IEthCrossAccountId,
   IPhasicEvent,
-} from './types.js';
+  ITransactionStatus,
+} from './types.ts';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import {HDNodeWallet} from 'ethers';
 
@@ -146,7 +147,7 @@ const nesting = {
 };
 
 class UniqueUtil {
-  static transactionStatus = {
+  static readonly transactionStatus : {NOT_READY: 'NotReady', FAIL: ITransactionStatus, SUCCESS: ITransactionStatus} = {
     NOT_READY: 'NotReady',
     FAIL: 'Fail',
     SUCCESS: 'Success',
@@ -198,7 +199,7 @@ class UniqueUtil {
       throw Error(`Unable to create collection! Status: ${status}`);
     }
 
-    let collectionId = null;
+    let collectionId: number | null = null;
     creationResult.result.events.forEach(({event: {data, method, section}}) => {
       if((section === 'common') && (method === 'CollectionCreated')) {
         collectionId = parseInt(data[0].toString(), 10);
@@ -261,7 +262,7 @@ class UniqueUtil {
   }
 
   static findCollectionInEvents(events: { event: IEvent }[], collectionId: number, expectedSection: string, expectedMethod: string): boolean {
-    let eventId = null;
+    let eventId: number | null = null;
     events.forEach(({event: {data, method, section}}) => {
       if((section === expectedSection) && (method === expectedMethod)) {
         eventId = parseInt(data[0].toString(), 10);
@@ -618,7 +619,7 @@ export class ChainHelperBase {
     return null;
   }
 
-  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction') {
+  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction'): Promise<ITransactionResult> {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);
@@ -641,9 +642,9 @@ export class ChainHelperBase {
             this.logger.log(`${label} successful`);
             unsub();
             //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
-            resolve({result, status, blockHash: result.status.toHuman().Finalized, fee});
+            resolve({result, status, blockHash: result.status.toHuman().Finalized, fee: fee!});
           } else if(status === this.transactionStatus.FAIL) {
-            let moduleError = null;
+            let moduleError: string | null = null;
 
             if(result.hasOwnProperty('dispatchError')) {
               const dispatchError = result['dispatchError'];
@@ -834,7 +835,7 @@ export class ChainHelperBase {
 
     const startTime = (new Date()).getTime();
     let result;
-    let error = null;
+    let error: unknown = null;
     const log = {
       type: this.chainLogType.RPC,
       call: rpc,
@@ -851,7 +852,7 @@ export class ChainHelperBase {
     const endTime = (new Date()).getTime();
 
     log.executedAt = endTime;
-    log.status = (error === null ? this.transactionStatus.SUCCESS : this.transactionStatus.FAIL) as 'Fail' | 'Success';
+    log.status = error === null ? this.transactionStatus.SUCCESS : this.transactionStatus.FAIL;
     log.executionTime = endTime - startTime;
 
     this.chainLog.push(log);
@@ -878,11 +879,11 @@ export class ChainHelperBase {
 
   async fetchPhasicEventsFromBlock(blockHash: string) {
     const apiAt = await this.getApi().at(blockHash);
-    const eventRecords = (await apiAt.query.system.events()).toArray();
+    const result: any = await apiAt.query.system.events;
+    const eventRecords = result.toArray();
     return this.eventHelper.extractPhasicEvents(eventRecords);
   }
 }
-
 
 export class HelperGroup<T extends ChainHelperBase> {
   helper: T;
@@ -891,7 +892,6 @@ export class HelperGroup<T extends ChainHelperBase> {
     this.helper = uniqueHelper;
   }
 }
-
 
 class CollectionGroup extends HelperGroup<UniqueHelper> {
   /**
@@ -1924,7 +1924,7 @@ class NFTGroup extends NFTnRFT {
    * @returns array of newly created tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { properties?: IProperty[] }[]): Promise<UniqueNFToken[]> {
-    const rawTokens = [];
+    const rawTokens: {NFT: any}[] = [];
     for(const token of tokens) {
       const raw = {NFT: {properties: token.properties}};
       rawTokens.push(raw);
@@ -2089,7 +2089,7 @@ class RFTGroup extends NFTnRFT {
    * @returns array of newly created RFT tokens
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, owner: ICrossAccountId, tokens: { pieces: bigint, properties?: IProperty[] }[]): Promise<UniqueRFToken[]> {
-    const rawTokens = [];
+    const rawTokens: { ReFungible: any }[] = [];
     for(const token of tokens) {
       const raw = {ReFungible: {pieces: token.pieces, properties: token.properties}};
       rawTokens.push(raw);
@@ -2248,7 +2248,7 @@ class FTGroup extends CollectionGroup {
    * @returns ```true``` if extrinsic success, otherwise ```false```
    */
   async mintMultipleTokensWithOneOwner(signer: TSigner, collectionId: number, tokens: { value: bigint }[], owner: ICrossAccountId): Promise<boolean> {
-    const rawTokens = [];
+    const rawTokens: { Fungible: any}[] = [];
     for(const token of tokens) {
       const raw = {Fungible: {Value: token.value}};
       rawTokens.push(raw);

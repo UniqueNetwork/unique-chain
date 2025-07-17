@@ -74,7 +74,7 @@ export function constructSubInfo(identityAccount: string, subQuery: any, supers:
   ];
 }
 
-export async function getSubs(helper: ChainHelperBase) {
+export async function getSubs(helper: ChainHelperBase): Promise<[string, any][]> {
   return (await helper.getApi().query.identity.subsOf.entries()).map(([key, value]) => [extractAccountId(key), value as any]);
 }
 

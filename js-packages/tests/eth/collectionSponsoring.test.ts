@@ -18,6 +18,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
 import {itEth, expect, waitParams} from '@unique/test-utils/eth/util.js';
 import {CollectionLimitField, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
 
 describe('evm nft collection sponsoring', () => {

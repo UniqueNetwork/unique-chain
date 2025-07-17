@@ -15,11 +15,11 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect} from 'chai';
-import {Pallets} from '@unique/test-utils/util.js';
-import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.js';
-import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {CreateCollectionData} from '@unique/test-utils/eth/types.js';
+import {Pallets} from '@unique/test-utils/util.ts';
+import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.ts';
+import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util.ts';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index.ts';
+import {CreateCollectionData} from '@unique/test-utils/eth/types.ts';
 import {Contract} from 'ethers';
 
 async function recordEthFee(helper: EthUniqueHelper, userAddress: string, call: () => Promise<any>) {

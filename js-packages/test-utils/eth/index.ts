@@ -3,7 +3,7 @@
 
 /* eslint-disable function-call-argument-newline */
 
-import {readFile} from 'fs/promises';
+import {readFile} from 'node:fs/promises';
 
 import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider} from 'ethers';
 
@@ -13,10 +13,10 @@ import solc from 'solc';
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils/index.js';
+import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils/index.ts';
 
-import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.js';
-import {CollectionMode, CreateCollectionData} from './types.js';
+import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.ts';
+import {CollectionMode, CreateCollectionData} from './types.ts';
 
 // Native contracts ABI
 import collectionHelpersAbi from '@unique-nft/evm-abi/abi/collectionHelpers.json' with {type: 'json'};
@@ -30,9 +30,10 @@ import refungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleDeprecate
 import refungibleTokenAbi from '@unique-nft/evm-abi/abi/reFungibleToken.json' with {type: 'json'};
 import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleTokenDeprecated.json' with {type: 'json'};
 import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' with {type: 'json'};
-import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
+import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.ts';
+import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
-import {waitParams} from './util.js';
+import {waitParams} from './util.ts';
 
 class EthGroupBase {
   helper: EthUniqueHelper;

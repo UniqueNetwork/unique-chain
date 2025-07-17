@@ -291,7 +291,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     itSub('Fails to set more properties than it is allowed', async ({helper}) =>  {
       const collection = await helper[testSuite.mode].mintCollection(alice);
 
-      const propertiesToBeSet = [];
+      const propertiesToBeSet: {key: string, value: string}[] = [];
       for(let i = 0; i < 65; i++) {
         propertiesToBeSet.push({
           key: 'electron_' + i,
