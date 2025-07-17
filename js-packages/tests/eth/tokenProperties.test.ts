@@ -21,6 +21,7 @@ import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {Pallets} from '@unique/test-utils/util.js';
 import {UniqueNFTCollection, UniqueNFToken, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
 import {CreateCollectionData, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {Buffer} from "node:buffer";
 
 describe('EVM token properties', () => {
   let donor: IKeyringPair;

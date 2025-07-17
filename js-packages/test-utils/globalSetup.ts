@@ -4,10 +4,10 @@
 import {
   usingPlaygrounds, Pallets, DONOR_FUNDING, MINIMUM_DONOR_FUND, LOCKING_PERIOD, UNLOCKING_PERIOD, makeNames,
   INTERVAL_INCOME,
-} from './util.js';
-import * as path from 'path';
-import {promises as fs} from 'fs';
-import {DevUniqueHelper} from './index.js';
+} from './util.ts';
+import * as path from 'node:path';
+import {promises as fs} from 'node:fs';
+import {DevUniqueHelper} from './index.ts';
 import type {IKeyringPair} from '@polkadot/types/types';
 
 const {dirname} = makeNames(import.meta.url);

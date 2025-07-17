@@ -1,19 +1,19 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as path from 'path';
+import * as path from 'node:path';
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import config from '../../tests/config.js';
+import config from '../../tests/config.ts';
 
-import {EthUniqueHelper} from './index.js';
+import {EthUniqueHelper} from './index.ts';
 import {SilentLogger, SilentConsole} from '@unique/test-utils';
-import type {SchedKind} from '@unique/test-utils/util.js';
+import type {SchedKind} from '@unique/test-utils/util.ts';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames} from '@unique/test-utils/util.js';
+import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames} from '@unique/test-utils/util.ts';
 import {hexlify, toUtf8Bytes} from 'ethers';
 
 chai.use(chaiAsPromised);

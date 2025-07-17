@@ -1,4 +1,4 @@
-import types from '../lookup.js';
+import types from '../lookup.ts';
 
 export default {
   types,

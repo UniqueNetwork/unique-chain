@@ -18,6 +18,7 @@ import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
+import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
 
 // FIXME: Need erc721 for ReFubgible.

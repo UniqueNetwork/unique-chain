@@ -1,6 +1,6 @@
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {readFile} from 'fs/promises';
+import {readFile} from 'node:fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract, HDNodeWallet} from 'ethers';
 import {convertToTokens} from '../utils/common.js';

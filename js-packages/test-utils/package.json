@@ -8,7 +8,7 @@
   "name": "@unique/test-utils",
   "type": "module",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "dependencies": {
     "@polkadot/api": "15.5.2",
     "@polkadot/util": "^13.3.1",

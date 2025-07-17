@@ -138,7 +138,7 @@ describe('Native fungible', () => {
     const balanceBobBefore = await helper.balance.getSubstrate(bob.address);
     await collection.transfer(alice, {Substrate: bob.address}, 100n);
     const balanceAliceAfter = await helper.balance.getSubstrate(alice.address);
-    const balanceBobAfter = await helper.balance.getSubstrate(bob.address);
+    const balanceBobAfter: bigint = await helper.balance.getSubstrate(bob.address);
     expect(balanceAliceBefore - balanceAliceAfter > 100n).to.be.true;
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
   });
@@ -150,8 +150,8 @@ describe('Native fungible', () => {
 
     await collection.transferFrom(alice, {Substrate: alice.address}, {Substrate: bob.address}, 100n);
 
-    const balanceAliceAfter = await helper.balance.getSubstrate(alice.address);
-    const balanceBobAfter = await helper.balance.getSubstrate(bob.address);
+    const balanceAliceAfter: bigint = await helper.balance.getSubstrate(alice.address);
+    const balanceBobAfter: bigint = await helper.balance.getSubstrate(bob.address);
     expect(balanceAliceBefore - balanceAliceAfter > 100n).to.be.true;
     expect(balanceBobAfter - balanceBobBefore === 100n).to.be.true;
 

@@ -21,6 +21,7 @@ import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils
 import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from '@unique/test-utils/eth/types.js';
 import {CollectionFlag} from '@unique-nft/playgrounds/types.js';
 import type {IEthCrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.js';
+import {Buffer} from "node:buffer";
 
 const DECIMALS = 18;
 const CREATE_COLLECTION_DATA_DEFAULTS_ARRAY = [

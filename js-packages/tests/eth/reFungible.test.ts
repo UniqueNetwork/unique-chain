@@ -19,6 +19,7 @@ import {waitParams, expect, itEth, usingEthPlaygrounds, hexlifyString} from '@un
 import type {IKeyringPair} from '@polkadot/types/types';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
 import {HDNodeWallet} from 'ethers';
 

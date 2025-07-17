@@ -1,8 +1,8 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from '@unique-nft/playgrounds/unique.js';
-import type {ILogger, TSigner} from '@unique-nft/playgrounds/types.js';
-import type {AcalaAssetMetadata, DemocracyStandardAccountVote, MoonbeamAssetInfo} from './types.js';
+import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
+import type {ILogger, TSigner} from '@unique-nft/playgrounds/types.ts';
+import type {AcalaAssetMetadata, DemocracyStandardAccountVote, MoonbeamAssetInfo} from './types.ts';
 
 
 export class XcmChainHelper extends ChainHelperBase {

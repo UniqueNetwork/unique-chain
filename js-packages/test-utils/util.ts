@@ -1,19 +1,20 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
+import {it} from "https://deno.land/x/deno_mocha/mod.ts";
 
-import * as path from 'path';
-import * as crypto from 'crypto';
+import * as path from 'node:path';
+import * as crypto from 'node:crypto';
 import type {IKeyringPair} from '@polkadot/types/types/interfaces';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiSubset from 'chai-subset';
 import {Context} from 'mocha';
-import config from '../tests/config.js';
-import {ChainHelperBase} from '@unique-nft/playgrounds/unique.js';
-import type {ILogger} from '@unique-nft/playgrounds/types.js';
+import config from '../tests/config.ts';
+import {ChainHelperBase} from '@unique-nft/playgrounds/unique.ts';
+import type {ILogger} from '@unique-nft/playgrounds/types.ts';
 import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevHydraDxHelper} from '@unique/test-utils';
-import {dirname} from 'path';
-import {fileURLToPath} from 'url';
+import {dirname} from 'node:path';
+import {fileURLToPath} from 'node:url';
 
 chai.config.truncateThreshold = 0;
 chai.use(chaiAsPromised);

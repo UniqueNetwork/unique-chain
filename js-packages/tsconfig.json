@@ -11,6 +11,9 @@
 		"checkJs": false,
 		"strict": true,
 		"resolveJsonModule": true,
+		"noImplicitAny": false,
+		"emitDeclarationOnly": true,
+		"allowImportingTsExtensions": true,
 	},
 	"include": [
 		"./**/*.ts"

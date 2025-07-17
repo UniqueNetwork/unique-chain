@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import process from 'process';
+import process from 'node:process';
 
 const config = {
   relayUrl: process.env.RELAY_URL || 'ws://127.0.0.1:9844',

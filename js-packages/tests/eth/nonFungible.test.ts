@@ -20,6 +20,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {Buffer} from "node:buffer";
 
 describe('Check ERC721 token URI for NFT', () => {
   let donor: IKeyringPair;

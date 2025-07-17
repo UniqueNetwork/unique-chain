@@ -1,6 +1,7 @@
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {readFile} from 'fs/promises';
+import {Buffer} from "node:buffer";
+import {readFile} from 'node:fs/promises';
 import type {ICrossAccountId} from '@unique-nft/playgrounds/types.js';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
