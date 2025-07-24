@@ -25,7 +25,7 @@ import {Contract, HDNodeWallet} from 'ethers';
 import {usingEthPlaygrounds, expect, itEth, waitParams} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {CompiledContract} from '@unique/test-utils/eth/types.js';
-import {requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util.js';
+import {before, describe, requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util.js';
 
 const {dirname} = makeNames(import.meta.url);
 
@@ -95,7 +95,7 @@ describe('Fractionalizer contract usage', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper: EthUniqueHelper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
       donor = await privateKey({url: import.meta.url});
     });
   });

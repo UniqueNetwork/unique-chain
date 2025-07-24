@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, after} from '@unique/test-utils/util.js';
 import {expect} from '@unique/test-utils/eth/util.js';
 
 let superuser: IKeyringPair;
@@ -25,7 +25,7 @@ let palletAdmin: IKeyringPair;
 describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
+      requirePalletsOrSkip(helper, [Pallets.AppPromotion]);
       superuser = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
       palletAdmin = await privateKey('//PromotionAdmin');

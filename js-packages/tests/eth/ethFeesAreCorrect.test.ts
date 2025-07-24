@@ -16,6 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds, expect, waitParams} from '@unique/test-utils/eth/util.js';
+import {before, describe} from "@unique/test-utils/util.ts";
 
 describe('Eth fees are correct', () => {
   let donor: IKeyringPair;

@@ -16,9 +16,10 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {
-  itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD,
+  before, describe, itSub, usingPlaygrounds, Pallets, requirePalletsOrSkip, LOCKING_PERIOD,
   CALCULATION_PERIOD,
   INTERVAL_INCOME,
+  afterEach,
 } from '@unique/test-utils/util.js';
 import {DevUniqueHelper} from '@unique/test-utils';
 import {itEth, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
@@ -49,7 +50,7 @@ async function getAccounts(accountsNumber: number, balance?: bigint) {
 describe('App promotion', () => {
   before(async function () {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.AppPromotion]);
+      requirePalletsOrSkip(helper, [Pallets.AppPromotion]);
       donor = await privateKey({url: import.meta.url});
       palletAddress = helper.arrange.calculatePalletAddress('appstake');
       palletAdmin = await privateKey('//PromotionAdmin');

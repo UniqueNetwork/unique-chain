@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect, requirePalletsOrSkip, Pallets} from '@unique/test-utils/util.js';
+import {itSub, usingPlaygrounds, expect, requirePalletsOrSkip, Pallets, describe, before} from '@unique/test-utils/util.js';
 
 const U128_MAX = (1n << 128n) - 1n;
 
@@ -154,7 +154,7 @@ describe('Fungible negative tests', () => {
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+      requirePalletsOrSkip(helper, [Pallets.Fungible]);
 
       donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([100n, 100n, 100n], donor);

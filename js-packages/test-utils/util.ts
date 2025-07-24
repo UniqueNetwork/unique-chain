@@ -1,20 +1,32 @@
 // Copyright 2019-2022 Unique Network (Gibraltar) Ltd.
 // SPDX-License-Identifier: Apache-2.0
-import {it} from "https://deno.land/x/deno_mocha/mod.ts";
-
 import * as path from 'node:path';
 import * as crypto from 'node:crypto';
 import type {IKeyringPair} from '@polkadot/types/types/interfaces';
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiSubset from 'chai-subset';
-import {Context} from 'mocha';
 import config from '../tests/config.ts';
 import {ChainHelperBase} from '@unique-nft/playgrounds/unique.ts';
 import type {ILogger} from '@unique-nft/playgrounds/types.ts';
 import {DevUniqueHelper, SilentLogger, SilentConsole, DevMoonbeamHelper, DevMoonriverHelper, DevAcalaHelper, DevKaruraHelper, DevRelayHelper, DevWestmintHelper, DevStatemineHelper, DevStatemintHelper, DevAstarHelper, DevShidenHelper, DevHydraDxHelper} from '@unique/test-utils';
 import {dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {
+  afterEach as afterEachBdd,
+  beforeEach as beforeEachBdd,
+  describe as describeBdd,
+  before as beforeBdd,
+  after as afterBdd,
+  it,
+  DescribeArgs,
+  TestSuite,
+} from "jsr:@std/testing/bdd";
+import {
+  configureGlobalSanitizers,
+  type ConfigureGlobalSanitizersOptions
+} from "jsr:@std/testing/unstable-bdd";
+import process from "node:process";
 
 chai.config.truncateThreshold = 0;
 chai.use(chaiAsPromised);
@@ -117,7 +129,7 @@ export enum Pallets {
   Identity = 'identity',
   Democracy = 'democracy',
   Council = 'council',
-  //CouncilMembership = 'councilmembership',
+  CouncilMembership = 'councilmembership',
   TechnicalCommittee = 'technicalcommittee',
   Fellowship = 'fellowshipcollective',
   Preimage = 'preimage',
@@ -125,73 +137,210 @@ export enum Pallets {
   TestUtils = 'testutils',
 }
 
-export function requirePalletsOrSkip(test: Context, helper: DevUniqueHelper, requiredPallets: readonly string[]) {
-  const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
+configureGlobalSanitizers({
+  sanitizeOps: false,
+  sanitizeResources: false,
+  sanitizeExit: true
+} as ConfigureGlobalSanitizersOptions);
 
-  if(missingPallets.length > 0) {
-    const skipMsg = `\tSkipping test '${test.test?.title}'.\n\tThe following pallets are missing:\n\t- ${missingPallets.join('\n\t- ')}`;
-    console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
-    test.skip();
+export type FixedDescribe = {
+  (...args: DescribeArgs<UniqueTestContext>): TestSuite<UniqueTestContext>;
+  only: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
+  ignore: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
+  skip: (...args: DescribeArgs<UniqueTestContext>) => void;
+  ifRunGov: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
+  ifRunXcm: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
+};
+
+// Create a new function object by rebinding methods
+export const describe: FixedDescribe = Object.assign(
+  (...args: DescribeArgs<UniqueTestContext>) => describeBdd<UniqueTestContext>(...args),
+  {
+    only: (...args: DescribeArgs<UniqueTestContext>) => describeBdd.only<UniqueTestContext>(...args),
+    ignore: (...args: DescribeArgs<UniqueTestContext>) => describeBdd.ignore<UniqueTestContext>(...args),
+    skip: (...args: DescribeArgs<UniqueTestContext>) => describeBdd.skip<UniqueTestContext>(...args),
+    ifRunGov: (...args: DescribeArgs<UniqueTestContext>) => {
+      return process.env.RUN_GOV_TESTS
+        ? describeBdd<UniqueTestContext>(...args)
+        : describeBdd.skip<UniqueTestContext>(...args);
+    },
+    ifRunXcm: (...args: DescribeArgs<UniqueTestContext>) => {
+      return process.env.RUN_XCM_TESTS
+        ? describeBdd<UniqueTestContext>(...args)
+        : describeBdd.skip<UniqueTestContext>(...args);
+    },
+  }
+);
+
+export const before = (fn: (this: UniqueTestContext) => void | Promise<void>) => {
+  beforeBdd<UniqueTestContext>(wrapBddFunctionCallback(fn));
+}
+
+export const after = (fn: (this: UniqueTestContext) => void | Promise<void>) => {
+  afterBdd<UniqueTestContext>(wrapBddFunctionCallback(fn));
+}
+
+export const beforeEach = (fn: (this: UniqueTestContext) => void | Promise<void>) => {
+  beforeEachBdd<UniqueTestContext>(wrapBddFunctionCallback(fn));
+}
+
+export const afterEach = (fn: (this: UniqueTestContext) => void | Promise<void>) => {
+  afterEachBdd<UniqueTestContext>(wrapBddFunctionCallback(fn));
+}
+
+function wrapBddFunctionCallback(cb: (this: UniqueTestContext) => void | Promise<void>): (this: UniqueTestContext) => void | Promise<void> {
+  return function (this: UniqueTestContext): void | Promise<void> {
+    if (!(this instanceof UniqueTestContext)) {
+      const ctx = new UniqueTestContext();
+      Object.assign(this, ctx);
+      Object.setPrototypeOf(this, Object.getPrototypeOf(ctx));
+    }
+    try {
+      const result =  cb.call(this);
+      if (result instanceof Promise) {
+        return result.catch((e) => {
+          handleSkipError(this, e);
+        });
+      }
+      return result;
+    } catch (e) {
+      handleSkipError(this, e);
+    }
   }
 }
 
-export function itSub(name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: readonly string[] } = {}) {
-  (opts.only ? it.only :
-    opts.skip ? it.skip : it)(name, async function () {
-    await usingPlaygrounds(async (helper, privateKey) => {
-      if(opts.requiredPallets) {
-        requirePalletsOrSkip(this, helper, opts.requiredPallets);
-      }
+function handleSkipError(ctx:UniqueTestContext, e) {
+  if (e instanceof SkipError) {
+    ctx.missingPallets = e.missingPallets;
+  } else {
+    throw e;
+  }
+}
 
-      console.log(`# /// run test ${this.test?.fullTitle()}`);
-      await cb({helper, privateKey});
-      console.log(`# +++ complete ${this.test?.fullTitle()}`);
-    });
+export function requirePalletsOrSkip(helper: DevUniqueHelper, requiredPallets: readonly Pallets[]) {
+  const missingPallets = helper.fetchMissingPalletNames(requiredPallets);
+  if(missingPallets.length > 0) {
+    throw new SkipError(missingPallets);
+  }
+}
+
+export class SkipError {
+  public missingPallets: string[] | undefined;
+  public message: string | undefined;
+  constructor(missingPalletsOrMessage: string[] | string) {
+    if (typeof missingPalletsOrMessage === "string")
+      this.message = missingPalletsOrMessage;
+    else
+      this.missingPallets = missingPalletsOrMessage;
+  }
+}
+
+export function fullTitle(t: Deno.TestContext, suffix?: string): string {
+  let title: string;
+  if (suffix)
+    title = `${t.name} ${suffix}`;
+  else
+    title = t.name;
+  if (!t.parent)
+    return title;
+  else
+    return fullTitle(t.parent, title);
+}
+
+export type ItSubArgs = [
+  name: string,
+  cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => void | Promise<void>,
+  opts: {skip: boolean, only: boolean, requiredPallets?: readonly Pallets[]}
+] | [
+  name: string,
+  cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => void | Promise<void>,
+];
+
+
+export interface itSub {
+  (...args: ItSubArgs): void;
+  only(...args: ItSubArgs): void;
+  skip(...args: ItSubArgs): void;
+}
+
+const defaultOptions = {
+  skip: false,
+  only: false,
+  requiredPallets: undefined
+}; 
+
+export function itSub(...args: ItSubArgs) {
+  const [name, cb, options] = args;
+  
+  const opts = options || defaultOptions;
+  (opts.only ? it.only<UniqueTestContext> :
+    opts.skip ? it.skip<UniqueTestContext> : it<UniqueTestContext>)(name, async function (t) {
+    try {
+      if (this.missingPallets)
+        throw new SkipError(this.missingPallets);
+      await usingPlaygrounds(async (helper, privateKey) => {
+        if(opts.requiredPallets) {
+          requirePalletsOrSkip(helper, opts.requiredPallets);
+        }
+        await cb({helper, privateKey});
+      });
+    } catch(e) {
+      if (e instanceof SkipError) {
+        if (e.missingPallets) {
+          const skipMsg = `\tSkipping test '${fullTitle(t)}'.\n\tThe following pallets are missing:\n\t- ${e.missingPallets.join('\n\t- ')}`;
+          console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+        } else {
+          const skipMsg = `\tSkipping test '${fullTitle(t)}'.\n\tMessage:\n\t- ${e.message}`;
+          console.warn('\x1b[38:5:208m%s\x1b[0m', skipMsg);
+        }
+      } else {
+        throw e;
+      }
+    }
   });
 }
-export function itSubIfWithPallet(name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: readonly string[] } = {}) {
-  return itSub(name, cb, {requiredPallets: required, ...opts});
-}
-itSub.only = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {only: true});
-itSub.skip = (name: string, cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSub(name, cb, {skip: true});
 
-itSubIfWithPallet.only = (name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {only: true});
-itSubIfWithPallet.skip = (name: string, required: readonly string[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSubIfWithPallet(name, required, cb, {skip: true});
-itSub.ifWithPallets = itSubIfWithPallet;
+itSub.only = (...args: ItSubArgs) => {
+  const [name, cb, opts] = args;
+  const options = opts || { ...defaultOptions};
+  options.only = true;
+  itSub(name, cb, options);
+};
+itSub.skip = (...args: ItSubArgs) => {
+  const [name, cb, opts] = args;
+  const options = opts || { ...defaultOptions};
+  options.skip = true;
+  itSub(name, cb, options);
+};
+itSub.ifWithPallets = (name: string, requiredPallets: readonly Pallets[], cb: (apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => void | Promise<void>) => {
+  itSub(name, cb, {requiredPallets, skip: false, only: false});
+};
+
+export class UniqueTestContext {
+  public missingPallets: string[] | undefined;
+
+  public skip(message: string) {
+    throw new SkipError(message);
+  }
+}
 
 export type SchedKind = 'anon' | 'named';
 
-export function itSched(
-  name: string,
-  cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any,
-  opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {},
-) {
-  itSub(name + ' (anonymous scheduling)', (apis) => cb('anon', apis), opts);
-  itSub(name + ' (named scheduling)', (apis) => cb('named', apis), opts);
-}
-itSched.only = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {only: true});
-itSched.skip = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {skip: true});
-itSched.ifWithPallets = itSchedIfWithPallets;
+// export function itSched(
+//   name: string,
+//   cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any,
+//   opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {},
+// ) {
+//   itSub(name + ' (anonymous scheduling)', (apis) => cb('anon', apis), opts);
+//   itSub(name + ' (named scheduling)', (apis) => cb('named', apis), opts);
+// }
+// itSched.only = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {only: true});
+// itSched.skip = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {skip: true});
+// itSched.ifWithPallets = itSchedIfWithPallets;
 
-function itSchedIfWithPallets(name: string, required: string[], cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
-  return itSched(name, cb, {requiredPallets: required, ...opts});
-}
-
-export function describeXCM(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
-  (process.env.RUN_XCM_TESTS && !opts.skip
-    ? describe
-    : describe.skip)(title, fn);
-}
-
-describeXCM.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeXCM(name, fn, {skip: true});
-
-export function describeGov(title: string, fn: (this: Mocha.Suite) => void, opts: {skip?: boolean} = {}) {
-  (process.env.RUN_GOV_TESTS && !opts.skip
-    ? describe
-    : describe.skip)(title, fn);
-}
-
-describeGov.skip = (name: string, fn: (this: Mocha.Suite) => void) => describeGov(name, fn, {skip: true});
+// function itSchedIfWithPallets(name: string, required: string[], cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
+//   return itSched(name, cb, {requiredPallets: required, ...opts});
+// }
 
 export function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');

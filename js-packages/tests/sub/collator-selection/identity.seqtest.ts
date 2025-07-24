@@ -15,8 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip, after} from '@unique/test-utils/util.js';
 import {UniqueHelper} from '@unique-nft/playgrounds/unique.js';
+import process from "node:process";
 
 async function getIdentities(helper: UniqueHelper) {
   const identities: [string, any][] = [];
@@ -41,10 +42,11 @@ describe('Integration Test: Identities Manipulation', () => {
   let superuser: IKeyringPair;
 
   before(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
+    if(!process.env.RUN_COLLATOR_TESTS)
+      this.skip("RUN_COLLATOR_TESTS not set");
 
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Identity]);
+      requirePalletsOrSkip(helper, [Pallets.Identity]);
       superuser = await privateKey('//Alice');
     });
   });

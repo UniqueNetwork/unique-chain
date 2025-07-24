@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
+import {before, describe, itSub, Pallets, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
 import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.js';
 
 describe('Integration Test: Access Rights to Token Properties', () => {

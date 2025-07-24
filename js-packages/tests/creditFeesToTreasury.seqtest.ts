@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, expect, itSub, describe, before} from '@unique/test-utils/util.js';
 import type {u32} from '@polkadot/types-codec';
 import {itEth} from '@unique/test-utils/eth/util.js';
 import {ITransactionResult} from '@unique-nft/playgrounds/types';
@@ -169,7 +169,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
   itEth('Evm Transactions send fees to Treasury', async ({helper}) => {
     const value = helper.balance.getOneTokenNominal();
     const gasPrice = await helper.getGasPrice();
-    let result = null;
+    let result;
 
     const lambda = async () => {
       result = await helper.executeExtrinsic(alice, 'api.tx.evm.call', [

@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {before, describe} from "@unique/test-utils/util.ts";
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Struct} from '@polkadot/types';
 

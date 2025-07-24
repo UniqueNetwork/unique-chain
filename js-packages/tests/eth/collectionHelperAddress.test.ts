@@ -16,7 +16,7 @@
 
 import {itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util.js';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {COLLECTION_HELPER, Pallets} from '@unique/test-utils/util.js';
+import {before, describe, COLLECTION_HELPER, Pallets} from '@unique/test-utils/util.js';
 
 describe('[eth]CollectionHelperAddress test: ERC20/ERC721 ', () => {
   let donor: IKeyringPair;

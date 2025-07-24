@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '@unique/test-utils/util.js';
+import {before, describe, itSub, Pallets, usingPlaygrounds, expect, requirePalletsOrSkip, sizeOfProperty} from '@unique/test-utils/util.js';
 
 describe('Integration Test: Collection Properties', () => {
   let alice: IKeyringPair;
@@ -41,7 +41,7 @@ describe('Integration Test: Collection Properties', () => {
     before(async function() {
       // eslint-disable-next-line require-await
       await usingPlaygrounds(async helper => {
-        requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
+        requirePalletsOrSkip(helper, testSuite.requiredPallets);
       });
     });
 
@@ -252,7 +252,7 @@ describe('Negative Integration Test: Collection Properties', () => {
     before(async function() {
       // eslint-disable-next-line require-await
       await usingPlaygrounds(async helper => {
-        requirePalletsOrSkip(this, helper, testSuite.requiredPallets);
+        requirePalletsOrSkip(helper, testSuite.requiredPallets);
       });
     });
 

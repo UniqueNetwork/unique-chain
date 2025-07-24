@@ -1,16 +1,16 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, before, describe} from '@unique/test-utils/util.js';
 import {clearFellowship, democracyLaunchPeriod, democracyTrackMinRank, dummyProposalCall, fellowshipConfirmPeriod, fellowshipMinEnactPeriod, fellowshipPreparePeriod, fellowshipPropositionOrigin, initFellowship, voteUnanimouslyInFellowship} from './util.js';
 import {Event} from '@unique/test-utils';
 
-describeGov('Governance: Democracy tests', () => {
+describe.ifRunGov('Governance: Democracy tests', () => {
   let regularUser: IKeyringPair;
   let donor: IKeyringPair;
   let sudoer: IKeyringPair;
 
   before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Democracy]);
+      requirePalletsOrSkip(helper, [Pallets.Democracy]);
 
       donor = await privateKey({url: import.meta.url});
       sudoer = await privateKey('//Alice');
