@@ -3,6 +3,7 @@ import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygr
 import {DevAcalaHelper, DevAstarHelper, DevHydraDxHelper, DevMoonbeamHelper, DevRelayHelper, DevUniqueHelper, DevWestmintHelper, Event} from '@unique/test-utils';
 import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm/index.ts';
 import {IEvent} from '@unique-nft/playgrounds/types.ts';
+import process from "node:process";
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);
 export const POLKADOT_ASSETHUB_CHAIN = +(process.env.RELAY_ASSETHUB_ID || 1000);

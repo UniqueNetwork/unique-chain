@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import {itEth, expect, SponsoringMode, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {usingPlaygrounds} from '@unique/test-utils/util.js';
+import {before, describe, usingPlaygrounds} from '@unique/test-utils/util.js';
 import type {CompiledContract} from '@unique/test-utils/eth/types.js';
 import {HDNodeWallet} from 'ethers';
 import {Contract} from 'ethers';
@@ -385,10 +385,6 @@ describe('Sponsoring EVM contracts', () => {
   });
 
   itEth('Sponsoring is limited, with setContractRateLimit. The limitation is working if transactions are sent more often, the sender pays the commission.', async ({helper}) => {
-    // Skip this test when running with parallel testing to avoid `Do not know how to serialize a BigInt` error
-    // that happens outside test when comparing bigints in `expect` fails.
-    if(process.env.MOCHA_WORKER_ID != undefined)
-      return;
     const owner = await helper.eth.createAccountWithBalance(donor);
     const sponsor = await helper.eth.createAccountWithBalance(donor);
     const caller = await helper.eth.createAccountWithBalance(donor);

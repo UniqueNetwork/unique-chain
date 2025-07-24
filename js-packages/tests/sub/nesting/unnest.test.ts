@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect, itSub, Pallets, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {expect, Pallets, usingPlaygrounds, describe, before, itSub} from '@unique/test-utils/util.js';
 import {CrossAccountId, UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '@unique-nft/playgrounds/unique.js';
 
 describe('Integration Test: Unnesting', () => {
@@ -23,7 +23,7 @@ describe('Integration Test: Unnesting', () => {
   let bob: IKeyringPair;
   let charlie: IKeyringPair;
 
-  before(async () => {
+  before(async function() {
     await usingPlaygrounds(async (helper, privateKey) => {
       const donor = await privateKey({url: import.meta.url});
       [alice, bob, charlie] = await helper.arrange.createAccounts([200n, 50n, 50n], donor);

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
 import type {IKeyringPair} from '@polkadot/types/types';
@@ -27,7 +27,7 @@ describe('Check ERC721 token URI for ReFungible', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
     });
@@ -92,7 +92,7 @@ describe('Refungible: Plain calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([50n], donor);
@@ -550,7 +550,7 @@ describe('Refungible: Fees', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([50n], donor);
@@ -615,7 +615,7 @@ describe('Refungible: Substrate calls', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
       [alice] = await helper.arrange.createAccounts([50n], donor);
@@ -715,7 +715,7 @@ describe('ERC 1633 implementation', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+      requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
       donor = await privateKey({url: import.meta.url});
     });

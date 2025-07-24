@@ -16,6 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {before, describe} from "@unique/test-utils/util.ts";
 import {expect} from 'chai';
 
 describe('Send value to contract', () => {

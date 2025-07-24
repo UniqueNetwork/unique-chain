@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 
 const DECIMALS = 18;
@@ -25,7 +25,7 @@ describe('Create FT collection from EVM', () => {
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+      requirePalletsOrSkip(helper, [Pallets.Fungible]);
       donor = await privateKey({url: import.meta.url});
     });
   });

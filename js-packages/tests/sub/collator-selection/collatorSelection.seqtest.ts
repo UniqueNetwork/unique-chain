@@ -15,7 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip, after} from '@unique/test-utils/util.js';
+import process from "node:process";
 
 async function nodeAddress(name: string) {
   // eslint-disable-next-line require-await
@@ -72,13 +73,14 @@ describe('Integration Test: Collator Selection', () => {
   let licenseBond = 0n;
 
   before(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) this.skip();
+    if(!process.env.RUN_COLLATOR_TESTS)
+      this.skip("RUN_COLLATOR_TESTS not set");
 
     // Check env vars
     await getInitialInvulnerables();
 
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.CollatorSelection]);
+      requirePalletsOrSkip(helper, [Pallets.CollatorSelection]);
       superuser = await privateKey('//Alice');
 
       previousLicenseBond = await helper.collatorSelection.getLicenseBond();
@@ -102,7 +104,8 @@ describe('Integration Test: Collator Selection', () => {
       await usingPlaygrounds(async (helper) => {
         // todo:collator see again if blocks start to be finalized in dev mode
         // Skip the collator block production in dev mode, since the blocks are sealed automatically.
-        if(await helper.arrange.isDevNode()) this.skip();
+        if(await helper.arrange.isDevNode())
+          this.skip("Disabled for dev node");
 
         [alphaNode, betaNode, gammaNode, deltaNode] = await getInitialInvulnerables();
 

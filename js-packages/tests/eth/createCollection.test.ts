@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
 import {CREATE_COLLECTION_DATA_DEFAULTS, CollectionLimitField, CollectionMode, CreateCollectionData, TokenPermissionField, emptyAddress} from '@unique/test-utils/eth/types.js';
 import {CollectionFlag} from '@unique-nft/playgrounds/types.js';
@@ -57,7 +57,7 @@ describe('Create collection from EVM', () => {
   describe('Fungible collection', () => {
     before(async function() {
       await usingEthPlaygrounds((helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.Fungible]);
+        requirePalletsOrSkip(helper, [Pallets.Fungible]);
         return Promise.resolve();
       });
     });
@@ -180,7 +180,7 @@ describe('Create collection from EVM', () => {
   describe('Nonfungible collection', () => {
     before(async function() {
       await usingEthPlaygrounds((helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.NFT]);
+        requirePalletsOrSkip(helper, [Pallets.NFT]);
         return Promise.resolve();
       });
     });
@@ -256,7 +256,7 @@ describe('Create collection from EVM', () => {
   describe('Create RFT collection from EVM', () => {
     before(async function() {
       await usingEthPlaygrounds((helper) => {
-        requirePalletsOrSkip(this, helper, [Pallets.ReFungible]);
+        requirePalletsOrSkip(helper, [Pallets.ReFungible]);
         return Promise.resolve();
       });
     });

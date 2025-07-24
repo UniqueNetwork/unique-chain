@@ -16,10 +16,11 @@
 
 import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util.js';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {before, describe} from "@unique/test-utils/util.ts";
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
 import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.js';
-import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from '@unique/test-utils/eth/types.js';
 import {Buffer} from "node:buffer";
 
 describe('Check ERC721 token URI for NFT', () => {

@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
+import {before, describe, itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
 
 // Pallets that must always be present
 const requiredPallets = [

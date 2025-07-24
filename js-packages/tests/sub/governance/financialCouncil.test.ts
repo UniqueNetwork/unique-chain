@@ -1,10 +1,10 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, describeGov} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, describe, before, beforeEach, afterEach} from '@unique/test-utils/util.js';
 import {Event} from '@unique/test-utils';
 import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.js';
 
 
-describeGov('Governance: Financial Council tests', () => {
+describe.ifRunGov('Governance: Financial Council tests', () => {
   let donor: IKeyringPair;
   let finCounselors: IFinCounselors;
   let sudoer: IKeyringPair;
