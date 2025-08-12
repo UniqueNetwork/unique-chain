@@ -3524,7 +3524,7 @@ dependencies = [
 [[package]]
 name = "fc-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "async-trait",
  "fp-storage",
@@ -3536,7 +3536,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "async-trait",
  "fp-consensus",
@@ -3552,7 +3552,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "async-trait",
  "ethereum",
@@ -3582,7 +3582,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "fc-db",
  "fc-storage",
@@ -3605,7 +3605,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3655,7 +3655,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3670,7 +3670,7 @@ dependencies = [
 [[package]]
 name = "fc-storage"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3851,7 +3851,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3870,7 +3870,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3881,7 +3881,7 @@ dependencies = [
 [[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3893,7 +3893,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "environmental",
  "evm",
@@ -3910,7 +3910,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3926,7 +3926,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3938,7 +3938,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -7762,7 +7762,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -8095,7 +8095,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -8118,7 +8118,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -8198,7 +8198,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503#f76ebdf2b75587160115a319b346f9c4f7b7147c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
 dependencies = [
  "fp-evm",
  "ripemd",

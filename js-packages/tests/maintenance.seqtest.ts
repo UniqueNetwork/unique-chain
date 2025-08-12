@@ -23,7 +23,7 @@ import type {FrameSupportTokensMiscIdAmount} from '@polkadot/types/lookup';
 import type {Vec} from '@polkadot/types-codec';
 
 async function maintenanceEnabled(api: ApiPromise): Promise<boolean> {
-  return (await api.query.maintenance.enabled()).toJSON() as boolean;
+  return (await api.query.maintenance.enabled()).toPrimitive();
 }
 
 describe('Integration Test: Maintenance Functionality', () => {
