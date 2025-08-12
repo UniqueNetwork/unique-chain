@@ -146,7 +146,7 @@ describe('Supports ERC721Metadata', () => {
   });
 
   [
-    {case: 'nft' as const},
+    {case: 'nft' as const, requiredPallets: []},
     {case: 'rft' as const, requiredPallets: [Pallets.ReFungible]},
   ].map(testCase =>
     itEth.ifWithPallets(`ERC721Metadata property can be set for ${testCase.case} collection`, testCase.requiredPallets || [], async ({helper}) => {

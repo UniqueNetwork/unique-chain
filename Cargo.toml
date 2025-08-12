@@ -74,26 +74,26 @@ quartz-runtime = { path = "runtime/quartz" }
 unique-runtime = { path = "runtime/unique" }
 
 # Frontier (Unique patches over the Parity version)
-fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
+fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
 fc-db = { default-features = false, features = [
 	'sql',
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
 fc-mapping-sync = { features = [
 	'sql',
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
 fp-self-contained = { default-features = false, features = [
 	"serde",
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
-pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
 
 # Parity
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.7.5" }

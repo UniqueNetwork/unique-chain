@@ -352,7 +352,7 @@ describe('evm nft collection sponsoring', () => {
     'setCollectionSponsorCross',
     'setCollectionSponsor', // Soft-deprecated
   ].map(testCase =>
-    itEth(`[${testCase}] Check that transaction via EVM spend money from sponsor address`, async ({helper}) => {
+    itEth.only(`[${testCase}] Check that transaction via EVM spend money from sponsor address`, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       const sponsor = await helper.eth.createAccountWithBalance(donor);

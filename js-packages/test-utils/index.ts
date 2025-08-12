@@ -602,6 +602,7 @@ export class DevUniqueHelper extends UniqueHelper {
     await this.api.isReadyOrError;
     this.network = await UniqueHelper.detectNetwork(this.api);
     this.wsEndpoint = wsEndpoint;
+    this.wsProvider = wsProvider;
   }
   getSudo<T extends DevUniqueHelper>() {
     // eslint-disable-next-line @typescript-eslint/naming-convention

@@ -425,6 +425,7 @@ export class ChainHelperBase {
   forcedNetwork: TNetworks | null;
   network: TNetworks | null;
   wsEndpoint: string | null;
+  wsProvider: WsProvider | null;
   chainLog: IUniqueHelperLog[];
   children: ChainHelperBase[];
   address: AddressGroup;
@@ -441,6 +442,7 @@ export class ChainHelperBase {
     this.forcedNetwork = null;
     this.network = null;
     this.wsEndpoint = null;
+    this.wsProvider = null;
     this.chainLog = [];
     this.children = [];
     this.address = new AddressGroup(this);
@@ -506,14 +508,25 @@ export class ChainHelperBase {
       child.clearApi();
     }
 
-    if(this.api === null) return;
-    await this.api.disconnect();
+    const promises: Promise<any>[] = [];
+    if(this.api != null) {
+      const api = this.api;
+      api.disconnect();
+      promises.push(new Promise((resolve) => api.on('disconnected', resolve)));
+    }
+    if (this.wsProvider != null) {
+      const wsProvider = this.wsProvider;
+      wsProvider.disconnect();
+      promises.push(new Promise((resolve) => wsProvider.on('disconnected', resolve)));
+    }
+    await Promise.all(promises);
     this.clearApi();
   }
 
   clearApi() {
     this.api = null;
     this.network = null;
+    this.wsProvider = null;
   }
 
   static async detectNetwork(api: ApiPromise): Promise<TNetworks> {
@@ -528,18 +541,23 @@ export class ChainHelperBase {
 
   static async detectNetworkByWsEndpoint(wsEndpoint: string): Promise<TNetworks> {
     if(!wsEndpoint) throw new Error('wsEndpoint was not set');
-    const api = new ApiPromise({provider: new WsProvider(wsEndpoint)});
+    const provider = new WsProvider(wsEndpoint);
+    const api = new ApiPromise({provider});
     await api.isReady;
 
     const network = await this.detectNetwork(api);
 
-    await api.disconnect();
+    api.disconnect();
+    await new Promise((resolve) => api.on('disconnected', resolve));
+    provider.disconnect();
+    await new Promise((resolve) => provider.on('disconnected', resolve));
 
     return network;
   }
 
   static async createConnection(wsEndpoint: string, listeners?: IApiListeners, network?: TNetworks | null): Promise<{
     api: ApiPromise;
+    provider: WsProvider,
     network: TNetworks;
   }> {
     if(typeof network === 'undefined' || network === null) network = 'opal';
@@ -567,8 +585,8 @@ export class ChainHelperBase {
 
     // TODO: investigate how to replace rpc in runtime
     // api._rpcCore.addUserInterfaces(rpc);
-
-    const api = new ApiPromise({provider: new WsProvider(wsEndpoint), rpc});
+    const provider = new WsProvider(wsEndpoint);
+    const api = new ApiPromise({provider, rpc});
 
     await api.isReadyOrError;
 
@@ -578,7 +596,7 @@ export class ChainHelperBase {
       api.on(event as ApiInterfaceEvents, listeners[event as TApiAllowedListeners] as (...args: any[]) => any);
     }
 
-    return {api, network};
+    return {api, provider, network};
   }
 
   getTransactionStatus(data: { events: { event: IEvent }[], status: any }) {
