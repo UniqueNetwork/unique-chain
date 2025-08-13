@@ -326,22 +326,6 @@ export class UniqueTestContext {
 
 export type SchedKind = 'anon' | 'named';
 
-// export function itSched(
-//   name: string,
-//   cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any,
-//   opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {},
-// ) {
-//   itSub(name + ' (anonymous scheduling)', (apis) => cb('anon', apis), opts);
-//   itSub(name + ' (named scheduling)', (apis) => cb('named', apis), opts);
-// }
-// itSched.only = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {only: true});
-// itSched.skip = (name: string, cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any) => itSched(name, cb, {skip: true});
-// itSched.ifWithPallets = itSchedIfWithPallets;
-
-// function itSchedIfWithPallets(name: string, required: string[], cb: (schedKind: SchedKind, apis: { helper: DevUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
-//   return itSched(name, cb, {requiredPallets: required, ...opts});
-// }
-
 export function sizeOfInt(i: number) {
   if(i < 0 || i > 0xffffffff) throw new Error('out of range');
   if(i < 0b11_1111) {

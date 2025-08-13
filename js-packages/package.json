@@ -36,7 +36,6 @@
     "chai-subset": "^1.6.0",
     "eslint": "^8.53.0",
     "eslint-plugin-mocha": "^10.2.0",
-    "tsx": "4.19.3",
     "typescript": "5.8.3"
   },
   "scripts": {
@@ -44,9 +43,9 @@
     "ts-check": "yarn tsc --noEmit true",
     "lint": "eslint --ext .ts .",
     "fix": "yarn lint --fix",
-    "polkadot-types-fetch-metadata": "yarn tsx scripts/fetchMetadata.ts",
-    "polkadot-types-from-defs": "yarn tsx ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
-    "polkadot-types-from-chain": "yarn tsx ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types-fetch-metadata": "deno --allow-env scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "deno --allow-env ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "deno --allow-env ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
     "polkadot-types": "echo \"export default {}\" > types/lookup.ts && yarn polkadot-types-fetch-metadata && yarn polkadot-types-from-defs && yarn polkadot-types-from-defs && yarn polkadot-types-from-chain && rm types/registry.ts"
   },
   "resolutions": {

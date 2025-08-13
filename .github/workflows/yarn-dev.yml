@@ -74,13 +74,13 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           yarn install
-          yarn tsx ./benchmarks/mintFee/index.ts
+          deno --allow-env ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
         working-directory: js-packages/scripts
         run: |
           yarn install
-          yarn tsx ./benchmarks/opsFee/index.ts
+          deno --allow-env ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
         if: always()                   # run this step always

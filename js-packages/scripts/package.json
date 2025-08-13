@@ -9,17 +9,14 @@
   "type": "module",
   "version": "1.0.0",
   "main": "",
-  "devDependencies": {
-    "tsx": "4.19.3"
-  },
   "scripts": {
-    "benchMintingFee": "yarn tsx benchmarks/mintFee/benchmark.ts",
-    "loadTransfer": "yarn tsx transfer.nload.ts",
-    "generateEnv": "yarn tsx ./generateEnv.ts",
-    "proposeUpgrade": "yarn tsx ./proposeupgrade.ts",
-    "proposeFastTrack": "yarn tsx ./proposefasttrack.ts",
-    "councilDemocracyProposal": "yarn tsx ./councilproposal.ts",
-    "hrmpChannel": "yarn tsx ./hrmpchannel.ts",
-    "leaseStatus": "yarn tsx ./leaseStatus.ts"
+    "benchMintingFee": "deno --allow-env benchmarks/mintFee/benchmark.ts",
+    "loadTransfer": "deno --allow-env transfer.nload.ts",
+    "generateEnv": "deno --allow-env ./generateEnv.ts",
+    "proposeUpgrade": "deno --allow-env ./proposeupgrade.ts",
+    "proposeFastTrack": "deno --allow-env./proposefasttrack.ts",
+    "councilDemocracyProposal": "deno --allow-env ./councilproposal.ts",
+    "hrmpChannel": "deno --allow-env ./hrmpchannel.ts",
+    "leaseStatus": "deno --allow-env ./leaseStatus.ts"
   }
 }
