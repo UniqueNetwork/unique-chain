@@ -14,10 +14,10 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
-import {CrossAccountId} from '@unique-nft/playgrounds/unique.js';
+import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {CrossAccountId} from '@unique-nft/playgrounds/unique.ts';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {before, describe} from "@unique/test-utils/util";
 
 describe('Token transfer between substrate address and EVM address. Fungible', () => {
   let donor: IKeyringPair;

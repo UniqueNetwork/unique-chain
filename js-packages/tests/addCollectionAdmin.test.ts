@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect, describe, before} from '@unique/test-utils/util.ts';
+import {itSub, usingPlaygrounds, expect, describe, before} from '@unique/test-utils/util';
 import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.ts';
 
 describe('Integration Test addCollectionAdmin(collection_id, new_admin_id):', () => {

@@ -22,10 +22,10 @@ import {evmToAddress} from '@polkadot/util-crypto';
 
 import {Contract, HDNodeWallet} from 'ethers';
 
-import {usingEthPlaygrounds, expect, itEth, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import type {CompiledContract} from '@unique/test-utils/eth/types.js';
-import {before, describe, requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util.js';
+import {usingEthPlaygrounds, expect, itEth, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import type {CompiledContract} from '@unique/test-utils/eth/types';
+import {before, describe, requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util';
 
 const {dirname} = makeNames(import.meta.url);
 

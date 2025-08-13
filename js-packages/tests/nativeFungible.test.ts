@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, expect, itSub, usingPlaygrounds} from '@unique/test-utils/util.js';
+import {before, describe, expect, itSub, usingPlaygrounds} from '@unique/test-utils/util';
 
 describe('Native fungible', () => {
   let root: IKeyringPair;

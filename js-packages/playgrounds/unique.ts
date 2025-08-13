@@ -564,13 +564,13 @@ export class ChainHelperBase {
     if(!wsEndpoint) throw new Error('wsEndpoint was not set');
     const supportedRPC = {
       opal: {
-        unique: require('@unique-nft/opal-testnet-types/definitions').unique.rpc,
+        unique: require('@unique-nft/opal-testnet-types/definitions.ts').unique.rpc,
       },
       quartz: {
-        unique: require('@unique-nft/quartz-mainnet-types/definitions').unique.rpc,
+        unique: require('@unique-nft/quartz-mainnet-types/definitions.ts').unique.rpc,
       },
       unique: {
-        unique: require('@unique-nft/unique-mainnet-types/definitions').unique.rpc,
+        unique: require('@unique-nft/unique-mainnet-types/definitions.ts').unique.rpc,
       },
       rococo: {},
       westend: {},

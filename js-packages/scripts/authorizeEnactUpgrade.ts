@@ -1,6 +1,6 @@
 import {readFile} from 'node:fs/promises';
 import {u8aToHex} from '@polkadot/util';
-import {usingPlaygrounds} from '@unique/test-utils/util.js';
+import {usingPlaygrounds} from '@unique/test-utils/util';
 import {blake2AsHex} from '@polkadot/util-crypto';
 
 

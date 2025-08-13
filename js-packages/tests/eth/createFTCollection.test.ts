@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {evmToAddress} from '@polkadot/util-crypto';
-import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
-import {CollectionLimitField} from '@unique/test-utils/eth/types.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {CollectionLimitField} from '@unique/test-utils/eth/types';
 
 const DECIMALS = 18;
 

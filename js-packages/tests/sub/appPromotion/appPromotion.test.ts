@@ -20,9 +20,9 @@ import {
   CALCULATION_PERIOD,
   INTERVAL_INCOME,
   afterEach,
-} from '@unique/test-utils/util.js';
+} from '@unique/test-utils/util';
 import {DevUniqueHelper} from '@unique/test-utils';
-import {itEth, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
+import {itEth, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util';
 
 let donor: IKeyringPair;
 let palletAdmin: IKeyringPair;

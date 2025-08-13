@@ -16,8 +16,8 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'node:fs/promises';
-import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util.js';
-import {before, beforeEach, describe, makeNames} from '@unique/test-utils/util.js';
+import {itEth, usingEthPlaygrounds, expect, SponsoringMode, waitParams} from '@unique/test-utils/eth/util';
+import {before, beforeEach, describe, makeNames} from '@unique/test-utils/util';
 
 const {dirname} = makeNames(import.meta.url);
 const EVM_ABI_DIR = `${dirname}/../../../evm-abi`;

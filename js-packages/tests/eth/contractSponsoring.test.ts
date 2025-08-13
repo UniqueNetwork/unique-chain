@@ -15,10 +15,10 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {itEth, expect, SponsoringMode, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {before, describe, usingPlaygrounds} from '@unique/test-utils/util.js';
-import type {CompiledContract} from '@unique/test-utils/eth/types.js';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {itEth, expect, SponsoringMode, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {before, describe, usingPlaygrounds} from '@unique/test-utils/util';
+import type {CompiledContract} from '@unique/test-utils/eth/types';
 import {HDNodeWallet} from 'ethers';
 import {Contract} from 'ethers';
 

@@ -1,6 +1,6 @@
 import {readFile} from 'node:fs/promises';
 import {u8aToHex} from '@polkadot/util';
-import {usingPlaygrounds} from '@unique/test-utils/util.js';
+import {usingPlaygrounds} from '@unique/test-utils/util';
 
 const codePath = process.argv[2];
 if(!codePath) throw new Error('missing code path argument');

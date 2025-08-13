@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
 
 const DECIMALS = 18;
 
