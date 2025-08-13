@@ -55,7 +55,7 @@ else
 fi
 
 cd "$DIR/../../"
-yarn polkadot-types
+deno task polkadot-types
 
 version=$(do_rpc state_getRuntimeVersion "")
 spec_version=$(echo "$version" | jq -r .result.specVersion)
@@ -196,8 +196,8 @@ if [ -t 0 ]; then
 fi
 
 pushd "$gen"
-yarn
-yarn prepublish
+deno install
+deno task prepublish
 git commit -m "chore: upgrade types to v$new_package_version"
 git tag --force "$repo_tag-v$new_package_version"
 if test "$push" = 1; then

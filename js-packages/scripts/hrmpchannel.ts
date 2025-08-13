@@ -1,5 +1,6 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import {blake2AsHex} from '@polkadot/util-crypto';
+import process from "node:process";
 
 export const paraChildSovereignAccount = (relayApi: ApiPromise, paraid: number) => {
   // We are getting a *child* parachain sovereign account,
@@ -66,7 +67,7 @@ async function main() {
   else if(process.argv.length == 7 && process.argv[6] == 'skip-balance-check') {
     skipBalanceCheck = true;
   } else {
-    console.log('Usage: yarn hrmpChannel <RELAY_URL> <OUR_CHAIN_URL> <OTHER_CHAIN_URL> <open | accept> [skip-balance-check]');
+    console.log('Usage: deno task hrmpChannel <RELAY_URL> <OUR_CHAIN_URL> <OTHER_CHAIN_URL> <open | accept> [skip-balance-check]');
     process.exit(1);
   }
 

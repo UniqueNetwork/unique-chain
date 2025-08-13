@@ -27,9 +27,10 @@ jobs:
       - name: Install substrate dependencies
         run: sudo apt install -y curl cmake make libssl-dev pkg-config libclang-dev clang protobuf-compiler
 
-      - uses: actions/setup-node@v3
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
 
       - name: RUN benchmarking
         run: |
@@ -42,7 +43,7 @@ jobs:
       - name: RUN Calibrate
         working-directory: js-packages/scripts
         run: |
-          yarn
+          deno install
           deno --allow-env calibrate.ts
           deno --allow-env calibrateApply.ts
           

@@ -75,17 +75,18 @@ jobs:
       - name: Build the stack
         run: docker compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
-      - uses: actions/setup-node@v4.0.2
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
 
       - name: Run tests
         working-directory: js-packages/tests
         run: |
-          yarn install
+          deno install
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn testGovernance --reporter tap
+          NOW=$(date +%s) && deno task testGovernance
         env:
           RPC_URL: http://127.0.0.1:9944/
 

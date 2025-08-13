@@ -2,6 +2,7 @@ import {ApiPromise, WsProvider} from '@polkadot/api';
 import {readFile} from 'node:fs/promises';
 import {join} from 'node:path';
 import {makeNames} from '@unique/test-utils/util';
+import process from "node:process";
 
 const {dirname} = makeNames(import.meta.url);
 
