@@ -43,8 +43,8 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           yarn
-          yarn tsx calibrate.ts
-          yarn tsx calibrateApply.ts
+          deno --allow-env calibrate.ts
+          deno --allow-env calibrateApply.ts
           
       - name: show git diff
         run: |

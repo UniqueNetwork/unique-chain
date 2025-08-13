@@ -242,7 +242,7 @@ jobs:
         id: hrmp
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
-          yarn tsx createHrmp.ts ${{matrix.network}}
+          deno --allow-env createHrmp.ts ${{matrix.network}}
 
       - name: Run XCM tests
         working-directory: js-packages/tests

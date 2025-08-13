@@ -157,19 +157,3 @@ itEth.skip = (...args: ItEthArgs) => {
 itEth.ifWithPallets = (name: string, requiredPallets: Pallets[], cb: (apis: { helper: EthUniqueHelper, privateKey: (seed: string) => Promise<IKeyringPair> }) => void | Promise<void>) => {
   itEth(name, cb, {requiredPallets, skip: false, only: false});
 };
-
-// export function itSchedEth(
-//   name: string,
-//   cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: PrivateKeyFn }) => any,
-//   opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {},
-// ) {
-//   itEth(name + ' (anonymous scheduling)', (apis) => cb('anon', apis), opts);
-//   itEth(name + ' (named scheduling)', (apis) => cb('named', apis), opts);
-// }
-// itSchedEth.only = (name: string, cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itSchedEth(name, cb, {only: true});
-// itSchedEth.skip = (name: string, cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: (seed: string | {filename: string}) => Promise<IKeyringPair> }) => any) => itSchedEth(name, cb, {skip: true});
-// itSchedEth.ifWithPallets = itSchedIfWithPallets;
-
-// function itSchedIfWithPallets(name: string, required: string[], cb: (schedKind: SchedKind, apis: { helper: EthUniqueHelper, privateKey: PrivateKeyFn }) => any, opts: { only?: boolean, skip?: boolean, requiredPallets?: string[] } = {}) {
-//   return itSchedEth(name, cb, {requiredPallets: required, ...opts});
-// }
