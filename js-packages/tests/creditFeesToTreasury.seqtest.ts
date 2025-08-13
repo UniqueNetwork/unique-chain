@@ -16,10 +16,10 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {ApiPromise} from '@polkadot/api';
-import {usingPlaygrounds, expect, itSub, describe, before} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, expect, itSub, describe, before} from '@unique/test-utils/util';
 import type {u32} from '@polkadot/types-codec';
-import {itEth} from '@unique/test-utils/eth/util.js';
-import {ITransactionResult} from '@unique-nft/playgrounds/types';
+import {itEth} from '@unique/test-utils/eth/util';
+import {ITransactionResult} from '@unique-nft/playgrounds/types.ts';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;

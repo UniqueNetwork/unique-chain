@@ -1,8 +1,8 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe, before, after, afterEach} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, describe, before, after, afterEach} from '@unique/test-utils/util';
 import {Event} from '@unique/test-utils';
-import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, initTechComm, ITechComms} from './util.js';
-import type {ICounselors} from './util.js';
+import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, clearCouncil, clearTechComm, initTechComm, ITechComms} from './util.ts';
+import type {ICounselors} from './util.ts';
 
 describe.ifRunGov('Governance: Elect Sudo', () => {
   let sudoer: IKeyringPair;

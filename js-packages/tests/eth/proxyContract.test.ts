@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {itEth, expect, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {before, describe} from "@unique/test-utils/util";
 import {HDNodeWallet} from 'ethers';
 import {Contract} from 'ethers';
 

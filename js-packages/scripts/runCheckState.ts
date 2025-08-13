@@ -1,4 +1,4 @@
-import {main} from './correctStateAfterMaintenance.js';
+import {main} from './correctStateAfterMaintenance.ts';
 
 main({
   wsEndpoint: process.env.WS_RPC!,

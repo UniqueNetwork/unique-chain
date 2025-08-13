@@ -1,7 +1,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {usingPlaygrounds, itSub, expect, describe, before, beforeEach, afterEach} from '@unique/test-utils/util.js';
+import {usingPlaygrounds, itSub, expect, describe, before, beforeEach, afterEach} from '@unique/test-utils/util';
 import {Event} from '@unique/test-utils';
-import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.js';
+import {democracyFastTrackVotingPeriod, IFinCounselors, clearTechComm, dummyProposalCall, initFinCouncil, clearFinCouncil, democracyLaunchPeriod, initFellowship, dummyProposal, fellowshipPropositionOrigin, defaultEnactmentMoment, initCouncil, clearCouncil, clearFellowship} from './util.ts';
 
 
 describe.ifRunGov('Governance: Financial Council tests', () => {

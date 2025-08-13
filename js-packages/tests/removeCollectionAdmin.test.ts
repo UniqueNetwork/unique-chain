@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, itSub, usingPlaygrounds, expect} from '@unique/test-utils/util.js';
-import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.js';
+import {before, describe, itSub, usingPlaygrounds, expect} from '@unique/test-utils/util';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.ts';
 
 describe('Integration Test removeCollectionAdmin(collection_id, account_id):', () => {
   let alice: IKeyringPair;

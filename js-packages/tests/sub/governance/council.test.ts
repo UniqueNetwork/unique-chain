@@ -1,8 +1,8 @@
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, beforeEach, afterEach} from '@unique/test-utils/util.js';
+import {before, describe, usingPlaygrounds, itSub, expect, Pallets, requirePalletsOrSkip, beforeEach, afterEach} from '@unique/test-utils/util';
 import {Event} from '@unique/test-utils';
-import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin, initFinCouncil} from './util.js';
-import type {ICounselors} from './util.js';
+import {initCouncil, democracyLaunchPeriod, democracyVotingPeriod, democracyEnactmentPeriod, councilMotionDuration, democracyFastTrackVotingPeriod, fellowshipRankLimit, clearCouncil, clearTechComm, initTechComm, clearFellowship, dummyProposal, dummyProposalCall, initFellowship, defaultEnactmentMoment, fellowshipPropositionOrigin, initFinCouncil} from './util.ts';
+import type {ICounselors} from './util.ts';
 
 describe.ifRunGov('Governance: Council tests', () => {
   let donor: IKeyringPair;

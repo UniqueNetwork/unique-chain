@@ -15,9 +15,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util.js';
-import {itEth, expect, waitParams} from '@unique/test-utils/eth/util.js';
-import {CollectionLimitField, TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {before, describe, Pallets, requirePalletsOrSkip, usingPlaygrounds} from '@unique/test-utils/util';
+import {itEth, expect, waitParams} from '@unique/test-utils/eth/util';
+import {CollectionLimitField, TokenPermissionField} from '@unique/test-utils/eth/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
 
@@ -352,7 +352,7 @@ describe('evm nft collection sponsoring', () => {
     'setCollectionSponsorCross',
     'setCollectionSponsor', // Soft-deprecated
   ].map(testCase =>
-    itEth.only(`[${testCase}] Check that transaction via EVM spend money from sponsor address`, async ({helper}) => {
+    itEth(`[${testCase}] Check that transaction via EVM spend money from sponsor address`, async ({helper}) => {
       const owner = await helper.eth.createAccountWithBalance(donor);
 
       const sponsor = await helper.eth.createAccountWithBalance(donor);

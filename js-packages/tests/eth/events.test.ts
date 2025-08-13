@@ -16,12 +16,12 @@
 
 import {expect} from 'chai';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
-import type {IEvent, TCollectionMode} from '@unique-nft/playgrounds/types.js';
-import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {CollectionLimitField, TokenPermissionField, CreateCollectionData} from '@unique/test-utils/eth/types.js';
-import type {NormalizedEvent} from '@unique/test-utils/eth/types.js';
+import {itEth, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import type {IEvent, TCollectionMode} from '@unique-nft/playgrounds/types.ts';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {CollectionLimitField, TokenPermissionField, CreateCollectionData} from '@unique/test-utils/eth/types';
+import type {NormalizedEvent} from '@unique/test-utils/eth/types';
 
 let donor: IKeyringPair;
 

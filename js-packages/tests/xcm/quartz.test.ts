@@ -15,8 +15,8 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, itSub, usingPlaygrounds, usingKaruraPlaygrounds, usingShidenPlaygrounds, usingMoonriverPlaygrounds, usingRelayPlaygrounds, usingKusamaAssetHubPlaygrounds} from '@unique/test-utils/util.js';
-import {QUARTZ_CHAIN, SAFE_XCM_VERSION, XcmTestHelper, SENDER_BUDGET, SENDTO_AMOUNT, SENDBACK_AMOUNT, SHIDEN_DECIMALS, UNQ_DECIMALS, POLKADOT_ASSETHUB_CHAIN, USDT_ASSET_ID, USDT_DECIMALS, ASSET_HUB_PALLET_ASSETS} from './xcm.types.js';
+import {before, describe, itSub, usingPlaygrounds, usingKaruraPlaygrounds, usingShidenPlaygrounds, usingMoonriverPlaygrounds, usingRelayPlaygrounds, usingKusamaAssetHubPlaygrounds} from '@unique/test-utils/util';
+import {QUARTZ_CHAIN, SAFE_XCM_VERSION, XcmTestHelper, SENDER_BUDGET, SENDTO_AMOUNT, SENDBACK_AMOUNT, SHIDEN_DECIMALS, UNQ_DECIMALS, POLKADOT_ASSETHUB_CHAIN, USDT_ASSET_ID, USDT_DECIMALS, ASSET_HUB_PALLET_ASSETS} from './xcm.types.ts';
 import {hexToString} from '@polkadot/util';
 
 const testHelper = new XcmTestHelper;

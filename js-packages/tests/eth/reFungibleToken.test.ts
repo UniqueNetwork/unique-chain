@@ -14,9 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util.js';
-import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
+import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
@@ -491,7 +491,7 @@ describe('Refungible: Plain calls', () => {
     {
       await (await contract.approveCross.send(spenderCrossEth, 100)).wait(...waitParams);
 
-      await expect(spenderContract.burnFromCross.send(ownerCross, 50)).to.be.fulfilled;
+      await expect((await spenderContract.burnFromCross.send(ownerCross, 50)).wait(...waitParams)).to.be.fulfilled;
       await expect(spenderContract.burnFromCross.send(ownerCross, 100)).to.be.rejected;
       expect(await contract.balanceOf.staticCall(owner.address)).to.be.equal(150n);
     }

@@ -1,15 +1,15 @@
-import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util.js';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index.js';
+import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {EthUniqueHelper} from '@unique/test-utils/eth/index';
 import {readFile} from 'node:fs/promises';
-import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/test-utils/eth/types.js';
+import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/test-utils/eth/types';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.js';
+import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.ts';
 import {Contract} from 'ethers';
 import {createObjectCsvWriter} from 'csv-writer';
-import {FunctionFeeVM} from '../utils/types.js';
-import type {IFunctionFee} from '../utils/types.js';
-import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common.js';
-import {makeNames} from '@unique/test-utils/util.js';
+import {FunctionFeeVM} from '../utils/types.ts';
+import type {IFunctionFee} from '../utils/types.ts';
+import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common.ts';
+import {makeNames} from '@unique/test-utils/util';
 
 
 const {dirname} = makeNames(import.meta.url);

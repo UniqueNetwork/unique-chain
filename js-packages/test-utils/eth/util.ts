@@ -8,12 +8,12 @@ import config from '../../tests/config.ts';
 
 import {EthUniqueHelper} from './index.ts';
 import {SilentLogger, SilentConsole} from '@unique/test-utils';
-import type {Pallets, SchedKind, UniqueTestContext} from '@unique/test-utils/util.ts';
+import type {Pallets, SchedKind, UniqueTestContext} from '@unique/test-utils/util';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
-import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames, fullTitle, SkipError} from '@unique/test-utils/util.ts';
+import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames, fullTitle, SkipError} from '@unique/test-utils/util';
 import {hexlify, toUtf8Bytes} from 'ethers';
 import { it } from "jsr:@std/testing/bdd";
 
@@ -22,7 +22,7 @@ chai.use(chaiLike);
 export const expect = chai.expect;
 
 // FIXME: 4? 12? 24? How to select confirmations count?
-const confirmations = 7;
+const confirmations = 4;
 // 2 min timeout, ~30 blocks
 const timeout = 2 * 60 * 1000;
 export const waitParams = [confirmations, timeout];
