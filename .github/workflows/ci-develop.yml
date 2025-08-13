@@ -16,9 +16,9 @@ concurrency:
 # List of a jobs included into Workflow.
 jobs:
 
-  yarn-dev:
+  deno-dev:
     if: github.event.pull_request.draft == false && !contains(github.event.pull_request.labels.*.name, 'CI-minimal')
-    uses: ./.github/workflows/yarn-dev.yml
+    uses: ./.github/workflows/deno-dev.yml
     secrets: inherit    
 
   unit-test:

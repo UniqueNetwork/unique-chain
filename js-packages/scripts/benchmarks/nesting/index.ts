@@ -6,6 +6,7 @@ import {Contract, HDNodeWallet} from 'ethers';
 import {convertToTokens} from '../utils/common.ts';
 import {makeNames} from '@unique/test-utils/util';
 import type {ContractImports} from '@unique/test-utils/eth/types';
+import process from "node:process";
 
 const {dirname} = makeNames(import.meta.url);
 

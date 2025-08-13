@@ -170,4 +170,4 @@ git-blame:
 init:
 	make git-hooks
 	cd tests
-	yarn install
+	deno install

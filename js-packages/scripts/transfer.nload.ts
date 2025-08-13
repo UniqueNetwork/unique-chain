@@ -19,7 +19,8 @@ import os from 'node:os';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds} from '@unique/test-utils/util';
 import {UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
-import * as notReallyCluster from 'node:cluster'; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346
+import * as notReallyCluster from 'node:cluster';
+import process from "node:process"; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346
 const cluster = notReallyCluster as unknown as notReallyCluster.Cluster;
 
 async function findUnusedAddress(helper: UniqueHelper, privateKey: (account: string) => Promise<IKeyringPair>, seedAddition = ''): Promise<IKeyringPair> {

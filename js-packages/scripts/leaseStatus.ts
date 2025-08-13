@@ -1,4 +1,5 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
+import process from "node:process";
 
 // [!ATTENTION!] Auto-renew will be available in the future:
 // https://github.com/paritytech/polkadot-sdk/blob/12539e7a931e82a040e74c84e413baa712ecd638/substrate/frame/broker/src/lib.rs#L889-L917
@@ -10,7 +11,7 @@ const TIMESLICE_PERIOD = 80; // In Relay Chain blocks (normal runtime, without t
 await (async () => {
   const args = process.argv.slice(2);
   if(args.length != 2) {
-    console.log('USAGE: yarn leaseStatus <CORETIME_CHAIN_ENDPOINT> <TASK_ID>');
+    console.log('USAGE: deno task leaseStatus <CORETIME_CHAIN_ENDPOINT> <TASK_ID>');
     process.exit(-1);
   }
 

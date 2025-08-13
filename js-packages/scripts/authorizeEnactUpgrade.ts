@@ -2,6 +2,7 @@ import {readFile} from 'node:fs/promises';
 import {u8aToHex} from '@polkadot/util';
 import {usingPlaygrounds} from '@unique/test-utils/util.ts';
 import {blake2AsHex} from '@polkadot/util-crypto';
+import process from "node:process";
 
 
 const codePath = process.argv[2];

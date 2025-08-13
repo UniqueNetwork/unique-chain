@@ -10,6 +10,7 @@ import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.ts';
 import {makeNames} from '@unique/test-utils/util';
 import type {ContractImports} from '@unique/test-utils/eth/types';
+import process from "node:process";
 
 const {dirname} = makeNames(import.meta.url);
 

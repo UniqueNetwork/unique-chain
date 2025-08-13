@@ -3,8 +3,8 @@
 //
 // Checks and reports the differences between identities and sub-identities on two chains.
 //
-// Usage: `yarn checkRelayIdentities [relay-1 WS URL] [relay-2 WS URL]`
-// Example: `yarn checkRelayIdentities wss://polkadot-rpc.dwellir.com wss://kusama-rpc.dwellir.com`
+// Usage: `deno task checkRelayIdentities [relay-1 WS URL] [relay-2 WS URL]`
+// Example: `deno task checkRelayIdentities wss://polkadot-rpc.dwellir.com wss://kusama-rpc.dwellir.com`
 
 import {encodeAddress} from '@polkadot/keyring';
 import {usingPlaygrounds} from '@unique/test-utils/util';

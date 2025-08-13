@@ -1,6 +1,6 @@
 # Integration test in --dev mode
 # https://cryptousetech.atlassian.net/wiki/spaces/CI/pages/2586411104/Integration+tests
-name: yarn-dev
+name: deno-dev
 
 # Triger: only call from main workflow(re-usable workflows)
 on:
@@ -52,17 +52,18 @@ jobs:
       - name: Build the stack
         run: docker compose -f ".docker/docker-compose.${{ matrix.network }}.yml" up -d --build --remove-orphans
 
-      - uses: actions/setup-node@v4.0.2
+      - uses: denoland/setup-deno@v2
         with:
-          node-version: 20
+          deno-version: v2.x
+          cache: true
 
       - name: Run tests
         working-directory: js-packages/tests
         run: |
-          yarn install
+          deno install
           ../scripts/wait_for_first_block.sh
           echo "Ready to start tests"
-          NOW=$(date +%s) && yarn test --reporter tap
+          NOW=$(date +%s) && deno test
         env:
           RPC_URL: http://127.0.0.1:9944/
 
@@ -73,13 +74,13 @@ jobs:
       - name: Run benchmark mintFee tests
         working-directory: js-packages/scripts
         run: |
-          yarn install
+          deno install
           deno --allow-env ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
         working-directory: js-packages/scripts
         run: |
-          yarn install
+          deno install
           deno --allow-env ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers

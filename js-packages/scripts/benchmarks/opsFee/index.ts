@@ -10,6 +10,7 @@ import {FunctionFeeVM} from '../utils/types.ts';
 import type {IFunctionFee} from '../utils/types.ts';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES, SUBS_PROPERTIES} from '../utils/common.ts';
 import {makeNames} from '@unique/test-utils/util';
+import process from "node:process";
 
 
 const {dirname} = makeNames(import.meta.url);

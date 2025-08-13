@@ -2,7 +2,7 @@
 
 set -eux
 
-yarn polkadot-types
+deno task polkadot-types
 
 if [ ! -d unique-types-js ]; then
 	git clone git@github.com:UniqueNetwork/unique-types-js.git

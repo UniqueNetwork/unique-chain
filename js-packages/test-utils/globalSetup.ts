@@ -9,6 +9,7 @@ import * as path from 'node:path';
 import {promises as fs} from 'node:fs';
 import {DevUniqueHelper} from './index.ts';
 import type {IKeyringPair} from '@polkadot/types/types';
+import process from "node:process";
 
 const {dirname} = makeNames(import.meta.url);
 
