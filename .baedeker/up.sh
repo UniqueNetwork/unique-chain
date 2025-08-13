@@ -11,7 +11,7 @@ baedeker \
 --secret=file=$BDK_DIR/.bdk-env/secret \
 --tla-str=relay_spec=westend-local \
 --tla-code=assethub_spec="import 'assethub-spec.json'" \
---input-modules='lib:baedeker-library/ops/nginx-dev.libsonnet' \
+--input-modules='lib:baedeker-library/ops/nginx.libsonnet' \
 --input-modules='lib:baedeker-library/ops/devtools.libsonnet' \
 --tla-str=repoDir=$(realpath $BDK_DIR/..) \
 $@ \

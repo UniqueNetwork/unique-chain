@@ -60,7 +60,6 @@ local opal = {
 			extraArgs: [
 				'--increase-future-pool',
 				'--pool-type=fork-aware',
-                '--pruning=archive',
 			],
 		},
 		for name in ['alice', 'bob', 'charlie']
