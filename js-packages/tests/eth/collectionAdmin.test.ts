@@ -14,10 +14,9 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {expect} from 'chai';
 import {before, describe, Pallets} from '@unique/test-utils/util';
 import type {IEthCrossAccountId} from '@unique-nft/playgrounds/types.ts';
-import {usingEthPlaygrounds, itEth, waitParams} from '@unique/test-utils/eth/util';
+import {usingEthPlaygrounds, itEth, waitParams, expect} from '@unique/test-utils/eth/util';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index';
 import {CreateCollectionData} from '@unique/test-utils/eth/types';
 import {Contract} from 'ethers';

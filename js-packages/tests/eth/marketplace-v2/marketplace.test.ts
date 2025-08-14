@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {readFile} from 'node:fs/promises';
-import {SponsoringMode, waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
+import {SponsoringMode, waitParams, itEth, usingEthPlaygrounds, expect} from '@unique/test-utils/eth/util';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index';
-import {before, describe, makeNames, expect} from '@unique/test-utils/util';
+import {before, describe, makeNames} from '@unique/test-utils/util';
 import {Contract, HDNodeWallet, toBeHex, zeroPadBytes} from 'ethers';
 
 const {dirname} = makeNames(import.meta.url);

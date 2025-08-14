@@ -14,9 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
-import {expect} from 'chai';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {itEth, usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
+import {itEth, usingEthPlaygrounds, waitParams, expect} from '@unique/test-utils/eth/util';
 import {EthUniqueHelper} from '@unique/test-utils/eth/index';
 import type {IEvent, TCollectionMode} from '@unique-nft/playgrounds/types.ts';
 import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
