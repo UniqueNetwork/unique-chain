@@ -17,8 +17,5 @@
     "rules": {
       "exclude": ["no-explicit-any"]
     }
-  },
-  "unstable": [
-    "sloppy-imports"
-  ]
+  }
 }
