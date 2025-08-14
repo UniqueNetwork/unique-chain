@@ -45,7 +45,7 @@ jobs:
       - name: Install modules
         run: cd js-packages && deno install
       - name: Run ESLint
-        run: cd js-packages && deno lint
+        run: cd js-packages && deno lint './**/*.ts'
 
   deno_types_check:
     runs-on: [ ci ]
@@ -62,7 +62,7 @@ jobs:
       - name: Install modules
         run: cd js-packages && deno install
       - name: Run tsc
-        run: cd js-packages && deno check
+        run: cd js-packages && deno check './**/*.ts'
 
   clippy:
     runs-on: [ ci ]
