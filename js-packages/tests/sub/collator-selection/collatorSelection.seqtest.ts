@@ -20,7 +20,7 @@ import process from "node:process";
 
 async function nodeAddress(name: string) {
   // eslint-disable-next-line require-await
-  return await usingPlaygrounds(async (helper) => {
+  return await usingPlaygrounds((helper) => {
     const envNodeStash = `RELAY_UNIQUE_NODE_${name.toUpperCase()}_STASH`;
 
     const nodeStash = process.env[envNodeStash];

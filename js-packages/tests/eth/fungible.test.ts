@@ -566,17 +566,18 @@ describe('Fungible: Fees', () => {
 
 describe('Fungible: Substrate calls', () => {
   let donor: IKeyringPair;
-  let alice: IKeyringPair;
+  //let alice: IKeyringPair;
   let owner: IKeyringPair;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
-      [alice, owner] = await helper.arrange.createAccounts([20n, 20n], donor);
+      //[alice, owner] = await helper.arrange.createAccounts([20n, 20n], donor);
+      [owner] = await helper.arrange.createAccounts([20n], donor);
     });
   });
 
-  itEth.skip('Events emitted for approve()', async ({helper}) => {
+  itEth.skip('Events emitted for approve()', async () => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);
@@ -601,7 +602,7 @@ describe('Fungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('100');
   });
 
-  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
+  itEth.skip('Events emitted for transferFrom()', async () => {
     // TODO: Refactor this
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
@@ -635,7 +636,7 @@ describe('Fungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('49');
   });
 
-  itEth.skip('Events emitted for transfer()', async ({helper}) => {
+  itEth.skip('Events emitted for transfer()', async () => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
     // const collection = await helper.ft.mintCollection(alice);

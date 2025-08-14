@@ -28,12 +28,12 @@ const createCollectionDeposit = 100;
 
 // Skip the inflation block pauses if the block is close to inflation block
 // until the inflation happens
-/*eslint no-async-promise-executor: "off"*/
 function skipInflationBlock(api: ApiPromise): Promise<void> {
-  const promise = new Promise<void>(async (resolve) => {
+  return new Promise<void>((resolve, reject) => {
     const inflationBlockInterval = api.consts.inflation.inflationBlockInterval as u32;
     const blockInterval = inflationBlockInterval.toNumber();
-    const unsubscribe = await api.rpc.chain.subscribeNewHeads(head => {
+    let unsubscribe: any = null;
+    api.rpc.chain.subscribeNewHeads(head => {
       const currentBlock = head.number.toNumber();
       if(currentBlock % blockInterval < blockInterval - (blockInterval / 5)) {
         unsubscribe();
@@ -41,10 +41,10 @@ function skipInflationBlock(api: ApiPromise): Promise<void> {
       } else {
         console.log(`Skipping inflation block, current block: ${currentBlock}`);
       }
-    });
+    })
+    .then(unsub => unsubscribe = unsub)
+    .catch(reject);
   });
-
-  return promise;
 }
 
 describe('integration test: Fees must be credited to Treasury:', () => {

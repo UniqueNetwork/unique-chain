@@ -12,7 +12,7 @@ describe.ifRunGov('Governance: Financial Council tests', () => {
   const moreThanHalfCouncilThreshold = 2;
 
   before(async function() {
-    await usingPlaygrounds(async (helper, privateKey) => {
+    await usingPlaygrounds(async (_helper, privateKey) => {
       sudoer = await privateKey('//Alice');
       donor = await privateKey({url: import.meta.url});
     });

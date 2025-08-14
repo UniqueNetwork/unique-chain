@@ -21,13 +21,13 @@ import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.ts';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
-import {HDNodeWallet} from 'ethers';
+//import {HDNodeWallet} from 'ethers';
 
 describe('Refungible: Plain calls', () => {
   let donor: IKeyringPair;
   let minter: IKeyringPair;
-  let bob: HDNodeWallet;
-  let charlie: HDNodeWallet;
+  // let bob: HDNodeWallet;
+  // let charlie: HDNodeWallet;
 
   before(async function() {
     await usingEthPlaygrounds(async (helper, privateKey) => {
@@ -35,8 +35,8 @@ describe('Refungible: Plain calls', () => {
 
       donor = await privateKey({url: import.meta.url});
       [minter] = await helper.arrange.createAccounts([100n], donor);
-      bob = await helper.eth.createAccountWithBalance(donor, 100n);
-      charlie = await helper.eth.createAccountWithBalance(donor, 100n);
+      // bob = await helper.eth.createAccountWithBalance(donor, 100n);
+      // charlie = await helper.eth.createAccountWithBalance(donor, 100n);
     });
   });
 
@@ -403,7 +403,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth('Can perform transfer with ApprovalForAll', async ({helper}) => {
+  itEth('Can perform transfer with ApprovalForAll', async () => {
     // TODO: Refactor this
 
     // const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
@@ -454,7 +454,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth.skip('Can perform transferFrom()', async ({helper}) => {
+  itEth.skip('Can perform transferFrom()', async () => {
     // TODO: Refactor this
     // const caller = await helper.eth.createAccountWithBalance(donor);
     // const receiver = helper.eth.createAccount();
@@ -535,7 +535,7 @@ describe('Refungible: Plain calls', () => {
     expect(await collection.getTokenBalance(token.tokenId, {Ethereum: owner.address})).to.be.eq(0n);
   });
 
-  itEth('Can perform burnFromCross()', async ({helper}) => {
+  itEth('Can perform burnFromCross()', async () => {
     // TODO: Refactor this
 
     // const collection = await helper.rft.mintCollection(minter, {name: 'A', description: 'B', tokenPrefix: 'C'});
@@ -632,7 +632,7 @@ describe('Refungible: Plain calls', () => {
     }
   });
 
-  itEth.skip('Can perform transferCross()', async ({helper}) => {
+  itEth.skip('Can perform transferCross()', async () => {
     // TODO: Refactor this
 
     // const sender = await helper.eth.createAccountWithBalance(donor);
@@ -706,7 +706,7 @@ describe('Refungible: Plain calls', () => {
     await expect(collectionEvm[testCase].staticCall(receiver, 999999)).to.be.rejected;
   }));
 
-  itEth('transfer event on transfer from partial ownership to full ownership', async ({helper}) => {
+  itEth('transfer event on transfer from partial ownership to full ownership', async () => {
     // TODO: Refactor this
 
     // const caller = await helper.eth.createAccountWithBalance(donor);
@@ -737,7 +737,7 @@ describe('Refungible: Plain calls', () => {
     // expect(event.args.tokenId).to.equal(tokenId.toString());
   });
 
-  itEth('transfer event on transfer from full ownership to partial ownership', async ({helper}) => {
+  itEth('transfer event on transfer from full ownership to partial ownership', async () => {
     // TODO: Refactor this
 
     // const caller = await helper.eth.createAccountWithBalance(donor);

@@ -49,7 +49,7 @@ describe('Create collection from EVM', () => {
   let donor: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds(async (_helper, privateKey) => {
       donor = await privateKey({url: import.meta.url});
     });
   });

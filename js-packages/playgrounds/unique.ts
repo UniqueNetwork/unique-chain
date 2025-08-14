@@ -343,7 +343,7 @@ class UniqueEventHelper {
     if(!type) return this.toHuman(data);
     if(['u16', 'u32'].indexOf(type.type) > -1) return data.toNumber();
     if(['u64', 'u128', 'u256'].indexOf(type.type) > -1) return data.toBigInt();
-    if(type.hasOwnProperty('sub')) return this.extractSub(data, type.sub);
+    if(Object.hasOwn(type, 'sub')) return this.extractSub(data, type.sub);
     return this.toHuman(data);
   }
 
@@ -580,7 +580,7 @@ export class ChainHelperBase {
       karura: {},
       westmint: {},
     };
-    if(!supportedRPC.hasOwnProperty(network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
+    if(!Object.hasOwn(supportedRPC, network)) network = await this.detectNetworkByWsEndpoint(wsEndpoint);
     const rpc = supportedRPC[network] as any;
 
     // TODO: investigate how to replace rpc in runtime
@@ -592,7 +592,7 @@ export class ChainHelperBase {
 
     if(typeof listeners === 'undefined') listeners = {};
     for(const event of ['connected', 'disconnected', 'error', 'ready', 'decorated']) {
-      if(!listeners.hasOwnProperty(event) || typeof listeners[event as TApiAllowedListeners] === 'undefined') continue;
+      if(!Object.hasOwn(listeners, event) || typeof listeners[event as TApiAllowedListeners] === 'undefined') continue;
       api.on(event as ApiInterfaceEvents, listeners[event as TApiAllowedListeners] as (...args: any[]) => any);
     }
 
@@ -629,7 +629,7 @@ export class ChainHelperBase {
   getFeePaid(data: { events: { event: IEvent }[], status: any }) {
     const {events, status} = data;
     if(status.isInBlock || status.isFinalized) {
-      const withdrawEvent = events.find(({event: {section, method, data}}) => section === 'balances' && method === 'Withdraw');
+      const withdrawEvent = events.find(({event: {section, method}}) => section === 'balances' && method === 'Withdraw');
       if(withdrawEvent) {
         return BigInt(withdrawEvent.event.data[1]);
       }
@@ -647,52 +647,54 @@ export class ChainHelperBase {
       let nonce = await this.chain.getNonce(sender.address);
       options.nonce = nonce++;
     }
-    // eslint-disable-next-line no-async-promise-executor
-    return new Promise(async (resolve, reject) => {
-      try {
-        const unsub = await sign((result: any) => {
-          const status = this.getTransactionStatus(result);
-          if(status === this.transactionStatus.SUCCESS) {
-            if(!result.status.isFinalized) {
-              return;
-            }
-            const fee = this.getFeePaid(result);
-            this.logger.log(`${label} successful`);
-            unsub();
-            //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
-            resolve({result, status, blockHash: result.status.toHuman().Finalized, fee: fee!});
-          } else if(status === this.transactionStatus.FAIL) {
-            let moduleError: string | null = null;
-
-            if(result.hasOwnProperty('dispatchError')) {
-              const dispatchError = result['dispatchError'];
-
-              if(dispatchError) {
-                if(dispatchError.isModule) {
-                  const modErr = dispatchError.asModule;
-                  const errorMeta = dispatchError.registry.findMetaError(modErr);
-
-                  moduleError = `${errorMeta.section}.${errorMeta.name}`;
-                } else if(dispatchError.isToken) {
-                  moduleError = `Token: ${dispatchError.asToken}`;
-                } else {
-                  // May be [object Object] in case of unhandled non-unit enum
-                  moduleError = `Misc: ${dispatchError.toHuman()}`;
-                }
-              } else {
-                this.logger.log(result, this.logger.level.ERROR);
-              }
-            }
-
-            this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
-            unsub();
-            reject({status, moduleError, result});
+    return new Promise((resolve, reject) => {
+      let unsub: any = null;
+      sign((result: any) => {
+        const status = this.getTransactionStatus(result);
+        if(status === this.transactionStatus.SUCCESS) {
+          if(!result.status.isFinalized) {
+            return;
           }
-        });
-      } catch (e) {
+          const fee = this.getFeePaid(result);
+          this.logger.log(`${label} successful`);
+          if (unsub != null)
+            unsub();
+          //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
+          resolve({result, status, blockHash: result.status.toHuman().Finalized, fee: fee!});
+        } else if(status === this.transactionStatus.FAIL) {
+          let moduleError: string | null = null;
+
+          if(Object.hasOwn(result, 'dispatchError')) {
+            const dispatchError = result['dispatchError'];
+
+            if(dispatchError) {
+              if(dispatchError.isModule) {
+                const modErr = dispatchError.asModule;
+                const errorMeta = dispatchError.registry.findMetaError(modErr);
+
+                moduleError = `${errorMeta.section}.${errorMeta.name}`;
+              } else if(dispatchError.isToken) {
+                moduleError = `Token: ${dispatchError.asToken}`;
+              } else {
+                // May be [object Object] in case of unhandled non-unit enum
+                moduleError = `Misc: ${dispatchError.toHuman()}`;
+              }
+            } else {
+              this.logger.log(result, this.logger.level.ERROR);
+            }
+          }
+
+          this.logger.log(`Something went wrong with ${label}. Status: ${status}`, this.logger.level.ERROR);
+          if (unsub != null)
+            unsub();
+          reject({status, moduleError, result});
+        }
+      }).then(unsubFn => {
+        unsub = unsubFn;
+      }).catch(e => {
         this.logger.log(e, this.logger.level.ERROR);
         reject(e);
-      }
+      });
     });
   }
 
@@ -776,7 +778,7 @@ export class ChainHelperBase {
         throw Error(errorEvent.method + ': ' + extrinsic);
     }
     catch (e) {
-      if(!(e as object).hasOwnProperty('status')) throw e;
+      if(!Object.hasOwn(e as object, 'status')) throw e;
       result = e as ITransactionResult;
     }
 

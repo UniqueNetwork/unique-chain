@@ -957,17 +957,17 @@ describe('NFT: Fees', () => {
 });
 
 describe('NFT: Substrate calls', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
+  //let donor: IKeyringPair;
+  //let alice: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
-      donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([20n], donor);
+    await usingEthPlaygrounds(async (_helper, _privateKey) => {
+      // donor = await privateKey({url: import.meta.url});
+      // [alice] = await helper.arrange.createAccounts([20n], donor);
     });
   });
 
-  itEth.skip('Events emitted for mint()', async ({helper}) => {
+  itEth.skip('Events emitted for mint()', async () => {
     // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(alice, {});
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
@@ -989,7 +989,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(tokenId.toString());
   });
 
-  itEth.skip('Events emitted for burn()', async ({helper}) => {
+  itEth.skip('Events emitted for burn()', async () => {
     // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(alice, {});
     // const token = await collection.mintToken(alice);
@@ -1013,7 +1013,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
   });
 
-  itEth.skip('Events emitted for approve()', async ({helper}) => {
+  itEth.skip('Events emitted for approve()', async () => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
 
@@ -1039,7 +1039,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(token.tokenId.toString());
   });
 
-  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
+  itEth.skip('Events emitted for transferFrom()', async () => {
     // TODO: Refactor this
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
     // const receiver = helper.eth.createAccount();
@@ -1067,7 +1067,7 @@ describe('NFT: Substrate calls', () => {
     // expect(event.args.tokenId).to.be.equal(`${token.tokenId}`);
   });
 
-  itEth.skip('Events emitted for transfer()', async ({helper}) => {
+  itEth.skip('Events emitted for transfer()', async () => {
     // TODO: Refactor this
     // const receiver = helper.eth.createAccount();
 

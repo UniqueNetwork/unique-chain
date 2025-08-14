@@ -50,7 +50,7 @@ describe('Performace tests', () => {
     try {
       startCount = await tryMintUnsafeRPC(helper, alice, MAX_TOKENS_TO_MINT, collection.collectionId, {Substrate: alice.address});
     }
-    catch (e) {
+    catch {
       startCount = await tryMintExplicit(helper, alice, MAX_TOKENS_TO_MINT, collection.collectionId, {Substrate: alice.address});
       minterFunc = tryMintExplicit;
     }
@@ -98,7 +98,7 @@ const tryMintExplicit = async (helper: UniqueHelper, signer: IKeyringPair, token
   try {
     await helper.executeExtrinsic(signer, 'api.tx.unique.createMultipleItemsEx', [collectionId, {NFT: tokens}]);
   }
-  catch (e) {
+  catch {
     if(tokensCount < 2) return 0;
     return await tryMintExplicit(helper, signer, tokensCount - 1, collectionId, owner, property);
   }

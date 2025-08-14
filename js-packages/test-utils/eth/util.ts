@@ -8,7 +8,7 @@ import config from '../../tests/config.ts';
 
 import {EthUniqueHelper} from './index.ts';
 import {SilentLogger, SilentConsole} from '@unique/test-utils';
-import type {Pallets, SchedKind, UniqueTestContext} from '@unique/test-utils/util';
+import type {Pallets, UniqueTestContext} from '@unique/test-utils/util';
 
 import chai from 'chai';
 import chaiAsPromised from 'chai-as-promised';
@@ -37,7 +37,7 @@ export enum SponsoringMode {
 
 type PrivateKeyFn = (seed: string | {filename?: string, url?: string}) => Promise<IKeyringPair>;
 
-export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: PrivateKeyFn) => Promise<void>) => {
+export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privateKey: PrivateKeyFn) => Promise<void> | void) => {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
@@ -67,7 +67,11 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
       }
       return account;
     };
-    await code(helper, privateKey);
+    const result = code(helper, privateKey);
+    if (result instanceof Promise)
+      return await result;
+    else
+      return result;
   }
   finally {
     await helper.disconnect();

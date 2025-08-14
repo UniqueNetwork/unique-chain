@@ -36,7 +36,7 @@ describe('Integration Test: Collection Properties with sudo', () => {
   ].map(testSuite => describe(`${testSuite.mode.toUpperCase()}`, () => {
     before(async function() {
       // eslint-disable-next-line require-await
-      await usingPlaygrounds(async helper => {
+      await usingPlaygrounds(helper => {
         requirePalletsOrSkip(helper, testSuite.requiredPallets);
       });
     });
