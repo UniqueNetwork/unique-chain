@@ -77,13 +77,13 @@ describe('integration test: Fees must be credited to Treasury:', () => {
     await helper.wait.newBlocks(1);
 
     const treasuryBalanceBefore = await helper.balance.getSubstrate(TREASURY);
-    const aliceBalanceBefore = await helper.balance.getSubstrate(alice.address);
+    const aliceBalanceBefore: bigint = await helper.balance.getSubstrate(alice.address);
 
     const amount = 1n;
     await helper.balance.transferToSubstrate(alice, bob.address, amount);
 
     const treasuryBalanceAfter = await helper.balance.getSubstrate(TREASURY);
-    const aliceBalanceAfter = await helper.balance.getSubstrate(alice.address);
+    const aliceBalanceAfter: bigint = await helper.balance.getSubstrate(alice.address);
 
     const fee = aliceBalanceBefore - aliceBalanceAfter - amount;
     const treasuryIncrease = treasuryBalanceAfter - treasuryBalanceBefore;

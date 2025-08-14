@@ -2,6 +2,7 @@
   "imports": {
     "@unique-nft/playgrounds/": "./playgrounds/",
     "@unique/test-utils/": "./test-utils/",
+    "@unique/test-utils/util": "./test-utils/util.ts",
     "@unique-nft/evm-abi/": "./evm-abi/",
     "@unique-nft/tests/": "./tests/",
     "@unique/scripts": "./scripts/",
