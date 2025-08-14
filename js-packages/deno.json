@@ -1,19 +1,24 @@
 {
-    "version": "1.0.0",
-    "workspace": [
-      "./evm-abi",
-      "./types",
-      "./test-utils",
-      "./playgrounds",
-      "./scripts",
-      "./tests"
-    ],
-    "compilerOptions": {
-      "checkJs": false,
-      "strict": true,
-      "noImplicitAny": false
-    },
-    "unstable": [
-      "sloppy-imports"
-    ]
-  }
+  "version": "1.0.0",
+  "workspace": [
+    "./evm-abi",
+    "./types",
+    "./test-utils",
+    "./playgrounds",
+    "./scripts",
+    "./tests"
+  ],
+  "compilerOptions": {
+    "checkJs": false,
+    "strict": true,
+    "noImplicitAny": false
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-explicit-any"]
+    }
+  },
+  "unstable": [
+    "sloppy-imports"
+  ]
+}

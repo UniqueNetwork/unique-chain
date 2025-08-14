@@ -1335,16 +1335,18 @@ class WaitGroup {
     const initialBlocksCount = blocksCount;
 
     timeout = timeout ?? blocksCount * 60_000;
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
+    const promise = new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads(() => {
         if(blocksCount > 0) {
           blocksCount--;
         } else {
           unsubscribe();
           resolve();
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
 
     try {
@@ -1371,11 +1373,11 @@ class WaitGroup {
 
     let currentSessionIndex = -1;
     while(currentSessionIndex < expectedSessionIndex) {
-      // eslint-disable-next-line no-async-promise-executor
-      currentSessionIndex = await this.withTimeout(new Promise(async (resolve) => {
-        await this.newBlocks(1);
-        const res = await (this.helper as DevUniqueHelper).session.getIndex();
-        resolve(res);
+      currentSessionIndex = await this.withTimeout(new Promise((resolve, reject) => {
+        this.newBlocks(1)
+        .then(() => (this.helper as DevUniqueHelper).session.getIndex())
+        .then(resolve)
+        .catch(reject);
       }), blockTimeout, 'The chain has stopped producing blocks!');
     }
 
@@ -1385,16 +1387,18 @@ class WaitGroup {
   async forParachainBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     let lastBlock = null;
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
+    const promise = new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
         const newlastBlock = data.number.toNumber();
         if(newlastBlock >= blockNumber) {
           unsubscribe();
           resolve();
         }
         lastBlock = newlastBlock;
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
 
     try {
@@ -1409,17 +1413,18 @@ class WaitGroup {
   async forRelayBlockNumber(blockNumber: bigint | number, timeout?: number) {
     timeout = timeout ?? 30 * 60 * 1000;
     let lastBlock = null;
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().query.parachainSystem.validationData((data: any) => {
+    const promise = new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().query.parachainSystem.validationData((data: any) => {
         const newlastBlock = data.value.relayParentNumber.toNumber();
         if(newlastBlock >= blockNumber) {
-          // @ts-ignore
           unsubscribe();
           resolve();
         }
         lastBlock = newlastBlock;
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
 
     try {
@@ -1434,33 +1439,35 @@ class WaitGroup {
   noScheduledTasks() {
     const api = this.helper.getApi();
 
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async resolve => {
-      const unsubscribe = await api.rpc.chain.subscribeNewHeads(async () => {
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      api.rpc.chain.subscribeNewHeads(async () => {
         const areThereScheduledTasks = await api.query.scheduler.lookup.entries();
 
         if(areThereScheduledTasks.length == 0) {
           unsubscribe();
           resolve();
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
-
-    return promise;
   }
 
   parachainBlockMultiplesOf(val: bigint) {
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<void>(async resolve => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
+    return new Promise<void>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads((data: any) => {
         if(data.number.toBigInt() % val == 0n) {
           console.log(`from waiter: ${data.number.toBigInt()}`);
           unsubscribe();
           resolve();
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
+
     });
-    return promise;
   }
 
   event<T extends IEventHelper>(
@@ -1468,9 +1475,9 @@ class WaitGroup {
     eventHelper: T,
     filter: (_: any) => boolean = () => true,
   ): any {
-    // eslint-disable-next-line no-async-promise-executor
-    const promise = new Promise<T | null>(async (resolve) => {
-      const unsubscribe = await this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
+    const promise = new Promise<T | null>((resolve, reject) => {
+      let unsubscribe: any = null;
+      this.helper.getApi().rpc.chain.subscribeNewHeads(async header => {
         const blockNumber = header.number.toJSON();
         const blockHash = header.hash;
         const eventIdStr = `${eventHelper.section()}.${eventHelper.method()}`;
@@ -1497,7 +1504,9 @@ class WaitGroup {
           unsubscribe();
           resolve(null);
         }
-      });
+      })
+      .then(unsub => unsubscribe = unsub)
+      .catch(reject);
     });
     return promise;
   }

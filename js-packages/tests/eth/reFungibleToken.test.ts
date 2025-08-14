@@ -438,7 +438,7 @@ describe('Refungible: Plain calls', () => {
     expect(event.args.value).to.be.equal('50');
   });
 
-  itEth.skip('Receiving Transfer event on burning into full ownership', async ({helper}) => {
+  itEth.skip('Receiving Transfer event on burning into full ownership', async () => {
     // TODO: Refactor this
 
     // const caller = await helper.eth.createAccountWithBalance(donor);
@@ -610,19 +610,19 @@ describe('Refungible: Fees', () => {
 });
 
 describe('Refungible: Substrate calls', () => {
-  let donor: IKeyringPair;
-  let alice: IKeyringPair;
+  // let donor: IKeyringPair;
+  // let alice: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds(async (helper, privateKey) => {
+    await usingEthPlaygrounds((helper, _privateKey) => {
       requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
-      donor = await privateKey({url: import.meta.url});
-      [alice] = await helper.arrange.createAccounts([50n], donor);
+      // donor = await privateKey({url: import.meta.url});
+      // [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
 
-  itEth.skip('Events emitted for approve()', async ({helper}) => {
+  itEth.skip('Events emitted for approve()', async () => {
     // TODO: Refactor this
 
     // const receiver = helper.eth.createAccount();
@@ -648,7 +648,7 @@ describe('Refungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('100');
   });
 
-  itEth.skip('Events emitted for transferFrom()', async ({helper}) => {
+  itEth.skip('Events emitted for transferFrom()', async () => {
     // TODO: Refactor this
 
     // const [bob] = await helper.arrange.createAccounts([10n], donor);
@@ -683,7 +683,7 @@ describe('Refungible: Substrate calls', () => {
     // expect(event.args.value).to.be.equal('49');
   });
 
-  itEth.skip('Events emitted for transfer()', async ({helper}) => {
+  itEth.skip('Events emitted for transfer()', async () => {
     // TODO: Refactor this
 
     // const receiver = helper.eth.createAccount();

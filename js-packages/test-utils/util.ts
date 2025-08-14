@@ -40,13 +40,13 @@ export const getTestSeed = (filename: string) => `//Alice+${getTestHash(filename
 async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
   helperType: new (logger: ILogger) => T,
   url: string,
-  code: (helper: T, privateKey: (seed: string | { filename?: string, url?: string, ignoreFundsPresence?: boolean }) => Promise<IKeyringPair>) => Promise<R>,
+  code: (helper: T, privateKey: (seed: string | { filename?: string, url?: string, ignoreFundsPresence?: boolean }) => Promise<IKeyringPair>) => Promise<R> | R,
 ): Promise<R> {
   const silentConsole = new SilentConsole();
   silentConsole.enable();
 
   const helper = new helperType(new SilentLogger());
-  let result;
+  let result: R;
   try {
     await helper.connect(url);
     const ss58Format = helper.chain.getChainProperties().ss58Format;
@@ -71,16 +71,20 @@ async function usingPlaygroundsGeneral<T extends ChainHelperBase, R = void>(
       }
       return account;
     };
-    result = await code(helper, privateKey);
+    const resultOrPromise = code(helper, privateKey);
+    if (resultOrPromise instanceof Promise)
+      result = await resultOrPromise;
+    else
+      result = resultOrPromise;
   }
   finally {
     await helper.disconnect();
     silentConsole.disable();
   }
-  return result as any as R;
+  return result;
 }
 
-export const usingPlaygrounds = <R = void>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<R>, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper, R>(DevUniqueHelper, url, code);
+export const usingPlaygrounds = <R = void>(code: (helper: DevUniqueHelper, privateKey: (seed: string | {filename?: string, url?: string, ignoreFundsPresence?: boolean}) => Promise<IKeyringPair>) => Promise<R> | R, url: string = config.substrateUrl) => usingPlaygroundsGeneral<DevUniqueHelper, R>(DevUniqueHelper, url, code);
 
 export const usingWestendAssetHubPlaygrounds = (code: (helper: DevWestmintHelper, privateKey: (seed: string) => Promise<IKeyringPair>) => Promise<void>, url: string = config.westendAssetHubUrl) => usingPlaygroundsGeneral<DevWestmintHelper>(DevWestmintHelper, url, code);
 

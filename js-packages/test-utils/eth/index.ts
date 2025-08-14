@@ -7,7 +7,6 @@ import {readFile} from 'node:fs/promises';
 
 import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider} from 'ethers';
 
-// @ts-ignore
 import solc from 'solc';
 
 import {evmToAddress} from '@polkadot/util-crypto';
@@ -616,8 +615,6 @@ export class EthUniqueHelper extends DevUniqueHelper {
     this.ethContract = new ContractGroup(this);
     this.ethProperty = new EthPropertyGroup(this);
     this.arrange = new EthArrangeGroup(this);
-    // @ts-ignore
-    super.arrange = this.arrange;
   }
 
   getWeb3(): JsonRpcProvider {

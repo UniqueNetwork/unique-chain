@@ -1,3 +1,4 @@
+import process from "node:process";
 const npmBinsToPackageName = {
   'tsx': 'tsx',
   'eslint': 'eslint',
@@ -32,7 +33,7 @@ module.exports = {
           throw new Error(`'${cmd}' is defined in package.json but the 'plugin-root-bin' also defined it. To avoid unexpected results, please rename the script in package.json`);
         }
 
-        const dir = await this.getBinaryPackageDirectory(fs, path, cmd, ownPackageJson);
+        const dir = this.getBinaryPackageDirectory(fs, path, cmd, ownPackageJson);
         const pkg = JSON.parse(await fs.promises.readFile(path.join(dir, 'package.json'), 'utf-8'));
 
         const packageRelativeBinPath = typeof pkg.bin === 'object'
@@ -47,7 +48,7 @@ module.exports = {
         process.exit();
       }
 
-      async getBinaryPackageDirectory(_fs, path, cmd, _ownPackageJson) {
+      getBinaryPackageDirectory(_fs, path, cmd, _ownPackageJson) {
         const res = path.resolve(__dirname, '../../node_modules', npmBinsToPackageName[cmd]);
         console.error(res);
         return res;

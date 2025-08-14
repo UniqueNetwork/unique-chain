@@ -152,7 +152,7 @@ cargo fmt
 
 ### Format tests
 ```bash
-pushd tests && yarn fix ; popd
+pushd tests && deno task fix ; popd
 ```
 
 ### Check code style in tests

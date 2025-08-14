@@ -168,7 +168,7 @@ describe('EVM Migrations', () => {
 
     expect(eventStrings).to.contain('common.ItemCreated');
   });
-  itEth('Fake token creation on ethereum side', async ({helper}) => {
+  itEth('Fake token creation on ethereum side', async () => {
     // TODO: Refactor this
     // const collection = await helper.nft.mintCollection(superuser);
     // const collectionAddress = helper.ethAddress.fromCollectionId(collection.collectionId);
