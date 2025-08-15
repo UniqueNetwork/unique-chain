@@ -7,8 +7,8 @@ import '@unique-nft/opal-testnet-types/types-lookup.ts';
 
 import {stringToU8a} from '@polkadot/util';
 import {blake2AsHex, encodeAddress, mnemonicGenerate} from '@polkadot/util-crypto';
-import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique.ts';
-import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique.ts';
+import type {ChainHelperBaseConstructor, UniqueHelperConstructor} from '@unique-nft/playgrounds/unique';
+import {UniqueHelper, ChainHelperBase, HelperGroup} from '@unique-nft/playgrounds/unique';
 import {ApiPromise, Keyring, WsProvider} from '@polkadot/api';
 import * as defs from '@unique-nft/opal-testnet-types/definitions.ts';
 import type {AnyJson, IKeyringPair} from '@polkadot/types/types';

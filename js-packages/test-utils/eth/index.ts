@@ -12,7 +12,7 @@ import solc from 'solc';
 import {evmToAddress} from '@polkadot/util-crypto';
 import type {IKeyringPair} from '@polkadot/types/types';
 
-import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils/index';
+import {ArrangeGroup, DevUniqueHelper} from '@unique/test-utils';
 
 import type {ContractImports, CompiledContract, CrossAddress, NormalizedEvent, EthProperty} from './types.ts';
 import {CollectionMode, CreateCollectionData} from './types.ts';
