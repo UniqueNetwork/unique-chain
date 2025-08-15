@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, itSub, Pallets, usingPlaygrounds, describe, before} from '@unique/test-utils/util';
-import {CrossAccountId} from '@unique-nft/playgrounds/unique.ts';
+import {CrossAccountId} from '@unique-nft/playgrounds/unique';
 
 
 

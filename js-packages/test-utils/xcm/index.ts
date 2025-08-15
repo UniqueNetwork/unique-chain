@@ -1,7 +1,7 @@
 import {ApiPromise, WsProvider} from '@polkadot/api';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
-import type {ILogger, TSigner} from '@unique-nft/playgrounds/types.ts';
+import {ChainHelperBase, EthereumBalanceGroup, HelperGroup, SubstrateBalanceGroup, UniqueHelper} from '@unique-nft/playgrounds/unique';
+import type {ILogger, TSigner} from '@unique-nft/playgrounds/types';
 import type {AcalaAssetMetadata, DemocracyStandardAccountVote, MoonbeamAssetInfo} from './types.ts';
 
 

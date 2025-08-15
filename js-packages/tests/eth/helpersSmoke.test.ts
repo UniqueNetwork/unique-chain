@@ -16,7 +16,7 @@
 
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {before, describe} from "@unique/test-utils/util";
 
 describe('Helpers sanity check', () => {
   let donor: IKeyringPair;

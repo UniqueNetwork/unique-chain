@@ -18,7 +18,7 @@
 import os from 'node:os';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds} from '@unique/test-utils/util';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
 import * as notReallyCluster from 'node:cluster';
 import { setInterval, } from 'node:timers/promises';
 import process from "node:process"; // https://github.com/nodejs/node/issues/42271#issuecomment-1063415346

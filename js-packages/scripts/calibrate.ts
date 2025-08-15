@@ -1,6 +1,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 
 class Fract {
   static ZERO = new Fract(0n);

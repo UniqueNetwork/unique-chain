@@ -2,7 +2,7 @@ import type {IKeyringPair} from '@polkadot/types/types';
 import {xxhashAsHex} from '@polkadot/util-crypto';
 import type {u32} from '@polkadot/types-codec';
 import {usingPlaygrounds, expect} from '@unique/test-utils/util';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
 import {DevUniqueHelper} from '@unique/test-utils';
 
 export const democracyLaunchPeriod = 35;

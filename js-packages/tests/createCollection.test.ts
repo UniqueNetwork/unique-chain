@@ -16,9 +16,9 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, Pallets, describe, before} from '@unique/test-utils/util';
-import {CollectionFlag} from '@unique-nft/playgrounds/types.ts';
-import type {ICollectionCreationOptions, IProperty} from '@unique-nft/playgrounds/types.ts';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
+import {CollectionFlag} from '@unique-nft/playgrounds/types';
+import type {ICollectionCreationOptions, IProperty} from '@unique-nft/playgrounds/types';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
 
 async function mintCollectionHelper(helper: UniqueHelper, signer: IKeyringPair, options: ICollectionCreationOptions, type?: 'nft' | 'fungible' | 'refungible') {
   let collection;

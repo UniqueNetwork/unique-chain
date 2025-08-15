@@ -29,7 +29,7 @@ import refungibleDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleDeprecate
 import refungibleTokenAbi from '@unique-nft/evm-abi/abi/reFungibleToken.json' with {type: 'json'};
 import refungibleTokenDeprecatedAbi from '@unique-nft/evm-abi/abi/reFungibleTokenDeprecated.json' with {type: 'json'};
 import contractHelpersAbi from '@unique-nft/evm-abi/abi/contractHelpers.json' with {type: 'json'};
-import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types.ts';
+import type {ICrossAccountId, TCollectionMode} from '@unique-nft/playgrounds/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
 import {waitParams} from './util.ts';

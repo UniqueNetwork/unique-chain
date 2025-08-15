@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip, after, UniqueTestContext} from '@unique/test-utils/util';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
 import process from "node:process";
 
 async function getIdentities(helper: UniqueHelper) {

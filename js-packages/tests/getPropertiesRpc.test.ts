@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {itSub, usingPlaygrounds, expect, describe, before} from '@unique/test-utils/util';
-import {UniqueHelper, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueHelper, UniqueNFTCollection} from '@unique-nft/playgrounds/unique';
 
 const collectionProps = [
   {key: 'col-0', value: 'col-0-value'},

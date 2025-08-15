@@ -17,7 +17,7 @@
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {before, describe} from "@unique/test-utils/util";
 
 describe('Fungible: Plain calls', () => {
   let donor: IKeyringPair;

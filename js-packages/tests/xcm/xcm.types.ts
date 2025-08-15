@@ -1,8 +1,8 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, usingAcalaPlaygrounds, usingAstarPlaygrounds, usingHydraDxPlaygrounds, usingKaruraPlaygrounds, usingKusamaAssetHubPlaygrounds, usingMoonbeamPlaygrounds, usingMoonriverPlaygrounds, usingPlaygrounds, usingPolkadotAssetHubPlaygrounds, usingRelayPlaygrounds, usingShidenPlaygrounds} from '@unique/test-utils/util';
 import {DevAcalaHelper, DevAstarHelper, DevHydraDxHelper, DevMoonbeamHelper, DevRelayHelper, DevUniqueHelper, DevWestmintHelper, Event} from '@unique/test-utils';
-import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm/index';
-import {IEvent} from '@unique-nft/playgrounds/types.ts';
+import {AcalaHelper, AstarHelper} from '@unique/test-utils/xcm';
+import {IEvent} from '@unique-nft/playgrounds/types';
 import process from "node:process";
 
 export const UNIQUE_CHAIN = +(process.env.RELAY_UNIQUE_ID || 2037);

@@ -1,5 +1,5 @@
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 import {readFile} from 'node:fs/promises';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract, HDNodeWallet} from 'ethers';

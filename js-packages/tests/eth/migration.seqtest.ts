@@ -15,11 +15,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {before, describe} from "@unique/test-utils/util";
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Struct} from '@polkadot/types';
 
-import type {IEvent} from '@unique-nft/playgrounds/types.ts';
+import type {IEvent} from '@unique-nft/playgrounds/types';
 import type {InterfaceTypes} from '@polkadot/types/types/registry';
 import {ApiPromise} from '@polkadot/api';
 import {Contract} from 'ethers';

@@ -16,7 +16,7 @@
 
 import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
