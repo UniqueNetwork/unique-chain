@@ -154,6 +154,7 @@ export type FixedDescribe = {
   skip: (...args: DescribeArgs<UniqueTestContext>) => void;
   ifRunGov: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
   ifRunXcm: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
+  ifRunCollators: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
 };
 
 // Create a new function object by rebinding methods
@@ -170,6 +171,11 @@ export const describe: FixedDescribe = Object.assign(
     },
     ifRunXcm: (...args: DescribeArgs<UniqueTestContext>) => {
       return process.env.RUN_XCM_TESTS
+        ? describeBdd<UniqueTestContext>(...args)
+        : describeBdd.skip<UniqueTestContext>(...args);
+    },
+    ifRunCollators: (...args: DescribeArgs<UniqueTestContext>) => {
+      return process.env.RUN_COLLATOR_TESTS
         ? describeBdd<UniqueTestContext>(...args)
         : describeBdd.skip<UniqueTestContext>(...args);
     },
@@ -216,6 +222,7 @@ function wrapBddFunctionCallback(cb: (this: UniqueTestContext) => void | Promise
 function handleSkipError(ctx:UniqueTestContext, e) {
   if (e instanceof SkipError) {
     ctx.missingPallets = e.missingPallets;
+    ctx.skipMessage = e.message;
   } else {
     throw e;
   }
@@ -282,6 +289,8 @@ export function itSub(...args: ItSubArgs) {
     try {
       if (this.missingPallets)
         throw new SkipError(this.missingPallets);
+      if (this.skipMessage)
+        throw new SkipError(this.skipMessage);
       await usingPlaygrounds(async (helper, privateKey) => {
         if(opts.requiredPallets) {
           requirePalletsOrSkip(helper, opts.requiredPallets);
@@ -322,6 +331,7 @@ itSub.ifWithPallets = (name: string, requiredPallets: readonly Pallets[], cb: (a
 
 export class UniqueTestContext {
   public missingPallets: string[] | undefined;
+  public skipMessage: string | undefined;
 
   public skip(message: string) {
     throw new SkipError(message);

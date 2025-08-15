@@ -67,15 +67,12 @@ async function resetInvulnerables() {
 }
 
 // todo:collator Most preferable to launch this test in parallel somehow -- or change the session period (1 hr).
-describe('Integration Test: Collator Selection', () => {
+describe.ifRunCollators('Integration Test: Collator Selection', () => {
   let superuser: IKeyringPair;
   let previousLicenseBond = 0n;
   let licenseBond = 0n;
 
   before(async function(this: UniqueTestContext) {
-    if(!process.env.RUN_COLLATOR_TESTS)
-      this.skip("RUN_COLLATOR_TESTS not set");
-
     // Check env vars
     await getInitialInvulnerables();
 
@@ -420,8 +417,6 @@ describe('Integration Test: Collator Selection', () => {
   });
 
   after(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) return;
-
     await usingPlaygrounds(async (helper) => {
       if(helper.fetchMissingPalletNames([Pallets.CollatorSelection]).length != 0) return;
 
