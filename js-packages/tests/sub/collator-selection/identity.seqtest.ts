@@ -17,7 +17,6 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, usingPlaygrounds, expect, itSub, Pallets, requirePalletsOrSkip, after, UniqueTestContext} from '@unique/test-utils/util';
 import {UniqueHelper} from '@unique-nft/playgrounds/unique';
-import process from "node:process";
 
 async function getIdentities(helper: UniqueHelper) {
   const identities: [string, any][] = [];
@@ -38,13 +37,10 @@ async function getSubIdentityName(helper: UniqueHelper, address: string) {
   return ((await helper.getApi().query.identity.superOf(address)).toHuman() as any);
 }
 
-describe('Integration Test: Identities Manipulation', () => {
+describe.ifRunCollators('Integration Test: Identities Manipulation', () => {
   let superuser: IKeyringPair;
 
   before(async function(this: UniqueTestContext) {
-    if(!process.env.RUN_COLLATOR_TESTS)
-      this.skip("RUN_COLLATOR_TESTS not set");
-
     await usingPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(helper, [Pallets.Identity]);
       superuser = await privateKey('//Alice');
@@ -273,8 +269,6 @@ describe('Integration Test: Identities Manipulation', () => {
   });
 
   after(async function() {
-    if(!process.env.RUN_COLLATOR_TESTS) return;
-
     await usingPlaygrounds(async helper => {
       if(helper.fetchMissingPalletNames([Pallets.Identity]).length != 0) return;
 
