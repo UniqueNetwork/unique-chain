@@ -17,7 +17,7 @@
 import {before, describe, Pallets, requirePalletsOrSkip} from '@unique/test-utils/util';
 import {waitParams, expect, itEth, usingEthPlaygrounds, hexlifyString} from '@unique/test-utils/eth/util';
 import type {IKeyringPair} from '@polkadot/types/types';
-import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.ts';
+import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
 import {CREATE_COLLECTION_DATA_DEFAULTS, NormalizedEvent, TokenPermissionField} from '@unique/test-utils/eth/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';

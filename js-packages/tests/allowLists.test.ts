@@ -16,8 +16,8 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, describe, before} from '@unique/test-utils/util';
-import type {ICollectionPermissions} from '@unique-nft/playgrounds/types.ts';
-import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.ts';
+import type {ICollectionPermissions} from '@unique-nft/playgrounds/types';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types';
 
 describe('Integration Test ext. Allow list tests', () => {
   let alice: IKeyringPair;

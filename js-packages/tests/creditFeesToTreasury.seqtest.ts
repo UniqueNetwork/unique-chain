@@ -19,7 +19,7 @@ import {ApiPromise} from '@polkadot/api';
 import {usingPlaygrounds, expect, itSub, describe, before} from '@unique/test-utils/util';
 import type {u32} from '@polkadot/types-codec';
 import {itEth} from '@unique/test-utils/eth/util';
-import {ITransactionResult} from '@unique-nft/playgrounds/types.ts';
+import {ITransactionResult} from '@unique-nft/playgrounds/types';
 
 const TREASURY = '5EYCAe5ijiYfyeZ2JJCGq56LmPyNRAKzpG4QkoQkkQNB5e6Z';
 const saneMinimumFee = 0.05;

@@ -15,11 +15,11 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {before, describe} from "@unique/test-utils/util";
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Contract} from 'ethers';
-import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types.ts';
+import type {ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
 import {CREATE_COLLECTION_DATA_DEFAULTS, TokenPermissionField} from '@unique/test-utils/eth/types';
 import {Buffer} from "node:buffer";
 

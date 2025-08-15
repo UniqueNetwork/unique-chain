@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, usingPlaygrounds, itSub, expect} from '@unique/test-utils/util';
-import {ICrossAccountId} from '@unique-nft/playgrounds/types.ts';
+import {ICrossAccountId} from '@unique-nft/playgrounds/types';
 
 describe('integration test: RPC methods', () => {
   let donor: IKeyringPair;

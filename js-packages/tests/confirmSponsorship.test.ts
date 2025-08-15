@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, itSub, Pallets, describe, before} from '@unique/test-utils/util';
-import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.ts';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types';
 
 async function setSponsorHelper(collection: any, signer: IKeyringPair, sponsorAddress: string) {
   await collection.setSponsor(signer, sponsorAddress);

@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {expect, Pallets, usingPlaygrounds, describe, before, itSub} from '@unique/test-utils/util';
-import {CrossAccountId, UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '@unique-nft/playgrounds/unique.ts';
+import {CrossAccountId, UniqueFTCollection, UniqueNFToken, UniqueRFToken} from '@unique-nft/playgrounds/unique';
 
 describe('Integration Test: Unnesting', () => {
   let alice: IKeyringPair;

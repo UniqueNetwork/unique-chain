@@ -1,10 +1,10 @@
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 import {Buffer} from "node:buffer";
 import {readFile} from 'node:fs/promises';
-import type {ICrossAccountId} from '@unique-nft/playgrounds/types.ts';
+import type {ICrossAccountId} from '@unique-nft/playgrounds/types';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueNFTCollection} from '@unique-nft/playgrounds/unique';
 import {Contract, hexlify} from 'ethers';
 import {createObjectCsvWriter} from 'csv-writer';
 import {convertToTokens, createCollectionForBenchmarks, PERMISSIONS, PROPERTIES} from '../utils/common.ts';

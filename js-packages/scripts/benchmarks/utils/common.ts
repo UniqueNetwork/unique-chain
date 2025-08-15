@@ -1,6 +1,6 @@
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
-import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.ts';
-import type {ITokenPropertyPermission, TCollectionMode} from '@unique-nft/playgrounds/types.ts';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
+import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique';
+import type {ITokenPropertyPermission, TCollectionMode} from '@unique-nft/playgrounds/types';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Buffer} from "node:buffer";
 

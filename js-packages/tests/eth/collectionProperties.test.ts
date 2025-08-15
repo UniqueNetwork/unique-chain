@@ -16,7 +16,7 @@
 
 import {itEth, usingEthPlaygrounds, expect, waitParams, hexlifyString} from '@unique/test-utils/eth/util';
 import {before, describe, Pallets} from '@unique/test-utils/util';
-import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types.ts';
+import type {IProperty, ITokenPropertyPermission} from '@unique-nft/playgrounds/types';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Buffer} from "node:buffer";
 

@@ -23,7 +23,7 @@ import {evmToAddress} from '@polkadot/util-crypto';
 import {Contract, HDNodeWallet} from 'ethers';
 
 import {usingEthPlaygrounds, expect, itEth, waitParams} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 import type {CompiledContract} from '@unique/test-utils/eth/types';
 import {before, describe, requirePalletsOrSkip, Pallets, makeNames} from '@unique/test-utils/util';
 

@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, expect, itSub, Pallets, usingPlaygrounds} from '@unique/test-utils/util';
-import {CrossAccountId, UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.ts';
+import {CrossAccountId, UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique';
 
 let alice: IKeyringPair;
 let bob: IKeyringPair;

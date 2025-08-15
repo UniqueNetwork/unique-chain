@@ -16,8 +16,8 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {waitParams, expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
-import {UniqueHelper} from '@unique-nft/playgrounds/unique.ts';
-import {before, describe} from "@unique/test-utils/util.ts";
+import {UniqueHelper} from '@unique-nft/playgrounds/unique';
+import {before, describe} from "@unique/test-utils/util";
 
 describe('NativeFungible: ERC20 calls', () => {
   let donor: IKeyringPair;

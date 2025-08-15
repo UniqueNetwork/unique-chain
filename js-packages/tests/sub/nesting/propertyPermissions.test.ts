@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, itSub, Pallets, usingPlaygrounds, expect} from '@unique/test-utils/util';
-import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueNFTCollection, UniqueRFTCollection} from '@unique-nft/playgrounds/unique';
 
 describe('Integration Test: Access Rights to Token Properties', () => {
   let alice: IKeyringPair;

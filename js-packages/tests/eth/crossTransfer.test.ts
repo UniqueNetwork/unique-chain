@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {waitParams, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
-import {CrossAccountId} from '@unique-nft/playgrounds/unique.ts';
+import {CrossAccountId} from '@unique-nft/playgrounds/unique';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe} from "@unique/test-utils/util";
 

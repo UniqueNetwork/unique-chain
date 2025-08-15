@@ -1,9 +1,9 @@
 import {usingEthPlaygrounds, waitParams} from '@unique/test-utils/eth/util';
-import {EthUniqueHelper} from '@unique/test-utils/eth/index';
+import {EthUniqueHelper} from '@unique/test-utils/eth';
 import {readFile} from 'node:fs/promises';
 import {CollectionLimitField,  CreateCollectionData,  TokenPermissionField} from '@unique/test-utils/eth/types';
 import type {IKeyringPair} from '@polkadot/types/types';
-import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique.ts';
+import {UniqueFTCollection, UniqueNFTCollection} from '@unique-nft/playgrounds/unique';
 import {Contract} from 'ethers';
 import {createObjectCsvWriter} from 'csv-writer';
 import {FunctionFeeVM} from '../utils/types.ts';

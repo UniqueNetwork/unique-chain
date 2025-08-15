@@ -1,5 +1,5 @@
-import {CollectionFlag} from '@unique-nft/playgrounds/types.ts';
-import type {TCollectionMode} from '@unique-nft/playgrounds/types.ts';
+import {CollectionFlag} from '@unique-nft/playgrounds/types';
+import type {TCollectionMode} from '@unique-nft/playgrounds/types';
 import {Buffer} from "node:buffer";
 
 export interface ContractImports {

@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, expect, Pallets, itSub, describe, before} from '@unique/test-utils/util';
-import type {IProperty} from '@unique-nft/playgrounds/types.ts';
+import type {IProperty} from '@unique-nft/playgrounds/types';
 
 describe('Integration Test: createMultipleItemsEx', () => {
   let alice: IKeyringPair;

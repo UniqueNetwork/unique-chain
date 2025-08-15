@@ -16,7 +16,7 @@
 
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, itSub, usingPlaygrounds, expect} from '@unique/test-utils/util';
-import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types.ts';
+import {NON_EXISTENT_COLLECTION_ID} from '@unique-nft/playgrounds/types';
 
 describe('Integration Test removeCollectionAdmin(collection_id, account_id):', () => {
   let alice: IKeyringPair;

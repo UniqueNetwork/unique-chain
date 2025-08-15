@@ -10,7 +10,7 @@
 import {encodeAddress} from '@polkadot/keyring';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {usingPlaygrounds, Pallets} from '@unique/test-utils/util';
-import {ChainHelperBase} from '@unique-nft/playgrounds/unique.ts';
+import {ChainHelperBase} from '@unique-nft/playgrounds/unique';
 import process from "node:process";
 
 const relayUrl = process.argv[2] ?? 'ws://localhost:9844';

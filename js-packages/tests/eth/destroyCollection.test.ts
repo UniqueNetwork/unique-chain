@@ -17,7 +17,7 @@
 import type {IKeyringPair} from '@polkadot/types/types';
 import {before, describe, Pallets} from '@unique/test-utils/util';
 import {expect, itEth, usingEthPlaygrounds} from '@unique/test-utils/eth/util';
-import type {TCollectionMode} from '@unique-nft/playgrounds/types.ts';
+import type {TCollectionMode} from '@unique-nft/playgrounds/types';
 import {CreateCollectionData} from '@unique/test-utils/eth/types';
 
 describe('Destroy Collection from EVM', function() {

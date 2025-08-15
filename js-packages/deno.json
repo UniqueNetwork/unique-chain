@@ -17,19 +17,5 @@
     "rules": {
       "exclude": ["no-explicit-any"]
     }
-  },
-  "imports": {
-    "@unique/test-utils": "./test-utils/index.ts",
-    "@unique/test-utils/util": "./test-utils/util.ts",
-    "@unique/test-utils/eth/util": "./test-utils/eth/util.ts",
-    "@unique-nft/evm-abi/": "./evm-abi/",
-    "@unique-nft/tests/": "./tests/",
-    "@unique/scripts": "./scripts/",
-    "@unique-nft/playgrounds/unique": "./playgrounds/unique.ts",
-    "@unique-nft/opal-testnet-types/": "./types/",
-    "@unique-nft/opal-testnet-types/types-lookup.js": "./types/lookup.ts",
-    "@unique-nft/opal-testnet-types/augment-types.js": "./types/augment-types.ts",
-    "@unique-nft/quartz-mainnet-types/definitions": "./types/definitions.ts",
-    "@unique-nft/unique-mainnet-types/definitions": "./types/definitions.ts"
   }
 }
