@@ -11,8 +11,8 @@
         "setIdentities": "deno ../scripts/identitySetter.ts",
         "checkRelayIdentities": "deno ../scripts/relayIdentitiesChecker.ts",
         
-        "_test": "deno task setup && deno test --import-map=../import_map.json --allow-env --allow-net --allow-read",
-        "_testParallel": "deno task setup && deno test --import-map=../import_map.json --allow-env --allow-net --allow-read --parallel",
+        "_test": "deno task setup && deno test --allow-env --allow-net --allow-read",
+        "_testParallel": "deno task setup && deno test --allow-env --allow-net --allow-read --parallel",
 
         "test": "deno task _test './**/*.*test.ts'",
         "testParallel": "deno task _testParallel './**/*.test.ts'",
