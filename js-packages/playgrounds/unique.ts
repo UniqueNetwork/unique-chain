@@ -508,18 +508,14 @@ export class ChainHelperBase {
       child.clearApi();
     }
 
-    const promises: Promise<any>[] = [];
     if(this.api != null) {
       const api = this.api;
-      api.disconnect();
-      promises.push(new Promise((resolve) => api.on('disconnected', resolve)));
+      await api.disconnect();
     }
     if (this.wsProvider != null) {
       const wsProvider = this.wsProvider;
-      wsProvider.disconnect();
-      promises.push(new Promise((resolve) => wsProvider.on('disconnected', resolve)));
+      await wsProvider.disconnect();
     }
-    await Promise.all(promises);
     this.clearApi();
   }
 

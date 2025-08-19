@@ -24,10 +24,7 @@ describe('Connection smoke test', () => {
   });
 
   it('Cannot connect to 255.255.255.255', async () => {
-    await expect((async () => {
-      await usingPlaygrounds(async helper => {
-        await helper.callRpc('api.rpc.system.health');
-      }, 'ws://255.255.255.255:9944');
-    })()).to.be.eventually.rejected;
+    await expect(usingPlaygrounds(() => {
+    }, 'ws://255.255.255.255:9944')).to.be.rejected;
   });
 });
