@@ -18,5 +18,17 @@
     "councilDemocracyProposal": "deno --allow-env ./councilproposal.ts",
     "hrmpChannel": "deno --allow-env ./hrmpchannel.ts",
     "leaseStatus": "deno --allow-env ./leaseStatus.ts"
+  },
+  "exports": {
+    ".": "./index.ts",
+    "./correctStateAfterMaintenance": "./correctStateAfterMaintenance.ts",
+    "./generateEnv": "./generateEnv.ts",
+    "./proposeUpgrade": "./proposeupgrade.ts",
+    "./proposeFastTrack": "./proposefasttrack.ts",
+    "./councilDemocracyProposal": "./councilproposal.ts",
+    "./hrmpChannel": "./hrmpchannel.ts",
+    "./leaseStatus": "./leaseStatus.ts",
+    "./benchMintingFee": "./benchMintingFee.ts",
+    "./loadTransfer": "./transfer.nload.ts"
   }
 }
