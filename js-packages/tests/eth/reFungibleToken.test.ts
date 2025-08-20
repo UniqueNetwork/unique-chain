@@ -20,6 +20,7 @@ import {EthUniqueHelper} from '@unique/test-utils/eth';
 import type {IKeyringPair} from '@polkadot/types/types';
 import {Buffer} from "node:buffer";
 import {Contract} from 'ethers';
+import { NormalizedEvent } from "../../test-utils/eth/types.ts";
 
 // FIXME: Need erc721 for ReFubgible.
 describe('Check ERC721 token URI for ReFungible', () => {
@@ -438,37 +439,44 @@ describe('Refungible: Plain calls', () => {
     expect(event.args.value).to.be.equal('50');
   });
 
-  itEth.skip('Receiving Transfer event on burning into full ownership', async () => {
-    // TODO: Refactor this
+  itEth('Receiving Transfer event on burning into full ownership', async ({helper}) => {
+    const caller = await helper.eth.createAccountWithBalance(donor);
+    const receiver = await helper.eth.createAccountWithBalance(donor);
+    const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Devastation', '6', '6');
+    const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
 
-    // const caller = await helper.eth.createAccountWithBalance(donor);
-    // const receiver = await helper.eth.createAccountWithBalance(donor);
-    // const {collectionId, collectionAddress} = await helper.eth.createRFTCollection(caller, 'Devastation', '6', '6');
-    // const contract = await helper.ethNativeContract.collection(collectionAddress, 'rft', caller);
+    const mintTx = await contract.mint.send(caller);
+    const mintReceipt = await mintTx.wait(...waitParams);
+    const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
 
-    // const mintTx = await contract.mint.send(caller);
-    // const mintReceipt = await mintTx.wait(...waitParams);
-    // const mintEvents = helper.eth.normalizeEvents(mintReceipt!);
+    const tokenId = +mintEvents.Transfer.args.tokenId;
+    const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
+    const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, caller, true);
 
-    // const tokenId = +mintEvents.Transfer.args.tokenId;
-    // const tokenAddress = helper.ethAddress.fromTokenId(collectionId, tokenId);
-    // const tokenContract = await helper.ethNativeContract.rftToken(tokenAddress, caller, true);
+    await (await tokenContract.repartition.send(2)).wait(...waitParams);
+    await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
 
-    // await (await tokenContract.repartition.send(2)).wait(...waitParams);
-    // await (await tokenContract.transfer.send(receiver, 1)).wait(...waitParams);
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
+    await (await tokenContract.burnFrom(caller, 1)).wait(...waitParams);
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
-    // await tokenContract.burnFrom(caller, 1).send();
+    if(events.length == 0) await helper.wait.newBlocks(1);
+    contract.off('Transfer');
 
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
-    // expect(event.address).to.be.equal(collectionAddress);
-    // expect(event.args.from).to.be.equal('0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF');
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.tokenId).to.be.equal(tokenId);
+    expect(events[0]).to.be.deep.equal({
+      address: collectionAddress,
+      event: 'Transfer',
+      args: {
+        from: '0xFFfFfFffFFfffFFfFFfFFFFFffFFFffffFfFFFfF',
+        to: receiver.address,
+        tokenId: tokenId.toString(),
+      },
+    });
   });
 
   itEth('Can perform burnFromCross()', async ({helper}) => {
@@ -610,103 +618,130 @@ describe('Refungible: Fees', () => {
 });
 
 describe('Refungible: Substrate calls', () => {
-  // let donor: IKeyringPair;
-  // let alice: IKeyringPair;
+  let donor: IKeyringPair;
+  let alice: IKeyringPair;
 
   before(async function() {
-    await usingEthPlaygrounds((helper, _privateKey) => {
+    await usingEthPlaygrounds(async (helper, privateKey) => {
       requirePalletsOrSkip(helper, [Pallets.ReFungible]);
 
-      // donor = await privateKey({url: import.meta.url});
-      // [alice] = await helper.arrange.createAccounts([50n], donor);
+      donor = await privateKey({url: import.meta.url});
+      [alice] = await helper.arrange.createAccounts([50n], donor);
     });
   });
 
-  itEth.skip('Events emitted for approve()', async () => {
-    // TODO: Refactor this
+  itEth('Events emitted for approve()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 200n);
 
-    // const receiver = helper.eth.createAccount();
-    // const collection = await helper.rft.mintCollection(alice);
-    // const token = await collection.mintToken(alice, 200n);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, helper.web3!);
 
-    // const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
-    // const contract = await helper.ethNativeContract.rftToken(tokenAddress);
+    const events: NormalizedEvent[] = [];
+    contract.on('Approval', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    expect(await token.approve(alice, {Ethereum: receiver.address}, 100n)).to.be.true;
+    if(events.length == 0) await helper.wait.newBlocks(1);
+    contract.off('Approval');
 
-    // expect(await token.approve(alice, {Ethereum: receiver}, 100n)).to.be.true;
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
-
-    // expect(event.event).to.be.equal('Approval');
-    // expect(event.address).to.be.equal(tokenAddress);
-    // expect(event.args.owner).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.spender).to.be.equal(receiver);
-    // expect(event.args.value).to.be.equal('100');
+    expect(events[0]).to.be.deep.equal({
+      address: tokenAddress,
+      event: 'Approval',
+      args: {
+        owner: helper.address.substrateToEth(alice.address),
+        spender: receiver.address,
+        value: '100',
+      },
+    });
   });
 
-  itEth.skip('Events emitted for transferFrom()', async () => {
-    // TODO: Refactor this
+  itEth('Events emitted for transferFrom()', async ({helper}) => {
+    const [bob] = await helper.arrange.createAccounts([10n], donor);
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 200n);
+    await token.approve(alice, {Substrate: bob.address}, 100n);
 
-    // const [bob] = await helper.arrange.createAccounts([10n], donor);
-    // const receiver = helper.eth.createAccount();
-    // const collection = await helper.rft.mintCollection(alice);
-    // const token = await collection.mintToken(alice, 200n);
-    // await token.approve(alice, {Substrate: bob.address}, 100n);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, helper.web3!);
 
-    // const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
-    // const contract = await helper.ethNativeContract.rftToken(tokenAddress);
+    const transferEvents: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        transferEvents.push(event);
+    });
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    const approvalEvents: NormalizedEvent[] = [];
+    contract.on('Approval', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        approvalEvents.push(event);
+    });
 
-    // expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver},  51n)).to.be.true;
-    // if(events.length == 0) await helper.wait.newBlocks(1);
+    expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address},  51n)).to.be.true;
+    if(transferEvents.length == 0) await helper.wait.newBlocks(1);
+    contract.off('Approval');
+    contract.off('Transfer');
 
-    // let event = events[0];
-    // expect(event.event).to.be.equal('Transfer');
-    // expect(event.address).to.be.equal(tokenAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.value).to.be.equal('51');
+    expect(transferEvents[0]).to.be.deep.equal({
+      address: tokenAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: receiver.address,
+        value: '51',
+      },
+    });
 
-    // event = events[1];
-    // expect(event.event).to.be.equal('Approval');
-    // expect(event.address).to.be.equal(tokenAddress);
-    // expect(event.args.owner).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.spender).to.be.equal(helper.address.substrateToEth(bob.address));
-    // expect(event.args.value).to.be.equal('49');
+    expect(approvalEvents[0]).to.be.deep.equal({
+      address: tokenAddress,
+      event: 'Approval',
+      args: {
+        owner: helper.address.substrateToEth(alice.address),
+        spender: helper.address.substrateToEth(bob.address),
+        value: '49',
+      },
+    });
   });
 
-  itEth.skip('Events emitted for transfer()', async () => {
-    // TODO: Refactor this
+  itEth('Events emitted for transfer()', async ({helper}) => {
+    const receiver = helper.eth.createAccount();
+    const collection = await helper.rft.mintCollection(alice);
+    const token = await collection.mintToken(alice, 200n);
 
-    // const receiver = helper.eth.createAccount();
-    // const collection = await helper.rft.mintCollection(alice);
-    // const token = await collection.mintToken(alice, 200n);
+    const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
+    const contract = await helper.ethNativeContract.rftToken(tokenAddress, helper.web3!);
 
-    // const tokenAddress = helper.ethAddress.fromTokenId(collection.collectionId, token.tokenId);
-    // const contract = await helper.ethNativeContract.rftToken(tokenAddress);
+    const events: NormalizedEvent[] = [];
+    contract.on('Transfer', (...args) => {
+      const eventPayload = args.at(-1);
+      const event = helper.eth.rebuildLog(eventPayload.log);
+      if (event)
+        events.push(event);
+    });
 
-    // const events: any = [];
-    // contract.events.allEvents((_: any, event: any) => {
-    //   events.push(event);
-    // });
+    expect(await token.transfer(alice, {Ethereum: receiver.address},  51n)).to.be.true;
+    if(events.length == 0) await helper.wait.newBlocks(1);
+    contract.off('Transfer');
 
-    // expect(await token.transfer(alice, {Ethereum: receiver},  51n)).to.be.true;
-    // if(events.length == 0) await helper.wait.newBlocks(1);
-    // const event = events[0];
-
-    // expect(event.event).to.be.equal('Transfer');
-    // expect(event.address).to.be.equal(tokenAddress);
-    // expect(event.args.from).to.be.equal(helper.address.substrateToEth(alice.address));
-    // expect(event.args.to).to.be.equal(receiver);
-    // expect(event.args.value).to.be.equal('51');
+    expect(events[0]).to.be.deep.equal({
+      address: tokenAddress,
+      event: 'Transfer',
+      args: {
+        from: helper.address.substrateToEth(alice.address),
+        to: receiver.address,
+        value: '51',
+      },
+    });
   });
 });
 

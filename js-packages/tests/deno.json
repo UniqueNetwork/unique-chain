@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "@unique/scripts/correctStateAfterMaintenance": "../scripts/correctStateAfterMaintenance.ts"
+  },
+  "compilerOptions": {
+    "moduleResolution": "bundler"
+  }
+}
