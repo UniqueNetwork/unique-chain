@@ -5,7 +5,7 @@
 
 import {readFile} from 'node:fs/promises';
 
-import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider} from 'ethers';
+import {ContractTransactionReceipt, ethers, EventLog, getAddress, HDNodeWallet, hexlify, Log, Wallet, JsonRpcProvider, ContractRunner} from 'ethers';
 
 import solc from 'solc';
 
@@ -129,7 +129,7 @@ class NativeContractGroup extends EthGroupBase {
     return new Contract(address, collectionHelpersAbi, signer);
   }
 
-  collection(address: string, mode: TCollectionMode, signer: HDNodeWallet, mergeDeprecated = false): Contract {
+  collection(address: string, mode: TCollectionMode, signer: ContractRunner, mergeDeprecated = false): Contract {
     let abi;
     if(address === this.helper.ethAddress.fromCollectionId(0)) {
       abi = nativeFungibleAbi;
@@ -155,7 +155,7 @@ class NativeContractGroup extends EthGroupBase {
     return this.collection(this.helper.ethAddress.fromCollectionId(collectionId), mode, signer, mergeDeprecated);
   }
 
-  rftToken(address: string, signer?: HDNodeWallet, mergeDeprecated = false) {
+  rftToken(address: string, signer?: ContractRunner, mergeDeprecated = false) {
     const abi = mergeDeprecated ? [...refungibleTokenAbi, ...refungibleTokenDeprecatedAbi] : refungibleTokenAbi;
     return new Contract(address, abi, signer);
   }
