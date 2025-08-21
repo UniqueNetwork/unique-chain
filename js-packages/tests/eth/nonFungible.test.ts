@@ -981,7 +981,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     const {tokenId} = await collection.mintToken(alice);
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
@@ -1011,7 +1011,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.burn(alice);
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
@@ -1043,7 +1043,7 @@ describe('NFT: Substrate calls', () => {
     });
 
     await token.approve(alice, {Ethereum: receiver.address});
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Approval');
 
     expect(events[0]).to.be.deep.equal({
@@ -1078,7 +1078,7 @@ describe('NFT: Substrate calls', () => {
 
     await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address});
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
@@ -1111,7 +1111,7 @@ describe('NFT: Substrate calls', () => {
 
     await token.transfer(alice, {Ethereum: receiver.address});
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({

@@ -594,7 +594,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.approveTokens(alice, {Ethereum: receiver.address}, 100n);
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
 
     contract.off('Approval');
     expect(events[0]).to.be.deep.equal({
@@ -635,7 +635,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address}, 51n);
-    if(transferEvents.length == 0) await helper.wait.newBlocks(1);
+    if(transferEvents.length == 0) await helper.wait.newBlocks(4);
 
     contract.off('Approval');
     contract.off('Transfer');
@@ -678,7 +678,7 @@ describe('Fungible: Substrate calls', () => {
     });
 
     await collection.transfer(alice, {Ethereum: receiver.address}, 51n);
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
 
     contract.off('Transfer');
 
