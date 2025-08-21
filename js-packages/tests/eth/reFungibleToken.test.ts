@@ -647,7 +647,7 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.approve(alice, {Ethereum: receiver.address}, 100n)).to.be.true;
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Approval');
 
     expect(events[0]).to.be.deep.equal({
@@ -688,7 +688,7 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transferFrom(bob, {Substrate: alice.address}, {Ethereum: receiver.address},  51n)).to.be.true;
-    if(transferEvents.length == 0) await helper.wait.newBlocks(1);
+    if(transferEvents.length == 0) await helper.wait.newBlocks(4);
     contract.off('Approval');
     contract.off('Transfer');
 
@@ -730,7 +730,7 @@ describe('Refungible: Substrate calls', () => {
     });
 
     expect(await token.transfer(alice, {Ethereum: receiver.address},  51n)).to.be.true;
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({

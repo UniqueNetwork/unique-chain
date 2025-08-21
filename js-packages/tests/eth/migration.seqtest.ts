@@ -207,7 +207,7 @@ describe('EVM Migrations', () => {
       await helper.executeExtrinsic(superuser, 'api.tx.sudo.sudo', [txInsertEthLogs]);
     }
 
-    if(events.length == 0) await helper.wait.newBlocks(1);
+    if(events.length == 0) await helper.wait.newBlocks(4);
     contract.off('Transfer');
 
     expect(events[0]).to.be.deep.equal({
