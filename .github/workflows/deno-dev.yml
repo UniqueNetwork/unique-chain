@@ -75,13 +75,13 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           deno install
-          deno --allow-env --allow-net ./benchmarks/mintFee/index.ts
+          deno --allow-env --allow-net --allow-read ./benchmarks/mintFee/index.ts
 
       - name: Run benchmark opsFee tests
         working-directory: js-packages/scripts
         run: |
           deno install
-          deno --allow-env --allow-net ./benchmarks/opsFee/index.ts
+          deno --allow-env --allow-net --allow-read ./benchmarks/opsFee/index.ts
 
       - name: Stop running containers
         if: always()                   # run this step always
