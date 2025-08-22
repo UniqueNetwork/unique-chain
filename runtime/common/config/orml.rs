@@ -16,7 +16,7 @@
 
 use frame_support::{parameter_types, traits::Everything};
 use frame_system::EnsureSigned;
-use orml_traits::{location::AbsoluteReserveProvider, parameter_type_with_key};
+use orml_traits::parameter_type_with_key;
 use pallet_foreign_assets::CurrencyIdConvert;
 use sp_runtime::traits::Convert;
 use staging_xcm::latest::prelude::*;
@@ -28,7 +28,9 @@ use up_common::{
 use up_data_structs::CollectionId;
 
 use crate::{
-	runtime_common::config::xcm::{SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig},
+	runtime_common::config::xcm::{
+		ReserveProvider, SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig,
+	},
 	RelayChainBlockNumberProvider, Runtime, RuntimeEvent,
 };
 
@@ -83,7 +85,7 @@ impl orml_xtokens::Config for Runtime {
 	type MaxAssetsForTransfer = MaxAssetsForTransfer;
 	type MinXcmFee = ParachainMinFee;
 	type LocationsFilter = Everything;
-	type ReserveProvider = AbsoluteReserveProvider;
+	type ReserveProvider = ReserveProvider;
 	type UniversalLocation = UniversalLocation;
 	type RateLimiter = ();
 	type RateLimiterId = ();

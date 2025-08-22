@@ -74,4 +74,30 @@ mod benchmarks {
 
 		Ok(())
 	}
+
+	#[benchmark]
+	fn force_set_foreign_asset_reserve_override() -> Result<(), BenchmarkError> {
+		let asset_id: AssetId = Parent.into();
+		let reserve_override: Location = (Parent, Parachain(1000)).into();
+
+		#[extrinsic_call]
+		_(
+			RawOrigin::Root,
+			Box::new(asset_id.into()),
+			Some(Box::new(reserve_override.into())),
+		);
+
+		Ok(())
+	}
+
+	#[benchmark]
+	fn force_set_foreign_asset_suspension() -> Result<(), BenchmarkError> {
+		let asset_id: AssetId = Parent.into();
+		let suspension = true;
+
+		#[extrinsic_call]
+		_(RawOrigin::Root, Box::new(asset_id.into()), suspension);
+
+		Ok(())
+	}
 }

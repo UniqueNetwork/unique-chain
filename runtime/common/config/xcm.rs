@@ -28,7 +28,7 @@ use frame_support::{
 	},
 };
 use frame_system::EnsureRoot;
-use orml_traits::location::AbsoluteReserveProvider;
+use orml_traits::location::{AbsoluteReserveProvider, Reserve};
 use orml_xcm_support::MultiNativeAsset;
 #[cfg(feature = "runtime-benchmarks")]
 use pallet_common::{eth::CrossAccountId, CommonCollectionOperations};
@@ -172,7 +172,15 @@ where
 
 pub type Weigher = FixedWeightBounds<UnitWeightCost, RuntimeCall, MaxInstructions>;
 
-pub type IsReserve = MultiNativeAsset<AbsoluteReserveProvider>;
+pub struct ReserveProvider;
+impl Reserve for ReserveProvider {
+	fn reserve(asset: &Asset) -> Option<Location> {
+		ForeignAssets::foreign_asset_reserve_override(&asset.id)
+			.or_else(|| AbsoluteReserveProvider::reserve(asset))
+	}
+}
+
+pub type IsReserve = MultiNativeAsset<ReserveProvider>;
 
 pub type Trader = FreeForAll;
 

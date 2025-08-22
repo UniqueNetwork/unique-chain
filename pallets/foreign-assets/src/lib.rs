@@ -36,7 +36,7 @@ use pallet_common::{
 use parity_scale_codec::DecodeWithMemTracking;
 use sp_runtime::traits::AccountIdConversion;
 use sp_std::{boxed::Box, vec, vec::Vec};
-use staging_xcm::{v5::prelude::*, VersionedAssetId};
+use staging_xcm::{v5::prelude::*, VersionedAssetId, VersionedLocation};
 use staging_xcm_executor::{
 	traits::{ConvertLocation, Error as XcmExecutorError, TransactAsset, WeightTrader},
 	AssetsInHolding,
@@ -140,6 +140,9 @@ pub mod module {
 		/// The given asset ID could not be converted into the current XCM version.
 		BadForeignAssetId,
 
+		/// The given location could not be converted into the current XCM version.
+		BadLocation,
+
 		/// The specified foreign asset is not found.
 		ForeignAssetNotFound,
 	}
@@ -160,6 +163,16 @@ pub mod module {
 			old_asset_id: Box<VersionedAssetId>,
 			new_asset_id: Box<VersionedAssetId>,
 		},
+
+		ForeignAssetReserveOverride {
+			asset_id: Box<VersionedAssetId>,
+			reserve_override: Option<Box<VersionedLocation>>,
+		},
+
+		ForeignAssetSuspensionSet {
+			asset_id: Box<VersionedAssetId>,
+			is_suspended: bool,
+		},
 	}
 
 	/// The corresponding collections of foreign assets.
@@ -173,6 +186,24 @@ pub mod module {
 	#[pallet::getter(fn collection_to_foreign_asset)]
 	pub type CollectionToForeignAsset<T: Config> =
 		StorageMap<_, Blake2_128Concat, CollectionId, staging_xcm::v5::AssetId, OptionQuery>;
+
+	/// Suspended foreign collections (disables outgoing transfers).
+	/// It is needed for events like AHM where our chain shouldn't send tokens to a particular dest.
+	#[pallet::storage]
+	#[pallet::getter(fn is_suspended_foreign_asset)]
+	pub type SuspendedForeignAsset<T: Config> =
+		StorageMap<_, Blake2_128Concat, staging_xcm::v5::AssetId, bool, ValueQuery>;
+
+	/// Override the reserve location for the given foreign assets.
+	#[pallet::storage]
+	#[pallet::getter(fn foreign_asset_reserve_override)]
+	pub type ForeignAssetReserveOverride<T: Config> = StorageMap<
+		_,
+		Blake2_128Concat,
+		staging_xcm::v5::AssetId,
+		staging_xcm::v5::Location,
+		OptionQuery,
+	>;
 
 	/// The correponding NFT token id of reserve NFTs
 	#[pallet::storage]
@@ -296,6 +327,70 @@ pub mod module {
 			Self::deposit_event(Event::<T>::ForeignAssetMoved {
 				old_asset_id: existing_versioned_asset_id,
 				new_asset_id: new_versioned_asset_id,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight(0)]
+		pub fn force_set_foreign_asset_reserve_override(
+			origin: OriginFor<T>,
+			versioned_asset_id: Box<VersionedAssetId>,
+			versioned_reserve_override: Option<Box<VersionedLocation>>,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin)?;
+
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
+			if let Some(ref versioned_reserve) = versioned_reserve_override {
+				let reserve: Location = versioned_reserve
+					.as_ref()
+					.clone()
+					.try_into()
+					.map_err(|()| Error::<T>::BadLocation)?;
+
+				<ForeignAssetReserveOverride<T>>::insert(&asset_id, reserve);
+			} else {
+				<ForeignAssetReserveOverride<T>>::remove(&asset_id);
+			}
+
+			Self::deposit_event(Event::<T>::ForeignAssetReserveOverride {
+				asset_id: versioned_asset_id,
+				reserve_override: versioned_reserve_override,
+			});
+
+			Ok(())
+		}
+
+		#[pallet::call_index(3)]
+		#[pallet::weight(0)]
+		pub fn force_set_foreign_asset_suspension(
+			origin: OriginFor<T>,
+			versioned_asset_id: Box<VersionedAssetId>,
+			is_suspended: bool,
+		) -> DispatchResult {
+			T::ManagerOrigin::ensure_origin(origin)?;
+
+			let asset_id: AssetId = versioned_asset_id
+				.as_ref()
+				.clone()
+				.try_into()
+				.map_err(|()| Error::<T>::BadForeignAssetId)?;
+
+			if is_suspended {
+				<SuspendedForeignAsset<T>>::insert(&asset_id, true);
+			} else {
+				<SuspendedForeignAsset<T>>::remove(&asset_id);
+			}
+
+			Self::deposit_event(Event::<T>::ForeignAssetSuspensionSet {
+				asset_id: versioned_asset_id,
+				is_suspended,
 			});
 
 			Ok(())
@@ -686,11 +781,6 @@ impl<T: Config> Pallet<T> {
 	}
 }
 
-// #[derive()]
-// pub enum Migration {
-
-// }
-
 impl<T: Config> TransactAsset for Pallet<T> {
 	fn can_check_in(_origin: &Location, _what: &Asset, _context: &XcmContext) -> XcmResult {
 		Err(XcmError::Unimplemented)
@@ -737,6 +827,10 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		from: &Location,
 		_maybe_context: Option<&XcmContext>,
 	) -> Result<AssetsInHolding, XcmError> {
+		if <SuspendedForeignAsset<T>>::get(&what.id) {
+			return Err(XcmError::NotWithdrawable);
+		}
+
 		let from = T::LocationToAccountId::convert_location(from)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 
@@ -766,6 +860,10 @@ impl<T: Config> TransactAsset for Pallet<T> {
 		to: &Location,
 		_context: &XcmContext,
 	) -> Result<AssetsInHolding, XcmError> {
+		if <SuspendedForeignAsset<T>>::get(&what.id) {
+			return Err(XcmError::NotWithdrawable);
+		}
+
 		let from = T::LocationToAccountId::convert_location(from)
 			.ok_or(XcmExecutorError::AccountIdConversionFailed)?;
 

@@ -146,7 +146,7 @@ pallet-transaction-payment-rpc = { default-features = false, version = "43.0.0" 
 pallet-transaction-payment-rpc-runtime-api = { default-features = false, version = "40.0.0" }
 pallet-treasury = { default-features = false, version = "39.0.0" }
 pallet-utility = { default-features = false, version = "40.0.0" }
-pallet-xcm = { default-features = false, version = "19.1.1" }
+pallet-xcm = { default-features = false, version = "19.2.0" }
 parachains-common = { default-features = false, version = "21.0.0" }
 parity-scale-codec = { version = "3.6.12", features = ["derive"], default-features = false }
 polkadot-cli = { default-features = false, version = "23.0.0" }
