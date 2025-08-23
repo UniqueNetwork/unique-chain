@@ -567,7 +567,7 @@ pub mod module {
 		}
 
 		#[pallet::call_index(2)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_set_foreign_asset_reserve_override())]
 		pub fn force_set_foreign_asset_reserve_override(
 			origin: OriginFor<T>,
 			versioned_asset_id: Box<VersionedAssetId>,
@@ -602,7 +602,7 @@ pub mod module {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(0)]
+		#[pallet::weight(<T as Config>::WeightInfo::force_set_foreign_asset_suspension())]
 		pub fn force_set_foreign_asset_suspension(
 			origin: OriginFor<T>,
 			versioned_asset_id: Box<VersionedAssetId>,
