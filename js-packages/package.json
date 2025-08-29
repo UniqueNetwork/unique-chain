@@ -43,9 +43,9 @@
     "ts-check": "deno check --quiet",
     "lint": "deno lint './**/*.ts'",
     "fix": "deno lint --fix './**/*.ts'",
-    "polkadot-types-fetch-metadata": "deno --allow-env --allow-net --allow-write scripts/fetchMetadata.ts",
-    "polkadot-types-from-defs": "deno --allow-env --allow-read --allow-write ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
-    "polkadot-types-from-chain": "deno --allow-env --allow-read --allow-write ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
+    "polkadot-types-fetch-metadata": "deno --allow-env --allow-net --allow-write --allow-read scripts/fetchMetadata.ts",
+    "polkadot-types-from-defs": "deno --allow-env --allow-net --allow-write --allow-read ./node_modules/.bin/polkadot-types-from-defs --endpoint scripts/metadata.json --input types/ --package .",
+    "polkadot-types-from-chain": "deno --allow-env --allow-net --allow-write --allow-read ./node_modules/.bin/polkadot-types-from-chain --endpoint scripts/metadata.json --output types/ --package .",
     "polkadot-types": "echo \"export default {}\" > types/lookup.ts && deno task polkadot-types-fetch-metadata && deno task polkadot-types-from-defs && deno task polkadot-types-from-defs && deno task polkadot-types-from-chain && rm types/registry.ts"
   },
   "resolutions": {
