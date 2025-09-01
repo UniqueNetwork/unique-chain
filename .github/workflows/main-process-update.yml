@@ -235,7 +235,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive2.outcome == 'success' }}
         run: |
           echo "Executing upgrade"
-          deno --allow-env ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
+          deno -A ../scripts/authorizeEnactUpgrade.ts ${{ steps.wasms.outputs.dir }}/${{ matrix.network }}-runtime/${{ matrix.network }}_runtime.compact.compressed.wasm
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
 
