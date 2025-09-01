@@ -601,9 +601,25 @@ export class XcmTestHelper {
   ) {
     let messageHash: any = null;
 
-    let expectedResult: any;
+    const sendDot: Promise<void> = this.#sendDot({
+      from,
+      to,
+      transferType,
+      fromAccount: randomAccountOnFrom,
+      toAccount: randomAccountOnTo,
+      amount,
+      decimals: UNQ_DECIMALS,
+      getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+        dotDerivativeCollectionId,
+        {Substrate: randomAccountOnFrom.address},
+      ),
+      setMessageHash: (hash) => messageHash = hash,
+    });
+
+    let sendDotExpectedResult: Promise<void>;
+
     if (expectedOutcome == 'ExpectSuccess') {
-      expectedResult = this.#awaitTokens({
+      sendDotExpectedResult = this.#awaitTokens({
         from,
         to,
         amount,
@@ -615,25 +631,12 @@ export class XcmTestHelper {
         getMessageHash: () => messageHash,
       });
     } else {
-      expectedResult = this.#awaitMaliciousProgramRejection(() => messageHash);
+      sendDotExpectedResult = this.#awaitMaliciousProgramRejection(() => messageHash);
     }
 
     await Promise.all([
-      this.#sendDot({
-        from,
-        to,
-        transferType,
-        fromAccount: randomAccountOnFrom,
-        toAccount: randomAccountOnTo,
-        amount,
-        decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
-          dotDerivativeCollectionId,
-          {Substrate: randomAccountOnFrom.address},
-        ),
-        setMessageHash: (hash) => messageHash = hash,
-      }),
-      expectedResult,
+      sendDot,
+      sendDotExpectedResult,
     ]);
   }
 
