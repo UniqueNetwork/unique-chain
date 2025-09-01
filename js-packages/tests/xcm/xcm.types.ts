@@ -58,6 +58,8 @@ type NetworkNames = keyof typeof NETWORKS;
 
 type UniqueChain = 'quartz' | 'unique';
 
+type TransferType = 'LocalReserve' | 'DestinationReserve' | 'Teleport' | { RemoteReserve: any };
+
 export function mapToChainId(networkName: keyof typeof NETWORKS): number {
   switch (networkName) {
     case 'unique':
@@ -136,7 +138,7 @@ export function getDevPlayground(name: NetworkNames) {
 }
 
 export const TRANSFER_AMOUNT = 2000000n * 10n ** BigInt(UNQ_DECIMALS);
-export const SENDER_BUDGET = 2n * TRANSFER_AMOUNT;
+export const SENDER_BUDGET = 10n * TRANSFER_AMOUNT;
 export const SENDTO_AMOUNT = TRANSFER_AMOUNT;
 export const SENDBACK_AMOUNT = TRANSFER_AMOUNT / 2n;
 export const STAYED_ON_TARGET_CHAIN = TRANSFER_AMOUNT - SENDBACK_AMOUNT;
@@ -286,6 +288,7 @@ export class XcmTestHelper {
 
     const fromPlayground = getDevPlayground(from);
 
+    let transferResult: any;
     await fromPlayground(async (helper) => {
       const getRandomAccountBalance = async (): Promise<bigint> => {
         if(!isFromUnique) {
@@ -326,20 +329,22 @@ export class XcmTestHelper {
 
       let messageHash: any;
 
-      if(
+      // `polkadotXcm.transferAssets` is filtered on Acala chains.
+      // Astar chains have prohibitive weights for it.
+      // using xTokens instead
+      const forceXTokens =
         from === 'acala' || from === 'karura'
-        || from === 'astar' || from === 'shiden'
-      ) {
-        // `polkadotXcm.transferAssets` is filtered on Acala chains.
-        // Astar chains have prohibitive weights for it.
-        // using xTokens instead
+        || from === 'astar' || from === 'shiden';
 
+      if(forceXTokens) {
         const acalaHelper = helper as AcalaHelper | AstarHelper;
 
         const destination = {
           V4: {
             parents: 1,
-            interior: {
+            interior: to === 'relay'
+            ? { X1: [beneficiaryAccount] }
+            : {
               X2: [
                 {
                   Parachain: mapToChainId(to),
@@ -350,7 +355,7 @@ export class XcmTestHelper {
           },
         };
 
-        const transferResult = await acalaHelper.xTokens.transferMultiassets(
+        transferResult = await acalaHelper.xTokens.transferMultiassets(
           fromAccount,
           assets,
           feeAssetItem,
@@ -373,7 +378,7 @@ export class XcmTestHelper {
           },
         };
 
-        const transferResult = await helper.xcm.transferAssets(
+        transferResult = await helper.xcm.transferAssets(
           fromAccount,
           destination,
           beneficiary,
@@ -381,14 +386,14 @@ export class XcmTestHelper {
           feeAssetItem,
           'Unlimited',
         );
+      }
 
-        if(from === 'relay') {
-          messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
-        } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub') {
-          messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
-        } else {
-          messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
-        }
+      if(from === 'relay') {
+        messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
+      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub') {
+        messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
+      } else {
+        messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
       }
 
       const balanceAfter = await getRandomAccountBalance();
@@ -470,47 +475,136 @@ export class XcmTestHelper {
     });
   }
 
-  async sendDotFromTo(
+  async #sendDot({
+    from,
+    to,
+    transferType,
+    fromAccount,
+    toAccount,
+    amount,
+    decimals,
+    getAssetBalanceOnUnique,
+    setMessageHash,
+  }: {
     from: keyof typeof NETWORKS,
     to: keyof typeof NETWORKS,
+    transferType: TransferType,
+    fromAccount: IKeyringPair,
+    toAccount: IKeyringPair,
+    amount: bigint,
+    decimals: number,
+    getAssetBalanceOnUnique: (helper: DevUniqueHelper) => Promise<bigint>,
+    setMessageHash: (messageHash: any) => void,
+  }) {
+    const isFromUnique = from === 'unique' || from === 'quartz';
+
+    const fromPlayground = getDevPlayground(from);
+
+    const assetId = from === 'relay'
+      ? { parents: 0, interior: 'here' }
+      : { parents: 1, interior: 'here' };
+
+    await fromPlayground(async (helper) => {
+      const getRandomAccountBalance = async (): Promise<bigint> => {
+        if(!isFromUnique) {
+          return 0n;
+        }
+
+        return await getAssetBalanceOnUnique(helper as DevUniqueHelper);
+      };
+
+      const balanceBefore = await getRandomAccountBalance();
+
+      let beneficiaryAccount = {
+        AccountId32: {
+          id: toAccount.addressRaw,
+        },
+      };
+
+      const assets = {
+        V4: [
+          {
+            id: assetId,
+            fun: {
+              Fungible: amount,
+            },
+          },
+        ],
+      };
+
+      let messageHash: any;
+
+      const destination = from === 'relay'
+        ? {V4: {parents: 0, interior: {X1: [{Parachain: mapToChainId(to)}]}}}
+        : {V4: mapToChainLocation(to)};
+
+      const transferResult = await helper.xcm.transferAssetsUsingTypeAndThen(
+        fromAccount,
+        destination,
+        assets,
+        transferType,
+        {V4: assetId},
+        transferType,
+        {
+          V4: [
+            {
+              DepositAsset: {
+                assets: { Wild: 'All' },
+                beneficiary: {
+                  parents: 0,
+                  interior: {
+                    X1: [beneficiaryAccount],
+                  },
+                },
+              }
+            }
+          ]
+        },
+        'Unlimited',
+      );
+
+      if(from === 'relay') {
+        messageHash = Event.XcmPallet.Sent.expect(transferResult).messageId;
+      } else if(to === 'relay' || from === 'polkadotAssetHub' || from === 'kusamaAssetHub') {
+        messageHash = Event.PolkadotXcm.Sent.expect(transferResult).messageId;
+      } else {
+        messageHash = Event.XcmpQueue.XcmpMessageSent.expect(transferResult).messageHash;
+      }
+
+      const balanceAfter = await getRandomAccountBalance();
+      if(isFromUnique) {
+        const balanceDiff = balanceBefore - balanceAfter;
+        const fees = balanceDiff - amount;
+        const minFees = 0n;
+        const maxFees = 2n * 10n ** BigInt(decimals);
+
+        console.log('[%s -> %s] transaction fees: %s asset tokens', from, to, helper.util.bigIntToDecimals(fees, decimals));
+
+        expect(
+          minFees <= fees && fees <= maxFees,
+          `invalid asset fees when transferring from ${from}: ${fees}`,
+        ).to.be.true;
+      }
+
+      setMessageHash(messageHash);
+    });
+  }
+
+  async palletXcmSendDotFromTo(
+    from: keyof typeof NETWORKS,
+    to: keyof typeof NETWORKS,
+    transferType: TransferType,
     randomAccountOnFrom: IKeyringPair,
     randomAccountOnTo: IKeyringPair,
     amount: bigint,
     dotDerivativeCollectionId: number,
+    expectedOutcome: 'ExpectSuccess' | 'ExpectFailure',
   ) {
     let messageHash: any = null;
 
-    const isFromUnique = from === 'unique' || from === 'quartz';
-
-    let assetId: any;
-    if(isFromUnique) {
-      assetId = {
-        parents: 1,
-        interior: 'here',
-      };
-    } else {
-      assetId = {
-        parents: 0,
-        interior: 'here',
-      };
-    }
-
-    await Promise.all([
-      this.#sendTokens({
-        from,
-        to,
-        fromAccount: randomAccountOnFrom,
-        toAccount: randomAccountOnTo,
-        assetId,
-        amount,
-        decimals: UNQ_DECIMALS,
-        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
-          dotDerivativeCollectionId,
-          {Substrate: randomAccountOnFrom.address},
-        ),
-        setMessageHash: (hash) => messageHash = hash,
-      }),
-      this.#awaitTokens({
+    let expectedResult: any;
+    if (expectedOutcome == 'ExpectSuccess') {
+      expectedResult = this.#awaitTokens({
         from,
         to,
         amount,
@@ -520,7 +614,27 @@ export class XcmTestHelper {
           {Substrate: randomAccountOnTo.address},
         ),
         getMessageHash: () => messageHash,
+      });
+    } else {
+      expectedResult = this.#awaitMaliciousProgramRejection(() => messageHash);
+    }
+
+    await Promise.all([
+      this.#sendDot({
+        from,
+        to,
+        transferType,
+        fromAccount: randomAccountOnFrom,
+        toAccount: randomAccountOnTo,
+        amount,
+        decimals: UNQ_DECIMALS,
+        getAssetBalanceOnUnique: async (helper: DevUniqueHelper) => await helper.ft.getBalance(
+          dotDerivativeCollectionId,
+          {Substrate: randomAccountOnFrom.address},
+        ),
+        setMessageHash: (hash) => messageHash = hash,
       }),
+      expectedResult,
     ]);
   }
 

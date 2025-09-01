@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import type {IKeyringPair} from '@polkadot/types/types';
-import {before, describe, itSub, usingPlaygrounds, usingKaruraPlaygrounds, usingShidenPlaygrounds, usingMoonriverPlaygrounds, usingRelayPlaygrounds, usingKusamaAssetHubPlaygrounds} from '@unique/test-utils/util';
+import {expect, before, describe, itSub, usingPlaygrounds, usingKaruraPlaygrounds, usingShidenPlaygrounds, usingMoonriverPlaygrounds, usingRelayPlaygrounds, usingKusamaAssetHubPlaygrounds} from '@unique/test-utils/util';
 import {QUARTZ_CHAIN, SAFE_XCM_VERSION, XcmTestHelper, SENDER_BUDGET, SENDTO_AMOUNT, SENDBACK_AMOUNT, SHIDEN_DECIMALS, UNQ_DECIMALS, POLKADOT_ASSETHUB_CHAIN, USDT_ASSET_ID, USDT_DECIMALS, ASSET_HUB_PALLET_ASSETS} from './xcm.types.ts';
 import {hexToString} from '@polkadot/util';
 
@@ -23,18 +23,51 @@ const testHelper = new XcmTestHelper;
 
 describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Relay', () => {
   let alice: IKeyringPair;
+
+  before(async () => {
+    await usingPlaygrounds(async (helper, privateKey) => {
+      alice = await privateKey('//Alice');
+
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+
+    await usingRelayPlaygrounds(async (helper) => {
+      // Set the default version to wrap the first message to other chains.
+      await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
+    });
+  });
+
+  itSub('Should not accept reserve transfer of QTZ from Relay', async () => {
+    await testHelper.rejectReserveTransferUNQfrom(
+      alice,
+      'relay',
+      'quartz',
+    );
+  });
+});
+
+describe.ifRunXcm('[XCM] Integration test: Exchanging DOT with its reserve', () => {
+  let alice: IKeyringPair;
   let randomAccount: IKeyringPair;
   let dotDerivativeCollectionId: number;
+
+  const relayLocation = {
+    parents: 1,
+    interior: 'Here',
+  };
+
+  const assetHubLocation = {
+    parents: 1,
+    interior: {
+      X1: [{ Parachain: 1000 }],
+    }
+  };
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
       alice = await privateKey('//Alice');
       randomAccount = helper.arrange.createEmptyAccount();
-
-      const relayLocation = {
-        parents: 1,
-        interior: 'Here',
-      };
 
       dotDerivativeCollectionId = await helper.foreignAssets.foreignCollectionId(relayLocation);
       if(dotDerivativeCollectionId == null) {
@@ -60,35 +93,211 @@ describe.ifRunXcm('[XCM] Integration test: Exchanging tokens with Relay', () => 
       // Set the default version to wrap the first message to other chains.
       await helper.getSudo().xcm.setSafeXcmVersion(alice, SAFE_XCM_VERSION);
     });
+
+    await usingKusamaAssetHubPlaygrounds(async (helper) => {
+      await helper.balance.transferToSubstrate(alice, randomAccount.address, SENDER_BUDGET);
+    });
   });
 
-  itSub('Should connect and send DOT to Quartz', async () => {
-    await testHelper.sendDotFromTo(
+  itSub('Should connect and exchange DOT with Relay (default reserve)', async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.getSudo().foreignAssets.forceSetForeignAssetReserveOverride(alice, relayLocation, null);
+    });
+
+    // Relay sends DOT as its reserve chain
+    await testHelper.palletXcmSendDotFromTo(
       'relay',
       'quartz',
+      'LocalReserve',
       randomAccount,
       randomAccount,
-      SENDTO_AMOUNT,
+      2n * SENDTO_AMOUNT,
       dotDerivativeCollectionId,
+      'ExpectSuccess'
     );
-  });
 
-  itSub('Should connect to Quartz and send DOT back', async () => {
-    await testHelper.sendDotFromTo(
+    // Quartz sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
+    await testHelper.palletXcmSendDotFromTo(
       'quartz',
       'relay',
+      'DestinationReserve',
       randomAccount,
       randomAccount,
       SENDBACK_AMOUNT,
       dotDerivativeCollectionId,
+      'ExpectSuccess'
+    );
+
+    // XTokens should send the message to the correct destination (Relay, in this case)
+    await usingPlaygrounds(async (helper) => {
+      const api = helper.getApi();
+
+      const xtokensTransferCall = await helper.constructApiCall('api.tx.xTokens.transfer', [
+        dotDerivativeCollectionId,
+        SENDBACK_AMOUNT,
+        {V4: { parents: 1, interior: {X1: [{AccountId32: { id:randomAccount.addressRaw }}]} }},
+        'Unlimited',
+      ]);
+
+      const xcmVersion = 4;
+      const dryRunResult = await api.call.dryRunApi.dryRunCall(
+        {system: {Signed: randomAccount.address}},
+        xtokensTransferCall.method.toHex(),
+        xcmVersion,
+      ).then(r => r.toJSON() as any);
+
+      const forwardedXcm = dryRunResult!.ok.forwardedXcms[0];
+      const forwardedDest = forwardedXcm[0].v4;
+
+      expect(forwardedDest.parents).to.be.equal(1);
+      expect(forwardedDest.interior.here).to.be.null;
+    });
+
+    // Send DOT from AH as it were the DOT reserve
+    // AH is not DOT reserve in this scenario, so Quartz should reject this
+    await testHelper.palletXcmSendDotFromTo(
+      'kusamaAssetHub',
+      'quartz',
+      'LocalReserve',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT,
+      dotDerivativeCollectionId,
+      'ExpectFailure'
     );
   });
 
-  itSub('Should not accept reserve transfer of QTZ from Relay', async () => {
-    await testHelper.rejectReserveTransferUNQfrom(
-      alice,
+  itSub('Should connect and exchange DOT with AH (reserve override)', async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.getSudo().foreignAssets.forceSetForeignAssetReserveOverride(alice, relayLocation, assetHubLocation);
+    });
+
+    // AH sends DOT as its reserve chain
+    await testHelper.palletXcmSendDotFromTo(
+      'kusamaAssetHub',
+      'quartz',
+      'LocalReserve',
+      randomAccount,
+      randomAccount,
+      2n * SENDTO_AMOUNT,
+      dotDerivativeCollectionId,
+      'ExpectSuccess'
+    );
+
+    // Quartz sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
+    await testHelper.palletXcmSendDotFromTo(
+      'quartz',
+      'kusamaAssetHub',
+      'DestinationReserve',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+      dotDerivativeCollectionId,
+      'ExpectSuccess'
+    );
+
+    // XTokens should send the message to the correct destination (AH, in this case)
+    await usingPlaygrounds(async (helper) => {
+      const api = helper.getApi();
+
+      const xtokensTransferCall = await helper.constructApiCall('api.tx.xTokens.transfer', [
+        dotDerivativeCollectionId,
+        SENDBACK_AMOUNT,
+        {V4: { parents: 1, interior: {X1: [{AccountId32: { id:randomAccount.addressRaw }}]} }},
+        'Unlimited',
+      ]);
+
+      const xcmVersion = 4;
+      const dryRunResult = await api.call.dryRunApi.dryRunCall(
+        {system: {Signed: randomAccount.address}},
+        xtokensTransferCall.method.toHex(),
+        xcmVersion,
+      ).then(r => r.toJSON() as any);
+
+      const forwardedXcm = dryRunResult!.ok.forwardedXcms[0];
+      const forwardedDest = forwardedXcm[0].v4;
+
+      expect(forwardedDest.parents).to.be.equal(1);
+      expect(forwardedDest.interior.x1[0].parachain).to.be.equal(1000);
+    });
+
+    // Send DOT from the Relay as it were the DOT reserve
+    // Relay is not DOT reserve in this scenario, so Quartz should reject this
+    await testHelper.palletXcmSendDotFromTo(
       'relay',
       'quartz',
+      'LocalReserve',
+      randomAccount,
+      randomAccount,
+      SENDTO_AMOUNT / 2n,
+      dotDerivativeCollectionId,
+      'ExpectFailure'
+    );
+  });
+
+  itSub('DOT transfer from Quartz suspended', async () => {
+    await usingPlaygrounds(async (helper) => {
+      await helper.getSudo().foreignAssets.forceSetForeignAssetReserveOverride(alice, relayLocation, null);
+
+      // Enable suspension
+      await helper.getSudo().foreignAssets.forceSetForeignAssetSuspension(alice, relayLocation, true);
+    });
+
+    // Relay sends DOT as its reserve chain
+    testHelper.palletXcmSendDotFromTo(
+      'relay',
+      'quartz',
+      'LocalReserve',
+      randomAccount,
+      randomAccount,
+      2n * SENDTO_AMOUNT,
+      dotDerivativeCollectionId,
+      'ExpectSuccess'
+    );
+
+    // Quartz sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
+    await expect(testHelper.palletXcmSendDotFromTo(
+      'quartz',
+      'relay',
+      'DestinationReserve',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+      dotDerivativeCollectionId,
+      'ExpectSuccess'
+    )).to.be.rejectedWith(/polkadotXcm\.LocalExecutionIncomplete/);
+
+    await usingPlaygrounds(async (helper) => {
+      expect(helper.xTokens.transfer(
+        randomAccount,
+        dotDerivativeCollectionId,
+        SENDBACK_AMOUNT,
+        {V4: {parents: 1, interior: {X1: [{ AccountId32: { id: randomAccount.addressRaw } }]}}},
+        'Unlimited'
+      )).to.be.rejectedWith(/polkadotXcm\.LocalExecutionIncomplete/);
+
+      // Disable suspension
+      await helper.getSudo().foreignAssets.forceSetForeignAssetSuspension(alice, relayLocation, false);
+
+      expect(helper.xTokens.transfer(
+        randomAccount,
+        dotDerivativeCollectionId,
+        SENDBACK_AMOUNT,
+        {V4: {parents: 1, interior: {X1: [{ AccountId32: { id: randomAccount.addressRaw } }]}}},
+        'Unlimited'
+      )).to.be.fulfilled;
+    });
+
+    // Quartz sends some DOT back using pallet-xcm `transfer_assets_using_type_and_then`
+    await testHelper.palletXcmSendDotFromTo(
+      'quartz',
+      'relay',
+      'DestinationReserve',
+      randomAccount,
+      randomAccount,
+      SENDBACK_AMOUNT,
+      dotDerivativeCollectionId,
+      'ExpectSuccess'
     );
   });
 });
