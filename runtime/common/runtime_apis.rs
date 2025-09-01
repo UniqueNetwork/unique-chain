@@ -61,6 +61,8 @@ macro_rules! impl_common_runtime_apis {
 			config::ethereum::CrossAccountId,
 		};
 		use up_data_structs::*;
+		use staging_xcm::{Version as XcmVersion, VersionedLocation, VersionedXcm};
+		use xcm_runtime_apis::dry_run::{CallDryRunEffects, Error as XcmDryRunApiError, XcmDryRunEffects};
 
 		impl_runtime_apis! {
 			$($($custom_apis)+)?
@@ -523,6 +525,16 @@ macro_rules! impl_common_runtime_apis {
 				}
 				fn query_length_to_fee(length: u32) -> Balance {
 					TransactionPayment::length_to_fee(length)
+				}
+			}
+
+			impl xcm_runtime_apis::dry_run::DryRunApi<Block, RuntimeCall, RuntimeEvent, OriginCaller> for Runtime {
+				fn dry_run_call(origin: OriginCaller, call: RuntimeCall, result_xcms_version: XcmVersion) -> Result<CallDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
+					PolkadotXcm::dry_run_call::<Runtime, $crate::config::xcm::XcmRouter, OriginCaller, RuntimeCall>(origin, call, result_xcms_version)
+				}
+
+				fn dry_run_xcm(origin_location: VersionedLocation, xcm: VersionedXcm<RuntimeCall>) -> Result<XcmDryRunEffects<RuntimeEvent>, XcmDryRunApiError> {
+					PolkadotXcm::dry_run_xcm::<Runtime, $crate::config::xcm::XcmRouter, RuntimeCall, $crate::config::xcm::XcmExecutorConfig<Runtime>>(origin_location, xcm)
 				}
 			}
 

@@ -7679,6 +7679,7 @@ dependencies = [
  "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
+ "xcm-runtime-apis",
 ]
 
 [[package]]
@@ -11783,6 +11784,7 @@ dependencies = [
  "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
+ "xcm-runtime-apis",
 ]
 
 [[package]]
@@ -17389,6 +17391,7 @@ dependencies = [
  "up-pov-estimate-rpc",
  "up-rpc",
  "up-sponsorship",
+ "xcm-runtime-apis",
 ]
 
 [[package]]
