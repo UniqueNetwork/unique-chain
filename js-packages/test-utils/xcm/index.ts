@@ -161,6 +161,24 @@ export class ForeignAssetsGroup extends HelperGroup<UniqueHelper> {
   async foreignCollectionId(assetId: any) {
     return (await this.helper.callRpc('api.query.foreignAssets.foreignAssetToCollection', [assetId])).toJSON();
   }
+
+  async forceSetForeignAssetReserveOverride(signer: TSigner, assetId: any, reserveOverride: any) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.forceSetForeignAssetReserveOverride',
+      [{V4: assetId}, reserveOverride ? {V4: reserveOverride} : null],
+      true,
+    );
+  }
+
+  async forceSetForeignAssetSuspension(signer: TSigner, assetId: any, suspension: boolean) {
+    await this.helper.executeExtrinsic(
+      signer,
+      'api.tx.foreignAssets.forceSetForeignAssetSuspension',
+      [{V4: assetId}, suspension],
+      true,
+    );
+  }
 }
 
 export class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
@@ -174,6 +192,10 @@ export class XcmGroup<T extends ChainHelperBase> extends HelperGroup<T> {
 
   async transferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
     return await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.transferAssets`, [destination, beneficiary, assets, feeAssetItem, weightLimit], true);
+  }
+
+  async transferAssetsUsingTypeAndThen(signer: TSigner, destination: any, assets: any, assetsTransferType: any, feesAssetId: any, feesTransferType: any, xcmOnDest: any, weightLimit: any) {
+    return await this.helper.executeExtrinsic(signer, `api.tx.${this.palletName}.transferAssetsUsingTypeAndThen`, [destination, assets, assetsTransferType, feesAssetId, feesTransferType, xcmOnDest, weightLimit], true);
   }
 
   async limitedReserveTransferAssets(signer: TSigner, destination: any, beneficiary: any, assets: any, feeAssetItem: number, weightLimit: any) {
