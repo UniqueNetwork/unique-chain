@@ -3,6 +3,8 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
+    masterNixpkgs.url = "github:nixos/nixpkgs/master";
+
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -31,26 +33,17 @@
       inputs.crane.follows = "crane";
     };
   };
-  outputs =
-    inputs:
-    let
-      inherit (inputs.nixpkgs) lib;
-    in
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
+  outputs = inputs:
+    let inherit (inputs.nixpkgs) lib;
+    in inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [ inputs.shelly.flakeModule ];
       systems = lib.systems.flakeExposed;
-      perSystem =
-        {
-          pkgs,
-          system,
-          inputs',
-          ...
-        }:
+      perSystem = { pkgs, system, inputs', ... }:
         let
           rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rust;
-        in
-        {
+          masterPkgs = import inputs.masterNixpkgs { inherit system; };
+        in {
           _module.args.pkgs = import inputs.nixpkgs {
             inherit system;
             overlays = [ inputs.rust-overlay.overlays.default ];
@@ -76,6 +69,7 @@
 
               # Test
               nodejs_24
+              masterPkgs.deno
               (yarn-berry.override { nodejs = nodejs_24; })
 
               # Format
