@@ -7,11 +7,11 @@
     "version": "1.0.0",
     "main": "",
     "scripts": {
-        "setup": "deno --allow-env --allow-net --allow-read ../test-utils/globalSetup.ts",
+        "setup": "deno --allow-env --allow-net --allow-read --sloppy-imports ../test-utils/globalSetup.ts",
         "setIdentities": "deno ../scripts/identitySetter.ts",
         "checkRelayIdentities": "deno ../scripts/relayIdentitiesChecker.ts",
         
-        "_test": "deno task setup && deno test --allow-env --allow-net --allow-read",
+        "_test": "deno task setup && deno test --allow-env --allow-net --allow-read --sloppy-imports",
         "_testParallel": "deno task setup && deno test --allow-env --allow-net --allow-read --parallel",
 
         "test": "deno task _test './**/*.*test.ts'",
