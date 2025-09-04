@@ -28,7 +28,7 @@
     "npm:csv-writer@^1.6.0": "1.6.0",
     "npm:eslint-plugin-mocha@^10.2.0": "10.5.0_eslint@8.57.1",
     "npm:eslint@^8.53.0": "8.57.1",
-    "npm:ethers@6.13.5": "6.13.5",
+    "npm:ethers@6.15.0": "6.15.0",
     "npm:solc@~0.8.22": "0.8.30",
     "npm:typescript@5.8.3": "5.8.3"
   },
@@ -1086,8 +1086,8 @@
     "esutils@2.0.3": {
       "integrity": "sha512-kVscqXk4OCp68SZ0dkgEKVi6/8ij300KBWTJq32P/dYeWTSwK41WyTxalN1eRmA5Z9UU/LX9D7FWSmV9SAYx6g=="
     },
-    "ethers@6.13.5": {
-      "integrity": "sha512-+knKNieu5EKRThQJWwqaJ10a6HE9sSehGeqWN65//wE7j47ZpFhKAnHB/JJFibwwg61I/koxaPsXbXpD/skNOQ==",
+    "ethers@6.15.0": {
+      "integrity": "sha512-Kf/3ZW54L4UT0pZtsY/rf+EkBU7Qi5nnhonjUb8yTXcxH3cdcWrV2cRyk0Xk/4jK6OoHhxxZHriyhje20If2hQ==",
       "dependencies": [
         "@adraffy/ens-normalize",
         "@noble/curves@1.2.0",
@@ -1689,7 +1689,7 @@
         "npm:csv-writer@^1.6.0",
         "npm:eslint-plugin-mocha@^10.2.0",
         "npm:eslint@^8.53.0",
-        "npm:ethers@6.13.5",
+        "npm:ethers@6.15.0",
         "npm:solc@~0.8.22",
         "npm:typescript@5.8.3"
       ]
