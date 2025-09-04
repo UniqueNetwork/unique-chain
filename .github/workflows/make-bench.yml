@@ -44,8 +44,8 @@ jobs:
         working-directory: js-packages/scripts
         run: |
           deno install
-          deno --allow-env calibrate.ts
-          deno --allow-env calibrateApply.ts
+          deno --allow-env --allow-net calibrate.ts
+          deno --allow-env --allow-net --allow-read --allow-write calibrateApply.ts
           
       - name: show git diff
         run: |
