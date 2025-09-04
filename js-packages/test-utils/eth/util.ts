@@ -67,11 +67,7 @@ export const usingEthPlaygrounds = async (code: (helper: EthUniqueHelper, privat
       }
       return account;
     };
-    const result = code(helper, privateKey);
-    if (result instanceof Promise)
-      return await result;
-    else
-      return result;
+    await code(helper, privateKey);
   }
   finally {
     await helper.disconnect();
@@ -114,20 +110,7 @@ export function itEth(...args: ItEthArgs) {
           if(opts.requiredPallets) {
             requirePalletsOrSkip(helper, opts.requiredPallets);
           }
-          while(true) {
-            try {
-              await cb({helper, privateKey});
-
-              break;
-            } catch (error: any) {
-              if(error.message.startsWith('non-canonical s')) {
-                console.warn(`Catch error "non-canonical signature" in test "${fullTitle(t)}" (issue https://github.com/ethers-io/ethers.js/issues/4223). Retry after 1 second`);
-                await new Promise(resolve => setTimeout(resolve, 1000));
-              } else {
-                throw error;
-              }
-            }
-          };
+          await cb({helper, privateKey});
         })
       } catch(e) {
         if (e instanceof SkipError) {
