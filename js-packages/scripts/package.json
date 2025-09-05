@@ -18,5 +18,8 @@
     "councilDemocracyProposal": "deno --allow-env --allow-net ./councilproposal.ts",
     "hrmpChannel": "deno --allow-env --allow-net ./hrmpchannel.ts",
     "leaseStatus": "deno --allow-env --allow-net ./leaseStatus.ts"
+  },
+  "exports": {
+    "./correctStateAfterMaintenance": "./correctStateAfterMaintenance.ts"
   }
 }
