@@ -42,7 +42,7 @@ use staging_xcm::latest::prelude::*;
 use staging_xcm_builder::{
 	AccountId32Aliases, EnsureXcmOrigin, FixedWeightBounds, FrameTransactionalProcessor,
 	ParentIsPreset, RelayChainAsNative, SiblingParachainAsNative, SiblingParachainConvertsVia,
-	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation,
+	SignedAccountId32AsNative, SignedToAccountId32, SovereignSignedViaLocation, WithUniqueTopic,
 };
 use staging_xcm_executor::{
 	traits::{Properties, ShouldExecute},
@@ -97,7 +97,7 @@ pub type LocalOriginToLocation = (SignedToAccountId32<RuntimeOrigin, AccountId, 
 
 /// The means for routing XCM messages which are not for local execution into the right message
 /// queues.
-pub type XcmRouter = (
+pub type XcmRouter = WithUniqueTopic<(
 	// Two routers - use UMP to communicate with the relay chain:
 	cumulus_primitives_utility::ParentAsUmp<
 		ParachainSystem,
@@ -106,7 +106,7 @@ pub type XcmRouter = (
 	>,
 	// ..and XCMP to communicate with the sibling chains.
 	XcmpQueue,
-);
+)>;
 
 /// This is the type we use to convert an (incoming) XCM origin into a local `Origin` instance,
 /// ready for dispatching a transaction with Xcm's `Transact`. There is an `OriginKind` which can
