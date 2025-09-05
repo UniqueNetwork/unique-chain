@@ -3,7 +3,7 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/release-25.05";
-    masterNixpkgs.url = "github:nixos/nixpkgs/master";
+    nixpkgs-master.url = "github:nixos/nixpkgs/master";
 
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
@@ -42,7 +42,7 @@
         let
           rust = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
           craneLib = (inputs.crane.mkLib pkgs).overrideToolchain rust;
-          masterPkgs = import inputs.masterNixpkgs { inherit system; };
+          pkgsMaster = import inputs.nixpkgs-master { inherit system; };
         in {
           _module.args.pkgs = import inputs.nixpkgs {
             inherit system;
@@ -69,7 +69,7 @@
 
               # Test
               nodejs_24
-              masterPkgs.deno
+              pkgsMaster.deno
               (yarn-berry.override { nodejs = nodejs_24; })
 
               # Format

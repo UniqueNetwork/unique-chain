@@ -99,22 +99,6 @@
         "type": "github"
       }
     },
-    "masterNixpkgs": {
-      "locked": {
-        "lastModified": 1756992239,
-        "narHash": "sha256-S+U82sUdy7qpb5cx1iIAUt/zz63LduLm/U/9y68mmZk=",
-        "owner": "nixos",
-        "repo": "nixpkgs",
-        "rev": "5a17103f36c1eb08ae49f2f14cd6d181bf0b6fa7",
-        "type": "github"
-      },
-      "original": {
-        "owner": "nixos",
-        "ref": "master",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1756991157,
@@ -131,14 +115,30 @@
         "type": "github"
       }
     },
+    "nixpkgs-master": {
+      "locked": {
+        "lastModified": 1757058701,
+        "narHash": "sha256-aizd7Wb0sganRkCPUzcEKoqXCc9x2XCWFTdaz3EVybU=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "ebf4955f874a327221d6d87e50033c10901edb07",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "ref": "master",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "baedeker": "baedeker",
         "chainql": "chainql",
         "crane": "crane",
         "flake-parts": "flake-parts",
-        "masterNixpkgs": "masterNixpkgs",
         "nixpkgs": "nixpkgs",
+        "nixpkgs-master": "nixpkgs-master",
         "rust-overlay": "rust-overlay",
         "shelly": "shelly"
       }
