@@ -45,7 +45,7 @@ jobs:
         run: |
           deno install
           deno --allow-env --allow-net calibrate.ts
-          deno --allow-env --allow-net --allow-read --allow-write calibrateApply.ts
+          deno -A calibrateApply.ts
           
       - name: show git diff
         run: |
