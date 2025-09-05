@@ -11,7 +11,7 @@
         "setIdentities": "deno ../scripts/identitySetter.ts",
         "checkRelayIdentities": "deno ../scripts/relayIdentitiesChecker.ts",
         
-        "_test": "deno task setup && deno test --allow-env --allow-net --allow-read --sloppy-imports",
+        "_test": "deno task setup && deno test --allow-env --allow-net --allow-read",
         "_testParallel": "deno task setup && deno test --allow-env --allow-net --allow-read --parallel",
 
         "test": "deno task _test './**/*.*test.ts'",
