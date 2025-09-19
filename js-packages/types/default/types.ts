@@ -3291,8 +3291,8 @@ export interface PalletSessionEvent extends Enum {
   readonly type: 'NewSession' | 'ValidatorDisabled' | 'ValidatorReenabled';
 }
 
-/** @name PalletSponsoringChargeTransactionPayment */
-export interface PalletSponsoringChargeTransactionPayment extends Struct {
+/** @name PalletSponsoringChargeAssetTxPayment */
+export interface PalletSponsoringChargeAssetTxPayment extends Struct {
   readonly tip: Compact<u128>;
   readonly assetId: Option<StagingXcmV3MultiLocation>;
 }

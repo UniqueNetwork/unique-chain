@@ -6282,8 +6282,8 @@ declare module '@polkadot/types/lookup' {
   /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls (779) */
   type OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls = Null;
 
-  /** @name PalletSponsoringChargeTransactionPayment (780) */
-  interface PalletSponsoringChargeTransactionPayment extends Struct {
+  /** @name PalletSponsoringChargeAssetTxPayment (780) */
+  interface PalletSponsoringChargeAssetTxPayment extends Struct {
     readonly tip: Compact<u128>;
     readonly assetId: Option<StagingXcmV3MultiLocation>;
   }

@@ -311,7 +311,8 @@ macro_rules! impl_common_runtime_apis {
 					statement: sp_statement_store::Statement,
 				) -> Result<sp_statement_store::runtime_api::ValidStatement, sp_statement_store::runtime_api::InvalidStatement> {
 					//Statement::validate_statement(source, statement)
-					//TODO: fix
+					//TODO oracle: fix
+					log::info!("TEST validate_statement: source={:?}, statement={:?}", source, statement);
 					Err(sp_statement_store::runtime_api::InvalidStatement::BadProof)
 				}
 			}
@@ -544,7 +545,7 @@ macro_rules! impl_common_runtime_apis {
 					Vec<frame_benchmarking::BenchmarkList>,
 					Vec<frame_support::traits::StorageInfo>,
 				) {
-					use frame_benchmarking::{list_benchmark, Benchmarking, BenchmarkList};
+					use frame_benchmarking::{list_benchmark, BenchmarkList};
 					use frame_support::traits::StorageInfoTrait;
 					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
@@ -589,7 +590,7 @@ macro_rules! impl_common_runtime_apis {
 				fn dispatch_benchmark(
 					config: frame_benchmarking::BenchmarkConfig
 				) -> Result<Vec<frame_benchmarking::BenchmarkBatch>, sp_runtime::RuntimeString> {
-					use frame_benchmarking::{Benchmarking, BenchmarkBatch, add_benchmark};
+					use frame_benchmarking::{BenchmarkBatch, add_benchmark};
 					use sp_storage::TrackedStorageKey;
 					use pallet_xcm::benchmarking::Pallet as PalletXcmBenchmarks;
 
@@ -741,7 +742,7 @@ macro_rules! impl_common_runtime_apis {
 					// We accept the native token to pay fees.
 					let mut acceptable_assets = vec![staging_xcm::v5::AssetId(native_token.clone())];
 					// We also accept all assets in a pool with the native token.
-					let assets_in_pool_with_native = ForeignAssets::get_convertible_assets().into_iter().map(|(asset_id, _)| asset_id);
+					let assets_in_pool_with_native = ForeignAssets::get_convertible_assets().into_iter();
 					acceptable_assets.extend(assets_in_pool_with_native);
 					PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable_assets)
 				}
@@ -761,10 +762,9 @@ macro_rules! impl_common_runtime_apis {
 							let assets_in_pool_with_this_asset = ForeignAssets::get_convertible_assets();
 							if assets_in_pool_with_this_asset
 								.into_iter()
-								.map(|(asset_id, _)| asset_id)
 								.map(|asset_id| asset_id.0)
 								.any(|location| location == native_asset) {
-									ForeignAssets::convert_native_to_asset(&asset_id, fee_in_native).ok_or(xcm_runtime_apis::fees::Error::AssetNotFound)
+								ForeignAssets::convert_native_to_asset(&asset_id, fee_in_native).ok_or(xcm_runtime_apis::fees::Error::AssetNotFound)
 							} else {
 								log::trace!(target: "staging_xcm::xcm_runtime_apis", "query_weight_to_asset_fee - unhandled asset_id: {asset_id:?}!");
 								Err(xcm_runtime_apis::fees::Error::AssetNotFound)

@@ -233,9 +233,11 @@ orml-oracle = { version = "1.4.0", default-features = false }
 derivative = { default-features = false, version = "2.2.0", features = ["use_core"] }
 ethereum = { git = "https://github.com/rust-ethereum/ethereum", rev = "bbb544622208ef6e9890a2dbc224248f6dd13318", default-features = false }
 evm-core = { git = "https://github.com/rust-ethereum/evm", branch = "v0.x", default-features = false }
+hex = { version = "0.4.3", default-features = false }
 hex-literal = "0.4.1"
 impl-trait-for-tuples = "0.2.2"
 jsonrpsee = { version = "0.24.9", features = ["macros", "server"] }
+lite-json = { version = "0.2.0", default-features = false  }
 log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }

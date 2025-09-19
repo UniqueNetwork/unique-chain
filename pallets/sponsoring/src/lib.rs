@@ -10,11 +10,11 @@ pub use std::*;
 
 use codec::{Decode, Encode};
 use frame_support::{
-	dispatch::{DispatchClass, DispatchInfo, PostDispatchInfo},
+	dispatch::{DispatchInfo, PostDispatchInfo},
 	pallet_prelude::{DecodeWithMemTracking, TransactionSource},
 	traits::{
 		tokens::fungibles::{Credit, Inspect},
-		Get, IsType, OriginTrait,
+		IsType, OriginTrait,
 	},
 };
 pub use pallet::*;
@@ -29,7 +29,7 @@ use sp_runtime::{
 		PostDispatchInfoOf, RefundWeight, TransactionExtension, ValidateResult, Zero,
 	},
 	transaction_validity::{
-		InvalidTransaction, TransactionLongevity, TransactionPriority, TransactionValidityError,
+		InvalidTransaction, TransactionLongevity, TransactionValidityError,
 		ValidTransaction,
 	},
 	DispatchResult, FixedPointOperand, Weight,
@@ -95,14 +95,14 @@ pub(crate) type OnChargeTransactionOf<T> =
 /// Require the transactor pay for themselves and maybe include a tip to gain additional priority
 /// in the queue.
 #[derive(Encode, Decode, DecodeWithMemTracking, Clone, Eq, PartialEq, TypeInfo)]
-pub struct ChargeTransactionPayment<T: Config, U: ApplyFeeCoefficient<T>> {
+pub struct ChargeAssetTxPayment<T: Config, U: ApplyFeeCoefficient<T>> {
 	#[codec(compact)]
 	tip: BalanceOf<T>,
 	asset_id: Option<ChargeAssetIdOf<T>>,
 	_phantom: PhantomData<U>,
 }
 
-impl<T: Config + Send + Sync, U: ApplyFeeCoefficient<T>> ChargeTransactionPayment<T, U> {
+impl<T: Config + Send + Sync, U: ApplyFeeCoefficient<T>> ChargeAssetTxPayment<T, U> {
 	/// Create new `TransactionExtension`
 	pub fn new(tip: BalanceOf<T>, asset_id: Option<ChargeAssetIdOf<T>>) -> Self {
 		Self {
@@ -114,11 +114,11 @@ impl<T: Config + Send + Sync, U: ApplyFeeCoefficient<T>> ChargeTransactionPaymen
 }
 
 impl<T: Config + Send + Sync, U: ApplyFeeCoefficient<T>> sp_std::fmt::Debug
-	for ChargeTransactionPayment<T, U>
+	for ChargeAssetTxPayment<T, U>
 {
 	#[cfg(feature = "std")]
 	fn fmt(&self, f: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
-		write!(f, "ChargeTransactionPayment<{:?}>", self.tip)
+		write!(f, "ChargeAssetTxPayment<{:?}>", self.tip)
 	}
 	#[cfg(not(feature = "std"))]
 	fn fmt(&self, _: &mut sp_std::fmt::Formatter) -> sp_std::fmt::Result {
@@ -134,7 +134,7 @@ pub trait ApplyFeeCoefficient<T: Config> {
 	) -> BalanceOf<T>;
 }
 
-impl<T: Config, U: ApplyFeeCoefficient<T>> ChargeTransactionPayment<T, U>
+impl<T: Config, U: ApplyFeeCoefficient<T>> ChargeAssetTxPayment<T, U>
 where
 	T::RuntimeCall: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 	BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand + IsType<ChargeAssetBalanceOf<T>>,
@@ -253,7 +253,7 @@ pub enum Val<T: Config> {
 impl<
 		T: Config + Send + Sync + TypeInfo,
 		U: ApplyFeeCoefficient<T> + Clone + Eq + Send + Sync + TypeInfo + 'static,
-	> TransactionExtension<T::RuntimeCall> for ChargeTransactionPayment<T, U>
+	> TransactionExtension<T::RuntimeCall> for ChargeAssetTxPayment<T, U>
 where
 	T::RuntimeCall: Dispatchable<Info = DispatchInfo, PostInfo = PostDispatchInfo>,
 	BalanceOf<T>: Send + Sync + From<u64> + FixedPointOperand + IsType<ChargeAssetBalanceOf<T>>,
@@ -261,7 +261,7 @@ where
 	ChargeAssetIdOf<T>: Send + Sync,
 	<T::RuntimeCall as Dispatchable>::RuntimeOrigin: AsSystemOriginSigner<T::AccountId> + Clone,
 {
-	const IDENTIFIER: &'static str = "ChargeTransactionPayment";
+	const IDENTIFIER: &'static str = "ChargeAssetTxPayment";
 
 	type Implicit = ();
 
@@ -293,7 +293,7 @@ where
 		),
 		TransactionValidityError,
 	> {
-		log::info!("TEST ChargeTransactionPayment validate");
+		log::info!("TEST ChargeAssetTxPayment validate");
 		use pallet_transaction_payment::ChargeTransactionPayment;
 		let Some(who) = origin.as_system_origin_signer() else {
 			return Ok((ValidTransaction::default(), Val::NoCharge, origin));

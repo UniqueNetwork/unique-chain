@@ -21,8 +21,6 @@ sp-std = { workspace = true }
 staging-xcm = { workspace = true }
 up-common = { workspace = true }
 
-orml-oracle = { workspace = true }
-
 cumulus-pallet-parachain-system = { workspace = true }
 polkadot-core-primitives = { workspace = true }
 

@@ -75,11 +75,7 @@ use sp_core::Encode;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::Block as BlockT;
 use sp_state_machine::Backend as StateBackend;
-use sp_statement_store::{
-	runtime_api::{
-		InvalidStatement, StatementSource, StatementStoreExt, ValidStatement, ValidateStatement,
-	}
-};
+use sp_statement_store::runtime_api::ValidateStatement;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
@@ -341,8 +337,6 @@ where
 		&task_manager,
 	)?;
 
-	test_func(client.clone());
-
 	let statement_store = sc_statement_store::Store::new_shared(
 		&config.data_path,
 		Default::default(),
@@ -371,15 +365,6 @@ where
 	};
 
 	Ok(params)
-}
-
-fn test_func<T, Block>(client: Arc<T>)
-where
-	T: ProvideRuntimeApi<Block>,
-	Block: BlockT,
-	T::Api: ValidateStatement<Block>,
-{
-	log::info!("TEST test_func");
 }
 
 macro_rules! clone {

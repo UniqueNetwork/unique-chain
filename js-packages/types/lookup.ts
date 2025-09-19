@@ -5841,9 +5841,9 @@ export default {
    **/
   OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls: 'Null',
   /**
-   * Lookup780: pallet_sponsoring::ChargeTransactionPayment<opal_runtime::Runtime, opal_runtime::runtime_common::FeeCoefficientApplier>
+   * Lookup780: pallet_sponsoring::ChargeAssetTxPayment<opal_runtime::Runtime, opal_runtime::runtime_common::FeeCoefficientApplier>
    **/
-  PalletSponsoringChargeTransactionPayment: {
+  PalletSponsoringChargeAssetTxPayment {
     tip: 'Compact<u128>',
     assetId: 'Option<StagingXcmV3MultiLocation>'
   },

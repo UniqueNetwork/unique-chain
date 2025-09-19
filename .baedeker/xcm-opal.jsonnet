@@ -56,7 +56,15 @@ local opal = {
 	nodes: {
 		[name]: {
 			bin: $.bin,
-			wantedKeys: 'para',
+            wantedKeys: {
+                _controller: "Sr25519",
+                _stash: "Sr25519",
+                aura: "Sr25519",
+                orcl: 'Sr25519',
+                sessionKeys: {
+                    "aura": "aura"
+                },
+            },
 			extraArgs: [
 				'--increase-future-pool',
 				'--pool-type=fork-aware',

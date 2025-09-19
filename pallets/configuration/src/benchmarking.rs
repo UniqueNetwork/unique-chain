@@ -24,8 +24,6 @@ use sp_std::vec;
 
 use super::*;
 
-const SEED: u32 = 0;
-
 fn assert_last_event<T: Config>(generic_event: <T as Config>::RuntimeEvent) {
 	let events = frame_system::Pallet::<T>::events();
 	let system_event: <T as frame_system::Config>::RuntimeEvent = generic_event.into();
@@ -156,36 +154,6 @@ mod benchmarks {
 			assert_ok!(<Pallet<T>>::set_relay_block_number_checks(
 				RawOrigin::Root.into(),
 				false
-			));
-		}
-
-		Ok(())
-	}
-
-	#[benchmark]
-	fn add_oracle_member() -> Result<(), BenchmarkError> {
-		let account_id: T::AccountId = account::<T::AccountId>("admin", 0, SEED);
-
-		#[block]
-		{
-			assert_ok!(<Pallet<T>>::add_oracle_member(
-				RawOrigin::Root.into(),
-				account_id
-			));
-		}
-
-		Ok(())
-	}
-
-	#[benchmark]
-	fn remove_oracle_member() -> Result<(), BenchmarkError> {
-		let account_id: T::AccountId = account::<T::AccountId>("admin", 0, SEED);
-
-		#[block]
-		{
-			assert_ok!(<Pallet<T>>::add_oracle_member(
-				RawOrigin::Root.into(),
-				account_id
 			));
 		}
 

@@ -17,12 +17,19 @@ pallet-balances-adapter = { workspace = true }
 pallet-common = { workspace = true }
 pallet-fungible = { workspace = true }
 serde = { workspace = true }
+sp-core = { workspace = true }
+sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
 staging-xcm = { workspace = true }
 staging-xcm-executor = { workspace = true }
 up-data-structs = { workspace = true }
 derivative = { workspace = true }
+
+orml-oracle = { workspace = true }
+
+hex = { workspace = true }
+lite-json = { workspace = true }
 
 [features]
 default = ["std"]
@@ -36,9 +43,11 @@ std = [
 	"pallet-fungible/std",
 	"parity-scale-codec/std",
 	"scale-info/std",
+	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
 	"staging-xcm-executor/std",
 	"up-data-structs/std",
+	"lite-json/std",
 ]
 try-runtime = ["frame-support/try-runtime"]

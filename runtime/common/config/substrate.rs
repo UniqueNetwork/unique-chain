@@ -19,7 +19,7 @@ use frame_support::{
 	dispatch::DispatchClass,
 	ord_parameter_types, parameter_types,
 	traits::{
-		fungible, fungibles,
+		fungibles,
 		tokens::{Fortitude, PayFromAccount, Precision, Preservation, UnityAssetBalanceConversion},
 		ConstBool, ConstU32, ConstU64, NeverEnsureOrigin,
 	},
@@ -38,9 +38,9 @@ use pallet_transaction_payment::{ConstFeeMultiplier, Multiplier};
 use sp_arithmetic::traits::One;
 use sp_runtime::{
 	traits::{AccountIdLookup, BlakeTwo256, DispatchInfoOf, IdentityLookup, PostDispatchInfoOf},
-	FixedPointNumber, FixedU128, Perbill, Percent, Permill,
+	Perbill, Percent, Permill,
 };
-use sp_std::{vec, vec::Vec};
+use sp_std::vec;
 use up_common::{constants::*, types::*};
 
 use crate::{
@@ -289,18 +289,6 @@ impl pallet_asset_tx_payment::Config for Runtime {
 
 pub struct TxFeeFungiblesAdapter;
 
-pub(crate) type OnChargeTransactionOf<T> =
-	<T as pallet_transaction_payment::Config>::OnChargeTransaction;
-pub(crate) type BalanceOf<T> =
-	<OnChargeTransactionOf<T> as pallet_transaction_payment::OnChargeTransaction<T>>::Balance;
-/// Liquidity info type alias.
-pub(crate) type LiquidityInfoOf<T> =
-	<OnChargeTransactionOf<T> as pallet_transaction_payment::OnChargeTransaction<T>>::LiquidityInfo;
-/// Asset id type alias.
-pub(crate) type AssetIdOf<T> =
-	<<T as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Inspect<
-		<T as frame_system::Config>::AccountId,
-	>>::AssetId;
 pub(crate) type AssetBalanceOf<T> =
 	<<T as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Inspect<
 		<T as frame_system::Config>::AccountId,
@@ -308,13 +296,9 @@ pub(crate) type AssetBalanceOf<T> =
 
 use frame_support::{
 	pallet_prelude::Zero,
-	traits::{fungibles::Inspect, tokens::WithdrawConsequence, Defensive},
+	traits::{tokens::WithdrawConsequence, Defensive},
 };
-use pallet_configuration::WeightToFee;
-use sp_runtime::{
-	transaction_validity::{InvalidTransaction, TransactionValidityError},
-	Saturating,
-};
+use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 
 impl TxFeeFungiblesAdapter {
 	fn convert_asset_id(
