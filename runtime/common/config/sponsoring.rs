@@ -18,7 +18,7 @@ use frame_support::parameter_types;
 use sp_core::U256;
 use up_common::{constants::*, types::BlockNumber};
 
-use crate::{runtime_common::sponsoring::UniqueSponsorshipHandler, Runtime};
+use crate::{runtime_common::sponsoring::UniqueSponsorshipHandler, Runtime, RuntimeEvent};
 
 parameter_types! {
 	pub const DefaultSponsoringRateLimit: BlockNumber = 1 * DAYS;
@@ -32,4 +32,5 @@ type SponsorshipHandler = (
 
 impl pallet_charge_transaction::Config for Runtime {
 	type SponsorshipHandler = SponsorshipHandler;
+	type RuntimeEvent = RuntimeEvent;
 }

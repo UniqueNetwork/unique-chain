@@ -1,6 +1,5 @@
-import {Metadata} from '@polkadot/types';
 import { IKeyringPair } from '@polkadot/types/types';
-import {itSub, usingPlaygrounds, expect, requirePalletsOrSkip, Pallets} from '@unique/test-utils/util.js';
+import {itSub, usingPlaygrounds, expect, requirePalletsOrSkip, Pallets, describe, before} from '@unique/test-utils/util';
 
 describe('Using foreign asset as fee', () => {
   let donor: IKeyringPair;
@@ -10,7 +9,7 @@ describe('Using foreign asset as fee', () => {
 
   before(async () => {
     await usingPlaygrounds(async (helper, privateKey) => {
-      requirePalletsOrSkip(this, helper, [Pallets.TestUtils]);
+      requirePalletsOrSkip(helper, [Pallets.TestUtils]);
       donor = await privateKey({url: import.meta.url});
       alice = await privateKey('//Alice'); 
       [bob, charlie] = await helper.arrange.createAccounts([50n, 10n], donor);
@@ -45,7 +44,7 @@ describe('Using foreign asset as fee', () => {
 
     await expect(helper.executeExtrinsic(bob, 'api.tx.balances.transferKeepAlive', [charlie.address, 100n], true)).to.be.fulfilled;
 
-    let feeAsset = { assetId: {
+    const feeAsset = { assetId: {
       interior: 'Here',
       parents: 1
     }};

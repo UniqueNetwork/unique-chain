@@ -18,12 +18,15 @@ frame-support = { workspace = true }
 frame-system = { workspace = true }
 pallet-balances = { workspace = true }
 pallet-transaction-payment = { workspace = true }
+pallet-asset-tx-payment = { workspace = true }
 scale-info = { workspace = true }
 serde = { workspace = true }
 sp-core = { workspace = true }
 sp-io = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
+
+log = { workspace = true }
 
 up-sponsorship = { workspace = true }
 

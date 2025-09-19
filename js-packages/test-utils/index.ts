@@ -580,7 +580,7 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
-        ChargeAssetTxPayment: {
+        ChargeTransactionPayment: {
           extrinsic: {
             tip: 'Compact<u128>',
             assetId: 'Option<StagingXcmV3MultiLocation>'

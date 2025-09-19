@@ -815,14 +815,6 @@ declare module '@polkadot/api-base/types/errors' {
        **/
       ForeignAssetAlreadyRegistered: AugmentedError<ApiType>;
       /**
-       * Overflow on applying foreign asset conversion rate
-       **/
-      ForeignAssetConversionOverflow: AugmentedError<ApiType>;
-      /**
-       * Conversion rate is not set for the asset
-       **/
-      ForeignAssetConversionRateNotSet: AugmentedError<ApiType>;
-      /**
        * Only fungible assets could be converted to fee.
        **/
       ForeignAssetIsNotFungible: AugmentedError<ApiType>;

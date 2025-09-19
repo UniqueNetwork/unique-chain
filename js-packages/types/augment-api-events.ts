@@ -160,6 +160,17 @@ declare module '@polkadot/api-base/types/events' {
        **/
       [key: string]: AugmentedEvent<ApiType>;
     };
+    charging: {
+      /**
+       * A transaction fee `actual_fee`, of which `tip` was added to the minimum inclusion fee,
+       * has been paid by `who` in an asset `asset_id`.
+       **/
+      AssetTxFeePaid: AugmentedEvent<ApiType, [who: AccountId32, actualFee: u128, tip: u128, assetId: Option<StagingXcmV3MultiLocation>], { who: AccountId32, actualFee: u128, tip: u128, assetId: Option<StagingXcmV3MultiLocation> }>;
+      /**
+       * Generic event
+       **/
+      [key: string]: AugmentedEvent<ApiType>;
+    };
     collatorSelection: {
       CandidateAdded: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;
       CandidateRemoved: AugmentedEvent<ApiType, [accountId: AccountId32], { accountId: AccountId32 }>;

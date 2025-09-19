@@ -777,8 +777,8 @@ export interface OpalRuntimeOriginCaller extends Enum {
 /** @name OpalRuntimeRuntime */
 export interface OpalRuntimeRuntime extends Null {}
 
-/** @name OpalRuntimeRuntimeCommonFeeCoefficientCalculator */
-export interface OpalRuntimeRuntimeCommonFeeCoefficientCalculator extends Null {}
+/** @name OpalRuntimeRuntimeCommonFeeCoefficientApplier */
+export interface OpalRuntimeRuntimeCommonFeeCoefficientApplier extends Null {}
 
 /** @name OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls */
 export interface OpalRuntimeRuntimeCommonIdentityDisableIdentityCalls extends Null {}
@@ -1018,12 +1018,6 @@ export interface PalletAppPromotionEvent extends Enum {
   readonly isSetAdmin: boolean;
   readonly asSetAdmin: AccountId32;
   readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
-}
-
-/** @name PalletAssetTxPaymentChargeAssetTxPayment */
-export interface PalletAssetTxPaymentChargeAssetTxPayment extends Struct {
-  readonly tip: Compact<u128>;
-  readonly assetId: Option<StagingXcmV3MultiLocation>;
 }
 
 /** @name PalletAssetTxPaymentEvent */
@@ -1606,7 +1600,11 @@ export interface PalletConfigurationCall extends Enum {
   readonly asSetCollatorSelectionKickThreshold: {
     readonly threshold: Option<u32>;
   } & Struct;
-  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold';
+  readonly isSetRelayBlockNumberChecks: boolean;
+  readonly asSetRelayBlockNumberChecks: {
+    readonly enabled: bool;
+  } & Struct;
+  readonly type: 'SetWeightToFeeCoefficientOverride' | 'SetMinGasPriceOverride' | 'SetAppPromotionConfigurationOverride' | 'SetCollatorSelectionDesiredCollators' | 'SetCollatorSelectionLicenseBond' | 'SetCollatorSelectionKickThreshold' | 'SetRelayBlockNumberChecks';
 }
 
 /** @name PalletConfigurationError */
@@ -2213,9 +2211,7 @@ export interface PalletForeignAssetsModuleError extends Enum {
   readonly isBadForeignAssetId: boolean;
   readonly isForeignAssetNotFound: boolean;
   readonly isForeignAssetIsNotFungible: boolean;
-  readonly isForeignAssetConversionRateNotSet: boolean;
-  readonly isForeignAssetConversionOverflow: boolean;
-  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible' | 'ForeignAssetConversionRateNotSet' | 'ForeignAssetConversionOverflow';
+  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible';
 }
 
 /** @name PalletForeignAssetsModuleEvent */
@@ -3296,10 +3292,25 @@ export interface PalletSessionEvent extends Enum {
 }
 
 /** @name PalletSponsoringChargeTransactionPayment */
-export interface PalletSponsoringChargeTransactionPayment extends Compact<u128> {}
+export interface PalletSponsoringChargeTransactionPayment extends Struct {
+  readonly tip: Compact<u128>;
+  readonly assetId: Option<StagingXcmV3MultiLocation>;
+}
 
 /** @name PalletSponsoringCheckNonce */
 export interface PalletSponsoringCheckNonce extends Compact<u32> {}
+
+/** @name PalletSponsoringEvent */
+export interface PalletSponsoringEvent extends Enum {
+  readonly isAssetTxFeePaid: boolean;
+  readonly asAssetTxFeePaid: {
+    readonly who: AccountId32;
+    readonly actualFee: u128;
+    readonly tip: u128;
+    readonly assetId: Option<StagingXcmV3MultiLocation>;
+  } & Struct;
+  readonly type: 'AssetTxFeePaid';
+}
 
 /** @name PalletStateTrieMigrationCall */
 export interface PalletStateTrieMigrationCall extends Enum {

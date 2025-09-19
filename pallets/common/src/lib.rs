@@ -2283,7 +2283,7 @@ pub trait CommonCollectionOperations<T: Config> {
 	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128;
 
 	/// Amount of token pieces.
-	/// It will be total supply for funcgible collection.
+	/// It will be total supply for fungible collection.
 	/// 1 for non-fungible collection or number of pieces for specific refungible token
 	fn total_pieces(&self, token: TokenId) -> Option<u128>;
 
