@@ -41,6 +41,8 @@ pub trait WeightInfo {
 	fn set_collator_selection_kick_threshold() -> Weight;
 	// TODO: Stubbed, need to re-run benchmarks
 	fn set_relay_block_number_checks() -> Weight;
+	fn add_oracle_member() -> Weight;
+	fn remove_oracle_member() -> Weight;
 }
 
 /// Weights for pallet_configuration using the Substrate node and recommended hardware.
@@ -114,6 +116,13 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(5_201_000, 0)
 			.saturating_add(T::DbWeight::get().writes(1_u64))
 	}
+	fn add_oracle_member() -> Weight {
+		Weight::from_parts(5_201_000, 0)
+			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
+	fn remove_oracle_member() -> Weight {
+		Weight::default()
+	}
 }
 
 // For backwards compatibility and tests
@@ -185,6 +194,12 @@ impl WeightInfo for () {
 	fn set_relay_block_number_checks() -> Weight {
 		Weight::from_parts(5_201_000, 0)
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
+	fn add_oracle_member() -> Weight {
+		Weight::default()
+	}
+	fn remove_oracle_member() -> Weight {
+		Weight::default()
 	}
 }
 

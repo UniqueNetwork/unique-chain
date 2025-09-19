@@ -16,11 +16,14 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::marker::PhantomData;
+#[cfg(not(feature = "std"))]
+use sp_std::alloc::format;
+
+use sp_std::{marker::PhantomData, prelude::*};
 
 use frame_support::{
 	pallet,
-	traits::{ConstBool, Get},
+	traits::{ConstBool, ConstU32, Get},
 	weights::{Weight, WeightToFeeCoefficient, WeightToFeeCoefficients, WeightToFeePolynomial},
 };
 pub use pallet::*;
@@ -32,26 +35,63 @@ use sp_arithmetic::{
 	per_things::{PerThing, Perbill},
 	traits::{BaseArithmetic, Unsigned},
 };
-use sp_core::U256;
+use sp_core::{U256, crypto::KeyTypeId};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;
 pub mod weights;
+
+pub const KEY_TYPE: KeyTypeId = KeyTypeId(*b"orcl");
+
+/// Based on the above `KeyTypeId` we need to generate a pallet-specific crypto type wrappers.
+/// We can use from supported crypto kinds (`sr25519`, `ed25519` and `ecdsa`) and augment
+/// the types with this pallet-specific identifier.
+pub mod crypto {
+	use super::KEY_TYPE;
+	use sp_core::sr25519::Signature as Sr25519Signature;
+	use sp_runtime::{
+		app_crypto::{app_crypto, sr25519},
+		traits::Verify,
+		MultiSignature, MultiSigner,
+	};
+	app_crypto!(sr25519, KEY_TYPE);
+
+	pub struct AuthId;
+
+	impl frame_system::offchain::AppCrypto<MultiSigner, MultiSignature> for AuthId {
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+
+	// implemented for mock runtime in test
+	impl frame_system::offchain::AppCrypto<<Sr25519Signature as Verify>::Signer, Sr25519Signature>
+		for AuthId
+	{
+		type RuntimeAppPublic = Public;
+		type GenericSignature = sp_core::sr25519::Signature;
+		type GenericPublic = sp_core::sr25519::Public;
+	}
+}
 
 #[pallet]
 mod pallet {
 	use core::fmt::Debug;
 
 	use frame_support::{pallet_prelude::*, traits::Get};
-	use frame_system::{ensure_root, pallet_prelude::*};
+	use frame_system::{ensure_root, offchain::{CreateSignedTransaction, SendSignedTransaction, Signer, SigningTypes}, pallet_prelude::*};
 	use parity_scale_codec::Codec;
 	use sp_arithmetic::{traits::AtLeast32BitUnsigned, FixedPointOperand, Permill};
+	use sp_core::U256;
+	use sp_runtime::{offchain::http, MultiSigner};
+	use frame_system::offchain::AppCrypto;
 
 	use super::*;
 	pub use crate::weights::WeightInfo;
+	use orml_oracle::WeightInfo as _;
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config {
+	pub trait Config: frame_system::Config + orml_oracle::Config + CreateSignedTransaction<orml_oracle::Call<Self>> {
 		/// Overarching event type.
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
@@ -67,6 +107,9 @@ mod pallet {
 			+ MaxEncodedLen
 			+ TypeInfo
 			+ FixedPointOperand;
+
+		type AccountId32: From<Self::AccountId> + AsRef<[u8; 32]>;
+		type AuthorityId: AppCrypto<<Self as SigningTypes>::Public, <Self as SigningTypes>::Signature>;
 
 		#[pallet::constant]
 		type DefaultWeightToFeeCoefficient: Get<u64>;
@@ -120,12 +163,105 @@ mod pallet {
 		);
 	}
 
+	fn fetch_rate() -> Result<f64, http::Error> {
+		// let deadline = timestamp().add(Duration::from_millis(2_000));
+		// let request = http::Request::get("https://api.exchangerate.host/latest?base=USD&symbols=EUR");
+		// let pending = request.deadline(deadline).send().map_err(|_| http::Error::IoError)?;
+		// let response = pending.try_wait(deadline).map_err(|_| http::Error::DeadlineReached)??;
+
+		// if response.code != 200 {
+		// 	log::warn!("Unexpected status code: {}", response.code);
+		// 	return Err(http::Error::Unknown);
+		// }
+
+		// let body = response.body().collect::<Vec<u8>>();
+		// let body_str = sp_std::str::from_utf8(&body).map_err(|_| http::Error::Unknown)?;
+
+		// // Parse JSON, e.g. {"rates":{"EUR":0.85}}
+		// //let v: serde_json::Value = serde_json::from_str(body_str).map_err(|_| http::Error::Unknown)?;
+		// Ok(v["rates"]["EUR"].as_f64().ok_or(http::Error::Unknown)?)
+
+		let unq_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf2e99190c148ccde2019000000";
+		let dot_storage_key = "0x99971b5749ac43e0235e41b0d37869188ee7418a6531173d60d1f6a82d8f4d51512f6eaaf236595bff0193f47dc14ef9d7a3d484f8388e304ae0e53869d8443c8f31c951596896e9b942a2e924cc2cf239b9d2792f8bd4c305000000";
+		let body = format!(r#"{{"id":1, "jsonrpc":"2.0", "method": "state_getStorage", "params": ["{unq_storage_key}", "latest"]}}"#);
+
+		let request = http::Request::post("https://hydration.ibp.network", vec![body.as_bytes().to_vec()])
+			.add_header("Content-Type", "application/json")
+			.send().map_err(|e| {
+				match e {
+					sp_core::offchain::HttpError::DeadlineReached => http::Error::DeadlineReached,
+					sp_core::offchain::HttpError::IoError => http::Error::IoError,
+					sp_core::offchain::HttpError::Invalid => http::Error::Unknown,
+				}
+			})?;
+
+		let response = request.wait()?;
+		let body = response.body().collect::<Vec<u8>>();
+		let body_str = sp_std::str::from_utf8(&body).map_err(|_| http::Error::Unknown)?;
+
+		log::info!("TEST {body_str}");
+
+		Ok(1.)
+	}
+
 	/// We update our default weights on every release
 	#[pallet::hooks]
-	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T> {
+	impl<T: Config> Hooks<BlockNumberFor<T>> for Pallet<T>
+	where T: Config,
+		T::OracleKey: From<BoundedVec<u8, ConstU32<3>>>,
+		T::OracleValue: From<u64>,
+		<T as SigningTypes>::Public: From<MultiSigner>,
+	{
+		fn on_initialize(_n: BlockNumberFor<T>) -> Weight {
+			log::info!("TEST Configuration on_initialize");
+			Weight::zero()
+		}
+
 		fn on_runtime_upgrade() -> Weight {
 			update_base_fee::<T>();
 			T::DbWeight::get().reads_writes(1, 2)
+		}
+
+		fn offchain_worker(block_number: BlockNumberFor<T>) {
+			let block_number: U256 = block_number.into();
+			if block_number.as_u128() % 100 != 1 {
+				return;
+			}
+			log::info!("TEST offchain_worker 1");
+			let oracles = OracleMembers::<T>::get().into_iter().flat_map(|account_id: T::AccountId| [
+				MultiSigner::Ed25519(T::AccountId32::as_ref(&T::AccountId32::from(account_id.clone())).clone().into()).into(),
+				MultiSigner::Sr25519(T::AccountId32::as_ref(&T::AccountId32::from(account_id)).clone().into()).into(),
+			]).collect::<Vec<<T as SigningTypes>::Public>>();
+			log::info!("TEST offchain_worker 2");
+			let signer = Signer::<T, T::AuthorityId>::any_account().with_filter(oracles);
+			log::info!("TEST offchain_worker 3");
+			if !signer.can_sign() {
+			log::info!("TEST offchain_worker 4");
+				Signer::<T, T::AuthorityId>::keystore_accounts().for_each(|account| {
+					log::info!("No signer is available for exchange rate offchain worker {:?}", account.public);
+				});
+				return;
+			}
+			log::info!("TEST offchain_worker 5");
+			// Fetch external data (e.g., exchange rate)
+			if let Ok(rate) = fetch_rate() {
+				log::info!("TEST offchain_worker 6");
+				// Use any available signer to submit a signed extrinsic
+				if let Some((account, result)) = signer.send_signed_transaction(|_acct| {
+					let scaled_rate = T::OracleValue::from((rate * 1_000_000f64) as u64);
+					let key = BoundedVec::<u8, ConstU32<3>>::truncate_from("DOT".as_bytes().to_vec()).into();
+					let values = BoundedVec::truncate_from(vec![(key, scaled_rate)]);
+					orml_oracle::Call::<T>::feed_values { values }
+				}) {
+					if result.is_ok() {
+						log::info!("Signed tx successfully submitted");
+					} else {
+						log::error!("Signed tx submission failed");
+					}
+				} else {
+					log::error!("No local account available for signing");
+				}
+			}
 		}
 	}
 
@@ -148,6 +284,7 @@ mod pallet {
 	#[pallet::error]
 	pub enum Error<T> {
 		InconsistentConfiguration,
+		OracleMembersCapacityExceeded,
 	}
 
 	#[pallet::storage]
@@ -190,10 +327,17 @@ mod pallet {
 	pub type RelayBlockNumberChecks<T: Config> =
 		StorageValue<Value = bool, QueryKind = ValueQuery, OnEmpty = ConstBool<true>>;
 
+	#[pallet::storage]
+	pub type OracleMembers<T: Config> = StorageValue<
+		_,
+		BoundedVec<T::AccountId, ConstU32<10>>, //TODO oracle: replace with a constant
+		ValueQuery
+	>;
+
 	#[pallet::call]
-	impl<T: Config> Pallet<T> {
+	impl<T: Config> Pallet<T> where T: orml_oracle::Config {
 		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::set_weight_to_fee_coefficient_override())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_weight_to_fee_coefficient_override())]
 		pub fn set_weight_to_fee_coefficient_override(
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
@@ -208,7 +352,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::set_min_gas_price_override())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_min_gas_price_override())]
 		pub fn set_min_gas_price_override(
 			origin: OriginFor<T>,
 			coeff: Option<u64>,
@@ -226,7 +370,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::set_app_promotion_configuration_override())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_app_promotion_configuration_override())]
 		pub fn set_app_promotion_configuration_override(
 			origin: OriginFor<T>,
 			configuration: AppPromotionConfiguration<BlockNumberFor<T>>,
@@ -239,7 +383,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_desired_collators())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_desired_collators())]
 		pub fn set_collator_selection_desired_collators(
 			origin: OriginFor<T>,
 			max: Option<u32>,
@@ -261,7 +405,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(5)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_license_bond())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_license_bond())]
 		pub fn set_collator_selection_license_bond(
 			origin: OriginFor<T>,
 			amount: Option<<T as Config>::Balance>,
@@ -277,7 +421,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(6)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_kick_threshold())]
 		pub fn set_collator_selection_kick_threshold(
 			origin: OriginFor<T>,
 			threshold: Option<BlockNumberFor<T>>,
@@ -295,7 +439,7 @@ mod pallet {
 		}
 
 		#[pallet::call_index(7)]
-		#[pallet::weight(T::WeightInfo::set_collator_selection_kick_threshold())]
+		#[pallet::weight(<T as Config>::WeightInfo::set_collator_selection_kick_threshold())]
 		pub fn set_relay_block_number_checks(
 			origin: OriginFor<T>,
 			enabled: bool,
@@ -307,6 +451,35 @@ mod pallet {
 				<RelayBlockNumberChecks<T>>::set(false);
 			}
 			Ok(())
+		}
+
+		#[pallet::call_index(8)]
+		#[pallet::weight(<T as Config>::WeightInfo::add_oracle_member())]
+		pub fn add_oracle_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
+			ensure_root(origin)?; //TODO oracle: allow `council`` etc..
+			OracleMembers::<T>::mutate(|members| {
+				members.try_push(account_id).map_err(|_| Error::<T>::OracleMembersCapacityExceeded)
+			})?;
+			Ok(())
+		}
+
+		#[pallet::call_index(9)]
+		#[pallet::weight(<T as Config>::WeightInfo::remove_oracle_member())]
+		pub fn remove_oracle_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
+			ensure_root(origin)?;
+			OracleMembers::<T>::mutate(|members| {
+				members.retain(|x| *x != account_id);
+			});
+			Ok(())
+		}
+
+		#[pallet::call_index(10)]
+		#[pallet::weight(<T as orml_oracle::Config>::WeightInfo::feed_values(values.len() as u32))]
+		pub fn feed_values(
+			origin: OriginFor<T>,
+			values: BoundedVec<(T::OracleKey, T::OracleValue), T::MaxFeedValues>,
+		) -> DispatchResultWithPostInfo {
+			orml_oracle::Pallet::<T>::feed_values(origin, values)
 		}
 	}
 

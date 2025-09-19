@@ -3524,7 +3524,7 @@ dependencies = [
 [[package]]
 name = "fc-api"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "async-trait",
  "fp-storage",
@@ -3536,7 +3536,7 @@ dependencies = [
 [[package]]
 name = "fc-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "async-trait",
  "fp-consensus",
@@ -3552,7 +3552,7 @@ dependencies = [
 [[package]]
 name = "fc-db"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "async-trait",
  "ethereum",
@@ -3582,7 +3582,7 @@ dependencies = [
 [[package]]
 name = "fc-mapping-sync"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "fc-db",
  "fc-storage",
@@ -3605,7 +3605,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3655,7 +3655,7 @@ dependencies = [
 [[package]]
 name = "fc-rpc-core"
 version = "1.1.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3670,7 +3670,7 @@ dependencies = [
 [[package]]
 name = "fc-storage"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3851,7 +3851,7 @@ dependencies = [
 [[package]]
 name = "fp-account"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "hex",
  "impl-serde",
@@ -3870,7 +3870,7 @@ dependencies = [
 [[package]]
 name = "fp-consensus"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "parity-scale-codec",
@@ -3881,7 +3881,7 @@ dependencies = [
 [[package]]
 name = "fp-ethereum"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3893,7 +3893,7 @@ dependencies = [
 [[package]]
 name = "fp-evm"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "environmental",
  "evm",
@@ -3910,7 +3910,7 @@ dependencies = [
 [[package]]
 name = "fp-rpc"
 version = "3.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -3926,7 +3926,7 @@ dependencies = [
 [[package]]
 name = "fp-self-contained"
 version = "1.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "frame-support",
  "parity-scale-codec",
@@ -3938,7 +3938,7 @@ dependencies = [
 [[package]]
 name = "fp-storage"
 version = "2.0.0"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "parity-scale-codec",
  "serde",
@@ -7262,6 +7262,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "num_enum",
+ "orml-oracle",
  "orml-traits",
  "orml-vesting",
  "orml-xcm-support",
@@ -7321,6 +7322,7 @@ dependencies = [
  "serde",
  "smallvec",
  "sp-api",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -7331,6 +7333,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-statement-store",
  "sp-std",
  "sp-storage",
  "sp-transaction-pool",
@@ -7441,6 +7444,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "orml-oracle"
+version = "1.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8fff90b8a677b85a4250a40da2bb6ff6c950772f50c17dcb8105bec8debd688c"
+dependencies = [
+ "frame-benchmarking",
+ "frame-support",
+ "frame-system",
+ "orml-traits",
+ "orml-utilities",
+ "parity-scale-codec",
+ "scale-info",
+ "serde",
+ "sp-application-crypto",
+ "sp-io",
+ "sp-runtime",
+ "sp-std",
 ]
 
 [[package]]
@@ -7764,7 +7787,7 @@ dependencies = [
 [[package]]
 name = "pallet-base-fee"
 version = "1.0.0"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "fp-evm",
  "frame-support",
@@ -7974,6 +7997,8 @@ dependencies = [
  "frame-system",
  "hex-literal",
  "log",
+ "orml-oracle",
+ "pallet-aura",
  "parity-scale-codec",
  "polkadot-core-primitives",
  "scale-info",
@@ -8097,7 +8122,7 @@ dependencies = [
 [[package]]
 name = "pallet-ethereum"
 version = "4.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "ethereum",
  "ethereum-types",
@@ -8120,7 +8145,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm"
 version = "6.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "cumulus-primitives-storage-weight-reclaim",
  "environmental",
@@ -8200,7 +8225,7 @@ dependencies = [
 [[package]]
 name = "pallet-evm-precompile-simple"
 version = "2.0.0-dev"
-source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-2#2e703b47314c0a248fb0e3a63ca8ebe5e48c3b3c"
+source = "git+https://github.com/uniquenetwork/unique-frontier?branch=unique-polkadot-2503-3#8d6ef2d8fd195668529084f092d256c01aa2f645"
 dependencies = [
  "fp-evm",
  "ripemd",
@@ -11183,6 +11208,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "num_enum",
+ "orml-oracle",
  "orml-traits",
  "orml-vesting",
  "orml-xcm-support",
@@ -11242,6 +11268,7 @@ dependencies = [
  "serde",
  "smallvec",
  "sp-api",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -11252,6 +11279,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-statement-store",
  "sp-std",
  "sp-storage",
  "sp-transaction-pool",
@@ -13209,6 +13237,26 @@ dependencies = [
  "parity-scale-codec",
  "parking_lot 0.12.3",
  "sp-core",
+]
+
+[[package]]
+name = "sc-statement-store"
+version = "21.0.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c050833b98361c53b752a3b544fae519fd08dcad667f7d03574be3b72a56ed21"
+dependencies = [
+ "log",
+ "parity-db",
+ "parking_lot 0.12.3",
+ "sc-client-api",
+ "sc-keystore",
+ "sp-api",
+ "sp-blockchain",
+ "sp-core",
+ "sp-runtime",
+ "sp-statement-store",
+ "substrate-prometheus-endpoint",
+ "tokio",
 ]
 
 [[package]]
@@ -16600,13 +16648,16 @@ dependencies = [
  "sc-executor",
  "sc-network",
  "sc-network-sync",
+ "sc-offchain",
  "sc-rpc",
  "sc-rpc-api",
  "sc-service",
+ "sc-statement-store",
  "sc-sysinfo",
  "sc-telemetry",
  "sc-tracing",
  "sc-transaction-pool",
+ "sc-transaction-pool-api",
  "serde",
  "serde_json",
  "sp-api",
@@ -16621,6 +16672,7 @@ dependencies = [
  "sp-runtime",
  "sp-session",
  "sp-state-machine",
+ "sp-statement-store",
  "sp-timestamp",
  "sp-transaction-pool",
  "substrate-build-script-utils",
@@ -16667,6 +16719,7 @@ dependencies = [
  "impl-trait-for-tuples",
  "log",
  "num_enum",
+ "orml-oracle",
  "orml-traits",
  "orml-vesting",
  "orml-xcm-support",
@@ -16726,6 +16779,7 @@ dependencies = [
  "serde",
  "smallvec",
  "sp-api",
+ "sp-application-crypto",
  "sp-arithmetic",
  "sp-block-builder",
  "sp-consensus-aura",
@@ -16736,6 +16790,7 @@ dependencies = [
  "sp-offchain",
  "sp-runtime",
  "sp-session",
+ "sp-statement-store",
  "sp-std",
  "sp-storage",
  "sp-transaction-pool",

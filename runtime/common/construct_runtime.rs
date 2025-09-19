@@ -126,6 +126,8 @@ macro_rules! construct_runtime {
 				ForeignAssets: pallet_foreign_assets = 80,
 				#[cfg(feature = "foreign-assets")]
 				AssetTransactionPayment: pallet_asset_tx_payment = 81,
+				#[cfg(feature = "foreign-assets")]
+				Oracle: orml_oracle = 82,
 
 				// Frontier
 				EVM: pallet_evm = 100,

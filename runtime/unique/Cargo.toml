@@ -156,6 +156,7 @@ std = [
 	'up-rpc/std',
 	'up-sponsorship/std',
 
+	"orml-oracle/std",
 	"orml-traits/std",
 	"orml-vesting/std",
 	"orml-xcm-support/std",
@@ -259,6 +260,7 @@ frame-metadata-hash-extension = { workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-system-rpc-runtime-api = { workspace = true }
+orml-oracle = { workspace = true }
 orml-traits = { workspace = true }
 orml-vesting = { workspace = true }
 orml-xcm-support = { workspace = true }
@@ -283,6 +285,7 @@ polkadot-parachain-primitives = { workspace = true }
 polkadot-runtime-common = { workspace = true }
 smallvec = { workspace = true }
 sp-api = { workspace = true }
+sp-application-crypto = { workspace = true }
 sp-arithmetic = { workspace = true }
 sp-block-builder = { workspace = true }
 sp-consensus-aura = { workspace = true }
@@ -292,6 +295,7 @@ sp-io = { workspace = true }
 sp-offchain = { workspace = true }
 sp-runtime = { workspace = true }
 sp-session = { workspace = true }
+sp-statement-store = { workspace = true }
 sp-std = { workspace = true }
 sp-storage = { workspace = true }
 sp-transaction-pool = { workspace = true }

@@ -74,26 +74,26 @@ quartz-runtime = { path = "runtime/quartz" }
 unique-runtime = { path = "runtime/unique" }
 
 # Frontier (Unique patches over the Parity version)
-fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+fc-api = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+fc-consensus = { git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
 fc-db = { default-features = false, features = [
 	'sql',
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
 fc-mapping-sync = { features = [
 	'sql',
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+fc-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+fc-rpc-core = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+fp-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+fp-rpc = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
 fp-self-contained = { default-features = false, features = [
 	"serde",
-], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
-pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-2" }
+], git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+fp-storage = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+pallet-base-fee = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+pallet-ethereum = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+pallet-evm = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
+pallet-evm-precompile-simple = { default-features = false, git = "https://github.com/uniquenetwork/unique-frontier", branch = "unique-polkadot-2503-3" }
 
 # Parity
 codec = { default-features = false, features = ['derive'], package = 'parity-scale-codec', version = "3.7.5" }
@@ -165,15 +165,19 @@ sc-consensus-manual-seal = { default-features = false, version = "0.50.0" }
 sc-executor = { default-features = false, version = "0.42.0" }
 sc-network = { default-features = false, version = "0.49.1" }
 sc-network-sync = { default-features = false, version = "0.48.0" }
+sc-offchain = { default-features = false, version = "44.0.0" }
 sc-rpc = { default-features = false, version = "44.0.0" }
 sc-rpc-api = { default-features = false, version = "0.48.0" }
 sc-service = { default-features = false, version = "0.50.0" }
+sc-statement-store = { default-features = false, version = "21.0.0" }
 sc-sysinfo = { default-features = false, version = "42.0.0" }
 sc-telemetry = { default-features = false, version = "28.1.0" }
 sc-tracing = { default-features = false, version = "39.0.0" }
 sc-transaction-pool = "39.0.0"
+sc-transaction-pool-api = { default-features = false, version = "39.0.0" }
 scale-info = { version = "2.9.0", default-features = false, features = ["derive"] }
 sp-api = { default-features = false, version = "36.0.1" }
+sp-application-crypto = { default-features = false, version = "40.1.0" }
 sp-arithmetic = { default-features = false, version = "26.1.0" }
 sp-block-builder = { default-features = false, version = "36.0.0" }
 sp-blockchain = { default-features = false, version = "39.0.0" }
@@ -189,6 +193,7 @@ sp-runtime = { default-features = false, version = "41.1.0" }
 sp-session = { default-features = false, version = "38.1.0" }
 sp-staking = { default-features = false, version = "38.0.0" }
 sp-state-machine = { default-features = false, version = "0.45.0" }
+sp-statement-store = { default-features = false, version = "20.1.0" }
 sp-std = { default-features = false, version = "14.0.0" }
 sp-storage = { default-features = false, version = "22.0.0" }
 sp-timestamp = { default-features = false, version = "36.0.0" }
@@ -222,6 +227,7 @@ orml-traits = { version = "1.4.0", default-features = false }
 orml-vesting = { version = "1.4.0", default-features = false }
 orml-xcm-support = { version = "1.4.0", default-features = false }
 orml-xtokens = { version = "1.4.0", default-features = false }
+orml-oracle = { version = "1.4.0", default-features = false }
 
 # Other
 derivative = { default-features = false, version = "2.2.0", features = ["use_core"] }
@@ -233,5 +239,5 @@ jsonrpsee = { version = "0.24.9", features = ["macros", "server"] }
 log = { version = "0.4.20", default-features = false }
 num_enum = { version = "0.7.0", default-features = false }
 serde = { default-features = false, features = ['derive'], version = "1.0.188" }
-serde_json = "1"
+serde_json = "1.0.117"
 smallvec = "1.11.1"

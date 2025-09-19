@@ -22,10 +22,10 @@ use frame_support::{
 	traits::{ConstU32, ConstU64, Currency},
 };
 use sp_arithmetic::Perbill;
-use sp_runtime::traits::{AccountIdConversion, BlockNumberProvider};
+use sp_runtime::{traits::{AccountIdConversion, BlockNumberProvider}, MultiSignature, MultiSigner};
 use up_common::{
 	constants::*,
-	types::{AccountId, Balance, BlockNumber},
+	types::{AccountId, AuraId, Balance, BlockNumber},
 };
 use up_data_structs::mapping::{CrossTokenAddressMapping, EvmTokenAddressMapping};
 
@@ -172,6 +172,7 @@ parameter_types! {
 impl pallet_configuration::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type Balance = Balance;
+	type AuthorityId = pallet_configuration::crypto::AuthId;
 	type DefaultWeightToFeeCoefficient = ConstU64<{ up_common::constants::WEIGHT_TO_FEE_COEFF }>;
 	type DefaultMinGasPrice = ConstU64<{ up_common::constants::MIN_GAS_PRICE }>;
 	type DefaultCollatorSelectionMaxCollators = MaxCollators;
@@ -181,6 +182,7 @@ impl pallet_configuration::Config for Runtime {
 	type AppPromotionDailyRate = AppPromotionDailyRate;
 	type DayRelayBlocks = DayRelayBlocks;
 	type WeightInfo = pallet_configuration::weights::SubstrateWeight<Self>;
+	type AccountId32 = AccountId;
 }
 
 impl pallet_maintenance::Config for Runtime {
