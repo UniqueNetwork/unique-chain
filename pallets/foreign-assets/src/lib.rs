@@ -382,9 +382,7 @@ pub mod module {
 			);
 
 			let old_conversion_rate =
-				<ForeignAssetConversionRate<T>>::get(&asset_id).unwrap_or(FixedU128::from(0));
-
-			<ForeignAssetConversionRate<T>>::remove(&asset_id);
+				<ForeignAssetConversionRate<T>>::take(&asset_id).unwrap_or(FixedU128::from(0));
 
 			if conversion_rate != 0.into() {
 				<ForeignAssetConversionRate<T>>::insert(&asset_id, conversion_rate);
