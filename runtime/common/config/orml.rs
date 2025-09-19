@@ -26,9 +26,10 @@ use up_common::{
 	types::{AccountId, Balance},
 };
 use up_data_structs::CollectionId;
+
 use crate::{
 	runtime_common::config::xcm::{SelfLocation, UniversalLocation, Weigher, XcmExecutorConfig},
-	RelayChainBlockNumberProvider, Runtime, RuntimeEvent
+	RelayChainBlockNumberProvider, Runtime, RuntimeEvent,
 };
 
 // Signed version of balance

@@ -15,7 +15,7 @@ import chaiAsPromised from 'chai-as-promised';
 import chaiLike from 'chai-like';
 import {getTestSeed, MINIMUM_DONOR_FUND, requirePalletsOrSkip, makeNames, fullTitle, SkipError} from '@unique/test-utils/util';
 import {hexlify, toUtf8Bytes} from 'ethers';
-import { it } from "jsr:@std/testing/bdd";
+import { it } from "@std/testing/bdd";
 
 chai.use(chaiAsPromised);
 chai.use(chaiLike);

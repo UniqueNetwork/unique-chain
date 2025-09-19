@@ -15,7 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 import {itSub, expect, usingPlaygrounds, describe} from '@unique/test-utils/util';
-import { it } from "jsr:@std/testing/bdd";
+import { it } from "@std/testing/bdd";
 
 describe('Connection smoke test', () => {
   itSub('Connection can be established', async ({helper}) => {

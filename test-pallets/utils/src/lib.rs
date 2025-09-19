@@ -16,7 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use frame_support::pallet_prelude::*;
 use frame_system::pallet_prelude::*;
 pub use pallet::*;
 
@@ -31,7 +30,7 @@ pub mod pallet {
 	use pallet_common::{dispatch::CollectionDispatch, erc::CrossAccountId};
 	use sp_runtime::traits::{AccountIdConversion, Dispatchable};
 	use sp_std::vec::Vec;
-	use up_data_structs::{budget::ZeroBudget, CreateFungibleData, CreateItemData, CollectionId};
+	use up_data_structs::{budget::ZeroBudget, CollectionId, CreateFungibleData, CreateItemData};
 
 	#[pallet::config]
 	pub trait Config:
@@ -203,7 +202,9 @@ pub mod pallet {
 }
 
 impl<T: Config> Pallet<T> {
-	fn ensure_origin_and_enabled(origin: OriginFor<T>) -> Result<<T as frame_system::Config>::AccountId, sp_runtime::DispatchError> {
+	fn ensure_origin_and_enabled(
+		origin: OriginFor<T>,
+	) -> Result<<T as frame_system::Config>::AccountId, sp_runtime::DispatchError> {
 		let account_id = ensure_signed(origin)?;
 		<Enabled<T>>::get()
 			.then_some(account_id)

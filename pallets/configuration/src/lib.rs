@@ -16,10 +16,6 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-#[cfg(not(feature = "std"))]
-use sp_std::alloc::{format, string::{String, ToString}};
-
-use sp_std::{marker::PhantomData, prelude::*};
 use frame_support::{
 	pallet,
 	traits::{ConstBool, Get},
@@ -35,6 +31,12 @@ use sp_arithmetic::{
 	traits::{BaseArithmetic, Unsigned},
 };
 use sp_core::U256;
+#[cfg(not(feature = "std"))]
+use sp_std::alloc::{
+	format,
+	string::{String, ToString},
+};
+use sp_std::{marker::PhantomData, prelude::*};
 
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarking;

@@ -4,6 +4,7 @@
     "jsr:@std/assert@^1.0.13": "1.0.13",
     "jsr:@std/internal@^1.0.10": "1.0.10",
     "jsr:@std/testing@*": "1.0.15",
+    "jsr:@std/testing@^1.0.15": "1.0.15",
     "npm:@openzeppelin/contracts@^4.9.2": "4.9.6",
     "npm:@polkadot/api-base@15.5.2": "15.5.2",
     "npm:@polkadot/api@15.5.2": "15.5.2_@polkadot+util@13.5.3_@polkadot+util-crypto@13.5.3__@polkadot+util@13.5.3__@polkadot+x-randomvalues@13.5.3___@polkadot+util@13.5.3___@polkadot+wasm-util@7.4.1____@polkadot+util@13.5.3__@polkadot+wasm-util@7.4.1___@polkadot+util@13.5.3",
@@ -1667,6 +1668,10 @@
     }
   },
   "workspace": {
+    "dependencies": [
+      "jsr:@std/testing@^1.0.15",
+      "npm:@unique/scripts@*"
+    ],
     "packageJson": {
       "dependencies": [
         "npm:@openzeppelin/contracts@^4.9.2",

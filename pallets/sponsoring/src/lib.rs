@@ -29,8 +29,7 @@ use sp_runtime::{
 		PostDispatchInfoOf, RefundWeight, TransactionExtension, ValidateResult, Zero,
 	},
 	transaction_validity::{
-		InvalidTransaction, TransactionLongevity, TransactionValidityError,
-		ValidTransaction,
+		InvalidTransaction, TransactionLongevity, TransactionValidityError, ValidTransaction,
 	},
 	DispatchResult, FixedPointOperand, Weight,
 };

@@ -563,19 +563,18 @@ where
 		}
 	});
 
-	let offchain_workers =
-		sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
-			runtime_api_provider: client.clone(),
-			keystore: Some(params.keystore_container.keystore()),
-			offchain_db: backend.offchain_storage(),
-			transaction_pool: Some(OffchainTransactionPoolFactory::new(
-				transaction_pool.clone(),
-			)),
-			network_provider: Arc::new(network.clone()),
-			is_validator: validator,
-			enable_http_requests: true,
-			custom_extensions: move |_| vec![],
-		})?;
+	let offchain_workers = sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+		runtime_api_provider: client.clone(),
+		keystore: Some(params.keystore_container.keystore()),
+		offchain_db: backend.offchain_storage(),
+		transaction_pool: Some(OffchainTransactionPoolFactory::new(
+			transaction_pool.clone(),
+		)),
+		network_provider: Arc::new(network.clone()),
+		is_validator: validator,
+		enable_http_requests: true,
+		custom_extensions: move |_| vec![],
+	})?;
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
 		rpc_builder,
@@ -657,7 +656,9 @@ where
 	task_manager.spawn_handle().spawn(
 		"offchain-workers-runner",
 		"offchain-work",
-		offchain_workers.run(client.clone(), task_manager.spawn_handle()).boxed(),
+		offchain_workers
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
 	);
 
 	Ok((task_manager, client))
@@ -925,23 +926,24 @@ where
 
 	let select_chain = maybe_select_chain;
 
-	let offchain_workers =
-		sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
-			runtime_api_provider: client.clone(),
-			keystore: Some(keystore_container.keystore()),
-			offchain_db: backend.offchain_storage(),
-			transaction_pool: Some(OffchainTransactionPoolFactory::new(
-				transaction_pool.clone(),
-			)),
-			network_provider: Arc::new(network.clone()),
-			is_validator: config.role.is_authority(),
-			enable_http_requests: true,
-			custom_extensions: move |_| vec![],
-		})?;
+	let offchain_workers = sc_offchain::OffchainWorkers::new(sc_offchain::OffchainWorkerOptions {
+		runtime_api_provider: client.clone(),
+		keystore: Some(keystore_container.keystore()),
+		offchain_db: backend.offchain_storage(),
+		transaction_pool: Some(OffchainTransactionPoolFactory::new(
+			transaction_pool.clone(),
+		)),
+		network_provider: Arc::new(network.clone()),
+		is_validator: config.role.is_authority(),
+		enable_http_requests: true,
+		custom_extensions: move |_| vec![],
+	})?;
 	task_manager.spawn_handle().spawn(
 		"offchain-workers-runner",
 		"offchain-work",
-		offchain_workers.run(client.clone(), task_manager.spawn_handle()).boxed(),
+		offchain_workers
+			.run(client.clone(), task_manager.spawn_handle())
+			.boxed(),
 	);
 
 	if collator {

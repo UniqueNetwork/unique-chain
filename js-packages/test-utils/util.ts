@@ -21,11 +21,11 @@ import {
   it,
   DescribeArgs,
   TestSuite,
-} from "jsr:@std/testing/bdd";
+} from "@std/testing/bdd";
 import {
   configureGlobalSanitizers,
   type ConfigureGlobalSanitizersOptions
-} from "jsr:@std/testing/unstable-bdd";
+} from "@std/testing/unstable-bdd";
 import process from "node:process";
 
 chai.config.truncateThreshold = 0;

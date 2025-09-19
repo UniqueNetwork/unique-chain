@@ -1,4 +1,8 @@
-use frame_support::{parameter_types, traits::{ConstU128, ConstU32, EitherOfDiverse, SortedMembers}, BoundedVec, PalletId};
+use frame_support::{
+	parameter_types,
+	traits::{ConstU128, ConstU32, EitherOfDiverse, SortedMembers},
+	BoundedVec, PalletId,
+};
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
 use orml_oracle::DefaultCombineData;
@@ -10,22 +14,21 @@ use sp_runtime::{traits::Verify, FixedU128, SaturatedConversion};
 use sp_std::vec::Vec;
 use staging_xcm::prelude::*;
 use staging_xcm_builder::AccountKey20Aliases;
-
 use up_common::types::{AccountId, Signature};
 
-use crate::runtime_common::config::governance;
 use crate::{
-	identity,
-	maintenance,
+	identity, maintenance,
 	runtime_common::{
 		config::{
 			ethereum::CrossAccountId as ConfigCrossAccountId,
+			governance,
 			substrate::BlockHashCount,
 			xcm::{LocationToAccountId, SelfLocation},
 		},
 		generic,
 	},
-	FeeCoefficientApplier, RelayNetwork, Runtime, RuntimeCall,RuntimeEvent, TxExtension, UncheckedExtrinsic
+	FeeCoefficientApplier, RelayNetwork, Runtime, RuntimeCall, RuntimeEvent, TxExtension,
+	UncheckedExtrinsic,
 };
 
 parameter_types! {
@@ -59,16 +62,14 @@ impl pallet_foreign_assets::Config for Runtime {
 	>;
 
 	#[cfg(not(feature = "governance"))]
-	type ManagerOrigin = EitherOfDiverse<
-		governance::RootOrHalfCouncil,
-		governance::HalfFinancialCouncil
-	>;
+	type ManagerOrigin =
+		EitherOfDiverse<governance::RootOrHalfCouncil, governance::HalfFinancialCouncil>;
 
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
 	type LocationToAccountId = LocationToCrossAccountId;
 	type WeightInfo = pallet_foreign_assets::weights::SubstrateWeight<Self>;
-	
+
 	type AuthorityId = pallet_foreign_assets::crypto::AuthId;
 	type AccountId32 = AccountId;
 	type ForeignAssetConversionCoefficientDefault = ForeignAssetConversionCoefficient;
@@ -90,8 +91,12 @@ impl SortedMembers<AccountId> for Members {
 
 	#[cfg(feature = "runtime-benchmarks")]
 	fn add(who: &AccountId) {
-    	use frame_system::RawOrigin;
-		pallet_foreign_assets::Pallet::<Runtime>::add_oracle_member(RawOrigin::Root.into(), who.clone()).unwrap();
+		use frame_system::RawOrigin;
+		pallet_foreign_assets::Pallet::<Runtime>::add_oracle_member(
+			RawOrigin::Root.into(),
+			who.clone(),
+		)
+		.unwrap();
 	}
 }
 
@@ -104,7 +109,7 @@ parameter_types! {
 }
 
 impl orml_oracle::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
+	type RuntimeEvent = RuntimeEvent;
 	type OnNewData = ();
 	type CombineData = DefaultCombineData<Self, MinimumCount, ExpiresIn, ()>;
 	type Time = crate::Timestamp;
@@ -118,7 +123,6 @@ impl orml_oracle::Config for Runtime {
 	#[cfg(feature = "runtime-benchmarks")]
 	type BenchmarkHelper = ();
 }
-
 
 impl frame_system::offchain::SigningTypes for Runtime {
 	type Public = <Signature as Verify>::Signer;
@@ -147,8 +151,10 @@ where
 	) -> Option<UncheckedExtrinsic> {
 		use sp_runtime::traits::StaticLookup;
 		// take the biggest period possible.
-		let period =
-			BlockHashCount::get().checked_next_power_of_two().map(|c| c / 2).unwrap_or(2) as u64;
+		let period = BlockHashCount::get()
+			.checked_next_power_of_two()
+			.map(|c| c / 2)
+			.unwrap_or(2) as u64;
 
 		let current_block = crate::System::block_number()
 			.saturated_into::<u64>()
@@ -165,25 +171,18 @@ where
 			frame_system::CheckWeight::<Runtime>::new(),
 			maintenance::CheckMaintenance,
 			identity::DisableIdentityCalls,
-			pallet_charge_transaction::ChargeAssetTxPayment::<Runtime, FeeCoefficientApplier>::new(tip, None),
+			pallet_charge_transaction::ChargeAssetTxPayment::<Runtime, FeeCoefficientApplier>::new(
+				tip, None,
+			),
 			//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 			pallet_ethereum::FakeTransactionFinalizer::<Runtime>::new(),
 			cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim::<Runtime>::new(),
 			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false), //TODO oracle:  probably should enable check
-		).into();
+		)
+			.into();
 		let raw_payload = generic::SignedPayload::new(call, tx_ext)
 			.map_err(|e| {
-				use sp_runtime::transaction_validity::{TransactionValidityError, UnknownTransaction};
-				match e {
-					TransactionValidityError::Invalid(e) => log::warn!("Unable to create signed payload: Invalid : {:?}", e),
-					TransactionValidityError::Unknown(e) => {
-						match e {
-							UnknownTransaction::CannotLookup => log::warn!("Unable to create signed payload: Unknown : CannotLookup1"),
-							UnknownTransaction::NoUnsignedValidator => log::warn!("Unable to create signed payload: Unknown : NoUnsignedValidator"),
-							UnknownTransaction::Custom(code) => log::warn!("Unable to create signed payload: Unknown : Custom({:?})", code),
-						}
-					}
-				}
+				log::warn!("Unable to create signed payload: Invalid : {:?}", e);
 			})
 			.ok()?;
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;
