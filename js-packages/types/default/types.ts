@@ -1020,6 +1020,24 @@ export interface PalletAppPromotionEvent extends Enum {
   readonly type: 'StakingRecalculation' | 'Stake' | 'Unstake' | 'SetAdmin';
 }
 
+/** @name PalletAssetTxPaymentChargeAssetTxPayment */
+export interface PalletAssetTxPaymentChargeAssetTxPayment extends Struct {
+  readonly tip: Compact<u128>;
+  readonly assetId: Option<StagingXcmV3MultiLocation>;
+}
+
+/** @name PalletAssetTxPaymentEvent */
+export interface PalletAssetTxPaymentEvent extends Enum {
+  readonly isAssetTxFeePaid: boolean;
+  readonly asAssetTxFeePaid: {
+    readonly who: AccountId32;
+    readonly actualFee: u128;
+    readonly tip: u128;
+    readonly assetId: Option<StagingXcmV3MultiLocation>;
+  } & Struct;
+  readonly type: 'AssetTxFeePaid';
+}
+
 /** @name PalletBalancesAccountData */
 export interface PalletBalancesAccountData extends Struct {
   readonly free: u128;
@@ -2181,7 +2199,12 @@ export interface PalletForeignAssetsModuleCall extends Enum {
     readonly existingVersionedAssetId: XcmVersionedAssetId;
     readonly newVersionedAssetId: XcmVersionedAssetId;
   } & Struct;
-  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation';
+  readonly isForceSetForeignAssetConversionRate: boolean;
+  readonly asForceSetForeignAssetConversionRate: {
+    readonly versionedAssetId: XcmVersionedAssetId;
+    readonly conversionRate: u128;
+  } & Struct;
+  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation' | 'ForceSetForeignAssetConversionRate';
 }
 
 /** @name PalletForeignAssetsModuleError */
@@ -2189,7 +2212,10 @@ export interface PalletForeignAssetsModuleError extends Enum {
   readonly isForeignAssetAlreadyRegistered: boolean;
   readonly isBadForeignAssetId: boolean;
   readonly isForeignAssetNotFound: boolean;
-  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound';
+  readonly isForeignAssetIsNotFungible: boolean;
+  readonly isForeignAssetConversionRateNotSet: boolean;
+  readonly isForeignAssetConversionOverflow: boolean;
+  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible' | 'ForeignAssetConversionRateNotSet' | 'ForeignAssetConversionOverflow';
 }
 
 /** @name PalletForeignAssetsModuleEvent */
@@ -2206,7 +2232,13 @@ export interface PalletForeignAssetsModuleEvent extends Enum {
     readonly oldAssetId: XcmVersionedAssetId;
     readonly newAssetId: XcmVersionedAssetId;
   } & Struct;
-  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved';
+  readonly isForeignAssetConversionRateSet: boolean;
+  readonly asForeignAssetConversionRateSet: {
+    readonly assetId: XcmVersionedAssetId;
+    readonly oldConversionRate: u128;
+    readonly newConversionRate: u128;
+  } & Struct;
+  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved' | 'ForeignAssetConversionRateSet';
 }
 
 /** @name PalletFungibleError */
@@ -3459,7 +3491,12 @@ export interface PalletTestUtilsCall extends Enum {
   readonly asBatchAll: {
     readonly calls: Vec<Call>;
   } & Struct;
-  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'JustTakeFee' | 'BatchAll';
+  readonly isMintForeignAssets: boolean;
+  readonly asMintForeignAssets: {
+    readonly collectionId: u32;
+    readonly amount: u128;
+  } & Struct;
+  readonly type: 'Enable' | 'SetTestValue' | 'SetTestValueAndRollback' | 'IncTestValue' | 'JustTakeFee' | 'BatchAll' | 'MintForeignAssets';
 }
 
 /** @name PalletTestUtilsError */

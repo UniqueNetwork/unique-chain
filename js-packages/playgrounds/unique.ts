@@ -43,6 +43,7 @@ import type {
 } from './types.ts';
 import type {RuntimeDispatchInfo} from '@polkadot/types/interfaces';
 import {HDNodeWallet} from 'ethers';
+import { StagingXcmV3MultiLocation } from '@unique-nft/opal-testnet-types/types.js';
 
 export class CrossAccountId {
   account: ICrossAccountId;
@@ -633,7 +634,7 @@ export class ChainHelperBase {
     return null;
   }
 
-  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions> | null = null, label = 'transaction'): Promise<ITransactionResult> {
+  async signTransaction(sender: TSigner, transaction: any, options: Partial<SignerOptions & { assetId: any }> | null = null, label = 'transaction'): Promise<ITransactionResult> {
     const sign = (callback: any) => {
       if(options !== null) return transaction.signAndSend(sender, options, callback);
       return transaction.signAndSend(sender, callback);

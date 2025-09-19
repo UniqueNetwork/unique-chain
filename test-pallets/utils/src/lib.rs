@@ -28,11 +28,15 @@ pub mod pallet {
 		traits::{IsSubType, OriginTrait, UnfilteredDispatchable},
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::Dispatchable;
+	use pallet_common::{dispatch::CollectionDispatch, erc::CrossAccountId};
+	use sp_runtime::traits::{AccountIdConversion, Dispatchable};
 	use sp_std::vec::Vec;
+	use up_data_structs::{budget::ZeroBudget, CreateFungibleData, CreateItemData, CollectionId};
 
 	#[pallet::config]
-	pub trait Config: frame_system::Config /*+ pallet_unique_scheduler_v2::Config*/ {
+	pub trait Config:
+		frame_system::Config + pallet_common::Config + pallet_foreign_assets::Config
+	{
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
 
 		/// The overarching call type.
@@ -163,14 +167,46 @@ pub mod pallet {
 			Self::deposit_event(Event::BatchCompleted);
 			Ok(None::<Weight>.into())
 		}
+
+		#[pallet::call_index(6)]
+		#[pallet::weight(10_000)]
+		pub fn mint_foreign_assets(
+			origin: OriginFor<T>,
+			collection_id: CollectionId,
+			amount: u128,
+		) -> DispatchResult {
+			let receiver = Self::ensure_origin_and_enabled(origin.clone())?;
+			let dispatch = T::CollectionDispatch::dispatch(collection_id)
+				.map_err(|_| DispatchError::Other("Can't find collection"))?;
+			let collection = dispatch.as_dyn();
+
+			let pallet_account: T::AccountId =
+				<T as pallet_foreign_assets::Config>::PalletId::get().into_account_truncating();
+			let pallet_account = T::CrossAccountId::from_sub(pallet_account);
+			let receiver = T::CrossAccountId::from_sub(receiver);
+
+			collection
+				.create_item(
+					pallet_account,
+					receiver,
+					CreateItemData::Fungible(CreateFungibleData { value: amount }),
+					&ZeroBudget,
+				)
+				.map_err(|e| {
+					log::info!("Error creating item: {:?}", e);
+					DispatchError::Other("Can't create item")
+				})?;
+
+			Ok(())
+		}
 	}
 }
 
 impl<T: Config> Pallet<T> {
-	fn ensure_origin_and_enabled(origin: OriginFor<T>) -> DispatchResult {
-		ensure_signed(origin)?;
+	fn ensure_origin_and_enabled(origin: OriginFor<T>) -> Result<<T as frame_system::Config>::AccountId, sp_runtime::DispatchError> {
+		let account_id = ensure_signed(origin)?;
 		<Enabled<T>>::get()
-			.then_some(())
+			.then_some(account_id)
 			.ok_or(<Error<T>>::TestPalletDisabled.into())
 	}
 }

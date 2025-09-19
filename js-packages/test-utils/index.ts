@@ -580,6 +580,13 @@ export class DevUniqueHelper extends UniqueHelper {
           extrinsic: {},
           payload: {},
         },
+        ChargeAssetTxPayment: {
+          extrinsic: {
+            tip: 'Compact<u128>',
+            assetId: 'Option<StagingXcmV3MultiLocation>'
+          },
+          payload: {}
+        }
       },
       rpc: {
         unique: defs.unique.rpc,

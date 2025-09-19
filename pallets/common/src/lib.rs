@@ -2269,7 +2269,9 @@ pub trait CommonCollectionOperations<T: Config> {
 	///   then all properties are returned.
 	fn token_properties(&self, token: TokenId, keys: Option<Vec<PropertyKey>>) -> Vec<Property>;
 
-	/// Amount of unique collection tokens
+	/// Amount of unique collection tokens.
+	/// It will be 1 for fungible collection or number of different tokens in collection for
+	/// non-fungible and refungible
 	fn total_supply(&self) -> u32;
 
 	/// Amount of different tokens account has.
@@ -2280,7 +2282,9 @@ pub trait CommonCollectionOperations<T: Config> {
 	/// Amount of specific token account have.
 	fn balance(&self, account: T::CrossAccountId, token: TokenId) -> u128;
 
-	/// Amount of token pieces
+	/// Amount of token pieces.
+	/// It will be total supply for funcgible collection.
+	/// 1 for non-fungible collection or number of pieces for specific refungible token
 	fn total_pieces(&self, token: TokenId) -> Option<u128>;
 
 	/// Get the number of parts of the token that a trusted user can manage.

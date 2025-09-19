@@ -920,6 +920,8 @@ declare module '@polkadot/types/types/registry' {
     PalletAppPromotionCall: PalletAppPromotionCall;
     PalletAppPromotionError: PalletAppPromotionError;
     PalletAppPromotionEvent: PalletAppPromotionEvent;
+    PalletAssetTxPaymentChargeAssetTxPayment: PalletAssetTxPaymentChargeAssetTxPayment;
+    PalletAssetTxPaymentEvent: PalletAssetTxPaymentEvent;
     PalletBalancesAccountData: PalletBalancesAccountData;
     PalletBalancesAdjustmentDirection: PalletBalancesAdjustmentDirection;
     PalletBalancesBalanceLock: PalletBalancesBalanceLock;
