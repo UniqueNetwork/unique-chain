@@ -251,6 +251,20 @@ declare module '@polkadot/api-base/types/consts' {
        **/
       [key: string]: Codec;
     };
+    foreignAssets: {
+      /**
+       * 1 DOT in u128
+       **/
+      dotAccuracy: u128 & AugmentedConst<ApiType>;
+      /**
+       * The conversion coefficient for foreign assets.
+       **/
+      foreignAssetConversionCoefficientDefault: u128 & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
     identity: {
       /**
        * The amount held on deposit for a registered identity
@@ -327,6 +341,24 @@ declare module '@polkadot/api-base/types/consts' {
        * it run in `on_idle`.
        **/
       serviceWeight: Option<SpWeightsWeightV2Weight> & AugmentedConst<ApiType>;
+      /**
+       * Generic const
+       **/
+      [key: string]: Codec;
+    };
+    oracle: {
+      /**
+       * Maximum size the vector used for feed values
+       **/
+      maxFeedValues: u32 & AugmentedConst<ApiType>;
+      /**
+       * Maximum size of HasDispatched
+       **/
+      maxHasDispatchedSize: u32 & AugmentedConst<ApiType>;
+      /**
+       * The root operator account id, record all sudo feeds on this account.
+       **/
+      rootOperatorAccountId: AccountId32 & AugmentedConst<ApiType>;
       /**
        * Generic const
        **/

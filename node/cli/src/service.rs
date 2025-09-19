@@ -58,12 +58,11 @@ use polkadot_primitives::UpgradeGoAhead;
 use polkadot_service::CollatorPair;
 use sc_client_api::{Backend, BlockOf, BlockchainEvents, StorageProvider};
 use sc_consensus::ImportQueue;
-use sc_statement_store::Store as StatementStore;
 use sc_executor::{HostFunctions, WasmExecutor};
 use sc_network::{NetworkBackend, NetworkBlock};
 use sc_network_sync::SyncingService;
 use sc_rpc::SubscriptionTaskExecutor;
-use sc_service::{error::Error as ServiceError, Configuration, PartialComponents, TaskManager, TransactionPool};
+use sc_service::{Configuration, PartialComponents, TaskManager, TransactionPool};
 use sc_telemetry::{Telemetry, TelemetryHandle, TelemetryWorker, TelemetryWorkerHandle};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
 use serde::{Deserialize, Serialize};
@@ -75,7 +74,6 @@ use sp_core::Encode;
 use sp_keystore::KeystorePtr;
 use sp_runtime::traits::Block as BlockT;
 use sp_state_machine::Backend as StateBackend;
-use sp_statement_store::runtime_api::ValidateStatement;
 use substrate_prometheus_endpoint::Registry;
 use tokio::time::Interval;
 use up_common::types::{opaque::*, Nonce};
@@ -203,7 +201,6 @@ ez_bounds!(
 		+ substrate_frame_rpc_system::AccountNonceApi<Block, AccountId, Nonce>
 		+ sp_api::Metadata<Block>
 		+ sp_offchain::OffchainWorkerApi<Block>
-		+ ValidateStatement<Block>
 		+ cumulus_primitives_core::CollectCollationInfo<Block>
 		// Deprecated, not used.
 		+ fp_rpc::ConvertTransactionRuntimeApi<Block>
@@ -337,16 +334,6 @@ where
 		&task_manager,
 	)?;
 
-	let statement_store = sc_statement_store::Store::new_shared(
-		&config.data_path,
-		Default::default(),
-		client.clone(),
-		keystore_container.local_keystore(),
-		config.prometheus_registry(),
-		&task_manager.spawn_handle(),
-	)
-	.map_err(|e| ServiceError::Other(format!("Statement store error: {:?}", e)))?;
-
 	let params = PartialComponents {
 		backend,
 		client,
@@ -360,7 +347,6 @@ where
 			eth_filter_pool,
 			eth_backend,
 			telemetry_worker_handle,
-			statement_store,
 		},
 	};
 
@@ -412,7 +398,6 @@ where
 		telemetry_worker_handle,
 		eth_filter_pool,
 		eth_backend,
-		statement_store,
 	} = params.other;
 	let net_config = sc_network::config::FullNetworkConfiguration::<
 		Block,
@@ -589,9 +574,7 @@ where
 			network_provider: Arc::new(network.clone()),
 			is_validator: validator,
 			enable_http_requests: true,
-			custom_extensions: move |_| {
-				vec![Box::new(statement_store.clone().as_statement_store_ext()) as Box<_>]
-			},
+			custom_extensions: move |_| vec![],
 		})?;
 
 	sc_service::spawn_tasks(sc_service::SpawnTasksParams {
@@ -850,7 +833,6 @@ pub struct OtherPartial<C: HeaderBackend<Block>> {
 	pub telemetry_worker_handle: Option<TelemetryWorkerHandle>,
 	pub eth_filter_pool: Option<FilterPool>,
 	pub eth_backend: Arc<fc_db::Backend<Block, C>>,
-	pub statement_store: Arc<StatementStore>,
 }
 
 struct DefaultEthConfig<C>(PhantomData<C>);
@@ -906,7 +888,6 @@ where
 				eth_filter_pool,
 				eth_backend,
 				telemetry_worker_handle: _,
-				statement_store,
 			},
 	} = new_partial::<Runtime, RuntimeApi, HF, _>(
 		&config,
@@ -955,9 +936,7 @@ where
 			network_provider: Arc::new(network.clone()),
 			is_validator: config.role.is_authority(),
 			enable_http_requests: true,
-			custom_extensions: move |_| {
-				vec![Box::new(statement_store.clone().as_statement_store_ext()) as Box<_>]
-			},
+			custom_extensions: move |_| vec![],
 		})?;
 	task_manager.spawn_handle().spawn(
 		"offchain-workers-runner",

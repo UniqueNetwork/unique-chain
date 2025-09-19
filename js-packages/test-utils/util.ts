@@ -154,6 +154,7 @@ export type FixedDescribe = {
   skip: (...args: DescribeArgs<UniqueTestContext>) => void;
   ifRunGov: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
   ifRunXcm: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
+  ifRunOcw: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
   ifRunCollators: (...args: DescribeArgs<UniqueTestContext>) => TestSuite<UniqueTestContext>;
 };
 
@@ -171,6 +172,11 @@ export const describe: FixedDescribe = Object.assign(
     },
     ifRunXcm: (...args: DescribeArgs<UniqueTestContext>) => {
       return process.env.RUN_XCM_TESTS
+        ? describeBdd<UniqueTestContext>(...args)
+        : describeBdd.skip<UniqueTestContext>(...args);
+    },
+    ifRunOcw: (...args: DescribeArgs<UniqueTestContext>) => {
+      return process.env.RUN_OCW_TESTS
         ? describeBdd<UniqueTestContext>(...args)
         : describeBdd.skip<UniqueTestContext>(...args);
     },

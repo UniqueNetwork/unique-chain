@@ -1,4 +1,4 @@
-use frame_support::{parameter_types, traits::{ConstU128, ConstU32, ConstU64, EitherOfDiverse, SortedMembers}, BoundedVec, PalletId};
+use frame_support::{parameter_types, traits::{ConstU128, ConstU32, EitherOfDiverse, SortedMembers}, BoundedVec, PalletId};
 #[cfg(not(feature = "governance"))]
 use frame_system::EnsureRoot;
 use orml_oracle::DefaultCombineData;
@@ -13,7 +13,6 @@ use staging_xcm_builder::AccountKey20Aliases;
 
 use up_common::types::{AccountId, Signature};
 
-#[cfg(feature = "governance")]
 use crate::runtime_common::config::governance;
 use crate::{
 	identity,
@@ -60,7 +59,10 @@ impl pallet_foreign_assets::Config for Runtime {
 	>;
 
 	#[cfg(not(feature = "governance"))]
-	type ManagerOrigin = EnsureRoot<Self::AccountId>;
+	type ManagerOrigin = EitherOfDiverse<
+		governance::RootOrHalfCouncil,
+		governance::HalfFinancialCouncil
+	>;
 
 	type PalletId = ForeignAssetPalletId;
 	type SelfLocation = SelfLocation;
@@ -152,14 +154,13 @@ where
 			.saturated_into::<u64>()
 			// The `System::block_number` is initialized with `n+1`,
 			// so the actual block number is `n`.
-			.saturating_sub(5);
+			.saturating_sub(30);
 		let tip = 0;
-		log::info!("TEST Offchain tx: current_block: {}, period: {}, nonce: {}", current_block, period, nonce);
 		let tx_ext: TxExtension = (
 			frame_system::CheckSpecVersion::<Runtime>::new(),
 			frame_system::CheckTxVersion::<Runtime>::new(),
 			frame_system::CheckGenesis::<Runtime>::new(),
-			frame_system::CheckEra::<Runtime>::from(generic::Era::immortal()), //TODO oracle: probably should be mortal
+			frame_system::CheckEra::<Runtime>::from(generic::Era::mortal(period, current_block)),
 			pallet_charge_transaction::CheckNonce::<Runtime>::from(nonce),
 			frame_system::CheckWeight::<Runtime>::new(),
 			maintenance::CheckMaintenance,

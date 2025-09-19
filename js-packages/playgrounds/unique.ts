@@ -625,9 +625,10 @@ export class ChainHelperBase {
   getFeePaid(data: { events: { event: IEvent }[], status: any }) {
     const {events, status} = data;
     if(status.isInBlock || status.isFinalized) {
-      const withdrawEvent = events.find(({event: {section, method}}) => section === 'balances' && method === 'Withdraw');
-      if(withdrawEvent) {
-        return BigInt(withdrawEvent.event.data[1]);
+      const fee = events.find(({event: {section, method}}) => section === 'balances' && method === 'Withdraw')?.event.data[1] ?? 
+        events.find(({event: {section, method}}) => section === 'charging' && method === 'AssetTxFeePaid')?.event.data[1];
+      if(fee) {
+        return BigInt(fee);
       }
     }
     return null;
@@ -655,7 +656,6 @@ export class ChainHelperBase {
           this.logger.log(`${label} successful`);
           if (unsub != null)
             unsub();
-          //resolve({result, status, blockHash: result.status.asInBlock.toHuman()});
           resolve({result, status, blockHash: result.status.toHuman().Finalized, fee: fee!});
         } else if(status === this.transactionStatus.FAIL) {
           let moduleError: string | null = null;

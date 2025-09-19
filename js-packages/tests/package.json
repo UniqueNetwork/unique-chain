@@ -28,6 +28,7 @@
         "testCollators": "RUN_COLLATOR_TESTS=1 deno task _test './sub/collator-selection/*.seqtest.ts'",
         "testXcmUnique": "RUN_XCM_TESTS=1 deno task _test './**/xcm/unique.test.ts'",
         "testXcmQuartz": "RUN_XCM_TESTS=1 deno task _test './**/xcm/quartz.test.ts'",
+        "testOcwOpal": "RUN_OCW_TESTS=1 deno task _test './**/ocw/opal.test.ts'",
         "load": "deno task _test './**/*.load.ts'"
     }
 }

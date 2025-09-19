@@ -153,8 +153,7 @@ pub mod crypto {
 pub mod module {
 	use frame_support::traits::BuildGenesisConfig;
 	use pallet_common::CollectionIssuer;
-	use sp_runtime::offchain::storage_lock::StorageLock;
-use up_data_structs::CollectionDescription;
+	use up_data_structs::CollectionDescription;
 
 	use super::*;
 
@@ -242,7 +241,6 @@ use up_data_structs::CollectionDescription;
 		},
 
 		ForeignAssetConversionCoefficientSet {
-			asset_id: Box<VersionedAssetId>,
 			old_conversion_coefficient: FixedU128,
 			new_conversion_coefficient: FixedU128,
 		},
@@ -358,7 +356,7 @@ use up_data_structs::CollectionDescription;
 	#[pallet::getter(fn exchange_rate_update_interval)]
 	//TODO oracle: set to 100
 	pub type ExchangeRateUpdateInterval<T: Config> =
-		StorageValue<Value = u128, QueryKind = ValueQuery, OnEmpty = ConstU128<20>>; // in blocks
+		StorageValue<Value = u128, QueryKind = ValueQuery, OnEmpty = ConstU128<10>>; // in blocks
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
@@ -392,7 +390,8 @@ use up_data_structs::CollectionDescription;
 			let conversion_rate = orml_oracle::Pallet::<T>::get(&T::OracleKey::try_from(b"DOT".to_vec()).ok()?)?;
 			let native_accuracy = 10u128.pow(native_decimals as u32);
 			let dot_accuracy = T::DotAccuracy::get();
-			let result = conversion_coefficient.const_checked_mul(FixedU128::checked_from_rational(native_amount, native_accuracy)?)?.const_checked_mul(conversion_rate.value.into())?;
+			let native_fee = FixedU128::checked_from_rational(native_amount, native_accuracy)?;
+			let result = conversion_coefficient.const_checked_mul(native_fee)?.const_checked_mul(conversion_rate.value.into())?;
 
 			if dot_accuracy != FixedU128::accuracy() {
 				Some(result.const_checked_mul(FixedU128::checked_from_rational(dot_accuracy, FixedU128::accuracy())?)?.into_inner())
@@ -504,25 +503,9 @@ use up_data_structs::CollectionDescription;
 		#[pallet::weight(<T as Config>::WeightInfo::force_set_foreign_asset_conversion_coefficient())]
 		pub fn force_set_foreign_asset_conversion_coefficient(
 			origin: OriginFor<T>,
-			versioned_asset_id: Box<VersionedAssetId>,
 			conversion_coefficient: FixedU128,
 		) -> DispatchResult {
 			T::ManagerOrigin::ensure_origin(origin.clone())?;
-
-			let asset_id: AssetId = versioned_asset_id
-				.as_ref()
-				.clone()
-				.try_into()
-				.map_err(|()| Error::<T>::BadForeignAssetId)?;
-
-			let collection_id = <ForeignAssetToCollection<T>>::get(&asset_id)
-				.ok_or(Error::<T>::ForeignAssetNotFound)?;
-
-			let handle = <pallet_common::CollectionHandle<T>>::try_get(collection_id)?;
-			ensure!(
-				matches!(handle.mode, CollectionMode::Fungible(_)),
-				Error::<T>::ForeignAssetIsNotFungible
-			);
 
 			let old_conversion_coefficient =
 				<ForeignAssetConversionCoefficient<T>>::get().unwrap_or(FixedU128::from(0));
@@ -532,7 +515,6 @@ use up_data_structs::CollectionDescription;
 			}
 
 			Self::deposit_event(Event::<T>::ForeignAssetConversionCoefficientSet {
-				asset_id: versioned_asset_id,
 				old_conversion_coefficient,
 				new_conversion_coefficient: conversion_coefficient,
 			});
@@ -543,7 +525,7 @@ use up_data_structs::CollectionDescription;
 		#[pallet::call_index(3)]
 		#[pallet::weight(<T as Config>::WeightInfo::add_oracle_member())]
 		pub fn add_oracle_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
-			//ensure_root(origin)?; //TODO oracle: allow `council`` etc..
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
 			OracleMembers::<T>::mutate(|members| {
 				members.try_push(account_id).map_err(|_| Error::<T>::OracleMembersCapacityExceeded)
 			})?;
@@ -553,7 +535,7 @@ use up_data_structs::CollectionDescription;
 		#[pallet::call_index(4)]
 		#[pallet::weight(<T as Config>::WeightInfo::remove_oracle_member())]
 		pub fn remove_oracle_member(origin: OriginFor<T>, account_id: T::AccountId) -> DispatchResult {
-			ensure_root(origin)?;
+			T::ManagerOrigin::ensure_origin(origin.clone())?;
 			OracleMembers::<T>::mutate(|members| {
 				members.retain(|x| *x != account_id);
 			});

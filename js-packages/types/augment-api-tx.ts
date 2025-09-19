@@ -1209,9 +1209,11 @@ declare module '@polkadot/api-base/types/submittable' {
       [key: string]: SubmittableExtrinsicFunction<ApiType>;
     };
     foreignAssets: {
+      addOracleMember: AugmentedSubmittable<(accountId: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       forceRegisterForeignAsset: AugmentedSubmittable<(versionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array, name: Vec<u16> | (u16 | AnyNumber | Uint8Array)[], tokenPrefix: Bytes | string | Uint8Array, mode: PalletForeignAssetsForeignCollectionMode | { NFT: any } | { Fungible: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedAssetId, Vec<u16>, Bytes, PalletForeignAssetsForeignCollectionMode]>;
       forceResetForeignAssetLocation: AugmentedSubmittable<(existingVersionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array, newVersionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedAssetId, XcmVersionedAssetId]>;
-      forceSetForeignAssetConversionRate: AugmentedSubmittable<(versionedAssetId: XcmVersionedAssetId | { V3: any } | { V4: any } | { V5: any } | string | Uint8Array, conversionRate: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [XcmVersionedAssetId, u128]>;
+      forceSetForeignAssetConversionCoefficient: AugmentedSubmittable<(conversionCoefficient: u128 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [u128]>;
+      removeOracleMember: AugmentedSubmittable<(accountId: AccountId32 | string | Uint8Array) => SubmittableExtrinsic<ApiType>, [AccountId32]>;
       /**
        * Generic tx
        **/
@@ -1558,6 +1560,18 @@ declare module '@polkadot/api-base/types/submittable' {
        * Remove a page which has no more messages remaining to be processed or is stale.
        **/
       reapPage: AugmentedSubmittable<(messageOrigin: CumulusPrimitivesCoreAggregateMessageOrigin | { Here: any } | { Parent: any } | { Sibling: any } | string | Uint8Array, pageIndex: u32 | AnyNumber | Uint8Array) => SubmittableExtrinsic<ApiType>, [CumulusPrimitivesCoreAggregateMessageOrigin, u32]>;
+      /**
+       * Generic tx
+       **/
+      [key: string]: SubmittableExtrinsicFunction<ApiType>;
+    };
+    oracle: {
+      /**
+       * Feed the external value.
+       * 
+       * Require authorized operator.
+       **/
+      feedValues: AugmentedSubmittable<(values: Vec<ITuple<[Bytes, u128]>> | ([Bytes | string | Uint8Array, u128 | AnyNumber | Uint8Array])[]) => SubmittableExtrinsic<ApiType>, [Vec<ITuple<[Bytes, u128]>>]>;
       /**
        * Generic tx
        **/

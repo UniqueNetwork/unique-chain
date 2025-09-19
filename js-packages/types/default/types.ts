@@ -810,6 +810,41 @@ export interface OpalRuntimeRuntimeHoldReason extends Enum {
   readonly type: 'StateTrieMigration' | 'CollatorSelection' | 'Preimage' | 'Council' | 'TechnicalCommittee' | 'PolkadotXcm' | 'FinancialCouncil';
 }
 
+/** @name OrmlOracleModuleCall */
+export interface OrmlOracleModuleCall extends Enum {
+  readonly isFeedValues: boolean;
+  readonly asFeedValues: {
+    readonly values: Vec<ITuple<[Bytes, u128]>>;
+  } & Struct;
+  readonly type: 'FeedValues';
+}
+
+/** @name OrmlOracleModuleError */
+export interface OrmlOracleModuleError extends Enum {
+  readonly isNoPermission: boolean;
+  readonly isAlreadyFeeded: boolean;
+  readonly type: 'NoPermission' | 'AlreadyFeeded';
+}
+
+/** @name OrmlOracleModuleEvent */
+export interface OrmlOracleModuleEvent extends Enum {
+  readonly isNewFeedData: boolean;
+  readonly asNewFeedData: {
+    readonly sender: AccountId32;
+    readonly values: Vec<ITuple<[Bytes, u128]>>;
+  } & Struct;
+  readonly type: 'NewFeedData';
+}
+
+/** @name OrmlOracleModuleTimestampedValue */
+export interface OrmlOracleModuleTimestampedValue extends Struct {
+  readonly value: u128;
+  readonly timestamp: u64;
+}
+
+/** @name OrmlUtilitiesOrderedSet */
+export interface OrmlUtilitiesOrderedSet extends Vec<AccountId32> {}
+
 /** @name OrmlVestingModuleCall */
 export interface OrmlVestingModuleCall extends Enum {
   readonly isClaim: boolean;
@@ -2197,12 +2232,19 @@ export interface PalletForeignAssetsModuleCall extends Enum {
     readonly existingVersionedAssetId: XcmVersionedAssetId;
     readonly newVersionedAssetId: XcmVersionedAssetId;
   } & Struct;
-  readonly isForceSetForeignAssetConversionRate: boolean;
-  readonly asForceSetForeignAssetConversionRate: {
-    readonly versionedAssetId: XcmVersionedAssetId;
-    readonly conversionRate: u128;
+  readonly isForceSetForeignAssetConversionCoefficient: boolean;
+  readonly asForceSetForeignAssetConversionCoefficient: {
+    readonly conversionCoefficient: u128;
   } & Struct;
-  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation' | 'ForceSetForeignAssetConversionRate';
+  readonly isAddOracleMember: boolean;
+  readonly asAddOracleMember: {
+    readonly accountId: AccountId32;
+  } & Struct;
+  readonly isRemoveOracleMember: boolean;
+  readonly asRemoveOracleMember: {
+    readonly accountId: AccountId32;
+  } & Struct;
+  readonly type: 'ForceRegisterForeignAsset' | 'ForceResetForeignAssetLocation' | 'ForceSetForeignAssetConversionCoefficient' | 'AddOracleMember' | 'RemoveOracleMember';
 }
 
 /** @name PalletForeignAssetsModuleError */
@@ -2211,7 +2253,11 @@ export interface PalletForeignAssetsModuleError extends Enum {
   readonly isBadForeignAssetId: boolean;
   readonly isForeignAssetNotFound: boolean;
   readonly isForeignAssetIsNotFungible: boolean;
-  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible';
+  readonly isCantParseBalance: boolean;
+  readonly isFailedToFetchRate: boolean;
+  readonly isCantParseResponse: boolean;
+  readonly isOracleMembersCapacityExceeded: boolean;
+  readonly type: 'ForeignAssetAlreadyRegistered' | 'BadForeignAssetId' | 'ForeignAssetNotFound' | 'ForeignAssetIsNotFungible' | 'CantParseBalance' | 'FailedToFetchRate' | 'CantParseResponse' | 'OracleMembersCapacityExceeded';
 }
 
 /** @name PalletForeignAssetsModuleEvent */
@@ -2228,13 +2274,12 @@ export interface PalletForeignAssetsModuleEvent extends Enum {
     readonly oldAssetId: XcmVersionedAssetId;
     readonly newAssetId: XcmVersionedAssetId;
   } & Struct;
-  readonly isForeignAssetConversionRateSet: boolean;
-  readonly asForeignAssetConversionRateSet: {
-    readonly assetId: XcmVersionedAssetId;
-    readonly oldConversionRate: u128;
-    readonly newConversionRate: u128;
+  readonly isForeignAssetConversionCoefficientSet: boolean;
+  readonly asForeignAssetConversionCoefficientSet: {
+    readonly oldConversionCoefficient: u128;
+    readonly newConversionCoefficient: u128;
   } & Struct;
-  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved' | 'ForeignAssetConversionRateSet';
+  readonly type: 'ForeignAssetRegistered' | 'MigrationStatus' | 'ForeignAssetMoved' | 'ForeignAssetConversionCoefficientSet';
 }
 
 /** @name PalletFungibleError */

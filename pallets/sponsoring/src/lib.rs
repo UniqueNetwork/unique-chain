@@ -293,7 +293,6 @@ where
 		),
 		TransactionValidityError,
 	> {
-		log::info!("TEST ChargeAssetTxPayment validate");
 		use pallet_transaction_payment::ChargeTransactionPayment;
 		let Some(who) = origin.as_system_origin_signer() else {
 			return Ok((ValidTransaction::default(), Val::NoCharge, origin));

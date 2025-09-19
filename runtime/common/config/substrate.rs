@@ -374,7 +374,7 @@ impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
 		_dispatch_info: &DispatchInfoOf<<Runtime as frame_system::Config>::RuntimeCall>,
 		asset_id: Self::AssetId,
 		fee: Self::Balance,
-		tip: Self::Balance,
+		_tip: Self::Balance,
 	) -> Result<(), TransactionValidityError> {
 		// We don't know the precision of the underlying asset. Because the converted fee could be
 		// less than one (e.g. 0.5) but gets rounded down by integer division we introduce a minimum

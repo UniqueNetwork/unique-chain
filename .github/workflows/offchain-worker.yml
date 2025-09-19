@@ -1,0 +1,185 @@
+# Governance tests in --dev mode with gov-test-timings feature enabled to reduce gov timings
+name: offchain worker
+
+# Triger: only call from main workflow(re-usable workflows)
+on:
+  workflow_call:
+  workflow_dispatch:
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  prepare-execution-marix:
+    name: Prepare execution matrix
+
+    runs-on: [ ci ]
+    outputs:
+      matrix: ${{ steps.create_matrix.outputs.matrix }}
+
+    steps:
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.head_ref }} #Checking out head commit
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2.3.0
+
+      - name: Create Execution matrix
+        uses: CertainLach/create-matrix-action@v4
+        id: create_matrix
+        with:
+          matrix: |
+            network {opal}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
+
+  dev_build_int_tests:
+    needs: prepare-execution-marix
+    # The type of runner that the job will run on
+    runs-on: [ ci ]
+    timeout-minutes: 1380
+
+    name: ${{ matrix.network }}
+    strategy:
+      matrix:
+        include: ${{fromJson(needs.prepare-execution-marix.outputs.matrix)}}
+
+    continue-on-error: true #Do not stop testing of matrix runs failed.  As it decided during PR review - it required 50/50& Let's check it with false.
+
+    steps:
+      - name: Skip if pull request is in Draft
+        if: github.event.pull_request.draft == true
+        run: exit 1
+
+      - name: Clean Workspace
+        uses: AutoModality/action-clean@v1.1.0
+
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v4.1.7
+        with:
+          ref: ${{ github.head_ref }} #Checking out head commit
+
+      # Prepare SHA
+      - name: Prepare SHA
+        uses: ./.github/actions/prepare
+
+      - name: Read .env file
+        uses: xom9ikk/dotenv@v2.3.0
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3.2.0
+        with:
+          username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Check and pull polkadot image
+        id: polkadot
+        uses: cloudposse/github-action-docker-image-exists@main
+        with:
+          registry: registry.hub.docker.com
+          organization: parity
+          repository: polkadot
+          login: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+          tag: ${{ matrix.relay_branch }}
+
+      - name: Prepare target runtime
+        uses: ./.github/actions/buildContainer
+        id: runtime
+        with:
+          container: uniquenetwork/ci-ocw-local
+          tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
+          context: .
+          dockerfile: .docker/Dockerfile-unique
+          args: |
+            --build-arg FEATURES=${{ matrix.network }}-runtime
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - name: Prepare target node
+        uses: ./.github/actions/buildContainer
+        id: node
+        with:
+          container: uniquenetwork/ci-ocw-local
+          tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
+          context: .docker
+          dockerfile: Dockerfile-unique-release
+          args: |
+            --build-arg FEATURES=${{ matrix.network }}-runtime
+            --build-arg CODE_VERSION=${{ env.NODE_BRANCH}}
+            --build-arg CODE_HASH=${{ env.NODE_HASH}}
+          dockerhub_username: ${{ secrets.CORE_DOCKERHUB_USERNAME }}
+          dockerhub_token: ${{ secrets.CORE_DOCKERHUB_TOKEN }}
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+          cache: true
+
+      - name: Install baedeker
+        uses: UniqueNetwork/baedeker-action/setup@v1.2
+        with:
+          version: 'v0.1.4'
+          useCache: false
+
+      - name: Setup library
+        run: mkdir -p .baedeker/vendor/ && git clone https://github.com/UniqueNetwork/baedeker-library .baedeker/vendor/baedeker-library
+
+      - name: Start network
+        uses: UniqueNetwork/baedeker-action@v1.2
+        id: bdk
+        with:
+          jpath: |
+            .baedeker/vendor
+          input-modules: |
+            lib:baedeker-library/ops/nginx-dev.libsonnet
+            lib:baedeker-library/ops/devtools.libsonnet
+          tla-str: |
+            relay_spec=${{ env.RELAY_CHAIN_TYPE }}-local
+          tla-code: |
+            assethub_spec=import 'assethub-spec.json'
+          inputs: |
+            .baedeker/xcm-${{ matrix.network }}.jsonnet
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/polkadot':{dockerImage:'${{ steps.polkadot.outputs.image }}:${{ steps.polkadot.outputs.tag }}'}})
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.node.outputs.name }}'}}, for_chain = false)
+            snippet:(import 'baedeker-library/ops/rewrites.libsonnet').rewriteNodePaths({'bin/unique':{dockerImage:'${{ steps.runtime.outputs.name }}'}})
+
+      - name: Upload network config
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.network }}-network-config-ocw
+          path: ${{ steps.bdk.outputs.composeProject }}
+          retention-days: 2
+
+      - name: Ensure network is alive
+        working-directory: js-packages/tests
+        id: alive1
+        if: ${{ !cancelled() && steps.bdk.outcome == 'success' }}
+        run: |
+          deno install
+          ../scripts/wait_for_first_block.sh
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+      - name: Run Offchain worker tests
+        working-directory: js-packages/tests
+        id: tests
+        if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
+        run: |
+          echo "Ready to start tests"
+          NOW=$(date +%s) && deno task testOcwOpal
+          
+        env:
+          RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
+
+
+      - name: Remove all containers
+        if: always() # run this step always
+        run: |
+          docker ps -aq | xargs docker rm -f
+
+      - name: Remove builder cache
+        if: always()
+        run: |
+          docker system prune -a -f
