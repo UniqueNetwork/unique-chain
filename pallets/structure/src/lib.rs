@@ -289,7 +289,7 @@ impl<T: Config> Pallet<T> {
 		};
 
 		Self::get_checked_topmost_owner(collection, token, for_nest, budget).map(|indirect_owner| {
-			indirect_owner.map_or(false, |indirect_owner| indirect_owner == target_parent)
+			indirect_owner.is_some_and(|indirect_owner| indirect_owner == target_parent)
 		})
 	}
 

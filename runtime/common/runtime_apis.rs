@@ -725,7 +725,7 @@ macro_rules! impl_common_runtime_apis {
 
 			impl xcm_runtime_apis::fees::XcmPaymentApi<Block> for Runtime {
 				fn query_acceptable_payment_assets(xcm_version: staging_xcm::Version) -> Result<Vec<staging_xcm::VersionedAssetId>, xcm_runtime_apis::fees::Error> {
-					let native_token = crate::config::xcm::TokenLocation::get();
+					let native_token = $crate::config::xcm::TokenLocation::get();
 					// We accept the native token to pay fees.
 					let mut acceptable_assets = vec![staging_xcm::v5::AssetId(native_token.clone())];
 					// We also accept all assets in a pool with the native token.
@@ -734,10 +734,10 @@ macro_rules! impl_common_runtime_apis {
 					PolkadotXcm::query_acceptable_payment_assets(xcm_version, acceptable_assets)
 				}
 
-				fn query_weight_to_asset_fee(weight: crate::Weight, asset: staging_xcm::VersionedAssetId) -> Result<u128, xcm_runtime_apis::fees::Error> {
+				fn query_weight_to_asset_fee(weight: $crate::Weight, asset: staging_xcm::VersionedAssetId) -> Result<u128, xcm_runtime_apis::fees::Error> {
 					use frame_support::weights::WeightToFee;
 
-					let native_asset = crate::config::xcm::TokenLocation::get();
+					let native_asset = $crate::config::xcm::TokenLocation::get();
 					let fee_in_native = pallet_configuration::WeightToFee::<Runtime, u128>::weight_to_fee(&weight);
 					let latest_asset_id: Result<staging_xcm::v5::AssetId, ()> = asset.clone().try_into();
 					match latest_asset_id {

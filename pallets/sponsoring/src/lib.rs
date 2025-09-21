@@ -297,7 +297,7 @@ where
 			return Ok((ValidTransaction::default(), Val::NoCharge, origin));
 		};
 		let fee = Self::traditional_fee(len, call, info, self.tip);
-		let (who_pays_fee, payed_by_sponsor) = self.can_withdraw_fee(&who, call, info, fee)?;
+		let (who_pays_fee, payed_by_sponsor) = self.can_withdraw_fee(who, call, info, fee)?;
 		let priority = ChargeTransactionPayment::<T>::get_priority(info, len, self.tip, fee);
 		let val = Val::Charge {
 			tip: self.tip,

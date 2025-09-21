@@ -91,8 +91,7 @@ impl<Runtime: pallet_evm::Config> Sr25519Precompile<Runtime> {
 
 		log::trace!(
 			target: "sr25519-precompile",
-			"Verified signature {:?} is {:?}",
-			signature, is_confirmed,
+			"Verified signature {signature:?} is {is_confirmed:?}"
 		);
 
 		Ok(PrecompileOutput {

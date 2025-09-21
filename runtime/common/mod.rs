@@ -339,7 +339,7 @@ impl OnRuntimeUpgrade for AuraToCollatorSelection {
 						let array: Option<[u8; 32]> = match slice.try_into() {
 							Ok(a) => Some(a),
 							Err(_) => {
-								log::error!("Failed to convert an Aura authority to a Collator Selection invulnerable: {:?}", authority_id);
+								log::error!("Failed to convert an Aura authority to a Collator Selection invulnerable: {authority_id:?}");
 								None
 							},
 						};

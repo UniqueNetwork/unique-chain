@@ -178,11 +178,10 @@ where
 			pallet_ethereum::FakeTransactionFinalizer::<Runtime>::new(),
 			cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim::<Runtime>::new(),
 			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false), //TODO oracle:  probably should enable check
-		)
-			.into();
+		);
 		let raw_payload = generic::SignedPayload::new(call, tx_ext)
 			.map_err(|e| {
-				log::warn!("Unable to create signed payload: Invalid : {:?}", e);
+				log::warn!("Unable to create signed payload: Invalid : {e:?}");
 			})
 			.ok()?;
 		let signature = raw_payload.using_encoded(|payload| C::sign(payload, public))?;

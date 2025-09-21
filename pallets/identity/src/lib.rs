@@ -1034,7 +1034,7 @@ pub mod pallet {
 				Error::<T>::NoIdentity
 			);
 			ensure!(
-				SuperOf::<T>::get(&sub).map_or(false, |x| x.0 == sender),
+				SuperOf::<T>::get(&sub).is_some_and(|x| x.0 == sender),
 				Error::<T>::NotOwned
 			);
 			SuperOf::<T>::insert(&sub, (sender, data));
@@ -1212,8 +1212,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Check if the account has corresponding identity information by the identity field.
 	pub fn has_identity(who: &T::AccountId, fields: u64) -> bool {
-		IdentityOf::<T>::get(who).map_or(false, |registration| {
-			(registration.info.fields().0.bits() & fields) == fields
-		})
+		IdentityOf::<T>::get(who)
+			.is_some_and(|registration| (registration.info.fields().0.bits() & fields) == fields)
 	}
 }

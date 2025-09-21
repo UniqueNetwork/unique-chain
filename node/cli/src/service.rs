@@ -1031,7 +1031,7 @@ where
 					{
 						Ok(info) => info.new_validation_code.is_some(),
 						Err(e) => {
-							log::error!("Failed to collect collation info: {:?}", e);
+							log::error!("Failed to collect collation info: {e:?}");
 							false
 						},
 					};

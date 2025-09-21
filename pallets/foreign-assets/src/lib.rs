@@ -636,15 +636,12 @@ pub mod module {
 				.flat_map(|account_id: T::AccountId| {
 					[
 						MultiSigner::Ed25519(
-							T::AccountId32::as_ref(&T::AccountId32::from(account_id.clone()))
-								.clone()
+							(*T::AccountId32::as_ref(&T::AccountId32::from(account_id.clone())))
 								.into(),
 						)
 						.into(),
 						MultiSigner::Sr25519(
-							T::AccountId32::as_ref(&T::AccountId32::from(account_id))
-								.clone()
-								.into(),
+							(*T::AccountId32::as_ref(&T::AccountId32::from(account_id))).into(),
 						)
 						.into(),
 					]
@@ -678,7 +675,7 @@ pub mod module {
 							signer.send_signed_transaction(|_acct| call.clone())
 						{
 							if result.is_ok() {
-								log::info!("Signed tx successfully submitted");
+								log::debug!("Signed tx successfully submitted");
 							} else {
 								log::error!("Signed tx submission failed");
 							}
@@ -686,7 +683,7 @@ pub mod module {
 							log::error!("No local account available for signing");
 						}
 					}
-					Err(e) => log::error!("Failed to fetch rate: {:?}", e),
+					Err(e) => log::error!("Failed to fetch rate: {e:?}"),
 				}
 			};
 		}
@@ -1441,7 +1438,7 @@ impl WeightTrader for FreeForAll {
 		payment: AssetsInHolding,
 		_xcm: &XcmContext,
 	) -> Result<AssetsInHolding, XcmError> {
-		log::trace!(target: "fassets::weight", "buy_weight weight: {:?}, payment: {:?}", weight, payment);
+		log::trace!(target: "fassets::weight", "buy_weight weight: {weight:?}, payment: {payment:?}");
 		Ok(payment)
 	}
 }

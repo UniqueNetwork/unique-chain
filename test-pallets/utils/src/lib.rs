@@ -192,7 +192,7 @@ pub mod pallet {
 					&ZeroBudget,
 				)
 				.map_err(|e| {
-					log::info!("Error creating item: {:?}", e);
+					log::info!("Error creating item: {e:?}");
 					DispatchError::Other("Can't create item")
 				})?;
 
