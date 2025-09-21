@@ -738,14 +738,7 @@ pub mod module {
 			_preservation: Preservation,
 			_: Fortitude,
 		) -> Self::Balance {
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
-				return Zero::zero();
-			};
-			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
-				return Zero::zero();
-			};
-			let collection = dispatch.as_dyn();
-			collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
+			Pallet::<T>::balance(asset, who)
 		}
 
 		fn can_deposit(
@@ -766,16 +759,7 @@ pub mod module {
 			who: &<T as frame_system::Config>::AccountId,
 			amount: Self::Balance,
 		) -> WithdrawConsequence<Self::Balance> {
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
-				return WithdrawConsequence::UnknownAsset;
-			};
-			let Ok(dispatch) = T::CollectionDispatch::dispatch(collection_id) else {
-				return WithdrawConsequence::UnknownAsset;
-			};
-			let collection = dispatch.as_dyn();
-			if collection.balance(T::CrossAccountId::from_sub(who.clone()), TokenId::default())
-				> amount
-			{
+			if Pallet::<T>::balance(asset, who) > amount {
 				WithdrawConsequence::Success
 			} else {
 				WithdrawConsequence::BalanceLow
@@ -792,35 +776,17 @@ pub mod module {
 		type OnDropDebt = fungibles::IncreaseIssuance<T::AccountId, Self>;
 
 		fn done_deposit(
-			asset_id: Self::AssetId,
-			who: &<T as frame_system::Config>::AccountId,
-			amount: Self::Balance,
+			_asset_id: Self::AssetId,
+			_who: &<T as frame_system::Config>::AccountId,
+			_amount: Self::Balance,
 		) {
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset_id) else {
-				return;
-			};
-			pallet_common::Pallet::<T>::deposit_event(pallet_common::Event::<T>::ItemCreated(
-				collection_id,
-				TokenId::default(),
-				T::CrossAccountId::from_sub(who.clone()),
-				amount,
-			))
 		}
 
 		fn done_withdraw(
-			asset_id: Self::AssetId,
-			who: &<T as frame_system::Config>::AccountId,
-			amount: Self::Balance,
+			_asset_id: Self::AssetId,
+			_who: &<T as frame_system::Config>::AccountId,
+			_amount: Self::Balance,
 		) {
-			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset_id) else {
-				return;
-			};
-			pallet_common::Pallet::<T>::deposit_event(pallet_common::Event::<T>::ItemDestroyed(
-				collection_id,
-				TokenId::default(),
-				T::CrossAccountId::from_sub(who.clone()),
-				amount,
-			))
 		}
 	}
 
