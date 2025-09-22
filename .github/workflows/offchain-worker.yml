@@ -168,7 +168,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
-          NOW=$(date +%s) && deno task testOcwQuartzl
+          NOW=$(date +%s) && deno task testOcwQuartz
           
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
