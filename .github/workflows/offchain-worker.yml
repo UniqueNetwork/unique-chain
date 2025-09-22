@@ -88,7 +88,7 @@ jobs:
         uses: ./.github/actions/buildContainer
         id: runtime
         with:
-          container: uniquenetwork/ci-ocw-local
+          container: uniquenetwork/ci-xcm-local
           tag: ${{ matrix.network }}-${{ env.REF_SLUG }}-${{ env.BUILD_SHA }}
           context: .
           dockerfile: .docker/Dockerfile-unique
@@ -101,7 +101,7 @@ jobs:
         uses: ./.github/actions/buildContainer
         id: node
         with:
-          container: uniquenetwork/ci-ocw-local
+          container: uniquenetwork/ci-xcm-local
           tag: ${{ matrix.network }}-${{ env.NODE_BRANCH }}-${{ env.NODE_HASH}}
           context: .docker
           dockerfile: Dockerfile-unique-release
