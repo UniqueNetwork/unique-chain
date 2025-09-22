@@ -29,6 +29,7 @@
         "testXcmUnique": "RUN_XCM_TESTS=1 deno task _test './**/xcm/unique.test.ts'",
         "testXcmQuartz": "RUN_XCM_TESTS=1 deno task _test './**/xcm/quartz.test.ts'",
         "testOcwOpal": "RUN_OCW_TESTS=1 deno task _test './**/ocw/opal.test.ts'",
+        "testOcwQuartz": "RUN_OCW_TESTS=1 deno task _test './**/ocw/quartz.test.ts'",
         "load": "deno task _test './**/*.load.ts'"
     }
 }

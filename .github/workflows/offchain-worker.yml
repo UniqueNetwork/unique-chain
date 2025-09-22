@@ -32,7 +32,7 @@ jobs:
         id: create_matrix
         with:
           matrix: |
-            network {opal}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
+            network {quartz}, relay_name {polkadot}, relay_branch {${{ env.POLKADOT_MAINNET_BRANCH }}}
 
   dev_build_int_tests:
     needs: prepare-execution-marix
@@ -168,7 +168,7 @@ jobs:
         if: ${{ !cancelled() && steps.alive1.outcome == 'success' }}
         run: |
           echo "Ready to start tests"
-          NOW=$(date +%s) && deno task testOcwOpal
+          NOW=$(date +%s) && deno task testOcwQuartzl
           
         env:
           RPC_URL: ${{ env.RELAY_UNIQUE_HTTP_URL }}
