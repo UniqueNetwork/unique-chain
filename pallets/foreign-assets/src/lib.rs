@@ -440,10 +440,7 @@ pub mod module {
 	}
 
 	#[pallet::call]
-	impl<T: Config> Pallet<T>
-	where
-		T: orml_oracle::Config,
-	{
+	impl<T: Config> Pallet<T> {
 		#[pallet::call_index(0)]
 		#[pallet::weight(<T as Config>::WeightInfo::force_register_foreign_asset())]
 		pub fn force_register_foreign_asset(

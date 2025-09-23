@@ -83,8 +83,7 @@ impl<Runtime: pallet_evm::Config> Sr25519Precompile<Runtime> {
 
 		log::trace!(
 			target: "sr25519-precompile",
-			"Verify signature {:?} for public {:?} and message {:?}",
-			signature, public, message,
+			"Verify signature {signature:?} for public {public:?} and message {message:?}",
 		);
 
 		let is_confirmed = sp_io::crypto::sr25519_verify(&signature, &message[..], &public);

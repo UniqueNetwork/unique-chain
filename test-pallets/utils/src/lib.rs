@@ -15,6 +15,7 @@
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::useless_conversion)]
 
 use frame_system::pallet_prelude::*;
 pub use pallet::*;

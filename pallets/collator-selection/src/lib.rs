@@ -77,6 +77,7 @@
 //! [this issue](https://github.com/paritytech/statemint/issues/21#issuecomment-810481073).
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::useless_conversion)]
 
 pub use pallet::*;
 

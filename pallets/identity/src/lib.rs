@@ -88,6 +88,7 @@
 //! [`Config`]: ./trait.Config.html
 
 #![cfg_attr(not(feature = "std"), no_std)]
+#![allow(clippy::useless_conversion)]
 
 mod benchmarking;
 #[cfg(test)]

@@ -68,7 +68,8 @@
 #![allow(
 	clippy::too_many_arguments,
 	clippy::unnecessary_mut_passed,
-	clippy::unused_unit
+	clippy::unused_unit,
+	clippy::useless_conversion,
 )]
 
 extern crate alloc;

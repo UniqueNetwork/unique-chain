@@ -764,12 +764,12 @@ macro_rules! impl_common_runtime_apis {
 					}
 				}
 
-				fn query_xcm_weight(message: staging_xcm::VersionedXcm<()>) -> Result<crate::Weight, xcm_runtime_apis::fees::Error> {
-					crate::PolkadotXcm::query_xcm_weight(message)
+				fn query_xcm_weight(message: staging_xcm::VersionedXcm<()>) -> Result<$crate::Weight, xcm_runtime_apis::fees::Error> {
+					$crate::PolkadotXcm::query_xcm_weight(message)
 				}
 
 				fn query_delivery_fees(destination: staging_xcm::VersionedLocation, message: staging_xcm::VersionedXcm<()>) -> Result<staging_xcm::VersionedAssets, xcm_runtime_apis::fees::Error> {
-					crate::PolkadotXcm::query_delivery_fees(destination, message)
+					$crate::PolkadotXcm::query_delivery_fees(destination, message)
 				}
 			}
 		}
