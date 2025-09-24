@@ -1062,7 +1062,7 @@ export interface PalletAssetTxPaymentEvent extends Enum {
     readonly who: AccountId32;
     readonly actualFee: u128;
     readonly tip: u128;
-    readonly assetId: Option<StagingXcmV3MultiLocation>;
+    readonly assetId: Option<StagingXcmV5Location>;
   } & Struct;
   readonly type: 'AssetTxFeePaid';
 }
@@ -3339,7 +3339,7 @@ export interface PalletSessionEvent extends Enum {
 /** @name PalletSponsoringChargeAssetTxPayment */
 export interface PalletSponsoringChargeAssetTxPayment extends Struct {
   readonly tip: Compact<u128>;
-  readonly assetId: Option<StagingXcmV3MultiLocation>;
+  readonly assetId: Option<StagingXcmV5Location>;
 }
 
 /** @name PalletSponsoringCheckNonce */
@@ -3352,7 +3352,7 @@ export interface PalletSponsoringEvent extends Enum {
     readonly who: AccountId32;
     readonly actualFee: u128;
     readonly tip: u128;
-    readonly assetId: Option<StagingXcmV3MultiLocation>;
+    readonly assetId: Option<StagingXcmV5Location>;
   } & Struct;
   readonly type: 'AssetTxFeePaid';
 }

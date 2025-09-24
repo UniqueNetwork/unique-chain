@@ -4335,7 +4335,7 @@ export default {
         who: 'AccountId32',
         actualFee: 'u128',
         tip: 'u128',
-        assetId: 'Option<StagingXcmV3MultiLocation>'
+        assetId: 'Option<StagingXcmV5Location>'
       }
     }
   },
@@ -4437,7 +4437,7 @@ export default {
         who: 'AccountId32',
         actualFee: 'u128',
         tip: 'u128',
-        assetId: 'Option<StagingXcmV3MultiLocation>'
+        assetId: 'Option<StagingXcmV5Location>'
       }
     }
   },
@@ -5887,7 +5887,7 @@ export default {
    **/
   PalletSponsoringChargeAssetTxPayment: {
     tip: 'Compact<u128>',
-    assetId: 'Option<StagingXcmV3MultiLocation>'
+    assetId: 'Option<StagingXcmV5Location>'
   },
   /**
    * Lookup794: opal_runtime::Runtime
