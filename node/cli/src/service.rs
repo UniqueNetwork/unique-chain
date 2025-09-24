@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Unique Network. If not, see <http://www.gnu.org/licenses/>.
 
+//sc_service::Error has big size. Can't do anything about it for now.
+#![allow(clippy::result_large_err)]
+
 // std
 use std::{
 	collections::BTreeMap,
