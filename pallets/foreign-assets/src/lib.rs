@@ -383,9 +383,8 @@ pub mod module {
 
 	#[pallet::storage]
 	#[pallet::getter(fn exchange_rate_update_interval)]
-	//TODO oracle: set to 100
 	pub type ExchangeRateUpdateInterval<T: Config> =
-		StorageValue<Value = u128, QueryKind = ValueQuery, OnEmpty = ConstU128<10>>; // in blocks
+		StorageValue<Value = u128, QueryKind = ValueQuery, OnEmpty = ConstU128<100>>; // in blocks
 
 	const STORAGE_VERSION: StorageVersion = StorageVersion::new(1);
 
@@ -756,7 +755,7 @@ pub mod module {
 			who: &<T as frame_system::Config>::AccountId,
 			amount: Self::Balance,
 		) -> WithdrawConsequence<Self::Balance> {
-			if Pallet::<T>::balance(asset, who) > amount {
+			if Pallet::<T>::balance(asset, who) >= amount {
 				WithdrawConsequence::Success
 			} else {
 				WithdrawConsequence::BalanceLow

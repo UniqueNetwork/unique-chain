@@ -177,7 +177,7 @@ where
 			//pallet_contract_helpers::ContractHelpersExtension<Runtime>,
 			pallet_ethereum::FakeTransactionFinalizer::<Runtime>::new(),
 			cumulus_primitives_storage_weight_reclaim::StorageWeightReclaim::<Runtime>::new(),
-			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false), //TODO oracle:  probably should enable check
+			frame_metadata_hash_extension::CheckMetadataHash::<Runtime>::new(false),
 		);
 		let raw_payload = generic::SignedPayload::new(call, tx_ext)
 			.map_err(|e| {
