@@ -301,7 +301,6 @@ use frame_support::{
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 
 impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
-	// Note: We stick to `v3::MultiLocation`` because `v4::Location`` doesn't implement `Copy`.
 	type AssetId = staging_xcm::v5::Location;
 	type Balance = u128;
 	type LiquidityInfo = fungibles::Credit<

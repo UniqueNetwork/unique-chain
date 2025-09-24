@@ -50,6 +50,8 @@ const requiredPallets = [
   'xtokens',
   'maintenance',
   'messagequeue',
+  'oracle',
+  'assettransactionpayment',
 ];
 
 // Pallets that depend on consensus and governance configuration
