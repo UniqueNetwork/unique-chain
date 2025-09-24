@@ -226,7 +226,7 @@ try-runtime = [
 	'polkadot-runtime-common/try-runtime',
 	'staging-parachain-info/try-runtime',
 ]
-unique-runtime = ['app-promotion', 'collator-selection','foreign-assets', 'governance', 'preimage', 'refungible']
+unique-runtime = ['app-promotion', 'foreign-assets', 'governance', 'preimage', 'refungible']
 
 app-promotion = []
 collator-selection = []

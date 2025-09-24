@@ -300,20 +300,9 @@ use frame_support::{
 };
 use sp_runtime::transaction_validity::{InvalidTransaction, TransactionValidityError};
 
-impl TxFeeFungiblesAdapter {
-	fn convert_asset_id(
-		asset_id: <Self as OnChargeAssetTransaction<Runtime>>::AssetId,
-	) -> Result<staging_xcm::v5::AssetId, InvalidTransaction> {
-		let location_v5 = staging_xcm::v4::Location::try_from(asset_id)
-			.and_then(staging_xcm::v5::Location::try_from)
-			.map_err(|_| InvalidTransaction::Payment)?;
-		Ok(staging_xcm::v5::AssetId(location_v5))
-	}
-}
-
 impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
 	// Note: We stick to `v3::MultiLocation`` because `v4::Location`` doesn't implement `Copy`.
-	type AssetId = staging_xcm::v3::MultiLocation;
+	type AssetId = staging_xcm::v5::Location;
 	type Balance = u128;
 	type LiquidityInfo = fungibles::Credit<
 		<Runtime as frame_system::Config>::AccountId,
@@ -341,7 +330,7 @@ impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
 		} else {
 			One::one()
 		};
-		let asset_v5 = Self::convert_asset_id(asset_id)?;
+		let asset_v5 = staging_xcm::v5::AssetId(asset_id);
 		let converted_fee = ForeignAssets::convert_native_to_asset(&asset_v5, fee)
 			.ok_or(InvalidTransaction::Payment)?
 			.max(min_converted_fee);
@@ -384,7 +373,7 @@ impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
 		} else {
 			One::one()
 		};
-		let asset_v5 = Self::convert_asset_id(asset_id)?;
+		let asset_v5 = staging_xcm::v5::AssetId(asset_id);
 		let converted_fee = ForeignAssets::convert_native_to_asset(&asset_v5, fee)
 			.ok_or(InvalidTransaction::Payment)?
 			.max(min_converted_fee);
@@ -433,17 +422,12 @@ impl OnChargeAssetTransaction<Runtime> for TxFeeFungiblesAdapter {
 		let _ = <<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Balanced<
 			<Runtime as frame_system::Config>::AccountId,
 		>>::resolve(who, refund);
-		// Handle the final fee, e.g. by transferring to the block author or burning.
-
-		// HC::handle_credit(final_fee);
-		if let Some(author) = pallet_authorship::Pallet::<Runtime>::author() {
-			// In case of error: Will drop the result triggering the `OnDrop` of the imbalance.
-			let _ =
-				<<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Balanced<
-					<Runtime as frame_system::Config>::AccountId,
-				>>::resolve(&author, final_fee)
-				.defensive();
-		}
+		// Handle the final fee, e.g. by transferring to the treasury or burning.
+		// In case of error: Will drop the result triggering the `OnDrop` of the imbalance.
+		let _ = <<Runtime as pallet_asset_tx_payment::Config>::Fungibles as fungibles::Balanced<
+			<Runtime as frame_system::Config>::AccountId,
+		>>::resolve(&Treasury::account_id(), final_fee)
+		.defensive();
 		Ok((converted_fee, converted_tip))
 	}
 }

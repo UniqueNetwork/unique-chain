@@ -807,10 +807,14 @@ pub mod module {
 			asset: Self::AssetId,
 			who: &T::AccountId,
 			amount: Self::Balance,
-			_precision: Precision,
+			precision: Precision,
 			_preservation: Preservation,
 			_: Fortitude,
 		) -> Result<Self::Balance, DispatchError> {
+			ensure!(
+				precision == Precision::Exact,
+				DispatchError::Other("Only Exact precision is supported")
+			);
 			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
 				return Err(DispatchError::Other("Asset is not registered"));
 			};
@@ -832,8 +836,12 @@ pub mod module {
 			asset: Self::AssetId,
 			who: &T::AccountId,
 			amount: Self::Balance,
-			_precision: Precision,
+			precision: Precision,
 		) -> Result<Self::Balance, DispatchError> {
+			ensure!(
+				precision == Precision::Exact,
+				DispatchError::Other("Only Exact precision is supported")
+			);
 			let Some(collection_id) = <ForeignAssetToCollection<T>>::get(asset) else {
 				return Err(DispatchError::Other("Asset is not registered"));
 			};
