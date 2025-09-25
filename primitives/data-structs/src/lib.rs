@@ -20,7 +20,10 @@
 
 #![cfg_attr(not(feature = "std"), no_std)]
 
-use core::{fmt, ops::Deref};
+use core::{
+	fmt,
+	ops::{Deref, DerefMut},
+};
 
 use bondrewd::Bitfields;
 use derivative::Derivative;
@@ -30,7 +33,9 @@ use frame_support::{
 	traits::ConstU32,
 	BoundedVec,
 };
-use parity_scale_codec::{Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen};
+use parity_scale_codec::{
+	Compact, Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen,
+};
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
 use sp_core::U256;
@@ -116,7 +121,7 @@ pub const MAX_TOKEN_PREFIX_LENGTH: u32 = 16;
 /// Maximal length of a property key.
 pub const MAX_PROPERTY_KEY_LENGTH: u32 = 256;
 
-/// Maximal length of a property value.
+/// Maximal length of an individual property value.
 pub const MAX_PROPERTY_VALUE_LENGTH: u32 = 32768;
 
 /// A maximum number of token properties.
@@ -125,11 +130,14 @@ pub const MAX_PROPERTIES_PER_ITEM: u32 = 64;
 /// Maximal lenght of extended property value.
 pub const MAX_AUX_PROPERTY_VALUE_LENGTH: u32 = 2048;
 
-/// Maximum size for all collection properties.
-pub const MAX_COLLECTION_PROPERTIES_SIZE: u32 = 40960;
+/// Maximum size limit for all collection properties.
+pub const MAX_COLLECTION_PROPERTIES_LIMIT: u32 = 40960;
 
-/// Maximum size of all token properties.
-pub const MAX_TOKEN_PROPERTIES_SIZE: u32 = 32768;
+/// Default size limit of all token properties
+pub const DEFAULT_TOKEN_PROPERTIES_LIMIT: u32 = 8192;
+
+/// Maximum size limit of all token properties.
+pub const MAX_TOKEN_PROPERTIES_LIMIT: u32 = 65536;
 
 /// How much items can be created per single
 /// create_many call.
@@ -1385,6 +1393,26 @@ impl PropertyScope {
 	}
 }
 
+#[derive(Encode, Decode, MaxEncodedLen, TypeInfo, PartialEq, Clone, Copy)]
+pub enum PropertySizeLimit {
+	Default,
+	Extended,
+	Max,
+}
+
+// We don't use explicit enum discriminants because this enum must be encodable as it is used as an extrinsic parameter.
+// The max encodable discriminant value is 255, while the corresponding limits are much bigger.
+// Thus, we need a conversion function to get the corresponding values.
+impl From<PropertySizeLimit> for u32 {
+	fn from(limit: PropertySizeLimit) -> Self {
+		match limit {
+			PropertySizeLimit::Default => DEFAULT_TOKEN_PROPERTIES_LIMIT,
+			PropertySizeLimit::Extended => MAX_TOKEN_PROPERTIES_LIMIT / 2,
+			PropertySizeLimit::Max => MAX_TOKEN_PROPERTIES_LIMIT,
+		}
+	}
+}
+
 /// Trait for operate with properties.
 pub trait TrySetProperty: Sized {
 	type Value;
@@ -1539,27 +1567,34 @@ fn scoped_slice_size(scope: PropertyScope, data: &[u8]) -> u32 {
 
 /// Wrapper for properties map with consumed space control.
 #[derive(Encode, Decode, TypeInfo, Clone, PartialEq)]
-pub struct Properties<const S: u32> {
+pub struct SpaceMeteredProperties<const MAX_SPACE_LIMIT: u32> {
 	map: PropertiesMap<PropertyValue>,
 	consumed_space: u32,
 	// May be not zero, previously served as a current S generic
 	_reserved: u32,
 }
 
-impl<const S: u32> MaxEncodedLen for Properties<S> {
+impl<const MAX_SPACE_LIMIT: u32> MaxEncodedLen for SpaceMeteredProperties<MAX_SPACE_LIMIT> {
 	fn max_encoded_len() -> usize {
-		// len of map + len of consumed_space + len of space_limit
-		u32::max_encoded_len() * 3 + S as usize
+		// This follows the implementation of Encode for BTreeMap
+		// The encoding is `LEN ++ DATA` where LEN is encoded as Compact<u32>.
+		// `MAX_SPACE_LIMIT` limits the overall data size (enforced in `SpaceLimitedProperties`)
+		let map_len = <Compact<u32>>::max_encoded_len() + MAX_SPACE_LIMIT as usize;
+
+		let consumed_space_len = u32::max_encoded_len();
+		let reserved_len = u32::max_encoded_len();
+
+		map_len + consumed_space_len + reserved_len
 	}
 }
 
-impl<const S: u32> Default for Properties<S> {
+impl<const MAX_SPACE_LIMIT: u32> Default for SpaceMeteredProperties<MAX_SPACE_LIMIT> {
 	fn default() -> Self {
 		Self::new()
 	}
 }
 
-impl<const S: u32> Properties<S> {
+impl<const MAX_SPACE_LIMIT: u32> SpaceMeteredProperties<MAX_SPACE_LIMIT> {
 	/// Create new properies container.
 	pub fn new() -> Self {
 		Self {
@@ -1567,6 +1602,29 @@ impl<const S: u32> Properties<S> {
 			consumed_space: 0,
 			_reserved: 0,
 		}
+	}
+
+	// TODO docs
+	pub fn with_space_limit(self, space_limit: u32) -> SpaceLimitedProperties<Self> {
+		SpaceLimitedProperties {
+			properties: self,
+			space_limit: space_limit.min(MAX_SPACE_LIMIT),
+		}
+	}
+
+	pub fn with_space_limit_ref(&mut self, space_limit: u32) -> SpaceLimitedProperties<&mut Self> {
+		SpaceLimitedProperties {
+			properties: self,
+			space_limit,
+		}
+	}
+
+	pub fn with_max_space_limit(self) -> SpaceLimitedProperties<Self> {
+		self.with_space_limit(MAX_SPACE_LIMIT)
+	}
+
+	pub fn with_max_space_limit_ref(&mut self) -> SpaceLimitedProperties<&mut Self> {
+		self.with_space_limit_ref(MAX_SPACE_LIMIT)
 	}
 
 	/// Remove propery with appropiate key.
@@ -1597,7 +1655,7 @@ impl<const S: u32> Properties<S> {
 	}
 }
 
-impl<const S: u32> IntoIterator for Properties<S> {
+impl<const MAX_SPACE_LIMIT: u32> IntoIterator for SpaceMeteredProperties<MAX_SPACE_LIMIT> {
 	type Item = (PropertyKey, PropertyValue);
 	type IntoIter = <PropertiesMap<PropertyValue> as IntoIterator>::IntoIter;
 
@@ -1606,7 +1664,30 @@ impl<const S: u32> IntoIterator for Properties<S> {
 	}
 }
 
-impl<const S: u32> TrySetProperty for Properties<S> {
+pub struct SpaceLimitedProperties<Properties> {
+	properties: Properties,
+	space_limit: u32,
+}
+impl<Properties> SpaceLimitedProperties<Properties> {
+	pub fn into_inner(self) -> Properties {
+		self.properties
+	}
+}
+impl<Properties> Deref for SpaceLimitedProperties<Properties> {
+	type Target = Properties;
+
+	fn deref(&self) -> &Self::Target {
+		&self.properties
+	}
+}
+impl<Properties> DerefMut for SpaceLimitedProperties<Properties> {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.properties
+	}
+}
+impl<'a, const MAX_SPACE_LIMIT: u32> TrySetProperty
+	for SpaceLimitedProperties<&'a mut SpaceMeteredProperties<MAX_SPACE_LIMIT>>
+{
 	type Value = PropertyValue;
 
 	fn try_scoped_set(
@@ -1618,23 +1699,62 @@ impl<const S: u32> TrySetProperty for Properties<S> {
 		let key_size = scoped_slice_size(scope, &key);
 		let value_size = slice_size(&value);
 
-		if self.consumed_space + value_size + key_size > S && !cfg!(feature = "runtime-benchmarks")
+		if self.properties.consumed_space + value_size + key_size > self.space_limit
+			&& !cfg!(feature = "runtime-benchmarks")
 		{
 			return Err(PropertiesError::NoSpaceForProperty);
 		}
 
-		let old_value = self.map.try_scoped_set(scope, key, value)?;
+		let old_value = self.properties.map.try_scoped_set(scope, key, value)?;
 
 		if let Some(old_value) = old_value.as_ref() {
 			let old_value_size = slice_size(old_value);
-			self.consumed_space = self.consumed_space.saturating_sub(old_value_size) + value_size;
+			self.properties.consumed_space = self
+				.properties
+				.consumed_space
+				.saturating_sub(old_value_size)
+				+ value_size;
 		} else {
-			self.consumed_space += key_size + value_size;
+			self.properties.consumed_space += key_size + value_size;
 		}
 
 		Ok(old_value)
 	}
 }
+impl<const MAX_SPACE_LIMIT: u32> TrySetProperty
+	for SpaceLimitedProperties<SpaceMeteredProperties<MAX_SPACE_LIMIT>>
+{
+	type Value = PropertyValue;
 
-pub type CollectionProperties = Properties<MAX_COLLECTION_PROPERTIES_SIZE>;
-pub type TokenProperties = Properties<MAX_TOKEN_PROPERTIES_SIZE>;
+	fn try_scoped_set(
+		&mut self,
+		scope: PropertyScope,
+		key: PropertyKey,
+		value: Self::Value,
+	) -> Result<Option<Self::Value>, PropertiesError> {
+		let space_limit = self.space_limit;
+		self.with_space_limit_ref(space_limit)
+			.try_scoped_set(scope, key, value)
+	}
+}
+
+pub type CollectionProperties = SpaceMeteredProperties<MAX_COLLECTION_PROPERTIES_LIMIT>;
+pub type TokenProperties = SpaceMeteredProperties<MAX_TOKEN_PROPERTIES_LIMIT>;
+
+#[derive(Encode, Decode, TypeInfo, MaxEncodedLen)]
+pub struct CollectionTokensPropertiesLimit(u32);
+impl Default for CollectionTokensPropertiesLimit {
+	fn default() -> Self {
+		Self(DEFAULT_TOKEN_PROPERTIES_LIMIT)
+	}
+}
+impl From<PropertySizeLimit> for CollectionTokensPropertiesLimit {
+	fn from(value: PropertySizeLimit) -> Self {
+		Self(value.into())
+	}
+}
+impl From<CollectionTokensPropertiesLimit> for u32 {
+	fn from(value: CollectionTokensPropertiesLimit) -> Self {
+		value.0
+	}
+}

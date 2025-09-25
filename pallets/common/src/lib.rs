@@ -87,11 +87,12 @@ use up_data_structs::{
 	CollectionProperties as CollectionPropertiesT, CollectionStats, CreateCollectionData,
 	CreateItemData, CreateItemExData, PhantomType, PropertiesError, PropertiesPermissionMap,
 	Property, PropertyKey, PropertyKeyPermission, PropertyPermission, PropertyScope, PropertyValue,
-	RpcCollection, RpcCollectionFlags, SponsoringRateLimit, SponsorshipState, TokenChild,
-	TokenData, TokenId, TokenOwnerError, TokenProperties, TrySetProperty, COLLECTION_ADMINS_LIMIT,
-	COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
-	MAX_SPONSOR_TIMEOUT, MAX_TOKEN_OWNERSHIP, MAX_TOKEN_PREFIX_LENGTH,
-	NFT_SPONSOR_TRANSFER_TIMEOUT, REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
+	RpcCollection, RpcCollectionFlags, SpaceLimitedProperties, SponsoringRateLimit,
+	SponsorshipState, TokenChild, TokenData, TokenId, TokenOwnerError, TokenProperties,
+	TrySetProperty, COLLECTION_ADMINS_LIMIT, COLLECTION_NUMBER_LIMIT, CUSTOM_DATA_LIMIT,
+	DEFAULT_TOKEN_PROPERTIES_LIMIT, FUNGIBLE_SPONSOR_TRANSFER_TIMEOUT, MAX_SPONSOR_TIMEOUT,
+	MAX_TOKEN_OWNERSHIP, MAX_TOKEN_PREFIX_LENGTH, NFT_SPONSOR_TRANSFER_TIMEOUT,
+	REFUNGIBLE_SPONSOR_TRANSFER_TIMEOUT,
 };
 use up_pov_estimate_rpc::PovInfo;
 
@@ -812,6 +813,15 @@ pub mod pallet {
 		QueryKind = OptionQuery,
 	>;
 
+	/// Storage of collection tokens' properties size limit
+	#[pallet::storage]
+	pub type CollectionTokenPropertiesLimit<T> = StorageMap<
+		Hasher = Blake2_128Concat,
+		Key = CollectionId,
+		Value = up_data_structs::CollectionTokensPropertiesLimit,
+		QueryKind = ValueQuery,
+	>;
+
 	/// Storage of collection properties.
 	#[pallet::storage]
 	#[pallet::getter(fn collection_properties)]
@@ -1214,12 +1224,12 @@ impl<T: Config> Pallet<T> {
 			flags: data.flags,
 		};
 
-		let mut collection_properties = CollectionPropertiesT::new();
+		let mut collection_properties = CollectionPropertiesT::new().with_max_space_limit();
 		collection_properties
 			.try_set_from_iter(data.properties.into_iter())
 			.map_err(<Error<T>>::from)?;
 
-		CollectionProperties::<T>::insert(id, collection_properties);
+		CollectionProperties::<T>::insert(id, collection_properties.into_inner());
 
 		let mut token_props_permissions = PropertiesPermissionMap::new();
 		token_props_permissions
@@ -1315,7 +1325,8 @@ impl<T: Config> Pallet<T> {
 	) -> DispatchResult {
 		collection.check_is_owner_or_admin(sender)?;
 
-		let mut stored_properties = <CollectionProperties<T>>::get(collection.id);
+		let mut stored_properties =
+			<CollectionProperties<T>>::get(collection.id).with_max_space_limit();
 
 		for (key, value) in properties_updates {
 			match value {
@@ -1346,7 +1357,7 @@ impl<T: Config> Pallet<T> {
 			}
 		}
 
-		<CollectionProperties<T>>::set(collection.id, stored_properties);
+		<CollectionProperties<T>>::set(collection.id, stored_properties.into_inner());
 
 		Ok(())
 	}
@@ -1384,6 +1395,11 @@ impl<T: Config> Pallet<T> {
 		Ok(())
 	}
 
+	/// Get the collection's tokens' properties size limit.
+	pub fn get_tokens_properties_limit(collection: &CollectionHandle<T>) -> u32 {
+		<CollectionTokenPropertiesLimit<T>>::get(&collection.id).into()
+	}
+
 	/// Set collection property.
 	///
 	/// * `collection` - Collection handler.
@@ -1409,7 +1425,11 @@ impl<T: Config> Pallet<T> {
 		property: Property,
 	) -> DispatchResult {
 		CollectionProperties::<T>::try_mutate(collection_id, |properties| {
-			properties.try_scoped_set(scope, property.key, property.value)
+			properties.with_max_space_limit_ref().try_scoped_set(
+				scope,
+				property.key,
+				property.value,
+			)
 		})
 		.map_err(<Error<T>>::from)?;
 
@@ -1428,7 +1448,9 @@ impl<T: Config> Pallet<T> {
 		properties: impl Iterator<Item = Property>,
 	) -> DispatchResult {
 		CollectionProperties::<T>::try_mutate(collection_id, |stored_properties| {
-			stored_properties.try_scoped_set_from_iter(scope, properties)
+			stored_properties
+				.with_max_space_limit_ref()
+				.try_scoped_set_from_iter(scope, properties)
 		})
 		.map_err(<Error<T>>::from)?;
 
@@ -2085,6 +2107,9 @@ pub trait CommonCollectionOperations<T: Config> {
 		budget: &dyn Budget,
 	) -> DispatchResultWithPostInfo;
 
+	/// Get the collection's tokens' properties size limit.
+	fn get_tokens_properties_limit(&self) -> u32;
+
 	/// Get token properties raw map.
 	///
 	/// * `token_id` - The token which properties are needed.
@@ -2575,8 +2600,10 @@ where
 		if properties_changed {
 			<PalletEvm<T>>::deposit_log(log);
 
-			self.collection
-				.set_token_properties_raw(token_id, token_lazy_info.stored_properties.into_inner());
+			self.collection.set_token_properties_raw(
+				token_id,
+				token_lazy_info.stored_properties.into_inner().into_inner(),
+			);
 		}
 
 		Ok(())
@@ -2596,7 +2623,7 @@ pub struct PropertyWriterLazyCollectionInfo<'a> {
 pub struct PropertyWriterLazyTokenInfo<'a> {
 	is_token_exist: LazyValue<'a, bool>,
 	is_token_owner: LazyValue<'a, Result<bool, DispatchError>>,
-	stored_properties: LazyValue<'a, TokenProperties>,
+	stored_properties: LazyValue<'a, SpaceLimitedProperties<TokenProperties>>,
 }
 
 impl<'a> PropertyWriterLazyTokenInfo<'a> {
@@ -2604,7 +2631,7 @@ impl<'a> PropertyWriterLazyTokenInfo<'a> {
 	pub fn new(
 		check_token_exist: impl FnOnce() -> bool + 'a,
 		check_token_owner: impl FnOnce() -> Result<bool, DispatchError> + 'a,
-		get_token_properties: impl FnOnce() -> TokenProperties + 'a,
+		get_token_properties: impl FnOnce() -> SpaceLimitedProperties<TokenProperties> + 'a,
 	) -> Self {
 		Self {
 			is_token_exist: LazyValue::new(check_token_exist),
@@ -2662,7 +2689,7 @@ where
 
 		let get_token_properties = || {
 			debug_assert!(self.collection.get_token_properties_raw(token_id).is_none());
-			TokenProperties::new()
+			TokenProperties::new().with_space_limit(DEFAULT_TOKEN_PROPERTIES_LIMIT)
 		};
 
 		self.internal_write_token_properties(
@@ -2726,6 +2753,7 @@ where
 			self.collection
 				.get_token_properties_raw(token_id)
 				.unwrap_or_default()
+				.with_space_limit(self.collection.get_tokens_properties_limit())
 		};
 
 		self.internal_write_token_properties(
@@ -2790,7 +2818,8 @@ impl<T: Config> BenchmarkPropertyWriter<T> {
 	{
 		let stored_properties = collection
 			.get_token_properties_raw(token_id)
-			.unwrap_or_default();
+			.unwrap_or_default()
+			.with_space_limit(collection.get_tokens_properties_limit());
 
 		PropertyWriterLazyTokenInfo {
 			is_token_exist: LazyValue::new(|| true),
@@ -2815,7 +2844,7 @@ where
 	) -> DispatchResult {
 		let check_token_exist = || true;
 		let check_token_owner = || Ok(true);
-		let get_token_properties = TokenProperties::new;
+		let get_token_properties = || TokenProperties::new().with_max_space_limit();
 
 		self.internal_write_token_properties(
 			token_id,

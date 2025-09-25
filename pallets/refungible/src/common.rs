@@ -323,6 +323,10 @@ impl<T: Config> CommonCollectionOperations<T> for RefungibleHandle<T> {
 		)
 	}
 
+	fn get_tokens_properties_limit(&self) -> u32 {
+		<Pallet<T>>::get_tokens_properties_limit(self)
+	}
+
 	fn set_collection_properties(
 		&self,
 		sender: T::CrossAccountId,

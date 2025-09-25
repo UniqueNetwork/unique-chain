@@ -116,6 +116,10 @@ impl<T: Config> CommonCollectionOperations<T> for NativeFungibleHandle<T> {
 		fail!(<CommonError<T>>::UnsupportedOperation);
 	}
 
+	fn get_tokens_properties_limit(&self) -> u32 {
+		0
+	}
+
 	fn set_collection_properties(
 		&self,
 		_sender: <T>::CrossAccountId,

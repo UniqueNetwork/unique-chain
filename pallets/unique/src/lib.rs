@@ -105,9 +105,9 @@ pub mod pallet {
 		budget, CollectionId, CollectionLimits, CollectionMode, CollectionPermissions,
 		CreateCollectionData, CreateItemData, CreateItemExData, Property, PropertyKey,
 		PropertyKeyPermission, TokenId, COLLECTION_ADMINS_LIMIT, MAX_COLLECTION_DESCRIPTION_LENGTH,
-		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_PROPERTIES_SIZE, MAX_PROPERTIES_PER_ITEM,
+		MAX_COLLECTION_NAME_LENGTH, MAX_COLLECTION_PROPERTIES_LIMIT, MAX_PROPERTIES_PER_ITEM,
 		MAX_PROPERTY_KEY_LENGTH, MAX_PROPERTY_VALUE_LENGTH, MAX_TOKEN_PREFIX_LENGTH,
-		MAX_TOKEN_PROPERTIES_SIZE,
+		MAX_TOKEN_PROPERTIES_LIMIT,
 	};
 	use weights::WeightInfo;
 
@@ -311,12 +311,12 @@ pub mod pallet {
 
 		/// Maximum size for all collection properties.
 		fn max_collection_properties_size() -> u32 {
-			MAX_COLLECTION_PROPERTIES_SIZE
+			MAX_COLLECTION_PROPERTIES_LIMIT
 		}
 
 		/// Maximum size of all token properties.
 		fn max_token_properties_size() -> u32 {
-			MAX_TOKEN_PROPERTIES_SIZE
+			MAX_TOKEN_PROPERTIES_LIMIT
 		}
 
 		/// Default NFT collection limit.

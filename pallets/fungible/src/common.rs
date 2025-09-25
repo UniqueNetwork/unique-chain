@@ -269,6 +269,11 @@ impl<T: Config> CommonCollectionOperations<T> for FungibleHandle<T> {
 		)
 	}
 
+	fn get_tokens_properties_limit(&self) -> u32 {
+		// No token properties are defined on fungibles
+		0
+	}
+
 	fn set_collection_properties(
 		&self,
 		sender: T::CrossAccountId,

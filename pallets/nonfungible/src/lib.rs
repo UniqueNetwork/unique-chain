@@ -117,7 +117,7 @@ use sp_std::{collections::btree_map::BTreeMap, vec};
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
 	CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property, PropertyKey,
-	PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
+	PropertyKeyPermission, PropertyScope, PropertySizeLimit, PropertyValue, TokenChild, TokenId,
 	TokenProperties as TokenPropertiesT,
 };
 use weights::WeightInfo;
@@ -618,6 +618,11 @@ impl<T: Config> Pallet<T> {
 			[property_key].into_iter(),
 			nesting_budget,
 		)
+	}
+
+	/// Get the collection's tokens properties size limit.
+	pub fn get_tokens_properties_limit(collection: &NonfungibleHandle<T>) -> u32 {
+		<PalletCommon<T>>::get_tokens_properties_limit(&collection)
 	}
 
 	/// Add or edit properties for the collection
