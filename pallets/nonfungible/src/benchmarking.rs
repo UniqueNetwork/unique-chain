@@ -22,8 +22,8 @@ use pallet_common::{
 };
 use sp_std::prelude::*;
 use up_data_structs::{
-	budget::Unlimited, CollectionMode, Property, PropertyPermission, MAX_ITEMS_PER_BATCH,
-	MAX_PROPERTIES_PER_ITEM, MAX_PROPERTY_KEY_LENGTH, MAX_TOKEN_PROPERTIES_LIMIT,
+	budget::Unlimited, CollectionMode, PropertyPermission, MAX_ITEMS_PER_BATCH,
+	MAX_PROPERTIES_PER_ITEM,
 };
 
 use super::*;
@@ -53,6 +53,12 @@ pub fn create_max_item<T: Config>(
 	)?;
 	Ok(TokenId(<TokensMinted<T>>::get(collection.id)))
 }
+fn create_min_item_data<T: Config>(owner: T::CrossAccountId) -> CreateItemData<T> {
+	CreateItemData::<T> {
+		owner,
+		properties: Default::default(),
+	}
+}
 
 pub fn create_collection<T: Config>(
 	owner: T::CrossAccountId,
@@ -78,9 +84,17 @@ mod benchmarks {
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
 
+		// We benchmark the creation of a token without properties
+		// since the properties-related weight is handled separately
+
 		#[block]
 		{
-			create_max_item(&collection, &sender, to)?;
+			<Pallet<T>>::create_item(
+				&collection,
+				&sender,
+				create_min_item_data::<T>(to),
+				&Unlimited,
+			)?;
 		}
 
 		Ok(())
@@ -92,8 +106,11 @@ mod benchmarks {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner); to: cross_sub;
 		};
+
+		// We benchmark the creation of a token without properties
+		// since the properties-related weight is handled separately
 		let data = (0..b)
-			.map(|_| create_max_item_data::<T>(to.clone()))
+			.map(|_| create_min_item_data::<T>(to.clone()))
 			.collect();
 
 		#[block]
@@ -110,10 +127,13 @@ mod benchmarks {
 			owner: sub; collection: collection(owner);
 			sender: cross_from_sub(owner);
 		};
+
+		// We benchmark the creation of a token without properties
+		// since the properties-related weight is handled separately
 		let data = (0..b)
 			.map(|i| {
 				bench_init!(to: cross_sub(i););
-				create_max_item_data::<T>(to)
+				create_min_item_data::<T>(to)
 			})
 			.collect();
 

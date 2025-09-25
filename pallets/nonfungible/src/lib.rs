@@ -117,7 +117,7 @@ use sp_std::{collections::btree_map::BTreeMap, vec};
 use up_data_structs::{
 	budget::Budget, mapping::TokenAddressMapping, AccessMode, AuxPropertyValue, CollectionId,
 	CreateNftExData, CustomDataLimit, PropertiesPermissionMap, Property, PropertyKey,
-	PropertyKeyPermission, PropertyScope, PropertySizeLimit, PropertyValue, TokenChild, TokenId,
+	PropertyKeyPermission, PropertyScope, PropertyValue, TokenChild, TokenId,
 	TokenProperties as TokenPropertiesT,
 };
 use weights::WeightInfo;

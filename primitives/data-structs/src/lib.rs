@@ -34,7 +34,7 @@ use frame_support::{
 	BoundedVec,
 };
 use parity_scale_codec::{
-	Compact, Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen,
+	Compact, CompactLen, Decode, DecodeWithMemTracking, Encode, EncodeLike, MaxEncodedLen,
 };
 use scale_info::TypeInfo;
 use serde::{Deserialize, Serialize};
@@ -1560,7 +1560,7 @@ fn slice_size(data: &[u8]) -> u32 {
 fn scoped_slice_size(scope: PropertyScope, data: &[u8]) -> u32 {
 	use parity_scale_codec::Compact;
 	let prefix = scope.prefix();
-	<Compact<u32>>::encoded_size(&Compact(data.len() as u32 + prefix.len() as u32)) as u32
+	<Compact<u32>>::compact_len(&(data.len() as u32 + prefix.len() as u32)) as u32
 		+ data.len() as u32
 		+ prefix.len() as u32
 }
@@ -1579,12 +1579,13 @@ impl<const MAX_SPACE_LIMIT: u32> MaxEncodedLen for SpaceMeteredProperties<MAX_SP
 		// This follows the implementation of Encode for BTreeMap
 		// The encoding is `LEN ++ DATA` where LEN is encoded as Compact<u32>.
 		// `MAX_SPACE_LIMIT` limits the overall data size (enforced in `SpaceLimitedProperties`)
-		let map_len = <Compact<u32>>::max_encoded_len() + MAX_SPACE_LIMIT as usize;
+		let map_max_len =
+			<Compact<u32>>::compact_len(&MAX_PROPERTIES_PER_ITEM) + MAX_SPACE_LIMIT as usize;
 
 		let consumed_space_len = u32::max_encoded_len();
 		let reserved_len = u32::max_encoded_len();
 
-		map_len + consumed_space_len + reserved_len
+		map_max_len + consumed_space_len + reserved_len
 	}
 }
 
