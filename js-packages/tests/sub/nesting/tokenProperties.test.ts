@@ -337,9 +337,9 @@ describe('Integration Test: Token Properties', () => {
         ],
       });
 
-      const maxTokenPropertiesSize = 32768;
+      const maxTokenPropertiesSize = 8192;
 
-      const propDataSize = 4096;
+      const propDataSize = 1024;
 
       let propDataChar = 'a';
       const makeNewPropData = () => {
@@ -426,9 +426,9 @@ describe('Integration Test: Token Properties', () => {
       );
       const originalSpace = await token.getTokenPropertiesConsumedSpace();
 
-      const initProp = {key: propKey, value: 'a'.repeat(4096)};
-      const biggerProp = {key: propKey, value: 'b'.repeat(5000)};
-      const smallerProp = {key: propKey, value: 'c'.repeat(4000)};
+      const initProp = {key: propKey, value: 'a'.repeat(1024)};
+      const biggerProp = {key: propKey, value: 'b'.repeat(4096)};
+      const smallerProp = {key: propKey, value: 'c'.repeat(512)};
 
       let consumedSpace;
       let expectedConsumedSpaceDiff;
