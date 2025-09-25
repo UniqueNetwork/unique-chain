@@ -480,7 +480,7 @@ class EthGroup extends EthGroupBase {
       // In dev mode, the transaction might not finish processing in time
       await this.helper.wait.newBlocks(1);
     };
-    return await this.helper.arrange.calculcateFee(address, wrappedCode);
+    return await this.helper.arrange.calculateFee(address, wrappedCode);
   }
 }
 
@@ -589,8 +589,8 @@ class EthArrangeGroup extends ArrangeGroup {
     this.helper = helper;
   }
 
-  async calculcateFeeGas(payer: ICrossAccountId, promise: () => Promise<any>): Promise<FeeGas> {
-    const fee = await this.calculcateFee(payer, promise);
+  async calculateFeeGas(payer: ICrossAccountId, promise: () => Promise<any>): Promise<FeeGas> {
+    const fee = await this.calculateFee(payer, promise);
     return await FeeGas.build(this.helper, fee);
   }
 }

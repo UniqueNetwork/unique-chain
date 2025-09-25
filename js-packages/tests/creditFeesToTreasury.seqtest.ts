@@ -185,7 +185,7 @@ describe('integration test: Fees must be credited to Treasury:', () => {
       ]);
     };
 
-    const totalPaid = await helper.arrange.calculcateFee({Substrate: alice.address}, lambda);
+    const totalPaid = await helper.arrange.calculateFee({Substrate: alice.address}, lambda);
     const evmFees = totalPaid - value;
 
     const treasuryDepoosited = (result as unknown as ITransactionResult).result.events

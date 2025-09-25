@@ -621,7 +621,7 @@ impl<T: Config> Pallet<T> {
 	}
 
 	pub fn get_tokens_properties_limit(collection: &NonfungibleHandle<T>) -> u32 {
-		<PalletCommon<T>>::get_tokens_properties_limit(&collection)
+		<PalletCommon<T>>::get_tokens_properties_limit(collection)
 	}
 
 	pub fn upgrade_tokens_properties_limit(

@@ -1390,7 +1390,7 @@ impl<T: Config> Pallet<T> {
 
 	/// Get the collection's tokens' properties size limit.
 	pub fn get_tokens_properties_limit(collection: &CollectionHandle<T>) -> u32 {
-		<CollectionTokenPropertiesLimit<T>>::get(&collection.id).into()
+		<CollectionTokenPropertiesLimit<T>>::get(collection.id).into()
 	}
 
 	/// Upgrade the collection's tokens' properties size limit.
@@ -1402,7 +1402,7 @@ impl<T: Config> Pallet<T> {
 		sender: &T::CrossAccountId,
 		new_limit: PropertySizeLimit,
 	) -> DispatchResult {
-		<CollectionTokenPropertiesLimit<T>>::try_mutate(&collection.id, |current_limit| {
+		<CollectionTokenPropertiesLimit<T>>::try_mutate(collection.id, |current_limit| {
 			collection.check_is_owner_or_admin(sender)?;
 
 			if current_limit.upgrade(new_limit).map_err(<Error<T>>::from)? {

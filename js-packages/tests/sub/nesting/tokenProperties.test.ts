@@ -526,7 +526,7 @@ describe('Integration Test: Token Properties', () => {
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Default')).to.be.fulfilled;
     expect(await collection.getTokensPropertiesLimit()).to.be.equal(defaultLimit);
 
-    const upgradeToExtendedFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+    const upgradeToExtendedFee = await helper.arrange.calculateFee({Substrate: alice.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     });
     expect(upgradeToExtendedFee > 2000n * helper.balance.getOneTokenNominal()).to.be.true;
@@ -542,7 +542,7 @@ describe('Integration Test: Token Properties', () => {
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);
 
-    const upgradeToMaxFee = await helper.arrange.calculcateFee({Substrate: alice.address}, async () => {
+    const upgradeToMaxFee = await helper.arrange.calculateFee({Substrate: alice.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
     });
     expect(upgradeToMaxFee > 5000n * helper.balance.getOneTokenNominal()).to.be.true;

@@ -155,7 +155,7 @@ async function benchMintFee(
     PERMISSIONS,
   )) as UniqueNFTCollection;
 
-  const substrateFee = await helper.arrange.calculcateFee(
+  const substrateFee = await helper.arrange.calculateFee(
     {Substrate: donor.address},
     () => collection.mintToken(donor, {Substrate: substrateReceiver.address}),
   );
@@ -171,7 +171,7 @@ async function benchMintFee(
 
   const encodedCall = (await collectionContract.mint.populateTransaction(receiverEthAddress)).data;
 
-  const ethFee = await helper.arrange.calculcateFee(
+  const ethFee = await helper.arrange.calculateFee(
     {Substrate: donor.address},
     async () => {
       await helper.eth.sendEVM(
@@ -183,7 +183,7 @@ async function benchMintFee(
     },
   );
 
-  const evmProxyContractFee = await helper.arrange.calculcateFee(
+  const evmProxyContractFee = await helper.arrange.calculateFee(
     {Ethereum: ethSigner.address},
     async () => {
       await (await proxyContract.mintToSubstrate.send(
@@ -388,7 +388,7 @@ async function calculateFeeNftMintWithProperties(
     proxyContractAddress,
     PERMISSIONS,
   )) as UniqueNFTCollection;
-  return helper.arrange.calculcateFee(payer, async () => {
+  return helper.arrange.calculateFee(payer, async () => {
     await calculatedCall(collection);
   });
 }

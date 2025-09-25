@@ -90,7 +90,7 @@ describe('EVM token properties', () => {
 
     const caller = await helper.eth.createAccountWithBalance(donor);
 
-    const upgradeToExtendedFee = await helper.arrange.calculcateFee({Ethereum: caller.address}, async () => {
+    const upgradeToExtendedFee = await helper.arrange.calculateFee({Ethereum: caller.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     });
     expect(upgradeToExtendedFee > 2000n * helper.balance.getOneTokenNominal()).to.be.true;
@@ -106,7 +106,7 @@ describe('EVM token properties', () => {
     await expect(collection.upgradeTokensPropertiesLimit(alice, 'Extended')).to.be.fulfilled;
     expect(await collection.getTokensPropertiesLimit()).to.be.equal(extendedLimit);    
 
-    const upgradeToMaxFee = await helper.arrange.calculcateFee({Ethereum: caller.address}, async () => {
+    const upgradeToMaxFee = await helper.arrange.calculateFee({Ethereum: caller.address}, async () => {
       await expect(collection.upgradeTokensPropertiesLimit(alice, 'Max')).to.be.fulfilled;
     });
     expect(upgradeToMaxFee > 5000n * helper.balance.getOneTokenNominal()).to.be.true;

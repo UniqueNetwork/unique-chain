@@ -115,14 +115,14 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
   const contractOwnedNestId = await createTokenFor(relayerAddress);
   const nextTokenId = contractOwnedNestId + 1;
 
-  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
+  const nestTransfer = await helper.arrange.calculateFee({Ethereum: ethSigner.address}, async () => {
     const addChildData = (await rmrk.addChild.populateTransaction(nestId, outerCollectionNestedId, [])).data;
     await (await relayer.relay.send(addChildData)).wait(...waitParams);
     await (await rmrk.acceptChild.send(nestId, 0, relayerAddress, outerCollectionNestedId)).wait(...waitParams);
   });
 
 
-  const nestMint = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
+  const nestMint = await helper.arrange.calculateFee({Ethereum: ethSigner.address}, async () => {
     const nestMintData = (await rmrk.nestMint.populateTransaction(await rmrk.getAddress(), nextTokenId, contractOwnedNestId)).data;
     await (await relayer.relay.send(nestMintData)).wait(...waitParams);
     const acceptNestedToken = (await rmrk.acceptChild.populateTransaction(contractOwnedNestId, 0, await rmrk.getAddress(), nextTokenId)).data;
@@ -130,7 +130,7 @@ async function measureRMRK(helper: EthUniqueHelper, donor: IKeyringPair) {
   });
 
 
-  const unnestToken = await helper.arrange.calculcateFee({Ethereum: ethSigner.address}, async () => {
+  const unnestToken = await helper.arrange.calculateFee({Ethereum: ethSigner.address}, async () => {
     const unnestData = (await rmrk.transferChild.populateTransaction(contractOwnedNestId, ethSigner.address, 0, 0, await rmrk.getAddress(), nextTokenId, false, [])).data;
     await (await relayer.relay.send(unnestData)).wait(...waitParams);
   });
@@ -148,7 +148,7 @@ async function measureEth(helper: EthUniqueHelper, donor: IKeyringPair) {
   const targetNftTokenAddress = helper.ethAddress.fromTokenId(collectionId, +targetNFTTokenId);
 
   // Create a nested token
-  const nestMint = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
+  const nestMint = await helper.arrange.calculateFee({Ethereum: owner.address}, async () => {
     await (await contract.mint.send(targetNftTokenAddress)).wait(...waitParams);
   });
 
@@ -156,11 +156,11 @@ async function measureEth(helper: EthUniqueHelper, donor: IKeyringPair) {
   const mintingSecondTokenIdReceipt = await (await contract.mint.send(owner)).wait(...waitParams);
   const nestedTokenId = helper.eth.normalizeEvents(mintingSecondTokenIdReceipt!).Transfer.args.tokenId;
 
-  const nestTransfer = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
+  const nestTransfer = await helper.arrange.calculateFee({Ethereum: owner.address}, async () => {
     await (await contract.transfer.send(targetNftTokenAddress, +nestedTokenId)).wait(...waitParams);
   });
 
-  const unnestToken = await helper.arrange.calculcateFee({Ethereum: owner.address}, async () => {
+  const unnestToken = await helper.arrange.calculateFee({Ethereum: owner.address}, async () => {
     await (await contract.transferFrom.send(targetNftTokenAddress, owner.address, +nestedTokenId)).wait(...waitParams);
   });
   return {mint: convertToTokens(nestMint), transfer: convertToTokens(nestTransfer), unnest: convertToTokens(unnestToken)};
@@ -180,16 +180,16 @@ async function measureSub(helper: EthUniqueHelper, donor: IKeyringPair) {
     nesting: {tokenOwner: true},
   });
 
-  const nestMint = await helper.arrange.calculcateFee({Substrate: bob.address}, async () => {
+  const nestMint = await helper.arrange.calculateFee({Substrate: bob.address}, async () => {
     await (collectionForNesting.mintToken(bob, targetTokenBob.nestingAccount()));
   });
 
   const nestedToken2 = await collectionForNesting.mintToken(bob);
-  const nestTransfer = await helper.arrange.calculcateFee({Substrate: bob.address}, async () => {
+  const nestTransfer = await helper.arrange.calculateFee({Substrate: bob.address}, async () => {
     await nestedToken2.nest(bob, targetTokenBob);
   });
 
-  const unnestToken = await helper.arrange.calculcateFee({Substrate: bob.address}, async () => {
+  const unnestToken = await helper.arrange.calculateFee({Substrate: bob.address}, async () => {
     await nestedToken2.transferFrom(bob, targetTokenBob.nestingAccount(), {Substrate: bob.address});
   });
 

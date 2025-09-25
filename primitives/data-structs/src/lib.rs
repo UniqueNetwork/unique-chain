@@ -1701,8 +1701,8 @@ impl<Properties> DerefMut for SpaceLimitedProperties<Properties> {
 		&mut self.properties
 	}
 }
-impl<'a, const MAX_SPACE_LIMIT: u32> TrySetProperty
-	for SpaceLimitedProperties<&'a mut SpaceMeteredProperties<MAX_SPACE_LIMIT>>
+impl<const MAX_SPACE_LIMIT: u32> TrySetProperty
+	for SpaceLimitedProperties<&mut SpaceMeteredProperties<MAX_SPACE_LIMIT>>
 {
 	type Value = PropertyValue;
 
