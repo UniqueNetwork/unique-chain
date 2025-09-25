@@ -869,6 +869,7 @@ export class ArrangeGroup {
     return false;
   };
 
+  // TODO fix the name. It should be `calculateFee`
   async calculcateFee(payer: ICrossAccountId, promise: () => Promise<any>): Promise<bigint> {
     const address = 'Substrate' in payer ? payer.Substrate : this.helper.address.ethToSubstrate(payer.Ethereum);
     let balance = await this.helper.balance.getSubstrate(address);
